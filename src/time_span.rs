@@ -2,7 +2,7 @@ use std::ops::{Add, Sub};
 use std::time::Duration as StdDuration;
 use chrono::Duration;
 
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct TimeSpan(Duration);
 
 impl TimeSpan {

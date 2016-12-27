@@ -3,7 +3,7 @@ use std::cmp::max;
 use {AtomicDateTime, TimeSpan, Time, TimingMethod, Attempt, RunMetadata, Segment};
 use odds::vec::VecFindRemove;
 
-#[derive(Default, Clone)]
+#[derive(Clone, Debug)]
 pub struct Run {
     game_name: String,
     category_name: String,
@@ -18,8 +18,39 @@ pub struct Run {
 
 impl Run {
     #[inline]
-    pub fn new() -> Self {
-        Default::default()
+    pub fn new(segments: Vec<Segment>) -> Self {
+        Run {
+            game_name: String::from(""),
+            category_name: String::from(""),
+            offset: TimeSpan::zero(),
+            attempt_count: 0,
+            attempt_history: Vec::new(),
+            metadata: RunMetadata::new(),
+            has_changed: false,
+            path: None,
+            segments: segments,
+        }
+    }
+
+    #[inline]
+    pub fn set_game_name<S>(&mut self, name: S)
+        where S: AsRef<str>
+    {
+        self.game_name.clear();
+        self.game_name.push_str(name.as_ref());
+    }
+
+    #[inline]
+    pub fn set_category_name<S>(&mut self, name: S)
+        where S: AsRef<str>
+    {
+        self.category_name.clear();
+        self.category_name.push_str(name.as_ref());
+    }
+
+    #[inline]
+    pub fn metadata_mut(&mut self) -> &mut RunMetadata {
+        &mut self.metadata
     }
 
     #[inline]

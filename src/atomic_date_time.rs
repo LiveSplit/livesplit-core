@@ -2,7 +2,7 @@ use std::ops::Sub;
 use chrono::{DateTime, UTC};
 use TimeSpan;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub struct AtomicDateTime {
     pub time: DateTime<UTC>,
     pub synced_with_atomic_clock: bool,

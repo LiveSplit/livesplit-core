@@ -1,6 +1,6 @@
 use {AtomicDateTime, Time, TimeSpan};
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Attempt {
     index: i32,
     time: Time,

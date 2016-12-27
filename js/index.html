@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en-us">
+    <head>
+        <script type='text/javascript' src="livesplit.js"></script>
+        <script type="text/javascript">
+            function run() {
+                var LS = LiveSplit({});
+                var list = LS.SegmentList();
+                list.push(LS.Segment("Okok"));
+                list.push(LS.Segment("bla"));
+                var timer = LS.Timer(LS.Run(list));
+
+                timer.printDebug();
+                timer.start();
+                timer.printDebug();
+                timer.split();
+                timer.printDebug();
+                timer.split();
+                timer.printDebug();
+                timer.reset();
+                timer.printDebug();
+
+                timer.drop();
+            }
+        </script>
+    </head>
+    <body onload="run();">
+    </body>
+</html>

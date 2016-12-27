@@ -1,7 +1,7 @@
 use std::ops::{Index, IndexMut, Add, Sub};
 use {TimingMethod, TimeSpan};
 
-#[derive(Copy, Clone, Default, Eq, PartialEq)]
+#[derive(Copy, Clone, Default, Debug, Eq, PartialEq)]
 pub struct Time {
     pub real_time: Option<TimeSpan>,
     pub game_time: Option<TimeSpan>,

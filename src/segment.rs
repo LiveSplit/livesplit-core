@@ -1,6 +1,6 @@
 use {SegmentHistory, Time};
 
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Debug)]
 pub struct Segment {
     name: String,
     personal_best_split_time: Time,

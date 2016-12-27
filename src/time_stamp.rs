@@ -2,7 +2,7 @@ use std::time::Instant;
 use std::ops::Sub;
 use TimeSpan;
 
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct TimeStamp(Instant, TimeSpan);
 
 impl TimeStamp {

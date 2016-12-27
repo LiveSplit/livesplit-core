@@ -3,7 +3,7 @@ use std::collections::hash_map::Iter;
 use std::cmp::min;
 use Time;
 
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Debug)]
 pub struct SegmentHistory(HashMap<i32, Time>);
 
 impl SegmentHistory {

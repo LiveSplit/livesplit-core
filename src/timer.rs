@@ -1,7 +1,7 @@
 use {AtomicDateTime, Run, Time, TimerPhase, TimingMethod, TimeStamp, TimeSpan, Segment};
 use TimerPhase::*;
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Timer {
     run: Run,
     phase: TimerPhase,
@@ -14,6 +14,19 @@ pub struct Timer {
 }
 
 impl Timer {
+    pub fn new(run: Run) -> Self {
+        Timer {
+            run: run,
+            phase: TimerPhase::NotRunning,
+            current_split_index: -1,
+            current_timing_method: TimingMethod::RealTime,
+            attempt_started: None,
+            attempt_ended: None,
+            start_time: TimeStamp::now(),
+            pause_time: TimeSpan::zero(),
+        }
+    }
+
     pub fn current_time(&self) -> Time {
         let real_time = match self.phase {
             NotRunning => Some(TimeSpan::zero()),
