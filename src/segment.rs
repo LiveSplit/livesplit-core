@@ -40,4 +40,24 @@ impl Segment {
     pub fn clear_split_time(&mut self) {
         self.set_split_time(Default::default());
     }
+
+    #[inline]
+    pub fn best_segment_time(&self) -> Time {
+        self.best_segment_time
+    }
+
+    #[inline]
+    pub fn personal_best_split_time(&self) -> Time {
+        self.personal_best_split_time
+    }
+
+    #[inline]
+    pub fn segment_history(&self) -> &SegmentHistory {
+        &self.segment_history
+    }
+
+    #[inline]
+    pub fn segment_history_mut(&mut self) -> &mut SegmentHistory {
+        &mut self.segment_history
+    }
 }

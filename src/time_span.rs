@@ -9,6 +9,15 @@ impl TimeSpan {
     pub fn zero() -> Self {
         Default::default()
     }
+
+    pub fn option_op<F, R>(a: Option<TimeSpan>, b: Option<TimeSpan>, f: F) -> Option<R>
+        where F: FnOnce(TimeSpan, TimeSpan) -> R
+    {
+        match (a, b) {
+            (Some(a), Some(b)) => Some(f(a, b)),
+            _ => None,
+        }
+    }
 }
 
 impl Default for TimeSpan {

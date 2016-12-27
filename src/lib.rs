@@ -1,4 +1,5 @@
 extern crate chrono;
+extern crate odds;
 
 mod atomic_date_time;
 mod attempt;

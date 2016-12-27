@@ -5,3 +5,4 @@ authors = ["Christopher Serr <christopher.serr@gmail.com>"]
 
 [dependencies]
 chrono = "0.2.25"
+odds = "0.2.25"

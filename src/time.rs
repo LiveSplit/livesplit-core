@@ -14,6 +14,14 @@ impl Time {
     }
 
     #[inline]
+    pub fn zero() -> Self {
+        Time {
+            real_time: Some(TimeSpan::zero()),
+            game_time: Some(TimeSpan::zero()),
+        }
+    }
+
+    #[inline]
     pub fn with_real_time(self, real_time: Option<TimeSpan>) -> Self {
         Time { real_time: real_time, ..self }
     }
@@ -31,16 +39,22 @@ impl Time {
         self[timing_method] = time;
         self
     }
+
+    pub fn op<F>(a: Time, b: Time, mut f: F) -> Time
+        where F: FnMut(TimeSpan, TimeSpan) -> TimeSpan
+    {
+        Time {
+            real_time: TimeSpan::option_op(a.real_time, b.real_time, &mut f),
+            game_time: TimeSpan::option_op(a.game_time, b.game_time, &mut f),
+        }
+    }
 }
 
 impl Add for Time {
     type Output = Time;
 
     fn add(self, rhs: Time) -> Self {
-        Time {
-            real_time: self.real_time.and_then(|a| rhs.real_time.map(|b| a + b)),
-            game_time: self.game_time.and_then(|a| rhs.game_time.map(|b| a + b)),
-        }
+        Time::op(self, rhs, Add::add)
     }
 }
 
@@ -48,10 +62,7 @@ impl Sub for Time {
     type Output = Time;
 
     fn sub(self, rhs: Time) -> Self {
-        Time {
-            real_time: self.real_time.and_then(|a| rhs.real_time.map(|b| a - b)),
-            game_time: self.game_time.and_then(|a| rhs.game_time.map(|b| a - b)),
-        }
+        Time::op(self, rhs, Sub::sub)
     }
 }
 

@@ -2,14 +2,15 @@ use {AtomicDateTime, Time, TimeSpan};
 
 #[derive(Clone)]
 pub struct Attempt {
-    index: i64,
+    index: i32,
     time: Time,
     started: Option<AtomicDateTime>,
     ended: Option<AtomicDateTime>,
 }
 
 impl Attempt {
-    pub fn new(index: i64,
+    #[inline]
+    pub fn new(index: i32,
                time: Time,
                started: Option<AtomicDateTime>,
                ended: Option<AtomicDateTime>)
@@ -28,10 +29,11 @@ impl Attempt {
     /// if it's from before LiveSplit 1.6. If it is from before
     /// 1.6 and resetted then it will return null.
     pub fn duration(&self) -> Option<TimeSpan> {
-        if let (Some(started), Some(ended)) = (self.started, self.ended) {
-            Some(ended - started)
-        } else {
-            self.time.real_time
-        }
+        AtomicDateTime::option_op(self.started, self.ended, |s, e| e - s).or(self.time.real_time)
+    }
+
+    #[inline]
+    pub fn index(&self) -> i32 {
+        self.index
     }
 }
