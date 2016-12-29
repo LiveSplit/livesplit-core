@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+        "module": "none",
+        "removeComments": true,
+        "preserveConstEnums": true,
+        "allowJs": true,
+        "outFile": "bindings.js"
+    },
+    "files": [
+        "livesplit.ts"
+    ]
+}

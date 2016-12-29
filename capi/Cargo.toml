@@ -7,9 +7,5 @@ authors = ["Christopher Serr <christopher.serr@gmail.com>"]
 livesplit-core = { path = ".." }
 libc = "0.2.18"
 
-[[bin]]
-name = "livesplit_core"
-path = "src/bin/emscripten.rs"
-
 [lib]
 crate-type = ["cdylib", "rlib", "staticlib"]

@@ -4,11 +4,11 @@
         <script type='text/javascript' src="livesplit.js"></script>
         <script type="text/javascript">
             function run() {
-                var LS = LiveSplit({});
-                var list = LS.SegmentList();
-                list.push(LS.Segment("Okok"));
-                list.push(LS.Segment("bla"));
-                var timer = LS.Timer(LS.Run(list));
+                var LS = new LiveSplit();
+                var list = new LS.SegmentList();
+                list.push(new LS.Segment("Okok"));
+                list.push(new LS.Segment("bla"));
+                var timer = new LS.Timer(new LS.Run(list));
 
                 timer.printDebug();
                 timer.start();
