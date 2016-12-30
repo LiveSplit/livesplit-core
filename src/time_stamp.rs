@@ -23,6 +23,6 @@ impl Sub<TimeSpan> for TimeStamp {
     type Output = TimeStamp;
 
     fn sub(self, rhs: TimeSpan) -> TimeStamp {
-        TimeStamp(self.0, self.1 + rhs)
+        TimeStamp(self.0, self.1 - rhs)
     }
 }

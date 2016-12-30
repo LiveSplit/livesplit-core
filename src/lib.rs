@@ -20,6 +20,7 @@ mod timer;
 mod timer_phase;
 mod timing_method;
 pub mod component;
+pub mod time_formatter;
 
 pub use chrono::{DateTime, UTC};
 pub use self::atomic_date_time::AtomicDateTime;
