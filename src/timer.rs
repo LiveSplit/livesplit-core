@@ -14,6 +14,7 @@ pub struct Timer {
 }
 
 impl Timer {
+    #[inline]
     pub fn new(run: Run) -> Self {
         Timer {
             run: run,
@@ -25,6 +26,11 @@ impl Timer {
             start_time: TimeStamp::now(),
             pause_time: TimeSpan::zero(),
         }
+    }
+
+    #[inline]
+    pub fn run(&self) -> &Run {
+        &self.run
     }
 
     pub fn current_time(&self) -> Time {

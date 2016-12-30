@@ -1,5 +1,11 @@
+#![feature(proc_macro)]
+
+#[macro_use]
+extern crate serde_derive;
+
 extern crate chrono;
 extern crate odds;
+extern crate serde_json;
 
 mod atomic_date_time;
 mod attempt;
@@ -13,6 +19,7 @@ mod time_stamp;
 mod timer;
 mod timer_phase;
 mod timing_method;
+pub mod component;
 
 pub use chrono::{DateTime, UTC};
 pub use self::atomic_date_time::AtomicDateTime;

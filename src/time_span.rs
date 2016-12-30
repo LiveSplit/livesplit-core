@@ -18,6 +18,10 @@ impl TimeSpan {
             _ => None,
         }
     }
+
+    pub fn total_seconds(&self) -> f64 {
+        self.0.num_nanoseconds().unwrap() as f64 / 1_000_000_000.0
+    }
 }
 
 impl Default for TimeSpan {

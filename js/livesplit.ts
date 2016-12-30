@@ -1,7 +1,7 @@
 declare var LiveSplitCore: any;
 
 class LiveSplit {
-    Segment: any;
+    Segment: (string) => Segment;
     SegmentList: any;
     Run: any;
     Timer: any;

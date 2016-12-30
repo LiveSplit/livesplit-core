@@ -8,7 +8,7 @@ pub struct Run {
     game_name: String,
     category_name: String,
     offset: TimeSpan,
-    attempt_count: u64,
+    attempt_count: u32,
     attempt_history: Vec<Attempt>,
     metadata: RunMetadata,
     has_changed: bool,
@@ -33,6 +33,11 @@ impl Run {
     }
 
     #[inline]
+    pub fn game_name(&self) -> &str {
+        &self.game_name
+    }
+
+    #[inline]
     pub fn set_game_name<S>(&mut self, name: S)
         where S: AsRef<str>
     {
@@ -41,11 +46,21 @@ impl Run {
     }
 
     #[inline]
+    pub fn category_name(&self) -> &str {
+        &self.category_name
+    }
+
+    #[inline]
     pub fn set_category_name<S>(&mut self, name: S)
         where S: AsRef<str>
     {
         self.category_name.clear();
         self.category_name.push_str(name.as_ref());
+    }
+
+    #[inline]
+    pub fn attempt_count(&self) -> u32 {
+        self.attempt_count
     }
 
     #[inline]

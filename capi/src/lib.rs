@@ -4,10 +4,42 @@ extern crate livesplit_core;
 extern crate libc;
 
 use livesplit_core::{Segment, Run, Timer};
+use livesplit_core::component::{timer, title};
 use libc::c_char;
 use std::ffi::CStr;
+use std::cell::RefCell;
+// use std::fmt::Write;
 
-unsafe fn get_str(s: *const c_char) -> &'static str {
+thread_local!{
+    // static OUTPUT_STR: RefCell<String> = RefCell::new(String::new());
+    static OUTPUT_VEC: RefCell<Vec<u8>> = RefCell::new(Vec::new());
+}
+
+// fn output_str<F>(f: F) -> *const c_char
+//     where F: FnOnce(&mut String)
+// {
+//     OUTPUT_STR.with(|output| {
+//         let mut output = output.borrow_mut();
+//         output.clear();
+//         f(&mut output);
+//         output.push('\0');
+//         output.as_ptr() as *const c_char
+//     })
+// }
+
+fn output_vec<F>(f: F) -> *const u8
+    where F: FnOnce(&mut Vec<u8>)
+{
+    OUTPUT_VEC.with(|output| {
+        let mut output = output.borrow_mut();
+        output.clear();
+        f(&mut output);
+        output.push(0);
+        output.as_ptr()
+    })
+}
+
+unsafe fn str(s: *const c_char) -> &'static str {
     CStr::from_ptr(s).to_str().unwrap()
 }
 
@@ -19,13 +51,17 @@ unsafe fn own<T>(data: *mut T) -> T {
     *Box::from_raw(data)
 }
 
-unsafe fn acc<T>(data: *mut T) -> &'static mut T {
+unsafe fn acc_mut<T>(data: *mut T) -> &'static mut T {
     &mut *data
+}
+
+unsafe fn acc<T>(data: *const T) -> &'static T {
+    &*data
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn Segment_new(name: *const c_char) -> *mut Segment {
-    alloc(Segment::new(get_str(name)))
+    alloc(Segment::new(str(name)))
 }
 
 #[no_mangle]
@@ -35,12 +71,22 @@ pub unsafe extern "C" fn SegmentList_new() -> *mut Vec<Segment> {
 
 #[no_mangle]
 pub unsafe extern "C" fn SegmentList_push(this: *mut Vec<Segment>, segment_drop: *mut Segment) {
-    acc(this).push(own(segment_drop));
+    acc_mut(this).push(own(segment_drop));
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn Run_new(segments_drop: *mut Vec<Segment>) -> *mut Run {
     alloc(Run::new(own(segments_drop)))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Run_set_game(this: *mut Run, game: *const c_char) {
+    acc_mut(this).set_game_name(str(game));
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Run_set_category(this: *mut Run, category: *const c_char) {
+    acc_mut(this).set_category_name(str(category));
 }
 
 #[no_mangle]
@@ -55,35 +101,73 @@ pub unsafe extern "C" fn Timer_drop(this_drop: *mut Timer) {
 
 #[no_mangle]
 pub unsafe extern "C" fn Timer_start(this: *mut Timer) {
-    acc(this).start();
+    acc_mut(this).start();
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn Timer_split(this: *mut Timer) {
-    acc(this).split();
+    acc_mut(this).split();
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn Timer_skip_split(this: *mut Timer) {
-    acc(this).skip_split();
+    acc_mut(this).skip_split();
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn Timer_undo_split(this: *mut Timer) {
-    acc(this).undo_split();
+    acc_mut(this).undo_split();
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn Timer_reset(this: *mut Timer, update_splits: bool) {
-    acc(this).reset(update_splits);
+    acc_mut(this).reset(update_splits);
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn Timer_pause(this: *mut Timer) {
-    acc(this).pause();
+    acc_mut(this).pause();
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn Timer_print_debug(this: *mut Timer) {
-    println!("{:#?}", acc(this));
+    println!("{:#?}", acc_mut(this));
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn TimerComponent_new() -> *mut timer::Component {
+    alloc(timer::Component::new())
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn TimerComponent_drop(this_drop: *mut timer::Component) {
+    own(this_drop);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn TimerComponent_state(this: *const timer::Component,
+                                              timer: *const Timer)
+                                              -> *const u8 {
+    output_vec(|o| {
+        acc(this).state(acc(timer)).write_json(o).unwrap();
+    })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn TitleComponent_new() -> *mut title::Component {
+    alloc(title::Component::new())
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn TitleComponent_drop(this_drop: *mut title::Component) {
+    own(this_drop);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn TitleComponent_state(this: *const title::Component,
+                                              timer: *const Timer)
+                                              -> *const u8 {
+    output_vec(|o| {
+        acc(this).state(acc(timer)).write_json(o).unwrap();
+    })
 }

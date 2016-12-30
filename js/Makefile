@@ -1,14 +1,10 @@
-standard_flags = -s EXPORTED_FUNCTIONS=['_Segment_new','_SegmentList_new','_SegmentList_push','_Run_new','_Timer_new','_Timer_drop','_Timer_start','_Timer_split','_Timer_skip_split','_Timer_undo_split','_Timer_reset','_Timer_pause','_Timer_print_debug'] -s MODULARIZE=1 -s EXPORT_NAME='LiveSplitCore'
+standard_flags = -s EXPORTED_FUNCTIONS=['_Segment_new','_SegmentList_new','_SegmentList_push','_Run_new','_Run_set_game','_Run_set_category','_Timer_new','_Timer_drop','_Timer_start','_Timer_split','_Timer_skip_split','_Timer_undo_split','_Timer_reset','_Timer_pause','_Timer_print_debug','_TimerComponent_new','_TimerComponent_drop','_TimerComponent_state','_TitleComponent_new','_TitleComponent_drop','_TitleComponent_state'] -s MODULARIZE=1 -s EXPORT_NAME='LiveSplitCore'
 debug_flags = $(standard_flags) -g -s ASSERTIONS=2 -s DEMANGLE_SUPPORT=1
 release_flags = $(standard_flags) -O3 --memory-init-file 0
 
 asmjs:
 	@cargo rustc --release --target asmjs-unknown-emscripten -- -C link-args="$(release_flags)"
-	@cp target/asmjs-unknown-emscripten/release/deps/livesplit*.js.mem target/asmjs-unknown-emscripten/release/.
 	@cp target/asmjs-unknown-emscripten/release/livesplit*.js* .
-	@tsc
-	@cat bindings.js >> livesplit.js
-	@rm bindings.js
 
 debug:
 	@cargo rustc --target asmjs-unknown-emscripten -- -C link-args="$(debug_flags)"

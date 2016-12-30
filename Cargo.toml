@@ -6,3 +6,6 @@ authors = ["Christopher Serr <christopher.serr@gmail.com>"]
 [dependencies]
 chrono = "0.2.25"
 odds = "0.2.25"
+serde_json = "0.8.4"
+serde_derive = "0.8.21"
+serde = "0.8.21"
