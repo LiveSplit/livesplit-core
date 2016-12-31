@@ -1,15 +1,21 @@
 use std::fmt::{Result, Formatter, Display};
 use TimeSpan;
+use super::TimeFormatter;
 
-pub struct Time(Option<TimeSpan>);
+pub struct TimeInner(Option<TimeSpan>);
+pub struct Time;
 
-impl Time {
-    pub fn new<T: Into<Option<TimeSpan>>>(time: T) -> Self {
-        Time(time.into())
+impl<'a> TimeFormatter<'a> for Time {
+    type Inner = TimeInner;
+
+    fn format<T>(&self, time: T) -> Self::Inner
+        where T: Into<Option<TimeSpan>>
+    {
+        TimeInner(time.into())
     }
 }
 
-impl Display for Time {
+impl Display for TimeInner {
     fn fmt(&self, f: &mut Formatter) -> Result {
         if let Some(time) = self.0 {
             let mut total_seconds = time.total_seconds();
@@ -34,15 +40,20 @@ impl Display for Time {
     }
 }
 
-pub struct Fraction(Option<TimeSpan>);
+pub struct FractionInner(Option<TimeSpan>);
+pub struct Fraction;
 
-impl Fraction {
-    pub fn new<T: Into<Option<TimeSpan>>>(time: T) -> Self {
-        Fraction(time.into())
+impl<'a> TimeFormatter<'a> for Fraction {
+    type Inner = FractionInner;
+
+    fn format<T>(&self, time: T) -> Self::Inner
+        where T: Into<Option<TimeSpan>>
+    {
+        FractionInner(time.into())
     }
 }
 
-impl Display for Fraction {
+impl Display for FractionInner {
     fn fmt(&self, f: &mut Formatter) -> Result {
         if let Some(time) = self.0 {
             write!(f,

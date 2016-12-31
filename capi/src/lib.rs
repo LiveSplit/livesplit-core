@@ -4,7 +4,7 @@ extern crate livesplit_core;
 extern crate libc;
 
 use livesplit_core::{Segment, Run, Timer};
-use livesplit_core::component::{timer, title};
+use livesplit_core::component::{timer, title, splits, previous_segment};
 use libc::c_char;
 use std::ffi::CStr;
 use std::cell::RefCell;
@@ -167,6 +167,44 @@ pub unsafe extern "C" fn TitleComponent_drop(this_drop: *mut title::Component) {
 pub unsafe extern "C" fn TitleComponent_state(this: *const title::Component,
                                               timer: *const Timer)
                                               -> *const u8 {
+    output_vec(|o| {
+        acc(this).state(acc(timer)).write_json(o).unwrap();
+    })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn SplitsComponent_new() -> *mut splits::Component {
+    alloc(splits::Component::new())
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn SplitsComponent_drop(this_drop: *mut splits::Component) {
+    own(this_drop);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn SplitsComponent_state(this: *const splits::Component,
+                                               timer: *const Timer)
+                                               -> *const u8 {
+    output_vec(|o| {
+        acc(this).state(acc(timer)).write_json(o).unwrap();
+    })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn PreviousSegmentComponent_new() -> *mut previous_segment::Component {
+    alloc(previous_segment::Component::new())
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn PreviousSegmentComponent_drop(this_drop: *mut previous_segment::Component) {
+    own(this_drop);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn PreviousSegmentComponent_state(this: *const previous_segment::Component,
+                                                        timer: *const Timer)
+                                                        -> *const u8 {
     output_vec(|o| {
         acc(this).state(acc(timer)).write_json(o).unwrap();
     })

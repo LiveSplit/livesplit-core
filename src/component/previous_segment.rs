@@ -8,8 +8,8 @@ pub struct Component;
 
 #[derive(Serialize, Deserialize)]
 pub struct State {
+    pub text: String,
     pub time: String,
-    pub fraction: String,
 }
 
 impl State {
@@ -26,11 +26,11 @@ impl Component {
     }
 
     pub fn state(&self, timer: &Timer) -> State {
-        let time = timer.current_time();
-        let time = time.real_time.unwrap();
+        // let time = timer.current_time();
+        // let time = time.real_time.unwrap();
         State {
-            time: formatter::Time.format(time).to_string(),
-            fraction: formatter::Fraction.format(time).to_string(),
+            text: "Previous Segment".to_string(),
+            time: "-".to_string(),
         }
     }
 }

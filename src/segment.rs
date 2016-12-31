@@ -17,6 +17,11 @@ impl Segment {
     }
 
     #[inline]
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    #[inline]
     pub fn set_personal_best_split_time(&mut self, time: Time) {
         self.personal_best_split_time = time;
     }

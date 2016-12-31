@@ -55,6 +55,11 @@ impl Timer {
         }
     }
 
+    #[inline]
+    pub fn current_split_index(&self) -> isize {
+        self.current_split_index
+    }
+
     pub fn start(&mut self) {
         if self.phase == NotRunning {
             self.phase = Running;
