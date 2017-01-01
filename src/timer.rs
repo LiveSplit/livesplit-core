@@ -33,6 +33,11 @@ impl Timer {
         &self.run
     }
 
+    #[inline]
+    pub fn current_phase(&self) -> TimerPhase {
+        self.phase
+    }
+
     pub fn current_time(&self) -> Time {
         let real_time = match self.phase {
             NotRunning => Some(TimeSpan::zero()),
@@ -46,10 +51,17 @@ impl Timer {
         Time::new().with_real_time(real_time)
     }
 
-    fn current_split_mut(&mut self) -> Option<&mut Segment> {
-        let segments = self.run.segments_mut();
+    pub fn current_split(&self) -> Option<&Segment> {
         if self.current_split_index >= 0 {
-            segments.get_mut(self.current_split_index as usize)
+            self.run.segments().get(self.current_split_index as usize)
+        } else {
+            None
+        }
+    }
+
+    fn current_split_mut(&mut self) -> Option<&mut Segment> {
+        if self.current_split_index >= 0 {
+            self.run.segments_mut().get_mut(self.current_split_index as usize)
         } else {
             None
         }

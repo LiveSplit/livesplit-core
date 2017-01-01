@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use {SegmentHistory, Time};
+use {SegmentHistory, Time, TimingMethod, TimeSpan};
 use run::PERSONAL_BEST_COMPARISON_NAME;
 
 #[derive(Clone, Default, Debug)]
@@ -26,6 +26,19 @@ impl Segment {
     #[inline]
     pub fn comparison_mut(&mut self, comparison: &str) -> &mut Time {
         self.comparisons.entry(comparison.into()).or_insert_with(Time::default)
+    }
+
+    #[inline]
+    pub fn comparison(&self, comparison: &str) -> Option<&Time> {
+        self.comparisons.get(comparison)
+    }
+
+    #[inline]
+    pub fn comparison_timing_method(&self,
+                                    comparison: &str,
+                                    method: TimingMethod)
+                                    -> Option<TimeSpan> {
+        self.comparisons.get(comparison).and_then(|t| t[method])
     }
 
     #[inline]

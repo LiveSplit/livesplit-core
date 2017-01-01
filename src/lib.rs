@@ -9,17 +9,19 @@ extern crate serde_json;
 
 mod atomic_date_time;
 mod attempt;
-mod run;
 mod run_metadata;
+mod run;
 mod segment_history;
 mod segment;
-mod time;
 mod time_span;
 mod time_stamp;
-mod timer;
+mod time;
 mod timer_phase;
+mod timer;
 mod timing_method;
 pub mod component;
+pub mod comparison;
+pub mod state_helper; // TODO Should maybe not be pub
 pub mod time_formatter;
 
 pub use chrono::{DateTime, UTC};

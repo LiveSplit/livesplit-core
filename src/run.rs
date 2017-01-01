@@ -93,6 +93,11 @@ impl Run {
     }
 
     #[inline]
+    pub fn segment(&self, index: usize) -> &Segment {
+        &self.segments[index]
+    }
+
+    #[inline]
     pub fn attempt_history(&self) -> &[Attempt] {
         &self.attempt_history
     }
