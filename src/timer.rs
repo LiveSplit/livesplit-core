@@ -217,8 +217,7 @@ impl Timer {
             let last_segment = self.run.segments().last().unwrap();
             (last_segment.split_time()[method], last_segment.personal_best_split_time()[method])
         };
-        if split_time.map_or(pb_split_time.is_none(),
-                             |s| pb_split_time.map_or(false, |pb| s < pb)) {
+        if split_time.map_or(false, |s| pb_split_time.map_or(true, |pb| s < pb)) {
             self.set_run_as_pb();
         }
     }

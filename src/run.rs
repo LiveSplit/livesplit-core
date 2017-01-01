@@ -3,6 +3,8 @@ use std::cmp::max;
 use {AtomicDateTime, TimeSpan, Time, TimingMethod, Attempt, RunMetadata, Segment};
 use odds::vec::VecFindRemove;
 
+pub const PERSONAL_BEST_COMPARISON_NAME: &'static str = "Personal Best";
+
 #[derive(Clone, Debug)]
 pub struct Run {
     game_name: String,
@@ -14,6 +16,7 @@ pub struct Run {
     has_changed: bool,
     path: Option<PathBuf>,
     segments: Vec<Segment>,
+    custom_comparisons: Vec<String>,
 }
 
 impl Run {
@@ -29,6 +32,7 @@ impl Run {
             has_changed: false,
             path: None,
             segments: segments,
+            custom_comparisons: vec![PERSONAL_BEST_COMPARISON_NAME.into()],
         }
     }
 
@@ -161,8 +165,28 @@ impl Run {
         }
     }
 
-    fn fix_comparison_times(&mut self, _method: TimingMethod) {
-        // TODO Implement Comparisons
+    fn fix_comparison_times(&mut self, method: TimingMethod) {
+        for comparison in &self.custom_comparisons {
+            let mut previous_time = TimeSpan::zero();
+            for segment in &mut self.segments {
+                if let Some(time) = segment.comparison_mut(comparison)[method] {
+                    // Prevent comparison times from decreasing from one split to the next
+                    if time < previous_time {
+                        segment.comparison_mut(comparison)[method] = Some(previous_time);
+                    }
+
+                    // Fix Best Segment time if the PB segment is faster
+                    let current_segment = time - previous_time;
+                    if comparison == PERSONAL_BEST_COMPARISON_NAME {
+                        let time = &mut segment.best_segment_time()[method];
+                        if time.map_or(true, |t| t > current_segment) {
+                            *time = Some(current_segment);
+                        }
+                    }
+                    previous_time = segment.comparison_mut(comparison)[method].unwrap();
+                }
+            }
+        }
     }
 
     fn remove_null_values(&mut self) {
