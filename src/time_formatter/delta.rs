@@ -63,7 +63,7 @@ impl Display for Inner {
                 write!(f, "{:.2}", seconds)
             }
         } else {
-            write!(f, "-")
+            write!(f, "—")
         }
     }
 }

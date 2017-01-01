@@ -136,7 +136,7 @@ pub fn live_segment_delta(timer: &Timer,
 /// Checks whether the live segment should now be shown.
 ///
 /// `timer`: The current timer.
-/// `showWhenBehind`: Specifies whether or not to start showing the live segment once you are behind.
+/// `show_when_behind`: Specifies whether or not to start showing the live segment once you are behind.
 /// `comparison`: The comparison that you are comparing with.
 /// `method`: The timing method that you are using.
 ///

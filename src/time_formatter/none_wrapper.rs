@@ -18,7 +18,7 @@ impl<'a, F: 'a + TimeFormatter<'a>, S: AsRef<str>> NoneWrapper<F, S> {
 
 impl DashWrapper {
     pub fn new<'a, F: 'a + TimeFormatter<'a>>(inner: F) -> NoneWrapper<F, &'static str> {
-        NoneWrapper::new(inner, "-")
+        NoneWrapper::new(inner, "—")
     }
 }
 

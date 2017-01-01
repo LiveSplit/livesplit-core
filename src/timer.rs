@@ -51,6 +51,11 @@ impl Timer {
         Time::new().with_real_time(real_time)
     }
 
+    #[inline]
+    pub fn current_timing_method(&self) -> TimingMethod {
+        self.current_timing_method
+    }
+
     pub fn current_split(&self) -> Option<&Segment> {
         if self.current_split_index >= 0 {
             self.run.segments().get(self.current_split_index as usize)
