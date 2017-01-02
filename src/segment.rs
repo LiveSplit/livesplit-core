@@ -5,6 +5,7 @@ use run::PERSONAL_BEST_COMPARISON_NAME;
 #[derive(Clone, Default, Debug)]
 pub struct Segment {
     name: String,
+    icon: String,
     best_segment_time: Time,
     split_time: Time,
     segment_history: SegmentHistory,
@@ -21,6 +22,12 @@ impl Segment {
     #[inline]
     pub fn name(&self) -> &str {
         &self.name
+    }
+
+    #[inline]
+    pub fn set_icon<S: AsRef<str>>(&mut self, icon: S) {
+        self.icon.clear();
+        self.icon.push_str(icon.as_ref());
     }
 
     #[inline]

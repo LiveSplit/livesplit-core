@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 use std::cmp::max;
+use std::collections::HashSet;
 use {AtomicDateTime, TimeSpan, Time, TimingMethod, Attempt, RunMetadata, Segment};
 use odds::vec::VecFindRemove;
 
@@ -7,6 +8,7 @@ pub const PERSONAL_BEST_COMPARISON_NAME: &'static str = "Personal Best";
 
 #[derive(Clone, Debug)]
 pub struct Run {
+    game_icon: String,
     game_name: String,
     category_name: String,
     offset: TimeSpan,
@@ -16,15 +18,16 @@ pub struct Run {
     has_changed: bool,
     path: Option<PathBuf>,
     segments: Vec<Segment>,
-    custom_comparisons: Vec<String>,
+    custom_comparisons: HashSet<String>,
 }
 
 impl Run {
     #[inline]
     pub fn new(segments: Vec<Segment>) -> Self {
         Run {
-            game_name: String::from(""),
-            category_name: String::from(""),
+            game_icon: String::new(),
+            game_name: String::new(),
+            category_name: String::new(),
             offset: TimeSpan::zero(),
             attempt_count: 0,
             attempt_history: Vec::new(),
@@ -32,7 +35,10 @@ impl Run {
             has_changed: false,
             path: None,
             segments: segments,
-            custom_comparisons: vec![PERSONAL_BEST_COMPARISON_NAME.into()],
+            custom_comparisons: [PERSONAL_BEST_COMPARISON_NAME.to_string()]
+                .iter()
+                .cloned()
+                .collect(),
         }
     }
 
@@ -50,6 +56,14 @@ impl Run {
     }
 
     #[inline]
+    pub fn set_game_icon<S>(&mut self, icon: S)
+        where S: AsRef<str>
+    {
+        self.game_icon.clear();
+        self.game_icon.push_str(icon.as_ref());
+    }
+
+    #[inline]
     pub fn category_name(&self) -> &str {
         &self.category_name
     }
@@ -63,8 +77,23 @@ impl Run {
     }
 
     #[inline]
+    pub fn set_path(&mut self, path: Option<PathBuf>) {
+        self.path = path;
+    }
+
+    #[inline]
+    pub fn set_offset(&mut self, offset: TimeSpan) {
+        self.offset = offset;
+    }
+
+    #[inline]
     pub fn attempt_count(&self) -> u32 {
         self.attempt_count
+    }
+
+    #[inline]
+    pub fn set_attempt_count(&mut self, attempts: u32) {
+        self.attempt_count = attempts;
     }
 
     #[inline]
@@ -90,6 +119,11 @@ impl Run {
     #[inline]
     pub fn segments_mut(&mut self) -> &mut [Segment] {
         &mut self.segments
+    }
+
+    #[inline]
+    pub fn push_segment(&mut self, segment: Segment) {
+        self.segments.push(segment);
     }
 
     #[inline]
@@ -123,6 +157,14 @@ impl Run {
                        ended: Option<AtomicDateTime>) {
         let index = self.attempt_history.iter().map(Attempt::index).max().unwrap_or(0);
         let index = max(0, index + 1);
+        self.add_attempt_with_index(time, index, started, ended);
+    }
+
+    pub fn add_attempt_with_index(&mut self,
+                                  time: Time,
+                                  index: i32,
+                                  started: Option<AtomicDateTime>,
+                                  ended: Option<AtomicDateTime>) {
         let attempt = Attempt::new(index, time, started, ended);
         self.attempt_history.push(attempt);
     }
@@ -130,6 +172,11 @@ impl Run {
     #[inline]
     pub fn clear_run_id(&mut self) {
         self.metadata.set_run_id(String::new());
+    }
+
+    #[inline]
+    pub fn add_custom_comparison<S: Into<String>>(&mut self, comparison: S) {
+        self.custom_comparisons.insert(comparison.into());
     }
 
     fn max_attempt_history_index(&self) -> Option<i32> {

@@ -1,5 +1,7 @@
 use std::ops::{Add, Sub};
+use std::str::FromStr;
 use std::time::Duration as StdDuration;
+use std::num::ParseFloatError;
 use chrono::Duration;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
@@ -8,6 +10,10 @@ pub struct TimeSpan(Duration);
 impl TimeSpan {
     pub fn zero() -> Self {
         Default::default()
+    }
+
+    pub fn from_seconds(seconds: f64) -> Self {
+        TimeSpan(Duration::microseconds((seconds * 1_000_000.0) as i64))
     }
 
     pub fn option_op<F, R>(a: Option<TimeSpan>, b: Option<TimeSpan>, f: F) -> Option<R>
@@ -20,7 +26,47 @@ impl TimeSpan {
     }
 
     pub fn total_seconds(&self) -> f64 {
-        self.0.num_nanoseconds().unwrap() as f64 / 1_000_000_000.0
+        self.0.num_microseconds().unwrap() as f64 / 1_000_000.0
+    }
+
+    pub fn parse_opt(text: &str) -> Result<Option<TimeSpan>, ParseError> {
+        if text.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(text.parse()?))
+        }
+    }
+}
+
+#[derive(Debug)]
+pub struct ParseError(ParseFloatError);
+
+impl From<ParseFloatError> for ParseError {
+    fn from(e: ParseFloatError) -> Self {
+        ParseError(e)
+    }
+}
+
+impl FromStr for TimeSpan {
+    type Err = ParseError;
+
+    fn from_str(mut text: &str) -> Result<Self, ParseError> {
+        let factor = if text.starts_with('-') {
+            text = &text[1..];
+            -1.0
+        } else if text.starts_with('−') {
+            text = &text[3..];
+            -1.0
+        } else {
+            1.0
+        };
+
+        let mut seconds = 0.0;
+        for split in text.split(':') {
+            seconds = 60.0 * seconds + split.parse::<f64>()?;
+        }
+
+        Ok(TimeSpan::from_seconds(factor * seconds))
     }
 }
 

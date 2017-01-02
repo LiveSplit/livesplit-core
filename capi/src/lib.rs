@@ -3,11 +3,13 @@
 extern crate livesplit_core;
 extern crate libc;
 
-use livesplit_core::{Segment, Run, Timer};
+use livesplit_core::{Segment, Run, Timer, parser};
 use livesplit_core::component::{timer, title, splits, previous_segment};
 use libc::c_char;
 use std::ffi::CStr;
 use std::cell::RefCell;
+use std::io::Cursor;
+use std::ptr;
 // use std::fmt::Write;
 
 thread_local!{
@@ -77,6 +79,15 @@ pub unsafe extern "C" fn SegmentList_push(this: *mut Vec<Segment>, segment_drop:
 #[no_mangle]
 pub unsafe extern "C" fn Run_new(segments_drop: *mut Vec<Segment>) -> *mut Run {
     alloc(Run::new(own(segments_drop)))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Run_from_lss(lss: *const c_char) -> *mut Run {
+    if let Ok(run) = parser::lss::parse(Cursor::new(str(lss)), None) {
+        alloc(run)
+    } else {
+        ptr::null_mut()
+    }
 }
 
 #[no_mangle]

@@ -2,10 +2,13 @@
 
 #[macro_use]
 extern crate serde_derive;
-
 extern crate chrono;
 extern crate odds;
 extern crate serde_json;
+extern crate sxd_document;
+extern crate sxd_xpath;
+#[macro_use]
+extern crate quick_error;
 
 mod atomic_date_time;
 mod attempt;
@@ -13,7 +16,6 @@ mod run_metadata;
 mod run;
 mod segment_history;
 mod segment;
-mod time_span;
 mod time_stamp;
 mod time;
 mod timer_phase;
@@ -21,8 +23,10 @@ mod timer;
 mod timing_method;
 pub mod component;
 pub mod comparison;
+pub mod parser;
 pub mod state_helper; // TODO Should maybe not be pub
 pub mod time_formatter;
+pub mod time_span;
 
 pub use chrono::{DateTime, UTC};
 pub use self::atomic_date_time::AtomicDateTime;
