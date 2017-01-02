@@ -83,10 +83,12 @@ pub unsafe extern "C" fn Run_new(segments_drop: *mut Vec<Segment>) -> *mut Run {
 
 #[no_mangle]
 pub unsafe extern "C" fn Run_from_lss(lss: *const c_char) -> *mut Run {
-    if let Ok(run) = parser::lss::parse(Cursor::new(str(lss)), None) {
-        alloc(run)
-    } else {
-        ptr::null_mut()
+    match parser::lss::parse(Cursor::new(str(lss)), None) {
+        Ok(run) => alloc(run),
+        Err(e) => {
+            println!("{:?}", e);
+            ptr::null_mut()
+        }
     }
 }
 

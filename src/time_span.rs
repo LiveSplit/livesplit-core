@@ -30,7 +30,7 @@ impl TimeSpan {
     }
 
     pub fn parse_opt(text: &str) -> Result<Option<TimeSpan>, ParseError> {
-        if text.is_empty() {
+        if text.trim().is_empty() {
             Ok(None)
         } else {
             Ok(Some(text.parse()?))
