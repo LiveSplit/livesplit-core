@@ -199,29 +199,28 @@ impl Timer {
     }
 
     fn update_best_segments(&mut self) {
-        let mut current_segment_rta;
-        let mut previous_split_time_rta = None;
-        let mut current_segment_game_time;
-        let mut previous_split_time_game_time = None;
+        let mut previous_split_time_rta = Some(TimeSpan::zero());
+        let mut previous_split_time_game_time = Some(TimeSpan::zero());
+
         for split in self.run.segments_mut() {
             let mut new_best_segment = split.best_segment_time();
             if let Some(split_time) = split.split_time().real_time {
-                current_segment_rta = previous_split_time_rta.map(|previous| split_time - previous);
+                let current_segment = previous_split_time_rta.map(|previous| split_time - previous);
                 previous_split_time_rta = Some(split_time);
                 if split.best_segment_time()
                     .real_time
-                    .map_or(true, |b| current_segment_rta.map_or(false, |c| c < b)) {
-                    new_best_segment.real_time = current_segment_rta;
+                    .map_or(true, |b| current_segment.map_or(false, |c| c < b)) {
+                    new_best_segment.real_time = current_segment;
                 }
             }
             if let Some(split_time) = split.split_time().game_time {
-                current_segment_game_time =
+                let current_segment =
                     previous_split_time_game_time.map(|previous| split_time - previous);
                 previous_split_time_game_time = Some(split_time);
                 if split.best_segment_time()
                     .game_time
-                    .map_or(true, |b| current_segment_game_time.map_or(false, |c| c < b)) {
-                    new_best_segment.game_time = current_segment_game_time;
+                    .map_or(true, |b| current_segment.map_or(false, |c| c < b)) {
+                    new_best_segment.game_time = current_segment;
                 }
             }
             split.set_best_segment_time(new_best_segment);
