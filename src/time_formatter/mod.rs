@@ -1,4 +1,5 @@
 mod accuracy;
+mod complete;
 mod delta;
 mod regular;
 mod short;
@@ -6,6 +7,7 @@ pub mod none_wrapper;
 pub mod timer;
 
 pub use self::short::Short;
+pub use self::complete::Complete;
 pub use self::delta::Delta;
 pub use self::regular::Regular;
 pub use self::accuracy::Accuracy;

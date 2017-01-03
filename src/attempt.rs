@@ -36,4 +36,19 @@ impl Attempt {
     pub fn index(&self) -> i32 {
         self.index
     }
+
+    #[inline]
+    pub fn time(&self) -> Time {
+        self.time
+    }
+
+    #[inline]
+    pub fn started(&self) -> Option<AtomicDateTime> {
+        self.started
+    }
+
+    #[inline]
+    pub fn ended(&self) -> Option<AtomicDateTime> {
+        self.ended
+    }
 }

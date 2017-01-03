@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::collections::hash_map;
 
 #[derive(Default, Clone, Debug)]
 pub struct RunMetadata {
@@ -16,11 +17,21 @@ impl RunMetadata {
     }
 
     #[inline]
+    pub fn run_id(&self) -> &str {
+        &self.run_id
+    }
+
+    #[inline]
     pub fn set_run_id<S>(&mut self, id: S)
         where S: AsRef<str>
     {
         self.run_id.clear();
         self.run_id.push_str(id.as_ref());
+    }
+
+    #[inline]
+    pub fn platform_name(&self) -> &str {
+        &self.platform_name
     }
 
     #[inline]
@@ -32,8 +43,18 @@ impl RunMetadata {
     }
 
     #[inline]
+    pub fn uses_emulator(&self) -> bool {
+        self.uses_emulator
+    }
+
+    #[inline]
     pub fn set_emulator_usage(&mut self, uses_emulator: bool) {
         self.uses_emulator = uses_emulator;
+    }
+
+    #[inline]
+    pub fn region_name(&self) -> &str {
+        &self.region_name
     }
 
     #[inline]
@@ -49,5 +70,9 @@ impl RunMetadata {
               V: Into<String>
     {
         self.variables.insert(name.into(), value.into());
+    }
+
+    pub fn variables(&self) -> hash_map::Iter<String, String> {
+        self.variables.iter()
     }
 }

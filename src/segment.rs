@@ -25,6 +25,11 @@ impl Segment {
     }
 
     #[inline]
+    pub fn icon(&self) -> &str {
+        &self.icon
+    }
+
+    #[inline]
     pub fn set_icon<S: AsRef<str>>(&mut self, icon: S) {
         self.icon.clear();
         self.icon.push_str(icon.as_ref());
@@ -36,8 +41,8 @@ impl Segment {
     }
 
     #[inline]
-    pub fn comparison(&self, comparison: &str) -> Option<&Time> {
-        self.comparisons.get(comparison)
+    pub fn comparison(&self, comparison: &str) -> Option<Time> {
+        self.comparisons.get(comparison).cloned()
     }
 
     #[inline]

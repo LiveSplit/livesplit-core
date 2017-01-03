@@ -24,6 +24,7 @@ mod timing_method;
 pub mod component;
 pub mod comparison;
 pub mod parser;
+pub mod saver;
 pub mod state_helper; // TODO Should maybe not be pub
 pub mod time_formatter;
 pub mod time_span;

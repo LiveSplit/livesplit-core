@@ -1,6 +1,5 @@
 use std::path::PathBuf;
 use std::cmp::max;
-use std::collections::HashSet;
 use {AtomicDateTime, TimeSpan, Time, TimingMethod, Attempt, RunMetadata, Segment};
 use odds::vec::VecFindRemove;
 
@@ -18,7 +17,7 @@ pub struct Run {
     has_changed: bool,
     path: Option<PathBuf>,
     segments: Vec<Segment>,
-    custom_comparisons: HashSet<String>,
+    custom_comparisons: Vec<String>,
 }
 
 impl Run {
@@ -35,10 +34,7 @@ impl Run {
             has_changed: false,
             path: None,
             segments: segments,
-            custom_comparisons: [PERSONAL_BEST_COMPARISON_NAME.to_string()]
-                .iter()
-                .cloned()
-                .collect(),
+            custom_comparisons: vec![PERSONAL_BEST_COMPARISON_NAME.to_string()],
         }
     }
 
@@ -53,6 +49,11 @@ impl Run {
     {
         self.game_name.clear();
         self.game_name.push_str(name.as_ref());
+    }
+
+    #[inline]
+    pub fn game_icon(&self) -> &str {
+        &self.game_icon
     }
 
     #[inline]
@@ -97,6 +98,11 @@ impl Run {
     }
 
     #[inline]
+    pub fn metadata(&self) -> &RunMetadata {
+        &self.metadata
+    }
+
+    #[inline]
     pub fn metadata_mut(&mut self) -> &mut RunMetadata {
         &mut self.metadata
     }
@@ -134,6 +140,11 @@ impl Run {
     #[inline]
     pub fn attempt_history(&self) -> &[Attempt] {
         &self.attempt_history
+    }
+
+    #[inline]
+    pub fn custom_comparisons(&self) -> &[String] {
+        &self.custom_comparisons
     }
 
     #[inline]
@@ -176,7 +187,7 @@ impl Run {
 
     #[inline]
     pub fn add_custom_comparison<S: Into<String>>(&mut self, comparison: S) {
-        self.custom_comparisons.insert(comparison.into());
+        self.custom_comparisons.push(comparison.into());
     }
 
     fn max_attempt_history_index(&self) -> Option<i32> {

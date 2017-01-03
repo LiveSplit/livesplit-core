@@ -3,7 +3,7 @@
 extern crate livesplit_core;
 extern crate libc;
 
-use livesplit_core::{Segment, Run, Timer, parser};
+use livesplit_core::{Segment, Run, Timer, parser, saver};
 use livesplit_core::component::{timer, title, splits, previous_segment};
 use libc::c_char;
 use std::ffi::CStr;
@@ -145,6 +145,13 @@ pub unsafe extern "C" fn Timer_pause(this: *mut Timer) {
 #[no_mangle]
 pub unsafe extern "C" fn Timer_print_debug(this: *mut Timer) {
     println!("{:#?}", acc_mut(this));
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Timer_save_run_as_lss(this: *const Timer) -> *const u8 {
+    output_vec(|o| {
+        saver::lss::save(acc(this).run(), o).unwrap();
+    })
 }
 
 #[no_mangle]
