@@ -109,12 +109,21 @@ fn attribute<'a, E: Borrow<Element<'a>>>(element: E, attribute: &str) -> Result<
 }
 
 fn text<'a, E: Borrow<Element<'a>>>(element: E) -> String {
-    element.borrow()
+    let text = element.borrow()
         .children()
         .into_iter()
         .filter_map(|c| c.text())
         .map(|t| t.text())
-        .collect()
+        .collect::<String>();
+
+    {
+        let trimmed = text.trim();
+        if trimmed.len() != text.len() {
+            return trimmed.to_string();
+        }
+    }
+
+    text
 }
 
 fn time_span<'a, E: Borrow<Element<'a>>>(element: E) -> Result<TimeSpan> {
