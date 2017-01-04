@@ -9,6 +9,10 @@ extern crate sxd_document;
 extern crate sxd_xpath;
 #[macro_use]
 extern crate quick_error;
+extern crate base64;
+#[macro_use]
+extern crate try_opt;
+extern crate byteorder;
 
 mod atomic_date_time;
 mod attempt;

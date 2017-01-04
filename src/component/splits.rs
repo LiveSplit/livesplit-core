@@ -9,6 +9,7 @@ pub struct Component;
 
 #[derive(Serialize, Deserialize)]
 pub struct SplitState {
+    pub icon: String,
     pub name: String,
     pub delta: String,
     pub time: String,
@@ -52,6 +53,7 @@ impl Component {
                     };
 
                     SplitState {
+                        icon: s.icon().to_string(),
                         name: s.name().to_string(),
                         delta: EmptyWrapper::new(Delta::with_decimal_dropping())
                             .format(delta)

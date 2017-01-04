@@ -7,6 +7,7 @@ pub struct Component;
 
 #[derive(Serialize, Deserialize)]
 pub struct State {
+    pub icon: String,
     pub game: String,
     pub category: String,
     pub attempts: u32,
@@ -28,6 +29,7 @@ impl Component {
     pub fn state(&self, timer: &Timer) -> State {
         let run = timer.run();
         State {
+            icon: run.game_icon().to_string(),
             game: run.game_name().to_string(),
             category: run.category_name().to_string(),
             attempts: run.attempt_count(),

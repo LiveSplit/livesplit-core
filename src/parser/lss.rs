@@ -3,6 +3,7 @@ use std::io::{self, Read};
 use std::result::Result as StdResult;
 use std::num::ParseIntError;
 use std::path::PathBuf;
+use base64;
 use sxd_document::dom::Element;
 use sxd_document::parser::{Error as XmlError, parse as parse_xml};
 use sxd_xpath::{EvaluationContext, Error as XPathError, Expression, Factory, Functions,
@@ -161,6 +162,19 @@ fn parse_bool<S: AsRef<str>>(text: S) -> Result<bool> {
     }
 }
 
+fn image<'a, E: Borrow<Element<'a>>>(element: E) -> String {
+    if let Ok(data) = base64::decode(&text(element)) {
+        if data.len() > 0xA2 {
+            let image = base64::encode(&data[0xA1..data.len() - 1]);
+            format!("data:;base64,{}", image)
+        } else {
+            String::new()
+        }
+    } else {
+        String::new()
+    }
+}
+
 fn parse_version<S: AsRef<str>>(version: S) -> Result<Version> {
     let splits = version.as_ref().split('.');
     let mut v = [1, 0, 0, 0];
@@ -264,7 +278,7 @@ pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
         }
     }
 
-    run.set_game_icon(text(eval.element(node, "GameIcon")?));
+    run.set_game_icon(image(eval.element(node, "GameIcon")?));
     run.set_game_name(text(eval.element(node, "GameName")?));
     run.set_category_name(text(eval.element(node, "CategoryName")?));
     run.set_offset(time_span(eval.element(node, "Offset")?)?);
@@ -276,7 +290,7 @@ pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
 
     for node in segments.children().into_iter().filter_map(|c| c.element()) {
         let mut segment = Segment::new(text(eval.element(node, "Name")?));
-        segment.set_icon(text(eval.element(node, "Icon")?));
+        segment.set_icon(image(eval.element(node, "Icon")?));
 
         if version >= Version(1, 3, 0, 0) {
             let node = eval.element(node, "SplitTimes")?;

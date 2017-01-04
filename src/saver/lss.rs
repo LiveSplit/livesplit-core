@@ -1,19 +1,12 @@
 use std::io::{Write, Result};
-use std::fmt::{self, Display, Formatter};
 use chrono::{DateTime, UTC};
 use sxd_document::Package;
 use sxd_document::dom::{Document, Element};
 use sxd_document::writer::format_document;
-use {Run, Time};
+use {Run, Time, base64};
+use byteorder::{WriteBytesExt, LittleEndian};
 
-struct CData<D: Display>(D);
-
-impl<D: Display> Display for CData<D> {
-    fn fmt(&self, fmt: &mut Formatter) -> fmt::Result {
-        write!(fmt, "") // TODO Fix CData
-        // write!(fmt, "<![CDATA[{}]]>", self.0)
-    }
-}
+static LSS_IMAGE_HEADER: &'static [u8] = include_bytes!("lss_image_header.bin");
 
 fn fmt_bool(value: bool) -> &'static str {
     if value { "True" } else { "False" }
@@ -21,6 +14,23 @@ fn fmt_bool(value: bool) -> &'static str {
 
 fn fmt_date(date: DateTime<UTC>) -> String {
     date.format("%m/%d/%Y %T").to_string()
+}
+
+fn fmt_image(image: &str) -> String {
+    if image.starts_with("data:;base64,") {
+        let data = &image["data:;base64,".len()..];
+        if let Ok(mut data) = base64::decode(data) {
+            let len = data.len();
+            let mut buf = Vec::<u8>::with_capacity(0xA2 + len);
+            buf.extend_from_slice(LSS_IMAGE_HEADER);
+            buf.write_u32::<LittleEndian>(len as u32).unwrap();
+            buf.push(0x2);
+            buf.append(&mut data);
+            buf.push(0xB);
+            return base64::encode(&buf);
+        }
+    }
+    String::new()
 }
 
 fn time<'a>(document: &Document<'a>, element_name: &str, time: Time) -> Element<'a> {
@@ -39,8 +49,10 @@ fn time<'a>(document: &Document<'a>, element_name: &str, time: Time) -> Element<
 
 fn to_element<'a>(document: &Document<'a>, element_name: &str, value: &str) -> Element<'a> {
     let element = document.create_element(element_name);
-    let value = document.create_text(value);
-    element.append_child(value);
+    if !value.is_empty() {
+        let value = document.create_text(value);
+        element.append_child(value);
+    }
     element
 }
 
@@ -56,10 +68,7 @@ pub fn save<W: Write>(run: &Run, mut writer: W) -> Result<()> {
     parent.set_attribute_value("version", "1.6.0");
     doc.root().append_child(parent);
 
-    add_element(doc,
-                &parent,
-                "GameIcon",
-                &CData(run.game_icon()).to_string());
+    add_element(doc, &parent, "GameIcon", &fmt_image(run.game_icon()));
     add_element(doc, &parent, "GameName", run.game_name());
     add_element(doc, &parent, "CategoryName", run.category_name());
 
@@ -115,10 +124,7 @@ pub fn save<W: Write>(run: &Run, mut writer: W) -> Result<()> {
         let segment_element = doc.create_element("Segment");
 
         add_element(doc, &segment_element, "Name", segment.name());
-        add_element(doc,
-                    &segment_element,
-                    "Icon",
-                    &CData(segment.icon()).to_string());
+        add_element(doc, &segment_element, "Icon", &fmt_image(segment.icon()));
 
         let split_times = doc.create_element("SplitTimes");
         for comparison in run.custom_comparisons() {
@@ -149,28 +155,4 @@ pub fn save<W: Write>(run: &Run, mut writer: W) -> Result<()> {
     parent.append_child(auto_splitter_settings);
 
     format_document(doc, &mut writer)
-}
-
-#[cfg(test)]
-mod test {
-    use {Run, Segment, Timer};
-    use super::*;
-
-    #[test]
-    fn test() {
-        let segments = vec![Segment::new("Hi"), Segment::new("okok")];
-        let mut run = Run::new(segments);
-        run.set_game_name("Wind Waker");
-        let mut timer = Timer::new(run);
-        timer.start();
-        timer.split();
-        timer.split();
-        timer.reset(true);
-
-        let mut buf = Vec::new();
-        save(timer.run(), &mut buf).unwrap();
-        let xml = ::std::str::from_utf8(&buf).unwrap();
-        println!("{}", xml);
-        panic!();
-    }
 }
