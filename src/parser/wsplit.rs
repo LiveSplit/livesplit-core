@@ -26,7 +26,6 @@ quick_error! {
 pub type Result<T> = StdResult<T, Error>;
 
 pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
-
     let mut run = Run::new(Vec::new());
     // let mut icons_list = Vec::new();
     let mut old_run_exists = false;
@@ -42,7 +41,7 @@ pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
             } else if line.starts_with("Offset=") {
                 let offset = &line["Offset=".len()..];
                 if !offset.is_empty() {
-                    run.set_offset(TimeSpan::from_seconds(offset.parse::<f64>()? * -1000.0));
+                    run.set_offset(TimeSpan::from_seconds(offset.parse::<f64>()? / -1000.0));
                 }
             } else if line.starts_with("Size=") {
                 // Ignore

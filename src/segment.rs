@@ -1,11 +1,11 @@
 use std::collections::HashMap;
-use {SegmentHistory, Time, TimingMethod, TimeSpan};
+use {SegmentHistory, Image, Time, TimingMethod, TimeSpan};
 use run::PERSONAL_BEST_COMPARISON_NAME;
 
 #[derive(Clone, Default, Debug)]
 pub struct Segment {
     name: String,
-    icon: String,
+    icon: Image,
     best_segment_time: Time,
     split_time: Time,
     segment_history: SegmentHistory,
@@ -25,14 +25,13 @@ impl Segment {
     }
 
     #[inline]
-    pub fn icon(&self) -> &str {
+    pub fn icon(&self) -> &Image {
         &self.icon
     }
 
     #[inline]
-    pub fn set_icon<S: AsRef<str>>(&mut self, icon: S) {
-        self.icon.clear();
-        self.icon.push_str(icon.as_ref());
+    pub fn modify_icon<D: AsRef<[u8]>>(&mut self, data: D) {
+        self.icon.modify(data.as_ref());
     }
 
     #[inline]

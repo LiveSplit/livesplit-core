@@ -190,11 +190,11 @@ pub unsafe extern "C" fn TitleComponent_drop(this_drop: *mut title::Component) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn TitleComponent_state(this: *const title::Component,
+pub unsafe extern "C" fn TitleComponent_state(this: *mut title::Component,
                                               timer: *const Timer)
                                               -> *const u8 {
     output_vec(|o| {
-        acc(this).state(acc(timer)).write_json(o).unwrap();
+        acc_mut(this).state(acc(timer)).write_json(o).unwrap();
     })
 }
 
@@ -209,11 +209,11 @@ pub unsafe extern "C" fn SplitsComponent_drop(this_drop: *mut splits::Component)
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn SplitsComponent_state(this: *const splits::Component,
+pub unsafe extern "C" fn SplitsComponent_state(this: *mut splits::Component,
                                                timer: *const Timer)
                                                -> *const u8 {
     output_vec(|o| {
-        acc(this).state(acc(timer)).write_json(o).unwrap();
+        acc_mut(this).state(acc(timer)).write_json(o).unwrap();
     })
 }
 

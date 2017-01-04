@@ -3,7 +3,7 @@ use chrono::{DateTime, UTC};
 use sxd_document::Package;
 use sxd_document::dom::{Document, Element};
 use sxd_document::writer::format_document;
-use {Run, Time, base64};
+use {Run, Time, Image, base64};
 use byteorder::{WriteBytesExt, LittleEndian};
 
 static LSS_IMAGE_HEADER: &'static [u8] = include_bytes!("lss_image_header.bin");
@@ -16,9 +16,10 @@ fn fmt_date(date: DateTime<UTC>) -> String {
     date.format("%m/%d/%Y %T").to_string()
 }
 
-fn fmt_image(image: &str) -> String {
-    if image.starts_with("data:;base64,") {
-        let data = &image["data:;base64,".len()..];
+fn fmt_image(image: &Image) -> String {
+    let url = image.url();
+    if url.starts_with("data:;base64,") {
+        let data = &url["data:;base64,".len()..];
         if let Ok(mut data) = base64::decode(data) {
             let len = data.len();
             let mut buf = Vec::<u8>::with_capacity(0xA2 + len);

@@ -1,13 +1,13 @@
 use std::path::PathBuf;
 use std::cmp::max;
-use {AtomicDateTime, TimeSpan, Time, TimingMethod, Attempt, RunMetadata, Segment};
+use {AtomicDateTime, TimeSpan, Time, TimingMethod, Attempt, RunMetadata, Segment, Image};
 use odds::vec::VecFindRemove;
 
 pub const PERSONAL_BEST_COMPARISON_NAME: &'static str = "Personal Best";
 
 #[derive(Clone, Debug)]
 pub struct Run {
-    game_icon: String,
+    game_icon: Image,
     game_name: String,
     category_name: String,
     offset: TimeSpan,
@@ -24,7 +24,7 @@ impl Run {
     #[inline]
     pub fn new(segments: Vec<Segment>) -> Self {
         Run {
-            game_icon: String::new(),
+            game_icon: Image::default(),
             game_name: String::new(),
             category_name: String::new(),
             offset: TimeSpan::zero(),
@@ -52,16 +52,13 @@ impl Run {
     }
 
     #[inline]
-    pub fn game_icon(&self) -> &str {
+    pub fn game_icon(&self) -> &Image {
         &self.game_icon
     }
 
     #[inline]
-    pub fn set_game_icon<S>(&mut self, icon: S)
-        where S: AsRef<str>
-    {
-        self.game_icon.clear();
-        self.game_icon.push_str(icon.as_ref());
+    pub fn modify_game_icon<D: AsRef<[u8]>>(&mut self, data: D) {
+        self.game_icon.modify(data.as_ref());
     }
 
     #[inline]
@@ -187,7 +184,10 @@ impl Run {
 
     #[inline]
     pub fn add_custom_comparison<S: Into<String>>(&mut self, comparison: S) {
-        self.custom_comparisons.push(comparison.into());
+        let comparison = comparison.into();
+        if !self.custom_comparisons.contains(&comparison) {
+            self.custom_comparisons.push(comparison);
+        }
     }
 
     fn max_attempt_history_index(&self) -> Option<i32> {

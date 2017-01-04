@@ -5,11 +5,13 @@ use serde_json::{to_writer, Result};
 use std::io::Write;
 
 #[derive(Default)]
-pub struct Component;
+pub struct Component {
+    icon_ids: Vec<usize>,
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct SplitState {
-    pub icon: String,
+    pub icon_change: Option<String>,
     pub name: String,
     pub delta: String,
     pub time: String,
@@ -34,17 +36,20 @@ impl Component {
         Default::default()
     }
 
-    pub fn state(&self, timer: &Timer) -> State {
+    pub fn state(&mut self, timer: &Timer) -> State {
+        self.icon_ids.resize(timer.run().len(), 0);
+
         let current_split = timer.current_split_index();
 
         State {
             splits: timer.run()
                 .segments()
                 .iter()
+                .zip(self.icon_ids.iter_mut())
                 .enumerate()
-                .map(|(i, s)| {
-                    let split = s.split_time().real_time;
-                    let pb = s.personal_best_split_time().real_time;
+                .map(|(i, (segment, icon_id))| {
+                    let split = segment.split_time().real_time;
+                    let pb = segment.personal_best_split_time().real_time;
 
                     let (time, delta) = if current_split > i as isize {
                         (split, TimeSpan::option_op(split, pb, |split, pb| split - pb))
@@ -53,8 +58,8 @@ impl Component {
                     };
 
                     SplitState {
-                        icon: s.icon().to_string(),
-                        name: s.name().to_string(),
+                        icon_change: segment.icon().check_for_change(icon_id).map(str::to_owned),
+                        name: segment.name().to_string(),
                         delta: EmptyWrapper::new(Delta::with_decimal_dropping())
                             .format(delta)
                             .to_string(),
