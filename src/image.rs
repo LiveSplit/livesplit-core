@@ -21,6 +21,12 @@ impl Default for Image {
     }
 }
 
+impl<D: AsRef<[u8]>> From<D> for Image {
+    fn from(d: D) -> Self {
+        Image::new(d.as_ref())
+    }
+}
+
 impl Image {
     pub fn new(data: &[u8]) -> Self {
         let mut image = Image {

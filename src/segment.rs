@@ -30,8 +30,8 @@ impl Segment {
     }
 
     #[inline]
-    pub fn modify_icon<D: AsRef<[u8]>>(&mut self, data: D) {
-        self.icon.modify(data.as_ref());
+    pub fn set_icon<D: Into<Image>>(&mut self, image: D) {
+        self.icon = image.into();
     }
 
     #[inline]

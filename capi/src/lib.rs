@@ -87,7 +87,7 @@ pub unsafe extern "C" fn Run_from_file(lss: *const c_char) -> *mut Run {
         Ok(run) => alloc(run),
         Err(e) => {
             println!("{:?}", e);
-            match parser::wsplit::parse(Cursor::new(str(lss)), None) {
+            match parser::wsplit::parse(Cursor::new(str(lss)), None, false) {
                 Ok(run) => alloc(run),
                 Err(e) => {
                     println!("{:?}", e);

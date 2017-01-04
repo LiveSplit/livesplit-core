@@ -57,8 +57,8 @@ impl Run {
     }
 
     #[inline]
-    pub fn modify_game_icon<D: AsRef<[u8]>>(&mut self, data: D) {
-        self.game_icon.modify(data.as_ref());
+    pub fn set_game_icon<D: Into<Image>>(&mut self, image: D) {
+        self.game_icon = image.into();
     }
 
     #[inline]

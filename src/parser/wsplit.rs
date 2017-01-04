@@ -1,8 +1,9 @@
 use std::path::PathBuf;
-use std::io::{self, BufRead};
+use std::io::{self, Read, BufRead, BufReader};
+use std::fs::File;
 use std::result::Result as StdResult;
 use std::num::{ParseFloatError, ParseIntError};
-use {Run, TimeSpan, Time, Segment};
+use {Run, Image, TimeSpan, Time, Segment};
 
 quick_error! {
     #[derive(Debug)]
@@ -25,9 +26,10 @@ quick_error! {
 
 pub type Result<T> = StdResult<T, Error>;
 
-pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
+pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>, load_icons: bool) -> Result<Run> {
     let mut run = Run::new(Vec::new());
-    // let mut icons_list = Vec::new();
+    let mut icon_buf = Vec::new();
+    let mut icons_list = Vec::new();
     let mut old_run_exists = false;
 
     for line in source.lines() {
@@ -46,7 +48,23 @@ pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
             } else if line.starts_with("Size=") {
                 // Ignore
             } else if line.starts_with("Icons=") {
-                // TODO Implement Icons
+                if load_icons {
+                    let icons = &line["Icons=".len()..];
+                    icons_list.clear();
+                    for path in icons.split(',') {
+                        if path.len() >= 2 {
+                            let path = &path[1..path.len() - 1];
+                            if let Ok(file) = File::open(path) {
+                                icon_buf.clear();
+                                if BufReader::new(file).read_to_end(&mut icon_buf).is_ok() {
+                                    icons_list.push(Image::new(&icon_buf));
+                                    continue;
+                                }
+                            }
+                        }
+                        icons_list.push(Image::default());
+                    }
+                }
             } else {
                 // must be a split Kappa
                 let mut split_info = line.split(',');
@@ -88,7 +106,9 @@ pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
         run.add_custom_comparison("Old Run");
     }
 
-    // TODO Insert Icons
+    for (icon, segment) in icons_list.into_iter().zip(run.segments_mut().iter_mut()) {
+        segment.set_icon(icon);
+    }
 
     run.set_path(path);
     Ok(run)
