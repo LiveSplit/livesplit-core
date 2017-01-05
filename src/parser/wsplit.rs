@@ -43,7 +43,7 @@ pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>, load_icons: bool) -> 
             } else if line.starts_with("Offset=") {
                 let offset = &line["Offset=".len()..];
                 if !offset.is_empty() {
-                    run.set_offset(TimeSpan::from_seconds(offset.parse::<f64>()? / -1000.0));
+                    run.set_offset(TimeSpan::from_milliseconds(-offset.parse::<f64>()?));
                 }
             } else if line.starts_with("Size=") {
                 // Ignore
