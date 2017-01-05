@@ -168,9 +168,10 @@ fn image<'a, 'b, E: Borrow<Element<'a>>>(element: E,
                                          str_buf: &mut String)
                                          -> &'b [u8] {
     buf.clear();
-    if let Ok(data) = base64::decode(text(element, str_buf)) {
-        if data.len() > 0xA2 {
-            buf.extend_from_slice(&data[0xA1..data.len() - 1]);
+    let text = text(element, str_buf);
+    if text.len() >= 216 {
+        if let Ok(data) = base64::decode(&text[212..]) {
+            buf.extend_from_slice(&data[2..data.len() - 1]);
         }
     }
     buf

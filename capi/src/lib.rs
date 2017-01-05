@@ -91,7 +91,13 @@ pub unsafe extern "C" fn Run_from_file(lss: *const c_char) -> *mut Run {
                 Ok(run) => alloc(run),
                 Err(e) => {
                     println!("{:?}", e);
-                    ptr::null_mut()
+                    match parser::urn::parse(Cursor::new(str(lss)), None) {
+                        Ok(run) => alloc(run),
+                        Err(e) => {
+                            println!("{:?}", e);
+                            ptr::null_mut()
+                        }
+                    }
                 }
             }
         }
