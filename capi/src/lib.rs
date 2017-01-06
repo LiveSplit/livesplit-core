@@ -4,7 +4,8 @@ extern crate livesplit_core;
 extern crate libc;
 
 use livesplit_core::{Segment, Run, Timer, parser, saver};
-use livesplit_core::component::{timer, title, splits, previous_segment, sum_of_best};
+use livesplit_core::component::{timer, title, splits, previous_segment, sum_of_best,
+                                possible_time_save};
 use libc::c_char;
 use std::ffi::CStr;
 use std::cell::RefCell;
@@ -241,6 +242,25 @@ pub unsafe extern "C" fn SumOfBestComponent_drop(this_drop: *mut sum_of_best::Co
 pub unsafe extern "C" fn SumOfBestComponent_state(this: *const sum_of_best::Component,
                                                   timer: *const Timer)
                                                   -> *const u8 {
+    output_vec(|o| {
+        acc(this).state(acc(timer)).write_json(o).unwrap();
+    })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn PossibleTimeSaveComponent_new() -> *mut possible_time_save::Component {
+    alloc(possible_time_save::Component::new())
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn PossibleTimeSaveComponent_drop(this_drop: *mut possible_time_save::Component) {
+    own(this_drop);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn PossibleTimeSaveComponent_state(this: *const possible_time_save::Component,
+                                                         timer: *const Timer)
+                                                         -> *const u8 {
     output_vec(|o| {
         acc(this).state(acc(timer)).write_json(o).unwrap();
     })
