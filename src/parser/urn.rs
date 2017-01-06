@@ -1,5 +1,4 @@
 use std::io::Read;
-use std::path::PathBuf;
 use std::result::Result as StdResult;
 use serde_json::de::from_reader;
 use serde_json::Error as JsonError;
@@ -49,7 +48,7 @@ fn parse_time(time: &str) -> Result<Time> {
     Ok(Time::new().with_real_time(real_time))
 }
 
-pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
+pub fn parse<R: Read>(source: R) -> Result<Run> {
     let mut run = Run::new(Vec::new());
 
     let splits: Splits = from_reader(source)?;
@@ -87,6 +86,5 @@ pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
         run.push_segment(segment);
     }
 
-    run.set_path(path);
     Ok(run)
 }

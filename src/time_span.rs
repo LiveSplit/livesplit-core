@@ -19,7 +19,7 @@ impl TimeSpan {
     }
 
     pub fn from_seconds(seconds: f64) -> Self {
-        TimeSpan(Duration::seconds((seconds * 1_000_000.0) as i64))
+        TimeSpan(Duration::microseconds((seconds * 1_000_000.0) as i64))
     }
 
     pub fn option_op<F, R>(a: Option<TimeSpan>, b: Option<TimeSpan>, f: F) -> Option<R>

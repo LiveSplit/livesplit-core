@@ -1,4 +1,3 @@
-use std::path::PathBuf;
 use std::io::{self, Read, BufRead, BufReader};
 use std::fs::File;
 use std::result::Result as StdResult;
@@ -26,7 +25,7 @@ quick_error! {
 
 pub type Result<T> = StdResult<T, Error>;
 
-pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>, load_icons: bool) -> Result<Run> {
+pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
     let mut run = Run::new(Vec::new());
     let mut icon_buf = Vec::new();
     let mut icons_list = Vec::new();
@@ -110,6 +109,5 @@ pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>, load_icons: bool) -> 
         segment.set_icon(icon);
     }
 
-    run.set_path(path);
     Ok(run)
 }
