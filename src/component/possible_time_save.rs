@@ -50,7 +50,7 @@ pub fn get_possible_time_save(timer: &Timer,
                               live: bool)
                               -> Option<TimeSpan> {
     let segments = timer.run().segments();
-    let mut split_index = split_index(&timer, &segment);
+    let mut split_index = split_index(timer, segment);
     let mut prev_time = TimeSpan::zero();
     let mut best_segments = segment.best_segment_time().real_time;
     let pb_split_time = segment.personal_best_split_time().real_time;
@@ -82,7 +82,7 @@ pub fn get_possible_time_save(timer: &Timer,
     }
 
     if live && split_index == timer.current_split_index() as usize {
-        let live_delta = state_helper::live_segment_delta(&timer,
+        let live_delta = state_helper::live_segment_delta(timer,
                                                           split_index,
                                                           comparison,
                                                           TimingMethod::RealTime);
@@ -105,6 +105,5 @@ pub fn get_possible_time_save(timer: &Timer,
 
 fn split_index(timer: &Timer, segment: &Segment) -> usize {
     let segments = timer.run().segments();
-    let index = segments.iter().position(|s| s.name() == segment.name()).unwrap();
-    index
+    segments.iter().position(|s| s.name() == segment.name()).unwrap()
 }

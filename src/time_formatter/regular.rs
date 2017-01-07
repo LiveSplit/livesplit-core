@@ -61,11 +61,7 @@ impl Display for Inner {
                 Accuracy::Seconds => Ok(()),
             }
         } else {
-            match self.accuracy {
-                Accuracy::Hundredths => write!(f, "0:00.00"),
-                Accuracy::Tenths => write!(f, "0:00.0"),
-                Accuracy::Seconds => write!(f, "0:00"),
-            }
+            write!(f, "—")
         }
     }
 }

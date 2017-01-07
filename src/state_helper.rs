@@ -147,7 +147,7 @@ pub fn check_live_delta(timer: &Timer,
                         method: TimingMethod)
                         -> Option<TimeSpan> {
     if timer.current_phase() == TimerPhase::Running || timer.current_phase() == TimerPhase::Paused {
-        let use_best_segment = true; // TODO Make this a setting
+        let use_best_segment = true; // TODO Make this a parameter
         let current_split =
             timer.current_split().unwrap().comparison_timing_method(comparison, method);
         let current_time = timer.current_time()[method];
@@ -167,6 +167,58 @@ pub fn check_live_delta(timer: &Timer,
         }
     }
     None
+}
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+pub enum SplitColor {
+    Default,
+    AheadGainingTime,
+    AheadLosingTime,
+    BehindLosingTime,
+    BehindGainingTime,
+    BestSegment,
+}
+
+/// Chooses a split color from the Layout Settings based on the current run.
+///
+/// `timer`: The current timer.
+/// `time_difference`: The delta that you want to find a color for.
+/// `split_number`: The split number that is associated with this delta.
+/// `show_segment_deltas`: Can show ahead gaining and behind losing colors if true.
+/// `show_best_segments`: Can show the best segment color if true.
+/// `comparison`: The comparison that you are comparing this delta to.
+/// `method`: The timing method of this delta.
+///
+/// Returns the chosen color.
+pub fn split_color(timer: &Timer,
+                   time_difference: Option<TimeSpan>,
+                   split_number: usize,
+                   show_segment_deltas: bool,
+                   show_best_segments: bool,
+                   comparison: &str,
+                   method: TimingMethod)
+                   -> SplitColor {
+    let use_best_segment = true; // TODO Make this a parameter
+
+    if show_best_segments && use_best_segment && check_best_segment(timer, split_number, method) {
+        SplitColor::BestSegment
+    } else if let Some(time_difference) = time_difference {
+        let last_delta = split_number.checked_sub(1)
+            .and_then(|n| last_delta(timer.run(), n, comparison, method));
+        if time_difference < TimeSpan::zero() {
+            if show_segment_deltas && last_delta.map_or(false, |d| time_difference > d) {
+                SplitColor::AheadLosingTime
+            } else {
+                SplitColor::AheadGainingTime
+            }
+        } else if show_segment_deltas && last_delta.map_or(false, |d| time_difference < d) {
+            SplitColor::BehindGainingTime
+        } else {
+            SplitColor::BehindLosingTime
+        }
+    } else {
+        SplitColor::Default
+    }
 }
 
 /// Calculates whether or not the Split Times for the indicated split qualify as a Best Segment.

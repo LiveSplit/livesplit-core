@@ -1,8 +1,9 @@
-use {Timer, TimeSpan};
-use time_formatter::{Delta, Regular, TimeFormatter};
-use time_formatter::none_wrapper::{DashWrapper, EmptyWrapper};
-use serde_json::{to_writer, Result};
 use std::io::Write;
+use serde_json::{to_writer, Result};
+use {Timer, TimeSpan};
+use state_helper::split_color;
+use time_formatter::{Delta, Regular, TimeFormatter};
+use time_formatter::none_wrapper::EmptyWrapper;
 
 #[derive(Default)]
 pub struct Component {
@@ -15,6 +16,7 @@ pub struct SplitState {
     pub name: String,
     pub delta: String,
     pub time: String,
+    pub color: String,
     pub is_current_split: bool,
 }
 
@@ -40,6 +42,7 @@ impl Component {
         self.icon_ids.resize(timer.run().len(), 0);
 
         let current_split = timer.current_split_index();
+        let method = timer.current_timing_method();
 
         State {
             splits: timer.run()
@@ -48,8 +51,8 @@ impl Component {
                 .zip(self.icon_ids.iter_mut())
                 .enumerate()
                 .map(|(i, (segment, icon_id))| {
-                    let split = segment.split_time().real_time;
-                    let pb = segment.personal_best_split_time().real_time;
+                    let split = segment.split_time()[method];
+                    let pb = segment.personal_best_split_time()[method];
 
                     let (time, delta) = if current_split > i as isize {
                         (split, TimeSpan::option_op(split, pb, |split, pb| split - pb))
@@ -63,7 +66,15 @@ impl Component {
                         delta: EmptyWrapper::new(Delta::with_decimal_dropping())
                             .format(delta)
                             .to_string(),
-                        time: DashWrapper::new(Regular::new()).format(time).to_string(),
+                        time: Regular::new().format(time).to_string(),
+                        color: format!("{:?}",
+                                       split_color(timer,
+                                                   delta,
+                                                   i,
+                                                   true,
+                                                   true,
+                                                   "Personal Best",
+                                                   method)),
                         is_current_split: i as isize == current_split,
                     }
                 })
