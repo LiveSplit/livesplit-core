@@ -43,7 +43,7 @@ pub use self::run::Run;
 pub use self::run_metadata::RunMetadata;
 pub use self::segment_history::SegmentHistory;
 pub use self::segment::Segment;
-pub use self::time::Time;
+pub use self::time::{Time, RealTime, GameTime};
 pub use self::time_span::TimeSpan;
 pub use self::time_stamp::TimeStamp;
 pub use self::timer::Timer;

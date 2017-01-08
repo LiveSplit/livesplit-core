@@ -50,6 +50,22 @@ impl Time {
     }
 }
 
+pub struct RealTime(pub Option<TimeSpan>);
+
+impl From<RealTime> for Time {
+    fn from(t: RealTime) -> Time {
+        Time::new().with_real_time(t.0)
+    }
+}
+
+pub struct GameTime(pub Option<TimeSpan>);
+
+impl From<GameTime> for Time {
+    fn from(t: GameTime) -> Time {
+        Time::new().with_game_time(t.0)
+    }
+}
+
 impl Add for Time {
     type Output = Time;
 

@@ -1,5 +1,4 @@
-use std::io::{self, Read, BufRead, BufReader};
-use std::fs::File;
+use std::io::{self, BufRead};
 use std::result::Result as StdResult;
 use std::num::{ParseFloatError, ParseIntError};
 use {Run, Image, TimeSpan, Time, Segment};
@@ -33,7 +32,6 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
 
     for line in source.lines() {
         let line = line?;
-        let line = line.trim();
         if !line.is_empty() {
             if line.starts_with("Title=") {
                 run.set_category_name(&line["Title=".len()..]);
@@ -53,12 +51,9 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
                     for path in icons.split(',') {
                         if path.len() >= 2 {
                             let path = &path[1..path.len() - 1];
-                            if let Ok(file) = File::open(path) {
-                                icon_buf.clear();
-                                if BufReader::new(file).read_to_end(&mut icon_buf).is_ok() {
-                                    icons_list.push(Image::new(&icon_buf));
-                                    continue;
-                                }
+                            if let Ok(image) = Image::from_file(path, &mut icon_buf) {
+                                icons_list.push(image);
+                                continue;
                             }
                         }
                         icons_list.push(Image::default());

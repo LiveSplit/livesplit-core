@@ -4,6 +4,9 @@
 //! initial state to refresh state at the beginning.
 
 use std::fmt::Write;
+use std::fs::File;
+use std::io::{self, Read, BufReader};
+use std::path::Path;
 use std::sync::atomic::{AtomicUsize, ATOMIC_USIZE_INIT, Ordering};
 use base64;
 
@@ -35,6 +38,16 @@ impl Image {
         };
         image.modify(data);
         image
+    }
+
+    pub fn from_file<P, B>(path: P, mut buf: B) -> io::Result<Image>
+        where P: AsRef<Path>,
+              B: AsMut<Vec<u8>>
+    {
+        let buf = buf.as_mut();
+        buf.clear();
+        BufReader::new(File::open(path)?).read_to_end(buf)?;
+        Ok(Image::new(buf))
     }
 
     #[inline]

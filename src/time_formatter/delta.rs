@@ -52,7 +52,11 @@ impl Display for Inner {
             let minutes = total_minutes % 60;
             let hours = total_minutes / 60;
             if hours > 0 {
-                write!(f, "{}:{:02}:{:05.2}", hours, minutes, seconds)
+                if self.drop_decimals {
+                    write!(f, "{}:{:02}:{:02}", hours, minutes, seconds as u8)
+                } else {
+                    write!(f, "{}:{:02}:{:05.2}", hours, minutes, seconds)
+                }
             } else if total_minutes > 0 {
                 if self.drop_decimals {
                     write!(f, "{}:{:02}", minutes, seconds as u8)

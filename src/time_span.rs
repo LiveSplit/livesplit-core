@@ -31,6 +31,10 @@ impl TimeSpan {
         }
     }
 
+    pub fn to_duration(&self) -> Duration {
+        self.0
+    }
+
     pub fn total_seconds(&self) -> f64 {
         self.0.num_microseconds().unwrap() as f64 / 1_000_000.0
     }

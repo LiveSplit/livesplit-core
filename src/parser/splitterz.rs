@@ -1,6 +1,5 @@
 use std::borrow::Cow;
-use std::io::{self, Read, BufRead, BufReader};
-use std::fs::File;
+use std::io::{self, BufRead};
 use std::result::Result as StdResult;
 use std::num::ParseIntError;
 use {Run, time_span, Image, TimeSpan, Time, Segment};
@@ -43,7 +42,6 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
 
     let mut lines = source.lines();
     let line = lines.next().ok_or(Error::Empty)??;
-    let line = line.trim();
     let mut splits = line.split(',');
     // Title Stuff here, do later
     run.set_category_name(unescape(splits.next().ok_or(Error::ExpectedCategoryName)?));
@@ -51,7 +49,6 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
 
     for line in lines {
         let line = line?;
-        let line = line.trim();
         if !line.is_empty() {
             let mut splits = line.split(',');
 
@@ -71,11 +68,9 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
             if load_icons {
                 if let Some(icon_path) = splits.next() {
                     if !icon_path.is_empty() {
-                        if let Ok(file) = File::open(unescape(icon_path).as_ref()) {
-                            icon_buf.clear();
-                            if BufReader::new(file).read_to_end(&mut icon_buf).is_ok() {
-                                segment.set_icon(Image::new(&icon_buf));
-                            }
+                        if let Ok(image) = Image::from_file(unescape(icon_path).as_ref(),
+                                                            &mut icon_buf) {
+                            segment.set_icon(image);
                         }
                     }
                 }
