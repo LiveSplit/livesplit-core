@@ -1,4 +1,4 @@
-use std::ops::{Add, Sub};
+use std::ops::{Add, Sub, AddAssign, SubAssign};
 use std::str::FromStr;
 use std::time::Duration as StdDuration;
 use std::num::ParseFloatError;
@@ -112,10 +112,22 @@ impl Add for TimeSpan {
     }
 }
 
+impl AddAssign for TimeSpan {
+    fn add_assign(&mut self, rhs: TimeSpan) {
+        self.0 = self.0 + rhs.0;
+    }
+}
+
 impl Sub for TimeSpan {
     type Output = TimeSpan;
 
     fn sub(self, rhs: TimeSpan) -> TimeSpan {
         TimeSpan(self.0 - rhs.0)
+    }
+}
+
+impl SubAssign for TimeSpan {
+    fn sub_assign(&mut self, rhs: TimeSpan) {
+        self.0 = self.0 - rhs.0;
     }
 }

@@ -148,7 +148,7 @@ pub unsafe extern "C" fn Timer_print_debug(this: *mut Timer) {
 #[no_mangle]
 pub unsafe extern "C" fn Timer_save_run_as_lss(this: *const Timer) -> *const u8 {
     output_vec(|o| {
-        saver::lss::save(acc(this).run(), o).unwrap();
+        saver::livesplit::save(acc(this).run(), o).unwrap();
     })
 }
 
