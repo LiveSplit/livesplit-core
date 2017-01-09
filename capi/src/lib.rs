@@ -11,6 +11,7 @@ use std::ffi::CStr;
 use std::cell::RefCell;
 use std::io::Cursor;
 use std::ptr;
+use std::slice;
 // use std::fmt::Write;
 
 thread_local!{
@@ -83,8 +84,10 @@ pub unsafe extern "C" fn Run_new(segments_drop: *mut Vec<Segment>) -> *mut Run {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Run_from_file(file: *const c_char) -> *mut Run {
-    match parser::composite::parse(Cursor::new(str(file)), None, false) {
+pub unsafe extern "C" fn Run_parse(data: *const u8, length: usize) -> *mut Run {
+    match parser::composite::parse(Cursor::new(slice::from_raw_parts(data, length)),
+                                   None,
+                                   false) {
         Ok(run) => alloc(run),
         Err(_) => ptr::null_mut(),
     }

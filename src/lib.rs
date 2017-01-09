@@ -13,6 +13,7 @@ extern crate base64;
 #[macro_use]
 extern crate try_opt;
 extern crate byteorder;
+extern crate image as imagelib;
 
 mod atomic_date_time;
 mod attempt;

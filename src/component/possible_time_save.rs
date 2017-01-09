@@ -1,7 +1,7 @@
 use {state_helper, Timer, TimeSpan, Segment, TimingMethod};
-use time_formatter::{Regular, TimeFormatter};
+use time_formatter::{Short, TimeFormatter};
+use time_formatter::none_wrapper::DashWrapper;
 use comparison::best_segments::COMPARISON_NAME;
-use time_formatter::Accuracy;
 use serde_json::{to_writer, Result};
 use std::io::Write;
 
@@ -39,7 +39,7 @@ impl Component {
 
         State {
             text: "Possible Time Save".to_string(),
-            time: Regular::with_accuracy(Accuracy::Tenths).format(time.unwrap()).to_string(),
+            time: DashWrapper::new(Short).format(time.unwrap()).to_string(),
         }
     }
 }

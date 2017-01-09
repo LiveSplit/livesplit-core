@@ -31,7 +31,7 @@ impl Component {
         let time = calculate_best(timer.run(), false, true, timer.current_timing_method());
 
         State {
-            text: String::from("Sum of Best"),
+            text: String::from("Sum of Best Segments"),
             time: Regular::with_accuracy(Accuracy::Seconds).format(time).to_string(),
         }
     }
