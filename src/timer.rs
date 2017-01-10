@@ -91,8 +91,9 @@ impl Timer {
     }
 
     pub fn split(&mut self) {
-        if self.phase == TimerPhase::Running {
-            let current_time = self.current_time();
+        let current_time = self.current_time();
+        if self.phase == TimerPhase::Running &&
+           current_time.real_time.map_or(false, |t| t >= TimeSpan::zero()) {
             self.current_split_mut().unwrap().set_split_time(current_time);
             self.current_split_index += 1;
             if self.run.len() as isize == self.current_split_index {

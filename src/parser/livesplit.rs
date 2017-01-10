@@ -262,7 +262,11 @@ pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
 
     let mut run = Run::new(Vec::new());
 
-    let version = parse_version(attribute(node, "version")?)?;
+    let version = if let Ok(version) = attribute(node, "version") {
+        parse_version(version)?
+    } else {
+        Version(1, 0, 0, 0)
+    };
 
     if version >= Version(1, 6, 0, 0) {
         let metadata = run.metadata_mut();

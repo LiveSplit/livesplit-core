@@ -4,6 +4,7 @@ pub mod livesplit;
 pub mod llanfair;
 pub mod portal2_live_timer;
 pub mod shit_split;
+pub mod splits_io_v4;
 pub mod splitterz;
 pub mod splitty;
 pub mod time_split_tracker;

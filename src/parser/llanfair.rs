@@ -8,7 +8,6 @@ use {Run, Image, RealTime, TimeSpan, Time, Segment};
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
-        StringTooLarge
         Utf8(err: Utf8Error) {
             from()
         }
@@ -30,9 +29,6 @@ fn to_time(milliseconds: u64) -> Time {
 
 fn read_string<R: Read>(mut source: R, buf: &mut Vec<u8>) -> Result<&str> {
     let str_length = source.read_u16::<BE>()? as usize;
-    if str_length > 1000 {
-        return Err(Error::StringTooLarge);
-    }
     buf.reserve(str_length);
     unsafe { buf.set_len(str_length) };
     source.read_exact(buf)?;
