@@ -6,7 +6,6 @@ extern crate chrono;
 extern crate odds;
 extern crate serde_json;
 extern crate sxd_document;
-extern crate sxd_xpath;
 #[macro_use]
 extern crate quick_error;
 extern crate base64;
