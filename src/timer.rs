@@ -1,5 +1,6 @@
 use {AtomicDateTime, Run, Time, TimerPhase, TimingMethod, TimeStamp, TimeSpan, Segment};
 use TimerPhase::*;
+use run::PERSONAL_BEST_COMPARISON_NAME;
 
 #[derive(Debug, Clone)]
 pub struct Timer {
@@ -7,6 +8,7 @@ pub struct Timer {
     phase: TimerPhase,
     current_split_index: isize,
     current_timing_method: TimingMethod,
+    current_comparison: String,
     attempt_started: Option<AtomicDateTime>,
     attempt_ended: Option<AtomicDateTime>,
     start_time: TimeStamp,
@@ -21,6 +23,7 @@ impl Timer {
             phase: TimerPhase::NotRunning,
             current_split_index: -1,
             current_timing_method: TimingMethod::RealTime,
+            current_comparison: PERSONAL_BEST_COMPARISON_NAME.into(),
             attempt_started: None,
             attempt_ended: None,
             start_time: TimeStamp::now(),
@@ -54,6 +57,11 @@ impl Timer {
     #[inline]
     pub fn current_timing_method(&self) -> TimingMethod {
         self.current_timing_method
+    }
+
+    #[inline]
+    pub fn current_comparison(&self) -> &str {
+        &self.current_comparison
     }
 
     pub fn current_split(&self) -> Option<&Segment> {

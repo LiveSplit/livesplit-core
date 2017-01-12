@@ -4,6 +4,7 @@ use {Timer, TimeSpan};
 use state_helper::split_color;
 use time_formatter::{Delta, Regular, TimeFormatter};
 use time_formatter::none_wrapper::EmptyWrapper;
+use Color;
 
 #[derive(Default)]
 pub struct Component {
@@ -16,7 +17,7 @@ pub struct SplitState {
     pub name: String,
     pub delta: String,
     pub time: String,
-    pub color: String,
+    pub color: Color,
     pub is_current_split: bool,
 }
 
@@ -67,14 +68,7 @@ impl Component {
                             .format(delta)
                             .to_string(),
                         time: Regular::new().format(time).to_string(),
-                        color: format!("{:?}",
-                                       split_color(timer,
-                                                   delta,
-                                                   i,
-                                                   true,
-                                                   true,
-                                                   "Personal Best",
-                                                   method)),
+                        color: split_color(timer, delta, i, true, true, "Personal Best", method),
                         is_current_split: i as isize == current_split,
                     }
                 })

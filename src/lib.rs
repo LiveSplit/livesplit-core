@@ -16,6 +16,7 @@ extern crate image as imagelib;
 
 mod atomic_date_time;
 mod attempt;
+mod color;
 mod image;
 mod run_metadata;
 mod run;
@@ -38,6 +39,7 @@ pub mod time_span;
 pub use chrono::{DateTime, UTC};
 pub use self::atomic_date_time::AtomicDateTime;
 pub use self::attempt::Attempt;
+pub use self::color::Color;
 pub use self::image::Image;
 pub use self::run::Run;
 pub use self::run_metadata::RunMetadata;

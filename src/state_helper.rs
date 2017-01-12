@@ -1,4 +1,4 @@
-use {Run, Timer, TimingMethod, TimeSpan, TimerPhase};
+use {Color, Run, Timer, TimingMethod, TimeSpan, TimerPhase};
 use run::PERSONAL_BEST_COMPARISON_NAME;
 use comparison::best_segments;
 
@@ -169,16 +169,6 @@ pub fn check_live_delta(timer: &Timer,
     None
 }
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
-pub enum SplitColor {
-    Default,
-    AheadGainingTime,
-    AheadLosingTime,
-    BehindLosingTime,
-    BehindGainingTime,
-    BestSegment,
-}
-
 /// Chooses a split color from the Layout Settings based on the current run.
 ///
 /// `timer`: The current timer.
@@ -197,27 +187,27 @@ pub fn split_color(timer: &Timer,
                    show_best_segments: bool,
                    comparison: &str,
                    method: TimingMethod)
-                   -> SplitColor {
+                   -> Color {
     let use_best_segment = true; // TODO Make this a parameter
 
     if show_best_segments && use_best_segment && check_best_segment(timer, split_number, method) {
-        SplitColor::BestSegment
+        Color::BestSegment
     } else if let Some(time_difference) = time_difference {
         let last_delta = split_number.checked_sub(1)
             .and_then(|n| last_delta(timer.run(), n, comparison, method));
         if time_difference < TimeSpan::zero() {
             if show_segment_deltas && last_delta.map_or(false, |d| time_difference > d) {
-                SplitColor::AheadLosingTime
+                Color::AheadLosingTime
             } else {
-                SplitColor::AheadGainingTime
+                Color::AheadGainingTime
             }
         } else if show_segment_deltas && last_delta.map_or(false, |d| time_difference < d) {
-            SplitColor::BehindGainingTime
+            Color::BehindGainingTime
         } else {
-            SplitColor::BehindLosingTime
+            Color::BehindLosingTime
         }
     } else {
-        SplitColor::Default
+        Color::Default
     }
 }
 
