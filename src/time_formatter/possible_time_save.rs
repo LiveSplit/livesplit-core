@@ -7,27 +7,27 @@ pub struct Inner {
     accuracy: Accuracy,
 }
 
-pub struct Short {
+pub struct PossibleTimeSave {
     accuracy: Accuracy,
 }
 
-impl Short {
+impl PossibleTimeSave {
     pub fn new() -> Self {
         Default::default()
     }
 
     pub fn with_accuracy(accuracy: Accuracy) -> Self {
-        Short { accuracy: accuracy }
+        PossibleTimeSave { accuracy: accuracy }
     }
 }
 
-impl Default for Short {
+impl Default for PossibleTimeSave {
     fn default() -> Self {
-        Short { accuracy: Accuracy::Hundredths }
+        PossibleTimeSave { accuracy: Accuracy::Hundredths }
     }
 }
 
-impl<'a> TimeFormatter<'a> for Short {
+impl<'a> TimeFormatter<'a> for PossibleTimeSave {
     type Inner = Inner;
 
     fn format<T>(&self, time: T) -> Self::Inner
@@ -55,23 +55,19 @@ impl Display for Inner {
             let minutes = total_minutes % 60;
             let hours = total_minutes / 60;
             if hours > 0 {
-                write!(f, "{}:{:02}:{:02}", hours, minutes, seconds)?;
+                write!(f, "{}:{:02}:{:02}", hours, minutes, seconds)
             } else if total_minutes > 0 {
-                write!(f, "{}:{:02}", minutes, seconds)?;
+                write!(f, "{}:{:02}", minutes, seconds)
             } else {
                 write!(f, "{}", seconds)?;
-            }
-            match self.accuracy {
-                Accuracy::Hundredths => write!(f, ".{:02}", (subseconds * 100.0) as u8),
-                Accuracy::Tenths => write!(f, ".{:01}", (subseconds * 10.0) as u8),
-                Accuracy::Seconds => Ok(()),
+                match self.accuracy {
+                    Accuracy::Hundredths => write!(f, ".{:02}", (subseconds * 100.0) as u8),
+                    Accuracy::Tenths => write!(f, ".{:01}", (subseconds * 10.0) as u8),
+                    Accuracy::Seconds => Ok(()),
+                }
             }
         } else {
-            match self.accuracy {
-                Accuracy::Hundredths => write!(f, "0.00"),
-                Accuracy::Tenths => write!(f, "0.0"),
-                Accuracy::Seconds => write!(f, "0"),
-            }
+            write!(f, "—")
         }
     }
 }

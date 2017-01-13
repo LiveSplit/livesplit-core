@@ -17,12 +17,14 @@ impl<'a, F: 'a + TimeFormatter<'a>, S: AsRef<str>> NoneWrapper<F, S> {
 }
 
 impl DashWrapper {
+    #[allow(new_ret_no_self)]
     pub fn new<'a, F: 'a + TimeFormatter<'a>>(inner: F) -> NoneWrapper<F, &'static str> {
         NoneWrapper::new(inner, "—")
     }
 }
 
 impl EmptyWrapper {
+    #[allow(new_ret_no_self)]
     pub fn new<'a, F: 'a + TimeFormatter<'a>>(inner: F) -> NoneWrapper<F, &'static str> {
         NoneWrapper::new(inner, "")
     }

@@ -20,7 +20,7 @@ impl Delta {
 
 impl Default for Delta {
     fn default() -> Self {
-        Delta(false)
+        Delta(true)
     }
 }
 

@@ -37,8 +37,7 @@ impl Component {
             TimerPhase::Running if time >= TimeSpan::zero() => {
                 let pb_split_time = timer.current_split()
                     .unwrap()
-                    .comparison(current_comparison)
-                    .and_then(|t| t[method]);
+                    .comparison(current_comparison)[method];
                 if let Some(pb_split_time) = pb_split_time {
                     split_color(timer,
                                 Some(time - pb_split_time),
@@ -58,8 +57,7 @@ impl Component {
                     .segments()
                     .last()
                     .unwrap()
-                    .comparison(current_comparison)
-                    .and_then(|t| t[method]);
+                    .comparison(current_comparison)[method];
                 if pb_time.map_or(true, |t| time < t) {
                     Color::PersonalBest
                 } else {
