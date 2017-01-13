@@ -1,12 +1,13 @@
 use std::fmt::{Result, Formatter, Display};
 use TimeSpan;
-use super::TimeFormatter;
+use super::{TimeFormatter, Accuracy};
 
 pub struct Inner {
     time: Option<TimeSpan>,
     drop_decimals: bool,
+    accuracy: Accuracy,
 }
-pub struct Delta(bool);
+pub struct Delta(bool, Accuracy);
 
 impl Delta {
     pub fn new() -> Self {
@@ -14,13 +15,13 @@ impl Delta {
     }
 
     pub fn with_decimal_dropping() -> Self {
-        Delta(true)
+        Delta(true, Accuracy::Tenths)
     }
 }
 
 impl Default for Delta {
     fn default() -> Self {
-        Delta(true)
+        Delta(true, Accuracy::Tenths)
     }
 }
 
@@ -33,6 +34,7 @@ impl<'a> TimeFormatter<'a> for Delta {
         Inner {
             time: time.into(),
             drop_decimals: self.0,
+            accuracy: self.1,
         }
     }
 }
@@ -55,16 +57,32 @@ impl Display for Inner {
                 if self.drop_decimals {
                     write!(f, "{}:{:02}:{:02}", hours, minutes, seconds as u8)
                 } else {
-                    write!(f, "{}:{:02}:{:05.2}", hours, minutes, seconds)
+                    match self.accuracy {
+                        Accuracy::Hundredths => {
+                            write!(f, "{}:{:02}:{:05.2}", hours, minutes, seconds)
+                        }
+                        Accuracy::Tenths => write!(f, "{}:{:02}:{:04.1}", hours, minutes, seconds),
+                        Accuracy::Seconds => {
+                            write!(f, "{}:{:02}:{:02}", hours, minutes, seconds as u8)
+                        }
+                    }
                 }
             } else if total_minutes > 0 {
                 if self.drop_decimals {
                     write!(f, "{}:{:02}", minutes, seconds as u8)
                 } else {
-                    write!(f, "{}:{:05.2}", minutes, seconds)
+                    match self.accuracy {
+                        Accuracy::Hundredths => write!(f, "{}:{:05.2}", minutes, seconds),
+                        Accuracy::Tenths => write!(f, "{}:{:04.1}", minutes, seconds),
+                        Accuracy::Seconds => write!(f, "{}:{:02}", minutes, seconds as u8),
+                    }
                 }
             } else {
-                write!(f, "{:.2}", seconds)
+                match self.accuracy {
+                    Accuracy::Hundredths => write!(f, "{:.2}", seconds),
+                    Accuracy::Tenths => write!(f, "{:.1}", seconds),
+                    Accuracy::Seconds => write!(f, "{}", seconds as u8),
+                }
             }
         } else {
             write!(f, "—")

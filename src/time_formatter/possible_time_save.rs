@@ -23,7 +23,7 @@ impl PossibleTimeSave {
 
 impl Default for PossibleTimeSave {
     fn default() -> Self {
-        PossibleTimeSave { accuracy: Accuracy::Hundredths }
+        PossibleTimeSave { accuracy: Accuracy::Tenths }
     }
 }
 
