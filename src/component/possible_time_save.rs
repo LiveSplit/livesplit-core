@@ -1,6 +1,5 @@
 use {state_helper, Timer, TimeSpan, TimerPhase};
-use time_formatter::{Short, TimeFormatter};
-use time_formatter::none_wrapper::DashWrapper;
+use time_formatter::{PossibleTimeSave, TimeFormatter};
 use serde_json::{to_writer, Result};
 use std::io::Write;
 
@@ -43,7 +42,7 @@ impl Component {
 
         State {
             text: "Possible Time Save".to_string(),
-            time: DashWrapper::new(Short::new()).format(time).to_string(),
+            time: PossibleTimeSave::new().format(time).to_string(),
         }
     }
 }
