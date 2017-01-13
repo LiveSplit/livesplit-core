@@ -3,7 +3,7 @@ use serde_json::{to_writer, Result};
 use {Timer, TimeSpan, state_helper};
 use state_helper::split_color;
 use time_formatter::{Delta, Regular, TimeFormatter};
-use time_formatter::none_wrapper::EmptyWrapper;
+use time_formatter::none_wrapper::{EmptyWrapper, DashWrapper};
 use Color;
 
 #[derive(Default)]
@@ -68,12 +68,20 @@ impl Component {
                         (comparison_time, None, Color::Default)
                     };
 
+                    let delta = if current_split > i as isize {
+                        DashWrapper::new(Delta::with_decimal_dropping())
+                            .format(delta)
+                            .to_string()
+                    } else {
+                        EmptyWrapper::new(Delta::with_decimal_dropping())
+                            .format(delta)
+                            .to_string()
+                    };
+
                     SplitState {
                         icon_change: segment.icon().check_for_change(icon_id).map(str::to_owned),
                         name: segment.name().to_string(),
-                        delta: EmptyWrapper::new(Delta::with_decimal_dropping())
-                            .format(delta)
-                            .to_string(),
+                        delta: delta,
                         time: Regular::new().format(time).to_string(),
                         color: color,
                         is_current_split: i as isize == current_split,
