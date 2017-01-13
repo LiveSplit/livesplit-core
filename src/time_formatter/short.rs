@@ -1,9 +1,31 @@
 use std::fmt::{Result, Formatter, Display};
 use TimeSpan;
-use super::TimeFormatter;
+use super::{Accuracy, TimeFormatter};
 
-pub struct Inner(Option<TimeSpan>);
-pub struct Short;
+pub struct Inner {
+    time: Option<TimeSpan>,
+    accuracy: Accuracy,
+}
+
+pub struct Short {
+    accuracy: Accuracy,
+}
+
+impl Short {
+    pub fn new() -> Self {
+        Default::default()
+    }
+
+    pub fn with_accuracy(accuracy: Accuracy) -> Self {
+        Short { accuracy: accuracy }
+    }
+}
+
+impl Default for Short {
+    fn default() -> Self {
+        Short { accuracy: Accuracy::Hundredths }
+    }
+}
 
 impl<'a> TimeFormatter<'a> for Short {
     type Inner = Inner;
@@ -11,31 +33,45 @@ impl<'a> TimeFormatter<'a> for Short {
     fn format<T>(&self, time: T) -> Self::Inner
         where T: Into<Option<TimeSpan>>
     {
-        Inner(time.into())
+        Inner {
+            time: time.into(),
+            accuracy: self.accuracy,
+        }
     }
 }
 
 impl Display for Inner {
     fn fmt(&self, f: &mut Formatter) -> Result {
-        if let Some(time) = self.0 {
+        if let Some(time) = self.time {
             let mut total_seconds = time.total_seconds();
             if total_seconds < 0.0 {
                 total_seconds *= -1.0;
                 write!(f, "−")?;
             }
-            let seconds = total_seconds % 60.0;
-            let total_minutes = (total_seconds / 60.0) as u64;
+            let subseconds = total_seconds % 1.0;
+            let total_seconds = total_seconds as u64;
+            let seconds = total_seconds % 60;
+            let total_minutes = total_seconds / 60;
             let minutes = total_minutes % 60;
             let hours = total_minutes / 60;
             if hours > 0 {
-                write!(f, "{}:{:02}:{:05.2}", hours, minutes, seconds)
+                write!(f, "{}:{:02}:{:02}", hours, minutes, seconds)?;
             } else if total_minutes > 0 {
-                write!(f, "{}:{:05.2}", minutes, seconds)
+                write!(f, "{}:{:02}", minutes, seconds)?;
             } else {
-                write!(f, "{:.2}", seconds)
+                write!(f, "{}", seconds)?;
+            }
+            match self.accuracy {
+                Accuracy::Hundredths => write!(f, ".{:02}", (subseconds * 100.0) as u8),
+                Accuracy::Tenths => write!(f, ".{:01}", (subseconds * 10.0) as u8),
+                Accuracy::Seconds => Ok(()),
             }
         } else {
-            write!(f, "0.00")
+            match self.accuracy {
+                Accuracy::Hundredths => write!(f, "0.00"),
+                Accuracy::Tenths => write!(f, "0.0"),
+                Accuracy::Seconds => write!(f, "0"),
+            }
         }
     }
 }

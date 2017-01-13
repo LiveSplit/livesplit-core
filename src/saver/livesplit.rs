@@ -129,9 +129,7 @@ pub fn save<W: Write>(run: &Run, mut writer: W) -> Result<()> {
 
         let split_times = doc.create_element("SplitTimes");
         for comparison in run.custom_comparisons() {
-            let split_time = time(doc,
-                                  "SplitTime",
-                                  segment.comparison(comparison).unwrap_or_default());
+            let split_time = time(doc, "SplitTime", segment.comparison(comparison));
             split_time.set_attribute_value("name", comparison);
             split_times.append_child(split_time);
         }

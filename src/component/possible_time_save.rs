@@ -1,7 +1,6 @@
-use {state_helper, Timer, TimeSpan, Segment, TimingMethod};
+use {state_helper, Timer, TimeSpan, TimerPhase};
 use time_formatter::{Short, TimeFormatter};
 use time_formatter::none_wrapper::DashWrapper;
-use comparison::best_segments::COMPARISON_NAME;
 use serde_json::{to_writer, Result};
 use std::io::Write;
 
@@ -30,80 +29,67 @@ impl Component {
     pub fn state(&self, timer: &Timer) -> State {
         let live = false;
 
-        let segment = timer.current_split();
-        let mut time: Option<TimeSpan> = Some(TimeSpan::zero());
+        let segment_index = timer.current_split_index();
+        let current_phase = timer.current_phase();
 
-        if segment.is_some() {
-            time = get_possible_time_save(&timer, &segment.unwrap(), COMPARISON_NAME, live);
-        }
+        let time = if current_phase == TimerPhase::Running || current_phase == TimerPhase::Paused {
+            get_possible_time_save(timer,
+                                   segment_index as usize,
+                                   timer.current_comparison(),
+                                   live)
+        } else {
+            None
+        };
 
         State {
             text: "Possible Time Save".to_string(),
-            time: DashWrapper::new(Short).format(time.unwrap()).to_string(),
+            time: DashWrapper::new(Short::new()).format(time).to_string(),
         }
     }
 }
 
 pub fn get_possible_time_save(timer: &Timer,
-                              segment: &Segment,
+                              segment_index: usize,
                               comparison: &str,
                               live: bool)
                               -> Option<TimeSpan> {
     let segments = timer.run().segments();
-    let mut split_index = split_index(timer, segment);
+    let method = timer.current_timing_method();
     let mut prev_time = TimeSpan::zero();
-    let mut best_segments = segment.best_segment_time().real_time;
-    let pb_split_time = segment.personal_best_split_time().real_time;
+    let segment = timer.run().segment(segment_index);
+    let mut best_segments = segment.best_segment_time()[method];
 
-    while split_index > 0 && best_segments != None {
-
-        let split_time = segments[split_index - 1].personal_best_split_time().real_time;
-
-        if split_time.is_some() {
-            prev_time = split_time.unwrap();
-            break;
+    for segment in segments[..segment_index].iter().rev() {
+        if let Some(ref mut best_segments) = best_segments {
+            if let Some(split_time) = segment.comparison(comparison)[method] {
+                prev_time = split_time;
+                break;
+            } else if let Some(best_segment) = segment.best_segment_time()[method] {
+                *best_segments += best_segment;
+            }
         } else {
-            split_index -= 1;
-            if segments[split_index].best_segment_time().real_time.is_some() {
-                best_segments = Some(best_segments.unwrap() +
-                                     segments[split_index].best_segment_time().real_time.unwrap());
+            break;
+        }
+    }
+
+    let mut time = TimeSpan::option_op(segment.comparison(comparison)[method],
+                                       best_segments,
+                                       |c, b| c - b - prev_time);
+
+    if live && segment_index == timer.current_split_index() as usize {
+        let segment_delta =
+            state_helper::live_segment_delta(timer, segment_index, comparison, method);
+        if let (Some(segment_delta), Some(time)) = (segment_delta, time.as_mut()) {
+            let segment_delta = TimeSpan::zero() - segment_delta;
+            if segment_delta < *time {
+                *time = segment_delta;
             }
         }
     }
 
-    let mut time = TimeSpan::zero();
-    if pb_split_time.is_some() {
-        time = pb_split_time.unwrap();
-    }
-
-    time = time - prev_time;
-    if best_segments.is_some() {
-        time = time - best_segments.unwrap();
-    }
-
-    if live && split_index == timer.current_split_index() as usize {
-        let live_delta = state_helper::live_segment_delta(timer,
-                                                          split_index,
-                                                          comparison,
-                                                          TimingMethod::RealTime);
-
-        let mut segment_delta = TimeSpan::zero();
-        if live_delta.is_some() {
-            segment_delta = TimeSpan::zero() - live_delta.unwrap();
-        }
-        if segment_delta < time {
-            time = segment_delta;
-        }
-    }
-
-    if time < TimeSpan::zero() {
-        time = TimeSpan::zero();
-    }
-
-    Some(time)
-}
-
-fn split_index(timer: &Timer, segment: &Segment) -> usize {
-    let segments = timer.run().segments();
-    segments.iter().position(|s| s.name() == segment.name()).unwrap()
+    time.map(|t| if t < TimeSpan::zero() {
+        TimeSpan::zero()
+    } else {
+        t
+    })
 }

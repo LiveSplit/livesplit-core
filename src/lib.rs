@@ -1,4 +1,5 @@
 #![feature(proc_macro)]
+#![allow(unknown_lints)]
 
 #[macro_use]
 extern crate serde_derive;

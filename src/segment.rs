@@ -40,8 +40,8 @@ impl Segment {
     }
 
     #[inline]
-    pub fn comparison(&self, comparison: &str) -> Option<Time> {
-        self.comparisons.get(comparison).cloned()
+    pub fn comparison(&self, comparison: &str) -> Time {
+        self.comparisons.get(comparison).cloned().unwrap_or_default()
     }
 
     #[inline]
