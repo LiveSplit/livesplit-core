@@ -23,7 +23,7 @@ impl PossibleTimeSave {
 
 impl Default for PossibleTimeSave {
     fn default() -> Self {
-        PossibleTimeSave { accuracy: Accuracy::Tenths }
+        PossibleTimeSave { accuracy: Accuracy::Hundredths }
     }
 }
 
@@ -55,16 +55,16 @@ impl Display for Inner {
             let minutes = total_minutes % 60;
             let hours = total_minutes / 60;
             if hours > 0 {
-                write!(f, "{}:{:02}:{:02}", hours, minutes, seconds)
+                write!(f, "{}:{:02}:{:02}", hours, minutes, seconds)?;
             } else if total_minutes > 0 {
-                write!(f, "{}:{:02}", minutes, seconds)
+                write!(f, "{}:{:02}", minutes, seconds)?;
             } else {
                 write!(f, "{}", seconds)?;
-                match self.accuracy {
-                    Accuracy::Hundredths => write!(f, ".{:02}", (subseconds * 100.0) as u8),
-                    Accuracy::Tenths => write!(f, ".{:01}", (subseconds * 10.0) as u8),
-                    Accuracy::Seconds => Ok(()),
-                }
+            }
+            match self.accuracy {
+                Accuracy::Hundredths => write!(f, ".{:02}", (subseconds * 100.0) as u8),
+                Accuracy::Tenths => write!(f, ".{:01}", (subseconds * 10.0) as u8),
+                Accuracy::Seconds => Ok(()),
             }
         } else {
             write!(f, "—")
