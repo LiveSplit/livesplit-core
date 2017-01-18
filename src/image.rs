@@ -3,12 +3,11 @@
 //! modified. IDs are unique across different images. ID 0 is never used so it can be used as an
 //! initial state to refresh state at the beginning.
 
-use std::fmt::Write;
 use std::fs::File;
 use std::io::{self, Read, BufReader};
 use std::path::Path;
 use std::sync::atomic::{AtomicUsize, ATOMIC_USIZE_INIT, Ordering};
-use base64;
+use base64::{self, Base64Mode};
 
 static LAST_IMAGE_ID: AtomicUsize = ATOMIC_USIZE_INIT;
 
@@ -75,8 +74,8 @@ impl Image {
         self.url.clear();
 
         if !data.is_empty() {
-            let image = base64::encode(data);
-            write!(&mut self.url, "data:;base64,{}", image).unwrap();
+            self.url.push_str("data:;base64,");
+            base64::encode_mode_buf(data, Base64Mode::UrlSafe, &mut self.url);
         }
     }
 }
