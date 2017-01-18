@@ -75,7 +75,7 @@ impl Image {
 
         if !data.is_empty() {
             self.url.push_str("data:;base64,");
-            base64::encode_mode_buf(data, Base64Mode::UrlSafe, &mut self.url);
+            base64::encode_mode_buf(data, Base64Mode::Standard, &mut self.url);
         }
     }
 }

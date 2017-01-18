@@ -13,6 +13,9 @@ pub struct Timer {
     attempt_ended: Option<AtomicDateTime>,
     start_time: TimeStamp,
     pause_time: TimeSpan,
+    is_game_time_paused: bool,
+    game_time_pause_time: Option<TimeSpan>,
+    loading_times: Option<TimeSpan>,
 }
 
 impl Timer {
@@ -28,6 +31,9 @@ impl Timer {
             attempt_ended: None,
             start_time: TimeStamp::now(),
             pause_time: TimeSpan::zero(),
+            is_game_time_paused: false,
+            game_time_pause_time: None,
+            loading_times: None,
         }
     }
 
@@ -43,15 +49,31 @@ impl Timer {
 
     pub fn current_time(&self) -> Time {
         let real_time = match self.phase {
-            NotRunning => Some(TimeSpan::zero()),
+            NotRunning => Some(self.run.offset()),
             Running => Some(TimeStamp::now() - self.start_time),
             Paused => Some(self.pause_time),
             Ended => self.run.segments().last().unwrap().split_time().real_time,
         };
 
-        // TODO No Game Time Implementation for now.
+        let game_time = match self.phase {
+            NotRunning => Some(self.run.offset()),
+            Ended => self.run.segments().last().unwrap().split_time().game_time,
+            _ => {
+                if self.is_game_time_paused() {
+                    self.game_time_pause_time()
+                } else {
+                    TimeSpan::option_op(real_time,
+                                        if self.is_game_time_initialized() {
+                                            Some(self.loading_times())
+                                        } else {
+                                            None
+                                        },
+                                        |a, b| a - b)
+                }
+            }
+        };
 
-        Time::new().with_real_time(real_time)
+        Time::new().with_real_time(real_time).with_game_time(game_time)
     }
 
     #[inline]
@@ -92,6 +114,7 @@ impl Timer {
             self.attempt_started = Some(AtomicDateTime::now());
             self.start_time = TimeStamp::now() - self.run.offset();
             self.pause_time = self.run.offset();
+            self.uninitialize_game_time();
             self.run.start_next_run();
 
             // TODO OnStart
@@ -143,8 +166,9 @@ impl Timer {
             if self.phase != TimerPhase::Ended {
                 self.attempt_ended = Some(AtomicDateTime::now());
             }
-            // TODO Handle Game Time
+            self.unpause_game_time();
             self.start_time = TimeStamp::now();
+            self.set_loading_times(TimeSpan::zero());
 
             if update_splits {
                 self.update_attempt_history();
@@ -196,6 +220,60 @@ impl Timer {
 
     pub fn switch_to_previous_comparison(&mut self) {
         unimplemented!()
+    }
+
+    #[inline]
+    pub fn is_game_time_paused(&self) -> bool {
+        self.is_game_time_paused
+    }
+
+    pub fn pause_game_time(&mut self) {
+        if self.is_game_time_paused() {
+            let current_time = self.current_time();
+            self.game_time_pause_time = current_time.game_time.or(current_time.real_time);
+            self.is_game_time_paused = true;
+        }
+    }
+
+    pub fn unpause_game_time(&mut self) {
+        if self.is_game_time_paused() {
+            let current_time = self.current_time();
+            self.set_loading_times(TimeSpan::option_op(current_time.real_time,
+                                                       current_time.game_time,
+                                                       |r, g| r - g)
+                .unwrap_or_default());
+            self.is_game_time_paused = false;
+        }
+    }
+
+    #[inline]
+    pub fn game_time_pause_time(&self) -> Option<TimeSpan> {
+        self.game_time_pause_time
+    }
+
+    #[inline]
+    pub fn is_game_time_initialized(&self) -> bool {
+        self.loading_times.is_some()
+    }
+
+    #[inline]
+    pub fn initialize_game_time(&mut self) {
+        self.loading_times = Some(self.loading_times());
+    }
+
+    #[inline]
+    pub fn uninitialize_game_time(&mut self) {
+        self.loading_times = None;
+    }
+
+    #[inline]
+    pub fn loading_times(&self) -> TimeSpan {
+        self.loading_times.unwrap_or_default()
+    }
+
+    #[inline]
+    pub fn set_loading_times(&mut self, time: TimeSpan) {
+        self.loading_times = Some(time);
     }
 
     fn update_attempt_history(&mut self) {
