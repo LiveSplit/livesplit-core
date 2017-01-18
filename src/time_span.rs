@@ -2,9 +2,7 @@ use std::ops::{Add, Sub, AddAssign, SubAssign};
 use std::str::FromStr;
 use std::time::Duration as StdDuration;
 use std::num::ParseFloatError;
-use std::fmt::{self, Display};
 use chrono::Duration;
-use time_formatter::{Complete, TimeFormatter};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct TimeSpan(Duration);
@@ -49,12 +47,6 @@ impl TimeSpan {
         } else {
             Ok(Some(text.parse()?))
         }
-    }
-}
-
-impl Display for TimeSpan {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        write!(fmt, "{}", Complete.format(*self))
     }
 }
 

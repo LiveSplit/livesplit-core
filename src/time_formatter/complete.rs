@@ -26,7 +26,12 @@ impl Display for Inner {
             let seconds = total_seconds % 60.0;
             let total_minutes = (total_seconds / 60.0) as u64;
             let minutes = total_minutes % 60;
-            let hours = total_minutes / 60;
+            let total_hours = total_minutes / 60;
+            let hours = total_hours % 24;
+            let days = total_hours / 24;
+            if days > 0 {
+                write!(f, "{}.", days)?;
+            }
             write!(f, "{:02}:{:02}:{:010.7}", hours, minutes, seconds)
         } else {
             write!(f, "00:00:00.0000000")

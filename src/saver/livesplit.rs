@@ -3,7 +3,8 @@ use chrono::{DateTime, UTC};
 use sxd_document::Package;
 use sxd_document::dom::{Document, Element};
 use sxd_document::writer::format_document;
-use {Run, Time, Image, base64};
+use time_formatter::{Complete, TimeFormatter};
+use {Run, Time, TimeSpan, Image, base64};
 use byteorder::{WriteBytesExt, LittleEndian};
 
 static LSS_IMAGE_HEADER: &'static [u8] = include_bytes!("lss_image_header.bin");
@@ -34,15 +35,19 @@ fn fmt_image(image: &Image) -> String {
     String::new()
 }
 
+fn time_span(time: TimeSpan) -> String {
+    Complete.format(time).to_string()
+}
+
 fn time<'a>(document: &Document<'a>, element_name: &str, time: Time) -> Element<'a> {
     let element = document.create_element(element_name);
 
     if let Some(time) = time.real_time {
-        add_element(document, &element, "RealTime", &time.to_string());
+        add_element(document, &element, "RealTime", &time_span(time));
     }
 
     if let Some(time) = time.game_time {
-        add_element(document, &element, "GameTime", &time.to_string());
+        add_element(document, &element, "GameTime", &time_span(time));
     }
 
     element
@@ -94,7 +99,7 @@ pub fn save<W: Write>(run: &Run, mut writer: W) -> Result<()> {
     metadata.append_child(variables);
     parent.append_child(metadata);
 
-    add_element(doc, &parent, "Offset", &run.offset().to_string());
+    add_element(doc, &parent, "Offset", &time_span(run.offset()));
     add_element(doc,
                 &parent,
                 "AttemptCount",
