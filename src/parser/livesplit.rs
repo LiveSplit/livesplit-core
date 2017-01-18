@@ -1,6 +1,6 @@
 use std::io::{self, Read};
 use std::result::Result as StdResult;
-use std::num::ParseIntError;
+use std::num::{ParseIntError, ParseFloatError};
 use std::path::PathBuf;
 use base64;
 use sxd_document::dom::Element;
@@ -20,6 +20,9 @@ quick_error! {
             from()
         }
         Int(err: ParseIntError) {
+            from()
+        }
+        Float(err: ParseFloatError) {
             from()
         }
         Bool
@@ -65,11 +68,31 @@ fn text<'d>(element: &Element, buf: &'d mut String) -> &'d str {
 }
 
 fn time_span(element: &Element, buf: &mut String) -> Result<TimeSpan> {
-    text(element, buf).parse().map_err(Into::into)
+    let text = text(element, buf);
+    if let (Some(dot_index), Some(colon_index)) = (text.find('.'), text.find(':')) {
+        if dot_index < colon_index {
+            let days = TimeSpan::from_days(text[..dot_index].parse()?);
+            let time = text[dot_index + 1..].parse()?;
+            return Ok(days + time);
+        }
+    }
+    text.parse().map_err(Into::into)
 }
 
 fn time_span_opt(element: &Element, buf: &mut String) -> Result<Option<TimeSpan>> {
-    TimeSpan::parse_opt(text(element, buf)).map_err(Into::into)
+    let text = text(element, buf);
+    if text.trim().is_empty() {
+        Ok(None)
+    } else {
+        if let (Some(dot_index), Some(colon_index)) = (text.find('.'), text.find(':')) {
+            if dot_index < colon_index {
+                let days = TimeSpan::from_days(text[..dot_index].parse()?);
+                let time = text[dot_index + 1..].parse()?;
+                return Ok(Some(days + time));
+            }
+        }
+        Ok(Some(text.parse()?))
+    }
 }
 
 fn time(element: &Element, buf: &mut String) -> Result<Time> {
