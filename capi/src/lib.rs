@@ -213,6 +213,16 @@ pub unsafe extern "C" fn SplitsComponent_state(this: *mut splits::Component,
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn SplitsComponent_scroll_up(this: *mut splits::Component) {
+    acc_mut(this).scroll_up();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn SplitsComponent_scroll_down(this: *mut splits::Component) {
+    acc_mut(this).scroll_down();
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn PreviousSegmentComponent_new() -> *mut previous_segment::Component {
     alloc(previous_segment::Component::new())
 }

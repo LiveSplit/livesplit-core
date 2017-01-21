@@ -1,3 +1,4 @@
+use std::cmp::{min, max};
 use std::io::Write;
 use serde_json::{to_writer, Result};
 use {Timer, TimeSpan, state_helper};
@@ -9,6 +10,15 @@ use Color;
 #[derive(Default)]
 pub struct Component {
     icon_ids: Vec<usize>,
+    settings: Settings,
+    scroll_offset: isize,
+}
+
+pub struct Settings {
+    visual_split_count: usize,
+    split_preview_count: usize,
+    always_show_last_split: bool,
+    separator_last_split: bool,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -24,6 +34,18 @@ pub struct SplitState {
 #[derive(Serialize, Deserialize)]
 pub struct State {
     pub splits: Vec<SplitState>,
+    pub show_final_separator: bool,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Settings {
+            visual_split_count: 16,
+            split_preview_count: 1,
+            always_show_last_split: true,
+            separator_last_split: true,
+        }
+    }
 }
 
 impl State {
@@ -39,6 +61,14 @@ impl Component {
         Default::default()
     }
 
+    pub fn scroll_up(&mut self) {
+        self.scroll_offset = self.scroll_offset.saturating_sub(1);
+    }
+
+    pub fn scroll_down(&mut self) {
+        self.scroll_offset = self.scroll_offset.saturating_add(1);
+    }
+
     pub fn state(&mut self, timer: &Timer) -> State {
         self.icon_ids.resize(timer.run().len(), 0);
 
@@ -46,13 +76,40 @@ impl Component {
         let method = timer.current_timing_method();
         let comparison = timer.current_comparison();
 
+        let always_show_last_split = if self.settings.always_show_last_split {
+            0
+        } else {
+            1
+        };
+        let skip_count = min(max(0,
+                                 current_split as isize -
+                                 (self.settings.visual_split_count as isize - 2 -
+                                  self.settings.split_preview_count as isize +
+                                  always_show_last_split)),
+                             timer.run().len() as isize -
+                             self.settings.visual_split_count as isize);
+        self.scroll_offset = min(max(self.scroll_offset, -skip_count),
+                                 timer.run().len() as isize - skip_count -
+                                 self.settings.visual_split_count as isize);
+        let skip_count = max(0, skip_count + self.scroll_offset) as usize;
+        let take_count = self.settings.visual_split_count + always_show_last_split as usize - 1;
+        let always_show_last_split = self.settings.always_show_last_split;
+
+        let show_final_separator = self.settings.separator_last_split && always_show_last_split &&
+                                   skip_count + take_count + 1 < timer.run().len();
+
         State {
             splits: timer.run()
                 .segments()
                 .iter()
-                .zip(self.icon_ids.iter_mut())
                 .enumerate()
-                .map(|(i, (segment, icon_id))| {
+                .skip(skip_count)
+                .zip(self.icon_ids.iter_mut())
+                .filter(|&((i, _), _)| {
+                    i - skip_count < take_count ||
+                    (always_show_last_split && i + 1 == timer.run().len())
+                })
+                .map(|((i, segment), icon_id)| {
                     let split = segment.split_time()[method];
                     let comparison_time = segment.comparison(comparison)[method];
 
@@ -88,6 +145,7 @@ impl Component {
                     }
                 })
                 .collect(),
+            show_final_separator: show_final_separator,
         }
     }
 }
