@@ -12,24 +12,23 @@ use std::cell::RefCell;
 use std::io::Cursor;
 use std::ptr;
 use std::slice;
-// use std::fmt::Write;
 
 thread_local!{
-    // static OUTPUT_STR: RefCell<String> = RefCell::new(String::new());
+    static OUTPUT_STR: RefCell<String> = RefCell::new(String::new());
     static OUTPUT_VEC: RefCell<Vec<u8>> = RefCell::new(Vec::new());
 }
 
-// fn output_str<F>(f: F) -> *const c_char
-//     where F: FnOnce(&mut String)
-// {
-//     OUTPUT_STR.with(|output| {
-//         let mut output = output.borrow_mut();
-//         output.clear();
-//         f(&mut output);
-//         output.push('\0');
-//         output.as_ptr() as *const c_char
-//     })
-// }
+fn output_str<F>(f: F) -> *const c_char
+    where F: FnOnce(&mut String)
+{
+    OUTPUT_STR.with(|output| {
+        let mut output = output.borrow_mut();
+        output.clear();
+        f(&mut output);
+        output.push('\0');
+        output.as_ptr() as *const c_char
+    })
+}
 
 fn output_vec<F>(f: F) -> *const u8
     where F: FnOnce(&mut Vec<u8>)
@@ -151,6 +150,23 @@ pub unsafe extern "C" fn Timer_current_timing_method(this: *const Timer) -> Timi
 #[no_mangle]
 pub unsafe extern "C" fn Timer_set_current_timing_method(this: *mut Timer, method: TimingMethod) {
     acc_mut(this).set_current_timing_method(method);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Timer_current_comparison(this: *const Timer) -> *const c_char {
+    output_str(|s| {
+        s.push_str(acc(this).current_comparison());
+    })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Timer_switch_to_next_comparison(this: *mut Timer) {
+    acc_mut(this).switch_to_next_comparison();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Timer_switch_to_previous_comparison(this: *mut Timer) {
+    acc_mut(this).switch_to_previous_comparison();
 }
 
 #[no_mangle]

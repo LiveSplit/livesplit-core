@@ -145,6 +145,11 @@ impl Run {
     }
 
     #[inline]
+    pub fn comparisons(&self) -> &[String] {
+        &self.custom_comparisons
+    }
+
+    #[inline]
     pub fn len(&self) -> usize {
         self.segments.len()
     }

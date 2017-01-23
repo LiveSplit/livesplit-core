@@ -1,6 +1,7 @@
 use {AtomicDateTime, Run, Time, TimerPhase, TimingMethod, TimeStamp, TimeSpan, Segment};
 use TimerPhase::*;
 use run::PERSONAL_BEST_COMPARISON_NAME;
+use odds::prelude::*;
 
 #[derive(Debug, Clone)]
 pub struct Timer {
@@ -220,11 +221,21 @@ impl Timer {
     }
 
     pub fn switch_to_next_comparison(&mut self) {
-        unimplemented!()
+        let comparisons = self.run.comparisons();
+        let index = comparisons.find(&self.current_comparison).unwrap();
+        let index = (index + 1) % comparisons.len();
+        self.current_comparison = comparisons[index].clone();
+
+        // TODO OnNextComparison
     }
 
     pub fn switch_to_previous_comparison(&mut self) {
-        unimplemented!()
+        let comparisons = self.run.comparisons();
+        let index = comparisons.find(&self.current_comparison).unwrap();
+        let index = (index + comparisons.len() - 1) % comparisons.len();
+        self.current_comparison = comparisons[index].clone();
+
+        // TODO OnPreviousComparison
     }
 
     #[inline]
