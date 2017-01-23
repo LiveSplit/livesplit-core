@@ -82,6 +82,11 @@ impl Timer {
     }
 
     #[inline]
+    pub fn set_current_timing_method(&mut self, method: TimingMethod) {
+        self.current_timing_method = method;
+    }
+
+    #[inline]
     pub fn current_comparison(&self) -> &str {
         &self.current_comparison
     }

@@ -1,7 +1,8 @@
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[repr(u8)]
 pub enum TimingMethod {
-    RealTime,
-    GameTime,
+    RealTime = 0,
+    GameTime = 1,
 }
 
 impl TimingMethod {

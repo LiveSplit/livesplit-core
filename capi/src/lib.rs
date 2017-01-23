@@ -3,7 +3,7 @@
 extern crate livesplit_core;
 extern crate libc;
 
-use livesplit_core::{Segment, Run, Timer, parser, saver};
+use livesplit_core::{Segment, Run, Timer, TimingMethod, parser, saver};
 use livesplit_core::component::{timer, title, splits, previous_segment, sum_of_best,
                                 possible_time_save};
 use libc::c_char;
@@ -141,6 +141,16 @@ pub unsafe extern "C" fn Timer_reset(this: *mut Timer, update_splits: bool) {
 #[no_mangle]
 pub unsafe extern "C" fn Timer_pause(this: *mut Timer) {
     acc_mut(this).pause();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Timer_current_timing_method(this: *const Timer) -> TimingMethod {
+    acc(this).current_timing_method()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Timer_set_current_timing_method(this: *mut Timer, method: TimingMethod) {
+    acc_mut(this).set_current_timing_method(method);
 }
 
 #[no_mangle]

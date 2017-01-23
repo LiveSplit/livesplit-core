@@ -30,7 +30,7 @@ impl Component {
     pub fn state(&self, timer: &Timer) -> State {
         let method = timer.current_timing_method();
         let time = timer.current_time();
-        let time = time[method].unwrap();
+        let time = time[method].or(time.real_time).unwrap_or_default();
         let current_comparison = timer.current_comparison();
 
         let color = match timer.current_phase() {
