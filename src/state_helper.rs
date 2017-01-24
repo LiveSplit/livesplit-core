@@ -155,7 +155,7 @@ pub fn check_live_delta(timer: &Timer,
         let current_segment = live_segment_time(timer, split_index, method);
         let best_segment = timer.run().segment(split_index).best_segment_time()[method];
         let best_segment_delta =
-            live_segment_delta(timer, split_index, best_segments::COMPARISON_NAME, method);
+            live_segment_delta(timer, split_index, best_segments::NAME, method);
         let comparison_delta = live_segment_delta(timer, split_index, comparison, method);
 
         if show_when_behind && current_time > current_split ||
@@ -223,7 +223,7 @@ pub fn check_best_segment(timer: &Timer, split_number: usize, method: TimingMeth
         return false;
     }
 
-    let delta = previous_segment_delta(timer, split_number, best_segments::COMPARISON_NAME, method);
+    let delta = previous_segment_delta(timer, split_number, best_segments::NAME, method);
     let current_segment = previous_segment_time(timer, split_number, method);
     let best_segment = timer.run().segment(split_number).best_segment_time()[method];
     best_segment.map_or(true, |b| {

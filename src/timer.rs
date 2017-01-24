@@ -1,7 +1,6 @@
 use {AtomicDateTime, Run, Time, TimerPhase, TimingMethod, TimeStamp, TimeSpan, Segment};
 use TimerPhase::*;
 use run::PERSONAL_BEST_COMPARISON_NAME;
-use odds::prelude::*;
 
 #[derive(Debug, Clone)]
 pub struct Timer {
@@ -21,7 +20,8 @@ pub struct Timer {
 
 impl Timer {
     #[inline]
-    pub fn new(run: Run) -> Self {
+    pub fn new(mut run: Run) -> Self {
+        run.regenerate_comparisons();
         Timer {
             run: run,
             phase: TimerPhase::NotRunning,
@@ -186,6 +186,8 @@ impl Timer {
             self.reset_splits();
 
             self.run.fix_splits();
+
+            self.run.regenerate_comparisons();
         }
     }
 
@@ -221,19 +223,21 @@ impl Timer {
     }
 
     pub fn switch_to_next_comparison(&mut self) {
-        let comparisons = self.run.comparisons();
-        let index = comparisons.find(&self.current_comparison).unwrap();
-        let index = (index + 1) % comparisons.len();
-        self.current_comparison = comparisons[index].clone();
+        let mut comparisons = self.run.comparisons();
+        let len = comparisons.len();
+        let index = comparisons.position(|c| c == self.current_comparison).unwrap();
+        let index = (index + 1) % len;
+        self.current_comparison = self.run.comparisons().nth(index).unwrap().to_owned();
 
         // TODO OnNextComparison
     }
 
     pub fn switch_to_previous_comparison(&mut self) {
-        let comparisons = self.run.comparisons();
-        let index = comparisons.find(&self.current_comparison).unwrap();
-        let index = (index + comparisons.len() - 1) % comparisons.len();
-        self.current_comparison = comparisons[index].clone();
+        let mut comparisons = self.run.comparisons();
+        let len = comparisons.len();
+        let index = comparisons.position(|c| c == self.current_comparison).unwrap();
+        let index = (index + len - 1) % len;
+        self.current_comparison = self.run.comparisons().nth(index).unwrap().to_owned();
 
         // TODO OnPreviousComparison
     }

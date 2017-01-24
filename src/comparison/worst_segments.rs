@@ -1,13 +1,13 @@
 use super::ComparisonGenerator;
 use {Segment, Time, TimingMethod};
-use sum_of_segments::best::calculate;
+use sum_of_segments::worst::calculate;
 
 #[derive(Copy, Clone, Debug)]
-pub struct BestSegments;
+pub struct WorstSegments;
 
-pub const NAME: &'static str = "Best Segments";
+pub const NAME: &'static str = "Worst Segments";
 
-impl ComparisonGenerator for BestSegments {
+impl ComparisonGenerator for WorstSegments {
     fn name(&self) -> &str {
         NAME
     }
@@ -21,13 +21,11 @@ impl ComparisonGenerator for BestSegments {
                   segments.len(),
                   &mut real_time_predictions,
                   false,
-                  false,
                   TimingMethod::RealTime);
         calculate(segments,
                   0,
                   segments.len(),
                   &mut game_time_predictions,
-                  false,
                   false,
                   TimingMethod::GameTime);
 

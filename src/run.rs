@@ -1,6 +1,7 @@
 use std::path::PathBuf;
 use std::cmp::max;
 use {AtomicDateTime, TimeSpan, Time, TimingMethod, Attempt, RunMetadata, Segment, Image};
+use comparison::{default_generators, ComparisonGenerator};
 use odds::vec::VecFindRemove;
 
 pub const PERSONAL_BEST_COMPARISON_NAME: &'static str = "Personal Best";
@@ -18,12 +19,13 @@ pub struct Run {
     path: Option<PathBuf>,
     segments: Vec<Segment>,
     custom_comparisons: Vec<String>,
+    comparison_generators: Vec<Box<ComparisonGenerator>>,
 }
 
 impl Run {
     #[inline]
     pub fn new(segments: Vec<Segment>) -> Self {
-        Run {
+        let mut run = Run {
             game_icon: Image::default(),
             game_name: String::new(),
             category_name: String::new(),
@@ -35,7 +37,10 @@ impl Run {
             path: None,
             segments: segments,
             custom_comparisons: vec![PERSONAL_BEST_COMPARISON_NAME.to_string()],
-        }
+            comparison_generators: default_generators(),
+        };
+        run.regenerate_comparisons();
+        run
     }
 
     #[inline]
@@ -145,8 +150,11 @@ impl Run {
     }
 
     #[inline]
-    pub fn comparisons(&self) -> &[String] {
-        &self.custom_comparisons
+    pub fn comparisons(&self) -> ComparisonsIter {
+        ComparisonsIter {
+            custom: &self.custom_comparisons,
+            generators: &self.comparison_generators,
+        }
     }
 
     #[inline]
@@ -192,6 +200,13 @@ impl Run {
         let comparison = comparison.into();
         if !self.custom_comparisons.contains(&comparison) {
             self.custom_comparisons.push(comparison);
+        }
+    }
+
+    #[inline]
+    pub fn regenerate_comparisons(&mut self) {
+        for generator in &mut self.comparison_generators {
+            generator.generate(&mut self.segments);
         }
     }
 
@@ -354,3 +369,33 @@ impl Run {
         }
     }
 }
+
+pub struct ComparisonsIter<'a> {
+    custom: &'a [String],
+    generators: &'a [Box<ComparisonGenerator>],
+}
+
+impl<'a> Iterator for ComparisonsIter<'a> {
+    type Item = &'a str;
+
+    fn next(&mut self) -> Option<&'a str> {
+        if !self.custom.is_empty() {
+            let (a, b) = self.custom.split_at(1);
+            self.custom = b;
+            Some(&a[0])
+        } else if !self.generators.is_empty() {
+            let (a, b) = self.generators.split_at(1);
+            self.generators = b;
+            Some(a[0].name())
+        } else {
+            None
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let len = self.custom.len() + self.generators.len();
+        (len, Some(len))
+    }
+}
+
+impl<'a> ExactSizeIterator for ComparisonsIter<'a> {}

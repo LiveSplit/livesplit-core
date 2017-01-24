@@ -28,7 +28,10 @@ impl Component {
     }
 
     pub fn state(&self, timer: &Timer) -> State {
-        let time = calculate_best(timer.run(), false, true, timer.current_timing_method());
+        let time = calculate_best(timer.run().segments(),
+                                  false,
+                                  true,
+                                  timer.current_timing_method());
 
         State {
             text: String::from("Sum of Best Segments"),
