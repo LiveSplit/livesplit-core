@@ -1,17 +1,21 @@
+pub mod average_segments;
 pub mod best_segments;
+pub mod best_split_times;
 pub mod none;
 pub mod worst_segments;
 
+pub use self::average_segments::AverageSegments;
 pub use self::best_segments::BestSegments;
+pub use self::best_split_times::BestSplitTimes;
 pub use self::none::None;
 pub use self::worst_segments::WorstSegments;
 
 use std::fmt::Debug;
-use Segment;
+use {Attempt, Segment};
 
 pub trait ComparisonGenerator: Debug + ComparisonGeneratorClone {
     fn name(&self) -> &str;
-    fn generate(&mut self, segments: &mut [Segment]);
+    fn generate(&mut self, segments: &mut [Segment], attempts: &[Attempt]);
 }
 
 pub trait ComparisonGeneratorClone {
@@ -33,5 +37,9 @@ impl Clone for Box<ComparisonGenerator> {
 }
 
 pub fn default_generators() -> Vec<Box<ComparisonGenerator>> {
-    vec![Box::new(BestSegments), Box::new(WorstSegments), Box::new(None)]
+    vec![Box::new(BestSegments),
+         Box::new(BestSplitTimes),
+         Box::new(AverageSegments),
+         Box::new(WorstSegments),
+         Box::new(None)]
 }

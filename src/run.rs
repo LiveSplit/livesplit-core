@@ -206,7 +206,7 @@ impl Run {
     #[inline]
     pub fn regenerate_comparisons(&mut self) {
         for generator in &mut self.comparison_generators {
-            generator.generate(&mut self.segments);
+            generator.generate(&mut self.segments, &self.attempt_history);
         }
     }
 

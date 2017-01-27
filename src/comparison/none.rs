@@ -1,5 +1,5 @@
 use super::ComparisonGenerator;
-use {Segment, Time};
+use {Attempt, Segment, Time};
 
 #[derive(Copy, Clone, Debug)]
 pub struct None;
@@ -11,7 +11,7 @@ impl ComparisonGenerator for None {
         NAME
     }
 
-    fn generate(&mut self, segments: &mut [Segment]) {
+    fn generate(&mut self, segments: &mut [Segment], _: &[Attempt]) {
         for segment in segments {
             *segment.comparison_mut(NAME) = Time::default();
         }

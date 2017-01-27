@@ -1,5 +1,5 @@
 use super::ComparisonGenerator;
-use {Segment, Time, TimingMethod};
+use {Attempt, Segment, Time, TimingMethod};
 use sum_of_segments::worst::calculate;
 
 #[derive(Copy, Clone, Debug)]
@@ -12,7 +12,7 @@ impl ComparisonGenerator for WorstSegments {
         NAME
     }
 
-    fn generate(&mut self, segments: &mut [Segment]) {
+    fn generate(&mut self, segments: &mut [Segment], _: &[Attempt]) {
         let mut real_time_predictions = vec![None; segments.len() + 1];
         let mut game_time_predictions = vec![None; segments.len() + 1];
 
