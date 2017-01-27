@@ -350,21 +350,22 @@ impl Run {
     }
 
     pub fn update_segment_history(&mut self, current_split_index: isize) {
-        let mut split_time = Time::zero();
+        let mut last_split_time = Time::zero();
 
         let segments = self.segments
             .iter_mut()
             .take(max(0, current_split_index) as usize);
+        let index = self.attempt_history.last().unwrap().index();
 
-        for split in segments {
-            let time = Time::op(split.split_time(), split_time, |a, b| a - b);
-            let index = self.attempt_history.last().unwrap().index();
-            split.segment_history_mut().insert(index, time);
-            if let Some(time) = time.real_time {
-                split_time.real_time = Some(time);
+        for segment in segments {
+            let split_time = segment.split_time();
+            let time = Time::op(split_time, last_split_time, |a, b| a - b);
+            segment.segment_history_mut().insert(index, time);
+            if let Some(time) = split_time.real_time {
+                last_split_time.real_time = Some(time);
             }
-            if let Some(time) = time.game_time {
-                split_time.game_time = Some(time);
+            if let Some(time) = split_time.game_time {
+                last_split_time.game_time = Some(time);
             }
         }
     }

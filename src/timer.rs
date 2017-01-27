@@ -184,9 +184,7 @@ impl Timer {
             }
 
             self.reset_splits();
-
             self.run.fix_splits();
-
             self.run.regenerate_comparisons();
         }
     }
