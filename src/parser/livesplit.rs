@@ -9,6 +9,7 @@ use chrono::{DateTime, UTC, TimeZone, ParseError as ChronoError};
 use super::bom_consumer::BomConsumer;
 use {Run, time_span, TimeSpan, Time, AtomicDateTime, Segment};
 use run::PERSONAL_BEST_COMPARISON_NAME;
+use super::xml_util::{self, text};
 
 quick_error! {
     #[derive(Debug)]
@@ -43,28 +44,11 @@ pub type Result<T> = StdResult<T, Error>;
 struct Version(u32, u32, u32, u32);
 
 fn child<'d>(element: &Element<'d>, name: &str) -> Result<Element<'d>> {
-    element.children()
-        .into_iter()
-        .filter_map(|c| c.element())
-        .find(|e| e.name().local_part() == name)
-        .ok_or(Error::ElementNotFound)
+    xml_util::child(element, name).ok_or(Error::ElementNotFound)
 }
 
 fn attribute<'d>(element: &Element<'d>, attribute: &str) -> Result<&'d str> {
-    element.attribute(attribute).map(|a| a.value()).ok_or(Error::AttributeNotFound)
-}
-
-fn text<'d>(element: &Element, buf: &'d mut String) -> &'d str {
-    buf.clear();
-
-    for part in element.children()
-        .into_iter()
-        .filter_map(|c| c.text())
-        .map(|t| t.text()) {
-        buf.push_str(part);
-    }
-
-    if buf.trim().is_empty() { "" } else { buf }
+    xml_util::attribute(element, attribute).ok_or(Error::AttributeNotFound)
 }
 
 fn time_span(element: &Element, buf: &mut String) -> Result<TimeSpan> {

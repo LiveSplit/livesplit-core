@@ -359,8 +359,8 @@ impl Run {
 
         for segment in segments {
             let split_time = segment.split_time();
-            let time = Time::op(split_time, last_split_time, |a, b| a - b);
-            segment.segment_history_mut().insert(index, time);
+            let segment_time = Time::op(split_time, last_split_time, |a, b| a - b);
+            segment.segment_history_mut().insert(index, segment_time);
             if let Some(time) = split_time.real_time {
                 last_split_time.real_time = Some(time);
             }

@@ -1,6 +1,7 @@
 use std::io::{self, Read, Seek, SeekFrom};
 use std::result::Result as StdResult;
 use std::str::{from_utf8, Utf8Error};
+use std::cmp::min;
 use byteorder::{ReadBytesExt, BigEndian as BE};
 use imagelib::{png, Rgba, ImageBuffer, ColorType};
 use {Run, Image, RealTime, TimeSpan, Time, Segment};
@@ -94,7 +95,7 @@ pub fn parse<R: Read + Seek>(mut source: R) -> Result<Run> {
             source.seek(SeekFrom::Current(seek_offset_base))?;
 
             let len = width as usize * height as usize * 4;
-            buf.reserve(len);
+            buf.reserve(min(len, 32 << 20));
             unsafe { buf.set_len(len) };
             source.read_exact(&mut buf)?;
 
