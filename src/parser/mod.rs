@@ -2,6 +2,7 @@ pub mod composite;
 pub mod face_split;
 pub mod livesplit;
 pub mod llanfair;
+pub mod llanfair2;
 pub mod llanfair_gered;
 pub mod portal2_live_timer;
 pub mod shit_split;
