@@ -1,5 +1,5 @@
-use std::collections::HashMap;
-use std::collections::hash_map;
+use std::collections::BTreeMap;
+use std::collections::btree_map;
 
 #[derive(Default, Clone, Debug)]
 pub struct RunMetadata {
@@ -7,7 +7,7 @@ pub struct RunMetadata {
     platform_name: String,
     uses_emulator: bool,
     region_name: String,
-    variables: HashMap<String, String>,
+    variables: BTreeMap<String, String>,
 }
 
 impl RunMetadata {
@@ -72,7 +72,7 @@ impl RunMetadata {
         self.variables.insert(name.into(), value.into());
     }
 
-    pub fn variables(&self) -> hash_map::Iter<String, String> {
+    pub fn variables(&self) -> btree_map::Iter<String, String> {
         self.variables.iter()
     }
 }

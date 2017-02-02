@@ -92,8 +92,8 @@ pub fn save<W: Write>(run: &Run, mut writer: W) -> Result<()> {
 
     let variables = doc.create_element("Variables");
     for (name, value) in run.metadata().variables() {
-        let variable = to_element(doc, "Variable", name);
-        variable.set_attribute_value("name", value);
+        let variable = to_element(doc, "Variable", value);
+        variable.set_attribute_value("name", name);
         variables.append_child(variable);
     }
     metadata.append_child(variables);

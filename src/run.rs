@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::path::PathBuf;
 use std::cmp::max;
 use {AtomicDateTime, TimeSpan, Time, TimingMethod, Attempt, RunMetadata, Segment, Image};
@@ -208,6 +209,94 @@ impl Run {
         for generator in &mut self.comparison_generators {
             generator.generate(&mut self.segments, &self.attempt_history);
         }
+    }
+
+    pub fn extended_category_name(&self,
+                                  show_region: bool,
+                                  show_platform: bool,
+                                  show_variables: bool)
+                                  -> Cow<str> {
+        let mut category_name: Cow<str> = Cow::Borrowed(&self.category_name);
+        let mut after_parenthesis = "";
+        let mut lower_buf = String::new();
+
+        if category_name.is_empty() {
+            return category_name;
+        }
+
+        let mut is_empty = true;
+        let mut has_pushed = false;
+
+        if let Some((i, u)) = self.category_name
+            .find('(')
+            .and_then(|i| self.category_name[i..].find(')').map(|u| (i, i + u))) {
+            category_name = Cow::Borrowed(&self.category_name[..u]);
+            is_empty = u == i + 1;
+            after_parenthesis = &self.category_name[u..];
+        }
+
+        {
+            let mut push = |buf: &mut String, values: &[&str]| {
+                if is_empty {
+                    if !has_pushed {
+                        buf.push_str(" (");
+                    }
+                    is_empty = false;
+                } else {
+                    buf.push_str(", ");
+                }
+                for value in values {
+                    buf.push_str(value);
+                }
+                has_pushed = true;
+            };
+
+            if show_variables {
+                for (name, value) in self.metadata.variables() {
+                    let mut name: &str = name;
+                    if name.ends_with('?') {
+                        name = &name[..name.len() - 1];
+                    }
+                    lower_buf.clear();
+                    lower_buf.extend(value.chars().flat_map(|c| c.to_lowercase()));
+                    match &lower_buf as &str {
+                        "yes" => push(category_name.to_mut(), &[name]),
+                        "no" => push(category_name.to_mut(), &["No ", value]),
+                        _ => push(category_name.to_mut(), &[value]),
+                    }
+                }
+            }
+
+            if show_region {
+                let region = self.metadata.region_name();
+                if !region.is_empty() {
+                    push(category_name.to_mut(), &[region]);
+                }
+            }
+
+            if show_platform {
+                let platform = self.metadata.platform_name();
+                let uses_emulator = self.metadata.uses_emulator();
+
+                match (!platform.is_empty(), uses_emulator) {
+                    (true, true) => push(category_name.to_mut(), &[platform, " Emulator"]),
+                    (true, false) => push(category_name.to_mut(), &[platform]),
+                    (false, true) => push(category_name.to_mut(), &["Emulator"]),
+                    _ => (),
+                }
+            }
+        }
+
+        if !after_parenthesis.is_empty() {
+            if !has_pushed {
+                return Cow::Borrowed(&self.category_name);
+            }
+            category_name.to_mut().push_str(after_parenthesis);
+        } else if !is_empty {
+            category_name.to_mut().push_str(")");
+        }
+
+        category_name
     }
 
     fn max_attempt_history_index(&self) -> Option<i32> {
