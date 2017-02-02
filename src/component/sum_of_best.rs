@@ -5,7 +5,7 @@ use time_formatter::Accuracy;
 use sum_of_segments::calculate_best;
 use std::io::Write;
 
-#[derive(Default)]
+#[derive(new, Default)]
 pub struct Component;
 
 #[derive(Serialize, Deserialize)]
@@ -23,10 +23,6 @@ impl State {
 }
 
 impl Component {
-    pub fn new() -> Self {
-        Default::default()
-    }
-
     pub fn state(&self, timer: &Timer) -> State {
         let time = calculate_best(timer.run().segments(),
                                   false,

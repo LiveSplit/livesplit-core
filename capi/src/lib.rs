@@ -154,9 +154,7 @@ pub unsafe extern "C" fn Timer_set_current_timing_method(this: *mut Timer, metho
 
 #[no_mangle]
 pub unsafe extern "C" fn Timer_current_comparison(this: *const Timer) -> *const c_char {
-    output_str(|s| {
-        s.push_str(acc(this).current_comparison());
-    })
+    output_str(|s| { s.push_str(acc(this).current_comparison()); })
 }
 
 #[no_mangle]
@@ -176,9 +174,7 @@ pub unsafe extern "C" fn Timer_print_debug(this: *mut Timer) {
 
 #[no_mangle]
 pub unsafe extern "C" fn Timer_save_run_as_lss(this: *const Timer) -> *const u8 {
-    output_vec(|o| {
-        saver::livesplit::save(acc(this).run(), o).unwrap();
-    })
+    output_vec(|o| { saver::livesplit::save(acc(this).run(), o).unwrap(); })
 }
 
 #[no_mangle]
@@ -195,9 +191,7 @@ pub unsafe extern "C" fn TimerComponent_drop(this_drop: *mut timer::Component) {
 pub unsafe extern "C" fn TimerComponent_state(this: *const timer::Component,
                                               timer: *const Timer)
                                               -> *const u8 {
-    output_vec(|o| {
-        acc(this).state(acc(timer)).write_json(o).unwrap();
-    })
+    output_vec(|o| { acc(this).state(acc(timer)).write_json(o).unwrap(); })
 }
 
 #[no_mangle]
@@ -214,9 +208,7 @@ pub unsafe extern "C" fn TitleComponent_drop(this_drop: *mut title::Component) {
 pub unsafe extern "C" fn TitleComponent_state(this: *mut title::Component,
                                               timer: *const Timer)
                                               -> *const u8 {
-    output_vec(|o| {
-        acc_mut(this).state(acc(timer)).write_json(o).unwrap();
-    })
+    output_vec(|o| { acc_mut(this).state(acc(timer)).write_json(o).unwrap(); })
 }
 
 #[no_mangle]
@@ -233,9 +225,7 @@ pub unsafe extern "C" fn SplitsComponent_drop(this_drop: *mut splits::Component)
 pub unsafe extern "C" fn SplitsComponent_state(this: *mut splits::Component,
                                                timer: *const Timer)
                                                -> *const u8 {
-    output_vec(|o| {
-        acc_mut(this).state(acc(timer)).write_json(o).unwrap();
-    })
+    output_vec(|o| { acc_mut(this).state(acc(timer)).write_json(o).unwrap(); })
 }
 
 #[no_mangle]
@@ -262,9 +252,7 @@ pub unsafe extern "C" fn PreviousSegmentComponent_drop(this_drop: *mut previous_
 pub unsafe extern "C" fn PreviousSegmentComponent_state(this: *const previous_segment::Component,
                                                         timer: *const Timer)
                                                         -> *const u8 {
-    output_vec(|o| {
-        acc(this).state(acc(timer)).write_json(o).unwrap();
-    })
+    output_vec(|o| { acc(this).state(acc(timer)).write_json(o).unwrap(); })
 }
 
 #[no_mangle]
@@ -281,9 +269,7 @@ pub unsafe extern "C" fn SumOfBestComponent_drop(this_drop: *mut sum_of_best::Co
 pub unsafe extern "C" fn SumOfBestComponent_state(this: *const sum_of_best::Component,
                                                   timer: *const Timer)
                                                   -> *const u8 {
-    output_vec(|o| {
-        acc(this).state(acc(timer)).write_json(o).unwrap();
-    })
+    output_vec(|o| { acc(this).state(acc(timer)).write_json(o).unwrap(); })
 }
 
 #[no_mangle]
@@ -300,7 +286,5 @@ pub unsafe extern "C" fn PossibleTimeSaveComponent_drop(this_drop: *mut possible
 pub unsafe extern "C" fn PossibleTimeSaveComponent_state(this: *const possible_time_save::Component,
                                                          timer: *const Timer)
                                                          -> *const u8 {
-    output_vec(|o| {
-        acc(this).state(acc(timer)).write_json(o).unwrap();
-    })
+    output_vec(|o| { acc(this).state(acc(timer)).write_json(o).unwrap(); })
 }

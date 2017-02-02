@@ -3,7 +3,7 @@ use time_formatter::{PossibleTimeSave, TimeFormatter};
 use serde_json::{to_writer, Result};
 use std::io::Write;
 
-#[derive(Default)]
+#[derive(new, Default)]
 pub struct Component;
 
 #[derive(Serialize, Deserialize)]
@@ -21,10 +21,6 @@ impl State {
 }
 
 impl Component {
-    pub fn new() -> Self {
-        Default::default()
-    }
-
     pub fn state(&self, timer: &Timer) -> State {
         let live = false;
 

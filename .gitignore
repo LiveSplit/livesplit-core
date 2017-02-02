@@ -3,3 +3,4 @@ capi/target
 capi/Cargo.lock
 emscripten/target
 emscripten/Cargo.lock
+js/livesplit.js

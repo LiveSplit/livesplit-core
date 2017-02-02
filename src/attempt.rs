@@ -1,6 +1,6 @@
 use {AtomicDateTime, Time, TimeSpan};
 
-#[derive(Clone, Debug)]
+#[derive(new, Clone, Debug)]
 pub struct Attempt {
     index: i32,
     time: Time,
@@ -9,20 +9,6 @@ pub struct Attempt {
 }
 
 impl Attempt {
-    #[inline]
-    pub fn new(index: i32,
-               time: Time,
-               started: Option<AtomicDateTime>,
-               ended: Option<AtomicDateTime>)
-               -> Self {
-        Attempt {
-            index: index,
-            time: time,
-            started: started,
-            ended: ended,
-        }
-    }
-
     /// Returns the Real Time Duration of the attempt.
     /// This either returns a 1.6+ Time Stamp based duration
     /// or the duration of the run (assuming it's not resetted)

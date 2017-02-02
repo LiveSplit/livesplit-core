@@ -1,4 +1,3 @@
-#![feature(proc_macro)]
 #![allow(unknown_lints)]
 
 #[macro_use]
@@ -10,10 +9,12 @@ extern crate sxd_document;
 #[macro_use]
 extern crate quick_error;
 extern crate base64;
-#[macro_use]
-extern crate try_opt;
 extern crate byteorder;
 extern crate image as imagelib;
+#[macro_use]
+extern crate derive_more;
+#[macro_use]
+extern crate derive_new;
 
 mod atomic_date_time;
 mod attempt;

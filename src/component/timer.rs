@@ -4,7 +4,7 @@ use state_helper::split_color;
 use serde_json::{to_writer, Result};
 use std::io::Write;
 
-#[derive(Default)]
+#[derive(new, Default)]
 pub struct Component;
 
 #[derive(Serialize, Deserialize)]
@@ -23,10 +23,6 @@ impl State {
 }
 
 impl Component {
-    pub fn new() -> Self {
-        Default::default()
-    }
-
     pub fn state(&self, timer: &Timer) -> State {
         let method = timer.current_timing_method();
         let time = timer.current_time();
@@ -37,7 +33,8 @@ impl Component {
             TimerPhase::Running if time >= TimeSpan::zero() => {
                 let pb_split_time = timer.current_split()
                     .unwrap()
-                    .comparison(current_comparison)[method];
+                    .comparison(current_comparison)
+                                        [method];
                 if let Some(pb_split_time) = pb_split_time {
                     split_color(timer,
                                 Some(time - pb_split_time),
@@ -57,7 +54,8 @@ impl Component {
                     .segments()
                     .last()
                     .unwrap()
-                    .comparison(current_comparison)[method];
+                    .comparison(current_comparison)
+                                  [method];
                 if pb_time.map_or(true, |t| time < t) {
                     Color::PersonalBest
                 } else {

@@ -1,10 +1,10 @@
-use std::ops::{Add, Sub, AddAssign, SubAssign};
+use std::ops::{AddAssign, SubAssign};
 use std::str::FromStr;
 use std::time::Duration as StdDuration;
 use std::num::ParseFloatError;
 use chrono::Duration;
 
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(From, Add, Sub, Neg, Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct TimeSpan(Duration);
 
 impl TimeSpan {
@@ -94,31 +94,9 @@ impl From<StdDuration> for TimeSpan {
     }
 }
 
-impl From<Duration> for TimeSpan {
-    fn from(duration: Duration) -> Self {
-        TimeSpan(duration)
-    }
-}
-
-impl Add for TimeSpan {
-    type Output = TimeSpan;
-
-    fn add(self, rhs: TimeSpan) -> TimeSpan {
-        TimeSpan(self.0 + rhs.0)
-    }
-}
-
 impl AddAssign for TimeSpan {
     fn add_assign(&mut self, rhs: TimeSpan) {
         self.0 = self.0 + rhs.0;
-    }
-}
-
-impl Sub for TimeSpan {
-    type Output = TimeSpan;
-
-    fn sub(self, rhs: TimeSpan) -> TimeSpan {
-        TimeSpan(self.0 - rhs.0)
     }
 }
 
