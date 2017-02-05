@@ -32,6 +32,7 @@ mod timing_method;
 pub mod component;
 pub mod comparison;
 pub mod parser;
+pub mod run_editor;
 pub mod saver;
 pub mod state_helper; // TODO Should maybe not be pub
 pub mod sum_of_segments; // TODO Should maybe not be pub
@@ -47,6 +48,7 @@ pub use self::run::Run;
 pub use self::run_metadata::RunMetadata;
 pub use self::segment_history::SegmentHistory;
 pub use self::segment::Segment;
+pub use self::run_editor::RunEditor;
 pub use self::time::{Time, RealTime, GameTime};
 pub use self::time_span::TimeSpan;
 pub use self::time_stamp::TimeStamp;

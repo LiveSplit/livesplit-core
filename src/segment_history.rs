@@ -22,6 +22,11 @@ impl SegmentHistory {
     }
 
     #[inline]
+    pub fn get_mut(&mut self, index: i32) -> Option<&mut Time> {
+        self.0.get_mut(&index)
+    }
+
+    #[inline]
     pub fn remove(&mut self, index: i32) {
         self.0.remove(&index);
     }

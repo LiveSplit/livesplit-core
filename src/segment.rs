@@ -25,6 +25,14 @@ impl Segment {
     }
 
     #[inline]
+    pub fn set_name<S>(&mut self, name: S)
+        where S: AsRef<str>
+    {
+        self.name.clear();
+        self.name.push_str(name.as_ref());
+    }
+
+    #[inline]
     pub fn icon(&self) -> &Image {
         &self.icon
     }
@@ -32,6 +40,11 @@ impl Segment {
     #[inline]
     pub fn set_icon<D: Into<Image>>(&mut self, image: D) {
         self.icon = image.into();
+    }
+
+    #[inline]
+    pub fn comparisons_mut(&mut self) -> &mut HashMap<String, Time> {
+        &mut self.comparisons
     }
 
     #[inline]
@@ -53,8 +66,33 @@ impl Segment {
     }
 
     #[inline]
+    pub fn personal_best_split_time(&self) -> Time {
+        self.comparisons
+            .get(PERSONAL_BEST_COMPARISON_NAME)
+            .cloned()
+            .unwrap_or_else(Time::default)
+    }
+
+    #[inline]
+    pub fn personal_best_split_time_mut(&mut self) -> &mut Time {
+        self.comparisons
+            .entry(PERSONAL_BEST_COMPARISON_NAME.to_string())
+            .or_insert_with(Time::default)
+    }
+
+    #[inline]
     pub fn set_personal_best_split_time(&mut self, time: Time) {
         self.comparisons.insert(PERSONAL_BEST_COMPARISON_NAME.into(), time);
+    }
+
+    #[inline]
+    pub fn best_segment_time(&self) -> Time {
+        self.best_segment_time
+    }
+
+    #[inline]
+    pub fn best_segment_time_mut(&mut self) -> &mut Time {
+        &mut self.best_segment_time
     }
 
     #[inline]
@@ -75,19 +113,6 @@ impl Segment {
     #[inline]
     pub fn clear_split_time(&mut self) {
         self.set_split_time(Default::default());
-    }
-
-    #[inline]
-    pub fn best_segment_time(&self) -> Time {
-        self.best_segment_time
-    }
-
-    #[inline]
-    pub fn personal_best_split_time(&self) -> Time {
-        self.comparisons
-            .get(PERSONAL_BEST_COMPARISON_NAME)
-            .cloned()
-            .unwrap_or_else(Time::default)
     }
 
     #[inline]

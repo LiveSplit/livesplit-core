@@ -126,7 +126,7 @@ impl Run {
     }
 
     #[inline]
-    pub fn segments_mut(&mut self) -> &mut [Segment] {
+    pub fn segments_mut(&mut self) -> &mut Vec<Segment> {
         &mut self.segments
     }
 
@@ -138,6 +138,11 @@ impl Run {
     #[inline]
     pub fn segment(&self, index: usize) -> &Segment {
         &self.segments[index]
+    }
+
+    #[inline]
+    pub fn segment_mut(&mut self, index: usize) -> &mut Segment {
+        &mut self.segments[index]
     }
 
     #[inline]
@@ -218,7 +223,6 @@ impl Run {
                                   -> Cow<str> {
         let mut category_name: Cow<str> = Cow::Borrowed(&self.category_name);
         let mut after_parenthesis = "";
-        let mut lower_buf = String::new();
 
         if category_name.is_empty() {
             return category_name;
@@ -253,16 +257,18 @@ impl Run {
 
             if show_variables {
                 for (name, value) in self.metadata.variables() {
-                    let mut name: &str = name;
-                    if name.ends_with('?') {
-                        name = &name[..name.len() - 1];
+                    let name = name.trim_right_matches('?');
+
+                    fn eq_lower(val: &str, lit: &str) -> bool {
+                        val.chars().flat_map(char::to_lowercase).eq(lit.chars())
                     }
-                    lower_buf.clear();
-                    lower_buf.extend(value.chars().flat_map(|c| c.to_lowercase()));
-                    match &lower_buf as &str {
-                        "yes" => push(category_name.to_mut(), &[name]),
-                        "no" => push(category_name.to_mut(), &["No ", value]),
-                        _ => push(category_name.to_mut(), &[value]),
+
+                    if eq_lower(value, "yes") {
+                        push(category_name.to_mut(), &[name]);
+                    } else if eq_lower(value, "no") {
+                        push(category_name.to_mut(), &["No ", value]);
+                    } else {
+                        push(category_name.to_mut(), &[value]);
                     }
                 }
             }
@@ -299,7 +305,7 @@ impl Run {
         category_name
     }
 
-    fn max_attempt_history_index(&self) -> Option<i32> {
+    pub fn max_attempt_history_index(&self) -> Option<i32> {
         self.attempt_history().iter().map(|x| x.index()).max()
     }
 
@@ -415,13 +421,14 @@ impl Run {
         cache.clear();
     }
 
-    fn min_segment_history_index(&self) -> i32 {
+    pub fn min_segment_history_index(&self) -> i32 {
         self.segments.iter().map(|s| s.segment_history().min_index()).min().unwrap()
     }
 
     pub fn import_segment_history(&mut self) {
-        let index = self.min_segment_history_index();
-        for &timing_method in &TimingMethod::all() {
+        let mut index = self.min_segment_history_index();
+        for &timing_method in &[TimingMethod::RealTime, TimingMethod::GameTime] {
+            index -= 1;
             let mut prev_time = TimeSpan::zero();
 
             for segment in self.segments_mut() {
@@ -435,6 +442,14 @@ impl Run {
                     prev_time = time;
                 }
             }
+        }
+    }
+
+    pub fn import_best_segment(&mut self, segment_index: usize) {
+        let best_segment_time = self.segments[segment_index].best_segment_time();
+        if best_segment_time.real_time.is_some() || best_segment_time.game_time.is_some() {
+            let index = self.min_segment_history_index() - 1;
+            self.segments[segment_index].segment_history_mut().insert(index, best_segment_time);
         }
     }
 

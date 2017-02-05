@@ -21,6 +21,8 @@ pub struct Timer {
 impl Timer {
     #[inline]
     pub fn new(mut run: Run) -> Self {
+        assert!(run.len() > 0);
+
         run.regenerate_comparisons();
         Timer {
             run: run,

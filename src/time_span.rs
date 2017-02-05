@@ -41,7 +41,10 @@ impl TimeSpan {
         self.0.num_microseconds().unwrap() as f64 / 1_000_000.0
     }
 
-    pub fn parse_opt(text: &str) -> Result<Option<TimeSpan>, ParseError> {
+    pub fn parse_opt<S>(text: S) -> Result<Option<TimeSpan>, ParseError>
+        where S: AsRef<str>
+    {
+        let text = text.as_ref();
         if text.trim().is_empty() {
             Ok(None)
         } else {
@@ -50,12 +53,12 @@ impl TimeSpan {
     }
 }
 
-#[derive(Debug)]
-pub struct ParseError(ParseFloatError);
-
-impl From<ParseFloatError> for ParseError {
-    fn from(e: ParseFloatError) -> Self {
-        ParseError(e)
+quick_error! {
+    #[derive(Debug)]
+    pub enum ParseError {
+        Float(err: ParseFloatError) {
+            from()
+        }
     }
 }
 
