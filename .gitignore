@@ -1,6 +1,8 @@
 target
 capi/target
 capi/Cargo.lock
+capi/bindings
+capi/bind_gen/target
 emscripten/target
 emscripten/Cargo.lock
 js/livesplit.js

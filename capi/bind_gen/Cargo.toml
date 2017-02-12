@@ -1,0 +1,7 @@
+[package]
+name = "bindings"
+version = "0.1.0"
+authors = ["Christopher Serr <christopher.serr@gmail.com>"]
+
+[dependencies]
+syntex_syntax = "0.58.0"
