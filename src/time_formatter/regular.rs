@@ -56,8 +56,8 @@ impl Display for Inner {
                 write!(f, "{}:{:02}", minutes, seconds)?;
             }
             match self.accuracy {
-                Accuracy::Hundredths => write!(f, ".{:02}", (subseconds * 100.0) as u8),
-                Accuracy::Tenths => write!(f, ".{:01}", (subseconds * 10.0) as u8),
+                Accuracy::Hundredths => write!(f, ".{:02}", (subseconds * 100.0).round() as u8),
+                Accuracy::Tenths => write!(f, ".{:01}", (subseconds * 10.0).round() as u8),
                 Accuracy::Seconds => Ok(()),
             }
         } else {

@@ -58,7 +58,7 @@ impl Display for FractionInner {
         if let Some(time) = self.0 {
             write!(f,
                    ".{:02}",
-                   ((time.total_seconds().abs() % 1.0) * 100.0) as u8)
+                   ((time.total_seconds().abs() % 1.0) * 100.0).round() as u8)
         } else {
             write!(f, ".00")
         }

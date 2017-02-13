@@ -127,21 +127,3 @@ impl RunEditor {
         }
     }
 }
-
-#[test]
-fn test() {
-    use std::fs::File;
-    use parser::livesplit;
-
-    let file = File::open(r"D:\Desktop\LiveSplit\Splits\Barney's Hide & Seek Game - any% no controller.lss").unwrap();
-    let run = livesplit::parse(file, None).unwrap();
-
-    let mut editor = RunEditor::new(run);
-    editor.select_only(2);
-    editor.remove_segments();
-    editor.selected_segment().parse_and_set_split_time("42:00").unwrap();
-    editor.select_additionally(1);
-    editor.selected_segment().set_name("Hi");
-    editor.selected_segment().parse_and_set_segment_time("100:00").unwrap();
-    panic!("{:#?}", editor.state());
-}
