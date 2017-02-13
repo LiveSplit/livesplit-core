@@ -15,6 +15,7 @@ extern crate image as imagelib;
 extern crate derive_more;
 #[macro_use]
 extern crate derive_new;
+extern crate rayon;
 
 mod atomic_date_time;
 mod attempt;

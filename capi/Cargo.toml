@@ -9,3 +9,6 @@ libc = "0.2.18"
 
 [lib]
 crate-type = ["cdylib", "rlib", "staticlib"]
+
+[profile.release]
+panic = 'abort'
