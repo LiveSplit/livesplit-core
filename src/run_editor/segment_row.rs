@@ -1,6 +1,5 @@
 use {Image, TimeSpan};
-use time_span::ParseError as ParseTimeSpanError;
-use super::RunEditor;
+use super::{RunEditor, ParseError};
 
 pub struct SegmentRow<'editor> {
     index: usize,
@@ -47,10 +46,14 @@ impl<'a> SegmentRow<'a> {
         self.editor.fix();
     }
 
-    pub fn parse_and_set_split_time<S>(&mut self, time: S) -> Result<(), ParseTimeSpanError>
+    pub fn parse_and_set_split_time<S>(&mut self, time: S) -> Result<(), ParseError>
         where S: AsRef<str>
     {
-        self.set_split_time(TimeSpan::parse_opt(time)?);
+        let time = TimeSpan::parse_opt(time)?;
+        if time.map_or(false, |t| t < TimeSpan::zero()) {
+            return Err(ParseError::NegativeTimeNotAllowed);
+        }
+        self.set_split_time(time);
         Ok(())
     }
 
@@ -65,10 +68,14 @@ impl<'a> SegmentRow<'a> {
         self.editor.fix();
     }
 
-    pub fn parse_and_set_segment_time<S>(&mut self, time: S) -> Result<(), ParseTimeSpanError>
+    pub fn parse_and_set_segment_time<S>(&mut self, time: S) -> Result<(), ParseError>
         where S: AsRef<str>
     {
-        self.set_segment_time(TimeSpan::parse_opt(time)?);
+        let time = TimeSpan::parse_opt(time)?;
+        if time.map_or(false, |t| t < TimeSpan::zero()) {
+            return Err(ParseError::NegativeTimeNotAllowed);
+        }
+        self.set_segment_time(time);
         Ok(())
     }
 
@@ -84,10 +91,14 @@ impl<'a> SegmentRow<'a> {
         self.editor.fix();
     }
 
-    pub fn parse_and_set_best_segment_time<S>(&mut self, time: S) -> Result<(), ParseTimeSpanError>
+    pub fn parse_and_set_best_segment_time<S>(&mut self, time: S) -> Result<(), ParseError>
         where S: AsRef<str>
     {
-        self.set_best_segment_time(TimeSpan::parse_opt(time)?);
+        let time = TimeSpan::parse_opt(time)?;
+        if time.map_or(false, |t| t < TimeSpan::zero()) {
+            return Err(ParseError::NegativeTimeNotAllowed);
+        }
+        self.set_best_segment_time(time);
         Ok(())
     }
 
@@ -106,10 +117,14 @@ impl<'a> SegmentRow<'a> {
     pub fn parse_and_set_comparison_time<S>(&mut self,
                                             comparison: &str,
                                             time: S)
-                                            -> Result<(), ParseTimeSpanError>
+                                            -> Result<(), ParseError>
         where S: AsRef<str>
     {
-        self.set_comparison_time(comparison, TimeSpan::parse_opt(time)?);
+        let time = TimeSpan::parse_opt(time)?;
+        if time.map_or(false, |t| t < TimeSpan::zero()) {
+            return Err(ParseError::NegativeTimeNotAllowed);
+        }
+        self.set_comparison_time(comparison, time);
         Ok(())
     }
 }

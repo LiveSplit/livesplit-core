@@ -10,6 +10,16 @@ mod state;
 pub use self::segment_row::SegmentRow;
 pub use self::state::{State, Segment as SegmentState, Buttons as ButtonsState};
 
+quick_error! {
+    #[derive(Debug)]
+    pub enum ParseError {
+        TimeSpan(err: ParseTimeSpanError) {
+            from()
+        }
+        NegativeTimeNotAllowed
+    }
+}
+
 pub struct RunEditor {
     run: Run,
     selected_method: TimingMethod,
@@ -114,7 +124,7 @@ impl RunEditor {
         self.raise_run_edited();
     }
 
-    pub fn parse_and_set_offset<S>(&mut self, offset: S) -> Result<(), ParseTimeSpanError>
+    pub fn parse_and_set_offset<S>(&mut self, offset: S) -> Result<(), ParseError>
         where S: AsRef<str>
     {
         self.set_offset(offset.as_ref().parse()?);
@@ -409,7 +419,7 @@ impl RunEditor {
             return;
         }
 
-        for i in 0..self.run.len() - 1 {
+        for i in (0..self.run.len() - 1).rev() {
             if self.selected_segments.contains(&i) {
                 self.switch_segments(i);
             }

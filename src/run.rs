@@ -344,6 +344,12 @@ impl Run {
     }
 
     fn fix_comparison_times(&mut self, method: TimingMethod) {
+        for segment in &mut self.segments {
+            if segment.best_segment_time_mut()[method].map_or(false, |t| t < TimeSpan::zero()) {
+                segment.best_segment_time_mut()[method] = None;
+            }
+        }
+
         for comparison in &self.custom_comparisons {
             let mut previous_time = TimeSpan::zero();
             for segment in &mut self.segments {
