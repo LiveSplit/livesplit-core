@@ -263,6 +263,20 @@ pub unsafe extern "C" fn Run_set_category_name(this: *mut Run, category: *const 
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn Run_extended_file_name(this: *const Run,
+                                                use_extended_category_name: bool)
+                                                -> *const c_char {
+    output_str(acc(this).extended_file_name(use_extended_category_name))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Run_extended_name(this: *const Run,
+                                           use_extended_category_name: bool)
+                                           -> *const c_char {
+    output_str(acc(this).extended_name(use_extended_category_name))
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn Run_extended_category_name(this: *const Run,
                                                     show_region: bool,
                                                     show_platform: bool,
@@ -406,6 +420,11 @@ pub unsafe extern "C" fn Timer_switch_to_previous_comparison(this: *mut Timer) {
 #[no_mangle]
 pub unsafe extern "C" fn Timer_current_phase(this: *const Timer) -> TimerPhase {
     acc(this).current_phase()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Timer_get_run(this: *const Timer) -> *const Run {
+    acc(this).run()
 }
 
 #[no_mangle]

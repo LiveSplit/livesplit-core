@@ -49,11 +49,7 @@ impl<'a> SegmentRow<'a> {
     pub fn parse_and_set_split_time<S>(&mut self, time: S) -> Result<(), ParseError>
         where S: AsRef<str>
     {
-        let time = TimeSpan::parse_opt(time)?;
-        if time.map_or(false, |t| t < TimeSpan::zero()) {
-            return Err(ParseError::NegativeTimeNotAllowed);
-        }
-        self.set_split_time(time);
+        self.set_split_time(parse_positive(time)?);
         Ok(())
     }
 
@@ -71,11 +67,7 @@ impl<'a> SegmentRow<'a> {
     pub fn parse_and_set_segment_time<S>(&mut self, time: S) -> Result<(), ParseError>
         where S: AsRef<str>
     {
-        let time = TimeSpan::parse_opt(time)?;
-        if time.map_or(false, |t| t < TimeSpan::zero()) {
-            return Err(ParseError::NegativeTimeNotAllowed);
-        }
-        self.set_segment_time(time);
+        self.set_segment_time(parse_positive(time)?);
         Ok(())
     }
 
@@ -94,11 +86,7 @@ impl<'a> SegmentRow<'a> {
     pub fn parse_and_set_best_segment_time<S>(&mut self, time: S) -> Result<(), ParseError>
         where S: AsRef<str>
     {
-        let time = TimeSpan::parse_opt(time)?;
-        if time.map_or(false, |t| t < TimeSpan::zero()) {
-            return Err(ParseError::NegativeTimeNotAllowed);
-        }
-        self.set_best_segment_time(time);
+        self.set_best_segment_time(parse_positive(time)?);
         Ok(())
     }
 
@@ -120,11 +108,18 @@ impl<'a> SegmentRow<'a> {
                                             -> Result<(), ParseError>
         where S: AsRef<str>
     {
-        let time = TimeSpan::parse_opt(time)?;
-        if time.map_or(false, |t| t < TimeSpan::zero()) {
-            return Err(ParseError::NegativeTimeNotAllowed);
-        }
-        self.set_comparison_time(comparison, time);
+        self.set_comparison_time(comparison, parse_positive(time)?);
         Ok(())
+    }
+}
+
+fn parse_positive<S>(time: S) -> Result<Option<TimeSpan>, ParseError>
+    where S: AsRef<str>
+{
+    let time = TimeSpan::parse_opt(time)?;
+    if time.map_or(false, |t| t < TimeSpan::zero()) {
+        Err(ParseError::NegativeTimeNotAllowed)
+    } else {
+        Ok(time)
     }
 }

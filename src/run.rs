@@ -216,6 +216,37 @@ impl Run {
         }
     }
 
+    pub fn extended_file_name(&self, use_extended_category_name: bool) -> String {
+        let extended_name = self.extended_name(use_extended_category_name);
+
+        extended_name.chars()
+            .filter(|&c| {
+                c != '\\' && c != '/' && c != ':' && c != '*' && c != '?' && c != '"' &&
+                c != '<' && c != '>' && c != '|'
+            })
+            .collect()
+    }
+
+    pub fn extended_name(&self, use_extended_category_name: bool) -> String {
+        let mut name = self.game_name().to_owned();
+
+        let category_name = if use_extended_category_name {
+            self.extended_category_name(false, false, true)
+        } else {
+            self.category_name().into()
+        };
+
+        if !category_name.is_empty() {
+            if !name.is_empty() {
+                name.push_str(" - ");
+            }
+
+            name.push_str(&category_name);
+        }
+
+        name
+    }
+
     pub fn extended_category_name(&self,
                                   show_region: bool,
                                   show_platform: bool,
