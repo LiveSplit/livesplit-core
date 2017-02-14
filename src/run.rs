@@ -347,10 +347,11 @@ impl Run {
         for comparison in &self.custom_comparisons {
             let mut previous_time = TimeSpan::zero();
             for segment in &mut self.segments {
-                if let Some(time) = segment.comparison_mut(comparison)[method] {
+                if let Some(mut time) = segment.comparison_mut(comparison)[method] {
                     // Prevent comparison times from decreasing from one split to the next
                     if time < previous_time {
-                        segment.comparison_mut(comparison)[method] = Some(previous_time);
+                        time = previous_time;
+                        segment.comparison_mut(comparison)[method] = Some(time);
                     }
 
                     // Fix Best Segment time if the PB segment is faster
