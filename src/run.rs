@@ -356,7 +356,7 @@ impl Run {
                     // Fix Best Segment time if the PB segment is faster
                     let current_segment = time - previous_time;
                     if comparison == PERSONAL_BEST_COMPARISON_NAME {
-                        let time = &mut segment.best_segment_time()[method];
+                        let time = &mut segment.best_segment_time_mut()[method];
                         if time.map_or(true, |t| t > current_segment) {
                             *time = Some(current_segment);
                         }

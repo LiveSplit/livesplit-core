@@ -219,6 +219,8 @@ impl RunEditor {
         }
         self.run.segments_mut().insert(selected_segment, segment);
 
+        self.select_only(selected_segment);
+
         self.fix();
     }
 
@@ -238,8 +240,7 @@ impl RunEditor {
         }
         self.run.segments_mut().insert(next_segment, segment);
 
-        self.unselect(selected_segment);
-        self.select_additionally(next_segment);
+        self.select_only(next_segment);
 
         self.fix();
     }
@@ -323,8 +324,15 @@ impl RunEditor {
                 removed += 1;
             }
         }
-        let last = self.selected_segments.len() - 1;
-        self.selected_segments.drain(..last);
+
+        let selected_segment = self.selected_segment_index();
+        let above_count = self.selected_segments.iter().filter(|&&i| i < selected_segment).count();
+        let mut new_index = selected_segment - above_count;
+        if new_index >= self.run.len() {
+            new_index = self.run.len() - 1;
+        }
+        self.selected_segments.clear();
+        self.selected_segments.push(new_index);
 
         self.fix();
     }
@@ -370,10 +378,14 @@ impl RunEditor {
     }
 
     pub fn can_move_segments_up(&self) -> bool {
-        self.selected_segments != &[0]
+        !self.selected_segments.iter().any(|&s| s == 0)
     }
 
     pub fn move_segments_up(&mut self) {
+        if !self.can_move_segments_up() {
+            return;
+        }
+
         for i in 0..self.run.len() - 1 {
             if self.selected_segments.contains(&(i + 1)) {
                 self.switch_segments(i);
@@ -388,10 +400,15 @@ impl RunEditor {
     }
 
     pub fn can_move_segments_down(&self) -> bool {
-        self.selected_segments != &[self.run.len() - 1]
+        let last_index = self.run.len() - 1;
+        !self.selected_segments.iter().any(|&s| s == last_index)
     }
 
     pub fn move_segments_down(&mut self) {
+        if !self.can_move_segments_down() {
+            return;
+        }
+
         for i in 0..self.run.len() - 1 {
             if self.selected_segments.contains(&i) {
                 self.switch_segments(i);
