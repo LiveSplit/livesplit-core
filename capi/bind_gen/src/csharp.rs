@@ -1,55 +1,48 @@
 use std::io::{Write, Result};
-use Function;
-use syntex_syntax::ast::TyKind;
-use syntex_syntax::symbol::Symbol;
+use {Function, Type, TypeKind};
 
-fn get_type(ty: &TyKind) -> &'static str {
-    if let &TyKind::Ptr(ref ptr) = ty {
-        if let &TyKind::Path(_, ref path) = &ptr.ty.node {
-            if let Some(segment) = path.segments.last() {
-                let name = segment.identifier.name;
-                if name == "c_char" {
-                    return "string";
-                } else {
-                    return "IntPtr";
-                }
-            }
-        }
-    } else if let &TyKind::Path(_, ref path) = ty {
-        if let Some(segment) = path.segments.last() {
-            let name = segment.identifier.name;
-            if name == "i8" {
-                return "sbyte";
-            } else if name == "i16" {
-                return "short";
-            } else if name == "i32" {
-                return "int";
-            } else if name == "i64" {
-                return "long";
-            } else if name == "u8" {
-                return "byte";
-            } else if name == "u16" {
-                return "ushort";
-            } else if name == "u32" {
-                return "uint";
-            } else if name == "u64" {
-                return "ulong";
-            } else if name == "f32" {
-                return "float";
-            } else if name == "f64" {
-                return "double";
-            } else if name == "usize" {
-                return "IntPtr";
-            } else if name == "bool" {
-                return "bool"; // Not entirely sure about this
-            } else if name == "TimingMethod" {
-                return "byte";
-            } else if name == "TimerPhase" {
-                return "byte";
+fn to_camel_case(snake_case: &str, cap_first_letter: bool) -> String {
+    let mut camel_case = String::new();
+
+    for (u, split) in snake_case.split('_').enumerate() {
+        for (i, c) in split.char_indices() {
+            if (cap_first_letter || u != 0) && i == 0 {
+                camel_case.extend(c.to_uppercase());
+            } else {
+                camel_case.push(c);
             }
         }
     }
-    panic!("Unknown type {:#?}", ty);
+
+    camel_case
+}
+
+fn get_type(ty: &Type, output: bool) -> &str {
+    match (ty.kind, ty.name.as_str()) {
+        (TypeKind::Ref, "c_char") => if output { "LSCCoreString" } else { "string" },
+        (TypeKind::Ref, _) |
+        (TypeKind::RefMut, _) => "IntPtr",
+        (_, t) if !ty.is_custom => {
+            match t {
+                "i8" => "sbyte",
+                "i16" => "short",
+                "i32" => "int",
+                "i64" => "long",
+                "u8" => "byte",
+                "u16" => "ushort",
+                "u32" => "uint",
+                "u64" => "ulong",
+                "usize" => "UIntPtr",
+                "f32" => "float",
+                "f64" => "double",
+                "bool" => "bool",
+                "()" => "void",
+                "c_char" => "char",
+                x => x,
+            }
+        }
+        _ => "IntPtr",
+    }
 }
 
 pub fn write<W: Write>(mut writer: W, functions: &[Function]) -> Result<()> {
@@ -65,42 +58,49 @@ using System.Text;
 
 namespace LiveSplitCore
 {
-    class LiveSplitCoreNative
+    public class LiveSplitCoreNative
     {"#)?;
 
     for function in functions {
         let name = function.name.to_string();
-        let new_prefix = name.split('_').next().unwrap();
-        if !prefix.is_empty() && new_prefix != prefix {
-            writeln!(writer, "")?;
+        let mut splits = name.splitn(2, '_');
+        let new_prefix = splits.next().unwrap();
+        let postfix = splits.next().unwrap();
+        if new_prefix != prefix {
+            if !prefix.is_empty() {
+                writeln!(writer,
+                         "{}",
+                         r#"
+        }"#)?;
+            }
+            write!(writer,
+                   r#"
+        public static class {}
+        {{"#,
+                   new_prefix)?;
         }
         prefix = new_prefix.to_string();
 
         write!(writer,
                r#"
-        [DllImport("livesplit-core")]
-        public static extern {} {}("#,
-               function.output
-                   .map(get_type)
-                   .map(|t| if t == "string" { "LSCoreString" } else { t })
-                   .unwrap_or("void"),
-               function.name)?;
+            [DllImport("livesplit-core", EntryPoint="{}")]
+            public static extern {} {}("#,
+               &function.name,
+               get_type(&function.output, true),
+               to_camel_case(&postfix, true))?;
 
-        for (i, &(name, typ)) in function.inputs.iter().enumerate() {
+        for (i, &(ref name, ref typ)) in function.inputs.iter().enumerate() {
             if i != 0 {
                 write!(writer, ", ")?;
             }
             write!(writer,
                    "{} {}",
-                   get_type(typ),
-                   name.map(|n| if n == "this" {
-                           Symbol::intern("self")
-                       } else if n == "this_drop" {
-                           Symbol::intern("self_drop")
-                       } else {
-                           n
-                       })
-                       .unwrap_or_else(|| Symbol::intern("parameter")))?;
+                   get_type(typ, false),
+                   if name == "this" {
+                       String::from("self")
+                   } else {
+                       to_camel_case(name, false)
+                   })?;
         }
 
         write!(writer, ");")?;
@@ -109,6 +109,7 @@ namespace LiveSplitCore
     writeln!(writer,
              "{}",
              r#"
+        }
     }
 
     internal class LSCoreString : SafeHandle

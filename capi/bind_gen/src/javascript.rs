@@ -1,19 +1,12 @@
 use std::io::{Write, Result};
-use Function;
-use syntex_syntax::ast::TyKind;
+use {Function, Type, TypeKind};
 
-fn get_type(ty: &TyKind) -> &'static str {
-    if let &TyKind::Ptr(ref ptr) = ty {
-        if let &TyKind::Path(_, ref path) = &ptr.ty.node {
-            if let Some(segment) = path.segments.last() {
-                let name = segment.identifier.name;
-                if name == "c_char" {
-                    return "'string'";
-                }
-            }
-        }
+fn get_type(ty: &Type) -> &str {
+    match (ty.kind, ty.name.as_str()) {
+        (TypeKind::Ref, "c_char") => r#""string""#,
+        (TypeKind::Value, "()") => "null",
+        _ => r#""number""#,
     }
-    "'number'"
 }
 
 pub fn write<W: Write>(mut writer: W, functions: &[Function]) -> Result<()> {
@@ -29,10 +22,10 @@ pub fn write<W: Write>(mut writer: W, functions: &[Function]) -> Result<()> {
 
         write!(writer,
                "var {0} = ls.cwrap('{0}', {1}, [",
-               function.name,
-               function.output.map_or("null", get_type))?;
+               &function.name,
+               get_type(&function.output))?;
 
-        for (i, &(_, typ)) in function.inputs.iter().enumerate() {
+        for (i, &(_, ref typ)) in function.inputs.iter().enumerate() {
             if i != 0 {
                 write!(writer, ", ")?;
             }

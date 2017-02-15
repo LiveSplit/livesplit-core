@@ -5,8 +5,12 @@ extern crate libc;
 
 use livesplit_core::{Segment, Run, RunMetadata, RunEditor, TimeSpan, Time, Timer, TimerPhase,
                      TimingMethod, SegmentHistory, Attempt, parser, saver};
-use livesplit_core::component::{timer, title, splits, previous_segment, sum_of_best,
-                                possible_time_save};
+use livesplit_core::component::timer::Component as TimerComponent;
+use livesplit_core::component::title::Component as TitleComponent;
+use livesplit_core::component::splits::Component as SplitsComponent;
+use livesplit_core::component::previous_segment::Component as PreviousSegmentComponent;
+use livesplit_core::component::sum_of_best::Component as SumOfBestComponent;
+use livesplit_core::component::possible_time_save::Component as PossibleTimeSaveComponent;
 use libc::c_char;
 use std::ffi::CStr;
 use std::cell::{Cell, RefCell};
@@ -16,6 +20,26 @@ use std::collections::hash_map;
 
 type SegmentHistoryIter = hash_map::Iter<'static, i32, Time>;
 type SegmentHistoryElement = (&'static i32, &'static Time);
+type SegmentList = Vec<Segment>;
+
+mod owned {
+    use livesplit_core as lsc;
+
+    pub type TimeSpan = *mut lsc::TimeSpan;
+    pub type Time = *mut lsc::Time;
+    pub type Segment = *mut lsc::Segment;
+    pub type SegmentHistoryIter = *mut super::SegmentHistoryIter;
+    pub type SegmentList = *mut super::SegmentList;
+    pub type Run = *mut lsc::Run;
+    pub type Timer = *mut lsc::Timer;
+    pub type TimerComponent = *mut lsc::component::timer::Component;
+    pub type TitleComponent = *mut lsc::component::title::Component;
+    pub type SplitsComponent = *mut lsc::component::splits::Component;
+    pub type PreviousSegmentComponent = *mut lsc::component::previous_segment::Component;
+    pub type SumOfBestComponent = *mut lsc::component::sum_of_best::Component;
+    pub type PossibleTimeSaveComponent = *mut lsc::component::possible_time_save::Component;
+    pub type RunEditor = *mut lsc::RunEditor;
+}
 
 thread_local! {
     static OUTPUT_STR: RefCell<String> = RefCell::new(String::new());
@@ -87,15 +111,14 @@ unsafe fn acc<T>(data: *const T) -> &'static T {
     &*data
 }
 
-
 #[no_mangle]
-pub unsafe extern "C" fn TimeSpan_clone(this: *const TimeSpan) -> *mut TimeSpan {
+pub unsafe extern "C" fn TimeSpan_clone(this: *const TimeSpan) -> owned::TimeSpan {
     alloc(*acc(this))
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn TimeSpan_drop(this_drop: *mut TimeSpan) {
-    own(this_drop);
+pub unsafe extern "C" fn TimeSpan_drop(this: owned::TimeSpan) {
+    own(this);
 }
 
 #[no_mangle]
@@ -104,13 +127,13 @@ pub unsafe extern "C" fn TimeSpan_total_seconds(this: *const TimeSpan) -> f64 {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Time_clone(this: *const Time) -> *mut Time {
+pub unsafe extern "C" fn Time_clone(this: *const Time) -> owned::Time {
     alloc(*acc(this))
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Time_drop(this_drop: *mut Time) {
-    own(this_drop);
+pub unsafe extern "C" fn Time_drop(this: owned::Time) {
+    own(this);
 }
 
 #[no_mangle]
@@ -131,13 +154,13 @@ pub unsafe extern "C" fn Time_index(this: *const Time,
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Segment_new(name: *const c_char) -> *mut Segment {
+pub unsafe extern "C" fn Segment_new(name: *const c_char) -> owned::Segment {
     alloc(Segment::new(str(name)))
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Segment_drop(this_drop: *mut Segment) {
-    own(this_drop);
+pub unsafe extern "C" fn Segment_drop(this: owned::Segment) {
+    own(this);
 }
 
 #[no_mangle]
@@ -174,13 +197,13 @@ pub unsafe extern "C" fn Segment_segment_history(this: *const Segment) -> *const
 
 #[no_mangle]
 pub unsafe extern "C" fn SegmentHistory_iter(this: *const SegmentHistory)
-                                             -> *mut SegmentHistoryIter {
+                                             -> owned::SegmentHistoryIter {
     alloc(acc(this).iter())
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn SegmentHistoryIter_drop(this_drop: *mut SegmentHistoryIter) {
-    own(this_drop);
+pub unsafe extern "C" fn SegmentHistoryIter_drop(this: owned::SegmentHistoryIter) {
+    own(this);
 }
 
 #[no_mangle]
@@ -208,27 +231,27 @@ pub unsafe extern "C" fn SegmentHistoryElement_time(this: *const SegmentHistoryE
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn SegmentList_new() -> *mut Vec<Segment> {
+pub unsafe extern "C" fn SegmentList_new() -> owned::SegmentList {
     alloc(Vec::new())
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn SegmentList_push(this: *mut Vec<Segment>, segment_drop: *mut Segment) {
-    acc_mut(this).push(own(segment_drop));
+pub unsafe extern "C" fn SegmentList_push(this: *mut SegmentList, segment: owned::Segment) {
+    acc_mut(this).push(own(segment));
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Run_new(segments_drop: *mut Vec<Segment>) -> *mut Run {
-    alloc(Run::new(own(segments_drop)))
+pub unsafe extern "C" fn Run_new(segments: owned::SegmentList) -> owned::Run {
+    alloc(Run::new(own(segments)))
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Run_drop(this_drop: *mut Run) {
-    own(this_drop);
+pub unsafe extern "C" fn Run_drop(this: owned::Run) {
+    own(this);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Run_parse(data: *const u8, length: usize) -> *mut Run {
+pub unsafe extern "C" fn Run_parse(data: *const u8, length: usize) -> owned::Run {
     match parser::composite::parse(Cursor::new(slice::from_raw_parts(data, length)),
                                    None,
                                    false) {
@@ -353,13 +376,13 @@ pub unsafe extern "C" fn RunMetadata_region_name(this: *const RunMetadata) -> *c
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Timer_new(run_drop: *mut Run) -> *mut Timer {
-    alloc(Timer::new(own(run_drop)))
+pub unsafe extern "C" fn Timer_new(run: owned::Run) -> owned::Timer {
+    alloc(Timer::new(own(run)))
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Timer_drop(this_drop: *mut Timer) {
-    own(this_drop);
+pub unsafe extern "C" fn Timer_drop(this: owned::Timer) {
+    own(this);
 }
 
 #[no_mangle]
@@ -428,13 +451,13 @@ pub unsafe extern "C" fn Timer_get_run(this: *const Timer) -> *const Run {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Timer_clone_run(this: *const Timer) -> *mut Run {
+pub unsafe extern "C" fn Timer_clone_run(this: *const Timer) -> owned::Run {
     alloc(acc(this).run().clone())
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Timer_print_debug(this: *mut Timer) {
-    println!("{:#?}", acc_mut(this));
+pub unsafe extern "C" fn Timer_print_debug(this: *const Timer) {
+    println!("{:#?}", acc(this));
 }
 
 #[no_mangle]
@@ -443,125 +466,125 @@ pub unsafe extern "C" fn Timer_save_run_as_lss(this: *const Timer) -> *const c_c
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn TimerComponent_new() -> *mut timer::Component {
-    alloc(timer::Component::new())
+pub unsafe extern "C" fn TimerComponent_new() -> owned::TimerComponent {
+    alloc(TimerComponent::new())
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn TimerComponent_drop(this_drop: *mut timer::Component) {
-    own(this_drop);
+pub unsafe extern "C" fn TimerComponent_drop(this: owned::TimerComponent) {
+    own(this);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn TimerComponent_state(this: *const timer::Component,
+pub unsafe extern "C" fn TimerComponent_state(this: *const TimerComponent,
                                               timer: *const Timer)
                                               -> *const c_char {
     output_vec(|o| { acc(this).state(acc(timer)).write_json(o).unwrap(); })
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn TitleComponent_new() -> *mut title::Component {
-    alloc(title::Component::new())
+pub unsafe extern "C" fn TitleComponent_new() -> owned::TitleComponent {
+    alloc(TitleComponent::new())
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn TitleComponent_drop(this_drop: *mut title::Component) {
-    own(this_drop);
+pub unsafe extern "C" fn TitleComponent_drop(this: owned::TitleComponent) {
+    own(this);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn TitleComponent_state(this: *mut title::Component,
+pub unsafe extern "C" fn TitleComponent_state(this: *mut TitleComponent,
                                               timer: *const Timer)
                                               -> *const c_char {
     output_vec(|o| { acc_mut(this).state(acc(timer)).write_json(o).unwrap(); })
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn SplitsComponent_new() -> *mut splits::Component {
-    alloc(splits::Component::new())
+pub unsafe extern "C" fn SplitsComponent_new() -> owned::SplitsComponent {
+    alloc(SplitsComponent::new())
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn SplitsComponent_drop(this_drop: *mut splits::Component) {
-    own(this_drop);
+pub unsafe extern "C" fn SplitsComponent_drop(this: owned::SplitsComponent) {
+    own(this);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn SplitsComponent_state(this: *mut splits::Component,
+pub unsafe extern "C" fn SplitsComponent_state(this: *mut SplitsComponent,
                                                timer: *const Timer)
                                                -> *const c_char {
     output_vec(|o| { acc_mut(this).state(acc(timer)).write_json(o).unwrap(); })
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn SplitsComponent_scroll_up(this: *mut splits::Component) {
+pub unsafe extern "C" fn SplitsComponent_scroll_up(this: *mut SplitsComponent) {
     acc_mut(this).scroll_up();
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn SplitsComponent_scroll_down(this: *mut splits::Component) {
+pub unsafe extern "C" fn SplitsComponent_scroll_down(this: *mut SplitsComponent) {
     acc_mut(this).scroll_down();
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn PreviousSegmentComponent_new() -> *mut previous_segment::Component {
-    alloc(previous_segment::Component::new())
+pub unsafe extern "C" fn PreviousSegmentComponent_new() -> owned::PreviousSegmentComponent {
+    alloc(PreviousSegmentComponent::new())
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn PreviousSegmentComponent_drop(this_drop: *mut previous_segment::Component) {
-    own(this_drop);
+pub unsafe extern "C" fn PreviousSegmentComponent_drop(this: owned::PreviousSegmentComponent) {
+    own(this);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn PreviousSegmentComponent_state(this: *const previous_segment::Component,
+pub unsafe extern "C" fn PreviousSegmentComponent_state(this: *const PreviousSegmentComponent,
                                                         timer: *const Timer)
                                                         -> *const c_char {
     output_vec(|o| { acc(this).state(acc(timer)).write_json(o).unwrap(); })
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn SumOfBestComponent_new() -> *mut sum_of_best::Component {
-    alloc(sum_of_best::Component::new())
+pub unsafe extern "C" fn SumOfBestComponent_new() -> owned::SumOfBestComponent {
+    alloc(SumOfBestComponent::new())
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn SumOfBestComponent_drop(this_drop: *mut sum_of_best::Component) {
-    own(this_drop);
+pub unsafe extern "C" fn SumOfBestComponent_drop(this: owned::SumOfBestComponent) {
+    own(this);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn SumOfBestComponent_state(this: *const sum_of_best::Component,
+pub unsafe extern "C" fn SumOfBestComponent_state(this: *const SumOfBestComponent,
                                                   timer: *const Timer)
                                                   -> *const c_char {
     output_vec(|o| { acc(this).state(acc(timer)).write_json(o).unwrap(); })
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn PossibleTimeSaveComponent_new() -> *mut possible_time_save::Component {
-    alloc(possible_time_save::Component::new())
+pub unsafe extern "C" fn PossibleTimeSaveComponent_new() -> owned::PossibleTimeSaveComponent {
+    alloc(PossibleTimeSaveComponent::new())
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn PossibleTimeSaveComponent_drop(this_drop: *mut possible_time_save::Component) {
-    own(this_drop);
+pub unsafe extern "C" fn PossibleTimeSaveComponent_drop(this: owned::PossibleTimeSaveComponent) {
+    own(this);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn PossibleTimeSaveComponent_state(this: *const possible_time_save::Component,
+pub unsafe extern "C" fn PossibleTimeSaveComponent_state(this: *const PossibleTimeSaveComponent,
                                                          timer: *const Timer)
                                                          -> *const c_char {
     output_vec(|o| { acc(this).state(acc(timer)).write_json(o).unwrap(); })
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn RunEditor_new(run_drop: *mut Run) -> *mut RunEditor {
-    alloc(RunEditor::new(own(run_drop)))
+pub unsafe extern "C" fn RunEditor_new(run: owned::Run) -> owned::RunEditor {
+    alloc(RunEditor::new(own(run)))
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn RunEditor_close(this_drop: *mut RunEditor) -> *mut Run {
-    alloc(own(this_drop).close())
+pub unsafe extern "C" fn RunEditor_close(this: owned::RunEditor) -> owned::Run {
+    alloc(own(this).close())
 }
 
 #[no_mangle]
