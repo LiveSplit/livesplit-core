@@ -1,3 +1,4 @@
+use pdqsort::sort_by_key;
 use super::ComparisonGenerator;
 use {Attempt, Segment, TimeSpan, TimingMethod};
 
@@ -46,7 +47,7 @@ fn generate(buf: &mut Vec<(i32, TimeSpan)>, segments: &mut [Segment], method: Ti
                 }
             }
 
-            buf.sort_by_key(|&(id, _)| id);
+            sort_by_key(buf, |&(id, _)| id);
 
             if buf.is_empty() {
                 total_time = None;

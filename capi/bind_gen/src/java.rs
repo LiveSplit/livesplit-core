@@ -53,15 +53,44 @@ pub fn write<W: Write>(mut writer: W, functions: &[Function]) -> Result<()> {
            r#"package livesplitcore;
 
 import com.sun.jna.*;
+import java.lang.reflect.Method;
+import java.util.HashMap;
 
 public interface LiveSplitCore extends Library {
-    LiveSplitCore INSTANCE = (LiveSplitCore) Native.loadLibrary("livesplit-core", LiveSplitCore.class);
+    static class Mapper implements FunctionMapper {
+        @Override
+        public String getFunctionName(NativeLibrary nativeLibrary, Method method) {
+            String name = method.getName();
+            StringBuilder builder = new StringBuilder();
+            boolean foundUnderscore = false;
+            for (int i = 0; i < name.length(); i++) {
+                char c = name.charAt(i);
+                if (foundUnderscore) {
+                    if (Character.isUpperCase(c)) {
+                        builder.append('_');
+                        c = Character.toLowerCase(c);
+                    }
+                } else if (c == '_') {
+                    foundUnderscore = true;
+                }
+                builder.append(c);
+            }
+            return builder.toString();
+        }
+    }
+
+    LiveSplitCore INSTANCE = (LiveSplitCore) Native.loadLibrary("livesplit-core", LiveSplitCore.class, new HashMap() {
+        {
+            put(Library.OPTION_FUNCTION_MAPPER, new Mapper());
+        }
+    });
 "#)?;
 
     for function in functions {
         let name = function.name.to_string();
         let mut splits = name.splitn(2, '_');
         let new_prefix = splits.next().unwrap();
+        let postfix = splits.next().unwrap();
         if !prefix.is_empty() && new_prefix != prefix {
             writeln!(writer, "")?;
         }
@@ -71,7 +100,7 @@ public interface LiveSplitCore extends Library {
                r#"
     {} {}("#,
                get_type(&function.output),
-               &function.name)?;
+               format!("{}_{}", prefix, to_camel_case(postfix)))?;
 
         for (i, &(ref name, ref typ)) in function.inputs.iter().enumerate() {
             if i != 0 {

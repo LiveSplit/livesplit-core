@@ -4,6 +4,7 @@ mod c;
 mod csharp;
 mod javascript;
 mod java;
+mod ruby;
 
 use std::path::Path;
 use syntex_syntax::abi::Abi;
@@ -135,6 +136,12 @@ fn write_files(functions: &[Function]) -> Result<()> {
         let mut path = path.clone();
         path.push("LiveSplitCore.java");
         java::write(BufWriter::new(File::create(&path)?), functions)?;
+    }
+
+    {
+        let mut path = path.clone();
+        path.push("LiveSplitCore.rb");
+        ruby::write(BufWriter::new(File::create(&path)?), functions)?;
     }
 
     {

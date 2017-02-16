@@ -16,6 +16,7 @@ extern crate derive_more;
 #[macro_use]
 extern crate derive_new;
 extern crate rayon;
+extern crate pdqsort;
 
 mod atomic_date_time;
 mod attempt;
