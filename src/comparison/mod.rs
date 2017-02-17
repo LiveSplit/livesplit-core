@@ -13,7 +13,7 @@ pub use self::worst_segments::WorstSegments;
 use std::fmt::Debug;
 use {Attempt, Segment};
 
-pub trait ComparisonGenerator: Debug + ComparisonGeneratorClone {
+pub trait ComparisonGenerator: Debug + Sync + Send + ComparisonGeneratorClone {
     fn name(&self) -> &str;
     fn generate(&mut self, segments: &mut [Segment], attempts: &[Attempt]);
 }
