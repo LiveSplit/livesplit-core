@@ -16,7 +16,7 @@ fn get_type(ty: &Type) -> Cow<str> {
         "usize" => "size_t",
         "f32" => "float",
         "f64" => "double",
-        "bool" => "_Bool",
+        "bool" => "uint8_t",
         "()" => "void",
         "c_char" => "char",
         x => x,
@@ -42,9 +42,13 @@ pub fn write<W: Write>(mut writer: W, functions: &[Function]) -> Result<()> {
            r#"#ifndef _LIVESPLIT_CORE_H_
 #define _LIVESPLIT_CORE_H_
 
+#ifdef __cplusplus
+namespace LiveSplit {
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include <stddef.h>
-#include <stdbool.h>
 
 "#)?;
 
@@ -105,6 +109,11 @@ typedef struct {0}_s const* {0}Ref;
     write!(writer,
            "{}",
            r#"
+#ifdef __cplusplus
+}
+}
+#endif
+
 #endif
 "#)
 }
