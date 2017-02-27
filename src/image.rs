@@ -7,7 +7,7 @@ use std::fs::File;
 use std::io::{self, Read, BufReader};
 use std::path::Path;
 use std::sync::atomic::{AtomicUsize, ATOMIC_USIZE_INIT, Ordering};
-use base64::{self, Base64Mode};
+use base64::{self, STANDARD};
 
 static LAST_IMAGE_ID: AtomicUsize = ATOMIC_USIZE_INIT;
 
@@ -75,7 +75,7 @@ impl Image {
 
         if !data.is_empty() {
             self.url.push_str("data:;base64,");
-            base64::encode_mode_buf(data, Base64Mode::Standard, &mut self.url);
+            base64::encode_config_buf(data, STANDARD, &mut self.url);
         }
     }
 }

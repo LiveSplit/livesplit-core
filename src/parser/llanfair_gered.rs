@@ -2,7 +2,7 @@ use std::io::{self, Read, Cursor, Seek, SeekFrom};
 use std::num::ParseIntError;
 use std::result::Result as StdResult;
 use {Run, TimeSpan, Time, RealTime, Segment};
-use base64::{self, Base64Mode};
+use base64::{self, STANDARD};
 use byteorder::{ReadBytesExt, BigEndian as BE};
 use imagelib::{png, Rgba, ImageBuffer, ColorType};
 use super::xml_util::{self, text};
@@ -55,7 +55,7 @@ fn image<'b>(node: &Element,
     let node = child(&node, "ImageIcon")?;
 
     buf.clear();
-    base64::decode_mode_buf(text(&node, str_buf), Base64Mode::Standard, buf).map_err(|_| Error::ElementNotFound)?;
+    base64::decode_config_buf(text(&node, str_buf), STANDARD, buf).map_err(|_| Error::ElementNotFound)?;
 
     let (width, height);
     {

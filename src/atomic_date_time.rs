@@ -31,7 +31,7 @@ impl Sub for AtomicDateTime {
     type Output = TimeSpan;
 
     fn sub(self, rhs: AtomicDateTime) -> TimeSpan {
-        (self.time - rhs.time).into()
+        self.time.signed_duration_since(rhs.time).into()
     }
 }
 
@@ -39,6 +39,6 @@ impl Sub<DateTime<UTC>> for AtomicDateTime {
     type Output = TimeSpan;
 
     fn sub(self, rhs: DateTime<UTC>) -> TimeSpan {
-        (self.time - rhs).into()
+        self.time.signed_duration_since(rhs).into()
     }
 }
