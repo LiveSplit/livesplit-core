@@ -1,6 +1,6 @@
 use std::fmt::{Result, Formatter, Display};
 use TimeSpan;
-use super::TimeFormatter;
+use super::{TimeFormatter, extract_hundredths};
 
 pub struct TimeInner(Option<TimeSpan>);
 pub struct Time;
@@ -56,11 +56,15 @@ impl<'a> TimeFormatter<'a> for Fraction {
 impl Display for FractionInner {
     fn fmt(&self, f: &mut Formatter) -> Result {
         if let Some(time) = self.0 {
-            write!(f,
-                   ".{:02}",
-                   ((time.total_seconds().abs() % 1.0) * 100.0).round() as u8)
+            write!(f, ".{:02}", extract_hundredths(time.total_seconds()))
         } else {
             write!(f, ".00")
         }
     }
+}
+
+#[test]
+fn test() {
+    let time = "4:20.999999".parse::<TimeSpan>().unwrap();
+    assert_eq!(FractionInner(Some(time)).to_string(), ".99");
 }

@@ -45,6 +45,9 @@ fn get_type(ty: &TyKind) -> Type {
     } else if let &TyKind::Path(_, ref path) = ty {
         if let Some(segment) = path.segments.last() {
             let mut name = segment.identifier.name.to_string();
+            if name.starts_with("Owned") {
+                name = name["Owned".len()..].to_string();
+            }
             if name == "TimingMethod" {
                 name = String::from("u8");
             } else if name == "TimerPhase" {
@@ -73,36 +76,40 @@ fn main() {
     let mut functions = Vec::new();
 
     for item in &items {
-        if let &ItemKind::Fn(ref decl, _, _, Abi::C, _, _) = &item.node {
-            if item.vis == Visibility::Public &&
-               item.attrs.iter().any(|a| a.value.name == "no_mangle") {
-                let output = if let &FunctionRetTy::Ty(ref output) = &decl.output {
-                    get_type(&output.node)
-                } else {
-                    Type {
-                        kind: TypeKind::Value,
-                        is_custom: false,
-                        name: String::from("()"),
-                    }
-                };
-
-                let inputs = decl.inputs
-                    .iter()
-                    .map(|i| {
-                        let name = if let &PatKind::Ident(_, ref ident, _) = &i.pat.node {
-                            ident.node.name.to_string()
+        if let &ItemKind::Mod(ref module) = &item.node {
+            for item in &module.items {
+                if let &ItemKind::Fn(ref decl, _, _, Abi::C, _, _) = &item.node {
+                    if item.vis == Visibility::Public &&
+                       item.attrs.iter().any(|a| a.value.name == "no_mangle") {
+                        let output = if let &FunctionRetTy::Ty(ref output) = &decl.output {
+                            get_type(&output.node)
                         } else {
-                            String::from("parameter")
+                            Type {
+                                kind: TypeKind::Value,
+                                is_custom: false,
+                                name: String::from("()"),
+                            }
                         };
-                        (name, get_type(&i.ty.node))
-                    })
-                    .collect();
 
-                functions.push(Function {
-                    name: item.ident.name,
-                    output: output,
-                    inputs: inputs,
-                });
+                        let inputs = decl.inputs
+                            .iter()
+                            .map(|i| {
+                                let name = if let &PatKind::Ident(_, ref ident, _) = &i.pat.node {
+                                    ident.node.name.to_string()
+                                } else {
+                                    String::from("parameter")
+                                };
+                                (name, get_type(&i.ty.node))
+                            })
+                            .collect();
+
+                        functions.push(Function {
+                            name: item.ident.name,
+                            output: output,
+                            inputs: inputs,
+                        });
+                    }
+                }
             }
         }
     }

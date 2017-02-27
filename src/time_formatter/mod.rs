@@ -16,9 +16,20 @@ pub use self::short::Short;
 
 use std::fmt::Display;
 use TimeSpan;
+use std::cmp::min;
 
 pub trait TimeFormatter<'a> {
     type Inner: Display;
 
     fn format<T>(&'a self, time: T) -> Self::Inner where T: Into<Option<TimeSpan>>;
+}
+
+const EPSILON: f64 = 0.0000001;
+
+fn extract_tenths(seconds: f64) -> u8 {
+    min(9, ((seconds.abs() % 1.0) * 10.0 + EPSILON).floor() as u8)
+}
+
+fn extract_hundredths(seconds: f64) -> u8 {
+    min(99, ((seconds.abs() % 1.0) * 100.0 + EPSILON).floor() as u8)
 }

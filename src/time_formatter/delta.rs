@@ -57,32 +57,23 @@ impl Display for Inner {
                 if self.drop_decimals {
                     write!(f, "{}:{:02}:{:02}", hours, minutes, seconds as u8)
                 } else {
-                    match self.accuracy {
-                        Accuracy::Hundredths => {
-                            write!(f, "{}:{:02}:{:05.2}", hours, minutes, seconds)
-                        }
-                        Accuracy::Tenths => write!(f, "{}:{:02}:{:04.1}", hours, minutes, seconds),
-                        Accuracy::Seconds => {
-                            write!(f, "{}:{:02}:{:02}", hours, minutes, seconds as u8)
-                        }
-                    }
+                    write!(f,
+                           "{}:{:02}:{}",
+                           hours,
+                           minutes,
+                           self.accuracy.format_seconds(seconds, true))
                 }
             } else if total_minutes > 0 {
                 if self.drop_decimals {
                     write!(f, "{}:{:02}", minutes, seconds as u8)
                 } else {
-                    match self.accuracy {
-                        Accuracy::Hundredths => write!(f, "{}:{:05.2}", minutes, seconds),
-                        Accuracy::Tenths => write!(f, "{}:{:04.1}", minutes, seconds),
-                        Accuracy::Seconds => write!(f, "{}:{:02}", minutes, seconds as u8),
-                    }
+                    write!(f,
+                           "{}:{}",
+                           minutes,
+                           self.accuracy.format_seconds(seconds, true))
                 }
             } else {
-                match self.accuracy {
-                    Accuracy::Hundredths => write!(f, "{:.2}", seconds),
-                    Accuracy::Tenths => write!(f, "{:.1}", seconds),
-                    Accuracy::Seconds => write!(f, "{}", seconds as u8),
-                }
+                write!(f, "{}", self.accuracy.format_seconds(seconds, false))
             }
         } else {
             write!(f, "—")
