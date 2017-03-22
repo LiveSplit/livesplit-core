@@ -2,6 +2,7 @@ use livesplit_core::component::splits::Component as SplitsComponent;
 use livesplit_core::Timer;
 use super::{alloc, drop, acc, output_vec, acc_mut};
 use libc::c_char;
+use splits_component_state::OwnedSplitsComponentState;
 
 pub type OwnedSplitsComponent = *mut SplitsComponent;
 
@@ -21,6 +22,14 @@ pub unsafe extern "C" fn SplitsComponent_state_as_json(this: *mut SplitsComponen
                                                        -> *const c_char {
     output_vec(|o| { acc_mut(this).state(acc(timer)).write_json(o).unwrap(); })
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn SplitsComponent_state(this: *mut SplitsComponent,
+                                               timer: *const Timer)
+                                               -> OwnedSplitsComponentState {
+    alloc(acc_mut(this).state(acc(timer)))
+}
+
 
 #[no_mangle]
 pub unsafe extern "C" fn SplitsComponent_scroll_up(this: *mut SplitsComponent) {

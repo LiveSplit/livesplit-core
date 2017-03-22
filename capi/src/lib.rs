@@ -20,12 +20,17 @@ pub mod segment_history;
 pub mod segment_history_iter;
 pub mod segment_history_element;
 pub mod title_component;
+pub mod title_component_state;
 pub mod splits_component;
+pub mod splits_component_state;
 pub mod timer_component;
 pub mod timer_component_state;
 pub mod previous_segment_component;
+pub mod previous_segment_component_state;
 pub mod sum_of_best_component;
+pub mod sum_of_best_component_state;
 pub mod possible_time_save_component;
+pub mod possible_time_save_component_state;
 pub mod run_editor;
 
 use segment_history_element::SegmentHistoryElement;

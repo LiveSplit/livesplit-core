@@ -2,6 +2,7 @@ use livesplit_core::component::previous_segment::Component as PreviousSegmentCom
 use livesplit_core::Timer;
 use super::{alloc, drop, acc, output_vec};
 use libc::c_char;
+use previous_segment_component_state::OwnedPreviousSegmentComponentState;
 
 pub type OwnedPreviousSegmentComponent = *mut PreviousSegmentComponent;
 
@@ -20,4 +21,11 @@ pub unsafe extern "C" fn PreviousSegmentComponent_state_as_json(this: *const Pre
                                                         timer: *const Timer)
                                                         -> *const c_char {
     output_vec(|o| { acc(this).state(acc(timer)).write_json(o).unwrap(); })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn PreviousSegmentComponent_state(this: *const PreviousSegmentComponent,
+                                                        timer: *const Timer)
+                                                        -> OwnedPreviousSegmentComponentState {
+    alloc(acc(this).state(acc(timer)))
 }

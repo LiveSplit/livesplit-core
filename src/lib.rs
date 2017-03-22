@@ -4,6 +4,7 @@
 extern crate serde_derive;
 extern crate chrono;
 extern crate odds;
+extern crate serde;
 extern crate serde_json;
 extern crate sxd_document;
 #[macro_use]

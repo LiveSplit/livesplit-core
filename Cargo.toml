@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Christopher Serr <christopher.serr@gmail.com>"]
 
 [dependencies]
-chrono = "0.3.0"
+chrono = { version = "0.3.0", features = ["serde"] }
 odds = "0.2.25"
 serde_json = "0.9.8"
 serde_derive = "0.9.9"

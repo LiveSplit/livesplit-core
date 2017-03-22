@@ -2,6 +2,7 @@ use livesplit_core::component::sum_of_best::Component as SumOfBestComponent;
 use livesplit_core::Timer;
 use super::{alloc, drop, acc, output_vec};
 use libc::c_char;
+use sum_of_best_component_state::OwnedSumOfBestComponentState;
 
 pub type OwnedSumOfBestComponent = *mut SumOfBestComponent;
 
@@ -20,4 +21,11 @@ pub unsafe extern "C" fn SumOfBestComponent_state_as_json(this: *const SumOfBest
                                                           timer: *const Timer)
                                                           -> *const c_char {
     output_vec(|o| { acc(this).state(acc(timer)).write_json(o).unwrap(); })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn SumOfBestComponent_state(this: *const SumOfBestComponent,
+                                                  timer: *const Timer)
+                                                  -> OwnedSumOfBestComponentState {
+    alloc(acc(this).state(acc(timer)))
 }
