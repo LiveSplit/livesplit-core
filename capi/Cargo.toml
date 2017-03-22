@@ -8,7 +8,7 @@ livesplit-core = { path = ".." }
 libc = "0.2.18"
 
 [lib]
-crate-type = ["cdylib", "rlib", "staticlib"]
+crate-type = ["cdylib", "staticlib"]
 
 [profile.release]
 panic = 'abort'

@@ -1,20 +1,9 @@
 [root]
-name = "livesplit-core"
+name = "livesplit-core-capi"
 version = "0.1.0"
 dependencies = [
- "base64 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "byteorder 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "chrono 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "derive-new 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "derive_more 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "image 0.12.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "odds 0.2.25 (registry+https://github.com/rust-lang/crates.io-index)",
- "pdqsort 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "quick-error 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde 0.9.9 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_derive 0.9.9 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_json 0.9.8 (registry+https://github.com/rust-lang/crates.io-index)",
- "sxd-document 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libc 0.2.20 (registry+https://github.com/rust-lang/crates.io-index)",
+ "livesplit-core 0.1.0",
 ]
 
 [[package]]
@@ -166,6 +155,25 @@ dependencies = [
 name = "libc"
 version = "0.2.20"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "livesplit-core"
+version = "0.1.0"
+dependencies = [
+ "base64 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "byteorder 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "chrono 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "derive-new 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "derive_more 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "image 0.12.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "odds 0.2.25 (registry+https://github.com/rust-lang/crates.io-index)",
+ "pdqsort 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "quick-error 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde 0.9.9 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_derive 0.9.9 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_json 0.9.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "sxd-document 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
 [[package]]
 name = "lzw"
