@@ -83,7 +83,7 @@ namespace LiveSplitCore
 
         write!(writer,
                r#"
-            [DllImport("livesplit-core", EntryPoint="{}")]
+            [DllImport("livesplit_core", EntryPoint="{}")]
             public static extern {} {}("#,
                &function.name,
                get_type(&function.output, true),

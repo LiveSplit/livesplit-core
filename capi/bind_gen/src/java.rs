@@ -79,7 +79,7 @@ public interface LiveSplitCore extends Library {
         }
     }
 
-    LiveSplitCore INSTANCE = (LiveSplitCore) Native.loadLibrary("livesplit-core", LiveSplitCore.class, new HashMap() {
+    LiveSplitCore INSTANCE = (LiveSplitCore) Native.loadLibrary("livesplit_core", LiveSplitCore.class, new HashMap() {
         {
             put(Library.OPTION_FUNCTION_MAPPER, new Mapper());
         }
@@ -98,9 +98,10 @@ public interface LiveSplitCore extends Library {
 
         write!(writer,
                r#"
-    {} {}("#,
+    {} {}_{}("#,
                get_type(&function.output),
-               format!("{}_{}", prefix, to_camel_case(postfix)))?;
+               prefix,
+               to_camel_case(postfix))?;
 
         for (i, &(ref name, ref typ)) in function.inputs.iter().enumerate() {
             if i != 0 {

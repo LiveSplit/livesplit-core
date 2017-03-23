@@ -39,7 +39,7 @@ require 'ffi'
 
 module LiveSplitCore
     extend FFI::Library
-    ffi_lib './liblivesplit-core.so'
+    ffi_lib './liblivesplit_core.so'
 "#)?;
 
     for function in functions {

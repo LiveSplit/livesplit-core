@@ -2,8 +2,9 @@ extern crate syntex_syntax;
 
 mod c;
 mod csharp;
-mod javascript;
 mod java;
+mod javascript;
+mod python;
 mod ruby;
 
 use std::path::Path;
@@ -155,6 +156,12 @@ fn write_files(functions: &[Function]) -> Result<()> {
         let mut path = path.clone();
         path.push("livesplit_core.h");
         c::write(BufWriter::new(File::create(&path)?), functions)?;
+    }
+
+    {
+        let mut path = path.clone();
+        path.push("livesplit_core.py");
+        python::write(BufWriter::new(File::create(&path)?), functions)?;
     }
 
     Ok(())
