@@ -1,10 +1,10 @@
 [package]
 name = "livesplit-core"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Christopher Serr <christopher.serr@gmail.com>"]
 
 [workspace]
-members = ["capi"]
+members = ["capi", "capi/bind_gen"]
 
 [dependencies]
 chrono = { version = "0.3.0", features = ["serde"] }

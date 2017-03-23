@@ -6,3 +6,4 @@ capi/bind_gen/target
 emscripten/target
 emscripten/Cargo.lock
 js/livesplit.js
+Cargo.lock
