@@ -181,18 +181,20 @@ impl Run {
     pub fn add_attempt(&mut self,
                        time: Time,
                        started: Option<AtomicDateTime>,
-                       ended: Option<AtomicDateTime>) {
+                       ended: Option<AtomicDateTime>,
+                       pause_time: Option<TimeSpan>) {
         let index = self.attempt_history.iter().map(Attempt::index).max().unwrap_or(0);
         let index = max(0, index + 1);
-        self.add_attempt_with_index(time, index, started, ended);
+        self.add_attempt_with_index(time, index, started, ended, pause_time);
     }
 
     pub fn add_attempt_with_index(&mut self,
                                   time: Time,
                                   index: i32,
                                   started: Option<AtomicDateTime>,
-                                  ended: Option<AtomicDateTime>) {
-        let attempt = Attempt::new(index, time, started, ended);
+                                  ended: Option<AtomicDateTime>,
+                                  pause_time: Option<TimeSpan>) {
+        let attempt = Attempt::new(index, time, started, ended, pause_time);
         self.attempt_history.push(attempt);
     }
 

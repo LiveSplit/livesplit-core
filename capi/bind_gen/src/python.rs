@@ -76,7 +76,7 @@ lib.{}.argtypes = ("#,
                function.name)?;
 
         for &(_, ref typ) in &function.inputs {
-            write!(writer, "{},", get_type(typ))?;
+            write!(writer, "{}, ", get_type(typ))?;
         }
 
         write!(writer,
@@ -113,7 +113,9 @@ def {}_{}("#,
             write!(writer, "{}", to_camel_case(name))?;
         }
 
-        write!(writer, "):\n\t")?;
+        write!(writer,
+               r#"):
+    "#)?;
 
         if get_type(&function.output) != "None" {
             write!(writer, "return ")?;
@@ -134,6 +136,10 @@ def {}_{}("#,
     }
 
     writeln!(writer,
-             "\ndef Run_parseFile(file):\n\tbytes = bytearray(file.read())\n\tbufferType = c_byte \
-              * len(bytes)\n\tbuffer = bufferType(*bytes)\n\treturn Run_parse(buffer, len(bytes))")
+             r#"
+def Run_parseFile(file):
+    bytes = bytearray(file.read())
+    bufferType = c_byte * len(bytes)
+    buffer = bufferType(*bytes)
+    return Run_parse(buffer, len(bytes))"#)
 }

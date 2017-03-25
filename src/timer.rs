@@ -12,6 +12,7 @@ pub struct Timer {
     attempt_started: Option<AtomicDateTime>,
     attempt_ended: Option<AtomicDateTime>,
     start_time: TimeStamp,
+    unmodified_start_time: TimeStamp,
     pause_time: TimeSpan,
     is_game_time_paused: bool,
     game_time_pause_time: Option<TimeSpan>,
@@ -24,6 +25,8 @@ impl Timer {
         assert!(run.len() > 0);
 
         run.regenerate_comparisons();
+        let now = TimeStamp::now();
+
         Timer {
             run: run,
             phase: TimerPhase::NotRunning,
@@ -32,7 +35,8 @@ impl Timer {
             current_comparison: PERSONAL_BEST_COMPARISON_NAME.into(),
             attempt_started: None,
             attempt_ended: None,
-            start_time: TimeStamp::now(),
+            start_time: now,
+            unmodified_start_time: now,
             pause_time: TimeSpan::zero(),
             is_game_time_paused: false,
             game_time_pause_time: None,
@@ -121,6 +125,7 @@ impl Timer {
             self.current_split_index = 0;
             self.attempt_started = Some(AtomicDateTime::now());
             self.start_time = TimeStamp::now() - self.run.offset();
+            self.unmodified_start_time = self.start_time;
             self.pause_time = self.run.offset();
             self.uninitialize_game_time();
             self.run.start_next_run();
@@ -175,7 +180,6 @@ impl Timer {
                 self.attempt_ended = Some(AtomicDateTime::now());
             }
             self.unpause_game_time();
-            self.start_time = TimeStamp::now();
             self.set_loading_times(TimeSpan::zero());
 
             if update_splits {
@@ -247,6 +251,14 @@ impl Timer {
         self.is_game_time_paused
     }
 
+    pub fn get_pause_time(&self) -> Option<TimeSpan> {
+        if self.phase != TimerPhase::NotRunning && self.unmodified_start_time != self.start_time {
+            Some(self.start_time - self.unmodified_start_time)
+        } else {
+            None
+        }
+    }
+
     pub fn pause_game_time(&mut self) {
         if self.is_game_time_paused() {
             let current_time = self.current_time();
@@ -297,12 +309,12 @@ impl Timer {
     }
 
     fn update_attempt_history(&mut self) {
-        let time = if self.phase == TimerPhase::Ended {
-            self.current_time()
+        let (time, pause_time) = if self.phase == TimerPhase::Ended {
+            (self.current_time(), self.get_pause_time())
         } else {
             Default::default()
         };
-        self.run.add_attempt(time, self.attempt_started, self.attempt_ended);
+        self.run.add_attempt(time, self.attempt_started, self.attempt_ended, pause_time);
     }
 
     fn update_best_segments(&mut self) {

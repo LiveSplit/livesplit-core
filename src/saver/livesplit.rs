@@ -71,7 +71,7 @@ pub fn save<W: Write>(run: &Run, mut writer: W) -> Result<()> {
     let doc = &package.as_document();
 
     let parent = doc.create_element("Run");
-    parent.set_attribute_value("version", "1.6.0");
+    parent.set_attribute_value("version", "1.7.0");
     doc.root().append_child(parent);
 
     add_element(doc, &parent, "GameIcon", &fmt_image(run.game_icon()));
@@ -119,6 +119,10 @@ pub fn save<W: Write>(run: &Run, mut writer: W) -> Result<()> {
         if let Some(ended) = attempt.ended() {
             element.set_attribute_value("ended", &fmt_date(ended.time));
             element.set_attribute_value("isEndedSynced", fmt_bool(ended.synced_with_atomic_clock));
+        }
+
+        if let Some(pause_time) = attempt.pause_time() {
+            add_element(doc, &element, "PauseTime", &time_span(pause_time));
         }
 
         attempt_history.append_child(element);

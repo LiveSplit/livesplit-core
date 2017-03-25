@@ -142,7 +142,8 @@ fn parse_history(run: &mut Run, path: Option<PathBuf>) -> StdResult<(), ()> {
             run.add_attempt_with_index(final_time,
                                        attempt_id,
                                        Some(AtomicDateTime::new(started, false)),
-                                       ended);
+                                       ended,
+                                       None);
 
             let mut last_split = TimeSpan::zero();
             for (segment, current_split) in

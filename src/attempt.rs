@@ -6,6 +6,7 @@ pub struct Attempt {
     time: Time,
     started: Option<AtomicDateTime>,
     ended: Option<AtomicDateTime>,
+    pause_time: Option<TimeSpan>,
 }
 
 impl Attempt {
@@ -26,6 +27,11 @@ impl Attempt {
     #[inline]
     pub fn time(&self) -> Time {
         self.time
+    }
+
+    #[inline]
+    pub fn pause_time(&self) -> Option<TimeSpan> {
+        self.pause_time
     }
 
     #[inline]

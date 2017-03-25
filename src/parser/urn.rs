@@ -70,7 +70,7 @@ pub fn parse<R: Read>(source: R) -> Result<Run> {
 
         let best_split_time = parse_time(&split.best_time)?;
         if best_split_time.real_time.is_some() {
-            run.add_attempt_with_index(Time::default(), attempt_history_index, None, None);
+            run.add_attempt_with_index(Time::default(), attempt_history_index, None, None, None);
 
             // Insert a new run that skips to the current split
             for already_inserted_segment in run.segments_mut() {

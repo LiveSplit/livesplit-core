@@ -157,10 +157,17 @@ fn parse_attempt_history(version: Version,
                 }
             }
 
+            let mut pause_time = None;
+            if version >= Version(1, 7, 0, 0) {
+                if let Ok(element) = child(&attempt, "PauseTime") {
+                    pause_time = time_span_opt(&element, buf)?;
+                }
+            }
+
             let started = started.map(|t| AtomicDateTime::new(t, started_synced));
             let ended = ended.map(|t| AtomicDateTime::new(t, ended_synced));
 
-            run.add_attempt_with_index(time, index, started, ended);
+            run.add_attempt_with_index(time, index, started, ended, pause_time);
         }
     } else if version >= Version(1, 4, 1, 0) {
         let run_history = child(element, "RunHistory")?;
@@ -168,7 +175,7 @@ fn parse_attempt_history(version: Version,
             let time = time(&attempt, buf)?;
             let index = attribute(&attempt, "id")?.parse()?;
 
-            run.add_attempt_with_index(time, index, None, None);
+            run.add_attempt_with_index(time, index, None, None, None);
         }
     } else {
         let run_history = child(element, "RunHistory")?;
@@ -176,7 +183,7 @@ fn parse_attempt_history(version: Version,
             let time = time_old(&attempt, buf)?;
             let index = attribute(&attempt, "id")?.parse()?;
 
-            run.add_attempt_with_index(time, index, None, None);
+            run.add_attempt_with_index(time, index, None, None, None);
         }
     }
 
