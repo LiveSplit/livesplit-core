@@ -3,6 +3,7 @@
 [![Build Status](https://travis-ci.org/CryZe/livesplit-core.svg?branch=master)](https://travis-ci.org/CryZe/livesplit-core)
 [![Build status](https://ci.appveyor.com/api/projects/status/bvv4un099w94kari/branch/master?svg=true)](https://ci.appveyor.com/project/CryZe/livesplit-core/branch/master)
 [![crates.io](https://img.shields.io/crates/v/livesplit-core.svg)](https://crates.io/crates/livesplit-core)
+[![docs.rs](https://docs.rs/livesplit-core/badge.svg)](https://docs.rs/livesplit-core/)
 
 livesplit-core is a library that provides a lot of functionality for creating a speedrun timer.
 It can be used directly from Rust.
