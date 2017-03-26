@@ -1,6 +1,6 @@
 [package]
 name = "livesplit-core"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["Christopher Serr <christopher.serr@gmail.com>"]
 
 [workspace]

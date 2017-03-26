@@ -14,6 +14,11 @@ pub unsafe extern "C" fn TimeSpan_drop(this: OwnedTimeSpan) {
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn TimeSpan_from_seconds(seconds: f64) -> OwnedTimeSpan {
+    alloc(TimeSpan::from_seconds(seconds))
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn TimeSpan_total_seconds(this: *const TimeSpan) -> f64 {
     acc(this).total_seconds()
 }

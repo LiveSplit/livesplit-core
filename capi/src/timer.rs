@@ -1,5 +1,5 @@
-use livesplit_core::{Timer, TimingMethod, TimerPhase, Run, saver};
-use super::{alloc, own, acc_mut, drop, acc, output_str, output_vec};
+use livesplit_core::{Timer, TimeSpan, TimingMethod, TimerPhase, Run, saver};
+use super::{alloc, own, acc_mut, drop, acc, output_str, output_vec, output_time_span};
 use run::OwnedRun;
 use libc::c_char;
 
@@ -68,6 +68,51 @@ pub unsafe extern "C" fn Timer_switch_to_next_comparison(this: *mut Timer) {
 #[no_mangle]
 pub unsafe extern "C" fn Timer_switch_to_previous_comparison(this: *mut Timer) {
     acc_mut(this).switch_to_previous_comparison();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Timer_is_game_time_initialized(this: *const Timer) -> bool {
+    acc(this).is_game_time_initialized()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Timer_initialize_game_time(this: *mut Timer) {
+    acc_mut(this).initialize_game_time();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Timer_uninitialize_game_time(this: *mut Timer) {
+    acc_mut(this).uninitialize_game_time();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Timer_is_game_time_paused(this: *const Timer) -> bool {
+    acc(this).is_game_time_paused()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Timer_pause_game_time(this: *mut Timer) {
+    acc_mut(this).pause_game_time();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Timer_unpause_game_time(this: *mut Timer) {
+    acc_mut(this).unpause_game_time();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Timer_set_game_time(this: *mut Timer, time: *const TimeSpan) {
+    acc_mut(this).set_game_time(*acc(time));
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Timer_loading_times(this: *const Timer) -> *const TimeSpan {
+    output_time_span(acc(this).loading_times())
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Timer_set_loading_times(this: *mut Timer, time: *const TimeSpan) {
+    acc_mut(this).set_loading_times(*acc(time));
 }
 
 #[no_mangle]

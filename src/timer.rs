@@ -67,7 +67,7 @@ impl Timer {
             Ended => self.run.segments().last().unwrap().split_time().game_time,
             _ => {
                 if self.is_game_time_paused() {
-                    self.game_time_pause_time()
+                    self.game_time_pause_time
                 } else {
                     TimeSpan::option_op(real_time,
                                         if self.is_game_time_initialized() {
@@ -246,41 +246,12 @@ impl Timer {
         // TODO OnPreviousComparison
     }
 
-    #[inline]
-    pub fn is_game_time_paused(&self) -> bool {
-        self.is_game_time_paused
-    }
-
     pub fn get_pause_time(&self) -> Option<TimeSpan> {
         if self.phase != TimerPhase::NotRunning && self.unmodified_start_time != self.start_time {
             Some(self.start_time - self.unmodified_start_time)
         } else {
             None
         }
-    }
-
-    pub fn pause_game_time(&mut self) {
-        if self.is_game_time_paused() {
-            let current_time = self.current_time();
-            self.game_time_pause_time = current_time.game_time.or(current_time.real_time);
-            self.is_game_time_paused = true;
-        }
-    }
-
-    pub fn unpause_game_time(&mut self) {
-        if self.is_game_time_paused() {
-            let current_time = self.current_time();
-            self.set_loading_times(TimeSpan::option_op(current_time.real_time,
-                                                       current_time.game_time,
-                                                       |r, g| r - g)
-                .unwrap_or_default());
-            self.is_game_time_paused = false;
-        }
-    }
-
-    #[inline]
-    pub fn game_time_pause_time(&self) -> Option<TimeSpan> {
-        self.game_time_pause_time
     }
 
     #[inline]
@@ -299,6 +270,39 @@ impl Timer {
     }
 
     #[inline]
+    pub fn is_game_time_paused(&self) -> bool {
+        self.is_game_time_paused
+    }
+
+    pub fn pause_game_time(&mut self) {
+        if !self.is_game_time_paused() {
+            let current_time = self.current_time();
+            self.game_time_pause_time = current_time.game_time.or(current_time.real_time);
+            self.is_game_time_paused = true;
+        }
+    }
+
+    pub fn unpause_game_time(&mut self) {
+        if self.is_game_time_paused() {
+            let current_time = self.current_time();
+            self.set_loading_times(TimeSpan::option_op(current_time.real_time,
+                                                       current_time.game_time,
+                                                       |r, g| r - g)
+                .unwrap_or_default());
+            self.is_game_time_paused = false;
+        }
+    }
+
+    #[inline]
+    pub fn set_game_time(&mut self, game_time: TimeSpan) {
+        if self.is_game_time_paused() {
+            self.game_time_pause_time = Some(game_time);
+        }
+        let loading_times = self.current_time().real_time.unwrap() - game_time;
+        self.loading_times = Some(loading_times);
+    }
+
+    #[inline]
     pub fn loading_times(&self) -> TimeSpan {
         self.loading_times.unwrap_or_default()
     }
@@ -306,6 +310,9 @@ impl Timer {
     #[inline]
     pub fn set_loading_times(&mut self, time: TimeSpan) {
         self.loading_times = Some(time);
+        if self.is_game_time_paused() {
+            self.game_time_pause_time = Some(self.current_time().real_time.unwrap() - time);
+        }
     }
 
     fn update_attempt_history(&mut self) {
