@@ -2,6 +2,13 @@
 name = "livesplit-core"
 version = "0.1.3"
 authors = ["Christopher Serr <christopher.serr@gmail.com>"]
+documentation = "https://docs.rs/livesplit-core/"
+repository = "https://github.com/CryZe/livesplit-core"
+license = "Apache-2.0/MIT"
+description = "livesplit-core is a library that provides a lot of functionality for creating a speedrun timer."
+readme = "README.md"
+keywords = ["speedrun", "timer", "livesplit"]
+exclude = ["ci/*", "capi/*", "js/*"]
 
 [workspace]
 members = ["capi", "capi/bind_gen"]
