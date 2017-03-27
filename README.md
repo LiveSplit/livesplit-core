@@ -25,10 +25,18 @@ You can install Rust with the Installer available on [rustup.rs](https://rustup.
 Clone the repository and build the library with the following command:
 
 ```
-cargo build --release -p livesplit_core_capi
+cargo build --release -p livesplit-core-capi
 ```
 
 The library will then be available as a shared and static library in the `target` folder.
+
+If you want to build the Bindings for the library too, you need to go into the `capi/bind_gen` folder and run the following command:
+
+```
+cargo run
+```
+
+The bindings will then be available in `capi/bindings`.
 
 ## Download
 
