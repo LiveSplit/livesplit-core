@@ -15,7 +15,7 @@ Additional Bindings are available for the following programming languages:
  - Java
  - Ruby
  - Python
- - JavaScript (when you compile the Library to asm.js or WebAssembly)
+ - JavaScript (Node.js + asm.js + WebAssembly)
 
 The Documentation for the Library is available here: [API Documentation](https://docs.rs/livesplit-core/)
 
