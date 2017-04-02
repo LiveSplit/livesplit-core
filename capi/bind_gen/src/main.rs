@@ -1,9 +1,11 @@
 extern crate syntex_syntax;
+extern crate heck;
 
 mod c;
 mod csharp;
+mod emscripten;
 mod java;
-mod javascript;
+mod node;
 mod python;
 mod ruby;
 
@@ -128,41 +130,33 @@ fn write_files(functions: &[Function]) -> Result<()> {
 
     fs::create_dir_all(&path)?;
 
-    {
-        let mut path = path.clone();
-        path.push("livesplit_core.js");
-        javascript::write(BufWriter::new(File::create(&path)?), functions)?;
-    }
+    path.push("livesplit_core_emscripten.js");
+    emscripten::write(BufWriter::new(File::create(&path)?), functions)?;
+    path.pop();
 
-    {
-        let mut path = path.clone();
-        path.push("LiveSplitCoreNative.cs");
-        csharp::write(BufWriter::new(File::create(&path)?), functions)?;
-    }
+    path.push("livesplit_core_node.js");
+    node::write(BufWriter::new(File::create(&path)?), functions)?;
+    path.pop();
 
-    {
-        let mut path = path.clone();
-        path.push("LiveSplitCore.java");
-        java::write(BufWriter::new(File::create(&path)?), functions)?;
-    }
+    path.push("LiveSplitCoreNative.cs");
+    csharp::write(BufWriter::new(File::create(&path)?), functions)?;
+    path.pop();
 
-    {
-        let mut path = path.clone();
-        path.push("LiveSplitCore.rb");
-        ruby::write(BufWriter::new(File::create(&path)?), functions)?;
-    }
+    path.push("LiveSplitCore.java");
+    java::write(BufWriter::new(File::create(&path)?), functions)?;
+    path.pop();
 
-    {
-        let mut path = path.clone();
-        path.push("livesplit_core.h");
-        c::write(BufWriter::new(File::create(&path)?), functions)?;
-    }
+    path.push("LiveSplitCore.rb");
+    ruby::write(BufWriter::new(File::create(&path)?), functions)?;
+    path.pop();
 
-    {
-        let mut path = path.clone();
-        path.push("livesplit_core.py");
-        python::write(BufWriter::new(File::create(&path)?), functions)?;
-    }
+    path.push("livesplit_core.h");
+    c::write(BufWriter::new(File::create(&path)?), functions)?;
+    path.pop();
+
+    path.push("livesplit_core.py");
+    python::write(BufWriter::new(File::create(&path)?), functions)?;
+    path.pop();
 
     Ok(())
 }

@@ -1,21 +1,6 @@
 use std::io::{Write, Result};
 use {Function, Type, TypeKind};
-
-fn to_camel_case(snake_case: &str) -> String {
-    let mut camel_case = String::new();
-
-    for (u, split) in snake_case.split('_').enumerate() {
-        for (i, c) in split.char_indices() {
-            if u != 0 && i == 0 {
-                camel_case.extend(c.to_uppercase());
-            } else {
-                camel_case.push(c);
-            }
-        }
-    }
-
-    camel_case
-}
+use heck::MixedCase;
 
 fn get_type(ty: &Type) -> &str {
     match (ty.kind, ty.name.as_str()) {
@@ -101,7 +86,7 @@ public interface LiveSplitCore extends Library {
     {} {}_{}("#,
                get_type(&function.output),
                prefix,
-               to_camel_case(postfix))?;
+               postfix.to_mixed_case())?;
 
         for (i, &(ref name, ref typ)) in function.inputs.iter().enumerate() {
             if i != 0 {
@@ -113,7 +98,7 @@ public interface LiveSplitCore extends Library {
                    if name == "this" {
                        String::from("self")
                    } else {
-                       to_camel_case(name)
+                       name.to_mixed_case()
                    })?;
         }
 
