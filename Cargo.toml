@@ -27,4 +27,4 @@ image = "0.12.3"
 derive_more = "0.6.0"
 derive-new = "0.4.0"
 pdqsort = "0.1.2"
-hotkey = { path = "hotkey" }
+hotkey = { path = "hotkey", version = "0.1.0" }
