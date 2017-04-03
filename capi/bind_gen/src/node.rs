@@ -36,6 +36,7 @@ pub fn write<W: Write>(mut writer: W, functions: &[Function]) -> Result<()> {
     write!(writer,
            "{}",
            r#"var ffi = require('ffi');
+let fs = require('fs');
 
 var ls = ffi.Library('livesplit_core', {"#)?;
 
@@ -124,5 +125,15 @@ exports.{}_{} = function("#,
 };"#)?;
     }
 
-    Ok(())
+    writeln!(writer,
+             "{}",
+             r#"
+exports.Run_parseFile = function(file) {
+    var data = fs.readFileSync(file);
+    var run = ls.Run_parse(data, data.byteLength);
+    if (run.isNull()) {
+        return null;
+    }
+    return run;
+}"#)
 }

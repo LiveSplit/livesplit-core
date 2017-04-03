@@ -1,6 +1,6 @@
 [package]
 name = "livesplit-core"
-version = "0.1.4"
+version = "0.2.0"
 authors = ["Christopher Serr <christopher.serr@gmail.com>"]
 documentation = "https://docs.rs/livesplit-core/"
 repository = "https://github.com/CryZe/livesplit-core"
@@ -27,3 +27,4 @@ image = "0.12.3"
 derive_more = "0.6.0"
 derive-new = "0.4.0"
 pdqsort = "0.1.2"
+hotkey = { path = "hotkey" }

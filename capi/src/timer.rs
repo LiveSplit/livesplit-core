@@ -1,5 +1,5 @@
-use livesplit_core::{Timer, TimeSpan, TimingMethod, TimerPhase, Run, saver};
-use super::{alloc, own, acc_mut, drop, acc, output_str, output_vec, output_time_span};
+use livesplit_core::{Timer, TimeSpan, TimingMethod, TimerPhase, Run};
+use super::{alloc, own, acc_mut, drop, acc, output_str, output_time_span};
 use run::OwnedRun;
 use libc::c_char;
 
@@ -13,11 +13,6 @@ pub unsafe extern "C" fn Timer_new(run: OwnedRun) -> OwnedTimer {
 #[no_mangle]
 pub unsafe extern "C" fn Timer_drop(this: OwnedTimer) {
     drop(this);
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn Timer_start(this: *mut Timer) {
-    acc_mut(this).start();
 }
 
 #[no_mangle]
@@ -133,9 +128,4 @@ pub unsafe extern "C" fn Timer_clone_run(this: *const Timer) -> OwnedRun {
 #[no_mangle]
 pub unsafe extern "C" fn Timer_print_debug(this: *const Timer) {
     println!("{:#?}", acc(this));
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn Timer_save_run_as_lss(this: *const Timer) -> *const c_char {
-    output_vec(|o| { saver::livesplit::save(acc(this).run(), o).unwrap(); })
 }

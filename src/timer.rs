@@ -119,7 +119,7 @@ impl Timer {
         self.current_split_index
     }
 
-    pub fn start(&mut self) {
+    pub fn split(&mut self) {
         if self.phase == NotRunning {
             self.phase = Running;
             self.current_split_index = 0;
@@ -131,22 +131,20 @@ impl Timer {
             self.run.start_next_run();
 
             // TODO OnStart
-        }
-    }
+        } else {
+            let current_time = self.current_time();
+            if self.phase == TimerPhase::Running &&
+               current_time.real_time.map_or(false, |t| t >= TimeSpan::zero()) {
+                self.current_split_mut().unwrap().set_split_time(current_time);
+                self.current_split_index += 1;
+                if self.run.len() as isize == self.current_split_index {
+                    self.phase = TimerPhase::Ended;
+                    self.attempt_ended = Some(AtomicDateTime::now());
+                }
+                self.run.mark_as_changed();
 
-    pub fn split(&mut self) {
-        let current_time = self.current_time();
-        if self.phase == TimerPhase::Running &&
-           current_time.real_time.map_or(false, |t| t >= TimeSpan::zero()) {
-            self.current_split_mut().unwrap().set_split_time(current_time);
-            self.current_split_index += 1;
-            if self.run.len() as isize == self.current_split_index {
-                self.phase = TimerPhase::Ended;
-                self.attempt_ended = Some(AtomicDateTime::now());
+                // TODO OnSplit
             }
-            self.run.mark_as_changed();
-
-            // TODO OnSplit
         }
     }
 
@@ -221,7 +219,7 @@ impl Timer {
 
                 // TODO OnResume
             }
-            TimerPhase::NotRunning => self.start(), // Fuck abahbob
+            TimerPhase::NotRunning => self.split(), // Fuck abahbob
             _ => {}
         }
     }

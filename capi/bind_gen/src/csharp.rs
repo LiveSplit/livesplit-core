@@ -4,7 +4,7 @@ use heck::{CamelCase, MixedCase};
 
 fn get_type(ty: &Type, output: bool) -> &str {
     match (ty.kind, ty.name.as_str()) {
-        (TypeKind::Ref, "c_char") => if output { "LSCCoreString" } else { "string" },
+        (TypeKind::Ref, "c_char") => if output { "LSCoreString" } else { "string" },
         (TypeKind::Ref, _) |
         (TypeKind::RefMut, _) => "IntPtr",
         (_, t) if !ty.is_custom => {
@@ -36,15 +36,12 @@ pub fn write<W: Write>(mut writer: W, functions: &[Function]) -> Result<()> {
     write!(writer,
            "{}",
            r#"using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.IO;
 
 namespace LiveSplitCore
-{
-    public class LiveSplitCoreNative
-    {"#)?;
+{"#)?;
 
     for function in functions {
         let name = function.name.to_string();
@@ -53,23 +50,43 @@ namespace LiveSplitCore
         let postfix = splits.next().unwrap();
         if new_prefix != prefix {
             if !prefix.is_empty() {
+                if prefix == "Run" {
+                    write!(writer,
+                           "{}",
+                           r#"
+        public static IntPtr Parse(FileStream file)
+        {
+            var data = new byte[file.Length];
+            file.Read(data, 0, data.Length);
+            IntPtr pnt = Marshal.AllocHGlobal(data.Length);
+            try
+            {
+                Marshal.Copy(data, 0, pnt, data.Length);
+                return Parse(pnt, (UIntPtr)data.Length);
+            }
+            finally
+            {
+                Marshal.FreeHGlobal(pnt);
+            }
+        }"#)?;
+                }
                 writeln!(writer,
                          "{}",
                          r#"
-        }"#)?;
+    }"#)?;
             }
             write!(writer,
                    r#"
-        public static class {}
-        {{"#,
+    public static class {}
+    {{"#,
                    new_prefix)?;
         }
         prefix = new_prefix.to_string();
 
         write!(writer,
                r#"
-            [DllImport("livesplit_core", EntryPoint="{}")]
-            public static extern {} {}("#,
+        [DllImport("livesplit_core", EntryPoint="{}")]
+        public static extern {} {}("#,
                &function.name,
                get_type(&function.output, true),
                postfix.to_camel_case())?;
@@ -94,10 +111,9 @@ namespace LiveSplitCore
     writeln!(writer,
              "{}",
              r#"
-        }
     }
 
-    internal class LSCoreString : SafeHandle
+    public class LSCoreString : SafeHandle
     {
         public LSCoreString() : base(IntPtr.Zero, false) { }
 

@@ -1,5 +1,5 @@
-use livesplit_core::{Run, RunMetadata, TimeSpan, Segment, Attempt, parser};
-use super::{alloc, drop, acc, own, output_str, output_time_span, acc_mut, str};
+use livesplit_core::{Run, RunMetadata, TimeSpan, Segment, Attempt, parser, saver};
+use super::{alloc, drop, acc, own, output_str, output_time_span, output_vec, acc_mut, str};
 use segment_list::OwnedSegmentList;
 use std::io::Cursor;
 use std::{slice, ptr};
@@ -110,4 +110,9 @@ pub unsafe extern "C" fn Run_attempt_history_index(this: *const Run,
                                                    index: usize)
                                                    -> *const Attempt {
     &acc(this).attempt_history()[index]
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Run_save_as_lss(this: *const Run) -> *const c_char {
+    output_vec(|o| { saver::livesplit::save(acc(this), o).unwrap(); })
 }

@@ -9,6 +9,7 @@ use std::cell::{Cell, RefCell};
 use std::mem;
 
 pub mod timer;
+pub mod hotkey_timer;
 pub mod run;
 pub mod segment_list;
 pub mod segment;
@@ -32,6 +33,8 @@ pub mod sum_of_best_component_state;
 pub mod possible_time_save_component;
 pub mod possible_time_save_component_state;
 pub mod run_editor;
+pub mod timer_read_lock;
+pub mod timer_write_lock;
 
 use segment_history_element::SegmentHistoryElement;
 use livesplit_core::{Time, TimeSpan};
