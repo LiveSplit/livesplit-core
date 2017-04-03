@@ -1,7 +1,12 @@
 [package]
-name = "hotkey"
+name = "livesplit-hotkey"
 version = "0.1.0"
 authors = ["Christopher Serr <christopher.serr@gmail.com>"]
+documentation = "https://docs.rs/livesplit-hotkey/"
+repository = "https://github.com/CryZe/livesplit-core/tree/master/hotkey"
+license = "Apache-2.0/MIT"
+description = "livesplit-hotkey provides cross-platform global hotkey hooks."
+keywords = ["speedrun", "timer", "livesplit", "hotkey", "keyboard"]
 
 [target.'cfg(windows)'.dependencies]
 winapi = "0.2.8"

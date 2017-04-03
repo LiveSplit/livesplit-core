@@ -17,7 +17,7 @@ extern crate derive_more;
 #[macro_use]
 extern crate derive_new;
 extern crate pdqsort;
-extern crate hotkey;
+extern crate livesplit_hotkey as hotkey;
 
 mod atomic_date_time;
 mod attempt;
