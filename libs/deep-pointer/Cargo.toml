@@ -1,0 +1,9 @@
+[package]
+name = "livesplit-deep-pointer"
+version = "0.1.0"
+authors = ["Christopher Serr <christopher.serr@gmail.com>"]
+
+[dependencies]
+winapi = "0.2.8"
+kernel32-sys = "0.2.2"
+quick-error = "1.1.0"
