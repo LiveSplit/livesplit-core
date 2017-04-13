@@ -1,48 +1,113 @@
-use {SharedTimer, HotkeyConfig, SharedHotkeyConfig};
-use hotkey::{register_hook, Hook, KeyEvent};
-use parking_lot::{RwLockReadGuard, RwLockWriteGuard};
+use {SharedTimer, HotkeyConfig};
+use hotkey::{Hook, KeyCode};
+pub use hotkey::{Result, Error};
 
 pub struct HotkeySystem {
-    config: SharedHotkeyConfig,
-    _hook: Hook,
+    config: HotkeyConfig,
+    hook: Hook,
+    timer: SharedTimer,
 }
 
 impl HotkeySystem {
-    pub fn new(timer: SharedTimer) -> Result<Self, ()> {
+    pub fn new(timer: SharedTimer) -> Result<Self> {
         Self::with_config(timer, Default::default())
     }
 
-    pub fn with_config(timer: SharedTimer, config: HotkeyConfig) -> Result<Self, ()> {
-        let config = config.into_shared();
+    pub fn with_config(timer: SharedTimer, config: HotkeyConfig) -> Result<Self> {
+        let hook = Hook::new()?;
+
+        let inner = timer.clone();
+        hook.register(config.split, move || { inner.write().split(); })?;
+
+        let inner = timer.clone();
+        hook.register(config.reset, move || { inner.write().reset(true); })?;
+
+        let inner = timer.clone();
+        hook.register(config.undo, move || { inner.write().undo_split(); })?;
+
+        let inner = timer.clone();
+        hook.register(config.skip, move || { inner.write().skip_split(); })?;
+
+        let inner = timer.clone();
+        hook.register(config.pause, move || { inner.write().pause(); })?;
+
+        let inner = timer.clone();
+        hook.register(config.previous_comparison,
+                      move || { inner.write().switch_to_previous_comparison(); })?;
+
+        let inner = timer.clone();
+        hook.register(config.next_comparison,
+                      move || { inner.write().switch_to_next_comparison(); })?;
 
         Ok(Self {
-            config: config.clone(),
-            _hook: register_hook(move |k| if let KeyEvent::KeyDown(k) = k {
-                let config = config.read();
-                if k == config.split {
-                    timer.write().split();
-                } else if k == config.reset {
-                    timer.write().reset(true);
-                } else if k == config.undo {
-                    timer.write().undo_split();
-                } else if k == config.skip {
-                    timer.write().skip_split();
-                } else if k == config.pause {
-                    timer.write().pause();
-                } else if k == config.previous_comparison {
-                    timer.write().switch_to_previous_comparison();
-                } else if k == config.next_comparison {
-                    timer.write().switch_to_next_comparison();
-                }
-            })?,
+            config: config,
+            hook: hook,
+            timer: timer,
         })
     }
 
-    pub fn read_config(&self) -> RwLockReadGuard<HotkeyConfig> {
-        self.config.read()
+    // TODO Ignore errors in a lot of situations
+    // If unregister works and register fails for example,
+    // you won't be able to register again, as unregistering will fail forever.
+    // Also in initial start up code ignore partially failed registers.
+
+    pub fn set_split(&mut self, hotkey: KeyCode) -> Result<()> {
+        self.hook.unregister(self.config.split)?;
+        let inner = self.timer.clone();
+        self.hook.register(hotkey, move || { inner.write().split(); })?;
+        self.config.split = hotkey;
+        Ok(())
     }
 
-    pub fn write_config(&self) -> RwLockWriteGuard<HotkeyConfig> {
-        self.config.write()
+    pub fn set_reset(&mut self, hotkey: KeyCode) -> Result<()> {
+        self.hook.unregister(self.config.reset)?;
+        let inner = self.timer.clone();
+        self.hook.register(hotkey, move || { inner.write().reset(true); })?;
+        self.config.reset = hotkey;
+        Ok(())
+    }
+
+    pub fn set_pause(&mut self, hotkey: KeyCode) -> Result<()> {
+        self.hook.unregister(self.config.pause)?;
+        let inner = self.timer.clone();
+        self.hook.register(hotkey, move || { inner.write().pause(); })?;
+        self.config.pause = hotkey;
+        Ok(())
+    }
+
+    pub fn set_skip(&mut self, hotkey: KeyCode) -> Result<()> {
+        self.hook.unregister(self.config.skip)?;
+        let inner = self.timer.clone();
+        self.hook.register(hotkey, move || { inner.write().skip_split(); })?;
+        self.config.skip = hotkey;
+        Ok(())
+    }
+
+    pub fn set_undo(&mut self, hotkey: KeyCode) -> Result<()> {
+        self.hook.unregister(self.config.undo)?;
+        let inner = self.timer.clone();
+        self.hook.register(hotkey, move || { inner.write().undo_split(); })?;
+        self.config.undo = hotkey;
+        Ok(())
+    }
+
+    pub fn set_previous_comparison(&mut self, hotkey: KeyCode) -> Result<()> {
+        self.hook.unregister(self.config.previous_comparison)?;
+        let inner = self.timer.clone();
+        self.hook
+            .register(hotkey,
+                      move || { inner.write().switch_to_previous_comparison(); })?;
+        self.config.previous_comparison = hotkey;
+        Ok(())
+    }
+
+    pub fn set_next_comparison(&mut self, hotkey: KeyCode) -> Result<()> {
+        self.hook.unregister(self.config.next_comparison)?;
+        let inner = self.timer.clone();
+        self.hook
+            .register(hotkey,
+                      move || { inner.write().switch_to_next_comparison(); })?;
+        self.config.next_comparison = hotkey;
+        Ok(())
     }
 }

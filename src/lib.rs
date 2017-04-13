@@ -61,5 +61,5 @@ pub use self::time_stamp::TimeStamp;
 pub use self::timer::{Timer, SharedTimer};
 pub use self::timer_phase::TimerPhase;
 pub use self::timing_method::TimingMethod;
-pub use self::hotkey_config::{HotkeyConfig, SharedHotkeyConfig};
+pub use self::hotkey_config::HotkeyConfig;
 pub use self::hotkey_system::HotkeySystem;

@@ -1,15 +1,17 @@
+#[macro_use]
+extern crate quick_error;
+
 #[cfg(windows)]
 pub mod windows;
 #[cfg(windows)]
 pub use windows::*;
 
-#[cfg(not(any(windows)))]
-pub mod other;
-#[cfg(not(any(windows)))]
-pub use other::*;
+#[cfg(target_os = "linux")]
+pub mod linux;
+#[cfg(target_os = "linux")]
+pub use linux::*;
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
-pub enum KeyEvent {
-    KeyUp(KeyCode),
-    KeyDown(KeyCode),
-}
+#[cfg(not(any(windows, target_os = "linux")))]
+pub mod other;
+#[cfg(not(any(windows, target_os = "linux")))]
+pub use other::*;
