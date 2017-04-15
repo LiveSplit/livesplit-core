@@ -1,6 +1,7 @@
 use pdqsort::sort_by_key;
 use super::ComparisonGenerator;
 use {Attempt, Segment, TimeSpan, TimingMethod};
+use clone_on_write::Cow;
 
 #[derive(Copy, Clone, Debug)]
 pub struct AverageSegments;
@@ -25,7 +26,7 @@ fn calculate_average(times: &[(i32, TimeSpan)]) -> TimeSpan {
     TimeSpan::from_seconds(total_time / total_weights)
 }
 
-fn generate(buf: &mut Vec<(i32, TimeSpan)>, segments: &mut [Segment], method: TimingMethod) {
+fn generate(buf: &mut Vec<(i32, TimeSpan)>, segments: &mut [Cow<Segment>], method: TimingMethod) {
     let mut total_time = Some(TimeSpan::zero());
 
     for i in 0..segments.len() {
@@ -65,7 +66,7 @@ impl ComparisonGenerator for AverageSegments {
         NAME
     }
 
-    fn generate(&mut self, segments: &mut [Segment], _: &[Attempt]) {
+    fn generate(&mut self, segments: &mut [Cow<Segment>], _: &[Attempt]) {
         let mut times = Vec::new();
 
         generate(&mut times, segments, TimingMethod::RealTime);

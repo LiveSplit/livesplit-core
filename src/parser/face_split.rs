@@ -46,7 +46,7 @@ fn replace<'a>(text: &'a str, a: &'a str, b: &str) -> Cow<'a, str> {
 }
 
 pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
-    let mut run = Run::new(Vec::new());
+    let mut run = Run::new();
     let mut icon_buf = Vec::new();
     let mut lines = source.lines();
 

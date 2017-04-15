@@ -3,6 +3,7 @@ use std::ops::Add;
 use std::mem::swap;
 use {Image, Run, Segment, TimingMethod, Time, TimeSpan};
 use time_span::ParseError as ParseTimeSpanError;
+use clone_on_write::Cow;
 
 mod segment_row;
 mod state;
@@ -227,7 +228,7 @@ impl RunEditor {
         for x in min_index..max_index + 1 {
             segment.segment_history_mut().insert(x, Default::default());
         }
-        self.run.segments_mut().insert(selected_segment, segment);
+        self.run.segments_mut().insert(selected_segment, Cow::new(segment));
 
         self.select_only(selected_segment);
 
@@ -248,7 +249,7 @@ impl RunEditor {
         for x in min_index..max_index + 1 {
             segment.segment_history_mut().insert(x, Default::default());
         }
-        self.run.segments_mut().insert(next_segment, segment);
+        self.run.segments_mut().insert(next_segment, Cow::new(segment));
 
         self.select_only(next_segment);
 

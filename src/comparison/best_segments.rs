@@ -1,6 +1,7 @@
 use super::ComparisonGenerator;
 use {Attempt, Segment, Time, TimingMethod};
 use sum_of_segments::best::calculate;
+use clone_on_write::Cow;
 
 #[derive(Copy, Clone, Debug)]
 pub struct BestSegments;
@@ -12,7 +13,7 @@ impl ComparisonGenerator for BestSegments {
         NAME
     }
 
-    fn generate(&mut self, segments: &mut [Segment], _: &[Attempt]) {
+    fn generate(&mut self, segments: &mut [Cow<Segment>], _: &[Attempt]) {
         let mut real_time_predictions = vec![None; segments.len() + 1];
         let mut game_time_predictions = vec![None; segments.len() + 1];
 

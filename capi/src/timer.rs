@@ -127,11 +127,6 @@ pub unsafe extern "C" fn Timer_get_run(this: *const Timer) -> *const Run {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Timer_clone_run(this: *const Timer) -> OwnedRun {
-    alloc(acc(this).run().clone())
-}
-
-#[no_mangle]
 pub unsafe extern "C" fn Timer_print_debug(this: *const Timer) {
     println!("{:#?}", acc(this));
 }

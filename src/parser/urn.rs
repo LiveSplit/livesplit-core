@@ -49,7 +49,7 @@ fn parse_time(time: &str) -> Result<Time> {
 }
 
 pub fn parse<R: Read>(source: R) -> Result<Run> {
-    let mut run = Run::new(Vec::new());
+    let mut run = Run::new();
 
     let splits: Splits = from_reader(source)?;
 

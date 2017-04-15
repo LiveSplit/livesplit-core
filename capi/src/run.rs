@@ -1,15 +1,20 @@
 use livesplit_core::{Run, RunMetadata, TimeSpan, Segment, Attempt, parser, saver};
 use super::{alloc, own_drop, acc, own, output_str, output_time_span, output_vec, acc_mut, str};
-use segment_list::OwnedSegmentList;
 use std::io::Cursor;
 use std::{slice, ptr};
 use libc::c_char;
+use segment::OwnedSegment;
 
 pub type OwnedRun = *mut Run;
 
 #[no_mangle]
-pub unsafe extern "C" fn Run_new(segments: OwnedSegmentList) -> OwnedRun {
-    alloc(Run::new(own(segments)))
+pub unsafe extern "C" fn Run_new() -> OwnedRun {
+    alloc(Run::new())
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Run_clone(this: *const Run) -> OwnedRun {
+    alloc(acc(this).clone())
 }
 
 #[no_mangle]
@@ -25,6 +30,11 @@ pub unsafe extern "C" fn Run_parse(data: *const u8, length: usize) -> OwnedRun {
         Ok(run) => alloc(run),
         Err(_) => ptr::null_mut(),
     }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Run_push_segment(this: *mut Run, segment: OwnedSegment) {
+    acc_mut(this).push_segment(own(segment));
 }
 
 #[no_mangle]

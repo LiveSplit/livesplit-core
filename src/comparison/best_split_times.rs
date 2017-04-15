@@ -1,12 +1,13 @@
 use super::ComparisonGenerator;
 use {Attempt, Segment, TimeSpan, TimingMethod};
+use clone_on_write::Cow;
 
 #[derive(Copy, Clone, Debug)]
 pub struct BestSplitTimes;
 
 pub const NAME: &'static str = "Best Split Times";
 
-fn generate(segments: &mut [Segment], attempts: &[Attempt], method: TimingMethod) {
+fn generate(segments: &mut [Cow<Segment>], attempts: &[Attempt], method: TimingMethod) {
     for attempt in attempts {
         let id = attempt.index();
         let mut total_time = TimeSpan::zero();
@@ -33,7 +34,7 @@ impl ComparisonGenerator for BestSplitTimes {
         NAME
     }
 
-    fn generate(&mut self, segments: &mut [Segment], attempts: &[Attempt]) {
+    fn generate(&mut self, segments: &mut [Cow<Segment>], attempts: &[Attempt]) {
         if !segments.is_empty() {
             *segments[0].comparison_mut(NAME) = segments[0].best_segment_time();
             for segment in &mut segments[1..] {

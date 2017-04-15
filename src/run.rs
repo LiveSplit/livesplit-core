@@ -1,15 +1,16 @@
-use std::borrow::Cow;
+use std::borrow::Cow as BoO;
 use std::path::PathBuf;
 use std::cmp::max;
 use {AtomicDateTime, TimeSpan, Time, TimingMethod, Attempt, RunMetadata, Segment, Image};
 use comparison::{default_generators, ComparisonGenerator};
 use odds::vec::VecFindRemove;
+use clone_on_write::Cow;
 
 pub const PERSONAL_BEST_COMPARISON_NAME: &'static str = "Personal Best";
 
 #[derive(Clone, Debug)]
 pub struct Run {
-    game_icon: Image,
+    game_icon: Cow<Image>,
     game_name: String,
     category_name: String,
     offset: TimeSpan,
@@ -18,16 +19,16 @@ pub struct Run {
     metadata: RunMetadata,
     has_changed: bool,
     path: Option<PathBuf>,
-    segments: Vec<Segment>,
+    segments: Vec<Cow<Segment>>,
     custom_comparisons: Vec<String>,
     comparison_generators: Vec<Box<ComparisonGenerator>>,
 }
 
 impl Run {
     #[inline]
-    pub fn new(segments: Vec<Segment>) -> Self {
+    pub fn new() -> Self {
         let mut run = Run {
-            game_icon: Image::default(),
+            game_icon: Cow::new(Image::default()),
             game_name: String::new(),
             category_name: String::new(),
             offset: TimeSpan::zero(),
@@ -36,7 +37,7 @@ impl Run {
             metadata: RunMetadata::new(),
             has_changed: false,
             path: None,
-            segments: segments,
+            segments: Vec::new(),
             custom_comparisons: vec![PERSONAL_BEST_COMPARISON_NAME.to_string()],
             comparison_generators: default_generators(),
         };
@@ -64,7 +65,7 @@ impl Run {
 
     #[inline]
     pub fn set_game_icon<D: Into<Image>>(&mut self, image: D) {
-        self.game_icon = image.into();
+        *self.game_icon = image.into();
     }
 
     #[inline]
@@ -121,18 +122,18 @@ impl Run {
     }
 
     #[inline]
-    pub fn segments(&self) -> &[Segment] {
+    pub fn segments(&self) -> &[Cow<Segment>] {
         &self.segments
     }
 
     #[inline]
-    pub fn segments_mut(&mut self) -> &mut Vec<Segment> {
+    pub fn segments_mut(&mut self) -> &mut Vec<Cow<Segment>> {
         &mut self.segments
     }
 
     #[inline]
     pub fn push_segment(&mut self, segment: Segment) {
-        self.segments.push(segment);
+        self.segments.push(Cow::new(segment));
     }
 
     #[inline]
@@ -253,8 +254,8 @@ impl Run {
                                   show_region: bool,
                                   show_platform: bool,
                                   show_variables: bool)
-                                  -> Cow<str> {
-        let mut category_name: Cow<str> = Cow::Borrowed(&self.category_name);
+                                  -> BoO<str> {
+        let mut category_name: BoO<str> = BoO::Borrowed(&self.category_name);
         let mut after_parenthesis = "";
 
         if category_name.is_empty() {
@@ -267,7 +268,7 @@ impl Run {
         if let Some((i, u)) = self.category_name
             .find('(')
             .and_then(|i| self.category_name[i..].find(')').map(|u| (i, i + u))) {
-            category_name = Cow::Borrowed(&self.category_name[..u]);
+            category_name = BoO::Borrowed(&self.category_name[..u]);
             is_empty = u == i + 1;
             after_parenthesis = &self.category_name[u..];
         }
@@ -328,7 +329,7 @@ impl Run {
 
         if !after_parenthesis.is_empty() {
             if !has_pushed {
-                return Cow::Borrowed(&self.category_name);
+                return BoO::Borrowed(&self.category_name);
             }
             category_name.to_mut().push_str(after_parenthesis);
         } else if !is_empty {

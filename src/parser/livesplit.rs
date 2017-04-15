@@ -204,7 +204,7 @@ pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
         .next()
         .unwrap();
 
-    let mut run = Run::new(Vec::new());
+    let mut run = Run::new();
 
     let version = if let Ok(version) = attribute(&node, "version") {
         parse_version(version)?

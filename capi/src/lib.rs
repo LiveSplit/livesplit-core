@@ -11,7 +11,6 @@ use std::mem;
 pub mod timer;
 pub mod hotkey_system;
 pub mod run;
-pub mod segment_list;
 pub mod segment;
 pub mod time;
 pub mod time_span;
@@ -34,8 +33,7 @@ pub mod possible_time_save_component;
 pub mod possible_time_save_component_state;
 pub mod run_editor;
 pub mod shared_timer;
-pub mod timer_read_lock;
-pub mod timer_write_lock;
+pub mod cow_timer;
 
 use segment_history_element::SegmentHistoryElement;
 use livesplit_core::{Time, TimeSpan};

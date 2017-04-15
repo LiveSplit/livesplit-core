@@ -1,11 +1,12 @@
 use std::collections::HashMap;
 use {SegmentHistory, Image, Time, TimingMethod, TimeSpan};
 use run::PERSONAL_BEST_COMPARISON_NAME;
+use clone_on_write::Cow;
 
 #[derive(Clone, Default, Debug)]
 pub struct Segment {
     name: String,
-    icon: Image,
+    icon: Cow<Image>,
     best_segment_time: Time,
     split_time: Time,
     segment_history: SegmentHistory,
@@ -39,7 +40,7 @@ impl Segment {
 
     #[inline]
     pub fn set_icon<D: Into<Image>>(&mut self, image: D) {
-        self.icon = image.into();
+        *self.icon = image.into();
     }
 
     #[inline]

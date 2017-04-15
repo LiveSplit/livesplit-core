@@ -25,7 +25,7 @@ quick_error! {
 pub type Result<T> = StdResult<T, Error>;
 
 pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
-    let mut run = Run::new(Vec::new());
+    let mut run = Run::new();
     let mut icon_buf = Vec::new();
     let mut icons_list = Vec::new();
     let mut old_run_exists = false;

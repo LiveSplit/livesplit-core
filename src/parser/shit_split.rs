@@ -26,7 +26,7 @@ quick_error! {
 pub type Result<T> = StdResult<T, Error>;
 
 pub fn parse<R: BufRead>(source: R) -> Result<Run> {
-    let mut run = Run::new(Vec::new());
+    let mut run = Run::new();
 
     let mut lines = source.lines();
 

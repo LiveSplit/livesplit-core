@@ -37,7 +37,7 @@ fn read_string<R: Read>(mut source: R, buf: &mut Vec<u8>) -> Result<&str> {
 }
 
 pub fn parse<R: Read + Seek>(mut source: R) -> Result<Run> {
-    let mut run = Run::new(Vec::new());
+    let mut run = Run::new();
     let mut buf = Vec::new();
     let mut buf2 = Vec::new();
 

@@ -1,3 +1,4 @@
+#![feature(ptr_eq)]
 #![allow(unknown_lints)]
 
 #[macro_use]
@@ -35,6 +36,8 @@ mod time;
 mod timer_phase;
 mod timer;
 mod timing_method;
+mod shared_timer;
+pub mod clone_on_write;
 pub mod component;
 pub mod comparison;
 pub mod parser;
@@ -58,7 +61,8 @@ pub use self::run_editor::RunEditor;
 pub use self::time::{Time, RealTime, GameTime};
 pub use self::time_span::TimeSpan;
 pub use self::time_stamp::TimeStamp;
-pub use self::timer::{Timer, SharedTimer};
+pub use self::timer::Timer;
+pub use self::shared_timer::SharedTimer;
 pub use self::timer_phase::TimerPhase;
 pub use self::timing_method::TimingMethod;
 pub use self::hotkey_config::{HotkeyConfig, SharedHotkeyConfig};

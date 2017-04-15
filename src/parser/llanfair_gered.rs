@@ -97,7 +97,7 @@ pub fn parse<R: Read>(mut source: R) -> Result<Run> {
         .next()
         .unwrap();
 
-    let mut run = Run::new(Vec::new());
+    let mut run = Run::new();
 
     let node = child(&node, "Run")?;
     let node = child(&node, "default")?;

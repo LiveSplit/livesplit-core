@@ -36,7 +36,7 @@ fn unescape(text: &str) -> Cow<str> {
 }
 
 pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
-    let mut run = Run::new(Vec::new());
+    let mut run = Run::new();
 
     let mut icon_buf = Vec::new();
 

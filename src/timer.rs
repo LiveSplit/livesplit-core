@@ -1,8 +1,8 @@
-use {AtomicDateTime, Run, Time, TimerPhase, TimingMethod, TimeStamp, TimeSpan, Segment};
+use {AtomicDateTime, Run, Time, TimerPhase, TimingMethod, TimeStamp, TimeSpan, Segment,
+     SharedTimer};
+use clone_on_write::Cow;
 use TimerPhase::*;
 use run::PERSONAL_BEST_COMPARISON_NAME;
-use parking_lot::RwLock;
-use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct Timer {
@@ -20,8 +20,6 @@ pub struct Timer {
     game_time_pause_time: Option<TimeSpan>,
     loading_times: Option<TimeSpan>,
 }
-
-pub type SharedTimer = Arc<RwLock<Timer>>;
 
 impl Timer {
     #[inline]
@@ -49,7 +47,7 @@ impl Timer {
     }
 
     pub fn into_shared(self) -> SharedTimer {
-        Arc::new(RwLock::new(self))
+        SharedTimer::new(Cow::new(self))
     }
 
     #[inline]
@@ -106,7 +104,7 @@ impl Timer {
         &self.current_comparison
     }
 
-    pub fn current_split(&self) -> Option<&Segment> {
+    pub fn current_split(&self) -> Option<&Cow<Segment>> {
         if self.current_split_index >= 0 {
             self.run.segments().get(self.current_split_index as usize)
         } else {
@@ -114,7 +112,7 @@ impl Timer {
         }
     }
 
-    fn current_split_mut(&mut self) -> Option<&mut Segment> {
+    fn current_split_mut(&mut self) -> Option<&mut Cow<Segment>> {
         if self.current_split_index >= 0 {
             self.run.segments_mut().get_mut(self.current_split_index as usize)
         } else {

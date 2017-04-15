@@ -1,5 +1,6 @@
 use {TimeSpan, Segment, TimingMethod};
 use super::{track_branch, track_current_run, track_personal_best_run};
+use clone_on_write::Cow;
 
 fn populate_prediction(prediction: &mut Option<TimeSpan>, predicted_time: Option<TimeSpan>) {
     if let Some(predicted_time) = predicted_time {
@@ -9,7 +10,7 @@ fn populate_prediction(prediction: &mut Option<TimeSpan>, predicted_time: Option
     }
 }
 
-fn populate_predictions(segments: &[Segment],
+fn populate_predictions(segments: &[Cow<Segment>],
                         current_time: Option<TimeSpan>,
                         segment_index: usize,
                         predictions: &mut [Option<TimeSpan>],
@@ -55,7 +56,7 @@ fn populate_predictions(segments: &[Segment],
 }
 
 #[allow(needless_range_loop, unknown_lints)]
-pub fn calculate(segments: &[Segment],
+pub fn calculate(segments: &[Cow<Segment>],
                  start_index: usize,
                  end_index: usize, // Exclusive
                  predictions: &mut [Option<TimeSpan>],

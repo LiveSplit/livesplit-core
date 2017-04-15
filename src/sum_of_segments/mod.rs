@@ -2,8 +2,9 @@ pub mod best;
 pub mod worst;
 
 use {Segment, TimeSpan, TimingMethod, Time};
+use clone_on_write::Cow;
 
-pub fn calculate_best(segments: &[Segment],
+pub fn calculate_best(segments: &[Cow<Segment>],
                       simple_calculation: bool,
                       use_current_run: bool,
                       method: TimingMethod)
@@ -19,7 +20,7 @@ pub fn calculate_best(segments: &[Segment],
                     method)
 }
 
-pub fn calculate_worst(segments: &[Segment],
+pub fn calculate_worst(segments: &[Cow<Segment>],
                        use_current_run: bool,
                        method: TimingMethod)
                        -> Option<TimeSpan> {
@@ -33,7 +34,7 @@ pub fn calculate_worst(segments: &[Segment],
                      method)
 }
 
-fn track_current_run(segments: &[Segment],
+fn track_current_run(segments: &[Cow<Segment>],
                      current_time: Option<TimeSpan>,
                      segment_index: usize,
                      method: TimingMethod)
@@ -55,7 +56,7 @@ fn track_current_run(segments: &[Segment],
     (0, Time::default())
 }
 
-fn track_personal_best_run(segments: &[Segment],
+fn track_personal_best_run(segments: &[Cow<Segment>],
                            current_time: Option<TimeSpan>,
                            segment_index: usize,
                            method: TimingMethod)
@@ -77,7 +78,7 @@ fn track_personal_best_run(segments: &[Segment],
     (0, Time::default())
 }
 
-fn track_branch(segments: &[Segment],
+fn track_branch(segments: &[Cow<Segment>],
                 current_time: Option<TimeSpan>,
                 segment_index: usize,
                 run_index: i32,

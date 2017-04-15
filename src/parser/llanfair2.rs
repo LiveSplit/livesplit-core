@@ -93,7 +93,7 @@ pub fn parse<R: Read>(mut source: R) -> Result<Run> {
         .next()
         .unwrap();
 
-    let mut run = Run::new(Vec::new());
+    let mut run = Run::new();
 
     if let Ok(node) = child(&node, "game") {
         run.set_game_name(text(&node, buf));

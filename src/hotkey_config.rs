@@ -6,8 +6,9 @@ use parking_lot::RwLock;
 pub struct HotkeyConfig {
     pub split: KeyCode,
     pub reset: KeyCode,
-    pub undo: KeyCode,
     pub skip: KeyCode,
+    pub undo: KeyCode,
+    pub redo: KeyCode,
     pub pause: KeyCode,
     pub previous_comparison: KeyCode,
     pub next_comparison: KeyCode,
@@ -28,8 +29,9 @@ impl Default for HotkeyConfig {
         Self {
             split: NumPad1,
             reset: NumPad3,
-            undo: NumPad8,
             skip: NumPad2,
+            undo: NumPad7,
+            redo: NumPad9,
             pause: NumPad5,
             previous_comparison: NumPad4,
             next_comparison: NumPad6,
@@ -43,8 +45,9 @@ impl Default for HotkeyConfig {
         Self {
             split: KeyCode,
             reset: KeyCode,
-            undo: KeyCode,
             skip: KeyCode,
+            undo: KeyCode,
+            redo: KeyCode,
             pause: KeyCode,
             previous_comparison: KeyCode,
             next_comparison: KeyCode,

@@ -92,7 +92,7 @@ static CHAPTERS: [(&'static str, &'static [&'static str]); 9] =
       &["sp_a4_finale1", "sp_a4_finale2", "sp_a4_finale3", "sp_a4_finale4"])];
 
 pub fn parse<R: BufRead>(source: R) -> Result<Run> {
-    let mut run = Run::new(Vec::new());
+    let mut run = Run::new();
 
     run.set_game_name("Portal 2");
     run.set_category_name("Any%");

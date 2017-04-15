@@ -42,7 +42,7 @@ fn parse_time_optional(time: &str) -> Result<Option<TimeSpan>> {
 }
 
 pub fn parse<R: BufRead>(source: R, path_for_loading_other_files: Option<PathBuf>) -> Result<Run> {
-    let mut run = Run::new(Vec::new());
+    let mut run = Run::new();
     let mut buf = Vec::new();
     let path = path_for_loading_other_files;
 

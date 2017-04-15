@@ -1,7 +1,6 @@
 use livesplit_core::SharedTimer;
-use timer_read_lock::OwnedTimerReadLock;
-use timer_write_lock::OwnedTimerWriteLock;
-use super::{alloc, acc, own_drop};
+use super::{alloc, acc, own, own_drop};
+use cow_timer::OwnedCowTimer;
 
 pub type OwnedSharedTimer = *mut SharedTimer;
 
@@ -16,11 +15,51 @@ pub unsafe extern "C" fn SharedTimer_drop(this: OwnedSharedTimer) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn SharedTimer_read(this: *const SharedTimer) -> OwnedTimerReadLock {
-    alloc(acc(this).read())
+pub unsafe extern "C" fn SharedTimer_get(this: *const SharedTimer) -> OwnedCowTimer {
+    alloc(acc(this).get())
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn SharedTimer_write(this: *const SharedTimer) -> OwnedTimerWriteLock {
-    alloc(acc(this).write())
+pub unsafe extern "C" fn SharedTimer_commit(this: *const SharedTimer, timer: OwnedCowTimer) {
+    acc(this).commit(own(timer));
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn SharedTimer_split(this: *const SharedTimer) {
+    acc(this).split();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn SharedTimer_skip_split(this: *const SharedTimer) {
+    acc(this).skip_split();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn SharedTimer_reset(this: *const SharedTimer, update_splits: bool) {
+    acc(this).reset(update_splits);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn SharedTimer_pause(this: *const SharedTimer) {
+    acc(this).pause();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn SharedTimer_switch_to_next_comparison(this: *const SharedTimer) {
+    acc(this).switch_to_next_comparison();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn SharedTimer_switch_to_previous_comparison(this: *const SharedTimer) {
+    acc(this).switch_to_previous_comparison();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn SharedTimer_undo(this: *const SharedTimer) {
+    acc(this).undo();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn SharedTimer_redo(this: *const SharedTimer) {
+    acc(this).redo();
 }

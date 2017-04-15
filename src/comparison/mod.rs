@@ -12,10 +12,11 @@ pub use self::worst_segments::WorstSegments;
 
 use std::fmt::Debug;
 use {Attempt, Segment};
+use clone_on_write::Cow;
 
 pub trait ComparisonGenerator: Debug + Sync + Send + ComparisonGeneratorClone {
     fn name(&self) -> &str;
-    fn generate(&mut self, segments: &mut [Segment], attempts: &[Attempt]);
+    fn generate(&mut self, segments: &mut [Cow<Segment>], attempts: &[Attempt]);
 }
 
 pub trait ComparisonGeneratorClone {
