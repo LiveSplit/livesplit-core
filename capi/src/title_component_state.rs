@@ -1,5 +1,5 @@
 use livesplit_core::component::title::State as TitleComponentState;
-use super::{drop, acc, output_str};
+use super::{own_drop, acc, output_str};
 use libc::c_char;
 use std::ptr;
 
@@ -7,7 +7,7 @@ pub type OwnedTitleComponentState = *mut TitleComponentState;
 
 #[no_mangle]
 pub unsafe extern "C" fn TitleComponentState_drop(this: OwnedTitleComponentState) {
-    drop(this);
+    own_drop(this);
 }
 
 #[no_mangle]

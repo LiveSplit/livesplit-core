@@ -9,7 +9,7 @@ use std::cell::{Cell, RefCell};
 use std::mem;
 
 pub mod timer;
-pub mod hotkey_timer;
+pub mod hotkey_system;
 pub mod run;
 pub mod segment_list;
 pub mod segment;
@@ -33,6 +33,7 @@ pub mod sum_of_best_component_state;
 pub mod possible_time_save_component;
 pub mod possible_time_save_component_state;
 pub mod run_editor;
+pub mod shared_timer;
 pub mod timer_read_lock;
 pub mod timer_write_lock;
 
@@ -101,7 +102,7 @@ unsafe fn own<T>(data: *mut T) -> T {
     *Box::from_raw(data)
 }
 
-unsafe fn drop<T>(data: *mut T) {
+unsafe fn own_drop<T>(data: *mut T) {
     Box::from_raw(data);
 }
 

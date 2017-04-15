@@ -1,5 +1,5 @@
 use livesplit_core::{Segment, Time, SegmentHistory};
-use super::{alloc, drop, acc, str, output_str, output_time};
+use super::{alloc, own_drop, acc, str, output_str, output_time};
 use libc::c_char;
 
 pub type OwnedSegment = *mut Segment;
@@ -11,7 +11,7 @@ pub unsafe extern "C" fn Segment_new(name: *const c_char) -> OwnedSegment {
 
 #[no_mangle]
 pub unsafe extern "C" fn Segment_drop(this: OwnedSegment) {
-    drop(this);
+    own_drop(this);
 }
 
 #[no_mangle]

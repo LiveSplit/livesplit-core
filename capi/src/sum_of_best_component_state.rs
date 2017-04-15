@@ -1,12 +1,12 @@
 use livesplit_core::component::sum_of_best::State as SumOfBestComponentState;
-use super::{drop, acc, output_str};
+use super::{own_drop, acc, output_str};
 use libc::c_char;
 
 pub type OwnedSumOfBestComponentState = *mut SumOfBestComponentState;
 
 #[no_mangle]
 pub unsafe extern "C" fn SumOfBestComponentState_drop(this: OwnedSumOfBestComponentState) {
-    drop(this);
+    own_drop(this);
 }
 
 #[no_mangle]

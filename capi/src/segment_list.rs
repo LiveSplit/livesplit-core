@@ -1,5 +1,5 @@
 use livesplit_core::Segment;
-use super::{alloc, drop, acc_mut, own};
+use super::{alloc, own_drop, acc_mut, own};
 use segment::OwnedSegment;
 
 pub type SegmentList = Vec<Segment>;
@@ -17,5 +17,5 @@ pub unsafe extern "C" fn SegmentList_push(this: *mut SegmentList, segment: Owned
 
 #[no_mangle]
 pub unsafe extern "C" fn SegmentList_drop(this: OwnedSegmentList) {
-    drop(this);
+    own_drop(this);
 }

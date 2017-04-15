@@ -1,5 +1,5 @@
 use livesplit_core::{Time, TimeSpan, TimingMethod};
-use super::{alloc, drop, acc};
+use super::{alloc, own_drop, acc};
 use std::ptr;
 
 pub type OwnedTime = *mut Time;
@@ -11,7 +11,7 @@ pub unsafe extern "C" fn Time_clone(this: *const Time) -> OwnedTime {
 
 #[no_mangle]
 pub unsafe extern "C" fn Time_drop(this: OwnedTime) {
-    drop(this);
+    own_drop(this);
 }
 
 #[no_mangle]

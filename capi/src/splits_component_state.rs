@@ -1,5 +1,5 @@
 use livesplit_core::component::splits::State as SplitsComponentState;
-use super::{drop, acc, output_str, output_str_with};
+use super::{own_drop, acc, output_str, output_str_with};
 use libc::c_char;
 use std::ptr;
 use std::fmt::Write;
@@ -8,7 +8,7 @@ pub type OwnedSplitsComponentState = *mut SplitsComponentState;
 
 #[no_mangle]
 pub unsafe extern "C" fn SplitsComponentState_drop(this: OwnedSplitsComponentState) {
-    drop(this);
+    own_drop(this);
 }
 
 #[no_mangle]

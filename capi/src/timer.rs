@@ -1,7 +1,8 @@
 use livesplit_core::{Timer, TimeSpan, TimingMethod, TimerPhase, Run};
-use super::{alloc, own, acc_mut, drop, acc, output_str, output_time_span};
+use super::{alloc, own, acc_mut, own_drop, acc, output_str, output_time_span};
 use run::OwnedRun;
 use libc::c_char;
+use shared_timer::OwnedSharedTimer;
 
 pub type OwnedTimer = *mut Timer;
 
@@ -11,8 +12,13 @@ pub unsafe extern "C" fn Timer_new(run: OwnedRun) -> OwnedTimer {
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn Timer_into_shared(this: OwnedTimer) -> OwnedSharedTimer {
+    alloc(own(this).into_shared())
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn Timer_drop(this: OwnedTimer) {
-    drop(this);
+    own_drop(this);
 }
 
 #[no_mangle]

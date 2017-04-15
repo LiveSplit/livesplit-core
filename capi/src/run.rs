@@ -1,5 +1,5 @@
 use livesplit_core::{Run, RunMetadata, TimeSpan, Segment, Attempt, parser, saver};
-use super::{alloc, drop, acc, own, output_str, output_time_span, output_vec, acc_mut, str};
+use super::{alloc, own_drop, acc, own, output_str, output_time_span, output_vec, acc_mut, str};
 use segment_list::OwnedSegmentList;
 use std::io::Cursor;
 use std::{slice, ptr};
@@ -14,7 +14,7 @@ pub unsafe extern "C" fn Run_new(segments: OwnedSegmentList) -> OwnedRun {
 
 #[no_mangle]
 pub unsafe extern "C" fn Run_drop(this: OwnedRun) {
-    drop(this);
+    own_drop(this);
 }
 
 #[no_mangle]

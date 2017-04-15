@@ -1,6 +1,8 @@
 use {AtomicDateTime, Run, Time, TimerPhase, TimingMethod, TimeStamp, TimeSpan, Segment};
 use TimerPhase::*;
 use run::PERSONAL_BEST_COMPARISON_NAME;
+use parking_lot::RwLock;
+use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct Timer {
@@ -18,6 +20,8 @@ pub struct Timer {
     game_time_pause_time: Option<TimeSpan>,
     loading_times: Option<TimeSpan>,
 }
+
+pub type SharedTimer = Arc<RwLock<Timer>>;
 
 impl Timer {
     #[inline]
@@ -42,6 +46,10 @@ impl Timer {
             game_time_pause_time: None,
             loading_times: None,
         }
+    }
+
+    pub fn into_shared(self) -> SharedTimer {
+        Arc::new(RwLock::new(self))
     }
 
     #[inline]

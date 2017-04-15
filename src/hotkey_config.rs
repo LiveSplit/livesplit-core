@@ -1,4 +1,6 @@
 use hotkey::KeyCode;
+use std::sync::Arc;
+use parking_lot::RwLock;
 
 #[derive(Debug, Eq, PartialEq, Hash)]
 pub struct HotkeyConfig {
@@ -9,6 +11,14 @@ pub struct HotkeyConfig {
     pub pause: KeyCode,
     pub previous_comparison: KeyCode,
     pub next_comparison: KeyCode,
+}
+
+pub type SharedHotkeyConfig = Arc<RwLock<HotkeyConfig>>;
+
+impl HotkeyConfig {
+    pub fn into_shared(self) -> SharedHotkeyConfig {
+        Arc::new(RwLock::new(self))
+    }
 }
 
 #[cfg(windows)]

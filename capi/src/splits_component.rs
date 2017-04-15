@@ -1,6 +1,6 @@
 use livesplit_core::component::splits::Component as SplitsComponent;
 use livesplit_core::Timer;
-use super::{alloc, drop, acc, output_vec, acc_mut};
+use super::{alloc, own_drop, acc, output_vec, acc_mut};
 use libc::c_char;
 use splits_component_state::OwnedSplitsComponentState;
 
@@ -13,7 +13,7 @@ pub unsafe extern "C" fn SplitsComponent_new() -> OwnedSplitsComponent {
 
 #[no_mangle]
 pub unsafe extern "C" fn SplitsComponent_drop(this: OwnedSplitsComponent) {
-    drop(this);
+    own_drop(this);
 }
 
 #[no_mangle]

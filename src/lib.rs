@@ -17,13 +17,14 @@ extern crate derive_more;
 #[macro_use]
 extern crate derive_new;
 extern crate pdqsort;
-extern crate livesplit_hotkey as hotkey;
+pub extern crate parking_lot;
+pub extern crate livesplit_hotkey as hotkey;
 
 mod atomic_date_time;
 mod attempt;
 mod color;
 mod hotkey_config;
-mod hotkey_timer;
+mod hotkey_system;
 mod image;
 mod run_metadata;
 mod run;
@@ -57,8 +58,8 @@ pub use self::run_editor::RunEditor;
 pub use self::time::{Time, RealTime, GameTime};
 pub use self::time_span::TimeSpan;
 pub use self::time_stamp::TimeStamp;
-pub use self::timer::Timer;
+pub use self::timer::{Timer, SharedTimer};
 pub use self::timer_phase::TimerPhase;
 pub use self::timing_method::TimingMethod;
-pub use self::hotkey_config::HotkeyConfig;
-pub use self::hotkey_timer::HotkeyTimer;
+pub use self::hotkey_config::{HotkeyConfig, SharedHotkeyConfig};
+pub use self::hotkey_system::HotkeySystem;

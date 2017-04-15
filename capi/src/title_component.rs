@@ -1,6 +1,6 @@
 use livesplit_core::component::title::Component as TitleComponent;
 use livesplit_core::Timer;
-use super::{alloc, drop, acc, output_vec, acc_mut};
+use super::{alloc, own_drop, acc, output_vec, acc_mut};
 use libc::c_char;
 use title_component_state::OwnedTitleComponentState;
 
@@ -13,7 +13,7 @@ pub unsafe extern "C" fn TitleComponent_new() -> OwnedTitleComponent {
 
 #[no_mangle]
 pub unsafe extern "C" fn TitleComponent_drop(this: OwnedTitleComponent) {
-    drop(this);
+    own_drop(this);
 }
 
 #[no_mangle]

@@ -1,6 +1,6 @@
 use livesplit_core::component::possible_time_save::Component as PossibleTimeSaveComponent;
 use livesplit_core::Timer;
-use super::{alloc, drop, acc, output_vec};
+use super::{alloc, own_drop, acc, output_vec};
 use libc::c_char;
 use possible_time_save_component_state::OwnedPossibleTimeSaveComponentState;
 
@@ -13,7 +13,7 @@ pub unsafe extern "C" fn PossibleTimeSaveComponent_new() -> OwnedPossibleTimeSav
 
 #[no_mangle]
 pub unsafe extern "C" fn PossibleTimeSaveComponent_drop(this: OwnedPossibleTimeSaveComponent) {
-    drop(this);
+    own_drop(this);
 }
 
 #[no_mangle]

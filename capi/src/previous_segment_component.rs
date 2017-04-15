@@ -1,6 +1,6 @@
 use livesplit_core::component::previous_segment::Component as PreviousSegmentComponent;
 use livesplit_core::Timer;
-use super::{alloc, drop, acc, output_vec};
+use super::{alloc, own_drop, acc, output_vec};
 use libc::c_char;
 use previous_segment_component_state::OwnedPreviousSegmentComponentState;
 
@@ -13,7 +13,7 @@ pub unsafe extern "C" fn PreviousSegmentComponent_new() -> OwnedPreviousSegmentC
 
 #[no_mangle]
 pub unsafe extern "C" fn PreviousSegmentComponent_drop(this: OwnedPreviousSegmentComponent) {
-    drop(this);
+    own_drop(this);
 }
 
 #[no_mangle]

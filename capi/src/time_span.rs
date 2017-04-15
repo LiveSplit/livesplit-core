@@ -1,5 +1,5 @@
 use livesplit_core::TimeSpan;
-use super::{alloc, drop, acc};
+use super::{alloc, own_drop, acc};
 
 pub type OwnedTimeSpan = *mut TimeSpan;
 
@@ -10,7 +10,7 @@ pub unsafe extern "C" fn TimeSpan_clone(this: *const TimeSpan) -> OwnedTimeSpan 
 
 #[no_mangle]
 pub unsafe extern "C" fn TimeSpan_drop(this: OwnedTimeSpan) {
-    drop(this);
+    own_drop(this);
 }
 
 #[no_mangle]
