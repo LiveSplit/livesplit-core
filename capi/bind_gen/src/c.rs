@@ -1,6 +1,6 @@
 use std::io::{Write, Result};
-use {Function, Type, TypeKind};
-use std::collections::BTreeSet;
+use {Type, TypeKind, Class};
+use std::collections::BTreeMap;
 use std::borrow::Cow;
 
 fn get_type(ty: &Type) -> Cow<str> {
@@ -22,7 +22,7 @@ fn get_type(ty: &Type) -> Cow<str> {
         x => x,
     });
     match (ty.is_custom, ty.kind) {
-        (false, TypeKind::RefMut) => name.to_mut().push_str("*"),
+        (false, TypeKind::RefMut) => name.to_mut().push_str("*restrict"),
         (false, TypeKind::Ref) => name.to_mut().push_str(" const*"),
         (true, TypeKind::RefMut) => name.to_mut().push_str("RefMut"),
         (true, TypeKind::Ref) => name.to_mut().push_str("Ref"),
@@ -34,9 +34,7 @@ fn get_type(ty: &Type) -> Cow<str> {
     name
 }
 
-pub fn write<W: Write>(mut writer: W, functions: &[Function]) -> Result<()> {
-    let mut prefix = String::from("");
-
+pub fn write<W: Write>(mut writer: W, classes: &BTreeMap<String, Class>) -> Result<()> {
     write!(writer,
            "{}",
            r#"#ifndef _LIVESPLIT_CORE_H_
@@ -52,58 +50,45 @@ extern "C" {
 
 "#)?;
 
-    let mut types = BTreeSet::new();
-
-    for function in functions {
-        let output = &function.output;
-        if output.is_custom {
-            types.insert(&output.name);
-        }
-
-        for &(_, ref typ) in &function.inputs {
-            if typ.is_custom {
-                types.insert(&typ.name);
-            }
-        }
-    }
-
-    for custom_type in types {
+    for name in classes.keys() {
         writeln!(writer,
                  r#"struct {0}_s;
-typedef struct {0}_s* {0};
-typedef struct {0}_s* {0}RefMut;
+typedef struct {0}_s *restrict {0};
+typedef struct {0}_s *restrict {0}RefMut;
 typedef struct {0}_s const* {0}Ref;
 "#,
-                 custom_type)?;
+                 name)?;
     }
 
-    for function in functions {
-        let name = function.name.to_string();
-        let new_prefix = name.split('_').next().unwrap();
-        if !prefix.is_empty() && new_prefix != prefix {
-            writeln!(writer, "")?;
-        }
-        prefix = new_prefix.to_string();
+    for class in classes.values() {
+        writeln!(writer, "")?;
 
-        write!(writer,
-               r#"extern {} {}("#,
-               get_type(&function.output),
-               function.name)?;
+        for function in class.static_fns
+            .iter()
+            .chain(class.own_fns.iter())
+            .chain(class.shared_fns.iter())
+            .chain(class.mut_fns.iter()) {
 
-        for (i, &(ref name, ref typ)) in function.inputs.iter().enumerate() {
-            if i != 0 {
-                write!(writer, ", ")?;
-            }
             write!(writer,
-                   "{} {}",
-                   get_type(typ),
-                   if name == "this" { "self" } else { name })?;
-        }
-        if function.inputs.is_empty() {
-            write!(writer, "void")?;
-        }
+                   r#"extern {} {}("#,
+                   get_type(&function.output),
+                   function.name)?;
 
-        writeln!(writer, ");")?;
+            for (i, &(ref name, ref typ)) in function.inputs.iter().enumerate() {
+                if i != 0 {
+                    write!(writer, ", ")?;
+                }
+                write!(writer,
+                       "{} {}",
+                       get_type(typ),
+                       if name == "this" { "self" } else { name })?;
+            }
+            if function.inputs.is_empty() {
+                write!(writer, "void")?;
+            }
+
+            writeln!(writer, ");")?;
+        }
     }
 
     write!(writer,

@@ -13,7 +13,6 @@ use std::path::Path;
 use syntex_syntax::abi::Abi;
 use syntex_syntax::ast::{ItemKind, Visibility, PatKind, TyKind, Mutability, FunctionRetTy};
 use syntex_syntax::parse::{ParseSess, parse_crate_from_file};
-use syntex_syntax::symbol::Symbol;
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum TypeKind {
@@ -31,9 +30,33 @@ pub struct Type {
 
 #[derive(Debug)]
 pub struct Function {
-    name: Symbol,
+    name: String,
+    class: String,
+    method: String,
     inputs: Vec<(String, Type)>,
     output: Type,
+}
+
+impl Function {
+    fn is_static(&self) -> bool {
+        if let Some(&(ref name, _)) = self.inputs.get(0) {
+            name != "this"
+        } else {
+            true
+        }
+    }
+
+    fn has_return_type(&self) -> bool {
+        self.output.name != "()"
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct Class {
+    static_fns: Vec<Function>,
+    shared_fns: Vec<Function>,
+    mut_fns: Vec<Function>,
+    own_fns: Vec<Function>,
 }
 
 fn get_type(ty: &TyKind) -> Type {
@@ -106,8 +129,19 @@ fn main() {
                             })
                             .collect();
 
+                        let name = item.ident.name.to_string();
+                        let class;
+                        let method;
+                        {
+                            let mut splits = name.splitn(2, '_');
+                            class = splits.next().unwrap().to_string();
+                            method = splits.next().unwrap().to_string();
+                        }
+
                         functions.push(Function {
-                            name: item.ident.name,
+                            name: name,
+                            class: class,
+                            method: method,
                             output: output,
                             inputs: inputs,
                         });
@@ -117,46 +151,70 @@ fn main() {
         }
     }
 
-    write_files(&functions).unwrap();
+    write_files(&fns_to_classes(functions)).unwrap();
+}
+
+use std::collections::BTreeMap;
+
+fn fns_to_classes(functions: Vec<Function>) -> BTreeMap<String, Class> {
+    let mut classes = BTreeMap::new();
+
+    for function in functions {
+        let class = classes.entry(function.class.clone()).or_insert_with(Class::default);
+        let kind = if let Some(&(ref name, ref ty)) = function.inputs.get(0) {
+            if name == "this" { Some(ty.kind) } else { None }
+        } else {
+            None
+        };
+        match kind {
+            Some(TypeKind::Value) => class.own_fns.push(function),
+            Some(TypeKind::Ref) => class.shared_fns.push(function),
+            Some(TypeKind::RefMut) => class.mut_fns.push(function),
+            None => class.static_fns.push(function),
+        }
+    }
+
+    classes
 }
 
 use std::fs::{self, File};
 use std::io::{BufWriter, Result};
 use std::path::PathBuf;
 
-fn write_files(functions: &[Function]) -> Result<()> {
+
+fn write_files(classes: &BTreeMap<String, Class>) -> Result<()> {
     let mut path = PathBuf::from("..");
     path.push("bindings");
 
     fs::create_dir_all(&path)?;
 
-    path.push("livesplit_core_emscripten.js");
-    emscripten::write(BufWriter::new(File::create(&path)?), functions)?;
-    path.pop();
+    // path.push("livesplit_core_emscripten.js");
+    // emscripten::write(BufWriter::new(File::create(&path)?), functions)?;
+    // path.pop();
 
-    path.push("livesplit_core_node.js");
-    node::write(BufWriter::new(File::create(&path)?), functions)?;
-    path.pop();
+    // path.push("livesplit_core_node.js");
+    // node::write(BufWriter::new(File::create(&path)?), functions)?;
+    // path.pop();
 
     path.push("LiveSplitCoreNative.cs");
-    csharp::write(BufWriter::new(File::create(&path)?), functions)?;
+    csharp::write(BufWriter::new(File::create(&path)?), classes)?;
     path.pop();
 
-    path.push("LiveSplitCore.java");
-    java::write(BufWriter::new(File::create(&path)?), functions)?;
-    path.pop();
+    // path.push("LiveSplitCore.java");
+    // java::write(BufWriter::new(File::create(&path)?), functions)?;
+    // path.pop();
 
-    path.push("LiveSplitCore.rb");
-    ruby::write(BufWriter::new(File::create(&path)?), functions)?;
-    path.pop();
+    // path.push("LiveSplitCore.rb");
+    // ruby::write(BufWriter::new(File::create(&path)?), functions)?;
+    // path.pop();
 
     path.push("livesplit_core.h");
-    c::write(BufWriter::new(File::create(&path)?), functions)?;
+    c::write(BufWriter::new(File::create(&path)?), classes)?;
     path.pop();
 
-    path.push("livesplit_core.py");
-    python::write(BufWriter::new(File::create(&path)?), functions)?;
-    path.pop();
+    // path.push("livesplit_core.py");
+    // python::write(BufWriter::new(File::create(&path)?), functions)?;
+    // path.pop();
 
     Ok(())
 }
