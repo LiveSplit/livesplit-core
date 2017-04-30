@@ -196,7 +196,7 @@ fn write_files(classes: &BTreeMap<String, Class>) -> Result<()> {
     // node::write(BufWriter::new(File::create(&path)?), functions)?;
     // path.pop();
 
-    path.push("LiveSplitCoreNative.cs");
+    path.push("LiveSplitCore.cs");
     csharp::write(BufWriter::new(File::create(&path)?), classes)?;
     path.pop();
 
