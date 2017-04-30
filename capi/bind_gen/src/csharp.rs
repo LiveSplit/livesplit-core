@@ -205,6 +205,26 @@ namespace LiveSplitCore
             write_fn(&mut writer, function, &class_name_ref)?;
         }
 
+        if class_name == "SharedTimer" {
+            write!(writer,
+                   "{}",
+                   r#"
+        public void ReadWith(Action<TimerRef> action)
+        {
+            using (var timerLock = Read())
+            {
+                action(timerLock.Timer());
+            }
+        }
+        public void WriteWith(Action<TimerRefMut> action)
+        {
+            using (var timerLock = Write())
+            {
+                action(timerLock.Timer());
+            }
+        }"#)?;
+        }
+
         write!(writer,
                r#"
         internal {base_class}(IntPtr ptr)
@@ -277,10 +297,6 @@ namespace LiveSplitCore
                    r#"
         public static Run Parse(Stream stream)
         {
-            if (stream.Length == 0)
-            {
-                return null;
-            }
             var data = new byte[stream.Length];
             stream.Read(data, 0, data.Length);
             IntPtr pnt = Marshal.AllocHGlobal(data.Length);
@@ -292,24 +308,6 @@ namespace LiveSplitCore
             finally
             {
                 Marshal.FreeHGlobal(pnt);
-            }
-        }"#)?;
-        } else if class_name == "SharedTimer" {
-            write!(writer,
-                   "{}",
-                   r#"
-        public void ReadWith(Action<TimerRef> action)
-        {
-            using (var timerLock = Read())
-            {
-                action(timerLock.Timer());
-            }
-        }
-        public void WriteWith(Action<TimerRefMut> action)
-        {
-            using (var timerLock = Write())
-            {
-                action(timerLock.Timer());
             }
         }"#)?;
         }

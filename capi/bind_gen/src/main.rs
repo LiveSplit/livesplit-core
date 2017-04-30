@@ -177,16 +177,15 @@ fn fns_to_classes(functions: Vec<Function>) -> BTreeMap<String, Class> {
     classes
 }
 
-use std::fs::{self, File};
+use std::fs::{self, File, create_dir_all};
 use std::io::{BufWriter, Result};
 use std::path::PathBuf;
-
 
 fn write_files(classes: &BTreeMap<String, Class>) -> Result<()> {
     let mut path = PathBuf::from("..");
     path.push("bindings");
 
-    fs::create_dir_all(&path)?;
+    create_dir_all(&path)?;
 
     // path.push("livesplit_core_emscripten.js");
     // emscripten::write(BufWriter::new(File::create(&path)?), functions)?;
@@ -200,9 +199,10 @@ fn write_files(classes: &BTreeMap<String, Class>) -> Result<()> {
     csharp::write(BufWriter::new(File::create(&path)?), classes)?;
     path.pop();
 
-    // path.push("LiveSplitCore.java");
-    // java::write(BufWriter::new(File::create(&path)?), functions)?;
-    // path.pop();
+    path.push("java");
+    create_dir_all(&path)?;
+    java::write(&path, classes)?;
+    path.pop();
 
     // path.push("LiveSplitCore.rb");
     // ruby::write(BufWriter::new(File::create(&path)?), functions)?;
