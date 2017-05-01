@@ -1,7 +1,20 @@
 use std::io::{Write, Result};
-use {Function, Type, TypeKind};
+use {Class, Function, Type, TypeKind};
+use std::collections::BTreeMap;
 
-fn get_type(ty: &Type) -> &str {
+fn get_hl_type(ty: &Type) -> String {
+    if ty.is_custom {
+        match ty.kind {
+            TypeKind::Ref => format!("{}Ref", ty.name),
+            TypeKind::RefMut => format!("{}RefMut", ty.name),
+            TypeKind::Value => ty.name.clone(),
+        }
+    } else {
+        get_ll_type(ty).to_string()
+    }
+}
+
+fn get_ll_type(ty: &Type) -> &str {
     match (ty.kind, ty.name.as_str()) {
         (TypeKind::Ref, "c_char") => "c_char_p",
         (TypeKind::Ref, _) |
@@ -29,9 +42,109 @@ fn get_type(ty: &Type) -> &str {
     }
 }
 
-pub fn write<W: Write>(mut writer: W, functions: &[Function]) -> Result<()> {
-    let mut prefix = String::from("");
+fn map_var(var: &str) -> &str {
+    if var == "this" { "self" } else { var }
+}
 
+fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
+    let is_static = function.is_static();
+    let has_return_type = function.has_return_type();
+    let return_type = get_hl_type(&function.output);
+
+    if is_static {
+        write!(writer,
+               r#"
+    @staticmethod
+    def {}("#,
+               function.method)?;
+    } else {
+        write!(writer,
+               r#"
+    def {}("#,
+               function.method)?;
+    }
+
+    for (i, &(ref name, _)) in function.inputs.iter().enumerate() {
+        if i != 0 {
+            write!(writer, ", ")?;
+        }
+        write!(writer, "{}", map_var(name))?;
+    }
+
+    write!(writer,
+           r#"):
+        "#)?;
+
+    for &(ref name, ref typ) in function.inputs.iter() {
+        if typ.is_custom {
+            write!(writer,
+                   r#"if {name}.ptr == None:
+            raise Exception("{name} is disposed")
+        "#,
+                   name = map_var(name))?;
+        }
+    }
+
+    if has_return_type {
+        if function.output.is_custom {
+            write!(writer, r#"result = {}("#, return_type)?;
+        } else {
+            write!(writer, "result = ")?;
+        }
+    }
+
+    write!(writer, r#"livesplit_core_native.{}("#, &function.name)?;
+
+    for (i, &(ref name, ref typ)) in function.inputs.iter().enumerate() {
+        if i != 0 {
+            write!(writer, ", ")?;
+        }
+        write!(writer,
+               "{}",
+               if name == "this" {
+                   "self.ptr".to_string()
+               } else if typ.is_custom {
+                   format!("{}.ptr", name)
+               } else {
+                   name.to_string()
+               })?;
+    }
+
+    write!(writer, ")")?;
+
+    if has_return_type && function.output.is_custom {
+        write!(writer, r#")"#)?;
+    }
+
+    for &(ref name, ref typ) in function.inputs.iter() {
+        if typ.is_custom && typ.kind == TypeKind::Value {
+            write!(writer,
+                   r#"
+        {}.ptr = None"#,
+                   map_var(name))?;
+        }
+    }
+
+    if has_return_type {
+        if function.output.is_custom {
+            write!(writer,
+                   r#"
+        if result.ptr == None:
+            return None"#)?;
+        }
+        write!(writer,
+               r#"
+        return result"#)?;
+    }
+
+    write!(writer,
+           r#"
+"#)?;
+
+    Ok(())
+}
+
+pub fn write<W: Write>(mut writer: W, classes: &BTreeMap<String, Class>) -> Result<()> {
     write!(writer,
            "{}",
            r#"#!/usr/bin/env python3
@@ -40,90 +153,119 @@ pub fn write<W: Write>(mut writer: W, functions: &[Function]) -> Result<()> {
 import sys, ctypes
 from ctypes import c_char_p, c_void_p, c_int8, c_int16, c_int32, c_int64, c_uint8, c_uint16, c_uint32, c_uint64, c_size_t, c_float, c_double, c_bool, c_char, c_byte
 
-prefix = {'win32': ''}.get(sys.platform, 'lib')
+prefix = {'win32': ''}.get(sys.platform, './lib')
 extension = {'darwin': '.dylib', 'win32': '.dll'}.get(sys.platform, '.so')
-lib = ctypes.cdll.LoadLibrary(prefix + "livesplit_core" + extension)
+livesplit_core_native = ctypes.cdll.LoadLibrary(prefix + "livesplit_core" + extension)
 "#)?;
 
-    for function in functions {
-        let name = function.name.to_string();
-        let mut splits = name.splitn(2, '_');
-        let new_prefix = splits.next().unwrap();
-        if !prefix.is_empty() && new_prefix != prefix {
-            writeln!(writer, "")?;
+    for class in classes.values() {
+        for function in class.static_fns
+            .iter()
+            .chain(class.own_fns.iter())
+            .chain(class.shared_fns.iter())
+            .chain(class.mut_fns.iter()) {
+            write!(writer,
+                   r#"
+livesplit_core_native.{}.argtypes = ("#,
+                   function.name)?;
+
+            for &(_, ref typ) in &function.inputs {
+                write!(writer, "{}, ", get_ll_type(typ))?;
+            }
+
+            write!(writer,
+                   r#")
+livesplit_core_native.{}.restype = {}"#,
+                   function.name,
+                   get_ll_type(&function.output))?;
         }
-        prefix = new_prefix.to_string();
-
-        write!(writer,
-               r#"
-lib.{}.argtypes = ("#,
-               function.name)?;
-
-        for &(_, ref typ) in &function.inputs {
-            write!(writer, "{}, ", get_type(typ))?;
-        }
-
-        write!(writer,
-               r#")
-lib.{}.restype = {}"#,
-               function.name,
-               get_type(&function.output))?;
     }
 
     writeln!(writer)?;
 
-    let mut prefix = String::from("");
-
-    for function in functions {
-        let name = function.name.to_string();
-        let mut splits = name.splitn(2, '_');
-        let new_prefix = splits.next().unwrap();
-        let postfix = splits.next().unwrap();
-        if !prefix.is_empty() && new_prefix != prefix {
-            writeln!(writer, "")?;
-        }
-        prefix = new_prefix.to_string();
+    for (class_name, class) in classes {
+        let class_name_ref = format!("{}Ref", class_name);
+        let class_name_ref_mut = format!("{}RefMut", class_name);
 
         write!(writer,
                r#"
-def {}_{}("#,
-               prefix,
-               postfix)?;
+class {class}:"#,
+               class = class_name_ref)?;
 
-        for (i, &(ref name, _)) in function.inputs.iter().enumerate() {
-            if i != 0 {
-                write!(writer, ", ")?;
-            }
-            write!(writer, "{}", name)?;
+        for function in &class.shared_fns {
+            write_fn(&mut writer, function)?;
         }
 
         write!(writer,
-               r#"):
-    "#)?;
+               r#"
+    def __init__(self, ptr):
+        self.ptr = ptr
 
-        if get_type(&function.output) != "None" {
-            write!(writer, "return ")?;
-        }
+class {class}({base_class}):"#,
+               class = class_name_ref_mut,
+               base_class = class_name_ref)?;
 
-        write!(writer, "lib.{}(", function.name)?;
-
-        for (i, &(ref name, _)) in function.inputs.iter().enumerate() {
-            if i != 0 {
-                write!(writer, ", ")?;
-            }
-            write!(writer, "{}", name)?;
+        for function in &class.mut_fns {
+            write_fn(&mut writer, function)?;
         }
 
         write!(writer,
-               r#")
+               r#"
+    def __init__(self, ptr):
+        self.ptr = ptr
+
+class {class}({base_class}):
+    def drop(self):
+        if self.ptr != None:"#,
+               class = class_name,
+               base_class = class_name_ref_mut)?;
+
+        if let Some(function) = class.own_fns.iter().find(|f| f.method == "drop") {
+            write!(writer,
+                   r#"
+            livesplit_core_native.{}(self.ptr)"#,
+                   function.name)?;
+        }
+
+        write!(writer,
+               r#"
+            self.ptr = None
+
+    def __del__(self):
+        self.drop()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.drop()
+"#)?;
+
+        for function in class.static_fns
+            .iter()
+            .chain(class.own_fns.iter()) {
+            if function.method != "drop" {
+                write_fn(&mut writer, function)?;
+            }
+        }
+
+        if class_name == "Run" {
+            writeln!(writer,
+                     r#"
+    @staticmethod
+    def parse_file(file):
+        bytes = bytearray(file.read())
+        bufferType = c_byte * len(bytes)
+        buffer = bufferType(*bytes)
+        return Run.parse(buffer, len(bytes))"#)?;
+        }
+
+        write!(writer,
+               r#"
+    def __init__(self, ptr):
+        self.ptr = ptr
 "#)?;
     }
 
-    writeln!(writer,
-             r#"
-def Run_parse_file(file):
-    bytes = bytearray(file.read())
-    bufferType = c_byte * len(bytes)
-    buffer = bufferType(*bytes)
-    return Run_parse(buffer, len(bytes))"#)
+    Ok(())
 }

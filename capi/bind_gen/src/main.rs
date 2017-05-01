@@ -212,9 +212,9 @@ fn write_files(classes: &BTreeMap<String, Class>) -> Result<()> {
     c::write(BufWriter::new(File::create(&path)?), classes)?;
     path.pop();
 
-    // path.push("livesplit_core.py");
-    // python::write(BufWriter::new(File::create(&path)?), functions)?;
-    // path.pop();
+    path.push("livesplit_core.py");
+    python::write(BufWriter::new(File::create(&path)?), classes)?;
+    path.pop();
 
     Ok(())
 }
