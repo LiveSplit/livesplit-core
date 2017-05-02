@@ -204,9 +204,9 @@ fn write_files(classes: &BTreeMap<String, Class>) -> Result<()> {
     java::write(&path, classes)?;
     path.pop();
 
-    // path.push("LiveSplitCore.rb");
-    // ruby::write(BufWriter::new(File::create(&path)?), functions)?;
-    // path.pop();
+    path.push("LiveSplitCore.rb");
+    ruby::write(BufWriter::new(File::create(&path)?), classes)?;
+    path.pop();
 
     path.push("livesplit_core.h");
     c::write(BufWriter::new(File::create(&path)?), classes)?;
