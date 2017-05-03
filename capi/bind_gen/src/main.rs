@@ -188,12 +188,12 @@ fn write_files(classes: &BTreeMap<String, Class>) -> Result<()> {
     create_dir_all(&path)?;
 
     // path.push("livesplit_core_emscripten.js");
-    // emscripten::write(BufWriter::new(File::create(&path)?), functions)?;
+    // emscripten::write(BufWriter::new(File::create(&path)?), classes)?;
     // path.pop();
 
-    // path.push("livesplit_core_node.js");
-    // node::write(BufWriter::new(File::create(&path)?), functions)?;
-    // path.pop();
+    path.push("livesplit_core_node.js");
+    node::write(BufWriter::new(File::create(&path)?), classes)?;
+    path.pop();
 
     path.push("LiveSplitCore.cs");
     csharp::write(BufWriter::new(File::create(&path)?), classes)?;
