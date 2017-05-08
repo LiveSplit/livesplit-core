@@ -126,7 +126,8 @@ fn parse_version<S: AsRef<str>>(version: S) -> Result<Version> {
 }
 
 fn parse_date_time<S: AsRef<str>>(text: S) -> Result<DateTime<UTC>> {
-    UTC.datetime_from_str(text.as_ref(), "%m/%d/%Y %T").map_err(Into::into)
+    UTC.datetime_from_str(text.as_ref(), "%m/%d/%Y %T")
+        .map_err(Into::into)
 }
 
 fn parse_attempt_history(version: Version,
@@ -136,7 +137,10 @@ fn parse_attempt_history(version: Version,
                          -> Result<()> {
     if version >= Version(1, 5, 0, 0) {
         let attempt_history = child(element, "AttemptHistory")?;
-        for attempt in attempt_history.children().into_iter().filter_map(|c| c.element()) {
+        for attempt in attempt_history
+                .children()
+                .into_iter()
+                .filter_map(|c| c.element()) {
             let time = time(&attempt, buf)?;
             let index = attribute(&attempt, "id")?.parse()?;
 
@@ -171,7 +175,10 @@ fn parse_attempt_history(version: Version,
         }
     } else if version >= Version(1, 4, 1, 0) {
         let run_history = child(element, "RunHistory")?;
-        for attempt in run_history.children().into_iter().filter_map(|c| c.element()) {
+        for attempt in run_history
+                .children()
+                .into_iter()
+                .filter_map(|c| c.element()) {
             let time = time(&attempt, buf)?;
             let index = attribute(&attempt, "id")?.parse()?;
 
@@ -179,7 +186,10 @@ fn parse_attempt_history(version: Version,
         }
     } else {
         let run_history = child(element, "RunHistory")?;
-        for attempt in run_history.children().into_iter().filter_map(|c| c.element()) {
+        for attempt in run_history
+                .children()
+                .into_iter()
+                .filter_map(|c| c.element()) {
             let time = time_old(&attempt, buf)?;
             let index = attribute(&attempt, "id")?.parse()?;
 
@@ -196,7 +206,8 @@ pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
     BomConsumer::from(source).read_to_string(buf)?;
     let package = parse_xml(buf)?;
 
-    let node = package.as_document()
+    let node = package
+        .as_document()
         .root()
         .children()
         .into_iter()
@@ -204,7 +215,7 @@ pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
         .next()
         .unwrap();
 
-    let mut run = Run::new(Vec::new());
+    let mut run = Run::new();
 
     let version = if let Ok(version) = attribute(&node, "version") {
         parse_version(version)?
@@ -223,7 +234,10 @@ pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
         metadata.set_region_name(text(&child(&node, "Region")?, buf));
 
         let variables = child(&node, "Variables")?;
-        for variable in variables.children().into_iter().filter_map(|c| c.element()) {
+        for variable in variables
+                .children()
+                .into_iter()
+                .filter_map(|c| c.element()) {
             let name = attribute(&variable, "name")?;
             let value = text(&variable, buf);
             metadata.add_variable(name, value);
@@ -240,7 +254,10 @@ pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
 
     let segments = child(&node, "Segments")?;
 
-    for node in segments.children().into_iter().filter_map(|c| c.element()) {
+    for node in segments
+            .children()
+            .into_iter()
+            .filter_map(|c| c.element()) {
         let mut segment = Segment::new(text(&child(&node, "Name")?, buf));
         segment.set_icon(image(&child(&node, "Icon")?, icon_buf, buf));
 
@@ -267,14 +284,17 @@ pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
         let gold_split = child(&node, "BestSegmentTime")?;
         if !gold_split.children().is_empty() {
             segment.set_best_segment_time(if version >= Version(1, 4, 1, 0) {
-                time(&gold_split, buf)?
-            } else {
-                time_old(&gold_split, buf)?
-            });
+                                              time(&gold_split, buf)?
+                                          } else {
+                                              time_old(&gold_split, buf)?
+                                          });
         }
 
         let history = child(&node, "SegmentHistory")?;
-        for node in history.children().into_iter().filter_map(|c| c.element()) {
+        for node in history
+                .children()
+                .into_iter()
+                .filter_map(|c| c.element()) {
             let index = attribute(&node, "id")?.parse()?;
             let time = if version >= Version(1, 4, 1, 0) {
                 time(&node, buf)?

@@ -37,7 +37,7 @@ fn read_string<R: Read>(mut source: R, buf: &mut Vec<u8>) -> Result<&str> {
 }
 
 pub fn parse<R: Read + Seek>(mut source: R) -> Result<Run> {
-    let mut run = Run::new(Vec::new());
+    let mut run = Run::new();
     let mut buf = Vec::new();
     let mut buf2 = Vec::new();
 
@@ -104,8 +104,8 @@ pub fn parse<R: Read + Seek>(mut source: R) -> Result<Run> {
                                                                      buf.as_slice()) {
                 buf2.clear();
                 if png::PNGEncoder::new(&mut buf2)
-                    .encode(image.as_ref(), width, height, ColorType::RGBA(8))
-                    .is_ok() {
+                       .encode(image.as_ref(), width, height, ColorType::RGBA(8))
+                       .is_ok() {
                     icon = Some(Image::new(&buf2));
                 }
             }

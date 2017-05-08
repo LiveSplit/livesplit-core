@@ -26,7 +26,7 @@ quick_error! {
 pub type Result<T> = StdResult<T, Error>;
 
 pub fn parse<R: BufRead>(source: R) -> Result<Run> {
-    let mut run = Run::new(Vec::new());
+    let mut run = Run::new();
 
     let mut lines = source.lines();
 
@@ -37,7 +37,10 @@ pub fn parse<R: BufRead>(source: R) -> Result<Run> {
         return Err(Error::ExpectedCategoryName);
     }
     run.set_category_name(&category_name[1..]);
-    run.set_attempt_count(splits.next().ok_or(Error::ExpectedAttemptCount)?.parse()?);
+    run.set_attempt_count(splits
+                              .next()
+                              .ok_or(Error::ExpectedAttemptCount)?
+                              .parse()?);
     let mut total_time = TimeSpan::zero();
     let mut next_line = lines.next();
     while let Some(line) = next_line {
@@ -47,7 +50,10 @@ pub fn parse<R: BufRead>(source: R) -> Result<Run> {
         }
         let mut splits = line.split('|');
         let world_name = splits.next().ok_or(Error::ExpectedWorldName)?;
-        total_time += splits.next().ok_or(Error::ExpectedWorldTime)?.parse()?;
+        total_time += splits
+            .next()
+            .ok_or(Error::ExpectedWorldTime)?
+            .parse()?;
         next_line = lines.next();
         let mut has_acts = false;
         while let Some(line) = next_line {

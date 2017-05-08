@@ -51,7 +51,8 @@ fn image<'b>(node: &Element,
     let node = child(&node, "javax.swing.ImageIcon")?;
 
     let default = child(&node, "default")?;
-    let height = text(&child(&default, "height")?, str_buf).parse::<u32>()?;
+    let height = text(&child(&default, "height")?, str_buf)
+        .parse::<u32>()?;
     let width = text(&child(&default, "width")?, str_buf).parse::<u32>()?;
 
     buf.clear();
@@ -68,11 +69,12 @@ fn image<'b>(node: &Element,
     }
 
     let buf = buf.as_slice();
-    let image =
-        ImageBuffer::<Rgba<_>, _>::from_raw(width, height, buf).ok_or(Error::ElementNotFound)?;
+    let image = ImageBuffer::<Rgba<_>, _>::from_raw(width, height, buf)
+        .ok_or(Error::ElementNotFound)?;
 
     buf2.clear();
-    png::PNGEncoder::new(&mut *buf2).encode(image.as_ref(), width, height, ColorType::RGBA(8))
+    png::PNGEncoder::new(&mut *buf2)
+        .encode(image.as_ref(), width, height, ColorType::RGBA(8))
         .map_err(|_| Error::ElementNotFound)?;
 
     Ok(buf2)
@@ -85,7 +87,8 @@ pub fn parse<R: Read>(mut source: R) -> Result<Run> {
     source.read_to_string(buf)?;
     let package = parse_xml(buf)?;
 
-    let node = package.as_document()
+    let node = package
+        .as_document()
         .root()
         .children()
         .into_iter()
@@ -93,7 +96,7 @@ pub fn parse<R: Read>(mut source: R) -> Result<Run> {
         .next()
         .unwrap();
 
-    let mut run = Run::new(Vec::new());
+    let mut run = Run::new();
 
     if let Ok(node) = child(&node, "game") {
         run.set_game_name(text(&node, buf));
@@ -107,11 +110,15 @@ pub fn parse<R: Read>(mut source: R) -> Result<Run> {
     if let Ok(node) = child(&node, "region") {
         run.metadata_mut().set_region_name(text(&node, buf));
     }
-    run.metadata_mut().set_emulator_usage(text(&child(&node, "emulated")?, buf) == "true");
+    run.metadata_mut()
+        .set_emulator_usage(text(&child(&node, "emulated")?, buf) == "true");
 
     let segments = child(&node, "segments")?;
 
-    for node in segments.children().into_iter().filter_map(|c| c.element()) {
+    for node in segments
+            .children()
+            .into_iter()
+            .filter_map(|c| c.element()) {
         let mut segment = Segment::new(child(&node, "name").ok().map_or("", |n| text(&n, buf)));
 
         if let Ok(image) = image(&node, &mut byte_buf, &mut byte_buf2, buf) {

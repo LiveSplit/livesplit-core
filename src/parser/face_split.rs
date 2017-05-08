@@ -46,13 +46,16 @@ fn replace<'a>(text: &'a str, a: &'a str, b: &str) -> Cow<'a, str> {
 }
 
 pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
-    let mut run = Run::new(Vec::new());
+    let mut run = Run::new();
     let mut icon_buf = Vec::new();
     let mut lines = source.lines();
 
     run.set_category_name(lines.next().ok_or(Error::ExpectedTitle)??);
     lines.next(); // TODO Store Goal
-    run.set_attempt_count(lines.next().ok_or(Error::ExpectedAttemptCount)??.parse()?);
+    run.set_attempt_count(lines
+                              .next()
+                              .ok_or(Error::ExpectedAttemptCount)??
+                              .parse()?);
     lines.next(); // TODO Store runs completed somehow
 
     for line in lines {

@@ -49,7 +49,7 @@ fn parse_time(time: &str) -> Result<Time> {
 }
 
 pub fn parse<R: Read>(source: R) -> Result<Run> {
-    let mut run = Run::new(Vec::new());
+    let mut run = Run::new();
 
     let splits: Splits = from_reader(source)?;
 
@@ -74,11 +74,14 @@ pub fn parse<R: Read>(source: R) -> Result<Run> {
 
             // Insert a new run that skips to the current split
             for already_inserted_segment in run.segments_mut() {
-                already_inserted_segment.segment_history_mut()
+                already_inserted_segment
+                    .segment_history_mut()
                     .insert(attempt_history_index, Time::default());
             }
 
-            segment.segment_history_mut().insert(attempt_history_index, best_split_time);
+            segment
+                .segment_history_mut()
+                .insert(attempt_history_index, best_split_time);
 
             attempt_history_index += 1;
         }

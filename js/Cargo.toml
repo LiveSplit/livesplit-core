@@ -5,6 +5,3 @@ authors = ["Christopher Serr <christopher.serr@gmail.com>"]
 
 [dependencies]
 livesplit-core-capi = { path = "../capi" }
-
-[profile.release]
-panic = 'abort'

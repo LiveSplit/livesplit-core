@@ -55,7 +55,8 @@ fn image<'b>(node: &Element,
     let node = child(&node, "ImageIcon")?;
 
     buf.clear();
-    base64::decode_config_buf(text(&node, str_buf), STANDARD, buf).map_err(|_| Error::ElementNotFound)?;
+    base64::decode_config_buf(text(&node, str_buf), STANDARD, buf)
+        .map_err(|_| Error::ElementNotFound)?;
 
     let (width, height);
     {
@@ -72,11 +73,12 @@ fn image<'b>(node: &Element,
     }
 
     let buf = &buf[0xFE..][..len];
-    let image =
-        ImageBuffer::<Rgba<_>, _>::from_raw(width, height, buf).ok_or(Error::ElementNotFound)?;
+    let image = ImageBuffer::<Rgba<_>, _>::from_raw(width, height, buf)
+        .ok_or(Error::ElementNotFound)?;
 
     buf2.clear();
-    png::PNGEncoder::new(&mut *buf2).encode(image.as_ref(), width, height, ColorType::RGBA(8))
+    png::PNGEncoder::new(&mut *buf2)
+        .encode(image.as_ref(), width, height, ColorType::RGBA(8))
         .map_err(|_| Error::ElementNotFound)?;
 
     Ok(buf2)
@@ -89,7 +91,8 @@ pub fn parse<R: Read>(mut source: R) -> Result<Run> {
     source.read_to_string(buf)?;
     let package = parse_xml(buf)?;
 
-    let node = package.as_document()
+    let node = package
+        .as_document()
         .root()
         .children()
         .into_iter()
@@ -97,7 +100,7 @@ pub fn parse<R: Read>(mut source: R) -> Result<Run> {
         .next()
         .unwrap();
 
-    let mut run = Run::new(Vec::new());
+    let mut run = Run::new();
 
     let node = child(&node, "Run")?;
     let node = child(&node, "default")?;
@@ -111,7 +114,10 @@ pub fn parse<R: Read>(mut source: R) -> Result<Run> {
 
     let mut total_time = TimeSpan::zero();
 
-    for node in segments.children().into_iter().filter_map(|c| c.element()) {
+    for node in segments
+            .children()
+            .into_iter()
+            .filter_map(|c| c.element()) {
         let node = child(&node, "Segment")?;
         let node = child(&node, "default")?;
 
@@ -127,7 +133,10 @@ pub fn parse<R: Read>(mut source: R) -> Result<Run> {
             if let Ok(node) = child(&node, "milliseconds") {
                 total_time += time_span(&node, buf)?;
             } else if let Ok("../bestTime") = attribute(&node, "reference") {
-                total_time += segment.best_segment_time().real_time.ok_or(Error::ElementNotFound)?;
+                total_time += segment
+                    .best_segment_time()
+                    .real_time
+                    .ok_or(Error::ElementNotFound)?;
             }
             segment.set_personal_best_split_time(RealTime(Some(total_time)).into());
         }

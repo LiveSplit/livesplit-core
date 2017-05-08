@@ -25,7 +25,7 @@ pub struct Run {
 
 impl Run {
     #[inline]
-    pub fn new(segments: Vec<Segment>) -> Self {
+    pub fn new() -> Self {
         let mut run = Run {
             game_icon: Image::default(),
             game_name: String::new(),
@@ -36,7 +36,7 @@ impl Run {
             metadata: RunMetadata::new(),
             has_changed: false,
             path: None,
-            segments: segments,
+            segments: Vec::new(),
             custom_comparisons: vec![PERSONAL_BEST_COMPARISON_NAME.to_string()],
             comparison_generators: default_generators(),
         };
@@ -183,7 +183,11 @@ impl Run {
                        started: Option<AtomicDateTime>,
                        ended: Option<AtomicDateTime>,
                        pause_time: Option<TimeSpan>) {
-        let index = self.attempt_history.iter().map(Attempt::index).max().unwrap_or(0);
+        let index = self.attempt_history
+            .iter()
+            .map(Attempt::index)
+            .max()
+            .unwrap_or(0);
         let index = max(0, index + 1);
         self.add_attempt_with_index(time, index, started, ended, pause_time);
     }
@@ -221,11 +225,12 @@ impl Run {
     pub fn extended_file_name(&self, use_extended_category_name: bool) -> String {
         let extended_name = self.extended_name(use_extended_category_name);
 
-        extended_name.chars()
+        extended_name
+            .chars()
             .filter(|&c| {
-                c != '\\' && c != '/' && c != ':' && c != '*' && c != '?' && c != '"' &&
-                c != '<' && c != '>' && c != '|'
-            })
+                        c != '\\' && c != '/' && c != ':' && c != '*' && c != '?' &&
+                        c != '"' && c != '<' && c != '>' && c != '|'
+                    })
             .collect()
     }
 
@@ -264,9 +269,10 @@ impl Run {
         let mut is_empty = true;
         let mut has_pushed = false;
 
-        if let Some((i, u)) = self.category_name
-            .find('(')
-            .and_then(|i| self.category_name[i..].find(')').map(|u| (i, i + u))) {
+        if let Some((i, u)) =
+            self.category_name
+                .find('(')
+                .and_then(|i| self.category_name[i..].find(')').map(|u| (i, i + u))) {
             category_name = Cow::Borrowed(&self.category_name[..u]);
             is_empty = u == i + 1;
             after_parenthesis = &self.category_name[u..];
@@ -360,7 +366,7 @@ impl Run {
                     if TimeSpan::option_op(segment.best_segment_time()[method],
                                            history_time[method],
                                            |b, h| h < b)
-                        .unwrap_or(false) {
+                               .unwrap_or(false) {
                         history_time[method] = segment.best_segment_time()[method];
                     }
 
@@ -369,7 +375,9 @@ impl Run {
                        history_time[method].is_some() {
                         segment.segment_history_mut().remove(run_index);
                     } else {
-                        segment.segment_history_mut().insert(run_index, history_time);
+                        segment
+                            .segment_history_mut()
+                            .insert(run_index, history_time);
                     }
                 }
             }
@@ -443,7 +451,9 @@ impl Run {
                 if let Some(element) = self.segments[index].segment_history().get(run_index) {
                     if let Some(element) = element[method] {
                         if history.iter().filter(|&&x| x == element).count() > 1 {
-                            self.segments[index].segment_history_mut().remove(run_index);
+                            self.segments[index]
+                                .segment_history_mut()
+                                .remove(run_index);
                             history.find_remove(&element);
                         }
                     }
@@ -462,7 +472,11 @@ impl Run {
     }
 
     pub fn min_segment_history_index(&self) -> i32 {
-        self.segments.iter().map(|s| s.segment_history().min_index()).min().unwrap()
+        self.segments
+            .iter()
+            .map(|s| s.segment_history().min_index())
+            .min()
+            .unwrap()
     }
 
     pub fn import_segment_history(&mut self) {
@@ -474,8 +488,8 @@ impl Run {
             for segment in self.segments_mut() {
                 // Import the PB splits into the history
                 let pb_time = segment.personal_best_split_time()[timing_method];
-                let time = Time::new()
-                    .with_timing_method(timing_method, pb_time.map(|p| p - prev_time));
+                let time =
+                    Time::new().with_timing_method(timing_method, pb_time.map(|p| p - prev_time));
                 segment.segment_history_mut().insert(index, time);
 
                 if let Some(time) = pb_time {
@@ -489,7 +503,9 @@ impl Run {
         let best_segment_time = self.segments[segment_index].best_segment_time();
         if best_segment_time.real_time.is_some() || best_segment_time.game_time.is_some() {
             let index = self.min_segment_history_index() - 1;
-            self.segments[segment_index].segment_history_mut().insert(index, best_segment_time);
+            self.segments[segment_index]
+                .segment_history_mut()
+                .insert(index, best_segment_time);
         }
     }
 

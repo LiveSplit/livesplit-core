@@ -42,7 +42,7 @@ fn parse_time_optional(time: &str) -> Result<Option<TimeSpan>> {
 }
 
 pub fn parse<R: BufRead>(source: R, path_for_loading_other_files: Option<PathBuf>) -> Result<Run> {
-    let mut run = Run::new(Vec::new());
+    let mut run = Run::new();
     let mut buf = Vec::new();
     let path = path_for_loading_other_files;
 
@@ -50,7 +50,10 @@ pub fn parse<R: BufRead>(source: R, path_for_loading_other_files: Option<PathBuf
 
     let line = lines.next().ok_or(Error::Empty)??;
     let mut splits = line.split('\t');
-    run.set_attempt_count(splits.next().ok_or(Error::ExpectedAttemptCount)?.parse()?);
+    run.set_attempt_count(splits
+                              .next()
+                              .ok_or(Error::ExpectedAttemptCount)?
+                              .parse()?);
     run.set_offset(splits.next().ok_or(Error::ExpectedOffset)?.parse()?);
     if let (&Some(ref path), Some(file)) = (&path, splits.next()) {
         let path = path.with_file_name(file);
@@ -79,8 +82,8 @@ pub fn parse<R: BufRead>(source: R, path_for_loading_other_files: Option<PathBuf
         let mut pb_time = Time::new();
         for comparison in &comparisons {
             let time = segment.comparison_mut(comparison);
-            pb_time.real_time = parse_time_optional(splits.next()
-                .ok_or(Error::ExpectedComparisonTime)?)?;
+            pb_time.real_time =
+                parse_time_optional(splits.next().ok_or(Error::ExpectedComparisonTime)?)?;
             time.real_time = pb_time.real_time;
         }
         segment.set_personal_best_split_time(pb_time);
@@ -123,10 +126,13 @@ fn parse_history(run: &mut Run, path: Option<PathBuf>) -> StdResult<(), ()> {
             let line = line.map_err(|_| ())?;
             let mut splits = line.split('\t');
             let time_stamp = splits.next().ok_or(())?;
-            let started = UTC.datetime_from_str(time_stamp, "%Y/%m/%d %R").map_err(|_| ())?;
+            let started = UTC.datetime_from_str(time_stamp, "%Y/%m/%d %R")
+                .map_err(|_| ())?;
             let completed = splits.next().ok_or(())? == "C";
-            let split_times: Vec<_> =
-                splits.map(parse_time_optional).collect::<Result<_>>().map_err(|_| ())?;
+            let split_times: Vec<_> = splits
+                .map(parse_time_optional)
+                .collect::<Result<_>>()
+                .map_err(|_| ())?;
             let mut final_time = Time::default();
             let mut ended = None;
             if completed {
@@ -147,7 +153,9 @@ fn parse_history(run: &mut Run, path: Option<PathBuf>) -> StdResult<(), ()> {
 
             let mut last_split = TimeSpan::zero();
             for (segment, current_split) in
-                run.segments_mut().iter_mut().zip(split_times.into_iter()) {
+                run.segments_mut()
+                    .iter_mut()
+                    .zip(split_times.into_iter()) {
 
                 let mut segment_time = Time::default();
                 if let Some(current_split) = current_split {
@@ -155,11 +163,13 @@ fn parse_history(run: &mut Run, path: Option<PathBuf>) -> StdResult<(), ()> {
                     last_split = current_split;
                 }
 
-                segment.segment_history_mut().insert(attempt_id, segment_time);
+                segment
+                    .segment_history_mut()
+                    .insert(attempt_id, segment_time);
                 if TimeSpan::option_op(segment_time.real_time,
                                        segment.best_segment_time().real_time,
                                        |a, b| a < b)
-                    .unwrap_or(false) {
+                           .unwrap_or(false) {
                     segment.set_best_segment_time(segment_time);
                 }
             }
