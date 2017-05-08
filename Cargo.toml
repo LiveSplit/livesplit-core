@@ -1,6 +1,6 @@
 [package]
 name = "livesplit-core"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Christopher Serr <christopher.serr@gmail.com>"]
 documentation = "https://docs.rs/livesplit-core/"
 repository = "https://github.com/CryZe/livesplit-core"

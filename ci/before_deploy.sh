@@ -18,12 +18,12 @@ main() {
     test -f Cargo.lock || cargo generate-lockfile
 
     # TODO Update this to build the artifacts that matter to you
-    cross rustc -p livesplit-core-capi --target $TARGET --release -- -C lto
+    cross rustc -p livesplit-core-capi --target $TARGET --release
 
     (cd capi/bind_gen && cargo run)
 
     # TODO Update this to package the right artifacts
-    cp capi/bindings/* $stage/
+    cp -r capi/bindings/* $stage/
     case $TRAVIS_OS_NAME in
         linux)
             cp target/$TARGET/release/liblivesplit_core_capi.so $stage/liblivesplit_core.so 2>/dev/null || :
