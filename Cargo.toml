@@ -20,15 +20,15 @@ members = ["capi", "capi/bind_gen", "js"]
 [dependencies]
 chrono = { version = "0.3.0", features = ["serde"] }
 odds = "0.2.25"
-serde_json = "0.9.8"
-serde_derive = "0.9.9"
-serde = "0.9.9"
+serde_json = "1.0.1"
+serde_derive = "1.0.2"
+serde = "1.0.2"
 sxd-document = "0.2.0"
-quick-error = "1.1.0"
-base64 = "0.4.0"
+quick-error = "1.2.0"
+base64 = "0.5.2"
 byteorder = "1.0.0"
-image = "0.12.3"
+image = "0.13.0"
 derive_more = "0.6.0"
 derive-new = "0.4.0"
-pdqsort = "0.1.2"
+pdqsort = "1.0.3"
 livesplit-hotkey = { path = "hotkey", version = "0.2.0" }
