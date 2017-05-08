@@ -17,10 +17,10 @@ pub unsafe extern "C" fn SharedTimer_drop(this: OwnedSharedTimer) {
 
 #[no_mangle]
 pub unsafe extern "C" fn SharedTimer_read(this: *const SharedTimer) -> OwnedTimerReadLock {
-    alloc(acc(this).read())
+    alloc(acc(this).read().unwrap())
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn SharedTimer_write(this: *const SharedTimer) -> OwnedTimerWriteLock {
-    alloc(acc(this).write())
+    alloc(acc(this).write().unwrap())
 }

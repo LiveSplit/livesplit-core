@@ -10,8 +10,12 @@ readme = "README.md"
 keywords = ["speedrun", "timer", "livesplit"]
 exclude = ["ci/*", "capi/*", "js/*", "hotkey/*"]
 
+[profile.release]
+lto = true
+panic = "abort"
+
 [workspace]
-members = ["capi", "capi/bind_gen"]
+members = ["capi", "capi/bind_gen", "js"]
 
 [dependencies]
 chrono = { version = "0.3.0", features = ["serde"] }
@@ -28,4 +32,3 @@ derive_more = "0.6.0"
 derive-new = "0.4.0"
 pdqsort = "0.1.2"
 livesplit-hotkey = { path = "hotkey", version = "0.2.0" }
-parking_lot = "0.4.0"

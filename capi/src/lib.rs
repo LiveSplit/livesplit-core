@@ -40,6 +40,8 @@ pub mod timer_write_lock;
 use segment_history_element::SegmentHistoryElement;
 use livesplit_core::{Time, TimeSpan};
 
+pub type Json = *const c_char;
+
 thread_local! {
     static OUTPUT_STR: RefCell<String> = RefCell::new(String::new());
     static OUTPUT_VEC: RefCell<Vec<u8>> = RefCell::new(Vec::new());
@@ -50,16 +52,16 @@ thread_local! {
 
 fn output_time_span(time_span: TimeSpan) -> *const TimeSpan {
     TIME_SPAN.with(|output| {
-        output.set(time_span);
-        output.as_ptr() as *const TimeSpan
-    })
+                       output.set(time_span);
+                       output.as_ptr() as *const TimeSpan
+                   })
 }
 
 fn output_time(time: Time) -> *const Time {
     TIME.with(|output| {
-        output.set(time);
-        output.as_ptr() as *const Time
-    })
+                  output.set(time);
+                  output.as_ptr() as *const Time
+              })
 }
 
 fn output_str<S: AsRef<str>>(s: S) -> *const c_char {
@@ -70,24 +72,24 @@ fn output_str_with<F>(f: F) -> *const c_char
     where F: FnOnce(&mut String)
 {
     OUTPUT_STR.with(|output| {
-        let mut output = output.borrow_mut();
-        output.clear();
-        f(&mut output);
-        output.push('\0');
-        output.as_ptr() as *const c_char
-    })
+                        let mut output = output.borrow_mut();
+                        output.clear();
+                        f(&mut output);
+                        output.push('\0');
+                        output.as_ptr() as *const c_char
+                    })
 }
 
 fn output_vec<F>(f: F) -> *const c_char
     where F: FnOnce(&mut Vec<u8>)
 {
     OUTPUT_VEC.with(|output| {
-        let mut output = output.borrow_mut();
-        output.clear();
-        f(&mut output);
-        output.push(0);
-        output.as_ptr() as *const c_char
-    })
+                        let mut output = output.borrow_mut();
+                        output.clear();
+                        f(&mut output);
+                        output.push(0);
+                        output.as_ptr() as *const c_char
+                    })
 }
 
 unsafe fn str(s: *const c_char) -> &'static str {

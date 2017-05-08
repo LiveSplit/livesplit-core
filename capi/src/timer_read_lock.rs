@@ -1,6 +1,7 @@
 use livesplit_core::Timer;
 use super::{own_drop, acc};
-use livesplit_core::parking_lot::RwLockReadGuard;
+// use livesplit_core::parking_lot::RwLockReadGuard;
+use std::sync::RwLockReadGuard;
 use std::ops::Deref;
 
 pub type TimerReadLock = RwLockReadGuard<'static, Timer>;

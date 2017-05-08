@@ -1,5 +1,5 @@
 use livesplit_core::{RunEditor, TimingMethod};
-use super::{alloc, own, output_vec, acc_mut, str};
+use super::{Json, alloc, own, output_vec, acc_mut, str};
 use run::OwnedRun;
 use libc::c_char;
 use std::slice;
@@ -17,7 +17,7 @@ pub unsafe extern "C" fn RunEditor_close(this: OwnedRunEditor) -> OwnedRun {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn RunEditor_state(this: *mut RunEditor) -> *const c_char {
+pub unsafe extern "C" fn RunEditor_stateAsJson(this: *mut RunEditor) -> Json {
     output_vec(|o| { acc_mut(this).state().write_json(o).unwrap(); })
 }
 
@@ -64,7 +64,9 @@ pub unsafe extern "C" fn RunEditor_parse_and_set_offset(this: *mut RunEditor,
 pub unsafe extern "C" fn RunEditor_parse_and_set_attempt_count(this: *mut RunEditor,
                                                                attempts: *const c_char)
                                                                -> bool {
-    acc_mut(this).parse_and_set_attempt_count(str(attempts)).is_ok()
+    acc_mut(this)
+        .parse_and_set_attempt_count(str(attempts))
+        .is_ok()
 }
 
 #[no_mangle]
@@ -103,7 +105,9 @@ pub unsafe extern "C" fn RunEditor_move_segments_down(this: *mut RunEditor) {
 pub unsafe extern "C" fn RunEditor_selected_set_icon(this: *mut RunEditor,
                                                      data: *const u8,
                                                      length: usize) {
-    acc_mut(this).selected_segment().set_icon(slice::from_raw_parts(data, length));
+    acc_mut(this)
+        .selected_segment()
+        .set_icon(slice::from_raw_parts(data, length));
 }
 
 #[no_mangle]
@@ -115,26 +119,35 @@ pub unsafe extern "C" fn RunEditor_selected_set_name(this: *mut RunEditor, name:
 pub unsafe extern "C" fn RunEditor_selected_parse_and_set_split_time(this: *mut RunEditor,
                                                                      time: *const c_char)
                                                                      -> bool {
-    acc_mut(this).selected_segment().parse_and_set_split_time(str(time)).is_ok()
+    acc_mut(this)
+        .selected_segment()
+        .parse_and_set_split_time(str(time))
+        .is_ok()
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn RunEditor_selected_parse_and_set_segment_time(this: *mut RunEditor,
                                                                        time: *const c_char)
                                                                        -> bool {
-    acc_mut(this).selected_segment().parse_and_set_segment_time(str(time)).is_ok()
+    acc_mut(this)
+        .selected_segment()
+        .parse_and_set_segment_time(str(time))
+        .is_ok()
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn RunEditor_selected_parse_and_set_best_segment_time(this: *mut RunEditor,
                                                                             time: *const c_char)
                                                                             -> bool {
-    acc_mut(this).selected_segment().parse_and_set_best_segment_time(str(time)).is_ok()
+    acc_mut(this)
+        .selected_segment()
+        .parse_and_set_best_segment_time(str(time))
+        .is_ok()
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn RunEditor_selected_parse_and_set_comparison_time(
-    this: *mut RunEditor, comparison: *const c_char, time: *const c_char) -> bool {
+this: *mut RunEditor, comparison: *const c_char, time: *const c_char) -> bool{
     acc_mut(this)
         .selected_segment()
         .parse_and_set_comparison_time(str(comparison), str(time))

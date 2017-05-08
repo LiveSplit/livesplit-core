@@ -35,6 +35,7 @@ fn get_ll_type(ty: &Type) -> &str {
                 "bool" => "c_bool",
                 "()" => "None",
                 "c_char" => "c_char",
+                "Json" => "string",
                 x => x,
             }
         }
@@ -104,10 +105,10 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
                if name == "this" {
                    "self.ptr".to_string()
                } else if typ.is_custom {
-                   format!("{}.ptr", name)
-               } else {
-                   name.to_string()
-               })?;
+            format!("{}.ptr", name)
+        } else {
+            name.to_string()
+        })?;
     }
 
     write!(writer, ")")?;
@@ -159,11 +160,12 @@ livesplit_core_native = ctypes.cdll.LoadLibrary(prefix + "livesplit_core" + exte
 "#)?;
 
     for class in classes.values() {
-        for function in class.static_fns
-            .iter()
-            .chain(class.own_fns.iter())
-            .chain(class.shared_fns.iter())
-            .chain(class.mut_fns.iter()) {
+        for function in class
+                .static_fns
+                .iter()
+                .chain(class.own_fns.iter())
+                .chain(class.shared_fns.iter())
+                .chain(class.mut_fns.iter()) {
             write!(writer,
                    r#"
 livesplit_core_native.{}.argtypes = ("#,
@@ -241,9 +243,7 @@ class {class}({base_class}):
         self.drop()
 "#)?;
 
-        for function in class.static_fns
-            .iter()
-            .chain(class.own_fns.iter()) {
+        for function in class.static_fns.iter().chain(class.own_fns.iter()) {
             if function.method != "drop" {
                 write_fn(&mut writer, function)?;
             }

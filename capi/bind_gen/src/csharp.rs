@@ -40,6 +40,7 @@ fn get_ll_type(ty: &Type, output: bool) -> &str {
                 "bool" => if output { "byte" } else { "bool" },
                 "()" => "void",
                 "c_char" => "char",
+                "Json" => if output { "LSCoreString" } else { "string" },
                 x => x,
             }
         }
@@ -69,7 +70,11 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
     }
 
     for (i, &(ref name, ref typ)) in
-        function.inputs.iter().skip(if is_static { 0 } else { 1 }).enumerate() {
+        function
+            .inputs
+            .iter()
+            .skip(if is_static { 0 } else { 1 })
+            .enumerate() {
         if i != 0 {
             write!(writer, ", ")?;
         }
@@ -125,12 +130,12 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
                if name == "this" {
                    "this.ptr".to_string()
                } else if ty_name == "UIntPtr" {
-                   format!("(UIntPtr){}", name.to_mixed_case())
-               } else if typ.is_custom {
-                   format!("{}.ptr", name.to_mixed_case())
-               } else {
-                   name.to_mixed_case()
-               })?;
+            format!("(UIntPtr){}", name.to_mixed_case())
+        } else if typ.is_custom {
+            format!("{}.ptr", name.to_mixed_case())
+        } else {
+            name.to_mixed_case()
+        })?;
     }
 
     write!(writer,
@@ -138,10 +143,10 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
            if return_type == "string" {
                ".AsString()"
            } else if return_type == "bool" {
-               " != 0"
-           } else {
-               ""
-           })?;
+        " != 0"
+    } else {
+        ""
+    })?;
 
     if !is_constructor && has_return_type && function.output.is_custom {
         write!(writer, r#")"#)?;
@@ -283,9 +288,7 @@ namespace LiveSplitCore
         }}"#,
                class = class_name)?;
 
-        for function in class.static_fns
-            .iter()
-            .chain(class.own_fns.iter()) {
+        for function in class.static_fns.iter().chain(class.own_fns.iter()) {
             if function.method != "drop" {
                 write_fn(&mut writer, function, class_name)?;
             }
@@ -325,11 +328,12 @@ namespace LiveSplitCore
     {{"#)?;
 
     for class in classes.values() {
-        for function in class.static_fns
-            .iter()
-            .chain(class.own_fns.iter())
-            .chain(class.shared_fns.iter())
-            .chain(class.mut_fns.iter()) {
+        for function in class
+                .static_fns
+                .iter()
+                .chain(class.own_fns.iter())
+                .chain(class.shared_fns.iter())
+                .chain(class.mut_fns.iter()) {
             write!(writer,
                    r#"
         [DllImport("livesplit_core", CallingConvention = CallingConvention.Cdecl)]

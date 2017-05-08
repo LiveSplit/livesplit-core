@@ -1,7 +1,6 @@
 use livesplit_core::component::title::Component as TitleComponent;
 use livesplit_core::Timer;
-use super::{alloc, own_drop, acc, output_vec, acc_mut};
-use libc::c_char;
+use super::{Json, alloc, own_drop, acc, output_vec, acc_mut};
 use title_component_state::OwnedTitleComponentState;
 
 pub type OwnedTitleComponent = *mut TitleComponent;
@@ -19,7 +18,7 @@ pub unsafe extern "C" fn TitleComponent_drop(this: OwnedTitleComponent) {
 #[no_mangle]
 pub unsafe extern "C" fn TitleComponent_state_as_json(this: *mut TitleComponent,
                                                       timer: *const Timer)
-                                                      -> *const c_char {
+                                                      -> Json {
     output_vec(|o| { acc_mut(this).state(acc(timer)).write_json(o).unwrap(); })
 }
 

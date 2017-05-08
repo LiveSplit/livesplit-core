@@ -1,7 +1,6 @@
 use livesplit_core::component::previous_segment::Component as PreviousSegmentComponent;
 use livesplit_core::Timer;
-use super::{alloc, own_drop, acc, output_vec};
-use libc::c_char;
+use super::{Json, alloc, own_drop, acc, output_vec};
 use previous_segment_component_state::OwnedPreviousSegmentComponentState;
 
 pub type OwnedPreviousSegmentComponent = *mut PreviousSegmentComponent;
@@ -18,8 +17,7 @@ pub unsafe extern "C" fn PreviousSegmentComponent_drop(this: OwnedPreviousSegmen
 
 #[no_mangle]
 pub unsafe extern "C" fn PreviousSegmentComponent_state_as_json(this: *const PreviousSegmentComponent,
-                                                        timer: *const Timer)
-                                                        -> *const c_char {
+timer: *const Timer) -> Json{
     output_vec(|o| { acc(this).state(acc(timer)).write_json(o).unwrap(); })
 }
 

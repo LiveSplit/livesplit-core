@@ -39,6 +39,7 @@ fn get_ll_type(ty: &Type) -> &str {
                 "bool" => "bool",
                 "()" => "void",
                 "c_char" => "char",
+                "Json" => "string",
                 x => x,
             }
         }
@@ -70,7 +71,11 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
            method)?;
 
     for (i, &(ref name, _)) in
-        function.inputs.iter().skip(if is_static { 0 } else { 1 }).enumerate() {
+        function
+            .inputs
+            .iter()
+            .skip(if is_static { 0 } else { 1 })
+            .enumerate() {
         if i != 0 {
             write!(writer, ", ")?;
         }
@@ -112,10 +117,10 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
                if name == "this" {
                    "@handle.ptr".to_string()
                } else if typ.is_custom {
-                   format!("{}.handle.ptr", name)
-               } else {
-                   name.to_string()
-               })?;
+            format!("{}.handle.ptr", name)
+        } else {
+            name.to_string()
+        })?;
     }
 
     write!(writer, ")")?;
@@ -165,11 +170,12 @@ module LiveSplitCoreNative
 "#)?;
 
     for class in classes.values() {
-        for function in class.static_fns
-            .iter()
-            .chain(class.own_fns.iter())
-            .chain(class.shared_fns.iter())
-            .chain(class.mut_fns.iter()) {
+        for function in class
+                .static_fns
+                .iter()
+                .chain(class.own_fns.iter())
+                .chain(class.shared_fns.iter())
+                .chain(class.mut_fns.iter()) {
             write!(writer,
                    r#"
     attach_function :{}, ["#,
@@ -286,9 +292,7 @@ class {class} < {base_class}
     end"#,
                class = class_name)?;
 
-        for function in class.static_fns
-            .iter()
-            .chain(class.own_fns.iter()) {
+        for function in class.static_fns.iter().chain(class.own_fns.iter()) {
             if function.method != "drop" {
                 write_fn(&mut writer, function)?;
             }

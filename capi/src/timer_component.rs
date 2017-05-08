@@ -1,7 +1,6 @@
 use livesplit_core::component::timer::Component as TimerComponent;
 use livesplit_core::Timer;
-use super::{alloc, own_drop, acc, output_vec};
-use libc::c_char;
+use super::{Json, alloc, own_drop, acc, output_vec};
 use timer_component_state::OwnedTimerComponentState;
 
 pub type OwnedTimerComponent = *mut TimerComponent;
@@ -19,7 +18,7 @@ pub unsafe extern "C" fn TimerComponent_drop(this: OwnedTimerComponent) {
 #[no_mangle]
 pub unsafe extern "C" fn TimerComponent_state_as_json(this: *const TimerComponent,
                                                       timer: *const Timer)
-                                                      -> *const c_char {
+                                                      -> Json {
     output_vec(|o| { acc(this).state(acc(timer)).write_json(o).unwrap(); })
 }
 

@@ -8,4 +8,4 @@ livesplit-core = { path = ".." }
 libc = "0.2.18"
 
 [lib]
-crate-type = ["cdylib", "staticlib"]
+crate-type = ["rlib", "cdylib", "staticlib"]

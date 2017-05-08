@@ -1,7 +1,6 @@
 use livesplit_core::component::possible_time_save::Component as PossibleTimeSaveComponent;
 use livesplit_core::Timer;
-use super::{alloc, own_drop, acc, output_vec};
-use libc::c_char;
+use super::{Json, alloc, own_drop, acc, output_vec};
 use possible_time_save_component_state::OwnedPossibleTimeSaveComponentState;
 
 pub type OwnedPossibleTimeSaveComponent = *mut PossibleTimeSaveComponent;
@@ -17,9 +16,8 @@ pub unsafe extern "C" fn PossibleTimeSaveComponent_drop(this: OwnedPossibleTimeS
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn PossibleTimeSaveComponent_state_as_json(this: *const PossibleTimeSaveComponent,
-                                                                 timer: *const Timer)
-                                                                 -> *const c_char {
+pub unsafe extern "C" fn PossibleTimeSaveComponent_state_as_json(this: *const PossibleTimeSaveComponent, timer: *const Timer)
+-> Json{
     output_vec(|o| { acc(this).state(acc(timer)).write_json(o).unwrap(); })
 }
 

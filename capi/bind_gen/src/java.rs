@@ -42,6 +42,7 @@ fn get_ll_type(ty: &Type) -> &str {
                 "bool" => "byte",
                 "()" => "void",
                 "c_char" => "byte",
+                "Json" => "String",
                 x => x,
             }
         }
@@ -77,7 +78,11 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
     }
 
     for (i, &(ref name, ref typ)) in
-        function.inputs.iter().skip(if is_static { 0 } else { 1 }).enumerate() {
+        function
+            .inputs
+            .iter()
+            .skip(if is_static { 0 } else { 1 })
+            .enumerate() {
         if i != 0 {
             write!(writer, ", ")?;
         }
@@ -136,14 +141,14 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
                if name == "this" {
                    "this.ptr".to_string()
                } else if hl_ty_name == "boolean" {
-                   format!("(byte)({} ? 1 : 0)", name.to_mixed_case())
-               } else if ty_name == "NativeLong" {
-                   format!("new NativeLong({})", name.to_mixed_case())
-               } else if typ.is_custom {
-                   format!("{}.ptr", name.to_mixed_case())
-               } else {
-                   name.to_mixed_case()
-               })?;
+            format!("(byte)({} ? 1 : 0)", name.to_mixed_case())
+        } else if ty_name == "NativeLong" {
+            format!("new NativeLong({})", name.to_mixed_case())
+        } else if typ.is_custom {
+            format!("{}.ptr", name.to_mixed_case())
+        } else {
+            name.to_mixed_case()
+        })?;
     }
 
     write!(writer,
@@ -151,10 +156,10 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
            if return_type == "boolean" {
                " != 0"
            } else if return_type_ll == "NativeLong" {
-               ".longValue()"
-           } else {
-               ""
-           })?;
+        ".longValue()"
+    } else {
+        ""
+    })?;
 
     if !is_constructor && has_return_type && function.output.is_custom {
         write!(writer, r#")"#)?;
@@ -295,9 +300,7 @@ public class {class} extends {base_class} implements AutoCloseable {{
         drop();
     }}"#)?;
 
-    for function in class.static_fns
-        .iter()
-        .chain(class.own_fns.iter()) {
+    for function in class.static_fns.iter().chain(class.own_fns.iter()) {
         if function.method != "drop" {
             write_fn(&mut writer, function, &class_name)?;
         }
@@ -344,11 +347,12 @@ public interface LiveSplitCoreNative extends Library {
     LiveSplitCoreNative INSTANCE = (LiveSplitCoreNative) Native.loadLibrary("livesplit_core", LiveSplitCoreNative.class);"#)?;
 
     for class in classes.values() {
-        for function in class.static_fns
-            .iter()
-            .chain(class.own_fns.iter())
-            .chain(class.shared_fns.iter())
-            .chain(class.mut_fns.iter()) {
+        for function in class
+                .static_fns
+                .iter()
+                .chain(class.own_fns.iter())
+                .chain(class.shared_fns.iter())
+                .chain(class.mut_fns.iter()) {
             write!(writer,
                    r#"
     {} {}("#,

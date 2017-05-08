@@ -1,7 +1,8 @@
 use {AtomicDateTime, Run, Time, TimerPhase, TimingMethod, TimeStamp, TimeSpan, Segment};
 use TimerPhase::*;
 use run::PERSONAL_BEST_COMPARISON_NAME;
-use parking_lot::RwLock;
+// use parking_lot::RwLock;
+use std::sync::RwLock;
 use std::sync::Arc;
 
 #[derive(Debug, Clone)]
@@ -67,12 +68,26 @@ impl Timer {
             NotRunning => Some(self.run.offset()),
             Running => Some(TimeStamp::now() - self.start_time),
             Paused => Some(self.pause_time),
-            Ended => self.run.segments().last().unwrap().split_time().real_time,
+            Ended => {
+                self.run
+                    .segments()
+                    .last()
+                    .unwrap()
+                    .split_time()
+                    .real_time
+            }
         };
 
         let game_time = match self.phase {
             NotRunning => Some(self.run.offset()),
-            Ended => self.run.segments().last().unwrap().split_time().game_time,
+            Ended => {
+                self.run
+                    .segments()
+                    .last()
+                    .unwrap()
+                    .split_time()
+                    .game_time
+            }
             _ => {
                 if self.is_game_time_paused() {
                     self.game_time_pause_time
@@ -88,7 +103,9 @@ impl Timer {
             }
         };
 
-        Time::new().with_real_time(real_time).with_game_time(game_time)
+        Time::new()
+            .with_real_time(real_time)
+            .with_game_time(game_time)
     }
 
     #[inline]
@@ -108,7 +125,9 @@ impl Timer {
 
     pub fn current_split(&self) -> Option<&Segment> {
         if self.current_split_index >= 0 {
-            self.run.segments().get(self.current_split_index as usize)
+            self.run
+                .segments()
+                .get(self.current_split_index as usize)
         } else {
             None
         }
@@ -116,7 +135,9 @@ impl Timer {
 
     fn current_split_mut(&mut self) -> Option<&mut Segment> {
         if self.current_split_index >= 0 {
-            self.run.segments_mut().get_mut(self.current_split_index as usize)
+            self.run
+                .segments_mut()
+                .get_mut(self.current_split_index as usize)
         } else {
             None
         }
@@ -142,8 +163,12 @@ impl Timer {
         } else {
             let current_time = self.current_time();
             if self.phase == TimerPhase::Running &&
-               current_time.real_time.map_or(false, |t| t >= TimeSpan::zero()) {
-                self.current_split_mut().unwrap().set_split_time(current_time);
+               current_time
+                   .real_time
+                   .map_or(false, |t| t >= TimeSpan::zero()) {
+                self.current_split_mut()
+                    .unwrap()
+                    .set_split_time(current_time);
                 self.current_split_index += 1;
                 if self.run.len() as isize == self.current_split_index {
                     self.phase = TimerPhase::Ended;
@@ -235,7 +260,9 @@ impl Timer {
     pub fn switch_to_next_comparison(&mut self) {
         let mut comparisons = self.run.comparisons();
         let len = comparisons.len();
-        let index = comparisons.position(|c| c == self.current_comparison).unwrap();
+        let index = comparisons
+            .position(|c| c == self.current_comparison)
+            .unwrap();
         let index = (index + 1) % len;
         self.current_comparison = self.run.comparisons().nth(index).unwrap().to_owned();
 
@@ -245,7 +272,9 @@ impl Timer {
     pub fn switch_to_previous_comparison(&mut self) {
         let mut comparisons = self.run.comparisons();
         let len = comparisons.len();
-        let index = comparisons.position(|c| c == self.current_comparison).unwrap();
+        let index = comparisons
+            .position(|c| c == self.current_comparison)
+            .unwrap();
         let index = (index + len - 1) % len;
         self.current_comparison = self.run.comparisons().nth(index).unwrap().to_owned();
 
@@ -294,7 +323,7 @@ impl Timer {
             self.set_loading_times(TimeSpan::option_op(current_time.real_time,
                                                        current_time.game_time,
                                                        |r, g| r - g)
-                .unwrap_or_default());
+                                           .unwrap_or_default());
             self.is_game_time_paused = false;
         }
     }
@@ -327,7 +356,8 @@ impl Timer {
         } else {
             Default::default()
         };
-        self.run.add_attempt(time, self.attempt_started, self.attempt_ended, pause_time);
+        self.run
+            .add_attempt(time, self.attempt_started, self.attempt_ended, pause_time);
     }
 
     fn update_best_segments(&mut self) {
@@ -339,9 +369,10 @@ impl Timer {
             if let Some(split_time) = split.split_time().real_time {
                 let current_segment = previous_split_time_rta.map(|previous| split_time - previous);
                 previous_split_time_rta = Some(split_time);
-                if split.best_segment_time()
-                    .real_time
-                    .map_or(true, |b| current_segment.map_or(false, |c| c < b)) {
+                if split
+                       .best_segment_time()
+                       .real_time
+                       .map_or(true, |b| current_segment.map_or(false, |c| c < b)) {
                     new_best_segment.real_time = current_segment;
                 }
             }
@@ -349,9 +380,10 @@ impl Timer {
                 let current_segment =
                     previous_split_time_game_time.map(|previous| split_time - previous);
                 previous_split_time_game_time = Some(split_time);
-                if split.best_segment_time()
-                    .game_time
-                    .map_or(true, |b| current_segment.map_or(false, |c| c < b)) {
+                if split
+                       .best_segment_time()
+                       .game_time
+                       .map_or(true, |b| current_segment.map_or(false, |c| c < b)) {
                     new_best_segment.game_time = current_segment;
                 }
             }

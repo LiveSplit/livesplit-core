@@ -81,14 +81,14 @@ fn get_type(ty: &TyKind) -> Type {
             }
             let is_custom = match &name as &str {
                 "u8" | "u16" | "u32" | "u64" | "i8" | "i16" | "i32" | "i64" | "()" | "bool" |
-                "c_char" | "usize" | "isize" | "f32" | "f64" => false,
+                "c_char" | "usize" | "isize" | "f32" | "f64" | "Json" => false,
                 _ => true,
             };
             return Type {
-                kind: TypeKind::Value,
-                is_custom: is_custom,
-                name: name,
-            };
+                       kind: TypeKind::Value,
+                       is_custom: is_custom,
+                       name: name,
+                   };
         }
     }
     panic!("Unknown type {:#?}", ty);
@@ -120,7 +120,8 @@ fn main() {
                         let inputs = decl.inputs
                             .iter()
                             .map(|i| {
-                                let name = if let &PatKind::Ident(_, ref ident, _) = &i.pat.node {
+                                let name = if let &PatKind::Ident(_, ref ident, _) =
+                                    &i.pat.node {
                                     ident.node.name.to_string()
                                 } else {
                                     String::from("parameter")
@@ -139,12 +140,12 @@ fn main() {
                         }
 
                         functions.push(Function {
-                            name: name,
-                            class: class,
-                            method: method,
-                            output: output,
-                            inputs: inputs,
-                        });
+                                           name: name,
+                                           class: class,
+                                           method: method,
+                                           output: output,
+                                           inputs: inputs,
+                                       });
                     }
                 }
             }
@@ -160,7 +161,9 @@ fn fns_to_classes(functions: Vec<Function>) -> BTreeMap<String, Class> {
     let mut classes = BTreeMap::new();
 
     for function in functions {
-        let class = classes.entry(function.class.clone()).or_insert_with(Class::default);
+        let class = classes
+            .entry(function.class.clone())
+            .or_insert_with(Class::default);
         let kind = if let Some(&(ref name, ref ty)) = function.inputs.get(0) {
             if name == "this" { Some(ty.kind) } else { None }
         } else {
@@ -177,7 +180,7 @@ fn fns_to_classes(functions: Vec<Function>) -> BTreeMap<String, Class> {
     classes
 }
 
-use std::fs::{self, File, create_dir_all};
+use std::fs::{File, create_dir_all};
 use std::io::{BufWriter, Result};
 use std::path::PathBuf;
 
@@ -187,12 +190,20 @@ fn write_files(classes: &BTreeMap<String, Class>) -> Result<()> {
 
     create_dir_all(&path)?;
 
-    // path.push("livesplit_core_emscripten.js");
-    // emscripten::write(BufWriter::new(File::create(&path)?), classes)?;
-    // path.pop();
+    path.push("livesplit_core_emscripten.js");
+    emscripten::write(BufWriter::new(File::create(&path)?), classes, false)?;
+    path.pop();
+
+    path.push("livesplit_core_emscripten.ts");
+    emscripten::write(BufWriter::new(File::create(&path)?), classes, true)?;
+    path.pop();
 
     path.push("livesplit_core_node.js");
-    node::write(BufWriter::new(File::create(&path)?), classes)?;
+    node::write(BufWriter::new(File::create(&path)?), classes, false)?;
+    path.pop();
+
+    path.push("livesplit_core_node.ts");
+    node::write(BufWriter::new(File::create(&path)?), classes, true)?;
     path.pop();
 
     path.push("LiveSplitCore.cs");
