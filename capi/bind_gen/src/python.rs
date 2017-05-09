@@ -35,7 +35,7 @@ fn get_ll_type(ty: &Type) -> &str {
                 "bool" => "c_bool",
                 "()" => "None",
                 "c_char" => "c_char",
-                "Json" => "string",
+                "Json" => "c_char_p",
                 x => x,
             }
         }
