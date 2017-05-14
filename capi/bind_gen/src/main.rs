@@ -4,7 +4,9 @@ extern crate heck;
 mod c;
 mod csharp;
 mod emscripten;
-mod java;
+mod java_jna;
+mod java_jni;
+mod java_jni_cpp;
 mod node;
 mod python;
 mod ruby;
@@ -210,9 +212,18 @@ fn write_files(classes: &BTreeMap<String, Class>) -> Result<()> {
     csharp::write(BufWriter::new(File::create(&path)?), classes)?;
     path.pop();
 
-    path.push("java");
+    path.push("java-native-access");
     create_dir_all(&path)?;
-    java::write(&path, classes)?;
+    java_jna::write(&path, classes)?;
+    path.pop();
+
+    path.push("java-native-interface");
+    create_dir_all(&path)?;
+    java_jni::write(&path, classes)?;
+    path.pop();
+
+    path.push("LiveSplitCoreJNI.cpp");
+    java_jni_cpp::write(BufWriter::new(File::create(&path)?), classes)?;
     path.pop();
 
     path.push("LiveSplitCore.rb");

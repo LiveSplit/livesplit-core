@@ -42,6 +42,7 @@ pub fn write<W: Write>(mut writer: W, classes: &BTreeMap<String, Class>) -> Resu
 #define _LIVESPLIT_CORE_H_
 
 #ifdef __cplusplus
+#define restrict __restrict
 namespace LiveSplit {
 extern "C" {
 #endif
