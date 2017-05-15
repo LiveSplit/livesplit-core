@@ -163,6 +163,13 @@ pub fn write<W: Write>(mut writer: W, classes: &BTreeMap<String, Class>) -> Resu
 #include "livesplit_core.h"
 
 using namespace LiveSplit;
+
+extern "C" JNIEXPORT jlong Java_livesplitcore_LiveSplitCoreNative_Run_1parseString(JNIEnv* jni_env, jobject, jstring data) {
+    auto cstr_data = jni_env->GetStringUTFChars(data, nullptr);
+    auto result = (jlong)Run_parse(cstr_data, strlen(cstr_data));
+    jni_env->ReleaseStringUTFChars(data, cstr_data);
+    return result;
+}
 "#)?;
 
     for (class_name, class) in classes {

@@ -15,10 +15,10 @@ pub struct Component {
 }
 
 pub struct Settings {
-    visual_split_count: usize,
-    split_preview_count: usize,
-    always_show_last_split: bool,
-    separator_last_split: bool,
+    pub visual_split_count: usize,
+    pub split_preview_count: usize,
+    pub always_show_last_split: bool,
+    pub separator_last_split: bool,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -69,6 +69,10 @@ impl Component {
         self.scroll_offset = self.scroll_offset.saturating_add(1);
     }
 
+    pub fn settings_mut(&mut self) -> &mut Settings {
+        &mut self.settings
+    }
+
     pub fn state(&mut self, timer: &Timer) -> State {
         self.icon_ids.resize(timer.run().len(), 0);
 
@@ -99,16 +103,17 @@ impl Component {
                                    skip_count + take_count + 1 < timer.run().len();
 
         State {
-            splits: timer.run()
+            splits: timer
+                .run()
                 .segments()
                 .iter()
                 .enumerate()
                 .skip(skip_count)
                 .zip(self.icon_ids.iter_mut())
                 .filter(|&((i, _), _)| {
-                    i - skip_count < take_count ||
-                    (always_show_last_split && i + 1 == timer.run().len())
-                })
+                            i - skip_count < take_count ||
+                            (always_show_last_split && i + 1 == timer.run().len())
+                        })
                 .map(|((i, segment), icon_id)| {
                     let split = segment.split_time()[method];
                     let comparison_time = segment.comparison(comparison)[method];
@@ -136,7 +141,10 @@ impl Component {
                     };
 
                     SplitState {
-                        icon_change: segment.icon().check_for_change(icon_id).map(str::to_owned),
+                        icon_change: segment
+                            .icon()
+                            .check_for_change(icon_id)
+                            .map(str::to_owned),
                         name: segment.name().to_string(),
                         delta: delta,
                         time: Regular::new().format(time).to_string(),

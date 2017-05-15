@@ -39,3 +39,27 @@ pub unsafe extern "C" fn SplitsComponent_scroll_up(this: *mut SplitsComponent) {
 pub unsafe extern "C" fn SplitsComponent_scroll_down(this: *mut SplitsComponent) {
     acc_mut(this).scroll_down();
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn SplitsComponent_set_visual_split_count(this: *mut SplitsComponent,
+                                                                count: usize) {
+    acc_mut(this).settings_mut().visual_split_count = count;
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn SplitsComponent_set_split_preview_count(this: *mut SplitsComponent,
+                                                                 count: usize) {
+    acc_mut(this).settings_mut().split_preview_count = count;
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn SplitsComponent_set_always_show_last_split(this: *mut SplitsComponent,
+                                                                    always_show_last_split: bool) {
+    acc_mut(this).settings_mut().always_show_last_split = always_show_last_split;
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn SplitsComponent_set_separator_last_split(this: *mut SplitsComponent,
+                                                                    separator_last_split: bool) {
+    acc_mut(this).settings_mut().separator_last_split = separator_last_split;
+}

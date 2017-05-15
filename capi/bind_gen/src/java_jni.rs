@@ -286,6 +286,19 @@ public class {class} extends {base_class} implements AutoCloseable {{
         }
     }
 
+    if class_name == "Run" {
+        write!(writer,
+               "{}",
+               r#"
+    public static Run parse(String data) {
+        Run result = new Run(LiveSplitCoreNative.Run_parseString(data));
+        if (result.ptr == 0) {
+            return null;
+        }
+        return result;
+    }"#)?;
+    }
+
     write!(writer,
            r#"
     {class}(long ptr) {{
@@ -302,7 +315,8 @@ fn write_native_class<P: AsRef<Path>>(path: P, classes: &BTreeMap<String, Class>
            "{}",
            r#"package livesplitcore;
 
-public class LiveSplitCoreNative {"#)?;
+public class LiveSplitCoreNative {
+    public static native long Run_parseString(String data);"#)?;
 
     for class in classes.values() {
         for function in class
