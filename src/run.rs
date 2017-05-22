@@ -4,6 +4,7 @@ use std::cmp::max;
 use {AtomicDateTime, TimeSpan, Time, TimingMethod, Attempt, RunMetadata, Segment, Image};
 use comparison::{default_generators, ComparisonGenerator};
 use odds::vec::VecFindRemove;
+use unicase;
 
 pub const PERSONAL_BEST_COMPARISON_NAME: &'static str = "Personal Best";
 
@@ -298,13 +299,9 @@ impl Run {
                 for (name, value) in self.metadata.variables() {
                     let name = name.trim_right_matches('?');
 
-                    fn eq_lower(val: &str, lit: &str) -> bool {
-                        val.chars().flat_map(char::to_lowercase).eq(lit.chars())
-                    }
-
-                    if eq_lower(value, "yes") {
+                    if unicase::eq(value.as_str(), "yes") {
                         push(category_name.to_mut(), &[name]);
-                    } else if eq_lower(value, "no") {
+                    } else if unicase::eq(value.as_str(), "no") {
                         push(category_name.to_mut(), &["No ", value]);
                     } else {
                         push(category_name.to_mut(), &[value]);

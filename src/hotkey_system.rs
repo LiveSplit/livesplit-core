@@ -17,30 +17,27 @@ impl HotkeySystem {
         let hook = Hook::new()?;
 
         let inner = timer.clone();
-        hook.register(config.split, move || { inner.write().unwrap().split(); })?;
+        hook.register(config.split, move || { inner.write().split(); })?;
 
         let inner = timer.clone();
-        hook.register(config.reset,
-                      move || { inner.write().unwrap().reset(true); })?;
+        hook.register(config.reset, move || { inner.write().reset(true); })?;
 
         let inner = timer.clone();
-        hook.register(config.undo,
-                      move || { inner.write().unwrap().undo_split(); })?;
+        hook.register(config.undo, move || { inner.write().undo_split(); })?;
 
         let inner = timer.clone();
-        hook.register(config.skip,
-                      move || { inner.write().unwrap().skip_split(); })?;
+        hook.register(config.skip, move || { inner.write().skip_split(); })?;
 
         let inner = timer.clone();
-        hook.register(config.pause, move || { inner.write().unwrap().pause(); })?;
+        hook.register(config.pause, move || { inner.write().pause(); })?;
 
         let inner = timer.clone();
         hook.register(config.previous_comparison,
-                      move || { inner.write().unwrap().switch_to_previous_comparison(); })?;
+                      move || { inner.write().switch_to_previous_comparison(); })?;
 
         let inner = timer.clone();
         hook.register(config.next_comparison,
-                      move || { inner.write().unwrap().switch_to_next_comparison(); })?;
+                      move || { inner.write().switch_to_next_comparison(); })?;
 
         Ok(Self {
                config: config,
@@ -58,7 +55,7 @@ impl HotkeySystem {
         self.hook.unregister(self.config.split)?;
         let inner = self.timer.clone();
         self.hook
-            .register(hotkey, move || { inner.write().unwrap().split(); })?;
+            .register(hotkey, move || { inner.write().split(); })?;
         self.config.split = hotkey;
         Ok(())
     }
@@ -67,7 +64,7 @@ impl HotkeySystem {
         self.hook.unregister(self.config.reset)?;
         let inner = self.timer.clone();
         self.hook
-            .register(hotkey, move || { inner.write().unwrap().reset(true); })?;
+            .register(hotkey, move || { inner.write().reset(true); })?;
         self.config.reset = hotkey;
         Ok(())
     }
@@ -76,7 +73,7 @@ impl HotkeySystem {
         self.hook.unregister(self.config.pause)?;
         let inner = self.timer.clone();
         self.hook
-            .register(hotkey, move || { inner.write().unwrap().pause(); })?;
+            .register(hotkey, move || { inner.write().pause(); })?;
         self.config.pause = hotkey;
         Ok(())
     }
@@ -85,7 +82,7 @@ impl HotkeySystem {
         self.hook.unregister(self.config.skip)?;
         let inner = self.timer.clone();
         self.hook
-            .register(hotkey, move || { inner.write().unwrap().skip_split(); })?;
+            .register(hotkey, move || { inner.write().skip_split(); })?;
         self.config.skip = hotkey;
         Ok(())
     }
@@ -94,7 +91,7 @@ impl HotkeySystem {
         self.hook.unregister(self.config.undo)?;
         let inner = self.timer.clone();
         self.hook
-            .register(hotkey, move || { inner.write().unwrap().undo_split(); })?;
+            .register(hotkey, move || { inner.write().undo_split(); })?;
         self.config.undo = hotkey;
         Ok(())
     }
@@ -104,7 +101,7 @@ impl HotkeySystem {
         let inner = self.timer.clone();
         self.hook
             .register(hotkey,
-                      move || { inner.write().unwrap().switch_to_previous_comparison(); })?;
+                      move || { inner.write().switch_to_previous_comparison(); })?;
         self.config.previous_comparison = hotkey;
         Ok(())
     }
@@ -114,7 +111,7 @@ impl HotkeySystem {
         let inner = self.timer.clone();
         self.hook
             .register(hotkey,
-                      move || { inner.write().unwrap().switch_to_next_comparison(); })?;
+                      move || { inner.write().switch_to_next_comparison(); })?;
         self.config.next_comparison = hotkey;
         Ok(())
     }

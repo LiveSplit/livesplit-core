@@ -17,8 +17,9 @@ extern crate derive_more;
 #[macro_use]
 extern crate derive_new;
 extern crate pdqsort;
-// pub extern crate parking_lot;
+pub extern crate parking_lot;
 pub extern crate livesplit_hotkey as hotkey;
+extern crate unicase;
 
 mod atomic_date_time;
 mod attempt;

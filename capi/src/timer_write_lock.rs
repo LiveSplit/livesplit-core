@@ -1,7 +1,6 @@
 use livesplit_core::Timer;
 use super::{own_drop, acc_mut};
-// use livesplit_core::parking_lot::RwLockWriteGuard;
-use std::sync::RwLockWriteGuard;
+use livesplit_core::parking_lot::RwLockWriteGuard;
 use std::ops::DerefMut;
 
 pub type TimerWriteLock = RwLockWriteGuard<'static, Timer>;
