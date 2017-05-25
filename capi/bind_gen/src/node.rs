@@ -284,6 +284,14 @@ export interface PossibleTimeSaveComponentStateJson {
     time: string;
 }
 
+export interface GraphComponentStateJson {
+    points: number[][];
+    horizontal_grid_lines: number[];
+    vertical_grid_lines: number[];
+    middle: number;
+    is_live_delta_active: boolean;
+}
+
 export interface RunEditorStateJson {
     icon_change?: string,
     game: string,
