@@ -23,6 +23,7 @@ pub struct State {
     pub horizontal_grid_lines: Vec<f32>,
     pub vertical_grid_lines: Vec<f32>,
     pub middle: f32,
+    pub is_live_delta_active: bool,
 }
 
 impl Default for Settings {
@@ -45,7 +46,7 @@ struct DrawInfo {
     deltas: Vec<Option<TimeSpan>>,
     max_delta: TimeSpan,
     min_delta: TimeSpan,
-    is_best_segment: bool,
+    is_live_delta_active: bool,
 }
 
 impl Component {
@@ -90,6 +91,7 @@ impl Component {
             horizontal_grid_lines,
             vertical_grid_lines,
             middle,
+            is_live_delta_active: draw_info.is_live_delta_active,
         }
     }
 
@@ -181,7 +183,7 @@ impl Component {
                                         height_two: &mut f32,
                                         width_two: &mut f32,
                                         y: usize) {
-        if y + 1 == draw_info.deltas.len() && draw_info.is_best_segment {
+        if y + 1 == draw_info.deltas.len() && draw_info.is_live_delta_active {
             *width_two = WIDTH;
         } else if let Some(split_time) = timer.run().segment(y).split_time()
                       [timer.current_timing_method()] {
@@ -286,7 +288,7 @@ impl Component {
             graph_edge += GRAPH_EDGE_MIN;
             middle = (-(draw_info.max_delta.total_milliseconds() as f32 /
                         total_delta.total_milliseconds() as f32)) *
-                     ((graph_height - graph_edge) * 2.0 + graph_edge);
+                     (graph_height - graph_edge) * 2.0 + graph_edge;
         }
         (graph_edge, graph_height, middle)
     }
@@ -353,7 +355,7 @@ impl Component {
                         draw_info.min_delta = best_segment;
                     }
                     draw_info.deltas.push(Some(best_segment));
-                    draw_info.is_best_segment = true;
+                    draw_info.is_live_delta_active = true;
                 }
             }
         }

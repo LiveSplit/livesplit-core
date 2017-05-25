@@ -53,3 +53,8 @@ pub unsafe extern "C" fn GraphComponentState_vertical_grid_line(this: *const Gra
 pub unsafe extern "C" fn GraphComponentState_middle(this: *const GraphComponentState) -> f32 {
     acc(this).middle
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn GraphComponentState_is_live_delta_active(this: *const GraphComponentState) -> bool {
+    acc(this).is_live_delta_active
+}
