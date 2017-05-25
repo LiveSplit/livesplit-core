@@ -69,7 +69,28 @@ impl Component {
         self.calculate_deltas(timer, comparison, &mut draw_info);
         self.check_live_segment_delta(timer, comparison, &mut draw_info);
 
-        self.calculate_points(timer, &draw_info)
+        let mut state = self.calculate_points(timer, &draw_info);
+
+        self.make_uniform(&mut state);
+
+        state
+    }
+
+    fn make_uniform(&self, state: &mut State) {
+        for grid_line in &mut state.horizontal_grid_lines {
+            *grid_line /= HEIGHT;
+        }
+
+        for grid_line in &mut state.vertical_grid_lines {
+            *grid_line /= WIDTH;
+        }
+
+        state.middle /= HEIGHT;
+
+        for &mut (ref mut x, ref mut y) in &mut state.points {
+            *x /= WIDTH;
+            *y /= HEIGHT;
+        }
     }
 
     fn calculate_points(&self, timer: &Timer, draw_info: &DrawInfo) -> State {
