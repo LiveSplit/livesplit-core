@@ -94,7 +94,7 @@ fn output_vec<F>(f: F) -> *const c_char
 }
 
 unsafe fn str(s: *const c_char) -> &'static str {
-    CStr::from_ptr(s).to_str().unwrap()
+    CStr::from_ptr(s as _).to_str().unwrap()
 }
 
 unsafe fn alloc<T>(data: T) -> *mut T {
