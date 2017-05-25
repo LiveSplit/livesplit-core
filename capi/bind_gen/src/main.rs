@@ -4,9 +4,9 @@ extern crate heck;
 mod c;
 mod csharp;
 mod emscripten;
-mod java_jna;
-mod java_jni;
-mod java_jni_cpp;
+mod java;
+mod jni_cpp;
+mod kotlin;
 mod node;
 mod python;
 mod ruby;
@@ -182,7 +182,7 @@ fn fns_to_classes(functions: Vec<Function>) -> BTreeMap<String, Class> {
     classes
 }
 
-use std::fs::{File, create_dir_all};
+use std::fs::{File, create_dir_all, remove_dir_all};
 use std::io::{BufWriter, Result};
 use std::path::PathBuf;
 
@@ -190,40 +190,47 @@ fn write_files(classes: &BTreeMap<String, Class>) -> Result<()> {
     let mut path = PathBuf::from("..");
     path.push("bindings");
 
+    remove_dir_all(&path)?;
     create_dir_all(&path)?;
 
-    path.push("livesplit_core_emscripten.js");
-    emscripten::write(BufWriter::new(File::create(&path)?), classes, false)?;
+    path.push("emscripten");
+    create_dir_all(&path)?;
+    {
+        path.push("livesplit_core.js");
+        emscripten::write(BufWriter::new(File::create(&path)?), classes, false)?;
+        path.pop();
+
+        path.push("livesplit_core.ts");
+        emscripten::write(BufWriter::new(File::create(&path)?), classes, true)?;
+        path.pop();
+    }
     path.pop();
 
-    path.push("livesplit_core_emscripten.ts");
-    emscripten::write(BufWriter::new(File::create(&path)?), classes, true)?;
-    path.pop();
+    path.push("node");
+    create_dir_all(&path)?;
+    {
+        path.push("livesplit_core.js");
+        node::write(BufWriter::new(File::create(&path)?), classes, false)?;
+        path.pop();
 
-    path.push("livesplit_core_node.js");
-    node::write(BufWriter::new(File::create(&path)?), classes, false)?;
-    path.pop();
-
-    path.push("livesplit_core_node.ts");
-    node::write(BufWriter::new(File::create(&path)?), classes, true)?;
+        path.push("livesplit_core.ts");
+        node::write(BufWriter::new(File::create(&path)?), classes, true)?;
+        path.pop();
+    }
     path.pop();
 
     path.push("LiveSplitCore.cs");
     csharp::write(BufWriter::new(File::create(&path)?), classes)?;
     path.pop();
 
-    path.push("java-native-access");
+    path.push("java");
     create_dir_all(&path)?;
-    java_jna::write(&path, classes)?;
+    java::write(&path, classes)?;
     path.pop();
 
-    path.push("java-native-interface");
+    path.push("kotlin");
     create_dir_all(&path)?;
-    java_jni::write(&path, classes)?;
-    path.pop();
-
-    path.push("LiveSplitCoreJNI.cpp");
-    java_jni_cpp::write(BufWriter::new(File::create(&path)?), classes)?;
+    kotlin::write(&path, classes)?;
     path.pop();
 
     path.push("LiveSplitCore.rb");

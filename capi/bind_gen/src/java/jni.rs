@@ -54,7 +54,6 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
     let is_static = function.is_static();
     let has_return_type = function.has_return_type();
     let return_type = get_hl_type(&function.output);
-    let return_type_ll = get_ll_type(&function.output);
     let is_constructor = function.method == "new";
     let mut method = function.method.to_mixed_case();
     if method == "clone" {
@@ -132,8 +131,6 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
         if i != 0 {
             write!(writer, ", ")?;
         }
-        let hl_ty_name = get_hl_type(typ);
-        let ty_name = get_ll_type(typ);
         write!(writer,
                "{}",
                if name == "this" {
@@ -316,6 +313,9 @@ fn write_native_class<P: AsRef<Path>>(path: P, classes: &BTreeMap<String, Class>
            r#"package livesplitcore;
 
 public class LiveSplitCoreNative {
+    static {
+        System.loadLibrary("native-lib");
+    }
     public static native long Run_parseString(String data);"#)?;
 
     for class in classes.values() {
