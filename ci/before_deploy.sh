@@ -23,7 +23,7 @@ main() {
     (cd capi/bind_gen && cargo run)
 
     # TODO Update this to package the right artifacts
-    cp -r capi/bindings/* $stage/
+    cp -r capi/bindings $stage/
     case $TRAVIS_OS_NAME in
         linux)
             cp target/$TARGET/release/liblivesplit_core_capi.so $stage/liblivesplit_core.so 2>/dev/null || :

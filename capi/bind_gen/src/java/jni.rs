@@ -21,11 +21,11 @@ fn get_hl_type(ty: &Type) -> String {
     }
 }
 
-fn get_ll_type(ty: &Type) -> &str {
+fn get_ll_type<'a>(ty: &'a Type) -> &'a str {
     match (ty.kind, ty.name.as_str()) {
         (TypeKind::Ref, "c_char") => "String",
         (TypeKind::Ref, _) |
-        (TypeKind::RefMut, _) => "Pointer",
+        (TypeKind::RefMut, _) => "long",
         (_, t) if !ty.is_custom => {
             match t {
                 "i8" => "byte",
@@ -36,17 +36,17 @@ fn get_ll_type(ty: &Type) -> &str {
                 "u16" => "short",
                 "u32" => "int",
                 "u64" => "long",
-                "usize" => "NativeLong", // Not really correct
+                "usize" => "long",
                 "f32" => "float",
                 "f64" => "double",
-                "bool" => "byte",
+                "bool" => "boolean",
                 "()" => "void",
                 "c_char" => "byte",
                 "Json" => "String",
                 x => x,
             }
         }
-        _ => "Pointer",
+        _ => "long",
     }
 }
 
@@ -54,7 +54,6 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
     let is_static = function.is_static();
     let has_return_type = function.has_return_type();
     let return_type = get_hl_type(&function.output);
-    let return_type_ll = get_ll_type(&function.output);
     let is_constructor = function.method == "new";
     let mut method = function.method.to_mixed_case();
     if method == "clone" {
@@ -92,7 +91,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
     if is_constructor {
         write!(writer,
                r#") {{
-        super(Pointer.NULL);
+        super(0);
         "#)?;
     } else {
         write!(writer,
@@ -103,7 +102,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
     for &(ref name, ref typ) in function.inputs.iter() {
         if typ.is_custom {
             write!(writer,
-                   r#"if ({name}.ptr == Pointer.NULL) {{
+                   r#"if ({name}.ptr == 0) {{
             throw new RuntimeException();
         }}
         "#,
@@ -120,46 +119,30 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
                    ret_type = return_type)?;
         } else {
             write!(writer, "{} result = ", return_type)?;
-            if return_type_ll == "UIntPtr" {
-                write!(writer, "(long)")?;
-            }
         }
     }
 
     write!(writer,
-           r#"LiveSplitCoreNative.INSTANCE.{}("#,
-           &function.name)?;
+           r#"LiveSplitCoreNative.{}_{}("#,
+           function.class,
+           function.method.to_mixed_case())?;
 
     for (i, &(ref name, ref typ)) in function.inputs.iter().enumerate() {
         if i != 0 {
             write!(writer, ", ")?;
         }
-        let hl_ty_name = get_hl_type(typ);
-        let ty_name = get_ll_type(typ);
         write!(writer,
                "{}",
                if name == "this" {
                    "this.ptr".to_string()
-               } else if hl_ty_name == "boolean" {
-            format!("(byte)({} ? 1 : 0)", name.to_mixed_case())
-        } else if ty_name == "NativeLong" {
-            format!("new NativeLong({})", name.to_mixed_case())
-        } else if typ.is_custom {
+               } else if typ.is_custom {
             format!("{}.ptr", name.to_mixed_case())
         } else {
             name.to_mixed_case()
         })?;
     }
 
-    write!(writer,
-           "){}",
-           if return_type == "boolean" {
-               " != 0"
-           } else if return_type_ll == "NativeLong" {
-        ".longValue()"
-    } else {
-        ""
-    })?;
+    write!(writer, ")")?;
 
     if !is_constructor && has_return_type && function.output.is_custom {
         write!(writer, r#")"#)?;
@@ -171,7 +154,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
         if typ.is_custom && typ.kind == TypeKind::Value {
             write!(writer,
                    r#"
-        {}.ptr = Pointer.NULL;"#,
+        {}.ptr = 0;"#,
                    name.to_mixed_case())?;
         }
     }
@@ -180,7 +163,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
         if function.output.is_custom {
             write!(writer,
                    r#"
-        if (result.ptr == Pointer.NULL) {{
+        if (result.ptr == 0) {{
             return null;
         }}"#)?;
         }
@@ -203,10 +186,8 @@ fn write_class_ref<P: AsRef<Path>>(path: P, class_name: &str, class: &Class) -> 
     write!(writer,
            r#"package livesplitcore;
 
-import com.sun.jna.*;
-
 public class {class} {{
-    Pointer ptr;"#,
+    long ptr;"#,
            class = class_name_ref)?;
 
     for function in &class.shared_fns {
@@ -231,7 +212,7 @@ public class {class} {{
 
     write!(writer,
            r#"
-    {class}(Pointer ptr) {{
+    {class}(long ptr) {{
         this.ptr = ptr;
     }}
 }}"#,
@@ -246,8 +227,6 @@ fn write_class_ref_mut<P: AsRef<Path>>(path: P, class_name: &str, class: &Class)
     write!(writer,
            r#"package livesplitcore;
 
-import com.sun.jna.*;
-
 public class {class} extends {base_class} {{"#,
            class = class_name_ref_mut,
            base_class = class_name_ref)?;
@@ -258,7 +237,7 @@ public class {class} extends {base_class} {{"#,
 
     write!(writer,
            r#"
-    {class}(Pointer ptr) {{
+    {class}(long ptr) {{
         super(ptr);
     }}
 }}"#,
@@ -272,24 +251,22 @@ fn write_class<P: AsRef<Path>>(path: P, class_name: &str, class: &Class) -> Resu
     write!(writer,
            r#"package livesplitcore;
 
-import com.sun.jna.*;
-
 public class {class} extends {base_class} implements AutoCloseable {{
     private void drop() {{
-        if (ptr != Pointer.NULL) {{"#,
+        if (ptr != 0) {{"#,
            class = class_name,
            base_class = class_name_ref_mut)?;
 
     if let Some(function) = class.own_fns.iter().find(|f| f.method == "drop") {
         write!(writer,
                r#"
-            LiveSplitCoreNative.INSTANCE.{}(this.ptr);"#,
+            LiveSplitCoreNative.{}(this.ptr);"#,
                function.name)?;
     }
 
     write!(writer,
            r#"
-            ptr = Pointer.NULL;
+            ptr = 0;
         }}
     }}
     protected void finalize() throws Throwable {{
@@ -310,24 +287,18 @@ public class {class} extends {base_class} implements AutoCloseable {{
         write!(writer,
                "{}",
                r#"
-    public static Run parse(java.io.InputStream stream) throws java.io.IOException {
-        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
-        byte[] buffer = new byte[1024];
-        while (true) {
-            int r = stream.read(buffer);
-            if (r == -1) break;
-            out.write(buffer, 0, r);
+    public static Run parse(String data) {
+        Run result = new Run(LiveSplitCoreNative.Run_parseString(data));
+        if (result.ptr == 0) {
+            return null;
         }
-        byte[] arr = out.toByteArray();
-        java.nio.ByteBuffer nativeBuf = java.nio.ByteBuffer.allocateDirect(arr.length);
-        nativeBuf.put(arr);
-        return Run.parse(Native.getDirectBufferPointer(nativeBuf), arr.length);
+        return result;
     }"#)?;
     }
 
     write!(writer,
            r#"
-    {class}(Pointer ptr) {{
+    {class}(long ptr) {{
         super(ptr);
     }}
 }}"#,
@@ -337,14 +308,15 @@ public class {class} extends {base_class} implements AutoCloseable {{
 fn write_native_class<P: AsRef<Path>>(path: P, classes: &BTreeMap<String, Class>) -> Result<()> {
     let mut writer = BufWriter::new(File::create(path)?);
 
-    writeln!(writer,
+    write!(writer,
            "{}",
            r#"package livesplitcore;
 
-import com.sun.jna.*;
-
-public interface LiveSplitCoreNative extends Library {
-    LiveSplitCoreNative INSTANCE = (LiveSplitCoreNative) Native.loadLibrary("livesplit_core", LiveSplitCoreNative.class);"#)?;
+public class LiveSplitCoreNative {
+    static {
+        System.loadLibrary("native-lib");
+    }
+    public static native long Run_parseString(String data);"#)?;
 
     for class in classes.values() {
         for function in class
@@ -355,9 +327,10 @@ public interface LiveSplitCoreNative extends Library {
                 .chain(class.mut_fns.iter()) {
             write!(writer,
                    r#"
-    {} {}("#,
+    public static native {} {}_{}("#,
                    get_ll_type(&function.output),
-                   function.name)?;
+                   function.class,
+                   function.method.to_mixed_case())?;
 
             for (i, &(ref name, ref typ)) in function.inputs.iter().enumerate() {
                 if i != 0 {
