@@ -26,6 +26,12 @@ matrix:
     - env: TARGET=x86_64-unknown-linux-gnu
     - env: TARGET=x86_64-unknown-linux-musl
 
+    # Android
+    - env: TARGET=arm-linux-androideabi
+    - env: TARGET=aarch64-linux-android
+    - env: TARGET=armv7-linux-androideabi
+    - env: TARGET=i686-linux-android
+
     # OSX
     - env: TARGET=i686-apple-darwin
       os: osx
