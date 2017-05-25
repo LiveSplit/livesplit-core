@@ -12,7 +12,8 @@ Additional Bindings are available for the following programming languages:
  - C
  - C++
  - C#
- - Java
+ - Java with Java Native Access or Java Native Interface
+ - Kotlin with Java Native Interface
  - Ruby
  - Python
  - JavaScript + TypeScript for Node.js, asm.js and WebAssembly

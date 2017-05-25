@@ -190,7 +190,7 @@ fn write_files(classes: &BTreeMap<String, Class>) -> Result<()> {
     let mut path = PathBuf::from("..");
     path.push("bindings");
 
-    remove_dir_all(&path)?;
+    remove_dir_all(&path).ok();
     create_dir_all(&path)?;
 
     path.push("emscripten");
