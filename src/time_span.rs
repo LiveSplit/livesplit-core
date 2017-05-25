@@ -41,6 +41,10 @@ impl TimeSpan {
         self.0.num_microseconds().unwrap() as f64 / 1_000_000.0
     }
 
+    pub fn total_milliseconds(&self) -> f64 {
+        self.0.num_microseconds().unwrap() as f64 / 1_000.0
+    }
+
     pub fn parse_opt<S>(text: S) -> Result<Option<TimeSpan>, ParseError>
         where S: AsRef<str>
     {
