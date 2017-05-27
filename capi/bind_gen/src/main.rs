@@ -10,6 +10,7 @@ mod kotlin;
 mod node;
 mod python;
 mod ruby;
+mod swift;
 
 use std::path::Path;
 use syntex_syntax::abi::Abi;
@@ -243,6 +244,11 @@ fn write_files(classes: &BTreeMap<String, Class>) -> Result<()> {
 
     path.push("livesplit_core.py");
     python::write(BufWriter::new(File::create(&path)?), classes)?;
+    path.pop();
+
+    path.push("swift");
+    create_dir_all(&path)?;
+    swift::write(&path, classes)?;
     path.pop();
 
     Ok(())
