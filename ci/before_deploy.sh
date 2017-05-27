@@ -29,7 +29,7 @@ main() {
             cp target/$TARGET/release/liblivesplit_core_capi.so $stage/liblivesplit_core.so 2>/dev/null || :
             ;;
         osx)
-            cp target/$TARGET/release/liblivesplit_core_capi.dylib $stage/liblivesplit_core.dylib
+            cp target/$TARGET/release/liblivesplit_core_capi.dylib $stage/liblivesplit_core.dylib 2>/dev/null || :
             ;;
     esac
     cp target/$TARGET/release/liblivesplit_core_capi.a $stage/liblivesplit_core.a

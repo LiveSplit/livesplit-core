@@ -328,10 +328,8 @@ fn write_native_class<P: AsRef<Path>>(path: P, classes: &BTreeMap<String, Class>
            r#"package livesplitcore
 
 object LiveSplitCoreNative {
-    companion object {
-        init {
-            System.loadLibrary("native-lib")
-        }
+    init {
+        System.loadLibrary("native-lib")
     }
     external fun Run_parseString(data: String): Long"#)?;
 
