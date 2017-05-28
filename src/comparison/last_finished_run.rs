@@ -12,28 +12,32 @@ fn generate(segments: &mut [Segment], attempts: &[Attempt], method: TimingMethod
         .rev()
         .find(|a| a.time()[method].is_some());
 
+    let mut remaining_segments = segments.iter_mut();
+
     if let Some(attempt) = attempt {
         let id = attempt.index();
         let mut total_time = TimeSpan::zero();
-        for segment in segments {
-            let segment_time = segment
-                .segment_history()
-                .get(id)
-                .and_then(|t| t[method]);
+        while let Some(segment) = remaining_segments.next() {
+            let segment_time = segment.segment_history().get(id).map(|t| t[method]);
 
-            let split_time = if let Some(segment_time) = segment_time {
-                total_time += segment_time;
-                Some(total_time)
-            } else {
-                None
+            let split_time = match segment_time {
+                Some(Some(segment_time)) => {
+                    total_time += segment_time;
+                    Some(total_time)
+                }
+                Some(None) => None,
+                None => {
+                    segment.comparison_mut(NAME)[method] = None;
+                    break;
+                }
             };
 
             segment.comparison_mut(NAME)[method] = split_time;
         }
-    } else {
-        for segment in segments {
-            segment.comparison_mut(NAME)[method] = None;
-        }
+    }
+
+    for segment in remaining_segments {
+        segment.comparison_mut(NAME)[method] = None;
     }
 }
 
