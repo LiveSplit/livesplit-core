@@ -13,9 +13,9 @@ pub struct Timer {
     current_comparison: String,
     attempt_started: Option<AtomicDateTime>,
     attempt_ended: Option<AtomicDateTime>,
+    adjusted_start_time: TimeStamp,
     start_time: TimeStamp,
-    unmodified_start_time: TimeStamp,
-    pause_time: TimeSpan,
+    time_paused_at: TimeSpan,
     is_game_time_paused: bool,
     game_time_pause_time: Option<TimeSpan>,
     loading_times: Option<TimeSpan>,
@@ -39,9 +39,9 @@ impl Timer {
             current_comparison: PERSONAL_BEST_COMPARISON_NAME.into(),
             attempt_started: None,
             attempt_ended: None,
+            adjusted_start_time: now,
             start_time: now,
-            unmodified_start_time: now,
-            pause_time: TimeSpan::zero(),
+            time_paused_at: TimeSpan::zero(),
             is_game_time_paused: false,
             game_time_pause_time: None,
             loading_times: None,
@@ -65,8 +65,8 @@ impl Timer {
     pub fn current_time(&self) -> Time {
         let real_time = match self.phase {
             NotRunning => Some(self.run.offset()),
-            Running => Some(TimeStamp::now() - self.start_time),
-            Paused => Some(self.pause_time),
+            Running => Some(TimeStamp::now() - self.adjusted_start_time),
+            Paused => Some(self.time_paused_at),
             Ended => {
                 self.run
                     .segments()
@@ -152,9 +152,9 @@ impl Timer {
             self.phase = Running;
             self.current_split_index = 0;
             self.attempt_started = Some(AtomicDateTime::now());
-            self.start_time = TimeStamp::now() - self.run.offset();
-            self.unmodified_start_time = self.start_time;
-            self.pause_time = self.run.offset();
+            self.adjusted_start_time = TimeStamp::now() - self.run.offset();
+            self.start_time = self.adjusted_start_time;
+            self.time_paused_at = self.run.offset();
             self.uninitialize_game_time();
             self.run.start_next_run();
 
@@ -240,13 +240,13 @@ impl Timer {
     pub fn pause(&mut self) {
         match self.phase {
             TimerPhase::Running => {
-                self.pause_time = self.current_time().real_time.unwrap();
+                self.time_paused_at = self.current_time().real_time.unwrap();
                 self.phase = TimerPhase::Paused;
 
                 // TODO OnPause
             }
             TimerPhase::Paused => {
-                self.start_time = TimeStamp::now() - self.pause_time;
+                self.adjusted_start_time = TimeStamp::now() - self.time_paused_at;
                 self.phase = TimerPhase::Running;
 
                 // TODO OnResume
@@ -281,8 +281,8 @@ impl Timer {
     }
 
     pub fn get_pause_time(&self) -> Option<TimeSpan> {
-        if self.phase != TimerPhase::NotRunning && self.unmodified_start_time != self.start_time {
-            Some(self.start_time - self.unmodified_start_time)
+        if self.phase != TimerPhase::NotRunning && self.start_time != self.adjusted_start_time {
+            Some(self.adjusted_start_time - self.start_time)
         } else {
             None
         }
