@@ -147,7 +147,7 @@ pub fn save<W: Write>(run: &Run, mut writer: W) -> Result<()> {
         segment_element.append_child(time(doc, "BestSegmentTime", segment.best_segment_time()));
 
         let history = doc.create_element("SegmentHistory");
-        for (index, &history_time) in segment.segment_history() {
+        for &(index, history_time) in segment.segment_history() {
             let element = time(doc, "Time", history_time);
             element.set_attribute_value("id", &index.to_string());
             history.append_child(element);

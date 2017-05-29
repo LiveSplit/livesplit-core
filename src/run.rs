@@ -440,7 +440,7 @@ impl Run {
             let mut history = self.segments[index]
                 .segment_history()
                 .iter()
-                .filter_map(|(_, t)| t[method])
+                .filter_map(|&(_, t)| t[method])
                 .collect::<Vec<_>>();
 
             for run_index in self.segments[index].segment_history().min_index()..1 {

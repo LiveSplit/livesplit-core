@@ -1,16 +1,16 @@
-use std::collections::BTreeMap;
-use std::collections::btree_map::{Iter, Range};
+// use std::collections::btree_map::{Iter, Range};
+use std::slice::Iter;
 use std::cmp::min;
 use Time;
 
 #[derive(Clone, Default, Debug)]
-pub struct SegmentHistory(BTreeMap<i32, Time>);
+pub struct SegmentHistory(Vec<(i32, Time)>);
 
 impl SegmentHistory {
     pub fn try_get_min_index(&self) -> Option<i32> {
         // This assumes that the first element is the minimum,
         // which is only true for an ordered map
-        self.0.keys().next().map(|&m| m)
+        self.0.iter().next().map(|&(i, _)| i)
     }
 
     /// Defaults to a maximum of 1
@@ -21,45 +21,64 @@ impl SegmentHistory {
     pub fn try_get_max_index(&self) -> Option<i32> {
         // This assumes that the last element is the maximum,
         // which is only true for an ordered map
-        self.0.keys().rev().next().map(|&m| m)
+        self.0.iter().rev().next().map(|&(i, _)| i)
+    }
+
+    fn get_pos(&self, index: i32) -> Result<usize, usize> {
+        self.0.binary_search_by_key(&index, |&(i, _)| i)
     }
 
     #[inline]
     pub fn insert(&mut self, index: i32, time: Time) {
-        self.0.insert(index, time);
+        if let Err(pos) = self.get_pos(index) {
+            self.0.insert(pos, (index, time));
+        }
     }
 
     #[inline]
     pub fn get(&self, index: i32) -> Option<Time> {
-        self.0.get(&index).cloned()
+        self.get_pos(index)
+            .ok()
+            .and_then(|p| self.0.get(p))
+            .map(|&(_, t)| t)
     }
 
     #[inline]
     pub fn get_mut(&mut self, index: i32) -> Option<&mut Time> {
-        self.0.get_mut(&index)
+        if let Ok(pos) = self.get_pos(index) {
+            Some(&mut self.0[pos].1)
+        } else {
+            None
+        }
     }
 
     #[inline]
     pub fn remove(&mut self, index: i32) {
-        self.0.remove(&index);
+        if let Ok(pos) = self.get_pos(index) {
+            self.0.remove(pos);
+        }
     }
 
     #[inline]
-    pub fn iter(&self) -> Iter<i32, Time> {
+    pub fn iter(&self) -> Iter<(i32, Time)> {
         IntoIterator::into_iter(self)
     }
 
     #[inline]
-    pub fn iter_actual_runs(&self) -> Range<i32, Time> {
-        self.0.range(1..)
+    pub fn iter_actual_runs(&self) -> Iter<(i32, Time)> {
+        let start = match self.get_pos(1) {
+            Ok(pos) => pos,
+            Err(pos) => pos,
+        };
+        self.0[start..].iter()
     }
 }
 
 impl<'a> IntoIterator for &'a SegmentHistory {
-    type Item = (&'a i32, &'a Time);
-    type IntoIter = Iter<'a, i32, Time>;
+    type Item = &'a (i32, Time);
+    type IntoIter = Iter<'a, (i32, Time)>;
 
-    fn into_iter(self) -> Iter<'a, i32, Time> {
+    fn into_iter(self) -> Iter<'a, (i32, Time)> {
         self.0.iter()
     }
 }

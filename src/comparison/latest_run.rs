@@ -2,9 +2,9 @@ use {Segment, Attempt, TimingMethod, TimeSpan};
 use super::ComparisonGenerator;
 
 #[derive(Copy, Clone, Debug)]
-pub struct MostRecentRun;
+pub struct LatestRun;
 
-pub const NAME: &'static str = "Most Recent Run";
+pub const NAME: &'static str = "Latest Run";
 
 fn generate(segments: &mut [Segment], method: TimingMethod) {
     let mut attempt_id = None;
@@ -46,7 +46,7 @@ fn generate(segments: &mut [Segment], method: TimingMethod) {
     }
 }
 
-impl ComparisonGenerator for MostRecentRun {
+impl ComparisonGenerator for LatestRun {
     fn name(&self) -> &str {
         NAME
     }
