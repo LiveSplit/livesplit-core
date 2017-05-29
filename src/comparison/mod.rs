@@ -3,14 +3,14 @@ pub mod best_segments;
 pub mod best_split_times;
 pub mod none;
 pub mod worst_segments;
-pub mod last_finished_run;
+pub mod most_recent_run;
 
 pub use self::average_segments::AverageSegments;
 pub use self::best_segments::BestSegments;
 pub use self::best_split_times::BestSplitTimes;
 pub use self::none::None;
 pub use self::worst_segments::WorstSegments;
-pub use self::last_finished_run::LastFinishedRun;
+pub use self::most_recent_run::MostRecentRun;
 
 use std::fmt::Debug;
 use {Attempt, Segment};
@@ -43,6 +43,6 @@ pub fn default_generators() -> Vec<Box<ComparisonGenerator>> {
          Box::new(BestSplitTimes),
          Box::new(AverageSegments),
          Box::new(WorstSegments),
-         Box::new(LastFinishedRun),
+         Box::new(MostRecentRun),
          Box::new(None)]
 }

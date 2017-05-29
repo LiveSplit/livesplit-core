@@ -1,4 +1,3 @@
-use pdqsort::sort_by_key;
 use super::ComparisonGenerator;
 use {Attempt, Segment, TimeSpan, TimingMethod};
 
@@ -32,13 +31,15 @@ fn generate(buf: &mut Vec<(i32, TimeSpan)>, segments: &mut [Segment], method: Ti
         if total_time.is_some() {
             buf.clear();
 
-            for (&id, time) in segments[i].segment_history() {
+            for (&id, time) in segments[i].segment_history().iter_actual_runs() {
                 if let Some(time) = time[method] {
-                    let keep = id > 0 &&
-                               i.checked_sub(1)
+                    let keep = i.checked_sub(1)
                         .and_then(|i| {
-                            segments[i].segment_history().get(id).map(|t| t[method].is_some())
-                        })
+                                      segments[i]
+                                          .segment_history()
+                                          .get(id)
+                                          .map(|t| t[method].is_some())
+                                  })
                         .unwrap_or(true);
 
                     if keep {
@@ -46,8 +47,6 @@ fn generate(buf: &mut Vec<(i32, TimeSpan)>, segments: &mut [Segment], method: Ti
                     }
                 }
             }
-
-            sort_by_key(buf, |&(id, _)| id);
 
             if buf.is_empty() {
                 total_time = None;
