@@ -260,7 +260,7 @@ impl Timer {
         match self.current_phase() {
             TimerPhase::Paused => self.pause(),
             TimerPhase::Ended => {
-                let pause_time = self.get_pause_time();
+                let pause_time = Some(self.get_pause_time().unwrap_or_default());
 
                 let split_time = self.run
                     .segments_mut()
