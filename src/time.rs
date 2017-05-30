@@ -1,4 +1,4 @@
-use std::ops::{Index, IndexMut, Add, Sub};
+use std::ops::{Index, IndexMut, Add, Sub, AddAssign, SubAssign};
 use {TimingMethod, TimeSpan};
 
 #[derive(Copy, Clone, Default, Debug, Eq, PartialEq)]
@@ -23,12 +23,18 @@ impl Time {
 
     #[inline]
     pub fn with_real_time(self, real_time: Option<TimeSpan>) -> Self {
-        Time { real_time: real_time, ..self }
+        Time {
+            real_time: real_time,
+            ..self
+        }
     }
 
     #[inline]
     pub fn with_game_time(self, game_time: Option<TimeSpan>) -> Self {
-        Time { game_time: game_time, ..self }
+        Time {
+            game_time: game_time,
+            ..self
+        }
     }
 
     #[inline]
@@ -74,11 +80,23 @@ impl Add for Time {
     }
 }
 
+impl AddAssign for Time {
+    fn add_assign(&mut self, rhs: Time) {
+        *self = *self + rhs;
+    }
+}
+
 impl Sub for Time {
     type Output = Time;
 
     fn sub(self, rhs: Time) -> Self {
         Time::op(self, rhs, Sub::sub)
+    }
+}
+
+impl SubAssign for Time {
+    fn sub_assign(&mut self, rhs: Time) {
+        *self = *self - rhs;
     }
 }
 

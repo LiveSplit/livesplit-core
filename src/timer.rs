@@ -256,6 +256,31 @@ impl Timer {
         }
     }
 
+    pub fn undo_all_pauses(&mut self) {
+        match self.current_phase() {
+            TimerPhase::Paused => self.pause(),
+            TimerPhase::Ended => {
+                let pause_time = self.get_pause_time();
+
+                let split_time = self.run
+                    .segments_mut()
+                    .iter_mut()
+                    .last()
+                    .unwrap()
+                    .split_time_mut();
+
+                *split_time += Time::new()
+                    .with_real_time(pause_time)
+                    .with_game_time(pause_time);
+            }
+            _ => {}
+        }
+
+        self.adjusted_start_time = self.start_time;
+
+        // TODO OnUndoAllPauses
+    }
+
     pub fn switch_to_next_comparison(&mut self) {
         let mut comparisons = self.run.comparisons();
         let len = comparisons.len();

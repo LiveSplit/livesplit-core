@@ -28,6 +28,11 @@ pub unsafe extern "C" fn Run_parse(data: *const u8, length: usize) -> OwnedRun {
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn Run_clone(this: *const Run) -> OwnedRun {
+    alloc(acc(this).clone())
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn Run_push_segment(this: *mut Run, segment: OwnedSegment) {
     acc_mut(this).push_segment(own(segment));
 }
