@@ -3,7 +3,7 @@ debug_flags = $(standard_flags) -s ASSERTIONS=1
 release_flags = $(standard_flags)
 
 asmjs:
-	@CARGO_INCREMENTAL=1 cargo rustc --release --target asmjs-unknown-emscripten -- -C link-args="$(release_flags)"
+	@cargo rustc --release --target asmjs-unknown-emscripten -- -C link-args="$(release_flags)"
 	@cp ../target/asmjs-unknown-emscripten/release/livesplit*.js* .
 
 optimized:
@@ -26,7 +26,7 @@ wasm:
 	@cp ../target/wasm32-unknown-emscripten/release/deps/*.wasm livesplit.wasm
 
 debug:
-	@CARGO_INCREMENTAL=1 cargo rustc --target asmjs-unknown-emscripten -- -C link-args="$(debug_flags)"
+	@cargo rustc --target asmjs-unknown-emscripten -- -C link-args="$(debug_flags)"
 	@cp ../target/asmjs-unknown-emscripten/debug/livesplit*.js* .
 
 clean:
