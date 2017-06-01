@@ -55,8 +55,10 @@ impl RunEditor {
     pub fn state(&mut self) -> State {
         let formatter = EmptyWrapper::new(Short::with_accuracy(Accuracy::Hundredths));
 
-        let icon_change =
-            self.run.game_icon().check_for_change(&mut self.game_icon_id).map(str::to_owned);
+        let icon_change = self.run
+            .game_icon()
+            .check_for_change(&mut self.game_icon_id)
+            .map(str::to_owned);
         let game = self.game_name().to_string();
         let category = self.category_name().to_string();
         let offset = formatter.format(self.offset()).to_string();
@@ -84,7 +86,8 @@ impl RunEditor {
                 split_time = formatter.format(row.split_time()).to_string();
                 segment_time = formatter.format(row.segment_time()).to_string();
                 best_segment_time = formatter.format(row.best_segment_time()).to_string();
-                comparison_times = comparison_names.iter()
+                comparison_times = comparison_names
+                    .iter()
                     .map(|c| formatter.format(row.comparison_time(c)).to_string())
                     .collect();
             }
@@ -104,14 +107,14 @@ impl RunEditor {
             };
 
             segments.push(Segment {
-                icon_change: icon_change,
-                name: name,
-                split_time: split_time,
-                segment_time: segment_time,
-                best_segment_time: best_segment_time,
-                comparison_times: comparison_times,
-                selected: selected,
-            });
+                              icon_change: icon_change,
+                              name: name,
+                              split_time: split_time,
+                              segment_time: segment_time,
+                              best_segment_time: best_segment_time,
+                              comparison_times: comparison_times,
+                              selected: selected,
+                          });
         }
 
         State {

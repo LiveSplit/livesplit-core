@@ -31,7 +31,9 @@ impl Component {
 
         State {
             text: String::from("Sum of Best Segments"),
-            time: Regular::with_accuracy(Accuracy::Seconds).format(time).to_string(),
+            time: Regular::with_accuracy(Accuracy::Seconds)
+                .format(time)
+                .to_string(),
         }
     }
 }

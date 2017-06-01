@@ -36,12 +36,20 @@ impl<'a> SegmentRow<'a> {
 
     pub fn split_time(&self) -> Option<TimeSpan> {
         let method = self.editor.selected_method;
-        self.editor.run.segment(self.index).personal_best_split_time()[method]
+        self.editor
+            .run
+            .segment(self.index)
+            .personal_best_split_time()
+            [method]
     }
 
     pub fn set_split_time(&mut self, time: Option<TimeSpan>) {
         let method = self.editor.selected_method;
-        self.editor.run.segment_mut(self.index).personal_best_split_time_mut()[method] = time;
+        self.editor
+            .run
+            .segment_mut(self.index)
+            .personal_best_split_time_mut()
+            [method] = time;
         self.editor.times_modified();
         self.editor.fix();
     }
@@ -78,7 +86,11 @@ impl<'a> SegmentRow<'a> {
 
     pub fn set_best_segment_time(&mut self, time: Option<TimeSpan>) {
         let method = self.editor.selected_method;
-        self.editor.run.segment_mut(self.index).best_segment_time_mut()[method] = time;
+        self.editor
+            .run
+            .segment_mut(self.index)
+            .best_segment_time_mut()
+            [method] = time;
         self.editor.times_modified();
         self.editor.fix();
     }
@@ -92,12 +104,20 @@ impl<'a> SegmentRow<'a> {
 
     pub fn comparison_time(&self, comparison: &str) -> Option<TimeSpan> {
         let method = self.editor.selected_method;
-        self.editor.run.segment(self.index).comparison(comparison)[method]
+        self.editor
+            .run
+            .segment(self.index)
+            .comparison(comparison)
+            [method]
     }
 
     pub fn set_comparison_time(&mut self, comparison: &str, time: Option<TimeSpan>) {
         let method = self.editor.selected_method;
-        self.editor.run.segment_mut(self.index).comparison_mut(comparison)[method] = time;
+        self.editor
+            .run
+            .segment_mut(self.index)
+            .comparison_mut(comparison)
+            [method] = time;
         self.editor.times_modified();
         self.editor.fix();
     }

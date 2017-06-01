@@ -31,10 +31,11 @@ impl Component {
 
         let color = match timer.current_phase() {
             TimerPhase::Running if time >= TimeSpan::zero() => {
-                let pb_split_time = timer.current_split()
+                let pb_split_time = timer
+                    .current_split()
                     .unwrap()
                     .comparison(current_comparison)
-                                        [method];
+                    [method];
                 if let Some(pb_split_time) = pb_split_time {
                     split_color(timer,
                                 Some(time - pb_split_time),
@@ -43,19 +44,20 @@ impl Component {
                                 false,
                                 current_comparison,
                                 method)
-                        .or(Color::AheadGainingTime)
+                            .or(Color::AheadGainingTime)
                 } else {
                     Color::AheadGainingTime
                 }
             }
             TimerPhase::Paused => Color::Paused,
             TimerPhase::Ended => {
-                let pb_time = timer.run()
+                let pb_time = timer
+                    .run()
                     .segments()
                     .last()
                     .unwrap()
                     .comparison(current_comparison)
-                                  [method];
+                    [method];
                 if pb_time.map_or(true, |t| time < t) {
                     Color::PersonalBest
                 } else {

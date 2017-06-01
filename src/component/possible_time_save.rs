@@ -83,8 +83,8 @@ pub fn get_possible_time_save(timer: &Timer,
     }
 
     time.map(|t| if t < TimeSpan::zero() {
-        TimeSpan::zero()
-    } else {
-        t
-    })
+                 TimeSpan::zero()
+             } else {
+                 t
+             })
 }

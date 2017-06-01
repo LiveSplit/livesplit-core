@@ -7,3 +7,4 @@ emscripten/target
 emscripten/Cargo.lock
 js/livesplit.js
 Cargo.lock
+**.rs.bk
