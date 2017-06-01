@@ -14,6 +14,7 @@ pub struct Component {
     scroll_offset: isize,
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Settings {
     pub visual_split_count: usize,
     pub split_preview_count: usize,

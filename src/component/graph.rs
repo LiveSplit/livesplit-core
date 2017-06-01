@@ -13,6 +13,7 @@ pub struct Component {
     settings: Settings,
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Settings {
     pub live_graph: bool,
 }

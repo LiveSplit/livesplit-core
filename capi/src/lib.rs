@@ -33,6 +33,8 @@ pub mod possible_time_save_component;
 pub mod possible_time_save_component_state;
 pub mod graph_component;
 pub mod graph_component_state;
+pub mod text_component;
+pub mod text_component_state;
 pub mod run_editor;
 pub mod shared_timer;
 pub mod timer_read_lock;
