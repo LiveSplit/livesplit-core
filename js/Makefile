@@ -1,4 +1,4 @@
-standard_flags = -s MODULARIZE=1 -s EXPORT_NAME='LiveSplitCore' -s TOTAL_MEMORY=33554432 #-s ALLOW_MEMORY_GROWTH=1
+standard_flags = -s MODULARIZE=1 -s EXPORT_NAME='LiveSplitCore' -s TOTAL_MEMORY=33554432 -s ALLOW_MEMORY_GROWTH=1
 debug_flags = $(standard_flags) -s ASSERTIONS=1
 release_flags = $(standard_flags)
 
@@ -28,6 +28,9 @@ wasm:
 debug:
 	@cargo rustc --target asmjs-unknown-emscripten -- -C link-args="$(debug_flags)"
 	@cp ../target/asmjs-unknown-emscripten/debug/livesplit*.js* .
+
+bindings:
+	@(cd ../capi/bind_gen && cargo run)
 
 clean:
 	@cargo clean
