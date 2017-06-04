@@ -14,6 +14,9 @@ pub struct Timer {
     attempt_started: Option<AtomicDateTime>,
     attempt_ended: Option<AtomicDateTime>,
     adjusted_start_time: TimeStamp,
+    // Invariant: Offset isn't allowed to change during a run.
+    // The Duration of the Attempt relies on it not changing.
+    /// Stores the Time Stamp the timer started at adjusted by the run offset.
     start_time: TimeStamp,
     time_paused_at: TimeSpan,
     is_game_time_paused: bool,
@@ -308,7 +311,7 @@ impl Timer {
     pub fn current_attempt_duration(&self) -> TimeSpan {
         match self.current_phase() {
             NotRunning => TimeSpan::zero(),
-            Paused | Running => TimeStamp::now() - self.start_time,
+            Paused | Running => TimeStamp::now() - self.start_time - self.run.offset(),
             Ended => {
                 self.run
                     .segments()
@@ -323,7 +326,7 @@ impl Timer {
 
     pub fn get_pause_time(&self) -> Option<TimeSpan> {
         if self.current_phase() == Paused {
-            Some(TimeStamp::now() - self.start_time - self.time_paused_at)
+            Some(self.current_attempt_duration() - self.time_paused_at)
         } else if self.start_time != self.adjusted_start_time {
             Some(self.adjusted_start_time - self.start_time)
         } else {
