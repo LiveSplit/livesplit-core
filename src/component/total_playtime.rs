@@ -1,8 +1,8 @@
 use Timer;
-use time_formatter::{Regular, TimeFormatter, Accuracy};
 use serde_json::{to_writer, Result};
-use analysis::sum_of_segments::calculate_best;
 use std::io::Write;
+use analysis::calculate_total_playtime;
+use time_formatter::{Days, TimeFormatter};
 
 #[derive(Default)]
 pub struct Component;
@@ -27,16 +27,11 @@ impl Component {
     }
 
     pub fn state(&self, timer: &Timer) -> State {
-        let time = calculate_best(timer.run().segments(),
-                                  false,
-                                  true,
-                                  timer.current_timing_method());
+        let total_playtime = calculate_total_playtime(timer);
 
         State {
-            text: String::from("Sum of Best Segments"),
-            time: Regular::with_accuracy(Accuracy::Seconds)
-                .format(time)
-                .to_string(),
+            text: String::from("Total Playtime"),
+            time: Days::new().format(total_playtime).to_string(),
         }
     }
 }

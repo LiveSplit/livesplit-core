@@ -1,8 +1,8 @@
 use std::cmp::{min, max};
 use std::io::Write;
 use serde_json::{to_writer, Result};
-use {Timer, TimeSpan, state_helper};
-use state_helper::split_color;
+use {Timer, TimeSpan, analysis};
+use analysis::split_color;
 use time_formatter::{Delta, Regular, TimeFormatter};
 use time_formatter::none_wrapper::{EmptyWrapper, DashWrapper};
 use Color;
@@ -125,7 +125,7 @@ impl Component {
                         (split, delta, split_color(timer, delta, i, true, true, comparison, method))
                     } else if current_split == i as isize {
                         (comparison_time,
-                         state_helper::check_live_delta(timer, true, comparison, method),
+                         analysis::check_live_delta(timer, true, comparison, method),
                          Color::Default)
                     } else {
                         (comparison_time, None, Color::Default)

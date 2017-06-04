@@ -6,3 +6,4 @@ pub mod sum_of_best;
 pub mod text;
 pub mod timer;
 pub mod title;
+pub mod total_playtime;

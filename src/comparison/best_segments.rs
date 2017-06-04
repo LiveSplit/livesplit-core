@@ -1,6 +1,6 @@
 use super::ComparisonGenerator;
 use {Attempt, Segment, Time, TimingMethod};
-use sum_of_segments::best::calculate;
+use analysis::sum_of_segments::best::calculate;
 
 #[derive(Copy, Clone, Debug)]
 pub struct BestSegments;

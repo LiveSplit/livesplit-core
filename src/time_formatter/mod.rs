@@ -1,5 +1,6 @@
 mod accuracy;
 mod complete;
+mod days;
 mod delta;
 mod possible_time_save;
 mod regular;
@@ -9,6 +10,7 @@ pub mod timer;
 
 pub use self::accuracy::Accuracy;
 pub use self::complete::Complete;
+pub use self::days::Days;
 pub use self::delta::Delta;
 pub use self::possible_time_save::PossibleTimeSave;
 pub use self::regular::Regular;

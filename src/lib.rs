@@ -40,8 +40,7 @@ pub mod comparison;
 pub mod parser;
 pub mod run_editor;
 pub mod saver;
-pub mod state_helper; // TODO Should maybe not be pub
-pub mod sum_of_segments; // TODO Should maybe not be pub
+pub mod analysis;
 pub mod time_formatter;
 pub mod time_span;
 

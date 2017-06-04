@@ -1,4 +1,4 @@
-use {state_helper, Timer, TimeSpan, TimerPhase};
+use {analysis, Timer, TimeSpan, TimerPhase};
 use time_formatter::{PossibleTimeSave, TimeFormatter};
 use serde_json::{to_writer, Result};
 use std::io::Write;
@@ -72,8 +72,7 @@ pub fn get_possible_time_save(timer: &Timer,
                                        |c, b| c - b - prev_time);
 
     if live && segment_index == timer.current_split_index() as usize {
-        let segment_delta =
-            state_helper::live_segment_delta(timer, segment_index, comparison, method);
+        let segment_delta = analysis::live_segment_delta(timer, segment_index, comparison, method);
         if let (Some(segment_delta), Some(time)) = (segment_delta, time.as_mut()) {
             let segment_delta = TimeSpan::zero() - segment_delta;
             if segment_delta < *time {

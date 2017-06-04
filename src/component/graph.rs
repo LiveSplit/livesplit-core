@@ -1,4 +1,4 @@
-use {Timer, TimeSpan, TimerPhase, state_helper};
+use {Timer, TimeSpan, TimerPhase, analysis};
 use serde_json::{to_writer, Result};
 use std::io::Write;
 
@@ -358,7 +358,7 @@ impl Component {
             if current_phase == TimerPhase::Running || current_phase == TimerPhase::Paused {
                 let timing_method = timer.current_timing_method();
                 let mut best_segment =
-                    state_helper::check_live_delta(timer, true, comparison, timing_method);
+                    analysis::check_live_delta(timer, true, comparison, timing_method);
                 // TODO Try if let instead of checking current phase up there, so we can skip this unwrap
                 let current_split = timer.current_split().unwrap().comparison(comparison)
                     [timing_method];

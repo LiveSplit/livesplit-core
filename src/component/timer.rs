@@ -1,6 +1,6 @@
 use {Color, Timer, TimerPhase, TimeSpan};
 use time_formatter::{timer as formatter, TimeFormatter};
-use state_helper::split_color;
+use analysis::split_color;
 use serde_json::{to_writer, Result};
 use std::io::Write;
 
