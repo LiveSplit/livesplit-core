@@ -292,6 +292,15 @@ export interface GraphComponentStateJson {
     is_live_delta_active: boolean;
 }
 
+export type TextComponentStateJson =
+	{ Center: String } |
+	{ Split: String[2] };
+
+export interface TotalPlaytimeComponentStateJson {
+    text: string;
+    time: string;
+}
+
 export interface RunEditorStateJson {
     icon_change?: string,
     game: string,

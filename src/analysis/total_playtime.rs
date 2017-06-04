@@ -22,13 +22,7 @@ pub fn calculate(timer: &Timer) -> TimeSpan {
         }
     }
 
-    if let Some(current_time) = timer.current_time()[TimingMethod::RealTime] {
-        total_playtime += current_time;
-    }
-
-    if let Some(pause_time) = timer.get_pause_time() {
-        total_playtime += pause_time;
-    }
+    total_playtime += timer.current_attempt_duration();
 
     total_playtime
 }

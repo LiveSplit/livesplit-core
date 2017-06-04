@@ -33,7 +33,7 @@ impl Timer {
 
         Timer {
             run: run,
-            phase: TimerPhase::NotRunning,
+            phase: NotRunning,
             current_split_index: -1,
             current_timing_method: TimingMethod::RealTime,
             current_comparison: PERSONAL_BEST_COMPARISON_NAME.into(),
@@ -161,7 +161,7 @@ impl Timer {
             // TODO OnStart
         } else {
             let current_time = self.current_time();
-            if self.phase == TimerPhase::Running &&
+            if self.phase == Running &&
                current_time
                    .real_time
                    .map_or(false, |t| t >= TimeSpan::zero()) {
@@ -170,7 +170,7 @@ impl Timer {
                     .set_split_time(current_time);
                 self.current_split_index += 1;
                 if self.run.len() as isize == self.current_split_index {
-                    self.phase = TimerPhase::Ended;
+                    self.phase = Ended;
                     self.attempt_ended = Some(AtomicDateTime::now());
                 }
                 self.run.mark_as_changed();
@@ -181,7 +181,7 @@ impl Timer {
     }
 
     pub fn skip_split(&mut self) {
-        if (self.phase == TimerPhase::Running || self.phase == TimerPhase::Paused) &&
+        if (self.phase == Running || self.phase == Paused) &&
            self.current_split_index < self.run.len() as isize - 1 {
             self.current_split_mut().unwrap().clear_split_time();
             self.current_split_index += 1;
@@ -192,9 +192,9 @@ impl Timer {
     }
 
     pub fn undo_split(&mut self) {
-        if self.phase != TimerPhase::NotRunning && self.current_split_index > 0 {
-            if self.phase == TimerPhase::Ended {
-                self.phase = TimerPhase::Running;
+        if self.phase != NotRunning && self.current_split_index > 0 {
+            if self.phase == Ended {
+                self.phase = Running;
             }
             self.current_split_index -= 1;
             self.current_split_mut().unwrap().clear_split_time();
@@ -205,8 +205,8 @@ impl Timer {
     }
 
     pub fn reset(&mut self, update_splits: bool) {
-        if self.phase != TimerPhase::NotRunning {
-            if self.phase != TimerPhase::Ended {
+        if self.phase != NotRunning {
+            if self.phase != Ended {
                 self.attempt_ended = Some(AtomicDateTime::now());
             }
             self.unpause_game_time();
@@ -226,7 +226,7 @@ impl Timer {
     }
 
     fn reset_splits(&mut self) {
-        self.phase = TimerPhase::NotRunning;
+        self.phase = NotRunning;
         self.current_split_index = -1;
 
         // Reset Splits
@@ -239,27 +239,27 @@ impl Timer {
 
     pub fn pause(&mut self) {
         match self.phase {
-            TimerPhase::Running => {
+            Running => {
                 self.time_paused_at = self.current_time().real_time.unwrap();
-                self.phase = TimerPhase::Paused;
+                self.phase = Paused;
 
                 // TODO OnPause
             }
-            TimerPhase::Paused => {
+            Paused => {
                 self.adjusted_start_time = TimeStamp::now() - self.time_paused_at;
-                self.phase = TimerPhase::Running;
+                self.phase = Running;
 
                 // TODO OnResume
             }
-            TimerPhase::NotRunning => self.split(), // Fuck abahbob
+            NotRunning => self.split(), // Fuck abahbob
             _ => {}
         }
     }
 
     pub fn undo_all_pauses(&mut self) {
         match self.current_phase() {
-            TimerPhase::Paused => self.pause(),
-            TimerPhase::Ended => {
+            Paused => self.pause(),
+            Ended => {
                 let pause_time = Some(self.get_pause_time().unwrap_or_default());
 
                 let split_time = self.run
@@ -305,8 +305,26 @@ impl Timer {
         // TODO OnPreviousComparison
     }
 
+    pub fn current_attempt_duration(&self) -> TimeSpan {
+        match self.current_phase() {
+            NotRunning => TimeSpan::zero(),
+            Paused | Running => TimeStamp::now() - self.start_time,
+            Ended => {
+                self.run
+                    .segments()
+                    .last()
+                    .unwrap()
+                    .split_time()
+                    .real_time
+                    .unwrap()
+            }
+        }
+    }
+
     pub fn get_pause_time(&self) -> Option<TimeSpan> {
-        if self.phase != TimerPhase::NotRunning && self.start_time != self.adjusted_start_time {
+        if self.current_phase() == Paused {
+            Some(TimeStamp::now() - self.start_time - self.time_paused_at)
+        } else if self.start_time != self.adjusted_start_time {
             Some(self.adjusted_start_time - self.start_time)
         } else {
             None
@@ -375,7 +393,7 @@ impl Timer {
     }
 
     fn update_attempt_history(&mut self) {
-        let (time, pause_time) = if self.phase == TimerPhase::Ended {
+        let (time, pause_time) = if self.phase == Ended {
             (self.current_time(), self.get_pause_time())
         } else {
             Default::default()

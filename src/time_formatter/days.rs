@@ -33,8 +33,9 @@ impl Display for Inner {
                 total_seconds *= -1.0;
                 write!(f, "-")?;
             }
-            let seconds = total_seconds % 60.0;
-            let total_minutes = (total_seconds / 60.0) as u64;
+            let total_seconds = total_seconds as u64;
+            let seconds = total_seconds % 60;
+            let total_minutes = total_seconds / 60;
             let minutes = total_minutes % 60;
             let total_hours = total_minutes / 60;
             let hours = total_hours % 24;
