@@ -11,8 +11,8 @@ main() {
         return
     fi
 
-    cross test -p livesplit-core-capi --target $TARGET
-    cross test -p livesplit-core-capi --target $TARGET --release
+    cross test -p livesplit-core --target $TARGET
+    cross test -p livesplit-core --target $TARGET --release
 
     # cross run --target $TARGET
     # cross run --target $TARGET --release

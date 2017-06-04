@@ -42,8 +42,8 @@ test_script:
   - if [%APPVEYOR_REPO_TAG%]==[false] (
       cargo build -p livesplit-core-capi --target %TARGET% &&
       cargo build -p livesplit-core-capi --target %TARGET% --release &&
-      cargo test -p livesplit-core-capi --target %TARGET% &&
-      cargo test -p livesplit-core-capi --target %TARGET% --release
+      cargo test -p livesplit-core --target %TARGET% &&
+      cargo test -p livesplit-core --target %TARGET% --release
     )
 
 before_deploy:
