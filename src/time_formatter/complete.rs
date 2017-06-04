@@ -1,6 +1,6 @@
 use std::fmt::{Result, Formatter, Display};
 use TimeSpan;
-use super::TimeFormatter;
+use super::{TimeFormatter, MINUS};
 
 pub struct Inner(Option<TimeSpan>);
 pub struct Complete;
@@ -21,7 +21,7 @@ impl Display for Inner {
             let mut total_seconds = time.total_seconds();
             if total_seconds < 0.0 {
                 total_seconds *= -1.0;
-                write!(f, "-")?;
+                write!(f, "{}", MINUS)?;
             }
             let seconds = total_seconds % 60.0;
             let total_minutes = (total_seconds / 60.0) as u64;

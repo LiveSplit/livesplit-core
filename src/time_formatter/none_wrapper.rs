@@ -1,6 +1,6 @@
 use std::fmt::{Result, Formatter, Display};
 use TimeSpan;
-use super::TimeFormatter;
+use super::{TimeFormatter, DASH};
 
 pub struct Inner<'a, F: 'a, S: 'a> {
     time: Option<TimeSpan>,
@@ -19,7 +19,7 @@ impl<'a, F: 'a + TimeFormatter<'a>, S: AsRef<str>> NoneWrapper<F, S> {
 impl DashWrapper {
     #[allow(new_ret_no_self)]
     pub fn new<'a, F: 'a + TimeFormatter<'a>>(inner: F) -> NoneWrapper<F, &'static str> {
-        NoneWrapper::new(inner, "—")
+        NoneWrapper::new(inner, DASH)
     }
 }
 

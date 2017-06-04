@@ -1,5 +1,5 @@
 use std::fmt::{Result, Formatter, Display};
-use super::{Accuracy, TimeFormatter};
+use super::{Accuracy, TimeFormatter, DASH};
 use TimeSpan;
 
 pub struct Inner {
@@ -61,7 +61,7 @@ impl Display for Inner {
                        self.accuracy.format_seconds(seconds, true))
             }
         } else {
-            write!(f, "—")
+            write!(f, "{}", DASH)
         }
     }
 }

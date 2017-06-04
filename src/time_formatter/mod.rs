@@ -27,6 +27,9 @@ pub trait TimeFormatter<'a> {
 }
 
 const EPSILON: f64 = 0.0000001;
+pub const DASH: &str = "—";
+pub const MINUS: &str = "−";
+pub const PLUS: &str = "+";
 
 fn extract_tenths(seconds: f64) -> u8 {
     min(9, ((seconds.abs() % 1.0) * 10.0 + EPSILON).floor() as u8)
