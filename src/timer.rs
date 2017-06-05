@@ -389,11 +389,14 @@ impl Timer {
     }
 
     fn update_attempt_history(&mut self) {
-        let (time, pause_time) = if self.phase == Ended {
-            (self.current_time(), self.get_pause_time())
+        let time = if self.phase == Ended {
+            self.current_time()
         } else {
             Default::default()
         };
+
+        let pause_time = self.get_pause_time();
+
         self.run
             .add_attempt(time, self.attempt_started, self.attempt_ended, pause_time);
     }
