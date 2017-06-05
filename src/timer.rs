@@ -318,12 +318,12 @@ impl Timer {
     }
 
     pub fn get_pause_time(&self) -> Option<TimeSpan> {
-        if self.current_phase() == Paused {
-            Some(TimeStamp::now() - self.start_time_with_offset - self.time_paused_at)
-        } else if self.start_time_with_offset != self.adjusted_start_time {
-            Some(self.adjusted_start_time - self.start_time_with_offset)
-        } else {
-            None
+        match self.current_phase() {
+            Paused => Some(TimeStamp::now() - self.start_time_with_offset - self.time_paused_at),
+            Running | Ended if self.start_time_with_offset != self.adjusted_start_time => {
+                Some(self.adjusted_start_time - self.start_time_with_offset)
+            }
+            _ => None,
         }
     }
 

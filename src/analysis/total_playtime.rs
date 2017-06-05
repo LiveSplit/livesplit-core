@@ -22,7 +22,7 @@ pub fn calculate(timer: &Timer) -> TimeSpan {
         }
     }
 
-    total_playtime += timer.current_attempt_duration();
+    total_playtime += timer.current_attempt_duration() - timer.get_pause_time().unwrap_or_default();
 
     total_playtime
 }
