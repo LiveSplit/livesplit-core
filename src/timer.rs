@@ -312,21 +312,13 @@ impl Timer {
         match self.current_phase() {
             NotRunning => TimeSpan::zero(),
             Paused | Running => TimeStamp::now() - self.start_time - self.run.offset(),
-            Ended => {
-                self.run
-                    .segments()
-                    .last()
-                    .unwrap()
-                    .split_time()
-                    .real_time
-                    .unwrap()
-            }
+            Ended => self.attempt_ended.unwrap() - self.attempt_started.unwrap(),
         }
     }
 
     pub fn get_pause_time(&self) -> Option<TimeSpan> {
         if self.current_phase() == Paused {
-            Some(self.current_attempt_duration() - self.time_paused_at)
+            Some(TimeStamp::now() - self.start_time - self.time_paused_at)
         } else if self.start_time != self.adjusted_start_time {
             Some(self.adjusted_start_time - self.start_time)
         } else {
