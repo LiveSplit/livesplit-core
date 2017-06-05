@@ -13,11 +13,10 @@ pub struct Timer {
     current_comparison: String,
     attempt_started: Option<AtomicDateTime>,
     attempt_ended: Option<AtomicDateTime>,
-    adjusted_start_time: TimeStamp,
-    // Invariant: Offset isn't allowed to change during a run.
-    // The Duration of the Attempt relies on it not changing.
-    /// Stores the Time Stamp the timer started at adjusted by the run offset.
     start_time: TimeStamp,
+    start_time_with_offset: TimeStamp,
+    // This gets adjusted after unpausing
+    adjusted_start_time: TimeStamp,
     time_paused_at: TimeSpan,
     is_game_time_paused: bool,
     game_time_pause_time: Option<TimeSpan>,
@@ -42,8 +41,9 @@ impl Timer {
             current_comparison: PERSONAL_BEST_COMPARISON_NAME.into(),
             attempt_started: None,
             attempt_ended: None,
-            adjusted_start_time: now,
             start_time: now,
+            start_time_with_offset: now,
+            adjusted_start_time: now,
             time_paused_at: TimeSpan::zero(),
             is_game_time_paused: false,
             game_time_pause_time: None,
@@ -155,8 +155,9 @@ impl Timer {
             self.phase = Running;
             self.current_split_index = 0;
             self.attempt_started = Some(AtomicDateTime::now());
-            self.adjusted_start_time = TimeStamp::now() - self.run.offset();
-            self.start_time = self.adjusted_start_time;
+            self.start_time = TimeStamp::now();
+            self.start_time_with_offset = self.start_time - self.run.offset();
+            self.adjusted_start_time = self.start_time_with_offset;
             self.time_paused_at = self.run.offset();
             self.uninitialize_game_time();
             self.run.start_next_run();
@@ -279,7 +280,7 @@ impl Timer {
             _ => {}
         }
 
-        self.adjusted_start_time = self.start_time;
+        self.adjusted_start_time = self.start_time_with_offset;
 
         // TODO OnUndoAllPauses
     }
@@ -311,16 +312,16 @@ impl Timer {
     pub fn current_attempt_duration(&self) -> TimeSpan {
         match self.current_phase() {
             NotRunning => TimeSpan::zero(),
-            Paused | Running => TimeStamp::now() - self.start_time - self.run.offset(),
+            Paused | Running => TimeStamp::now() - self.start_time,
             Ended => self.attempt_ended.unwrap() - self.attempt_started.unwrap(),
         }
     }
 
     pub fn get_pause_time(&self) -> Option<TimeSpan> {
         if self.current_phase() == Paused {
-            Some(TimeStamp::now() - self.start_time - self.time_paused_at)
-        } else if self.start_time != self.adjusted_start_time {
-            Some(self.adjusted_start_time - self.start_time)
+            Some(TimeStamp::now() - self.start_time_with_offset - self.time_paused_at)
+        } else if self.start_time_with_offset != self.adjusted_start_time {
+            Some(self.adjusted_start_time - self.start_time_with_offset)
         } else {
             None
         }
