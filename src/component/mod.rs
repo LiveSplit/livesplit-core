@@ -1,3 +1,4 @@
+pub mod current_pace;
 pub mod graph;
 pub mod possible_time_save;
 pub mod previous_segment;

@@ -1,6 +1,6 @@
 use {AtomicDateTime, Run, Time, TimerPhase, TimingMethod, TimeStamp, TimeSpan, Segment};
 use TimerPhase::*;
-use run::PERSONAL_BEST_COMPARISON_NAME;
+use comparison::PERSONAL_BEST_COMPARISON_NAME;
 use parking_lot::RwLock;
 use std::sync::Arc;
 

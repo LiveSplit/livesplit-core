@@ -2,11 +2,9 @@ use std::borrow::Cow;
 use std::path::PathBuf;
 use std::cmp::max;
 use {AtomicDateTime, TimeSpan, Time, TimingMethod, Attempt, RunMetadata, Segment, Image};
-use comparison::{default_generators, ComparisonGenerator};
+use comparison::{default_generators, ComparisonGenerator, PERSONAL_BEST_COMPARISON_NAME};
 use odds::vec::VecFindRemove;
 use unicase;
-
-pub const PERSONAL_BEST_COMPARISON_NAME: &'static str = "Personal Best";
 
 #[derive(Clone, Debug)]
 pub struct Run {

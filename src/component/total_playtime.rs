@@ -1,7 +1,7 @@
 use Timer;
 use serde_json::{to_writer, Result};
 use std::io::Write;
-use analysis::calculate_total_playtime;
+use analysis::total_playtime;
 use time_formatter::{Days, TimeFormatter};
 
 #[derive(Default)]
@@ -27,7 +27,7 @@ impl Component {
     }
 
     pub fn state(&self, timer: &Timer) -> State {
-        let total_playtime = calculate_total_playtime(timer);
+        let total_playtime = total_playtime::calculate(timer);
 
         State {
             text: String::from("Total Playtime"),

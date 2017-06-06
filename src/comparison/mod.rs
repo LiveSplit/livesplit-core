@@ -15,6 +15,8 @@ pub use self::latest_run::LatestRun;
 use std::fmt::Debug;
 use {Attempt, Segment};
 
+pub const PERSONAL_BEST_COMPARISON_NAME: &'static str = "Personal Best";
+
 pub trait ComparisonGenerator: Debug + Sync + Send + ComparisonGeneratorClone {
     fn name(&self) -> &str;
     fn generate(&mut self, segments: &mut [Segment], attempts: &[Attempt]);

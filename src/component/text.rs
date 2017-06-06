@@ -68,6 +68,13 @@ impl Component {
         Default::default()
     }
 
+    pub fn with_settings(settings: Settings) -> Self {
+        Self {
+            settings,
+            ..Default::default()
+        }
+    }
+
     pub fn settings_mut(&mut self) -> &mut Settings {
         &mut self.settings
     }

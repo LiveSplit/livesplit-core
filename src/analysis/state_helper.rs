@@ -1,5 +1,5 @@
 use {Color, Run, Timer, TimingMethod, TimeSpan, TimerPhase};
-use run::PERSONAL_BEST_COMPARISON_NAME;
+use comparison::PERSONAL_BEST_COMPARISON_NAME;
 use comparison::best_segments;
 
 /// Gets the last non-live delta in the run starting from `split_number`.

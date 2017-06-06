@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use {SegmentHistory, Image, Time, TimingMethod, TimeSpan};
-use run::PERSONAL_BEST_COMPARISON_NAME;
+use comparison::PERSONAL_BEST_COMPARISON_NAME;
 
 #[derive(Clone, Default, Debug)]
 pub struct Segment {

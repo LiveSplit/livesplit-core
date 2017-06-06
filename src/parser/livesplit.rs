@@ -8,7 +8,7 @@ use sxd_document::parser::{Error as XmlError, parse as parse_xml};
 use chrono::{DateTime, UTC, TimeZone, ParseError as ChronoError};
 use super::bom_consumer::BomConsumer;
 use {Run, time_span, TimeSpan, Time, AtomicDateTime, Segment};
-use run::PERSONAL_BEST_COMPARISON_NAME;
+use comparison::PERSONAL_BEST_COMPARISON_NAME;
 use super::xml_util::{self, text};
 
 quick_error! {

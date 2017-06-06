@@ -1,5 +1,5 @@
 use super::{RunEditor, SegmentRow, TimingMethod};
-use run::PERSONAL_BEST_COMPARISON_NAME;
+use comparison::PERSONAL_BEST_COMPARISON_NAME;
 use time_formatter::{Accuracy, TimeFormatter, Short};
 use time_formatter::none_wrapper::EmptyWrapper;
 use serde_json::{to_writer, Result as JsonResult};
