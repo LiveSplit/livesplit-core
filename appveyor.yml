@@ -23,6 +23,10 @@ environment:
 
     # Testing other channels
     - TARGET: x86_64-pc-windows-gnu
+      RUST_VERSION: beta
+    - TARGET: x86_64-pc-windows-msvc
+      RUST_VERSION: beta
+    - TARGET: x86_64-pc-windows-gnu
       RUST_VERSION: nightly-2017-06-01 # Temporary fix
     - TARGET: x86_64-pc-windows-msvc
       RUST_VERSION: nightly
