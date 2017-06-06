@@ -7,6 +7,9 @@ pub fn calculate(timer: &Timer) -> TimeSpan {
         if let Some(duration) = attempt.duration() {
             // Either >= 1.6.0 or a finished run
             total_playtime += duration;
+            if let Some(pause_time) = attempt.pause_time() {
+                total_playtime -= pause_time;
+            }
         } else {
             // Must be < 1.6.0 and a reset
             // Calculate the sum of the segments for that run
