@@ -55,7 +55,7 @@ pub fn parse<R: Read>(source: R) -> Result<Run> {
 
     run.set_category_name(splits.title);
     run.set_attempt_count(splits.attempt_count);
-    run.set_offset(splits.start_delay.parse()?);
+    run.set_offset(-splits.start_delay.parse()?);
 
     // Best Split Times can be used for the Segment History
     // Every single best split time should be included as its own run,
