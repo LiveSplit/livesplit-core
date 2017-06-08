@@ -2,7 +2,6 @@
 
 set -ex
 
-# TODO This is the "test phase", tweak it as you see fit
 main() {
     cross build -p livesplit-core-capi --target $TARGET
     cross build -p livesplit-core-capi --target $TARGET --release

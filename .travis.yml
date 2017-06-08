@@ -6,19 +6,11 @@ language: rust
 services: docker
 sudo: required
 
-# TODO Rust builds on stable by default, this can be
-# overridden on a case by case basis down below.
-# rust: stable not specified in order to avoid making
-# a default job.
-
 env:
   global:
-    # TODO Update this to match the name of your project.
     - CRATE_NAME=livesplit-core
 
 matrix:
-  # TODO These are all the build jobs. Adjust as necessary. Comment out what you
-  # don't need
   include:
     # Linux
     - env: TARGET=i686-unknown-linux-gnu
@@ -101,19 +93,11 @@ before_deploy:
   - sh ci/before_deploy.sh
 
 deploy:
-  # TODO update `api_key.secure`
-  # - Create a `public_repo` GitHub token. Go to: https://github.com/settings/tokens/new
-  # - Encrypt it: `travis encrypt YOUR_TOKEN`
-  # - Paste the output down here
   api_key:
     secure: "pKwa9SjJVenEk2MwFh3pVv6MO+Z//Ng4RG6ZvMxHDsfuElFpU6obMs6dvK0tUFNBQMayXxMhJMKz2ZD+eiOtyOmJY218QxsfkyqazwakvXLasrGtKtyp7pzkNHaiE8o73Mr+9MudUiqWIg8y+X1lTV1A5GN+i1jprGZip0RV+qHeZtpNkYjX/99+Xh5Z/Wp9rCcxO+flyWjbpA151Bqx/QX88usCpIXEH9uJOHjQd/VHuPQoxOw6RiyAleF1EfHfor+/0uHbHNHjulm4U5hCjAoQGm0RppA1rMBg5y36lXLg5Ophz+PREzJl6Xj9rW2ExPRkHYqrkmfUKAjNeJQVNnN1xu84ngND5YRUzsDBk1t3XDvY1DSdqosSsjSZ99XvJrrbTFoF12WpKBKFCaTQHp26Fn5oNh9I/ZNW7I9Jzqga2PubxCiSR9L2DtCaw5Y2nKFn54+VMF4U4pa6fnCsw2o72qTFkpLwba+oFnrUT+dXoUpvPMcBeZSb4HuV0LKfkN2e3WHPZKRbJAFfmjVVJ083HYIpp7lohBKFNMtbrcXNdAtD0y2xb+SlzKo/ZIQnTJw3lW5+n4PCzso1OlIwUiEx0ZN2V3jHC6ZOrqMNdnFn3NZq4aOBzQdi493gPnhIiJlyywEn93UXTyTXirpsNL99GlUo3iX6nbh8LbgAjQY="
   file_glob: true
   file: $CRATE_NAME-$TRAVIS_TAG-$TARGET.*
   on:
-    # TODO Here you can pick which targets will generate binary releases
-    # In this example, there are some targets that are tested using the stable
-    # and nightly channels. This condition makes sure there is only one release
-    # for such targets and that's generated using the stable channel
     condition: $TRAVIS_RUST_VERSION = stable
     tags: true
   provider: releases

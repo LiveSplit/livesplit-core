@@ -3,15 +3,9 @@
 
 environment:
   global:
-  # TODO This is the Rust channel that build jobs will use by default but can be
-  # overridden on a case by case basis down below
     RUST_VERSION: stable
-
-    # TODO Update this to match the name of your project.
     CRATE_NAME: livesplit-core
 
-  # TODO These are all the build jobs. Adjust as necessary. Comment out what you
-  # don't need
   matrix:
     # MinGW
     - TARGET: i686-pc-windows-gnu
@@ -27,9 +21,14 @@ environment:
     - TARGET: x86_64-pc-windows-msvc
       RUST_VERSION: beta
     - TARGET: x86_64-pc-windows-gnu
-      RUST_VERSION: nightly-2017-06-01 # Temporary fix
+      RUST_VERSION: nightly
     - TARGET: x86_64-pc-windows-msvc
       RUST_VERSION: nightly
+
+matrix:
+  allow_failures:
+    - RUST_VERSION: nightly
+    - RUST_VERSION: beta
 
 install:
   - ps: >-
@@ -40,7 +39,6 @@ install:
   - rustc -Vv
   - cargo -V
 
-# TODO This is the "test phase", tweak it as you see fit
 test_script:
   # we don't run the "test phase" when doing deploys
   - if [%APPVEYOR_REPO_TAG%]==[false] (
@@ -51,24 +49,15 @@ test_script:
     )
 
 before_deploy:
-  # TODO Update this to build the artifacts that matter to you
   - cargo rustc -p livesplit-core-capi --target %TARGET% --release
   - ps: ci\before_deploy.ps1
 
 deploy:
   artifact: /.*\.zip/
-  # TODO update `auth_token.secure`
-  # - Create a `public_repo` GitHub token. Go to: https://github.com/settings/tokens/new
-  # - Encrypt it. Go to https://ci.appveyor.com/tools/encrypt
-  # - Paste the output down here
   auth_token:
     secure: zZGfrpCR/0TmHcXPwar4hOx6pZeq3C9Wwf/g62pvf135tAwJIVpuZHJjB0sAAd2M
   description: ''
   on:
-    # TODO Here you can pick which targets will generate binary releases
-    # In this example, there are some targets that are tested using the stable
-    # and nightly channels. This condition makes sure there is only one release
-    # for such targets and that's generated using the stable channel
     RUST_VERSION: stable
     appveyor_repo_tag: true
   provider: GitHub
