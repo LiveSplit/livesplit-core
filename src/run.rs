@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use std::path::PathBuf;
 use std::cmp::max;
 use {AtomicDateTime, TimeSpan, Time, TimingMethod, Attempt, RunMetadata, Segment, Image};
-use comparison::{default_generators, ComparisonGenerator, PERSONAL_BEST_COMPARISON_NAME};
+use comparison::{default_generators, ComparisonGenerator, personal_best};
 use odds::vec::VecFindRemove;
 use unicase;
 
@@ -36,7 +36,7 @@ impl Run {
             has_changed: false,
             path: None,
             segments: Vec::new(),
-            custom_comparisons: vec![PERSONAL_BEST_COMPARISON_NAME.to_string()],
+            custom_comparisons: vec![personal_best::NAME.to_string()],
             comparison_generators: default_generators(),
         };
         run.regenerate_comparisons();
@@ -398,7 +398,7 @@ impl Run {
 
                     // Fix Best Segment time if the PB segment is faster
                     let current_segment = time - previous_time;
-                    if comparison == PERSONAL_BEST_COMPARISON_NAME {
+                    if comparison == personal_best::NAME {
                         let time = &mut segment.best_segment_time_mut()[method];
                         if time.map_or(true, |t| t > current_segment) {
                             *time = Some(current_segment);

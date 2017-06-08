@@ -8,7 +8,7 @@ use sxd_document::parser::{Error as XmlError, parse as parse_xml};
 use chrono::{DateTime, UTC, TimeZone, ParseError as ChronoError};
 use super::bom_consumer::BomConsumer;
 use {Run, time_span, TimeSpan, Time, AtomicDateTime, Segment};
-use comparison::PERSONAL_BEST_COMPARISON_NAME;
+use comparison::personal_best;
 use super::xml_util::{self, text};
 
 quick_error! {
@@ -277,7 +277,7 @@ pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
         } else {
             let node = child(&node, "PersonalBestSplitTime")?;
             if !node.children().is_empty() {
-                *segment.comparison_mut(PERSONAL_BEST_COMPARISON_NAME) = time_old(&node, buf)?;
+                *segment.comparison_mut(personal_best::NAME) = time_old(&node, buf)?;
             }
         }
 

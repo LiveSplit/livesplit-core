@@ -4,7 +4,7 @@ use {Attempt, Segment, Time};
 #[derive(Copy, Clone, Debug)]
 pub struct None;
 
-pub const NAME: &'static str = "None";
+pub const NAME: &str = "None";
 
 impl ComparisonGenerator for None {
     fn name(&self) -> &str {

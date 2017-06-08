@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use {SegmentHistory, Image, Time, TimingMethod, TimeSpan};
-use comparison::PERSONAL_BEST_COMPARISON_NAME;
+use comparison::personal_best;
 
 #[derive(Clone, Default, Debug)]
 pub struct Segment {
@@ -76,7 +76,7 @@ impl Segment {
     #[inline]
     pub fn personal_best_split_time(&self) -> Time {
         self.comparisons
-            .get(PERSONAL_BEST_COMPARISON_NAME)
+            .get(personal_best::NAME)
             .cloned()
             .unwrap_or_else(Time::default)
     }
@@ -84,14 +84,13 @@ impl Segment {
     #[inline]
     pub fn personal_best_split_time_mut(&mut self) -> &mut Time {
         self.comparisons
-            .entry(PERSONAL_BEST_COMPARISON_NAME.to_string())
+            .entry(personal_best::NAME.to_string())
             .or_insert_with(Time::default)
     }
 
     #[inline]
     pub fn set_personal_best_split_time(&mut self, time: Time) {
-        self.comparisons
-            .insert(PERSONAL_BEST_COMPARISON_NAME.into(), time);
+        self.comparisons.insert(personal_best::NAME.into(), time);
     }
 
     #[inline]

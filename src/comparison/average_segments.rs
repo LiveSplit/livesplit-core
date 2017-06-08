@@ -4,7 +4,7 @@ use {Attempt, Segment, TimeSpan, TimingMethod};
 #[derive(Copy, Clone, Debug)]
 pub struct AverageSegments;
 
-pub const NAME: &'static str = "Average Segments";
+pub const NAME: &str = "Average Segments";
 
 const WEIGHT: f64 = 0.75;
 

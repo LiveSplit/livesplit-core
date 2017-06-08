@@ -1,6 +1,5 @@
 use {Color, Run, Timer, TimingMethod, TimeSpan, TimerPhase};
-use comparison::PERSONAL_BEST_COMPARISON_NAME;
-use comparison::best_segments;
+use comparison::{best_segments, personal_best};
 
 /// Gets the last non-live delta in the run starting from `split_number`.
 ///
@@ -83,7 +82,7 @@ pub fn previous_segment_time(timer: &Timer,
                                   split_number,
                                   false,
                                   true,
-                                  PERSONAL_BEST_COMPARISON_NAME,
+                                  personal_best::NAME,
                                   method)
 }
 
@@ -98,12 +97,7 @@ pub fn live_segment_time(timer: &Timer,
                          split_number: usize,
                          method: TimingMethod)
                          -> Option<TimeSpan> {
-    segment_time_or_segment_delta(timer,
-                                  split_number,
-                                  true,
-                                  true,
-                                  PERSONAL_BEST_COMPARISON_NAME,
-                                  method)
+    segment_time_or_segment_delta(timer, split_number, true, true, personal_best::NAME, method)
 }
 
 /// Gets the amount of time lost or gained on a certain split.

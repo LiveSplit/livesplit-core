@@ -64,7 +64,7 @@ impl Component {
         let mut current_pace = current_pace::calculate(timer, comparison);
 
         let text = match comparison {
-            comparison::PERSONAL_BEST_COMPARISON_NAME => "Current Pace".into(),
+            comparison::personal_best::NAME => "Current Pace".into(),
             comparison::best_segments::NAME => "Best Possible Time".into(),
             comparison::worst_segments::NAME => "Worst Possible Time".into(),
             comparison::average_segments::NAME => "Predicted Time".into(),

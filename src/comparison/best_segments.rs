@@ -5,7 +5,7 @@ use analysis::sum_of_segments::best::calculate;
 #[derive(Copy, Clone, Debug)]
 pub struct BestSegments;
 
-pub const NAME: &'static str = "Best Segments";
+pub const NAME: &str = "Best Segments";
 
 impl ComparisonGenerator for BestSegments {
     fn name(&self) -> &str {

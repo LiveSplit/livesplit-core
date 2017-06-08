@@ -1,5 +1,5 @@
 use super::{RunEditor, SegmentRow, TimingMethod};
-use comparison::PERSONAL_BEST_COMPARISON_NAME;
+use comparison::personal_best;
 use time_formatter::{Accuracy, TimeFormatter, Short};
 use time_formatter::none_wrapper::EmptyWrapper;
 use serde_json::{to_writer, Result as JsonResult};
@@ -67,7 +67,7 @@ impl RunEditor {
         let comparison_names = self.custom_comparisons()
             .iter()
             .cloned()
-            .filter(|n| n != PERSONAL_BEST_COMPARISON_NAME)
+            .filter(|n| n != personal_best::NAME)
             .collect::<Vec<_>>();
 
         let buttons = Buttons {

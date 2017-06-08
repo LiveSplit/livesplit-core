@@ -5,7 +5,7 @@ use analysis::sum_of_segments::worst::calculate;
 #[derive(Copy, Clone, Debug)]
 pub struct WorstSegments;
 
-pub const NAME: &'static str = "Worst Segments";
+pub const NAME: &str = "Worst Segments";
 
 impl ComparisonGenerator for WorstSegments {
     fn name(&self) -> &str {

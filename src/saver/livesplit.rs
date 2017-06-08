@@ -7,7 +7,7 @@ use time_formatter::{Complete, TimeFormatter};
 use {Run, Time, TimeSpan, Image, base64};
 use byteorder::{WriteBytesExt, LittleEndian};
 
-static LSS_IMAGE_HEADER: &'static [u8] = include_bytes!("lss_image_header.bin");
+static LSS_IMAGE_HEADER: &[u8] = include_bytes!("lss_image_header.bin");
 
 fn fmt_bool(value: bool) -> &'static str {
     if value { "True" } else { "False" }

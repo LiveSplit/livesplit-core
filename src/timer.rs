@@ -1,6 +1,6 @@
 use {AtomicDateTime, Run, Time, TimerPhase, TimingMethod, TimeStamp, TimeSpan, Segment};
 use TimerPhase::*;
-use comparison::PERSONAL_BEST_COMPARISON_NAME;
+use comparison::personal_best;
 use parking_lot::RwLock;
 use std::sync::Arc;
 
@@ -38,7 +38,7 @@ impl Timer {
             phase: NotRunning,
             current_split_index: -1,
             current_timing_method: TimingMethod::RealTime,
-            current_comparison: PERSONAL_BEST_COMPARISON_NAME.into(),
+            current_comparison: personal_best::NAME.into(),
             attempt_started: None,
             attempt_ended: None,
             start_time: now,

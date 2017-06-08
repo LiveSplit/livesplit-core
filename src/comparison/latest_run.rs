@@ -4,7 +4,7 @@ use super::ComparisonGenerator;
 #[derive(Copy, Clone, Debug)]
 pub struct LatestRun;
 
-pub const NAME: &'static str = "Latest Run";
+pub const NAME: &str = "Latest Run";
 
 fn generate(segments: &mut [Segment], method: TimingMethod) {
     let mut attempt_id = None;
