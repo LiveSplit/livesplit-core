@@ -37,6 +37,8 @@ pub mod text_component;
 pub mod text_component_state;
 pub mod total_playtime_component;
 pub mod total_playtime_component_state;
+pub mod current_pace_component;
+pub mod current_pace_component_state;
 pub mod run_editor;
 pub mod shared_timer;
 pub mod timer_read_lock;

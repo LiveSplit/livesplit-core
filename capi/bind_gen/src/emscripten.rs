@@ -287,6 +287,11 @@ export interface TotalPlaytimeComponentStateJson {
     time: string;
 }
 
+export interface CurrentPaceComponentStateJson {
+    text: string;
+    time: string;
+}
+
 export interface RunEditorStateJson {
     icon_change?: string,
     game: string,

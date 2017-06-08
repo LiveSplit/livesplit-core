@@ -1,4 +1,4 @@
-use {Timer, comparison};
+use {Timer, TimerPhase, comparison};
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use analysis::current_pace;
@@ -58,18 +58,22 @@ impl Component {
         let comparison = self.settings
             .comparison_override
             .as_ref()
-            .and_then(|c| timer.run().comparisons().find(|&rc| c == rc));
+            .and_then(|c| timer.run().comparisons().find(|&rc| c == rc))
+            .unwrap_or_else(|| timer.current_comparison());
 
-        let current_pace = current_pace::calculate(timer, comparison);
+        let mut current_pace = current_pace::calculate(timer, comparison);
 
         let text = match comparison {
-            None |
-            Some(comparison::PERSONAL_BEST_COMPARISON_NAME) => "Current Pace".into(),
-            Some(comparison::best_segments::NAME) => "Best Possible Time".into(),
-            Some(comparison::worst_segments::NAME) => "Worst Possible Time".into(),
-            Some(comparison::average_segments::NAME) => "Predicted Time".into(),
-            Some(comparison) => format!("Current Pace ({})", comparison),
+            comparison::PERSONAL_BEST_COMPARISON_NAME => "Current Pace".into(),
+            comparison::best_segments::NAME => "Best Possible Time".into(),
+            comparison::worst_segments::NAME => "Worst Possible Time".into(),
+            comparison::average_segments::NAME => "Predicted Time".into(),
+            comparison => format!("Current Pace ({})", comparison),
         };
+
+        if timer.current_phase() == TimerPhase::NotRunning && text.starts_with("Current Pace") {
+            current_pace = None;
+        }
 
         State {
             text,

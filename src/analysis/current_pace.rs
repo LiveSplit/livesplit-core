@@ -1,9 +1,7 @@
 use {Timer, TimeSpan, TimerPhase};
 use analysis;
 
-pub fn calculate(timer: &Timer, comparison: Option<&str>) -> Option<TimeSpan> {
-    let comparison = comparison.unwrap_or_else(|| timer.current_comparison());
-
+pub fn calculate(timer: &Timer, comparison: &str) -> Option<TimeSpan> {
     let timing_method = timer.current_timing_method();
     let last_segment = timer.run().segments().iter().last().unwrap();
 
@@ -12,7 +10,8 @@ pub fn calculate(timer: &Timer, comparison: Option<&str>) -> Option<TimeSpan> {
             let mut delta = analysis::last_delta(timer.run(),
                                                  timer.current_split_index() as usize,
                                                  comparison,
-                                                 timing_method);
+                                                 timing_method)
+                    .unwrap_or_default();
 
             let live_delta =
                 TimeSpan::option_op(timer.current_time()[timing_method],
@@ -20,13 +19,13 @@ pub fn calculate(timer: &Timer, comparison: Option<&str>) -> Option<TimeSpan> {
                                         [timing_method],
                                     |a, b| a - b);
 
-            if TimeSpan::option_op(live_delta, delta, |a, b| a > b).unwrap_or(false) {
-                delta = live_delta;
+            if let Some(live_delta) = live_delta {
+                if live_delta > delta {
+                    delta = live_delta;
+                }
             }
 
-            TimeSpan::option_op(delta,
-                                last_segment.comparison(comparison)[timing_method],
-                                |a, b| a + b)
+            last_segment.comparison(comparison)[timing_method].map(|c| delta + c)
         }
         TimerPhase::Ended => last_segment.split_time()[timing_method],
         TimerPhase::NotRunning => last_segment.comparison(comparison)[timing_method],
