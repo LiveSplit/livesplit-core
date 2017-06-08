@@ -1,17 +1,18 @@
 use {Timer, TimeSpan, TimerPhase};
 use analysis;
 
-pub fn calculate(timer: &Timer, comparison: &str) -> Option<TimeSpan> {
+pub fn calculate(timer: &Timer, comparison: &str) -> (Option<TimeSpan>, bool) {
     let timing_method = timer.current_timing_method();
     let last_segment = timer.run().segments().last().unwrap();
 
-    match timer.current_phase() {
+    let mut use_live_delta = false;
+
+    let time = match timer.current_phase() {
         TimerPhase::Running | TimerPhase::Paused => {
             let mut delta = analysis::last_delta(timer.run(),
                                                  timer.current_split_index() as usize,
                                                  comparison,
-                                                 timing_method)
-                    .unwrap_or_default();
+                                                 timing_method);
 
             let live_delta =
                 TimeSpan::option_op(timer.current_time()[timing_method],
@@ -20,14 +21,21 @@ pub fn calculate(timer: &Timer, comparison: &str) -> Option<TimeSpan> {
                                     |a, b| a - b);
 
             if let Some(live_delta) = live_delta {
-                if live_delta > delta {
-                    delta = live_delta;
+                if live_delta > delta.unwrap_or_default() {
+                    delta = Some(live_delta);
+                    use_live_delta = true;
                 }
             }
 
-            last_segment.comparison(comparison)[timing_method].map(|c| delta + c)
+            delta
         }
-        TimerPhase::Ended => last_segment.split_time()[timing_method],
-        TimerPhase::NotRunning => last_segment.comparison(comparison)[timing_method],
-    }
+        TimerPhase::Ended => {
+            TimeSpan::option_op(last_segment.split_time()[timing_method],
+                                last_segment.comparison(comparison)[timing_method],
+                                |a, b| a - b)
+        }
+        TimerPhase::NotRunning => None,
+    };
+
+    (time, use_live_delta)
 }
