@@ -292,6 +292,12 @@ export interface CurrentPaceComponentStateJson {
     time: string;
 }
 
+export interface DeltaComponentStateJson {
+    text: string;
+    time: string;
+    color: Color;
+}
+
 export interface RunEditorStateJson {
     icon_change?: string,
     game: string,

@@ -67,7 +67,7 @@ impl Component {
         let (delta, use_live_delta) = delta::calculate(timer, comparison);
 
         let mut index = timer.current_split_index();
-        if use_live_delta {
+        if !use_live_delta {
             index -= 1;
         }
         let color = if index >= 0 {
