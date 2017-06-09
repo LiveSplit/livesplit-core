@@ -1,6 +1,7 @@
 use livesplit_core::RunMetadata;
-use super::{acc, output_str};
+use super::{acc, output_str, alloc};
 use libc::c_char;
+use run_metadata_variables_iter::OwnedRunMetadataVariablesIter;
 
 pub type OwnedRunMetadata = *mut RunMetadata;
 
@@ -22,4 +23,9 @@ pub unsafe extern "C" fn RunMetadata_uses_emulator(this: *const RunMetadata) -> 
 #[no_mangle]
 pub unsafe extern "C" fn RunMetadata_region_name(this: *const RunMetadata) -> *const c_char {
     output_str(acc(this).region_name())
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn RunMetadata_variables(this: *const RunMetadata) -> OwnedRunMetadataVariablesIter {
+    alloc(acc(this).variables())
 }

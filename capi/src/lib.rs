@@ -15,7 +15,10 @@ pub mod segment;
 pub mod time;
 pub mod time_span;
 pub mod attempt;
+pub mod atomic_date_time;
 pub mod run_metadata;
+pub mod run_metadata_variables_iter;
+pub mod run_metadata_variable;
 pub mod segment_history;
 pub mod segment_history_iter;
 pub mod segment_history_element;
@@ -45,6 +48,7 @@ pub mod timer_read_lock;
 pub mod timer_write_lock;
 
 use segment_history_element::SegmentHistoryElement;
+use run_metadata_variable::RunMetadataVariable;
 use livesplit_core::{Time, TimeSpan};
 
 pub type Json = *const c_char;
@@ -55,6 +59,7 @@ thread_local! {
     static TIME_SPAN: Cell<TimeSpan> = Cell::default();
     static TIME: Cell<Time> = Cell::default();
     static SEGMENT_HISTORY_ELEMENT: Cell<SegmentHistoryElement> = Cell::new(unsafe { mem::uninitialized() });
+    static RUN_METADATA_VARIABLE: Cell<RunMetadataVariable> = Cell::new(unsafe { mem::uninitialized() });
 }
 
 fn output_time_span(time_span: TimeSpan) -> *const TimeSpan {
