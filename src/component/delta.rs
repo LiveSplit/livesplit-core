@@ -82,14 +82,8 @@ impl Component {
             Color::Default
         };
 
-        let text = if let Some(comparison) = self.settings.comparison_override.as_ref() {
-            format!("Delta ({})", comparison)
-        } else {
-            String::from("Delta")
-        };
-
         State {
-            text,
+            text: String::from(comparison),
             time: Delta::custom(self.settings.drop_decimals, self.settings.accuracy)
                 .format(delta)
                 .to_string(),
