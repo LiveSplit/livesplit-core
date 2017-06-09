@@ -14,6 +14,10 @@ impl Delta {
         Default::default()
     }
 
+    pub fn custom(drop_decimals: bool, accuracy: Accuracy) -> Self {
+        Delta(drop_decimals, accuracy)
+    }
+
     pub fn with_decimal_dropping() -> Self {
         Delta(true, Accuracy::Tenths)
     }
