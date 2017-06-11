@@ -12,6 +12,12 @@ env:
 
 matrix:
   include:
+    # emscripten
+    - env: TARGET=asmjs-unknown-emscripten DISABLE_TESTS=1
+      rust: nightly
+    - env: TARGET=wasm32-unknown-emscripten DISABLE_TESTS=1
+      rust: nightly
+
     # Linux
     - env: TARGET=i686-unknown-linux-gnu
     - env: TARGET=i686-unknown-linux-musl
@@ -98,7 +104,7 @@ deploy:
   file_glob: true
   file: $CRATE_NAME-$TRAVIS_TAG-$TARGET.*
   on:
-    condition: $TRAVIS_RUST_VERSION = stable
+    condition: $TRAVIS_RUST_VERSION == 'stable' || $TARGET = 'asmjs-unknown-emscripten' || $TARGET == 'wasm32-unknown-emscripten'
     tags: true
   provider: releases
   skip_cleanup: true

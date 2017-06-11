@@ -1,32 +1,16 @@
-standard_flags = -s MODULARIZE=1 -s EXPORT_NAME='LiveSplitCore' -s TOTAL_MEMORY=33554432 -s ALLOW_MEMORY_GROWTH=1
-debug_flags = $(standard_flags) -s ASSERTIONS=1
-release_flags = $(standard_flags)
-
 asmjs:
-	@cargo rustc --release --target asmjs-unknown-emscripten -- -C link-args="$(release_flags)"
-	@cp ../target/asmjs-unknown-emscripten/release/livesplit*.js* .
-
-optimized:
-	@cargo rustc --release --target asmjs-unknown-emscripten -- -C link-args="$(release_flags)"
-	@cp ../target/asmjs-unknown-emscripten/release/livesplit*.js* .
-
-small:
-	@cargo rustc --release --target asmjs-unknown-emscripten -- -C debuginfo=0 -C panic=abort -C opt-level=s -C lto -C link-args="-Os $(release_flags)"
-	@cp ../target/asmjs-unknown-emscripten/release/livesplit*.js* .
-
-supersmall:
-	@cargo rustc --release --target asmjs-unknown-emscripten -- -C debuginfo=0 -C panic=abort -C opt-level=z -C lto -C link-args="-Oz $(release_flags)"
+	@cargo build --release --target asmjs-unknown-emscripten
 	@cp ../target/asmjs-unknown-emscripten/release/livesplit*.js* .
 
 wasm:
 	@-rm ../target/wasm32-unknown-emscripten/release/deps/*.wasm
 	@-rm ../target/wasm32-unknown-emscripten/release/deps/*.js
-	@cargo rustc --release --target wasm32-unknown-emscripten -- -C link-args="$(release_flags) -s BINARYEN_METHOD='native-wasm'"
+	@cargo build --release --target wasm32-unknown-emscripten
 	@cp ../target/wasm32-unknown-emscripten/release/livesplit*.js* .
 	@cp ../target/wasm32-unknown-emscripten/release/deps/*.wasm livesplit.wasm
 
 debug:
-	@cargo rustc --target asmjs-unknown-emscripten -- -C link-args="$(debug_flags)"
+	@cargo build --target asmjs-unknown-emscripten
 	@cp ../target/asmjs-unknown-emscripten/debug/livesplit*.js* .
 
 bindings:
