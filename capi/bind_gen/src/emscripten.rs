@@ -298,6 +298,11 @@ export interface DeltaComponentStateJson {
     color: Color;
 }
 
+export interface CurrentComparisonComponentStateJson {
+    text: string;
+    comparison: string;
+}
+
 export interface RunEditorStateJson {
     icon_change?: string,
     game: string,

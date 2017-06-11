@@ -1,3 +1,4 @@
+pub mod current_comparison;
 pub mod current_pace;
 pub mod delta;
 pub mod graph;

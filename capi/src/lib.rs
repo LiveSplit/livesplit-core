@@ -44,6 +44,8 @@ pub mod current_pace_component;
 pub mod current_pace_component_state;
 pub mod delta_component;
 pub mod delta_component_state;
+pub mod current_comparison_component;
+pub mod current_comparison_component_state;
 pub mod run_editor;
 pub mod shared_timer;
 pub mod timer_read_lock;
