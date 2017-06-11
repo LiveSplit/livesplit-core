@@ -17,7 +17,19 @@ main() {
 
     test -f Cargo.lock || cargo generate-lockfile
 
-    cross rustc -p livesplit-core-capi --target $TARGET --release
+    case $TARGET in
+        asmjs-unknown-emscripten)
+            cross build -p livesplit --target $TARGET --release
+            ;;
+        wasm32-unknown-emscripten)
+            rm target/wasm32-unknown-emscripten/release/deps/*.wasm 2>/dev/null || :
+	        rm target/wasm32-unknown-emscripten/release/deps/*.js 2>/dev/null || :
+            cross build -p livesplit --target $TARGET --release
+            ;;
+        *)
+            cross rustc -p livesplit-core-capi --target $TARGET --release
+            ;;
+    esac
 
     (cd capi/bind_gen && cargo run)
 
