@@ -35,8 +35,7 @@ impl Component {
                 .check_for_change(&mut self.icon_id)
                 .map(str::to_owned),
             game: run.game_name().to_string(),
-            category: run.extended_category_name(false, false, true)
-                .into_owned(),
+            category: run.extended_category_name(false, false, true).into_owned(),
             attempts: run.attempt_count(),
         }
     }

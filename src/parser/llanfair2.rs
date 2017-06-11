@@ -51,8 +51,7 @@ fn image<'b>(node: &Element,
     let node = child(&node, "javax.swing.ImageIcon")?;
 
     let default = child(&node, "default")?;
-    let height = text(&child(&default, "height")?, str_buf)
-        .parse::<u32>()?;
+    let height = text(&child(&default, "height")?, str_buf).parse::<u32>()?;
     let width = text(&child(&default, "width")?, str_buf).parse::<u32>()?;
 
     buf.clear();
@@ -115,10 +114,7 @@ pub fn parse<R: Read>(mut source: R) -> Result<Run> {
 
     let segments = child(&node, "segments")?;
 
-    for node in segments
-            .children()
-            .into_iter()
-            .filter_map(|c| c.element()) {
+    for node in segments.children().into_iter().filter_map(|c| c.element()) {
         let mut segment = Segment::new(child(&node, "name").ok().map_or("", |n| text(&n, buf)));
 
         if let Ok(image) = image(&node, &mut byte_buf, &mut byte_buf2, buf) {

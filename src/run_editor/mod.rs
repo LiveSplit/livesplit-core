@@ -35,10 +35,7 @@ impl RunEditor {
         let len = run.len();
         assert!(len > 0);
 
-        let personal_best_time = run.segments()
-            .last()
-            .unwrap()
-            .personal_best_split_time();
+        let personal_best_time = run.segments().last().unwrap().personal_best_split_time();
 
         let mut editor = RunEditor {
             run: run,
@@ -234,13 +231,9 @@ impl RunEditor {
         let max_index = self.run.max_attempt_history_index().unwrap_or(0);
         let min_index = self.run.min_segment_history_index();
         for x in min_index..max_index + 1 {
-            segment
-                .segment_history_mut()
-                .insert(x, Default::default());
+            segment.segment_history_mut().insert(x, Default::default());
         }
-        self.run
-            .segments_mut()
-            .insert(selected_segment, segment);
+        self.run.segments_mut().insert(selected_segment, segment);
 
         self.select_only(selected_segment);
 
@@ -259,9 +252,7 @@ impl RunEditor {
         let max_index = self.run.max_attempt_history_index().unwrap_or(0);
         let min_index = self.run.min_segment_history_index();
         for x in min_index..max_index + 1 {
-            segment
-                .segment_history_mut()
-                .insert(x, Default::default());
+            segment.segment_history_mut().insert(x, Default::default());
         }
         self.run.segments_mut().insert(next_segment, segment);
 
@@ -288,10 +279,7 @@ impl RunEditor {
             // If a history element isn't there in the segment that's deleted
             // remove it from the next segment's history as well
             if let Some(segment_history_element) =
-                self.run
-                    .segment(index)
-                    .segment_history()
-                    .get(run_index) {
+                self.run.segment(index).segment_history().get(run_index) {
                 let current_segment = segment_history_element[method];
                 if let Some(current_segment) = current_segment {
                     for current_index in current_index..self.run.len() {
@@ -332,10 +320,8 @@ impl RunEditor {
                     min_best_segment = time;
                 }
             }
-            self.run
-                .segment_mut(current_index)
-                .best_segment_time_mut()
-                [method] = Some(min_best_segment);
+            self.run.segment_mut(current_index).best_segment_time_mut()[method] =
+                Some(min_best_segment);
         }
     }
 

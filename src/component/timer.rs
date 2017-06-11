@@ -44,7 +44,7 @@ impl Component {
                                 false,
                                 current_comparison,
                                 method)
-                            .or(Color::AheadGainingTime)
+                        .or(Color::AheadGainingTime)
                 } else {
                     Color::AheadGainingTime
                 }

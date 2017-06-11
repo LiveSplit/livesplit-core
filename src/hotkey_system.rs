@@ -32,12 +32,14 @@ impl HotkeySystem {
         hook.register(config.pause, move || { inner.write().pause(); })?;
 
         let inner = timer.clone();
-        hook.register(config.previous_comparison,
-                      move || { inner.write().switch_to_previous_comparison(); })?;
+        hook.register(config.previous_comparison, move || {
+            inner.write().switch_to_previous_comparison();
+        })?;
 
         let inner = timer.clone();
-        hook.register(config.next_comparison,
-                      move || { inner.write().switch_to_next_comparison(); })?;
+        hook.register(config.next_comparison, move || {
+            inner.write().switch_to_next_comparison();
+        })?;
 
         Ok(Self {
                config: config,
@@ -100,8 +102,9 @@ impl HotkeySystem {
         self.hook.unregister(self.config.previous_comparison)?;
         let inner = self.timer.clone();
         self.hook
-            .register(hotkey,
-                      move || { inner.write().switch_to_previous_comparison(); })?;
+            .register(hotkey, move || {
+                inner.write().switch_to_previous_comparison();
+            })?;
         self.config.previous_comparison = hotkey;
         Ok(())
     }

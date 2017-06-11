@@ -234,10 +234,7 @@ pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
         metadata.set_region_name(text(&child(&node, "Region")?, buf));
 
         let variables = child(&node, "Variables")?;
-        for variable in variables
-                .children()
-                .into_iter()
-                .filter_map(|c| c.element()) {
+        for variable in variables.children().into_iter().filter_map(|c| c.element()) {
             let name = attribute(&variable, "name")?;
             let value = text(&variable, buf);
             metadata.add_variable(name, value);
@@ -254,10 +251,7 @@ pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
 
     let segments = child(&node, "Segments")?;
 
-    for node in segments
-            .children()
-            .into_iter()
-            .filter_map(|c| c.element()) {
+    for node in segments.children().into_iter().filter_map(|c| c.element()) {
         let mut segment = Segment::new(text(&child(&node, "Name")?, buf));
         segment.set_icon(image(&child(&node, "Icon")?, icon_buf, buf));
 
@@ -291,10 +285,7 @@ pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
         }
 
         let history = child(&node, "SegmentHistory")?;
-        for node in history
-                .children()
-                .into_iter()
-                .filter_map(|c| c.element()) {
+        for node in history.children().into_iter().filter_map(|c| c.element()) {
             let index = attribute(&node, "id")?.parse()?;
             let time = if version >= Version(1, 4, 1, 0) {
                 time(&node, buf)?

@@ -104,11 +104,7 @@ impl<'a> SegmentRow<'a> {
 
     pub fn comparison_time(&self, comparison: &str) -> Option<TimeSpan> {
         let method = self.editor.selected_method;
-        self.editor
-            .run
-            .segment(self.index)
-            .comparison(comparison)
-            [method]
+        self.editor.run.segment(self.index).comparison(comparison)[method]
     }
 
     pub fn set_comparison_time(&mut self, comparison: &str, time: Option<TimeSpan>) {

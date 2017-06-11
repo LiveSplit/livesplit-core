@@ -114,10 +114,7 @@ pub fn parse<R: Read>(mut source: R) -> Result<Run> {
 
     let mut total_time = TimeSpan::zero();
 
-    for node in segments
-            .children()
-            .into_iter()
-            .filter_map(|c| c.element()) {
+    for node in segments.children().into_iter().filter_map(|c| c.element()) {
         let node = child(&node, "Segment")?;
         let node = child(&node, "default")?;
 

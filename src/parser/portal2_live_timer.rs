@@ -116,10 +116,7 @@ pub fn parse<R: BufRead>(source: R) -> Result<Run> {
             if map_name != map {
                 return Err(Error::ExpectedDifferentMapName);
             }
-            let start_ticks: f64 = splits
-                .next()
-                .ok_or(Error::ExpectedStartTicks)?
-                .parse()?;
+            let start_ticks: f64 = splits.next().ok_or(Error::ExpectedStartTicks)?.parse()?;
             let end_ticks: f64 = splits.next().ok_or(Error::ExpectedEndTicks)?.parse()?;
             let map_ticks = end_ticks - start_ticks;
             aggregate_ticks += map_ticks;

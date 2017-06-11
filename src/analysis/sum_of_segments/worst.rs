@@ -17,10 +17,8 @@ fn populate_predictions(segments: &[Segment],
                         method: TimingMethod) {
     if let Some(current_time) = current_time {
         populate_prediction(&mut predictions[segment_index + 1],
-                            segments[segment_index].best_segment_time()[method].map(|t| {
-                                                                                        t +
-                                                                                        current_time
-                                                                                    }));
+                            segments[segment_index].best_segment_time()[method]
+                                .map(|t| t + current_time));
         for &(segment_history_index, _) in segments[segment_index].segment_history().iter() {
             let should_track_branch =
                 segment_index

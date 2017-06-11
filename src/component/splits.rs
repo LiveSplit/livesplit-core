@@ -142,10 +142,7 @@ impl Component {
                     };
 
                     SplitState {
-                        icon_change: segment
-                            .icon()
-                            .check_for_change(icon_id)
-                            .map(str::to_owned),
+                        icon_change: segment.icon().check_for_change(icon_id).map(str::to_owned),
                         name: segment.name().to_string(),
                         delta: delta,
                         time: Regular::new().format(time).to_string(),

@@ -70,26 +70,12 @@ impl Timer {
             NotRunning => Some(self.run.offset()),
             Running => Some(TimeStamp::now() - self.adjusted_start_time),
             Paused => Some(self.time_paused_at),
-            Ended => {
-                self.run
-                    .segments()
-                    .last()
-                    .unwrap()
-                    .split_time()
-                    .real_time
-            }
+            Ended => self.run.segments().last().unwrap().split_time().real_time,
         };
 
         let game_time = match self.phase {
             NotRunning => Some(self.run.offset()),
-            Ended => {
-                self.run
-                    .segments()
-                    .last()
-                    .unwrap()
-                    .split_time()
-                    .game_time
-            }
+            Ended => self.run.segments().last().unwrap().split_time().game_time,
             _ => {
                 if self.is_game_time_paused() {
                     self.game_time_pause_time
@@ -127,9 +113,7 @@ impl Timer {
 
     pub fn current_split(&self) -> Option<&Segment> {
         if self.current_split_index >= 0 {
-            self.run
-                .segments()
-                .get(self.current_split_index as usize)
+            self.run.segments().get(self.current_split_index as usize)
         } else {
             None
         }
@@ -162,7 +146,7 @@ impl Timer {
             self.uninitialize_game_time();
             self.run.start_next_run();
 
-            // TODO OnStart
+        // TODO OnStart
         } else {
             let current_time = self.current_time();
             if self.phase == Running &&
@@ -418,8 +402,8 @@ impl Timer {
                 }
             }
             if let Some(split_time) = split.split_time().game_time {
-                let current_segment =
-                    previous_split_time_game_time.map(|previous| split_time - previous);
+                let current_segment = previous_split_time_game_time
+                    .map(|previous| split_time - previous);
                 previous_split_time_game_time = Some(split_time);
                 if split
                        .best_segment_time()

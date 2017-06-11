@@ -446,9 +446,7 @@ impl Run {
                 if let Some(element) = self.segments[index].segment_history().get(run_index) {
                     if let Some(element) = element[method] {
                         if history.iter().filter(|&&x| x == element).count() > 1 {
-                            self.segments[index]
-                                .segment_history_mut()
-                                .remove(run_index);
+                            self.segments[index].segment_history_mut().remove(run_index);
                             history.find_remove(&element);
                         }
                     }
@@ -483,8 +481,8 @@ impl Run {
             for segment in self.segments_mut() {
                 // Import the PB splits into the history
                 let pb_time = segment.personal_best_split_time()[timing_method];
-                let time =
-                    Time::new().with_timing_method(timing_method, pb_time.map(|p| p - prev_time));
+                let time = Time::new()
+                    .with_timing_method(timing_method, pb_time.map(|p| p - prev_time));
                 segment.segment_history_mut().insert(index, time);
 
                 if let Some(time) = pb_time {

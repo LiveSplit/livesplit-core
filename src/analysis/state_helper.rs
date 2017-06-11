@@ -47,12 +47,10 @@ fn segment_time_or_segment_delta(timer: &Timer,
             if let Some(split_time) = segment.split_time()[method] {
                 if segment_time {
                     return Some(current_time - split_time);
-                } else if let Some(comparison) =
-                    segment.comparison_timing_method(comparison, method) {
-                    return split_number_comparison.map(|s| {
-                                                           (current_time - s) -
-                                                           (split_time - comparison)
-                                                       });
+                } else if let Some(comparison) = segment
+                              .comparison_timing_method(comparison, method) {
+                    return split_number_comparison
+                        .map(|s| (current_time - s) - (split_time - comparison));
                 }
             }
         }

@@ -14,11 +14,13 @@ pub fn calculate(timer: &Timer, comparison: &str) -> (Option<TimeSpan>, bool) {
                                                  comparison,
                                                  timing_method);
 
-            let live_delta =
-                TimeSpan::option_op(timer.current_time()[timing_method],
-                                    timer.current_split().unwrap().comparison(comparison)
-                                        [timing_method],
-                                    |a, b| a - b);
+            let live_delta = TimeSpan::option_op(timer.current_time()[timing_method],
+                                                 timer
+                                                     .current_split()
+                                                     .unwrap()
+                                                     .comparison(comparison)
+                                                     [timing_method],
+                                                 |a, b| a - b);
 
             if let Some(live_delta) = live_delta {
                 if live_delta > delta.unwrap_or_default() {

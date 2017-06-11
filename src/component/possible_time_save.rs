@@ -67,9 +67,10 @@ pub fn get_possible_time_save(timer: &Timer,
         }
     }
 
-    let mut time = TimeSpan::option_op(segment.comparison(comparison)[method],
-                                       best_segments,
-                                       |c, b| c - b - prev_time);
+    let mut time = TimeSpan::option_op(segment.comparison(comparison)[method], best_segments, |c,
+     b| {
+        c - b - prev_time
+    });
 
     if live && segment_index == timer.current_split_index() as usize {
         let segment_delta = analysis::live_segment_delta(timer, segment_index, comparison, method);
