@@ -77,6 +77,7 @@ pub mod component;
 mod hotkey_config;
 mod hotkey_system;
 mod image;
+mod image_shrink;
 pub mod layout;
 pub mod run;
 pub mod settings;

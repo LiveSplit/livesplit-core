@@ -453,7 +453,7 @@ export async function load(path?: string) {
         },
     };
 
-    const request = fetch(path || 'livesplit_core.wasm');
+    let request = fetch(path || 'livesplit_core.wasm');
     if (typeof WebAssembly.instantiateStreaming === "function") {
         try {
             wasm = await WebAssembly.instantiateStreaming(request, imports);
@@ -461,6 +461,7 @@ export async function load(path?: string) {
         } catch { }
         // We retry with the normal instantiate here because Chrome 60 seems to
         // have instantiateStreaming, but it doesn't actually work.
+        request = fetch(path || 'livesplit_core.wasm');
     }
     const response = await request;
     const bytes = await response.arrayBuffer();
@@ -625,7 +626,7 @@ exports.load = async function (path) {
         },
     };
 
-    const request = fetch(path || 'livesplit_core.wasm');
+    let request = fetch(path || 'livesplit_core.wasm');
     if (typeof WebAssembly.instantiateStreaming === "function") {
         try {
             wasm = await WebAssembly.instantiateStreaming(request, imports);
@@ -633,6 +634,7 @@ exports.load = async function (path) {
         } catch { }
         // We retry with the normal instantiate here because Chrome 60 seems to
         // have instantiateStreaming, but it doesn't actually work.
+        request = fetch(path || 'livesplit_core.wasm');
     }
     const response = await request;
     const bytes = await response.arrayBuffer();
