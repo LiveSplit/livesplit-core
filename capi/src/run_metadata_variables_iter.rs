@@ -12,13 +12,14 @@ pub unsafe extern "C" fn RunMetadataVariablesIter_drop(this: OwnedRunMetadataVar
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn RunMetadataVariablesIter_next(this: *mut RunMetadataVariablesIter)
-                                                       -> *const RunMetadataVariable {
+pub unsafe extern "C" fn RunMetadataVariablesIter_next(
+    this: *mut RunMetadataVariablesIter,
+) -> *const RunMetadataVariable {
     if let Some((name, value)) = acc_mut(this).next() {
         RUN_METADATA_VARIABLE.with(|output| {
-                                       output.set((name, value));
-                                       output.as_ptr() as *const RunMetadataVariable
-                                   })
+            output.set((name, value));
+            output.as_ptr() as *const RunMetadataVariable
+        })
     } else {
         ptr::null()
     }

@@ -88,10 +88,10 @@ fn get_type(ty: &TyKind) -> Type {
                 _ => true,
             };
             return Type {
-                       kind: TypeKind::Value,
-                       is_custom: is_custom,
-                       name: name,
-                   };
+                kind: TypeKind::Value,
+                is_custom: is_custom,
+                name: name,
+            };
         }
     }
     panic!("Unknown type {:#?}", ty);
@@ -109,7 +109,8 @@ fn main() {
             for item in &module.items {
                 if let &ItemKind::Fn(ref decl, _, _, Abi::C, _, _) = &item.node {
                     if item.vis == Visibility::Public &&
-                       item.attrs.iter().any(|a| a.value.name == "no_mangle") {
+                        item.attrs.iter().any(|a| a.value.name == "no_mangle")
+                    {
                         let output = if let &FunctionRetTy::Ty(ref output) = &decl.output {
                             get_type(&output.node)
                         } else {
@@ -123,8 +124,7 @@ fn main() {
                         let inputs = decl.inputs
                             .iter()
                             .map(|i| {
-                                let name = if let &PatKind::Ident(_, ref ident, _) =
-                                    &i.pat.node {
+                                let name = if let &PatKind::Ident(_, ref ident, _) = &i.pat.node {
                                     ident.node.name.to_string()
                                 } else {
                                     String::from("parameter")
@@ -143,12 +143,12 @@ fn main() {
                         }
 
                         functions.push(Function {
-                                           name: name,
-                                           class: class,
-                                           method: method,
-                                           output: output,
-                                           inputs: inputs,
-                                       });
+                            name: name,
+                            class: class,
+                            method: method,
+                            output: output,
+                            inputs: inputs,
+                        });
                     }
                 }
             }
@@ -164,9 +164,9 @@ fn fns_to_classes(functions: Vec<Function>) -> BTreeMap<String, Class> {
     let mut classes = BTreeMap::new();
 
     for function in functions {
-        let class = classes
-            .entry(function.class.clone())
-            .or_insert_with(Class::default);
+        let class = classes.entry(function.class.clone()).or_insert_with(
+            Class::default,
+        );
         let kind = if let Some(&(ref name, ref ty)) = function.inputs.get(0) {
             if name == "this" { Some(ty.kind) } else { None }
         } else {

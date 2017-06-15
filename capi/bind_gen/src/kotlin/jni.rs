@@ -63,14 +63,18 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
     }
 
     if is_constructor {
-        write!(writer,
-               r#"
-    constructor("#)?;
+        write!(
+            writer,
+            r#"
+    constructor("#
+        )?;
     } else {
-        write!(writer,
-               r#"
+        write!(
+            writer,
+            r#"
     fun {}("#,
-               method)?;
+            method
+        )?;
     }
 
     for (i, &(ref name, ref typ)) in
@@ -78,7 +82,8 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
             .inputs
             .iter()
             .skip(if is_static { 0 } else { 1 })
-            .enumerate() {
+            .enumerate()
+    {
         if i != 0 {
             write!(writer, ", ")?;
         }
@@ -86,31 +91,39 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
     }
 
     if is_constructor {
-        write!(writer,
-               r#"): super(0L) {{
-        "#)?;
+        write!(
+            writer,
+            r#"): super(0L) {{
+        "#
+        )?;
     } else if has_return_type {
         write!(writer, r#"): {}"#, return_type)?;
         if function.output.is_custom {
             write!(writer, "?")?;
         }
-        write!(writer,
-               r#" {{
-        "#)?;
+        write!(
+            writer,
+            r#" {{
+        "#
+        )?;
     } else {
-        write!(writer,
-               r#") {{
-        "#)?;
+        write!(
+            writer,
+            r#") {{
+        "#
+        )?;
     }
 
     for &(ref name, ref typ) in function.inputs.iter() {
         if typ.is_custom {
-            write!(writer,
-                   r#"if ({name}.ptr == 0L) {{
+            write!(
+                writer,
+                r#"if ({name}.ptr == 0L) {{
             throw RuntimeException()
         }}
         "#,
-                   name = name.to_mixed_case())?;
+                name = name.to_mixed_case()
+            )?;
         }
     }
 
@@ -118,32 +131,38 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         if is_constructor {
             write!(writer, "this.ptr = ")?;
         } else if function.output.is_custom {
-            write!(writer,
-                   r#"val result = {ret_type}("#,
-                   ret_type = return_type)?;
+            write!(
+                writer,
+                r#"val result = {ret_type}("#,
+                ret_type = return_type
+            )?;
         } else {
             write!(writer, "val result = ")?;
         }
     }
 
-    write!(writer,
-           r#"LiveSplitCoreNative.{}_{}("#,
-           function.class,
-           function.method.to_mixed_case())?;
+    write!(
+        writer,
+        r#"LiveSplitCoreNative.{}_{}("#,
+        function.class,
+        function.method.to_mixed_case()
+    )?;
 
     for (i, &(ref name, ref typ)) in function.inputs.iter().enumerate() {
         if i != 0 {
             write!(writer, ", ")?;
         }
-        write!(writer,
-               "{}",
-               if name == "this" {
-                   "this.ptr".to_string()
-               } else if typ.is_custom {
-            format!("{}.ptr", name.to_mixed_case())
-        } else {
-            name.to_mixed_case()
-        })?;
+        write!(
+            writer,
+            "{}",
+            if name == "this" {
+                "this.ptr".to_string()
+            } else if typ.is_custom {
+                format!("{}.ptr", name.to_mixed_case())
+            } else {
+                name.to_mixed_case()
+            }
+        )?;
     }
 
     write!(writer, ")")?;
@@ -154,29 +173,37 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
 
     for &(ref name, ref typ) in function.inputs.iter() {
         if typ.is_custom && typ.kind == TypeKind::Value {
-            write!(writer,
-                   r#"
+            write!(
+                writer,
+                r#"
         {}.ptr = 0L"#,
-                   name.to_mixed_case())?;
+                name.to_mixed_case()
+            )?;
         }
     }
 
     if has_return_type && !is_constructor {
         if function.output.is_custom {
-            write!(writer,
-                   r#"
+            write!(
+                writer,
+                r#"
         if (result.ptr == 0L) {{
             return null
-        }}"#)?;
+        }}"#
+            )?;
         }
-        write!(writer,
-               r#"
-        return result"#)?;
+        write!(
+            writer,
+            r#"
+        return result"#
+        )?;
     }
 
-    write!(writer,
-           r#"
-    }}"#)?;
+    write!(
+        writer,
+        r#"
+    }}"#
+    )?;
 
     Ok(())
 }
@@ -185,20 +212,23 @@ fn write_class_ref<P: AsRef<Path>>(path: P, class_name: &str, class: &Class) -> 
     let mut writer = BufWriter::new(File::create(path)?);
     let class_name_ref = format!("{}Ref", class_name);
 
-    write!(writer,
-           r#"package livesplitcore
+    write!(
+        writer,
+        r#"package livesplitcore
 
 open class {class} internal constructor(var ptr: Long) {{"#,
-           class = class_name_ref)?;
+        class = class_name_ref
+    )?;
 
     for function in &class.shared_fns {
         write_fn(&mut writer, function)?;
     }
 
     if class_name == "SharedTimer" {
-        write!(writer,
-               "{}",
-               r#"
+        write!(
+            writer,
+            "{}",
+            r#"
     fun readWith(action: (TimerRef) -> Unit) {
         val lock = read()!!
         lock.use { lock ->
@@ -210,12 +240,15 @@ open class {class} internal constructor(var ptr: Long) {{"#,
         lock.use { lock ->
             action(lock.timer()!!)
         }
-    }"#)?;
+    }"#
+        )?;
     }
 
-    write!(writer,
-           r#"
-}}"#)
+    write!(
+        writer,
+        r#"
+}}"#
+    )
 }
 
 fn write_class_ref_mut<P: AsRef<Path>>(path: P, class_name: &str, class: &Class) -> Result<()> {
@@ -223,44 +256,53 @@ fn write_class_ref_mut<P: AsRef<Path>>(path: P, class_name: &str, class: &Class)
     let class_name_ref = format!("{}Ref", class_name);
     let class_name_ref_mut = format!("{}RefMut", class_name);
 
-    write!(writer,
-           r#"package livesplitcore
+    write!(
+        writer,
+        r#"package livesplitcore
 
 open class {class} internal constructor(ptr: Long) : {base_class}(ptr) {{"#,
-           class = class_name_ref_mut,
-           base_class = class_name_ref)?;
+        class = class_name_ref_mut,
+        base_class = class_name_ref
+    )?;
 
     for function in &class.mut_fns {
         write_fn(&mut writer, function)?;
     }
 
-    write!(writer,
-           r#"
-}}"#)
+    write!(
+        writer,
+        r#"
+}}"#
+    )
 }
 
 fn write_class<P: AsRef<Path>>(path: P, class_name: &str, class: &Class) -> Result<()> {
     let mut writer = BufWriter::new(File::create(path)?);
     let class_name_ref_mut = format!("{}RefMut", class_name);
 
-    write!(writer,
-           r#"package livesplitcore
+    write!(
+        writer,
+        r#"package livesplitcore
 
 open class {class} : {base_class}, AutoCloseable {{
     private fun drop() {{
         if (ptr != 0L) {{"#,
-           class = class_name,
-           base_class = class_name_ref_mut)?;
+        class = class_name,
+        base_class = class_name_ref_mut
+    )?;
 
     if let Some(function) = class.own_fns.iter().find(|f| f.method == "drop") {
-        write!(writer,
-               r#"
+        write!(
+            writer,
+            r#"
             LiveSplitCoreNative.{}(this.ptr)"#,
-               function.name)?;
+            function.name
+        )?;
     }
 
-    write!(writer,
-           r#"
+    write!(
+        writer,
+        r#"
             ptr = 0
         }}
     }}
@@ -269,7 +311,8 @@ open class {class} : {base_class}, AutoCloseable {{
     }}
     override fun close() {{
         drop()
-    }}"#)?;
+    }}"#
+    )?;
 
     for function in &class.own_fns {
         if function.method != "drop" {
@@ -280,9 +323,11 @@ open class {class} : {base_class}, AutoCloseable {{
     let mut constructor = None;
 
     if !class.static_fns.is_empty() {
-        write!(writer,
-               r#"
-    companion object {{"#)?;
+        write!(
+            writer,
+            r#"
+    companion object {{"#
+        )?;
 
         for function in &class.static_fns {
             if function.method != "new" {
@@ -293,71 +338,84 @@ open class {class} : {base_class}, AutoCloseable {{
         }
 
         if class_name == "Run" {
-            write!(writer,
-                   "{}",
-                   r#"
+            write!(
+                writer,
+                "{}",
+                r#"
     fun parse(data: String): Run? {
         val result = Run(LiveSplitCoreNative.Run_parseString(data))
         if (result.ptr == 0L) {
             return null
         }
         return result
-    }"#)?;
+    }"#
+            )?;
         }
 
-        write!(writer,
-               r#"
-    }}"#)?;
+        write!(
+            writer,
+            r#"
+    }}"#
+        )?;
     }
 
     if let Some(constructor) = constructor {
         write_fn(&mut writer, constructor)?;
     }
 
-    write!(writer,
-           r#"
+    write!(
+        writer,
+        r#"
     internal constructor(ptr: Long) : super(ptr) {{}}
-}}"#)
+}}"#
+    )
 }
 
 fn write_native_class<P: AsRef<Path>>(path: P, classes: &BTreeMap<String, Class>) -> Result<()> {
     let mut writer = BufWriter::new(File::create(path)?);
 
-    write!(writer,
-           "{}",
-           r#"package livesplitcore
+    write!(
+        writer,
+        "{}",
+        r#"package livesplitcore
 
 object LiveSplitCoreNative {
     init {
         System.loadLibrary("native-lib")
     }
-    external fun Run_parseString(data: String): Long"#)?;
+    external fun Run_parseString(data: String): Long"#
+    )?;
 
     for class in classes.values() {
         for function in class
-                .static_fns
-                .iter()
-                .chain(class.own_fns.iter())
-                .chain(class.shared_fns.iter())
-                .chain(class.mut_fns.iter()) {
-            write!(writer,
-                   r#"
+            .static_fns
+            .iter()
+            .chain(class.own_fns.iter())
+            .chain(class.shared_fns.iter())
+            .chain(class.mut_fns.iter())
+        {
+            write!(
+                writer,
+                r#"
     external fun {}_{}("#,
-                   function.class,
-                   function.method.to_mixed_case())?;
+                function.class,
+                function.method.to_mixed_case()
+            )?;
 
             for (i, &(ref name, ref typ)) in function.inputs.iter().enumerate() {
                 if i != 0 {
                     write!(writer, ", ")?;
                 }
-                write!(writer,
-                       "{}: {}",
-                       if name == "this" {
-                           String::from("self")
-                       } else {
-                           name.to_mixed_case()
-                       },
-                       get_ll_type(typ))?;
+                write!(
+                    writer,
+                    "{}: {}",
+                    if name == "this" {
+                        String::from("self")
+                    } else {
+                        name.to_mixed_case()
+                    },
+                    get_ll_type(typ)
+                )?;
             }
 
             write!(writer, ")")?;
@@ -368,10 +426,12 @@ object LiveSplitCoreNative {
         }
     }
 
-    writeln!(writer,
-             "{}",
-             r#"
-}"#)
+    writeln!(
+        writer,
+        "{}",
+        r#"
+}"#
+    )
 }
 
 pub fn write<P: AsRef<Path>>(path: P, classes: &BTreeMap<String, Class>) -> Result<()> {

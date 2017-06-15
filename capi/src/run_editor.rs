@@ -22,8 +22,10 @@ pub unsafe extern "C" fn RunEditor_state_as_json(this: *mut RunEditor) -> Json {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn RunEditor_select_timing_method(this: *mut RunEditor,
-                                                        method: TimingMethod) {
+pub unsafe extern "C" fn RunEditor_select_timing_method(
+    this: *mut RunEditor,
+    method: TimingMethod,
+) {
     acc_mut(this).select_timing_method(method);
 }
 
@@ -48,31 +50,37 @@ pub unsafe extern "C" fn RunEditor_set_game_name(this: *mut RunEditor, game: *co
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn RunEditor_set_category_name(this: *mut RunEditor,
-                                                     category: *const c_char) {
+pub unsafe extern "C" fn RunEditor_set_category_name(
+    this: *mut RunEditor,
+    category: *const c_char,
+) {
     acc_mut(this).set_category_name(str(category));
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn RunEditor_parse_and_set_offset(this: *mut RunEditor,
-                                                        offset: *const c_char)
-                                                        -> bool {
+pub unsafe extern "C" fn RunEditor_parse_and_set_offset(
+    this: *mut RunEditor,
+    offset: *const c_char,
+) -> bool {
     acc_mut(this).parse_and_set_offset(str(offset)).is_ok()
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn RunEditor_parse_and_set_attempt_count(this: *mut RunEditor,
-                                                               attempts: *const c_char)
-                                                               -> bool {
+pub unsafe extern "C" fn RunEditor_parse_and_set_attempt_count(
+    this: *mut RunEditor,
+    attempts: *const c_char,
+) -> bool {
     acc_mut(this)
         .parse_and_set_attempt_count(str(attempts))
         .is_ok()
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn RunEditor_set_game_icon(this: *mut RunEditor,
-                                                 data: *const u8,
-                                                 length: usize) {
+pub unsafe extern "C" fn RunEditor_set_game_icon(
+    this: *mut RunEditor,
+    data: *const u8,
+    length: usize,
+) {
     acc_mut(this).set_game_icon(slice::from_raw_parts(data, length));
 }
 
@@ -102,12 +110,17 @@ pub unsafe extern "C" fn RunEditor_move_segments_down(this: *mut RunEditor) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn RunEditor_selected_set_icon(this: *mut RunEditor,
-                                                     data: *const u8,
-                                                     length: usize) {
-    acc_mut(this)
-        .selected_segment()
-        .set_icon(slice::from_raw_parts(data, length));
+pub unsafe extern "C" fn RunEditor_selected_set_icon(
+    this: *mut RunEditor,
+    data: *const u8,
+    length: usize,
+) {
+    acc_mut(this).selected_segment().set_icon(
+        slice::from_raw_parts(
+            data,
+            length,
+        ),
+    );
 }
 
 #[no_mangle]
@@ -116,9 +129,10 @@ pub unsafe extern "C" fn RunEditor_selected_set_name(this: *mut RunEditor, name:
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn RunEditor_selected_parse_and_set_split_time(this: *mut RunEditor,
-                                                                     time: *const c_char)
-                                                                     -> bool {
+pub unsafe extern "C" fn RunEditor_selected_parse_and_set_split_time(
+    this: *mut RunEditor,
+    time: *const c_char,
+) -> bool {
     acc_mut(this)
         .selected_segment()
         .parse_and_set_split_time(str(time))
@@ -126,9 +140,10 @@ pub unsafe extern "C" fn RunEditor_selected_parse_and_set_split_time(this: *mut 
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn RunEditor_selected_parse_and_set_segment_time(this: *mut RunEditor,
-                                                                       time: *const c_char)
-                                                                       -> bool {
+pub unsafe extern "C" fn RunEditor_selected_parse_and_set_segment_time(
+    this: *mut RunEditor,
+    time: *const c_char,
+) -> bool {
     acc_mut(this)
         .selected_segment()
         .parse_and_set_segment_time(str(time))
@@ -136,9 +151,10 @@ pub unsafe extern "C" fn RunEditor_selected_parse_and_set_segment_time(this: *mu
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn RunEditor_selected_parse_and_set_best_segment_time(this: *mut RunEditor,
-                                                                            time: *const c_char)
-                                                                            -> bool {
+pub unsafe extern "C" fn RunEditor_selected_parse_and_set_best_segment_time(
+    this: *mut RunEditor,
+    time: *const c_char,
+) -> bool {
     acc_mut(this)
         .selected_segment()
         .parse_and_set_best_segment_time(str(time))
@@ -147,7 +163,10 @@ pub unsafe extern "C" fn RunEditor_selected_parse_and_set_best_segment_time(this
 
 #[no_mangle]
 pub unsafe extern "C" fn RunEditor_selected_parse_and_set_comparison_time(
-this: *mut RunEditor, comparison: *const c_char, time: *const c_char) -> bool{
+    this: *mut RunEditor,
+    comparison: *const c_char,
+    time: *const c_char,
+) -> bool {
     acc_mut(this)
         .selected_segment()
         .parse_and_set_comparison_time(str(comparison), str(time))

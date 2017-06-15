@@ -11,20 +11,26 @@ pub unsafe extern "C" fn TitleComponentState_drop(this: OwnedTitleComponentState
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn TitleComponentState_icon_change(this: *const TitleComponentState)
-                                                         -> *const c_char {
-    acc(this).icon_change.as_ref().map_or_else(ptr::null, |s| output_str(s))
+pub unsafe extern "C" fn TitleComponentState_icon_change(
+    this: *const TitleComponentState,
+) -> *const c_char {
+    acc(this).icon_change.as_ref().map_or_else(
+        ptr::null,
+        |s| output_str(s),
+    )
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn TitleComponentState_game(this: *const TitleComponentState)
-                                                  -> *const c_char {
+pub unsafe extern "C" fn TitleComponentState_game(
+    this: *const TitleComponentState,
+) -> *const c_char {
     output_str(&acc(this).game)
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn TitleComponentState_category(this: *const TitleComponentState)
-                                                      -> *const c_char {
+pub unsafe extern "C" fn TitleComponentState_category(
+    this: *const TitleComponentState,
+) -> *const c_char {
     output_str(&acc(this).category)
 }
 

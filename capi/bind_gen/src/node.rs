@@ -12,32 +12,31 @@ fn get_hl_type(ty: &Type) -> String {
         }
     } else {
         match (ty.kind, ty.name.as_str()) {
-                (TypeKind::Ref, "c_char") => "string",
-                (TypeKind::Ref, _) |
-                (TypeKind::RefMut, _) => "Buffer",
-                (_, t) if !ty.is_custom => {
-                    match t {
-                        "i8" => "number",
-                        "i16" => "number",
-                        "i32" => "number",
-                        "i64" => "number",
-                        "u8" => "number",
-                        "u16" => "number",
-                        "u32" => "number",
-                        "u64" => "number",
-                        "usize" => "number",
-                        "f32" => "number",
-                        "f64" => "number",
-                        "bool" => "boolean",
-                        "()" => "void",
-                        "c_char" => "string",
-                        "Json" => "any",
-                        x => x,
-                    }
+            (TypeKind::Ref, "c_char") => "string",
+            (TypeKind::Ref, _) |
+            (TypeKind::RefMut, _) => "Buffer",
+            (_, t) if !ty.is_custom => {
+                match t {
+                    "i8" => "number",
+                    "i16" => "number",
+                    "i32" => "number",
+                    "i64" => "number",
+                    "u8" => "number",
+                    "u16" => "number",
+                    "u32" => "number",
+                    "u64" => "number",
+                    "usize" => "number",
+                    "f32" => "number",
+                    "f64" => "number",
+                    "bool" => "boolean",
+                    "()" => "void",
+                    "c_char" => "string",
+                    "Json" => "any",
+                    x => x,
                 }
-                _ => unreachable!(),
             }
-            .to_string()
+            _ => unreachable!(),
+        }.to_string()
     }
 }
 
@@ -78,46 +77,53 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
     let is_json = has_return_type && function.output.name == "Json";
 
     if !type_script {
-        write!(writer,
-               r#"
-    /**"#)?;
+        write!(
+            writer,
+            r#"
+    /**"#
+        )?;
 
-        for &(ref name, ref ty) in
-            function
-                .inputs
-                .iter()
-                .skip(if is_static { 0 } else { 1 }) {
-            write!(writer,
-                   r#"
+        for &(ref name, ref ty) in function.inputs.iter().skip(if is_static { 0 } else { 1 }) {
+            write!(
+                writer,
+                r#"
      * @param {{{}}} {}"#,
-                   get_hl_type(ty),
-                   name.to_mixed_case())?;
+                get_hl_type(ty),
+                name.to_mixed_case()
+            )?;
         }
 
         if has_return_type {
-            write!(writer,
-                   r#"
+            write!(
+                writer,
+                r#"
      * @return {{{}}}"#,
-                   return_type)?;
+                return_type
+            )?;
         }
 
-        write!(writer,
-               r#"
-     */"#)?;
+        write!(
+            writer,
+            r#"
+     */"#
+        )?;
     }
 
-    write!(writer,
-           r#"
+    write!(
+        writer,
+        r#"
     {}{}("#,
-           if is_static { "static " } else { "" },
-           method)?;
+        if is_static { "static " } else { "" },
+        method
+    )?;
 
     for (i, &(ref name, ref ty)) in
         function
             .inputs
             .iter()
             .skip(if is_static { 0 } else { 1 })
-            .enumerate() {
+            .enumerate()
+    {
         if i != 0 {
             write!(writer, ", ")?;
         }
@@ -128,24 +134,30 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
     }
 
     if type_script && has_return_type {
-        write!(writer,
-               r#"): {} {{
+        write!(
+            writer,
+            r#"): {} {{
         "#,
-               return_type)?;
+            return_type
+        )?;
     } else {
-        write!(writer,
-               r#") {{
-        "#)?;
+        write!(
+            writer,
+            r#") {{
+        "#
+        )?;
     }
 
     for &(ref name, ref typ) in function.inputs.iter() {
         if typ.is_custom {
-            write!(writer,
-                   r#"if (ref.isNull({name}.ptr)) {{
+            write!(
+                writer,
+                r#"if (ref.isNull({name}.ptr)) {{
             throw "{name} is disposed";
         }}
         "#,
-                   name = name.to_mixed_case())?;
+                name = name.to_mixed_case()
+            )?;
         }
     }
 
@@ -163,15 +175,19 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
         if i != 0 {
             write!(writer, ", ")?;
         }
-        write!(writer,
-               "{}",
-               if name == "this" {
-                   "this.ptr".to_string()
-               } else if typ.is_custom {
-            format!("{}.ptr", name.to_mixed_case())
-        } else {
-            name.to_mixed_case()
-        })?;
+        write!(
+            writer,
+            "{}",
+            if name == "this" {
+                "this.ptr".to_string()
+            } else if typ.name == "Json" {
+                format!("JSON.stringify({})", name.to_mixed_case())
+            } else if typ.is_custom {
+                format!("{}.ptr", name.to_mixed_case())
+            } else {
+                name.to_mixed_case()
+            }
+        )?;
     }
 
     write!(writer, ")")?;
@@ -184,50 +200,76 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
 
     for &(ref name, ref typ) in function.inputs.iter() {
         if typ.is_custom && typ.kind == TypeKind::Value {
-            write!(writer,
-                   r#"
+            write!(
+                writer,
+                r#"
         {}.ptr = ref.NULL;"#,
-                   name.to_mixed_case())?;
+                name.to_mixed_case()
+            )?;
         }
     }
 
     if has_return_type {
         if function.output.is_custom {
-            write!(writer,
-                   r#"
+            write!(
+                writer,
+                r#"
         if (ref.isNull(result.ptr)) {{
             return null;
-        }}"#)?;
+        }}"#
+            )?;
         }
         if is_json {
-            write!(writer,
-                   r#"
-        return JSON.parse(result);"#)?;
+            write!(
+                writer,
+                r#"
+        return JSON.parse(result);"#
+            )?;
         } else {
-            write!(writer,
-                   r#"
-        return result;"#)?;
+            write!(
+                writer,
+                r#"
+        return result;"#
+            )?;
         }
     }
 
-    write!(writer,
-           r#"
-    }}"#)?;
+    write!(
+        writer,
+        r#"
+    }}"#
+    )?;
 
     Ok(())
 }
 
-pub fn write<W: Write>(mut writer: W,
-                       classes: &BTreeMap<String, Class>,
-                       type_script: bool)
-                       -> Result<()> {
+pub fn write<W: Write>(
+    mut writer: W,
+    classes: &BTreeMap<String, Class>,
+    type_script: bool,
+) -> Result<()> {
     if type_script {
-        write!(writer,
-               "{}",
-               r#""use strict";
+        write!(
+            writer,
+            "{}",
+            r#""use strict";
 import ffi = require('ffi');
 import fs = require('fs');
 import ref = require('ref');
+
+export type ComponentStateJson =
+    { CurrentComparison: CurrentComparisonComponentStateJson } |
+    { CurrentPace: CurrentPaceComponentStateJson } |
+    { Delta: DeltaComponentStateJson } |
+    { Graph: GraphComponentStateJson } |
+    { PossibleTimeSave: PossibleTimeSaveComponentStateJson } |
+    { PreviousSegment: PreviousSegmentComponentStateJson } |
+    { Splits: SplitsComponentStateJson } |
+    { SumOfBest: SumOfBestComponentStateJson } |
+    { Text: TextComponentStateJson } |
+    { Timer: TimerComponentStateJson } |
+    { Title: TitleComponentStateJson } |
+    { TotalPLaytime: TotalPlaytimeComponentStateJson };
 
 export enum TimingMethod {
     RealTime = 0,
@@ -355,30 +397,36 @@ export type Color = "Default" |
     "Paused" |
     "PersonalBest";
 
-var liveSplitCoreNative = ffi.Library('livesplit_core', {"#)?;
+var liveSplitCoreNative = ffi.Library('livesplit_core', {"#
+        )?;
     } else {
-        write!(writer,
-               "{}",
-               r#""use strict";
+        write!(
+            writer,
+            "{}",
+            r#""use strict";
 var ffi = require('ffi');
 var fs = require('fs');
 var ref = require('ref');
 
-var liveSplitCoreNative = ffi.Library('livesplit_core', {"#)?;
+var liveSplitCoreNative = ffi.Library('livesplit_core', {"#
+        )?;
     }
 
     for class in classes.values() {
         for function in class
-                .static_fns
-                .iter()
-                .chain(class.own_fns.iter())
-                .chain(class.shared_fns.iter())
-                .chain(class.mut_fns.iter()) {
-            write!(writer,
-                   r#"
+            .static_fns
+            .iter()
+            .chain(class.own_fns.iter())
+            .chain(class.shared_fns.iter())
+            .chain(class.mut_fns.iter())
+        {
+            write!(
+                writer,
+                r#"
     '{}': [{}, ["#,
-                   function.name,
-                   get_ll_type(&function.output))?;
+                function.name,
+                get_ll_type(&function.output)
+            )?;
 
             for (i, &(_, ref typ)) in function.inputs.iter().enumerate() {
                 if i != 0 {
@@ -391,25 +439,31 @@ var liveSplitCoreNative = ffi.Library('livesplit_core', {"#)?;
         }
     }
 
-    writeln!(writer,
-             "{}",
-             r#"
-});"#)?;
+    writeln!(
+        writer,
+        "{}",
+        r#"
+});"#
+    )?;
 
     for (class_name, class) in classes {
         let class_name_ref = format!("{}Ref", class_name);
         let class_name_ref_mut = format!("{}RefMut", class_name);
 
-        write!(writer,
-               r#"
+        write!(
+            writer,
+            r#"
 {export}class {class} {{"#,
-               class = class_name_ref,
-               export = if type_script { "export " } else { "" })?;
+            class = class_name_ref,
+            export = if type_script { "export " } else { "" }
+        )?;
 
         if type_script {
-            write!(writer,
-                   r#"
-    ptr: Buffer;"#)?;
+            write!(
+                writer,
+                r#"
+    ptr: Buffer;"#
+            )?;
         }
 
         for function in &class.shared_fns {
@@ -418,9 +472,10 @@ var liveSplitCoreNative = ffi.Library('livesplit_core', {"#)?;
 
         if class_name == "SharedTimer" {
             if type_script {
-                write!(writer,
-                       "{}",
-                       r#"
+                write!(
+                    writer,
+                    "{}",
+                    r#"
     readWith(action: (timer: TimerRef) => void) {
         this.read().with(function (lock) {
             action(lock.timer());
@@ -430,11 +485,13 @@ var liveSplitCoreNative = ffi.Library('livesplit_core', {"#)?;
         this.write().with(function (lock) {
             action(lock.timer());
         });
-    }"#)?;
+    }"#
+                )?;
             } else {
-                write!(writer,
-                       "{}",
-                       r#"
+                write!(
+                    writer,
+                    "{}",
+                    r#"
     /**
      * @param {function(TimerRef)} action
      */
@@ -450,80 +507,98 @@ var liveSplitCoreNative = ffi.Library('livesplit_core', {"#)?;
         this.write().with(function (lock) {
             action(lock.timer());
         });
-    }"#)?;
+    }"#
+                )?;
             }
         }
 
         if type_script {
-            write!(writer,
-                   r#"
-    constructor(ptr: Buffer) {{"#)?;
+            write!(
+                writer,
+                r#"
+    constructor(ptr: Buffer) {{"#
+            )?;
         } else {
-            write!(writer,
-                   r#"
+            write!(
+                writer,
+                r#"
     /**
      * @param {{Buffer}} ptr
      */
-    constructor(ptr) {{"#)?;
+    constructor(ptr) {{"#
+            )?;
         }
 
-        write!(writer,
-               r#"
+        write!(
+            writer,
+            r#"
         this.ptr = ptr;
     }}
 }}
 {export}class {class} extends {base_class} {{"#,
-               class = class_name_ref_mut,
-               base_class = class_name_ref,
-               export = if type_script {
-                   r#"
+            class = class_name_ref_mut,
+            base_class = class_name_ref,
+            export = if type_script {
+                r#"
 export "#
-                           .to_string()
-               } else {
-                   format!(r#"exports.{base_class} = {base_class};
+                    .to_string()
+            } else {
+                format!(
+                    r#"exports.{base_class} = {base_class};
 
 "#,
-                           base_class = class_name_ref)
-               })?;
+                    base_class = class_name_ref
+                )
+            }
+        )?;
 
         for function in &class.mut_fns {
             write_fn(&mut writer, function, type_script)?;
         }
 
-        write!(writer,
-               r#"
+        write!(
+            writer,
+            r#"
 }}
 {export}class {class} extends {base_class} {{"#,
-               class = class_name,
-               base_class = class_name_ref_mut,
-               export = if type_script {
-                   r#"
+            class = class_name,
+            base_class = class_name_ref_mut,
+            export = if type_script {
+                r#"
 export "#
-                           .to_string()
-               } else {
-                   format!(r#"exports.{base_class} = {base_class};
+                    .to_string()
+            } else {
+                format!(
+                    r#"exports.{base_class} = {base_class};
 
 "#,
-                           base_class = class_name_ref_mut)
-               })?;
+                    base_class = class_name_ref_mut
+                )
+            }
+        )?;
 
         if type_script {
-            write!(writer,
-                   r#"
+            write!(
+                writer,
+                r#"
     with(closure: (obj: {class}) => void) {{"#,
-                   class = class_name)?;
+                class = class_name
+            )?;
         } else {
-            write!(writer,
-                   r#"
+            write!(
+                writer,
+                r#"
     /**
      * @param {{function({class})}} closure
      */
     with(closure) {{"#,
-                   class = class_name)?;
+                class = class_name
+            )?;
         }
 
-        write!(writer,
-               r#"
+        write!(
+            writer,
+            r#"
         try {{
             closure(this);
         }} finally {{
@@ -531,20 +606,25 @@ export "#
         }}
     }}
     dispose() {{
-        if (!ref.isNull(this.ptr)) {{"#)?;
+        if (!ref.isNull(this.ptr)) {{"#
+        )?;
 
         if let Some(function) = class.own_fns.iter().find(|f| f.method == "drop") {
-            write!(writer,
-                   r#"
+            write!(
+                writer,
+                r#"
             liveSplitCoreNative.{}(this.ptr);"#,
-                   function.name)?;
+                function.name
+            )?;
         }
 
-        write!(writer,
-               r#"
+        write!(
+            writer,
+            r#"
             this.ptr = ref.NULL;
         }}
-    }}"#)?;
+    }}"#
+        )?;
 
         for function in class.static_fns.iter().chain(class.own_fns.iter()) {
             if function.method != "drop" {
@@ -554,37 +634,45 @@ export "#
 
         if class_name == "Run" {
             if type_script {
-                write!(writer,
-                       "{}",
-                       r#"
+                write!(
+                    writer,
+                    "{}",
+                    r#"
     static parseFile(file: any) {
         var data = fs.readFileSync(file);
         return Run.parse(data, data.byteLength);
-    }"#)?;
+    }"#
+                )?;
             } else {
-                write!(writer,
-                       "{}",
-                       r#"
+                write!(
+                    writer,
+                    "{}",
+                    r#"
     /**
      * @param {string | Buffer | number} file
      */
     static parseFile(file) {
         var data = fs.readFileSync(file);
         return Run.parse(data, data.byteLength);
-    }"#)?;
+    }"#
+                )?;
             }
         }
 
-        writeln!(writer,
-                 r#"
+        writeln!(
+            writer,
+            r#"
 }}{export}"#,
-                 export = if type_script {
-                     "".to_string()
-                 } else {
-                     format!(r#"
+            export = if type_script {
+                "".to_string()
+            } else {
+                format!(
+                    r#"
 exports.{base_class} = {base_class};"#,
-                             base_class = class_name)
-                 })?;
+                    base_class = class_name
+                )
+            }
+        )?;
     }
 
     Ok(())

@@ -9,7 +9,7 @@ pub struct Component {
     settings: Settings,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Settings {
     pub comparison_override: Option<String>,
     pub accuracy: Accuracy,
@@ -31,11 +31,11 @@ pub struct State {
 }
 
 impl State {
-    pub fn write_json<W>(&self, mut writer: W) -> Result<()>
+    pub fn write_json<W>(&self, writer: W) -> Result<()>
     where
         W: Write,
     {
-        to_writer(&mut writer, self)
+        to_writer(writer, self)
     }
 }
 
@@ -49,6 +49,10 @@ impl Component {
             settings,
             ..Default::default()
         }
+    }
+
+    pub fn settings(&self) -> &Settings {
+        &self.settings
     }
 
     pub fn settings_mut(&mut self) -> &mut Settings {

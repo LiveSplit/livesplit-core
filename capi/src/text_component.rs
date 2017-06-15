@@ -1,7 +1,8 @@
 use livesplit_core::component::text::Component as TextComponent;
-use super::{Json, alloc, str, acc_mut, own_drop, acc, output_vec};
+use super::{Json, alloc, str, acc_mut, own, own_drop, acc, output_vec};
 use text_component_state::OwnedTextComponentState;
 use libc::c_char;
+use component::OwnedComponent;
 
 pub type OwnedTextComponent = *mut TextComponent;
 
@@ -13,6 +14,11 @@ pub unsafe extern "C" fn TextComponent_new() -> OwnedTextComponent {
 #[no_mangle]
 pub unsafe extern "C" fn TextComponent_drop(this: OwnedTextComponent) {
     own_drop(this);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn TextComponent_into_generic(this: OwnedTextComponent) -> OwnedComponent {
+    alloc(own(this).into())
 }
 
 #[no_mangle]
@@ -36,7 +42,8 @@ pub unsafe extern "C" fn TextComponent_set_right(this: *mut TextComponent, text:
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn TextComponent_state(this: *const TextComponent)
-                                             -> OwnedTextComponentState {
+pub unsafe extern "C" fn TextComponent_state(
+    this: *const TextComponent,
+) -> OwnedTextComponentState {
     alloc(acc(this).state())
 }

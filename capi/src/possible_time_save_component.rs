@@ -1,7 +1,8 @@
 use livesplit_core::component::possible_time_save::Component as PossibleTimeSaveComponent;
 use livesplit_core::Timer;
-use super::{Json, alloc, own_drop, acc, output_vec};
+use super::{Json, alloc, own, own_drop, acc, output_vec};
 use possible_time_save_component_state::OwnedPossibleTimeSaveComponentState;
+use component::OwnedComponent;
 
 pub type OwnedPossibleTimeSaveComponent = *mut PossibleTimeSaveComponent;
 
@@ -16,14 +17,24 @@ pub unsafe extern "C" fn PossibleTimeSaveComponent_drop(this: OwnedPossibleTimeS
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn PossibleTimeSaveComponent_state_as_json(this: *const PossibleTimeSaveComponent, timer: *const Timer)
--> Json{
+pub unsafe extern "C" fn PossibleTimeSaveComponent_into_generic(
+    this: OwnedPossibleTimeSaveComponent,
+) -> OwnedComponent {
+    alloc(own(this).into())
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn PossibleTimeSaveComponent_state_as_json(
+    this: *const PossibleTimeSaveComponent,
+    timer: *const Timer,
+) -> Json {
     output_vec(|o| { acc(this).state(acc(timer)).write_json(o).unwrap(); })
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn PossibleTimeSaveComponent_state(this: *const PossibleTimeSaveComponent,
-                                                         timer: *const Timer)
-                                                         -> OwnedPossibleTimeSaveComponentState {
+pub unsafe extern "C" fn PossibleTimeSaveComponent_state(
+    this: *const PossibleTimeSaveComponent,
+    timer: *const Timer,
+) -> OwnedPossibleTimeSaveComponentState {
     alloc(acc(this).state(acc(timer)))
 }

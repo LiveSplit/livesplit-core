@@ -14,7 +14,7 @@ pub struct Component {
     scroll_offset: isize,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Settings {
     pub visual_split_count: usize,
     pub split_preview_count: usize,
@@ -50,17 +50,32 @@ impl Default for Settings {
 }
 
 impl State {
-    pub fn write_json<W>(&self, mut writer: W) -> Result<()>
+    pub fn write_json<W>(&self, writer: W) -> Result<()>
     where
         W: Write,
     {
-        to_writer(&mut writer, self)
+        to_writer(writer, self)
     }
 }
 
 impl Component {
     pub fn new() -> Self {
         Default::default()
+    }
+
+    pub fn with_settings(settings: Settings) -> Self {
+        Self {
+            settings,
+            ..Default::default()
+        }
+    }
+
+    pub fn settings(&self) -> &Settings {
+        &self.settings
+    }
+
+    pub fn settings_mut(&mut self) -> &mut Settings {
+        &mut self.settings
     }
 
     pub fn scroll_up(&mut self) {
@@ -71,8 +86,8 @@ impl Component {
         self.scroll_offset = self.scroll_offset.saturating_add(1);
     }
 
-    pub fn settings_mut(&mut self) -> &mut Settings {
-        &mut self.settings
+    pub fn remount(&mut self) {
+        self.icon_ids.clear();
     }
 
     pub fn state(&mut self, timer: &Timer) -> State {

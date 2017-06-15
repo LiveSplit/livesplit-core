@@ -1,7 +1,8 @@
 use livesplit_core::component::sum_of_best::Component as SumOfBestComponent;
 use livesplit_core::Timer;
-use super::{Json, alloc, own_drop, acc, output_vec};
+use super::{Json, alloc, own, own_drop, acc, output_vec};
 use sum_of_best_component_state::OwnedSumOfBestComponentState;
+use component::OwnedComponent;
 
 pub type OwnedSumOfBestComponent = *mut SumOfBestComponent;
 
@@ -16,15 +17,24 @@ pub unsafe extern "C" fn SumOfBestComponent_drop(this: OwnedSumOfBestComponent) 
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn SumOfBestComponent_state_as_json(this: *const SumOfBestComponent,
-                                                          timer: *const Timer)
-                                                          -> Json {
+pub unsafe extern "C" fn SumOfBestComponent_into_generic(
+    this: OwnedSumOfBestComponent,
+) -> OwnedComponent {
+    alloc(own(this).into())
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn SumOfBestComponent_state_as_json(
+    this: *const SumOfBestComponent,
+    timer: *const Timer,
+) -> Json {
     output_vec(|o| { acc(this).state(acc(timer)).write_json(o).unwrap(); })
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn SumOfBestComponent_state(this: *const SumOfBestComponent,
-                                                  timer: *const Timer)
-                                                  -> OwnedSumOfBestComponentState {
+pub unsafe extern "C" fn SumOfBestComponent_state(
+    this: *const SumOfBestComponent,
+    timer: *const Timer,
+) -> OwnedSumOfBestComponentState {
     alloc(acc(this).state(acc(timer)))
 }

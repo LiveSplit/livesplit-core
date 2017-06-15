@@ -22,6 +22,8 @@ pub mod run_metadata_variable;
 pub mod segment_history;
 pub mod segment_history_iter;
 pub mod segment_history_element;
+pub mod component;
+pub mod layout;
 pub mod title_component;
 pub mod title_component_state;
 pub mod splits_component;
@@ -68,16 +70,16 @@ thread_local! {
 
 fn output_time_span(time_span: TimeSpan) -> *const TimeSpan {
     TIME_SPAN.with(|output| {
-                       output.set(time_span);
-                       output.as_ptr() as *const TimeSpan
-                   })
+        output.set(time_span);
+        output.as_ptr() as *const TimeSpan
+    })
 }
 
 fn output_time(time: Time) -> *const Time {
     TIME.with(|output| {
-                  output.set(time);
-                  output.as_ptr() as *const Time
-              })
+        output.set(time);
+        output.as_ptr() as *const Time
+    })
 }
 
 fn output_str<S: AsRef<str>>(s: S) -> *const c_char {
@@ -85,27 +87,29 @@ fn output_str<S: AsRef<str>>(s: S) -> *const c_char {
 }
 
 fn output_str_with<F>(f: F) -> *const c_char
-    where F: FnOnce(&mut String)
+where
+    F: FnOnce(&mut String),
 {
     OUTPUT_STR.with(|output| {
-                        let mut output = output.borrow_mut();
-                        output.clear();
-                        f(&mut output);
-                        output.push('\0');
-                        output.as_ptr() as *const c_char
-                    })
+        let mut output = output.borrow_mut();
+        output.clear();
+        f(&mut output);
+        output.push('\0');
+        output.as_ptr() as *const c_char
+    })
 }
 
 fn output_vec<F>(f: F) -> *const c_char
-    where F: FnOnce(&mut Vec<u8>)
+where
+    F: FnOnce(&mut Vec<u8>),
 {
     OUTPUT_VEC.with(|output| {
-                        let mut output = output.borrow_mut();
-                        output.clear();
-                        f(&mut output);
-                        output.push(0);
-                        output.as_ptr() as *const c_char
-                    })
+        let mut output = output.borrow_mut();
+        output.clear();
+        f(&mut output);
+        output.push(0);
+        output.as_ptr() as *const c_char
+    })
 }
 
 unsafe fn str(s: *const c_char) -> &'static str {

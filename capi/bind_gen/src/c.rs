@@ -5,23 +5,23 @@ use std::borrow::Cow;
 
 fn get_type(ty: &Type) -> Cow<str> {
     let mut name = Cow::Borrowed(match ty.name.as_str() {
-                                     "i8" => "int8_t",
-                                     "i16" => "int16_t",
-                                     "i32" => "int32_t",
-                                     "i64" => "int64_t",
-                                     "u8" => "uint8_t",
-                                     "u16" => "uint16_t",
-                                     "u32" => "uint32_t",
-                                     "u64" => "uint64_t",
-                                     "usize" => "size_t",
-                                     "f32" => "float",
-                                     "f64" => "double",
-                                     "bool" => "uint8_t",
-                                     "()" => "void",
-                                     "c_char" => "char",
-                                     "Json" => "char const*",
-                                     x => x,
-                                 });
+        "i8" => "int8_t",
+        "i16" => "int16_t",
+        "i32" => "int32_t",
+        "i64" => "int64_t",
+        "u8" => "uint8_t",
+        "u16" => "uint16_t",
+        "u32" => "uint32_t",
+        "u64" => "uint64_t",
+        "usize" => "size_t",
+        "f32" => "float",
+        "f64" => "double",
+        "bool" => "uint8_t",
+        "()" => "void",
+        "c_char" => "char",
+        "Json" => "char const*",
+        x => x,
+    });
     match (ty.is_custom, ty.kind) {
         (false, TypeKind::RefMut) => name.to_mut().push_str("*restrict"),
         (false, TypeKind::Ref) => name.to_mut().push_str(" const*"),
@@ -36,9 +36,10 @@ fn get_type(ty: &Type) -> Cow<str> {
 }
 
 pub fn write<W: Write>(mut writer: W, classes: &BTreeMap<String, Class>) -> Result<()> {
-    write!(writer,
-           "{}",
-           r#"#ifndef _LIVESPLIT_CORE_H_
+    write!(
+        writer,
+        "{}",
+        r#"#ifndef _LIVESPLIT_CORE_H_
 #define _LIVESPLIT_CORE_H_
 
 #ifdef __cplusplus
@@ -50,41 +51,49 @@ extern "C" {
 #include <stdint.h>
 #include <stddef.h>
 
-"#)?;
+"#
+    )?;
 
     for name in classes.keys() {
-        writeln!(writer,
-                 r#"struct {0}_s;
+        writeln!(
+            writer,
+            r#"struct {0}_s;
 typedef struct {0}_s *restrict {0};
 typedef struct {0}_s *restrict {0}RefMut;
 typedef struct {0}_s const* {0}Ref;
 "#,
-                 name)?;
+            name
+        )?;
     }
 
     for class in classes.values() {
         writeln!(writer, "")?;
 
         for function in class
-                .static_fns
-                .iter()
-                .chain(class.own_fns.iter())
-                .chain(class.shared_fns.iter())
-                .chain(class.mut_fns.iter()) {
+            .static_fns
+            .iter()
+            .chain(class.own_fns.iter())
+            .chain(class.shared_fns.iter())
+            .chain(class.mut_fns.iter())
+        {
 
-            write!(writer,
-                   r#"extern {} {}("#,
-                   get_type(&function.output),
-                   function.name)?;
+            write!(
+                writer,
+                r#"extern {} {}("#,
+                get_type(&function.output),
+                function.name
+            )?;
 
             for (i, &(ref name, ref typ)) in function.inputs.iter().enumerate() {
                 if i != 0 {
                     write!(writer, ", ")?;
                 }
-                write!(writer,
-                       "{} {}",
-                       get_type(typ),
-                       if name == "this" { "self" } else { name })?;
+                write!(
+                    writer,
+                    "{} {}",
+                    get_type(typ),
+                    if name == "this" { "self" } else { name }
+                )?;
             }
             if function.inputs.is_empty() {
                 write!(writer, "void")?;
@@ -94,14 +103,16 @@ typedef struct {0}_s const* {0}Ref;
         }
     }
 
-    write!(writer,
-           "{}",
-           r#"
+    write!(
+        writer,
+        "{}",
+        r#"
 #ifdef __cplusplus
 }
 }
 #endif
 
 #endif
-"#)
+"#
+    )
 }

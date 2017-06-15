@@ -19,9 +19,11 @@ pub unsafe extern "C" fn Run_drop(this: OwnedRun) {
 
 #[no_mangle]
 pub unsafe extern "C" fn Run_parse(data: *const u8, length: usize) -> OwnedRun {
-    match parser::composite::parse(Cursor::new(slice::from_raw_parts(data, length)),
-                                   None,
-                                   false) {
+    match parser::composite::parse(
+        Cursor::new(slice::from_raw_parts(data, length)),
+        None,
+        false,
+    ) {
         Ok(run) => alloc(run),
         Err(_) => ptr::null_mut(),
     }
@@ -63,26 +65,33 @@ pub unsafe extern "C" fn Run_set_category_name(this: *mut Run, category: *const 
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Run_extended_file_name(this: *const Run,
-                                                use_extended_category_name: bool)
-                                                -> *const c_char {
+pub unsafe extern "C" fn Run_extended_file_name(
+    this: *const Run,
+    use_extended_category_name: bool,
+) -> *const c_char {
     output_str(acc(this).extended_file_name(use_extended_category_name))
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Run_extended_name(this: *const Run,
-                                           use_extended_category_name: bool)
-                                           -> *const c_char {
+pub unsafe extern "C" fn Run_extended_name(
+    this: *const Run,
+    use_extended_category_name: bool,
+) -> *const c_char {
     output_str(acc(this).extended_name(use_extended_category_name))
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Run_extended_category_name(this: *const Run,
-                                                    show_region: bool,
-                                                    show_platform: bool,
-                                                    show_variables: bool)
-                                                    -> *const c_char {
-    output_str(acc(this).extended_category_name(show_region, show_platform, show_variables))
+pub unsafe extern "C" fn Run_extended_category_name(
+    this: *const Run,
+    show_region: bool,
+    show_platform: bool,
+    show_variables: bool,
+) -> *const c_char {
+    output_str(acc(this).extended_category_name(
+        show_region,
+        show_platform,
+        show_variables,
+    ))
 }
 
 #[no_mangle]
@@ -116,9 +125,10 @@ pub unsafe extern "C" fn Run_attempt_history_len(this: *const Run) -> usize {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Run_attempt_history_index(this: *const Run,
-                                                   index: usize)
-                                                   -> *const Attempt {
+pub unsafe extern "C" fn Run_attempt_history_index(
+    this: *const Run,
+    index: usize,
+) -> *const Attempt {
     &acc(this).attempt_history()[index]
 }
 

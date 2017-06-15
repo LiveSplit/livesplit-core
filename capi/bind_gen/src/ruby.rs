@@ -64,37 +64,44 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         method = "create";
     }
 
-    write!(writer,
-           r#"
+    write!(
+        writer,
+        r#"
     def {}{}("#,
-           if is_static { "self." } else { "" },
-           method)?;
+        if is_static { "self." } else { "" },
+        method
+    )?;
 
     for (i, &(ref name, _)) in
         function
             .inputs
             .iter()
             .skip(if is_static { 0 } else { 1 })
-            .enumerate() {
+            .enumerate()
+    {
         if i != 0 {
             write!(writer, ", ")?;
         }
         write!(writer, "{}", name)?;
     }
 
-    write!(writer,
-           r#")
-        "#)?;
+    write!(
+        writer,
+        r#")
+        "#
+    )?;
 
     for &(ref name, ref typ) in function.inputs.iter() {
         if typ.is_custom {
-            write!(writer,
-                   r#"if {ptr} == nil
+            write!(
+                writer,
+                r#"if {ptr} == nil
             raise "{name} is disposed"
         end
         "#,
-                   name = name,
-                   ptr = ptr_of(name))?;
+                name = name,
+                ptr = ptr_of(name)
+            )?;
         }
     }
 
@@ -112,15 +119,17 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         if i != 0 {
             write!(writer, ", ")?;
         }
-        write!(writer,
-               "{}",
-               if name == "this" {
-                   "@handle.ptr".to_string()
-               } else if typ.is_custom {
-            format!("{}.handle.ptr", name)
-        } else {
-            name.to_string()
-        })?;
+        write!(
+            writer,
+            "{}",
+            if name == "this" {
+                "@handle.ptr".to_string()
+            } else if typ.is_custom {
+                format!("{}.handle.ptr", name)
+            } else {
+                name.to_string()
+            }
+        )?;
     }
 
     write!(writer, ")")?;
@@ -131,55 +140,68 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
 
     for &(ref name, ref typ) in function.inputs.iter() {
         if typ.is_custom && typ.kind == TypeKind::Value {
-            write!(writer,
-                   r#"
+            write!(
+                writer,
+                r#"
         {} = nil"#,
-                   ptr_of(name))?;
+                ptr_of(name)
+            )?;
         }
     }
 
     if has_return_type {
         if function.output.is_custom {
-            write!(writer,
-                   r#"
+            write!(
+                writer,
+                r#"
         if result.handle.ptr == nil
             return nil
-        end"#)?;
+        end"#
+            )?;
         }
-        write!(writer,
-               r#"
-        result"#)?;
+        write!(
+            writer,
+            r#"
+        result"#
+        )?;
     }
 
-    write!(writer,
-           r#"
-    end"#)?;
+    write!(
+        writer,
+        r#"
+    end"#
+    )?;
 
     Ok(())
 }
 
 pub fn write<W: Write>(mut writer: W, classes: &BTreeMap<String, Class>) -> Result<()> {
-    write!(writer,
-           "{}",
-           r#"# coding: utf-8
+    write!(
+        writer,
+        "{}",
+        r#"# coding: utf-8
 require 'ffi'
 
 module LiveSplitCoreNative
     extend FFI::Library
     ffi_lib './liblivesplit_core.so'
-"#)?;
+"#
+    )?;
 
     for class in classes.values() {
         for function in class
-                .static_fns
-                .iter()
-                .chain(class.own_fns.iter())
-                .chain(class.shared_fns.iter())
-                .chain(class.mut_fns.iter()) {
-            write!(writer,
-                   r#"
+            .static_fns
+            .iter()
+            .chain(class.own_fns.iter())
+            .chain(class.shared_fns.iter())
+            .chain(class.mut_fns.iter())
+        {
+            write!(
+                writer,
+                r#"
     attach_function :{}, ["#,
-                   function.name)?;
+                function.name
+            )?;
 
             for (i, &(_, ref typ)) in function.inputs.iter().enumerate() {
                 if i != 0 {
@@ -192,9 +214,10 @@ module LiveSplitCoreNative
         }
     }
 
-    write!(writer,
-           "{}",
-           r#"
+    write!(
+        writer,
+        "{}",
+        r#"
 end
 
 class LSCHandle
@@ -203,7 +226,8 @@ class LSCHandle
         @ptr = ptr
     end
 end
-"#)?;
+"#
+    )?;
 
     for (class_name, class) in classes {
         let mut class_name = class_name.to_string();
@@ -213,21 +237,24 @@ end
         let class_name_ref = format!("{}Ref", class_name);
         let class_name_ref_mut = format!("{}RefMut", class_name);
 
-        write!(writer,
-               r#"
+        write!(
+            writer,
+            r#"
 
 class {class}
     attr_accessor :handle"#,
-               class = class_name_ref)?;
+            class = class_name_ref
+        )?;
 
         for function in &class.shared_fns {
             write_fn(&mut writer, function)?;
         }
 
         if class_name == "SharedTimer" {
-            write!(writer,
-                   "{}",
-                   r#"
+            write!(
+                writer,
+                "{}",
+                r#"
     def read_with
         self.read.wtih do |lock|
             yield lock.timer
@@ -237,26 +264,30 @@ class {class}
         self.write.with do |lock|
             yield lock.timer
         end
-    end"#)?;
+    end"#
+            )?;
         }
 
-        write!(writer,
-               r#"
+        write!(
+            writer,
+            r#"
     def initialize(ptr)
         @handle = LSCHandle.new ptr
     end
 end
 
 class {class} < {base_class}"#,
-               class = class_name_ref_mut,
-               base_class = class_name_ref)?;
+            class = class_name_ref_mut,
+            base_class = class_name_ref
+        )?;
 
         for function in &class.mut_fns {
             write_fn(&mut writer, function)?;
         }
 
-        write!(writer,
-               r#"
+        write!(
+            writer,
+            r#"
     def initialize(ptr)
         @handle = LSCHandle.new ptr
     end
@@ -266,18 +297,22 @@ class {class} < {base_class}
     def self.finalize(handle)
         proc {{
             if handle.ptr != nil"#,
-               class = class_name,
-               base_class = class_name_ref_mut)?;
+            class = class_name,
+            base_class = class_name_ref_mut
+        )?;
 
         if let Some(function) = class.own_fns.iter().find(|f| f.method == "drop") {
-            write!(writer,
-                   r#"
+            write!(
+                writer,
+                r#"
                 LiveSplitCoreNative.{} handle.ptr"#,
-                   function.name)?;
+                function.name
+            )?;
         }
 
-        write!(writer,
-               r#"
+        write!(
+            writer,
+            r#"
                 handle.ptr = nil
             end
         }}
@@ -290,7 +325,8 @@ class {class} < {base_class}
         yield self
         self.dispose
     end"#,
-               class = class_name)?;
+            class = class_name
+        )?;
 
         for function in class.static_fns.iter().chain(class.own_fns.iter()) {
             if function.method != "drop" {
@@ -298,14 +334,16 @@ class {class} < {base_class}
             }
         }
 
-        write!(writer,
-               r#"
+        write!(
+            writer,
+            r#"
     def initialize(ptr)
         handle = LSCHandle.new ptr
         @handle = handle
         ObjectSpace.define_finalizer(self, self.class.finalize(handle))
     end
-end"#)?;
+end"#
+        )?;
     }
 
     Ok(())

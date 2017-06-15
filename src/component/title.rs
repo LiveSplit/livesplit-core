@@ -16,11 +16,11 @@ pub struct State {
 }
 
 impl State {
-    pub fn write_json<W>(&self, mut writer: W) -> Result<()>
+    pub fn write_json<W>(&self, writer: W) -> Result<()>
     where
         W: Write,
     {
-        to_writer(&mut writer, self)
+        to_writer(writer, self)
     }
 }
 
@@ -39,5 +39,9 @@ impl Component {
             category: run.extended_category_name(false, false, true).into_owned(),
             attempts: run.attempt_count(),
         }
+    }
+
+    pub fn remount(&mut self) {
+        self.icon_id = 0;
     }
 }

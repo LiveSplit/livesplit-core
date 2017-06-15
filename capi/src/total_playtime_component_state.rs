@@ -10,13 +10,15 @@ pub unsafe extern "C" fn TotalPlaytimeComponentState_drop(this: OwnedTotalPlayti
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn TotalPlaytimeComponentState_text(this: *const TotalPlaytimeComponentState)
--> *const c_char{
+pub unsafe extern "C" fn TotalPlaytimeComponentState_text(
+    this: *const TotalPlaytimeComponentState,
+) -> *const c_char {
     output_str(&acc(this).text)
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn TotalPlaytimeComponentState_time(this: *const TotalPlaytimeComponentState)
--> *const c_char{
+pub unsafe extern "C" fn TotalPlaytimeComponentState_time(
+    this: *const TotalPlaytimeComponentState,
+) -> *const c_char {
     output_str(&acc(this).time)
 }

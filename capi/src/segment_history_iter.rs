@@ -12,13 +12,14 @@ pub unsafe extern "C" fn SegmentHistoryIter_drop(this: OwnedSegmentHistoryIter) 
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn SegmentHistoryIter_next(this: *mut SegmentHistoryIter)
-                                                 -> *const SegmentHistoryElement {
+pub unsafe extern "C" fn SegmentHistoryIter_next(
+    this: *mut SegmentHistoryIter,
+) -> *const SegmentHistoryElement {
     if let Some(&element) = acc_mut(this).next() {
         SEGMENT_HISTORY_ELEMENT.with(|output| {
-                                         output.set(element);
-                                         output.as_ptr() as *const SegmentHistoryElement
-                                     })
+            output.set(element);
+            output.as_ptr() as *const SegmentHistoryElement
+        })
     } else {
         ptr::null()
     }

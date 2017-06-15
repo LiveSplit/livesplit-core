@@ -6,23 +6,23 @@ use std::borrow::Cow;
 
 fn get_c_type(ty: &Type) -> Cow<str> {
     let mut name = Cow::Borrowed(match ty.name.as_str() {
-                                     "i8" => "int8_t",
-                                     "i16" => "int16_t",
-                                     "i32" => "int32_t",
-                                     "i64" => "int64_t",
-                                     "u8" => "uint8_t",
-                                     "u16" => "uint16_t",
-                                     "u32" => "uint32_t",
-                                     "u64" => "uint64_t",
-                                     "usize" => "size_t",
-                                     "f32" => "float",
-                                     "f64" => "double",
-                                     "bool" => "uint8_t",
-                                     "()" => "void",
-                                     "c_char" => "char",
-                                     "Json" => "char const*",
-                                     x => x,
-                                 });
+        "i8" => "int8_t",
+        "i16" => "int16_t",
+        "i32" => "int32_t",
+        "i64" => "int64_t",
+        "u8" => "uint8_t",
+        "u16" => "uint16_t",
+        "u32" => "uint32_t",
+        "u64" => "uint64_t",
+        "usize" => "size_t",
+        "f32" => "float",
+        "f64" => "double",
+        "bool" => "uint8_t",
+        "()" => "void",
+        "c_char" => "char",
+        "Json" => "char const*",
+        x => x,
+    });
     match (ty.is_custom, ty.kind) {
         (false, TypeKind::RefMut) => name.to_mut().push_str("*restrict"),
         (false, TypeKind::Ref) => name.to_mut().push_str(" const*"),
@@ -69,31 +69,39 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
     let has_return_type = function.has_return_type();
     let return_type = get_jni_type(&function.output);
 
-    write!(writer,
-           r#"
+    write!(
+        writer,
+        r#"
 extern "C" JNIEXPORT {} Java_livesplitcore_LiveSplitCoreNative_{}_1{}(JNIEnv* jni_env, jobject"#,
-           return_type,
-           class_name,
-           function.method.to_mixed_case())?;
+        return_type,
+        class_name,
+        function.method.to_mixed_case()
+    )?;
 
     for &(ref name, ref typ) in &function.inputs {
-        write!(writer,
-               ", {} {}",
-               get_jni_type(typ),
-               if name == "this" { "self" } else { name })?;
+        write!(
+            writer,
+            ", {} {}",
+            get_jni_type(typ),
+            if name == "this" { "self" } else { name }
+        )?;
     }
 
-    write!(writer,
-           r#") {{
-    "#)?;
+    write!(
+        writer,
+        r#") {{
+    "#
+    )?;
 
     for &(ref name, ref typ) in &function.inputs {
         let jni_type = get_jni_type(typ);
         if jni_type == "jstring" {
-            write!(writer,
-                   r#"auto cstr_{name} = jni_env->GetStringUTFChars({name}, nullptr);
+            write!(
+                writer,
+                r#"auto cstr_{name} = jni_env->GetStringUTFChars({name}, nullptr);
     "#,
-                   name = name)?;
+                name = name
+            )?;
         }
     }
 
@@ -113,15 +121,17 @@ extern "C" JNIEXPORT {} Java_livesplitcore_LiveSplitCoreNative_{}_1{}(JNIEnv* jn
         }
         let ty_name = get_c_type(typ);
         let jni_type = get_jni_type(typ);
-        write!(writer,
-               "{}",
-               if name == "this" {
-                   format!("({})self", ty_name)
-               } else if jni_type == "jstring" {
-            format!("cstr_{}", name)
-        } else {
-            format!("({}){}", ty_name, name)
-        })?;
+        write!(
+            writer,
+            "{}",
+            if name == "this" {
+                format!("({})self", ty_name)
+            } else if jni_type == "jstring" {
+                format!("cstr_{}", name)
+            } else {
+                format!("({}){}", ty_name, name)
+            }
+        )?;
     }
 
     write!(writer, ")")?;
@@ -135,22 +145,28 @@ extern "C" JNIEXPORT {} Java_livesplitcore_LiveSplitCoreNative_{}_1{}(JNIEnv* jn
     for &(ref name, ref typ) in &function.inputs {
         let jni_type = get_jni_type(typ);
         if jni_type == "jstring" {
-            write!(writer,
-                   r#"
+            write!(
+                writer,
+                r#"
     jni_env->ReleaseStringUTFChars({name}, cstr_{name});"#,
-                   name = name)?;
+                name = name
+            )?;
         }
     }
 
     if has_return_type {
-        write!(writer,
-               r#"
-    return result;"#)?;
+        write!(
+            writer,
+            r#"
+    return result;"#
+        )?;
     }
 
-    write!(writer,
-           r#"
-}}"#)?;
+    write!(
+        writer,
+        r#"
+}}"#
+    )?;
 
     Ok(())
 }
@@ -175,11 +191,12 @@ extern "C" JNIEXPORT jlong Java_livesplitcore_LiveSplitCoreNative_Run_1parseStri
     for (class_name, class) in classes {
 
         for function in class
-                .static_fns
-                .iter()
-                .chain(class.own_fns.iter())
-                .chain(class.shared_fns.iter())
-                .chain(class.mut_fns.iter()) {
+            .static_fns
+            .iter()
+            .chain(class.own_fns.iter())
+            .chain(class.shared_fns.iter())
+            .chain(class.mut_fns.iter())
+        {
             write_fn(&mut writer, function, class_name)?;
             writeln!(writer, "")?;
         }

@@ -56,17 +56,21 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
     let is_constructor = function.method == "new";
 
     if is_constructor {
-        write!(writer,
-               r#"
+        write!(
+            writer,
+            r#"
         public {}("#,
-               class_name)?;
+            class_name
+        )?;
     } else {
-        write!(writer,
-               r#"
+        write!(
+            writer,
+            r#"
         public{} {} {}("#,
-               if is_static { " static" } else { "" },
-               return_type,
-               function.method.to_camel_case())?;
+            if is_static { " static" } else { "" },
+            return_type,
+            function.method.to_camel_case()
+        )?;
     }
 
     for (i, &(ref name, ref typ)) in
@@ -74,7 +78,8 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
             .inputs
             .iter()
             .skip(if is_static { 0 } else { 1 })
-            .enumerate() {
+            .enumerate()
+    {
         if i != 0 {
             write!(writer, ", ")?;
         }
@@ -82,26 +87,32 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
     }
 
     if is_constructor {
-        write!(writer,
-               r#") : base(IntPtr.Zero)
+        write!(
+            writer,
+            r#") : base(IntPtr.Zero)
         {{
-            "#)?;
+            "#
+        )?;
     } else {
-        write!(writer,
-               r#")
+        write!(
+            writer,
+            r#")
         {{
-            "#)?;
+            "#
+        )?;
     }
 
     for &(ref name, ref typ) in function.inputs.iter() {
         if typ.is_custom {
-            write!(writer,
-                   r#"if ({name}.ptr == IntPtr.Zero)
+            write!(
+                writer,
+                r#"if ({name}.ptr == IntPtr.Zero)
             {{
                 throw new ObjectDisposedException("{name}");
             }}
             "#,
-                   name = name.to_mixed_case())?;
+                name = name.to_mixed_case()
+            )?;
         }
     }
 
@@ -125,28 +136,32 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
             write!(writer, ", ")?;
         }
         let ty_name = get_ll_type(typ, false);
-        write!(writer,
-               "{}",
-               if name == "this" {
-                   "this.ptr".to_string()
-               } else if ty_name == "UIntPtr" {
-            format!("(UIntPtr){}", name.to_mixed_case())
-        } else if typ.is_custom {
-            format!("{}.ptr", name.to_mixed_case())
-        } else {
-            name.to_mixed_case()
-        })?;
+        write!(
+            writer,
+            "{}",
+            if name == "this" {
+                "this.ptr".to_string()
+            } else if ty_name == "UIntPtr" {
+                format!("(UIntPtr){}", name.to_mixed_case())
+            } else if typ.is_custom {
+                format!("{}.ptr", name.to_mixed_case())
+            } else {
+                name.to_mixed_case()
+            }
+        )?;
     }
 
-    write!(writer,
-           "){}",
-           if return_type == "string" {
-               ".AsString()"
-           } else if return_type == "bool" {
-        " != 0"
-    } else {
-        ""
-    })?;
+    write!(
+        writer,
+        "){}",
+        if return_type == "string" {
+            ".AsString()"
+        } else if return_type == "bool" {
+            " != 0"
+        } else {
+            ""
+        }
+    )?;
 
     if !is_constructor && has_return_type && function.output.is_custom {
         write!(writer, r#")"#)?;
@@ -156,64 +171,77 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
 
     for &(ref name, ref typ) in function.inputs.iter() {
         if typ.is_custom && typ.kind == TypeKind::Value {
-            write!(writer,
-                   r#"
+            write!(
+                writer,
+                r#"
             {}.ptr = IntPtr.Zero;"#,
-                   name.to_mixed_case())?;
+                name.to_mixed_case()
+            )?;
         }
     }
 
     if has_return_type && !is_constructor {
         if function.output.is_custom {
-            write!(writer,
-                   r#"
+            write!(
+                writer,
+                r#"
             if (result.ptr == IntPtr.Zero)
             {{
                 return null;
-            }}"#)?;
+            }}"#
+            )?;
         }
-        write!(writer,
-               r#"
-            return result;"#)?;
+        write!(
+            writer,
+            r#"
+            return result;"#
+        )?;
     }
 
-    write!(writer,
-           r#"
-        }}"#)?;
+    write!(
+        writer,
+        r#"
+        }}"#
+    )?;
 
     Ok(())
 }
 
 pub fn write<W: Write>(mut writer: W, classes: &BTreeMap<String, Class>) -> Result<()> {
-    write!(writer,
-           "{}",
-           r#"using System;
+    write!(
+        writer,
+        "{}",
+        r#"using System;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.IO;
 
 namespace LiveSplitCore
-{"#)?;
+{"#
+    )?;
 
     for (class_name, class) in classes {
         let class_name_ref = format!("{}Ref", class_name);
         let class_name_ref_mut = format!("{}RefMut", class_name);
 
-        write!(writer,
-               r#"
+        write!(
+            writer,
+            r#"
     public class {class}
     {{
         internal IntPtr ptr;"#,
-               class = class_name_ref)?;
+            class = class_name_ref
+        )?;
 
         for function in &class.shared_fns {
             write_fn(&mut writer, function, &class_name_ref)?;
         }
 
         if class_name == "SharedTimer" {
-            write!(writer,
-                   "{}",
-                   r#"
+            write!(
+                writer,
+                "{}",
+                r#"
         public void ReadWith(Action<TimerRef> action)
         {
             using (var timerLock = Read())
@@ -227,11 +255,13 @@ namespace LiveSplitCore
             {
                 action(timerLock.Timer());
             }
-        }"#)?;
+        }"#
+            )?;
         }
 
-        write!(writer,
-               r#"
+        write!(
+            writer,
+            r#"
         internal {base_class}(IntPtr ptr)
         {{
             this.ptr = ptr;
@@ -240,21 +270,25 @@ namespace LiveSplitCore
 
     public class {class} : {base_class}
     {{"#,
-               class = class_name_ref_mut,
-               base_class = class_name_ref)?;
+            class = class_name_ref_mut,
+            base_class = class_name_ref
+        )?;
 
         for function in &class.mut_fns {
             write_fn(&mut writer, function, &class_name_ref_mut)?;
         }
 
-        write!(writer,
-               r#"
+        write!(
+            writer,
+            r#"
         internal {class}(IntPtr ptr) : base(ptr) {{ }}
     }}"#,
-               class = class_name_ref_mut)?;
+            class = class_name_ref_mut
+        )?;
 
-        write!(writer,
-               r#"
+        write!(
+            writer,
+            r#"
 
     public class {class} : {base_class}, IDisposable
     {{
@@ -262,18 +296,22 @@ namespace LiveSplitCore
         {{
             if (ptr != IntPtr.Zero)
             {{"#,
-               class = class_name,
-               base_class = class_name_ref_mut)?;
+            class = class_name,
+            base_class = class_name_ref_mut
+        )?;
 
         if let Some(function) = class.own_fns.iter().find(|f| f.method == "drop") {
-            write!(writer,
-                   r#"
+            write!(
+                writer,
+                r#"
                 LiveSplitCoreNative.{}(this.ptr);"#,
-                   function.name)?;
+                function.name
+            )?;
         }
 
-        write!(writer,
-               r#"
+        write!(
+            writer,
+            r#"
                 ptr = IntPtr.Zero;
             }}
         }}
@@ -286,7 +324,8 @@ namespace LiveSplitCore
             Drop();
             GC.SuppressFinalize(this);
         }}"#,
-               class = class_name)?;
+            class = class_name
+        )?;
 
         for function in class.static_fns.iter().chain(class.own_fns.iter()) {
             if function.method != "drop" {
@@ -295,9 +334,10 @@ namespace LiveSplitCore
         }
 
         if class_name == "Run" {
-            write!(writer,
-                   "{}",
-                   r#"
+            write!(
+                writer,
+                "{}",
+                r#"
         public static Run Parse(Stream stream)
         {
             var data = new byte[stream.Length];
@@ -312,56 +352,67 @@ namespace LiveSplitCore
             {
                 Marshal.FreeHGlobal(pnt);
             }
-        }"#)?;
+        }"#
+            )?;
         }
 
-        writeln!(writer,
-                 r#"
+        writeln!(
+            writer,
+            r#"
         internal {class}(IntPtr ptr) : base(ptr) {{ }}
     }}"#,
-                 class = class_name)?;
+            class = class_name
+        )?;
     }
 
-    write!(writer,
-           r#"
+    write!(
+        writer,
+        r#"
     public static class LiveSplitCoreNative
-    {{"#)?;
+    {{"#
+    )?;
 
     for class in classes.values() {
         for function in class
-                .static_fns
-                .iter()
-                .chain(class.own_fns.iter())
-                .chain(class.shared_fns.iter())
-                .chain(class.mut_fns.iter()) {
-            write!(writer,
-                   r#"
+            .static_fns
+            .iter()
+            .chain(class.own_fns.iter())
+            .chain(class.shared_fns.iter())
+            .chain(class.mut_fns.iter())
+        {
+            write!(
+                writer,
+                r#"
         [DllImport("livesplit_core", CallingConvention = CallingConvention.Cdecl)]
         public static extern {} {}("#,
-                   get_ll_type(&function.output, true),
-                   &function.name)?;
+                get_ll_type(&function.output, true),
+                &function.name
+            )?;
 
             for (i, &(ref name, ref typ)) in function.inputs.iter().enumerate() {
                 if i != 0 {
                     write!(writer, ", ")?;
                 }
-                write!(writer,
-                       "{} {}",
-                       get_ll_type(typ, false),
-                       if name == "this" {
-                           String::from("self")
-                       } else {
-                           name.clone()
-                       })?;
+                write!(
+                    writer,
+                    "{} {}",
+                    get_ll_type(typ, false),
+                    if name == "this" {
+                        String::from("self")
+                    } else {
+                        name.clone()
+                    }
+                )?;
             }
 
             write!(writer, ");")?;
         }
     }
 
-    writeln!(writer,
-             "{}",
-             r#"
+    writeln!(
+        writer,
+        "{}",
+        r#"
     }
 
     public class LSCoreString : SafeHandle
@@ -387,5 +438,6 @@ namespace LiveSplitCore
             return true;
         }
     }
-}"#)
+}"#
+    )
 }

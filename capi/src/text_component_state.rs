@@ -20,8 +20,9 @@ pub unsafe extern "C" fn TextComponentState_left(this: *const TextComponentState
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn TextComponentState_right(this: *const TextComponentState)
-                                                  -> *const c_char {
+pub unsafe extern "C" fn TextComponentState_right(
+    this: *const TextComponentState,
+) -> *const c_char {
     if let &TextComponentState(Text::Split(_, ref right)) = acc(this) {
         output_str(right)
     } else {
@@ -30,8 +31,9 @@ pub unsafe extern "C" fn TextComponentState_right(this: *const TextComponentStat
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn TextComponentState_center(this: *const TextComponentState)
-                                                   -> *const c_char {
+pub unsafe extern "C" fn TextComponentState_center(
+    this: *const TextComponentState,
+) -> *const c_char {
     if let &TextComponentState(Text::Center(ref center)) = acc(this) {
         output_str(center)
     } else {

@@ -10,13 +10,15 @@ pub unsafe extern "C" fn CurrentPaceComponentState_drop(this: OwnedCurrentPaceCo
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn CurrentPaceComponentState_text(this: *const CurrentPaceComponentState)
-                                                        -> *const c_char {
+pub unsafe extern "C" fn CurrentPaceComponentState_text(
+    this: *const CurrentPaceComponentState,
+) -> *const c_char {
     output_str(&acc(this).text)
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn CurrentPaceComponentState_time(this: *const CurrentPaceComponentState)
-                                                        -> *const c_char {
+pub unsafe extern "C" fn CurrentPaceComponentState_time(
+    this: *const CurrentPaceComponentState,
+) -> *const c_char {
     output_str(&acc(this).time)
 }

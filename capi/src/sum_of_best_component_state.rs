@@ -10,13 +10,15 @@ pub unsafe extern "C" fn SumOfBestComponentState_drop(this: OwnedSumOfBestCompon
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn SumOfBestComponentState_text(this: *const SumOfBestComponentState)
-                                                      -> *const c_char {
+pub unsafe extern "C" fn SumOfBestComponentState_text(
+    this: *const SumOfBestComponentState,
+) -> *const c_char {
     output_str(&acc(this).text)
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn SumOfBestComponentState_time(this: *const SumOfBestComponentState)
-                                                      -> *const c_char {
+pub unsafe extern "C" fn SumOfBestComponentState_time(
+    this: *const SumOfBestComponentState,
+) -> *const c_char {
     output_str(&acc(this).time)
 }

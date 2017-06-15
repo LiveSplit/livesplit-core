@@ -44,11 +44,11 @@ pub enum SelectionState {
 }
 
 impl State {
-    pub fn write_json<W>(&self, mut writer: W) -> JsonResult<()>
+    pub fn write_json<W>(&self, writer: W) -> JsonResult<()>
     where
         W: Write,
     {
-        to_writer(&mut writer, self)
+        to_writer(writer, self)
     }
 }
 

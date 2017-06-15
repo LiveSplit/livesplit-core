@@ -11,19 +11,22 @@ pub unsafe extern "C" fn TimerComponentState_drop(this: OwnedTimerComponentState
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn TimerComponentState_time(this: *const TimerComponentState)
-                                                  -> *const c_char {
+pub unsafe extern "C" fn TimerComponentState_time(
+    this: *const TimerComponentState,
+) -> *const c_char {
     output_str(&acc(this).time)
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn TimerComponentState_fraction(this: *const TimerComponentState)
-                                                      -> *const c_char {
+pub unsafe extern "C" fn TimerComponentState_fraction(
+    this: *const TimerComponentState,
+) -> *const c_char {
     output_str(&acc(this).fraction)
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn TimerComponentState_color(this: *const TimerComponentState)
-                                                   -> *const c_char {
+pub unsafe extern "C" fn TimerComponentState_color(
+    this: *const TimerComponentState,
+) -> *const c_char {
     output_str_with(|f| write!(f, "{:?}", acc(this).color).unwrap())
 }

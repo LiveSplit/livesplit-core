@@ -53,16 +53,20 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
     let return_type = get_hl_type(&function.output);
 
     if is_static {
-        write!(writer,
-               r#"
+        write!(
+            writer,
+            r#"
     @staticmethod
     def {}("#,
-               function.method)?;
+            function.method
+        )?;
     } else {
-        write!(writer,
-               r#"
+        write!(
+            writer,
+            r#"
     def {}("#,
-               function.method)?;
+            function.method
+        )?;
     }
 
     for (i, &(ref name, _)) in function.inputs.iter().enumerate() {
@@ -72,17 +76,21 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         write!(writer, "{}", map_var(name))?;
     }
 
-    write!(writer,
-           r#"):
-        "#)?;
+    write!(
+        writer,
+        r#"):
+        "#
+    )?;
 
     for &(ref name, ref typ) in function.inputs.iter() {
         if typ.is_custom {
-            write!(writer,
-                   r#"if {name}.ptr == None:
+            write!(
+                writer,
+                r#"if {name}.ptr == None:
             raise Exception("{name} is disposed")
         "#,
-                   name = map_var(name))?;
+                name = map_var(name)
+            )?;
         }
     }
 
@@ -100,15 +108,17 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         if i != 0 {
             write!(writer, ", ")?;
         }
-        write!(writer,
-               "{}",
-               if name == "this" {
-                   "self.ptr".to_string()
-               } else if typ.is_custom {
-            format!("{}.ptr", name)
-        } else {
-            name.to_string()
-        })?;
+        write!(
+            writer,
+            "{}",
+            if name == "this" {
+                "self.ptr".to_string()
+            } else if typ.is_custom {
+                format!("{}.ptr", name)
+            } else {
+                name.to_string()
+            }
+        )?;
     }
 
     write!(writer, ")")?;
@@ -119,28 +129,36 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
 
     for &(ref name, ref typ) in function.inputs.iter() {
         if typ.is_custom && typ.kind == TypeKind::Value {
-            write!(writer,
-                   r#"
+            write!(
+                writer,
+                r#"
         {}.ptr = None"#,
-                   map_var(name))?;
+                map_var(name)
+            )?;
         }
     }
 
     if has_return_type {
         if function.output.is_custom {
-            write!(writer,
-                   r#"
+            write!(
+                writer,
+                r#"
         if result.ptr == None:
-            return None"#)?;
+            return None"#
+            )?;
         }
-        write!(writer,
-               r#"
-        return result"#)?;
+        write!(
+            writer,
+            r#"
+        return result"#
+        )?;
     }
 
-    write!(writer,
-           r#"
-"#)?;
+    write!(
+        writer,
+        r#"
+"#
+    )?;
 
     Ok(())
 }
@@ -161,25 +179,30 @@ livesplit_core_native = ctypes.cdll.LoadLibrary(prefix + "livesplit_core" + exte
 
     for class in classes.values() {
         for function in class
-                .static_fns
-                .iter()
-                .chain(class.own_fns.iter())
-                .chain(class.shared_fns.iter())
-                .chain(class.mut_fns.iter()) {
-            write!(writer,
-                   r#"
+            .static_fns
+            .iter()
+            .chain(class.own_fns.iter())
+            .chain(class.shared_fns.iter())
+            .chain(class.mut_fns.iter())
+        {
+            write!(
+                writer,
+                r#"
 livesplit_core_native.{}.argtypes = ("#,
-                   function.name)?;
+                function.name
+            )?;
 
             for &(_, ref typ) in &function.inputs {
                 write!(writer, "{}, ", get_ll_type(typ))?;
             }
 
-            write!(writer,
-                   r#")
+            write!(
+                writer,
+                r#")
 livesplit_core_native.{}.restype = {}"#,
-                   function.name,
-                   get_ll_type(&function.output))?;
+                function.name,
+                get_ll_type(&function.output)
+            )?;
         }
     }
 
@@ -189,48 +212,57 @@ livesplit_core_native.{}.restype = {}"#,
         let class_name_ref = format!("{}Ref", class_name);
         let class_name_ref_mut = format!("{}RefMut", class_name);
 
-        write!(writer,
-               r#"
+        write!(
+            writer,
+            r#"
 class {class}:"#,
-               class = class_name_ref)?;
+            class = class_name_ref
+        )?;
 
         for function in &class.shared_fns {
             write_fn(&mut writer, function)?;
         }
 
-        write!(writer,
-               r#"
+        write!(
+            writer,
+            r#"
     def __init__(self, ptr):
         self.ptr = ptr
 
 class {class}({base_class}):"#,
-               class = class_name_ref_mut,
-               base_class = class_name_ref)?;
+            class = class_name_ref_mut,
+            base_class = class_name_ref
+        )?;
 
         for function in &class.mut_fns {
             write_fn(&mut writer, function)?;
         }
 
-        write!(writer,
-               r#"
+        write!(
+            writer,
+            r#"
     def __init__(self, ptr):
         self.ptr = ptr
 
 class {class}({base_class}):
     def drop(self):
         if self.ptr != None:"#,
-               class = class_name,
-               base_class = class_name_ref_mut)?;
+            class = class_name,
+            base_class = class_name_ref_mut
+        )?;
 
         if let Some(function) = class.own_fns.iter().find(|f| f.method == "drop") {
-            write!(writer,
-                   r#"
+            write!(
+                writer,
+                r#"
             livesplit_core_native.{}(self.ptr)"#,
-                   function.name)?;
+                function.name
+            )?;
         }
 
-        write!(writer,
-               r#"
+        write!(
+            writer,
+            r#"
             self.ptr = None
 
     def __del__(self):
@@ -241,7 +273,8 @@ class {class}({base_class}):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.drop()
-"#)?;
+"#
+        )?;
 
         for function in class.static_fns.iter().chain(class.own_fns.iter()) {
             if function.method != "drop" {
@@ -250,21 +283,25 @@ class {class}({base_class}):
         }
 
         if class_name == "Run" {
-            writeln!(writer,
-                     r#"
+            writeln!(
+                writer,
+                r#"
     @staticmethod
     def parse_file(file):
         bytes = bytearray(file.read())
         bufferType = c_byte * len(bytes)
         buffer = bufferType(*bytes)
-        return Run.parse(buffer, len(bytes))"#)?;
+        return Run.parse(buffer, len(bytes))"#
+            )?;
         }
 
-        write!(writer,
-               r#"
+        write!(
+            writer,
+            r#"
     def __init__(self, ptr):
         self.ptr = ptr
-"#)?;
+"#
+        )?;
     }
 
     Ok(())

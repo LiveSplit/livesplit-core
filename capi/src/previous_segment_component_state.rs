@@ -6,23 +6,29 @@ use libc::c_char;
 pub type OwnedPreviousSegmentComponentState = *mut PreviousSegmentComponentState;
 
 #[no_mangle]
-pub unsafe extern "C" fn PreviousSegmentComponentState_drop(this: OwnedPreviousSegmentComponentState){
+pub unsafe extern "C" fn PreviousSegmentComponentState_drop(
+    this: OwnedPreviousSegmentComponentState,
+) {
     own_drop(this);
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn PreviousSegmentComponentState_text(this: *const PreviousSegmentComponentState)
--> *const c_char{
+pub unsafe extern "C" fn PreviousSegmentComponentState_text(
+    this: *const PreviousSegmentComponentState,
+) -> *const c_char {
     output_str(&acc(this).text)
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn PreviousSegmentComponentState_time(this: *const PreviousSegmentComponentState)
--> *const c_char{
+pub unsafe extern "C" fn PreviousSegmentComponentState_time(
+    this: *const PreviousSegmentComponentState,
+) -> *const c_char {
     output_str(&acc(this).time)
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn PreviousSegmentComponentState_color(this: *const PreviousSegmentComponentState) -> *const c_char{
+pub unsafe extern "C" fn PreviousSegmentComponentState_color(
+    this: *const PreviousSegmentComponentState,
+) -> *const c_char {
     output_str_with(|f| write!(f, "{:?}", acc(this).color).unwrap())
 }

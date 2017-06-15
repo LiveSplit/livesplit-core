@@ -10,7 +10,8 @@ pub unsafe extern "C" fn SegmentHistoryElement_index(this: *const SegmentHistory
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn SegmentHistoryElement_time(this: *const SegmentHistoryElement)
-                                                    -> *const Time {
+pub unsafe extern "C" fn SegmentHistoryElement_time(
+    this: *const SegmentHistoryElement,
+) -> *const Time {
     output_time(acc(this).1)
 }

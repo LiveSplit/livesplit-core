@@ -13,7 +13,7 @@ pub struct Component {
     settings: Settings,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Settings {
     pub live_graph: bool,
 }
@@ -34,11 +34,11 @@ impl Default for Settings {
 }
 
 impl State {
-    pub fn write_json<W>(&self, mut writer: W) -> Result<()>
+    pub fn write_json<W>(&self, writer: W) -> Result<()>
     where
         W: Write,
     {
-        to_writer(&mut writer, self)
+        to_writer(writer, self)
     }
 }
 
@@ -54,6 +54,17 @@ struct DrawInfo {
 impl Component {
     pub fn new() -> Self {
         Default::default()
+    }
+
+    pub fn with_settings(settings: Settings) -> Self {
+        Self {
+            settings,
+            ..Default::default()
+        }
+    }
+
+    pub fn settings(&self) -> &Settings {
+        &self.settings
     }
 
     pub fn settings_mut(&mut self) -> &mut Settings {

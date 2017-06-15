@@ -25,9 +25,10 @@ pub unsafe extern "C" fn Segment_icon(this: *const Segment) -> *const c_char {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Segment_comparison(this: *const Segment,
-                                            comparison: *const c_char)
-                                            -> *const Time {
+pub unsafe extern "C" fn Segment_comparison(
+    this: *const Segment,
+    comparison: *const c_char,
+) -> *const Time {
     output_time(acc(this).comparison(str(comparison)))
 }
 
