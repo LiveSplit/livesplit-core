@@ -40,8 +40,9 @@ impl Image {
     }
 
     pub fn from_file<P, B>(path: P, mut buf: B) -> io::Result<Image>
-        where P: AsRef<Path>,
-              B: AsMut<Vec<u8>>
+    where
+        P: AsRef<Path>,
+        B: AsMut<Vec<u8>>,
     {
         let buf = buf.as_mut();
         buf.clear();

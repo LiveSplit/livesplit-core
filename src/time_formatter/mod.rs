@@ -23,7 +23,9 @@ use std::cmp::min;
 pub trait TimeFormatter<'a> {
     type Inner: Display;
 
-    fn format<T>(&'a self, time: T) -> Self::Inner where T: Into<Option<TimeSpan>>;
+    fn format<T>(&'a self, time: T) -> Self::Inner
+    where
+        T: Into<Option<TimeSpan>>;
 }
 
 const EPSILON: f64 = 0.0000001;

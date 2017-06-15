@@ -38,16 +38,18 @@ impl Time {
     }
 
     #[inline]
-    pub fn with_timing_method(mut self,
-                              timing_method: TimingMethod,
-                              time: Option<TimeSpan>)
-                              -> Self {
+    pub fn with_timing_method(
+        mut self,
+        timing_method: TimingMethod,
+        time: Option<TimeSpan>,
+    ) -> Self {
         self[timing_method] = time;
         self
     }
 
     pub fn op<F>(a: Time, b: Time, mut f: F) -> Time
-        where F: FnMut(TimeSpan, TimeSpan) -> TimeSpan
+    where
+        F: FnMut(TimeSpan, TimeSpan) -> TimeSpan,
     {
         Time {
             real_time: TimeSpan::option_op(a.real_time, b.real_time, &mut f),

@@ -15,7 +15,8 @@ pub struct State {
 
 impl State {
     pub fn write_json<W>(&self, mut writer: W) -> Result<()>
-        where W: Write
+    where
+        W: Write,
     {
         to_writer(&mut writer, self)
     }
@@ -27,10 +28,12 @@ impl Component {
     }
 
     pub fn state(&self, timer: &Timer) -> State {
-        let time = calculate_best(timer.run().segments(),
-                                  false,
-                                  true,
-                                  timer.current_timing_method());
+        let time = calculate_best(
+            timer.run().segments(),
+            false,
+            true,
+            timer.current_timing_method(),
+        );
 
         State {
             text: String::from("Sum of Best Segments"),

@@ -50,7 +50,8 @@ impl Run {
 
     #[inline]
     pub fn set_game_name<S>(&mut self, name: S)
-        where S: AsRef<str>
+    where
+        S: AsRef<str>,
     {
         self.game_name.clear();
         self.game_name.push_str(name.as_ref());
@@ -73,7 +74,8 @@ impl Run {
 
     #[inline]
     pub fn set_category_name<S>(&mut self, name: S)
-        where S: AsRef<str>
+    where
+        S: AsRef<str>,
     {
         self.category_name.clear();
         self.category_name.push_str(name.as_ref());
@@ -177,11 +179,13 @@ impl Run {
         self.has_changed = true;
     }
 
-    pub fn add_attempt(&mut self,
-                       time: Time,
-                       started: Option<AtomicDateTime>,
-                       ended: Option<AtomicDateTime>,
-                       pause_time: Option<TimeSpan>) {
+    pub fn add_attempt(
+        &mut self,
+        time: Time,
+        started: Option<AtomicDateTime>,
+        ended: Option<AtomicDateTime>,
+        pause_time: Option<TimeSpan>,
+    ) {
         let index = self.attempt_history
             .iter()
             .map(Attempt::index)
@@ -191,12 +195,14 @@ impl Run {
         self.add_attempt_with_index(time, index, started, ended, pause_time);
     }
 
-    pub fn add_attempt_with_index(&mut self,
-                                  time: Time,
-                                  index: i32,
-                                  started: Option<AtomicDateTime>,
-                                  ended: Option<AtomicDateTime>,
-                                  pause_time: Option<TimeSpan>) {
+    pub fn add_attempt_with_index(
+        &mut self,
+        time: Time,
+        index: i32,
+        started: Option<AtomicDateTime>,
+        ended: Option<AtomicDateTime>,
+        pause_time: Option<TimeSpan>,
+    ) {
         let attempt = Attempt::new(index, time, started, ended, pause_time);
         self.attempt_history.push(attempt);
     }
@@ -227,9 +233,9 @@ impl Run {
         extended_name
             .chars()
             .filter(|&c| {
-                        c != '\\' && c != '/' && c != ':' && c != '*' && c != '?' &&
-                        c != '"' && c != '<' && c != '>' && c != '|'
-                    })
+                c != '\\' && c != '/' && c != ':' && c != '*' && c != '?' && c != '"' &&
+                    c != '<' && c != '>' && c != '|'
+            })
             .collect()
     }
 
@@ -253,11 +259,12 @@ impl Run {
         name
     }
 
-    pub fn extended_category_name(&self,
-                                  show_region: bool,
-                                  show_platform: bool,
-                                  show_variables: bool)
-                                  -> Cow<str> {
+    pub fn extended_category_name(
+        &self,
+        show_region: bool,
+        show_platform: bool,
+        show_variables: bool,
+    ) -> Cow<str> {
         let mut category_name: Cow<str> = Cow::Borrowed(&self.category_name);
         let mut after_parenthesis = "";
 
@@ -268,10 +275,10 @@ impl Run {
         let mut is_empty = true;
         let mut has_pushed = false;
 
-        if let Some((i, u)) =
-            self.category_name
-                .find('(')
-                .and_then(|i| self.category_name[i..].find(')').map(|u| (i, i + u))) {
+        if let Some((i, u)) = self.category_name.find('(').and_then(|i| {
+            self.category_name[i..].find(')').map(|u| (i, i + u))
+        })
+        {
             category_name = Cow::Borrowed(&self.category_name[..u]);
             is_empty = u == i + 1;
             after_parenthesis = &self.category_name[u..];
@@ -358,21 +365,25 @@ impl Run {
             for run_index in segment.segment_history().min_index()..max_index {
                 if let Some(mut history_time) = segment.segment_history().get(run_index) {
                     // Make sure no times in the history are lower than the Best Segment
-                    if TimeSpan::option_op(segment.best_segment_time()[method],
-                                           history_time[method],
-                                           |b, h| h < b)
-                               .unwrap_or(false) {
+                    if TimeSpan::option_op(
+                        segment.best_segment_time()[method],
+                        history_time[method],
+                        |b, h| h < b,
+                    ).unwrap_or(false)
+                    {
                         history_time[method] = segment.best_segment_time()[method];
                     }
 
                     // If the Best Segment is gone, clear the history
                     if segment.best_segment_time()[method].is_none() &&
-                       history_time[method].is_some() {
+                        history_time[method].is_some()
+                    {
                         segment.segment_history_mut().remove(run_index);
                     } else {
-                        segment
-                            .segment_history_mut()
-                            .insert(run_index, history_time);
+                        segment.segment_history_mut().insert(
+                            run_index,
+                            history_time,
+                        );
                     }
                 }
             }
@@ -481,8 +492,8 @@ impl Run {
             for segment in self.segments_mut() {
                 // Import the PB splits into the history
                 let pb_time = segment.personal_best_split_time()[timing_method];
-                let time = Time::new()
-                    .with_timing_method(timing_method, pb_time.map(|p| p - prev_time));
+                let time =
+                    Time::new().with_timing_method(timing_method, pb_time.map(|p| p - prev_time));
                 segment.segment_history_mut().insert(index, time);
 
                 if let Some(time) = pb_time {
@@ -496,18 +507,19 @@ impl Run {
         let best_segment_time = self.segments[segment_index].best_segment_time();
         if best_segment_time.real_time.is_some() || best_segment_time.game_time.is_some() {
             let index = self.min_segment_history_index() - 1;
-            self.segments[segment_index]
-                .segment_history_mut()
-                .insert(index, best_segment_time);
+            self.segments[segment_index].segment_history_mut().insert(
+                index,
+                best_segment_time,
+            );
         }
     }
 
     pub fn update_segment_history(&mut self, current_split_index: isize) {
         let mut last_split_time = Time::zero();
 
-        let segments = self.segments
-            .iter_mut()
-            .take(max(0, current_split_index) as usize);
+        let segments = self.segments.iter_mut().take(
+            max(0, current_split_index) as usize,
+        );
         let index = self.attempt_history.last().unwrap().index();
 
         for segment in segments {

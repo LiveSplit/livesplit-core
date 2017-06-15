@@ -31,7 +31,8 @@ impl<'a> TimeFormatter<'a> for Regular {
     type Inner = Inner;
 
     fn format<T>(&self, time: T) -> Self::Inner
-        where T: Into<Option<TimeSpan>>
+    where
+        T: Into<Option<TimeSpan>>,
     {
         Inner {
             time: time.into(),
@@ -49,16 +50,20 @@ impl Display for Inner {
             let minutes = total_minutes % 60;
             let hours = total_minutes / 60;
             if hours > 0 {
-                write!(f,
-                       "{}:{:02}:{}",
-                       hours,
-                       minutes,
-                       self.accuracy.format_seconds(seconds, true))
+                write!(
+                    f,
+                    "{}:{:02}:{}",
+                    hours,
+                    minutes,
+                    self.accuracy.format_seconds(seconds, true)
+                )
             } else {
-                write!(f,
-                       "{}:{}",
-                       minutes,
-                       self.accuracy.format_seconds(seconds, true))
+                write!(
+                    f,
+                    "{}:{}",
+                    minutes,
+                    self.accuracy.format_seconds(seconds, true)
+                )
             }
         } else {
             write!(f, "{}", DASH)

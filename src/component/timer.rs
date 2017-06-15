@@ -16,7 +16,8 @@ pub struct State {
 
 impl State {
     pub fn write_json<W>(&self, mut writer: W) -> Result<()>
-        where W: Write
+    where
+        W: Write,
     {
         to_writer(&mut writer, self)
     }
@@ -31,32 +32,29 @@ impl Component {
 
         let color = match timer.current_phase() {
             TimerPhase::Running if time >= TimeSpan::zero() => {
-                let pb_split_time = timer
-                    .current_split()
-                    .unwrap()
-                    .comparison(current_comparison)
+                let pb_split_time = timer.current_split().unwrap().comparison(
+                    current_comparison,
+                )
                     [method];
                 if let Some(pb_split_time) = pb_split_time {
-                    split_color(timer,
-                                Some(time - pb_split_time),
-                                timer.current_split_index() as usize,
-                                true,
-                                false,
-                                current_comparison,
-                                method)
-                        .or(Color::AheadGainingTime)
+                    split_color(
+                        timer,
+                        Some(time - pb_split_time),
+                        timer.current_split_index() as usize,
+                        true,
+                        false,
+                        current_comparison,
+                        method,
+                    ).or(Color::AheadGainingTime)
                 } else {
                     Color::AheadGainingTime
                 }
             }
             TimerPhase::Paused => Color::Paused,
             TimerPhase::Ended => {
-                let pb_time = timer
-                    .run()
-                    .segments()
-                    .last()
-                    .unwrap()
-                    .comparison(current_comparison)
+                let pb_time = timer.run().segments().last().unwrap().comparison(
+                    current_comparison,
+                )
                     [method];
                 if pb_time.map_or(true, |t| time < t) {
                     Color::PersonalBest

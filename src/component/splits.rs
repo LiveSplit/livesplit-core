@@ -51,7 +51,8 @@ impl Default for Settings {
 
 impl State {
     pub fn write_json<W>(&self, mut writer: W) -> Result<()>
-        where W: Write
+    where
+        W: Write,
     {
         to_writer(&mut writer, self)
     }
@@ -86,22 +87,27 @@ impl Component {
         } else {
             1
         };
-        let skip_count = min(max(0,
-                                 current_split as isize -
-                                 (self.settings.visual_split_count as isize - 2 -
-                                  self.settings.split_preview_count as isize +
-                                  always_show_last_split)),
-                             timer.run().len() as isize -
-                             self.settings.visual_split_count as isize);
-        self.scroll_offset = min(max(self.scroll_offset, -skip_count),
-                                 timer.run().len() as isize - skip_count -
-                                 self.settings.visual_split_count as isize);
+        let skip_count = min(
+            max(
+                0,
+                current_split as isize -
+                    (self.settings.visual_split_count as isize - 2 -
+                         self.settings.split_preview_count as isize +
+                         always_show_last_split),
+            ),
+            timer.run().len() as isize - self.settings.visual_split_count as isize,
+        );
+        self.scroll_offset = min(
+            max(self.scroll_offset, -skip_count),
+            timer.run().len() as isize - skip_count -
+                self.settings.visual_split_count as isize,
+        );
         let skip_count = max(0, skip_count + self.scroll_offset) as usize;
         let take_count = self.settings.visual_split_count + always_show_last_split as usize - 1;
         let always_show_last_split = self.settings.always_show_last_split;
 
         let show_final_separator = self.settings.separator_last_split && always_show_last_split &&
-                                   skip_count + take_count + 1 < timer.run().len();
+            skip_count + take_count + 1 < timer.run().len();
 
         State {
             splits: timer
@@ -112,9 +118,9 @@ impl Component {
                 .skip(skip_count)
                 .zip(self.icon_ids.iter_mut())
                 .filter(|&((i, _), _)| {
-                            i - skip_count < take_count ||
-                            (always_show_last_split && i + 1 == timer.run().len())
-                        })
+                    i - skip_count < take_count ||
+                        (always_show_last_split && i + 1 == timer.run().len())
+                })
                 .map(|((i, segment), icon_id)| {
                     let split = segment.split_time()[method];
                     let comparison_time = segment.comparison(comparison)[method];
@@ -122,11 +128,17 @@ impl Component {
                     let (time, delta, color) = if current_split > i as isize {
                         let delta =
                             TimeSpan::option_op(split, comparison_time, |split, ct| split - ct);
-                        (split, delta, split_color(timer, delta, i, true, true, comparison, method))
+                        (
+                            split,
+                            delta,
+                            split_color(timer, delta, i, true, true, comparison, method),
+                        )
                     } else if current_split == i as isize {
-                        (comparison_time,
-                         analysis::check_live_delta(timer, true, comparison, method),
-                         Color::Default)
+                        (
+                            comparison_time,
+                            analysis::check_live_delta(timer, true, comparison, method),
+                            Color::Default,
+                        )
                     } else {
                         (comparison_time, None, Color::Default)
                     };

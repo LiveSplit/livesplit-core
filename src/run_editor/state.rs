@@ -45,7 +45,8 @@ pub enum SelectionState {
 
 impl State {
     pub fn write_json<W>(&self, mut writer: W) -> JsonResult<()>
-        where W: Write
+    where
+        W: Write,
     {
         to_writer(&mut writer, self)
     }
@@ -107,14 +108,14 @@ impl RunEditor {
             };
 
             segments.push(Segment {
-                              icon_change: icon_change,
-                              name: name,
-                              split_time: split_time,
-                              segment_time: segment_time,
-                              best_segment_time: best_segment_time,
-                              comparison_times: comparison_times,
-                              selected: selected,
-                          });
+                icon_change: icon_change,
+                name: name,
+                split_time: split_time,
+                segment_time: segment_time,
+                best_segment_time: best_segment_time,
+                comparison_times: comparison_times,
+                selected: selected,
+            });
         }
 
         State {

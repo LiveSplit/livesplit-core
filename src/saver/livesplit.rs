@@ -100,10 +100,12 @@ pub fn save<W: Write>(run: &Run, mut writer: W) -> Result<()> {
     parent.append_child(metadata);
 
     add_element(doc, &parent, "Offset", &time_span(run.offset()));
-    add_element(doc,
-                &parent,
-                "AttemptCount",
-                &run.attempt_count().to_string());
+    add_element(
+        doc,
+        &parent,
+        "AttemptCount",
+        &run.attempt_count().to_string(),
+    );
 
     let attempt_history = doc.create_element("AttemptHistory");
     for attempt in run.attempt_history() {
@@ -112,8 +114,10 @@ pub fn save<W: Write>(run: &Run, mut writer: W) -> Result<()> {
 
         if let Some(started) = attempt.started() {
             element.set_attribute_value("started", &fmt_date(started.time));
-            element.set_attribute_value("isStartedSynced",
-                                        fmt_bool(started.synced_with_atomic_clock));
+            element.set_attribute_value(
+                "isStartedSynced",
+                fmt_bool(started.synced_with_atomic_clock),
+            );
         }
 
         if let Some(ended) = attempt.ended() {

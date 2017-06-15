@@ -59,9 +59,11 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
         let line = line?;
         let mut splits = line.splitn(5, '-');
 
-        let segment_name = replace(splits.next().ok_or(Error::ExpectedSplitName)?,
-                                   r#""?""#,
-                                   "-");
+        let segment_name = replace(
+            splits.next().ok_or(Error::ExpectedSplitName)?,
+            r#""?""#,
+            "-",
+        );
         let mut segment = Segment::new(segment_name);
 
         let split_time = parse_time(splits.next().ok_or(Error::ExpectedSplitTime)?)?;

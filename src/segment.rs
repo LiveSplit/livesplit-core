@@ -14,7 +14,8 @@ pub struct Segment {
 
 impl Segment {
     pub fn new<S>(name: S) -> Self
-        where S: Into<String>
+    where
+        S: Into<String>,
     {
         Segment {
             name: name.into(),
@@ -29,7 +30,8 @@ impl Segment {
 
     #[inline]
     pub fn set_name<S>(&mut self, name: S)
-        where S: AsRef<str>
+    where
+        S: AsRef<str>,
     {
         self.name.clear();
         self.name.push_str(name.as_ref());
@@ -52,9 +54,9 @@ impl Segment {
 
     #[inline]
     pub fn comparison_mut(&mut self, comparison: &str) -> &mut Time {
-        self.comparisons
-            .entry(comparison.into())
-            .or_insert_with(Time::default)
+        self.comparisons.entry(comparison.into()).or_insert_with(
+            Time::default,
+        )
     }
 
     #[inline]
@@ -66,10 +68,11 @@ impl Segment {
     }
 
     #[inline]
-    pub fn comparison_timing_method(&self,
-                                    comparison: &str,
-                                    method: TimingMethod)
-                                    -> Option<TimeSpan> {
+    pub fn comparison_timing_method(
+        &self,
+        comparison: &str,
+        method: TimingMethod,
+    ) -> Option<TimeSpan> {
         self.comparisons.get(comparison).and_then(|t| t[method])
     }
 

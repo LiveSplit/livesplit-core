@@ -42,11 +42,12 @@ fn time(element: &Element, buf: &mut String) -> Result<Time> {
     Ok(RealTime(Some(time_span(element, buf)?)).into())
 }
 
-fn image<'b>(node: &Element,
-             buf: &mut Vec<u8>,
-             buf2: &'b mut Vec<u8>,
-             str_buf: &mut String)
-             -> Result<&'b [u8]> {
+fn image<'b>(
+    node: &Element,
+    buf: &mut Vec<u8>,
+    buf2: &'b mut Vec<u8>,
+    str_buf: &mut String,
+) -> Result<&'b [u8]> {
     let node = child(&node, "icon")?;
     let node = child(&node, "javax.swing.ImageIcon")?;
 
@@ -109,8 +110,10 @@ pub fn parse<R: Read>(mut source: R) -> Result<Run> {
     if let Ok(node) = child(&node, "region") {
         run.metadata_mut().set_region_name(text(&node, buf));
     }
-    run.metadata_mut()
-        .set_emulator_usage(text(&child(&node, "emulated")?, buf) == "true");
+    run.metadata_mut().set_emulator_usage(
+        text(&child(&node, "emulated")?, buf) ==
+            "true",
+    );
 
     let segments = child(&node, "segments")?;
 

@@ -23,7 +23,8 @@ impl RunMetadata {
 
     #[inline]
     pub fn set_run_id<S>(&mut self, id: S)
-        where S: AsRef<str>
+    where
+        S: AsRef<str>,
     {
         self.run_id.clear();
         self.run_id.push_str(id.as_ref());
@@ -36,7 +37,8 @@ impl RunMetadata {
 
     #[inline]
     pub fn set_platform_name<S>(&mut self, name: S)
-        where S: AsRef<str>
+    where
+        S: AsRef<str>,
     {
         self.platform_name.clear();
         self.platform_name.push_str(name.as_ref());
@@ -59,15 +61,17 @@ impl RunMetadata {
 
     #[inline]
     pub fn set_region_name<S>(&mut self, region_name: S)
-        where S: AsRef<str>
+    where
+        S: AsRef<str>,
     {
         self.region_name.clear();
         self.region_name.push_str(region_name.as_ref());
     }
 
     pub fn add_variable<N, V>(&mut self, name: N, value: V)
-        where N: Into<String>,
-              V: Into<String>
+    where
+        N: Into<String>,
+        V: Into<String>,
     {
         self.variables.insert(name.into(), value.into());
     }

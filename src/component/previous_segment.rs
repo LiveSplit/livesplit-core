@@ -15,7 +15,8 @@ pub struct State {
 
 impl State {
     pub fn write_json<W>(&self, mut writer: W) -> Result<()>
-        where W: Write
+    where
+        W: Write,
     {
         to_writer(&mut writer, self)
     }
@@ -33,7 +34,8 @@ impl Component {
         let comparison = timer.current_comparison();
         let color = if phase != TimerPhase::NotRunning {
             if (phase == TimerPhase::Running || phase == TimerPhase::Paused) &&
-               analysis::check_live_delta(timer, false, comparison, method).is_some() {
+                analysis::check_live_delta(timer, false, comparison, method).is_some()
+            {
                 live_segment = true;
             }
 
@@ -47,32 +49,38 @@ impl Component {
 
             if let Some(time_change) = time_change {
                 if live_segment {
-                    analysis::split_color(timer,
-                                          time_change.into(),
-                                          split_index,
-                                          false,
-                                          false,
-                                          comparison,
-                                          method)
+                    analysis::split_color(
+                        timer,
+                        time_change.into(),
+                        split_index,
+                        false,
+                        false,
+                        comparison,
+                        method,
+                    )
                 } else if let Some(prev_split_index) = split_index.checked_sub(1) {
-                    analysis::split_color(timer,
-                                          time_change.into(),
-                                          prev_split_index,
-                                          false,
-                                          true,
-                                          comparison,
-                                          method)
+                    analysis::split_color(
+                        timer,
+                        time_change.into(),
+                        prev_split_index,
+                        false,
+                        true,
+                        comparison,
+                        method,
+                    )
                 } else {
                     Color::Default
                 }
             } else if let Some(prev_split_index) = split_index.checked_sub(1) {
-                analysis::split_color(timer,
-                                      None,
-                                      prev_split_index,
-                                      true,
-                                      true,
-                                      comparison,
-                                      method)
+                analysis::split_color(
+                    timer,
+                    None,
+                    prev_split_index,
+                    true,
+                    true,
+                    comparison,
+                    method,
+                )
             } else {
                 Color::Default
             }

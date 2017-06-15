@@ -33,7 +33,8 @@ impl<'a> TimeFormatter<'a> for Delta {
     type Inner = Inner;
 
     fn format<T>(&self, time: T) -> Self::Inner
-        where T: Into<Option<TimeSpan>>
+    where
+        T: Into<Option<TimeSpan>>,
     {
         Inner {
             time: time.into(),
@@ -61,20 +62,24 @@ impl Display for Inner {
                 if self.drop_decimals {
                     write!(f, "{}:{:02}:{:02}", hours, minutes, seconds as u8)
                 } else {
-                    write!(f,
-                           "{}:{:02}:{}",
-                           hours,
-                           minutes,
-                           self.accuracy.format_seconds(seconds, true))
+                    write!(
+                        f,
+                        "{}:{:02}:{}",
+                        hours,
+                        minutes,
+                        self.accuracy.format_seconds(seconds, true)
+                    )
                 }
             } else if total_minutes > 0 {
                 if self.drop_decimals {
                     write!(f, "{}:{:02}", minutes, seconds as u8)
                 } else {
-                    write!(f,
-                           "{}:{}",
-                           minutes,
-                           self.accuracy.format_seconds(seconds, true))
+                    write!(
+                        f,
+                        "{}:{}",
+                        minutes,
+                        self.accuracy.format_seconds(seconds, true)
+                    )
                 }
             } else {
                 write!(f, "{}", self.accuracy.format_seconds(seconds, false))

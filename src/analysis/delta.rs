@@ -9,10 +9,12 @@ pub fn calculate(timer: &Timer, comparison: &str) -> (Option<TimeSpan>, bool) {
 
     let time = match timer.current_phase() {
         TimerPhase::Running | TimerPhase::Paused => {
-            let mut delta = analysis::last_delta(timer.run(),
-                                                 timer.current_split_index() as usize,
-                                                 comparison,
-                                                 timing_method);
+            let mut delta = analysis::last_delta(
+                timer.run(),
+                timer.current_split_index() as usize,
+                comparison,
+                timing_method,
+            );
 
             let live_delta = TimeSpan::option_op(timer.current_time()[timing_method],
                                                  timer

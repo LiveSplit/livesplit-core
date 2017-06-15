@@ -17,7 +17,8 @@ pub struct State {
 
 impl State {
     pub fn write_json<W>(&self, mut writer: W) -> Result<()>
-        where W: Write
+    where
+        W: Write,
     {
         to_writer(&mut writer, self)
     }
@@ -31,9 +32,9 @@ impl Component {
     pub fn state(&mut self, timer: &Timer) -> State {
         let run = timer.run();
         State {
-            icon_change: run.game_icon()
-                .check_for_change(&mut self.icon_id)
-                .map(str::to_owned),
+            icon_change: run.game_icon().check_for_change(&mut self.icon_id).map(
+                str::to_owned,
+            ),
             game: run.game_name().to_string(),
             category: run.extended_category_name(false, false, true).into_owned(),
             attempts: run.attempt_count(),

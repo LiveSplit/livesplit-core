@@ -68,8 +68,11 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
             if load_icons {
                 if let Some(icon_path) = splits.next() {
                     if !icon_path.is_empty() {
-                        if let Ok(image) = Image::from_file(unescape(icon_path).as_ref(),
-                                                            &mut icon_buf) {
+                        if let Ok(image) = Image::from_file(
+                            unescape(icon_path).as_ref(),
+                            &mut icon_buf,
+                        )
+                        {
                             segment.set_icon(image);
                         }
                     }

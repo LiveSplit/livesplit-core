@@ -130,17 +130,18 @@ fn parse_date_time<S: AsRef<str>>(text: S) -> Result<DateTime<UTC>> {
         .map_err(Into::into)
 }
 
-fn parse_attempt_history(version: Version,
-                         element: &Element,
-                         run: &mut Run,
-                         buf: &mut String)
-                         -> Result<()> {
+fn parse_attempt_history(
+    version: Version,
+    element: &Element,
+    run: &mut Run,
+    buf: &mut String,
+) -> Result<()> {
     if version >= Version(1, 5, 0, 0) {
         let attempt_history = child(element, "AttemptHistory")?;
-        for attempt in attempt_history
-                .children()
-                .into_iter()
-                .filter_map(|c| c.element()) {
+        for attempt in attempt_history.children().into_iter().filter_map(
+            |c| c.element(),
+        )
+        {
             let time = time(&attempt, buf)?;
             let index = attribute(&attempt, "id")?.parse()?;
 
@@ -175,10 +176,10 @@ fn parse_attempt_history(version: Version,
         }
     } else if version >= Version(1, 4, 1, 0) {
         let run_history = child(element, "RunHistory")?;
-        for attempt in run_history
-                .children()
-                .into_iter()
-                .filter_map(|c| c.element()) {
+        for attempt in run_history.children().into_iter().filter_map(
+            |c| c.element(),
+        )
+        {
             let time = time(&attempt, buf)?;
             let index = attribute(&attempt, "id")?.parse()?;
 
@@ -186,10 +187,10 @@ fn parse_attempt_history(version: Version,
         }
     } else {
         let run_history = child(element, "RunHistory")?;
-        for attempt in run_history
-                .children()
-                .into_iter()
-                .filter_map(|c| c.element()) {
+        for attempt in run_history.children().into_iter().filter_map(
+            |c| c.element(),
+        )
+        {
             let time = time_old(&attempt, buf)?;
             let index = attribute(&attempt, "id")?.parse()?;
 
@@ -278,10 +279,10 @@ pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
         let gold_split = child(&node, "BestSegmentTime")?;
         if !gold_split.children().is_empty() {
             segment.set_best_segment_time(if version >= Version(1, 4, 1, 0) {
-                                              time(&gold_split, buf)?
-                                          } else {
-                                              time_old(&gold_split, buf)?
-                                          });
+                time(&gold_split, buf)?
+            } else {
+                time_old(&gold_split, buf)?
+            });
         }
 
         let history = child(&node, "SegmentHistory")?;

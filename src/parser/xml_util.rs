@@ -16,10 +16,11 @@ pub fn text<'d>(element: &Element, buf: &'d mut String) -> &'d str {
     buf.clear();
 
     for part in element
-            .children()
-            .into_iter()
-            .filter_map(|c| c.text())
-            .map(|t| t.text()) {
+        .children()
+        .into_iter()
+        .filter_map(|c| c.text())
+        .map(|t| t.text())
+    {
         buf.push_str(part);
     }
 

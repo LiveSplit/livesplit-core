@@ -21,11 +21,14 @@ impl TimeSpan {
     }
 
     pub fn from_days(days: f64) -> Self {
-        TimeSpan(Duration::microseconds((days * 24.0 * 3600.0 * 1_000_000.0) as i64))
+        TimeSpan(Duration::microseconds(
+            (days * 24.0 * 3600.0 * 1_000_000.0) as i64,
+        ))
     }
 
     pub fn option_op<F, R>(a: Option<TimeSpan>, b: Option<TimeSpan>, f: F) -> Option<R>
-        where F: FnOnce(TimeSpan, TimeSpan) -> R
+    where
+        F: FnOnce(TimeSpan, TimeSpan) -> R,
     {
         match (a, b) {
             (Some(a), Some(b)) => Some(f(a, b)),
@@ -46,7 +49,8 @@ impl TimeSpan {
     }
 
     pub fn parse_opt<S>(text: S) -> Result<Option<TimeSpan>, ParseError>
-        where S: AsRef<str>
+    where
+        S: AsRef<str>,
     {
         let text = text.as_ref();
         if text.trim().is_empty() {

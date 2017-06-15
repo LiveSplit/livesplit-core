@@ -19,7 +19,8 @@ impl<'a> TimeFormatter<'a> for Days {
     type Inner = Inner;
 
     fn format<T>(&self, time: T) -> Self::Inner
-        where T: Into<Option<TimeSpan>>
+    where
+        T: Into<Option<TimeSpan>>,
     {
         Inner { time: time.into() }
     }

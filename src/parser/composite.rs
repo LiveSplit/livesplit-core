@@ -18,7 +18,8 @@ quick_error! {
 pub type Result<T> = StdResult<T, Error>;
 
 pub fn parse<R>(mut source: R, path: Option<PathBuf>, load_files: bool) -> Result<Run>
-    where R: BufRead + Seek
+where
+    R: BufRead + Seek,
 {
     let files_path = if load_files { path.clone() } else { None };
 

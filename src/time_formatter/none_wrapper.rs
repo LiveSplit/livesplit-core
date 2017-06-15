@@ -34,7 +34,8 @@ impl<'a, F: 'a + TimeFormatter<'a>, S: 'a + AsRef<str>> TimeFormatter<'a> for No
     type Inner = Inner<'a, F, S>;
 
     fn format<T>(&'a self, time: T) -> Self::Inner
-        where T: Into<Option<TimeSpan>>
+    where
+        T: Into<Option<TimeSpan>>,
     {
         Inner {
             time: time.into(),

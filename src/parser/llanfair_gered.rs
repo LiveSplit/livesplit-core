@@ -46,11 +46,12 @@ fn time(element: &Element, buf: &mut String) -> Result<Time> {
     Ok(RealTime(Some(time_span(element, buf)?)).into())
 }
 
-fn image<'b>(node: &Element,
-             buf: &mut Vec<u8>,
-             buf2: &'b mut Vec<u8>,
-             str_buf: &mut String)
-             -> Result<&'b [u8]> {
+fn image<'b>(
+    node: &Element,
+    buf: &mut Vec<u8>,
+    buf2: &'b mut Vec<u8>,
+    str_buf: &mut String,
+) -> Result<&'b [u8]> {
     let node = child(&node, "icon")?;
     let node = child(&node, "ImageIcon")?;
 
@@ -107,7 +108,9 @@ pub fn parse<R: Read>(mut source: R) -> Result<Run> {
 
     run.set_game_name(text(&child(&node, "name")?, buf));
     run.set_category_name(text(&child(&node, "subTitle")?, buf));
-    run.set_offset(TimeSpan::zero() - time_span(&child(&node, "delayedStart")?, buf)?);
+    run.set_offset(
+        TimeSpan::zero() - time_span(&child(&node, "delayedStart")?, buf)?,
+    );
     run.set_attempt_count(text(&child(&node, "numberOfAttempts")?, buf).parse()?);
 
     let segments = child(&node, "segments")?;
@@ -130,10 +133,9 @@ pub fn parse<R: Read>(mut source: R) -> Result<Run> {
             if let Ok(node) = child(&node, "milliseconds") {
                 total_time += time_span(&node, buf)?;
             } else if let Ok("../bestTime") = attribute(&node, "reference") {
-                total_time += segment
-                    .best_segment_time()
-                    .real_time
-                    .ok_or(Error::ElementNotFound)?;
+                total_time += segment.best_segment_time().real_time.ok_or(
+                    Error::ElementNotFound,
+                )?;
             }
             segment.set_personal_best_split_time(RealTime(Some(total_time)).into());
         }

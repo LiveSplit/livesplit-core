@@ -36,10 +36,9 @@ impl SegmentHistory {
 
     #[inline]
     pub fn get(&self, index: i32) -> Option<Time> {
-        self.get_pos(index)
-            .ok()
-            .and_then(|p| self.0.get(p))
-            .map(|&(_, t)| t)
+        self.get_pos(index).ok().and_then(|p| self.0.get(p)).map(
+            |&(_, t)| t,
+        )
     }
 
     #[inline]

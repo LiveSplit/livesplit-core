@@ -123,8 +123,9 @@ fn parse_history(run: &mut Run, path: Option<PathBuf>) -> StdResult<(), ()> {
             let line = line.map_err(|_| ())?;
             let mut splits = line.split('\t');
             let time_stamp = splits.next().ok_or(())?;
-            let started = UTC.datetime_from_str(time_stamp, "%Y/%m/%d %R")
-                .map_err(|_| ())?;
+            let started = UTC.datetime_from_str(time_stamp, "%Y/%m/%d %R").map_err(
+                |_| (),
+            )?;
             let completed = splits.next().ok_or(())? == "C";
             let split_times: Vec<_> = splits
                 .map(parse_time_optional)
@@ -142,15 +143,18 @@ fn parse_history(run: &mut Run, path: Option<PathBuf>) -> StdResult<(), ()> {
                 }
             }
 
-            run.add_attempt_with_index(final_time,
-                                       attempt_id,
-                                       Some(AtomicDateTime::new(started, false)),
-                                       ended,
-                                       None);
+            run.add_attempt_with_index(
+                final_time,
+                attempt_id,
+                Some(AtomicDateTime::new(started, false)),
+                ended,
+                None,
+            );
 
             let mut last_split = TimeSpan::zero();
             for (segment, current_split) in
-                run.segments_mut().iter_mut().zip(split_times.into_iter()) {
+                run.segments_mut().iter_mut().zip(split_times.into_iter())
+            {
 
                 let mut segment_time = Time::default();
                 if let Some(current_split) = current_split {
@@ -158,13 +162,16 @@ fn parse_history(run: &mut Run, path: Option<PathBuf>) -> StdResult<(), ()> {
                     last_split = current_split;
                 }
 
-                segment
-                    .segment_history_mut()
-                    .insert(attempt_id, segment_time);
-                if TimeSpan::option_op(segment_time.real_time,
-                                       segment.best_segment_time().real_time,
-                                       |a, b| a < b)
-                           .unwrap_or(false) {
+                segment.segment_history_mut().insert(
+                    attempt_id,
+                    segment_time,
+                );
+                if TimeSpan::option_op(
+                    segment_time.real_time,
+                    segment.best_segment_time().real_time,
+                    |a, b| a < b,
+                ).unwrap_or(false)
+                {
                     segment.set_best_segment_time(segment_time);
                 }
             }

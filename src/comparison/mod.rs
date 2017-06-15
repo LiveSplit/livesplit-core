@@ -29,7 +29,8 @@ pub trait ComparisonGeneratorClone {
 }
 
 impl<T> ComparisonGeneratorClone for T
-    where T: 'static + ComparisonGenerator + Clone
+where
+    T: 'static + ComparisonGenerator + Clone,
 {
     fn clone_box(&self) -> Box<ComparisonGenerator> {
         Box::new(self.clone())
@@ -43,10 +44,12 @@ impl Clone for Box<ComparisonGenerator> {
 }
 
 pub fn default_generators() -> Vec<Box<ComparisonGenerator>> {
-    vec![Box::new(BestSegments),
-         Box::new(BestSplitTimes),
-         Box::new(AverageSegments),
-         Box::new(WorstSegments),
-         Box::new(LatestRun),
-         Box::new(None)]
+    vec![
+        Box::new(BestSegments),
+        Box::new(BestSplitTimes),
+        Box::new(AverageSegments),
+        Box::new(WorstSegments),
+        Box::new(LatestRun),
+        Box::new(None),
+    ]
 }

@@ -35,7 +35,8 @@ pub struct State {
 
 impl State {
     pub fn write_json<W>(&self, mut writer: W) -> Result<()>
-        where W: Write
+    where
+        W: Write,
     {
         to_writer(&mut writer, self)
     }
@@ -71,13 +72,15 @@ impl Component {
             index -= 1;
         }
         let color = if index >= 0 {
-            state_helper::split_color(timer,
-                                      delta,
-                                      index as usize,
-                                      true,
-                                      false,
-                                      comparison,
-                                      timer.current_timing_method())
+            state_helper::split_color(
+                timer,
+                delta,
+                index as usize,
+                true,
+                false,
+                comparison,
+                timer.current_timing_method(),
+            )
         } else {
             Color::Default
         };

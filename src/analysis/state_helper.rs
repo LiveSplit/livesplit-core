@@ -9,11 +9,12 @@ use comparison::{best_segments, personal_best};
 /// `method`: The timing method that you are using.
 ///
 /// Returns the last non-live delta or None if there have been no deltas yet.
-pub fn last_delta(run: &Run,
-                  split_number: usize,
-                  comparison: &str,
-                  method: TimingMethod)
-                  -> Option<TimeSpan> {
+pub fn last_delta(
+    run: &Run,
+    split_number: usize,
+    comparison: &str,
+    method: TimingMethod,
+) -> Option<TimeSpan> {
     for segment in run.segments()[..split_number + 1].iter().rev() {
         let comparison = segment.comparison_timing_method(comparison, method);
         let split_time = segment.split_time()[method];
@@ -24,13 +25,14 @@ pub fn last_delta(run: &Run,
     None
 }
 
-fn segment_time_or_segment_delta(timer: &Timer,
-                                 split_number: usize,
-                                 use_current_time: bool,
-                                 segment_time: bool,
-                                 comparison: &str,
-                                 method: TimingMethod)
-                                 -> Option<TimeSpan> {
+fn segment_time_or_segment_delta(
+    timer: &Timer,
+    split_number: usize,
+    use_current_time: bool,
+    segment_time: bool,
+    comparison: &str,
+    method: TimingMethod,
+) -> Option<TimeSpan> {
     let current_time = if use_current_time {
         timer.current_time()[method]
     } else {
@@ -38,19 +40,23 @@ fn segment_time_or_segment_delta(timer: &Timer,
     };
 
     if let Some(current_time) = current_time {
-        let split_number_comparison = timer
-            .run()
-            .segment(split_number)
-            .comparison_timing_method(comparison, method);
+        let split_number_comparison = timer.run().segment(split_number).comparison_timing_method(
+            comparison,
+            method,
+        );
 
         for segment in timer.run().segments()[..split_number].iter().rev() {
             if let Some(split_time) = segment.split_time()[method] {
                 if segment_time {
                     return Some(current_time - split_time);
-                } else if let Some(comparison) = segment
-                              .comparison_timing_method(comparison, method) {
-                    return split_number_comparison
-                        .map(|s| (current_time - s) - (split_time - comparison));
+                } else if let Some(comparison) = segment.comparison_timing_method(
+                    comparison,
+                    method,
+                )
+                {
+                    return split_number_comparison.map(|s| {
+                        (current_time - s) - (split_time - comparison)
+                    });
                 }
             }
         }
@@ -72,16 +78,19 @@ fn segment_time_or_segment_delta(timer: &Timer,
 /// `method`: The timing method that you are using.
 ///
 /// Returns the length of the segment leading up to `split_number`, returning None if the split is not completed yet.
-pub fn previous_segment_time(timer: &Timer,
-                             split_number: usize,
-                             method: TimingMethod)
-                             -> Option<TimeSpan> {
-    segment_time_or_segment_delta(timer,
-                                  split_number,
-                                  false,
-                                  true,
-                                  personal_best::NAME,
-                                  method)
+pub fn previous_segment_time(
+    timer: &Timer,
+    split_number: usize,
+    method: TimingMethod,
+) -> Option<TimeSpan> {
+    segment_time_or_segment_delta(
+        timer,
+        split_number,
+        false,
+        true,
+        personal_best::NAME,
+        method,
+    )
 }
 
 /// Gets the length of the last segment that leads up to a certain split, using the live segment time if the split is not completed yet.
@@ -91,10 +100,11 @@ pub fn previous_segment_time(timer: &Timer,
 /// `method`: The timing method that you are using.
 ///
 /// Returns the length of the segment leading up to `split_number`, returning the live segment time if the split is not completed yet.
-pub fn live_segment_time(timer: &Timer,
-                         split_number: usize,
-                         method: TimingMethod)
-                         -> Option<TimeSpan> {
+pub fn live_segment_time(
+    timer: &Timer,
+    split_number: usize,
+    method: TimingMethod,
+) -> Option<TimeSpan> {
     segment_time_or_segment_delta(timer, split_number, true, true, personal_best::NAME, method)
 }
 
@@ -106,11 +116,12 @@ pub fn live_segment_time(timer: &Timer,
 /// `method`: The timing method that you are using.
 ///
 /// Returns the segment delta for a certain split, returning None if the split is not completed yet.
-pub fn previous_segment_delta(timer: &Timer,
-                              split_number: usize,
-                              comparison: &str,
-                              method: TimingMethod)
-                              -> Option<TimeSpan> {
+pub fn previous_segment_delta(
+    timer: &Timer,
+    split_number: usize,
+    comparison: &str,
+    method: TimingMethod,
+) -> Option<TimeSpan> {
     segment_time_or_segment_delta(timer, split_number, false, false, comparison, method)
 }
 
@@ -122,11 +133,12 @@ pub fn previous_segment_delta(timer: &Timer,
 /// `method`: The timing method that you are using.
 ///
 /// Returns the segment delta for a certain split, returning the live segment delta if the split is not completed yet.
-pub fn live_segment_delta(timer: &Timer,
-                          split_number: usize,
-                          comparison: &str,
-                          method: TimingMethod)
-                          -> Option<TimeSpan> {
+pub fn live_segment_delta(
+    timer: &Timer,
+    split_number: usize,
+    comparison: &str,
+    method: TimingMethod,
+) -> Option<TimeSpan> {
     segment_time_or_segment_delta(timer, split_number, true, false, comparison, method)
 }
 
@@ -138,17 +150,18 @@ pub fn live_segment_delta(timer: &Timer,
 /// `method`: The timing method that you are using.
 ///
 /// Returns the current live delta.
-pub fn check_live_delta(timer: &Timer,
-                        show_when_behind: bool,
-                        comparison: &str,
-                        method: TimingMethod)
-                        -> Option<TimeSpan> {
+pub fn check_live_delta(
+    timer: &Timer,
+    show_when_behind: bool,
+    comparison: &str,
+    method: TimingMethod,
+) -> Option<TimeSpan> {
     if timer.current_phase() == TimerPhase::Running || timer.current_phase() == TimerPhase::Paused {
         let use_best_segment = true; // TODO Make this a parameter
-        let current_split = timer
-            .current_split()
-            .unwrap()
-            .comparison_timing_method(comparison, method);
+        let current_split = timer.current_split().unwrap().comparison_timing_method(
+            comparison,
+            method,
+        );
         let current_time = timer.current_time()[method];
         let split_index = timer.current_split_index() as usize;
         let current_segment = live_segment_time(timer, split_index, method);
@@ -158,10 +171,11 @@ pub fn check_live_delta(timer: &Timer,
         let comparison_delta = live_segment_delta(timer, split_index, comparison, method);
 
         if show_when_behind && current_time > current_split ||
-           use_best_segment &&
-           TimeSpan::option_op(current_segment, best_segment, |c, b| c > b).unwrap_or(false) &&
-           best_segment_delta.map_or(false, |d| d > TimeSpan::zero()) ||
-           comparison_delta.map_or(false, |d| d > TimeSpan::zero()) {
+            use_best_segment &&
+                TimeSpan::option_op(current_segment, best_segment, |c, b| c > b).unwrap_or(false) &&
+                best_segment_delta.map_or(false, |d| d > TimeSpan::zero()) ||
+            comparison_delta.map_or(false, |d| d > TimeSpan::zero())
+        {
             return TimeSpan::option_op(current_time, current_split, |t, s| t - s);
         }
     }
@@ -179,22 +193,23 @@ pub fn check_live_delta(timer: &Timer,
 /// `method`: The timing method of this delta.
 ///
 /// Returns the chosen color.
-pub fn split_color(timer: &Timer,
-                   time_difference: Option<TimeSpan>,
-                   split_number: usize,
-                   show_segment_deltas: bool,
-                   show_best_segments: bool,
-                   comparison: &str,
-                   method: TimingMethod)
-                   -> Color {
+pub fn split_color(
+    timer: &Timer,
+    time_difference: Option<TimeSpan>,
+    split_number: usize,
+    show_segment_deltas: bool,
+    show_best_segments: bool,
+    comparison: &str,
+    method: TimingMethod,
+) -> Color {
     let use_best_segment = true; // TODO Make this a parameter
 
     if show_best_segments && use_best_segment && check_best_segment(timer, split_number, method) {
         Color::BestSegment
     } else if let Some(time_difference) = time_difference {
-        let last_delta = split_number
-            .checked_sub(1)
-            .and_then(|n| last_delta(timer.run(), n, comparison, method));
+        let last_delta = split_number.checked_sub(1).and_then(|n| {
+            last_delta(timer.run(), n, comparison, method)
+        });
         if time_difference < TimeSpan::zero() {
             if show_segment_deltas && last_delta.map_or(false, |d| time_difference > d) {
                 Color::AheadLosingTime

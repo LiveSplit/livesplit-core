@@ -14,7 +14,8 @@ pub struct State {
 
 impl State {
     pub fn write_json<W>(&self, mut writer: W) -> Result<()>
-        where W: Write
+    where
+        W: Write,
     {
         to_writer(&mut writer, self)
     }
@@ -28,10 +29,12 @@ impl Component {
         let current_phase = timer.current_phase();
 
         let time = if current_phase == TimerPhase::Running || current_phase == TimerPhase::Paused {
-            get_possible_time_save(timer,
-                                   segment_index as usize,
-                                   timer.current_comparison(),
-                                   live)
+            get_possible_time_save(
+                timer,
+                segment_index as usize,
+                timer.current_comparison(),
+                live,
+            )
         } else {
             None
         };
@@ -43,11 +46,12 @@ impl Component {
     }
 }
 
-pub fn get_possible_time_save(timer: &Timer,
-                              segment_index: usize,
-                              comparison: &str,
-                              live: bool)
-                              -> Option<TimeSpan> {
+pub fn get_possible_time_save(
+    timer: &Timer,
+    segment_index: usize,
+    comparison: &str,
+    live: bool,
+) -> Option<TimeSpan> {
     let segments = timer.run().segments();
     let method = timer.current_timing_method();
     let mut prev_time = TimeSpan::zero();
@@ -67,10 +71,11 @@ pub fn get_possible_time_save(timer: &Timer,
         }
     }
 
-    let mut time = TimeSpan::option_op(segment.comparison(comparison)[method], best_segments, |c,
-     b| {
-        c - b - prev_time
-    });
+    let mut time = TimeSpan::option_op(
+        segment.comparison(comparison)[method],
+        best_segments,
+        |c, b| c - b - prev_time,
+    );
 
     if live && segment_index == timer.current_split_index() as usize {
         let segment_delta = analysis::live_segment_delta(timer, segment_index, comparison, method);
@@ -83,8 +88,8 @@ pub fn get_possible_time_save(timer: &Timer,
     }
 
     time.map(|t| if t < TimeSpan::zero() {
-                 TimeSpan::zero()
-             } else {
-                 t
-             })
+        TimeSpan::zero()
+    } else {
+        t
+    })
 }

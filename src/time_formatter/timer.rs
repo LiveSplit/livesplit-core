@@ -9,7 +9,8 @@ impl<'a> TimeFormatter<'a> for Time {
     type Inner = TimeInner;
 
     fn format<T>(&self, time: T) -> Self::Inner
-        where T: Into<Option<TimeSpan>>
+    where
+        T: Into<Option<TimeSpan>>,
     {
         TimeInner(time.into())
     }
@@ -47,7 +48,8 @@ impl<'a> TimeFormatter<'a> for Fraction {
     type Inner = FractionInner;
 
     fn format<T>(&self, time: T) -> Self::Inner
-        where T: Into<Option<TimeSpan>>
+    where
+        T: Into<Option<TimeSpan>>,
     {
         FractionInner(time.into())
     }

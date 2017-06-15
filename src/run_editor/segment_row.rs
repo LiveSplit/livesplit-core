@@ -28,7 +28,8 @@ impl<'a> SegmentRow<'a> {
     }
 
     pub fn set_name<S>(&mut self, name: S)
-        where S: AsRef<str>
+    where
+        S: AsRef<str>,
     {
         self.editor.run.segment_mut(self.index).set_name(name);
         self.editor.raise_run_edited();
@@ -55,7 +56,8 @@ impl<'a> SegmentRow<'a> {
     }
 
     pub fn parse_and_set_split_time<S>(&mut self, time: S) -> Result<(), ParseError>
-        where S: AsRef<str>
+    where
+        S: AsRef<str>,
     {
         self.set_split_time(parse_positive(time)?);
         Ok(())
@@ -73,7 +75,8 @@ impl<'a> SegmentRow<'a> {
     }
 
     pub fn parse_and_set_segment_time<S>(&mut self, time: S) -> Result<(), ParseError>
-        where S: AsRef<str>
+    where
+        S: AsRef<str>,
     {
         self.set_segment_time(parse_positive(time)?);
         Ok(())
@@ -96,7 +99,8 @@ impl<'a> SegmentRow<'a> {
     }
 
     pub fn parse_and_set_best_segment_time<S>(&mut self, time: S) -> Result<(), ParseError>
-        where S: AsRef<str>
+    where
+        S: AsRef<str>,
     {
         self.set_best_segment_time(parse_positive(time)?);
         Ok(())
@@ -109,20 +113,21 @@ impl<'a> SegmentRow<'a> {
 
     pub fn set_comparison_time(&mut self, comparison: &str, time: Option<TimeSpan>) {
         let method = self.editor.selected_method;
-        self.editor
-            .run
-            .segment_mut(self.index)
-            .comparison_mut(comparison)
+        self.editor.run.segment_mut(self.index).comparison_mut(
+            comparison,
+        )
             [method] = time;
         self.editor.times_modified();
         self.editor.fix();
     }
 
-    pub fn parse_and_set_comparison_time<S>(&mut self,
-                                            comparison: &str,
-                                            time: S)
-                                            -> Result<(), ParseError>
-        where S: AsRef<str>
+    pub fn parse_and_set_comparison_time<S>(
+        &mut self,
+        comparison: &str,
+        time: S,
+    ) -> Result<(), ParseError>
+    where
+        S: AsRef<str>,
     {
         self.set_comparison_time(comparison, parse_positive(time)?);
         Ok(())
@@ -130,7 +135,8 @@ impl<'a> SegmentRow<'a> {
 }
 
 fn parse_positive<S>(time: S) -> Result<Option<TimeSpan>, ParseError>
-    where S: AsRef<str>
+where
+    S: AsRef<str>,
 {
     let time = TimeSpan::parse_opt(time)?;
     if time.map_or(false, |t| t < TimeSpan::zero()) {
