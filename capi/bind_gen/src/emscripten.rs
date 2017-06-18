@@ -241,7 +241,7 @@ pub fn write<W: Write>(
         writeln!(
             writer,
             "{}",
-            r#"declare var LiveSplitCore: any;
+            r#"var LiveSplitCore = require('./livesplit_core');
 var emscriptenModule = LiveSplitCore({});
 var liveSplitCoreNative: any = {};
 
@@ -390,7 +390,8 @@ export type Color = "Default" |
         writeln!(
             writer,
             "{}",
-            r#"var emscriptenModule = LiveSplitCore({});
+            r#"var LiveSplitCore = require('./livesplit_core');
+var emscriptenModule = LiveSplitCore({});
 var liveSplitCoreNative = {};"#
         )?;
     }
@@ -646,7 +647,7 @@ export "#
      * @param {Int8Array} data
      * @return {Run}
      */
-    static parse(data) {
+    static parseArray(data) {
         let buf = emscriptenModule._malloc(data.length);
         emscriptenModule.writeArrayToMemory(data, buf);
         let ptr = liveSplitCoreNative.Run_parse(buf, data.length);
