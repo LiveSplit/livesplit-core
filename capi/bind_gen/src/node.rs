@@ -638,8 +638,19 @@ export "#
                     writer,
                     "{}",
                     r#"
+    static parseArray(data: Int8Array): Run {
+        var buf = Buffer.from(data.buffer);
+        if (data.byteLength !== data.buffer.byteLength) {
+            buf = buf.slice(data.byteOffset, data.byteOffset + data.byteLength);
+        }
+        return Run.parse(buf, buf.byteLength);
+    }
     static parseFile(file: any) {
         var data = fs.readFileSync(file);
+        return Run.parse(data, data.byteLength);
+    }
+    static parseString(text: string): Run {
+        let data = new Buffer(text);
         return Run.parse(data, data.byteLength);
     }"#
                 )?;
@@ -649,10 +660,30 @@ export "#
                     "{}",
                     r#"
     /**
-     * @param {string | Buffer | number} file
+     * @param {Int8Array} data
+     * @return {Run}
      */
-    static parseFile(file) {
+    static parseArray(data) {
+        var buf = Buffer.from(data.buffer);
+        if (data.byteLength !== data.buffer.byteLength) {
+            buf = buf.slice(data.byteOffset, data.byteOffset + data.byteLength);
+        }
+        return Run.parse(buf, buf.byteLength);
+    }
+    /**
+     * @param {string | Buffer | number} file
+     * @return {Run}
+     */
+    static parseFile(file: any) {
         var data = fs.readFileSync(file);
+        return Run.parse(data, data.byteLength);
+    }
+    /**
+     * @param {string} text
+     * @return {Run}
+     */
+    static parseString(text: string): Run {
+        let data = new Buffer(text);
         return Run.parse(data, data.byteLength);
     }"#
                 )?;
