@@ -343,20 +343,23 @@ impl Component {
     }
 
     fn calculate_final_split(&self, timer: &Timer, draw_info: &mut DrawInfo) {
-        if self.settings.live_graph {
-            if timer.current_phase() != TimerPhase::NotRunning {
+        if timer.current_phase() != TimerPhase::NotRunning {
+            if self.settings.live_graph {
                 let current_time = timer.current_time();
                 let timing_method = timer.current_timing_method();
                 draw_info.final_split = current_time[timing_method]
                     .or_else(|| current_time.real_time)
                     .unwrap_or_else(TimeSpan::zero);
-            }
-        } else {
-            let timing_method = timer.current_timing_method();
-            for segment in timer.run().segments() {
-                if let Some(time) = segment.split_time()[timing_method] {
-                    draw_info.final_split = time;
-                    return;
+            } else {
+                let timing_method = timer.current_timing_method();
+                for segment in timer.run().segments()[..timer.current_split_index() as usize]
+                    .iter()
+                    .rev()
+                {
+                    if let Some(time) = segment.split_time()[timing_method] {
+                        draw_info.final_split = time;
+                        return;
+                    }
                 }
             }
         }

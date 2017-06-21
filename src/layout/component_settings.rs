@@ -2,7 +2,7 @@ use super::Component;
 use component::{current_comparison, current_pace, delta, graph, possible_time_save,
                 previous_segment, splits, sum_of_best, text, timer, title, total_playtime};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub enum ComponentSettings {
     CurrentComparison,
     CurrentPace(current_pace::Settings),
