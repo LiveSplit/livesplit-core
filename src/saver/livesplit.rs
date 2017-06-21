@@ -1,5 +1,5 @@
 use std::io::{Write, Result};
-use chrono::{DateTime, UTC};
+use chrono::{DateTime, Utc};
 use sxd_document::Package;
 use sxd_document::dom::{Document, Element};
 use sxd_document::writer::format_document;
@@ -13,7 +13,7 @@ fn fmt_bool(value: bool) -> &'static str {
     if value { "True" } else { "False" }
 }
 
-fn fmt_date(date: DateTime<UTC>) -> String {
+fn fmt_date(date: DateTime<Utc>) -> String {
     date.format("%m/%d/%Y %T").to_string()
 }
 

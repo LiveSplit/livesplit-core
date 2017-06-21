@@ -45,7 +45,7 @@ pub mod saver;
 pub mod time_formatter;
 pub mod time_span;
 
-pub use chrono::{DateTime, UTC};
+pub use chrono::{DateTime, Utc};
 pub use self::atomic_date_time::AtomicDateTime;
 pub use self::attempt::Attempt;
 pub use self::color::Color;

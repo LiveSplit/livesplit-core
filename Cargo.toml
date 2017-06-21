@@ -20,7 +20,7 @@ members = ["capi", "capi/bind_gen", "js"]
 [dependencies]
 base64 = "0.5.2"
 byteorder = "1.0.0"
-chrono = { version = "0.3.0", features = ["serde"] }
+chrono = { version = "0.4.0", features = ["serde"] }
 derive_more = "0.6.0"
 derive-new = "0.4.0"
 image = "0.13.0"

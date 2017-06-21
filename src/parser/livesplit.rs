@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use base64;
 use sxd_document::dom::Element;
 use sxd_document::parser::{Error as XmlError, parse as parse_xml};
-use chrono::{DateTime, UTC, TimeZone, ParseError as ChronoError};
+use chrono::{DateTime, Utc, TimeZone, ParseError as ChronoError};
 use super::bom_consumer::BomConsumer;
 use {Run, time_span, TimeSpan, Time, AtomicDateTime, Segment};
 use comparison::personal_best;
@@ -125,8 +125,8 @@ fn parse_version<S: AsRef<str>>(version: S) -> Result<Version> {
     Ok(Version(v[0], v[1], v[2], v[3]))
 }
 
-fn parse_date_time<S: AsRef<str>>(text: S) -> Result<DateTime<UTC>> {
-    UTC.datetime_from_str(text.as_ref(), "%m/%d/%Y %T")
+fn parse_date_time<S: AsRef<str>>(text: S) -> Result<DateTime<Utc>> {
+    Utc.datetime_from_str(text.as_ref(), "%m/%d/%Y %T")
         .map_err(Into::into)
 }
 

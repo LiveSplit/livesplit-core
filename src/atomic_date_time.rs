@@ -1,10 +1,10 @@
 use std::ops::Sub;
-use chrono::{DateTime, UTC};
+use chrono::{DateTime, Utc};
 use TimeSpan;
 
 #[derive(new, Copy, Clone, Debug)]
 pub struct AtomicDateTime {
-    pub time: DateTime<UTC>,
+    pub time: DateTime<Utc>,
     pub synced_with_atomic_clock: bool,
 }
 
@@ -12,7 +12,7 @@ impl AtomicDateTime {
     #[inline]
     pub fn now() -> Self {
         AtomicDateTime {
-            time: UTC::now(),
+            time: Utc::now(),
             synced_with_atomic_clock: false,
         }
     }
@@ -36,10 +36,10 @@ impl Sub for AtomicDateTime {
     }
 }
 
-impl Sub<DateTime<UTC>> for AtomicDateTime {
+impl Sub<DateTime<Utc>> for AtomicDateTime {
     type Output = TimeSpan;
 
-    fn sub(self, rhs: DateTime<UTC>) -> TimeSpan {
+    fn sub(self, rhs: DateTime<Utc>) -> TimeSpan {
         self.time.signed_duration_since(rhs).into()
     }
 }

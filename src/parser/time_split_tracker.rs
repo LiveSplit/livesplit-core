@@ -3,7 +3,7 @@ use std::fs::File;
 use std::path::PathBuf;
 use std::result::Result as StdResult;
 use std::num::ParseIntError;
-use chrono::{UTC, TimeZone};
+use chrono::{Utc, TimeZone};
 use {Run, time_span, Image, TimeSpan, RealTime, Time, Segment, AtomicDateTime};
 
 quick_error! {
@@ -123,7 +123,7 @@ fn parse_history(run: &mut Run, path: Option<PathBuf>) -> StdResult<(), ()> {
             let line = line.map_err(|_| ())?;
             let mut splits = line.split('\t');
             let time_stamp = splits.next().ok_or(())?;
-            let started = UTC.datetime_from_str(time_stamp, "%Y/%m/%d %R").map_err(
+            let started = Utc.datetime_from_str(time_stamp, "%Y/%m/%d %R").map_err(
                 |_| (),
             )?;
             let completed = splits.next().ok_or(())? == "C";
