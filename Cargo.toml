@@ -18,12 +18,12 @@ panic = "abort"
 members = ["capi", "capi/bind_gen", "js"]
 
 [dependencies]
-base64 = "0.5.2"
+base64 = "0.6.0"
 byteorder = "1.0.0"
 chrono = { version = "0.4.0", features = ["serde"] }
 derive_more = "0.6.0"
 derive-new = "0.4.0"
-image = "0.13.0"
+image = "0.14.0"
 livesplit-hotkey = { path = "hotkey", version = "0.2.0" }
 odds = "0.2.25"
 parking_lot = "0.4.3"
