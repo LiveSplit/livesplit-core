@@ -242,7 +242,7 @@ pub fn write<W: Write>(
             writer,
             "{}{}",
             r#"var LiveSplitCore = require('./livesplit_core');
-var emscriptenModule = LiveSplitCore({});
+var emscriptenModule = LiveSplitCore.Module;
 var liveSplitCoreNative: any = {};
 
 "#,
@@ -252,8 +252,8 @@ var liveSplitCoreNative: any = {};
         writeln!(
             writer,
             "{}",
-            r#"var LiveSplitCore = require('./livesplit_core');
-var emscriptenModule = LiveSplitCore({});
+            r#"var emscriptenModule = require('./livesplit_core');
+var emscriptenModule = LiveSplitCore.Module;
 var liveSplitCoreNative = {};"#
         )?;
     }
