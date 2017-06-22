@@ -35,6 +35,27 @@ pub unsafe extern "C" fn TitleComponentState_category(
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn TitleComponentState_shows_finished_runs(
+    this: *const TitleComponentState,
+) -> bool {
+    acc(this).finished_runs.is_some()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn TitleComponentState_finished_runs(
+    this: *const TitleComponentState,
+) -> u32 {
+    acc(this).finished_runs.unwrap_or_default()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn TitleComponentState_shows_attempts(
+    this: *const TitleComponentState,
+) -> bool {
+    acc(this).attempts.is_some()
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn TitleComponentState_attempts(this: *const TitleComponentState) -> u32 {
-    acc(this).attempts
+    acc(this).attempts.unwrap_or_default()
 }

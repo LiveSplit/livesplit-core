@@ -69,7 +69,9 @@ impl Component {
             Component::SumOfBest(_) => ComponentSettings::SumOfBest,
             Component::Text(ref component) => ComponentSettings::Text(component.settings().clone()),
             Component::Timer(_) => ComponentSettings::Timer,
-            Component::Title(_) => ComponentSettings::Title,
+            Component::Title(ref component) => ComponentSettings::Title(
+                component.settings().clone(),
+            ),
             Component::TotalPlaytime(_) => ComponentSettings::TotalPlaytime,
         }
     }

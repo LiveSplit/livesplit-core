@@ -5,6 +5,13 @@ use std::io::Write;
 #[derive(Default)]
 pub struct Component {
     icon_id: usize,
+    settings: Settings,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct Settings {
+    pub show_attempt_count: bool,
+    pub show_finished_runs_count: bool,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -12,7 +19,17 @@ pub struct State {
     pub icon_change: Option<String>,
     pub game: String,
     pub category: String,
-    pub attempts: u32,
+    pub finished_runs: Option<u32>,
+    pub attempts: Option<u32>,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            show_finished_runs_count: false,
+            show_attempt_count: true,
+        }
+    }
 }
 
 impl State {
@@ -29,15 +46,49 @@ impl Component {
         Default::default()
     }
 
+    pub fn with_settings(settings: Settings) -> Self {
+        Self {
+            settings,
+            ..Default::default()
+        }
+    }
+
+    pub fn settings(&self) -> &Settings {
+        &self.settings
+    }
+
+    pub fn settings_mut(&mut self) -> &mut Settings {
+        &mut self.settings
+    }
+
     pub fn state(&mut self, timer: &Timer) -> State {
         let run = timer.run();
+
+        let finished_runs = if self.settings.show_finished_runs_count {
+            Some(timer
+                .run()
+                .attempt_history()
+                .iter()
+                .filter(|a| a.time().real_time.is_some())
+                .count() as u32)
+        } else {
+            None
+        };
+
+        let attempts = if self.settings.show_attempt_count {
+            Some(run.attempt_count())
+        } else {
+            None
+        };
+
         State {
             icon_change: run.game_icon().check_for_change(&mut self.icon_id).map(
                 str::to_owned,
             ),
             game: run.game_name().to_string(),
             category: run.extended_category_name(false, false, true).into_owned(),
-            attempts: run.attempt_count(),
+            finished_runs,
+            attempts,
         }
     }
 

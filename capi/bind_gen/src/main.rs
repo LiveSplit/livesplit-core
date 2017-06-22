@@ -11,6 +11,7 @@ mod node;
 mod python;
 mod ruby;
 mod swift;
+mod typescript;
 
 use std::path::Path;
 use syntex_syntax::abi::Abi;

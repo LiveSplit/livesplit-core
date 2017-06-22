@@ -14,7 +14,7 @@ pub enum ComponentSettings {
     SumOfBest,
     Text(text::Settings),
     Timer,
-    Title,
+    Title(title::Settings),
     TotalPlaytime,
 }
 
@@ -49,7 +49,9 @@ impl From<ComponentSettings> for Component {
                 text::Component::with_settings(settings),
             ),
             ComponentSettings::Timer => Component::Timer(timer::Component::new()),
-            ComponentSettings::Title => Component::Title(title::Component::new()),
+            ComponentSettings::Title(settings) => Component::Title(
+                title::Component::with_settings(settings),
+            ),
             ComponentSettings::TotalPlaytime => Component::TotalPlaytime(
                 total_playtime::Component::new(),
             ),
