@@ -6,6 +6,9 @@ language: rust
 services: docker
 sudo: required
 
+# Temporary fix for emscripten
+group: deprecated-2017Q2
+
 env:
   global:
     - CRATE_NAME=livesplit-core
