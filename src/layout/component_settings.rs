@@ -1,12 +1,14 @@
 use super::Component;
-use component::{current_comparison, current_pace, delta, graph, possible_time_save,
-                previous_segment, splits, sum_of_best, text, timer, title, total_playtime};
+use component::{current_comparison, current_pace, delta, detailed_timer, graph,
+                possible_time_save, previous_segment, splits, sum_of_best, text, timer, title,
+                total_playtime};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub enum ComponentSettings {
     CurrentComparison,
     CurrentPace(current_pace::Settings),
     Delta(delta::Settings),
+    DetailedTimer(detailed_timer::Settings),
     Graph(graph::Settings),
     PossibleTimeSave,
     PreviousSegment,
@@ -31,6 +33,9 @@ impl From<ComponentSettings> for Component {
             ),
             ComponentSettings::Delta(settings) => Component::Delta(
                 delta::Component::with_settings(settings),
+            ),
+            ComponentSettings::DetailedTimer(settings) => Component::DetailedTimer(
+                detailed_timer::Component::with_settings(settings),
             ),
             ComponentSettings::Graph(settings) => Component::Graph(
                 graph::Component::with_settings(settings),

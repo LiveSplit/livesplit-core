@@ -16,13 +16,10 @@ pub fn calculate(timer: &Timer, comparison: &str) -> (Option<TimeSpan>, bool) {
                 timing_method,
             );
 
-            let live_delta = TimeSpan::option_op(timer.current_time()[timing_method],
-                                                 timer
-                                                     .current_split()
-                                                     .unwrap()
-                                                     .comparison(comparison)
-                                                     [timing_method],
-                                                 |a, b| a - b);
+            let live_delta = TimeSpan::option_sub(
+                timer.current_time()[timing_method],
+                timer.current_split().unwrap().comparison(comparison)[timing_method],
+            );
 
             if let Some(live_delta) = live_delta {
                 if live_delta > delta.unwrap_or_default() {
@@ -34,9 +31,10 @@ pub fn calculate(timer: &Timer, comparison: &str) -> (Option<TimeSpan>, bool) {
             delta
         }
         TimerPhase::Ended => {
-            TimeSpan::option_op(last_segment.split_time()[timing_method],
-                                last_segment.comparison(comparison)[timing_method],
-                                |a, b| a - b)
+            TimeSpan::option_sub(
+                last_segment.split_time()[timing_method],
+                last_segment.comparison(comparison)[timing_method],
+            )
         }
         TimerPhase::NotRunning => None,
     };

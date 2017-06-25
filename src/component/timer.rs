@@ -4,7 +4,7 @@ use analysis::split_color;
 use serde_json::{to_writer, Result};
 use std::io::Write;
 
-#[derive(new, Default)]
+#[derive(Default)]
 pub struct Component;
 
 #[derive(Serialize, Deserialize)]
@@ -24,6 +24,10 @@ impl State {
 }
 
 impl Component {
+    pub fn new() -> Self {
+        Default::default()
+    }
+
     pub fn state(&self, timer: &Timer) -> State {
         let method = timer.current_timing_method();
         let time = timer.current_time();

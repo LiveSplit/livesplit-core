@@ -368,9 +368,10 @@ impl Component {
     fn calculate_deltas(&self, timer: &Timer, comparison: &str, draw_info: &mut DrawInfo) {
         let timing_method = timer.current_timing_method();
         for segment in timer.run().segments() {
-            let time = TimeSpan::option_op(segment.split_time()[timing_method],
-                                           segment.comparison(comparison)[timing_method],
-                                           |a, b| a - b);
+            let time = TimeSpan::option_sub(
+                segment.split_time()[timing_method],
+                segment.comparison(comparison)[timing_method],
+            );
             if let Some(time) = time {
                 if time > draw_info.max_delta {
                     draw_info.max_delta = time;

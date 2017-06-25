@@ -80,14 +80,13 @@ impl Timer {
                 if self.is_game_time_paused() {
                     self.game_time_pause_time
                 } else {
-                    TimeSpan::option_op(
+                    TimeSpan::option_sub(
                         real_time,
                         if self.is_game_time_initialized() {
                             Some(self.loading_times())
                         } else {
                             None
                         },
-                        |a, b| a - b,
                     )
                 }
             }
@@ -350,7 +349,7 @@ impl Timer {
         if self.is_game_time_paused() {
             let current_time = self.current_time();
             self.set_loading_times(
-                TimeSpan::option_op(current_time.real_time, current_time.game_time, |r, g| r - g)
+                TimeSpan::option_sub(current_time.real_time, current_time.game_time)
                     .unwrap_or_default(),
             );
             self.is_game_time_paused = false;

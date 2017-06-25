@@ -176,7 +176,7 @@ pub fn check_live_delta(
                 best_segment_delta.map_or(false, |d| d > TimeSpan::zero()) ||
             comparison_delta.map_or(false, |d| d > TimeSpan::zero())
         {
-            return TimeSpan::option_op(current_time, current_split, |t, s| t - s);
+            return TimeSpan::option_sub(current_time, current_split);
         }
     }
     None

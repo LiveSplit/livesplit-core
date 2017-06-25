@@ -1,5 +1,4 @@
 use std::num::ParseIntError;
-use std::ops::Add;
 use std::mem::swap;
 use {Image, Run, Segment, TimingMethod, Time, TimeSpan};
 use time_span::ParseError as ParseTimeSpanError;
@@ -314,10 +313,9 @@ impl RunEditor {
         }
 
         // Set the new Best Segment time to be the sum of the two Best Segments
-        let min_best_segment = TimeSpan::option_op(
+        let min_best_segment = TimeSpan::option_add(
             self.run.segment(index).best_segment_time()[method],
             self.run.segment(current_index).best_segment_time()[method],
-            Add::add,
         );
 
         if let Some(mut min_best_segment) = min_best_segment {

@@ -1,13 +1,15 @@
 use Timer;
 use super::{ComponentState, ComponentSettings};
-use component::{current_comparison, current_pace, delta, graph, possible_time_save,
-                previous_segment, splits, sum_of_best, text, timer, title, total_playtime};
+use component::{current_comparison, current_pace, delta, detailed_timer, graph,
+                possible_time_save, previous_segment, splits, sum_of_best, text, timer, title,
+                total_playtime};
 
 #[derive(From)]
 pub enum Component {
     CurrentComparison(current_comparison::Component),
     CurrentPace(current_pace::Component),
     Delta(delta::Component),
+    DetailedTimer(detailed_timer::Component),
     Graph(graph::Component),
     PossibleTimeSave(possible_time_save::Component),
     PreviousSegment(previous_segment::Component),
@@ -29,6 +31,9 @@ impl Component {
                 component.state(timer),
             ),
             Component::Delta(ref mut component) => ComponentState::Delta(component.state(timer)),
+            Component::DetailedTimer(ref mut component) => ComponentState::DetailedTimer(
+                component.state(timer),
+            ),
             Component::Graph(ref mut component) => ComponentState::Graph(component.state(timer)),
             Component::PossibleTimeSave(ref mut component) => ComponentState::PossibleTimeSave(
                 component.state(timer),
@@ -56,6 +61,9 @@ impl Component {
                 component.settings().clone(),
             ),
             Component::Delta(ref component) => ComponentSettings::Delta(
+                component.settings().clone(),
+            ),
+            Component::DetailedTimer(ref component) => ComponentSettings::DetailedTimer(
                 component.settings().clone(),
             ),
             Component::Graph(ref component) => ComponentSettings::Graph(

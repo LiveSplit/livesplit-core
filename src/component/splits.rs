@@ -141,8 +141,7 @@ impl Component {
                     let comparison_time = segment.comparison(comparison)[method];
 
                     let (time, delta, color) = if current_split > i as isize {
-                        let delta =
-                            TimeSpan::option_op(split, comparison_time, |split, ct| split - ct);
+                        let delta = TimeSpan::option_sub(split, comparison_time);
                         (
                             split,
                             delta,
