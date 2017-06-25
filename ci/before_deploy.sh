@@ -20,11 +20,13 @@ main() {
     case $TARGET in
         asmjs-unknown-emscripten)
             cross build -p livesplit --target $TARGET --release
+            cat js/exports.js >> target/$TARGET/release/livesplit*.js*
             ;;
         wasm32-unknown-emscripten)
-            rm target/wasm32-unknown-emscripten/release/deps/*.wasm 2>/dev/null || :
-	        rm target/wasm32-unknown-emscripten/release/deps/*.js 2>/dev/null || :
+            rm target/$TARGET/release/deps/*.wasm 2>/dev/null || :
+	        rm target/$TARGET/release/deps/*.js 2>/dev/null || :
             cross build -p livesplit --target $TARGET --release
+            cat js/exports.js >> target/$TARGET/release/livesplit*.js*
             ;;
         *)
             cross rustc -p livesplit-core-capi --target $TARGET --release
