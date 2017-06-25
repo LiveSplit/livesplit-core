@@ -3,8 +3,9 @@ use serde_json::{to_writer, Result};
 use std::io::Write;
 use analysis::{state_helper, delta};
 use time_formatter::{Delta, TimeFormatter, Accuracy};
+use std::borrow::Cow;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Component {
     settings: Settings,
 }
@@ -60,6 +61,10 @@ impl Component {
 
     pub fn settings_mut(&mut self) -> &mut Settings {
         &mut self.settings
+    }
+
+    pub fn name(&self) -> Cow<str> {
+        "Delta".into()
     }
 
     pub fn state(&self, timer: &Timer) -> State {

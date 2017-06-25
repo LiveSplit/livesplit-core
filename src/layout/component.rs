@@ -1,10 +1,11 @@
+use std::borrow::Cow;
 use Timer;
 use super::{ComponentState, ComponentSettings};
 use component::{current_comparison, current_pace, delta, detailed_timer, graph,
                 possible_time_save, previous_segment, splits, sum_of_best, text, timer, title,
                 total_playtime};
 
-#[derive(From)]
+#[derive(From, Clone)]
 pub enum Component {
     CurrentComparison(current_comparison::Component),
     CurrentPace(current_pace::Component),
@@ -81,6 +82,24 @@ impl Component {
                 component.settings().clone(),
             ),
             Component::TotalPlaytime(_) => ComponentSettings::TotalPlaytime,
+        }
+    }
+
+    pub fn name(&self) -> Cow<str> {
+        match *self {
+            Component::CurrentComparison(ref component) => component.name(),
+            Component::CurrentPace(ref component) => component.name(),
+            Component::Delta(ref component) => component.name(),
+            Component::DetailedTimer(ref component) => component.name(),
+            Component::Graph(ref component) => component.name(),
+            Component::PossibleTimeSave(ref component) => component.name(),
+            Component::PreviousSegment(ref component) => component.name(),
+            Component::Splits(ref component) => component.name(),
+            Component::SumOfBest(ref component) => component.name(),
+            Component::Text(ref component) => component.name(),
+            Component::Timer(ref component) => component.name(),
+            Component::Title(ref component) => component.name(),
+            Component::TotalPlaytime(ref component) => component.name(),
         }
     }
 

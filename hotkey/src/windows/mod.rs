@@ -64,9 +64,9 @@ unsafe extern "system" fn callback_proc(code: c_int, wparam: WPARAM, lparam: LPA
             let key_code = mem::transmute((*(lparam as *const KBDLLHOOKSTRUCT)).vkCode as u8);
             let event = wparam as UINT;
             if event == WM_KEYDOWN {
-                state.events
-                    .send(key_code)
-                    .expect("Callback Thread disconnected");
+                state.events.send(key_code).expect(
+                    "Callback Thread disconnected",
+                );
             }
         }
 
@@ -76,8 +76,9 @@ unsafe extern "system" fn callback_proc(code: c_int, wparam: WPARAM, lparam: LPA
 
 impl Hook {
     pub fn new() -> Result<Self> {
-        let hotkeys =
-            Arc::new(Mutex::new(HashMap::<KeyCode, Box<FnMut() + Send + 'static>>::new()));
+        let hotkeys = Arc::new(Mutex::new(
+            HashMap::<KeyCode, Box<FnMut() + Send + 'static>>::new(),
+        ));
 
         let (initialized_tx, initialized_rx) = channel();
         let (events_tx, events_rx) = channel();
@@ -86,28 +87,32 @@ impl Hook {
             let mut hook = ptr::null_mut();
 
             STATE.with(|state| {
-                    hook = unsafe {
-                        SetWindowsHookExW(WH_KEYBOARD_LL,
-                                          Some(callback_proc),
-                                          GetModuleHandleW(ptr::null()),
-                                          0)
-                    };
+                hook = unsafe {
+                    SetWindowsHookExW(
+                        WH_KEYBOARD_LL,
+                        Some(callback_proc),
+                        GetModuleHandleW(ptr::null()),
+                        0,
+                    )
+                };
 
-                    if hook != ptr::null_mut() {
-                        initialized_tx.send(Ok(unsafe { GetCurrentThreadId() }))
-                            .map_err(|_| Error::ThreadStopped)?;
-                    } else {
-                        initialized_tx.send(Err(Error::WindowsHook))
-                            .map_err(|_| Error::ThreadStopped)?;
-                    }
+                if hook != ptr::null_mut() {
+                    initialized_tx
+                        .send(Ok(unsafe { GetCurrentThreadId() }))
+                        .map_err(|_| Error::ThreadStopped)?;
+                } else {
+                    initialized_tx.send(Err(Error::WindowsHook)).map_err(|_| {
+                        Error::ThreadStopped
+                    })?;
+                }
 
-                    *state.borrow_mut() = Some(State {
-                        hook: hook,
-                        events: events_tx,
-                    });
+                *state.borrow_mut() = Some(State {
+                    hook: hook,
+                    events: events_tx,
+                });
 
-                    Ok(())
-                })?;
+                Ok(())
+            })?;
 
             let mut msg = unsafe { mem::uninitialized() };
             loop {
@@ -146,7 +151,8 @@ impl Hook {
     }
 
     pub fn register<F>(&self, hotkey: KeyCode, callback: F) -> Result<()>
-        where F: FnMut() + Send + 'static
+    where
+        F: FnMut() + Send + 'static,
     {
         if let Entry::Vacant(vacant) = self.hotkeys.lock().entry(hotkey) {
             vacant.insert(Box::new(callback));

@@ -1,8 +1,9 @@
 use Timer;
 use serde_json::{to_writer, Result};
 use std::io::Write;
+use std::borrow::Cow;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Component {
     icon_id: usize,
     settings: Settings,
@@ -59,6 +60,10 @@ impl Component {
 
     pub fn settings_mut(&mut self) -> &mut Settings {
         &mut self.settings
+    }
+
+    pub fn name(&self) -> Cow<str> {
+        "Title".into()
     }
 
     pub fn state(&mut self, timer: &Timer) -> State {

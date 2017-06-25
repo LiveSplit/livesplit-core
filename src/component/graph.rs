@@ -1,6 +1,7 @@
 use {Timer, TimeSpan, TimerPhase, analysis};
 use serde_json::{to_writer, Result};
 use std::io::Write;
+use std::borrow::Cow;
 
 const GRAPH_EDGE_VALUE: f32 = 200.0;
 const GRAPH_EDGE_MIN: f32 = 5.0;
@@ -8,7 +9,7 @@ const GRAPH_EDGE_MIN: f32 = 5.0;
 const WIDTH: f32 = 180.0;
 const HEIGHT: f32 = 120.0;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Component {
     settings: Settings,
 }
@@ -69,6 +70,10 @@ impl Component {
 
     pub fn settings_mut(&mut self) -> &mut Settings {
         &mut self.settings
+    }
+
+    pub fn name(&self) -> Cow<str> {
+        "Graph".into()
     }
 
     pub fn state(&self, timer: &Timer) -> State {

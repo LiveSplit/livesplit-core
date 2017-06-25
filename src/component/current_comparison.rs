@@ -1,8 +1,9 @@
 use Timer;
 use serde_json::{to_writer, Result};
 use std::io::Write;
+use std::borrow::Cow;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Component;
 
 #[derive(Serialize, Deserialize)]
@@ -23,6 +24,10 @@ impl State {
 impl Component {
     pub fn new() -> Self {
         Default::default()
+    }
+
+    pub fn name(&self) -> Cow<str> {
+        "Current Comparison".into()
     }
 
     pub fn state(&self, timer: &Timer) -> State {

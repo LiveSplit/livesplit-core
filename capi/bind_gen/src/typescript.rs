@@ -113,6 +113,18 @@ export interface DetailedTimerComponentComparisonStateJson {
     time: string;
 }
 
+export interface LayoutEditorStateJson {
+    components: string[],
+    buttons: LayoutEditorButtonsJson,
+    selected_component: number,
+}
+
+export interface LayoutEditorButtonsJson {
+    can_remove: boolean,
+    can_move_up: boolean,
+    can_move_down: boolean,
+}
+
 export interface RunEditorStateJson {
     icon_change?: string,
     game: string,

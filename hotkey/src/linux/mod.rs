@@ -5,8 +5,8 @@ extern crate promising_future;
 mod key_code;
 pub use self::key_code::KeyCode;
 
-use self::x11_dl::xlib::{Xlib, XKeyEvent, Display, GrabModeAsync, KeyPressMask, KeyPress, Mod2Mask,
-                         XErrorEvent};
+use self::x11_dl::xlib::{Xlib, XKeyEvent, Display, GrabModeAsync, KeyPressMask, KeyPress,
+                         Mod2Mask, XErrorEvent};
 use std::{ptr, mem};
 use std::collections::hash_map::{Entry, HashMap};
 use std::sync::mpsc::{channel, Sender};
@@ -86,17 +86,19 @@ impl Hook {
             const X_TOKEN: Token = Token(0);
             const PING_TOKEN: Token = Token(1);
 
-            poll.register(&EventedFd(&fd),
-                          X_TOKEN,
-                          Ready::readable() | Ready::writable(),
-                          PollOpt::edge())
-                .map_err(|_| Error::EPoll)?;
+            poll.register(
+                &EventedFd(&fd),
+                X_TOKEN,
+                Ready::readable() | Ready::writable(),
+                PollOpt::edge(),
+            ).map_err(|_| Error::EPoll)?;
 
-            poll.register(&registration,
-                          PING_TOKEN,
-                          Ready::readable(),
-                          PollOpt::edge())
-                .map_err(|_| Error::EPoll)?;
+            poll.register(
+                &registration,
+                PING_TOKEN,
+                Ready::readable(),
+                PollOpt::edge(),
+            ).map_err(|_| Error::EPoll)?;
 
             struct XData(Xlib, *mut Display, c_ulong);
             unsafe impl Send for XData {}
@@ -122,24 +124,28 @@ impl Hook {
                                 match message {
                                     Message::Register(key, callback, promise) => {
                                         let code = (xlib.XKeysymToKeycode)(display, key as _) as
-                                                   c_uint;
+                                            c_uint;
 
                                         if let Entry::Vacant(vacant) = hotkeys.entry(code) {
-                                            (xlib.XGrabKey)(display,
-                                                            code as _,
-                                                            0,
-                                                            window,
-                                                            false as _,
-                                                            GrabModeAsync,
-                                                            GrabModeAsync);
+                                            (xlib.XGrabKey)(
+                                                display,
+                                                code as _,
+                                                0,
+                                                window,
+                                                false as _,
+                                                GrabModeAsync,
+                                                GrabModeAsync,
+                                            );
 
-                                            (xlib.XGrabKey)(display,
-                                                            code as _,
-                                                            Mod2Mask,
-                                                            window,
-                                                            false as _,
-                                                            GrabModeAsync,
-                                                            GrabModeAsync);
+                                            (xlib.XGrabKey)(
+                                                display,
+                                                code as _,
+                                                Mod2Mask,
+                                                window,
+                                                false as _,
+                                                GrabModeAsync,
+                                                GrabModeAsync,
+                                            );
 
                                             vacant.insert(callback);
                                             promise.set(Ok(()));
@@ -149,7 +155,7 @@ impl Hook {
                                     }
                                     Message::Unregister(key, promise) => {
                                         let code = (xlib.XKeysymToKeycode)(display, key as _) as
-                                                   c_uint;
+                                            c_uint;
 
                                         if hotkeys.remove(&code).is_some() {
                                             unregister(&xlib, display, window, code);
@@ -196,7 +202,8 @@ impl Hook {
     }
 
     pub fn register<F>(&self, hotkey: KeyCode, callback: F) -> Result<()>
-        where F: FnMut() + Send + 'static
+    where
+        F: FnMut() + Send + 'static,
     {
         let (future, promise) = future_promise();
 
@@ -204,7 +211,9 @@ impl Hook {
             .send(Message::Register(hotkey, Box::new(callback), promise))
             .map_err(|_| Error::ThreadStopped)?;
 
-        self.ping.set_readiness(Ready::readable()).map_err(|_| Error::ThreadStopped)?;
+        self.ping.set_readiness(Ready::readable()).map_err(|_| {
+            Error::ThreadStopped
+        })?;
 
         future.value().ok_or(Error::ThreadStopped)?
     }
@@ -212,8 +221,12 @@ impl Hook {
     pub fn unregister(&self, hotkey: KeyCode) -> Result<()> {
         let (future, promise) = future_promise();
 
-        self.sender.send(Message::Unregister(hotkey, promise)).map_err(|_| Error::ThreadStopped)?;
-        self.ping.set_readiness(Ready::readable()).map_err(|_| Error::ThreadStopped)?;
+        self.sender
+            .send(Message::Unregister(hotkey, promise))
+            .map_err(|_| Error::ThreadStopped)?;
+        self.ping.set_readiness(Ready::readable()).map_err(|_| {
+            Error::ThreadStopped
+        })?;
 
         future.value().ok_or(Error::ThreadStopped)?
     }

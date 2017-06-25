@@ -3,8 +3,9 @@ use time_formatter::{Regular, TimeFormatter, Accuracy};
 use serde_json::{to_writer, Result};
 use analysis::sum_of_segments::calculate_best;
 use std::io::Write;
+use std::borrow::Cow;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Component;
 
 #[derive(Serialize, Deserialize)]
@@ -25,6 +26,10 @@ impl State {
 impl Component {
     pub fn new() -> Self {
         Default::default()
+    }
+
+    pub fn name(&self) -> Cow<str> {
+        "Sum of Best".into()
     }
 
     pub fn state(&self, timer: &Timer) -> State {

@@ -6,8 +6,9 @@ use analysis::split_color;
 use time_formatter::{Delta, Regular, TimeFormatter};
 use time_formatter::none_wrapper::{EmptyWrapper, DashWrapper};
 use Color;
+use std::borrow::Cow;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Component {
     icon_ids: Vec<usize>,
     settings: Settings,
@@ -88,6 +89,10 @@ impl Component {
 
     pub fn remount(&mut self) {
         self.icon_ids.clear();
+    }
+
+    pub fn name(&self) -> Cow<str> {
+        "Splits".into()
     }
 
     pub fn state(&mut self, timer: &Timer) -> State {

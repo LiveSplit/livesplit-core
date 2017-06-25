@@ -63,4 +63,4 @@ pub use self::timer_phase::TimerPhase;
 pub use self::timing_method::TimingMethod;
 pub use self::hotkey_config::HotkeyConfig;
 pub use self::hotkey_system::HotkeySystem;
-pub use self::layout::{Layout, Component};
+pub use self::layout::{Layout, Component, editor as layout_editor};

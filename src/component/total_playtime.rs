@@ -3,8 +3,9 @@ use serde_json::{to_writer, Result};
 use std::io::Write;
 use analysis::total_playtime;
 use time_formatter::{Days, TimeFormatter};
+use std::borrow::Cow;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Component;
 
 #[derive(Serialize, Deserialize)]
@@ -25,6 +26,10 @@ impl State {
 impl Component {
     pub fn new() -> Self {
         Default::default()
+    }
+
+    pub fn name(&self) -> Cow<str> {
+        "Total Playtime".into()
     }
 
     pub fn state(&self, timer: &Timer) -> State {

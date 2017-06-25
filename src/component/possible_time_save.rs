@@ -2,8 +2,9 @@ use {analysis, Timer, TimeSpan, TimerPhase};
 use time_formatter::{PossibleTimeSave, TimeFormatter};
 use serde_json::{to_writer, Result};
 use std::io::Write;
+use std::borrow::Cow;
 
-#[derive(new, Default)]
+#[derive(Default, Clone)]
 pub struct Component;
 
 #[derive(Serialize, Deserialize)]
@@ -22,6 +23,14 @@ impl State {
 }
 
 impl Component {
+    pub fn new() -> Self {
+        Default::default()
+    }
+
+    pub fn name(&self) -> Cow<str> {
+        "Possible Time Save".into()
+    }
+
     pub fn state(&self, timer: &Timer) -> State {
         let live = false;
 

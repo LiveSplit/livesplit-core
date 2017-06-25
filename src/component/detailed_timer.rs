@@ -6,8 +6,9 @@ use comparison::{self, best_segments, none};
 use std::cmp::max;
 use serde_json::{to_writer, Result};
 use std::io::Write;
+use std::borrow::Cow;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Component {
     timer: timer::Component,
     settings: Settings,
@@ -71,6 +72,10 @@ impl Component {
 
     pub fn settings_mut(&mut self) -> &mut Settings {
         &mut self.settings
+    }
+
+    pub fn name(&self) -> Cow<str> {
+        "Detailed Timer".into()
     }
 
     pub fn state(&self, timer: &Timer) -> State {

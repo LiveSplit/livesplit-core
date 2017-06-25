@@ -17,7 +17,8 @@ impl Hook {
     }
 
     pub fn register<F>(&self, _: KeyCode, _: F) -> Result<()>
-        where F: FnMut() + Send + 'static
+    where
+        F: FnMut() + Send + 'static,
     {
         Ok(())
     }

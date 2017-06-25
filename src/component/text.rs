@@ -1,7 +1,8 @@
 use std::io::Write;
 use serde_json::{to_writer, Result};
+use std::borrow::Cow;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Component {
     settings: Settings,
 }
@@ -82,6 +83,10 @@ impl Component {
 
     pub fn settings_mut(&mut self) -> &mut Settings {
         &mut self.settings
+    }
+
+    pub fn name(&self) -> Cow<str> {
+        "Text".into()
     }
 
     pub fn state(&self) -> State {

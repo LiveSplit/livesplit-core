@@ -1,7 +1,7 @@
 use Timer;
 use super::{Component, LayoutSettings, LayoutState};
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Layout {
     pub components: Vec<Component>,
 }

@@ -3,8 +3,9 @@ use serde_json::{to_writer, Result};
 use std::io::Write;
 use analysis::current_pace;
 use time_formatter::{Regular, TimeFormatter, Accuracy};
+use std::borrow::Cow;
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct Component {
     settings: Settings,
 }
@@ -57,6 +58,10 @@ impl Component {
 
     pub fn settings_mut(&mut self) -> &mut Settings {
         &mut self.settings
+    }
+
+    pub fn name(&self) -> Cow<str> {
+        "Current Pace".into()
     }
 
     pub fn state(&self, timer: &Timer) -> State {
