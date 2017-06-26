@@ -4,6 +4,7 @@ use {Attempt, Segment, TimeSpan, TimingMethod};
 #[derive(Copy, Clone, Debug)]
 pub struct BestSplitTimes;
 
+pub const SHORT_NAME: &str = NAME;
 pub const NAME: &str = "Best Split Times";
 
 fn generate(segments: &mut [Segment], attempts: &[Attempt], method: TimingMethod) {

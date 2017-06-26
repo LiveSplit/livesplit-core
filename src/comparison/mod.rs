@@ -16,6 +16,7 @@ use std::fmt::Debug;
 use {Attempt, Segment};
 
 pub mod personal_best {
+    pub const SHORT_NAME: &str = "PB";
     pub const NAME: &str = "Personal Best";
 }
 
@@ -52,4 +53,17 @@ pub fn default_generators() -> Vec<Box<ComparisonGenerator>> {
         Box::new(LatestRun),
         Box::new(None),
     ]
+}
+
+pub fn shorten(comparison: &str) -> &str {
+    match comparison {
+        personal_best::NAME => personal_best::SHORT_NAME,
+        average_segments::NAME => average_segments::SHORT_NAME,
+        best_segments::NAME => best_segments::SHORT_NAME,
+        best_split_times::NAME => best_split_times::SHORT_NAME,
+        latest_run::NAME => latest_run::SHORT_NAME,
+        none::NAME => none::SHORT_NAME,
+        worst_segments::NAME => worst_segments::SHORT_NAME,
+        c => c,
+    }
 }

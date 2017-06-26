@@ -2,7 +2,7 @@ use {Color, Timer, TimerPhase, TimingMethod, TimeSpan};
 use super::timer;
 use time_formatter::{timer as formatter, TimeFormatter, Short};
 use time_formatter::none_wrapper::DashWrapper;
-use comparison::{best_segments, none};
+use comparison::{self, best_segments, none};
 use std::cmp::max;
 use serde_json::{to_writer, Result};
 use std::io::Write;
@@ -117,7 +117,7 @@ impl Component {
             }
 
             let comparison1 = Some((
-                comparison1,
+                comparison::shorten(comparison1),
                 calculate_comparison_time(
                     timer,
                     timing_method,
@@ -128,7 +128,7 @@ impl Component {
 
             let comparison2 = if !hide_comparison {
                 Some((
-                    comparison2,
+                    comparison::shorten(comparison2),
                     calculate_comparison_time(
                         timer,
                         timing_method,

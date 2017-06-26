@@ -101,6 +101,18 @@ export interface CurrentComparisonComponentStateJson {
     comparison: string;
 }
 
+export interface DetailedTimerComponentStateJson {
+    timer: TimerComponentStateJson;
+    segment_timer: TimerComponentStateJson;
+    comparison1: DetailedTimerComponentComparisonStateJson;
+    comparison2: DetailedTimerComponentComparisonStateJson;
+}
+
+export interface DetailedTimerComponentComparisonStateJson {
+    name: string;
+    time: string;
+}
+
 export interface RunEditorStateJson {
     icon_change?: string,
     game: string,

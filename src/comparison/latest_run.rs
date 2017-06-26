@@ -4,6 +4,7 @@ use super::ComparisonGenerator;
 #[derive(Copy, Clone, Debug)]
 pub struct LatestRun;
 
+pub const SHORT_NAME: &str = "Latest";
 pub const NAME: &str = "Latest Run";
 
 fn generate(segments: &mut [Segment], method: TimingMethod) {
