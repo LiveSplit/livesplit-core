@@ -1,7 +1,6 @@
 use std::io::{self, Read, Seek, SeekFrom};
 use std::result::Result as StdResult;
 use std::str::{from_utf8, Utf8Error};
-use std::cmp::min;
 use byteorder::{ReadBytesExt, BigEndian as BE};
 use imagelib::{png, Rgba, ImageBuffer, ColorType};
 use {Run, Image, RealTime, TimeSpan, Time, Segment};
@@ -9,6 +8,7 @@ use {Run, Image, RealTime, TimeSpan, Time, Segment};
 quick_error! {
     #[derive(Debug)]
     pub enum Error {
+        LengthOutOfBounds {}
         Utf8(err: Utf8Error) {
             from()
         }
@@ -28,8 +28,12 @@ fn to_time(milliseconds: u64) -> Time {
     }
 }
 
-fn read_string<R: Read>(mut source: R, buf: &mut Vec<u8>) -> Result<&str> {
+fn read_string<R: Read>(mut source: R, buf: &mut Vec<u8>, max_length: u64) -> Result<&str> {
     let str_length = source.read_u16::<BE>()? as usize;
+    if str_length as u64 > max_length {
+        return Err(Error::LengthOutOfBounds);
+    }
+    buf.clear();
     buf.reserve(str_length);
     unsafe { buf.set_len(str_length) };
     source.read_exact(buf)?;
@@ -41,13 +45,16 @@ pub fn parse<R: Read + Seek>(mut source: R) -> Result<Run> {
     let mut buf = Vec::new();
     let mut buf2 = Vec::new();
 
+    // Determine total length of the source
+    let total_len = source.seek(SeekFrom::End(0))?;
+
     // Skip to the goal string
     source.seek(SeekFrom::Start(0xc5))?;
-    run.set_category_name(read_string(&mut source, &mut buf)?);
+    run.set_category_name(read_string(&mut source, &mut buf, total_len)?);
 
     // Skip to the title string
     source.read_u8()?;
-    run.set_game_name(read_string(&mut source, &mut buf)?);
+    run.set_game_name(read_string(&mut source, &mut buf, total_len)?);
 
     source.seek(SeekFrom::Current(0x6))?;
     let segment_count = source.read_u32::<BE>()?;
@@ -94,8 +101,17 @@ pub fn parse<R: Read + Seek>(mut source: R) -> Result<Run> {
 
             source.seek(SeekFrom::Current(seek_offset_base))?;
 
-            let len = width as usize * height as usize * 4;
-            buf.reserve(min(len, 32 << 20));
+            let len = (width as usize)
+                .checked_mul(height as usize)
+                .and_then(|b| b.checked_mul(4))
+                .ok_or(Error::LengthOutOfBounds)?;
+
+            if len as u64 > total_len || width == 0 || height == 0 {
+                return Err(Error::LengthOutOfBounds);
+            }
+
+            buf.clear();
+            buf.reserve(len);
             unsafe { buf.set_len(len) };
             source.read_exact(&mut buf)?;
 
@@ -117,7 +133,7 @@ pub fn parse<R: Read + Seek>(mut source: R) -> Result<Run> {
 
         // Skip to the segment name
         source.read_u8()?;
-        let mut segment = Segment::new(read_string(&mut source, &mut buf)?);
+        let mut segment = Segment::new(read_string(&mut source, &mut buf, total_len)?);
 
         if let Some(icon) = icon {
             segment.set_icon(icon);
