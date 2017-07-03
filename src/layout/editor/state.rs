@@ -1,15 +1,17 @@
 use serde_json::{to_writer, Result as JsonResult};
 use std::io::Write;
 use super::LayoutEditor;
+use super::settings_description::SettingsDescription;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct State {
     pub components: Vec<String>,
     pub buttons: Buttons,
     pub selected_component: u32,
+    pub settings_description: SettingsDescription,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize)]
 pub struct Buttons {
     pub can_remove: bool,
     pub can_move_up: bool,
@@ -43,6 +45,8 @@ impl LayoutEditor {
             components,
             buttons,
             selected_component: self.selected_component as u32,
+            settings_description: self.layout.components[self.selected_component]
+                .settings_description(),
         }
     }
 }

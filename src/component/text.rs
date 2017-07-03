@@ -1,6 +1,8 @@
 use std::io::Write;
 use serde_json::{to_writer, Result};
 use std::borrow::Cow;
+use layout::editor::settings_description::{SettingsDescription, Field, Value};
+use std::mem::replace;
 
 #[derive(Default, Clone)]
 pub struct Component {
@@ -91,5 +93,61 @@ impl Component {
 
     pub fn state(&self) -> State {
         State(self.settings.text.clone())
+    }
+
+    pub fn settings_description(&self) -> SettingsDescription {
+        let (first, second) = match self.settings.text {
+            Text::Center(ref text) => (Field::new("Text".into(), text.to_string().into()), None),
+            Text::Split(ref left, ref right) => {
+                (
+                    Field::new("Left".into(), left.to_string().into()),
+                    Some(Field::new("Right".into(), right.to_string().into())),
+                )
+            }
+        };
+
+        let mut fields = vec![Field::new("Split".into(), second.is_some().into()), first];
+
+        if let Some(second) = second {
+            fields.push(second);
+        }
+
+        SettingsDescription::with_fields(fields)
+    }
+
+    pub fn set_value(&mut self, index: usize, value: Value) {
+        match index {
+            0 => {
+                self.settings.text = match (value.into_bool().unwrap(), &mut self.settings.text) {
+                    (true, &mut Text::Center(ref mut center)) => {
+                        Text::Split(replace(center, String::new()), String::new())
+                    }
+                    (false, &mut Text::Split(ref mut left, ref mut right)) => {
+                        let mut value = replace(left, String::new());
+                        let right = replace(right, String::new());
+                        if !value.is_empty() && !right.is_empty() {
+                            value.push(' ');
+                        }
+                        value.push_str(&right);
+
+                        Text::Center(value)
+                    }
+                    _ => return,
+                };
+            }
+            1 => {
+                match self.settings.text {
+                    Text::Center(ref mut center) => *center = value.into(),
+                    Text::Split(ref mut left, _) => *left = value.into(),
+                }
+            }
+            2 => {
+                match self.settings.text {
+                    Text::Center(_) => panic!("Set right text when there's only a center text"),
+                    Text::Split(_, ref mut right) => *right = value.into(),
+                }
+            }
+            _ => panic!("Unsupported Setting Index"),
+        }
     }
 }

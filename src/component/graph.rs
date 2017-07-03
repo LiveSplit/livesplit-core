@@ -2,6 +2,7 @@ use {Timer, TimeSpan, TimerPhase, analysis};
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use std::borrow::Cow;
+use layout::editor::settings_description::{SettingsDescription, Field, Value};
 
 const GRAPH_EDGE_VALUE: f32 = 200.0;
 const GRAPH_EDGE_MIN: f32 = 5.0;
@@ -92,6 +93,22 @@ impl Component {
         self.make_uniform(&mut state);
 
         state
+    }
+
+    pub fn settings_description(&self) -> SettingsDescription {
+        SettingsDescription::with_fields(vec![
+            Field::new(
+                "Live Graph".into(),
+                self.settings.live_graph.into()
+            ),
+        ])
+    }
+
+    pub fn set_value(&mut self, index: usize, value: Value) {
+        match index {
+            0 => self.settings.live_graph = value.into(),
+            _ => panic!("Unsupported Setting Index"),
+        }
     }
 
     fn make_uniform(&self, state: &mut State) {

@@ -7,6 +7,7 @@ use std::cmp::max;
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use std::borrow::Cow;
+use layout::editor::settings_description::{SettingsDescription, Field, Value};
 
 #[derive(Default, Clone)]
 pub struct Component {
@@ -18,7 +19,7 @@ pub struct Component {
 pub struct Settings {
     pub comparison1: Option<String>,
     pub comparison2: Option<String>,
-    pub hide_comparison: bool,
+    pub hide_second_comparison: bool,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -40,7 +41,7 @@ impl Default for Settings {
         Settings {
             comparison1: None,
             comparison2: Some(String::from(best_segments::NAME)),
-            hide_comparison: false,
+            hide_second_comparison: false,
         }
     }
 }
@@ -101,7 +102,7 @@ impl Component {
                 .map(String::as_str)
                 .unwrap_or_else(|| timer.current_comparison());
 
-            let mut hide_comparison = self.settings.hide_comparison;
+            let mut hide_comparison = self.settings.hide_second_comparison;
 
             if hide_comparison || !timer.run().comparisons().any(|c| c == comparison2) ||
                 comparison2 == none::NAME
@@ -181,6 +182,32 @@ impl Component {
             segment_timer: segment_time_state,
             comparison1,
             comparison2,
+        }
+    }
+
+    pub fn settings_description(&self) -> SettingsDescription {
+        SettingsDescription::with_fields(vec![
+            Field::new(
+                "Comparison 1".into(),
+                self.settings.comparison1.clone().into()
+            ),
+            Field::new(
+                "Comparison 2".into(),
+                self.settings.comparison2.clone().into()
+            ),
+            Field::new(
+                "Hide Second Comparison".into(),
+                self.settings.hide_second_comparison.into()
+            ),
+        ])
+    }
+
+    pub fn set_value(&mut self, index: usize, value: Value) {
+        match index {
+            0 => self.settings.comparison1 = value.into(),
+            1 => self.settings.comparison2 = value.into(),
+            2 => self.settings.hide_second_comparison = value.into(),
+            _ => panic!("Unsupported Setting Index"),
         }
     }
 }

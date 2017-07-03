@@ -4,6 +4,7 @@ use std::io::Write;
 use analysis::total_playtime;
 use time_formatter::{Days, TimeFormatter};
 use std::borrow::Cow;
+use layout::editor::settings_description::{SettingsDescription, Value};
 
 #[derive(Default, Clone)]
 pub struct Component;
@@ -40,4 +41,10 @@ impl Component {
             time: Days::new().format(total_playtime).to_string(),
         }
     }
+
+    pub fn settings_description(&self) -> SettingsDescription {
+        SettingsDescription::default()
+    }
+
+    pub fn set_value(&mut self, _index: usize, _value: Value) {}
 }

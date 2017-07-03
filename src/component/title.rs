@@ -2,6 +2,7 @@ use Timer;
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use std::borrow::Cow;
+use layout::editor::settings_description::{SettingsDescription, Field, Value};
 
 #[derive(Default, Clone)]
 pub struct Component {
@@ -99,5 +100,26 @@ impl Component {
 
     pub fn remount(&mut self) {
         self.icon_id = 0;
+    }
+
+    pub fn settings_description(&self) -> SettingsDescription {
+        SettingsDescription::with_fields(vec![
+            Field::new(
+                "Show Finished Runs Count".into(),
+                self.settings.show_finished_runs_count.into()
+            ),
+            Field::new(
+                "Show Attempt Count".into(),
+                self.settings.show_attempt_count.into()
+            ),
+        ])
+    }
+
+    pub fn set_value(&mut self, index: usize, value: Value) {
+        match index {
+            0 => self.settings.show_finished_runs_count = value.into(),
+            1 => self.settings.show_attempt_count = value.into(),
+            _ => panic!("Unsupported Setting Index"),
+        }
     }
 }

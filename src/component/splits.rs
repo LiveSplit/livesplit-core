@@ -7,6 +7,7 @@ use time_formatter::{Delta, Regular, TimeFormatter};
 use time_formatter::none_wrapper::{EmptyWrapper, DashWrapper};
 use Color;
 use std::borrow::Cow;
+use layout::editor::settings_description::{SettingsDescription, Field, Value};
 
 #[derive(Default, Clone)]
 pub struct Component {
@@ -183,6 +184,37 @@ impl Component {
                 })
                 .collect(),
             show_final_separator: show_final_separator,
+        }
+    }
+
+    pub fn settings_description(&self) -> SettingsDescription {
+        SettingsDescription::with_fields(vec![
+            Field::new(
+                "Total Splits".into(),
+                Value::UInt(self.settings.visual_split_count as _)
+            ),
+            Field::new(
+                "Upcoming Splits".into(),
+                Value::UInt(self.settings.split_preview_count as _)
+            ),
+            Field::new(
+                "Always Show Last".into(),
+                self.settings.always_show_last_split.into()
+            ),
+            Field::new(
+                "Show Separator Before Last Split".into(),
+                self.settings.separator_last_split.into()
+            ),
+        ])
+    }
+
+    pub fn set_value(&mut self, index: usize, value: Value) {
+        match index {
+            0 => self.settings.visual_split_count = value.into_uint().unwrap() as _,
+            1 => self.settings.split_preview_count = value.into_uint().unwrap() as _,
+            2 => self.settings.always_show_last_split = value.into(),
+            3 => self.settings.separator_last_split = value.into(),
+            _ => panic!("Unsupported Setting Index"),
         }
     }
 }

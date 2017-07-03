@@ -2,6 +2,7 @@ use Timer;
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use std::borrow::Cow;
+use layout::editor::settings_description::{SettingsDescription, Value};
 
 #[derive(Default, Clone)]
 pub struct Component;
@@ -36,4 +37,10 @@ impl Component {
             comparison: timer.current_comparison().to_string(),
         }
     }
+
+    pub fn settings_description(&self) -> SettingsDescription {
+        SettingsDescription::default()
+    }
+
+    pub fn set_value(&mut self, _index: usize, _value: Value) {}
 }

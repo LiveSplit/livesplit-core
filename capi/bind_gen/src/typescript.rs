@@ -117,6 +117,7 @@ export interface LayoutEditorStateJson {
     components: string[],
     buttons: LayoutEditorButtonsJson,
     selected_component: number,
+    settings_description: SettingsDescriptionJson,
 }
 
 export interface LayoutEditorButtonsJson {
@@ -124,6 +125,26 @@ export interface LayoutEditorButtonsJson {
     can_move_up: boolean,
     can_move_down: boolean,
 }
+
+export interface SettingsDescriptionJson {
+    fields: SettingsDescriptionFieldJson[],
+}
+
+export interface SettingsDescriptionFieldJson {
+    text: string,
+    value: SettingsDescriptionValueJson,
+}
+
+export type SettingsDescriptionValueJson =
+    { Bool: boolean } |
+    { UInt: number } |
+    { Int: number } |
+    { String: string } |
+    { OptionalString: string } |
+    { Float: number } |
+    { Accuracy: AccuracyJson };
+
+export type AccuracyJson = "Seconds" | "Tenths" | "Hundredths";
 
 export interface RunEditorStateJson {
     icon_change?: string,

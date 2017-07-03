@@ -1,7 +1,9 @@
 use livesplit_core::layout::editor::LayoutEditor;
 use layout::OwnedLayout;
-use super::{Json, alloc, own, output_vec, acc, acc_mut};
+use super::{Json, alloc, own, output_vec, acc, acc_mut, str};
 use component::OwnedComponent;
+use livesplit_core::time_formatter::Accuracy;
+use libc::c_char;
 
 pub type OwnedLayoutEditor = *mut LayoutEditor;
 
@@ -26,7 +28,10 @@ pub unsafe extern "C" fn LayoutEditor_select(this: *mut LayoutEditor, index: usi
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn LayoutEditor_add_component(this: *mut LayoutEditor, component: OwnedComponent) {
+pub unsafe extern "C" fn LayoutEditor_add_component(
+    this: *mut LayoutEditor,
+    component: OwnedComponent,
+) {
     acc_mut(this).add_component(own(component));
 }
 
@@ -48,4 +53,88 @@ pub unsafe extern "C" fn LayoutEditor_move_component_down(this: *mut LayoutEdito
 #[no_mangle]
 pub unsafe extern "C" fn LayoutEditor_move_component(this: *mut LayoutEditor, dst_index: usize) {
     acc_mut(this).move_component(dst_index);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn LayoutEditor_set_component_settings_bool(
+    this: *mut LayoutEditor,
+    index: usize,
+    value: bool,
+) {
+    acc_mut(this).set_component_settings_value(index, value.into());
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn LayoutEditor_set_component_settings_uint(
+    this: *mut LayoutEditor,
+    index: usize,
+    value: u64,
+) {
+    acc_mut(this).set_component_settings_value(index, value.into());
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn LayoutEditor_set_component_settings_int(
+    this: *mut LayoutEditor,
+    index: usize,
+    value: i64,
+) {
+    acc_mut(this).set_component_settings_value(index, value.into());
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn LayoutEditor_set_component_settings_string(
+    this: *mut LayoutEditor,
+    index: usize,
+    value: *const c_char,
+) {
+    acc_mut(this).set_component_settings_value(index, str(value).to_string().into());
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn LayoutEditor_set_component_settings_optional_string(
+    this: *mut LayoutEditor,
+    index: usize,
+    value: *const c_char,
+) {
+    let value = if value.is_null() {
+        None.into()
+    } else {
+        Some(str(value).to_string()).into()
+    };
+    acc_mut(this).set_component_settings_value(index, value);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn LayoutEditor_set_component_settings_optional_string_to_empty(
+    this: *mut LayoutEditor,
+    index: usize,
+) {
+    acc_mut(this).set_component_settings_value(index, None::<String>.into());
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn LayoutEditor_set_component_settings_float(
+    this: *mut LayoutEditor,
+    index: usize,
+    value: f64,
+) {
+    acc_mut(this).set_component_settings_value(index, value.into());
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn LayoutEditor_set_component_settings_accuracy(
+    this: *mut LayoutEditor,
+    index: usize,
+    value: *const c_char,
+) {
+    let value = str(value);
+    let value = match value {
+        "Seconds" => Accuracy::Seconds,
+        "Tenths" => Accuracy::Tenths,
+        "Hundredths" => Accuracy::Hundredths,
+        _ => return,
+    };
+
+    acc_mut(this).set_component_settings_value(index, value.into());
 }

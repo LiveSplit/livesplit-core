@@ -4,6 +4,7 @@ use std::io::Write;
 use analysis::current_pace;
 use time_formatter::{Regular, TimeFormatter, Accuracy};
 use std::borrow::Cow;
+use layout::editor::settings_description::{SettingsDescription, Field, Value};
 
 #[derive(Default, Clone)]
 pub struct Component {
@@ -90,6 +91,27 @@ impl Component {
             time: Regular::with_accuracy(self.settings.accuracy)
                 .format(current_pace)
                 .to_string(),
+        }
+    }
+
+    pub fn settings_description(&self) -> SettingsDescription {
+        SettingsDescription::with_fields(vec![
+            Field::new(
+                "Comparison Override".into(),
+                self.settings.comparison_override.clone().into()
+            ),
+            Field::new(
+                "Accuracy".into(),
+                self.settings.accuracy.into()
+            ),
+        ])
+    }
+
+    pub fn set_value(&mut self, index: usize, value: Value) {
+        match index {
+            0 => self.settings.comparison_override = value.into(),
+            1 => self.settings.accuracy = value.into(),
+            _ => panic!("Unsupported Setting Index"),
         }
     }
 }
