@@ -252,7 +252,7 @@ var liveSplitCoreNative: any = {};
         writeln!(
             writer,
             "{}",
-            r#"var emscriptenModule = require('./livesplit_core');
+            r#"var LiveSplitCore = require('./livesplit_core');
 var emscriptenModule = LiveSplitCore.Module;
 var liveSplitCoreNative = {};"#
         )?;
