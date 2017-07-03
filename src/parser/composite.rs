@@ -44,11 +44,6 @@ where
     }
 
     source.seek(SeekFrom::Start(0))?;
-    if let Ok(run) = urn::parse(&mut source) {
-        return Ok(run);
-    }
-
-    source.seek(SeekFrom::Start(0))?;
     if let Ok(run) = splitty::parse(&mut source) {
         return Ok(run);
     }
@@ -80,6 +75,11 @@ where
 
     source.seek(SeekFrom::Start(0))?;
     if let Ok(run) = llanfair2::parse(&mut source) {
+        return Ok(run);
+    }
+
+    source.seek(SeekFrom::Start(0))?;
+    if let Ok(run) = urn::parse(&mut source) {
         return Ok(run);
     }
 

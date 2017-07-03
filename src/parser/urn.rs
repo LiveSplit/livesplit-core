@@ -21,18 +21,18 @@ pub type Result<T> = StdResult<T, Error>;
 
 #[derive(Deserialize)]
 struct Splits {
-    title: String,
-    attempt_count: u32,
-    start_delay: String,
-    splits: Vec<Split>,
+    title: Option<String>,
+    attempt_count: Option<u32>,
+    start_delay: Option<String>,
+    splits: Option<Vec<Split>>,
 }
 
 #[derive(Deserialize)]
 struct Split {
-    title: String,
-    time: String,
-    best_time: String,
-    best_segment: String,
+    title: Option<String>,
+    time: Option<String>,
+    best_time: Option<String>,
+    best_segment: Option<String>,
 }
 
 fn parse_time(time: &str) -> Result<Time> {
@@ -53,9 +53,15 @@ pub fn parse<R: Read>(source: R) -> Result<Run> {
 
     let splits: Splits = from_reader(source)?;
 
-    run.set_category_name(splits.title);
-    run.set_attempt_count(splits.attempt_count);
-    run.set_offset(-splits.start_delay.parse()?);
+    if let Some(title) = splits.title {
+        run.set_category_name(title);
+    }
+    if let Some(attempt_count) = splits.attempt_count {
+        run.set_attempt_count(attempt_count);
+    }
+    if let Some(start_delay) = splits.start_delay {
+        run.set_offset(-start_delay.parse()?);
+    }
 
     // Best Split Times can be used for the Segment History
     // Every single best split time should be included as its own run,
@@ -63,32 +69,46 @@ pub fn parse<R: Read>(source: R) -> Result<Run> {
     // than the best segments, so we have to assume they are from different runs.
     let mut attempt_history_index = 1;
 
-    for split in splits.splits {
-        let mut segment = Segment::new(split.title);
-        segment.set_personal_best_split_time(parse_time(&split.time)?);
-        segment.set_best_segment_time(parse_time(&split.best_segment)?);
-
-        let best_split_time = parse_time(&split.best_time)?;
-        if best_split_time.real_time.is_some() {
-            run.add_attempt_with_index(Time::default(), attempt_history_index, None, None, None);
-
-            // Insert a new run that skips to the current split
-            for already_inserted_segment in run.segments_mut() {
-                already_inserted_segment.segment_history_mut().insert(
-                    attempt_history_index,
-                    Time::default(),
-                );
+    if let Some(splits) = splits.splits {
+        for split in splits {
+            let mut segment = Segment::new(split.title.unwrap_or_default());
+            if let Some(time) = split.time {
+                segment.set_personal_best_split_time(parse_time(&time)?);
+            }
+            if let Some(best_segment) = split.best_segment {
+                segment.set_best_segment_time(parse_time(&best_segment)?);
             }
 
-            segment.segment_history_mut().insert(
-                attempt_history_index,
-                best_split_time,
-            );
+            if let Some(best_time) = split.best_time {
+                let best_split_time = parse_time(&best_time)?;
+                if best_split_time.real_time.is_some() {
+                    run.add_attempt_with_index(
+                        Time::default(),
+                        attempt_history_index,
+                        None,
+                        None,
+                        None,
+                    );
 
-            attempt_history_index += 1;
+                    // Insert a new run that skips to the current split
+                    for already_inserted_segment in run.segments_mut() {
+                        already_inserted_segment.segment_history_mut().insert(
+                            attempt_history_index,
+                            Time::default(),
+                        );
+                    }
+
+                    segment.segment_history_mut().insert(
+                        attempt_history_index,
+                        best_split_time,
+                    );
+
+                    attempt_history_index += 1;
+                }
+            }
+
+            run.push_segment(segment);
         }
-
-        run.push_segment(segment);
     }
 
     Ok(run)
