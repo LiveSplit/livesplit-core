@@ -21,6 +21,7 @@ quick_error! {
         Int(err: ParseIntError) {
             from()
         }
+        LengthOutOfBounds
         ElementNotFound
         AttributeNotFound
     }
@@ -67,7 +68,10 @@ fn image<'b>(
         width = cursor.read_u32::<BE>()?;
     }
 
-    let len = width as usize * height as usize * 4;
+    let len = (width as usize)
+        .checked_mul(height as usize)
+        .and_then(|b| b.checked_mul(4))
+        .ok_or(Error::LengthOutOfBounds)?;
 
     if buf.len() < 0xFE + len {
         return Err(Error::ElementNotFound);
