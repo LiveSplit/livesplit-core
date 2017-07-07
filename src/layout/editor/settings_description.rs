@@ -1,5 +1,5 @@
 use super::Component;
-use time_formatter::Accuracy;
+use time_formatter::{DigitsFormat, Accuracy};
 use std::result::Result as StdResult;
 
 #[derive(From, Serialize, Deserialize)]
@@ -11,6 +11,7 @@ pub enum Value {
     OptionalString(Option<String>),
     Float(f64),
     Accuracy(Accuracy),
+    DigitsFormat(DigitsFormat),
 }
 
 #[derive(Serialize, Deserialize)]
@@ -82,6 +83,13 @@ impl Value {
             _ => Err(Error::WrongType),
         }
     }
+
+        pub fn into_digits_format(self) -> Result<DigitsFormat> {
+        match self {
+            Value::DigitsFormat(v) => Ok(v),
+            _ => Err(Error::WrongType),
+        }
+    }
 }
 
 impl Into<bool> for Value {
@@ -123,6 +131,12 @@ impl Into<f64> for Value {
 impl Into<Accuracy> for Value {
     fn into(self) -> Accuracy {
         self.into_accuracy().unwrap()
+    }
+}
+
+impl Into<DigitsFormat> for Value {
+    fn into(self) -> DigitsFormat {
+        self.into_digits_format().unwrap()
     }
 }
 

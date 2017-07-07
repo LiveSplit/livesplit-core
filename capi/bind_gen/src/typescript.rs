@@ -142,9 +142,18 @@ export type SettingsDescriptionValueJson =
     { String: string } |
     { OptionalString: string } |
     { Float: number } |
-    { Accuracy: AccuracyJson };
+    { Accuracy: AccuracyJson } |
+    { DigitsFormat: DigitsFormatJson };
 
 export type AccuracyJson = "Seconds" | "Tenths" | "Hundredths";
+
+export type DigitsFormatJson =
+    "SingleDigitSeconds" |
+    "DoubleDigitSeconds" |
+    "SingleDigitMinutes" |
+    "DoubleDigitMinutes" |
+    "SingleDigitHours" |
+    "DoubleDigitHours";
 
 export interface RunEditorStateJson {
     icon_change?: string,

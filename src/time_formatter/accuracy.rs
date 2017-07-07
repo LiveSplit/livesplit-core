@@ -1,7 +1,10 @@
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Serialize, Deserialize)]
 pub enum Accuracy {
+    /// No Fractional Part
     Seconds,
+    /// .2
     Tenths,
+    /// .23
     Hundredths,
 }
 

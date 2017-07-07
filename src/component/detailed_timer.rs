@@ -1,6 +1,6 @@
 use {Color, Timer, TimerPhase, TimingMethod, TimeSpan};
 use super::timer;
-use time_formatter::{timer as formatter, TimeFormatter, Short};
+use time_formatter::{timer as formatter, TimeFormatter, Short, Accuracy, DigitsFormat};
 use time_formatter::none_wrapper::DashWrapper;
 use comparison::{self, best_segments, none};
 use std::cmp::max;
@@ -20,6 +20,8 @@ pub struct Settings {
     pub comparison1: Option<String>,
     pub comparison2: Option<String>,
     pub hide_second_comparison: bool,
+    pub timer: timer::Settings,
+    pub segment_timer: timer::Settings,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -42,6 +44,8 @@ impl Default for Settings {
             comparison1: None,
             comparison2: Some(String::from(best_segments::NAME)),
             hide_second_comparison: false,
+            timer: Default::default(),
+            segment_timer: Default::default(),
         }
     }
 }
@@ -61,7 +65,9 @@ impl Component {
     }
 
     pub fn with_settings(settings: Settings) -> Self {
+        let timer = timer::Component::with_settings(settings.timer.clone());
         Self {
+            timer,
             settings,
             ..Default::default()
         }
@@ -71,8 +77,9 @@ impl Component {
         &self.settings
     }
 
-    pub fn settings_mut(&mut self) -> &mut Settings {
-        &mut self.settings
+    pub fn set_settings(&mut self, settings: Settings) {
+        self.settings = settings;
+        *self.timer.settings_mut() = self.settings.timer.clone();
     }
 
     pub fn name(&self) -> Cow<str> {
@@ -145,8 +152,12 @@ impl Component {
         let segment_time = calculate_segment_time(timer, timing_method, last_split_index);
         let segment_time_state = segment_time.map(|t| {
             timer::State {
-                time: formatter::Time.format(t).to_string(),
-                fraction: formatter::Fraction.format(t).to_string(),
+            time: formatter::Time::with_digits_format(self.settings.segment_timer.digits_format)
+                .format(t)
+                .to_string(),
+            fraction: formatter::Fraction::with_accuracy(self.settings.segment_timer.accuracy)
+                .format(t)
+                .to_string(),
                 color: Color::Default,
             }
         });
@@ -189,6 +200,22 @@ impl Component {
                 "Hide Second Comparison".into(),
                 self.settings.hide_second_comparison.into(),
             ),
+            Field::new(
+                "Timer Digits Format".into(),
+                self.settings.timer.digits_format.into(),
+            ),
+            Field::new(
+                "Timer Accuracy".into(),
+                self.settings.timer.accuracy.into(),
+            ),
+            Field::new(
+                "Segment Timer Digits Format".into(),
+                self.settings.segment_timer.digits_format.into(),
+            ),
+            Field::new(
+                "Segment Timer Accuracy".into(),
+                self.settings.segment_timer.accuracy.into(),
+            ),
         ])
     }
 
@@ -197,6 +224,18 @@ impl Component {
             0 => self.settings.comparison1 = value.into(),
             1 => self.settings.comparison2 = value.into(),
             2 => self.settings.hide_second_comparison = value.into(),
+            3 => {
+                let value: DigitsFormat = value.into();
+                self.settings.timer.digits_format = value.clone();
+                self.timer.settings_mut().digits_format = value;
+            }
+            4 => {
+                let value: Accuracy = value.into();
+                self.settings.timer.accuracy = value.clone();
+                self.timer.settings_mut().accuracy = value;
+            }
+            5 => self.settings.segment_timer.digits_format = value.into(),
+            6 => self.settings.segment_timer.accuracy = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

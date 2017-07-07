@@ -1,3 +1,3 @@
 if (exports !== undefined) {
-    exports.Module = Module;
+    exports.LiveSplitCore = LiveSplitCore;
 }

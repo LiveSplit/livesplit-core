@@ -1,4 +1,5 @@
 mod accuracy;
+mod digits_format;
 mod complete;
 mod days;
 mod delta;
@@ -9,6 +10,7 @@ pub mod none_wrapper;
 pub mod timer;
 
 pub use self::accuracy::Accuracy;
+pub use self::digits_format::DigitsFormat;
 pub use self::complete::Complete;
 pub use self::days::Days;
 pub use self::delta::Delta;

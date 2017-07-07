@@ -1,13 +1,30 @@
 use {Color, Timer, TimerPhase, TimeSpan};
-use time_formatter::{timer as formatter, TimeFormatter};
+use time_formatter::{timer as formatter, TimeFormatter, Accuracy, DigitsFormat};
 use analysis::split_color;
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use std::borrow::Cow;
-use layout::editor::settings_description::{SettingsDescription, Value};
+use layout::editor::settings_description::{SettingsDescription, Value, Field};
 
 #[derive(Default, Clone)]
-pub struct Component;
+pub struct Component {
+    settings: Settings,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct Settings {
+    pub digits_format: DigitsFormat,
+    pub accuracy: Accuracy,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            digits_format: DigitsFormat::SingleDigitSeconds,
+            accuracy: Accuracy::Hundredths,
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct State {
@@ -28,6 +45,21 @@ impl State {
 impl Component {
     pub fn new() -> Self {
         Default::default()
+    }
+
+    pub fn with_settings(settings: Settings) -> Self {
+        Self {
+            settings,
+            ..Default::default()
+        }
+    }
+
+    pub fn settings(&self) -> &Settings {
+        &self.settings
+    }
+
+    pub fn settings_mut(&mut self) -> &mut Settings {
+        &mut self.settings
     }
 
     pub fn name(&self) -> Cow<str> {
@@ -80,15 +112,34 @@ impl Component {
         };
 
         State {
-            time: formatter::Time.format(time).to_string(),
-            fraction: formatter::Fraction.format(time).to_string(),
+            time: formatter::Time::with_digits_format(self.settings.digits_format)
+                .format(time)
+                .to_string(),
+            fraction: formatter::Fraction::with_accuracy(self.settings.accuracy)
+                .format(time)
+                .to_string(),
             color: color,
         }
     }
 
     pub fn settings_description(&self) -> SettingsDescription {
-        SettingsDescription::default()
+        SettingsDescription::with_fields(vec![
+            Field::new(
+                "Digits Format".into(),
+                self.settings.digits_format.into(),
+            ),
+            Field::new(
+                "Accuracy".into(),
+                self.settings.accuracy.into(),
+            ),
+        ])
     }
 
-    pub fn set_value(&mut self, _index: usize, _value: Value) {}
+    pub fn set_value(&mut self, index: usize, value: Value) {
+        match index {
+            0 => self.settings.digits_format = value.into(),
+            1 => self.settings.accuracy = value.into(),
+            _ => panic!("Unsupported Setting Index"),
+        }
+    }
 }

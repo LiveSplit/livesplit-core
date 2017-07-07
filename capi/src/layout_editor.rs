@@ -2,7 +2,7 @@ use livesplit_core::layout::editor::LayoutEditor;
 use layout::OwnedLayout;
 use super::{Json, alloc, own, output_vec, acc, acc_mut, str};
 use component::OwnedComponent;
-use livesplit_core::time_formatter::Accuracy;
+use livesplit_core::time_formatter::{Accuracy, DigitsFormat};
 use libc::c_char;
 
 pub type OwnedLayoutEditor = *mut LayoutEditor;
@@ -133,6 +133,26 @@ pub unsafe extern "C" fn LayoutEditor_set_component_settings_accuracy(
         "Seconds" => Accuracy::Seconds,
         "Tenths" => Accuracy::Tenths,
         "Hundredths" => Accuracy::Hundredths,
+        _ => return,
+    };
+
+    acc_mut(this).set_component_settings_value(index, value.into());
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn LayoutEditor_set_component_settings_digits_format(
+    this: *mut LayoutEditor,
+    index: usize,
+    value: *const c_char,
+) {
+    let value = str(value);
+    let value = match value {
+        "SingleDigitSeconds" => DigitsFormat::SingleDigitSeconds,
+        "DoubleDigitSeconds" => DigitsFormat::DoubleDigitSeconds,
+        "SingleDigitMinutes" => DigitsFormat::SingleDigitMinutes,
+        "DoubleDigitMinutes" => DigitsFormat::DoubleDigitMinutes,
+        "SingleDigitHours" => DigitsFormat::SingleDigitHours,
+        "DoubleDigitHours" => DigitsFormat::DoubleDigitHours,
         _ => return,
     };
 

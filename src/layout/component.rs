@@ -77,7 +77,9 @@ impl Component {
             ),
             Component::SumOfBest(_) => ComponentSettings::SumOfBest,
             Component::Text(ref component) => ComponentSettings::Text(component.settings().clone()),
-            Component::Timer(_) => ComponentSettings::Timer,
+            Component::Timer(ref component) => ComponentSettings::Timer(
+                component.settings().clone(),
+            ),
             Component::Title(ref component) => ComponentSettings::Title(
                 component.settings().clone(),
             ),
