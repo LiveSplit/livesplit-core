@@ -25,6 +25,7 @@ derive_more = "0.6.0"
 image = "0.14.0"
 livesplit-hotkey = { path = "hotkey", version = "0.2.0" }
 odds = "0.2.25"
+ordermap = "0.2.10"
 parking_lot = "0.4.3"
 quick-error = "1.2.0"
 serde = "1.0.2"

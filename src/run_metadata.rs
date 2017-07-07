@@ -1,5 +1,4 @@
-use std::collections::BTreeMap;
-use std::collections::btree_map;
+use ordermap::{OrderMap, Iter};
 
 #[derive(Default, Clone, Debug)]
 pub struct RunMetadata {
@@ -7,7 +6,7 @@ pub struct RunMetadata {
     platform_name: String,
     uses_emulator: bool,
     region_name: String,
-    variables: BTreeMap<String, String>,
+    variables: OrderMap<String, String>,
 }
 
 impl RunMetadata {
@@ -76,7 +75,7 @@ impl RunMetadata {
         self.variables.insert(name.into(), value.into());
     }
 
-    pub fn variables(&self) -> btree_map::Iter<String, String> {
+    pub fn variables(&self) -> Iter<String, String> {
         self.variables.iter()
     }
 }

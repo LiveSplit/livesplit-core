@@ -1,9 +1,9 @@
 use super::{own_drop, acc_mut, RUN_METADATA_VARIABLE};
 use std::ptr;
-use std::collections::btree_map;
+use livesplit_core::ordermap;
 use run_metadata_variable::RunMetadataVariable;
 
-pub type RunMetadataVariablesIter = btree_map::Iter<'static, String, String>;
+pub type RunMetadataVariablesIter = ordermap::Iter<'static, String, String>;
 pub type OwnedRunMetadataVariablesIter = *mut RunMetadataVariablesIter;
 
 #[no_mangle]
