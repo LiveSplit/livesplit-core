@@ -14,8 +14,6 @@ extern crate byteorder;
 extern crate image as imagelib;
 #[macro_use]
 extern crate derive_more;
-#[macro_use]
-extern crate derive_new;
 pub extern crate parking_lot;
 pub extern crate livesplit_hotkey as hotkey;
 extern crate unicase;

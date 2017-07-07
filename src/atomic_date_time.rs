@@ -2,13 +2,20 @@ use std::ops::Sub;
 use chrono::{DateTime, Utc};
 use TimeSpan;
 
-#[derive(new, Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct AtomicDateTime {
     pub time: DateTime<Utc>,
     pub synced_with_atomic_clock: bool,
 }
 
 impl AtomicDateTime {
+    pub fn new(time: DateTime<Utc>, synced_with_atomic_clock: bool) -> Self {
+        Self {
+            time,
+            synced_with_atomic_clock,
+        }
+    }
+
     #[inline]
     pub fn now() -> Self {
         AtomicDateTime {
