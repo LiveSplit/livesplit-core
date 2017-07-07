@@ -28,12 +28,10 @@ pub unsafe extern "C" fn SplitsComponentState_icon_change(
     this: *const SplitsComponentState,
     index: usize,
 ) -> *const c_char {
-    acc(this).splits[index].icon_change.as_ref().map_or_else(
-        ptr::null,
-        |s| {
-            output_str(s)
-        },
-    )
+    acc(this).splits[index]
+        .icon_change
+        .as_ref()
+        .map_or_else(ptr::null, |s| output_str(s))
 }
 
 #[no_mangle]

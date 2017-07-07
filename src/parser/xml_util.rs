@@ -24,5 +24,9 @@ pub fn text<'d>(element: &Element, buf: &'d mut String) -> &'d str {
         buf.push_str(part);
     }
 
-    if buf.trim().is_empty() { "" } else { buf }
+    if buf.trim().is_empty() {
+        ""
+    } else {
+        buf
+    }
 }

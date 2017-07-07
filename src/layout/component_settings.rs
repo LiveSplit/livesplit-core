@@ -27,9 +27,7 @@ impl From<ComponentSettings> for Component {
                 current_comparison::Component::new(),
             ),
             ComponentSettings::CurrentPace(settings) => Component::CurrentPace(
-                current_pace::Component::with_settings(
-                    settings,
-                ),
+                current_pace::Component::with_settings(settings),
             ),
             ComponentSettings::Delta(settings) => Component::Delta(
                 delta::Component::with_settings(settings),

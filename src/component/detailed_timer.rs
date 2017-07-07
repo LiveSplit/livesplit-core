@@ -124,23 +124,13 @@ impl Component {
 
             let comparison1 = Some((
                 comparison::shorten(comparison1),
-                calculate_comparison_time(
-                    timer,
-                    timing_method,
-                    comparison1,
-                    last_split_index,
-                ),
+                calculate_comparison_time(timer, timing_method, comparison1, last_split_index),
             ));
 
             let comparison2 = if !hide_comparison {
                 Some((
                     comparison::shorten(comparison2),
-                    calculate_comparison_time(
-                        timer,
-                        timing_method,
-                        comparison2,
-                        last_split_index,
-                    ),
+                    calculate_comparison_time(timer, timing_method, comparison2, last_split_index),
                 ))
             } else {
                 None
@@ -189,15 +179,15 @@ impl Component {
         SettingsDescription::with_fields(vec![
             Field::new(
                 "Comparison 1".into(),
-                self.settings.comparison1.clone().into()
+                self.settings.comparison1.clone().into(),
             ),
             Field::new(
                 "Comparison 2".into(),
-                self.settings.comparison2.clone().into()
+                self.settings.comparison2.clone().into(),
             ),
             Field::new(
                 "Hide Second Comparison".into(),
-                self.settings.hide_second_comparison.into()
+                self.settings.hide_second_comparison.into(),
             ),
         ])
     }
@@ -221,10 +211,10 @@ fn calculate_comparison_time(
     if comparison == best_segments::NAME {
         timer.run().segment(last_split_index).best_segment_time()[timing_method]
     } else if last_split_index == 0 {
-        timer.run().segment(0).comparison_timing_method(
-            comparison,
-            timing_method,
-        )
+        timer
+            .run()
+            .segment(0)
+            .comparison_timing_method(comparison, timing_method)
     } else if timer.current_split_index() > 0 {
         TimeSpan::option_sub(
             timer

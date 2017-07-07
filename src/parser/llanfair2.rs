@@ -110,10 +110,8 @@ pub fn parse<R: Read>(mut source: R) -> Result<Run> {
     if let Ok(node) = child(&node, "region") {
         run.metadata_mut().set_region_name(text(&node, buf));
     }
-    run.metadata_mut().set_emulator_usage(
-        text(&child(&node, "emulated")?, buf) ==
-            "true",
-    );
+    run.metadata_mut()
+        .set_emulator_usage(text(&child(&node, "emulated")?, buf) == "true");
 
     let segments = child(&node, "segments")?;
 

@@ -15,11 +15,10 @@ pub fn calculate(timer: &Timer) -> TimeSpan {
             // Calculate the sum of the segments for that run
             for segment in timer.run().segments() {
                 if let Some(segment_time) =
-                    segment.segment_history().get(attempt.index()).and_then(
-                        |s| {
-                            s[TimingMethod::RealTime]
-                        },
-                    )
+                    segment
+                        .segment_history()
+                        .get(attempt.index())
+                        .and_then(|s| s[TimingMethod::RealTime])
                 {
                     total_playtime += segment_time;
                 }

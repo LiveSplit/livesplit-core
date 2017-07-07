@@ -378,8 +378,7 @@ var liveSplitCoreNative = {};"#
             base_class = class_name_ref,
             export = if type_script {
                 r#"
-export "#
-                    .to_string()
+export "#.to_string()
             } else {
                 format!(
                     r#"exports.{base_class} = {base_class};
@@ -403,8 +402,7 @@ export "#
             base_class = class_name_ref_mut,
             export = if type_script {
                 r#"
-export "#
-                    .to_string()
+export "#.to_string()
             } else {
                 format!(
                     r#"exports.{base_class} = {base_class};

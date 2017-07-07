@@ -137,9 +137,10 @@ pub fn parse<R: Read>(mut source: R) -> Result<Run> {
             if let Ok(node) = child(&node, "milliseconds") {
                 total_time += time_span(&node, buf)?;
             } else if let Ok("../bestTime") = attribute(&node, "reference") {
-                total_time += segment.best_segment_time().real_time.ok_or(
-                    Error::ElementNotFound,
-                )?;
+                total_time += segment
+                    .best_segment_time()
+                    .real_time
+                    .ok_or(Error::ElementNotFound)?;
             }
             segment.set_personal_best_split_time(RealTime(Some(total_time)).into());
         }

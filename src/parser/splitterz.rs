@@ -71,8 +71,7 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
                         if let Ok(image) = Image::from_file(
                             unescape(icon_path).as_ref(),
                             &mut icon_buf,
-                        )
-                        {
+                        ) {
                             segment.set_icon(image);
                         }
                     }

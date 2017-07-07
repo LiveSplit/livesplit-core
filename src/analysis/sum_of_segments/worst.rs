@@ -23,15 +23,14 @@ fn populate_predictions(
             segments[segment_index].best_segment_time()[method].map(|t| t + current_time),
         );
         for &(segment_history_index, _) in segments[segment_index].segment_history().iter() {
-            let should_track_branch =
-                segment_index
-                    .checked_sub(1)
-                    .and_then(|previous_index| {
-                        segments[previous_index].segment_history().get(
-                            segment_history_index,
-                        )
-                    })
-                    .map_or(true, |segment_time| segment_time[method].is_some());
+            let should_track_branch = segment_index
+                .checked_sub(1)
+                .and_then(|previous_index| {
+                    segments[previous_index]
+                        .segment_history()
+                        .get(segment_history_index)
+                })
+                .map_or(true, |segment_time| segment_time[method].is_some());
 
             if should_track_branch {
                 let (index, time) = track_branch(

@@ -14,10 +14,10 @@ pub unsafe extern "C" fn TitleComponentState_drop(this: OwnedTitleComponentState
 pub unsafe extern "C" fn TitleComponentState_icon_change(
     this: *const TitleComponentState,
 ) -> *const c_char {
-    acc(this).icon_change.as_ref().map_or_else(
-        ptr::null,
-        |s| output_str(s),
-    )
+    acc(this)
+        .icon_change
+        .as_ref()
+        .map_or_else(ptr::null, |s| output_str(s))
 }
 
 #[no_mangle]

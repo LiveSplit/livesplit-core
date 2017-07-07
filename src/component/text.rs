@@ -54,7 +54,9 @@ pub struct State(pub Text);
 
 impl Default for Settings {
     fn default() -> Self {
-        Self { text: Text::Center(String::from("")) }
+        Self {
+            text: Text::Center(String::from("")),
+        }
     }
 }
 

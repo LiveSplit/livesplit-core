@@ -64,9 +64,10 @@ unsafe extern "system" fn callback_proc(code: c_int, wparam: WPARAM, lparam: LPA
             let key_code = mem::transmute((*(lparam as *const KBDLLHOOKSTRUCT)).vkCode as u8);
             let event = wparam as UINT;
             if event == WM_KEYDOWN {
-                state.events.send(key_code).expect(
-                    "Callback Thread disconnected",
-                );
+                state
+                    .events
+                    .send(key_code)
+                    .expect("Callback Thread disconnected");
             }
         }
 
@@ -101,9 +102,9 @@ impl Hook {
                         .send(Ok(unsafe { GetCurrentThreadId() }))
                         .map_err(|_| Error::ThreadStopped)?;
                 } else {
-                    initialized_tx.send(Err(Error::WindowsHook)).map_err(|_| {
-                        Error::ThreadStopped
-                    })?;
+                    initialized_tx
+                        .send(Err(Error::WindowsHook))
+                        .map_err(|_| Error::ThreadStopped)?;
                 }
 
                 *state.borrow_mut() = Some(State {

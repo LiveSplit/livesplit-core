@@ -54,9 +54,9 @@ impl Segment {
 
     #[inline]
     pub fn comparison_mut(&mut self, comparison: &str) -> &mut Time {
-        self.comparisons.entry(comparison.into()).or_insert_with(
-            Time::default,
-        )
+        self.comparisons
+            .entry(comparison.into())
+            .or_insert_with(Time::default)
     }
 
     #[inline]

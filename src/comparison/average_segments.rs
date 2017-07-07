@@ -36,9 +36,10 @@ fn generate(buf: &mut Vec<(i32, TimeSpan)>, segments: &mut [Segment], method: Ti
                 if let Some(time) = time[method] {
                     let keep = i.checked_sub(1)
                         .and_then(|i| {
-                            segments[i].segment_history().get(id).map(
-                                |t| t[method].is_some(),
-                            )
+                            segments[i]
+                                .segment_history()
+                                .get(id)
+                                .map(|t| t[method].is_some())
                         })
                         .unwrap_or(true);
 

@@ -46,12 +46,9 @@ fn track_current_run(
     method: TimingMethod,
 ) -> (usize, Time) {
     if let Some(first_split_time) =
-        segment_index.checked_sub(1).map_or(
-            Some(TimeSpan::zero()),
-            |i| {
-                segments[i].split_time()[method]
-            },
-        )
+        segment_index
+            .checked_sub(1)
+            .map_or(Some(TimeSpan::zero()), |i| segments[i].split_time()[method])
     {
         for (segment_index, segment) in segments.iter().enumerate().skip(segment_index) {
             let second_split_time = segment.split_time()[method];
@@ -78,11 +75,8 @@ fn track_personal_best_run(
     if let Some(first_split_time) =
         segment_index.checked_sub(1).map_or(
             Some(TimeSpan::zero()),
-            |i| {
-                segments[i].personal_best_split_time()[method]
-            },
-        )
-    {
+            |i| segments[i].personal_best_split_time()[method],
+        ) {
         for (segment_index, segment) in segments.iter().enumerate().skip(segment_index) {
             let second_split_time = segment.personal_best_split_time()[method];
             if let Some(second_split_time) = second_split_time {

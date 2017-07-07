@@ -10,7 +10,11 @@ use byteorder::{WriteBytesExt, LittleEndian};
 static LSS_IMAGE_HEADER: &[u8] = include_bytes!("lss_image_header.bin");
 
 fn fmt_bool(value: bool) -> &'static str {
-    if value { "True" } else { "False" }
+    if value {
+        "True"
+    } else {
+        "False"
+    }
 }
 
 fn fmt_date(date: DateTime<Utc>) -> String {

@@ -165,11 +165,15 @@ fn fns_to_classes(functions: Vec<Function>) -> BTreeMap<String, Class> {
     let mut classes = BTreeMap::new();
 
     for function in functions {
-        let class = classes.entry(function.class.clone()).or_insert_with(
-            Class::default,
-        );
+        let class = classes
+            .entry(function.class.clone())
+            .or_insert_with(Class::default);
         let kind = if let Some(&(ref name, ref ty)) = function.inputs.get(0) {
-            if name == "this" { Some(ty.kind) } else { None }
+            if name == "this" {
+                Some(ty.kind)
+            } else {
+                None
+            }
         } else {
             None
         };

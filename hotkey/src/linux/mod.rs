@@ -211,9 +211,9 @@ impl Hook {
             .send(Message::Register(hotkey, Box::new(callback), promise))
             .map_err(|_| Error::ThreadStopped)?;
 
-        self.ping.set_readiness(Ready::readable()).map_err(|_| {
-            Error::ThreadStopped
-        })?;
+        self.ping
+            .set_readiness(Ready::readable())
+            .map_err(|_| Error::ThreadStopped)?;
 
         future.value().ok_or(Error::ThreadStopped)?
     }
@@ -224,9 +224,9 @@ impl Hook {
         self.sender
             .send(Message::Unregister(hotkey, promise))
             .map_err(|_| Error::ThreadStopped)?;
-        self.ping.set_readiness(Ready::readable()).map_err(|_| {
-            Error::ThreadStopped
-        })?;
+        self.ping
+            .set_readiness(Ready::readable())
+            .map_err(|_| Error::ThreadStopped)?;
 
         future.value().ok_or(Error::ThreadStopped)?
     }

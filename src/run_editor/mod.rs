@@ -203,11 +203,9 @@ impl RunEditor {
         let mut previous_time = TimeSpan::zero();
         let mut decrement = TimeSpan::zero();
         for (segment_time, segment) in
-            self.segment_times.iter_mut().zip(
-                self.run
-                    .segments_mut()
-                    .iter_mut(),
-            )
+            self.segment_times
+                .iter_mut()
+                .zip(self.run.segments_mut().iter_mut())
         {
             if let &mut Some(ref mut segment_time) = segment_time {
                 let pb_time = &mut segment.personal_best_split_time_mut()[method];
@@ -397,9 +395,9 @@ impl RunEditor {
 
         for (comparison, first_time) in first.comparisons_mut() {
             // Fix the comparison times based on the new positions of the two segments
-            let previous_time = previous.map(|p| p.comparison(comparison)).unwrap_or_else(
-                || Time::zero(),
-            );
+            let previous_time = previous
+                .map(|p| p.comparison(comparison))
+                .unwrap_or_else(|| Time::zero());
 
             let second_time = second.comparison_mut(comparison);
             let first_segment_time = *first_time - previous_time;

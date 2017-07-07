@@ -123,9 +123,8 @@ fn parse_history(run: &mut Run, path: Option<PathBuf>) -> StdResult<(), ()> {
             let line = line.map_err(|_| ())?;
             let mut splits = line.split('\t');
             let time_stamp = splits.next().ok_or(())?;
-            let started = Utc.datetime_from_str(time_stamp, "%Y/%m/%d %R").map_err(
-                |_| (),
-            )?;
+            let started = Utc.datetime_from_str(time_stamp, "%Y/%m/%d %R")
+                .map_err(|_| ())?;
             let completed = splits.next().ok_or(())? == "C";
             let split_times: Vec<_> = splits
                 .map(parse_time_optional)
@@ -162,10 +161,9 @@ fn parse_history(run: &mut Run, path: Option<PathBuf>) -> StdResult<(), ()> {
                     last_split = current_split;
                 }
 
-                segment.segment_history_mut().insert(
-                    attempt_id,
-                    segment_time,
-                );
+                segment
+                    .segment_history_mut()
+                    .insert(attempt_id, segment_time);
                 if TimeSpan::option_op(
                     segment_time.real_time,
                     segment.best_segment_time().real_time,

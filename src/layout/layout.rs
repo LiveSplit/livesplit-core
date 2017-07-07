@@ -26,11 +26,15 @@ impl Layout {
     }
 
     pub fn state(&mut self, timer: &Timer) -> LayoutState {
-        LayoutState { components: self.components.iter_mut().map(|c| c.state(timer)).collect() }
+        LayoutState {
+            components: self.components.iter_mut().map(|c| c.state(timer)).collect(),
+        }
     }
 
     pub fn settings(&self) -> LayoutSettings {
-        LayoutSettings { components: self.components.iter().map(|c| c.settings()).collect() }
+        LayoutSettings {
+            components: self.components.iter().map(|c| c.settings()).collect(),
+        }
     }
 
     pub fn scroll_up(&mut self) {

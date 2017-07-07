@@ -40,23 +40,20 @@ fn segment_time_or_segment_delta(
     };
 
     if let Some(current_time) = current_time {
-        let split_number_comparison = timer.run().segment(split_number).comparison_timing_method(
-            comparison,
-            method,
-        );
+        let split_number_comparison = timer
+            .run()
+            .segment(split_number)
+            .comparison_timing_method(comparison, method);
 
         for segment in timer.run().segments()[..split_number].iter().rev() {
             if let Some(split_time) = segment.split_time()[method] {
                 if segment_time {
                     return Some(current_time - split_time);
-                } else if let Some(comparison) = segment.comparison_timing_method(
-                    comparison,
-                    method,
-                )
+                } else if let Some(comparison) = segment
+                           .comparison_timing_method(comparison, method)
                 {
-                    return split_number_comparison.map(|s| {
-                        (current_time - s) - (split_time - comparison)
-                    });
+                    return split_number_comparison
+                        .map(|s| (current_time - s) - (split_time - comparison));
                 }
             }
         }
@@ -158,10 +155,10 @@ pub fn check_live_delta(
 ) -> Option<TimeSpan> {
     if timer.current_phase() == TimerPhase::Running || timer.current_phase() == TimerPhase::Paused {
         let use_best_segment = true; // TODO Make this a parameter
-        let current_split = timer.current_split().unwrap().comparison_timing_method(
-            comparison,
-            method,
-        );
+        let current_split = timer
+            .current_split()
+            .unwrap()
+            .comparison_timing_method(comparison, method);
         let current_time = timer.current_time()[method];
         let split_index = timer.current_split_index() as usize;
         let current_segment = live_segment_time(timer, split_index, method);
@@ -207,9 +204,9 @@ pub fn split_color(
     if show_best_segments && use_best_segment && check_best_segment(timer, split_number, method) {
         Color::BestSegment
     } else if let Some(time_difference) = time_difference {
-        let last_delta = split_number.checked_sub(1).and_then(|n| {
-            last_delta(timer.run(), n, comparison, method)
-        });
+        let last_delta = split_number
+            .checked_sub(1)
+            .and_then(|n| last_delta(timer.run(), n, comparison, method));
         if time_difference < TimeSpan::zero() {
             if show_segment_deltas && last_delta.map_or(false, |d| time_difference > d) {
                 Color::AheadLosingTime

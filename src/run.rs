@@ -275,9 +275,9 @@ impl Run {
         let mut is_empty = true;
         let mut has_pushed = false;
 
-        if let Some((i, u)) = self.category_name.find('(').and_then(|i| {
-            self.category_name[i..].find(')').map(|u| (i, i + u))
-        })
+        if let Some((i, u)) = self.category_name
+            .find('(')
+            .and_then(|i| self.category_name[i..].find(')').map(|u| (i, i + u)))
         {
             category_name = Cow::Borrowed(&self.category_name[..u]);
             is_empty = u == i + 1;
@@ -380,10 +380,9 @@ impl Run {
                     {
                         segment.segment_history_mut().remove(run_index);
                     } else {
-                        segment.segment_history_mut().insert(
-                            run_index,
-                            history_time,
-                        );
+                        segment
+                            .segment_history_mut()
+                            .insert(run_index, history_time);
                     }
                 }
             }
@@ -492,8 +491,8 @@ impl Run {
             for segment in self.segments_mut() {
                 // Import the PB splits into the history
                 let pb_time = segment.personal_best_split_time()[timing_method];
-                let time =
-                    Time::new().with_timing_method(timing_method, pb_time.map(|p| p - prev_time));
+                let time = Time::new()
+                    .with_timing_method(timing_method, pb_time.map(|p| p - prev_time));
                 segment.segment_history_mut().insert(index, time);
 
                 if let Some(time) = pb_time {
@@ -507,19 +506,18 @@ impl Run {
         let best_segment_time = self.segments[segment_index].best_segment_time();
         if best_segment_time.real_time.is_some() || best_segment_time.game_time.is_some() {
             let index = self.min_segment_history_index() - 1;
-            self.segments[segment_index].segment_history_mut().insert(
-                index,
-                best_segment_time,
-            );
+            self.segments[segment_index]
+                .segment_history_mut()
+                .insert(index, best_segment_time);
         }
     }
 
     pub fn update_segment_history(&mut self, current_split_index: isize) {
         let mut last_split_time = Time::zero();
 
-        let segments = self.segments.iter_mut().take(
-            max(0, current_split_index) as usize,
-        );
+        let segments = self.segments
+            .iter_mut()
+            .take(max(0, current_split_index) as usize);
         let index = self.attempt_history.last().unwrap().index();
 
         for segment in segments {

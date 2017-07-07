@@ -57,10 +57,9 @@ impl LayoutEditor {
 
     pub fn move_component_up(&mut self) {
         if self.can_move_component_up() {
-            self.layout.components.swap(
-                self.selected_component,
-                self.selected_component - 1,
-            );
+            self.layout
+                .components
+                .swap(self.selected_component, self.selected_component - 1);
             self.selected_component -= 1;
         }
     }
@@ -71,10 +70,9 @@ impl LayoutEditor {
 
     pub fn move_component_down(&mut self) {
         if self.can_move_component_down() {
-            self.layout.components.swap(
-                self.selected_component,
-                self.selected_component + 1,
-            );
+            self.layout
+                .components
+                .swap(self.selected_component, self.selected_component + 1);
             self.selected_component += 1;
         }
     }

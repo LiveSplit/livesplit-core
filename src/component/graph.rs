@@ -99,7 +99,7 @@ impl Component {
         SettingsDescription::with_fields(vec![
             Field::new(
                 "Live Graph".into(),
-                self.settings.live_graph.into()
+                self.settings.live_graph.into(),
             ),
         ])
     }

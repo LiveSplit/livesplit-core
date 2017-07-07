@@ -115,12 +115,9 @@ pub unsafe extern "C" fn RunEditor_selected_set_icon(
     data: *const u8,
     length: usize,
 ) {
-    acc_mut(this).selected_segment().set_icon(
-        slice::from_raw_parts(
-            data,
-            length,
-        ),
-    );
+    acc_mut(this)
+        .selected_segment()
+        .set_icon(slice::from_raw_parts(data, length));
 }
 
 #[no_mangle]

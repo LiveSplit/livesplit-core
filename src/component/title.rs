@@ -88,9 +88,9 @@ impl Component {
         };
 
         State {
-            icon_change: run.game_icon().check_for_change(&mut self.icon_id).map(
-                str::to_owned,
-            ),
+            icon_change: run.game_icon()
+                .check_for_change(&mut self.icon_id)
+                .map(str::to_owned),
             game: run.game_name().to_string(),
             category: run.extended_category_name(false, false, true).into_owned(),
             finished_runs,
@@ -106,11 +106,11 @@ impl Component {
         SettingsDescription::with_fields(vec![
             Field::new(
                 "Show Finished Runs Count".into(),
-                self.settings.show_finished_runs_count.into()
+                self.settings.show_finished_runs_count.into(),
             ),
             Field::new(
                 "Show Attempt Count".into(),
-                self.settings.show_attempt_count.into()
+                self.settings.show_attempt_count.into(),
             ),
         ])
     }

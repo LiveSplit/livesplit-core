@@ -42,9 +42,10 @@ impl Component {
 
         let color = match timer.current_phase() {
             TimerPhase::Running if time >= TimeSpan::zero() => {
-                let pb_split_time = timer.current_split().unwrap().comparison(
-                    current_comparison,
-                )
+                let pb_split_time = timer
+                    .current_split()
+                    .unwrap()
+                    .comparison(current_comparison)
                     [method];
                 if let Some(pb_split_time) = pb_split_time {
                     split_color(
@@ -62,9 +63,12 @@ impl Component {
             }
             TimerPhase::Paused => Color::Paused,
             TimerPhase::Ended => {
-                let pb_time = timer.run().segments().last().unwrap().comparison(
-                    current_comparison,
-                )
+                let pb_time = timer
+                    .run()
+                    .segments()
+                    .last()
+                    .unwrap()
+                    .comparison(current_comparison)
                     [method];
                 if pb_time.map_or(true, |t| time < t) {
                     Color::PersonalBest

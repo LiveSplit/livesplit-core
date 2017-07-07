@@ -23,7 +23,9 @@ impl Short {
 
 impl Default for Short {
     fn default() -> Self {
-        Short { accuracy: Accuracy::Hundredths }
+        Short {
+            accuracy: Accuracy::Hundredths,
+        }
     }
 }
 

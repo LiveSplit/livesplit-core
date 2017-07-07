@@ -120,8 +120,7 @@ impl Component {
         );
         self.scroll_offset = min(
             max(self.scroll_offset, -skip_count),
-            timer.run().len() as isize - skip_count -
-                self.settings.visual_split_count as isize,
+            timer.run().len() as isize - skip_count - self.settings.visual_split_count as isize,
         );
         let skip_count = max(0, skip_count + self.scroll_offset) as usize;
         let take_count = self.settings.visual_split_count + always_show_last_split as usize - 1;
@@ -191,19 +190,19 @@ impl Component {
         SettingsDescription::with_fields(vec![
             Field::new(
                 "Total Splits".into(),
-                Value::UInt(self.settings.visual_split_count as _)
+                Value::UInt(self.settings.visual_split_count as _),
             ),
             Field::new(
                 "Upcoming Splits".into(),
-                Value::UInt(self.settings.split_preview_count as _)
+                Value::UInt(self.settings.split_preview_count as _),
             ),
             Field::new(
                 "Always Show Last".into(),
-                self.settings.always_show_last_split.into()
+                self.settings.always_show_last_split.into(),
             ),
             Field::new(
                 "Show Separator Before Last Split".into(),
-                self.settings.separator_last_split.into()
+                self.settings.separator_last_split.into(),
             ),
         ])
     }

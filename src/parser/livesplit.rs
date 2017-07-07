@@ -138,9 +138,10 @@ fn parse_attempt_history(
 ) -> Result<()> {
     if version >= Version(1, 5, 0, 0) {
         let attempt_history = child(element, "AttemptHistory")?;
-        for attempt in attempt_history.children().into_iter().filter_map(
-            |c| c.element(),
-        )
+        for attempt in attempt_history
+            .children()
+            .into_iter()
+            .filter_map(|c| c.element())
         {
             let time = time(&attempt, buf)?;
             let index = attribute(&attempt, "id")?.parse()?;
@@ -176,9 +177,10 @@ fn parse_attempt_history(
         }
     } else if version >= Version(1, 4, 1, 0) {
         let run_history = child(element, "RunHistory")?;
-        for attempt in run_history.children().into_iter().filter_map(
-            |c| c.element(),
-        )
+        for attempt in run_history
+            .children()
+            .into_iter()
+            .filter_map(|c| c.element())
         {
             let time = time(&attempt, buf)?;
             let index = attribute(&attempt, "id")?.parse()?;
@@ -187,9 +189,10 @@ fn parse_attempt_history(
         }
     } else {
         let run_history = child(element, "RunHistory")?;
-        for attempt in run_history.children().into_iter().filter_map(
-            |c| c.element(),
-        )
+        for attempt in run_history
+            .children()
+            .into_iter()
+            .filter_map(|c| c.element())
         {
             let time = time_old(&attempt, buf)?;
             let index = attribute(&attempt, "id")?.parse()?;

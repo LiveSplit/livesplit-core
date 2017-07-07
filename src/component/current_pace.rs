@@ -98,11 +98,11 @@ impl Component {
         SettingsDescription::with_fields(vec![
             Field::new(
                 "Comparison Override".into(),
-                self.settings.comparison_override.clone().into()
+                self.settings.comparison_override.clone().into(),
             ),
             Field::new(
                 "Accuracy".into(),
-                self.settings.accuracy.into()
+                self.settings.accuracy.into(),
             ),
         ])
     }

@@ -92,9 +92,9 @@ impl Timer {
             }
         };
 
-        Time::new().with_real_time(real_time).with_game_time(
-            game_time,
-        )
+        Time::new()
+            .with_real_time(real_time)
+            .with_game_time(game_time)
     }
 
     #[inline]
@@ -122,9 +122,9 @@ impl Timer {
 
     fn current_split_mut(&mut self) -> Option<&mut Segment> {
         if self.current_split_index >= 0 {
-            self.run.segments_mut().get_mut(
-                self.current_split_index as usize,
-            )
+            self.run
+                .segments_mut()
+                .get_mut(self.current_split_index as usize)
         } else {
             None
         }
@@ -154,14 +154,13 @@ impl Timer {
     pub fn split(&mut self) {
         let current_time = self.current_time();
         if self.phase == Running &&
-            current_time.real_time.map_or(
-                false,
-                |t| t >= TimeSpan::zero(),
-            )
+            current_time
+                .real_time
+                .map_or(false, |t| t >= TimeSpan::zero())
         {
-            self.current_split_mut().unwrap().set_split_time(
-                current_time,
-            );
+            self.current_split_mut()
+                .unwrap()
+                .set_split_time(current_time);
             self.current_split_index += 1;
             if self.run.len() as isize == self.current_split_index {
                 self.phase = Ended;
@@ -287,9 +286,9 @@ impl Timer {
                     .unwrap()
                     .split_time_mut();
 
-                *split_time += Time::new().with_real_time(pause_time).with_game_time(
-                    pause_time,
-                );
+                *split_time += Time::new()
+                    .with_real_time(pause_time)
+                    .with_game_time(pause_time);
             }
             _ => {}
         }
@@ -413,12 +412,8 @@ impl Timer {
 
         let pause_time = self.get_pause_time();
 
-        self.run.add_attempt(
-            time,
-            self.attempt_started,
-            self.attempt_ended,
-            pause_time,
-        );
+        self.run
+            .add_attempt(time, self.attempt_started, self.attempt_ended, pause_time);
     }
 
     fn update_best_segments(&mut self) {
@@ -430,20 +425,22 @@ impl Timer {
             if let Some(split_time) = split.split_time().real_time {
                 let current_segment = previous_split_time_rta.map(|previous| split_time - previous);
                 previous_split_time_rta = Some(split_time);
-                if split.best_segment_time().real_time.map_or(true, |b| {
-                    current_segment.map_or(false, |c| c < b)
-                })
+                if split
+                    .best_segment_time()
+                    .real_time
+                    .map_or(true, |b| current_segment.map_or(false, |c| c < b))
                 {
                     new_best_segment.real_time = current_segment;
                 }
             }
             if let Some(split_time) = split.split_time().game_time {
-                let current_segment =
-                    previous_split_time_game_time.map(|previous| split_time - previous);
+                let current_segment = previous_split_time_game_time
+                    .map(|previous| split_time - previous);
                 previous_split_time_game_time = Some(split_time);
-                if split.best_segment_time().game_time.map_or(true, |b| {
-                    current_segment.map_or(false, |c| c < b)
-                })
+                if split
+                    .best_segment_time()
+                    .game_time
+                    .map_or(true, |b| current_segment.map_or(false, |c| c < b))
                 {
                     new_best_segment.game_time = current_segment;
                 }

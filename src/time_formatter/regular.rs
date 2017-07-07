@@ -23,7 +23,9 @@ impl Regular {
 
 impl Default for Regular {
     fn default() -> Self {
-        Regular { accuracy: Accuracy::Seconds }
+        Regular {
+            accuracy: Accuracy::Seconds,
+        }
     }
 }
 

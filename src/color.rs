@@ -13,6 +13,10 @@ pub enum Color {
 
 impl Color {
     pub fn or(self, color: Color) -> Color {
-        if self == Color::Default { color } else { self }
+        if self == Color::Default {
+            color
+        } else {
+            self
+        }
     }
 }
