@@ -22,8 +22,18 @@ pub unsafe extern "C" fn Timer_drop(this: OwnedTimer) {
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn Timer_start(this: *mut Timer) {
+    acc_mut(this).start();
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn Timer_split(this: *mut Timer) {
     acc_mut(this).split();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Timer_split_or_start(this: *mut Timer) {
+    acc_mut(this).split_or_start();
 }
 
 #[no_mangle]
@@ -44,6 +54,21 @@ pub unsafe extern "C" fn Timer_reset(this: *mut Timer, update_splits: bool) {
 #[no_mangle]
 pub unsafe extern "C" fn Timer_pause(this: *mut Timer) {
     acc_mut(this).pause();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Timer_resume(this: *mut Timer) {
+    acc_mut(this).resume();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Timer_toggle_pause(this: *mut Timer) {
+    acc_mut(this).toggle_pause();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Timer_toggle_pause_or_start(this: *mut Timer) {
+    acc_mut(this).toggle_pause_or_start();
 }
 
 #[no_mangle]

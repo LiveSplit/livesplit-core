@@ -19,7 +19,7 @@ impl HotkeySystem {
         let inner = timer.clone();
         hook.register(
             config.split,
-            move || { inner.write().split(); },
+            move || { inner.write().split_or_start(); },
         )?;
 
         let inner = timer.clone();
@@ -41,10 +41,9 @@ impl HotkeySystem {
         )?;
 
         let inner = timer.clone();
-        hook.register(
-            config.pause,
-            move || { inner.write().pause(); },
-        )?;
+        hook.register(config.pause, move || {
+            inner.write().toggle_pause_or_start();
+        })?;
 
         let inner = timer.clone();
         hook.register(config.previous_comparison, move || {
@@ -73,7 +72,7 @@ impl HotkeySystem {
         let inner = self.timer.clone();
         self.hook.register(
             hotkey,
-            move || { inner.write().split(); },
+            move || { inner.write().split_or_start(); },
         )?;
         self.config.split = hotkey;
         Ok(())
@@ -93,10 +92,9 @@ impl HotkeySystem {
     pub fn set_pause(&mut self, hotkey: KeyCode) -> Result<()> {
         self.hook.unregister(self.config.pause)?;
         let inner = self.timer.clone();
-        self.hook.register(
-            hotkey,
-            move || { inner.write().pause(); },
-        )?;
+        self.hook.register(hotkey, move || {
+            inner.write().toggle_pause_or_start();
+        })?;
         self.config.pause = hotkey;
         Ok(())
     }

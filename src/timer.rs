@@ -135,7 +135,7 @@ impl Timer {
         self.current_split_index
     }
 
-    pub fn split(&mut self) {
+    pub fn start(&mut self) {
         if self.phase == NotRunning {
             self.phase = Running;
             self.current_split_index = 0;
@@ -147,27 +147,37 @@ impl Timer {
             self.uninitialize_game_time();
             self.run.start_next_run();
 
-        // TODO OnStart
-        } else {
-            let current_time = self.current_time();
-            if self.phase == Running &&
-                current_time.real_time.map_or(
-                    false,
-                    |t| t >= TimeSpan::zero(),
-                )
-            {
-                self.current_split_mut().unwrap().set_split_time(
-                    current_time,
-                );
-                self.current_split_index += 1;
-                if self.run.len() as isize == self.current_split_index {
-                    self.phase = Ended;
-                    self.attempt_ended = Some(AtomicDateTime::now());
-                }
-                self.run.mark_as_changed();
+            // TODO OnStart
+        }
+    }
 
-                // TODO OnSplit
+    pub fn split(&mut self) {
+        let current_time = self.current_time();
+        if self.phase == Running &&
+            current_time.real_time.map_or(
+                false,
+                |t| t >= TimeSpan::zero(),
+            )
+        {
+            self.current_split_mut().unwrap().set_split_time(
+                current_time,
+            );
+            self.current_split_index += 1;
+            if self.run.len() as isize == self.current_split_index {
+                self.phase = Ended;
+                self.attempt_ended = Some(AtomicDateTime::now());
             }
+            self.run.mark_as_changed();
+
+            // TODO OnSplit
+        }
+    }
+
+    pub fn split_or_start(&mut self) {
+        if self.phase == NotRunning {
+            self.start();
+        } else {
+            self.split();
         }
     }
 
@@ -230,20 +240,36 @@ impl Timer {
     }
 
     pub fn pause(&mut self) {
+        if self.phase == Running {
+            self.time_paused_at = self.current_time().real_time.unwrap();
+            self.phase = Paused;
+
+            // TODO OnPause
+        }
+    }
+
+    pub fn resume(&mut self) {
+        if self.phase == Paused {
+            self.adjusted_start_time = TimeStamp::now() - self.time_paused_at;
+            self.phase = Running;
+
+            // TODO OnResume
+        }
+    }
+
+    pub fn toggle_pause(&mut self) {
         match self.phase {
-            Running => {
-                self.time_paused_at = self.current_time().real_time.unwrap();
-                self.phase = Paused;
+            Running => self.pause(),
+            Paused => self.resume(),
+            _ => {}
+        }
+    }
 
-                // TODO OnPause
-            }
-            Paused => {
-                self.adjusted_start_time = TimeStamp::now() - self.time_paused_at;
-                self.phase = Running;
-
-                // TODO OnResume
-            }
-            NotRunning => self.split(), // Fuck abahbob
+    pub fn toggle_pause_or_start(&mut self) {
+        match self.phase {
+            Running => self.pause(),
+            Paused => self.resume(),
+            NotRunning => self.start(),
             _ => {}
         }
     }
