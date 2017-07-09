@@ -90,7 +90,24 @@ impl Component {
     }
 
     pub fn name(&self) -> Cow<str> {
-        "Text".into()
+        let name: Cow<str> = match self.settings.text {
+            Text::Center(ref text) => text.as_str().into(),
+            Text::Split(ref left, ref right) => {
+                let mut name = String::with_capacity(left.len() + right.len() + 1);
+                name.push_str(left);
+                if !left.is_empty() && !right.is_empty() {
+                    name.push_str(" ");
+                }
+                name.push_str(right);
+                name.into()
+            }
+        };
+
+        if name.trim().is_empty() {
+            "Text".into()
+        } else {
+            name
+        }
     }
 
     pub fn state(&self) -> State {

@@ -13,7 +13,7 @@ pub use self::worst_segments::WorstSegments;
 pub use self::latest_run::LatestRun;
 
 use std::fmt::Debug;
-use {Attempt, Segment};
+use {Attempt, Segment, Timer};
 
 pub mod personal_best {
     pub const SHORT_NAME: &str = "PB";
@@ -66,4 +66,14 @@ pub fn shorten(comparison: &str) -> &str {
         worst_segments::NAME => worst_segments::SHORT_NAME,
         c => c,
     }
+}
+
+pub fn or_current<'a>(comparison: Option<&'a str>, timer: &'a Timer) -> &'a str {
+    comparison.unwrap_or_else(|| timer.current_comparison())
+}
+
+pub fn resolve<'a>(comparison: &Option<String>, timer: &'a Timer) -> Option<&'a str> {
+    comparison
+        .as_ref()
+        .and_then(|c| timer.run().comparisons().find(|&rc| c == rc))
 }

@@ -73,11 +73,15 @@ impl Component {
             Component::PossibleTimeSave(ref component) => ComponentSettings::PossibleTimeSave(
                 component.settings().clone(),
             ),
-            Component::PreviousSegment(_) => ComponentSettings::PreviousSegment,
+            Component::PreviousSegment(ref component) => ComponentSettings::PreviousSegment(
+                component.settings().clone(),
+            ),
             Component::Splits(ref component) => ComponentSettings::Splits(
                 component.settings().clone(),
             ),
-            Component::SumOfBest(_) => ComponentSettings::SumOfBest,
+            Component::SumOfBest(ref component) => ComponentSettings::SumOfBest(
+                component.settings().clone(),
+            ),
             Component::Text(ref component) => ComponentSettings::Text(component.settings().clone()),
             Component::Timer(ref component) => ComponentSettings::Timer(
                 component.settings().clone(),
@@ -85,7 +89,9 @@ impl Component {
             Component::Title(ref component) => ComponentSettings::Title(
                 component.settings().clone(),
             ),
-            Component::TotalPlaytime(_) => ComponentSettings::TotalPlaytime,
+            Component::TotalPlaytime(ref component) => ComponentSettings::TotalPlaytime(
+                component.settings().clone(),
+            ),
         }
     }
 

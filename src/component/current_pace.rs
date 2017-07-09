@@ -62,25 +62,35 @@ impl Component {
     }
 
     pub fn name(&self) -> Cow<str> {
-        "Current Pace".into()
+        self.text(
+            self.settings
+                .comparison_override
+                .as_ref()
+                .map(String::as_str),
+        )
+    }
+
+    fn text(&self, comparison: Option<&str>) -> Cow<str> {
+        if let Some(comparison) = comparison {
+            match comparison {
+                comparison::personal_best::NAME => "Current Pace".into(),
+                comparison::best_segments::NAME => "Best Possible Time".into(),
+                comparison::worst_segments::NAME => "Worst Possible Time".into(),
+                comparison::average_segments::NAME => "Predicted Time".into(),
+                comparison => format!("Current Pace ({})", comparison::shorten(comparison)).into(),
+            }
+        } else {
+            "Current Pace".into()
+        }
     }
 
     pub fn state(&self, timer: &Timer) -> State {
-        let comparison = self.settings
-            .comparison_override
-            .as_ref()
-            .and_then(|c| timer.run().comparisons().find(|&rc| c == rc))
-            .unwrap_or_else(|| timer.current_comparison());
+        let comparison = comparison::resolve(&self.settings.comparison_override, timer);
+        let comparison = comparison::or_current(comparison, timer);
+        let text = self.text(Some(comparison)).into_owned();
 
         let mut current_pace = current_pace::calculate(timer, comparison);
 
-        let text = match comparison {
-            comparison::personal_best::NAME => "Current Pace".into(),
-            comparison::best_segments::NAME => "Best Possible Time".into(),
-            comparison::worst_segments::NAME => "Worst Possible Time".into(),
-            comparison::average_segments::NAME => "Predicted Time".into(),
-            comparison => format!("Current Pace ({})", comparison),
-        };
 
         if timer.current_phase() == TimerPhase::NotRunning && text.starts_with("Current Pace") {
             current_pace = None;
@@ -97,7 +107,7 @@ impl Component {
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new(
-                "Comparison Override".into(),
+                "Comparison".into(),
                 self.settings.comparison_override.clone().into(),
             ),
             Field::new(

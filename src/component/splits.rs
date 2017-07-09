@@ -197,7 +197,7 @@ impl Component {
                 Value::UInt(self.settings.split_preview_count as _),
             ),
             Field::new(
-                "Always Show Last".into(),
+                "Always Show Last Split".into(),
                 self.settings.always_show_last_split.into(),
             ),
             Field::new(

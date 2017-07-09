@@ -1,4 +1,4 @@
-use {Timer, Color};
+use {Timer, Color, comparison};
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use analysis::{state_helper, delta};
@@ -65,15 +65,26 @@ impl Component {
     }
 
     pub fn name(&self) -> Cow<str> {
-        "Delta".into()
+        self.text(
+            self.settings
+                .comparison_override
+                .as_ref()
+                .map(String::as_ref),
+        )
+    }
+
+    fn text(&self, comparison: Option<&str>) -> Cow<str> {
+        if let Some(comparison) = comparison {
+            format!("Delta ({})", comparison::shorten(comparison)).into()
+        } else {
+            "Delta".into()
+        }
     }
 
     pub fn state(&self, timer: &Timer) -> State {
-        let comparison = self.settings
-            .comparison_override
-            .as_ref()
-            .and_then(|c| timer.run().comparisons().find(|&rc| c == rc))
-            .unwrap_or_else(|| timer.current_comparison());
+        let comparison = comparison::resolve(&self.settings.comparison_override, timer);
+        let text = self.text(comparison);
+        let comparison = comparison::or_current(comparison, timer);
 
         let (delta, use_live_delta) = delta::calculate(timer, comparison);
 
@@ -96,7 +107,7 @@ impl Component {
         };
 
         State {
-            text: String::from(comparison),
+            text: text.into_owned(),
             time: Delta::custom(self.settings.drop_decimals, self.settings.accuracy)
                 .format(delta)
                 .to_string(),
@@ -107,7 +118,7 @@ impl Component {
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new(
-                "Comparison Override".into(),
+                "Comparison".into(),
                 self.settings.comparison_override.clone().into(),
             ),
             Field::new(

@@ -88,7 +88,10 @@ impl Component {
 
     pub fn state(&self, timer: &Timer) -> State {
         let current_phase = timer.current_phase();
-        let timing_method = timer.current_timing_method();
+        let timing_method = self.settings
+            .timer
+            .timing_method
+            .unwrap_or_else(|| timer.current_timing_method());
 
         let last_split_index = if current_phase == TimerPhase::Ended {
             timer.run().len() - 1
@@ -190,6 +193,10 @@ impl Component {
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new(
+                "Timing Method".into(),
+                self.settings.timer.timing_method.into(),
+            ),
+            Field::new(
                 "Comparison 1".into(),
                 self.settings.comparison1.clone().into(),
             ),
@@ -222,21 +229,22 @@ impl Component {
 
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
-            0 => self.settings.comparison1 = value.into(),
-            1 => self.settings.comparison2 = value.into(),
-            2 => self.settings.hide_second_comparison = value.into(),
-            3 => {
+            0 => self.settings.timer.timing_method = value.into(),
+            1 => self.settings.comparison1 = value.into(),
+            2 => self.settings.comparison2 = value.into(),
+            3 => self.settings.hide_second_comparison = value.into(),
+            4 => {
                 let value: DigitsFormat = value.into();
                 self.settings.timer.digits_format = value.clone();
                 self.timer.settings_mut().digits_format = value;
             }
-            4 => {
+            5 => {
                 let value: Accuracy = value.into();
                 self.settings.timer.accuracy = value.clone();
                 self.timer.settings_mut().accuracy = value;
             }
-            5 => self.settings.segment_timer.digits_format = value.into(),
-            6 => self.settings.segment_timer.accuracy = value.into(),
+            6 => self.settings.segment_timer.digits_format = value.into(),
+            7 => self.settings.segment_timer.accuracy = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

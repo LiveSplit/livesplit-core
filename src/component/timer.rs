@@ -1,4 +1,4 @@
-use {Color, Timer, TimerPhase, TimeSpan};
+use {Color, Timer, TimerPhase, TimeSpan, TimingMethod};
 use time_formatter::{timer as formatter, TimeFormatter, Accuracy, DigitsFormat};
 use analysis::split_color;
 use serde_json::{to_writer, Result};
@@ -13,6 +13,7 @@ pub struct Component {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Settings {
+    pub timing_method: Option<TimingMethod>,
     pub digits_format: DigitsFormat,
     pub accuracy: Accuracy,
 }
@@ -20,6 +21,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
+            timing_method: None,
             digits_format: DigitsFormat::SingleDigitSeconds,
             accuracy: Accuracy::Hundredths,
         }
@@ -67,7 +69,9 @@ impl Component {
     }
 
     pub fn state(&self, timer: &Timer) -> State {
-        let method = timer.current_timing_method();
+        let method = self.settings
+            .timing_method
+            .unwrap_or_else(|| timer.current_timing_method());
         let time = timer.current_time();
         let time = time[method].or(time.real_time).unwrap_or_default();
         let current_comparison = timer.current_comparison();
@@ -79,6 +83,7 @@ impl Component {
                     .unwrap()
                     .comparison(current_comparison)
                     [method];
+
                 if let Some(pb_split_time) = pb_split_time {
                     split_color(
                         timer,
@@ -102,6 +107,7 @@ impl Component {
                     .unwrap()
                     .comparison(current_comparison)
                     [method];
+
                 if pb_time.map_or(true, |t| time < t) {
                     Color::PersonalBest
                 } else {
@@ -125,6 +131,10 @@ impl Component {
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new(
+                "Timing Method".into(),
+                self.settings.timing_method.into(),
+            ),
+            Field::new(
                 "Digits Format".into(),
                 self.settings.digits_format.into(),
             ),
@@ -137,8 +147,9 @@ impl Component {
 
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
-            0 => self.settings.digits_format = value.into(),
-            1 => self.settings.accuracy = value.into(),
+            0 => self.settings.timing_method = value.into(),
+            1 => self.settings.digits_format = value.into(),
+            2 => self.settings.accuracy = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

@@ -11,13 +11,13 @@ pub enum ComponentSettings {
     DetailedTimer(detailed_timer::Settings),
     Graph(graph::Settings),
     PossibleTimeSave(possible_time_save::Settings),
-    PreviousSegment,
+    PreviousSegment(previous_segment::Settings),
     Splits(splits::Settings),
-    SumOfBest,
+    SumOfBest(sum_of_best::Settings),
     Text(text::Settings),
     Timer(timer::Settings),
     Title(title::Settings),
-    TotalPlaytime,
+    TotalPlaytime(total_playtime::Settings),
 }
 
 impl From<ComponentSettings> for Component {
@@ -41,13 +41,15 @@ impl From<ComponentSettings> for Component {
             ComponentSettings::PossibleTimeSave(settings) => Component::PossibleTimeSave(
                 possible_time_save::Component::with_settings(settings),
             ),
-            ComponentSettings::PreviousSegment => Component::PreviousSegment(
-                previous_segment::Component::new(),
+            ComponentSettings::PreviousSegment(settings) => Component::PreviousSegment(
+                previous_segment::Component::with_settings(settings),
             ),
             ComponentSettings::Splits(settings) => Component::Splits(
                 splits::Component::with_settings(settings),
             ),
-            ComponentSettings::SumOfBest => Component::SumOfBest(sum_of_best::Component::new()),
+            ComponentSettings::SumOfBest(settings) => Component::SumOfBest(
+                sum_of_best::Component::with_settings(settings),
+            ),
             ComponentSettings::Text(settings) => Component::Text(
                 text::Component::with_settings(settings),
             ),
@@ -57,8 +59,8 @@ impl From<ComponentSettings> for Component {
             ComponentSettings::Title(settings) => Component::Title(
                 title::Component::with_settings(settings),
             ),
-            ComponentSettings::TotalPlaytime => Component::TotalPlaytime(
-                total_playtime::Component::new(),
+            ComponentSettings::TotalPlaytime(settings) => Component::TotalPlaytime(
+                total_playtime::Component::with_settings(settings),
             ),
         }
     }

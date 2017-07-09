@@ -1,12 +1,32 @@
-use {analysis, Timer, TimerPhase, Color};
-use time_formatter::{Delta, TimeFormatter};
+use {analysis, Timer, TimerPhase, Color, comparison};
+use time_formatter::{Delta, TimeFormatter, Accuracy};
 use serde_json::{to_writer, Result};
 use std::io::Write;
+use std::fmt::Write as FmtWrite;
 use std::borrow::Cow;
-use layout::editor::settings_description::{SettingsDescription, Value};
+use layout::editor::settings_description::{SettingsDescription, Value, Field};
 
 #[derive(Default, Clone)]
-pub struct Component;
+pub struct Component {
+    settings: Settings,
+}
+
+#[derive(Clone, Serialize, Deserialize)]
+pub struct Settings {
+    pub comparison_override: Option<String>,
+    pub drop_decimals: bool,
+    pub accuracy: Accuracy,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            comparison_override: None,
+            drop_decimals: true,
+            accuracy: Accuracy::Tenths,
+        }
+    }
+}
 
 #[derive(Serialize, Deserialize)]
 pub struct State {
@@ -29,19 +49,53 @@ impl Component {
         Default::default()
     }
 
+    pub fn with_settings(settings: Settings) -> Self {
+        Self {
+            settings,
+            ..Default::default()
+        }
+    }
+
+    pub fn settings(&self) -> &Settings {
+        &self.settings
+    }
+
+    pub fn settings_mut(&mut self) -> &mut Settings {
+        &mut self.settings
+    }
+
     pub fn name(&self) -> Cow<str> {
-        "Previous Segment".into()
+        self.text(
+            false,
+            self.settings
+                .comparison_override
+                .as_ref()
+                .map(String::as_ref),
+        )
+    }
+
+    fn text(&self, live: bool, comparison: Option<&str>) -> Cow<str> {
+        let text = if live {
+            "Live Segment"
+        } else {
+            "Previous Segment"
+        };
+        let mut text = Cow::from(text);
+        if let Some(comparison) = comparison {
+            write!(text.to_mut(), " ({})", comparison::shorten(comparison)).unwrap();
+        }
+        text
     }
 
     pub fn state(&self, timer: &Timer) -> State {
         let mut time_change = None;
         let mut live_segment = false;
-        let mut name = "Previous Segment";
+        let resolved_comparison = comparison::resolve(&self.settings.comparison_override, timer);
+        let comparison = comparison::or_current(resolved_comparison, timer);
 
         let phase = timer.current_phase();
         let method = timer.current_timing_method();
         let split_index = timer.current_split_index() as usize;
-        let comparison = timer.current_comparison();
         let color = if phase != TimerPhase::NotRunning {
             if (phase == TimerPhase::Running || phase == TimerPhase::Paused) &&
                 analysis::check_live_delta(timer, false, comparison, method).is_some()
@@ -51,7 +105,6 @@ impl Component {
 
             if live_segment {
                 time_change = analysis::live_segment_delta(timer, split_index, comparison, method);
-                name = "Live Segment";
             } else if let Some(prev_split_index) = split_index.checked_sub(1) {
                 time_change =
                     analysis::previous_segment_delta(timer, prev_split_index, comparison, method);
@@ -98,16 +151,40 @@ impl Component {
             Color::Default
         };
 
+        let text = self.text(live_segment, resolved_comparison);
+
         State {
-            text: name.into(),
-            time: Delta::new().format(time_change).to_string(),
+            text: text.into_owned(),
+            time: Delta::custom(self.settings.drop_decimals, self.settings.accuracy)
+                .format(time_change)
+                .to_string(),
             color: color,
         }
     }
 
     pub fn settings_description(&self) -> SettingsDescription {
-        SettingsDescription::default()
+        SettingsDescription::with_fields(vec![
+            Field::new(
+                "Comparison".into(),
+                self.settings.comparison_override.clone().into(),
+            ),
+            Field::new(
+                "Drop Decimals".into(),
+                self.settings.drop_decimals.into(),
+            ),
+            Field::new(
+                "Accuracy".into(),
+                self.settings.accuracy.into(),
+            ),
+        ])
     }
 
-    pub fn set_value(&mut self, _index: usize, _value: Value) {}
+    pub fn set_value(&mut self, index: usize, value: Value) {
+        match index {
+            0 => self.settings.comparison_override = value.into(),
+            1 => self.settings.drop_decimals = value.into(),
+            2 => self.settings.accuracy = value.into(),
+            _ => panic!("Unsupported Setting Index"),
+        }
+    }
 }

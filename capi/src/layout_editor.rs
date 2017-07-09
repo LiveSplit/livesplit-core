@@ -3,6 +3,7 @@ use layout::OwnedLayout;
 use super::{Json, alloc, own, output_vec, acc, acc_mut, str};
 use component::OwnedComponent;
 use livesplit_core::time_formatter::{Accuracy, DigitsFormat};
+use livesplit_core::TimingMethod;
 use libc::c_char;
 
 pub type OwnedLayoutEditor = *mut LayoutEditor;
@@ -98,7 +99,7 @@ pub unsafe extern "C" fn LayoutEditor_set_component_settings_optional_string(
     value: *const c_char,
 ) {
     let value = if value.is_null() {
-        None.into()
+        None::<String>.into()
     } else {
         Some(str(value).to_string()).into()
     };
@@ -157,4 +158,27 @@ pub unsafe extern "C" fn LayoutEditor_set_component_settings_digits_format(
     };
 
     acc_mut(this).set_component_settings_value(index, value.into());
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn LayoutEditor_set_component_settings_optional_timing_method(
+    this: *mut LayoutEditor,
+    index: usize,
+    value: *const c_char,
+) {
+    let value = str(value);
+    let value = match value {
+        "RealTime" => TimingMethod::RealTime,
+        "GameTime" => TimingMethod::GameTime,
+        _ => return,
+    };
+    acc_mut(this).set_component_settings_value(index, Some(value).into());
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn LayoutEditor_set_component_settings_optional_timing_method_to_empty(
+    this: *mut LayoutEditor,
+    index: usize,
+) {
+    acc_mut(this).set_component_settings_value(index, None::<TimingMethod>.into());
 }

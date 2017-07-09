@@ -1,4 +1,5 @@
 use super::Component;
+use TimingMethod;
 use time_formatter::{DigitsFormat, Accuracy};
 use std::result::Result as StdResult;
 
@@ -12,6 +13,7 @@ pub enum Value {
     Float(f64),
     Accuracy(Accuracy),
     DigitsFormat(DigitsFormat),
+    OptionalTimingMethod(Option<TimingMethod>),
 }
 
 #[derive(Serialize, Deserialize)]
@@ -90,6 +92,13 @@ impl Value {
             _ => Err(Error::WrongType),
         }
     }
+
+    pub fn into_optional_timing_method(self) -> Result<Option<TimingMethod>> {
+        match self {
+            Value::OptionalTimingMethod(v) => Ok(v),
+            _ => Err(Error::WrongType),
+        }
+    }
 }
 
 impl Into<bool> for Value {
@@ -137,6 +146,12 @@ impl Into<Accuracy> for Value {
 impl Into<DigitsFormat> for Value {
     fn into(self) -> DigitsFormat {
         self.into_digits_format().unwrap()
+    }
+}
+
+impl Into<Option<TimingMethod>> for Value {
+    fn into(self) -> Option<TimingMethod> {
+        self.into_optional_timing_method().unwrap()
     }
 }
 

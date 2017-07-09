@@ -1,4 +1,4 @@
-use {Timer, TimeSpan, TimerPhase, analysis};
+use {Timer, TimeSpan, TimerPhase, analysis, comparison};
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use std::borrow::Cow;
@@ -17,6 +17,7 @@ pub struct Component {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Settings {
+    pub comparison_override: Option<String>,
     pub live_graph: bool,
 }
 
@@ -31,7 +32,10 @@ pub struct State {
 
 impl Default for Settings {
     fn default() -> Self {
-        Settings { live_graph: true }
+        Settings {
+            comparison_override: None,
+            live_graph: true,
+        }
     }
 }
 
@@ -74,16 +78,31 @@ impl Component {
     }
 
     pub fn name(&self) -> Cow<str> {
-        "Graph".into()
+        self.text(
+            self.settings
+                .comparison_override
+                .as_ref()
+                .map(String::as_ref),
+        )
+    }
+
+    fn text(&self, comparison: Option<&str>) -> Cow<str> {
+        if let Some(comparison) = comparison {
+            format!("Graph ({})", comparison::shorten(comparison)).into()
+        } else {
+            "Graph".into()
+        }
     }
 
     pub fn state(&self, timer: &Timer) -> State {
+        let comparison = comparison::resolve(&self.settings.comparison_override, timer);
+        let comparison = comparison::or_current(comparison, timer);
+
         let mut draw_info = DrawInfo {
             deltas: Vec::with_capacity(timer.run().len() + 1),
             ..Default::default()
         };
 
-        let comparison = timer.current_comparison();
         self.calculate_final_split(timer, &mut draw_info);
         self.calculate_deltas(timer, comparison, &mut draw_info);
         self.check_live_segment_delta(timer, comparison, &mut draw_info);
@@ -98,6 +117,10 @@ impl Component {
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new(
+                "Comparison".into(),
+                self.settings.comparison_override.clone().into(),
+            ),
+            Field::new(
                 "Live Graph".into(),
                 self.settings.live_graph.into(),
             ),
@@ -106,7 +129,8 @@ impl Component {
 
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
-            0 => self.settings.live_graph = value.into(),
+            0 => self.settings.comparison_override = value.into(),
+            1 => self.settings.live_graph = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }
