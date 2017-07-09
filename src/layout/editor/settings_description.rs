@@ -84,7 +84,7 @@ impl Value {
         }
     }
 
-        pub fn into_digits_format(self) -> Result<DigitsFormat> {
+    pub fn into_digits_format(self) -> Result<DigitsFormat> {
         match self {
             Value::DigitsFormat(v) => Ok(v),
             _ => Err(Error::WrongType),

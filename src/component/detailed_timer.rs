@@ -152,12 +152,13 @@ impl Component {
         let segment_time = calculate_segment_time(timer, timing_method, last_split_index);
         let segment_time_state = segment_time.map(|t| {
             timer::State {
-            time: formatter::Time::with_digits_format(self.settings.segment_timer.digits_format)
-                .format(t)
-                .to_string(),
-            fraction: formatter::Fraction::with_accuracy(self.settings.segment_timer.accuracy)
-                .format(t)
-                .to_string(),
+                time: formatter::Time::with_digits_format(
+                    self.settings.segment_timer.digits_format,
+                ).format(t)
+                    .to_string(),
+                fraction: formatter::Fraction::with_accuracy(self.settings.segment_timer.accuracy)
+                    .format(t)
+                    .to_string(),
                 color: Color::Default,
             }
         });

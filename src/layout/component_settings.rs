@@ -10,7 +10,7 @@ pub enum ComponentSettings {
     Delta(delta::Settings),
     DetailedTimer(detailed_timer::Settings),
     Graph(graph::Settings),
-    PossibleTimeSave,
+    PossibleTimeSave(possible_time_save::Settings),
     PreviousSegment,
     Splits(splits::Settings),
     SumOfBest,
@@ -38,8 +38,8 @@ impl From<ComponentSettings> for Component {
             ComponentSettings::Graph(settings) => Component::Graph(
                 graph::Component::with_settings(settings),
             ),
-            ComponentSettings::PossibleTimeSave => Component::PossibleTimeSave(
-                possible_time_save::Component::new(),
+            ComponentSettings::PossibleTimeSave(settings) => Component::PossibleTimeSave(
+                possible_time_save::Component::with_settings(settings),
             ),
             ComponentSettings::PreviousSegment => Component::PreviousSegment(
                 previous_segment::Component::new(),

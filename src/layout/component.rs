@@ -70,7 +70,9 @@ impl Component {
             Component::Graph(ref component) => ComponentSettings::Graph(
                 component.settings().clone(),
             ),
-            Component::PossibleTimeSave(_) => ComponentSettings::PossibleTimeSave,
+            Component::PossibleTimeSave(ref component) => ComponentSettings::PossibleTimeSave(
+                component.settings().clone(),
+            ),
             Component::PreviousSegment(_) => ComponentSettings::PreviousSegment,
             Component::Splits(ref component) => ComponentSettings::Splits(
                 component.settings().clone(),
