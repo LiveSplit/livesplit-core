@@ -36,11 +36,10 @@ impl ComparisonGenerator for BestSegments {
             TimingMethod::GameTime,
         );
 
-        for ((segment, &real_time), &game_time) in
-            segments
-                .iter_mut()
-                .zip(real_time_predictions[1..].iter())
-                .zip(game_time_predictions[1..].iter())
+        for ((segment, &real_time), &game_time) in segments
+            .iter_mut()
+            .zip(real_time_predictions[1..].iter())
+            .zip(game_time_predictions[1..].iter())
         {
             *segment.comparison_mut(NAME) = Time::new()
                 .with_real_time(real_time)

@@ -81,10 +81,7 @@ impl Component {
 
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
-            Field::new(
-                "Accuracy".into(),
-                self.settings.accuracy.into(),
-            ),
+            Field::new("Accuracy".into(), self.settings.accuracy.into()),
         ])
     }
 

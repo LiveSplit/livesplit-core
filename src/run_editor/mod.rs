@@ -202,12 +202,11 @@ impl RunEditor {
         let method = self.selected_method;
         let mut previous_time = TimeSpan::zero();
         let mut decrement = TimeSpan::zero();
-        for (segment_time, segment) in
-            self.segment_times
-                .iter_mut()
-                .zip(self.run.segments_mut().iter_mut())
+        for (segment_time, segment) in self.segment_times
+            .iter_mut()
+            .zip(self.run.segments_mut().iter_mut())
         {
-            if let &mut Some(ref mut segment_time) = segment_time {
+            if let Some(ref mut segment_time) = *segment_time {
                 let pb_time = &mut segment.personal_best_split_time_mut()[method];
                 if pb_time.is_none() {
                     decrement = *segment_time;
@@ -290,12 +289,11 @@ impl RunEditor {
                 if let Some(current_segment) = current_segment {
                     for current_index in current_index..self.run.len() {
                         // Add the removed segment's history times to the next non null times
-                        if let Some(&mut Some(ref mut segment)) =
-                            self.run
-                                .segment_mut(current_index)
-                                .segment_history_mut()
-                                .get_mut(run_index)
-                                .map(|t| &mut t[method])
+                        if let Some(&mut Some(ref mut segment)) = self.run
+                            .segment_mut(current_index)
+                            .segment_history_mut()
+                            .get_mut(run_index)
+                            .map(|t| &mut t[method])
                         {
                             *segment += current_segment;
                             break;
@@ -397,7 +395,7 @@ impl RunEditor {
             // Fix the comparison times based on the new positions of the two segments
             let previous_time = previous
                 .map(|p| p.comparison(comparison))
-                .unwrap_or_else(|| Time::zero());
+                .unwrap_or_else(Time::zero);
 
             let second_time = second.comparison_mut(comparison);
             let first_segment_time = *first_time - previous_time;

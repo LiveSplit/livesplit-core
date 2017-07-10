@@ -89,12 +89,13 @@ impl Component {
         let comparison = comparison::or_current(comparison, timer);
         let text = self.text(Some(comparison)).into_owned();
 
-        let mut current_pace = current_pace::calculate(timer, comparison);
-
-
-        if timer.current_phase() == TimerPhase::NotRunning && text.starts_with("Current Pace") {
-            current_pace = None;
-        }
+        let current_pace = if timer.current_phase() == TimerPhase::NotRunning &&
+            text.starts_with("Current Pace")
+        {
+            None
+        } else {
+            current_pace::calculate(timer, comparison)
+        };
 
         State {
             text,
@@ -110,10 +111,7 @@ impl Component {
                 "Comparison".into(),
                 self.settings.comparison_override.clone().into(),
             ),
-            Field::new(
-                "Accuracy".into(),
-                self.settings.accuracy.into(),
-            ),
+            Field::new("Accuracy".into(), self.settings.accuracy.into()),
         ])
     }
 

@@ -212,10 +212,7 @@ impl Component {
                 "Timer Digits Format".into(),
                 self.settings.timer.digits_format.into(),
             ),
-            Field::new(
-                "Timer Accuracy".into(),
-                self.settings.timer.accuracy.into(),
-            ),
+            Field::new("Timer Accuracy".into(), self.settings.timer.accuracy.into()),
             Field::new(
                 "Segment Timer Digits Format".into(),
                 self.settings.segment_timer.digits_format.into(),
@@ -235,12 +232,12 @@ impl Component {
             3 => self.settings.hide_second_comparison = value.into(),
             4 => {
                 let value: DigitsFormat = value.into();
-                self.settings.timer.digits_format = value.clone();
+                self.settings.timer.digits_format = value;
                 self.timer.settings_mut().digits_format = value;
             }
             5 => {
                 let value: Accuracy = value.into();
-                self.settings.timer.accuracy = value.clone();
+                self.settings.timer.accuracy = value;
                 self.timer.settings_mut().accuracy = value;
             }
             6 => self.settings.segment_timer.digits_format = value.into(),

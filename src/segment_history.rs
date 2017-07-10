@@ -66,8 +66,7 @@ impl SegmentHistory {
     #[inline]
     pub fn iter_actual_runs(&self) -> Iter<(i32, Time)> {
         let start = match self.get_pos(1) {
-            Ok(pos) => pos,
-            Err(pos) => pos,
+            Ok(pos) | Err(pos) => pos,
         };
         self.0[start..].iter()
     }

@@ -24,11 +24,10 @@ fn populate_predictions(
             segments[segment_index].best_segment_time()[method].map(|t| t + current_time),
         );
         if !simple_calculation {
-            for &(null_segment_index, _) in
-                segments[segment_index]
-                    .segment_history()
-                    .iter()
-                    .filter(|&&(_, t)| t[method].is_none())
+            for &(null_segment_index, _) in segments[segment_index]
+                .segment_history()
+                .iter()
+                .filter(|&&(_, t)| t[method].is_none())
             {
 
                 let should_track_branch = segment_index

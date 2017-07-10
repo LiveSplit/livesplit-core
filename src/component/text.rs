@@ -23,7 +23,7 @@ pub enum Text {
 impl Text {
     pub fn set_center<S: Into<String>>(&mut self, text: S) {
         let text = text.into();
-        if let &mut Text::Center(ref mut inner) = self {
+        if let Text::Center(ref mut inner) = *self {
             *inner = text;
         } else {
             *self = Text::Center(text);
@@ -32,7 +32,7 @@ impl Text {
 
     pub fn set_left<S: Into<String>>(&mut self, text: S) {
         let text = text.into();
-        if let &mut Text::Split(ref mut inner, _) = self {
+        if let Text::Split(ref mut inner, _) = *self {
             *inner = text;
         } else {
             *self = Text::Split(text, String::from(""));
@@ -41,7 +41,7 @@ impl Text {
 
     pub fn set_right<S: Into<String>>(&mut self, text: S) {
         let text = text.into();
-        if let &mut Text::Split(_, ref mut inner) = self {
+        if let Text::Split(_, ref mut inner) = *self {
             *inner = text;
         } else {
             *self = Text::Split(String::from(""), text);

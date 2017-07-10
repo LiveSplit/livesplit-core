@@ -78,10 +78,7 @@ impl Component {
 
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
-            Field::new(
-                "Show Days (>24h)".into(),
-                self.settings.show_days.into(),
-            ),
+            Field::new("Show Days (>24h)".into(), self.settings.show_days.into()),
         ])
     }
 

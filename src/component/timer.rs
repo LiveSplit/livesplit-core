@@ -130,18 +130,9 @@ impl Component {
 
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
-            Field::new(
-                "Timing Method".into(),
-                self.settings.timing_method.into(),
-            ),
-            Field::new(
-                "Digits Format".into(),
-                self.settings.digits_format.into(),
-            ),
-            Field::new(
-                "Accuracy".into(),
-                self.settings.accuracy.into(),
-            ),
+            Field::new("Timing Method".into(), self.settings.timing_method.into()),
+            Field::new("Digits Format".into(), self.settings.digits_format.into()),
+            Field::new("Accuracy".into(), self.settings.accuracy.into()),
         ])
     }
 

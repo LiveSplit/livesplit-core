@@ -168,14 +168,8 @@ impl Component {
                 "Comparison".into(),
                 self.settings.comparison_override.clone().into(),
             ),
-            Field::new(
-                "Drop Decimals".into(),
-                self.settings.drop_decimals.into(),
-            ),
-            Field::new(
-                "Accuracy".into(),
-                self.settings.accuracy.into(),
-            ),
+            Field::new("Drop Decimals".into(), self.settings.drop_decimals.into()),
+            Field::new("Accuracy".into(), self.settings.accuracy.into()),
         ])
     }
 

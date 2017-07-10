@@ -120,10 +120,7 @@ impl Component {
                 "Comparison".into(),
                 self.settings.comparison_override.clone().into(),
             ),
-            Field::new(
-                "Live Graph".into(),
-                self.settings.live_graph.into(),
-            ),
+            Field::new("Live Graph".into(), self.settings.live_graph.into()),
         ])
     }
 
@@ -251,8 +248,8 @@ impl Component {
         }
 
         if y + 1 != draw_info.deltas.len() {
-            if let Some(split_time) = timer.run().segment(y).split_time()
-                [timer.current_timing_method()]
+            if let Some(split_time) =
+                timer.run().segment(y).split_time()[timer.current_timing_method()]
             {
                 *width_one = (split_time.total_milliseconds() as f32 /
                                   draw_info.final_split.total_milliseconds() as f32) *
@@ -275,8 +272,8 @@ impl Component {
     ) {
         if y + 1 == draw_info.deltas.len() && draw_info.is_live_delta_active {
             *width_two = WIDTH;
-        } else if let Some(split_time) = timer.run().segment(y).split_time()
-                   [timer.current_timing_method()]
+        } else if let Some(split_time) =
+            timer.run().segment(y).split_time()[timer.current_timing_method()]
         {
             *width_two = (split_time.total_milliseconds() as f32 /
                               draw_info.final_split.total_milliseconds() as f32) *
@@ -347,8 +344,8 @@ impl Component {
             while draw_info.final_split.total_milliseconds() as f32 / grid_value_x > WIDTH / 20.0 {
                 grid_value_x *= 6.0;
             }
-            grid_value_x = (grid_value_x / draw_info.final_split.total_milliseconds() as f32) *
-                WIDTH;
+            grid_value_x =
+                (grid_value_x / draw_info.final_split.total_milliseconds() as f32) * WIDTH;
         } else {
             grid_value_x = -1.0;
         }
@@ -375,16 +372,17 @@ impl Component {
     ) -> (f32, f32, f32) {
         let mut graph_edge = 0.0;
         let graph_height = HEIGHT / 2.0; // TODO Make const
-        let mut middle = graph_height;
-        if total_delta != TimeSpan::zero() {
+        let middle = if total_delta != TimeSpan::zero() {
             graph_edge = GRAPH_EDGE_VALUE /
                 (-total_delta.total_milliseconds() as f32 + 2.0 * GRAPH_EDGE_VALUE) *
                 (graph_height * 2.0 - GRAPH_EDGE_MIN * 2.0);
             graph_edge += GRAPH_EDGE_MIN;
-            middle = (-(draw_info.max_delta.total_milliseconds() as f32 /
-                            total_delta.total_milliseconds() as f32)) *
-                (graph_height - graph_edge) * 2.0 + graph_edge;
-        }
+            (-(draw_info.max_delta.total_milliseconds() as f32 /
+                   total_delta.total_milliseconds() as f32)) *
+                (graph_height - graph_edge) * 2.0 + graph_edge
+        } else {
+            graph_height
+        };
         (graph_edge, graph_height, middle)
     }
 
@@ -437,8 +435,8 @@ impl Component {
                 let mut best_segment =
                     analysis::check_live_delta(timer, true, comparison, timing_method);
                 // TODO Try if let instead of checking current phase up there, so we can skip this unwrap
-                let current_split = timer.current_split().unwrap().comparison(comparison)
-                    [timing_method];
+                let current_split =
+                    timer.current_split().unwrap().comparison(comparison)[timing_method];
                 let current_time = timer.current_time()[timing_method];
                 if let (Some(current_time), Some(current_split), None) =
                     (current_time, current_split, best_segment)

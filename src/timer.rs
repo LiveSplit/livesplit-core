@@ -28,7 +28,7 @@ pub type SharedTimer = Arc<RwLock<Timer>>;
 impl Timer {
     #[inline]
     pub fn new(mut run: Run) -> Self {
-        assert!(run.len() > 0);
+        assert!(!run.is_empty());
 
         run.regenerate_comparisons();
         let now = TimeStamp::now();
@@ -434,8 +434,8 @@ impl Timer {
                 }
             }
             if let Some(split_time) = split.split_time().game_time {
-                let current_segment = previous_split_time_game_time
-                    .map(|previous| split_time - previous);
+                let current_segment =
+                    previous_split_time_game_time.map(|previous| split_time - previous);
                 previous_split_time_game_time = Some(split_time);
                 if split
                     .best_segment_time()

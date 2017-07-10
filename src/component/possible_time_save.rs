@@ -124,10 +124,7 @@ impl Component {
                 "Show Total Possible Time Save".into(),
                 self.settings.total_possible_time_save.into(),
             ),
-            Field::new(
-                "Accuracy".into(),
-                self.settings.accuracy.into(),
-            ),
+            Field::new("Accuracy".into(), self.settings.accuracy.into()),
         ])
     }
 

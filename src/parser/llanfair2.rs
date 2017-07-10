@@ -32,7 +32,7 @@ fn child<'d>(element: &Element<'d>, name: &str) -> Result<Element<'d>> {
 }
 
 fn time_span(element: &Element, buf: &mut String) -> Result<TimeSpan> {
-    let node = child(&element, "value")?;
+    let node = child(element, "value")?;
     let text = text(&node, buf);
     let milliseconds = text.parse::<i64>()?;
     Ok(TimeSpan::from_milliseconds(milliseconds as f64))
@@ -48,7 +48,7 @@ fn image<'b>(
     buf2: &'b mut Vec<u8>,
     str_buf: &mut String,
 ) -> Result<&'b [u8]> {
-    let node = child(&node, "icon")?;
+    let node = child(node, "icon")?;
     let node = child(&node, "javax.swing.ImageIcon")?;
 
     let default = child(&node, "default")?;

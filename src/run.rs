@@ -491,8 +491,8 @@ impl Run {
             for segment in self.segments_mut() {
                 // Import the PB splits into the history
                 let pb_time = segment.personal_best_split_time()[timing_method];
-                let time = Time::new()
-                    .with_timing_method(timing_method, pb_time.map(|p| p - prev_time));
+                let time =
+                    Time::new().with_timing_method(timing_method, pb_time.map(|p| p - prev_time));
                 segment.segment_history_mut().insert(index, time);
 
                 if let Some(time) = pb_time {

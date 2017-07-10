@@ -53,7 +53,7 @@ fn image<'b>(
     buf2: &'b mut Vec<u8>,
     str_buf: &mut String,
 ) -> Result<&'b [u8]> {
-    let node = child(&node, "icon")?;
+    let node = child(node, "icon")?;
     let node = child(&node, "ImageIcon")?;
 
     buf.clear();

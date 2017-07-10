@@ -53,7 +53,7 @@ fn generate(buf: &mut Vec<(i32, TimeSpan)>, segments: &mut [Segment], method: Ti
                 total_time = None;
             }
             if let Some(ref mut total_time) = total_time {
-                *total_time = *total_time + calculate_average(&buf);
+                *total_time += calculate_average(buf);
             }
         }
         segments[i].comparison_mut(NAME)[method] = total_time;
