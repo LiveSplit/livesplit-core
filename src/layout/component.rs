@@ -2,8 +2,8 @@ use std::borrow::Cow;
 use Timer;
 use super::{ComponentState, ComponentSettings};
 use component::{current_comparison, current_pace, delta, detailed_timer, graph,
-                possible_time_save, previous_segment, splits, sum_of_best, text, timer, title,
-                total_playtime};
+                possible_time_save, previous_segment, separator, splits, sum_of_best, text, timer,
+                title, total_playtime};
 
 #[derive(From, Clone)]
 pub enum Component {
@@ -14,6 +14,7 @@ pub enum Component {
     Graph(graph::Component),
     PossibleTimeSave(possible_time_save::Component),
     PreviousSegment(previous_segment::Component),
+    Separator(separator::Component),
     Splits(splits::Component),
     SumOfBest(sum_of_best::Component),
     Text(text::Component),
@@ -40,6 +41,9 @@ impl Component {
                 component.state(timer),
             ),
             Component::PreviousSegment(ref mut component) => ComponentState::PreviousSegment(
+                component.state(timer),
+            ),
+            Component::Separator(ref mut component) => ComponentState::Separator(
                 component.state(timer),
             ),
             Component::Splits(ref mut component) => ComponentState::Splits(component.state(timer)),
@@ -76,6 +80,7 @@ impl Component {
             Component::PreviousSegment(ref component) => ComponentSettings::PreviousSegment(
                 component.settings().clone(),
             ),
+            Component::Separator(_) => ComponentSettings::Separator,
             Component::Splits(ref component) => ComponentSettings::Splits(
                 component.settings().clone(),
             ),
@@ -104,6 +109,7 @@ impl Component {
             Component::Graph(ref component) => component.name(),
             Component::PossibleTimeSave(ref component) => component.name(),
             Component::PreviousSegment(ref component) => component.name(),
+            Component::Separator(ref component) => component.name(),
             Component::Splits(ref component) => component.name(),
             Component::SumOfBest(ref component) => component.name(),
             Component::Text(ref component) => component.name(),

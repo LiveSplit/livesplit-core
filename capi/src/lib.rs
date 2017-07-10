@@ -39,6 +39,7 @@ pub mod possible_time_save_component_state;
 pub mod possible_time_save_component;
 pub mod previous_segment_component_state;
 pub mod previous_segment_component;
+pub mod separator_component;
 pub mod splits_component_state;
 pub mod splits_component;
 pub mod sum_of_best_component_state;

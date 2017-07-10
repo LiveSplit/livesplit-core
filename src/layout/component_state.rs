@@ -1,6 +1,6 @@
 use component::{current_comparison, current_pace, delta, detailed_timer, graph,
-                possible_time_save, previous_segment, splits, sum_of_best, text, timer, title,
-                total_playtime};
+                possible_time_save, previous_segment, separator, splits, sum_of_best, text, timer,
+                title, total_playtime};
 
 #[derive(Serialize, Deserialize)]
 pub enum ComponentState {
@@ -11,6 +11,7 @@ pub enum ComponentState {
     Graph(graph::State),
     PossibleTimeSave(possible_time_save::State),
     PreviousSegment(previous_segment::State),
+    Separator(separator::State),
     Splits(splits::State),
     SumOfBest(sum_of_best::State),
     Text(text::State),

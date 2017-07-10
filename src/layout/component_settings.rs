@@ -1,7 +1,7 @@
 use super::Component;
 use component::{current_comparison, current_pace, delta, detailed_timer, graph,
-                possible_time_save, previous_segment, splits, sum_of_best, text, timer, title,
-                total_playtime};
+                possible_time_save, previous_segment, separator, splits, sum_of_best, text, timer,
+                title, total_playtime};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub enum ComponentSettings {
@@ -12,6 +12,7 @@ pub enum ComponentSettings {
     Graph(graph::Settings),
     PossibleTimeSave(possible_time_save::Settings),
     PreviousSegment(previous_segment::Settings),
+    Separator,
     Splits(splits::Settings),
     SumOfBest(sum_of_best::Settings),
     Text(text::Settings),
@@ -44,6 +45,7 @@ impl From<ComponentSettings> for Component {
             ComponentSettings::PreviousSegment(settings) => Component::PreviousSegment(
                 previous_segment::Component::with_settings(settings),
             ),
+            ComponentSettings::Separator => Component::Separator(separator::Component::new()),
             ComponentSettings::Splits(settings) => Component::Splits(
                 splits::Component::with_settings(settings),
             ),
