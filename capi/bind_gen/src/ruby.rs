@@ -21,8 +21,7 @@ fn get_hl_type(ty: &Type) -> String {
 fn get_ll_type(ty: &Type) -> &str {
     match (ty.kind, ty.name.as_str()) {
         (TypeKind::Ref, "c_char") => "string",
-        (TypeKind::Ref, _) |
-        (TypeKind::RefMut, _) => "pointer",
+        (TypeKind::Ref, _) | (TypeKind::RefMut, _) => "pointer",
         (_, t) if !ty.is_custom => {
             match t {
                 "i8" => "int8",
@@ -72,12 +71,11 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         method
     )?;
 
-    for (i, &(ref name, _)) in
-        function
-            .inputs
-            .iter()
-            .skip(if is_static { 0 } else { 1 })
-            .enumerate()
+    for (i, &(ref name, _)) in function
+        .inputs
+        .iter()
+        .skip(if is_static { 0 } else { 1 })
+        .enumerate()
     {
         if i != 0 {
             write!(writer, ", ")?;

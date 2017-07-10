@@ -123,8 +123,8 @@ impl Hook {
                             for message in receiver.try_iter() {
                                 match message {
                                     Message::Register(key, callback, promise) => {
-                                        let code = (xlib.XKeysymToKeycode)(display, key as _) as
-                                            c_uint;
+                                        let code =
+                                            (xlib.XKeysymToKeycode)(display, key as _) as c_uint;
 
                                         if let Entry::Vacant(vacant) = hotkeys.entry(code) {
                                             (xlib.XGrabKey)(
@@ -154,8 +154,8 @@ impl Hook {
                                         }
                                     }
                                     Message::Unregister(key, promise) => {
-                                        let code = (xlib.XKeysymToKeycode)(display, key as _) as
-                                            c_uint;
+                                        let code =
+                                            (xlib.XKeysymToKeycode)(display, key as _) as c_uint;
 
                                         if hotkeys.remove(&code).is_some() {
                                             unregister(&xlib, display, window, code);

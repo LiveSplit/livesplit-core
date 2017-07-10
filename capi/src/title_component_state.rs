@@ -21,17 +21,25 @@ pub unsafe extern "C" fn TitleComponentState_icon_change(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn TitleComponentState_game(
+pub unsafe extern "C" fn TitleComponentState_line1(
     this: *const TitleComponentState,
 ) -> *const c_char {
-    output_str(&acc(this).game)
+    output_str(&acc(this).line1)
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn TitleComponentState_category(
+pub unsafe extern "C" fn TitleComponentState_line2(
     this: *const TitleComponentState,
 ) -> *const c_char {
-    output_str(&acc(this).category)
+    acc(this)
+        .line2
+        .as_ref()
+        .map_or_else(ptr::null, |s| output_str(s))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn TitleComponentState_centered(this: *const TitleComponentState) -> bool {
+    acc(this).centered
 }
 
 #[no_mangle]

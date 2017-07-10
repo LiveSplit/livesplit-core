@@ -28,8 +28,7 @@ fn get_ll_type(ty: &Type, output: bool) -> &str {
                 "string"
             }
         }
-        (TypeKind::Ref, _) |
-        (TypeKind::RefMut, _) => "IntPtr",
+        (TypeKind::Ref, _) | (TypeKind::RefMut, _) => "IntPtr",
         (_, t) if !ty.is_custom => {
             match t {
                 "i8" => "sbyte",
@@ -91,12 +90,11 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
         )?;
     }
 
-    for (i, &(ref name, ref typ)) in
-        function
-            .inputs
-            .iter()
-            .skip(if is_static { 0 } else { 1 })
-            .enumerate()
+    for (i, &(ref name, ref typ)) in function
+        .inputs
+        .iter()
+        .skip(if is_static { 0 } else { 1 })
+        .enumerate()
     {
         if i != 0 {
             write!(writer, ", ")?;

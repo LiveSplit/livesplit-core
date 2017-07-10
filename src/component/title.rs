@@ -12,15 +12,24 @@ pub struct Component {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Settings {
-    pub show_attempt_count: bool,
+    pub show_game_name: bool,
+    pub show_category_name: bool,
     pub show_finished_runs_count: bool,
+    pub show_attempt_count: bool,
+    pub center_text: bool,
+    pub display_as_single_line: bool,
+    pub display_game_icon: bool,
+    pub show_region: bool,
+    pub show_platform: bool,
+    pub show_variables: bool,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct State {
     pub icon_change: Option<String>,
-    pub game: String,
-    pub category: String,
+    pub line1: String,
+    pub line2: Option<String>,
+    pub centered: bool,
     pub finished_runs: Option<u32>,
     pub attempts: Option<u32>,
 }
@@ -28,8 +37,16 @@ pub struct State {
 impl Default for Settings {
     fn default() -> Self {
         Self {
+            show_game_name: true,
+            show_category_name: true,
             show_finished_runs_count: false,
             show_attempt_count: true,
+            center_text: false,
+            display_as_single_line: false,
+            display_game_icon: true,
+            show_region: false,
+            show_platform: false,
+            show_variables: true,
         }
     }
 }
@@ -87,14 +104,59 @@ impl Component {
             None
         };
 
-        State {
-            icon_change: run.game_icon()
+        let icon_change = if self.settings.display_game_icon {
+            run.game_icon()
                 .check_for_change(&mut self.icon_id)
-                .map(str::to_owned),
-            game: run.game_name().to_string(),
-            category: run.extended_category_name(false, false, true).into_owned(),
+                .map(str::to_owned)
+        } else if self.icon_id != 0 {
+            self.icon_id = 0;
+            Some(String::new())
+        } else {
+            None
+        };
+
+        let centered = self.icon_id == 0 || self.settings.center_text;
+
+        let game_name = if self.settings.show_game_name {
+            run.game_name()
+        } else {
+            ""
+        };
+
+        let category_name = if self.settings.show_category_name {
+            run.extended_category_name(
+                self.settings.show_region,
+                self.settings.show_platform,
+                self.settings.show_variables,
+            )
+        } else {
+            "".into()
+        };
+
+        let (line1, line2) = if self.settings.display_as_single_line {
+            let mut line1 = String::with_capacity(game_name.len() + category_name.len() + 3);
+            line1.push_str(game_name);
+            if !game_name.is_empty() && !category_name.is_empty() {
+                line1.push_str(" - ");
+            }
+            line1.push_str(&*category_name);
+            (line1, None)
+        } else {
+            match (!game_name.is_empty(), !category_name.is_empty()) {
+                (true, true) => (game_name.to_owned(), Some(category_name.into_owned())),
+                (true, false) => (game_name.to_owned(), None),
+                (false, true) => (category_name.into_owned(), None),
+                (false, false) => (String::new(), None),
+            }
+        };
+
+        State {
+            icon_change,
             finished_runs,
             attempts,
+            centered,
+            line1,
+            line2,
         }
     }
 
@@ -104,6 +166,11 @@ impl Component {
 
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
+            Field::new("Show Game Name".into(), self.settings.show_game_name.into()),
+            Field::new(
+                "Show Category Name".into(),
+                self.settings.show_category_name.into(),
+            ),
             Field::new(
                 "Show Finished Runs Count".into(),
                 self.settings.show_finished_runs_count.into(),
@@ -112,13 +179,33 @@ impl Component {
                 "Show Attempt Count".into(),
                 self.settings.show_attempt_count.into(),
             ),
+            Field::new("Center Text".into(), self.settings.center_text.into()),
+            Field::new(
+                "Display Text as Single Line".into(),
+                self.settings.display_as_single_line.into(),
+            ),
+            Field::new(
+                "Display Game Icon".into(),
+                self.settings.display_game_icon.into(),
+            ),
+            Field::new("Show Region".into(), self.settings.show_region.into()),
+            Field::new("Show Platform".into(), self.settings.show_platform.into()),
+            Field::new("Show Variables".into(), self.settings.show_variables.into()),
         ])
     }
 
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
-            0 => self.settings.show_finished_runs_count = value.into(),
-            1 => self.settings.show_attempt_count = value.into(),
+            0 => self.settings.show_game_name = value.into(),
+            1 => self.settings.show_category_name = value.into(),
+            2 => self.settings.show_finished_runs_count = value.into(),
+            3 => self.settings.show_attempt_count = value.into(),
+            4 => self.settings.center_text = value.into(),
+            5 => self.settings.display_as_single_line = value.into(),
+            6 => self.settings.display_game_icon = value.into(),
+            7 => self.settings.show_region = value.into(),
+            8 => self.settings.show_platform = value.into(),
+            9 => self.settings.show_variables = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

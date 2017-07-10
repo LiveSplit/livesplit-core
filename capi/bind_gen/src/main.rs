@@ -84,8 +84,22 @@ fn get_type(ty: &TyKind) -> Type {
                 name = String::from("u8");
             }
             let is_custom = match &name as &str {
-                "u8" | "u16" | "u32" | "u64" | "i8" | "i16" | "i32" | "i64" | "()" | "bool" |
-                "c_char" | "usize" | "isize" | "f32" | "f64" | "Json" => false,
+                "u8" |
+                "u16" |
+                "u32" |
+                "u64" |
+                "i8" |
+                "i16" |
+                "i32" |
+                "i64" |
+                "()" |
+                "bool" |
+                "c_char" |
+                "usize" |
+                "isize" |
+                "f32" |
+                "f64" |
+                "Json" => false,
                 _ => true,
             };
             return Type {

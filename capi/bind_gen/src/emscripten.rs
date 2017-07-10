@@ -40,8 +40,7 @@ fn get_hl_type(ty: &Type) -> String {
 
 fn get_ll_type(ty: &Type) -> &str {
     match (ty.kind, ty.name.as_str()) {
-        (TypeKind::Ref, "c_char") |
-        (_, "Json") => r#""string""#,
+        (TypeKind::Ref, "c_char") | (_, "Json") => r#""string""#,
         (TypeKind::Value, "()") => "null",
         _ => r#""number""#,
     }
@@ -95,12 +94,11 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
         method
     )?;
 
-    for (i, &(ref name, ref ty)) in
-        function
-            .inputs
-            .iter()
-            .skip(if is_static { 0 } else { 1 })
-            .enumerate()
+    for (i, &(ref name, ref ty)) in function
+        .inputs
+        .iter()
+        .skip(if is_static { 0 } else { 1 })
+        .enumerate()
     {
         if i != 0 {
             write!(writer, ", ")?;

@@ -39,8 +39,7 @@ fn get_c_type(ty: &Type) -> Cow<str> {
 fn get_jni_type<'a>(ty: &'a Type) -> &'a str {
     match (ty.kind, ty.name.as_str()) {
         (TypeKind::Ref, "c_char") => "jstring",
-        (TypeKind::Ref, _) |
-        (TypeKind::RefMut, _) => "jlong",
+        (TypeKind::Ref, _) | (TypeKind::RefMut, _) => "jlong",
         (_, t) if !ty.is_custom => {
             match t {
                 "i8" => "jbyte",

@@ -17,8 +17,7 @@ fn get_hl_type(ty: &Type) -> String {
 fn get_ll_type(ty: &Type) -> &str {
     match (ty.kind, ty.name.as_str()) {
         (TypeKind::Ref, "c_char") => "c_char_p",
-        (TypeKind::Ref, _) |
-        (TypeKind::RefMut, _) => "c_void_p",
+        (TypeKind::Ref, _) | (TypeKind::RefMut, _) => "c_void_p",
         (_, t) if !ty.is_custom => {
             match t {
                 "i8" => "c_int8",
