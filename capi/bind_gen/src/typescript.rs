@@ -35,7 +35,7 @@ export interface TitleComponentStateJson {
     icon_change?: string;
     line1: string;
     line2?: string;
-    centered: boolean;
+    is_centered: boolean;
     finished_runs?: number;
     attempts?: number;
 }
@@ -71,11 +71,18 @@ export interface PossibleTimeSaveComponentStateJson {
 }
 
 export interface GraphComponentStateJson {
-    points: number[][];
+    points: GraphComponentStatePointJson[];
     horizontal_grid_lines: number[];
     vertical_grid_lines: number[];
     middle: number;
     is_live_delta_active: boolean;
+    is_flipped: boolean;
+}
+
+export interface GraphComponentStatePointJson {
+    x: number;
+    y: number;
+    is_best_segment: boolean;
 }
 
 export type TextComponentStateJson =

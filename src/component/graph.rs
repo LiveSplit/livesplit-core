@@ -18,23 +18,35 @@ pub struct Component {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Settings {
     pub comparison_override: Option<String>,
+    pub show_best_segments: bool,
     pub live_graph: bool,
+    pub flip_graph: bool,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct State {
-    pub points: Vec<(f32, f32)>,
+    pub points: Vec<Point>,
     pub horizontal_grid_lines: Vec<f32>,
     pub vertical_grid_lines: Vec<f32>,
     pub middle: f32,
     pub is_live_delta_active: bool,
+    pub is_flipped: bool,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Point {
+    pub x: f32,
+    pub y: f32,
+    pub is_best_segment: bool,
 }
 
 impl Default for Settings {
     fn default() -> Self {
         Settings {
             comparison_override: None,
+            show_best_segments: false,
             live_graph: true,
+            flip_graph: false,
         }
     }
 }
@@ -110,6 +122,7 @@ impl Component {
         let mut state = self.calculate_points(timer, &draw_info);
 
         self.make_uniform(&mut state);
+        self.flip(&mut state);
 
         state
     }
@@ -120,14 +133,21 @@ impl Component {
                 "Comparison".into(),
                 self.settings.comparison_override.clone().into(),
             ),
+            Field::new(
+                "Show Best Segments".into(),
+                self.settings.show_best_segments.into(),
+            ),
             Field::new("Live Graph".into(), self.settings.live_graph.into()),
+            Field::new("Flip Graph".into(), self.settings.flip_graph.into()),
         ])
     }
 
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
             0 => self.settings.comparison_override = value.into(),
-            1 => self.settings.live_graph = value.into(),
+            1 => self.settings.show_best_segments = value.into(),
+            2 => self.settings.live_graph = value.into(),
+            3 => self.settings.flip_graph = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }
@@ -143,9 +163,23 @@ impl Component {
 
         state.middle /= HEIGHT;
 
-        for &mut (ref mut x, ref mut y) in &mut state.points {
-            *x /= WIDTH;
-            *y /= HEIGHT;
+        for point in &mut state.points {
+            point.x /= WIDTH;
+            point.y /= HEIGHT;
+        }
+    }
+
+    fn flip(&self, state: &mut State) {
+        if self.settings.flip_graph {
+            for y in &mut state.horizontal_grid_lines {
+                *y = 1.0 - *y;
+            }
+
+            for point in &mut state.points {
+                point.y = 1.0 - point.y;
+            }
+
+            state.middle = 1.0 - state.middle;
         }
     }
 
@@ -169,6 +203,7 @@ impl Component {
             vertical_grid_lines,
             middle,
             is_live_delta_active: draw_info.is_live_delta_active,
+            is_flipped: self.settings.flip_graph,
         }
     }
 
@@ -179,7 +214,7 @@ impl Component {
         total_delta: TimeSpan,
         graph_edge: f32,
         graph_height: f32,
-    ) -> Vec<(f32, f32)> {
+    ) -> Vec<Point> {
         let mut points_list = Vec::new();
         if !draw_info.deltas.is_empty() {
             let mut height_one = if total_delta != TimeSpan::zero() {
@@ -191,7 +226,11 @@ impl Component {
             };
             let (mut width_one, mut width_two, mut height_two) = (0.0, 0.0, 0.0);
 
-            points_list.push((width_one, height_one));
+            points_list.push(Point {
+                x: width_one,
+                y: height_one,
+                is_best_segment: false,
+            });
 
             for (y, &delta) in draw_info.deltas.iter().enumerate() {
                 if let Some(delta) = delta {
@@ -207,7 +246,13 @@ impl Component {
                         y,
                     );
 
-                    points_list.push((width_two, height_two));
+                    let is_best_segment = self.check_best_segment(timer, y);
+
+                    points_list.push(Point {
+                        x: width_two,
+                        y: height_two,
+                        is_best_segment,
+                    });
 
                     self.calculate_left_side_coordinates(
                         draw_info,
@@ -224,6 +269,11 @@ impl Component {
             }
         }
         points_list
+    }
+
+    fn check_best_segment(&self, timer: &Timer, split_number: usize) -> bool {
+        self.settings.show_best_segments && split_number < timer.run().len() &&
+            analysis::check_best_segment(timer, split_number, timer.current_timing_method())
     }
 
     fn calculate_left_side_coordinates(

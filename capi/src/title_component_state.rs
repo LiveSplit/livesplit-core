@@ -38,8 +38,8 @@ pub unsafe extern "C" fn TitleComponentState_line2(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn TitleComponentState_centered(this: *const TitleComponentState) -> bool {
-    acc(this).centered
+pub unsafe extern "C" fn TitleComponentState_is_centered(this: *const TitleComponentState) -> bool {
+    acc(this).is_centered
 }
 
 #[no_mangle]

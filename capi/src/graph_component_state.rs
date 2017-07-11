@@ -18,7 +18,7 @@ pub unsafe extern "C" fn GraphComponentState_point_x(
     this: *const GraphComponentState,
     index: usize,
 ) -> f32 {
-    acc(this).points[index].0
+    acc(this).points[index].x
 }
 
 #[no_mangle]
@@ -26,7 +26,15 @@ pub unsafe extern "C" fn GraphComponentState_point_y(
     this: *const GraphComponentState,
     index: usize,
 ) -> f32 {
-    acc(this).points[index].1
+    acc(this).points[index].y
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn GraphComponentState_point_is_best_segment(
+    this: *const GraphComponentState,
+    index: usize,
+) -> bool {
+    acc(this).points[index].is_best_segment
 }
 
 #[no_mangle]
@@ -69,4 +77,9 @@ pub unsafe extern "C" fn GraphComponentState_is_live_delta_active(
     this: *const GraphComponentState,
 ) -> bool {
     acc(this).is_live_delta_active
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn GraphComponentState_is_flipped(this: *const GraphComponentState) -> bool {
+    acc(this).is_flipped
 }

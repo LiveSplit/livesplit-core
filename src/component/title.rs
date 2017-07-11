@@ -29,7 +29,7 @@ pub struct State {
     pub icon_change: Option<String>,
     pub line1: String,
     pub line2: Option<String>,
-    pub centered: bool,
+    pub is_centered: bool,
     pub finished_runs: Option<u32>,
     pub attempts: Option<u32>,
 }
@@ -115,7 +115,7 @@ impl Component {
             None
         };
 
-        let centered = self.icon_id == 0 || self.settings.center_text;
+        let is_centered = self.icon_id == 0 || self.settings.center_text;
 
         let game_name = if self.settings.show_game_name {
             run.game_name()
@@ -154,7 +154,7 @@ impl Component {
             icon_change,
             finished_runs,
             attempts,
-            centered,
+            is_centered,
             line1,
             line2,
         }
