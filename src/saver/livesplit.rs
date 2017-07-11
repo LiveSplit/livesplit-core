@@ -5,7 +5,7 @@ use sxd_document::dom::{Document, Element};
 use sxd_document::writer::format_document;
 use time_formatter::{Complete, TimeFormatter};
 use {Run, Time, TimeSpan, Image, base64};
-use byteorder::{WriteBytesExt, LittleEndian};
+use byteorder::{WriteBytesExt, LE};
 
 static LSS_IMAGE_HEADER: &[u8] = include_bytes!("lss_image_header.bin");
 
@@ -29,7 +29,7 @@ fn fmt_image(image: &Image) -> String {
             let len = data.len();
             let mut buf = Vec::<u8>::with_capacity(0xA2 + len);
             buf.extend_from_slice(LSS_IMAGE_HEADER);
-            buf.write_u32::<LittleEndian>(len as u32).unwrap();
+            buf.write_u32::<LE>(len as u32).unwrap();
             buf.push(0x2);
             buf.append(&mut data);
             buf.push(0xB);

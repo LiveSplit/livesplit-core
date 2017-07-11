@@ -1,7 +1,7 @@
 use std::io::{self, Read, Seek, SeekFrom};
 use std::result::Result as StdResult;
 use std::str::{from_utf8, Utf8Error};
-use byteorder::{ReadBytesExt, BigEndian as BE};
+use byteorder::{ReadBytesExt, BE};
 use imagelib::{png, Rgba, ImageBuffer, ColorType};
 use {Run, Image, RealTime, TimeSpan, Time, Segment};
 

@@ -1,5 +1,5 @@
 use {Run, TimeSpan, Time, RealTime, Segment};
-use byteorder::{BigEndian, ByteOrder};
+use byteorder::{BE, ByteOrder};
 use imagelib::{png, Rgba, ImageBuffer, ColorType};
 use std::cmp::min;
 use std::io::{self, Read};
@@ -64,7 +64,7 @@ fn image<'b>(
 
     for node in array.children().into_iter().filter_map(|c| c.element()) {
         let value = text(&node, str_buf).parse::<i32>()?;
-        BigEndian::write_i32(&mut tmp, value);
+        BE::write_i32(&mut tmp, value);
         buf.extend_from_slice(&[tmp[1], tmp[2], tmp[3], tmp[0]]);
     }
 

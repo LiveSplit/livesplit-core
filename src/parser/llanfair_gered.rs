@@ -3,7 +3,7 @@ use std::num::ParseIntError;
 use std::result::Result as StdResult;
 use {Run, TimeSpan, Time, RealTime, Segment};
 use base64::{self, STANDARD};
-use byteorder::{ReadBytesExt, BigEndian as BE};
+use byteorder::{ReadBytesExt, BE};
 use imagelib::{png, Rgba, ImageBuffer, ColorType};
 use super::xml_util::{self, text};
 use sxd_document::dom::Element;
