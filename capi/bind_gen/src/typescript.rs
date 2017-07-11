@@ -10,7 +10,8 @@ pub static HEADER: &str = r#"export type ComponentStateJson =
     { Text: TextComponentStateJson } |
     { Timer: TimerComponentStateJson } |
     { Title: TitleComponentStateJson } |
-    { TotalPLaytime: TotalPlaytimeComponentStateJson };
+    { TotalPLaytime: TotalPlaytimeComponentStateJson } |
+    { Separator: null };
 
 export enum TimingMethod {
     RealTime = 0,
@@ -32,8 +33,9 @@ export interface TimerComponentStateJson {
 
 export interface TitleComponentStateJson {
     icon_change?: string;
-    game: string;
-    category: string;
+    line1: string;
+    line2?: string;
+    centered: boolean;
     finished_runs?: number;
     attempts?: number;
 }
