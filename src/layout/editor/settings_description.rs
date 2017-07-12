@@ -170,6 +170,7 @@ impl SettingsDescription {
 impl Component {
     pub fn settings_description(&self) -> SettingsDescription {
         match *self {
+            Component::BlankSpace(ref component) => component.settings_description(),
             Component::CurrentComparison(ref component) => component.settings_description(),
             Component::CurrentPace(ref component) => component.settings_description(),
             Component::Delta(ref component) => component.settings_description(),
@@ -189,6 +190,7 @@ impl Component {
 
     pub fn set_value(&mut self, index: usize, value: Value) {
         match *self {
+            Component::BlankSpace(ref mut component) => component.set_value(index, value),
             Component::CurrentComparison(ref mut component) => component.set_value(index, value),
             Component::CurrentPace(ref mut component) => component.set_value(index, value),
             Component::Delta(ref mut component) => component.set_value(index, value),

@@ -1,12 +1,13 @@
 use std::borrow::Cow;
 use Timer;
 use super::{ComponentState, ComponentSettings};
-use component::{current_comparison, current_pace, delta, detailed_timer, graph,
+use component::{blank_space, current_comparison, current_pace, delta, detailed_timer, graph,
                 possible_time_save, previous_segment, separator, splits, sum_of_best, text, timer,
                 title, total_playtime};
 
 #[derive(From, Clone)]
 pub enum Component {
+    BlankSpace(blank_space::Component),
     CurrentComparison(current_comparison::Component),
     CurrentPace(current_pace::Component),
     Delta(delta::Component),
@@ -26,6 +27,9 @@ pub enum Component {
 impl Component {
     pub fn state(&mut self, timer: &Timer) -> ComponentState {
         match *self {
+            Component::BlankSpace(ref mut component) => ComponentState::BlankSpace(
+                component.state(timer),
+            ),
             Component::CurrentComparison(ref mut component) => ComponentState::CurrentComparison(
                 component.state(timer),
             ),
@@ -61,6 +65,9 @@ impl Component {
 
     pub fn settings(&self) -> ComponentSettings {
         match *self {
+            Component::BlankSpace(ref component) => ComponentSettings::BlankSpace(
+                component.settings().clone(),
+            ),
             Component::CurrentComparison(_) => ComponentSettings::CurrentComparison,
             Component::CurrentPace(ref component) => ComponentSettings::CurrentPace(
                 component.settings().clone(),
@@ -102,6 +109,7 @@ impl Component {
 
     pub fn name(&self) -> Cow<str> {
         match *self {
+            Component::BlankSpace(ref component) => component.name(),
             Component::CurrentComparison(ref component) => component.name(),
             Component::CurrentPace(ref component) => component.name(),
             Component::Delta(ref component) => component.name(),

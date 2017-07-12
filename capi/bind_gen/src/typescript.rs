@@ -1,17 +1,18 @@
 pub static HEADER: &str = r#"export type ComponentStateJson =
+    { BlankSpace: BlankSpaceComponentStateJson } |
     { CurrentComparison: CurrentComparisonComponentStateJson } |
     { CurrentPace: CurrentPaceComponentStateJson } |
     { Delta: DeltaComponentStateJson } |
     { Graph: GraphComponentStateJson } |
     { PossibleTimeSave: PossibleTimeSaveComponentStateJson } |
     { PreviousSegment: PreviousSegmentComponentStateJson } |
+    { Separator: null } |
     { Splits: SplitsComponentStateJson } |
     { SumOfBest: SumOfBestComponentStateJson } |
     { Text: TextComponentStateJson } |
     { Timer: TimerComponentStateJson } |
     { Title: TitleComponentStateJson } |
-    { TotalPLaytime: TotalPlaytimeComponentStateJson } |
-    { Separator: null };
+    { TotalPlaytime: TotalPlaytimeComponentStateJson };
 
 export enum TimingMethod {
     RealTime = 0,
@@ -23,6 +24,10 @@ export enum TimerPhase {
     Running = 1,
     Ended = 2,
     Paused = 3,
+}
+
+export interface BlankSpaceComponentStateJson {
+    height: number;
 }
 
 export interface TimerComponentStateJson {

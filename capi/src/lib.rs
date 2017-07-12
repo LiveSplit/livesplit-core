@@ -25,6 +25,8 @@ pub mod segment_history_element;
 pub mod component;
 pub mod layout;
 pub mod layout_editor;
+pub mod blank_space_component_state;
+pub mod blank_space_component;
 pub mod current_comparison_component_state;
 pub mod current_comparison_component;
 pub mod current_pace_component_state;

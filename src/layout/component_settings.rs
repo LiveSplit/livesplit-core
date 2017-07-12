@@ -1,10 +1,11 @@
 use super::Component;
-use component::{current_comparison, current_pace, delta, detailed_timer, graph,
+use component::{blank_space, current_comparison, current_pace, delta, detailed_timer, graph,
                 possible_time_save, previous_segment, separator, splits, sum_of_best, text, timer,
                 title, total_playtime};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub enum ComponentSettings {
+    BlankSpace(blank_space::Settings),
     CurrentComparison,
     CurrentPace(current_pace::Settings),
     Delta(delta::Settings),
@@ -24,6 +25,9 @@ pub enum ComponentSettings {
 impl From<ComponentSettings> for Component {
     fn from(settings: ComponentSettings) -> Self {
         match settings {
+            ComponentSettings::BlankSpace(settings) => Component::BlankSpace(
+                blank_space::Component::with_settings(settings),
+            ),
             ComponentSettings::CurrentComparison => Component::CurrentComparison(
                 current_comparison::Component::new(),
             ),

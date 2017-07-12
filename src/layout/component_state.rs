@@ -1,9 +1,10 @@
-use component::{current_comparison, current_pace, delta, detailed_timer, graph,
+use component::{blank_space, current_comparison, current_pace, delta, detailed_timer, graph,
                 possible_time_save, previous_segment, separator, splits, sum_of_best, text, timer,
                 title, total_playtime};
 
 #[derive(Serialize, Deserialize)]
 pub enum ComponentState {
+    BlankSpace(blank_space::State),
     CurrentComparison(current_comparison::State),
     CurrentPace(current_pace::State),
     Delta(delta::State),
