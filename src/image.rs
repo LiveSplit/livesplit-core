@@ -79,4 +79,8 @@ impl Image {
             base64::encode_config_buf(data, STANDARD, &mut self.url);
         }
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.url.is_empty()
+    }
 }
