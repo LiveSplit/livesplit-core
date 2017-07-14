@@ -1,5 +1,5 @@
 use {analysis, Timer, TimerPhase, Color, comparison};
-use time_formatter::{Delta, TimeFormatter, Accuracy};
+use time_formatter::{Delta, PossibleTimeSave, TimeFormatter, Accuracy};
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use std::fmt::Write as FmtWrite;
@@ -16,6 +16,7 @@ pub struct Settings {
     pub comparison_override: Option<String>,
     pub drop_decimals: bool,
     pub accuracy: Accuracy,
+    pub show_possible_time_save: bool,
 }
 
 impl Default for Settings {
@@ -24,6 +25,7 @@ impl Default for Settings {
             comparison_override: None,
             drop_decimals: true,
             accuracy: Accuracy::Tenths,
+            show_possible_time_save: true,
         }
     }
 }
@@ -89,6 +91,7 @@ impl Component {
 
     pub fn state(&self, timer: &Timer) -> State {
         let mut time_change = None;
+        let mut previous_possible = None;
         let mut live_segment = false;
         let resolved_comparison = comparison::resolve(&self.settings.comparison_override, timer);
         let comparison = comparison::or_current(resolved_comparison, timer);
@@ -105,10 +108,26 @@ impl Component {
 
             if live_segment {
                 time_change = analysis::live_segment_delta(timer, split_index, comparison, method);
+                if self.settings.show_possible_time_save {
+                    previous_possible = analysis::possible_time_save::calculate(
+                        timer,
+                        split_index,
+                        comparison,
+                        false,
+                    );
+                }
             } else if let Some(prev_split_index) = split_index.checked_sub(1) {
                 time_change =
                     analysis::previous_segment_delta(timer, prev_split_index, comparison, method);
-            }
+                if self.settings.show_possible_time_save {
+                    previous_possible = analysis::possible_time_save::calculate(
+                        timer,
+                        prev_split_index,
+                        comparison,
+                        false,
+                    );
+                }
+            };
 
             if let Some(time_change) = time_change {
                 if live_segment {
@@ -152,12 +171,21 @@ impl Component {
         };
 
         let text = self.text(live_segment, resolved_comparison);
+        let mut time = Delta::custom(self.settings.drop_decimals, self.settings.accuracy)
+            .format(time_change)
+            .to_string();
+
+        if self.settings.show_possible_time_save {
+            write!(
+                time,
+                " / {}",
+                PossibleTimeSave::with_accuracy(self.settings.accuracy).format(previous_possible)
+            ).unwrap();
+        }
 
         State {
             text: text.into_owned(),
-            time: Delta::custom(self.settings.drop_decimals, self.settings.accuracy)
-                .format(time_change)
-                .to_string(),
+            time: time,
             color: color,
         }
     }
@@ -170,6 +198,10 @@ impl Component {
             ),
             Field::new("Drop Decimals".into(), self.settings.drop_decimals.into()),
             Field::new("Accuracy".into(), self.settings.accuracy.into()),
+            Field::new(
+                "Show Possible Time Save".into(),
+                self.settings.show_possible_time_save.into(),
+            ),
         ])
     }
 
@@ -178,6 +210,7 @@ impl Component {
             0 => self.settings.comparison_override = value.into(),
             1 => self.settings.drop_decimals = value.into(),
             2 => self.settings.accuracy = value.into(),
+            3 => self.settings.show_possible_time_save = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }
