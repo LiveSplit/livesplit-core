@@ -13,6 +13,7 @@ use layout::editor::settings_description::{SettingsDescription, Field, Value};
 pub struct Component {
     icon_ids: Vec<usize>,
     settings: Settings,
+    current_split_index: isize,
     scroll_offset: isize,
 }
 
@@ -97,6 +98,12 @@ impl Component {
     }
 
     pub fn state(&mut self, timer: &Timer) -> State {
+        // Reset Scroll Offset when any movement of the split index is observed.
+        if self.current_split_index != timer.current_split_index() {
+            self.current_split_index = timer.current_split_index();
+            self.scroll_offset = 0;
+        }
+
         self.icon_ids.resize(timer.run().len(), 0);
 
         let current_split = timer.current_split_index();
