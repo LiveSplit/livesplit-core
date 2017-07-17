@@ -141,6 +141,7 @@ impl Component {
 
     pub fn remount(&mut self) {
         match *self {
+            Component::DetailedTimer(ref mut component) => component.remount(),
             Component::Splits(ref mut component) => component.remount(),
             Component::Title(ref mut component) => component.remount(),
             _ => {}

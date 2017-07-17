@@ -120,6 +120,8 @@ export interface DetailedTimerComponentStateJson {
     segment_timer: TimerComponentStateJson;
     comparison1: DetailedTimerComponentComparisonStateJson;
     comparison2: DetailedTimerComponentComparisonStateJson;
+    segment_name: string;
+    icon_change: string;
 }
 
 export interface DetailedTimerComponentComparisonStateJson {

@@ -2,6 +2,7 @@ use livesplit_core::component::detailed_timer::State as DetailedTimerComponentSt
 use super::{own_drop, acc, output_str, output_str_with};
 use libc::c_char;
 use std::fmt::Write;
+use std::ptr;
 
 pub type OwnedDetailedTimerComponentState = *mut DetailedTimerComponentState;
 
@@ -128,4 +129,24 @@ pub unsafe extern "C" fn DetailedTimerComponentState_comparison2_time(
             .expect("Comparison 2 is not visible")
             .time,
     )
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn DetailedTimerComponentState_icon_change(
+    this: *const DetailedTimerComponentState,
+) -> *const c_char {
+    acc(this)
+        .icon_change
+        .as_ref()
+        .map_or_else(ptr::null, |s| output_str(s))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn DetailedTimerComponentState_name(
+    this: *const DetailedTimerComponentState,
+) -> *const c_char {
+    acc(this)
+        .segment_name
+        .as_ref()
+        .map_or_else(ptr::null, |s| output_str(s))
 }

@@ -1,6 +1,6 @@
 use livesplit_core::component::detailed_timer::Component as DetailedTimerComponent;
 use livesplit_core::Timer;
-use super::{Json, alloc, own, own_drop, acc, output_vec};
+use super::{Json, alloc, own, own_drop, acc, acc_mut, output_vec};
 use detailed_timer_component_state::OwnedDetailedTimerComponentState;
 use component::OwnedComponent;
 
@@ -25,16 +25,18 @@ pub unsafe extern "C" fn DetailedTimerComponent_into_generic(
 
 #[no_mangle]
 pub unsafe extern "C" fn DetailedTimerComponent_state_as_json(
-    this: *const DetailedTimerComponent,
+    this: *mut DetailedTimerComponent,
     timer: *const Timer,
 ) -> Json {
-    output_vec(|o| { acc(this).state(acc(timer)).write_json(o).unwrap(); })
+    output_vec(|o| {
+        acc_mut(this).state(acc(timer)).write_json(o).unwrap();
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn DetailedTimerComponent_state(
-    this: *const DetailedTimerComponent,
+    this: *mut DetailedTimerComponent,
     timer: *const Timer,
 ) -> OwnedDetailedTimerComponentState {
-    alloc(acc(this).state(acc(timer)))
+    alloc(acc_mut(this).state(acc(timer)))
 }

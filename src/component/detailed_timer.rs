@@ -11,6 +11,7 @@ use layout::editor::settings_description::{SettingsDescription, Field, Value};
 
 #[derive(Default, Clone)]
 pub struct Component {
+    icon_id: usize,
     timer: timer::Component,
     settings: Settings,
 }
@@ -22,6 +23,8 @@ pub struct Settings {
     pub hide_second_comparison: bool,
     pub timer: timer::Settings,
     pub segment_timer: timer::Settings,
+    pub display_icon: bool,
+    pub show_segment_name: bool,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -30,6 +33,8 @@ pub struct State {
     pub segment_timer: Option<timer::State>,
     pub comparison1: Option<ComparisonState>,
     pub comparison2: Option<ComparisonState>,
+    pub segment_name: Option<String>,
+    pub icon_change: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -46,6 +51,8 @@ impl Default for Settings {
             hide_second_comparison: false,
             timer: Default::default(),
             segment_timer: Default::default(),
+            display_icon: false,
+            show_segment_name: false,
         }
     }
 }
@@ -86,7 +93,7 @@ impl Component {
         "Detailed Timer".into()
     }
 
-    pub fn state(&self, timer: &Timer) -> State {
+    pub fn state(&mut self, timer: &Timer) -> State {
         let current_phase = timer.current_phase();
         let timing_method = self.settings
             .timer
@@ -182,12 +189,36 @@ impl Component {
             }
         });
 
+        let icon_id = &mut self.icon_id;
+        let icon_change = if self.settings.display_icon {
+            timer
+                .current_split()
+                .and_then(|s| s.icon().check_for_change(icon_id).map(str::to_owned))
+        } else if *icon_id != 0 {
+            *icon_id = 0;
+            Some(String::new())
+        } else {
+            None
+        };
+
+        let segment_name = if self.settings.show_segment_name {
+            timer.current_split().map(|s| s.name().to_owned())
+        } else {
+            None
+        };
+
         State {
             timer: timer_state,
             segment_timer: segment_time_state,
             comparison1,
             comparison2,
+            segment_name,
+            icon_change,
         }
+    }
+
+    pub fn remount(&mut self) {
+        self.icon_id = 0;
     }
 
     pub fn settings_description(&self) -> SettingsDescription {
@@ -221,6 +252,11 @@ impl Component {
                 "Segment Timer Accuracy".into(),
                 self.settings.segment_timer.accuracy.into(),
             ),
+            Field::new(
+                "Show Segment Name".into(),
+                self.settings.show_segment_name.into(),
+            ),
+            Field::new("Display Icon".into(), self.settings.display_icon.into()),
         ])
     }
 
@@ -242,6 +278,8 @@ impl Component {
             }
             6 => self.settings.segment_timer.digits_format = value.into(),
             7 => self.settings.segment_timer.accuracy = value.into(),
+            8 => self.settings.show_segment_name = value.into(),
+            9 => self.settings.display_icon = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }
