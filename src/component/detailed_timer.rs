@@ -159,7 +159,12 @@ impl Component {
         };
 
         let timer_state = self.timer.state(timer);
-        let segment_time = calculate_segment_time(timer, timing_method, last_split_index);
+        let mut segment_time = calculate_segment_time(timer, timing_method, last_split_index);
+
+        if segment_time.is_none() && timing_method == TimingMethod::GameTime {
+            segment_time = calculate_segment_time(timer, TimingMethod::RealTime, last_split_index);
+        }
+
         let segment_time_state = segment_time.map(|t| {
             timer::State {
                 time: formatter::Time::with_digits_format(
