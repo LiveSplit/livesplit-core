@@ -352,8 +352,8 @@ impl Run {
 
     pub fn fix_splits(&mut self) {
         for &method in &TimingMethod::all() {
-            self.fix_segment_history(method);
             self.fix_comparison_times(method);
+            self.fix_segment_history(method);
             self.remove_duplicates(method);
         }
         self.remove_null_values();
@@ -390,6 +390,7 @@ impl Run {
     }
 
     fn fix_comparison_times(&mut self, method: TimingMethod) {
+        // Remove negative Best Segment Times
         for segment in &mut self.segments {
             if segment.best_segment_time_mut()[method].map_or(false, |t| t < TimeSpan::zero()) {
                 segment.best_segment_time_mut()[method] = None;
