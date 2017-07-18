@@ -1,4 +1,4 @@
-use std::slice::Iter;
+use std::slice::{Iter, IterMut};
 use std::cmp::min;
 use Time;
 
@@ -59,7 +59,20 @@ impl SegmentHistory {
     }
 
     #[inline]
+    pub fn retain<F>(&mut self, f: F)
+    where
+        F: FnMut(&(i32, Time)) -> bool,
+    {
+        self.0.retain(f);
+    }
+
+    #[inline]
     pub fn iter(&self) -> Iter<(i32, Time)> {
+        IntoIterator::into_iter(self)
+    }
+
+    #[inline]
+    pub fn iter_mut(&mut self) -> IterMut<(i32, Time)> {
         IntoIterator::into_iter(self)
     }
 
@@ -78,5 +91,14 @@ impl<'a> IntoIterator for &'a SegmentHistory {
 
     fn into_iter(self) -> Iter<'a, (i32, Time)> {
         self.0.iter()
+    }
+}
+
+impl<'a> IntoIterator for &'a mut SegmentHistory {
+    type Item = &'a mut (i32, Time);
+    type IntoIter = IterMut<'a, (i32, Time)>;
+
+    fn into_iter(self) -> IterMut<'a, (i32, Time)> {
+        self.0.iter_mut()
     }
 }
