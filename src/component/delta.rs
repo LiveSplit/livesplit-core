@@ -1,10 +1,10 @@
-use {Timer, Color, comparison};
+use {Timer, SemanticColor, Color, comparison, GeneralLayoutSettings};
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use analysis::{state_helper, delta};
 use time_formatter::{Delta, TimeFormatter, Accuracy};
 use std::borrow::Cow;
-use layout::editor::settings_description::{SettingsDescription, Field, Value};
+use layout::editor::{SettingsDescription, Field, Value};
 
 #[derive(Default, Clone)]
 pub struct Component {
@@ -32,7 +32,8 @@ impl Default for Settings {
 pub struct State {
     pub text: String,
     pub time: String,
-    pub color: Color,
+    pub semantic_color: SemanticColor,
+    pub visual_color: Color,
 }
 
 impl State {
@@ -81,7 +82,7 @@ impl Component {
         }
     }
 
-    pub fn state(&self, timer: &Timer) -> State {
+    pub fn state(&self, timer: &Timer, layout_settings: &GeneralLayoutSettings) -> State {
         let comparison = comparison::resolve(&self.settings.comparison_override, timer);
         let text = self.text(comparison);
         let comparison = comparison::or_current(comparison, timer);
@@ -92,7 +93,8 @@ impl Component {
         if !use_live_delta {
             index -= 1;
         }
-        let color = if index >= 0 {
+
+        let semantic_color = if index >= 0 {
             state_helper::split_color(
                 timer,
                 delta,
@@ -103,15 +105,18 @@ impl Component {
                 timer.current_timing_method(),
             )
         } else {
-            Color::Default
+            SemanticColor::Default
         };
+
+        let visual_color = semantic_color.visualize(layout_settings);
 
         State {
             text: text.into_owned(),
             time: Delta::custom(self.settings.drop_decimals, self.settings.accuracy)
                 .format(delta)
                 .to_string(),
-            color,
+            semantic_color,
+            visual_color,
         }
     }
 

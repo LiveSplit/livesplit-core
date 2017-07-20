@@ -25,8 +25,8 @@ pub unsafe extern "C" fn TimerComponentState_fraction(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn TimerComponentState_color(
+pub unsafe extern "C" fn TimerComponentState_semantic_color(
     this: *const TimerComponentState,
 ) -> *const c_char {
-    output_str_with(|f| write!(f, "{:?}", acc(this).color).unwrap())
+    output_str_with(|f| write!(f, "{:?}", acc(this).semantic_color).unwrap())
 }

@@ -14,6 +14,16 @@ pub static HEADER: &str = r#"export type ComponentStateJson =
     { Title: TitleComponentStateJson } |
     { TotalPlaytime: TotalPlaytimeComponentStateJson };
 
+export type Color = number[];
+
+export interface LayoutStateJson {
+    components: ComponentStateJson[];
+    background_color: Color;
+    thin_separators_color: Color;
+    separators_color: Color;
+    text_color: Color;
+}
+
 export enum TimingMethod {
     RealTime = 0,
     GameTime = 1,
@@ -33,7 +43,9 @@ export interface BlankSpaceComponentStateJson {
 export interface TimerComponentStateJson {
     time: string;
     fraction: string;
-    color: Color;
+    semantic_color: SemanticColor;
+    top_color: Color;
+    bottom_color: Color;
 }
 
 export interface TitleComponentStateJson {
@@ -55,14 +67,16 @@ export interface SplitStateJson {
     name: string;
     delta: string;
     time: string;
-    color: Color;
+    semantic_color: SemanticColor;
+    visual_color: Color;
     is_current_split: boolean;
 }
 
 export interface PreviousSegmentComponentStateJson {
     text: string;
     time: string;
-    color: Color;
+    semantic_color: SemanticColor;
+    visual_color: Color;
 }
 
 export interface SumOfBestComponentStateJson {
@@ -107,7 +121,8 @@ export interface CurrentPaceComponentStateJson {
 export interface DeltaComponentStateJson {
     text: string;
     time: string;
-    color: Color;
+    semantic_color: SemanticColor;
+    visual_color: Color;
 }
 
 export interface CurrentComparisonComponentStateJson {
@@ -133,7 +148,8 @@ export interface LayoutEditorStateJson {
     components: string[],
     buttons: LayoutEditorButtonsJson,
     selected_component: number,
-    settings_description: SettingsDescriptionJson,
+    component_settings: SettingsDescriptionJson,
+    general_settings: SettingsDescriptionJson,
 }
 
 export interface LayoutEditorButtonsJson {
@@ -159,7 +175,8 @@ export type SettingsDescriptionValueJson =
     { OptionalString: string } |
     { Float: number } |
     { Accuracy: AccuracyJson } |
-    { DigitsFormat: DigitsFormatJson };
+    { DigitsFormat: DigitsFormatJson } |
+    { Color: Color };
 
 export type AccuracyJson = "Seconds" | "Tenths" | "Hundredths";
 
@@ -199,7 +216,7 @@ export interface RunEditorRowJson {
     selected: "NotSelected" | "Selected" | "CurrentRow",
 }
 
-export type Color = "Default" |
+export type SemanticColor = "Default" |
     "AheadGainingTime" |
     "AheadLosingTime" |
     "BehindLosingTime" |

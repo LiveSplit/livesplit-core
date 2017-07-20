@@ -27,8 +27,8 @@ pub unsafe extern "C" fn PreviousSegmentComponentState_time(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn PreviousSegmentComponentState_color(
+pub unsafe extern "C" fn PreviousSegmentComponentState_semantic_color(
     this: *const PreviousSegmentComponentState,
 ) -> *const c_char {
-    output_str_with(|f| write!(f, "{:?}", acc(this).color).unwrap())
+    output_str_with(|f| write!(f, "{:?}", acc(this).semantic_color).unwrap())
 }

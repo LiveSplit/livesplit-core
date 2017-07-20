@@ -1,10 +1,14 @@
 use super::{Layout, Component};
 
-pub mod settings_description;
+mod field;
+mod settings_description;
 mod state;
+mod value;
 
 pub use self::state::{State, Buttons as ButtonsState};
-use self::settings_description::Value;
+pub use self::value::{Value, Result, Error};
+pub use self::field::Field;
+pub use self::settings_description::SettingsDescription;
 
 pub struct LayoutEditor {
     layout: Layout,
@@ -90,5 +94,9 @@ impl LayoutEditor {
 
     pub fn set_component_settings_value(&mut self, index: usize, value: Value) {
         self.layout.components[self.selected_component].set_value(index, value);
+    }
+
+    pub fn set_general_settings_value(&mut self, index: usize, value: Value) {
+        self.layout.general_settings_mut().set_value(index, value);
     }
 }

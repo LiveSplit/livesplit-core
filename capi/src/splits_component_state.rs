@@ -59,12 +59,12 @@ pub unsafe extern "C" fn SplitsComponentState_time(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn SplitsComponentState_color(
+pub unsafe extern "C" fn SplitsComponentState_semantic_color(
     this: *const SplitsComponentState,
     index: usize,
 ) -> *const c_char {
     output_str_with(|f| {
-        write!(f, "{:?}", acc(this).splits[index].color).unwrap()
+        write!(f, "{:?}", acc(this).splits[index].semantic_color).unwrap()
     })
 }
 

@@ -1,5 +1,5 @@
 use livesplit_core::component::splits::Component as SplitsComponent;
-use livesplit_core::Timer;
+use livesplit_core::{Timer, GeneralLayoutSettings};
 use super::{Json, alloc, own, own_drop, acc, output_vec, acc_mut};
 use splits_component_state::OwnedSplitsComponentState;
 use component::OwnedComponent;
@@ -27,9 +27,13 @@ pub unsafe extern "C" fn SplitsComponent_into_generic(
 pub unsafe extern "C" fn SplitsComponent_state_as_json(
     this: *mut SplitsComponent,
     timer: *const Timer,
+    layout_settings: *const GeneralLayoutSettings,
 ) -> Json {
     output_vec(|o| {
-        acc_mut(this).state(acc(timer)).write_json(o).unwrap();
+        acc_mut(this)
+            .state(acc(timer), acc(layout_settings))
+            .write_json(o)
+            .unwrap();
     })
 }
 
@@ -37,8 +41,9 @@ pub unsafe extern "C" fn SplitsComponent_state_as_json(
 pub unsafe extern "C" fn SplitsComponent_state(
     this: *mut SplitsComponent,
     timer: *const Timer,
+    layout_settings: *const GeneralLayoutSettings,
 ) -> OwnedSplitsComponentState {
-    alloc(acc_mut(this).state(acc(timer)))
+    alloc(acc_mut(this).state(acc(timer), acc(layout_settings)))
 }
 
 

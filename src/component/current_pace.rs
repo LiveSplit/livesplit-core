@@ -4,7 +4,7 @@ use std::io::Write;
 use analysis::current_pace;
 use time_formatter::{Regular, TimeFormatter, Accuracy};
 use std::borrow::Cow;
-use layout::editor::settings_description::{SettingsDescription, Field, Value};
+use layout::editor::{SettingsDescription, Field, Value};
 
 #[derive(Default, Clone)]
 pub struct Component {

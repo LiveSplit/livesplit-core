@@ -1,13 +1,13 @@
-use {Color, Timer, TimerPhase, TimingMethod, TimeSpan};
+use {SemanticColor, GeneralLayoutSettings, Timer, TimerPhase, TimingMethod, TimeSpan};
 use super::timer;
-use time_formatter::{timer as formatter, TimeFormatter, Short, Accuracy, DigitsFormat};
+use time_formatter::{timer as formatter, TimeFormatter, Short, Accuracy, DigitsFormat, DASH};
 use time_formatter::none_wrapper::DashWrapper;
 use comparison::{self, best_segments, none};
 use std::cmp::max;
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use std::borrow::Cow;
-use layout::editor::settings_description::{SettingsDescription, Field, Value};
+use layout::editor::{SettingsDescription, Field, Value};
 
 #[derive(Default, Clone)]
 pub struct Component {
@@ -30,7 +30,7 @@ pub struct Settings {
 #[derive(Serialize, Deserialize)]
 pub struct State {
     pub timer: timer::State,
-    pub segment_timer: Option<timer::State>,
+    pub segment_timer: timer::State,
     pub comparison1: Option<ComparisonState>,
     pub comparison2: Option<ComparisonState>,
     pub segment_name: Option<String>,
@@ -93,7 +93,7 @@ impl Component {
         "Detailed Timer".into()
     }
 
-    pub fn state(&mut self, timer: &Timer) -> State {
+    pub fn state(&mut self, timer: &Timer, layout_settings: &GeneralLayoutSettings) -> State {
         let current_phase = timer.current_phase();
         let timing_method = self.settings
             .timer
@@ -158,15 +158,18 @@ impl Component {
             Default::default()
         };
 
-        let timer_state = self.timer.state(timer);
+        let timer_state = self.timer.state(timer, layout_settings);
         let mut segment_time = calculate_segment_time(timer, timing_method, last_split_index);
 
         if segment_time.is_none() && timing_method == TimingMethod::GameTime {
             segment_time = calculate_segment_time(timer, TimingMethod::RealTime, last_split_index);
         }
 
-        let segment_time_state = segment_time.map(|t| {
-            timer::State {
+        let (top_color, bottom_color) =
+            timer::top_and_bottom_color((170.0 / 255.0, 170.0 / 255.0, 170.0 / 255.0, 1.0).into());
+
+        let segment_time_state = match segment_time {
+            Some(t) => timer::State {
                 time: formatter::Time::with_digits_format(
                     self.settings.segment_timer.digits_format,
                 ).format(t)
@@ -174,9 +177,18 @@ impl Component {
                 fraction: formatter::Fraction::with_accuracy(self.settings.segment_timer.accuracy)
                     .format(t)
                     .to_string(),
-                color: Color::Default,
-            }
-        });
+                semantic_color: SemanticColor::Default,
+                top_color,
+                bottom_color,
+            },
+            None => timer::State {
+                time: DASH.into(),
+                fraction: String::new(),
+                semantic_color: SemanticColor::Default,
+                top_color,
+                bottom_color,
+            },
+        };
 
         let formatter = DashWrapper::new(Short::new());
 

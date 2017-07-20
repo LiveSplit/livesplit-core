@@ -1,13 +1,12 @@
 use std::cmp::{min, max};
 use std::io::Write;
 use serde_json::{to_writer, Result};
-use {Timer, TimeSpan, analysis};
+use {SemanticColor, Color, GeneralLayoutSettings, Timer, TimeSpan, analysis};
 use analysis::split_color;
 use time_formatter::{Delta, Regular, TimeFormatter};
 use time_formatter::none_wrapper::{EmptyWrapper, DashWrapper};
-use Color;
 use std::borrow::Cow;
-use layout::editor::settings_description::{SettingsDescription, Field, Value};
+use layout::editor::{SettingsDescription, Field, Value};
 
 #[derive(Default, Clone)]
 pub struct Component {
@@ -31,7 +30,8 @@ pub struct SplitState {
     pub name: String,
     pub delta: String,
     pub time: String,
-    pub color: Color,
+    pub semantic_color: SemanticColor,
+    pub visual_color: Color,
     pub is_current_split: bool,
 }
 
@@ -97,7 +97,7 @@ impl Component {
         "Splits".into()
     }
 
-    pub fn state(&mut self, timer: &Timer) -> State {
+    pub fn state(&mut self, timer: &Timer, layout_settings: &GeneralLayoutSettings) -> State {
         // Reset Scroll Offset when any movement of the split index is observed.
         if self.current_split_index != timer.current_split_index() {
             self.current_split_index = timer.current_split_index();
@@ -152,7 +152,7 @@ impl Component {
                     let split = segment.split_time()[method];
                     let comparison_time = segment.comparison(comparison)[method];
 
-                    let (time, delta, color) = if current_split > i as isize {
+                    let (time, delta, semantic_color) = if current_split > i as isize {
                         let delta = TimeSpan::option_sub(split, comparison_time);
                         (
                             split,
@@ -163,10 +163,10 @@ impl Component {
                         (
                             comparison_time,
                             analysis::check_live_delta(timer, true, comparison, method),
-                            Color::Default,
+                            SemanticColor::Default,
                         )
                     } else {
-                        (comparison_time, None, Color::Default)
+                        (comparison_time, None, SemanticColor::Default)
                     };
 
                     let delta = if current_split > i as isize {
@@ -179,12 +179,15 @@ impl Component {
                             .to_string()
                     };
 
+                    let visual_color = semantic_color.visualize(layout_settings);
+
                     SplitState {
                         icon_change: segment.icon().check_for_change(icon_id).map(str::to_owned),
                         name: segment.name().to_string(),
-                        delta: delta,
+                        delta,
                         time: Regular::new().format(time).to_string(),
-                        color: color,
+                        semantic_color,
+                        visual_color,
                         is_current_split: i as isize == current_split,
                     }
                 })

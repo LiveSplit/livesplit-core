@@ -25,8 +25,8 @@ pub unsafe extern "C" fn DeltaComponentState_time(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn DeltaComponentState_color(
+pub unsafe extern "C" fn DeltaComponentState_semantic_color(
     this: *const DeltaComponentState,
 ) -> *const c_char {
-    output_str_with(|f| write!(f, "{:?}", acc(this).color).unwrap())
+    output_str_with(|f| write!(f, "{:?}", acc(this).semantic_color).unwrap())
 }

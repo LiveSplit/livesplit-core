@@ -1,10 +1,11 @@
-use super::ComponentSettings;
+use super::{ComponentSettings, GeneralSettings};
 use serde_json::{to_writer, from_reader, Result};
 use std::io::{Read, Write};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct LayoutSettings {
     pub components: Vec<ComponentSettings>,
+    pub general: GeneralSettings,
 }
 
 impl LayoutSettings {

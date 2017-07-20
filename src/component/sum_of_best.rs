@@ -4,7 +4,7 @@ use serde_json::{to_writer, Result};
 use analysis::sum_of_segments::calculate_best;
 use std::io::Write;
 use std::borrow::Cow;
-use layout::editor::settings_description::{SettingsDescription, Value, Field};
+use layout::editor::{SettingsDescription, Value, Field};
 
 #[derive(Default, Clone)]
 pub struct Component {

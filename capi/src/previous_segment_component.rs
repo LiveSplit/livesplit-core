@@ -1,5 +1,5 @@
 use livesplit_core::component::previous_segment::Component as PreviousSegmentComponent;
-use livesplit_core::Timer;
+use livesplit_core::{Timer, GeneralLayoutSettings};
 use super::{Json, alloc, own, own_drop, acc, output_vec};
 use previous_segment_component_state::OwnedPreviousSegmentComponentState;
 use component::OwnedComponent;
@@ -27,14 +27,21 @@ pub unsafe extern "C" fn PreviousSegmentComponent_into_generic(
 pub unsafe extern "C" fn PreviousSegmentComponent_state_as_json(
     this: *const PreviousSegmentComponent,
     timer: *const Timer,
+    layout_settings: *const GeneralLayoutSettings,
 ) -> Json {
-    output_vec(|o| { acc(this).state(acc(timer)).write_json(o).unwrap(); })
+    output_vec(|o| {
+        acc(this)
+            .state(acc(timer), acc(layout_settings))
+            .write_json(o)
+            .unwrap();
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn PreviousSegmentComponent_state(
     this: *const PreviousSegmentComponent,
     timer: *const Timer,
+    layout_settings: *const GeneralLayoutSettings,
 ) -> OwnedPreviousSegmentComponentState {
-    alloc(acc(this).state(acc(timer)))
+    alloc(acc(this).state(acc(timer), acc(layout_settings)))
 }

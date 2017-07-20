@@ -1,5 +1,5 @@
 use livesplit_core::component::timer::Component as TimerComponent;
-use livesplit_core::Timer;
+use livesplit_core::{Timer, GeneralLayoutSettings};
 use super::{Json, alloc, own, own_drop, acc, output_vec};
 use timer_component_state::OwnedTimerComponentState;
 use component::OwnedComponent;
@@ -25,14 +25,21 @@ pub unsafe extern "C" fn TimerComponent_into_generic(this: OwnedTimerComponent) 
 pub unsafe extern "C" fn TimerComponent_state_as_json(
     this: *const TimerComponent,
     timer: *const Timer,
+    layout_settings: *const GeneralLayoutSettings,
 ) -> Json {
-    output_vec(|o| { acc(this).state(acc(timer)).write_json(o).unwrap(); })
+    output_vec(|o| {
+        acc(this)
+            .state(acc(timer), acc(layout_settings))
+            .write_json(o)
+            .unwrap();
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn TimerComponent_state(
     this: *const TimerComponent,
     timer: *const Timer,
+    layout_settings: *const GeneralLayoutSettings,
 ) -> OwnedTimerComponentState {
-    alloc(acc(this).state(acc(timer)))
+    alloc(acc(this).state(acc(timer), acc(layout_settings)))
 }

@@ -8,7 +8,8 @@ pub struct State {
     pub components: Vec<String>,
     pub buttons: Buttons,
     pub selected_component: u32,
-    pub settings_description: SettingsDescription,
+    pub component_settings: SettingsDescription,
+    pub general_settings: SettingsDescription,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -45,8 +46,9 @@ impl LayoutEditor {
             components,
             buttons,
             selected_component: self.selected_component as u32,
-            settings_description: self.layout.components[self.selected_component]
+            component_settings: self.layout.components[self.selected_component]
                 .settings_description(),
+            general_settings: self.layout.general_settings().settings_description(),
         }
     }
 }

@@ -1,5 +1,5 @@
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
-pub enum Color {
+pub enum SemanticColor {
     Default,
     AheadGainingTime,
     AheadLosingTime,
@@ -11,9 +11,9 @@ pub enum Color {
     PersonalBest,
 }
 
-impl Color {
-    pub fn or(self, color: Color) -> Color {
-        if self == Color::Default {
+impl SemanticColor {
+    pub fn or(self, color: SemanticColor) -> SemanticColor {
+        if self == SemanticColor::Default {
             color
         } else {
             self

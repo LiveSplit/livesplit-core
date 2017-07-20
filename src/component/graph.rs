@@ -2,7 +2,7 @@ use {Timer, TimeSpan, TimerPhase, analysis, comparison};
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use std::borrow::Cow;
-use layout::editor::settings_description::{SettingsDescription, Field, Value};
+use layout::editor::{SettingsDescription, Field, Value};
 
 const GRAPH_EDGE_VALUE: f32 = 200.0;
 const GRAPH_EDGE_MIN: f32 = 5.0;

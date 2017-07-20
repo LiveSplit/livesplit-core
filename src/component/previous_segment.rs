@@ -1,10 +1,10 @@
-use {analysis, Timer, TimerPhase, Color, comparison};
+use {analysis, Timer, TimerPhase, SemanticColor, Color, GeneralLayoutSettings, comparison};
 use time_formatter::{Delta, PossibleTimeSave, TimeFormatter, Accuracy};
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use std::fmt::Write as FmtWrite;
 use std::borrow::Cow;
-use layout::editor::settings_description::{SettingsDescription, Value, Field};
+use layout::editor::{SettingsDescription, Value, Field};
 
 #[derive(Default, Clone)]
 pub struct Component {
@@ -25,7 +25,7 @@ impl Default for Settings {
             comparison_override: None,
             drop_decimals: true,
             accuracy: Accuracy::Tenths,
-            show_possible_time_save: true,
+            show_possible_time_save: false,
         }
     }
 }
@@ -34,7 +34,8 @@ impl Default for Settings {
 pub struct State {
     pub text: String,
     pub time: String,
-    pub color: Color,
+    pub semantic_color: SemanticColor,
+    pub visual_color: Color,
 }
 
 impl State {
@@ -89,7 +90,7 @@ impl Component {
         text
     }
 
-    pub fn state(&self, timer: &Timer) -> State {
+    pub fn state(&self, timer: &Timer, layout_settings: &GeneralLayoutSettings) -> State {
         let mut time_change = None;
         let mut previous_possible = None;
         let mut live_segment = false;
@@ -99,7 +100,7 @@ impl Component {
         let phase = timer.current_phase();
         let method = timer.current_timing_method();
         let split_index = timer.current_split_index() as usize;
-        let color = if phase != TimerPhase::NotRunning {
+        let semantic_color = if phase != TimerPhase::NotRunning {
             if (phase == TimerPhase::Running || phase == TimerPhase::Paused) &&
                 analysis::check_live_delta(timer, false, comparison, method).is_some()
             {
@@ -151,7 +152,7 @@ impl Component {
                         method,
                     )
                 } else {
-                    Color::Default
+                    SemanticColor::Default
                 }
             } else if let Some(prev_split_index) = split_index.checked_sub(1) {
                 analysis::split_color(
@@ -164,11 +165,13 @@ impl Component {
                     method,
                 )
             } else {
-                Color::Default
+                SemanticColor::Default
             }
         } else {
-            Color::Default
+            SemanticColor::Default
         };
+
+        let visual_color = semantic_color.visualize(layout_settings);
 
         let text = self.text(live_segment, resolved_comparison);
         let mut time = Delta::custom(self.settings.drop_decimals, self.settings.accuracy)
@@ -185,8 +188,9 @@ impl Component {
 
         State {
             text: text.into_owned(),
-            time: time,
-            color: color,
+            time,
+            semantic_color,
+            visual_color,
         }
     }
 

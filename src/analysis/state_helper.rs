@@ -1,4 +1,4 @@
-use {Color, Run, Timer, TimingMethod, TimeSpan, TimerPhase};
+use {SemanticColor, Run, Timer, TimingMethod, TimeSpan, TimerPhase};
 use comparison::{best_segments, personal_best};
 
 /// Gets the last non-live delta in the run starting from `split_number`.
@@ -198,28 +198,28 @@ pub fn split_color(
     show_best_segments: bool,
     comparison: &str,
     method: TimingMethod,
-) -> Color {
+) -> SemanticColor {
     let use_best_segment = true; // TODO Make this a parameter
 
     if show_best_segments && use_best_segment && check_best_segment(timer, split_number, method) {
-        Color::BestSegment
+        SemanticColor::BestSegment
     } else if let Some(time_difference) = time_difference {
         let last_delta = split_number
             .checked_sub(1)
             .and_then(|n| last_delta(timer.run(), n, comparison, method));
         if time_difference < TimeSpan::zero() {
             if show_segment_deltas && last_delta.map_or(false, |d| time_difference > d) {
-                Color::AheadLosingTime
+                SemanticColor::AheadLosingTime
             } else {
-                Color::AheadGainingTime
+                SemanticColor::AheadGainingTime
             }
         } else if show_segment_deltas && last_delta.map_or(false, |d| time_difference < d) {
-            Color::BehindGainingTime
+            SemanticColor::BehindGainingTime
         } else {
-            Color::BehindLosingTime
+            SemanticColor::BehindLosingTime
         }
     } else {
-        Color::Default
+        SemanticColor::Default
     }
 }
 

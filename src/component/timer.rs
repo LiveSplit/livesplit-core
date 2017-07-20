@@ -1,10 +1,11 @@
-use {Color, Timer, TimerPhase, TimeSpan, TimingMethod};
+use {SemanticColor, Color, GeneralLayoutSettings, Timer, TimerPhase, TimeSpan, TimingMethod};
 use time_formatter::{timer as formatter, TimeFormatter, Accuracy, DigitsFormat};
 use analysis::split_color;
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use std::borrow::Cow;
-use layout::editor::settings_description::{SettingsDescription, Value, Field};
+use layout::editor::{SettingsDescription, Value, Field};
+use palette::{Hsva, Rgba};
 
 #[derive(Default, Clone)]
 pub struct Component {
@@ -32,7 +33,9 @@ impl Default for Settings {
 pub struct State {
     pub time: String,
     pub fraction: String,
-    pub color: Color,
+    pub semantic_color: SemanticColor,
+    pub top_color: Color,
+    pub bottom_color: Color,
 }
 
 impl State {
@@ -68,7 +71,7 @@ impl Component {
         "Timer".into()
     }
 
-    pub fn state(&self, timer: &Timer) -> State {
+    pub fn state(&self, timer: &Timer, layout_settings: &GeneralLayoutSettings) -> State {
         let method = self.settings
             .timing_method
             .unwrap_or_else(|| timer.current_timing_method());
@@ -76,7 +79,7 @@ impl Component {
         let time = time[method].or(time.real_time).unwrap_or_default();
         let current_comparison = timer.current_comparison();
 
-        let color = match timer.current_phase() {
+        let semantic_color = match timer.current_phase() {
             TimerPhase::Running if time >= TimeSpan::zero() => {
                 let pb_split_time = timer
                     .current_split()
@@ -93,12 +96,12 @@ impl Component {
                         false,
                         current_comparison,
                         method,
-                    ).or(Color::AheadGainingTime)
+                    ).or(SemanticColor::AheadGainingTime)
                 } else {
-                    Color::AheadGainingTime
+                    SemanticColor::AheadGainingTime
                 }
             }
-            TimerPhase::Paused => Color::Paused,
+            TimerPhase::Paused => SemanticColor::Paused,
             TimerPhase::Ended => {
                 let pb_time = timer
                     .run()
@@ -109,13 +112,16 @@ impl Component {
                     [method];
 
                 if pb_time.map_or(true, |t| time < t) {
-                    Color::PersonalBest
+                    SemanticColor::PersonalBest
                 } else {
-                    Color::BehindLosingTime
+                    SemanticColor::BehindLosingTime
                 }
             }
-            _ => Color::NotRunning,
+            _ => SemanticColor::NotRunning,
         };
+
+        let visual_color = semantic_color.visualize(layout_settings);
+        let (top_color, bottom_color) = top_and_bottom_color(visual_color);
 
         State {
             time: formatter::Time::with_digits_format(self.settings.digits_format)
@@ -124,7 +130,9 @@ impl Component {
             fraction: formatter::Fraction::with_accuracy(self.settings.accuracy)
                 .format(time)
                 .to_string(),
-            color: color,
+            semantic_color,
+            top_color,
+            bottom_color,
         }
     }
 
@@ -144,4 +152,21 @@ impl Component {
             _ => panic!("Unsupported Setting Index"),
         }
     }
+}
+
+pub fn top_and_bottom_color(color: Color) -> (Color, Color) {
+    let hsv: Hsva = color.rgba.color.into();
+    let top_color = Rgba::from(Hsva::new(
+        hsv.hue,
+        0.5 * hsv.saturation,
+        (1.5 * hsv.value + 0.1).min(1.0),
+        hsv.alpha,
+    )).into();
+    let bottom_color = Rgba::from(Hsva::new(
+        hsv.hue,
+        hsv.saturation,
+        0.8 * hsv.value,
+        hsv.alpha,
+    )).into();
+    (top_color, bottom_color)
 }

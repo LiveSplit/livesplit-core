@@ -1,10 +1,8 @@
 use livesplit_core::layout::editor::LayoutEditor;
 use layout::OwnedLayout;
-use super::{Json, alloc, own, output_vec, acc, acc_mut, str};
+use super::{Json, alloc, own, output_vec, acc, acc_mut};
 use component::OwnedComponent;
-use livesplit_core::time_formatter::{Accuracy, DigitsFormat};
-use livesplit_core::TimingMethod;
-use libc::c_char;
+use setting_value::OwnedSettingValue;
 
 pub type OwnedLayoutEditor = *mut LayoutEditor;
 
@@ -57,128 +55,19 @@ pub unsafe extern "C" fn LayoutEditor_move_component(this: *mut LayoutEditor, ds
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn LayoutEditor_set_component_settings_bool(
+pub unsafe extern "C" fn LayoutEditor_set_component_settings_value(
     this: *mut LayoutEditor,
     index: usize,
-    value: bool,
+    value: OwnedSettingValue,
 ) {
-    acc_mut(this).set_component_settings_value(index, value.into());
+    acc_mut(this).set_component_settings_value(index, own(value));
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn LayoutEditor_set_component_settings_uint(
+pub unsafe extern "C" fn LayoutEditor_set_general_settings_value(
     this: *mut LayoutEditor,
     index: usize,
-    value: u64,
+    value: OwnedSettingValue,
 ) {
-    acc_mut(this).set_component_settings_value(index, value.into());
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn LayoutEditor_set_component_settings_int(
-    this: *mut LayoutEditor,
-    index: usize,
-    value: i64,
-) {
-    acc_mut(this).set_component_settings_value(index, value.into());
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn LayoutEditor_set_component_settings_string(
-    this: *mut LayoutEditor,
-    index: usize,
-    value: *const c_char,
-) {
-    acc_mut(this).set_component_settings_value(index, str(value).to_string().into());
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn LayoutEditor_set_component_settings_optional_string(
-    this: *mut LayoutEditor,
-    index: usize,
-    value: *const c_char,
-) {
-    let value = if value.is_null() {
-        None::<String>.into()
-    } else {
-        Some(str(value).to_string()).into()
-    };
-    acc_mut(this).set_component_settings_value(index, value);
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn LayoutEditor_set_component_settings_optional_string_to_empty(
-    this: *mut LayoutEditor,
-    index: usize,
-) {
-    acc_mut(this).set_component_settings_value(index, None::<String>.into());
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn LayoutEditor_set_component_settings_float(
-    this: *mut LayoutEditor,
-    index: usize,
-    value: f64,
-) {
-    acc_mut(this).set_component_settings_value(index, value.into());
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn LayoutEditor_set_component_settings_accuracy(
-    this: *mut LayoutEditor,
-    index: usize,
-    value: *const c_char,
-) {
-    let value = str(value);
-    let value = match value {
-        "Seconds" => Accuracy::Seconds,
-        "Tenths" => Accuracy::Tenths,
-        "Hundredths" => Accuracy::Hundredths,
-        _ => return,
-    };
-
-    acc_mut(this).set_component_settings_value(index, value.into());
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn LayoutEditor_set_component_settings_digits_format(
-    this: *mut LayoutEditor,
-    index: usize,
-    value: *const c_char,
-) {
-    let value = str(value);
-    let value = match value {
-        "SingleDigitSeconds" => DigitsFormat::SingleDigitSeconds,
-        "DoubleDigitSeconds" => DigitsFormat::DoubleDigitSeconds,
-        "SingleDigitMinutes" => DigitsFormat::SingleDigitMinutes,
-        "DoubleDigitMinutes" => DigitsFormat::DoubleDigitMinutes,
-        "SingleDigitHours" => DigitsFormat::SingleDigitHours,
-        "DoubleDigitHours" => DigitsFormat::DoubleDigitHours,
-        _ => return,
-    };
-
-    acc_mut(this).set_component_settings_value(index, value.into());
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn LayoutEditor_set_component_settings_optional_timing_method(
-    this: *mut LayoutEditor,
-    index: usize,
-    value: *const c_char,
-) {
-    let value = str(value);
-    let value = match value {
-        "RealTime" => TimingMethod::RealTime,
-        "GameTime" => TimingMethod::GameTime,
-        _ => return,
-    };
-    acc_mut(this).set_component_settings_value(index, Some(value).into());
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn LayoutEditor_set_component_settings_optional_timing_method_to_empty(
-    this: *mut LayoutEditor,
-    index: usize,
-) {
-    acc_mut(this).set_component_settings_value(index, None::<TimingMethod>.into());
+    acc_mut(this).set_general_settings_value(index, own(value));
 }

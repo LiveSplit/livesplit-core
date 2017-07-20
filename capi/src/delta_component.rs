@@ -1,5 +1,5 @@
 use livesplit_core::component::delta::Component as DeltaComponent;
-use livesplit_core::Timer;
+use livesplit_core::{Timer, GeneralLayoutSettings};
 use super::{Json, alloc, own, own_drop, acc, output_vec, acc_mut};
 use delta_component_state::OwnedDeltaComponentState;
 use component::OwnedComponent;
@@ -25,9 +25,13 @@ pub unsafe extern "C" fn DeltaComponent_into_generic(this: OwnedDeltaComponent) 
 pub unsafe extern "C" fn DeltaComponent_state_as_json(
     this: *mut DeltaComponent,
     timer: *const Timer,
+    layout_settings: *const GeneralLayoutSettings,
 ) -> Json {
     output_vec(|o| {
-        acc_mut(this).state(acc(timer)).write_json(o).unwrap();
+        acc_mut(this)
+            .state(acc(timer), acc(layout_settings))
+            .write_json(o)
+            .unwrap();
     })
 }
 
@@ -35,6 +39,7 @@ pub unsafe extern "C" fn DeltaComponent_state_as_json(
 pub unsafe extern "C" fn DeltaComponent_state(
     this: *mut DeltaComponent,
     timer: *const Timer,
+    layout_settings: *const GeneralLayoutSettings,
 ) -> OwnedDeltaComponentState {
-    alloc(acc_mut(this).state(acc(timer)))
+    alloc(acc_mut(this).state(acc(timer), acc(layout_settings)))
 }

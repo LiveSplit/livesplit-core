@@ -1,9 +1,10 @@
 use Timer;
-use super::{Component, LayoutSettings, LayoutState};
+use super::{Component, LayoutSettings, LayoutState, GeneralSettings};
 
 #[derive(Default, Clone)]
 pub struct Layout {
     pub components: Vec<Component>,
+    settings: GeneralSettings,
 }
 
 impl Layout {
@@ -18,7 +19,16 @@ impl Layout {
                 .into_iter()
                 .map(Into::into)
                 .collect(),
+            settings: layout_settings.general,
         }
+    }
+
+    pub fn general_settings(&self) -> &GeneralSettings {
+        &self.settings
+    }
+
+    pub fn general_settings_mut(&mut self) -> &mut GeneralSettings {
+        &mut self.settings
     }
 
     pub fn push<C: Into<Component>>(&mut self, component: C) {
@@ -26,14 +36,23 @@ impl Layout {
     }
 
     pub fn state(&mut self, timer: &Timer) -> LayoutState {
+        let settings = &self.settings;
         LayoutState {
-            components: self.components.iter_mut().map(|c| c.state(timer)).collect(),
+            components: self.components
+                .iter_mut()
+                .map(|c| c.state(timer, settings))
+                .collect(),
+            background_color: self.settings.background_color,
+            thin_separators_color: self.settings.thin_separators_color,
+            separators_color: self.settings.separators_color,
+            text_color: self.settings.text_color,
         }
     }
 
     pub fn settings(&self) -> LayoutSettings {
         LayoutSettings {
             components: self.components.iter().map(|c| c.settings()).collect(),
+            general: self.settings.clone(),
         }
     }
 

@@ -1,7 +1,7 @@
 use std::io::Write;
 use serde_json::{to_writer, Result};
 use std::borrow::Cow;
-use layout::editor::settings_description::{SettingsDescription, Field, Value};
+use layout::editor::{SettingsDescription, Field, Value};
 use std::mem::replace;
 
 #[derive(Default, Clone)]

@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 use Timer;
-use super::{ComponentState, ComponentSettings};
+use super::{ComponentState, ComponentSettings, GeneralSettings};
 use component::{blank_space, current_comparison, current_pace, delta, detailed_timer, graph,
                 possible_time_save, previous_segment, separator, splits, sum_of_best, text, timer,
                 title, total_playtime};
@@ -25,7 +25,7 @@ pub enum Component {
 }
 
 impl Component {
-    pub fn state(&mut self, timer: &Timer) -> ComponentState {
+    pub fn state(&mut self, timer: &Timer, layout_settings: &GeneralSettings) -> ComponentState {
         match *self {
             Component::BlankSpace(ref mut component) => ComponentState::BlankSpace(
                 component.state(timer),
@@ -36,26 +36,32 @@ impl Component {
             Component::CurrentPace(ref mut component) => ComponentState::CurrentPace(
                 component.state(timer),
             ),
-            Component::Delta(ref mut component) => ComponentState::Delta(component.state(timer)),
+            Component::Delta(ref mut component) => ComponentState::Delta(
+                component.state(timer, layout_settings),
+            ),
             Component::DetailedTimer(ref mut component) => ComponentState::DetailedTimer(
-                component.state(timer),
+                component.state(timer, layout_settings),
             ),
             Component::Graph(ref mut component) => ComponentState::Graph(component.state(timer)),
             Component::PossibleTimeSave(ref mut component) => ComponentState::PossibleTimeSave(
                 component.state(timer),
             ),
             Component::PreviousSegment(ref mut component) => ComponentState::PreviousSegment(
-                component.state(timer),
+                component.state(timer, layout_settings),
             ),
             Component::Separator(ref mut component) => ComponentState::Separator(
                 component.state(timer),
             ),
-            Component::Splits(ref mut component) => ComponentState::Splits(component.state(timer)),
+            Component::Splits(ref mut component) => ComponentState::Splits(
+                component.state(timer, layout_settings),
+            ),
             Component::SumOfBest(ref mut component) => ComponentState::SumOfBest(
                 component.state(timer),
             ),
             Component::Text(ref mut component) => ComponentState::Text(component.state()),
-            Component::Timer(ref mut component) => ComponentState::Timer(component.state(timer)),
+            Component::Timer(ref mut component) => ComponentState::Timer(
+                component.state(timer, layout_settings),
+            ),
             Component::Title(ref mut component) => ComponentState::Title(component.state(timer)),
             Component::TotalPlaytime(ref mut component) => ComponentState::TotalPlaytime(
                 component.state(timer),

@@ -1,9 +1,14 @@
-use super::ComponentState;
+use super::{ComponentState, Color};
 use serde_json::{to_writer, Result};
 use std::io::Write;
 
+#[derive(Serialize, Deserialize)]
 pub struct LayoutState {
     pub components: Vec<ComponentState>,
+    pub background_color: Color,
+    pub thin_separators_color: Color,
+    pub separators_color: Color,
+    pub text_color: Color,
 }
 
 impl LayoutState {
@@ -11,6 +16,6 @@ impl LayoutState {
     where
         W: Write,
     {
-        to_writer(writer, &self.components)
+        to_writer(writer, &self)
     }
 }

@@ -26,43 +26,26 @@ pub unsafe extern "C" fn DetailedTimerComponentState_timer_fraction(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn DetailedTimerComponentState_timer_color(
+pub unsafe extern "C" fn DetailedTimerComponentState_timer_semantic_color(
     this: *const DetailedTimerComponentState,
 ) -> *const c_char {
-    output_str_with(|f| write!(f, "{:?}", acc(this).timer.color).unwrap())
-}
-
-#[no_mangle]
-pub unsafe extern "C" fn DetailedTimerComponentState_segment_timer_visible(
-    this: *const DetailedTimerComponentState,
-) -> bool {
-    acc(this).segment_timer.is_some()
+    output_str_with(|f| {
+        write!(f, "{:?}", acc(this).timer.semantic_color).unwrap()
+    })
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn DetailedTimerComponentState_segment_timer_time(
     this: *const DetailedTimerComponentState,
 ) -> *const c_char {
-    output_str(
-        &acc(this)
-            .segment_timer
-            .as_ref()
-            .expect("Segment Timer is not visible")
-            .time,
-    )
+    output_str(&acc(this).segment_timer.time)
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn DetailedTimerComponentState_segment_timer_fraction(
     this: *const DetailedTimerComponentState,
 ) -> *const c_char {
-    output_str(
-        &acc(this)
-            .segment_timer
-            .as_ref()
-            .expect("Segment Timer is not visible")
-            .fraction,
-    )
+    output_str(&acc(this).segment_timer.fraction)
 }
 
 #[no_mangle]
