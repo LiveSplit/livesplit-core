@@ -96,6 +96,13 @@ export interface GraphComponentStateJson {
     middle: number;
     is_live_delta_active: boolean;
     is_flipped: boolean;
+    top_background_color: Color;
+    bottom_background_color: Color;
+    grid_lines_color: Color;
+    graph_lines_color: Color;
+    partial_fill_color: Color;
+    complete_fill_color: Color;
+    best_segment_color: Color;
 }
 
 export interface GraphComponentStatePointJson {

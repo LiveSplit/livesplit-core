@@ -42,7 +42,9 @@ impl Component {
             Component::DetailedTimer(ref mut component) => ComponentState::DetailedTimer(
                 component.state(timer, layout_settings),
             ),
-            Component::Graph(ref mut component) => ComponentState::Graph(component.state(timer)),
+            Component::Graph(ref mut component) => ComponentState::Graph(
+                component.state(timer, layout_settings),
+            ),
             Component::PossibleTimeSave(ref mut component) => ComponentState::PossibleTimeSave(
                 component.state(timer),
             ),

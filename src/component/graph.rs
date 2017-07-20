@@ -1,4 +1,4 @@
-use {Timer, TimeSpan, TimerPhase, analysis, comparison};
+use {Color, Timer, TimeSpan, TimerPhase, GeneralLayoutSettings, analysis, comparison};
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use std::borrow::Cow;
@@ -21,6 +21,12 @@ pub struct Settings {
     pub show_best_segments: bool,
     pub live_graph: bool,
     pub flip_graph: bool,
+    pub behind_background_color: Color,
+    pub ahead_background_color: Color,
+    pub grid_lines_color: Color,
+    pub graph_lines_color: Color,
+    pub partial_fill_color: Color,
+    pub complete_fill_color: Color,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -31,6 +37,13 @@ pub struct State {
     pub middle: f32,
     pub is_live_delta_active: bool,
     pub is_flipped: bool,
+    pub top_background_color: Color,
+    pub bottom_background_color: Color,
+    pub grid_lines_color: Color,
+    pub graph_lines_color: Color,
+    pub partial_fill_color: Color,
+    pub complete_fill_color: Color,
+    pub best_segment_color: Color,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -47,6 +60,12 @@ impl Default for Settings {
             show_best_segments: false,
             live_graph: true,
             flip_graph: false,
+            behind_background_color: (115.0 / 255.0, 40.0 / 255.0, 40.0 / 255.0, 1.0).into(),
+            ahead_background_color: (40.0 / 255.0, 115.0 / 255.0, 52.0 / 255.0, 1.0).into(),
+            grid_lines_color: (0.0, 0.0, 0.0, 50.0 / 255.0).into(),
+            graph_lines_color: (1.0, 1.0, 1.0, 1.0).into(),
+            partial_fill_color: (1.0, 1.0, 1.0, 25.0 / 255.0).into(),
+            complete_fill_color: (1.0, 1.0, 1.0, 50.0 / 255.0).into(),
         }
     }
 }
@@ -106,7 +125,7 @@ impl Component {
         }
     }
 
-    pub fn state(&self, timer: &Timer) -> State {
+    pub fn state(&self, timer: &Timer, layout_settings: &GeneralLayoutSettings) -> State {
         let comparison = comparison::resolve(&self.settings.comparison_override, timer);
         let comparison = comparison::or_current(comparison, timer);
 
@@ -119,7 +138,7 @@ impl Component {
         self.calculate_deltas(timer, comparison, &mut draw_info);
         self.check_live_segment_delta(timer, comparison, &mut draw_info);
 
-        let mut state = self.calculate_points(timer, &draw_info);
+        let mut state = self.calculate_points(timer, &draw_info, layout_settings);
 
         self.make_uniform(&mut state);
         self.flip(&mut state);
@@ -139,6 +158,30 @@ impl Component {
             ),
             Field::new("Live Graph".into(), self.settings.live_graph.into()),
             Field::new("Flip Graph".into(), self.settings.flip_graph.into()),
+            Field::new(
+                "Behind Background Color".into(),
+                self.settings.behind_background_color.into(),
+            ),
+            Field::new(
+                "Ahead Background Color".into(),
+                self.settings.ahead_background_color.into(),
+            ),
+            Field::new(
+                "Grid Lines Color".into(),
+                self.settings.grid_lines_color.into(),
+            ),
+            Field::new(
+                "Graph Lines Color".into(),
+                self.settings.graph_lines_color.into(),
+            ),
+            Field::new(
+                "Partial Fill Color".into(),
+                self.settings.partial_fill_color.into(),
+            ),
+            Field::new(
+                "Complete Fill Color".into(),
+                self.settings.complete_fill_color.into(),
+            ),
         ])
     }
 
@@ -148,6 +191,12 @@ impl Component {
             1 => self.settings.show_best_segments = value.into(),
             2 => self.settings.live_graph = value.into(),
             3 => self.settings.flip_graph = value.into(),
+            4 => self.settings.behind_background_color = value.into(),
+            5 => self.settings.ahead_background_color = value.into(),
+            6 => self.settings.grid_lines_color = value.into(),
+            7 => self.settings.graph_lines_color = value.into(),
+            8 => self.settings.partial_fill_color = value.into(),
+            9 => self.settings.complete_fill_color = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }
@@ -183,7 +232,12 @@ impl Component {
         }
     }
 
-    fn calculate_points(&self, timer: &Timer, draw_info: &DrawInfo) -> State {
+    fn calculate_points(
+        &self,
+        timer: &Timer,
+        draw_info: &DrawInfo,
+        layout_settings: &GeneralLayoutSettings,
+    ) -> State {
         let total_delta = draw_info.min_delta - draw_info.max_delta;
 
         let (graph_edge, graph_height, middle) =
@@ -197,6 +251,18 @@ impl Component {
 
         let points = self.make_points_list(draw_info, timer, total_delta, graph_edge, graph_height);
 
+        let (top_background_color, bottom_background_color) = if self.settings.flip_graph {
+            (
+                self.settings.ahead_background_color,
+                self.settings.behind_background_color,
+            )
+        } else {
+            (
+                self.settings.behind_background_color,
+                self.settings.ahead_background_color,
+            )
+        };
+
         State {
             points,
             horizontal_grid_lines,
@@ -204,6 +270,13 @@ impl Component {
             middle,
             is_live_delta_active: draw_info.is_live_delta_active,
             is_flipped: self.settings.flip_graph,
+            top_background_color,
+            bottom_background_color,
+            grid_lines_color: self.settings.grid_lines_color,
+            graph_lines_color: self.settings.graph_lines_color,
+            partial_fill_color: self.settings.partial_fill_color,
+            complete_fill_color: self.settings.complete_fill_color,
+            best_segment_color: layout_settings.best_segment_color,
         }
     }
 
