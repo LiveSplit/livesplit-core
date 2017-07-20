@@ -5,7 +5,7 @@ use serde_json::{to_writer, Result};
 use std::io::Write;
 use std::borrow::Cow;
 use layout::editor::{SettingsDescription, Value, Field};
-use palette::{Hsva, Rgba};
+use palette::{Hsv, Rgb};
 
 #[derive(Default, Clone)]
 pub struct Component {
@@ -155,18 +155,29 @@ impl Component {
 }
 
 pub fn top_and_bottom_color(color: Color) -> (Color, Color) {
-    let hsv: Hsva = color.rgba.color.into();
-    let top_color = Rgba::from(Hsva::new(
-        hsv.hue,
-        0.5 * hsv.saturation,
-        (1.5 * hsv.value + 0.1).min(1.0),
-        hsv.alpha,
-    )).into();
-    let bottom_color = Rgba::from(Hsva::new(
-        hsv.hue,
-        hsv.saturation,
-        0.8 * hsv.value,
-        hsv.alpha,
-    )).into();
+    let hsv: Hsv = color.rgba.into();
+
+    let h = hsv.hue.to_degrees() as f64;
+    let s = hsv.saturation as f64;
+    let v = hsv.value as f64;
+    let a = color.rgba.alpha;
+
+    let top_color = Rgb::from(Hsv::new(h.into(), 0.5 * s, (1.5 * v + 0.1).min(1.0)));
+    let bottom_color = Rgb::from(Hsv::new(h.into(), s, 0.8 * v));
+
+    let top_color = Color::from((
+        top_color.red as f32,
+        top_color.green as f32,
+        top_color.blue as f32,
+        a,
+    ));
+
+    let bottom_color = Color::from((
+        bottom_color.red as f32,
+        bottom_color.green as f32,
+        bottom_color.blue as f32,
+        a,
+    ));
+
     (top_color, bottom_color)
 }
