@@ -5,6 +5,8 @@ use time_span::ParseError as ParseTimeSpanError;
 
 mod segment_row;
 mod state;
+#[cfg(test)]
+mod tests;
 
 pub use self::segment_row::SegmentRow;
 pub use self::state::{State, Segment as SegmentState, Buttons as ButtonsState};
