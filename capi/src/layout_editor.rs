@@ -1,4 +1,4 @@
-use livesplit_core::layout::editor::LayoutEditor;
+use livesplit_core::LayoutEditor;
 use layout::OwnedLayout;
 use super::{Json, alloc, own, output_vec, acc, acc_mut};
 use component::OwnedComponent;

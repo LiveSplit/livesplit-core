@@ -3,8 +3,8 @@ use std::io::Write;
 use serde_json::{to_writer, Result};
 use {GeneralLayoutSettings, Timer, TimeSpan, analysis};
 use analysis::split_color;
-use time_formatter::{Delta, Regular, TimeFormatter};
-use time_formatter::none_wrapper::{EmptyWrapper, DashWrapper};
+use time::formatter::{Delta, Regular, TimeFormatter};
+use time::formatter::none_wrapper::{EmptyWrapper, DashWrapper};
 use std::borrow::Cow;
 use settings::{SettingsDescription, Field, Value, SemanticColor, Color};
 

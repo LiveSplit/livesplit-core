@@ -1,5 +1,5 @@
 use {analysis, Timer, TimerPhase, GeneralLayoutSettings, comparison};
-use time_formatter::{Delta, PossibleTimeSave, TimeFormatter, Accuracy};
+use time::formatter::{Delta, PossibleTimeSave, TimeFormatter, Accuracy};
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use std::fmt::Write as FmtWrite;

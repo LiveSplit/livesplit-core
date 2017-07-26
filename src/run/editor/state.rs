@@ -1,7 +1,7 @@
-use super::{RunEditor, SegmentRow, TimingMethod};
+use super::{Editor, SegmentRow, TimingMethod};
 use comparison::personal_best;
-use time_formatter::{Accuracy, TimeFormatter, Short};
-use time_formatter::none_wrapper::EmptyWrapper;
+use time::formatter::{Accuracy, TimeFormatter, Short};
+use time::formatter::none_wrapper::EmptyWrapper;
 use serde_json::{to_writer, Result as JsonResult};
 use std::io::Write;
 
@@ -52,7 +52,7 @@ impl State {
     }
 }
 
-impl RunEditor {
+impl Editor {
     pub fn state(&mut self) -> State {
         let formatter = EmptyWrapper::new(Short::with_accuracy(Accuracy::Hundredths));
 

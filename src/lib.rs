@@ -20,47 +20,23 @@ extern crate unicase;
 pub extern crate ordermap;
 pub extern crate palette;
 
-mod atomic_date_time;
-mod attempt;
 mod hotkey_config;
 mod hotkey_system;
 mod image;
-mod run_metadata;
-mod run;
-mod segment_history;
-mod segment;
-pub mod settings;
-mod time_stamp;
-mod time;
-mod timer_phase;
-mod timer;
-mod timing_method;
 pub mod analysis;
 pub mod comparison;
 pub mod component;
 pub mod layout;
-pub mod parser;
-pub mod run_editor;
-pub mod saver;
-pub mod time_formatter;
-pub mod time_span;
+pub mod run;
+pub mod settings;
+pub mod time;
 
 pub use chrono::{DateTime, Utc};
-pub use self::atomic_date_time::AtomicDateTime;
-pub use self::attempt::Attempt;
-pub use self::image::Image;
-pub use self::run::Run;
-pub use self::run_metadata::RunMetadata;
-pub use self::segment_history::SegmentHistory;
-pub use self::segment::Segment;
-pub use self::run_editor::RunEditor;
-pub use self::time::{Time, RealTime, GameTime};
-pub use self::time_span::TimeSpan;
-pub use self::time_stamp::TimeStamp;
-pub use self::timer::{Timer, SharedTimer};
-pub use self::timer_phase::TimerPhase;
-pub use self::timing_method::TimingMethod;
 pub use self::hotkey_config::HotkeyConfig;
 pub use self::hotkey_system::HotkeySystem;
-pub use self::layout::{Layout, Component, editor as layout_editor,
+pub use self::image::Image;
+pub use self::layout::{Layout, Component, Editor as LayoutEditor,
                        GeneralSettings as GeneralLayoutSettings};
+pub use self::run::{Attempt, Run, RunMetadata, SegmentHistory, Segment, Editor as RunEditor};
+pub use self::time::{AtomicDateTime, Time, RealTime, GameTime, TimeSpan, TimeStamp, Timer,
+                     SharedTimer, TimerPhase, TimingMethod};

@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use std::io::{self, BufRead};
 use std::result::Result as StdResult;
 use std::num::ParseIntError;
-use {Run, time_span, Image, TimeSpan, Time, Segment};
+use {Run, time, Image, TimeSpan, Time, Segment};
 
 quick_error! {
     #[derive(Debug)]
@@ -16,7 +16,7 @@ quick_error! {
         Attempt(err: ParseIntError) {
             from()
         }
-        Time(err: time_span::ParseError) {
+        Time(err: time::ParseError) {
             from()
         }
         Io(err: io::Error) {

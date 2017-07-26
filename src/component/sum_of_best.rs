@@ -1,5 +1,5 @@
 use Timer;
-use time_formatter::{Regular, TimeFormatter, Accuracy};
+use time::formatter::{Regular, TimeFormatter, Accuracy};
 use serde_json::{to_writer, Result};
 use analysis::sum_of_segments::calculate_best;
 use std::io::Write;

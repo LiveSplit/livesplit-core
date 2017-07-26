@@ -6,7 +6,7 @@ use std::borrow::Cow;
 use std::cmp::max;
 use std::fmt::Write as FmtWrite;
 use std::io::Write;
-use time_formatter::{PossibleTimeSave, TimeFormatter, Accuracy};
+use time::formatter::{PossibleTimeSave, TimeFormatter, Accuracy};
 
 #[derive(Default, Clone)]
 pub struct Component {

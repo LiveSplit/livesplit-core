@@ -1,5 +1,5 @@
 use {GeneralLayoutSettings, Timer, TimerPhase, TimeSpan, TimingMethod};
-use time_formatter::{timer as formatter, TimeFormatter, Accuracy, DigitsFormat};
+use time::formatter::{timer as formatter, TimeFormatter, Accuracy, DigitsFormat};
 use analysis::split_color;
 use serde_json::{to_writer, Result};
 use std::io::Write;

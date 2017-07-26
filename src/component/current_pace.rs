@@ -2,7 +2,7 @@ use {Timer, TimerPhase, comparison};
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use analysis::current_pace;
-use time_formatter::{Regular, TimeFormatter, Accuracy};
+use time::formatter::{Regular, TimeFormatter, Accuracy};
 use std::borrow::Cow;
 use settings::{SettingsDescription, Field, Value};
 

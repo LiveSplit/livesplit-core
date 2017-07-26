@@ -1,13 +1,13 @@
 use {Image, TimeSpan};
-use super::{RunEditor, ParseError};
+use super::{Editor, ParseError};
 
 pub struct SegmentRow<'editor> {
     index: usize,
-    editor: &'editor mut RunEditor,
+    editor: &'editor mut Editor,
 }
 
 impl<'a> SegmentRow<'a> {
-    pub fn new(index: usize, editor: &'a mut RunEditor) -> Self {
+    pub fn new(index: usize, editor: &'a mut Editor) -> Self {
         SegmentRow {
             index: index,
             editor: editor,

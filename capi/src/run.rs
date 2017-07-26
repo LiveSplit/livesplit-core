@@ -1,4 +1,5 @@
-use livesplit_core::{Run, RunMetadata, TimeSpan, Segment, Attempt, parser, saver};
+use livesplit_core::{Run, RunMetadata, TimeSpan, Segment, Attempt};
+use livesplit_core::run::{parser, saver};
 use super::{alloc, own_drop, own, acc, output_str, output_time_span, output_vec, acc_mut, str};
 use std::io::Cursor;
 use std::{slice, ptr};

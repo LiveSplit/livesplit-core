@@ -1,7 +1,7 @@
 use std::num::ParseIntError;
 use std::mem::swap;
 use {Image, Run, Segment, TimingMethod, Time, TimeSpan};
-use time_span::ParseError as ParseTimeSpanError;
+use time::ParseError as ParseTimeSpanError;
 
 mod segment_row;
 mod state;
@@ -21,7 +21,7 @@ quick_error! {
     }
 }
 
-pub struct RunEditor {
+pub struct Editor {
     run: Run,
     selected_method: TimingMethod,
     selected_segments: Vec<usize>,
@@ -31,14 +31,14 @@ pub struct RunEditor {
     segment_times: Vec<Option<TimeSpan>>,
 }
 
-impl RunEditor {
+impl Editor {
     pub fn new(run: Run) -> Self {
         let len = run.len();
         assert!(len > 0);
 
         let personal_best_time = run.segments().last().unwrap().personal_best_split_time();
 
-        let mut editor = RunEditor {
+        let mut editor = Self {
             run: run,
             selected_method: TimingMethod::RealTime,
             selected_segments: vec![0],

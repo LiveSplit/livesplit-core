@@ -1,7 +1,7 @@
 use {GeneralLayoutSettings, Timer, TimerPhase, TimingMethod, TimeSpan};
 use super::timer;
-use time_formatter::{timer as formatter, TimeFormatter, Short, Accuracy, DigitsFormat, DASH};
-use time_formatter::none_wrapper::DashWrapper;
+use time::formatter::{timer as formatter, TimeFormatter, Short, Accuracy, DigitsFormat, DASH};
+use time::formatter::none_wrapper::DashWrapper;
 use comparison::{self, best_segments, none};
 use std::cmp::max;
 use serde_json::{to_writer, Result};

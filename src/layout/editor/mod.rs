@@ -5,17 +5,17 @@ mod state;
 
 pub use self::state::{State, Buttons as ButtonsState};
 
-pub struct LayoutEditor {
+pub struct Editor {
     layout: Layout,
     selected_component: usize,
 }
 
-impl LayoutEditor {
+impl Editor {
     pub fn new(layout: Layout) -> Self {
         let len = layout.components.len();
         assert!(len > 0);
 
-        LayoutEditor {
+        Self {
             layout,
             selected_component: 0,
         }

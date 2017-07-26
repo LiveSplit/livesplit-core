@@ -1,6 +1,6 @@
 use serde_json::{to_writer, Result as JsonResult};
 use std::io::Write;
-use super::LayoutEditor;
+use super::Editor;
 use settings::SettingsDescription;
 
 #[derive(Serialize, Deserialize)]
@@ -28,7 +28,7 @@ impl State {
     }
 }
 
-impl LayoutEditor {
+impl Editor {
     pub fn state(&self) -> State {
         let components = self.layout
             .components

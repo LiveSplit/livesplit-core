@@ -14,3 +14,4 @@ pub use self::layout_settings::LayoutSettings;
 pub use self::layout_state::LayoutState;
 pub use self::layout::Layout;
 pub use self::general_settings::GeneralSettings;
+pub use self::editor::Editor;

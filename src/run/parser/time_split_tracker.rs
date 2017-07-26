@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use std::result::Result as StdResult;
 use std::num::ParseIntError;
 use chrono::{Utc, TimeZone};
-use {Run, time_span, Image, TimeSpan, RealTime, Time, Segment, AtomicDateTime};
+use {Run, time, Image, TimeSpan, RealTime, Time, Segment, AtomicDateTime};
 
 quick_error! {
     #[derive(Debug)]
@@ -21,7 +21,7 @@ quick_error! {
         Int(err: ParseIntError) {
             from()
         }
-        Time(err: time_span::ParseError) {
+        Time(err: time::ParseError) {
             from()
         }
         Io(err: io::Error) {

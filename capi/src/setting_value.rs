@@ -1,5 +1,5 @@
 use livesplit_core::settings::{Value as SettingValue, Color};
-use livesplit_core::time_formatter::{Accuracy, DigitsFormat};
+use livesplit_core::time::formatter::{Accuracy, DigitsFormat};
 use livesplit_core::TimingMethod;
 use {alloc, str, own_drop};
 use libc::c_char;

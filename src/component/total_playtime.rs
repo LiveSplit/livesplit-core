@@ -2,7 +2,7 @@ use Timer;
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use analysis::total_playtime;
-use time_formatter::{Days, Regular, TimeFormatter};
+use time::formatter::{Days, Regular, TimeFormatter};
 use std::borrow::Cow;
 use settings::{SettingsDescription, Value, Field};
 

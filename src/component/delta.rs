@@ -2,7 +2,7 @@ use {Timer, comparison, GeneralLayoutSettings};
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use analysis::{state_helper, delta};
-use time_formatter::{Delta, TimeFormatter, Accuracy};
+use time::formatter::{Delta, TimeFormatter, Accuracy};
 use std::borrow::Cow;
 use settings::{SettingsDescription, Field, Value, SemanticColor, Color};
 

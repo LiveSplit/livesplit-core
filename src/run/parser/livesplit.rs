@@ -7,7 +7,7 @@ use sxd_document::dom::Element;
 use sxd_document::parser::{Error as XmlError, parse as parse_xml};
 use chrono::{DateTime, Utc, TimeZone, ParseError as ChronoError};
 use super::bom_consumer::BomConsumer;
-use {Run, time_span, TimeSpan, Time, AtomicDateTime, Segment};
+use {Run, time, TimeSpan, Time, AtomicDateTime, Segment};
 use comparison::personal_best;
 use super::xml_util::{self, text};
 
@@ -29,7 +29,7 @@ quick_error! {
         Bool
         ElementNotFound
         AttributeNotFound
-        Time(err: time_span::ParseError) {
+        Time(err: time::ParseError) {
             from()
         }
         Date(err: ChronoError) {

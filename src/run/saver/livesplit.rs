@@ -3,7 +3,7 @@ use chrono::{DateTime, Utc};
 use sxd_document::Package;
 use sxd_document::dom::{Document, Element};
 use sxd_document::writer::format_document;
-use time_formatter::{Complete, TimeFormatter};
+use time::formatter::{Complete, TimeFormatter};
 use {Run, Time, TimeSpan, Image, base64};
 use byteorder::{WriteBytesExt, LE};
 
