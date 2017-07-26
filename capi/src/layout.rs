@@ -13,6 +13,11 @@ pub unsafe extern "C" fn Layout_new() -> OwnedLayout {
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn Layout_default_layout() -> OwnedLayout {
+    alloc(Layout::default_layout())
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn Layout_drop(this: OwnedLayout) {
     own_drop(this);
 }

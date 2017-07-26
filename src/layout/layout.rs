@@ -1,7 +1,7 @@
-use Timer;
+use {Timer, component};
 use super::{Component, LayoutSettings, LayoutState, GeneralSettings};
 
-#[derive(Default, Clone)]
+#[derive(Clone)]
 pub struct Layout {
     pub components: Vec<Component>,
     settings: GeneralSettings,
@@ -9,7 +9,22 @@ pub struct Layout {
 
 impl Layout {
     pub fn new() -> Self {
-        Default::default()
+        Self {
+            components: Vec::new(),
+            settings: GeneralSettings::default(),
+        }
+    }
+
+    pub fn default_layout() -> Self {
+        Self {
+            components: vec![
+                component::title::Component::new().into(),
+                component::splits::Component::new().into(),
+                component::timer::Component::new().into(),
+                component::previous_segment::Component::new().into(),
+            ],
+            settings: GeneralSettings::default(),
+        }
     }
 
     pub fn from_settings(layout_settings: LayoutSettings) -> Self {
