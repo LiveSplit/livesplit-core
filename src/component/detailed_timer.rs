@@ -1,4 +1,4 @@
-use {SemanticColor, GeneralLayoutSettings, Timer, TimerPhase, TimingMethod, TimeSpan};
+use {GeneralLayoutSettings, Timer, TimerPhase, TimingMethod, TimeSpan};
 use super::timer;
 use time_formatter::{timer as formatter, TimeFormatter, Short, Accuracy, DigitsFormat, DASH};
 use time_formatter::none_wrapper::DashWrapper;
@@ -7,7 +7,7 @@ use std::cmp::max;
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use std::borrow::Cow;
-use layout::editor::{SettingsDescription, Field, Value};
+use settings::{SemanticColor, SettingsDescription, Field, Value};
 
 #[derive(Default, Clone)]
 pub struct Component {

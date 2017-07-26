@@ -1,6 +1,6 @@
 use {Timer, TimerPhase, comparison};
 use analysis::possible_time_save;
-use layout::editor::{SettingsDescription, Value, Field};
+use settings::{SettingsDescription, Value, Field};
 use serde_json::{to_writer, Result};
 use std::borrow::Cow;
 use std::cmp::max;

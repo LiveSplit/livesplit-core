@@ -1,7 +1,7 @@
 use serde_json::{to_writer, Result as JsonResult};
 use std::io::Write;
 use super::LayoutEditor;
-use super::settings_description::SettingsDescription;
+use settings::SettingsDescription;
 
 #[derive(Serialize, Deserialize)]
 pub struct State {

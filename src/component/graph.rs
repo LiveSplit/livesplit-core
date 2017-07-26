@@ -1,8 +1,8 @@
-use {Color, Timer, TimeSpan, TimerPhase, GeneralLayoutSettings, analysis, comparison};
+use {Timer, TimeSpan, TimerPhase, GeneralLayoutSettings, analysis, comparison};
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use std::borrow::Cow;
-use layout::editor::{SettingsDescription, Field, Value};
+use settings::{SettingsDescription, Field, Value, Color};
 
 const GRAPH_EDGE_VALUE: f32 = 200.0;
 const GRAPH_EDGE_MIN: f32 = 5.0;

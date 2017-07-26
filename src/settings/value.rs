@@ -1,4 +1,5 @@
-use {TimingMethod, Color};
+use TimingMethod;
+use super::Color;
 use time_formatter::{DigitsFormat, Accuracy};
 use std::result::Result as StdResult;
 

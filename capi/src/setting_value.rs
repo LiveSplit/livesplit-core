@@ -1,6 +1,6 @@
-use livesplit_core::layout::editor::Value as SettingValue;
+use livesplit_core::settings::{Value as SettingValue, Color};
 use livesplit_core::time_formatter::{Accuracy, DigitsFormat};
-use livesplit_core::{TimingMethod, Color};
+use livesplit_core::TimingMethod;
 use {alloc, str, own_drop};
 use libc::c_char;
 use std::ptr;

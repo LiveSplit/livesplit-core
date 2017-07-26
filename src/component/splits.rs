@@ -1,12 +1,12 @@
 use std::cmp::{min, max};
 use std::io::Write;
 use serde_json::{to_writer, Result};
-use {SemanticColor, Color, GeneralLayoutSettings, Timer, TimeSpan, analysis};
+use {GeneralLayoutSettings, Timer, TimeSpan, analysis};
 use analysis::split_color;
 use time_formatter::{Delta, Regular, TimeFormatter};
 use time_formatter::none_wrapper::{EmptyWrapper, DashWrapper};
 use std::borrow::Cow;
-use layout::editor::{SettingsDescription, Field, Value};
+use settings::{SettingsDescription, Field, Value, SemanticColor, Color};
 
 #[derive(Default, Clone)]
 pub struct Component {

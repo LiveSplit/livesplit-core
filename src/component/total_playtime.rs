@@ -4,7 +4,7 @@ use std::io::Write;
 use analysis::total_playtime;
 use time_formatter::{Days, Regular, TimeFormatter};
 use std::borrow::Cow;
-use layout::editor::{SettingsDescription, Value, Field};
+use settings::{SettingsDescription, Value, Field};
 
 #[derive(Default, Clone)]
 pub struct Component {

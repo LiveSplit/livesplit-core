@@ -1,4 +1,5 @@
-use super::{ComponentState, Color};
+use super::ComponentState;
+use settings::Color;
 use serde_json::{to_writer, Result};
 use std::io::Write;
 

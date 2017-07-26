@@ -1,14 +1,9 @@
 use super::{Layout, Component};
+use settings::Value;
 
-mod field;
-mod settings_description;
 mod state;
-mod value;
 
 pub use self::state::{State, Buttons as ButtonsState};
-pub use self::value::{Value, Result, Error};
-pub use self::field::Field;
-pub use self::settings_description::SettingsDescription;
 
 pub struct LayoutEditor {
     layout: Layout,

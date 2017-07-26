@@ -1,4 +1,5 @@
-use {SemanticColor, Run, Timer, TimingMethod, TimeSpan, TimerPhase};
+use {Run, Timer, TimingMethod, TimeSpan, TimerPhase};
+use settings::SemanticColor;
 use comparison::{best_segments, personal_best};
 
 /// Gets the last non-live delta in the run starting from `split_number`.

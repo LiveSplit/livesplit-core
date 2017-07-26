@@ -2,7 +2,7 @@ use Timer;
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use std::borrow::Cow;
-use layout::editor::{SettingsDescription, Value};
+use settings::{SettingsDescription, Value};
 
 #[derive(Default, Clone)]
 pub struct Component;

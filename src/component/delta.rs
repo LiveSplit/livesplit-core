@@ -1,10 +1,10 @@
-use {Timer, SemanticColor, Color, comparison, GeneralLayoutSettings};
+use {Timer, comparison, GeneralLayoutSettings};
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use analysis::{state_helper, delta};
 use time_formatter::{Delta, TimeFormatter, Accuracy};
 use std::borrow::Cow;
-use layout::editor::{SettingsDescription, Field, Value};
+use settings::{SettingsDescription, Field, Value, SemanticColor, Color};
 
 #[derive(Default, Clone)]
 pub struct Component {

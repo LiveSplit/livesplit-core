@@ -1,10 +1,10 @@
-use {SemanticColor, Color, GeneralLayoutSettings, Timer, TimerPhase, TimeSpan, TimingMethod};
+use {GeneralLayoutSettings, Timer, TimerPhase, TimeSpan, TimingMethod};
 use time_formatter::{timer as formatter, TimeFormatter, Accuracy, DigitsFormat};
 use analysis::split_color;
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use std::borrow::Cow;
-use layout::editor::{SettingsDescription, Value, Field};
+use settings::{SemanticColor, Color, SettingsDescription, Value, Field};
 use palette::{Hsv, Rgb};
 
 #[derive(Default, Clone)]

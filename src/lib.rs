@@ -29,7 +29,7 @@ mod run_metadata;
 mod run;
 mod segment_history;
 mod segment;
-mod semantic_color;
+pub mod settings;
 mod time_stamp;
 mod time;
 mod timer_phase;
@@ -48,7 +48,6 @@ pub mod time_span;
 pub use chrono::{DateTime, Utc};
 pub use self::atomic_date_time::AtomicDateTime;
 pub use self::attempt::Attempt;
-pub use self::semantic_color::SemanticColor;
 pub use self::image::Image;
 pub use self::run::Run;
 pub use self::run_metadata::RunMetadata;
@@ -63,5 +62,5 @@ pub use self::timer_phase::TimerPhase;
 pub use self::timing_method::TimingMethod;
 pub use self::hotkey_config::HotkeyConfig;
 pub use self::hotkey_system::HotkeySystem;
-pub use self::layout::{Layout, Component, editor as layout_editor, Color,
+pub use self::layout::{Layout, Component, editor as layout_editor,
                        GeneralSettings as GeneralLayoutSettings};

@@ -1,5 +1,4 @@
-use Color;
-use layout::editor::{SettingsDescription, Field, Value};
+use settings::{Color, SettingsDescription, Field, Value};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct GeneralSettings {
