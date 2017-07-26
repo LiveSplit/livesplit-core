@@ -17,6 +17,7 @@ use std::path::Path;
 use syntex_syntax::abi::Abi;
 use syntex_syntax::ast::{ItemKind, Visibility, PatKind, TyKind, Mutability, FunctionRetTy};
 use syntex_syntax::parse::{ParseSess, parse_crate_from_file};
+use syntex_syntax::codemap::FilePathMapping;
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum TypeKind {
@@ -113,7 +114,7 @@ fn get_type(ty: &TyKind) -> Type {
 }
 
 fn main() {
-    let sess = ParseSess::new();
+    let sess = ParseSess::new(FilePathMapping::empty());
     let ast = parse_crate_from_file(Path::new("../src/lib.rs"), &sess).unwrap();
     let items = ast.module.items;
 
@@ -124,7 +125,7 @@ fn main() {
             for item in &module.items {
                 if let &ItemKind::Fn(ref decl, _, _, Abi::C, _, _) = &item.node {
                     if item.vis == Visibility::Public &&
-                        item.attrs.iter().any(|a| a.value.name == "no_mangle")
+                        item.attrs.iter().any(|a| a.check_name("no_mangle"))
                     {
                         let output = if let &FunctionRetTy::Ty(ref output) = &decl.output {
                             get_type(&output.node)

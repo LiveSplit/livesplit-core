@@ -5,4 +5,4 @@ version = "0.1.0"
 
 [dependencies]
 heck = "0.2.1"
-syntex_syntax = "0.58.0"
+syntex_syntax = "0.59.1"
