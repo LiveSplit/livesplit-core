@@ -1,5 +1,5 @@
 use {Run, Segment};
-use super::RunEditor;
+use super::Editor;
 
 #[test]
 fn new_best_segment() {
@@ -7,7 +7,7 @@ fn new_best_segment() {
     run.push_segment(Segment::new(""));
     run.push_segment(Segment::new(""));
 
-    let mut editor = RunEditor::new(run);
+    let mut editor = Editor::new(run);
 
     editor
         .selected_segment()
