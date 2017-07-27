@@ -7,7 +7,7 @@ fn new_best_segment() {
     run.push_segment(Segment::new(""));
     run.push_segment(Segment::new(""));
 
-    let mut editor = Editor::new(run);
+    let mut editor = Editor::new(run).unwrap();
 
     editor
         .selected_segment()

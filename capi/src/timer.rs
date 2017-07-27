@@ -3,12 +3,13 @@ use super::{alloc, own, acc_mut, own_drop, acc, output_str, output_time_span};
 use run::OwnedRun;
 use libc::c_char;
 use shared_timer::OwnedSharedTimer;
+use std::ptr;
 
 pub type OwnedTimer = *mut Timer;
 
 #[no_mangle]
 pub unsafe extern "C" fn Timer_new(run: OwnedRun) -> OwnedTimer {
-    alloc(Timer::new(own(run)))
+    Timer::new(own(run)).ok().map_or_else(ptr::null_mut, alloc)
 }
 
 #[no_mangle]

@@ -25,15 +25,24 @@ pub struct Timer {
 
 pub type SharedTimer = Arc<RwLock<Timer>>;
 
+quick_error! {
+    #[derive(Debug)]
+    pub enum CreationError {
+        EmptyRun
+    }
+}
+
 impl Timer {
     #[inline]
-    pub fn new(mut run: Run) -> Self {
-        assert!(!run.is_empty());
+    pub fn new(mut run: Run) -> Result<Self, CreationError> {
+        if run.is_empty() {
+            return Err(CreationError::EmptyRun);
+        }
 
         run.regenerate_comparisons();
         let now = TimeStamp::now();
 
-        Timer {
+        Ok(Timer {
             run: run,
             phase: NotRunning,
             current_split_index: -1,
@@ -48,7 +57,7 @@ impl Timer {
             is_game_time_paused: false,
             game_time_pause_time: None,
             loading_times: None,
-        }
+        })
     }
 
     pub fn into_shared(self) -> SharedTimer {

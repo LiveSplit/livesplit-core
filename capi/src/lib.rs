@@ -124,7 +124,7 @@ unsafe fn str(s: *const c_char) -> &'static str {
     CStr::from_ptr(s as _).to_str().unwrap()
 }
 
-unsafe fn alloc<T>(data: T) -> *mut T {
+fn alloc<T>(data: T) -> *mut T {
     Box::into_raw(Box::new(data))
 }
 

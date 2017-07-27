@@ -3,12 +3,15 @@ use layout::OwnedLayout;
 use super::{Json, alloc, own, output_vec, acc, acc_mut};
 use component::OwnedComponent;
 use setting_value::OwnedSettingValue;
+use std::ptr;
 
 pub type OwnedLayoutEditor = *mut LayoutEditor;
 
 #[no_mangle]
 pub unsafe extern "C" fn LayoutEditor_new(layout: OwnedLayout) -> OwnedLayoutEditor {
-    alloc(LayoutEditor::new(own(layout)))
+    LayoutEditor::new(own(layout))
+        .ok()
+        .map_or_else(ptr::null_mut, alloc)
 }
 
 #[no_mangle]

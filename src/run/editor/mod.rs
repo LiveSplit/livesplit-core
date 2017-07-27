@@ -21,6 +21,13 @@ quick_error! {
     }
 }
 
+quick_error! {
+    #[derive(Debug)]
+    pub enum OpenError {
+        EmptyRun
+    }
+}
+
 pub struct Editor {
     run: Run,
     selected_method: TimingMethod,
@@ -32,9 +39,11 @@ pub struct Editor {
 }
 
 impl Editor {
-    pub fn new(run: Run) -> Self {
+    pub fn new(run: Run) -> Result<Self, OpenError> {
         let len = run.len();
-        assert!(len > 0);
+        if len == 0 {
+            return Err(OpenError::EmptyRun);
+        }
 
         let personal_best_time = run.segments().last().unwrap().personal_best_split_time();
 
@@ -49,7 +58,8 @@ impl Editor {
         };
 
         editor.update_segment_list();
-        editor
+
+        Ok(editor)
     }
 
     pub fn close(self) -> Run {

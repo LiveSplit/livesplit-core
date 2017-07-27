@@ -1,5 +1,6 @@
 use super::{Layout, Component};
 use settings::Value;
+use std::result::Result as StdResult;
 
 mod state;
 
@@ -10,15 +11,25 @@ pub struct Editor {
     selected_component: usize,
 }
 
-impl Editor {
-    pub fn new(layout: Layout) -> Self {
-        let len = layout.components.len();
-        assert!(len > 0);
+quick_error! {
+    #[derive(Debug)]
+    pub enum Error {
+        EmptyLayout
+    }
+}
 
-        Self {
+pub type Result<T> = StdResult<T, Error>;
+
+impl Editor {
+    pub fn new(layout: Layout) -> Result<Self> {
+        if layout.components.is_empty() {
+            return Err(Error::EmptyLayout);
+        }
+
+        Ok(Self {
             layout,
             selected_component: 0,
-        }
+        })
     }
 
     pub fn close(self) -> Layout {

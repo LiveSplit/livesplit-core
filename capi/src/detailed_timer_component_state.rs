@@ -121,7 +121,7 @@ pub unsafe extern "C" fn DetailedTimerComponentState_icon_change(
     acc(this)
         .icon_change
         .as_ref()
-        .map_or_else(ptr::null, |s| output_str(s))
+        .map_or_else(ptr::null, output_str)
 }
 
 #[no_mangle]
@@ -131,5 +131,5 @@ pub unsafe extern "C" fn DetailedTimerComponentState_name(
     acc(this)
         .segment_name
         .as_ref()
-        .map_or_else(ptr::null, |s| output_str(s))
+        .map_or_else(ptr::null, output_str)
 }

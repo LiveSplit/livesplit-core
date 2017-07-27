@@ -2,13 +2,15 @@ use livesplit_core::{RunEditor, TimingMethod};
 use super::{Json, alloc, own, output_vec, acc_mut, str};
 use run::OwnedRun;
 use libc::c_char;
-use std::slice;
+use std::{slice, ptr};
 
 pub type OwnedRunEditor = *mut RunEditor;
 
 #[no_mangle]
 pub unsafe extern "C" fn RunEditor_new(run: OwnedRun) -> OwnedRunEditor {
-    alloc(RunEditor::new(own(run)))
+    RunEditor::new(own(run))
+        .ok()
+        .map_or_else(ptr::null_mut, alloc)
 }
 
 #[no_mangle]

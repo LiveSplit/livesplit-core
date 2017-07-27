@@ -31,7 +31,7 @@ pub unsafe extern "C" fn SplitsComponentState_icon_change(
     acc(this).splits[index]
         .icon_change
         .as_ref()
-        .map_or_else(ptr::null, |s| output_str(s))
+        .map_or_else(ptr::null, output_str)
 }
 
 #[no_mangle]

@@ -17,7 +17,7 @@ pub unsafe extern "C" fn TitleComponentState_icon_change(
     acc(this)
         .icon_change
         .as_ref()
-        .map_or_else(ptr::null, |s| output_str(s))
+        .map_or_else(ptr::null, output_str)
 }
 
 #[no_mangle]
@@ -31,10 +31,7 @@ pub unsafe extern "C" fn TitleComponentState_line1(
 pub unsafe extern "C" fn TitleComponentState_line2(
     this: *const TitleComponentState,
 ) -> *const c_char {
-    acc(this)
-        .line2
-        .as_ref()
-        .map_or_else(ptr::null, |s| output_str(s))
+    acc(this).line2.as_ref().map_or_else(ptr::null, output_str)
 }
 
 #[no_mangle]
