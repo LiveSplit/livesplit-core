@@ -17,17 +17,17 @@ pub static HEADER: &str = r#"export type ComponentStateJson =
 export type Color = number[];
 
 export type Gradient =
-    { Transparent: null } |
+    "Transparent" |
     { Plain: Color } |
     { Vertical: Color[] } |
     { Horizontal: Color[] };
 
 export interface LayoutStateJson {
-    components: ComponentStateJson[];
-    background: Gradient;
-    thin_separators_color: Color;
-    separators_color: Color;
-    text_color: Color;
+    components: ComponentStateJson[],
+    background: Gradient,
+    thin_separators_color: Color,
+    separators_color: Color,
+    text_color: Color,
 }
 
 export enum TimingMethod {
@@ -43,130 +43,130 @@ export enum TimerPhase {
 }
 
 export interface BlankSpaceComponentStateJson {
-    background: Gradient;
-    height: number;
+    background: Gradient,
+    height: number,
 }
 
 export interface TimerComponentStateJson {
-    background: Gradient;
-    time: string;
-    fraction: string;
-    semantic_color: SemanticColor;
-    top_color: Color;
-    bottom_color: Color;
+    background: Gradient,
+    time: string,
+    fraction: string,
+    semantic_color: SemanticColor,
+    top_color: Color,
+    bottom_color: Color,
 }
 
 export interface TitleComponentStateJson {
-    background: Gradient;
-    icon_change?: string;
-    line1: string;
-    line2?: string;
-    is_centered: boolean;
-    finished_runs?: number;
-    attempts?: number;
+    background: Gradient,
+    icon_change: string | null,
+    line1: string,
+    line2: string | null,
+    is_centered: boolean,
+    finished_runs: number | null,
+    attempts: number | null,
 }
 
 export interface SplitsComponentStateJson {
-    splits: SplitStateJson[];
-    show_final_separator: boolean;
-    current_split_gradient: Gradient;
+    splits: SplitStateJson[],
+    show_final_separator: boolean,
+    current_split_gradient: Gradient,
 }
 
 export interface SplitStateJson {
-    icon_change?: string;
-    name: string;
-    delta: string;
-    time: string;
-    semantic_color: SemanticColor;
-    visual_color: Color;
-    is_current_split: boolean;
+    icon_change: string | null,
+    name: string,
+    delta: string,
+    time: string,
+    semantic_color: SemanticColor,
+    visual_color: Color,
+    is_current_split: boolean,
 }
 
 export interface PreviousSegmentComponentStateJson {
-    background: Gradient;
-    text: string;
-    time: string;
-    semantic_color: SemanticColor;
-    visual_color: Color;
+    background: Gradient,
+    text: string,
+    time: string,
+    semantic_color: SemanticColor,
+    visual_color: Color,
 }
 
 export interface SumOfBestComponentStateJson {
-    background: Gradient;
-    text: string;
-    time: string;
+    background: Gradient,
+    text: string,
+    time: string,
 }
 
 export interface PossibleTimeSaveComponentStateJson {
-    background: Gradient;
-    text: string;
-    time: string;
+    background: Gradient,
+    text: string,
+    time: string,
 }
 
 export interface GraphComponentStateJson {
-    points: GraphComponentStatePointJson[];
-    horizontal_grid_lines: number[];
-    vertical_grid_lines: number[];
-    middle: number;
-    is_live_delta_active: boolean;
-    is_flipped: boolean;
-    top_background_color: Color;
-    bottom_background_color: Color;
-    grid_lines_color: Color;
-    graph_lines_color: Color;
-    partial_fill_color: Color;
-    complete_fill_color: Color;
-    best_segment_color: Color;
+    points: GraphComponentStatePointJson[],
+    horizontal_grid_lines: number[],
+    vertical_grid_lines: number[],
+    middle: number,
+    is_live_delta_active: boolean,
+    is_flipped: boolean,
+    top_background_color: Color,
+    bottom_background_color: Color,
+    grid_lines_color: Color,
+    graph_lines_color: Color,
+    partial_fill_color: Color,
+    complete_fill_color: Color,
+    best_segment_color: Color,
 }
 
 export interface GraphComponentStatePointJson {
-    x: number;
-    y: number;
-    is_best_segment: boolean;
+    x: number,
+    y: number,
+    is_best_segment: boolean,
 }
 
 export type TextComponentStateJson =
 	{ Center: String } |
-	{ Split: String[2] };
+	{ Split: String[] };
 
 export interface TotalPlaytimeComponentStateJson {
-    background: Gradient;
-    text: string;
-    time: string;
+    background: Gradient,
+    text: string,
+    time: string,
 }
 
 export interface CurrentPaceComponentStateJson {
-    background: Gradient;
-    text: string;
-    time: string;
+    background: Gradient,
+    text: string,
+    time: string,
 }
 
 export interface DeltaComponentStateJson {
-    background: Gradient;
-    text: string;
-    time: string;
-    semantic_color: SemanticColor;
-    visual_color: Color;
+    background: Gradient,
+    text: string,
+    time: string,
+    semantic_color: SemanticColor,
+    visual_color: Color,
 }
 
 export interface CurrentComparisonComponentStateJson {
-    background: Gradient;
-    text: string;
-    comparison: string;
+    background: Gradient,
+    text: string,
+    comparison: string,
 }
 
 export interface DetailedTimerComponentStateJson {
-    background: Gradient;
-    timer: TimerComponentStateJson;
-    segment_timer: TimerComponentStateJson;
-    comparison1: DetailedTimerComponentComparisonStateJson;
-    comparison2: DetailedTimerComponentComparisonStateJson;
-    segment_name: string;
-    icon_change: string;
+    background: Gradient,
+    timer: TimerComponentStateJson,
+    segment_timer: TimerComponentStateJson,
+    comparison1: DetailedTimerComponentComparisonStateJson | null,
+    comparison2: DetailedTimerComponentComparisonStateJson | null,
+    segment_name: string | null,
+    icon_change: string | null,
 }
 
 export interface DetailedTimerComponentComparisonStateJson {
-    name: string;
-    time: string;
+    name: string,
+    time: string,
 }
 
 export interface LayoutEditorStateJson {
@@ -197,14 +197,17 @@ export type SettingsDescriptionValueJson =
     { UInt: number } |
     { Int: number } |
     { String: string } |
-    { OptionalString: string } |
+    { OptionalString: string | null } |
     { Float: number } |
     { Accuracy: AccuracyJson } |
     { DigitsFormat: DigitsFormatJson } |
+    { OptionalTimingMethod: TimingMethodJson | null } |
     { Color: Color } |
     { Gradient: Gradient };
 
 export type AccuracyJson = "Seconds" | "Tenths" | "Hundredths";
+
+export type TimingMethodJson = "RealTime" | "GameTime";
 
 export type DigitsFormatJson =
     "SingleDigitSeconds" |
@@ -215,12 +218,12 @@ export type DigitsFormatJson =
     "DoubleDigitHours";
 
 export interface RunEditorStateJson {
-    icon_change?: string,
+    icon_change: string | null,
     game: string,
     category: string,
     offset: string,
-    attempts: string,
-    timing_method: "RealTime" | "GameTime",
+    attempts: number,
+    timing_method: TimingMethodJson,
     segments: RunEditorRowJson[],
     comparison_names: string[],
     buttons: RunEditorButtonsJson,
@@ -233,7 +236,7 @@ export interface RunEditorButtonsJson {
 }
 
 export interface RunEditorRowJson {
-    icon_change?: string,
+    icon_change: string | null,
     name: string,
     split_time: string,
     segment_time: string,

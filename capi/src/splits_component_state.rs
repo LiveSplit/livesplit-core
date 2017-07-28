@@ -1,5 +1,5 @@
 use livesplit_core::component::splits::State as SplitsComponentState;
-use super::{own_drop, acc, output_str, output_str_with};
+use super::{own_drop, acc, output_str, output_str_with, Nullablec_char};
 use libc::c_char;
 use std::ptr;
 use std::fmt::Write;
@@ -27,7 +27,7 @@ pub unsafe extern "C" fn SplitsComponentState_len(this: *const SplitsComponentSt
 pub unsafe extern "C" fn SplitsComponentState_icon_change(
     this: *const SplitsComponentState,
     index: usize,
-) -> *const c_char {
+) -> *const Nullablec_char {
     acc(this).splits[index]
         .icon_change
         .as_ref()

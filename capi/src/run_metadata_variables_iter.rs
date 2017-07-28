@@ -1,7 +1,7 @@
 use super::{own_drop, acc_mut, RUN_METADATA_VARIABLE};
 use std::ptr;
 use livesplit_core::ordermap;
-use run_metadata_variable::RunMetadataVariable;
+use run_metadata_variable::{RunMetadataVariable, NullableRunMetadataVariable};
 
 pub type RunMetadataVariablesIter = ordermap::Iter<'static, String, String>;
 pub type OwnedRunMetadataVariablesIter = *mut RunMetadataVariablesIter;
@@ -14,7 +14,7 @@ pub unsafe extern "C" fn RunMetadataVariablesIter_drop(this: OwnedRunMetadataVar
 #[no_mangle]
 pub unsafe extern "C" fn RunMetadataVariablesIter_next(
     this: *mut RunMetadataVariablesIter,
-) -> *const RunMetadataVariable {
+) -> *const NullableRunMetadataVariable {
     if let Some((name, value)) = acc_mut(this).next() {
         RUN_METADATA_VARIABLE.with(|output| {
             output.set((name, value));

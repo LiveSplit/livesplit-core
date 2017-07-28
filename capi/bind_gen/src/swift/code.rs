@@ -57,7 +57,8 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         write!(
             writer,
             r#"
-    public init?("#
+    public init{}("#,
+            if function.output.is_nullable { "?" } else { "" }
         )?;
     } else {
         write!(
@@ -94,7 +95,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
             r#") -> {}{} {{
         "#,
             return_type,
-            if function.output.is_custom { "?" } else { "" }
+            if function.output.is_nullable && function.output.is_custom { "?" } else { "" }
         )?;
     } else {
         write!(
@@ -175,7 +176,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
     }
 
     if has_return_type {
-        if function.output.is_custom {
+        if function.output.is_nullable && function.output.is_custom {
             if is_constructor {
                 write!(
                     writer,

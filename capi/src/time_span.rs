@@ -1,6 +1,7 @@
 use livesplit_core::TimeSpan;
 use super::{alloc, own_drop, acc};
 
+pub type NullableTimeSpan = TimeSpan;
 pub type OwnedTimeSpan = *mut TimeSpan;
 
 #[no_mangle]

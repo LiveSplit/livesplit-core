@@ -1,5 +1,5 @@
 use livesplit_core::component::detailed_timer::State as DetailedTimerComponentState;
-use super::{own_drop, acc, output_str, output_str_with};
+use super::{own_drop, acc, output_str, output_str_with, Nullablec_char};
 use libc::c_char;
 use std::fmt::Write;
 use std::ptr;
@@ -117,7 +117,7 @@ pub unsafe extern "C" fn DetailedTimerComponentState_comparison2_time(
 #[no_mangle]
 pub unsafe extern "C" fn DetailedTimerComponentState_icon_change(
     this: *const DetailedTimerComponentState,
-) -> *const c_char {
+) -> *const Nullablec_char {
     acc(this)
         .icon_change
         .as_ref()
@@ -127,7 +127,7 @@ pub unsafe extern "C" fn DetailedTimerComponentState_icon_change(
 #[no_mangle]
 pub unsafe extern "C" fn DetailedTimerComponentState_name(
     this: *const DetailedTimerComponentState,
-) -> *const c_char {
+) -> *const Nullablec_char {
     acc(this)
         .segment_name
         .as_ref()

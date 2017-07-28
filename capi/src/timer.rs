@@ -6,9 +6,10 @@ use shared_timer::OwnedSharedTimer;
 use std::ptr;
 
 pub type OwnedTimer = *mut Timer;
+pub type NullableOwnedTimer = OwnedTimer;
 
 #[no_mangle]
-pub unsafe extern "C" fn Timer_new(run: OwnedRun) -> OwnedTimer {
+pub unsafe extern "C" fn Timer_new(run: OwnedRun) -> NullableOwnedTimer {
     Timer::new(own(run)).ok().map_or_else(ptr::null_mut, alloc)
 }
 

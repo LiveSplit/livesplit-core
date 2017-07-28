@@ -6,6 +6,7 @@ use std::io::Cursor;
 use std::ptr;
 
 pub type OwnedLayout = *mut Layout;
+pub type NullableOwnedLayout = OwnedLayout;
 
 #[no_mangle]
 pub unsafe extern "C" fn Layout_new() -> OwnedLayout {
@@ -28,7 +29,7 @@ pub unsafe extern "C" fn Layout_clone(this: *const Layout) -> OwnedLayout {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Layout_parse_json(settings: Json) -> OwnedLayout {
+pub unsafe extern "C" fn Layout_parse_json(settings: Json) -> NullableOwnedLayout {
     let settings = Cursor::new(str(settings).as_bytes());
     if let Ok(settings) = LayoutSettings::from_json(settings) {
         alloc(Layout::from_settings(settings))

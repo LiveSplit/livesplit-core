@@ -30,6 +30,7 @@ pub enum TypeKind {
 pub struct Type {
     kind: TypeKind,
     is_custom: bool,
+    is_nullable: bool,
     name: String,
 }
 
@@ -76,6 +77,13 @@ fn get_type(ty: &TyKind) -> Type {
     } else if let &TyKind::Path(_, ref path) = ty {
         if let Some(segment) = path.segments.last() {
             let mut name = segment.identifier.name.to_string();
+            let is_nullable = if name.starts_with("Nullable") {
+                name = name["Nullable".len()..].to_string();
+                true
+            } else {
+                false
+            };
+
             if name.starts_with("Owned") {
                 name = name["Owned".len()..].to_string();
             }
@@ -105,8 +113,9 @@ fn get_type(ty: &TyKind) -> Type {
             };
             return Type {
                 kind: TypeKind::Value,
-                is_custom: is_custom,
-                name: name,
+                is_custom,
+                is_nullable,
+                name,
             };
         }
     }
@@ -133,6 +142,7 @@ fn main() {
                             Type {
                                 kind: TypeKind::Value,
                                 is_custom: false,
+                                is_nullable: false,
                                 name: String::from("()"),
                             }
                         };

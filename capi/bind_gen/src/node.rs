@@ -3,7 +3,15 @@ use {Class, Function, Type, TypeKind, typescript};
 use heck::MixedCase;
 use std::collections::BTreeMap;
 
-fn get_hl_type(ty: &Type) -> String {
+fn get_hl_type_with_null(ty: &Type) -> String {
+    let mut formatted = get_hl_type_without_null(ty);
+    if ty.is_nullable {
+        formatted.push_str(" | null");
+    }
+    formatted
+}
+
+fn get_hl_type_without_null(ty: &Type) -> String {
     if ty.is_custom {
         match ty.kind {
             TypeKind::Ref => format!("{}Ref", ty.name),
@@ -69,7 +77,8 @@ fn get_ll_type(ty: &Type) -> &str {
 fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> Result<()> {
     let is_static = function.is_static();
     let has_return_type = function.has_return_type();
-    let return_type = get_hl_type(&function.output);
+    let return_type_with_null = get_hl_type_with_null(&function.output);
+    let return_type_without_null = get_hl_type_without_null(&function.output);
     let method = function.method.to_mixed_case();
     let is_json = has_return_type && function.output.name == "Json";
 
@@ -85,7 +94,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
                 writer,
                 r#"
      * @param {{{}}} {}"#,
-                get_hl_type(ty),
+                get_hl_type_with_null(ty),
                 name.to_mixed_case()
             )?;
         }
@@ -95,7 +104,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
                 writer,
                 r#"
      * @return {{{}}}"#,
-                return_type
+                return_type_with_null
             )?;
         }
 
@@ -125,7 +134,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
         }
         write!(writer, "{}", name.to_mixed_case())?;
         if type_script {
-            write!(writer, ": {}", get_hl_type(ty))?;
+            write!(writer, ": {}", get_hl_type_with_null(ty))?;
         }
     }
 
@@ -134,7 +143,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
             writer,
             r#"): {} {{
         "#,
-            return_type
+            return_type_with_null
         )?;
     } else {
         write!(
@@ -159,7 +168,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
 
     if has_return_type {
         if function.output.is_custom {
-            write!(writer, r#"var result = new {}("#, return_type)?;
+            write!(writer, r#"var result = new {}("#, return_type_without_null)?;
         } else {
             write!(writer, "var result = ")?;
         }
@@ -206,7 +215,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
     }
 
     if has_return_type {
-        if function.output.is_custom {
+        if function.output.is_nullable && function.output.is_custom {
             write!(
                 writer,
                 r#"

@@ -5,9 +5,10 @@ use libc::c_char;
 use std::{slice, ptr};
 
 pub type OwnedRunEditor = *mut RunEditor;
+pub type NullableOwnedRunEditor = *mut RunEditor;
 
 #[no_mangle]
-pub unsafe extern "C" fn RunEditor_new(run: OwnedRun) -> OwnedRunEditor {
+pub unsafe extern "C" fn RunEditor_new(run: OwnedRun) -> NullableOwnedRunEditor {
     RunEditor::new(own(run))
         .ok()
         .map_or_else(ptr::null_mut, alloc)

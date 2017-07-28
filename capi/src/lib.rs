@@ -1,4 +1,4 @@
-#![allow(non_snake_case)]
+#![allow(non_snake_case, non_camel_case_types)]
 
 extern crate livesplit_core;
 extern crate libc;
@@ -66,6 +66,7 @@ use run_metadata_variable::RunMetadataVariable;
 use livesplit_core::{Time, TimeSpan};
 
 pub type Json = *const c_char;
+pub type Nullablec_char = c_char;
 
 thread_local! {
     static OUTPUT_STR: RefCell<String> = RefCell::new(String::new());

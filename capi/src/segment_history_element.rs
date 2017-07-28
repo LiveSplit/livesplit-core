@@ -2,6 +2,7 @@ use livesplit_core::Time;
 use super::{acc, output_time};
 
 pub type SegmentHistoryElement = (i32, Time);
+pub type NullableSegmentHistoryElement = SegmentHistoryElement;
 pub type OwnedSegmentHistoryElement = *mut SegmentHistoryElement;
 
 #[no_mangle]

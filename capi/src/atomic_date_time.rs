@@ -3,6 +3,7 @@ use {acc, own_drop, output_str};
 use libc::c_char;
 
 pub type OwnedAtomicDateTime = *mut AtomicDateTime;
+pub type NullableOwnedAtomicDateTime = OwnedAtomicDateTime;
 
 #[no_mangle]
 pub unsafe extern "C" fn AtomicDateTime_drop(this: OwnedAtomicDateTime) {

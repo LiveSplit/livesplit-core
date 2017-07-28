@@ -2,6 +2,7 @@ use super::{own_drop, acc, output_str};
 use libc::c_char;
 
 pub type RunMetadataVariable = (*const String, *const String);
+pub type NullableRunMetadataVariable = RunMetadataVariable;
 pub type OwnedRunMetadataVariable = *mut RunMetadataVariable;
 
 #[no_mangle]

@@ -1,7 +1,8 @@
-use livesplit_core::{Attempt, Time, TimeSpan};
+use livesplit_core::{Attempt, Time};
 use super::{acc, output_time, output_time_span, alloc};
 use std::ptr;
-use atomic_date_time::OwnedAtomicDateTime;
+use atomic_date_time::NullableOwnedAtomicDateTime;
+use time_span::NullableTimeSpan;
 
 pub type OwnedAttempt = *mut Attempt;
 
@@ -16,7 +17,7 @@ pub unsafe extern "C" fn Attempt_time(this: *const Attempt) -> *const Time {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Attempt_pause_time(this: *const Attempt) -> *const TimeSpan {
+pub unsafe extern "C" fn Attempt_pause_time(this: *const Attempt) -> *const NullableTimeSpan {
     if let Some(pause_time) = acc(this).pause_time() {
         output_time_span(pause_time)
     } else {
@@ -25,7 +26,7 @@ pub unsafe extern "C" fn Attempt_pause_time(this: *const Attempt) -> *const Time
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Attempt_started(this: *const Attempt) -> OwnedAtomicDateTime {
+pub unsafe extern "C" fn Attempt_started(this: *const Attempt) -> NullableOwnedAtomicDateTime {
     if let Some(date_time) = acc(this).started() {
         alloc(date_time)
     } else {
@@ -34,7 +35,7 @@ pub unsafe extern "C" fn Attempt_started(this: *const Attempt) -> OwnedAtomicDat
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Attempt_ended(this: *const Attempt) -> OwnedAtomicDateTime {
+pub unsafe extern "C" fn Attempt_ended(this: *const Attempt) -> NullableOwnedAtomicDateTime {
     if let Some(date_time) = acc(this).ended() {
         alloc(date_time)
     } else {

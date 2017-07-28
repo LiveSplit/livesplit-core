@@ -6,9 +6,10 @@ use setting_value::OwnedSettingValue;
 use std::ptr;
 
 pub type OwnedLayoutEditor = *mut LayoutEditor;
+pub type NullableOwnedLayoutEditor = OwnedLayoutEditor;
 
 #[no_mangle]
-pub unsafe extern "C" fn LayoutEditor_new(layout: OwnedLayout) -> OwnedLayoutEditor {
+pub unsafe extern "C" fn LayoutEditor_new(layout: OwnedLayout) -> NullableOwnedLayoutEditor {
     LayoutEditor::new(own(layout))
         .ok()
         .map_or_else(ptr::null_mut, alloc)

@@ -1,5 +1,5 @@
 use livesplit_core::component::title::State as TitleComponentState;
-use super::{own_drop, acc, output_str};
+use super::{own_drop, acc, output_str, Nullablec_char};
 use libc::c_char;
 use std::ptr;
 
@@ -13,7 +13,7 @@ pub unsafe extern "C" fn TitleComponentState_drop(this: OwnedTitleComponentState
 #[no_mangle]
 pub unsafe extern "C" fn TitleComponentState_icon_change(
     this: *const TitleComponentState,
-) -> *const c_char {
+) -> *const Nullablec_char {
     acc(this)
         .icon_change
         .as_ref()
@@ -30,7 +30,7 @@ pub unsafe extern "C" fn TitleComponentState_line1(
 #[no_mangle]
 pub unsafe extern "C" fn TitleComponentState_line2(
     this: *const TitleComponentState,
-) -> *const c_char {
+) -> *const Nullablec_char {
     acc(this).line2.as_ref().map_or_else(ptr::null, output_str)
 }
 

@@ -197,7 +197,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
     }
 
     if has_return_type && !is_constructor {
-        if function.output.is_custom {
+        if function.output.is_nullable && function.output.is_custom {
             write!(
                 writer,
                 r#"
@@ -442,6 +442,9 @@ namespace LiveSplitCore
 
         public string AsString()
         {
+            if (handle == IntPtr.Zero)
+                return null;
+
             int len = 0;
             while (Marshal.ReadByte(handle, len) != 0) { ++len; }
             byte[] buffer = new byte[len];

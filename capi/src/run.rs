@@ -7,6 +7,7 @@ use libc::c_char;
 use segment::OwnedSegment;
 
 pub type OwnedRun = *mut Run;
+pub type NullableOwnedRun = *mut Run;
 
 #[no_mangle]
 pub unsafe extern "C" fn Run_new() -> OwnedRun {
@@ -19,7 +20,7 @@ pub unsafe extern "C" fn Run_drop(this: OwnedRun) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Run_parse(data: *const u8, length: usize) -> OwnedRun {
+pub unsafe extern "C" fn Run_parse(data: *const u8, length: usize) -> NullableOwnedRun {
     match parser::composite::parse(
         Cursor::new(slice::from_raw_parts(data, length)),
         None,

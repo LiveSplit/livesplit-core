@@ -148,7 +148,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
     }
 
     if has_return_type {
-        if function.output.is_custom {
+        if function.output.is_nullable && function.output.is_custom {
             write!(
                 writer,
                 r#"

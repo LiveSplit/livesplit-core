@@ -6,6 +6,7 @@ use libc::c_char;
 use std::ptr;
 
 pub type OwnedSettingValue = *mut SettingValue;
+pub type NullableOwnedSettingValue = OwnedSettingValue;
 
 #[no_mangle]
 pub unsafe extern "C" fn SettingValue_drop(this: OwnedSettingValue) {
@@ -55,7 +56,7 @@ pub unsafe extern "C" fn SettingValue_from_float(value: f64) -> OwnedSettingValu
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn SettingValue_from_accuracy(value: *const c_char) -> OwnedSettingValue {
+pub unsafe extern "C" fn SettingValue_from_accuracy(value: *const c_char) -> NullableOwnedSettingValue {
     let value = str(value);
     let value = match value {
         "Seconds" => Accuracy::Seconds,
@@ -69,7 +70,7 @@ pub unsafe extern "C" fn SettingValue_from_accuracy(value: *const c_char) -> Own
 #[no_mangle]
 pub unsafe extern "C" fn SettingValue_from_digits_format(
     value: *const c_char,
-) -> OwnedSettingValue {
+) -> NullableOwnedSettingValue {
     let value = str(value);
     let value = match value {
         "SingleDigitSeconds" => DigitsFormat::SingleDigitSeconds,
@@ -86,7 +87,7 @@ pub unsafe extern "C" fn SettingValue_from_digits_format(
 #[no_mangle]
 pub unsafe extern "C" fn SettingValue_from_optional_timing_method(
     value: *const c_char,
-) -> OwnedSettingValue {
+) -> NullableOwnedSettingValue {
     if value.is_null() {
         alloc(None::<TimingMethod>.into())
     } else {
