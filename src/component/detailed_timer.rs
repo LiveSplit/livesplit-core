@@ -7,7 +7,7 @@ use std::cmp::max;
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use std::borrow::Cow;
-use settings::{SemanticColor, SettingsDescription, Field, Value};
+use settings::{SemanticColor, SettingsDescription, Field, Value, Gradient};
 
 #[derive(Default, Clone)]
 pub struct Component {
@@ -17,7 +17,9 @@ pub struct Component {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Settings {
+    pub background: Gradient,
     pub comparison1: Option<String>,
     pub comparison2: Option<String>,
     pub hide_second_comparison: bool,
@@ -29,6 +31,7 @@ pub struct Settings {
 
 #[derive(Serialize, Deserialize)]
 pub struct State {
+    pub background: Gradient,
     pub timer: timer::State,
     pub segment_timer: timer::State,
     pub comparison1: Option<ComparisonState>,
@@ -46,6 +49,7 @@ pub struct ComparisonState {
 impl Default for Settings {
     fn default() -> Self {
         Settings {
+            background: Gradient::Transparent,
             comparison1: None,
             comparison2: Some(String::from(best_segments::NAME)),
             hide_second_comparison: false,
@@ -168,8 +172,11 @@ impl Component {
         let (top_color, bottom_color) =
             timer::top_and_bottom_color((170.0 / 255.0, 170.0 / 255.0, 170.0 / 255.0, 1.0).into());
 
+        let background = Gradient::Transparent;
+
         let segment_time_state = match segment_time {
             Some(t) => timer::State {
+                background,
                 time: formatter::Time::with_digits_format(
                     self.settings.segment_timer.digits_format,
                 ).format(t)
@@ -182,6 +189,7 @@ impl Component {
                 bottom_color,
             },
             None => timer::State {
+                background,
                 time: DASH.into(),
                 fraction: String::new(),
                 semantic_color: SemanticColor::Default,
@@ -225,6 +233,7 @@ impl Component {
         };
 
         State {
+            background: self.settings.background,
             timer: timer_state,
             segment_timer: segment_time_state,
             comparison1,
@@ -240,6 +249,7 @@ impl Component {
 
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
+            Field::new("Background".into(), self.settings.background.into()),
             Field::new(
                 "Timing Method".into(),
                 self.settings.timer.timing_method.into(),
@@ -279,24 +289,25 @@ impl Component {
 
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
-            0 => self.settings.timer.timing_method = value.into(),
-            1 => self.settings.comparison1 = value.into(),
-            2 => self.settings.comparison2 = value.into(),
-            3 => self.settings.hide_second_comparison = value.into(),
-            4 => {
+            0 => self.settings.background = value.into(),
+            1 => self.settings.timer.timing_method = value.into(),
+            2 => self.settings.comparison1 = value.into(),
+            3 => self.settings.comparison2 = value.into(),
+            4 => self.settings.hide_second_comparison = value.into(),
+            5 => {
                 let value: DigitsFormat = value.into();
                 self.settings.timer.digits_format = value;
                 self.timer.settings_mut().digits_format = value;
             }
-            5 => {
+            6 => {
                 let value: Accuracy = value.into();
                 self.settings.timer.accuracy = value;
                 self.timer.settings_mut().accuracy = value;
             }
-            6 => self.settings.segment_timer.digits_format = value.into(),
-            7 => self.settings.segment_timer.accuracy = value.into(),
-            8 => self.settings.show_segment_name = value.into(),
-            9 => self.settings.display_icon = value.into(),
+            7 => self.settings.segment_timer.digits_format = value.into(),
+            8 => self.settings.segment_timer.accuracy = value.into(),
+            9 => self.settings.show_segment_name = value.into(),
+            10 => self.settings.display_icon = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

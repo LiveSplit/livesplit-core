@@ -16,6 +16,7 @@ pub struct Component {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Settings {
     pub comparison_override: Option<String>,
     pub show_best_segments: bool,
@@ -62,10 +63,10 @@ impl Default for Settings {
             flip_graph: false,
             behind_background_color: (115.0 / 255.0, 40.0 / 255.0, 40.0 / 255.0, 1.0).into(),
             ahead_background_color: (40.0 / 255.0, 115.0 / 255.0, 52.0 / 255.0, 1.0).into(),
-            grid_lines_color: (0.0, 0.0, 0.0, 50.0 / 255.0).into(),
+            grid_lines_color: (0.0, 0.0, 0.0, 0.15).into(),
             graph_lines_color: (1.0, 1.0, 1.0, 1.0).into(),
-            partial_fill_color: (1.0, 1.0, 1.0, 25.0 / 255.0).into(),
-            complete_fill_color: (1.0, 1.0, 1.0, 50.0 / 255.0).into(),
+            partial_fill_color: (1.0, 1.0, 1.0, 0.25).into(),
+            complete_fill_color: (1.0, 1.0, 1.0, 0.4).into(),
         }
     }
 }

@@ -1,4 +1,4 @@
-use livesplit_core::settings::{Value as SettingValue, Color};
+use livesplit_core::settings::{Value as SettingValue, Color, Gradient};
 use livesplit_core::time::formatter::{Accuracy, DigitsFormat};
 use livesplit_core::TimingMethod;
 use {alloc, str, own_drop};
@@ -113,4 +113,41 @@ pub unsafe extern "C" fn SettingValue_from_color(
     a: f32,
 ) -> OwnedSettingValue {
     alloc(Color::from((r, g, b, a)).into())
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn SettingValue_from_transparent_gradient() -> OwnedSettingValue {
+    alloc(Gradient::Transparent.into())
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn SettingValue_from_vertical_gradient(
+    r1: f32,
+    g1: f32,
+    b1: f32,
+    a1: f32,
+    r2: f32,
+    g2: f32,
+    b2: f32,
+    a2: f32,
+) -> OwnedSettingValue {
+    alloc(
+        Gradient::Vertical(Color::from((r1, g1, b1, a1)), Color::from((r2, g2, b2, a2))).into(),
+    )
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn SettingValue_from_horizontal_gradient(
+    r1: f32,
+    g1: f32,
+    b1: f32,
+    a1: f32,
+    r2: f32,
+    g2: f32,
+    b2: f32,
+    a2: f32,
+) -> OwnedSettingValue {
+    alloc(
+        Gradient::Horizontal(Color::from((r1, g1, b1, a1)), Color::from((r2, g2, b2, a2))).into(),
+    )
 }

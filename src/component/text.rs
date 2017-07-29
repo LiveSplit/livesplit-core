@@ -10,6 +10,7 @@ pub struct Component {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Settings {
     pub text: Text,
 }

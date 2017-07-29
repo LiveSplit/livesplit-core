@@ -77,7 +77,9 @@ impl Component {
             Component::BlankSpace(ref component) => ComponentSettings::BlankSpace(
                 component.settings().clone(),
             ),
-            Component::CurrentComparison(_) => ComponentSettings::CurrentComparison,
+            Component::CurrentComparison(ref component) => ComponentSettings::CurrentComparison(
+                component.settings().clone(),
+            ),
             Component::CurrentPace(ref component) => ComponentSettings::CurrentPace(
                 component.settings().clone(),
             ),

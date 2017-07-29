@@ -6,7 +6,7 @@ use analysis::split_color;
 use time::formatter::{Delta, Regular, TimeFormatter};
 use time::formatter::none_wrapper::{EmptyWrapper, DashWrapper};
 use std::borrow::Cow;
-use settings::{SettingsDescription, Field, Value, SemanticColor, Color};
+use settings::{SettingsDescription, Field, Value, SemanticColor, Color, Gradient};
 
 #[derive(Default, Clone)]
 pub struct Component {
@@ -17,11 +17,13 @@ pub struct Component {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Settings {
     pub visual_split_count: usize,
     pub split_preview_count: usize,
     pub always_show_last_split: bool,
     pub separator_last_split: bool,
+    pub current_split_gradient: Gradient,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -39,6 +41,7 @@ pub struct SplitState {
 pub struct State {
     pub splits: Vec<SplitState>,
     pub show_final_separator: bool,
+    pub current_split_gradient: Gradient,
 }
 
 impl Default for Settings {
@@ -48,6 +51,10 @@ impl Default for Settings {
             split_preview_count: 1,
             always_show_last_split: true,
             separator_last_split: true,
+            current_split_gradient: Gradient::Vertical(
+                Color::from((51.0 / 255.0, 115.0 / 255.0, 244.0 / 255.0, 1.0)),
+                Color::from((21.0 / 255.0, 53.0 / 255.0, 116.0 / 255.0, 1.0)),
+            ),
         }
     }
 }
@@ -193,6 +200,7 @@ impl Component {
                 })
                 .collect(),
             show_final_separator: show_final_separator,
+            current_split_gradient: self.settings.current_split_gradient,
         }
     }
 
@@ -214,6 +222,10 @@ impl Component {
                 "Show Separator Before Last Split".into(),
                 self.settings.separator_last_split.into(),
             ),
+            Field::new(
+                "Current Split Gradient".into(),
+                self.settings.current_split_gradient.into(),
+            ),
         ])
     }
 
@@ -223,6 +235,7 @@ impl Component {
             1 => self.settings.split_preview_count = value.into_uint().unwrap() as _,
             2 => self.settings.always_show_last_split = value.into(),
             3 => self.settings.separator_last_split = value.into(),
+            4 => self.settings.current_split_gradient = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

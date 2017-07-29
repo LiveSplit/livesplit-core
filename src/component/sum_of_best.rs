@@ -4,7 +4,8 @@ use serde_json::{to_writer, Result};
 use analysis::sum_of_segments::calculate_best;
 use std::io::Write;
 use std::borrow::Cow;
-use settings::{SettingsDescription, Value, Field};
+use settings::{SettingsDescription, Field, Value, Gradient};
+use super::DEFAULT_INFO_TEXT_GRADIENT;
 
 #[derive(Default, Clone)]
 pub struct Component {
@@ -12,13 +13,16 @@ pub struct Component {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Settings {
+    pub background: Gradient,
     pub accuracy: Accuracy,
 }
 
 impl Default for Settings {
     fn default() -> Self {
         Self {
+            background: DEFAULT_INFO_TEXT_GRADIENT,
             accuracy: Accuracy::Seconds,
         }
     }
@@ -26,6 +30,7 @@ impl Default for Settings {
 
 #[derive(Serialize, Deserialize)]
 pub struct State {
+    pub background: Gradient,
     pub text: String,
     pub time: String,
 }
@@ -72,6 +77,7 @@ impl Component {
         );
 
         State {
+            background: self.settings.background,
             text: String::from("Sum of Best Segments"),
             time: Regular::with_accuracy(self.settings.accuracy)
                 .format(time)
@@ -81,13 +87,15 @@ impl Component {
 
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
+            Field::new("Background".into(), self.settings.background.into()),
             Field::new("Accuracy".into(), self.settings.accuracy.into()),
         ])
     }
 
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
-            0 => self.settings.accuracy = value.into(),
+            0 => self.settings.background = value.into(),
+            1 => self.settings.accuracy = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

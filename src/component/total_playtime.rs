@@ -4,7 +4,8 @@ use std::io::Write;
 use analysis::total_playtime;
 use time::formatter::{Days, Regular, TimeFormatter};
 use std::borrow::Cow;
-use settings::{SettingsDescription, Value, Field};
+use settings::{SettingsDescription, Value, Field, Gradient};
+use super::DEFAULT_INFO_TEXT_GRADIENT;
 
 #[derive(Default, Clone)]
 pub struct Component {
@@ -12,18 +13,24 @@ pub struct Component {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Settings {
+    pub background: Gradient,
     pub show_days: bool,
 }
 
 impl Default for Settings {
     fn default() -> Self {
-        Self { show_days: true }
+        Self {
+            background: DEFAULT_INFO_TEXT_GRADIENT,
+            show_days: true,
+        }
     }
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct State {
+    pub background: Gradient,
     pub text: String,
     pub time: String,
 }
@@ -71,6 +78,7 @@ impl Component {
         };
 
         State {
+            background: self.settings.background,
             text: String::from("Total Playtime"),
             time,
         }
@@ -78,13 +86,15 @@ impl Component {
 
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
+            Field::new("Background".into(), self.settings.background.into()),
             Field::new("Show Days (>24h)".into(), self.settings.show_days.into()),
         ])
     }
 
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
-            0 => self.settings.show_days = value.into(),
+            0 => self.settings.background = value.into(),
+            1 => self.settings.show_days = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

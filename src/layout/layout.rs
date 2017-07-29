@@ -57,7 +57,7 @@ impl Layout {
                 .iter_mut()
                 .map(|c| c.state(timer, settings))
                 .collect(),
-            background_color: self.settings.background_color,
+            background: self.settings.background,
             thin_separators_color: self.settings.thin_separators_color,
             separators_color: self.settings.separators_color,
             text_color: self.settings.text_color,

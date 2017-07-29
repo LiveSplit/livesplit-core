@@ -4,7 +4,7 @@ use analysis::split_color;
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use std::borrow::Cow;
-use settings::{SemanticColor, Color, SettingsDescription, Value, Field};
+use settings::{SemanticColor, Color, SettingsDescription, Value, Field, Gradient};
 use palette::{Hsv, Rgb};
 
 #[derive(Default, Clone)]
@@ -13,7 +13,9 @@ pub struct Component {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Settings {
+    pub background: Gradient,
     pub timing_method: Option<TimingMethod>,
     pub digits_format: DigitsFormat,
     pub accuracy: Accuracy,
@@ -22,6 +24,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
+            background: Gradient::Transparent,
             timing_method: None,
             digits_format: DigitsFormat::SingleDigitSeconds,
             accuracy: Accuracy::Hundredths,
@@ -31,6 +34,7 @@ impl Default for Settings {
 
 #[derive(Serialize, Deserialize)]
 pub struct State {
+    pub background: Gradient,
     pub time: String,
     pub fraction: String,
     pub semantic_color: SemanticColor,
@@ -124,6 +128,7 @@ impl Component {
         let (top_color, bottom_color) = top_and_bottom_color(visual_color);
 
         State {
+            background: self.settings.background,
             time: formatter::Time::with_digits_format(self.settings.digits_format)
                 .format(time)
                 .to_string(),
@@ -138,6 +143,7 @@ impl Component {
 
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
+            Field::new("Background".into(), self.settings.background.into()),
             Field::new("Timing Method".into(), self.settings.timing_method.into()),
             Field::new("Digits Format".into(), self.settings.digits_format.into()),
             Field::new("Accuracy".into(), self.settings.accuracy.into()),
@@ -146,9 +152,10 @@ impl Component {
 
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
-            0 => self.settings.timing_method = value.into(),
-            1 => self.settings.digits_format = value.into(),
-            2 => self.settings.accuracy = value.into(),
+            0 => self.settings.background = value.into(),
+            1 => self.settings.timing_method = value.into(),
+            2 => self.settings.digits_format = value.into(),
+            3 => self.settings.accuracy = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

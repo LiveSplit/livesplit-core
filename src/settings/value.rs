@@ -1,5 +1,5 @@
 use TimingMethod;
-use super::Color;
+use super::{Color, Gradient};
 use time::formatter::{DigitsFormat, Accuracy};
 use std::result::Result as StdResult;
 
@@ -15,6 +15,7 @@ pub enum Value {
     DigitsFormat(DigitsFormat),
     OptionalTimingMethod(Option<TimingMethod>),
     Color(Color),
+    Gradient(Gradient),
 }
 
 quick_error! {
@@ -96,6 +97,14 @@ impl Value {
             _ => Err(Error::WrongType),
         }
     }
+
+    pub fn into_gradient(self) -> Result<Gradient> {
+        match self {
+            Value::Color(v) => Ok(Gradient::Plain(v)),
+            Value::Gradient(v) => Ok(v),
+            _ => Err(Error::WrongType),
+        }
+    }
 }
 
 impl Into<bool> for Value {
@@ -155,5 +164,11 @@ impl Into<Option<TimingMethod>> for Value {
 impl Into<Color> for Value {
     fn into(self) -> Color {
         self.into_color().unwrap()
+    }
+}
+
+impl Into<Gradient> for Value {
+    fn into(self) -> Gradient {
+        self.into_gradient().unwrap()
     }
 }

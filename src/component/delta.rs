@@ -4,7 +4,8 @@ use std::io::Write;
 use analysis::{state_helper, delta};
 use time::formatter::{Delta, TimeFormatter, Accuracy};
 use std::borrow::Cow;
-use settings::{SettingsDescription, Field, Value, SemanticColor, Color};
+use settings::{SettingsDescription, Field, Value, SemanticColor, Gradient, Color};
+use super::DEFAULT_INFO_TEXT_GRADIENT;
 
 #[derive(Default, Clone)]
 pub struct Component {
@@ -12,7 +13,9 @@ pub struct Component {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Settings {
+    pub background: Gradient,
     pub comparison_override: Option<String>,
     pub drop_decimals: bool,
     pub accuracy: Accuracy,
@@ -21,6 +24,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
+            background: DEFAULT_INFO_TEXT_GRADIENT,
             comparison_override: None,
             drop_decimals: true,
             accuracy: Accuracy::Tenths,
@@ -30,6 +34,7 @@ impl Default for Settings {
 
 #[derive(Serialize, Deserialize)]
 pub struct State {
+    pub background: Gradient,
     pub text: String,
     pub time: String,
     pub semantic_color: SemanticColor,
@@ -111,6 +116,7 @@ impl Component {
         let visual_color = semantic_color.visualize(layout_settings);
 
         State {
+            background: self.settings.background,
             text: text.into_owned(),
             time: Delta::custom(self.settings.drop_decimals, self.settings.accuracy)
                 .format(delta)
@@ -122,6 +128,7 @@ impl Component {
 
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
+            Field::new("Background".into(), self.settings.background.into()),
             Field::new(
                 "Comparison".into(),
                 self.settings.comparison_override.clone().into(),
@@ -133,9 +140,10 @@ impl Component {
 
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
-            0 => self.settings.comparison_override = value.into(),
-            1 => self.settings.drop_decimals = value.into(),
-            2 => self.settings.accuracy = value.into(),
+            0 => self.settings.background = value.into(),
+            1 => self.settings.comparison_override = value.into(),
+            2 => self.settings.drop_decimals = value.into(),
+            3 => self.settings.accuracy = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

@@ -1,12 +1,12 @@
 use super::ComponentState;
-use settings::Color;
+use settings::{Color, Gradient};
 use serde_json::{to_writer, Result};
 use std::io::Write;
 
 #[derive(Serialize, Deserialize)]
 pub struct LayoutState {
     pub components: Vec<ComponentState>,
-    pub background_color: Color,
+    pub background: Gradient,
     pub thin_separators_color: Color,
     pub separators_color: Color,
     pub text_color: Color,

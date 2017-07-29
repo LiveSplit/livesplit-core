@@ -1,8 +1,8 @@
-use settings::{Color, SettingsDescription, Field, Value};
+use settings::{Color, Gradient, SettingsDescription, Field, Value};
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct GeneralSettings {
-    pub background_color: Color,
+    pub background: Gradient,
     pub best_segment_color: Color,
     pub ahead_gaining_time_color: Color,
     pub ahead_losing_time_color: Color,
@@ -19,7 +19,7 @@ pub struct GeneralSettings {
 impl Default for GeneralSettings {
     fn default() -> Self {
         Self {
-            background_color: Color::hsla(0.0, 0.0, 0.06, 1.0),
+            background: Gradient::Plain(Color::hsla(0.0, 0.0, 0.06, 1.0)),
             best_segment_color: Color::hsla(50.0, 1.0, 0.5, 1.0),
             ahead_gaining_time_color: Color::hsla(136.0, 1.0, 0.4, 1.0),
             ahead_losing_time_color: Color::hsla(136.0, 0.55, 0.6, 1.0),
@@ -38,7 +38,7 @@ impl Default for GeneralSettings {
 impl GeneralSettings {
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
-            Field::new("Background".into(), self.background_color.into()),
+            Field::new("Background".into(), self.background.into()),
             Field::new("Best Segment".into(), self.best_segment_color.into()),
             Field::new(
                 "Ahead (Gaining Time)".into(),
@@ -67,7 +67,7 @@ impl GeneralSettings {
 
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
-            0 => self.background_color = value.into(),
+            0 => self.background = value.into(),
             1 => self.best_segment_color = value.into(),
             2 => self.ahead_gaining_time_color = value.into(),
             3 => self.ahead_losing_time_color = value.into(),

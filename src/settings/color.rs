@@ -7,6 +7,10 @@ pub struct Color {
 }
 
 impl Color {
+    pub fn transparent() -> Self {
+        (0.0, 0.0, 0.0, 0.0).into()
+    }
+
     pub fn hsla(hue: f32, saturation: f32, lightness: f32, alpha: f32) -> Self {
         Self {
             rgba: Hsla::new(hue.into(), saturation, lightness, alpha).into(),

@@ -1,12 +1,13 @@
 use {Timer, TimerPhase, comparison};
 use analysis::possible_time_save;
-use settings::{SettingsDescription, Value, Field};
+use settings::{SettingsDescription, Value, Field, Gradient};
 use serde_json::{to_writer, Result};
 use std::borrow::Cow;
 use std::cmp::max;
 use std::fmt::Write as FmtWrite;
 use std::io::Write;
 use time::formatter::{PossibleTimeSave, TimeFormatter, Accuracy};
+use super::DEFAULT_INFO_TEXT_GRADIENT;
 
 #[derive(Default, Clone)]
 pub struct Component {
@@ -14,7 +15,9 @@ pub struct Component {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct Settings {
+    pub background: Gradient,
     pub comparison_override: Option<String>,
     pub total_possible_time_save: bool,
     pub accuracy: Accuracy,
@@ -23,6 +26,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
+            background: DEFAULT_INFO_TEXT_GRADIENT,
             comparison_override: None,
             total_possible_time_save: false,
             accuracy: Accuracy::Hundredths,
@@ -32,6 +36,7 @@ impl Default for Settings {
 
 #[derive(Serialize, Deserialize)]
 pub struct State {
+    pub background: Gradient,
     pub text: String,
     pub time: String,
 }
@@ -107,6 +112,7 @@ impl Component {
         };
 
         State {
+            background: self.settings.background,
             text: text.into_owned(),
             time: PossibleTimeSave::with_accuracy(self.settings.accuracy)
                 .format(time)
@@ -116,6 +122,7 @@ impl Component {
 
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
+            Field::new("Background".into(), self.settings.background.into()),
             Field::new(
                 "Comparison".into(),
                 self.settings.comparison_override.clone().into(),
@@ -130,9 +137,10 @@ impl Component {
 
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
-            0 => self.settings.comparison_override = value.into(),
-            1 => self.settings.total_possible_time_save = value.into(),
-            2 => self.settings.accuracy = value.into(),
+            0 => self.settings.background = value.into(),
+            1 => self.settings.comparison_override = value.into(),
+            2 => self.settings.total_possible_time_save = value.into(),
+            3 => self.settings.accuracy = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

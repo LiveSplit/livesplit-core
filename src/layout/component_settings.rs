@@ -6,7 +6,7 @@ use component::{blank_space, current_comparison, current_pace, delta, detailed_t
 #[derive(Clone, Serialize, Deserialize)]
 pub enum ComponentSettings {
     BlankSpace(blank_space::Settings),
-    CurrentComparison,
+    CurrentComparison(current_comparison::Settings),
     CurrentPace(current_pace::Settings),
     Delta(delta::Settings),
     DetailedTimer(detailed_timer::Settings),
@@ -28,8 +28,8 @@ impl From<ComponentSettings> for Component {
             ComponentSettings::BlankSpace(settings) => Component::BlankSpace(
                 blank_space::Component::with_settings(settings),
             ),
-            ComponentSettings::CurrentComparison => Component::CurrentComparison(
-                current_comparison::Component::new(),
+            ComponentSettings::CurrentComparison(settings) => Component::CurrentComparison(
+                current_comparison::Component::with_settings(settings),
             ),
             ComponentSettings::CurrentPace(settings) => Component::CurrentPace(
                 current_pace::Component::with_settings(settings),

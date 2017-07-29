@@ -16,9 +16,15 @@ pub static HEADER: &str = r#"export type ComponentStateJson =
 
 export type Color = number[];
 
+export type Gradient =
+    { Transparent: null } |
+    { Plain: Color } |
+    { Vertical: Color[] } |
+    { Horizontal: Color[] };
+
 export interface LayoutStateJson {
     components: ComponentStateJson[];
-    background_color: Color;
+    background: Gradient;
     thin_separators_color: Color;
     separators_color: Color;
     text_color: Color;
@@ -37,10 +43,12 @@ export enum TimerPhase {
 }
 
 export interface BlankSpaceComponentStateJson {
+    background: Gradient;
     height: number;
 }
 
 export interface TimerComponentStateJson {
+    background: Gradient;
     time: string;
     fraction: string;
     semantic_color: SemanticColor;
@@ -49,6 +57,7 @@ export interface TimerComponentStateJson {
 }
 
 export interface TitleComponentStateJson {
+    background: Gradient;
     icon_change?: string;
     line1: string;
     line2?: string;
@@ -60,6 +69,7 @@ export interface TitleComponentStateJson {
 export interface SplitsComponentStateJson {
     splits: SplitStateJson[];
     show_final_separator: boolean;
+    current_split_gradient: Gradient;
 }
 
 export interface SplitStateJson {
@@ -73,6 +83,7 @@ export interface SplitStateJson {
 }
 
 export interface PreviousSegmentComponentStateJson {
+    background: Gradient;
     text: string;
     time: string;
     semantic_color: SemanticColor;
@@ -80,11 +91,13 @@ export interface PreviousSegmentComponentStateJson {
 }
 
 export interface SumOfBestComponentStateJson {
+    background: Gradient;
     text: string;
     time: string;
 }
 
 export interface PossibleTimeSaveComponentStateJson {
+    background: Gradient;
     text: string;
     time: string;
 }
@@ -116,16 +129,19 @@ export type TextComponentStateJson =
 	{ Split: String[2] };
 
 export interface TotalPlaytimeComponentStateJson {
+    background: Gradient;
     text: string;
     time: string;
 }
 
 export interface CurrentPaceComponentStateJson {
+    background: Gradient;
     text: string;
     time: string;
 }
 
 export interface DeltaComponentStateJson {
+    background: Gradient;
     text: string;
     time: string;
     semantic_color: SemanticColor;
@@ -133,11 +149,13 @@ export interface DeltaComponentStateJson {
 }
 
 export interface CurrentComparisonComponentStateJson {
+    background: Gradient;
     text: string;
     comparison: string;
 }
 
 export interface DetailedTimerComponentStateJson {
+    background: Gradient;
     timer: TimerComponentStateJson;
     segment_timer: TimerComponentStateJson;
     comparison1: DetailedTimerComponentComparisonStateJson;
@@ -183,7 +201,8 @@ export type SettingsDescriptionValueJson =
     { Float: number } |
     { Accuracy: AccuracyJson } |
     { DigitsFormat: DigitsFormatJson } |
-    { Color: Color };
+    { Color: Color } |
+    { Gradient: Gradient };
 
 export type AccuracyJson = "Seconds" | "Tenths" | "Hundredths";
 
