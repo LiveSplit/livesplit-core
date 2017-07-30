@@ -78,8 +78,31 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
             }
 
             run.push_segment(segment);
+        } else {
+            break;
         }
     }
 
     Ok(run)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Cursor;
+
+    #[test]
+    fn counters() {
+        const RUN: &[u8] = br#"Run Title:,1
+SegmentName,0:00:00.00,0.00
+SegmentName,0:00:00.00,0.00
+SegmentName,0:00:00.00,0.00
+
+Counter,1,True
+Counter,1,True
+"#;
+
+        let run = parse(Cursor::new(RUN), false).unwrap();
+        assert_eq!(run.len(), 3);
+    }
 }
