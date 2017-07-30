@@ -65,16 +65,21 @@ impl Timer {
         Arc::new(RwLock::new(self))
     }
 
-    pub fn replace_run(&mut self, run: Run, update_splits: bool) -> Run {
+    pub fn replace_run(&mut self, run: Run, update_splits: bool) -> Result<Run, Run> {
+        if run.is_empty() {
+            return Err(run);
+        }
+
         self.reset(update_splits);
         if !run.comparisons().any(|c| c == self.current_comparison) {
             self.current_comparison = personal_best::NAME.to_string();
         }
-        mem::replace(&mut self.run, run)
+
+        Ok(mem::replace(&mut self.run, run))
     }
 
-    pub fn set_run(&mut self, run: Run) {
-        self.replace_run(run, false);
+    pub fn set_run(&mut self, run: Run) -> Result<(), Run> {
+        self.replace_run(run, false).map(|_| ())
     }
 
     #[inline]

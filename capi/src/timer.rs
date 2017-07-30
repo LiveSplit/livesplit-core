@@ -1,6 +1,6 @@
 use livesplit_core::{Timer, TimeSpan, TimingMethod, TimerPhase, Run};
 use super::{alloc, own, acc_mut, own_drop, acc, output_str, output_time_span};
-use run::OwnedRun;
+use run::{OwnedRun, NullableOwnedRun};
 use libc::c_char;
 use shared_timer::OwnedSharedTimer;
 use std::ptr;
@@ -26,15 +26,26 @@ pub unsafe extern "C" fn Timer_drop(this: OwnedTimer) {
 #[no_mangle]
 pub unsafe extern "C" fn Timer_replace_run(
     this: *mut Timer,
-    run: OwnedRun,
+    run: *mut Run,
     update_splits: bool,
-) -> OwnedRun {
-    alloc(acc_mut(this).replace_run(own(run), update_splits))
+) -> bool {
+    // This working correctly relies on panic = "abort",
+    // as a panic would leave the run in an uninitialized state.
+    let result = acc_mut(this).replace_run(ptr::read(run), update_splits);
+    let was_successful = result.is_ok();
+    let result = match result {
+        Ok(r) | Err(r) => r,
+    };
+    ptr::write(run, result);
+    was_successful
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Timer_set_run(this: *mut Timer, run: OwnedRun) {
-    acc_mut(this).set_run(own(run));
+pub unsafe extern "C" fn Timer_set_run(this: *mut Timer, run: OwnedRun) -> NullableOwnedRun {
+    acc_mut(this)
+        .set_run(own(run))
+        .err()
+        .map_or_else(ptr::null_mut, alloc)
 }
 
 #[no_mangle]
