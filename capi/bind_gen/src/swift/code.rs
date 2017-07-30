@@ -95,7 +95,11 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
             r#") -> {}{} {{
         "#,
             return_type,
-            if function.output.is_nullable && function.output.is_custom { "?" } else { "" }
+            if function.output.is_nullable && function.output.is_custom {
+                "?"
+            } else {
+                ""
+            }
         )?;
     } else {
         write!(

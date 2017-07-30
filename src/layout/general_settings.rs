@@ -1,6 +1,7 @@
 use settings::{Color, Gradient, SettingsDescription, Field, Value};
 
 #[derive(Clone, Serialize, Deserialize)]
+#[serde(default)]
 pub struct GeneralSettings {
     pub background: Gradient,
     pub best_segment_color: Color,

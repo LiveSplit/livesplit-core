@@ -7,7 +7,9 @@ pub type OwnedHotkeySystem = *mut HotkeySystem;
 pub type NullableOwnedHotkeySystem = OwnedHotkeySystem;
 
 #[no_mangle]
-pub unsafe extern "C" fn HotkeySystem_new(shared_timer: OwnedSharedTimer) -> NullableOwnedHotkeySystem {
+pub unsafe extern "C" fn HotkeySystem_new(
+    shared_timer: OwnedSharedTimer,
+) -> NullableOwnedHotkeySystem {
     if let Ok(hotkey_system) = HotkeySystem::new(own(shared_timer)) {
         alloc(hotkey_system)
     } else {

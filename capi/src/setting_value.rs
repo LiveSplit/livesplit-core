@@ -56,7 +56,9 @@ pub unsafe extern "C" fn SettingValue_from_float(value: f64) -> OwnedSettingValu
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn SettingValue_from_accuracy(value: *const c_char) -> NullableOwnedSettingValue {
+pub unsafe extern "C" fn SettingValue_from_accuracy(
+    value: *const c_char,
+) -> NullableOwnedSettingValue {
     let value = str(value);
     let value = match value {
         "Seconds" => Accuracy::Seconds,

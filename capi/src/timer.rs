@@ -24,6 +24,20 @@ pub unsafe extern "C" fn Timer_drop(this: OwnedTimer) {
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn Timer_replace_run(
+    this: *mut Timer,
+    run: OwnedRun,
+    update_splits: bool,
+) -> OwnedRun {
+    alloc(acc_mut(this).replace_run(own(run), update_splits))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Timer_set_run(this: *mut Timer, run: OwnedRun) {
+    acc_mut(this).set_run(own(run));
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn Timer_start(this: *mut Timer) {
     acc_mut(this).start();
 }
