@@ -1,4 +1,4 @@
-use livesplit_core::LayoutEditor;
+use livesplit_core::{LayoutEditor, Timer};
 use layout::OwnedLayout;
 use super::{Json, alloc, own, output_vec, acc, acc_mut};
 use component::OwnedComponent;
@@ -23,6 +23,19 @@ pub unsafe extern "C" fn LayoutEditor_close(this: OwnedLayoutEditor) -> OwnedLay
 #[no_mangle]
 pub unsafe extern "C" fn LayoutEditor_state_as_json(this: *const LayoutEditor) -> Json {
     output_vec(|o| { acc(this).state().write_json(o).unwrap(); })
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn LayoutEditor_layout_state_as_json(
+    this: *mut LayoutEditor,
+    timer: *const Timer,
+) -> Json {
+    output_vec(|o| {
+        acc_mut(this)
+            .layout_state(acc(timer))
+            .write_json(o)
+            .unwrap();
+    })
 }
 
 #[no_mangle]

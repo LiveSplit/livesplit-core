@@ -1,6 +1,7 @@
-use super::{Layout, Component};
+use super::{Layout, LayoutState, Component};
 use settings::Value;
 use std::result::Result as StdResult;
+use Timer;
 
 mod state;
 
@@ -21,10 +22,12 @@ quick_error! {
 pub type Result<T> = StdResult<T, Error>;
 
 impl Editor {
-    pub fn new(layout: Layout) -> Result<Self> {
+    pub fn new(mut layout: Layout) -> Result<Self> {
         if layout.components.is_empty() {
             return Err(Error::EmptyLayout);
         }
+
+        layout.remount();
 
         Ok(Self {
             layout,
@@ -34,6 +37,10 @@ impl Editor {
 
     pub fn close(self) -> Layout {
         self.layout
+    }
+
+    pub fn layout_state(&mut self, timer: &Timer) -> LayoutState {
+        self.layout.state(timer)
     }
 
     pub fn select(&mut self, index: usize) {
@@ -58,6 +65,7 @@ impl Editor {
             if self.selected_component >= self.layout.components.len() {
                 self.selected_component = self.layout.components.len() - 1;
             }
+            self.layout.remount();
         }
     }
 
@@ -71,6 +79,7 @@ impl Editor {
                 .components
                 .swap(self.selected_component, self.selected_component - 1);
             self.selected_component -= 1;
+            self.layout.remount();
         }
     }
 
@@ -84,6 +93,7 @@ impl Editor {
                 .components
                 .swap(self.selected_component, self.selected_component + 1);
             self.selected_component += 1;
+            self.layout.remount();
         }
     }
 
