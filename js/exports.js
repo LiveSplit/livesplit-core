@@ -1,3 +1,3 @@
-if (exports !== undefined) {
-    exports.LiveSplitCore = LiveSplitCore;
-}
+if (typeof module === "object" && module.exports) {
+    module['exports'] = LiveSplitCore;
+};
