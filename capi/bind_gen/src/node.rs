@@ -539,7 +539,7 @@ export "#.to_string()
      * @param {string | Buffer | number} file
      * @return {Run}
      */
-    static parseFile(file: any) {
+    static parseFile(file) {
         var data = fs.readFileSync(file);
         return Run.parse(data, data.byteLength);
     }
@@ -547,7 +547,7 @@ export "#.to_string()
      * @param {string} text
      * @return {Run}
      */
-    static parseString(text: string): Run {
+    static parseString(text) {
         let data = new Buffer(text);
         return Run.parse(data, data.byteLength);
     }"#
