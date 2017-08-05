@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use std::io::{self, BufRead};
 use std::result::Result as StdResult;
 use std::num::ParseIntError;
-use {Run, time, Image, TimeSpan, Time, Segment};
+use {time, Image, Run, Segment, Time, TimeSpan};
 
 quick_error! {
     #[derive(Debug)]

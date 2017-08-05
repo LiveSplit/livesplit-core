@@ -1,12 +1,12 @@
-use std::cmp::{min, max};
+use std::cmp::{max, min};
 use std::io::Write;
 use serde_json::{to_writer, Result};
-use {GeneralLayoutSettings, Timer, TimeSpan, analysis};
+use {analysis, GeneralLayoutSettings, TimeSpan, Timer};
 use analysis::split_color;
 use time::formatter::{Delta, Regular, TimeFormatter};
-use time::formatter::none_wrapper::{EmptyWrapper, DashWrapper};
+use time::formatter::none_wrapper::{DashWrapper, EmptyWrapper};
 use std::borrow::Cow;
-use settings::{SettingsDescription, Field, Value, SemanticColor, Color, Gradient};
+use settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
 
 #[derive(Default, Clone)]
 pub struct Component {
@@ -127,8 +127,8 @@ impl Component {
                 0,
                 current_split as isize -
                     (self.settings.visual_split_count as isize - 2 -
-                         self.settings.split_preview_count as isize +
-                         always_show_last_split),
+                        self.settings.split_preview_count as isize +
+                        always_show_last_split),
             ),
             timer.run().len() as isize - self.settings.visual_split_count as isize,
         );
@@ -238,5 +238,10 @@ impl Component {
             4 => self.settings.current_split_gradient = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
+        // Invalidate the Icon Cache.
+        // This may only be necessary in certain cases,
+        // but we are missing a lot of settings anyway,
+        // so we just do it for all at the moment.
+        self.remount();
     }
 }

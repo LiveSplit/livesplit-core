@@ -1,7 +1,7 @@
 pub mod best;
 pub mod worst;
 
-use {Segment, TimeSpan, TimingMethod, Time};
+use {Segment, Time, TimeSpan, TimingMethod};
 
 pub fn calculate_best(
     segments: &[Segment],

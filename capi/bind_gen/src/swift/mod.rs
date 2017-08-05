@@ -1,6 +1,6 @@
 use std::path::Path;
 use std::collections::BTreeMap;
-use {Result, Class};
+use {Class, Result};
 use std::fs::{create_dir_all, File};
 use std::io::{BufWriter, Write};
 

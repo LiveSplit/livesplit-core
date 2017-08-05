@@ -1,5 +1,5 @@
 use livesplit_core::component::delta::State as DeltaComponentState;
-use super::{own_drop, acc, output_str, output_str_with};
+use super::{acc, output_str, output_str_with, own_drop};
 use std::fmt::Write;
 use libc::c_char;
 

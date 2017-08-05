@@ -1,4 +1,4 @@
-use {TimeSpan, Segment, TimingMethod};
+use {Segment, TimeSpan, TimingMethod};
 use super::{track_branch, track_current_run, track_personal_best_run};
 
 fn populate_prediction(prediction: &mut Option<TimeSpan>, predicted_time: Option<TimeSpan>) {

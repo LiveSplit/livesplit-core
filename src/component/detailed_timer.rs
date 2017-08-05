@@ -1,13 +1,13 @@
-use {GeneralLayoutSettings, Timer, TimerPhase, TimingMethod, TimeSpan};
+use {GeneralLayoutSettings, TimeSpan, Timer, TimerPhase, TimingMethod};
 use super::timer;
-use time::formatter::{timer as formatter, TimeFormatter, Short, Accuracy, DigitsFormat, DASH};
+use time::formatter::{timer as formatter, Accuracy, DigitsFormat, Short, TimeFormatter, DASH};
 use time::formatter::none_wrapper::DashWrapper;
 use comparison::{self, best_segments, none};
 use std::cmp::max;
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use std::borrow::Cow;
-use settings::{SemanticColor, SettingsDescription, Field, Value, Gradient};
+use settings::{Field, Gradient, SemanticColor, SettingsDescription, Value};
 
 #[derive(Default, Clone)]
 pub struct Component {
@@ -135,7 +135,7 @@ impl Component {
                     comparison1 = timer.current_comparison();
                 }
             } else if !timer.run().comparisons().any(|c| c == comparison1) ||
-                       comparison1 == none::NAME
+                comparison1 == none::NAME
             {
                 hide_comparison = true;
                 comparison1 = comparison2;

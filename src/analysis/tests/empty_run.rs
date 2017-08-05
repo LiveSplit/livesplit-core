@@ -1,4 +1,4 @@
-use {Run, TimingMethod, TimeSpan};
+use {Run, TimeSpan, TimingMethod};
 use super::super::sum_of_segments::{calculate_best, calculate_worst};
 use super::super::total_playtime;
 

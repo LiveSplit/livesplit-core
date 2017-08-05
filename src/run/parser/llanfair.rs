@@ -1,9 +1,9 @@
 use std::io::{self, Read, Seek, SeekFrom};
 use std::result::Result as StdResult;
-use std::str::{from_utf8, Utf8Error};
+use std::str::{Utf8Error, from_utf8};
 use byteorder::{ReadBytesExt, BE};
-use imagelib::{png, Rgba, ImageBuffer, ColorType};
-use {Run, Image, RealTime, TimeSpan, Time, Segment};
+use imagelib::{png, ColorType, ImageBuffer, Rgba};
+use {Image, RealTime, Run, Segment, Time, TimeSpan};
 
 quick_error! {
     #[derive(Debug)]

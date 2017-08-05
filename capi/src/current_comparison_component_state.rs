@@ -1,5 +1,5 @@
 use livesplit_core::component::current_comparison::State as CurrentComparisonComponentState;
-use super::{own_drop, acc, output_str};
+use super::{acc, output_str, own_drop};
 use libc::c_char;
 
 pub type OwnedCurrentComparisonComponentState = *mut CurrentComparisonComponentState;

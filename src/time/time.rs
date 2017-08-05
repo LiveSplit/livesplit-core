@@ -1,5 +1,5 @@
-use std::ops::{Index, IndexMut, Add, Sub, AddAssign, SubAssign};
-use {TimingMethod, TimeSpan};
+use std::ops::{Add, AddAssign, Index, IndexMut, Sub, SubAssign};
+use {TimeSpan, TimingMethod};
 
 #[derive(Copy, Clone, Default, Debug, Eq, PartialEq)]
 pub struct Time {

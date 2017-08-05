@@ -4,7 +4,7 @@ use std::io::Write;
 use analysis::total_playtime;
 use time::formatter::{Days, Regular, TimeFormatter};
 use std::borrow::Cow;
-use settings::{SettingsDescription, Value, Field, Gradient};
+use settings::{Field, Gradient, SettingsDescription, Value};
 use super::DEFAULT_INFO_TEXT_GRADIENT;
 
 #[derive(Default, Clone)]

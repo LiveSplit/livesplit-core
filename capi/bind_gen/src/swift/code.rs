@@ -1,4 +1,4 @@
-use std::io::{Write, Result};
+use std::io::{Result, Write};
 use {Class, Function, Type, TypeKind};
 use heck::MixedCase;
 use std::collections::BTreeMap;
@@ -23,26 +23,24 @@ fn get_ll_type(ty: &Type) -> &str {
     match (ty.kind, ty.name.as_str()) {
         (TypeKind::Ref, "c_char") => "String",
         (TypeKind::Ref, _) | (TypeKind::RefMut, _) => "UnsafeMutableRawPointer?",
-        (_, t) if !ty.is_custom => {
-            match t {
-                "i8" => "Int8",
-                "i16" => "Int16",
-                "i32" => "Int32",
-                "i64" => "Int64",
-                "u8" => "UInt8",
-                "u16" => "UInt16",
-                "u32" => "UInt32",
-                "u64" => "UInt64",
-                "usize" => "size_t",
-                "f32" => "Float",
-                "f64" => "Double",
-                "bool" => "Bool",
-                "()" => "()",
-                "c_char" => "UInt8",
-                "Json" => "String",
-                x => x,
-            }
-        }
+        (_, t) if !ty.is_custom => match t {
+            "i8" => "Int8",
+            "i16" => "Int16",
+            "i32" => "Int32",
+            "i64" => "Int64",
+            "u8" => "UInt8",
+            "u16" => "UInt16",
+            "u32" => "UInt32",
+            "u64" => "UInt64",
+            "usize" => "size_t",
+            "f32" => "Float",
+            "f64" => "Double",
+            "bool" => "Bool",
+            "()" => "()",
+            "c_char" => "UInt8",
+            "Json" => "String",
+            x => x,
+        },
         _ => "UnsafeMutableRawPointer?",
     }
 }

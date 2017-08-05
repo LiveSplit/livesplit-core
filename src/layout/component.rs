@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 use Timer;
-use super::{ComponentState, ComponentSettings, GeneralSettings};
+use super::{ComponentSettings, ComponentState, GeneralSettings};
 use settings::{SettingsDescription, Value};
 use component::{blank_space, current_comparison, current_pace, delta, detailed_timer, graph,
                 possible_time_save, previous_segment, separator, splits, sum_of_best, text, timer,
@@ -28,93 +28,93 @@ pub enum Component {
 impl Component {
     pub fn state(&mut self, timer: &Timer, layout_settings: &GeneralSettings) -> ComponentState {
         match *self {
-            Component::BlankSpace(ref mut component) => ComponentState::BlankSpace(
-                component.state(timer),
-            ),
-            Component::CurrentComparison(ref mut component) => ComponentState::CurrentComparison(
-                component.state(timer),
-            ),
-            Component::CurrentPace(ref mut component) => ComponentState::CurrentPace(
-                component.state(timer),
-            ),
-            Component::Delta(ref mut component) => ComponentState::Delta(
-                component.state(timer, layout_settings),
-            ),
-            Component::DetailedTimer(ref mut component) => ComponentState::DetailedTimer(
-                component.state(timer, layout_settings),
-            ),
-            Component::Graph(ref mut component) => ComponentState::Graph(
-                component.state(timer, layout_settings),
-            ),
-            Component::PossibleTimeSave(ref mut component) => ComponentState::PossibleTimeSave(
-                component.state(timer),
-            ),
-            Component::PreviousSegment(ref mut component) => ComponentState::PreviousSegment(
-                component.state(timer, layout_settings),
-            ),
-            Component::Separator(ref mut component) => ComponentState::Separator(
-                component.state(timer),
-            ),
-            Component::Splits(ref mut component) => ComponentState::Splits(
-                component.state(timer, layout_settings),
-            ),
-            Component::SumOfBest(ref mut component) => ComponentState::SumOfBest(
-                component.state(timer),
-            ),
+            Component::BlankSpace(ref mut component) => {
+                ComponentState::BlankSpace(component.state(timer))
+            }
+            Component::CurrentComparison(ref mut component) => {
+                ComponentState::CurrentComparison(component.state(timer))
+            }
+            Component::CurrentPace(ref mut component) => {
+                ComponentState::CurrentPace(component.state(timer))
+            }
+            Component::Delta(ref mut component) => {
+                ComponentState::Delta(component.state(timer, layout_settings))
+            }
+            Component::DetailedTimer(ref mut component) => {
+                ComponentState::DetailedTimer(component.state(timer, layout_settings))
+            }
+            Component::Graph(ref mut component) => {
+                ComponentState::Graph(component.state(timer, layout_settings))
+            }
+            Component::PossibleTimeSave(ref mut component) => {
+                ComponentState::PossibleTimeSave(component.state(timer))
+            }
+            Component::PreviousSegment(ref mut component) => {
+                ComponentState::PreviousSegment(component.state(timer, layout_settings))
+            }
+            Component::Separator(ref mut component) => {
+                ComponentState::Separator(component.state(timer))
+            }
+            Component::Splits(ref mut component) => {
+                ComponentState::Splits(component.state(timer, layout_settings))
+            }
+            Component::SumOfBest(ref mut component) => {
+                ComponentState::SumOfBest(component.state(timer))
+            }
             Component::Text(ref mut component) => ComponentState::Text(component.state()),
-            Component::Timer(ref mut component) => ComponentState::Timer(
-                component.state(timer, layout_settings),
-            ),
+            Component::Timer(ref mut component) => {
+                ComponentState::Timer(component.state(timer, layout_settings))
+            }
             Component::Title(ref mut component) => ComponentState::Title(component.state(timer)),
-            Component::TotalPlaytime(ref mut component) => ComponentState::TotalPlaytime(
-                component.state(timer),
-            ),
+            Component::TotalPlaytime(ref mut component) => {
+                ComponentState::TotalPlaytime(component.state(timer))
+            }
         }
     }
 
     pub fn settings(&self) -> ComponentSettings {
         match *self {
-            Component::BlankSpace(ref component) => ComponentSettings::BlankSpace(
-                component.settings().clone(),
-            ),
-            Component::CurrentComparison(ref component) => ComponentSettings::CurrentComparison(
-                component.settings().clone(),
-            ),
-            Component::CurrentPace(ref component) => ComponentSettings::CurrentPace(
-                component.settings().clone(),
-            ),
-            Component::Delta(ref component) => ComponentSettings::Delta(
-                component.settings().clone(),
-            ),
-            Component::DetailedTimer(ref component) => ComponentSettings::DetailedTimer(
-                component.settings().clone(),
-            ),
-            Component::Graph(ref component) => ComponentSettings::Graph(
-                component.settings().clone(),
-            ),
-            Component::PossibleTimeSave(ref component) => ComponentSettings::PossibleTimeSave(
-                component.settings().clone(),
-            ),
-            Component::PreviousSegment(ref component) => ComponentSettings::PreviousSegment(
-                component.settings().clone(),
-            ),
+            Component::BlankSpace(ref component) => {
+                ComponentSettings::BlankSpace(component.settings().clone())
+            }
+            Component::CurrentComparison(ref component) => {
+                ComponentSettings::CurrentComparison(component.settings().clone())
+            }
+            Component::CurrentPace(ref component) => {
+                ComponentSettings::CurrentPace(component.settings().clone())
+            }
+            Component::Delta(ref component) => {
+                ComponentSettings::Delta(component.settings().clone())
+            }
+            Component::DetailedTimer(ref component) => {
+                ComponentSettings::DetailedTimer(component.settings().clone())
+            }
+            Component::Graph(ref component) => {
+                ComponentSettings::Graph(component.settings().clone())
+            }
+            Component::PossibleTimeSave(ref component) => {
+                ComponentSettings::PossibleTimeSave(component.settings().clone())
+            }
+            Component::PreviousSegment(ref component) => {
+                ComponentSettings::PreviousSegment(component.settings().clone())
+            }
             Component::Separator(_) => ComponentSettings::Separator,
-            Component::Splits(ref component) => ComponentSettings::Splits(
-                component.settings().clone(),
-            ),
-            Component::SumOfBest(ref component) => ComponentSettings::SumOfBest(
-                component.settings().clone(),
-            ),
+            Component::Splits(ref component) => {
+                ComponentSettings::Splits(component.settings().clone())
+            }
+            Component::SumOfBest(ref component) => {
+                ComponentSettings::SumOfBest(component.settings().clone())
+            }
             Component::Text(ref component) => ComponentSettings::Text(component.settings().clone()),
-            Component::Timer(ref component) => ComponentSettings::Timer(
-                component.settings().clone(),
-            ),
-            Component::Title(ref component) => ComponentSettings::Title(
-                component.settings().clone(),
-            ),
-            Component::TotalPlaytime(ref component) => ComponentSettings::TotalPlaytime(
-                component.settings().clone(),
-            ),
+            Component::Timer(ref component) => {
+                ComponentSettings::Timer(component.settings().clone())
+            }
+            Component::Title(ref component) => {
+                ComponentSettings::Title(component.settings().clone())
+            }
+            Component::TotalPlaytime(ref component) => {
+                ComponentSettings::TotalPlaytime(component.settings().clone())
+            }
         }
     }
 

@@ -1,5 +1,5 @@
 use livesplit_core::component::graph::State as GraphComponentState;
-use super::{own_drop, acc};
+use super::{acc, own_drop};
 
 pub type OwnedGraphComponentState = *mut GraphComponentState;
 

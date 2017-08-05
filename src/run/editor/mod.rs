@@ -1,6 +1,6 @@
 use std::num::ParseIntError;
 use std::mem::swap;
-use {Image, Run, Segment, TimingMethod, Time, TimeSpan};
+use {Image, Run, Segment, Time, TimeSpan, TimingMethod};
 use time::ParseError as ParseTimeSpanError;
 
 mod segment_row;
@@ -9,7 +9,7 @@ mod state;
 mod tests;
 
 pub use self::segment_row::SegmentRow;
-pub use self::state::{State, Segment as SegmentState, Buttons as ButtonsState};
+pub use self::state::{Buttons as ButtonsState, Segment as SegmentState, State};
 
 quick_error! {
     #[derive(Debug)]

@@ -10,4 +10,4 @@ pub use self::field::Field;
 pub use self::gradient::Gradient;
 pub use self::semantic_color::SemanticColor;
 pub use self::settings_description::SettingsDescription;
-pub use self::value::{Value, Result as ValueResult, Error as ValueError};
+pub use self::value::{Error as ValueError, Result as ValueResult, Value};

@@ -1,5 +1,5 @@
 use livesplit_core::component::blank_space::State as BlankSpaceComponentState;
-use super::{own_drop, acc};
+use super::{acc, own_drop};
 
 pub type OwnedBlankSpaceComponentState = *mut BlankSpaceComponentState;
 

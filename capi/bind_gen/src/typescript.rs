@@ -125,8 +125,8 @@ export interface GraphComponentStatePointJson {
 }
 
 export type TextComponentStateJson =
-	{ Center: String } |
-	{ Split: String[] };
+	{ Center: string } |
+	{ Split: string[] };
 
 export interface TotalPlaytimeComponentStateJson {
     background: Gradient,

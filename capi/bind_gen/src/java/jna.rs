@@ -1,4 +1,4 @@
-use std::io::{Write, Result, BufWriter};
+use std::io::{BufWriter, Result, Write};
 use {Class, Function, Type, TypeKind};
 use heck::MixedCase;
 use std::collections::BTreeMap;

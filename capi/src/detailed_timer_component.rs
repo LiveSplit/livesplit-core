@@ -1,6 +1,6 @@
 use livesplit_core::component::detailed_timer::Component as DetailedTimerComponent;
-use livesplit_core::{Timer, GeneralLayoutSettings};
-use super::{Json, alloc, own, own_drop, acc, acc_mut, output_vec};
+use livesplit_core::{GeneralLayoutSettings, Timer};
+use super::{acc, acc_mut, alloc, output_vec, own, own_drop, Json};
 use detailed_timer_component_state::OwnedDetailedTimerComponentState;
 use component::OwnedComponent;
 

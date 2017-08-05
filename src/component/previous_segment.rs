@@ -1,10 +1,10 @@
-use {analysis, Timer, TimerPhase, GeneralLayoutSettings, comparison};
-use time::formatter::{Delta, PossibleTimeSave, TimeFormatter, Accuracy};
+use {analysis, comparison, GeneralLayoutSettings, Timer, TimerPhase};
+use time::formatter::{Accuracy, Delta, PossibleTimeSave, TimeFormatter};
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use std::fmt::Write as FmtWrite;
 use std::borrow::Cow;
-use settings::{SettingsDescription, Value, Field, SemanticColor, Gradient, Color};
+use settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
 use super::DEFAULT_INFO_TEXT_GRADIENT;
 
 #[derive(Default, Clone)]

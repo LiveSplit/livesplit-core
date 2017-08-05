@@ -1,5 +1,5 @@
 use livesplit_core::component::title::State as TitleComponentState;
-use super::{own_drop, acc, output_str, Nullablec_char};
+use super::{acc, output_str, own_drop, Nullablec_char};
 use libc::c_char;
 use std::ptr;
 

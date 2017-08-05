@@ -1,10 +1,10 @@
-use std::io::{Write, Result};
+use std::io::{Result, Write};
 use chrono::{DateTime, Utc};
 use sxd_document::Package;
 use sxd_document::dom::{Document, Element};
 use sxd_document::writer::format_document;
 use time::formatter::{Complete, TimeFormatter};
-use {Run, Time, TimeSpan, Image, base64};
+use {Image, Run, Time, TimeSpan, base64};
 use byteorder::{WriteBytesExt, LE};
 
 static LSS_IMAGE_HEADER: &[u8] = include_bytes!("lss_image_header.bin");

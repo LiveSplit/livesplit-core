@@ -1,4 +1,4 @@
-use {AtomicDateTime, Run, Time, TimerPhase, TimingMethod, TimeStamp, TimeSpan, Segment};
+use {AtomicDateTime, Run, Segment, Time, TimeSpan, TimeStamp, TimerPhase, TimingMethod};
 use TimerPhase::*;
 use comparison::personal_best;
 use parking_lot::RwLock;
@@ -103,20 +103,18 @@ impl Timer {
         let game_time = match self.phase {
             NotRunning => Some(self.run.offset()),
             Ended => self.run.segments().last().unwrap().split_time().game_time,
-            _ => {
-                if self.is_game_time_paused() {
-                    self.game_time_pause_time
-                } else {
-                    TimeSpan::option_sub(
-                        real_time,
-                        if self.is_game_time_initialized() {
-                            Some(self.loading_times())
-                        } else {
-                            None
-                        },
-                    )
-                }
-            }
+            _ => if self.is_game_time_paused() {
+                self.game_time_pause_time
+            } else {
+                TimeSpan::option_sub(
+                    real_time,
+                    if self.is_game_time_initialized() {
+                        Some(self.loading_times())
+                    } else {
+                        None
+                    },
+                )
+            },
         };
 
         Time::new()

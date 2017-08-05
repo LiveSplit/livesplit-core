@@ -1,5 +1,5 @@
 use super::{ComponentSettings, GeneralSettings};
-use serde_json::{to_writer, from_reader, Result};
+use serde_json::{from_reader, to_writer, Result};
 use std::io::{Read, Write};
 
 #[derive(Clone, Serialize, Deserialize)]

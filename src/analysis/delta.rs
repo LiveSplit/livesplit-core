@@ -1,4 +1,4 @@
-use {Timer, TimeSpan, TimerPhase};
+use {TimeSpan, Timer, TimerPhase};
 use analysis;
 
 pub fn calculate(timer: &Timer, comparison: &str) -> (Option<TimeSpan>, bool) {
@@ -30,12 +30,10 @@ pub fn calculate(timer: &Timer, comparison: &str) -> (Option<TimeSpan>, bool) {
 
             delta
         }
-        TimerPhase::Ended => {
-            TimeSpan::option_sub(
-                last_segment.split_time()[timing_method],
-                last_segment.comparison(comparison)[timing_method],
-            )
-        }
+        TimerPhase::Ended => TimeSpan::option_sub(
+            last_segment.split_time()[timing_method],
+            last_segment.comparison(comparison)[timing_method],
+        ),
         TimerPhase::NotRunning => None,
     };
 

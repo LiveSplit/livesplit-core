@@ -1,10 +1,10 @@
-use {GeneralLayoutSettings, Timer, TimerPhase, TimeSpan, TimingMethod};
-use time::formatter::{timer as formatter, TimeFormatter, Accuracy, DigitsFormat};
+use {GeneralLayoutSettings, TimeSpan, Timer, TimerPhase, TimingMethod};
+use time::formatter::{timer as formatter, Accuracy, DigitsFormat, TimeFormatter};
 use analysis::split_color;
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use std::borrow::Cow;
-use settings::{SemanticColor, Color, SettingsDescription, Value, Field, Gradient};
+use settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
 use palette::{Hsv, Rgb};
 
 #[derive(Default, Clone)]
@@ -88,8 +88,7 @@ impl Component {
                 let pb_split_time = timer
                     .current_split()
                     .unwrap()
-                    .comparison(current_comparison)
-                    [method];
+                    .comparison(current_comparison)[method];
 
                 if let Some(pb_split_time) = pb_split_time {
                     split_color(
@@ -112,8 +111,7 @@ impl Component {
                     .segments()
                     .last()
                     .unwrap()
-                    .comparison(current_comparison)
-                    [method];
+                    .comparison(current_comparison)[method];
 
                 if pb_time.map_or(true, |t| time < t) {
                     SemanticColor::PersonalBest

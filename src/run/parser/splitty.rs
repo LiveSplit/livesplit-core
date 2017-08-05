@@ -2,7 +2,7 @@ use std::io::Read;
 use std::result::Result as StdResult;
 use serde_json::de::from_reader;
 use serde_json::Error as JsonError;
-use {Run, TimeSpan, Time, TimingMethod, Segment};
+use {Run, Segment, Time, TimeSpan, TimingMethod};
 
 quick_error! {
     #[derive(Debug)]

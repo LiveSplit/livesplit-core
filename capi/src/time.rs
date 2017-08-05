@@ -1,5 +1,5 @@
 use livesplit_core::{Time, TimingMethod};
-use super::{alloc, own_drop, acc};
+use super::{acc, alloc, own_drop};
 use std::ptr;
 use time_span::NullableTimeSpan;
 

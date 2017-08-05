@@ -1,5 +1,5 @@
-use std::io::{Write, Result};
-use {Class, Function, Type, TypeKind, typescript};
+use std::io::{Result, Write};
+use {typescript, Class, Function, Type, TypeKind};
 use heck::MixedCase;
 use std::collections::BTreeMap;
 
@@ -21,26 +21,24 @@ fn get_hl_type_without_null(ty: &Type) -> String {
     } else {
         match (ty.kind, ty.name.as_str()) {
             (TypeKind::Ref, "c_char") => "string",
-            (_, t) if !ty.is_custom => {
-                match t {
-                    "i8" => "number",
-                    "i16" => "number",
-                    "i32" => "number",
-                    "i64" => "number",
-                    "u8" => "number",
-                    "u16" => "number",
-                    "u32" => "number",
-                    "u64" => "number",
-                    "usize" => "number",
-                    "f32" => "number",
-                    "f64" => "number",
-                    "bool" => "boolean",
-                    "()" => "void",
-                    "c_char" => "string",
-                    "Json" => "any",
-                    x => x,
-                }
-            }
+            (_, t) if !ty.is_custom => match t {
+                "i8" => "number",
+                "i16" => "number",
+                "i32" => "number",
+                "i64" => "number",
+                "u8" => "number",
+                "u16" => "number",
+                "u32" => "number",
+                "u64" => "number",
+                "usize" => "number",
+                "f32" => "number",
+                "f64" => "number",
+                "bool" => "boolean",
+                "()" => "void",
+                "c_char" => "string",
+                "Json" => "any",
+                x => x,
+            },
             _ => unreachable!(),
         }.to_string()
     }
@@ -148,9 +146,13 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
 
     if has_return_type {
         if function.output.is_custom {
-            write!(writer, r#"var result = new {}("#, return_type_without_null)?;
+            write!(
+                writer,
+                r#"const result = new {}("#,
+                return_type_without_null
+            )?;
         } else {
-            write!(writer, "var result = ")?;
+            write!(writer, "const result = ")?;
         }
     }
 
@@ -248,9 +250,10 @@ pub fn write<W: Write>(
         writeln!(
             writer,
             "{}{}",
-            r#"var LiveSplitCore = require('./livesplit_core');
-var emscriptenModule = LiveSplitCore({});
-var liveSplitCoreNative: any = {};
+            r#"// tslint:disable
+const LiveSplitCore = require('./livesplit_core');
+const emscriptenModule = LiveSplitCore({});
+const liveSplitCoreNative: any = {};
 
 "#,
             typescript::HEADER
@@ -259,9 +262,9 @@ var liveSplitCoreNative: any = {};
         writeln!(
             writer,
             "{}",
-            r#"var LiveSplitCore = require('./livesplit_core');
-var emscriptenModule = LiveSplitCore({});
-var liveSplitCoreNative = {};"#
+            r#"const LiveSplitCore = require('./livesplit_core');
+const emscriptenModule = LiveSplitCore({});
+const liveSplitCoreNative = {};"#
         )?;
     }
 
@@ -400,6 +403,43 @@ export "#.to_string()
             write_fn(&mut writer, function, type_script)?;
         }
 
+        if class_name == "RunEditor" {
+            if type_script {
+                write!(
+                    writer,
+                    "{}",
+                    r#"
+    setGameIconFromArray(data: Int8Array) {
+        const buf = emscriptenModule._malloc(data.length);
+        try {
+            emscriptenModule.writeArrayToMemory(data, buf);
+            this.setGameIcon(buf, data.length);
+        } finally {
+            emscriptenModule._free(buf);
+        }
+    }"#
+                )?;
+            } else {
+                write!(
+                    writer,
+                    "{}",
+                    r#"
+    /**
+     * @param {Int8Array} data
+     */
+    setGameIconFromArray(data) {
+        const buf = emscriptenModule._malloc(data.length);
+        try {
+            emscriptenModule.writeArrayToMemory(data, buf);
+            this.setGameIcon(buf, data.length);
+        } finally {
+            emscriptenModule._free(buf);
+        }
+    }"#
+                )?;
+            }
+        }
+
         write!(
             writer,
             r#"
@@ -482,27 +522,33 @@ export "#.to_string()
                     "{}",
                     r#"
     static parseArray(data: Int8Array): Run | null {
-        let buf = emscriptenModule._malloc(data.length);
-        emscriptenModule.writeArrayToMemory(data, buf);
-        let ptr = liveSplitCoreNative.Run_parse(buf, data.length);
-        emscriptenModule._free(buf);
+        const buf = emscriptenModule._malloc(data.length);
+        try {
+            emscriptenModule.writeArrayToMemory(data, buf);
+            const ptr = liveSplitCoreNative.Run_parse(buf, data.length);
 
-        if (ptr == 0) {
-            return null;
+            if (ptr == 0) {
+                return null;
+            }
+            return new Run(ptr);
+        } finally {
+            emscriptenModule._free(buf);
         }
-        return new Run(ptr);
     }
     static parseString(text: string): Run | null {
-        let len = (text.length << 2) + 1;
-        let buf = emscriptenModule._malloc(len);
-        let actualLen = emscriptenModule.stringToUTF8(text, buf, len);
-        let ptr = liveSplitCoreNative.Run_parse(buf, actualLen);
-        emscriptenModule._free(buf);
+        const len = (text.length << 2) + 1;
+        const buf = emscriptenModule._malloc(len);
+        try {
+            const actualLen = emscriptenModule.stringToUTF8(text, buf, len);
+            const ptr = liveSplitCoreNative.Run_parse(buf, actualLen);
 
-        if (ptr == 0) {
-            return null;
+            if (ptr == 0) {
+                return null;
+            }
+            return new Run(ptr);
+        } finally {
+            emscriptenModule._free(buf);
         }
-        return new Run(ptr);
     }"#
                 )?;
             } else {
@@ -515,31 +561,37 @@ export "#.to_string()
      * @return {Run | null}
      */
     static parseArray(data) {
-        let buf = emscriptenModule._malloc(data.length);
-        emscriptenModule.writeArrayToMemory(data, buf);
-        let ptr = liveSplitCoreNative.Run_parse(buf, data.length);
-        emscriptenModule._free(buf);
+        const buf = emscriptenModule._malloc(data.length);
+        try {
+            emscriptenModule.writeArrayToMemory(data, buf);
+            const ptr = liveSplitCoreNative.Run_parse(buf, data.length);
 
-        if (ptr == 0) {
-            return null;
+            if (ptr == 0) {
+                return null;
+            }
+            return new Run(ptr);
+        } finally {
+            emscriptenModule._free(buf);
         }
-        return new Run(ptr);
     }
     /**
      * @param {string} text
      * @return {Run | null}
      */
     static parseString(text) {
-        let len = (text.length << 2) + 1;
-        let buf = emscriptenModule._malloc(len);
-        let actualLen = emscriptenModule.stringToUTF8(text, buf, len);
-        let ptr = liveSplitCoreNative.Run_parse(buf, actualLen);
-        emscriptenModule._free(buf);
+        const len = (text.length << 2) + 1;
+        const buf = emscriptenModule._malloc(len);
+        try {
+            const actualLen = emscriptenModule.stringToUTF8(text, buf, len);
+            const ptr = liveSplitCoreNative.Run_parse(buf, actualLen);
 
-        if (ptr == 0) {
-            return null;
+            if (ptr == 0) {
+                return null;
+            }
+            return new Run(ptr);
+        } finally {
+            emscriptenModule._free(buf);
         }
-        return new Run(ptr);
     }"#
                 )?;
             }

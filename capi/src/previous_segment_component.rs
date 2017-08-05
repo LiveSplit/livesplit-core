@@ -1,6 +1,6 @@
 use livesplit_core::component::previous_segment::Component as PreviousSegmentComponent;
-use livesplit_core::{Timer, GeneralLayoutSettings};
-use super::{Json, alloc, own, own_drop, acc, output_vec};
+use livesplit_core::{GeneralLayoutSettings, Timer};
+use super::{acc, alloc, output_vec, own, own_drop, Json};
 use previous_segment_component_state::OwnedPreviousSegmentComponentState;
 use component::OwnedComponent;
 

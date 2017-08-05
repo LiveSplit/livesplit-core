@@ -1,5 +1,5 @@
-use std::io::{Write, Result};
-use {Type, TypeKind, Class};
+use std::io::{Result, Write};
+use {Class, Type, TypeKind};
 use std::collections::BTreeMap;
 use std::borrow::Cow;
 

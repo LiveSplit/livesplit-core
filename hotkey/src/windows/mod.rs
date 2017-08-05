@@ -7,13 +7,13 @@ mod key_code;
 pub use self::key_code::KeyCode;
 
 use std::cell::RefCell;
-use std::{ptr, mem, thread};
+use std::{mem, ptr, thread};
 use std::sync::mpsc::{channel, Sender};
-use self::winapi::{c_int, WPARAM, LPARAM, LRESULT, WH_KEYBOARD_LL, HHOOK, WM_KEYDOWN,
-                   KBDLLHOOKSTRUCT, UINT, DWORD};
-use self::user32::{CallNextHookEx, UnhookWindowsHookEx, SetWindowsHookExW, GetMessageW,
-                   PostThreadMessageW};
-use self::kernel32::{GetModuleHandleW, GetCurrentThreadId};
+use self::winapi::{c_int, DWORD, HHOOK, KBDLLHOOKSTRUCT, LPARAM, LRESULT, UINT, WH_KEYBOARD_LL,
+                   WM_KEYDOWN, WPARAM};
+use self::user32::{CallNextHookEx, GetMessageW, PostThreadMessageW, SetWindowsHookExW,
+                   UnhookWindowsHookEx};
+use self::kernel32::{GetCurrentThreadId, GetModuleHandleW};
 use std::sync::Arc;
 use std::collections::hash_map::{Entry, HashMap};
 use self::parking_lot::Mutex;

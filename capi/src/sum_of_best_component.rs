@@ -1,6 +1,6 @@
 use livesplit_core::component::sum_of_best::Component as SumOfBestComponent;
 use livesplit_core::Timer;
-use super::{Json, alloc, own, own_drop, acc, output_vec};
+use super::{acc, alloc, output_vec, own, own_drop, Json};
 use sum_of_best_component_state::OwnedSumOfBestComponentState;
 use component::OwnedComponent;
 

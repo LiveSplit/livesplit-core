@@ -1,4 +1,4 @@
-use std::io::{Write, Result};
+use std::io::{Result, Write};
 use {Class, Function, Type, TypeKind};
 use heck::{CamelCase, MixedCase};
 use std::collections::BTreeMap;
@@ -21,46 +21,38 @@ fn get_hl_type(ty: &Type) -> String {
 
 fn get_ll_type(ty: &Type, output: bool) -> &str {
     match (ty.kind, ty.name.as_str()) {
-        (TypeKind::Ref, "c_char") => {
-            if output {
+        (TypeKind::Ref, "c_char") => if output {
+            "LSCoreString"
+        } else {
+            "string"
+        },
+        (TypeKind::Ref, _) | (TypeKind::RefMut, _) => "IntPtr",
+        (_, t) if !ty.is_custom => match t {
+            "i8" => "sbyte",
+            "i16" => "short",
+            "i32" => "int",
+            "i64" => "long",
+            "u8" => "byte",
+            "u16" => "ushort",
+            "u32" => "uint",
+            "u64" => "ulong",
+            "usize" => "UIntPtr",
+            "f32" => "float",
+            "f64" => "double",
+            "bool" => if output {
+                "byte"
+            } else {
+                "bool"
+            },
+            "()" => "void",
+            "c_char" => "char",
+            "Json" => if output {
                 "LSCoreString"
             } else {
                 "string"
-            }
-        }
-        (TypeKind::Ref, _) | (TypeKind::RefMut, _) => "IntPtr",
-        (_, t) if !ty.is_custom => {
-            match t {
-                "i8" => "sbyte",
-                "i16" => "short",
-                "i32" => "int",
-                "i64" => "long",
-                "u8" => "byte",
-                "u16" => "ushort",
-                "u32" => "uint",
-                "u64" => "ulong",
-                "usize" => "UIntPtr",
-                "f32" => "float",
-                "f64" => "double",
-                "bool" => {
-                    if output {
-                        "byte"
-                    } else {
-                        "bool"
-                    }
-                }
-                "()" => "void",
-                "c_char" => "char",
-                "Json" => {
-                    if output {
-                        "LSCoreString"
-                    } else {
-                        "string"
-                    }
-                }
-                x => x,
-            }
-        }
+            },
+            x => x,
+        },
         _ => "IntPtr",
     }
 }

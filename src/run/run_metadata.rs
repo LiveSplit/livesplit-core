@@ -1,4 +1,4 @@
-use ordermap::{OrderMap, Iter};
+use ordermap::{Iter, OrderMap};
 
 #[derive(Default, Clone, Debug)]
 pub struct RunMetadata {

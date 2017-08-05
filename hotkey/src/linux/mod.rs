@@ -5,16 +5,16 @@ extern crate promising_future;
 mod key_code;
 pub use self::key_code::KeyCode;
 
-use self::x11_dl::xlib::{Xlib, XKeyEvent, Display, GrabModeAsync, KeyPressMask, KeyPress,
-                         Mod2Mask, XErrorEvent};
-use std::{ptr, mem};
+use self::x11_dl::xlib::{Display, GrabModeAsync, KeyPress, KeyPressMask, Mod2Mask, XErrorEvent,
+                         XKeyEvent, Xlib};
+use std::{mem, ptr};
 use std::collections::hash_map::{Entry, HashMap};
 use std::sync::mpsc::{channel, Sender};
-use self::mio::{Events, Poll, Token, PollOpt, Ready, Registration, SetReadiness};
+use self::mio::{Events, Poll, PollOpt, Ready, Registration, SetReadiness, Token};
 use self::mio::unix::EventedFd;
 use std::thread::{self, JoinHandle};
-use std::os::raw::{c_ulong, c_int, c_uint};
-use self::promising_future::{Promise, future_promise};
+use std::os::raw::{c_int, c_uint, c_ulong};
+use self::promising_future::{future_promise, Promise};
 
 quick_error! {
     #[derive(Debug)]

@@ -1,8 +1,8 @@
-use {Timer, TimeSpan, TimerPhase, GeneralLayoutSettings, analysis, comparison};
+use {analysis, comparison, GeneralLayoutSettings, TimeSpan, Timer, TimerPhase};
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use std::borrow::Cow;
-use settings::{SettingsDescription, Field, Value, Color};
+use settings::{Color, Field, SettingsDescription, Value};
 
 const GRAPH_EDGE_VALUE: f32 = 200.0;
 const GRAPH_EDGE_MIN: f32 = 5.0;
@@ -364,7 +364,7 @@ impl Component {
     ) {
         if total_delta != TimeSpan::zero() {
             *height_one = (delta.total_milliseconds() as f32 -
-                               draw_info.max_delta.total_milliseconds() as f32) /
+                draw_info.max_delta.total_milliseconds() as f32) /
                 total_delta.total_milliseconds() as f32 *
                 (graph_height - graph_edge) * 2.0 + graph_edge;
         } else {
@@ -376,7 +376,7 @@ impl Component {
                 timer.run().segment(y).split_time()[timer.current_timing_method()]
             {
                 *width_one = (split_time.total_milliseconds() as f32 /
-                                  draw_info.final_split.total_milliseconds() as f32) *
+                    draw_info.final_split.total_milliseconds() as f32) *
                     WIDTH;
             }
         }
@@ -400,13 +400,12 @@ impl Component {
             timer.run().segment(y).split_time()[timer.current_timing_method()]
         {
             *width_two = (split_time.total_milliseconds() as f32 /
-                              draw_info.final_split.total_milliseconds() as f32) *
-                WIDTH;
+                draw_info.final_split.total_milliseconds() as f32) * WIDTH;
         }
 
         if total_delta != TimeSpan::zero() {
             *height_two = (delta.total_milliseconds() as f32 -
-                               draw_info.max_delta.total_milliseconds() as f32) /
+                draw_info.max_delta.total_milliseconds() as f32) /
                 total_delta.total_milliseconds() as f32 *
                 (graph_height - graph_edge) * 2.0 + graph_edge;
         } else {
@@ -502,7 +501,7 @@ impl Component {
                 (graph_height * 2.0 - GRAPH_EDGE_MIN * 2.0);
             graph_edge += GRAPH_EDGE_MIN;
             (-(draw_info.max_delta.total_milliseconds() as f32 /
-                   total_delta.total_milliseconds() as f32)) *
+                total_delta.total_milliseconds() as f32)) *
                 (graph_height - graph_edge) * 2.0 + graph_edge
         } else {
             graph_height

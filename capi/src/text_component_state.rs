@@ -1,6 +1,6 @@
 use livesplit_core::component::text::State as TextComponentState;
 use livesplit_core::component::text::Text;
-use super::{own_drop, acc, output_str};
+use super::{acc, output_str, own_drop};
 use libc::c_char;
 
 pub type OwnedTextComponentState = *mut TextComponentState;

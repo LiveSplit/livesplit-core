@@ -1,12 +1,12 @@
-use {Timer, TimerPhase, comparison};
+use {comparison, Timer, TimerPhase};
 use analysis::possible_time_save;
-use settings::{SettingsDescription, Value, Field, Gradient};
+use settings::{Field, Gradient, SettingsDescription, Value};
 use serde_json::{to_writer, Result};
 use std::borrow::Cow;
 use std::cmp::max;
 use std::fmt::Write as FmtWrite;
 use std::io::Write;
-use time::formatter::{PossibleTimeSave, TimeFormatter, Accuracy};
+use time::formatter::{Accuracy, PossibleTimeSave, TimeFormatter};
 use super::DEFAULT_INFO_TEXT_GRADIENT;
 
 #[derive(Default, Clone)]

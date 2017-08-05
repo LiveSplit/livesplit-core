@@ -1,11 +1,11 @@
-use super::{Layout, LayoutState, Component};
+use super::{Component, Layout, LayoutState};
 use settings::Value;
 use std::result::Result as StdResult;
 use Timer;
 
 mod state;
 
-pub use self::state::{State, Buttons as ButtonsState};
+pub use self::state::{Buttons as ButtonsState, State};
 
 pub struct Editor {
     layout: Layout,

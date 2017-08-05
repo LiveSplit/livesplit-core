@@ -1,4 +1,4 @@
-use {Segment, Attempt, TimingMethod, TimeSpan};
+use {Attempt, Segment, TimeSpan, TimingMethod};
 use super::ComparisonGenerator;
 
 #[derive(Copy, Clone, Debug)]

@@ -1,7 +1,7 @@
 use std::io::Write;
 use serde_json::{to_writer, Result};
 use std::borrow::Cow;
-use settings::{SettingsDescription, Field, Value};
+use settings::{Field, SettingsDescription, Value};
 use std::mem::replace;
 
 #[derive(Default, Clone)]
@@ -118,12 +118,10 @@ impl Component {
     pub fn settings_description(&self) -> SettingsDescription {
         let (first, second) = match self.settings.text {
             Text::Center(ref text) => (Field::new("Text".into(), text.to_string().into()), None),
-            Text::Split(ref left, ref right) => {
-                (
-                    Field::new("Left".into(), left.to_string().into()),
-                    Some(Field::new("Right".into(), right.to_string().into())),
-                )
-            }
+            Text::Split(ref left, ref right) => (
+                Field::new("Left".into(), left.to_string().into()),
+                Some(Field::new("Right".into(), right.to_string().into())),
+            ),
         };
 
         let mut fields = vec![Field::new("Split".into(), second.is_some().into()), first];
@@ -155,18 +153,14 @@ impl Component {
                     _ => return,
                 };
             }
-            1 => {
-                match self.settings.text {
-                    Text::Center(ref mut center) => *center = value.into(),
-                    Text::Split(ref mut left, _) => *left = value.into(),
-                }
-            }
-            2 => {
-                match self.settings.text {
-                    Text::Center(_) => panic!("Set right text when there's only a center text"),
-                    Text::Split(_, ref mut right) => *right = value.into(),
-                }
-            }
+            1 => match self.settings.text {
+                Text::Center(ref mut center) => *center = value.into(),
+                Text::Split(ref mut left, _) => *left = value.into(),
+            },
+            2 => match self.settings.text {
+                Text::Center(_) => panic!("Set right text when there's only a center text"),
+                Text::Split(_, ref mut right) => *right = value.into(),
+            },
             _ => panic!("Unsupported Setting Index"),
         }
     }

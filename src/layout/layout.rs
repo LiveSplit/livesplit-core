@@ -1,5 +1,5 @@
-use {Timer, component};
-use super::{Component, LayoutSettings, LayoutState, GeneralSettings};
+use {component, Timer};
+use super::{Component, GeneralSettings, LayoutSettings, LayoutState};
 
 #[derive(Clone)]
 pub struct Layout {

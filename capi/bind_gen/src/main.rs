@@ -15,8 +15,8 @@ mod typescript;
 
 use std::path::Path;
 use syntex_syntax::abi::Abi;
-use syntex_syntax::ast::{ItemKind, Visibility, PatKind, TyKind, Mutability, FunctionRetTy};
-use syntex_syntax::parse::{ParseSess, parse_crate_from_file};
+use syntex_syntax::ast::{FunctionRetTy, ItemKind, Mutability, PatKind, TyKind, Visibility};
+use syntex_syntax::parse::{parse_crate_from_file, ParseSess};
 use syntex_syntax::codemap::FilePathMapping;
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
@@ -213,7 +213,7 @@ fn fns_to_classes(functions: Vec<Function>) -> BTreeMap<String, Class> {
     classes
 }
 
-use std::fs::{File, create_dir_all, remove_dir_all};
+use std::fs::{create_dir_all, remove_dir_all, File};
 use std::io::{BufWriter, Result};
 use std::path::PathBuf;
 

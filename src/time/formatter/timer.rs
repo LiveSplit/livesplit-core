@@ -1,6 +1,6 @@
-use std::fmt::{Result, Formatter, Display};
+use std::fmt::{Display, Formatter, Result};
 use TimeSpan;
-use super::{TimeFormatter, extract_hundredths, extract_tenths, MINUS, DigitsFormat, Accuracy};
+use super::{extract_hundredths, extract_tenths, Accuracy, DigitsFormat, TimeFormatter, MINUS};
 
 pub struct TimeInner {
     time: Option<TimeSpan>,

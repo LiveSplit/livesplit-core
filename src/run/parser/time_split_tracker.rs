@@ -3,8 +3,8 @@ use std::fs::File;
 use std::path::PathBuf;
 use std::result::Result as StdResult;
 use std::num::ParseIntError;
-use chrono::{Utc, TimeZone};
-use {Run, time, Image, TimeSpan, RealTime, Time, Segment, AtomicDateTime};
+use chrono::{TimeZone, Utc};
+use {time, AtomicDateTime, Image, RealTime, Run, Segment, Time, TimeSpan};
 
 quick_error! {
     #[derive(Debug)]

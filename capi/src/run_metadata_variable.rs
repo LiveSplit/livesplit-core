@@ -1,4 +1,4 @@
-use super::{own_drop, acc, output_str};
+use super::{acc, output_str, own_drop};
 use libc::c_char;
 
 pub type RunMetadataVariable = (*const String, *const String);

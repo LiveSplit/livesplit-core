@@ -1,6 +1,6 @@
 use livesplit_core::component::graph::Component as GraphComponent;
-use livesplit_core::{Timer, GeneralLayoutSettings};
-use super::{Json, alloc, own, own_drop, acc, output_vec};
+use livesplit_core::{GeneralLayoutSettings, Timer};
+use super::{acc, alloc, output_vec, own, own_drop, Json};
 use graph_component_state::OwnedGraphComponentState;
 use component::OwnedComponent;
 

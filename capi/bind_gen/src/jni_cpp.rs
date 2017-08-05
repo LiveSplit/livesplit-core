@@ -1,4 +1,4 @@
-use std::io::{Write, Result};
+use std::io::{Result, Write};
 use {Class, Function, Type, TypeKind};
 use heck::MixedCase;
 use std::collections::BTreeMap;
@@ -40,26 +40,24 @@ fn get_jni_type<'a>(ty: &'a Type) -> &'a str {
     match (ty.kind, ty.name.as_str()) {
         (TypeKind::Ref, "c_char") => "jstring",
         (TypeKind::Ref, _) | (TypeKind::RefMut, _) => "jlong",
-        (_, t) if !ty.is_custom => {
-            match t {
-                "i8" => "jbyte",
-                "i16" => "jshort",
-                "i32" => "jint",
-                "i64" => "jlong",
-                "u8" => "jbyte",
-                "u16" => "jshort",
-                "u32" => "jint",
-                "u64" => "jlong",
-                "usize" => "jlong",
-                "f32" => "jfloat",
-                "f64" => "jdouble",
-                "bool" => "jboolean",
-                "()" => "void",
-                "c_char" => "jbyte",
-                "Json" => "jstring",
-                x => x,
-            }
-        }
+        (_, t) if !ty.is_custom => match t {
+            "i8" => "jbyte",
+            "i16" => "jshort",
+            "i32" => "jint",
+            "i64" => "jlong",
+            "u8" => "jbyte",
+            "u16" => "jshort",
+            "u32" => "jint",
+            "u64" => "jlong",
+            "usize" => "jlong",
+            "f32" => "jfloat",
+            "f64" => "jdouble",
+            "bool" => "jboolean",
+            "()" => "void",
+            "c_char" => "jbyte",
+            "Json" => "jstring",
+            x => x,
+        },
         _ => "jlong",
     }
 }

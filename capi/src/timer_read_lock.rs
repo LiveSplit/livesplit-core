@@ -1,5 +1,5 @@
 use livesplit_core::Timer;
-use super::{own_drop, acc};
+use super::{acc, own_drop};
 use livesplit_core::parking_lot::RwLockReadGuard;
 use std::ops::Deref;
 

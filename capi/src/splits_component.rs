@@ -1,6 +1,6 @@
 use livesplit_core::component::splits::Component as SplitsComponent;
-use livesplit_core::{Timer, GeneralLayoutSettings};
-use super::{Json, alloc, own, own_drop, acc, output_vec, acc_mut};
+use livesplit_core::{GeneralLayoutSettings, Timer};
+use super::{acc, acc_mut, alloc, output_vec, own, own_drop, Json};
 use splits_component_state::OwnedSplitsComponentState;
 use component::OwnedComponent;
 

@@ -1,13 +1,13 @@
 use std::io::{self, Read};
 use std::result::Result as StdResult;
-use std::num::{ParseIntError, ParseFloatError};
+use std::num::{ParseFloatError, ParseIntError};
 use std::path::PathBuf;
 use base64;
 use sxd_document::dom::Element;
-use sxd_document::parser::{Error as XmlError, parse as parse_xml};
-use chrono::{DateTime, Utc, TimeZone, ParseError as ChronoError};
+use sxd_document::parser::{parse as parse_xml, Error as XmlError};
+use chrono::{DateTime, ParseError as ChronoError, TimeZone, Utc};
 use super::bom_consumer::BomConsumer;
-use {Run, time, TimeSpan, Time, AtomicDateTime, Segment};
+use {time, AtomicDateTime, Run, Segment, Time, TimeSpan};
 use comparison::personal_best;
 use super::xml_util::{self, text};
 

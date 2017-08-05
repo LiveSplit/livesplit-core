@@ -2,7 +2,7 @@ use Timer;
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use std::borrow::Cow;
-use settings::{SettingsDescription, Field, Value, Gradient, Color};
+use settings::{Color, Field, Gradient, SettingsDescription, Value};
 
 #[derive(Default, Clone)]
 pub struct Component {

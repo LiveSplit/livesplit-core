@@ -1,13 +1,13 @@
-use {Run, TimeSpan, Time, RealTime, Segment};
-use byteorder::{BE, ByteOrder};
-use imagelib::{png, Rgba, ImageBuffer, ColorType};
+use {RealTime, Run, Segment, Time, TimeSpan};
+use byteorder::{ByteOrder, BE};
+use imagelib::{png, ColorType, ImageBuffer, Rgba};
 use std::cmp::min;
 use std::io::{self, Read};
 use std::num::ParseIntError;
 use std::result::Result as StdResult;
 use super::xml_util::{self, text};
 use sxd_document::dom::Element;
-use sxd_document::parser::{Error as XmlError, parse as parse_xml};
+use sxd_document::parser::{parse as parse_xml, Error as XmlError};
 
 quick_error! {
     #[derive(Debug)]

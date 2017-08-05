@@ -1,7 +1,7 @@
 use std::io::{self, BufRead};
 use std::result::Result as StdResult;
 use std::num::{ParseFloatError, ParseIntError};
-use {Run, Image, TimeSpan, Time, Segment};
+use {Image, Run, Segment, Time, TimeSpan};
 
 quick_error! {
     #[derive(Debug)]

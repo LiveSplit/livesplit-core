@@ -2,7 +2,7 @@ use livesplit_core::SharedTimer;
 use timer::OwnedTimer;
 use timer_read_lock::OwnedTimerReadLock;
 use timer_write_lock::OwnedTimerWriteLock;
-use super::{alloc, acc, own, own_drop};
+use super::{acc, alloc, own, own_drop};
 
 pub type OwnedSharedTimer = *mut SharedTimer;
 

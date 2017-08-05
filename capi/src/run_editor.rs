@@ -1,8 +1,8 @@
 use livesplit_core::{RunEditor, TimingMethod};
-use super::{Json, alloc, own, output_vec, acc_mut, str};
+use super::{acc_mut, alloc, output_vec, own, str, Json};
 use run::OwnedRun;
 use libc::c_char;
-use std::{slice, ptr};
+use std::{ptr, slice};
 
 pub type OwnedRunEditor = *mut RunEditor;
 pub type NullableOwnedRunEditor = *mut RunEditor;

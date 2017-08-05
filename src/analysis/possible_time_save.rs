@@ -1,4 +1,4 @@
-use {analysis, Timer, TimeSpan};
+use {analysis, TimeSpan, Timer};
 
 pub fn calculate(
     timer: &Timer,

@@ -1,13 +1,13 @@
-use std::io::{self, Read, Cursor, Seek, SeekFrom};
+use std::io::{self, Cursor, Read, Seek, SeekFrom};
 use std::num::ParseIntError;
 use std::result::Result as StdResult;
-use {Run, TimeSpan, Time, RealTime, Segment};
+use {RealTime, Run, Segment, Time, TimeSpan};
 use base64::{self, STANDARD};
 use byteorder::{ReadBytesExt, BE};
-use imagelib::{png, Rgba, ImageBuffer, ColorType};
+use imagelib::{png, ColorType, ImageBuffer, Rgba};
 use super::xml_util::{self, text};
 use sxd_document::dom::Element;
-use sxd_document::parser::{Error as XmlError, parse as parse_xml};
+use sxd_document::parser::{parse as parse_xml, Error as XmlError};
 
 quick_error! {
     #[derive(Debug)]

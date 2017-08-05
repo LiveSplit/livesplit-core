@@ -1,5 +1,5 @@
-use std::io::{Write, Result};
-use {Type, TypeKind, Class};
+use std::io::{Result, Write};
+use {Class, Type, TypeKind};
 use std::collections::BTreeMap;
 use std::borrow::Cow;
 
@@ -24,13 +24,11 @@ fn get_type(ty: &Type) -> Cow<str> {
     });
     match (ty.is_custom, ty.kind) {
         (false, TypeKind::RefMut) => name.to_mut().push_str("*"),
-        (false, TypeKind::Ref) => {
-            if name == "char" {
-                name.to_mut().push_str(" const*")
-            } else {
-                name.to_mut().push_str("*")
-            }
-        }
+        (false, TypeKind::Ref) => if name == "char" {
+            name.to_mut().push_str(" const*")
+        } else {
+            name.to_mut().push_str("*")
+        },
         (true, TypeKind::Ref) => name = Cow::Borrowed("void*"),
         (true, _) => name = Cow::Borrowed("void*"),
         _ => (),

@@ -1,5 +1,5 @@
 use livesplit_core::component::timer::State as TimerComponentState;
-use super::{own_drop, acc, output_str, output_str_with};
+use super::{acc, output_str, output_str_with, own_drop};
 use libc::c_char;
 use std::fmt::Write;
 

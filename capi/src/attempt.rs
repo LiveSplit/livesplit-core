@@ -1,5 +1,5 @@
 use livesplit_core::{Attempt, Time};
-use super::{acc, output_time, output_time_span, alloc};
+use super::{acc, alloc, output_time, output_time_span};
 use std::ptr;
 use atomic_date_time::NullableOwnedAtomicDateTime;
 use time_span::NullableTimeSpan;

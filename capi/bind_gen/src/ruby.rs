@@ -1,4 +1,4 @@
-use std::io::{Write, Result};
+use std::io::{Result, Write};
 use {Class, Function, Type, TypeKind};
 use std::collections::BTreeMap;
 
@@ -22,26 +22,24 @@ fn get_ll_type(ty: &Type) -> &str {
     match (ty.kind, ty.name.as_str()) {
         (TypeKind::Ref, "c_char") => "string",
         (TypeKind::Ref, _) | (TypeKind::RefMut, _) => "pointer",
-        (_, t) if !ty.is_custom => {
-            match t {
-                "i8" => "int8",
-                "i16" => "int16",
-                "i32" => "int32",
-                "i64" => "int64",
-                "u8" => "uint8",
-                "u16" => "uint16",
-                "u32" => "uint32",
-                "u64" => "uint64",
-                "usize" => "size_t",
-                "f32" => "float",
-                "f64" => "double",
-                "bool" => "bool",
-                "()" => "void",
-                "c_char" => "char",
-                "Json" => "string",
-                x => x,
-            }
-        }
+        (_, t) if !ty.is_custom => match t {
+            "i8" => "int8",
+            "i16" => "int16",
+            "i32" => "int32",
+            "i64" => "int64",
+            "u8" => "uint8",
+            "u16" => "uint16",
+            "u32" => "uint32",
+            "u64" => "uint64",
+            "usize" => "size_t",
+            "f32" => "float",
+            "f64" => "double",
+            "bool" => "bool",
+            "()" => "void",
+            "c_char" => "char",
+            "Json" => "string",
+            x => x,
+        },
         _ => "pointer",
     }
 }

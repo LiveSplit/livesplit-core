@@ -1,5 +1,5 @@
 use livesplit_core::component::splits::State as SplitsComponentState;
-use super::{own_drop, acc, output_str, output_str_with, Nullablec_char};
+use super::{acc, output_str, output_str_with, own_drop, Nullablec_char};
 use libc::c_char;
 use std::ptr;
 use std::fmt::Write;

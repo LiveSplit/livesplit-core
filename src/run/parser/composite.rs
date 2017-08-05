@@ -1,9 +1,9 @@
 use std::path::PathBuf;
-use std::io::{self, BufRead, SeekFrom, Seek};
+use std::io::{self, BufRead, Seek, SeekFrom};
 use std::result::Result as StdResult;
 use Run;
-use super::{face_split, livesplit, llanfair, llanfair2, llanfair_gered, portal2_live_timer,
-            shit_split, splitterz, splitty, time_split_tracker, urn, wsplit};
+use super::{face_split, livesplit, llanfair, llanfair_gered, shit_split, splitterz, splitty,
+            time_split_tracker, urn, wsplit, llanfair2, portal2_live_timer};
 
 quick_error! {
     #[derive(Debug)]

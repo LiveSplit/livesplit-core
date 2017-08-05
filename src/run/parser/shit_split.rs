@@ -1,7 +1,7 @@
 use std::io::{self, BufRead};
 use std::result::Result as StdResult;
 use std::num::ParseIntError;
-use {Run, time, TimeSpan, GameTime, Segment};
+use {time, GameTime, Run, Segment, TimeSpan};
 
 quick_error! {
     #[derive(Debug)]

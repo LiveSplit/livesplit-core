@@ -1,8 +1,8 @@
 use std::borrow::Cow;
 use std::path::PathBuf;
 use std::cmp::max;
-use {AtomicDateTime, TimeSpan, Time, TimingMethod, Attempt, RunMetadata, Segment, Image};
-use comparison::{default_generators, ComparisonGenerator, personal_best};
+use {AtomicDateTime, Attempt, Image, RunMetadata, Segment, Time, TimeSpan, TimingMethod};
+use comparison::{default_generators, personal_best, ComparisonGenerator};
 use odds::vec::VecFindRemove;
 use unicase;
 

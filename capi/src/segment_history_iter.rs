@@ -1,7 +1,7 @@
 use livesplit_core::Time;
-use super::{own_drop, acc_mut, SEGMENT_HISTORY_ELEMENT};
+use super::{acc_mut, own_drop, SEGMENT_HISTORY_ELEMENT};
 use std::{ptr, slice};
-use segment_history_element::{SegmentHistoryElement, NullableSegmentHistoryElement};
+use segment_history_element::{NullableSegmentHistoryElement, SegmentHistoryElement};
 
 pub type SegmentHistoryIter = slice::Iter<'static, (i32, Time)>;
 pub type OwnedSegmentHistoryIter = *mut SegmentHistoryIter;

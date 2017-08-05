@@ -1,4 +1,4 @@
-use {Run, Timer, TimingMethod, TimeSpan, TimerPhase};
+use {Run, TimeSpan, Timer, TimerPhase, TimingMethod};
 use settings::SemanticColor;
 use comparison::{best_segments, personal_best};
 

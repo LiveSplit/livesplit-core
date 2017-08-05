@@ -1,6 +1,6 @@
 use super::{Editor, SegmentRow, TimingMethod};
 use comparison::personal_best;
-use time::formatter::{Accuracy, TimeFormatter, Short};
+use time::formatter::{Accuracy, Short, TimeFormatter};
 use time::formatter::none_wrapper::EmptyWrapper;
 use serde_json::{to_writer, Result as JsonResult};
 use std::io::Write;

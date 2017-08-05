@@ -1,5 +1,5 @@
 use livesplit_core::SegmentHistory;
-use super::{alloc, acc};
+use super::{acc, alloc};
 use segment_history_iter::OwnedSegmentHistoryIter;
 
 pub type OwnedSegmentHistory = *mut SegmentHistory;

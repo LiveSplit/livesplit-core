@@ -1,10 +1,10 @@
 use Timer;
-use time::formatter::{Regular, TimeFormatter, Accuracy};
+use time::formatter::{Accuracy, Regular, TimeFormatter};
 use serde_json::{to_writer, Result};
 use analysis::sum_of_segments::calculate_best;
 use std::io::Write;
 use std::borrow::Cow;
-use settings::{SettingsDescription, Field, Value, Gradient};
+use settings::{Field, Gradient, SettingsDescription, Value};
 use super::DEFAULT_INFO_TEXT_GRADIENT;
 
 #[derive(Default, Clone)]

@@ -1,6 +1,6 @@
 use livesplit_core::component::possible_time_save::Component as PossibleTimeSaveComponent;
 use livesplit_core::Timer;
-use super::{Json, alloc, own, own_drop, acc, output_vec};
+use super::{acc, alloc, output_vec, own, own_drop, Json};
 use possible_time_save_component_state::OwnedPossibleTimeSaveComponentState;
 use component::OwnedComponent;
 

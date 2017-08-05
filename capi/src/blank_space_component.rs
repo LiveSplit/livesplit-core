@@ -1,6 +1,6 @@
 use livesplit_core::component::blank_space::Component as BlankSpaceComponent;
 use livesplit_core::Timer;
-use super::{Json, alloc, own, own_drop, acc, output_vec, acc_mut};
+use super::{acc, acc_mut, alloc, output_vec, own, own_drop, Json};
 use blank_space_component_state::OwnedBlankSpaceComponentState;
 use component::OwnedComponent;
 

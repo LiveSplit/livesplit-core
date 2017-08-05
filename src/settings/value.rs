@@ -1,6 +1,6 @@
 use TimingMethod;
 use super::{Color, Gradient};
-use time::formatter::{DigitsFormat, Accuracy};
+use time::formatter::{Accuracy, DigitsFormat};
 use std::result::Result as StdResult;
 
 #[derive(From, Serialize, Deserialize)]

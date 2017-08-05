@@ -1,6 +1,6 @@
 use livesplit_core::{LayoutEditor, Timer};
 use layout::OwnedLayout;
-use super::{Json, alloc, own, output_vec, acc, acc_mut};
+use super::{acc, acc_mut, alloc, output_vec, own, Json};
 use component::OwnedComponent;
 use setting_value::OwnedSettingValue;
 use std::ptr;

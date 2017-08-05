@@ -1,5 +1,5 @@
-use std::io::{Write, Result};
-use {Class, Function, Type, TypeKind, typescript};
+use std::io::{Result, Write};
+use {typescript, Class, Function, Type, TypeKind};
 use heck::MixedCase;
 use std::collections::BTreeMap;
 
@@ -22,26 +22,24 @@ fn get_hl_type_without_null(ty: &Type) -> String {
         match (ty.kind, ty.name.as_str()) {
             (TypeKind::Ref, "c_char") => "string",
             (TypeKind::Ref, _) | (TypeKind::RefMut, _) => "Buffer",
-            (_, t) if !ty.is_custom => {
-                match t {
-                    "i8" => "number",
-                    "i16" => "number",
-                    "i32" => "number",
-                    "i64" => "number",
-                    "u8" => "number",
-                    "u16" => "number",
-                    "u32" => "number",
-                    "u64" => "number",
-                    "usize" => "number",
-                    "f32" => "number",
-                    "f64" => "number",
-                    "bool" => "boolean",
-                    "()" => "void",
-                    "c_char" => "string",
-                    "Json" => "any",
-                    x => x,
-                }
-            }
+            (_, t) if !ty.is_custom => match t {
+                "i8" => "number",
+                "i16" => "number",
+                "i32" => "number",
+                "i64" => "number",
+                "u8" => "number",
+                "u16" => "number",
+                "u32" => "number",
+                "u64" => "number",
+                "usize" => "number",
+                "f32" => "number",
+                "f64" => "number",
+                "bool" => "boolean",
+                "()" => "void",
+                "c_char" => "string",
+                "Json" => "any",
+                x => x,
+            },
             _ => unreachable!(),
         }.to_string()
     }
@@ -51,25 +49,23 @@ fn get_ll_type(ty: &Type) -> &str {
     match (ty.kind, ty.name.as_str()) {
         (TypeKind::Ref, "c_char") | (_, "Json") => "'CString'",
         (TypeKind::Ref, _) | (TypeKind::RefMut, _) => "'pointer'",
-        (_, t) if !ty.is_custom => {
-            match t {
-                "i8" => "'int8'",
-                "i16" => "'int16'",
-                "i32" => "'int32'",
-                "i64" => "'int64'",
-                "u8" => "'uint8'",
-                "u16" => "'uint16'",
-                "u32" => "'uint32'",
-                "u64" => "'uint64'",
-                "usize" => "'size_t'",
-                "f32" => "'float'",
-                "f64" => "'double'",
-                "bool" => "'bool'",
-                "()" => "'void'",
-                "c_char" => "'char'",
-                x => x,
-            }
-        }
+        (_, t) if !ty.is_custom => match t {
+            "i8" => "'int8'",
+            "i16" => "'int16'",
+            "i32" => "'int32'",
+            "i64" => "'int64'",
+            "u8" => "'uint8'",
+            "u16" => "'uint16'",
+            "u32" => "'uint32'",
+            "u64" => "'uint64'",
+            "usize" => "'size_t'",
+            "f32" => "'float'",
+            "f64" => "'double'",
+            "bool" => "'bool'",
+            "()" => "'void'",
+            "c_char" => "'char'",
+            x => x,
+        },
         _ => "'pointer'",
     }
 }
@@ -168,9 +164,13 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
 
     if has_return_type {
         if function.output.is_custom {
-            write!(writer, r#"var result = new {}("#, return_type_without_null)?;
+            write!(
+                writer,
+                r#"const result = new {}("#,
+                return_type_without_null
+            )?;
         } else {
-            write!(writer, "var result = ")?;
+            write!(writer, "const result = ")?;
         }
     }
 
@@ -257,13 +257,14 @@ pub fn write<W: Write>(
         write!(
             writer,
             r#""use strict";
+// tslint:disable
 import ffi = require('ffi');
 import fs = require('fs');
 import ref = require('ref');
 
 {}
 
-var liveSplitCoreNative = ffi.Library('livesplit_core', {{"#,
+const liveSplitCoreNative = ffi.Library('livesplit_core', {{"#,
             typescript::HEADER
         )?;
     } else {
@@ -271,11 +272,11 @@ var liveSplitCoreNative = ffi.Library('livesplit_core', {{"#,
             writer,
             "{}",
             r#""use strict";
-var ffi = require('ffi');
-var fs = require('fs');
-var ref = require('ref');
+const ffi = require('ffi');
+const fs = require('fs');
+const ref = require('ref');
 
-var liveSplitCoreNative = ffi.Library('livesplit_core', {"#
+const liveSplitCoreNative = ffi.Library('livesplit_core', {"#
         )?;
     }
 
@@ -422,6 +423,39 @@ export "#.to_string()
             write_fn(&mut writer, function, type_script)?;
         }
 
+        if class_name == "RunEditor" {
+            if type_script {
+                write!(
+                    writer,
+                    "{}",
+                    r#"
+    setGameIconFromArray(data: Int8Array) {
+        let buf = Buffer.from(data.buffer);
+        if (data.byteLength !== data.buffer.byteLength) {
+            buf = buf.slice(data.byteOffset, data.byteOffset + data.byteLength);
+        }
+        this.setGameIcon(buf, buf.byteLength);
+    }"#
+                )?;
+            } else {
+                write!(
+                    writer,
+                    "{}",
+                    r#"
+    /**
+     * @param {Int8Array} data
+     */
+    setGameIconFromArray(data) {
+        let buf = Buffer.from(data.buffer);
+        if (data.byteLength !== data.buffer.byteLength) {
+            buf = buf.slice(data.byteOffset, data.byteOffset + data.byteLength);
+        }
+        this.setGameIcon(buf, buf.byteLength);
+    }"#
+                )?;
+            }
+        }
+
         write!(
             writer,
             r#"
@@ -504,18 +538,18 @@ export "#.to_string()
                     "{}",
                     r#"
     static parseArray(data: Int8Array): Run {
-        var buf = Buffer.from(data.buffer);
+        let buf = Buffer.from(data.buffer);
         if (data.byteLength !== data.buffer.byteLength) {
             buf = buf.slice(data.byteOffset, data.byteOffset + data.byteLength);
         }
         return Run.parse(buf, buf.byteLength);
     }
     static parseFile(file: any) {
-        var data = fs.readFileSync(file);
+        const data = fs.readFileSync(file);
         return Run.parse(data, data.byteLength);
     }
     static parseString(text: string): Run {
-        let data = new Buffer(text);
+        const data = new Buffer(text);
         return Run.parse(data, data.byteLength);
     }"#
                 )?;
@@ -529,7 +563,7 @@ export "#.to_string()
      * @return {Run}
      */
     static parseArray(data) {
-        var buf = Buffer.from(data.buffer);
+        let buf = Buffer.from(data.buffer);
         if (data.byteLength !== data.buffer.byteLength) {
             buf = buf.slice(data.byteOffset, data.byteOffset + data.byteLength);
         }
@@ -540,7 +574,7 @@ export "#.to_string()
      * @return {Run}
      */
     static parseFile(file) {
-        var data = fs.readFileSync(file);
+        const data = fs.readFileSync(file);
         return Run.parse(data, data.byteLength);
     }
     /**
@@ -548,7 +582,7 @@ export "#.to_string()
      * @return {Run}
      */
     static parseString(text) {
-        let data = new Buffer(text);
+        const data = new Buffer(text);
         return Run.parse(data, data.byteLength);
     }"#
                 )?;

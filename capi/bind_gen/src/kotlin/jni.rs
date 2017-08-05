@@ -1,4 +1,4 @@
-use std::io::{Write, Result, BufWriter};
+use std::io::{BufWriter, Result, Write};
 use {Class, Function, Type, TypeKind};
 use heck::MixedCase;
 use std::collections::BTreeMap;
@@ -25,26 +25,24 @@ fn get_ll_type<'a>(ty: &'a Type) -> &'a str {
     match (ty.kind, ty.name.as_str()) {
         (TypeKind::Ref, "c_char") => "String",
         (TypeKind::Ref, _) | (TypeKind::RefMut, _) => "Long",
-        (_, t) if !ty.is_custom => {
-            match t {
-                "i8" => "Byte",
-                "i16" => "Short",
-                "i32" => "Int",
-                "i64" => "Long",
-                "u8" => "Byte",
-                "u16" => "Short",
-                "u32" => "Int",
-                "u64" => "Long",
-                "usize" => "Long",
-                "f32" => "Float",
-                "f64" => "Double",
-                "bool" => "Boolean",
-                "()" => "Unit",
-                "c_char" => "Byte",
-                "Json" => "String",
-                x => x,
-            }
-        }
+        (_, t) if !ty.is_custom => match t {
+            "i8" => "Byte",
+            "i16" => "Short",
+            "i32" => "Int",
+            "i64" => "Long",
+            "u8" => "Byte",
+            "u16" => "Short",
+            "u32" => "Int",
+            "u64" => "Long",
+            "usize" => "Long",
+            "f32" => "Float",
+            "f64" => "Double",
+            "bool" => "Boolean",
+            "()" => "Unit",
+            "c_char" => "Byte",
+            "Json" => "String",
+            x => x,
+        },
         _ => "Long",
     }
 }

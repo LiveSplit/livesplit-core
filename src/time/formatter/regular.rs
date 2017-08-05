@@ -1,4 +1,4 @@
-use std::fmt::{Result, Formatter, Display};
+use std::fmt::{Display, Formatter, Result};
 use super::{Accuracy, TimeFormatter, DASH};
 use TimeSpan;
 

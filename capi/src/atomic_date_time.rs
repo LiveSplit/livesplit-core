@@ -1,5 +1,5 @@
 use livesplit_core::AtomicDateTime;
-use {acc, own_drop, output_str};
+use {acc, output_str, own_drop};
 use libc::c_char;
 
 pub type OwnedAtomicDateTime = *mut AtomicDateTime;

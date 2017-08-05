@@ -1,4 +1,4 @@
-use std::io::{Write, Result};
+use std::io::{Result, Write};
 use {Class, Function, Type, TypeKind};
 use std::collections::BTreeMap;
 
@@ -18,26 +18,24 @@ fn get_ll_type(ty: &Type) -> &str {
     match (ty.kind, ty.name.as_str()) {
         (TypeKind::Ref, "c_char") => "c_char_p",
         (TypeKind::Ref, _) | (TypeKind::RefMut, _) => "c_void_p",
-        (_, t) if !ty.is_custom => {
-            match t {
-                "i8" => "c_int8",
-                "i16" => "c_int16",
-                "i32" => "c_int32",
-                "i64" => "c_int64",
-                "u8" => "c_uint8",
-                "u16" => "c_uint16",
-                "u32" => "c_uint32",
-                "u64" => "c_uint64",
-                "usize" => "c_size_t",
-                "f32" => "c_float",
-                "f64" => "c_double",
-                "bool" => "c_bool",
-                "()" => "None",
-                "c_char" => "c_char",
-                "Json" => "c_char_p",
-                x => x,
-            }
-        }
+        (_, t) if !ty.is_custom => match t {
+            "i8" => "c_int8",
+            "i16" => "c_int16",
+            "i32" => "c_int32",
+            "i64" => "c_int64",
+            "u8" => "c_uint8",
+            "u16" => "c_uint16",
+            "u32" => "c_uint32",
+            "u64" => "c_uint64",
+            "usize" => "c_size_t",
+            "f32" => "c_float",
+            "f64" => "c_double",
+            "bool" => "c_bool",
+            "()" => "None",
+            "c_char" => "c_char",
+            "Json" => "c_char_p",
+            x => x,
+        },
         _ => "c_void_p",
     }
 }

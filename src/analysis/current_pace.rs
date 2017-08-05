@@ -1,4 +1,4 @@
-use {Timer, TimeSpan, TimerPhase};
+use {TimeSpan, Timer, TimerPhase};
 use analysis;
 
 pub fn calculate(timer: &Timer, comparison: &str) -> Option<TimeSpan> {

@@ -1,10 +1,10 @@
-use {Timer, comparison, GeneralLayoutSettings};
+use {comparison, GeneralLayoutSettings, Timer};
 use serde_json::{to_writer, Result};
 use std::io::Write;
-use analysis::{state_helper, delta};
-use time::formatter::{Delta, TimeFormatter, Accuracy};
+use analysis::{delta, state_helper};
+use time::formatter::{Accuracy, Delta, TimeFormatter};
 use std::borrow::Cow;
-use settings::{SettingsDescription, Field, Value, SemanticColor, Gradient, Color};
+use settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
 use super::DEFAULT_INFO_TEXT_GRADIENT;
 
 #[derive(Default, Clone)]

@@ -1,7 +1,7 @@
-use livesplit_core::settings::{Value as SettingValue, Color, Gradient};
+use livesplit_core::settings::{Color, Gradient, Value as SettingValue};
 use livesplit_core::time::formatter::{Accuracy, DigitsFormat};
 use livesplit_core::TimingMethod;
-use {alloc, str, own_drop};
+use {alloc, own_drop, str};
 use libc::c_char;
 use std::ptr;
 

@@ -1,4 +1,4 @@
-use {Timer, Run, TimeSpan, TimingMethod};
+use {Run, TimeSpan, Timer, TimingMethod};
 
 pub trait TotalPlaytime {
     fn total_playtime(&self) -> TimeSpan;

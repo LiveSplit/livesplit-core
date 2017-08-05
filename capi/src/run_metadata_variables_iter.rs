@@ -1,7 +1,7 @@
-use super::{own_drop, acc_mut, RUN_METADATA_VARIABLE};
+use super::{acc_mut, own_drop, RUN_METADATA_VARIABLE};
 use std::ptr;
 use livesplit_core::ordermap;
-use run_metadata_variable::{RunMetadataVariable, NullableRunMetadataVariable};
+use run_metadata_variable::{NullableRunMetadataVariable, RunMetadataVariable};
 
 pub type RunMetadataVariablesIter = ordermap::Iter<'static, String, String>;
 pub type OwnedRunMetadataVariablesIter = *mut RunMetadataVariablesIter;

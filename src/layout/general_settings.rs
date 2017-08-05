@@ -1,4 +1,4 @@
-use settings::{Color, Gradient, SettingsDescription, Field, Value};
+use settings::{Color, Field, Gradient, SettingsDescription, Value};
 
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(default)]

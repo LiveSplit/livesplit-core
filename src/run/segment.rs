@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use {SegmentHistory, Image, Time, TimingMethod, TimeSpan};
+use {Image, SegmentHistory, Time, TimeSpan, TimingMethod};
 use comparison::personal_best;
 
 #[derive(Clone, Default, Debug)]

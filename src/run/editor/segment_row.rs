@@ -40,8 +40,7 @@ impl<'a> SegmentRow<'a> {
         self.editor
             .run
             .segment(self.index)
-            .personal_best_split_time()
-            [method]
+            .personal_best_split_time()[method]
     }
 
     pub fn set_split_time(&mut self, time: Option<TimeSpan>) {
@@ -49,8 +48,7 @@ impl<'a> SegmentRow<'a> {
         self.editor
             .run
             .segment_mut(self.index)
-            .personal_best_split_time_mut()
-            [method] = time;
+            .personal_best_split_time_mut()[method] = time;
         self.editor.times_modified();
         self.editor.fix();
     }
@@ -92,8 +90,7 @@ impl<'a> SegmentRow<'a> {
         self.editor
             .run
             .segment_mut(self.index)
-            .best_segment_time_mut()
-            [method] = time;
+            .best_segment_time_mut()[method] = time;
         self.editor.times_modified();
         self.editor.fix();
     }
@@ -116,8 +113,7 @@ impl<'a> SegmentRow<'a> {
         self.editor
             .run
             .segment_mut(self.index)
-            .comparison_mut(comparison)
-            [method] = time;
+            .comparison_mut(comparison)[method] = time;
         self.editor.times_modified();
         self.editor.fix();
     }

@@ -1,5 +1,5 @@
-use palette::{Rgba, Hsla};
-use serde::{Serialize, Deserialize, Serializer, Deserializer};
+use palette::{Hsla, Rgba};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 #[derive(Copy, Clone, PartialEq, From)]
 pub struct Color {

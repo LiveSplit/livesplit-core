@@ -1,6 +1,6 @@
-use {SharedTimer, HotkeyConfig};
+use {HotkeyConfig, SharedTimer};
 use hotkey::{Hook, KeyCode};
-pub use hotkey::{Result, Error};
+pub use hotkey::{Error, Result};
 
 pub struct HotkeySystem {
     config: HotkeyConfig,
