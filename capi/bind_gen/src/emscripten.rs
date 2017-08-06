@@ -417,6 +417,15 @@ export "#.to_string()
         } finally {
             emscriptenModule._free(buf);
         }
+    }
+    selectedSetIconFromArray(data: Int8Array) {
+        const buf = emscriptenModule._malloc(data.length);
+        try {
+            emscriptenModule.writeArrayToMemory(data, buf);
+            this.selectedSetIcon(buf, data.length);
+        } finally {
+            emscriptenModule._free(buf);
+        }
     }"#
                 )?;
             } else {
@@ -432,6 +441,18 @@ export "#.to_string()
         try {
             emscriptenModule.writeArrayToMemory(data, buf);
             this.setGameIcon(buf, data.length);
+        } finally {
+            emscriptenModule._free(buf);
+        }
+    }
+    /**
+     * @param {Int8Array} data
+     */
+    selectedSetIconFromArray(data) {
+        const buf = emscriptenModule._malloc(data.length);
+        try {
+            emscriptenModule.writeArrayToMemory(data, buf);
+            this.selectedSetIcon(buf, data.length);
         } finally {
             emscriptenModule._free(buf);
         }

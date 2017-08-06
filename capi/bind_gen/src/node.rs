@@ -435,6 +435,13 @@ export "#.to_string()
             buf = buf.slice(data.byteOffset, data.byteOffset + data.byteLength);
         }
         this.setGameIcon(buf, buf.byteLength);
+    }
+    selectedSetIconFromArray(data: Int8Array) {
+        let buf = Buffer.from(data.buffer);
+        if (data.byteLength !== data.buffer.byteLength) {
+            buf = buf.slice(data.byteOffset, data.byteOffset + data.byteLength);
+        }
+        this.selectedSetIconFromArray(buf, buf.byteLength);
     }"#
                 )?;
             } else {
@@ -451,6 +458,16 @@ export "#.to_string()
             buf = buf.slice(data.byteOffset, data.byteOffset + data.byteLength);
         }
         this.setGameIcon(buf, buf.byteLength);
+    }
+    /**
+     * @param {Int8Array} data
+     */
+    selectedSetIconFromArray(data) {
+        let buf = Buffer.from(data.buffer);
+        if (data.byteLength !== data.buffer.byteLength) {
+            buf = buf.slice(data.byteOffset, data.byteOffset + data.byteLength);
+        }
+        this.selectedSetIconFromArray(buf, buf.byteLength);
     }"#
                 )?;
             }
