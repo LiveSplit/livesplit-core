@@ -157,6 +157,11 @@ impl Run {
     }
 
     #[inline]
+    pub fn custom_comparisons_mut(&mut self) -> &mut Vec<String> {
+        &mut self.custom_comparisons
+    }
+
+    #[inline]
     pub fn comparisons(&self) -> ComparisonsIter {
         ComparisonsIter {
             custom: &self.custom_comparisons,

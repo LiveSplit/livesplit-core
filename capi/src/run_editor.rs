@@ -172,3 +172,19 @@ pub unsafe extern "C" fn RunEditor_selected_parse_and_set_comparison_time(
         .parse_and_set_comparison_time(str(comparison), str(time))
         .is_ok()
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn RunEditor_add_comparison(
+    this: *mut RunEditor,
+    comparison: *const c_char,
+) -> bool {
+    acc_mut(this).add_comparison(str(comparison)).is_ok()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn RunEditor_remove_comparison(
+    this: *mut RunEditor,
+    comparison: *const c_char,
+) {
+    acc_mut(this).remove_comparison(str(comparison));
+}

@@ -465,4 +465,23 @@ impl Editor {
 
         self.fix();
     }
+
+    pub fn add_comparison<S: Into<String>>(&mut self, comparison: S) -> Result<(), ()> {
+        let comparison = comparison.into();
+        if comparison.starts_with("[Race]") {
+            return Err(());
+        }
+        if !self.run.comparisons().any(|c| c == comparison) {
+            self.run.add_custom_comparison(comparison);
+            Ok(())
+        } else {
+            Err(())
+        }
+    }
+
+    pub fn remove_comparison(&mut self, comparison: &str) {
+        self.run
+            .custom_comparisons_mut()
+            .retain(|c| c != comparison);
+    }
 }
