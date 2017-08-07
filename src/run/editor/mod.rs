@@ -1,6 +1,6 @@
 use std::num::ParseIntError;
 use std::mem::swap;
-use {Image, Run, Segment, Time, TimeSpan, TimingMethod};
+use {unicase, Image, Run, Segment, Time, TimeSpan, TimingMethod};
 use time::ParseError as ParseTimeSpanError;
 
 mod segment_row;
@@ -468,11 +468,41 @@ impl Editor {
 
     pub fn add_comparison<S: Into<String>>(&mut self, comparison: S) -> Result<(), ()> {
         let comparison = comparison.into();
-        if comparison.starts_with("[Race]") {
-            return Err(());
-        }
-        if !self.run.comparisons().any(|c| c == comparison) {
+        if validate_comparison_name(&self.run, &comparison) {
             self.run.add_custom_comparison(comparison);
+            self.fix();
+            Ok(())
+        } else {
+            Err(())
+        }
+    }
+
+    pub fn import_comparison<S: Into<String>>(
+        &mut self,
+        run: &Run,
+        comparison: S,
+    ) -> Result<(), ()> {
+        let comparison = comparison.into();
+        if validate_comparison_name(&self.run, &comparison) {
+            self.run.add_custom_comparison(comparison.as_str());
+
+            for segment in run.segments().iter().take(run.len().saturating_sub(1)) {
+                if let Some(my_segment) = self.run
+                    .segments_mut()
+                    .iter_mut()
+                    .find(|s| unicase::eq(segment.name(), s.name()))
+                {
+                    *my_segment.comparison_mut(&comparison) = segment.personal_best_split_time();
+                }
+            }
+
+            if let (Some(my_segment), Some(segment)) =
+                (self.run.segments_mut().last_mut(), run.segments().last())
+            {
+                *my_segment.comparison_mut(&comparison) = segment.personal_best_split_time();
+            }
+
+            self.fix();
             Ok(())
         } else {
             Err(())
@@ -483,5 +513,10 @@ impl Editor {
         self.run
             .custom_comparisons_mut()
             .retain(|c| c != comparison);
+        self.fix();
     }
+}
+
+fn validate_comparison_name(run: &Run, comparison: &str) -> bool {
+    !comparison.starts_with("[Race]") && !run.comparisons().any(|c| c == comparison)
 }
