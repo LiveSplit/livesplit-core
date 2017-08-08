@@ -513,7 +513,37 @@ impl Editor {
         self.run
             .custom_comparisons_mut()
             .retain(|c| c != comparison);
+
+        for segment in self.run.segments_mut() {
+            segment.comparisons_mut().remove(comparison);
+        }
+
         self.fix();
+    }
+
+    pub fn rename_comparison(&mut self, old: &str, new: &str) -> Result<(), ()> {
+        if validate_comparison_name(&self.run, new) {
+            let position = self.run
+                .custom_comparisons()
+                .iter()
+                .position(|c| c == old)
+                .ok_or(())?;
+
+            self.run.custom_comparisons_mut().remove(position);
+            self.run.add_custom_comparison(new);
+
+            for segment in self.run.segments_mut() {
+                if let Some(time) = segment.comparisons_mut().remove(old) {
+                    *segment.comparison_mut(new) = time;
+                }
+            }
+
+            self.fix();
+
+            Ok(())
+        } else {
+            Err(())
+        }
     }
 }
 

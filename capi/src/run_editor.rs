@@ -199,3 +199,12 @@ pub unsafe extern "C" fn RunEditor_remove_comparison(
 ) {
     acc_mut(this).remove_comparison(str(comparison));
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn RunEditor_rename_comparison(
+    this: *mut RunEditor,
+    old: *const c_char,
+    new: *const c_char,
+) -> bool {
+    acc_mut(this).rename_comparison(str(old), str(new)).is_ok()
+}
