@@ -522,6 +522,10 @@ impl Editor {
     }
 
     pub fn rename_comparison(&mut self, old: &str, new: &str) -> Result<(), ()> {
+        if old == new {
+            return Ok(());
+        }
+
         if validate_comparison_name(&self.run, new) {
             let position = self.run
                 .custom_comparisons()
@@ -529,8 +533,7 @@ impl Editor {
                 .position(|c| c == old)
                 .ok_or(())?;
 
-            self.run.custom_comparisons_mut().remove(position);
-            self.run.add_custom_comparison(new);
+            self.run.custom_comparisons_mut()[position] = new.to_string();
 
             for segment in self.run.segments_mut() {
                 if let Some(time) = segment.comparisons_mut().remove(old) {

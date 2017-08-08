@@ -206,5 +206,7 @@ pub unsafe extern "C" fn RunEditor_rename_comparison(
     old_name: *const c_char,
     new_name: *const c_char,
 ) -> bool {
-    acc_mut(this).rename_comparison(str(old_name), str(new_name)).is_ok()
+    acc_mut(this)
+        .rename_comparison(str(old_name), str(new_name))
+        .is_ok()
 }
