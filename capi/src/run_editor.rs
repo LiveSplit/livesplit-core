@@ -88,6 +88,11 @@ pub unsafe extern "C" fn RunEditor_set_game_icon(
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn RunEditor_remove_game_icon(this: *mut RunEditor) {
+    acc_mut(this).remove_game_icon();
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn RunEditor_insert_segment_above(this: *mut RunEditor) {
     acc_mut(this).insert_segment_above();
 }
@@ -121,6 +126,11 @@ pub unsafe extern "C" fn RunEditor_selected_set_icon(
     acc_mut(this)
         .selected_segment()
         .set_icon(slice::from_raw_parts(data, length));
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn RunEditor_selected_remove_icon(this: *mut RunEditor) {
+    acc_mut(this).selected_segment().remove_icon();
 }
 
 #[no_mangle]

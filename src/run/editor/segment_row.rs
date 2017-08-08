@@ -23,6 +23,11 @@ impl<'a> SegmentRow<'a> {
         self.editor.raise_run_edited();
     }
 
+    pub fn remove_icon(&mut self) {
+        self.editor.run.segment_mut(self.index).set_icon(&[]);
+        self.editor.raise_run_edited();
+    }
+
     pub fn name(&self) -> &str {
         self.editor.run.segment(self.index).name()
     }

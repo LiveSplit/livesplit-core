@@ -171,6 +171,11 @@ impl Editor {
         self.raise_run_edited();
     }
 
+    pub fn remove_game_icon(&mut self) {
+        self.run.set_game_icon(&[]);
+        self.raise_run_edited();
+    }
+
     pub fn custom_comparisons(&self) -> &[String] {
         self.run.custom_comparisons()
     }
