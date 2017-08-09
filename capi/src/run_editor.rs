@@ -220,3 +220,13 @@ pub unsafe extern "C" fn RunEditor_rename_comparison(
         .rename_comparison(str(old_name), str(new_name))
         .is_ok()
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn RunEditor_clear_history(this: *mut RunEditor) {
+    acc_mut(this).clear_history();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn RunEditor_clear_times(this: *mut RunEditor) {
+    acc_mut(this).clear_times();
+}

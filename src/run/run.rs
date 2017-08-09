@@ -363,6 +363,24 @@ impl Run {
         self.remove_null_values();
     }
 
+    pub fn clear_history(&mut self) {
+        self.attempt_history.clear();
+        for segment in &mut self.segments {
+            segment.segment_history_mut().clear();
+        }
+    }
+
+    pub fn clear_times(&mut self) {
+        self.clear_history();
+        self.custom_comparisons.retain(|c| c == personal_best::NAME);
+        for segment in &mut self.segments {
+            segment.comparisons_mut().clear();
+            segment.set_best_segment_time(Time::default());
+        }
+        self.attempt_count = 0;
+        self.metadata.set_run_id("");
+    }
+
     fn fix_comparison_times_and_history(&mut self, method: TimingMethod) {
         // Remove negative Best Segment Times
         for segment in &mut self.segments {

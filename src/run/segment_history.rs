@@ -59,6 +59,11 @@ impl SegmentHistory {
     }
 
     #[inline]
+    pub fn clear(&mut self) {
+        self.0.clear();
+    }
+
+    #[inline]
     pub fn retain<F>(&mut self, f: F)
     where
         F: FnMut(&(i32, Time)) -> bool,

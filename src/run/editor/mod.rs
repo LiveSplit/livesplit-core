@@ -553,6 +553,16 @@ impl Editor {
             Err(())
         }
     }
+
+    pub fn clear_history(&mut self) {
+        self.run.clear_history();
+        self.fix();
+    }
+
+    pub fn clear_times(&mut self) {
+        self.run.clear_times();
+        self.fix();
+    }
 }
 
 fn validate_comparison_name(run: &Run, comparison: &str) -> bool {
