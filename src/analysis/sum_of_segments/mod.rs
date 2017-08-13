@@ -91,7 +91,7 @@ fn track_personal_best_run(
     (0, Time::default())
 }
 
-fn track_branch(
+pub fn track_branch(
     segments: &[Segment],
     current_time: Option<TimeSpan>,
     segment_index: usize,

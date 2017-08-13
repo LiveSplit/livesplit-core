@@ -1,6 +1,7 @@
 use livesplit_core::{Run, RunEditor, TimingMethod};
 use super::{acc, acc_mut, alloc, output_vec, own, str, Json};
 use run::OwnedRun;
+use sum_of_best_cleaner::OwnedSumOfBestCleaner;
 use libc::c_char;
 use std::{ptr, slice};
 
@@ -229,4 +230,11 @@ pub unsafe extern "C" fn RunEditor_clear_history(this: *mut RunEditor) {
 #[no_mangle]
 pub unsafe extern "C" fn RunEditor_clear_times(this: *mut RunEditor) {
     acc_mut(this).clear_times();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn RunEditor_clean_sum_of_best(
+    this: *mut RunEditor,
+) -> OwnedSumOfBestCleaner {
+    alloc(acc_mut(this).clean_sum_of_best())
 }

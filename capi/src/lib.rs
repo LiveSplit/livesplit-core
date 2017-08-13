@@ -57,6 +57,7 @@ pub mod title_component;
 pub mod total_playtime_component_state;
 pub mod total_playtime_component;
 pub mod run_editor;
+pub mod sum_of_best_cleaner;
 pub mod shared_timer;
 pub mod timer_read_lock;
 pub mod timer_write_lock;

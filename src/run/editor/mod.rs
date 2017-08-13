@@ -3,6 +3,7 @@ use std::mem::swap;
 use {unicase, Image, Run, Segment, Time, TimeSpan, TimingMethod};
 use time::ParseError as ParseTimeSpanError;
 
+pub mod cleaning;
 mod segment_row;
 mod state;
 #[cfg(test)]
@@ -10,6 +11,7 @@ mod tests;
 
 pub use self::segment_row::SegmentRow;
 pub use self::state::{Buttons as ButtonsState, Segment as SegmentState, State};
+pub use self::cleaning::SumOfBestCleaner;
 
 quick_error! {
     #[derive(Debug)]
@@ -562,6 +564,10 @@ impl Editor {
     pub fn clear_times(&mut self) {
         self.run.clear_times();
         self.fix();
+    }
+
+    pub fn clean_sum_of_best(&mut self) -> SumOfBestCleaner {
+        SumOfBestCleaner::new(&mut self.run)
     }
 }
 
