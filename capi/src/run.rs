@@ -120,7 +120,7 @@ pub unsafe extern "C" fn Run_len(this: *const Run) -> usize {
 
 #[no_mangle]
 pub unsafe extern "C" fn Run_segment(this: *const Run, index: usize) -> *const Segment {
-    acc(this).segments.get(index).unwrap_or(std::ptr::null())
+    acc(this).segments.get(index).map_or(ptr::null(), |p| p as *const Segment)
 }
 
 #[no_mangle]
