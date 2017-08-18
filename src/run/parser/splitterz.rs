@@ -62,7 +62,7 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
 
             let time: TimeSpan = splits.next().ok_or(Error::ExpectedBestSegment)?.parse()?;
             if time != TimeSpan::zero() {
-                segment.set_best_segment_time(Time::new().with_real_time(Some(time)));
+                segment.best_segment_time = Time::new().with_real_time(Some(time));
             }
 
             if load_icons {
@@ -71,7 +71,7 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
                         if let Ok(image) =
                             Image::from_file(unescape(icon_path).as_ref(), &mut icon_buf)
                         {
-                            segment.set_icon(image);
+                            segment.icon = image;
                         }
                     }
                 }

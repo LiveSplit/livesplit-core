@@ -218,7 +218,7 @@ impl Component {
         let icon_change = if self.settings.display_icon {
             timer
                 .current_split()
-                .and_then(|s| s.icon().check_for_change(icon_id).map(str::to_owned))
+                .and_then(|s| s.icon.check_for_change(icon_id).map(str::to_owned))
         } else if *icon_id != 0 {
             *icon_id = 0;
             Some(String::new())
@@ -227,7 +227,7 @@ impl Component {
         };
 
         let segment_name = if self.settings.show_segment_name {
-            timer.current_split().map(|s| s.name().to_owned())
+            timer.current_split().map(|s| s.name.clone())
         } else {
             None
         };
@@ -320,7 +320,7 @@ fn calculate_comparison_time(
     last_split_index: usize,
 ) -> Option<TimeSpan> {
     if comparison == best_segments::NAME {
-        timer.run().segments[last_split_index].best_segment_time()[timing_method]
+        timer.run().segments[last_split_index].best_segment_time[timing_method]
     } else if last_split_index == 0 {
         timer
             .run()
@@ -348,7 +348,7 @@ fn calculate_segment_time(
     last_split_index: usize,
 ) -> Option<TimeSpan> {
     let last_split = if last_split_index > 0 {
-        timer.run().segments[last_split_index - 1].split_time()[timing_method]
+        timer.run().segments[last_split_index - 1].split_time[timing_method]
     } else {
         Some(TimeSpan::zero())
     };

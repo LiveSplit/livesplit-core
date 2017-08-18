@@ -62,12 +62,12 @@ impl<'r> fmt::Display for PotentialCleanUp<'r> {
         )?;
 
         if let Some(starting_segment) = self.starting_segment {
-            write!(f, "{}", starting_segment.name())?;
+            write!(f, "{}", starting_segment.name)?;
         } else {
             write!(f, "the start of the run")?;
         }
 
-        write!(f, " and {}", self.ending_segment.name())?;
+        write!(f, " and {}", self.ending_segment.name)?;
 
         if let Some(combined) = self.combined_sum_of_best {
             write!(
@@ -111,7 +111,7 @@ impl<'r> SumOfBestCleaner<'r> {
     pub fn apply(&mut self, clean_up: CleanUp) {
         self.run
             .segments[clean_up.ending_index]
-            .segment_history_mut()
+            .segment_history
             .remove(clean_up.run_index);
 
         self.run.mark_as_changed();
@@ -146,7 +146,7 @@ impl<'r> SumOfBestCleaner<'r> {
                 State::IteratingHistory(state) => {
                     let iter = self.run
                         .segments[state.parent.segment_index]
-                        .segment_history()
+                        .segment_history
                         .iter()
                         .enumerate()
                         .skip(state.skip_count);
@@ -201,7 +201,7 @@ fn check_prediction<'a>(
     if let Some(predicted_time) = predicted_time {
         if predictions[ending_index + 1].map_or(true, |t| predicted_time < t) {
             if let Some(segment_history_element) =
-                run.segments[ending_index].segment_history().get(run_index)
+                run.segments[ending_index].segment_history.get(run_index)
             {
                 return Some(PotentialCleanUp {
                     starting_segment: if starting_index >= 0 {

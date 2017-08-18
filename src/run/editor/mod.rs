@@ -256,7 +256,7 @@ impl Editor {
         let max_index = self.run.max_attempt_history_index().unwrap_or(0);
         let min_index = self.run.min_segment_history_index();
         for x in min_index..max_index + 1 {
-            segment.segment_history_mut().insert(x, Default::default());
+            segment.segment_history.insert(x, Default::default());
         }
         self.run.segments.insert(selected_segment, segment);
 
@@ -277,7 +277,7 @@ impl Editor {
         let max_index = self.run.max_attempt_history_index().unwrap_or(0);
         let min_index = self.run.min_segment_history_index();
         for x in min_index..max_index + 1 {
-            segment.segment_history_mut().insert(x, Default::default());
+            segment.segment_history.insert(x, Default::default());
         }
         self.run.segments.insert(next_segment, segment);
 
@@ -304,7 +304,7 @@ impl Editor {
             // If a history element isn't there in the segment that's deleted
             // remove it from the next segment's history as well
             if let Some(segment_history_element) =
-                self.run.segments[index].segment_history().get(run_index)
+                self.run.segments[index].segment_history.get(run_index)
             {
                 let current_segment = segment_history_element[method];
                 if let Some(current_segment) = current_segment {
@@ -312,7 +312,7 @@ impl Editor {
                         // Add the removed segment's history times to the next non null times
                         if let Some(&mut Some(ref mut segment)) = self.run
                             .segments[current_index]
-                            .segment_history_mut()
+                            .segment_history
                             .get_mut(run_index)
                             .map(|t| &mut t[method])
                         {
@@ -324,22 +324,22 @@ impl Editor {
             } else {
                 self.run
                     .segments[current_index]
-                    .segment_history_mut()
+                    .segment_history
                     .remove(run_index);
             }
         }
 
         // Set the new Best Segment time to be the sum of the two Best Segments
         let min_best_segment = TimeSpan::option_add(
-            self.run.segments[index].best_segment_time()[method],
-            self.run.segments[current_index].best_segment_time()[method],
+            self.run.segments[index].best_segment_time[method],
+            self.run.segments[current_index].best_segment_time[method],
         );
 
         if let Some(mut min_best_segment) = min_best_segment {
             // Use any element in the history that has a lower time than this sum
             for time in self.run
                 .segments[current_index]
-                .segment_history()
+                .segment_history
                 .iter()
                 .filter_map(|&(_, t)| t[method])
             {
@@ -347,7 +347,7 @@ impl Editor {
                     min_best_segment = time;
                 }
             }
-            self.run.segments[current_index].best_segment_time_mut()[method] =
+            self.run.segments[current_index].best_segment_time[method] =
                 Some(min_best_segment);
         }
     }
@@ -400,19 +400,19 @@ impl Editor {
         for run_index in min_index..max_index + 1 {
             // Remove both segment history elements if one of them
             // has a null time and the other has has a non null time
-            let first_history = first.segment_history().get(run_index);
-            let second_history = second.segment_history().get(run_index);
+            let first_history = first.segment_history.get(run_index);
+            let second_history = second.segment_history.get(run_index);
             if let (Some(first_history), Some(second_history)) = (first_history, second_history) {
                 if first_history.real_time.is_some() != second_history.real_time.is_some() ||
                     first_history.game_time.is_some() != second_history.game_time.is_some()
                 {
-                    first.segment_history_mut().remove(run_index);
-                    second.segment_history_mut().remove(run_index);
+                    first.segment_history.remove(run_index);
+                    second.segment_history.remove(run_index);
                 }
             }
         }
 
-        for (comparison, first_time) in first.comparisons_mut() {
+        for (comparison, first_time) in &mut first.comparisons {
             // Fix the comparison times based on the new positions of the two segments
             let previous_time = previous
                 .map(|p| p.comparison(comparison))
@@ -499,7 +499,7 @@ impl Editor {
                 if let Some(my_segment) = self.run
                     .segments
                     .iter_mut()
-                    .find(|s| unicase::eq(segment.name(), s.name()))
+                    .find(|s| unicase::eq(&segment.name, &s.name))
                 {
                     *my_segment.comparison_mut(&comparison) = segment.personal_best_split_time();
                 }
@@ -524,7 +524,7 @@ impl Editor {
             .retain(|c| c != comparison);
 
         for segment in &mut self.run.segments {
-            segment.comparisons_mut().remove(comparison);
+            segment.comparisons.remove(comparison);
         }
 
         self.fix();
@@ -545,7 +545,7 @@ impl Editor {
             self.run.custom_comparisons[position] = new.to_string();
 
             for segment in &mut self.run.segments {
-                if let Some(time) = segment.comparisons_mut().remove(old) {
+                if let Some(time) = segment.comparisons.remove(old) {
                     *segment.comparison_mut(new) = time;
                 }
             }

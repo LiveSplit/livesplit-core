@@ -90,7 +90,7 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
                 }
 
                 segment.set_personal_best_split_time(pb_time);
-                segment.set_best_segment_time(best_time);
+                segment.best_segment_time = best_time;
                 run.segments.push(segment);
             }
         }
@@ -101,7 +101,7 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
     }
 
     for (icon, segment) in icons_list.into_iter().zip(run.segments.iter_mut()) {
-        segment.set_icon(icon);
+        segment.icon = icon;
     }
 
     Ok(run)

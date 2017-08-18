@@ -141,8 +141,8 @@ pub fn save<W: Write>(run: &Run, mut writer: W) -> Result<()> {
     for segment in &run.segments {
         let segment_element = doc.create_element("Segment");
 
-        add_element(doc, &segment_element, "Name", segment.name());
-        add_element(doc, &segment_element, "Icon", &fmt_image(segment.icon()));
+        add_element(doc, &segment_element, "Name", &segment.name);
+        add_element(doc, &segment_element, "Icon", &fmt_image(&segment.icon));
 
         let split_times = doc.create_element("SplitTimes");
         for comparison in &run.custom_comparisons {
@@ -152,10 +152,10 @@ pub fn save<W: Write>(run: &Run, mut writer: W) -> Result<()> {
         }
         segment_element.append_child(split_times);
 
-        segment_element.append_child(time(doc, "BestSegmentTime", segment.best_segment_time()));
+        segment_element.append_child(time(doc, "BestSegmentTime", segment.best_segment_time));
 
         let history = doc.create_element("SegmentHistory");
-        for &(index, history_time) in segment.segment_history() {
+        for &(index, history_time) in &segment.segment_history {
             let element = time(doc, "Time", history_time);
             element.set_attribute_value("id", &index.to_string());
             history.append_child(element);

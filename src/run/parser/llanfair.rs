@@ -133,7 +133,7 @@ pub fn parse<R: Read + Seek>(mut source: R) -> Result<Run> {
         let mut segment = Segment::new(read_string(&mut source, &mut buf, total_len)?);
 
         if let Some(icon) = icon {
-            segment.set_icon(icon);
+            segment.icon = icon;
         }
 
         // Read the segment time
@@ -158,7 +158,7 @@ pub fn parse<R: Read + Seek>(mut source: R) -> Result<Run> {
             segment.set_personal_best_split_time(split_time);
         }
 
-        segment.set_best_segment_time(to_time(best_segment_ms));
+        segment.best_segment_time = to_time(best_segment_ms);
 
         run.segments.push(segment);
 

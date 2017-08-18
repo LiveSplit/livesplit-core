@@ -119,7 +119,7 @@ pub fn parse<R: Read>(mut source: R) -> Result<Run> {
         let mut segment = Segment::new(child(&node, "name").ok().map_or("", |n| text(&n, buf)));
 
         if let Ok(image) = image(&node, &mut byte_buf, &mut byte_buf2, buf) {
-            segment.set_icon(image);
+            segment.icon = image.into();
         }
 
         if let Ok(node) = child(&node, "time") {
@@ -127,7 +127,7 @@ pub fn parse<R: Read>(mut source: R) -> Result<Run> {
         }
 
         if let Ok(node) = child(&node, "best") {
-            segment.set_best_segment_time(time(&node, buf)?);
+            segment.best_segment_time = time(&node, buf)?;
         }
 
         run.segments.push(segment);

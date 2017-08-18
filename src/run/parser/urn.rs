@@ -75,7 +75,7 @@ pub fn parse<R: Read>(source: R) -> Result<Run> {
                 segment.set_personal_best_split_time(parse_time(&time)?);
             }
             if let Some(best_segment) = split.best_segment {
-                segment.set_best_segment_time(parse_time(&best_segment)?);
+                segment.best_segment_time = parse_time(&best_segment)?;
             }
 
             if let Some(best_time) = split.best_time {
@@ -92,12 +92,12 @@ pub fn parse<R: Read>(source: R) -> Result<Run> {
                     // Insert a new run that skips to the current split
                     for already_inserted_segment in &mut run.segments {
                         already_inserted_segment
-                            .segment_history_mut()
+                            .segment_history
                             .insert(attempt_history_index, Time::default());
                     }
 
                     segment
-                        .segment_history_mut()
+                        .segment_history
                         .insert(attempt_history_index, best_split_time);
 
                     attempt_history_index += 1;

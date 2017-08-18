@@ -47,10 +47,10 @@ fn track_current_run(
 ) -> (usize, Time) {
     if let Some(first_split_time) = segment_index
         .checked_sub(1)
-        .map_or(Some(TimeSpan::zero()), |i| segments[i].split_time()[method])
+        .map_or(Some(TimeSpan::zero()), |i| segments[i].split_time[method])
     {
         for (segment_index, segment) in segments.iter().enumerate().skip(segment_index) {
-            let second_split_time = segment.split_time()[method];
+            let second_split_time = segment.split_time[method];
             if let Some(second_split_time) = second_split_time {
                 return (
                     segment_index + 1,
@@ -99,7 +99,7 @@ pub fn track_branch(
     method: TimingMethod,
 ) -> (usize, Time) {
     for (segment_index, segment) in segments.iter().enumerate().skip(segment_index) {
-        if let Some(cur_time) = segment.segment_history().get(run_index) {
+        if let Some(cur_time) = segment.segment_history.get(run_index) {
             if let Some(cur_time) = cur_time[method] {
                 return (
                     segment_index + 1,

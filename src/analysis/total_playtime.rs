@@ -20,7 +20,7 @@ impl TotalPlaytime for Run {
                 // Calculate the sum of the segments for that run
                 for segment in &self.segments {
                     if let Some(segment_time) = segment
-                        .segment_history()
+                        .segment_history
                         .get(attempt.index())
                         .and_then(|s| s[TimingMethod::RealTime])
                     {

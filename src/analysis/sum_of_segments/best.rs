@@ -21,11 +21,11 @@ fn populate_predictions(
     if let Some(current_time) = current_time {
         populate_prediction(
             &mut predictions[segment_index + 1],
-            segments[segment_index].best_segment_time()[method].map(|t| t + current_time),
+            segments[segment_index].best_segment_time[method].map(|t| t + current_time),
         );
         if !simple_calculation {
             for &(null_segment_index, _) in segments[segment_index]
-                .segment_history()
+                .segment_history
                 .iter()
                 .filter(|&&(_, t)| t[method].is_none())
             {
@@ -34,7 +34,7 @@ fn populate_predictions(
                     .checked_sub(1)
                     .and_then(|previous_index| {
                         segments[previous_index]
-                            .segment_history()
+                            .segment_history
                             .get(null_segment_index)
                     })
                     .map_or(true, |segment_time| segment_time[method].is_some());

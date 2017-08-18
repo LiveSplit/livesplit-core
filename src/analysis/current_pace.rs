@@ -27,7 +27,7 @@ pub fn calculate(timer: &Timer, comparison: &str) -> Option<TimeSpan> {
 
             last_segment.comparison(comparison)[timing_method].map(|c| delta + c)
         }
-        TimerPhase::Ended => last_segment.split_time()[timing_method],
+        TimerPhase::Ended => last_segment.split_time[timing_method],
         TimerPhase::NotRunning => last_segment.comparison(comparison)[timing_method],
     }
 }

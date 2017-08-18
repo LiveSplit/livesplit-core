@@ -258,7 +258,7 @@ impl Run {
     pub fn clear_history(&mut self) {
         self.attempt_history.clear();
         for segment in &mut self.segments {
-            segment.segment_history_mut().clear();
+            segment.segment_history.clear();
         }
     }
 
@@ -266,8 +266,8 @@ impl Run {
         self.clear_history();
         self.custom_comparisons.retain(|c| c == personal_best::NAME);
         for segment in &mut self.segments {
-            segment.comparisons_mut().clear();
-            segment.set_best_segment_time(Time::default());
+            segment.comparisons.clear();
+            segment.best_segment_time = Time::default();
         }
         self.attempt_count = 0;
         self.metadata.run_id.clear();
@@ -276,8 +276,8 @@ impl Run {
     fn fix_comparison_times_and_history(&mut self, method: TimingMethod) {
         // Remove negative Best Segment Times
         for segment in &mut self.segments {
-            if segment.best_segment_time_mut()[method].map_or(false, |t| t < TimeSpan::zero()) {
-                segment.best_segment_time_mut()[method] = None;
+            if segment.best_segment_time[method].map_or(false, |t| t < TimeSpan::zero()) {
+                segment.best_segment_time[method] = None;
             }
         }
 
@@ -296,10 +296,10 @@ impl Run {
                     if comparison == personal_best::NAME {
                         fix_history_from_null_best_segments(segment, method);
 
-                        if segment.best_segment_time()[method]
+                        if segment.best_segment_time[method]
                             .map_or(true, |t| t > current_segment)
                         {
-                            segment.best_segment_time_mut()[method] = Some(current_segment);
+                            segment.best_segment_time[method] = Some(current_segment);
                         }
 
                         fix_history_from_best_segment_times(segment, method);
@@ -316,7 +316,7 @@ impl Run {
         let max_index = self.max_attempt_history_index().unwrap_or(0) + 1;
         for run_index in min_index..max_index {
             for index in 0..self.len() {
-                if let Some(element) = self.segments[index].segment_history().get(run_index) {
+                if let Some(element) = self.segments[index].segment_history.get(run_index) {
                     if element.real_time.is_none() && element.game_time.is_none() {
                         cache.push(run_index);
                     } else {
@@ -336,7 +336,7 @@ impl Run {
         let mut history = Vec::new();
 
         for segment in &mut self.segments {
-            let segment_history = segment.segment_history_mut();
+            let segment_history = &mut segment.segment_history;
             history.clear();
             history.extend(segment_history.iter().filter_map(|&(_, t)| t[method]));
 
@@ -362,14 +362,14 @@ impl Run {
     fn remove_items_from_cache(&mut self, index: usize, cache: &mut Vec<i32>) {
         let ind = index - cache.len();
         for (index, segment) in cache.drain(..).zip(self.segments[ind..].iter_mut()) {
-            segment.segment_history_mut().remove(index);
+            segment.segment_history.remove(index);
         }
     }
 
     pub fn min_segment_history_index(&self) -> i32 {
         self.segments
             .iter()
-            .map(|s| s.segment_history().min_index())
+            .map(|s| s.segment_history.min_index())
             .min()
             .unwrap()
     }
@@ -385,7 +385,7 @@ impl Run {
                 let pb_time = segment.personal_best_split_time()[timing_method];
                 let time =
                     Time::new().with_timing_method(timing_method, pb_time.map(|p| p - prev_time));
-                segment.segment_history_mut().insert(index, time);
+                segment.segment_history.insert(index, time);
 
                 if let Some(time) = pb_time {
                     prev_time = time;
@@ -395,11 +395,11 @@ impl Run {
     }
 
     pub fn import_best_segment(&mut self, segment_index: usize) {
-        let best_segment_time = self.segments[segment_index].best_segment_time();
+        let best_segment_time = self.segments[segment_index].best_segment_time;
         if best_segment_time.real_time.is_some() || best_segment_time.game_time.is_some() {
             let index = self.min_segment_history_index() - 1;
             self.segments[segment_index]
-                .segment_history_mut()
+                .segment_history
                 .insert(index, best_segment_time);
         }
     }
@@ -413,9 +413,9 @@ impl Run {
         let index = self.attempt_history.last().unwrap().index();
 
         for segment in segments {
-            let split_time = segment.split_time();
+            let split_time = segment.split_time;
             let segment_time = Time::op(split_time, last_split_time, |a, b| a - b);
-            segment.segment_history_mut().insert(index, segment_time);
+            segment.segment_history.insert(index, segment_time);
             if let Some(time) = split_time.real_time {
                 last_split_time.real_time = Some(time);
             }
@@ -428,17 +428,17 @@ impl Run {
 
 fn fix_history_from_null_best_segments(segment: &mut Segment, method: TimingMethod) {
     // Only do anything if the Best Segment Time is gone for the Segment in question
-    if segment.best_segment_time()[method].is_none() {
+    if segment.best_segment_time[method].is_none() {
         // Keep only the skipped segments
         segment
-            .segment_history_mut()
+            .segment_history
             .retain(|&(_, time)| time[method].is_none());
     }
 }
 
 fn fix_history_from_best_segment_times(segment: &mut Segment, method: TimingMethod) {
-    if let Some(best_segment) = segment.best_segment_time()[method] {
-        for &mut (_, ref mut time) in segment.segment_history_mut() {
+    if let Some(best_segment) = segment.best_segment_time[method] {
+        for &mut (_, ref mut time) in &mut segment.segment_history {
             // Make sure no times in the history are lower than the Best Segment
             if let Some(ref mut time) = time[method] {
                 if *time < best_segment {

@@ -59,7 +59,7 @@ pub fn parse<R: Read>(source: R) -> Result<Run> {
     for split in splits.splits {
         let mut segment = Segment::new(split.name);
         segment.set_personal_best_split_time(parse_time(split.pb_split, method));
-        segment.set_best_segment_time(parse_time(split.split_best, method));
+        segment.best_segment_time = parse_time(split.split_best, method);
 
         run.segments.push(segment);
     }

@@ -128,7 +128,7 @@ pub fn parse<R: Read>(mut source: R) -> Result<Run> {
 
         if let Ok(node) = child(&node, "bestTime") {
             if let Ok(node) = child(&node, "milliseconds") {
-                segment.set_best_segment_time(time(&node, buf)?);
+                segment.best_segment_time = time(&node, buf)?;
             }
         }
 
@@ -137,7 +137,7 @@ pub fn parse<R: Read>(mut source: R) -> Result<Run> {
                 total_time += time_span(&node, buf)?;
             } else if let Ok("../bestTime") = attribute(&node, "reference") {
                 total_time += segment
-                    .best_segment_time()
+                    .best_segment_time
                     .real_time
                     .ok_or(Error::ElementNotFound)?;
             }
@@ -145,7 +145,7 @@ pub fn parse<R: Read>(mut source: R) -> Result<Run> {
         }
 
         if let Ok(image) = image(&node, &mut byte_buf, &mut byte_buf2, buf) {
-            segment.set_icon(image);
+            segment.icon = image.into();
         }
 
         run.segments.push(segment);

@@ -31,7 +31,7 @@ pub fn calculate(timer: &Timer, comparison: &str) -> (Option<TimeSpan>, bool) {
             delta
         }
         TimerPhase::Ended => TimeSpan::option_sub(
-            last_segment.split_time()[timing_method],
+            last_segment.split_time[timing_method],
             last_segment.comparison(comparison)[timing_method],
         ),
         TimerPhase::NotRunning => None,

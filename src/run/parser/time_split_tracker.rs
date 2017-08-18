@@ -74,7 +74,7 @@ pub fn parse<R: BufRead>(source: R, path_for_loading_other_files: Option<PathBuf
         let mut splits = line.split('\t');
         let mut segment = Segment::new(splits.next().ok_or(Error::ExpectedSplitName)?);
         let best_segment = parse_time_optional(splits.next().ok_or(Error::ExpectedBestSegment)?)?;
-        segment.set_best_segment_time(RealTime(best_segment).into());
+        segment.best_segment_time = RealTime(best_segment).into();
 
         let mut pb_time = Time::new();
         for comparison in &comparisons {
@@ -92,7 +92,7 @@ pub fn parse<R: BufRead>(source: R, path_for_loading_other_files: Option<PathBuf
             if !file.is_empty() {
                 let path = path.with_file_name(file);
                 if let Ok(image) = Image::from_file(path, &mut buf) {
-                    segment.set_icon(image);
+                    segment.icon = image;
                 }
             }
         }
@@ -162,15 +162,15 @@ fn parse_history(run: &mut Run, path: Option<PathBuf>) -> StdResult<(), ()> {
                 }
 
                 segment
-                    .segment_history_mut()
+                    .segment_history
                     .insert(attempt_id, segment_time);
                 if TimeSpan::option_op(
                     segment_time.real_time,
-                    segment.best_segment_time().real_time,
+                    segment.best_segment_time.real_time,
                     |a, b| a < b,
                 ).unwrap_or(false)
                 {
-                    segment.set_best_segment_time(segment_time);
+                    segment.best_segment_time = segment_time;
                 }
             }
 

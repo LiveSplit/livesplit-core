@@ -95,7 +95,7 @@ impl Editor {
 
             let icon_change = self.run
                 .segments[segment_index]
-                .icon()
+                .icon
                 .check_for_change(&mut self.segment_icon_ids[segment_index])
                 .map(str::to_owned);
 

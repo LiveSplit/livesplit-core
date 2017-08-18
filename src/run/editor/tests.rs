@@ -40,7 +40,7 @@ fn new_best_segment() {
         Some("1:00".parse().unwrap())
     );
     assert_eq!(
-        run.segments[0].best_segment_time().real_time,
+        run.segments[0].best_segment_time.real_time,
         Some("1:00".parse().unwrap())
     );
     assert_eq!(
@@ -48,7 +48,7 @@ fn new_best_segment() {
         Some("2:00".parse().unwrap())
     );
     assert_eq!(
-        run.segments[1].best_segment_time().real_time,
+        run.segments[1].best_segment_time.real_time,
         Some("1:00".parse().unwrap())
     );
     assert_eq!(
@@ -56,7 +56,7 @@ fn new_best_segment() {
         Some("3:00".parse().unwrap())
     );
     assert_eq!(
-        run.segments[2].best_segment_time().real_time,
+        run.segments[2].best_segment_time.real_time,
         Some("0:30".parse().unwrap())
     );
 }

@@ -257,7 +257,7 @@ pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
 
     for node in segments.children().into_iter().filter_map(|c| c.element()) {
         let mut segment = Segment::new(text(&child(&node, "Name")?, buf));
-        segment.set_icon(image(&child(&node, "Icon")?, icon_buf, buf));
+        segment.icon = image(&child(&node, "Icon")?, icon_buf, buf).into();
 
         if version >= Version(1, 3, 0, 0) {
             let node = child(&node, "SplitTimes")?;
@@ -281,11 +281,11 @@ pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
 
         let gold_split = child(&node, "BestSegmentTime")?;
         if !gold_split.children().is_empty() {
-            segment.set_best_segment_time(if version >= Version(1, 4, 1, 0) {
+            segment.best_segment_time = if version >= Version(1, 4, 1, 0) {
                 time(&gold_split, buf)?
             } else {
                 time_old(&gold_split, buf)?
-            });
+            };
         }
 
         let history = child(&node, "SegmentHistory")?;
@@ -297,7 +297,7 @@ pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
                 time_old(&node, buf)?
             };
 
-            segment.segment_history_mut().insert(index, time);
+            segment.segment_history.insert(index, time);
         }
 
         run.segments.push(segment);
