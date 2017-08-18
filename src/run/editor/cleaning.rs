@@ -110,7 +110,7 @@ impl<'r> SumOfBestCleaner<'r> {
 
     pub fn apply(&mut self, clean_up: CleanUp) {
         self.run
-            .segment_mut(clean_up.ending_index)
+            .segments[clean_up.ending_index]
             .segment_history_mut()
             .remove(clean_up.run_index);
 
@@ -145,7 +145,7 @@ impl<'r> SumOfBestCleaner<'r> {
                 }
                 State::IteratingHistory(state) => {
                     let iter = self.run
-                        .segment(state.parent.segment_index)
+                        .segments[state.parent.segment_index]
                         .segment_history()
                         .iter()
                         .enumerate()
@@ -154,7 +154,7 @@ impl<'r> SumOfBestCleaner<'r> {
                     for (skip_count, &(run_index, time)) in iter {
                         if time[state.parent.method].is_none() {
                             let (prediction_index, prediction_time) = track_branch(
-                                self.run.segments(),
+                                &self.run.segments,
                                 state.current_time,
                                 state.parent.segment_index + 1,
                                 run_index,
@@ -201,15 +201,15 @@ fn check_prediction<'a>(
     if let Some(predicted_time) = predicted_time {
         if predictions[ending_index + 1].map_or(true, |t| predicted_time < t) {
             if let Some(segment_history_element) =
-                run.segment(ending_index).segment_history().get(run_index)
+                run.segments[ending_index].segment_history().get(run_index)
             {
                 return Some(PotentialCleanUp {
                     starting_segment: if starting_index >= 0 {
-                        Some(run.segment(starting_index as usize))
+                        Some(&run.segments[starting_index as usize])
                     } else {
                         None
                     },
-                    ending_segment: run.segment(ending_index),
+                    ending_segment: &run.segments[ending_index],
                     time_between: segment_history_element[method]
                         .expect("Cleanup path is shorter but doesn't have a time"),
                     combined_sum_of_best: predictions[ending_index + 1].map(|t| {
@@ -234,7 +234,7 @@ fn check_prediction<'a>(
 }
 
 fn next_timing_method(run: &Run, predictions: &mut Vec<Option<TimeSpan>>, method: TimingMethod) {
-    let segments = run.segments();
+    let segments = &run.segments;
 
     predictions.clear();
     predictions.resize(segments.len() + 1, None);

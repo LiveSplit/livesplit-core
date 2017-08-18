@@ -320,21 +320,21 @@ fn calculate_comparison_time(
     last_split_index: usize,
 ) -> Option<TimeSpan> {
     if comparison == best_segments::NAME {
-        timer.run().segment(last_split_index).best_segment_time()[timing_method]
+        timer.run().segments[last_split_index].best_segment_time()[timing_method]
     } else if last_split_index == 0 {
         timer
             .run()
-            .segment(0)
+            .segments[0]
             .comparison_timing_method(comparison, timing_method)
     } else if timer.current_split_index() > 0 {
         TimeSpan::option_sub(
             timer
                 .run()
-                .segment(last_split_index)
+                .segments[last_split_index]
                 .comparison_timing_method(comparison, timing_method),
             timer
                 .run()
-                .segment(last_split_index - 1)
+                .segments[last_split_index - 1]
                 .comparison_timing_method(comparison, timing_method),
         )
     } else {
@@ -348,13 +348,13 @@ fn calculate_segment_time(
     last_split_index: usize,
 ) -> Option<TimeSpan> {
     let last_split = if last_split_index > 0 {
-        timer.run().segment(last_split_index - 1).split_time()[timing_method]
+        timer.run().segments[last_split_index - 1].split_time()[timing_method]
     } else {
         Some(TimeSpan::zero())
     };
 
     if timer.current_phase() == TimerPhase::NotRunning {
-        Some(timer.run().offset())
+        Some(timer.run().offset)
     } else {
         TimeSpan::option_sub(timer.current_time()[timing_method], last_split)
     }

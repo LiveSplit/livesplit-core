@@ -373,7 +373,7 @@ impl Component {
 
         if y + 1 != draw_info.deltas.len() {
             if let Some(split_time) =
-                timer.run().segment(y).split_time()[timer.current_timing_method()]
+                timer.run().segments[y].split_time()[timer.current_timing_method()]
             {
                 *width_one = (split_time.total_milliseconds() as f32 /
                     draw_info.final_split.total_milliseconds() as f32) *
@@ -397,7 +397,7 @@ impl Component {
         if y + 1 == draw_info.deltas.len() && draw_info.is_live_delta_active {
             *width_two = WIDTH;
         } else if let Some(split_time) =
-            timer.run().segment(y).split_time()[timer.current_timing_method()]
+            timer.run().segments[y].split_time()[timer.current_timing_method()]
         {
             *width_two = (split_time.total_milliseconds() as f32 /
                 draw_info.final_split.total_milliseconds() as f32) * WIDTH;
@@ -519,7 +519,7 @@ impl Component {
                     .unwrap_or_else(TimeSpan::zero);
             } else {
                 let timing_method = timer.current_timing_method();
-                for segment in timer.run().segments()[..timer.current_split_index() as usize]
+                for segment in timer.run().segments[..timer.current_split_index() as usize]
                     .iter()
                     .rev()
                 {
@@ -534,7 +534,7 @@ impl Component {
 
     fn calculate_deltas(&self, timer: &Timer, comparison: &str, draw_info: &mut DrawInfo) {
         let timing_method = timer.current_timing_method();
-        for segment in timer.run().segments() {
+        for segment in &timer.run().segments {
             let time = TimeSpan::option_sub(
                 segment.split_time()[timing_method],
                 segment.comparison(comparison)[timing_method],

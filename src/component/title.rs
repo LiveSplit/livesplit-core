@@ -106,13 +106,13 @@ impl Component {
         };
 
         let attempts = if self.settings.show_attempt_count {
-            Some(run.attempt_count())
+            Some(run.attempt_count)
         } else {
             None
         };
 
         let icon_change = if self.settings.display_game_icon {
-            run.game_icon()
+            run.game_icon
                 .check_for_change(&mut self.icon_id)
                 .map(str::to_owned)
         } else if self.icon_id != 0 {
@@ -122,11 +122,11 @@ impl Component {
             None
         };
 
-        let is_centered = self.settings.center_text || run.game_icon().is_empty() ||
+        let is_centered = self.settings.center_text || run.game_icon.is_empty() ||
             !self.settings.display_game_icon;
 
         let game_name = if self.settings.show_game_name {
-            run.game_name()
+            &run.game_name
         } else {
             ""
         };

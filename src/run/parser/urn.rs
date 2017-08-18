@@ -53,13 +53,13 @@ pub fn parse<R: Read>(source: R) -> Result<Run> {
     let splits: Splits = from_reader(source)?;
 
     if let Some(title) = splits.title {
-        run.set_category_name(title);
+        run.category_name = title;
     }
     if let Some(attempt_count) = splits.attempt_count {
-        run.set_attempt_count(attempt_count);
+        run.attempt_count = attempt_count;
     }
     if let Some(start_delay) = splits.start_delay {
-        run.set_offset(-start_delay.parse()?);
+        run.offset = -start_delay.parse()?;
     }
 
     // Best Split Times can be used for the Segment History
@@ -90,7 +90,7 @@ pub fn parse<R: Read>(source: R) -> Result<Run> {
                     );
 
                     // Insert a new run that skips to the current split
-                    for already_inserted_segment in run.segments_mut() {
+                    for already_inserted_segment in &mut run.segments {
                         already_inserted_segment
                             .segment_history_mut()
                             .insert(attempt_history_index, Time::default());
@@ -104,7 +104,7 @@ pub fn parse<R: Read>(source: R) -> Result<Run> {
                 }
             }
 
-            run.push_segment(segment);
+            run.segments.push(segment);
         }
     }
 

@@ -36,8 +36,8 @@ pub fn parse<R: BufRead>(source: R) -> Result<Run> {
     if !category_name.starts_with('#') {
         return Err(Error::ExpectedCategoryName);
     }
-    run.set_category_name(&category_name[1..]);
-    run.set_attempt_count(splits.next().ok_or(Error::ExpectedAttemptCount)?.parse()?);
+    run.category_name = category_name[1..].to_string();
+    run.attempt_count = splits.next().ok_or(Error::ExpectedAttemptCount)?.parse()?;
     let mut total_time = TimeSpan::zero();
     let mut next_line = lines.next();
     while let Some(line) = next_line {
@@ -53,7 +53,7 @@ pub fn parse<R: BufRead>(source: R) -> Result<Run> {
         while let Some(line) = next_line {
             let line = line?;
             if line.starts_with('*') {
-                run.push_segment(Segment::new(&line[1..]));
+                run.segments.push(Segment::new(&line[1..]));
                 has_acts = true;
                 next_line = lines.next();
             } else {
@@ -63,14 +63,14 @@ pub fn parse<R: BufRead>(source: R) -> Result<Run> {
         }
         let time = GameTime(Some(total_time)).into();
         if has_acts {
-            run.segments_mut()
+            run.segments
                 .last_mut()
                 .unwrap()
                 .set_personal_best_split_time(time);
         } else {
             let mut segment = Segment::new(world_name);
             segment.set_personal_best_split_time(time);
-            run.push_segment(segment);
+            run.segments.push(segment);
         }
     }
 

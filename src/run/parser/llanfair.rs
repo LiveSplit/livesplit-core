@@ -50,11 +50,11 @@ pub fn parse<R: Read + Seek>(mut source: R) -> Result<Run> {
 
     // Skip to the goal string
     source.seek(SeekFrom::Start(0xc5))?;
-    run.set_category_name(read_string(&mut source, &mut buf, total_len)?);
+    run.category_name = read_string(&mut source, &mut buf, total_len)?.to_string();
 
     // Skip to the title string
     source.read_u8()?;
-    run.set_game_name(read_string(&mut source, &mut buf, total_len)?);
+    run.game_name = read_string(&mut source, &mut buf, total_len)?.to_string();
 
     source.seek(SeekFrom::Current(0x6))?;
     let segment_count = source.read_u32::<BE>()?;
@@ -160,7 +160,7 @@ pub fn parse<R: Read + Seek>(mut source: R) -> Result<Run> {
 
         segment.set_best_segment_time(to_time(best_segment_ms));
 
-        run.push_segment(segment);
+        run.segments.push(segment);
 
         // Seek to the beginning of the next segment name
         source.seek(SeekFrom::Current(0x6))?;

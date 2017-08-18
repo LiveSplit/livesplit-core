@@ -228,7 +228,7 @@ pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
     };
 
     if version >= Version(1, 6, 0, 0) {
-        let metadata = run.metadata_mut();
+        let metadata = &mut run.metadata;
         let node = child(&node, "Metadata")?;
 
         metadata.set_run_id(attribute(&child(&node, "Run")?, "id")?);
@@ -245,11 +245,11 @@ pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
         }
     }
 
-    run.set_game_icon(image(&child(&node, "GameIcon")?, icon_buf, buf));
-    run.set_game_name(text(&child(&node, "GameName")?, buf));
-    run.set_category_name(text(&child(&node, "CategoryName")?, buf));
-    run.set_offset(time_span(&child(&node, "Offset")?, buf)?);
-    run.set_attempt_count(text(&child(&node, "AttemptCount")?, buf).parse()?);
+    run.game_icon = image(&child(&node, "GameIcon")?, icon_buf, buf).into();
+    run.game_name = text(&child(&node, "GameName")?, buf).to_string();
+    run.category_name = text(&child(&node, "CategoryName")?, buf).to_string();
+    run.offset = time_span(&child(&node, "Offset")?, buf)?;
+    run.attempt_count = text(&child(&node, "AttemptCount")?, buf).parse()?;
 
     parse_attempt_history(version, &node, &mut run, buf)?;
 
@@ -300,7 +300,7 @@ pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
             segment.segment_history_mut().insert(index, time);
         }
 
-        run.push_segment(segment);
+        run.segments.push(segment);
     }
 
     if version >= Version(1, 4, 2, 0) {
@@ -308,7 +308,7 @@ pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
         // TODO Store this somehow
     }
 
-    run.set_path(path);
+    run.path = path;
 
     Ok(run)
 }

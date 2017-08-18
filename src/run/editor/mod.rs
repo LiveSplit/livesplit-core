@@ -47,7 +47,7 @@ impl Editor {
             return Err(OpenError::EmptyRun);
         }
 
-        let personal_best_time = run.segments().last().unwrap().personal_best_split_time();
+        let personal_best_time = run.segments.last().unwrap().personal_best_split_time();
 
         let mut editor = Self {
             run: run,
@@ -107,35 +107,37 @@ impl Editor {
     }
 
     pub fn game_name(&self) -> &str {
-        self.run.game_name()
+        &self.run.game_name
     }
 
     pub fn set_game_name<S>(&mut self, name: S)
     where
         S: AsRef<str>,
     {
-        self.run.set_game_name(name);
+        self.run.game_name.clear();
+        self.run.game_name.push_str(name.as_ref());
         self.raise_run_edited();
     }
 
     pub fn category_name(&self) -> &str {
-        self.run.category_name()
+        &self.run.category_name
     }
 
     pub fn set_category_name<S>(&mut self, name: S)
     where
         S: AsRef<str>,
     {
-        self.run.set_category_name(name);
+        self.run.category_name.clear();
+        self.run.category_name.push_str(name.as_ref());
         self.raise_run_edited();
     }
 
     pub fn offset(&self) -> TimeSpan {
-        self.run.offset()
+        self.run.offset
     }
 
     pub fn set_offset(&mut self, offset: TimeSpan) {
-        self.run.set_offset(offset);
+        self.run.offset = offset;
         self.raise_run_edited();
     }
 
@@ -148,11 +150,11 @@ impl Editor {
     }
 
     pub fn attempt_count(&self) -> u32 {
-        self.run.attempt_count()
+        self.run.attempt_count
     }
 
     pub fn set_attempt_count(&mut self, attempts: u32) {
-        self.run.set_attempt_count(attempts);
+        self.run.attempt_count = attempts;
         self.raise_run_edited();
     }
 
@@ -165,33 +167,33 @@ impl Editor {
     }
 
     pub fn game_icon(&self) -> &Image {
-        self.run.game_icon()
+        &self.run.game_icon
     }
 
     pub fn set_game_icon<D: Into<Image>>(&mut self, image: D) {
-        self.run.set_game_icon(image);
+        self.run.game_icon = image.into();
         self.raise_run_edited();
     }
 
     pub fn remove_game_icon(&mut self) {
-        self.run.set_game_icon(&[]);
+        self.run.game_icon = Image::default();
         self.raise_run_edited();
     }
 
     pub fn custom_comparisons(&self) -> &[String] {
-        self.run.custom_comparisons()
+        &self.run.custom_comparisons
     }
 
     fn times_modified(&mut self) {
         let pb_split_time = self.run
-            .segments()
+            .segments
             .last()
             .unwrap()
             .personal_best_split_time();
         if pb_split_time.real_time != self.previous_personal_best_time.real_time ||
             pb_split_time.game_time != self.previous_personal_best_time.game_time
         {
-            self.run.metadata_mut().set_run_id("");
+            self.run.metadata.set_run_id("");
             self.previous_personal_best_time = pb_split_time;
         }
         self.raise_run_edited();
@@ -207,7 +209,7 @@ impl Editor {
         let method = self.selected_method;
         let mut previous_time = TimeSpan::zero();
         self.segment_times.clear();
-        for segment in self.run.segments() {
+        for segment in &self.run.segments {
             if let Some(time) = segment.personal_best_split_time()[method] {
                 self.segment_times.push(Some(time - previous_time));
                 previous_time = time;
@@ -223,7 +225,7 @@ impl Editor {
         let mut decrement = TimeSpan::zero();
         for (segment_time, segment) in self.segment_times
             .iter_mut()
-            .zip(self.run.segments_mut().iter_mut())
+            .zip(self.run.segments.iter_mut())
         {
             if let Some(ref mut segment_time) = *segment_time {
                 let pb_time = &mut segment.personal_best_split_time_mut()[method];
@@ -256,7 +258,7 @@ impl Editor {
         for x in min_index..max_index + 1 {
             segment.segment_history_mut().insert(x, Default::default());
         }
-        self.run.segments_mut().insert(selected_segment, segment);
+        self.run.segments.insert(selected_segment, segment);
 
         self.select_only(selected_segment);
 
@@ -277,7 +279,7 @@ impl Editor {
         for x in min_index..max_index + 1 {
             segment.segment_history_mut().insert(x, Default::default());
         }
-        self.run.segments_mut().insert(next_segment, segment);
+        self.run.segments.insert(next_segment, segment);
 
         self.select_only(next_segment);
 
@@ -302,14 +304,14 @@ impl Editor {
             // If a history element isn't there in the segment that's deleted
             // remove it from the next segment's history as well
             if let Some(segment_history_element) =
-                self.run.segment(index).segment_history().get(run_index)
+                self.run.segments[index].segment_history().get(run_index)
             {
                 let current_segment = segment_history_element[method];
                 if let Some(current_segment) = current_segment {
                     for current_index in current_index..self.run.len() {
                         // Add the removed segment's history times to the next non null times
                         if let Some(&mut Some(ref mut segment)) = self.run
-                            .segment_mut(current_index)
+                            .segments[current_index]
                             .segment_history_mut()
                             .get_mut(run_index)
                             .map(|t| &mut t[method])
@@ -321,7 +323,7 @@ impl Editor {
                 }
             } else {
                 self.run
-                    .segment_mut(current_index)
+                    .segments[current_index]
                     .segment_history_mut()
                     .remove(run_index);
             }
@@ -329,14 +331,14 @@ impl Editor {
 
         // Set the new Best Segment time to be the sum of the two Best Segments
         let min_best_segment = TimeSpan::option_add(
-            self.run.segment(index).best_segment_time()[method],
-            self.run.segment(current_index).best_segment_time()[method],
+            self.run.segments[index].best_segment_time()[method],
+            self.run.segments[current_index].best_segment_time()[method],
         );
 
         if let Some(mut min_best_segment) = min_best_segment {
             // Use any element in the history that has a lower time than this sum
             for time in self.run
-                .segment(current_index)
+                .segments[current_index]
                 .segment_history()
                 .iter()
                 .filter_map(|&(_, t)| t[method])
@@ -345,7 +347,7 @@ impl Editor {
                     min_best_segment = time;
                 }
             }
-            self.run.segment_mut(current_index).best_segment_time_mut()[method] =
+            self.run.segments[current_index].best_segment_time_mut()[method] =
                 Some(min_best_segment);
         }
     }
@@ -364,7 +366,7 @@ impl Editor {
             if self.selected_segments.contains(&i) {
                 let segment_index = i - removed;
                 self.fix_after_deletion(segment_index);
-                self.run.segments_mut().remove(segment_index);
+                self.run.segments.remove(segment_index);
                 removed += 1;
             }
         }
@@ -389,7 +391,7 @@ impl Editor {
         let min_index = self.run.min_segment_history_index();
 
         // Use split_at to prove that the 3 segments are distinct
-        let (a, b) = self.run.segments_mut().split_at_mut(index);
+        let (a, b) = self.run.segments.split_at_mut(index);
         let previous = a.last();
         let (a, b) = b.split_at_mut(1);
         let first = &mut a[0];
@@ -493,9 +495,9 @@ impl Editor {
         if validate_comparison_name(&self.run, &comparison) {
             self.run.add_custom_comparison(comparison.as_str());
 
-            for segment in run.segments().iter().take(run.len().saturating_sub(1)) {
+            for segment in run.segments.iter().take(run.len().saturating_sub(1)) {
                 if let Some(my_segment) = self.run
-                    .segments_mut()
+                    .segments
                     .iter_mut()
                     .find(|s| unicase::eq(segment.name(), s.name()))
                 {
@@ -504,7 +506,7 @@ impl Editor {
             }
 
             if let (Some(my_segment), Some(segment)) =
-                (self.run.segments_mut().last_mut(), run.segments().last())
+                (self.run.segments.last_mut(), run.segments.last())
             {
                 *my_segment.comparison_mut(&comparison) = segment.personal_best_split_time();
             }
@@ -518,10 +520,10 @@ impl Editor {
 
     pub fn remove_comparison(&mut self, comparison: &str) {
         self.run
-            .custom_comparisons_mut()
+            .custom_comparisons
             .retain(|c| c != comparison);
 
-        for segment in self.run.segments_mut() {
+        for segment in &mut self.run.segments {
             segment.comparisons_mut().remove(comparison);
         }
 
@@ -535,14 +537,14 @@ impl Editor {
 
         if validate_comparison_name(&self.run, new) {
             let position = self.run
-                .custom_comparisons()
+                .custom_comparisons
                 .iter()
                 .position(|c| c == old)
                 .ok_or(())?;
 
-            self.run.custom_comparisons_mut()[position] = new.to_string();
+            self.run.custom_comparisons[position] = new.to_string();
 
-            for segment in self.run.segments_mut() {
+            for segment in &mut self.run.segments {
                 if let Some(time) = segment.comparisons_mut().remove(old) {
                     *segment.comparison_mut(new) = time;
                 }

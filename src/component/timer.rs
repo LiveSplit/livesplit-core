@@ -108,7 +108,7 @@ impl Component {
             TimerPhase::Ended => {
                 let pb_time = timer
                     .run()
-                    .segments()
+                    .segments
                     .last()
                     .unwrap()
                     .comparison(current_comparison)[method];

@@ -99,18 +99,18 @@ pub fn parse<R: Read>(mut source: R) -> Result<Run> {
     let mut run = Run::new();
 
     if let Ok(node) = child(&node, "game") {
-        run.set_game_name(text(&node, buf));
+        run.game_name = text(&node, buf).to_string();
     }
     if let Ok(node) = child(&node, "category") {
-        run.set_category_name(text(&node, buf));
+        run.category_name = text(&node, buf).to_string();
     }
     if let Ok(node) = child(&node, "platform") {
-        run.metadata_mut().set_platform_name(text(&node, buf));
+        run.metadata.set_platform_name(text(&node, buf));
     }
     if let Ok(node) = child(&node, "region") {
-        run.metadata_mut().set_region_name(text(&node, buf));
+        run.metadata.set_region_name(text(&node, buf));
     }
-    run.metadata_mut()
+    run.metadata
         .set_emulator_usage(text(&child(&node, "emulated")?, buf) == "true");
 
     let segments = child(&node, "segments")?;
@@ -130,7 +130,7 @@ pub fn parse<R: Read>(mut source: R) -> Result<Run> {
             segment.set_best_segment_time(time(&node, buf)?);
         }
 
-        run.push_segment(segment);
+        run.segments.push(segment);
     }
 
     Ok(run)

@@ -138,8 +138,8 @@ static CHAPTERS: [(&str, &[&str]); 9] = [
 pub fn parse<R: BufRead>(source: R) -> Result<Run> {
     let mut run = Run::new();
 
-    run.set_game_name("Portal 2");
-    run.set_category_name("Any%");
+    run.game_name = "Portal 2".to_string();
+    run.category_name = "Any%".to_string();
 
     let mut lines = source.lines().peekable();
     lines.next(); // Skip the header
@@ -164,7 +164,7 @@ pub fn parse<R: BufRead>(source: R) -> Result<Run> {
         let mut segment = Segment::new(chapter_name);
         segment.set_personal_best_split_time(time);
 
-        run.push_segment(segment);
+        run.segments.push(segment);
     }
 
     Ok(run)

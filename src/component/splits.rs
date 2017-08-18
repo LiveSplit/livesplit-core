@@ -146,7 +146,7 @@ impl Component {
         State {
             splits: timer
                 .run()
-                .segments()
+                .segments
                 .iter()
                 .enumerate()
                 .skip(skip_count)

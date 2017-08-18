@@ -16,7 +16,7 @@ pub fn last_delta(
     comparison: &str,
     method: TimingMethod,
 ) -> Option<TimeSpan> {
-    for segment in run.segments()[..split_number + 1].iter().rev() {
+    for segment in run.segments[..split_number + 1].iter().rev() {
         let comparison = segment.comparison_timing_method(comparison, method);
         let split_time = segment.split_time()[method];
         if let (Some(comparison), Some(split_time)) = (comparison, split_time) {
@@ -37,16 +37,16 @@ fn segment_time_or_segment_delta(
     let current_time = if use_current_time {
         timer.current_time()[method]
     } else {
-        timer.run().segment(split_number).split_time()[method]
+        timer.run().segments[split_number].split_time()[method]
     };
 
     if let Some(current_time) = current_time {
         let split_number_comparison = timer
             .run()
-            .segment(split_number)
+            .segments[split_number]
             .comparison_timing_method(comparison, method);
 
-        for segment in timer.run().segments()[..split_number].iter().rev() {
+        for segment in timer.run().segments[..split_number].iter().rev() {
             if let Some(split_time) = segment.split_time()[method] {
                 if segment_time {
                     return Some(current_time - split_time);
@@ -163,7 +163,7 @@ pub fn check_live_delta(
         let current_time = timer.current_time()[method];
         let split_index = timer.current_split_index() as usize;
         let current_segment = live_segment_time(timer, split_index, method);
-        let best_segment = timer.run().segment(split_index).best_segment_time()[method];
+        let best_segment = timer.run().segments[split_index].best_segment_time()[method];
         let best_segment_delta =
             live_segment_delta(timer, split_index, best_segments::NAME, method);
         let comparison_delta = live_segment_delta(timer, split_index, comparison, method);
@@ -232,13 +232,13 @@ pub fn split_color(
 ///
 /// Returns whether or not the indicated split is a Best Segment.
 pub fn check_best_segment(timer: &Timer, split_number: usize, method: TimingMethod) -> bool {
-    if timer.run().segment(split_number).split_time()[method].is_none() {
+    if timer.run().segments[split_number].split_time()[method].is_none() {
         return false;
     }
 
     let delta = previous_segment_delta(timer, split_number, best_segments::NAME, method);
     let current_segment = previous_segment_time(timer, split_number, method);
-    let best_segment = timer.run().segment(split_number).best_segment_time()[method];
+    let best_segment = timer.run().segments[split_number].best_segment_time()[method];
     best_segment.map_or(true, |b| {
         current_segment.map_or(false, |c| c < b) || delta.map_or(false, |d| d < TimeSpan::zero())
     })

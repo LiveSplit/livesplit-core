@@ -50,18 +50,18 @@ pub fn parse<R: BufRead>(source: R, path_for_loading_other_files: Option<PathBuf
 
     let line = lines.next().ok_or(Error::Empty)??;
     let mut splits = line.split('\t');
-    run.set_attempt_count(splits.next().ok_or(Error::ExpectedAttemptCount)?.parse()?);
-    run.set_offset(splits.next().ok_or(Error::ExpectedOffset)?.parse()?);
+    run.attempt_count = splits.next().ok_or(Error::ExpectedAttemptCount)?.parse()?;
+    run.offset = splits.next().ok_or(Error::ExpectedOffset)?.parse()?;
     if let (&Some(ref path), Some(file)) = (&path, splits.next()) {
         let path = path.with_file_name(file);
         if let Ok(image) = Image::from_file(path, &mut buf) {
-            run.set_game_icon(image);
+            run.game_icon = image;
         }
     }
 
     let line = lines.next().ok_or(Error::ExpectedTitleLine)??;
     let mut splits = line.split('\t');
-    run.set_category_name(splits.next().ok_or(Error::ExpectedCategoryName)?);
+    run.category_name = splits.next().ok_or(Error::ExpectedCategoryName)?.to_string();
     splits.next(); // Skip one element
     let comparisons = splits.collect::<Vec<_>>();
 
@@ -97,7 +97,7 @@ pub fn parse<R: BufRead>(source: R, path_for_loading_other_files: Option<PathBuf
             }
         }
 
-        run.push_segment(segment);
+        run.segments.push(segment);
     }
 
     parse_history(&mut run, path).ok();
@@ -152,7 +152,7 @@ fn parse_history(run: &mut Run, path: Option<PathBuf>) -> StdResult<(), ()> {
 
             let mut last_split = TimeSpan::zero();
             for (segment, current_split) in
-                run.segments_mut().iter_mut().zip(split_times.into_iter())
+                run.segments.iter_mut().zip(split_times.into_iter())
             {
 
                 let mut segment_time = Time::default();

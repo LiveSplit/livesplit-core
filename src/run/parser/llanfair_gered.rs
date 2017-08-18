@@ -110,12 +110,11 @@ pub fn parse<R: Read>(mut source: R) -> Result<Run> {
     let node = child(&node, "Run")?;
     let node = child(&node, "default")?;
 
-    run.set_game_name(text(&child(&node, "name")?, buf));
-    run.set_category_name(text(&child(&node, "subTitle")?, buf));
-    run.set_offset(
-        TimeSpan::zero() - time_span(&child(&node, "delayedStart")?, buf)?,
-    );
-    run.set_attempt_count(text(&child(&node, "numberOfAttempts")?, buf).parse()?);
+    run.game_name = text(&child(&node, "name")?, buf).to_string();
+    run.category_name = text(&child(&node, "subTitle")?, buf).to_string();
+    run.offset =
+        TimeSpan::zero() - time_span(&child(&node, "delayedStart")?, buf)?;
+    run.attempt_count = text(&child(&node, "numberOfAttempts")?, buf).parse()?;
 
     let segments = child(&node, "segments")?;
 
@@ -149,7 +148,7 @@ pub fn parse<R: Read>(mut source: R) -> Result<Run> {
             segment.set_icon(image);
         }
 
-        run.push_segment(segment);
+        run.segments.push(segment);
     }
 
     Ok(run)

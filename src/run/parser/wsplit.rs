@@ -34,13 +34,13 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
         let line = line?;
         if !line.is_empty() {
             if line.starts_with("Title=") {
-                run.set_category_name(&line["Title=".len()..]);
+                run.category_name = line["Title=".len()..].to_string();
             } else if line.starts_with("Attempts=") {
-                run.set_attempt_count(line["Attempts=".len()..].parse()?);
+                run.attempt_count = line["Attempts=".len()..].parse()?;
             } else if line.starts_with("Offset=") {
                 let offset = &line["Offset=".len()..];
                 if !offset.is_empty() {
-                    run.set_offset(TimeSpan::from_milliseconds(-offset.parse::<f64>()?));
+                    run.offset = TimeSpan::from_milliseconds(-offset.parse::<f64>()?);
                 }
             } else if line.starts_with("Size=") {
                 // Ignore
@@ -91,7 +91,7 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
 
                 segment.set_personal_best_split_time(pb_time);
                 segment.set_best_segment_time(best_time);
-                run.push_segment(segment);
+                run.segments.push(segment);
             }
         }
     }
@@ -100,7 +100,7 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
         run.add_custom_comparison("Old Run");
     }
 
-    for (icon, segment) in icons_list.into_iter().zip(run.segments_mut().iter_mut()) {
+    for (icon, segment) in icons_list.into_iter().zip(run.segments.iter_mut()) {
         segment.set_icon(icon);
     }
 

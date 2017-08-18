@@ -70,7 +70,7 @@ impl Component {
 
     pub fn state(&self, timer: &Timer) -> State {
         let time = calculate_best(
-            timer.run().segments(),
+            &timer.run().segments,
             false,
             true,
             timer.current_timing_method(),

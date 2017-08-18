@@ -44,8 +44,8 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
     let line = lines.next().ok_or(Error::Empty)??;
     let mut splits = line.split(',');
     // Title Stuff here, do later
-    run.set_category_name(unescape(splits.next().ok_or(Error::ExpectedCategoryName)?));
-    run.set_attempt_count(splits.next().ok_or(Error::ExpectedAttemptCount)?.parse()?);
+    run.category_name = unescape(splits.next().ok_or(Error::ExpectedCategoryName)?).to_string();
+    run.attempt_count = splits.next().ok_or(Error::ExpectedAttemptCount)?.parse()?;
 
     for line in lines {
         let line = line?;
@@ -77,7 +77,7 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
                 }
             }
 
-            run.push_segment(segment);
+            run.segments.push(segment);
         } else {
             break;
         }

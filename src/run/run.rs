@@ -8,17 +8,17 @@ use unicase;
 
 #[derive(Clone, Debug)]
 pub struct Run {
-    game_icon: Image,
-    game_name: String,
-    category_name: String,
-    offset: TimeSpan,
-    attempt_count: u32,
+    pub game_icon: Image,
+    pub game_name: String,
+    pub category_name: String,
+    pub offset: TimeSpan,
+    pub attempt_count: u32,
     attempt_history: Vec<Attempt>,
-    metadata: RunMetadata,
+    pub metadata: RunMetadata,
     has_changed: bool,
-    path: Option<PathBuf>,
-    segments: Vec<Segment>,
-    custom_comparisons: Vec<String>,
+    pub path: Option<PathBuf>,
+    pub segments: Vec<Segment>,
+    pub custom_comparisons: Vec<String>,
     comparison_generators: Vec<Box<ComparisonGenerator>>,
 }
 
@@ -43,122 +43,14 @@ impl Run {
         run
     }
 
-    #[inline]
-    pub fn game_name(&self) -> &str {
-        &self.game_name
-    }
-
-    #[inline]
-    pub fn set_game_name<S>(&mut self, name: S)
-    where
-        S: AsRef<str>,
-    {
-        self.game_name.clear();
-        self.game_name.push_str(name.as_ref());
-    }
-
-    #[inline]
-    pub fn game_icon(&self) -> &Image {
-        &self.game_icon
-    }
-
-    #[inline]
-    pub fn set_game_icon<D: Into<Image>>(&mut self, image: D) {
-        self.game_icon = image.into();
-    }
-
-    #[inline]
-    pub fn category_name(&self) -> &str {
-        &self.category_name
-    }
-
-    #[inline]
-    pub fn set_category_name<S>(&mut self, name: S)
-    where
-        S: AsRef<str>,
-    {
-        self.category_name.clear();
-        self.category_name.push_str(name.as_ref());
-    }
-
-    #[inline]
-    pub fn set_path(&mut self, path: Option<PathBuf>) {
-        self.path = path;
-    }
-
-    #[inline]
-    pub fn set_offset(&mut self, offset: TimeSpan) {
-        self.offset = offset;
-    }
-
-    #[inline]
-    pub fn attempt_count(&self) -> u32 {
-        self.attempt_count
-    }
-
-    #[inline]
-    pub fn set_attempt_count(&mut self, attempts: u32) {
-        self.attempt_count = attempts;
-    }
-
-    #[inline]
-    pub fn metadata(&self) -> &RunMetadata {
-        &self.metadata
-    }
-
-    #[inline]
-    pub fn metadata_mut(&mut self) -> &mut RunMetadata {
-        &mut self.metadata
-    }
-
-    #[inline]
-    pub fn offset(&self) -> TimeSpan {
-        self.offset
-    }
-
     pub fn start_next_run(&mut self) {
         self.attempt_count += 1;
         self.has_changed = true;
     }
 
     #[inline]
-    pub fn segments(&self) -> &[Segment] {
-        &self.segments
-    }
-
-    #[inline]
-    pub fn segments_mut(&mut self) -> &mut Vec<Segment> {
-        &mut self.segments
-    }
-
-    #[inline]
-    pub fn push_segment(&mut self, segment: Segment) {
-        self.segments.push(segment);
-    }
-
-    #[inline]
-    pub fn segment(&self, index: usize) -> &Segment {
-        &self.segments[index]
-    }
-
-    #[inline]
-    pub fn segment_mut(&mut self, index: usize) -> &mut Segment {
-        &mut self.segments[index]
-    }
-
-    #[inline]
     pub fn attempt_history(&self) -> &[Attempt] {
         &self.attempt_history
-    }
-
-    #[inline]
-    pub fn custom_comparisons(&self) -> &[String] {
-        &self.custom_comparisons
-    }
-
-    #[inline]
-    pub fn custom_comparisons_mut(&mut self) -> &mut Vec<String> {
-        &mut self.custom_comparisons
     }
 
     #[inline]
@@ -245,12 +137,12 @@ impl Run {
     }
 
     pub fn extended_name(&self, use_extended_category_name: bool) -> String {
-        let mut name = self.game_name().to_owned();
+        let mut name = self.game_name.clone();
 
         let category_name = if use_extended_category_name {
             self.extended_category_name(false, false, true)
         } else {
-            self.category_name().into()
+            Cow::Borrowed(self.category_name.as_str())
         };
 
         if !category_name.is_empty() {
@@ -443,7 +335,7 @@ impl Run {
     fn remove_duplicates(&mut self, method: TimingMethod) {
         let mut history = Vec::new();
 
-        for segment in self.segments_mut() {
+        for segment in &mut self.segments {
             let segment_history = segment.segment_history_mut();
             history.clear();
             history.extend(segment_history.iter().filter_map(|&(_, t)| t[method]));
@@ -469,7 +361,7 @@ impl Run {
 
     fn remove_items_from_cache(&mut self, index: usize, cache: &mut Vec<i32>) {
         let ind = index - cache.len();
-        for (index, segment) in cache.drain(..).zip(self.segments_mut()[ind..].iter_mut()) {
+        for (index, segment) in cache.drain(..).zip(self.segments[ind..].iter_mut()) {
             segment.segment_history_mut().remove(index);
         }
     }
@@ -488,7 +380,7 @@ impl Run {
             index -= 1;
             let mut prev_time = TimeSpan::zero();
 
-            for segment in self.segments_mut() {
+            for segment in &mut self.segments {
                 // Import the PB splits into the history
                 let pb_time = segment.personal_best_split_time()[timing_method];
                 let time =

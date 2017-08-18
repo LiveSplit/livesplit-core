@@ -46,9 +46,9 @@ pub fn parse<R: Read>(source: R) -> Result<Run> {
 
     let splits: Splits = from_reader(source)?;
 
-    run.set_game_name(splits.run_name);
-    run.set_attempt_count(splits.run_count);
-    run.set_offset(TimeSpan::from_milliseconds(-splits.start_delay));
+    run.game_name = splits.run_name;
+    run.attempt_count = splits.run_count;
+    run.offset = TimeSpan::from_milliseconds(-splits.start_delay);
 
     let method = if splits.timer_type == 0 {
         TimingMethod::RealTime
@@ -61,7 +61,7 @@ pub fn parse<R: Read>(source: R) -> Result<Run> {
         segment.set_personal_best_split_time(parse_time(split.pb_split, method));
         segment.set_best_segment_time(parse_time(split.split_best, method));
 
-        run.push_segment(segment);
+        run.segments.push(segment);
     }
 
     Ok(run)

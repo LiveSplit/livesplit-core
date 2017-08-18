@@ -6,10 +6,10 @@ pub fn calculate(
     comparison: &str,
     live: bool,
 ) -> Option<TimeSpan> {
-    let segments = timer.run().segments();
+    let segments = &timer.run().segments;
     let method = timer.current_timing_method();
     let mut prev_time = TimeSpan::zero();
-    let segment = timer.run().segment(segment_index);
+    let segment = &timer.run().segments[segment_index];
     let mut best_segments = segment.best_segment_time()[method];
 
     for segment in segments[..segment_index].iter().rev() {
