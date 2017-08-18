@@ -193,7 +193,7 @@ impl Editor {
         if pb_split_time.real_time != self.previous_personal_best_time.real_time ||
             pb_split_time.game_time != self.previous_personal_best_time.game_time
         {
-            self.run.metadata.set_run_id("");
+            self.run.metadata.run_id.clear();
             self.previous_personal_best_time = pb_split_time;
         }
         self.raise_run_edited();

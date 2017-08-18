@@ -231,11 +231,11 @@ pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
         let metadata = &mut run.metadata;
         let node = child(&node, "Metadata")?;
 
-        metadata.set_run_id(attribute(&child(&node, "Run")?, "id")?);
+        metadata.run_id = attribute(&child(&node, "Run")?, "id")?.to_string();
         let platform = child(&node, "Platform")?;
-        metadata.set_platform_name(text(&platform, buf));
-        metadata.set_emulator_usage(parse_bool(attribute(&platform, "usesEmulator")?)?);
-        metadata.set_region_name(text(&child(&node, "Region")?, buf));
+        metadata.platform_name = text(&platform, buf).to_string();
+        metadata.uses_emulator = parse_bool(attribute(&platform, "usesEmulator")?)?;
+        metadata.region_name = text(&child(&node, "Region")?, buf).to_string();
 
         let variables = child(&node, "Variables")?;
         for variable in variables.children().into_iter().filter_map(|c| c.element()) {

@@ -105,13 +105,13 @@ pub fn parse<R: Read>(mut source: R) -> Result<Run> {
         run.category_name = text(&node, buf).to_string();
     }
     if let Ok(node) = child(&node, "platform") {
-        run.metadata.set_platform_name(text(&node, buf));
+        run.metadata.platform_name = text(&node, buf).to_string();
     }
     if let Ok(node) = child(&node, "region") {
-        run.metadata.set_region_name(text(&node, buf));
+        run.metadata.region_name = text(&node, buf).to_string();
     }
     run.metadata
-        .set_emulator_usage(text(&child(&node, "emulated")?, buf) == "true");
+        .uses_emulator = text(&child(&node, "emulated")?, buf) == "true";
 
     let segments = child(&node, "segments")?;
 

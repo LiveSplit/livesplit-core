@@ -106,7 +106,7 @@ impl Run {
 
     #[inline]
     pub fn clear_run_id(&mut self) {
-        self.metadata.set_run_id(String::new());
+        self.metadata.run_id = String::new();
     }
 
     #[inline]
@@ -212,15 +212,15 @@ impl Run {
             }
 
             if show_region {
-                let region = self.metadata.region_name();
+                let region = &self.metadata.region_name;
                 if !region.is_empty() {
                     push(category_name.to_mut(), &[region]);
                 }
             }
 
             if show_platform {
-                let platform = self.metadata.platform_name();
-                let uses_emulator = self.metadata.uses_emulator();
+                let platform = &self.metadata.platform_name;
+                let uses_emulator = self.metadata.uses_emulator;
 
                 match (!platform.is_empty(), uses_emulator) {
                     (true, true) => push(category_name.to_mut(), &[platform, " Emulator"]),
@@ -270,7 +270,7 @@ impl Run {
             segment.set_best_segment_time(Time::default());
         }
         self.attempt_count = 0;
-        self.metadata.set_run_id("");
+        self.metadata.run_id.clear();
     }
 
     fn fix_comparison_times_and_history(&mut self, method: TimingMethod) {

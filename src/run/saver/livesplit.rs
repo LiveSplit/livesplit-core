@@ -85,14 +85,14 @@ pub fn save<W: Write>(run: &Run, mut writer: W) -> Result<()> {
     let metadata = doc.create_element("Metadata");
 
     let run_element = doc.create_element("Run");
-    run_element.set_attribute_value("id", run.metadata.run_id());
+    run_element.set_attribute_value("id", &run.metadata.run_id);
     metadata.append_child(run_element);
 
-    let platform = to_element(doc, "Platform", run.metadata.platform_name());
-    platform.set_attribute_value("usesEmulator", fmt_bool(run.metadata.uses_emulator()));
+    let platform = to_element(doc, "Platform", &run.metadata.platform_name);
+    platform.set_attribute_value("usesEmulator", fmt_bool(run.metadata.uses_emulator));
     metadata.append_child(platform);
 
-    add_element(doc, &metadata, "Region", run.metadata.region_name());
+    add_element(doc, &metadata, "Region", &run.metadata.region_name);
 
     let variables = doc.create_element("Variables");
     for (name, value) in run.metadata.variables() {
