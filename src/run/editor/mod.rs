@@ -542,7 +542,8 @@ impl Editor {
                 .position(|c| c == old)
                 .ok_or(())?;
 
-            self.run.custom_comparisons[position] = new.to_string();
+            self.run.custom_comparisons[position].clear();
+            self.run.custom_comparisons[position].push_str(new);
 
             for segment in &mut self.run.segments {
                 if let Some(time) = segment.comparisons.remove(old) {
