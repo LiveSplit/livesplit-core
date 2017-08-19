@@ -3,6 +3,12 @@ asmjs:
 	@cp ../target/asmjs-unknown-emscripten/release/livesplit*.js* livesplit.js
 	@cat exports.js >> livesplit.js
 
+node: asmjs
+	(cd ../capi/bind_gen && cargo run)
+	cp ../capi/bindings/emscripten/livesplit_core.js node/index.js
+	cp livesplit.js node/livesplit_core.js
+	cp ../README.md node/README.md
+
 wasm:
 	@-rm ../target/wasm32-unknown-emscripten/release/deps/*.wasm
 	@-rm ../target/wasm32-unknown-emscripten/release/deps/*.js
