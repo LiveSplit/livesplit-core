@@ -289,7 +289,11 @@ class {class}({base_class}):
                 r#"
     @staticmethod
     def parse_file(file):
-        bytes = bytearray(file.read())
+        data = file.read()
+        if sys.version_info[0] > 2:
+            if isinstance(data, str):
+                raise TypeError("File must be opened in binary mode!")
+        bytes = bytearray(data)
         bufferType = c_byte * len(bytes)
         buffer = bufferType(*bytes)
         return Run.parse(buffer, len(bytes))"#
