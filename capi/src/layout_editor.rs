@@ -72,6 +72,11 @@ pub unsafe extern "C" fn LayoutEditor_move_component(this: *mut LayoutEditor, ds
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn LayoutEditor_duplicate_component(this: *mut LayoutEditor) {
+    acc_mut(this).duplicate_component();
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn LayoutEditor_set_component_settings_value(
     this: *mut LayoutEditor,
     index: usize,
