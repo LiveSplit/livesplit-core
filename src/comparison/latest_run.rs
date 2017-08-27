@@ -10,7 +10,7 @@ pub const NAME: &str = "Latest Run";
 fn generate(segments: &mut [Segment], method: TimingMethod) {
     let mut attempt_id = None;
     for segment in segments.iter_mut().rev() {
-        if let Some(max_index) = segment.segment_history().try_get_max_index() {
+        if let Some(max_index) = segment.segment_history.try_get_max_index() {
             attempt_id = Some(max_index);
             break;
         }
@@ -21,7 +21,7 @@ fn generate(segments: &mut [Segment], method: TimingMethod) {
 
         let mut total_time = TimeSpan::zero();
         while let Some(segment) = remaining_segments.next() {
-            let segment_time = segment.segment_history().get(attempt_id).map(|t| t[method]);
+            let segment_time = segment.segment_history.get(attempt_id).map(|t| t[method]);
 
             let split_time = match segment_time {
                 Some(Some(segment_time)) => {

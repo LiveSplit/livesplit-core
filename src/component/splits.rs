@@ -146,7 +146,7 @@ impl Component {
         State {
             splits: timer
                 .run()
-                .segments()
+                .segments
                 .iter()
                 .enumerate()
                 .skip(skip_count)
@@ -156,7 +156,7 @@ impl Component {
                         (always_show_last_split && i + 1 == timer.run().len())
                 })
                 .map(|((i, segment), icon_id)| {
-                    let split = segment.split_time()[method];
+                    let split = segment.split_time[method];
                     let comparison_time = segment.comparison(comparison)[method];
 
                     let (time, delta, semantic_color) = if current_split > i as isize {
@@ -189,8 +189,8 @@ impl Component {
                     let visual_color = semantic_color.visualize(layout_settings);
 
                     SplitState {
-                        icon_change: segment.icon().check_for_change(icon_id).map(str::to_owned),
-                        name: segment.name().to_string(),
+                        icon_change: segment.icon.check_for_change(icon_id).map(str::to_owned),
+                        name: segment.name.clone(),
                         delta,
                         time: Regular::new().format(time).to_string(),
                         semantic_color,

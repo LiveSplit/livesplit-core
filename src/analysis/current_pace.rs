@@ -3,7 +3,7 @@ use analysis;
 
 pub fn calculate(timer: &Timer, comparison: &str) -> Option<TimeSpan> {
     let timing_method = timer.current_timing_method();
-    let last_segment = timer.run().segments().last().unwrap();
+    let last_segment = timer.run().segments.last().unwrap();
 
     match timer.current_phase() {
         TimerPhase::Running | TimerPhase::Paused => {
@@ -27,7 +27,7 @@ pub fn calculate(timer: &Timer, comparison: &str) -> Option<TimeSpan> {
 
             last_segment.comparison(comparison)[timing_method].map(|c| delta + c)
         }
-        TimerPhase::Ended => last_segment.split_time()[timing_method],
+        TimerPhase::Ended => last_segment.split_time[timing_method],
         TimerPhase::NotRunning => last_segment.comparison(comparison)[timing_method],
     }
 }

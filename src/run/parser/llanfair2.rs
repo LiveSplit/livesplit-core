@@ -99,19 +99,19 @@ pub fn parse<R: Read>(mut source: R) -> Result<Run> {
     let mut run = Run::new();
 
     if let Ok(node) = child(&node, "game") {
-        run.set_game_name(text(&node, buf));
+        run.game_name = text(&node, buf).to_string();
     }
     if let Ok(node) = child(&node, "category") {
-        run.set_category_name(text(&node, buf));
+        run.category_name = text(&node, buf).to_string();
     }
     if let Ok(node) = child(&node, "platform") {
-        run.metadata_mut().set_platform_name(text(&node, buf));
+        run.metadata.platform_name = text(&node, buf).to_string();
     }
     if let Ok(node) = child(&node, "region") {
-        run.metadata_mut().set_region_name(text(&node, buf));
+        run.metadata.region_name = text(&node, buf).to_string();
     }
-    run.metadata_mut()
-        .set_emulator_usage(text(&child(&node, "emulated")?, buf) == "true");
+    run.metadata
+        .uses_emulator = text(&child(&node, "emulated")?, buf) == "true";
 
     let segments = child(&node, "segments")?;
 
@@ -119,7 +119,7 @@ pub fn parse<R: Read>(mut source: R) -> Result<Run> {
         let mut segment = Segment::new(child(&node, "name").ok().map_or("", |n| text(&n, buf)));
 
         if let Ok(image) = image(&node, &mut byte_buf, &mut byte_buf2, buf) {
-            segment.set_icon(image);
+            segment.icon = image.into();
         }
 
         if let Ok(node) = child(&node, "time") {
@@ -127,10 +127,10 @@ pub fn parse<R: Read>(mut source: R) -> Result<Run> {
         }
 
         if let Ok(node) = child(&node, "best") {
-            segment.set_best_segment_time(time(&node, buf)?);
+            segment.best_segment_time = time(&node, buf)?;
         }
 
-        run.push_segment(segment);
+        run.segments.push(segment);
     }
 
     Ok(run)

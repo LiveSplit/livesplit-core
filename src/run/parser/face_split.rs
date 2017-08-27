@@ -50,9 +50,9 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
     let mut icon_buf = Vec::new();
     let mut lines = source.lines();
 
-    run.set_category_name(lines.next().ok_or(Error::ExpectedTitle)??);
+    run.category_name = lines.next().ok_or(Error::ExpectedTitle)??;
     lines.next(); // TODO Store Goal
-    run.set_attempt_count(lines.next().ok_or(Error::ExpectedAttemptCount)??.parse()?);
+    run.attempt_count = lines.next().ok_or(Error::ExpectedAttemptCount)??.parse()?;
     lines.next(); // TODO Store runs completed somehow
 
     for line in lines {
@@ -70,7 +70,7 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
         segment.set_personal_best_split_time(split_time);
 
         let best_segment = parse_time(splits.next().ok_or(Error::ExpectedBestSegmentTime)?)?;
-        segment.set_best_segment_time(best_segment);
+        segment.best_segment_time = best_segment;
 
         splits.next(); // Skip Segment Time
 
@@ -78,13 +78,13 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
             if let Some(icon_path) = splits.next() {
                 if !icon_path.is_empty() {
                     if let Ok(image) = Image::from_file(icon_path, &mut icon_buf) {
-                        segment.set_icon(image);
+                        segment.icon = image;
                     }
                 }
             }
         }
 
-        run.push_segment(segment);
+        run.segments.push(segment);
     }
 
     Ok(run)

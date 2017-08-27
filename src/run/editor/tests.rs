@@ -4,8 +4,8 @@ use super::Editor;
 #[test]
 fn new_best_segment() {
     let mut run = Run::new();
-    run.push_segment(Segment::new(""));
-    run.push_segment(Segment::new(""));
+    run.segments.push(Segment::new(""));
+    run.segments.push(Segment::new(""));
 
     let mut editor = Editor::new(run).unwrap();
 
@@ -36,27 +36,27 @@ fn new_best_segment() {
     let run = editor.close();
 
     assert_eq!(
-        run.segment(0).personal_best_split_time().real_time,
+        run.segments[0].personal_best_split_time().real_time,
         Some("1:00".parse().unwrap())
     );
     assert_eq!(
-        run.segment(0).best_segment_time().real_time,
+        run.segments[0].best_segment_time.real_time,
         Some("1:00".parse().unwrap())
     );
     assert_eq!(
-        run.segment(1).personal_best_split_time().real_time,
+        run.segments[1].personal_best_split_time().real_time,
         Some("2:00".parse().unwrap())
     );
     assert_eq!(
-        run.segment(1).best_segment_time().real_time,
+        run.segments[1].best_segment_time.real_time,
         Some("1:00".parse().unwrap())
     );
     assert_eq!(
-        run.segment(2).personal_best_split_time().real_time,
+        run.segments[2].personal_best_split_time().real_time,
         Some("3:00".parse().unwrap())
     );
     assert_eq!(
-        run.segment(2).best_segment_time().real_time,
+        run.segments[2].best_segment_time.real_time,
         Some("0:30".parse().unwrap())
     );
 }

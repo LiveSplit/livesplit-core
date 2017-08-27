@@ -78,24 +78,24 @@ pub fn save<W: Write>(run: &Run, mut writer: W) -> Result<()> {
     parent.set_attribute_value("version", "1.7.0");
     doc.root().append_child(parent);
 
-    add_element(doc, &parent, "GameIcon", &fmt_image(run.game_icon()));
-    add_element(doc, &parent, "GameName", run.game_name());
-    add_element(doc, &parent, "CategoryName", run.category_name());
+    add_element(doc, &parent, "GameIcon", &fmt_image(&run.game_icon));
+    add_element(doc, &parent, "GameName", &run.game_name);
+    add_element(doc, &parent, "CategoryName", &run.category_name);
 
     let metadata = doc.create_element("Metadata");
 
     let run_element = doc.create_element("Run");
-    run_element.set_attribute_value("id", run.metadata().run_id());
+    run_element.set_attribute_value("id", &run.metadata.run_id);
     metadata.append_child(run_element);
 
-    let platform = to_element(doc, "Platform", run.metadata().platform_name());
-    platform.set_attribute_value("usesEmulator", fmt_bool(run.metadata().uses_emulator()));
+    let platform = to_element(doc, "Platform", &run.metadata.platform_name);
+    platform.set_attribute_value("usesEmulator", fmt_bool(run.metadata.uses_emulator));
     metadata.append_child(platform);
 
-    add_element(doc, &metadata, "Region", run.metadata().region_name());
+    add_element(doc, &metadata, "Region", &run.metadata.region_name);
 
     let variables = doc.create_element("Variables");
-    for (name, value) in run.metadata().variables() {
+    for (name, value) in run.metadata.variables() {
         let variable = to_element(doc, "Variable", value);
         variable.set_attribute_value("name", name);
         variables.append_child(variable);
@@ -103,12 +103,12 @@ pub fn save<W: Write>(run: &Run, mut writer: W) -> Result<()> {
     metadata.append_child(variables);
     parent.append_child(metadata);
 
-    add_element(doc, &parent, "Offset", &time_span(run.offset()));
+    add_element(doc, &parent, "Offset", &time_span(run.offset));
     add_element(
         doc,
         &parent,
         "AttemptCount",
-        &run.attempt_count().to_string(),
+        &run.attempt_count.to_string(),
     );
 
     let attempt_history = doc.create_element("AttemptHistory");
@@ -138,24 +138,24 @@ pub fn save<W: Write>(run: &Run, mut writer: W) -> Result<()> {
     parent.append_child(attempt_history);
 
     let segments_element = doc.create_element("Segments");
-    for segment in run.segments() {
+    for segment in &run.segments {
         let segment_element = doc.create_element("Segment");
 
-        add_element(doc, &segment_element, "Name", segment.name());
-        add_element(doc, &segment_element, "Icon", &fmt_image(segment.icon()));
+        add_element(doc, &segment_element, "Name", &segment.name);
+        add_element(doc, &segment_element, "Icon", &fmt_image(&segment.icon));
 
         let split_times = doc.create_element("SplitTimes");
-        for comparison in run.custom_comparisons() {
+        for comparison in &run.custom_comparisons {
             let split_time = time(doc, "SplitTime", segment.comparison(comparison));
             split_time.set_attribute_value("name", comparison);
             split_times.append_child(split_time);
         }
         segment_element.append_child(split_times);
 
-        segment_element.append_child(time(doc, "BestSegmentTime", segment.best_segment_time()));
+        segment_element.append_child(time(doc, "BestSegmentTime", segment.best_segment_time));
 
         let history = doc.create_element("SegmentHistory");
-        for &(index, history_time) in segment.segment_history() {
+        for &(index, history_time) in &segment.segment_history {
             let element = time(doc, "Time", history_time);
             element.set_attribute_value("id", &index.to_string());
             history.append_child(element);

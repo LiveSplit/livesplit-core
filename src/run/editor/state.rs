@@ -57,7 +57,7 @@ impl Editor {
         let formatter = EmptyWrapper::new(Short::with_accuracy(Accuracy::Hundredths));
 
         let icon_change = self.run
-            .game_icon()
+            .game_icon
             .check_for_change(&mut self.game_icon_id)
             .map(str::to_owned);
         let game = self.game_name().to_string();
@@ -94,8 +94,8 @@ impl Editor {
             }
 
             let icon_change = self.run
-                .segment(segment_index)
-                .icon()
+                .segments[segment_index]
+                .icon
                 .check_for_change(&mut self.segment_icon_ids[segment_index])
                 .map(str::to_owned);
 

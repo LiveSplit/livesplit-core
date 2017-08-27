@@ -6,19 +6,19 @@ use super::super::total_playtime;
 fn sum_of_best() {
     let run = Run::new();
     assert_eq!(
-        calculate_best(run.segments(), false, false, TimingMethod::RealTime),
+        calculate_best(&run.segments, false, false, TimingMethod::RealTime),
         Some(TimeSpan::zero())
     );
     assert_eq!(
-        calculate_best(run.segments(), false, true, TimingMethod::RealTime),
+        calculate_best(&run.segments, false, true, TimingMethod::RealTime),
         Some(TimeSpan::zero())
     );
     assert_eq!(
-        calculate_best(run.segments(), true, false, TimingMethod::RealTime),
+        calculate_best(&run.segments, true, false, TimingMethod::RealTime),
         Some(TimeSpan::zero())
     );
     assert_eq!(
-        calculate_best(run.segments(), true, true, TimingMethod::RealTime),
+        calculate_best(&run.segments, true, true, TimingMethod::RealTime),
         Some(TimeSpan::zero())
     );
 }
@@ -27,11 +27,11 @@ fn sum_of_best() {
 fn sum_of_worst() {
     let run = Run::new();
     assert_eq!(
-        calculate_worst(run.segments(), false, TimingMethod::RealTime),
+        calculate_worst(&run.segments, false, TimingMethod::RealTime),
         Some(TimeSpan::zero())
     );
     assert_eq!(
-        calculate_worst(run.segments(), true, TimingMethod::RealTime),
+        calculate_worst(&run.segments, true, TimingMethod::RealTime),
         Some(TimeSpan::zero())
     );
 }

@@ -38,32 +38,36 @@ pub unsafe extern "C" fn Run_clone(this: *const Run) -> OwnedRun {
 
 #[no_mangle]
 pub unsafe extern "C" fn Run_push_segment(this: *mut Run, segment: OwnedSegment) {
-    acc_mut(this).push_segment(own(segment));
+    acc_mut(this).segments.push(own(segment));
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn Run_game_name(this: *const Run) -> *const c_char {
-    output_str(acc(this).game_name())
+    output_str(&acc(this).game_name)
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn Run_set_game_name(this: *mut Run, game: *const c_char) {
-    acc_mut(this).set_game_name(str(game));
+    let r = acc_mut(this);
+    r.game_name.clear();
+    r.game_name.push_str(str(game));
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn Run_game_icon(this: *const Run) -> *const c_char {
-    output_str(acc(this).game_icon().url())
+    output_str(acc(this).game_icon.url())
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn Run_category_name(this: *const Run) -> *const c_char {
-    output_str(acc(this).category_name())
+    output_str(&acc(this).category_name)
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn Run_set_category_name(this: *mut Run, category: *const c_char) {
-    acc_mut(this).set_category_name(str(category));
+    let r = acc_mut(this);
+    r.category_name.clear();
+    r.category_name.push_str(str(category));
 }
 
 #[no_mangle]
@@ -96,17 +100,17 @@ pub unsafe extern "C" fn Run_extended_category_name(
 
 #[no_mangle]
 pub unsafe extern "C" fn Run_attempt_count(this: *const Run) -> u32 {
-    acc(this).attempt_count()
+    acc(this).attempt_count
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn Run_metadata(this: *const Run) -> *const RunMetadata {
-    acc(this).metadata()
+    &acc(this).metadata
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn Run_offset(this: *const Run) -> *const TimeSpan {
-    output_time_span(acc(this).offset())
+    output_time_span(acc(this).offset)
 }
 
 #[no_mangle]
@@ -116,7 +120,7 @@ pub unsafe extern "C" fn Run_len(this: *const Run) -> usize {
 
 #[no_mangle]
 pub unsafe extern "C" fn Run_segment(this: *const Run, index: usize) -> *const Segment {
-    acc(this).segment(index)
+    acc(this).segments.get(index).map_or(ptr::null(), |p| p as *const Segment)
 }
 
 #[no_mangle]

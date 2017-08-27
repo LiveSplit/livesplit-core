@@ -3,7 +3,7 @@ use analysis;
 
 pub fn calculate(timer: &Timer, comparison: &str) -> (Option<TimeSpan>, bool) {
     let timing_method = timer.current_timing_method();
-    let last_segment = timer.run().segments().last().unwrap();
+    let last_segment = timer.run().segments.last().unwrap();
 
     let mut use_live_delta = false;
 
@@ -31,7 +31,7 @@ pub fn calculate(timer: &Timer, comparison: &str) -> (Option<TimeSpan>, bool) {
             delta
         }
         TimerPhase::Ended => TimeSpan::option_sub(
-            last_segment.split_time()[timing_method],
+            last_segment.split_time[timing_method],
             last_segment.comparison(comparison)[timing_method],
         ),
         TimerPhase::NotRunning => None,

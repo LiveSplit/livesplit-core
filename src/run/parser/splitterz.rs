@@ -44,8 +44,8 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
     let line = lines.next().ok_or(Error::Empty)??;
     let mut splits = line.split(',');
     // Title Stuff here, do later
-    run.set_category_name(unescape(splits.next().ok_or(Error::ExpectedCategoryName)?));
-    run.set_attempt_count(splits.next().ok_or(Error::ExpectedAttemptCount)?.parse()?);
+    run.category_name = unescape(splits.next().ok_or(Error::ExpectedCategoryName)?).to_string();
+    run.attempt_count = splits.next().ok_or(Error::ExpectedAttemptCount)?.parse()?;
 
     for line in lines {
         let line = line?;
@@ -62,7 +62,7 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
 
             let time: TimeSpan = splits.next().ok_or(Error::ExpectedBestSegment)?.parse()?;
             if time != TimeSpan::zero() {
-                segment.set_best_segment_time(Time::new().with_real_time(Some(time)));
+                segment.best_segment_time = Time::new().with_real_time(Some(time));
             }
 
             if load_icons {
@@ -71,13 +71,13 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
                         if let Ok(image) =
                             Image::from_file(unescape(icon_path).as_ref(), &mut icon_buf)
                         {
-                            segment.set_icon(image);
+                            segment.icon = image;
                         }
                     }
                 }
             }
 
-            run.push_segment(segment);
+            run.segments.push(segment);
         } else {
             break;
         }

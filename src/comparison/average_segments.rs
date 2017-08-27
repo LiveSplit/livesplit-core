@@ -32,12 +32,12 @@ fn generate(buf: &mut Vec<(i32, TimeSpan)>, segments: &mut [Segment], method: Ti
         if total_time.is_some() {
             buf.clear();
 
-            for &(id, time) in segments[i].segment_history().iter_actual_runs() {
+            for &(id, time) in segments[i].segment_history.iter_actual_runs() {
                 if let Some(time) = time[method] {
                     let keep = i.checked_sub(1)
                         .and_then(|i| {
                             segments[i]
-                                .segment_history()
+                                .segment_history
                                 .get(id)
                                 .map(|t| t[method].is_some())
                         })

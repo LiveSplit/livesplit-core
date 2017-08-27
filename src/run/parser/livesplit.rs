@@ -228,14 +228,14 @@ pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
     };
 
     if version >= Version(1, 6, 0, 0) {
-        let metadata = run.metadata_mut();
+        let metadata = &mut run.metadata;
         let node = child(&node, "Metadata")?;
 
-        metadata.set_run_id(attribute(&child(&node, "Run")?, "id")?);
+        metadata.run_id = attribute(&child(&node, "Run")?, "id")?.to_string();
         let platform = child(&node, "Platform")?;
-        metadata.set_platform_name(text(&platform, buf));
-        metadata.set_emulator_usage(parse_bool(attribute(&platform, "usesEmulator")?)?);
-        metadata.set_region_name(text(&child(&node, "Region")?, buf));
+        metadata.platform_name = text(&platform, buf).to_string();
+        metadata.uses_emulator = parse_bool(attribute(&platform, "usesEmulator")?)?;
+        metadata.region_name = text(&child(&node, "Region")?, buf).to_string();
 
         let variables = child(&node, "Variables")?;
         for variable in variables.children().into_iter().filter_map(|c| c.element()) {
@@ -245,11 +245,11 @@ pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
         }
     }
 
-    run.set_game_icon(image(&child(&node, "GameIcon")?, icon_buf, buf));
-    run.set_game_name(text(&child(&node, "GameName")?, buf));
-    run.set_category_name(text(&child(&node, "CategoryName")?, buf));
-    run.set_offset(time_span(&child(&node, "Offset")?, buf)?);
-    run.set_attempt_count(text(&child(&node, "AttemptCount")?, buf).parse()?);
+    run.game_icon = image(&child(&node, "GameIcon")?, icon_buf, buf).into();
+    run.game_name = text(&child(&node, "GameName")?, buf).to_string();
+    run.category_name = text(&child(&node, "CategoryName")?, buf).to_string();
+    run.offset = time_span(&child(&node, "Offset")?, buf)?;
+    run.attempt_count = text(&child(&node, "AttemptCount")?, buf).parse()?;
 
     parse_attempt_history(version, &node, &mut run, buf)?;
 
@@ -257,7 +257,7 @@ pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
 
     for node in segments.children().into_iter().filter_map(|c| c.element()) {
         let mut segment = Segment::new(text(&child(&node, "Name")?, buf));
-        segment.set_icon(image(&child(&node, "Icon")?, icon_buf, buf));
+        segment.icon = image(&child(&node, "Icon")?, icon_buf, buf).into();
 
         if version >= Version(1, 3, 0, 0) {
             let node = child(&node, "SplitTimes")?;
@@ -281,11 +281,11 @@ pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
 
         let gold_split = child(&node, "BestSegmentTime")?;
         if !gold_split.children().is_empty() {
-            segment.set_best_segment_time(if version >= Version(1, 4, 1, 0) {
+            segment.best_segment_time = if version >= Version(1, 4, 1, 0) {
                 time(&gold_split, buf)?
             } else {
                 time_old(&gold_split, buf)?
-            });
+            };
         }
 
         let history = child(&node, "SegmentHistory")?;
@@ -297,10 +297,10 @@ pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
                 time_old(&node, buf)?
             };
 
-            segment.segment_history_mut().insert(index, time);
+            segment.segment_history.insert(index, time);
         }
 
-        run.push_segment(segment);
+        run.segments.push(segment);
     }
 
     if version >= Version(1, 4, 2, 0) {
@@ -308,7 +308,7 @@ pub fn parse<R: Read>(source: R, path: Option<PathBuf>) -> Result<Run> {
         // TODO Store this somehow
     }
 
-    run.set_path(path);
+    run.path = path;
 
     Ok(run)
 }

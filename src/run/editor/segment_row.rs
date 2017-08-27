@@ -15,28 +15,29 @@ impl<'a> SegmentRow<'a> {
     }
 
     pub fn icon(&self) -> &Image {
-        self.editor.run.segment(self.index).icon()
+        &self.editor.run.segments[self.index].icon
     }
 
     pub fn set_icon<D: Into<Image>>(&mut self, image: D) {
-        self.editor.run.segment_mut(self.index).set_icon(image);
+        self.editor.run.segments[self.index].icon = image.into();
         self.editor.raise_run_edited();
     }
 
     pub fn remove_icon(&mut self) {
-        self.editor.run.segment_mut(self.index).set_icon(&[]);
+        self.editor.run.segments[self.index].icon = Image::default();
         self.editor.raise_run_edited();
     }
 
     pub fn name(&self) -> &str {
-        self.editor.run.segment(self.index).name()
+        &self.editor.run.segments[self.index].name
     }
 
     pub fn set_name<S>(&mut self, name: S)
     where
         S: AsRef<str>,
     {
-        self.editor.run.segment_mut(self.index).set_name(name);
+        self.editor.run.segments[self.index].name.clear();
+        self.editor.run.segments[self.index].name.push_str(name.as_ref());
         self.editor.raise_run_edited();
     }
 
@@ -44,7 +45,7 @@ impl<'a> SegmentRow<'a> {
         let method = self.editor.selected_method;
         self.editor
             .run
-            .segment(self.index)
+            .segments[self.index]
             .personal_best_split_time()[method]
     }
 
@@ -52,7 +53,7 @@ impl<'a> SegmentRow<'a> {
         let method = self.editor.selected_method;
         self.editor
             .run
-            .segment_mut(self.index)
+            .segments[self.index]
             .personal_best_split_time_mut()[method] = time;
         self.editor.times_modified();
         self.editor.fix();
@@ -87,15 +88,15 @@ impl<'a> SegmentRow<'a> {
 
     pub fn best_segment_time(&self) -> Option<TimeSpan> {
         let method = self.editor.selected_method;
-        self.editor.run.segment(self.index).best_segment_time()[method]
+        self.editor.run.segments[self.index].best_segment_time[method]
     }
 
     pub fn set_best_segment_time(&mut self, time: Option<TimeSpan>) {
         let method = self.editor.selected_method;
         self.editor
             .run
-            .segment_mut(self.index)
-            .best_segment_time_mut()[method] = time;
+            .segments[self.index]
+            .best_segment_time[method] = time;
         self.editor.times_modified();
         self.editor.fix();
     }
@@ -110,14 +111,14 @@ impl<'a> SegmentRow<'a> {
 
     pub fn comparison_time(&self, comparison: &str) -> Option<TimeSpan> {
         let method = self.editor.selected_method;
-        self.editor.run.segment(self.index).comparison(comparison)[method]
+        self.editor.run.segments[self.index].comparison(comparison)[method]
     }
 
     pub fn set_comparison_time(&mut self, comparison: &str, time: Option<TimeSpan>) {
         let method = self.editor.selected_method;
         self.editor
             .run
-            .segment_mut(self.index)
+            .segments[self.index]
             .comparison_mut(comparison)[method] = time;
         self.editor.times_modified();
         self.editor.fix();

@@ -10,4 +10,5 @@ js/node/livesplit_core.js
 js/node/index.js
 js/node/README.md
 Cargo.lock
-**.rs.bk
+*.rs.bk
+*.swp
