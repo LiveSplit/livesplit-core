@@ -19,6 +19,7 @@ pub struct Settings {
     pub timing_method: Option<TimingMethod>,
     pub digits_format: DigitsFormat,
     pub accuracy: Accuracy,
+    pub height: u32,
 }
 
 impl Default for Settings {
@@ -28,6 +29,7 @@ impl Default for Settings {
             timing_method: None,
             digits_format: DigitsFormat::SingleDigitSeconds,
             accuracy: Accuracy::Hundredths,
+            height: 60,
         }
     }
 }
@@ -40,6 +42,7 @@ pub struct State {
     pub semantic_color: SemanticColor,
     pub top_color: Color,
     pub bottom_color: Color,
+    pub height: u32,
 }
 
 impl State {
@@ -136,6 +139,7 @@ impl Component {
             semantic_color,
             top_color,
             bottom_color,
+            height: self.settings.height,
         }
     }
 
@@ -143,6 +147,7 @@ impl Component {
         SettingsDescription::with_fields(vec![
             Field::new("Background".into(), self.settings.background.into()),
             Field::new("Timing Method".into(), self.settings.timing_method.into()),
+            Field::new("Height".into(), (self.settings.height as u64).into()),
             Field::new("Digits Format".into(), self.settings.digits_format.into()),
             Field::new("Accuracy".into(), self.settings.accuracy.into()),
         ])
@@ -152,8 +157,9 @@ impl Component {
         match index {
             0 => self.settings.background = value.into(),
             1 => self.settings.timing_method = value.into(),
-            2 => self.settings.digits_format = value.into(),
-            3 => self.settings.accuracy = value.into(),
+            2 => self.settings.height = value.into_uint().unwrap() as _,
+            3 => self.settings.digits_format = value.into(),
+            4 => self.settings.accuracy = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

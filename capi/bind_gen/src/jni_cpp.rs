@@ -186,7 +186,6 @@ extern "C" JNIEXPORT jlong Java_livesplitcore_LiveSplitCoreNative_Run_1parseStri
 "#)?;
 
     for (class_name, class) in classes {
-
         for function in class
             .static_fns
             .iter()

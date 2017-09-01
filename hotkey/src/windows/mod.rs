@@ -1,7 +1,8 @@
-extern crate winapi;
+
 extern crate kernel32;
-extern crate user32;
 extern crate parking_lot;
+extern crate user32;
+extern crate winapi;
 
 mod key_code;
 pub use self::key_code::KeyCode;

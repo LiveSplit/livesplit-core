@@ -103,10 +103,9 @@ impl HotkeySystem {
     pub fn set_previous_comparison(&mut self, hotkey: KeyCode) -> Result<()> {
         self.hook.unregister(self.config.previous_comparison)?;
         let inner = self.timer.clone();
-        self.hook
-            .register(hotkey, move || {
-                inner.write().switch_to_previous_comparison();
-            })?;
+        self.hook.register(hotkey, move || {
+            inner.write().switch_to_previous_comparison();
+        })?;
         self.config.previous_comparison = hotkey;
         Ok(())
     }

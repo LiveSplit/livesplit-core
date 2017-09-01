@@ -1,24 +1,24 @@
 #![allow(unknown_lints)]
 
-#[macro_use]
-extern crate serde_derive;
-extern crate chrono;
-extern crate odds;
-extern crate serde;
-extern crate serde_json;
-extern crate sxd_document;
-#[macro_use]
-extern crate quick_error;
 extern crate base64;
 extern crate byteorder;
-extern crate image as imagelib;
+extern crate chrono;
 #[macro_use]
 extern crate derive_more;
-pub extern crate parking_lot;
-pub extern crate livesplit_hotkey as hotkey;
+extern crate image as imagelib;
+extern crate odds;
+#[macro_use]
+extern crate quick_error;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde_json;
+extern crate sxd_document;
 extern crate unicase;
+pub extern crate livesplit_hotkey as hotkey;
 pub extern crate ordermap;
 pub extern crate palette;
+pub extern crate parking_lot;
 
 mod hotkey_config;
 mod hotkey_system;

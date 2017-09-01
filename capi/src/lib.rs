@@ -1,7 +1,7 @@
 #![allow(non_snake_case, non_camel_case_types)]
 
-extern crate livesplit_core;
 extern crate libc;
+extern crate livesplit_core;
 
 use libc::c_char;
 use std::ffi::CStr;

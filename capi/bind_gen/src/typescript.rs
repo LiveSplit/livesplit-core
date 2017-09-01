@@ -54,6 +54,7 @@ export interface TimerComponentStateJson {
     semantic_color: SemanticColor,
     top_color: Color,
     bottom_color: Color,
+    height: number,
 }
 
 export interface TitleComponentStateJson {
@@ -116,6 +117,7 @@ export interface GraphComponentStateJson {
     partial_fill_color: Color,
     complete_fill_color: Color,
     best_segment_color: Color,
+    height: number,
 }
 
 export interface GraphComponentStatePointJson {
