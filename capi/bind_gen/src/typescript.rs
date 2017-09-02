@@ -69,18 +69,24 @@ export interface TitleComponentStateJson {
 
 export interface SplitsComponentStateJson {
     splits: SplitStateJson[],
+    icon_changes: SplitsComponentIconChangeJson[],
     show_final_separator: boolean,
     current_split_gradient: Gradient,
 }
 
+export interface SplitsComponentIconChangeJson {
+    segment_index: number,
+    icon: string,
+}
+
 export interface SplitStateJson {
-    icon_change: string | null,
     name: string,
     delta: string,
     time: string,
     semantic_color: SemanticColor,
     visual_color: Color,
     is_current_split: boolean,
+    index: number,
 }
 
 export interface PreviousSegmentComponentStateJson {
