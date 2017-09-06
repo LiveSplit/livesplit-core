@@ -138,10 +138,10 @@ unsafe fn own_drop<T>(data: *mut T) {
     Box::from_raw(data);
 }
 
-unsafe fn acc_mut<T>(data: *mut T) -> &'static mut T {
-    &mut *data
+unsafe fn acc_mut<'a, T>(p: &'a *mut T) -> &mut T {
+    &mut **p
 }
 
-unsafe fn acc<T>(data: *const T) -> &'static T {
-    &*data
+unsafe fn acc<'a, T>(p: &'a *const T) -> &T {
+    &**p
 }

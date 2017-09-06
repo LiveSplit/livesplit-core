@@ -16,19 +16,19 @@ pub unsafe extern "C" fn PreviousSegmentComponentState_drop(
 pub unsafe extern "C" fn PreviousSegmentComponentState_text(
     this: *const PreviousSegmentComponentState,
 ) -> *const c_char {
-    output_str(&acc(this).text)
+    output_str(&acc(&this).text)
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn PreviousSegmentComponentState_time(
     this: *const PreviousSegmentComponentState,
 ) -> *const c_char {
-    output_str(&acc(this).time)
+    output_str(&acc(&this).time)
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn PreviousSegmentComponentState_semantic_color(
     this: *const PreviousSegmentComponentState,
 ) -> *const c_char {
-    output_str_with(|f| write!(f, "{:?}", acc(this).semantic_color).unwrap())
+    output_str_with(|f| write!(f, "{:?}", acc(&this).semantic_color).unwrap())
 }

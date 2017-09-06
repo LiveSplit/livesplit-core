@@ -15,7 +15,7 @@ pub unsafe extern "C" fn SegmentHistoryIter_drop(this: OwnedSegmentHistoryIter) 
 pub unsafe extern "C" fn SegmentHistoryIter_next(
     this: *mut SegmentHistoryIter,
 ) -> *const NullableSegmentHistoryElement {
-    if let Some(&element) = acc_mut(this).next() {
+    if let Some(&element) = acc_mut(&this).next() {
         SEGMENT_HISTORY_ELEMENT.with(|output| {
             output.set(element);
             output.as_ptr() as *const SegmentHistoryElement

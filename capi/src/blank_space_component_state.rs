@@ -12,5 +12,5 @@ pub unsafe extern "C" fn BlankSpaceComponentState_drop(this: OwnedBlankSpaceComp
 pub unsafe extern "C" fn BlankSpaceComponentState_height(
     this: *const BlankSpaceComponentState,
 ) -> u32 {
-    acc(this).height
+    acc(&this).height
 }

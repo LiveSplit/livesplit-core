@@ -28,7 +28,7 @@ pub unsafe extern "C" fn SumOfBestComponent_state_as_json(
     this: *const SumOfBestComponent,
     timer: *const Timer,
 ) -> Json {
-    output_vec(|o| { acc(this).state(acc(timer)).write_json(o).unwrap(); })
+    output_vec(|o| { acc(&this).state(acc(&timer)).write_json(o).unwrap(); })
 }
 
 #[no_mangle]
@@ -36,5 +36,5 @@ pub unsafe extern "C" fn SumOfBestComponent_state(
     this: *const SumOfBestComponent,
     timer: *const Timer,
 ) -> OwnedSumOfBestComponentState {
-    alloc(acc(this).state(acc(timer)))
+    alloc(acc(&this).state(acc(&timer)))
 }

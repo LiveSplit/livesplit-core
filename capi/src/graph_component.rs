@@ -28,8 +28,8 @@ pub unsafe extern "C" fn GraphComponent_state_as_json(
     layout_settings: *const GeneralLayoutSettings,
 ) -> Json {
     output_vec(|o| {
-        acc(this)
-            .state(acc(timer), acc(layout_settings))
+        acc(&this)
+            .state(acc(&timer), acc(&layout_settings))
             .write_json(o)
             .unwrap();
     })
@@ -41,5 +41,5 @@ pub unsafe extern "C" fn GraphComponent_state(
     timer: *const Timer,
     layout_settings: *const GeneralLayoutSettings,
 ) -> OwnedGraphComponentState {
-    alloc(acc(this).state(acc(timer), acc(layout_settings)))
+    alloc(acc(&this).state(acc(&timer), acc(&layout_settings)))
 }

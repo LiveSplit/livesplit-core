@@ -15,12 +15,12 @@ pub unsafe extern "C" fn CurrentComparisonComponentState_drop(
 pub unsafe extern "C" fn CurrentComparisonComponentState_text(
     this: *const CurrentComparisonComponentState,
 ) -> *const c_char {
-    output_str(&acc(this).text)
+    output_str(&acc(&this).text)
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn CurrentComparisonComponentState_comparison(
     this: *const CurrentComparisonComponentState,
 ) -> *const c_char {
-    output_str(&acc(this).comparison)
+    output_str(&acc(&this).comparison)
 }

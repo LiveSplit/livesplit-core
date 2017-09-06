@@ -15,7 +15,7 @@ pub unsafe extern "C" fn RunMetadataVariablesIter_drop(this: OwnedRunMetadataVar
 pub unsafe extern "C" fn RunMetadataVariablesIter_next(
     this: *mut RunMetadataVariablesIter,
 ) -> *const NullableRunMetadataVariable {
-    if let Some((name, value)) = acc_mut(this).next() {
+    if let Some((name, value)) = acc_mut(&this).next() {
         RUN_METADATA_VARIABLE.with(|output| {
             output.set((name, value));
             output.as_ptr() as *const RunMetadataVariable

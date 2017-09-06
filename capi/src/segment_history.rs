@@ -8,5 +8,5 @@ pub type OwnedSegmentHistory = *mut SegmentHistory;
 pub unsafe extern "C" fn SegmentHistory_iter(
     this: *const SegmentHistory,
 ) -> OwnedSegmentHistoryIter {
-    alloc(acc(this).iter())
+    alloc(acc(&this).iter())
 }

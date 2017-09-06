@@ -13,5 +13,5 @@ pub unsafe extern "C" fn TimerWriteLock_drop(this: OwnedTimerWriteLock) {
 
 #[no_mangle]
 pub unsafe extern "C" fn TimerWriteLock_timer(this: *mut TimerWriteLock) -> *mut Timer {
-    acc_mut(this).deref_mut()
+    acc_mut(&this).deref_mut()
 }

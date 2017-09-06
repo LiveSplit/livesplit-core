@@ -13,5 +13,5 @@ pub unsafe extern "C" fn TimerReadLock_drop(this: OwnedTimerReadLock) {
 
 #[no_mangle]
 pub unsafe extern "C" fn TimerReadLock_timer(this: *const TimerReadLock) -> *const Timer {
-    acc(this).deref()
+    acc(&this).deref()
 }
