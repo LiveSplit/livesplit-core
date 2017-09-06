@@ -50,7 +50,7 @@ pub unsafe extern "C" fn RunEditor_select_only(this: *mut RunEditor, index: usiz
 
 #[no_mangle]
 pub unsafe extern "C" fn RunEditor_set_game_name(this: *mut RunEditor, game: *const c_char) {
-    acc_mut(&this).set_game_name(str(game));
+    acc_mut(&this).set_game_name(str(&game));
 }
 
 #[no_mangle]
@@ -58,7 +58,7 @@ pub unsafe extern "C" fn RunEditor_set_category_name(
     this: *mut RunEditor,
     category: *const c_char,
 ) {
-    acc_mut(&this).set_category_name(str(category));
+    acc_mut(&this).set_category_name(str(&category));
 }
 
 #[no_mangle]
@@ -66,7 +66,7 @@ pub unsafe extern "C" fn RunEditor_parse_and_set_offset(
     this: *mut RunEditor,
     offset: *const c_char,
 ) -> bool {
-    acc_mut(&this).parse_and_set_offset(str(offset)).is_ok()
+    acc_mut(&this).parse_and_set_offset(str(&offset)).is_ok()
 }
 
 #[no_mangle]
@@ -75,7 +75,7 @@ pub unsafe extern "C" fn RunEditor_parse_and_set_attempt_count(
     attempts: *const c_char,
 ) -> bool {
     acc_mut(&this)
-        .parse_and_set_attempt_count(str(attempts))
+        .parse_and_set_attempt_count(str(&attempts))
         .is_ok()
 }
 
@@ -136,7 +136,7 @@ pub unsafe extern "C" fn RunEditor_selected_remove_icon(this: *mut RunEditor) {
 
 #[no_mangle]
 pub unsafe extern "C" fn RunEditor_selected_set_name(this: *mut RunEditor, name: *const c_char) {
-    acc_mut(&this).selected_segment().set_name(str(name));
+    acc_mut(&this).selected_segment().set_name(str(&name));
 }
 
 #[no_mangle]
@@ -146,7 +146,7 @@ pub unsafe extern "C" fn RunEditor_selected_parse_and_set_split_time(
 ) -> bool {
     acc_mut(&this)
         .selected_segment()
-        .parse_and_set_split_time(str(time))
+        .parse_and_set_split_time(str(&time))
         .is_ok()
 }
 
@@ -157,7 +157,7 @@ pub unsafe extern "C" fn RunEditor_selected_parse_and_set_segment_time(
 ) -> bool {
     acc_mut(&this)
         .selected_segment()
-        .parse_and_set_segment_time(str(time))
+        .parse_and_set_segment_time(str(&time))
         .is_ok()
 }
 
@@ -168,7 +168,7 @@ pub unsafe extern "C" fn RunEditor_selected_parse_and_set_best_segment_time(
 ) -> bool {
     acc_mut(&this)
         .selected_segment()
-        .parse_and_set_best_segment_time(str(time))
+        .parse_and_set_best_segment_time(str(&time))
         .is_ok()
 }
 
@@ -180,7 +180,7 @@ pub unsafe extern "C" fn RunEditor_selected_parse_and_set_comparison_time(
 ) -> bool {
     acc_mut(&this)
         .selected_segment()
-        .parse_and_set_comparison_time(str(comparison), str(time))
+        .parse_and_set_comparison_time(str(&comparison), str(&time))
         .is_ok()
 }
 
@@ -189,7 +189,7 @@ pub unsafe extern "C" fn RunEditor_add_comparison(
     this: *mut RunEditor,
     comparison: *const c_char,
 ) -> bool {
-    acc_mut(&this).add_comparison(str(comparison)).is_ok()
+    acc_mut(&this).add_comparison(str(&comparison)).is_ok()
 }
 
 #[no_mangle]
@@ -199,7 +199,7 @@ pub unsafe extern "C" fn RunEditor_import_comparison(
     comparison: *const c_char,
 ) -> bool {
     acc_mut(&this)
-        .import_comparison(acc(&run), str(comparison))
+        .import_comparison(acc(&run), str(&comparison))
         .is_ok()
 }
 
@@ -208,7 +208,7 @@ pub unsafe extern "C" fn RunEditor_remove_comparison(
     this: *mut RunEditor,
     comparison: *const c_char,
 ) {
-    acc_mut(&this).remove_comparison(str(comparison));
+    acc_mut(&this).remove_comparison(str(&comparison));
 }
 
 #[no_mangle]
@@ -218,7 +218,7 @@ pub unsafe extern "C" fn RunEditor_rename_comparison(
     new_name: *const c_char,
 ) -> bool {
     acc_mut(&this)
-        .rename_comparison(str(old_name), str(new_name))
+        .rename_comparison(str(&old_name), str(&new_name))
         .is_ok()
 }
 

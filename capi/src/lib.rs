@@ -122,8 +122,8 @@ where
     })
 }
 
-unsafe fn str(s: *const c_char) -> &'static str {
-    CStr::from_ptr(s as _).to_str().unwrap()
+unsafe fn str<'a>(s: &'a *const c_char) -> &'a str {
+    CStr::from_ptr(*s as _).to_str().unwrap()
 }
 
 fn alloc<T>(data: T) -> *mut T {

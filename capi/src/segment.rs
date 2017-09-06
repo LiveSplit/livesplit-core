@@ -6,7 +6,7 @@ pub type OwnedSegment = *mut Segment;
 
 #[no_mangle]
 pub unsafe extern "C" fn Segment_new(name: *const c_char) -> OwnedSegment {
-    alloc(Segment::new(str(name)))
+    alloc(Segment::new(str(&name)))
 }
 
 #[no_mangle]
@@ -29,7 +29,7 @@ pub unsafe extern "C" fn Segment_comparison(
     this: *const Segment,
     comparison: *const c_char,
 ) -> *const Time {
-    output_time(acc(&this).comparison(str(comparison)))
+    output_time(acc(&this).comparison(str(&comparison)))
 }
 
 #[no_mangle]

@@ -48,7 +48,7 @@ pub unsafe extern "C" fn Run_game_name(this: *const Run) -> *const c_char {
 
 #[no_mangle]
 pub unsafe extern "C" fn Run_set_game_name(this: *mut Run, game: *const c_char) {
-    acc_mut(&this).set_game_name(str(game));
+    acc_mut(&this).set_game_name(str(&game));
 }
 
 #[no_mangle]
@@ -63,7 +63,7 @@ pub unsafe extern "C" fn Run_category_name(this: *const Run) -> *const c_char {
 
 #[no_mangle]
 pub unsafe extern "C" fn Run_set_category_name(this: *mut Run, category: *const c_char) {
-    acc_mut(&this).set_category_name(str(category));
+    acc_mut(&this).set_category_name(str(&category));
 }
 
 #[no_mangle]
