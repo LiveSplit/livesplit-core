@@ -29,7 +29,6 @@ fn populate_predictions(
                 .iter()
                 .filter(|&&(_, t)| t[method].is_none())
             {
-
                 let should_track_branch = segment_index
                     .checked_sub(1)
                     .and_then(|previous_index| {

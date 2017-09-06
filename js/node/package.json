@@ -1,0 +1,38 @@
+{
+  "author": {
+    "name": "Christopher Serr"
+  },
+  "bugs": {
+    "url": "https://github.com/CryZe/livesplit-core/issues"
+  },
+  "dependencies": {},
+  "description": "livesplit-core is a library that provides a lot of functionality for creating a speedrun timer.",
+  "devDependencies": {},
+  "files": [
+    "README.md",
+    "index.js",
+    "livesplit_core.js"
+  ],
+  "homepage": "https://github.com/CryZe/livesplit-core#readme",
+  "keywords": [
+    "speedrun",
+    "timer",
+    "livesplit"
+  ],
+  "license": "MIT",
+  "main": "index.js",
+  "maintainers": [
+    {
+      "name": "cryze92",
+      "email": "christopher.serr@gmail.com"
+    }
+  ],
+  "name": "livesplit-core",
+  "optionalDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CryZe/livesplit-core.git"
+  },
+  "scripts": {},
+  "version": "0.7.0"
+}

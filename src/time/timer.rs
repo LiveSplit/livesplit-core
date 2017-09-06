@@ -300,7 +300,7 @@ impl Timer {
 
     pub fn undo_all_pauses(&mut self) {
         match self.current_phase() {
-            Paused => self.pause(),
+            Paused => self.resume(),
             Ended => {
                 let pause_time = Some(self.get_pause_time().unwrap_or_default());
 

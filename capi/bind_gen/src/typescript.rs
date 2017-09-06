@@ -54,6 +54,7 @@ export interface TimerComponentStateJson {
     semantic_color: SemanticColor,
     top_color: Color,
     bottom_color: Color,
+    height: number,
 }
 
 export interface TitleComponentStateJson {
@@ -68,18 +69,24 @@ export interface TitleComponentStateJson {
 
 export interface SplitsComponentStateJson {
     splits: SplitStateJson[],
+    icon_changes: SplitsComponentIconChangeJson[],
     show_final_separator: boolean,
     current_split_gradient: Gradient,
 }
 
+export interface SplitsComponentIconChangeJson {
+    segment_index: number,
+    icon: string,
+}
+
 export interface SplitStateJson {
-    icon_change: string | null,
     name: string,
     delta: string,
     time: string,
     semantic_color: SemanticColor,
     visual_color: Color,
     is_current_split: boolean,
+    index: number,
 }
 
 export interface PreviousSegmentComponentStateJson {
@@ -116,6 +123,7 @@ export interface GraphComponentStateJson {
     partial_fill_color: Color,
     complete_fill_color: Color,
     best_segment_color: Color,
+    height: number,
 }
 
 export interface GraphComponentStatePointJson {

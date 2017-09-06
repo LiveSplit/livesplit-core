@@ -89,9 +89,11 @@ pub unsafe extern "C" fn Run_extended_category_name(
     show_platform: bool,
     show_variables: bool,
 ) -> *const c_char {
-    output_str(
-        acc(&this).extended_category_name(show_region, show_platform, show_variables),
-    )
+    output_str(acc(&this).extended_category_name(
+        show_region,
+        show_platform,
+        show_variables,
+    ))
 }
 
 #[no_mangle]

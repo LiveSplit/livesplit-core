@@ -196,7 +196,6 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         }}"#
                 )?;
             }
-
         }
         if return_type == "String" {
             write!(

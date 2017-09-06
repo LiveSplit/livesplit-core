@@ -69,8 +69,8 @@ fn image<'b>(
     }
 
     let buf = buf.as_slice();
-    let image = ImageBuffer::<Rgba<_>, _>::from_raw(width, height, buf)
-        .ok_or(Error::ElementNotFound)?;
+    let image =
+        ImageBuffer::<Rgba<_>, _>::from_raw(width, height, buf).ok_or(Error::ElementNotFound)?;
 
     buf2.clear();
     png::PNGEncoder::new(&mut *buf2)

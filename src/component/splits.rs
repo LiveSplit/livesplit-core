@@ -28,18 +28,25 @@ pub struct Settings {
 
 #[derive(Serialize, Deserialize)]
 pub struct SplitState {
-    pub icon_change: Option<String>,
     pub name: String,
     pub delta: String,
     pub time: String,
     pub semantic_color: SemanticColor,
     pub visual_color: Color,
     pub is_current_split: bool,
+    pub index: usize,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct IconChange {
+    pub segment_index: usize,
+    pub icon: String,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct State {
     pub splits: Vec<SplitState>,
+    pub icon_changes: Vec<IconChange>,
     pub show_final_separator: bool,
     pub current_split_gradient: Gradient,
 }
@@ -143,14 +150,16 @@ impl Component {
         let show_final_separator = self.settings.separator_last_split && always_show_last_split &&
             skip_count + take_count + 1 < timer.run().len();
 
+        let mut icon_changes = Vec::new();
+
         State {
             splits: timer
                 .run()
                 .segments()
                 .iter()
                 .enumerate()
-                .skip(skip_count)
                 .zip(self.icon_ids.iter_mut())
+                .skip(skip_count)
                 .filter(|&((i, _), _)| {
                     i - skip_count < take_count ||
                         (always_show_last_split && i + 1 == timer.run().len())
@@ -188,17 +197,25 @@ impl Component {
 
                     let visual_color = semantic_color.visualize(layout_settings);
 
+                    if let Some(icon_change) = segment.icon().check_for_change(icon_id) {
+                        icon_changes.push(IconChange {
+                            segment_index: i,
+                            icon: icon_change.to_owned(),
+                        });
+                    }
+
                     SplitState {
-                        icon_change: segment.icon().check_for_change(icon_id).map(str::to_owned),
                         name: segment.name().to_string(),
                         delta,
                         time: Regular::new().format(time).to_string(),
                         semantic_color,
                         visual_color,
                         is_current_split: i as isize == current_split,
+                        index: i,
                     }
                 })
                 .collect(),
+            icon_changes,
             show_final_separator: show_final_separator,
             current_split_gradient: self.settings.current_split_gradient,
         }
@@ -238,10 +255,5 @@ impl Component {
             4 => self.settings.current_split_gradient = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
-        // Invalidate the Icon Cache.
-        // This may only be necessary in certain cases,
-        // but we are missing a lot of settings anyway,
-        // so we just do it for all at the moment.
-        self.remount();
     }
 }

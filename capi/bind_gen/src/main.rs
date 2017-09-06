@@ -1,5 +1,6 @@
-extern crate syntex_syntax;
+
 extern crate heck;
+extern crate syntex_syntax;
 
 mod c;
 mod csharp;

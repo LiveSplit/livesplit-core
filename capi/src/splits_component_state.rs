@@ -1,7 +1,6 @@
 use livesplit_core::component::splits::State as SplitsComponentState;
-use super::{acc, output_str, output_str_with, own_drop, Nullablec_char};
+use super::{acc, output_str, output_str_with, own_drop};
 use libc::c_char;
-use std::ptr;
 use std::fmt::Write;
 
 pub type OwnedSplitsComponentState = *mut SplitsComponentState;
@@ -24,14 +23,26 @@ pub unsafe extern "C" fn SplitsComponentState_len(this: *const SplitsComponentSt
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn SplitsComponentState_icon_change(
+pub unsafe extern "C" fn SplitsComponentState_icon_change_count(
+    this: *const SplitsComponentState,
+) -> usize {
+    acc(&this).icon_changes.len()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn SplitsComponentState_icon_change_segment_index(
     this: *const SplitsComponentState,
     index: usize,
-) -> *const Nullablec_char {
-    acc(&this).splits[index]
-        .icon_change
-        .as_ref()
-        .map_or_else(ptr::null, output_str)
+) -> usize {
+    acc(&this).icon_changes[index].segment_index
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn SplitsComponentState_icon_change_icon(
+    this: *const SplitsComponentState,
+    index: usize,
+) -> *const c_char {
+    output_str(&acc(&this).icon_changes[index].icon)
 }
 
 #[no_mangle]

@@ -53,8 +53,14 @@ impl Default for Settings {
             comparison1: None,
             comparison2: Some(String::from(best_segments::NAME)),
             hide_second_comparison: false,
-            timer: Default::default(),
-            segment_timer: Default::default(),
+            timer: timer::Settings {
+                height: 40,
+                ..Default::default()
+            },
+            segment_timer: timer::Settings {
+                height: 25,
+                ..Default::default()
+            },
             display_icon: false,
             show_segment_name: false,
         }
@@ -72,7 +78,7 @@ impl State {
 
 impl Component {
     pub fn new() -> Self {
-        Default::default()
+        Self::with_settings(Default::default())
     }
 
     pub fn with_settings(settings: Settings) -> Self {
@@ -129,8 +135,7 @@ impl Component {
                 comparison2 == none::NAME
             {
                 hide_comparison = true;
-                if !timer.run().comparisons().any(|c| c == comparison1) ||
-                    comparison1 == none::NAME
+                if !timer.run().comparisons().any(|c| c == comparison1) || comparison1 == none::NAME
                 {
                     comparison1 = timer.current_comparison();
                 }
@@ -187,6 +192,7 @@ impl Component {
                 semantic_color: SemanticColor::Default,
                 top_color,
                 bottom_color,
+                height: self.settings.segment_timer.height,
             },
             None => timer::State {
                 background,
@@ -195,6 +201,7 @@ impl Component {
                 semantic_color: SemanticColor::Default,
                 top_color,
                 bottom_color,
+                height: self.settings.segment_timer.height,
             },
         };
 
@@ -267,6 +274,14 @@ impl Component {
                 self.settings.hide_second_comparison.into(),
             ),
             Field::new(
+                "Timer Height".into(),
+                (self.settings.timer.height as u64).into(),
+            ),
+            Field::new(
+                "Segment Timer Height".into(),
+                (self.settings.segment_timer.height as u64).into(),
+            ),
+            Field::new(
                 "Timer Digits Format".into(),
                 self.settings.timer.digits_format.into(),
             ),
@@ -295,19 +310,25 @@ impl Component {
             3 => self.settings.comparison2 = value.into(),
             4 => self.settings.hide_second_comparison = value.into(),
             5 => {
+                let value = value.into_uint().unwrap() as _;
+                self.settings.timer.height = value;
+                self.timer.settings_mut().height = value;
+            }
+            6 => self.settings.segment_timer.height = value.into_uint().unwrap() as _,
+            7 => {
                 let value: DigitsFormat = value.into();
                 self.settings.timer.digits_format = value;
                 self.timer.settings_mut().digits_format = value;
             }
-            6 => {
+            8 => {
                 let value: Accuracy = value.into();
                 self.settings.timer.accuracy = value;
                 self.timer.settings_mut().accuracy = value;
             }
-            7 => self.settings.segment_timer.digits_format = value.into(),
-            8 => self.settings.segment_timer.accuracy = value.into(),
-            9 => self.settings.show_segment_name = value.into(),
-            10 => self.settings.display_icon = value.into(),
+            9 => self.settings.segment_timer.digits_format = value.into(),
+            10 => self.settings.segment_timer.accuracy = value.into(),
+            11 => self.settings.show_segment_name = value.into(),
+            12 => self.settings.display_icon = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

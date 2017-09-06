@@ -66,7 +66,6 @@ extern "C" {
             .chain(class.shared_fns.iter())
             .chain(class.mut_fns.iter())
         {
-
             write!(
                 writer,
                 r#"extern {} {}("#,

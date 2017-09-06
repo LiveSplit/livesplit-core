@@ -154,7 +154,6 @@ fn parse_history(run: &mut Run, path: Option<PathBuf>) -> StdResult<(), ()> {
             for (segment, current_split) in
                 run.segments_mut().iter_mut().zip(split_times.into_iter())
             {
-
                 let mut segment_time = Time::default();
                 if let Some(current_split) = current_split {
                     segment_time.real_time = Some(current_split - last_split);

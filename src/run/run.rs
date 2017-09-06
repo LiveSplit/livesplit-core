@@ -238,8 +238,8 @@ impl Run {
         extended_name
             .chars()
             .filter(|&c| {
-                c != '\\' && c != '/' && c != ':' && c != '*' && c != '?' && c != '"' &&
-                    c != '<' && c != '>' && c != '|'
+                c != '\\' && c != '/' && c != ':' && c != '*' && c != '?' && c != '"' && c != '<' &&
+                    c != '>' && c != '|'
             })
             .collect()
     }
@@ -404,8 +404,7 @@ impl Run {
                     if comparison == personal_best::NAME {
                         fix_history_from_null_best_segments(segment, method);
 
-                        if segment.best_segment_time()[method]
-                            .map_or(true, |t| t > current_segment)
+                        if segment.best_segment_time()[method].map_or(true, |t| t > current_segment)
                         {
                             segment.best_segment_time_mut()[method] = Some(current_segment);
                         }

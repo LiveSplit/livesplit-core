@@ -6,5 +6,8 @@ capi/bind_gen/target
 emscripten/target
 emscripten/Cargo.lock
 js/livesplit.js
+js/node/livesplit_core.js
+js/node/index.js
+js/node/README.md
 Cargo.lock
 *.rs.bk

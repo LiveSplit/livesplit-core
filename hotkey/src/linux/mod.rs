@@ -1,6 +1,7 @@
-extern crate x11_dl;
+
 extern crate mio;
 extern crate promising_future;
+extern crate x11_dl;
 
 mod key_code;
 pub use self::key_code::KeyCode;

@@ -28,6 +28,7 @@ pub struct Settings {
     pub graph_lines_color: Color,
     pub partial_fill_color: Color,
     pub complete_fill_color: Color,
+    pub height: u32,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -45,6 +46,7 @@ pub struct State {
     pub partial_fill_color: Color,
     pub complete_fill_color: Color,
     pub best_segment_color: Color,
+    pub height: u32,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -67,6 +69,7 @@ impl Default for Settings {
             graph_lines_color: (1.0, 1.0, 1.0, 1.0).into(),
             partial_fill_color: (1.0, 1.0, 1.0, 0.25).into(),
             complete_fill_color: (1.0, 1.0, 1.0, 0.4).into(),
+            height: 80,
         }
     }
 }
@@ -153,6 +156,7 @@ impl Component {
                 "Comparison".into(),
                 self.settings.comparison_override.clone().into(),
             ),
+            Field::new("Height".into(), (self.settings.height as u64).into()),
             Field::new(
                 "Show Best Segments".into(),
                 self.settings.show_best_segments.into(),
@@ -189,15 +193,16 @@ impl Component {
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
             0 => self.settings.comparison_override = value.into(),
-            1 => self.settings.show_best_segments = value.into(),
-            2 => self.settings.live_graph = value.into(),
-            3 => self.settings.flip_graph = value.into(),
-            4 => self.settings.behind_background_color = value.into(),
-            5 => self.settings.ahead_background_color = value.into(),
-            6 => self.settings.grid_lines_color = value.into(),
-            7 => self.settings.graph_lines_color = value.into(),
-            8 => self.settings.partial_fill_color = value.into(),
-            9 => self.settings.complete_fill_color = value.into(),
+            1 => self.settings.height = value.into_uint().unwrap() as _,
+            2 => self.settings.show_best_segments = value.into(),
+            3 => self.settings.live_graph = value.into(),
+            4 => self.settings.flip_graph = value.into(),
+            5 => self.settings.behind_background_color = value.into(),
+            6 => self.settings.ahead_background_color = value.into(),
+            7 => self.settings.grid_lines_color = value.into(),
+            8 => self.settings.graph_lines_color = value.into(),
+            9 => self.settings.partial_fill_color = value.into(),
+            10 => self.settings.complete_fill_color = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }
@@ -278,6 +283,7 @@ impl Component {
             partial_fill_color: self.settings.partial_fill_color,
             complete_fill_color: self.settings.complete_fill_color,
             best_segment_color: layout_settings.best_segment_color,
+            height: self.settings.height,
         }
     }
 
@@ -293,8 +299,7 @@ impl Component {
         if !draw_info.deltas.is_empty() {
             let mut height_one = if total_delta != TimeSpan::zero() {
                 (-draw_info.max_delta.total_milliseconds() / total_delta.total_milliseconds()) as
-                    f32 *
-                    (graph_height - graph_edge) * 2.0 + graph_edge
+                    f32 * (graph_height - graph_edge) * 2.0 + graph_edge
             } else {
                 graph_height
             };

@@ -108,6 +108,17 @@ impl Editor {
         }
     }
 
+    pub fn duplicate_component(&mut self) {
+        let index = self.selected_component;
+        let new_index = index + 1;
+
+        let component = self.layout.components[index].clone();
+        self.layout.components.insert(new_index, component);
+
+        self.selected_component = new_index;
+        self.layout.remount();
+    }
+
     pub fn set_component_settings_value(&mut self, index: usize, value: Value) {
         self.layout.components[self.selected_component].set_value(index, value);
     }

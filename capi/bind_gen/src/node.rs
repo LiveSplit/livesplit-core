@@ -344,14 +344,14 @@ const liveSplitCoreNative = ffi.Library('livesplit_core', {"#
                     writer,
                     "{}",
                     r#"
-    readWith(action: (timer: TimerRef) => void) {
-        this.read().with(function (lock) {
-            action(lock.timer());
+    readWith<T>(action: (timer: TimerRef) => T): T {
+        return this.read().with(function (lock) {
+            return action(lock.timer());
         });
     }
-    writeWith(action: (timer: TimerRefMut) => void) {
-        this.write().with(function (lock) {
-            action(lock.timer());
+    writeWith<T>(action: (timer: TimerRefMut) => T): T {
+        return this.write().with(function (lock) {
+            return action(lock.timer());
         });
     }"#
                 )?;
@@ -364,16 +364,16 @@ const liveSplitCoreNative = ffi.Library('livesplit_core', {"#
      * @param {function(TimerRef)} action
      */
     readWith(action) {
-        this.read().with(function (lock) {
-            action(lock.timer());
+        return this.read().with(function (lock) {
+            return action(lock.timer());
         });
     }
     /**
      * @param {function(TimerRefMut)} action
      */
     writeWith(action) {
-        this.write().with(function (lock) {
-            action(lock.timer());
+        return this.write().with(function (lock) {
+            return action(lock.timer());
         });
     }"#
                 )?;
@@ -497,7 +497,7 @@ export "#.to_string()
             write!(
                 writer,
                 r#"
-    with(closure: (obj: {class}) => void) {{"#,
+    with<T>(closure: (obj: {class}) => T): T {{"#,
                 class = class_name
             )?;
         } else {
@@ -516,7 +516,7 @@ export "#.to_string()
             writer,
             r#"
         try {{
-            closure(this);
+            return closure(this);
         }} finally {{
             this.dispose();
         }}

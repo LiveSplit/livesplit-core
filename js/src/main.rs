@@ -5,3 +5,5 @@
 extern "C" {}
 
 extern crate livesplit_core_capi;
+
+pub use livesplit_core_capi::*;

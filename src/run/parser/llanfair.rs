@@ -115,8 +115,7 @@ pub fn parse<R: Read + Seek>(mut source: R) -> Result<Run> {
             unsafe { buf.set_len(len) };
             source.read_exact(&mut buf)?;
 
-            if let Some(image) =
-                ImageBuffer::<Rgba<_>, _>::from_raw(width, height, buf.as_slice())
+            if let Some(image) = ImageBuffer::<Rgba<_>, _>::from_raw(width, height, buf.as_slice())
             {
                 buf2.clear();
                 if png::PNGEncoder::new(&mut buf2)

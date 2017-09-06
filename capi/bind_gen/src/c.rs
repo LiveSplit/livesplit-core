@@ -76,7 +76,6 @@ typedef struct {0}_s const* {0}Ref;
             .chain(class.shared_fns.iter())
             .chain(class.mut_fns.iter())
         {
-
             write!(
                 writer,
                 r#"extern {} {}("#,
