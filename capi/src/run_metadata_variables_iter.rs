@@ -3,8 +3,8 @@ use std::ptr;
 use livesplit_core::ordermap;
 use run_metadata_variable::{NullableRunMetadataVariable, RunMetadataVariable};
 
-pub type RunMetadataVariablesIter = ordermap::Iter<'static, String, String>;
-pub type OwnedRunMetadataVariablesIter = *mut RunMetadataVariablesIter;
+pub type RunMetadataVariablesIter<'a> = ordermap::Iter<'a, String, String>;
+pub type OwnedRunMetadataVariablesIter<'a> = *mut RunMetadataVariablesIter<'a>;
 
 #[no_mangle]
 pub unsafe extern "C" fn RunMetadataVariablesIter_drop(this: OwnedRunMetadataVariablesIter) {

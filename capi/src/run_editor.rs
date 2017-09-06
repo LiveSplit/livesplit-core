@@ -232,9 +232,11 @@ pub unsafe extern "C" fn RunEditor_clear_times(this: *mut RunEditor) {
     acc_mut(&this).clear_times();
 }
 
+/// # Safety
+/// `this` must outlive `OwnedSumOfBestCleaner`
 #[no_mangle]
-pub unsafe extern "C" fn RunEditor_clean_sum_of_best(
+pub unsafe extern "C" fn RunEditor_clean_sum_of_best<'a>(
     this: *mut RunEditor,
-) -> OwnedSumOfBestCleaner {
-    alloc(acc_mut(&this).clean_sum_of_best())
+) -> OwnedSumOfBestCleaner<'a> {
+    alloc((&mut *this).clean_sum_of_best())
 }

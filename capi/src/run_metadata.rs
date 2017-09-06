@@ -25,9 +25,11 @@ pub unsafe extern "C" fn RunMetadata_region_name(this: *const RunMetadata) -> *c
     output_str(acc(&this).region_name())
 }
 
+/// # Safety
+/// `this` must outlive `OwnedRunMetadataVariablesIter`
 #[no_mangle]
-pub unsafe extern "C" fn RunMetadata_variables(
+pub unsafe extern "C" fn RunMetadata_variables<'a>(
     this: *const RunMetadata,
-) -> OwnedRunMetadataVariablesIter {
-    alloc(acc(&this).variables())
+) -> OwnedRunMetadataVariablesIter<'a> {
+    alloc((&*this).variables())
 }

@@ -16,14 +16,18 @@ pub unsafe extern "C" fn SharedTimer_drop(this: OwnedSharedTimer) {
     own_drop(this);
 }
 
+/// # Safety
+/// `this` must outlive `OwnedTimerReadLock`
 #[no_mangle]
-pub unsafe extern "C" fn SharedTimer_read(this: *const SharedTimer) -> OwnedTimerReadLock {
-    alloc(acc(&this).read())
+pub unsafe extern "C" fn SharedTimer_read<'a>(this: *const SharedTimer) -> OwnedTimerReadLock<'a> {
+    alloc((&*this).read())
 }
 
+/// # Safety
+/// `this` must outlive `OwnedTimerWriteLock`
 #[no_mangle]
-pub unsafe extern "C" fn SharedTimer_write(this: *const SharedTimer) -> OwnedTimerWriteLock {
-    alloc(acc(&this).write())
+pub unsafe extern "C" fn SharedTimer_write<'a>(this: *const SharedTimer) -> OwnedTimerWriteLock<'a> {
+    alloc((&*this).write())
 }
 
 #[no_mangle]
