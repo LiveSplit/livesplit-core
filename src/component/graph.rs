@@ -525,7 +525,7 @@ impl Component {
                     .unwrap_or_else(TimeSpan::zero);
             } else {
                 let timing_method = timer.current_timing_method();
-                for segment in timer.run().segments()[..timer.current_split_index() as usize]
+                for segment in timer.run().segments()[..timer.current_split_index().unwrap()]
                     .iter()
                     .rev()
                 {

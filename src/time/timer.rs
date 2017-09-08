@@ -9,7 +9,7 @@ use std::mem;
 pub struct Timer {
     run: Run,
     phase: TimerPhase,
-    current_split_index: isize,
+    current_split_index: Option<usize>,
     current_timing_method: TimingMethod,
     current_comparison: String,
     attempt_started: Option<AtomicDateTime>,
@@ -46,7 +46,7 @@ impl Timer {
         Ok(Timer {
             run: run,
             phase: NotRunning,
-            current_split_index: -1,
+            current_split_index: None,
             current_timing_method: TimingMethod::RealTime,
             current_comparison: personal_best::NAME.into(),
             attempt_started: None,
@@ -138,32 +138,24 @@ impl Timer {
     }
 
     pub fn current_split(&self) -> Option<&Segment> {
-        if self.current_split_index >= 0 {
-            self.run.segments().get(self.current_split_index as usize)
-        } else {
-            None
-        }
+        self.current_split_index
+            .and_then(|i| self.run.segments().get(i))
     }
 
     fn current_split_mut(&mut self) -> Option<&mut Segment> {
-        if self.current_split_index >= 0 {
-            self.run
-                .segments_mut()
-                .get_mut(self.current_split_index as usize)
-        } else {
-            None
-        }
+        self.current_split_index
+            .and_then(move |i| self.run.segments_mut().get_mut(i))
     }
 
     #[inline]
-    pub fn current_split_index(&self) -> isize {
+    pub fn current_split_index(&self) -> Option<usize> {
         self.current_split_index
     }
 
     pub fn start(&mut self) {
         if self.phase == NotRunning {
             self.phase = Running;
-            self.current_split_index = 0;
+            self.current_split_index = Some(0);
             self.attempt_started = Some(AtomicDateTime::now());
             self.start_time = TimeStamp::now();
             self.start_time_with_offset = self.start_time - self.run.offset();
@@ -186,8 +178,8 @@ impl Timer {
             self.current_split_mut()
                 .unwrap()
                 .set_split_time(current_time);
-            self.current_split_index += 1;
-            if self.run.len() as isize == self.current_split_index {
+            *self.current_split_index.as_mut().unwrap() += 1;
+            if Some(self.run.len()) == self.current_split_index {
                 self.phase = Ended;
                 self.attempt_ended = Some(AtomicDateTime::now());
             }
@@ -207,10 +199,10 @@ impl Timer {
 
     pub fn skip_split(&mut self) {
         if (self.phase == Running || self.phase == Paused)
-            && self.current_split_index < self.run.len() as isize - 1
+            && self.current_split_index < self.run.len().checked_sub(1)
         {
             self.current_split_mut().unwrap().clear_split_time();
-            self.current_split_index += 1;
+            self.current_split_index = self.current_split_index.map(|i| i + 1);
             self.run.mark_as_changed();
 
             // TODO OnSkipSplit
@@ -218,11 +210,11 @@ impl Timer {
     }
 
     pub fn undo_split(&mut self) {
-        if self.phase != NotRunning && self.current_split_index > 0 {
+        if self.phase != NotRunning && self.current_split_index > Some(0) {
             if self.phase == Ended {
                 self.phase = Running;
             }
-            self.current_split_index -= 1;
+            self.current_split_index = self.current_split_index.map(|i| i - 1);
             self.current_split_mut().unwrap().clear_split_time();
             self.run.mark_as_changed();
 
@@ -253,7 +245,7 @@ impl Timer {
 
     fn reset_splits(&mut self) {
         self.phase = NotRunning;
-        self.current_split_index = -1;
+        self.current_split_index = None;
 
         // Reset Splits
         for segment in self.run.segments_mut() {
@@ -487,7 +479,9 @@ impl Timer {
     }
 
     fn update_segment_history(&mut self) {
-        self.run.update_segment_history(self.current_split_index);
+        if let Some(index) = self.current_split_index {
+            self.run.update_segment_history(index);
+        }
     }
 
     fn set_run_as_pb(&mut self) {

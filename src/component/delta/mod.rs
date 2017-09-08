@@ -93,14 +93,14 @@ impl Component {
 
         let mut index = timer.current_split_index();
         if !use_live_delta {
-            index -= 1;
+            index = index.and_then(|i| i.checked_sub(1));
         }
 
-        let semantic_color = if index >= 0 {
+        let semantic_color = if index.is_some() {
             state_helper::split_color(
                 timer,
                 delta,
-                index as usize,
+                index.unwrap(),
                 true,
                 false,
                 comparison,

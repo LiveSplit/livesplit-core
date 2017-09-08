@@ -31,7 +31,7 @@ pub fn calculate(
         |c, b| c - b - prev_time,
     );
 
-    if live && segment_index == timer.current_split_index() as usize {
+    if live && timer.current_split_index() == Some(segment_index) {
         let segment_delta = analysis::live_segment_delta(timer, segment_index, comparison, method);
         if let (Some(segment_delta), Some(time)) = (segment_delta, time.as_mut()) {
             let segment_delta = TimeSpan::zero() - segment_delta;

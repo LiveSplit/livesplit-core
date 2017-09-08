@@ -539,12 +539,10 @@ impl Run {
         }
     }
 
-    pub fn update_segment_history(&mut self, current_split_index: isize) {
+    pub fn update_segment_history(&mut self, current_split_index: usize) {
         let mut last_split_time = Time::zero();
 
-        let segments = self.segments
-            .iter_mut()
-            .take(max(0, current_split_index) as usize);
+        let segments = self.segments.iter_mut().take(current_split_index);
         let index = self.attempt_history.last().unwrap().index();
 
         for segment in segments {

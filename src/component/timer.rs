@@ -101,7 +101,7 @@ impl Component {
                     split_color(
                         timer,
                         Some(time - pb_split_time),
-                        timer.current_split_index() as usize,
+                        timer.current_split_index().unwrap(),
                         true,
                         false,
                         current_comparison,

@@ -164,7 +164,7 @@ pub fn check_live_delta(
             .unwrap()
             .comparison_timing_method(comparison, method);
         let current_time = timer.current_time()[method];
-        let split_index = timer.current_split_index() as usize;
+        let split_index = timer.current_split_index().unwrap();
         let current_segment = live_segment_time(timer, split_index, method);
         let best_segment = timer.run().segment(split_index).best_segment_time()[method];
         let best_segment_delta =
