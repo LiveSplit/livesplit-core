@@ -3,7 +3,6 @@ use analysis::possible_time_save;
 use settings::{Field, Gradient, SettingsDescription, Value};
 use serde_json::{to_writer, Result};
 use std::borrow::Cow;
-use std::cmp::max;
 use std::fmt::Write as FmtWrite;
 use std::io::Write;
 use time::formatter::{Accuracy, PossibleTimeSave, TimeFormatter};
@@ -102,11 +101,11 @@ impl Component {
         let time = if self.settings.total_possible_time_save {
             Some(possible_time_save::calculate_total(
                 timer,
-                max(0, segment_index) as usize,
+                segment_index.unwrap_or(0),
                 comparison,
             ))
         } else if current_phase == TimerPhase::Running || current_phase == TimerPhase::Paused {
-            possible_time_save::calculate(timer, segment_index as usize, comparison, false)
+            possible_time_save::calculate(timer, segment_index.unwrap(), comparison, false)
         } else {
             None
         };

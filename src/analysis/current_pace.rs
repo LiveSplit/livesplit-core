@@ -9,7 +9,7 @@ pub fn calculate(timer: &Timer, comparison: &str) -> Option<TimeSpan> {
         TimerPhase::Running | TimerPhase::Paused => {
             let mut delta = analysis::last_delta(
                 timer.run(),
-                timer.current_split_index() as usize,
+                timer.current_split_index().unwrap(),
                 comparison,
                 timing_method,
             ).unwrap_or_default();

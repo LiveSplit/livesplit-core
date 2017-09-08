@@ -104,8 +104,8 @@ impl Component {
 
         let phase = timer.current_phase();
         let method = timer.current_timing_method();
-        let split_index = timer.current_split_index() as usize;
         let semantic_color = if phase != TimerPhase::NotRunning {
+            let split_index = timer.current_split_index().unwrap();
             if (phase == TimerPhase::Running || phase == TimerPhase::Paused) &&
                 analysis::check_live_delta(timer, false, comparison, method).is_some()
             {

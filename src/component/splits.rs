@@ -12,7 +12,7 @@ use settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value
 pub struct Component {
     icon_ids: Vec<usize>,
     settings: Settings,
-    current_split_index: isize,
+    current_split_index: Option<usize>,
     scroll_offset: isize,
 }
 
@@ -130,13 +130,14 @@ impl Component {
             1
         };
         let skip_count = min(
-            max(
-                0,
-                current_split as isize -
-                    (self.settings.visual_split_count as isize - 2 -
-                        self.settings.split_preview_count as isize +
-                        always_show_last_split),
-            ),
+            current_split.map_or(0, |c_s| {
+                c_s.saturating_sub(
+                    self.settings.visual_split_count
+                        .saturating_sub(2)
+                        .saturating_sub(self.settings.split_preview_count)
+                        .saturating_add(always_show_last_split)
+                ) as isize
+            }),
             timer.run().len() as isize - self.settings.visual_split_count as isize,
         );
         self.scroll_offset = min(
@@ -168,14 +169,14 @@ impl Component {
                     let split = segment.split_time()[method];
                     let comparison_time = segment.comparison(comparison)[method];
 
-                    let (time, delta, semantic_color) = if current_split > i as isize {
+                    let (time, delta, semantic_color) = if current_split > Some(i) {
                         let delta = TimeSpan::option_sub(split, comparison_time);
                         (
                             split,
                             delta,
                             split_color(timer, delta, i, true, true, comparison, method),
                         )
-                    } else if current_split == i as isize {
+                    } else if current_split == Some(i) {
                         (
                             comparison_time,
                             analysis::check_live_delta(timer, true, comparison, method),
@@ -185,7 +186,7 @@ impl Component {
                         (comparison_time, None, SemanticColor::Default)
                     };
 
-                    let delta = if current_split > i as isize {
+                    let delta = if current_split > Some(i) {
                         DashWrapper::new(Delta::with_decimal_dropping())
                             .format(delta)
                             .to_string()
@@ -210,7 +211,7 @@ impl Component {
                         time: Regular::new().format(time).to_string(),
                         semantic_color,
                         visual_color,
-                        is_current_split: i as isize == current_split,
+                        is_current_split: Some(i) == current_split,
                         index: i,
                     }
                 })
