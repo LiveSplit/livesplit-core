@@ -338,11 +338,8 @@ open class {class} : {base_class}, AutoCloseable {{
                 writer,
                 "{}",
                 r#"
-    fun parse(data: String): Run? {
-        val result = Run(LiveSplitCoreNative.Run_parseString(data))
-        if (result.ptr == 0L) {
-            return null
-        }
+    fun parse(data: String): ParseRunResult {
+        val result = ParseRunResult(LiveSplitCoreNative.Run_parseString(data))
         return result
     }"#
             )?;

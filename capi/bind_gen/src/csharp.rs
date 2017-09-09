@@ -346,7 +346,7 @@ namespace LiveSplitCore
                 writer,
                 "{}",
                 r#"
-        public static Run Parse(Stream stream)
+        public static ParseRunResult Parse(Stream stream)
         {
             var data = new byte[stream.Length];
             stream.Read(data, 0, data.Length);

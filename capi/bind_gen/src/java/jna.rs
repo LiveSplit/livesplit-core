@@ -349,7 +349,7 @@ public class {class} extends {base_class} implements AutoCloseable {{
             writer,
             "{}",
             r#"
-    public static Run parse(java.io.InputStream stream) throws java.io.IOException {
+    public static ParseRunResult parse(java.io.InputStream stream) throws java.io.IOException {
         java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
         byte[] buffer = new byte[1024];
         while (true) {

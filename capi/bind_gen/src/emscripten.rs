@@ -542,31 +542,23 @@ export "#.to_string()
                     writer,
                     "{}",
                     r#"
-    static parseArray(data: Int8Array): Run | null {
+    static parseArray(data: Int8Array): ParseRunResult {
         const buf = emscriptenModule._malloc(data.length);
         try {
             emscriptenModule.writeArrayToMemory(data, buf);
             const ptr = liveSplitCoreNative.Run_parse(buf, data.length);
-
-            if (ptr == 0) {
-                return null;
-            }
-            return new Run(ptr);
+            return new ParseRunResult(ptr);
         } finally {
             emscriptenModule._free(buf);
         }
     }
-    static parseString(text: string): Run | null {
+    static parseString(text: string): ParseRunResult {
         const len = (text.length << 2) + 1;
         const buf = emscriptenModule._malloc(len);
         try {
             const actualLen = emscriptenModule.stringToUTF8(text, buf, len);
             const ptr = liveSplitCoreNative.Run_parse(buf, actualLen);
-
-            if (ptr == 0) {
-                return null;
-            }
-            return new Run(ptr);
+            return new ParseRunResult(ptr);
         } finally {
             emscriptenModule._free(buf);
         }
@@ -579,25 +571,21 @@ export "#.to_string()
                     r#"
     /**
      * @param {Int8Array} data
-     * @return {Run | null}
+     * @return {ParseRunResult}
      */
     static parseArray(data) {
         const buf = emscriptenModule._malloc(data.length);
         try {
             emscriptenModule.writeArrayToMemory(data, buf);
             const ptr = liveSplitCoreNative.Run_parse(buf, data.length);
-
-            if (ptr == 0) {
-                return null;
-            }
-            return new Run(ptr);
+            return new ParseRunResult(ptr);
         } finally {
             emscriptenModule._free(buf);
         }
     }
     /**
      * @param {string} text
-     * @return {Run | null}
+     * @return {ParseRunResult}
      */
     static parseString(text) {
         const len = (text.length << 2) + 1;
@@ -605,11 +593,7 @@ export "#.to_string()
         try {
             const actualLen = emscriptenModule.stringToUTF8(text, buf, len);
             const ptr = liveSplitCoreNative.Run_parse(buf, actualLen);
-
-            if (ptr == 0) {
-                return null;
-            }
-            return new Run(ptr);
+            return new ParseRunResult(ptr);
         } finally {
             emscriptenModule._free(buf);
         }

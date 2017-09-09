@@ -325,11 +325,8 @@ public class {class} extends {base_class} implements AutoCloseable {{
             writer,
             "{}",
             r#"
-    public static Run parse(String data) {
-        Run result = new Run(LiveSplitCoreNative.Run_parseString(data));
-        if (result.ptr == 0) {
-            return null;
-        }
+    public static ParseRunResult parse(String data) {
+        ParseRunResult result = new ParseRunResult(LiveSplitCoreNative.Run_parseString(data));
         return result;
     }"#
         )?;

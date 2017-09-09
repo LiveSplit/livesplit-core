@@ -554,18 +554,18 @@ export "#.to_string()
                     writer,
                     "{}",
                     r#"
-    static parseArray(data: Int8Array): Run {
+    static parseArray(data: Int8Array): ParseRunResult {
         let buf = Buffer.from(data.buffer);
         if (data.byteLength !== data.buffer.byteLength) {
             buf = buf.slice(data.byteOffset, data.byteOffset + data.byteLength);
         }
         return Run.parse(buf, buf.byteLength);
     }
-    static parseFile(file: any) {
+    static parseFile(file: any): ParseRunResult {
         const data = fs.readFileSync(file);
         return Run.parse(data, data.byteLength);
     }
-    static parseString(text: string): Run {
+    static parseString(text: string): ParseRunResult {
         const data = new Buffer(text);
         return Run.parse(data, data.byteLength);
     }"#
@@ -577,7 +577,7 @@ export "#.to_string()
                     r#"
     /**
      * @param {Int8Array} data
-     * @return {Run}
+     * @return {ParseRunResult}
      */
     static parseArray(data) {
         let buf = Buffer.from(data.buffer);
@@ -588,7 +588,7 @@ export "#.to_string()
     }
     /**
      * @param {string | Buffer | number} file
-     * @return {Run}
+     * @return {ParseRunResult}
      */
     static parseFile(file) {
         const data = fs.readFileSync(file);
@@ -596,7 +596,7 @@ export "#.to_string()
     }
     /**
      * @param {string} text
-     * @return {Run}
+     * @return {ParseRunResult}
      */
     static parseString(text) {
         const data = new Buffer(text);
