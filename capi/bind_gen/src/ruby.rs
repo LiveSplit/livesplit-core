@@ -4,17 +4,35 @@ use std::collections::BTreeMap;
 
 fn get_hl_type(ty: &Type) -> String {
     if ty.is_custom {
-        let mut name = ty.name.to_string();
-        if name == "Time" {
-            name = "LSTime".to_string();
-        }
+        let name = ty.name.to_string();
         match ty.kind {
             TypeKind::Ref => format!("{}Ref", name),
             TypeKind::RefMut => format!("{}RefMut", name),
             TypeKind::Value => name,
         }
     } else {
-        get_ll_type(ty).to_string()
+        match (ty.kind, ty.name.as_str()) {
+            (TypeKind::Ref, "c_char") => "String",
+            (_, t) if !ty.is_custom => match t {
+                "i8" => "Integer",
+                "i16" => "Integer",
+                "i32" => "Integer",
+                "i64" => "Integer",
+                "u8" => "Integer",
+                "u16" => "Integer",
+                "u32" => "Integer",
+                "u64" => "Integer",
+                "usize" => "Integer",
+                "f32" => "Float",
+                "f64" => "Float",
+                "bool" => "Boolean",
+                "()" => "void",
+                "c_char" => "String",
+                "Json" => "String",
+                x => x,
+            },
+            _ => "Object",
+        }.to_string()
     }
 }
 
@@ -61,10 +79,29 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         method = "create";
     }
 
+    for &(ref name, ref typ) in function.inputs.iter().skip(if is_static { 0 } else { 1 }) {
+        write!(
+            writer,
+            r"
+        # @param [{}] {}",
+            get_hl_type(typ),
+            name
+        )?;
+    }
+
+    if has_return_type {
+        write!(
+            writer,
+            r"
+        # @return [{}]",
+            return_type
+        )?;
+    }
+
     write!(
         writer,
         r#"
-    def {}{}("#,
+        def {}{}("#,
         if is_static { "self." } else { "" },
         method
     )?;
@@ -84,7 +121,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
     write!(
         writer,
         r#")
-        "#
+            "#
     )?;
 
     for &(ref name, ref typ) in function.inputs.iter() {
@@ -92,9 +129,9 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
             write!(
                 writer,
                 r#"if {ptr} == nil
-            raise "{name} is disposed"
-        end
-        "#,
+                raise "{name} is disposed"
+            end
+            "#,
                 name = name,
                 ptr = ptr_of(name)
             )?;
@@ -109,7 +146,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         }
     }
 
-    write!(writer, r#"LiveSplitCoreNative.{}("#, &function.name)?;
+    write!(writer, r#"Native.{}("#, &function.name)?;
 
     for (i, &(ref name, ref typ)) in function.inputs.iter().enumerate() {
         if i != 0 {
@@ -139,7 +176,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
             write!(
                 writer,
                 r#"
-        {} = nil"#,
+            {} = nil"#,
                 ptr_of(name)
             )?;
         }
@@ -150,22 +187,22 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
             write!(
                 writer,
                 r#"
-        if result.handle.ptr == nil
-            return nil
-        end"#
+            if result.handle.ptr == nil
+                return nil
+            end"#
             )?;
         }
         write!(
             writer,
             r#"
-        result"#
+            result"#
         )?;
     }
 
     write!(
         writer,
         r#"
-    end"#
+        end"#
     )?;
 
     Ok(())
@@ -178,10 +215,11 @@ pub fn write<W: Write>(mut writer: W, classes: &BTreeMap<String, Class>) -> Resu
         r#"# coding: utf-8
 require 'ffi'
 
-module LiveSplitCoreNative
-    extend FFI::Library
-    ffi_lib './liblivesplit_core.so'
-"#
+module LiveSplitCore
+    module Native
+        extend FFI::Library
+        ffi_lib './liblivesplit_core.so'
+    "#
     )?;
 
     for class in classes.values() {
@@ -195,7 +233,7 @@ module LiveSplitCoreNative
             write!(
                 writer,
                 r#"
-    attach_function :{}, ["#,
+        attach_function :{}, ["#,
                 function.name
             )?;
 
@@ -214,22 +252,19 @@ module LiveSplitCoreNative
         writer,
         "{}",
         r#"
-end
-
-class LSCHandle
-    attr_accessor :ptr
-    def initialize(ptr)
-        @ptr = ptr
     end
-end
-"#
+
+    class LSCHandle
+        attr_accessor :ptr
+        def initialize(ptr)
+            @ptr = ptr
+        end
+    end
+    "#
     )?;
 
     for (class_name, class) in classes {
-        let mut class_name = class_name.to_string();
-        if class_name == "Time" {
-            class_name = "LSTime".to_string();
-        }
+        let class_name = class_name.to_string();
         let class_name_ref = format!("{}Ref", class_name);
         let class_name_ref_mut = format!("{}RefMut", class_name);
 
@@ -237,8 +272,8 @@ end
             writer,
             r#"
 
-class {class}
-    attr_accessor :handle"#,
+    class {class}
+        attr_accessor :handle"#,
             class = class_name_ref
         )?;
 
@@ -251,28 +286,28 @@ class {class}
                 writer,
                 "{}",
                 r#"
-    def read_with
-        self.read.wtih do |lock|
-            yield lock.timer
+        def read_with
+            self.read.wtih do |lock|
+                yield lock.timer
+            end
         end
-    end
-    def write_with
-        self.write.with do |lock|
-            yield lock.timer
-        end
-    end"#
+        def write_with
+            self.write.with do |lock|
+                yield lock.timer
+            end
+        end"#
             )?;
         }
 
         write!(
             writer,
             r#"
-    def initialize(ptr)
-        @handle = LSCHandle.new ptr
+        def initialize(ptr)
+            @handle = LSCHandle.new ptr
+        end
     end
-end
 
-class {class} < {base_class}"#,
+    class {class} < {base_class}"#,
             class = class_name_ref_mut,
             base_class = class_name_ref
         )?;
@@ -284,15 +319,15 @@ class {class} < {base_class}"#,
         write!(
             writer,
             r#"
-    def initialize(ptr)
-        @handle = LSCHandle.new ptr
+        def initialize(ptr)
+            @handle = LSCHandle.new ptr
+        end
     end
-end
 
-class {class} < {base_class}
-    def self.finalize(handle)
-        proc {{
-            if handle.ptr != nil"#,
+    class {class} < {base_class}
+        def self.finalize(handle)
+            proc {{
+                if handle.ptr != nil"#,
             class = class_name,
             base_class = class_name_ref_mut
         )?;
@@ -301,7 +336,7 @@ class {class} < {base_class}
             write!(
                 writer,
                 r#"
-                LiveSplitCoreNative.{} handle.ptr"#,
+                    Native.{} handle.ptr"#,
                 function.name
             )?;
         }
@@ -309,18 +344,18 @@ class {class} < {base_class}
         write!(
             writer,
             r#"
-                handle.ptr = nil
-            end
-        }}
-    end
-    def dispose
-        finalizer = {class}.finalize @handle
-        finalizer.call
-    end
-    def with
-        yield self
-        self.dispose
-    end"#,
+                    handle.ptr = nil
+                end
+            }}
+        end
+        def dispose
+            finalizer = {class}.finalize @handle
+            finalizer.call
+        end
+        def with
+            yield self
+            self.dispose
+        end"#,
             class = class_name
         )?;
 
@@ -333,14 +368,18 @@ class {class} < {base_class}
         write!(
             writer,
             r#"
-    def initialize(ptr)
-        handle = LSCHandle.new ptr
-        @handle = handle
-        ObjectSpace.define_finalizer(self, self.class.finalize(handle))
-    end
-end"#
+        def initialize(ptr)
+            handle = LSCHandle.new ptr
+            @handle = handle
+            ObjectSpace.define_finalizer(self, self.class.finalize(handle))
+        end
+    end"#
         )?;
     }
 
-    Ok(())
+    writeln!(
+        writer,
+        r#"
+end"#
+    )
 }
