@@ -11,6 +11,7 @@ use std::mem;
 pub mod timer;
 pub mod hotkey_system;
 pub mod run;
+pub mod parse_run_result;
 pub mod segment;
 pub mod time;
 pub mod time_span;

@@ -2,9 +2,10 @@ use livesplit_core::{Attempt, Run, RunMetadata, Segment, TimeSpan};
 use livesplit_core::run::{parser, saver};
 use super::{acc, acc_mut, alloc, output_str, output_time_span, output_vec, own, own_drop, str};
 use std::io::Cursor;
-use std::{ptr, slice};
+use std::slice;
 use libc::c_char;
 use segment::OwnedSegment;
+use parse_run_result::OwnedParseRunResult;
 
 pub type OwnedRun = *mut Run;
 pub type NullableOwnedRun = *mut Run;
@@ -20,15 +21,12 @@ pub unsafe extern "C" fn Run_drop(this: OwnedRun) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Run_parse(data: *const u8, length: usize) -> NullableOwnedRun {
-    match parser::composite::parse(
+pub unsafe extern "C" fn Run_parse(data: *const u8, length: usize) -> OwnedParseRunResult {
+    alloc(parser::composite::parse(
         Cursor::new(slice::from_raw_parts(data, length)),
         None,
         false,
-    ) {
-        Ok(run) => alloc(run),
-        Err(_) => ptr::null_mut(),
-    }
+    ))
 }
 
 #[no_mangle]

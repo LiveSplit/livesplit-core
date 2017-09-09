@@ -12,5 +12,8 @@ pub mod time_split_tracker;
 pub mod urn;
 pub mod wsplit;
 
+mod timer_kind;
 mod bom_consumer;
 mod xml_util;
+
+pub use self::timer_kind::TimerKind;
