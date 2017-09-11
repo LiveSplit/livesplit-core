@@ -27,7 +27,7 @@ use syntex_syntax::codemap::FilePathMapping;
 #[structopt(about = "Generates bindings for livesplit-core")]
 pub struct Opt {
     #[structopt(long = "ruby-lib-path", help = "The path of the library for the Ruby bindings",
-                default_value = "./liblivesplit_core.so")]
+                default_value = "../liblivesplit_core.so")]
     ruby_lib_path: String,
 }
 
