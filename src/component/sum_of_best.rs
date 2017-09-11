@@ -4,7 +4,7 @@ use serde_json::{to_writer, Result};
 use analysis::sum_of_segments::calculate_best;
 use std::io::Write;
 use std::borrow::Cow;
-use settings::{Field, Gradient, SettingsDescription, Value};
+use settings::{Color, Field, Gradient, SettingsDescription, Value};
 use super::DEFAULT_INFO_TEXT_GRADIENT;
 
 #[derive(Default, Clone)]
@@ -16,6 +16,8 @@ pub struct Component {
 #[serde(default)]
 pub struct Settings {
     pub background: Gradient,
+    pub label_color: Option<Color>,
+    pub value_color: Option<Color>,
     pub accuracy: Accuracy,
 }
 
@@ -23,6 +25,8 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             background: DEFAULT_INFO_TEXT_GRADIENT,
+            label_color: None,
+            value_color: None,
             accuracy: Accuracy::Seconds,
         }
     }
@@ -31,6 +35,8 @@ impl Default for Settings {
 #[derive(Serialize, Deserialize)]
 pub struct State {
     pub background: Gradient,
+    pub label_color: Option<Color>,
+    pub value_color: Option<Color>,
     pub text: String,
     pub time: String,
 }
@@ -78,6 +84,8 @@ impl Component {
 
         State {
             background: self.settings.background,
+            label_color: self.settings.label_color,
+            value_color: self.settings.value_color,
             text: String::from("Sum of Best Segments"),
             time: Regular::with_accuracy(self.settings.accuracy)
                 .format(time)
@@ -88,6 +96,8 @@ impl Component {
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new("Background".into(), self.settings.background.into()),
+            Field::new("Label Color".into(), self.settings.label_color.into()),
+            Field::new("Value Color".into(), self.settings.value_color.into()),
             Field::new("Accuracy".into(), self.settings.accuracy.into()),
         ])
     }
@@ -95,7 +105,9 @@ impl Component {
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
             0 => self.settings.background = value.into(),
-            1 => self.settings.accuracy = value.into(),
+            1 => self.settings.label_color = value.into(),
+            2 => self.settings.value_color = value.into(),
+            3 => self.settings.accuracy = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

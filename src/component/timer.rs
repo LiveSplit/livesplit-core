@@ -17,9 +17,11 @@ pub struct Component {
 pub struct Settings {
     pub background: Gradient,
     pub timing_method: Option<TimingMethod>,
+    pub height: u32,
+    pub color_override: Option<Color>,
+    pub show_gradient: bool,
     pub digits_format: DigitsFormat,
     pub accuracy: Accuracy,
-    pub height: u32,
 }
 
 impl Default for Settings {
@@ -27,9 +29,11 @@ impl Default for Settings {
         Self {
             background: Gradient::Transparent,
             timing_method: None,
+            height: 60,
+            color_override: None,
+            show_gradient: true,
             digits_format: DigitsFormat::SingleDigitSeconds,
             accuracy: Accuracy::Hundredths,
-            height: 60,
         }
     }
 }
@@ -125,8 +129,17 @@ impl Component {
             _ => SemanticColor::NotRunning,
         };
 
-        let visual_color = semantic_color.visualize(layout_settings);
-        let (top_color, bottom_color) = top_and_bottom_color(visual_color);
+        let visual_color = if let Some(color) = self.settings.color_override {
+            color
+        } else {
+            semantic_color.visualize(layout_settings)
+        };
+
+        let (top_color, bottom_color) = if self.settings.show_gradient {
+            top_and_bottom_color(visual_color)
+        } else {
+            (visual_color, visual_color)
+        };
 
         State {
             background: self.settings.background,
@@ -148,6 +161,8 @@ impl Component {
             Field::new("Background".into(), self.settings.background.into()),
             Field::new("Timing Method".into(), self.settings.timing_method.into()),
             Field::new("Height".into(), (self.settings.height as u64).into()),
+            Field::new("Text Color".into(), self.settings.color_override.into()),
+            Field::new("Show Gradient".into(), self.settings.show_gradient.into()),
             Field::new("Digits Format".into(), self.settings.digits_format.into()),
             Field::new("Accuracy".into(), self.settings.accuracy.into()),
         ])
@@ -158,8 +173,10 @@ impl Component {
             0 => self.settings.background = value.into(),
             1 => self.settings.timing_method = value.into(),
             2 => self.settings.height = value.into_uint().unwrap() as _,
-            3 => self.settings.digits_format = value.into(),
-            4 => self.settings.accuracy = value.into(),
+            3 => self.settings.color_override = value.into(),
+            4 => self.settings.show_gradient = value.into(),
+            5 => self.settings.digits_format = value.into(),
+            6 => self.settings.accuracy = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

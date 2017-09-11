@@ -1,6 +1,6 @@
 use {comparison, Timer, TimerPhase};
 use analysis::possible_time_save;
-use settings::{Field, Gradient, SettingsDescription, Value};
+use settings::{Color, Field, Gradient, SettingsDescription, Value};
 use serde_json::{to_writer, Result};
 use std::borrow::Cow;
 use std::cmp::max;
@@ -20,6 +20,8 @@ pub struct Settings {
     pub background: Gradient,
     pub comparison_override: Option<String>,
     pub total_possible_time_save: bool,
+    pub label_color: Option<Color>,
+    pub value_color: Option<Color>,
     pub accuracy: Accuracy,
 }
 
@@ -29,6 +31,8 @@ impl Default for Settings {
             background: DEFAULT_INFO_TEXT_GRADIENT,
             comparison_override: None,
             total_possible_time_save: false,
+            label_color: None,
+            value_color: None,
             accuracy: Accuracy::Hundredths,
         }
     }
@@ -37,6 +41,8 @@ impl Default for Settings {
 #[derive(Serialize, Deserialize)]
 pub struct State {
     pub background: Gradient,
+    pub label_color: Option<Color>,
+    pub value_color: Option<Color>,
     pub text: String,
     pub time: String,
 }
@@ -113,6 +119,8 @@ impl Component {
 
         State {
             background: self.settings.background,
+            label_color: self.settings.label_color,
+            value_color: self.settings.value_color,
             text: text.into_owned(),
             time: PossibleTimeSave::with_accuracy(self.settings.accuracy)
                 .format(time)
@@ -131,6 +139,8 @@ impl Component {
                 "Show Total Possible Time Save".into(),
                 self.settings.total_possible_time_save.into(),
             ),
+            Field::new("Label Color".into(), self.settings.label_color.into()),
+            Field::new("Value Color".into(), self.settings.value_color.into()),
             Field::new("Accuracy".into(), self.settings.accuracy.into()),
         ])
     }
@@ -140,7 +150,9 @@ impl Component {
             0 => self.settings.background = value.into(),
             1 => self.settings.comparison_override = value.into(),
             2 => self.settings.total_possible_time_save = value.into(),
-            3 => self.settings.accuracy = value.into(),
+            3 => self.settings.label_color = value.into(),
+            4 => self.settings.value_color = value.into(),
+            5 => self.settings.accuracy = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

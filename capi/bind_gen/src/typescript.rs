@@ -59,6 +59,7 @@ export interface TimerComponentStateJson {
 
 export interface TitleComponentStateJson {
     background: Gradient,
+    text_color: Color | null,
     icon_change: string | null,
     line1: string,
     line2: string | null,
@@ -91,6 +92,7 @@ export interface SplitStateJson {
 
 export interface PreviousSegmentComponentStateJson {
     background: Gradient,
+    label_color: Color | null,
     text: string,
     time: string,
     semantic_color: SemanticColor,
@@ -99,12 +101,16 @@ export interface PreviousSegmentComponentStateJson {
 
 export interface SumOfBestComponentStateJson {
     background: Gradient,
+    label_color: Color | null,
+    value_color: Color | null,
     text: string,
     time: string,
 }
 
 export interface PossibleTimeSaveComponentStateJson {
     background: Gradient,
+    label_color: Color | null,
+    value_color: Color | null,
     text: string,
     time: string,
 }
@@ -138,18 +144,23 @@ export type TextComponentStateJson =
 
 export interface TotalPlaytimeComponentStateJson {
     background: Gradient,
+    label_color: Color | null,
+    value_color: Color | null,
     text: string,
     time: string,
 }
 
 export interface CurrentPaceComponentStateJson {
     background: Gradient,
+    label_color: Color | null,
+    value_color: Color | null,
     text: string,
     time: string,
 }
 
 export interface DeltaComponentStateJson {
     background: Gradient,
+    label_color: Color | null,
     text: string,
     time: string,
     semantic_color: SemanticColor,
@@ -158,6 +169,8 @@ export interface DeltaComponentStateJson {
 
 export interface CurrentComparisonComponentStateJson {
     background: Gradient,
+    label_color: Color | null,
+    value_color: Color | null,
     text: string,
     comparison: string,
 }
@@ -211,6 +224,7 @@ export type SettingsDescriptionValueJson =
     { DigitsFormat: DigitsFormatJson } |
     { OptionalTimingMethod: TimingMethodJson | null } |
     { Color: Color } |
+    { OptionalColor: Color | null } |
     { Gradient: Gradient };
 
 export type AccuracyJson = "Seconds" | "Tenths" | "Hundredths";

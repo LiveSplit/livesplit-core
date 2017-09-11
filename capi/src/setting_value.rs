@@ -119,6 +119,21 @@ pub unsafe extern "C" fn SettingValue_from_color(
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn SettingValue_from_optional_color(
+    r: f32,
+    g: f32,
+    b: f32,
+    a: f32,
+) -> OwnedSettingValue {
+    alloc(Some(Color::from((r, g, b, a))).into())
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn SettingValue_from_optional_empty_color() -> OwnedSettingValue {
+    alloc(None::<Color>.into())
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn SettingValue_from_transparent_gradient() -> OwnedSettingValue {
     alloc(Gradient::Transparent.into())
 }

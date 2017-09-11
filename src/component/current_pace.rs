@@ -4,7 +4,7 @@ use std::io::Write;
 use analysis::current_pace;
 use time::formatter::{Accuracy, Regular, TimeFormatter};
 use std::borrow::Cow;
-use settings::{Field, Gradient, SettingsDescription, Value};
+use settings::{Color, Field, Gradient, SettingsDescription, Value};
 use super::DEFAULT_INFO_TEXT_GRADIENT;
 
 #[derive(Default, Clone)]
@@ -17,6 +17,8 @@ pub struct Component {
 pub struct Settings {
     pub background: Gradient,
     pub comparison_override: Option<String>,
+    pub label_color: Option<Color>,
+    pub value_color: Option<Color>,
     pub accuracy: Accuracy,
 }
 
@@ -25,6 +27,8 @@ impl Default for Settings {
         Self {
             background: DEFAULT_INFO_TEXT_GRADIENT,
             comparison_override: None,
+            label_color: None,
+            value_color: None,
             accuracy: Accuracy::Seconds,
         }
     }
@@ -33,6 +37,8 @@ impl Default for Settings {
 #[derive(Serialize, Deserialize)]
 pub struct State {
     pub background: Gradient,
+    pub label_color: Option<Color>,
+    pub value_color: Option<Color>,
     pub text: String,
     pub time: String,
 }
@@ -103,6 +109,8 @@ impl Component {
 
         State {
             background: self.settings.background,
+            label_color: self.settings.label_color,
+            value_color: self.settings.value_color,
             text,
             time: Regular::with_accuracy(self.settings.accuracy)
                 .format(current_pace)
@@ -117,6 +125,8 @@ impl Component {
                 "Comparison".into(),
                 self.settings.comparison_override.clone().into(),
             ),
+            Field::new("Label Color".into(), self.settings.label_color.into()),
+            Field::new("Value Color".into(), self.settings.value_color.into()),
             Field::new("Accuracy".into(), self.settings.accuracy.into()),
         ])
     }
@@ -125,7 +135,9 @@ impl Component {
         match index {
             0 => self.settings.background = value.into(),
             1 => self.settings.comparison_override = value.into(),
-            2 => self.settings.accuracy = value.into(),
+            2 => self.settings.label_color = value.into(),
+            3 => self.settings.value_color = value.into(),
+            4 => self.settings.accuracy = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

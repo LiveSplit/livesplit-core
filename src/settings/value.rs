@@ -15,6 +15,7 @@ pub enum Value {
     DigitsFormat(DigitsFormat),
     OptionalTimingMethod(Option<TimingMethod>),
     Color(Color),
+    OptionalColor(Option<Color>),
     Gradient(Gradient),
 }
 
@@ -98,6 +99,13 @@ impl Value {
         }
     }
 
+    pub fn into_optional_color(self) -> Result<Option<Color>> {
+        match self {
+            Value::OptionalColor(v) => Ok(v),
+            _ => Err(Error::WrongType),
+        }
+    }
+
     pub fn into_gradient(self) -> Result<Gradient> {
         match self {
             Value::Color(v) => Ok(Gradient::Plain(v)),
@@ -164,6 +172,12 @@ impl Into<Option<TimingMethod>> for Value {
 impl Into<Color> for Value {
     fn into(self) -> Color {
         self.into_color().unwrap()
+    }
+}
+
+impl Into<Option<Color>> for Value {
+    fn into(self) -> Option<Color> {
+        self.into_optional_color().unwrap()
     }
 }
 

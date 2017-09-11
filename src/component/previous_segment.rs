@@ -17,6 +17,7 @@ pub struct Component {
 pub struct Settings {
     pub background: Gradient,
     pub comparison_override: Option<String>,
+    pub label_color: Option<Color>,
     pub drop_decimals: bool,
     pub accuracy: Accuracy,
     pub show_possible_time_save: bool,
@@ -27,6 +28,7 @@ impl Default for Settings {
         Self {
             background: DEFAULT_INFO_TEXT_GRADIENT,
             comparison_override: None,
+            label_color: None,
             drop_decimals: true,
             accuracy: Accuracy::Tenths,
             show_possible_time_save: false,
@@ -37,6 +39,7 @@ impl Default for Settings {
 #[derive(Serialize, Deserialize)]
 pub struct State {
     pub background: Gradient,
+    pub label_color: Option<Color>,
     pub text: String,
     pub time: String,
     pub semantic_color: SemanticColor,
@@ -193,6 +196,7 @@ impl Component {
 
         State {
             background: self.settings.background,
+            label_color: self.settings.label_color,
             text: text.into_owned(),
             time,
             semantic_color,
@@ -207,6 +211,7 @@ impl Component {
                 "Comparison".into(),
                 self.settings.comparison_override.clone().into(),
             ),
+            Field::new("Label Color".into(), self.settings.label_color.into()),
             Field::new("Drop Decimals".into(), self.settings.drop_decimals.into()),
             Field::new("Accuracy".into(), self.settings.accuracy.into()),
             Field::new(
@@ -220,9 +225,10 @@ impl Component {
         match index {
             0 => self.settings.background = value.into(),
             1 => self.settings.comparison_override = value.into(),
-            2 => self.settings.drop_decimals = value.into(),
-            3 => self.settings.accuracy = value.into(),
-            4 => self.settings.show_possible_time_save = value.into(),
+            2 => self.settings.label_color = value.into(),
+            3 => self.settings.drop_decimals = value.into(),
+            4 => self.settings.accuracy = value.into(),
+            5 => self.settings.show_possible_time_save = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

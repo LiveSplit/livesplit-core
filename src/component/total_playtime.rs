@@ -4,7 +4,7 @@ use std::io::Write;
 use analysis::total_playtime;
 use time::formatter::{Days, Regular, TimeFormatter};
 use std::borrow::Cow;
-use settings::{Field, Gradient, SettingsDescription, Value};
+use settings::{Color, Field, Gradient, SettingsDescription, Value};
 use super::DEFAULT_INFO_TEXT_GRADIENT;
 
 #[derive(Default, Clone)]
@@ -17,6 +17,8 @@ pub struct Component {
 pub struct Settings {
     pub background: Gradient,
     pub show_days: bool,
+    pub label_color: Option<Color>,
+    pub value_color: Option<Color>,
 }
 
 impl Default for Settings {
@@ -24,6 +26,8 @@ impl Default for Settings {
         Self {
             background: DEFAULT_INFO_TEXT_GRADIENT,
             show_days: true,
+            label_color: None,
+            value_color: None,
         }
     }
 }
@@ -31,6 +35,8 @@ impl Default for Settings {
 #[derive(Serialize, Deserialize)]
 pub struct State {
     pub background: Gradient,
+    pub label_color: Option<Color>,
+    pub value_color: Option<Color>,
     pub text: String,
     pub time: String,
 }
@@ -79,6 +85,8 @@ impl Component {
 
         State {
             background: self.settings.background,
+            label_color: self.settings.label_color,
+            value_color: self.settings.value_color,
             text: String::from("Total Playtime"),
             time,
         }
@@ -88,6 +96,8 @@ impl Component {
         SettingsDescription::with_fields(vec![
             Field::new("Background".into(), self.settings.background.into()),
             Field::new("Show Days (>24h)".into(), self.settings.show_days.into()),
+            Field::new("Label Color".into(), self.settings.label_color.into()),
+            Field::new("Value Color".into(), self.settings.value_color.into()),
         ])
     }
 
@@ -95,6 +105,8 @@ impl Component {
         match index {
             0 => self.settings.background = value.into(),
             1 => self.settings.show_days = value.into(),
+            2 => self.settings.label_color = value.into(),
+            3 => self.settings.value_color = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

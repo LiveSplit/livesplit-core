@@ -14,6 +14,7 @@ pub struct Component {
 #[serde(default)]
 pub struct Settings {
     pub background: Gradient,
+    pub text_color: Option<Color>,
     pub show_game_name: bool,
     pub show_category_name: bool,
     pub show_finished_runs_count: bool,
@@ -29,6 +30,7 @@ pub struct Settings {
 #[derive(Serialize, Deserialize)]
 pub struct State {
     pub background: Gradient,
+    pub text_color: Option<Color>,
     pub icon_change: Option<String>,
     pub line1: String,
     pub line2: Option<String>,
@@ -44,6 +46,7 @@ impl Default for Settings {
                 Color::hsla(0.0, 0.0, 1.0, 0.13),
                 Color::hsla(0.0, 0.0, 1.0, 0.0),
             ),
+            text_color: None,
             show_game_name: true,
             show_category_name: true,
             show_finished_runs_count: false,
@@ -160,6 +163,7 @@ impl Component {
 
         State {
             background: self.settings.background,
+            text_color: self.settings.text_color,
             icon_change,
             finished_runs,
             attempts,
@@ -176,6 +180,7 @@ impl Component {
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new("Background".into(), self.settings.background.into()),
+            Field::new("Text Color".into(), self.settings.text_color.into()),
             Field::new("Show Game Name".into(), self.settings.show_game_name.into()),
             Field::new(
                 "Show Category Name".into(),
@@ -207,16 +212,17 @@ impl Component {
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
             0 => self.settings.background = value.into(),
-            1 => self.settings.show_game_name = value.into(),
-            2 => self.settings.show_category_name = value.into(),
-            3 => self.settings.show_finished_runs_count = value.into(),
-            4 => self.settings.show_attempt_count = value.into(),
-            5 => self.settings.center_text = value.into(),
-            6 => self.settings.display_as_single_line = value.into(),
-            7 => self.settings.display_game_icon = value.into(),
-            8 => self.settings.show_region = value.into(),
-            9 => self.settings.show_platform = value.into(),
-            10 => self.settings.show_variables = value.into(),
+            1 => self.settings.text_color = value.into(),
+            2 => self.settings.show_game_name = value.into(),
+            3 => self.settings.show_category_name = value.into(),
+            4 => self.settings.show_finished_runs_count = value.into(),
+            5 => self.settings.show_attempt_count = value.into(),
+            6 => self.settings.center_text = value.into(),
+            7 => self.settings.display_as_single_line = value.into(),
+            8 => self.settings.display_game_icon = value.into(),
+            9 => self.settings.show_region = value.into(),
+            10 => self.settings.show_platform = value.into(),
+            11 => self.settings.show_variables = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }
