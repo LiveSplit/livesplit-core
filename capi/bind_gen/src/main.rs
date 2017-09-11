@@ -1,5 +1,7 @@
-
 extern crate heck;
+extern crate structopt;
+#[macro_use]
+extern crate structopt_derive;
 extern crate syntex_syntax;
 
 mod c;
@@ -14,11 +16,20 @@ mod ruby;
 mod swift;
 mod typescript;
 
+use structopt::StructOpt;
 use std::path::Path;
 use syntex_syntax::abi::Abi;
 use syntex_syntax::ast::{FunctionRetTy, ItemKind, Mutability, PatKind, TyKind, Visibility};
 use syntex_syntax::parse::{parse_crate_from_file, ParseSess};
 use syntex_syntax::codemap::FilePathMapping;
+
+#[derive(StructOpt)]
+#[structopt(about = "Generates bindings for livesplit-core")]
+pub struct Opt {
+    #[structopt(long = "ruby-lib-path", help = "The path of the library for the Ruby bindings",
+                default_value = "./liblivesplit_core.so")]
+    ruby_lib_path: String,
+}
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum TypeKind {
@@ -124,6 +135,8 @@ fn get_type(ty: &TyKind) -> Type {
 }
 
 fn main() {
+    let opt = Opt::from_args();
+
     let sess = ParseSess::new(FilePathMapping::empty());
     let ast = parse_crate_from_file(Path::new("../src/lib.rs"), &sess).unwrap();
     let items = ast.module.items;
@@ -182,7 +195,7 @@ fn main() {
         }
     }
 
-    write_files(&fns_to_classes(functions)).unwrap();
+    write_files(&fns_to_classes(functions), &opt).unwrap();
 }
 
 use std::collections::BTreeMap;
@@ -218,7 +231,7 @@ use std::fs::{create_dir_all, remove_dir_all, File};
 use std::io::{BufWriter, Result};
 use std::path::PathBuf;
 
-fn write_files(classes: &BTreeMap<String, Class>) -> Result<()> {
+fn write_files(classes: &BTreeMap<String, Class>, opt: &Opt) -> Result<()> {
     let mut path = PathBuf::from("..");
     path.push("bindings");
 
@@ -266,7 +279,7 @@ fn write_files(classes: &BTreeMap<String, Class>) -> Result<()> {
     path.pop();
 
     path.push("LiveSplitCore.rb");
-    ruby::write(BufWriter::new(File::create(&path)?), classes)?;
+    ruby::write(BufWriter::new(File::create(&path)?), classes, opt)?;
     path.pop();
 
     path.push("livesplit_core.h");

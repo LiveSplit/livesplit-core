@@ -1,5 +1,5 @@
 use std::io::{Result, Write};
-use {Class, Function, Type, TypeKind};
+use {Class, Function, Opt, Type, TypeKind};
 use std::collections::BTreeMap;
 
 fn get_hl_type(ty: &Type) -> String {
@@ -208,18 +208,18 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
     Ok(())
 }
 
-pub fn write<W: Write>(mut writer: W, classes: &BTreeMap<String, Class>) -> Result<()> {
+pub fn write<W: Write>(mut writer: W, classes: &BTreeMap<String, Class>, opt: &Opt) -> Result<()> {
     write!(
         writer,
-        "{}",
         r#"# coding: utf-8
 require 'ffi'
 
 module LiveSplitCore
     module Native
         extend FFI::Library
-        ffi_lib './liblivesplit_core.so'
-    "#
+        ffi_lib File.expand_path('{}', __FILE__)
+    "#,
+        opt.ruby_lib_path
     )?;
 
     for class in classes.values() {
