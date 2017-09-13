@@ -7,6 +7,9 @@ use std::borrow::Cow;
 use settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
 use super::DEFAULT_INFO_TEXT_GRADIENT;
 
+#[cfg(test)]
+mod tests;
+
 #[derive(Default, Clone)]
 pub struct Component {
     settings: Settings,
@@ -74,17 +77,8 @@ impl Component {
     }
 
     pub fn name(&self) -> Cow<str> {
-        self.text(
-            self.settings
-                .comparison_override
-                .as_ref()
-                .map(String::as_ref),
-        )
-    }
-
-    fn text(&self, comparison: Option<&str>) -> Cow<str> {
-        if let Some(comparison) = comparison {
-            format!("Delta ({})", comparison::shorten(comparison)).into()
+        if let Some(ref comparison) = self.settings.comparison_override {
+            format!("Delta ({})", comparison).into()
         } else {
             "Delta".into()
         }
@@ -92,7 +86,7 @@ impl Component {
 
     pub fn state(&self, timer: &Timer, layout_settings: &GeneralLayoutSettings) -> State {
         let comparison = comparison::resolve(&self.settings.comparison_override, timer);
-        let text = self.text(comparison);
+        let text = comparison.unwrap_or_else(|| timer.current_comparison());
         let comparison = comparison::or_current(comparison, timer);
 
         let (delta, use_live_delta) = delta::calculate(timer, comparison);
@@ -121,7 +115,7 @@ impl Component {
         State {
             background: self.settings.background,
             label_color: self.settings.label_color,
-            text: text.into_owned(),
+            text: text.to_string(),
             time: Delta::custom(self.settings.drop_decimals, self.settings.accuracy)
                 .format(delta)
                 .to_string(),
