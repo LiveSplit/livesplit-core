@@ -30,8 +30,8 @@ pub unsafe extern "C" fn PreviousSegmentComponent_state_as_json(
     layout_settings: *const GeneralLayoutSettings,
 ) -> Json {
     output_vec(|o| {
-        acc(this)
-            .state(acc(timer), acc(layout_settings))
+        acc(&this)
+            .state(acc(&timer), acc(&layout_settings))
             .write_json(o)
             .unwrap();
     })
@@ -43,5 +43,5 @@ pub unsafe extern "C" fn PreviousSegmentComponent_state(
     timer: *const Timer,
     layout_settings: *const GeneralLayoutSettings,
 ) -> OwnedPreviousSegmentComponentState {
-    alloc(acc(this).state(acc(timer), acc(layout_settings)))
+    alloc(acc(&this).state(acc(&timer), acc(&layout_settings)))
 }

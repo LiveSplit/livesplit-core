@@ -28,8 +28,8 @@ pub unsafe extern "C" fn DeltaComponent_state_as_json(
     layout_settings: *const GeneralLayoutSettings,
 ) -> Json {
     output_vec(|o| {
-        acc_mut(this)
-            .state(acc(timer), acc(layout_settings))
+        acc_mut(&this)
+            .state(acc(&timer), acc(&layout_settings))
             .write_json(o)
             .unwrap();
     })
@@ -41,5 +41,5 @@ pub unsafe extern "C" fn DeltaComponent_state(
     timer: *const Timer,
     layout_settings: *const GeneralLayoutSettings,
 ) -> OwnedDeltaComponentState {
-    alloc(acc_mut(this).state(acc(timer), acc(layout_settings)))
+    alloc(acc_mut(&this).state(acc(&timer), acc(&layout_settings)))
 }

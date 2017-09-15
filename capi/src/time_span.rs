@@ -6,7 +6,7 @@ pub type OwnedTimeSpan = *mut TimeSpan;
 
 #[no_mangle]
 pub unsafe extern "C" fn TimeSpan_clone(this: *const TimeSpan) -> OwnedTimeSpan {
-    alloc(*acc(this))
+    alloc(*acc(&this))
 }
 
 #[no_mangle]
@@ -21,5 +21,5 @@ pub unsafe extern "C" fn TimeSpan_from_seconds(seconds: f64) -> OwnedTimeSpan {
 
 #[no_mangle]
 pub unsafe extern "C" fn TimeSpan_total_seconds(this: *const TimeSpan) -> f64 {
-    acc(this).total_seconds()
+    acc(&this).total_seconds()
 }

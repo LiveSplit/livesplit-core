@@ -3,8 +3,8 @@ use super::{acc, own_drop};
 use livesplit_core::parking_lot::RwLockReadGuard;
 use std::ops::Deref;
 
-pub type TimerReadLock = RwLockReadGuard<'static, Timer>;
-pub type OwnedTimerReadLock = *mut TimerReadLock;
+pub type TimerReadLock<'a> = RwLockReadGuard<'a, Timer>;
+pub type OwnedTimerReadLock<'a> = *mut TimerReadLock<'a>;
 
 #[no_mangle]
 pub unsafe extern "C" fn TimerReadLock_drop(this: OwnedTimerReadLock) {
@@ -13,5 +13,5 @@ pub unsafe extern "C" fn TimerReadLock_drop(this: OwnedTimerReadLock) {
 
 #[no_mangle]
 pub unsafe extern "C" fn TimerReadLock_timer(this: *const TimerReadLock) -> *const Timer {
-    acc(this).deref()
+    acc(&this).deref()
 }

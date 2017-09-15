@@ -15,14 +15,14 @@ pub unsafe extern "C" fn DetailedTimerComponentState_drop(this: OwnedDetailedTim
 pub unsafe extern "C" fn DetailedTimerComponentState_timer_time(
     this: *const DetailedTimerComponentState,
 ) -> *const c_char {
-    output_str(&acc(this).timer.time)
+    output_str(&acc(&this).timer.time)
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn DetailedTimerComponentState_timer_fraction(
     this: *const DetailedTimerComponentState,
 ) -> *const c_char {
-    output_str(&acc(this).timer.fraction)
+    output_str(&acc(&this).timer.fraction)
 }
 
 #[no_mangle]
@@ -30,7 +30,7 @@ pub unsafe extern "C" fn DetailedTimerComponentState_timer_semantic_color(
     this: *const DetailedTimerComponentState,
 ) -> *const c_char {
     output_str_with(|f| {
-        write!(f, "{:?}", acc(this).timer.semantic_color).unwrap()
+        write!(f, "{:?}", acc(&this).timer.semantic_color).unwrap()
     })
 }
 
@@ -38,21 +38,21 @@ pub unsafe extern "C" fn DetailedTimerComponentState_timer_semantic_color(
 pub unsafe extern "C" fn DetailedTimerComponentState_segment_timer_time(
     this: *const DetailedTimerComponentState,
 ) -> *const c_char {
-    output_str(&acc(this).segment_timer.time)
+    output_str(&acc(&this).segment_timer.time)
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn DetailedTimerComponentState_segment_timer_fraction(
     this: *const DetailedTimerComponentState,
 ) -> *const c_char {
-    output_str(&acc(this).segment_timer.fraction)
+    output_str(&acc(&this).segment_timer.fraction)
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn DetailedTimerComponentState_comparison1_visible(
     this: *const DetailedTimerComponentState,
 ) -> bool {
-    acc(this).comparison1.is_some()
+    acc(&this).comparison1.is_some()
 }
 
 #[no_mangle]
@@ -60,7 +60,7 @@ pub unsafe extern "C" fn DetailedTimerComponentState_comparison1_name(
     this: *const DetailedTimerComponentState,
 ) -> *const c_char {
     output_str(
-        &acc(this)
+        &acc(&this)
             .comparison1
             .as_ref()
             .expect("Comparison 1 is not visible")
@@ -73,7 +73,7 @@ pub unsafe extern "C" fn DetailedTimerComponentState_comparison1_time(
     this: *const DetailedTimerComponentState,
 ) -> *const c_char {
     output_str(
-        &acc(this)
+        &acc(&this)
             .comparison1
             .as_ref()
             .expect("Comparison 1 is not visible")
@@ -85,7 +85,7 @@ pub unsafe extern "C" fn DetailedTimerComponentState_comparison1_time(
 pub unsafe extern "C" fn DetailedTimerComponentState_comparison2_visible(
     this: *const DetailedTimerComponentState,
 ) -> bool {
-    acc(this).comparison2.is_some()
+    acc(&this).comparison2.is_some()
 }
 
 #[no_mangle]
@@ -93,7 +93,7 @@ pub unsafe extern "C" fn DetailedTimerComponentState_comparison2_name(
     this: *const DetailedTimerComponentState,
 ) -> *const c_char {
     output_str(
-        &acc(this)
+        &acc(&this)
             .comparison2
             .as_ref()
             .expect("Comparison 2 is not visible")
@@ -106,7 +106,7 @@ pub unsafe extern "C" fn DetailedTimerComponentState_comparison2_time(
     this: *const DetailedTimerComponentState,
 ) -> *const c_char {
     output_str(
-        &acc(this)
+        &acc(&this)
             .comparison2
             .as_ref()
             .expect("Comparison 2 is not visible")
@@ -118,7 +118,7 @@ pub unsafe extern "C" fn DetailedTimerComponentState_comparison2_time(
 pub unsafe extern "C" fn DetailedTimerComponentState_icon_change(
     this: *const DetailedTimerComponentState,
 ) -> *const Nullablec_char {
-    acc(this)
+    acc(&this)
         .icon_change
         .as_ref()
         .map_or_else(ptr::null, output_str)
@@ -128,7 +128,7 @@ pub unsafe extern "C" fn DetailedTimerComponentState_icon_change(
 pub unsafe extern "C" fn DetailedTimerComponentState_name(
     this: *const DetailedTimerComponentState,
 ) -> *const Nullablec_char {
-    acc(this)
+    acc(&this)
         .segment_name
         .as_ref()
         .map_or_else(ptr::null, output_str)

@@ -7,27 +7,29 @@ pub type OwnedRunMetadata = *mut RunMetadata;
 
 #[no_mangle]
 pub unsafe extern "C" fn RunMetadata_run_id(this: *const RunMetadata) -> *const c_char {
-    output_str(acc(this).run_id())
+    output_str(acc(&this).run_id())
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn RunMetadata_platform_name(this: *const RunMetadata) -> *const c_char {
-    output_str(acc(this).platform_name())
+    output_str(acc(&this).platform_name())
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn RunMetadata_uses_emulator(this: *const RunMetadata) -> bool {
-    acc(this).uses_emulator()
+    acc(&this).uses_emulator()
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn RunMetadata_region_name(this: *const RunMetadata) -> *const c_char {
-    output_str(acc(this).region_name())
+    output_str(acc(&this).region_name())
 }
 
+/// # Safety
+/// `this` must outlive `OwnedRunMetadataVariablesIter`
 #[no_mangle]
-pub unsafe extern "C" fn RunMetadata_variables(
+pub unsafe extern "C" fn RunMetadata_variables<'a>(
     this: *const RunMetadata,
-) -> OwnedRunMetadataVariablesIter {
-    alloc(acc(this).variables())
+) -> OwnedRunMetadataVariablesIter<'a> {
+    alloc((&*this).variables())
 }

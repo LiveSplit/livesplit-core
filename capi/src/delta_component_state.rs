@@ -14,19 +14,19 @@ pub unsafe extern "C" fn DeltaComponentState_drop(this: OwnedDeltaComponentState
 pub unsafe extern "C" fn DeltaComponentState_text(
     this: *const DeltaComponentState,
 ) -> *const c_char {
-    output_str(&acc(this).text)
+    output_str(&acc(&this).text)
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn DeltaComponentState_time(
     this: *const DeltaComponentState,
 ) -> *const c_char {
-    output_str(&acc(this).time)
+    output_str(&acc(&this).time)
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn DeltaComponentState_semantic_color(
     this: *const DeltaComponentState,
 ) -> *const c_char {
-    output_str_with(|f| write!(f, "{:?}", acc(this).semantic_color).unwrap())
+    output_str_with(|f| write!(f, "{:?}", acc(&this).semantic_color).unwrap())
 }

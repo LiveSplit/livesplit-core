@@ -30,7 +30,7 @@ pub unsafe extern "C" fn SettingValue_from_int(value: i64) -> OwnedSettingValue 
 
 #[no_mangle]
 pub unsafe extern "C" fn SettingValue_from_string(value: *const c_char) -> OwnedSettingValue {
-    alloc(str(value).to_string().into())
+    alloc(str(&value).to_string().into())
 }
 
 #[no_mangle]
@@ -40,7 +40,7 @@ pub unsafe extern "C" fn SettingValue_from_optional_string(
     let value = if value.is_null() {
         None::<String>.into()
     } else {
-        Some(str(value).to_string()).into()
+        Some(str(&value).to_string()).into()
     };
     alloc(value)
 }
@@ -59,7 +59,7 @@ pub unsafe extern "C" fn SettingValue_from_float(value: f64) -> OwnedSettingValu
 pub unsafe extern "C" fn SettingValue_from_accuracy(
     value: *const c_char,
 ) -> NullableOwnedSettingValue {
-    let value = str(value);
+    let value = str(&value);
     let value = match value {
         "Seconds" => Accuracy::Seconds,
         "Tenths" => Accuracy::Tenths,
@@ -73,7 +73,7 @@ pub unsafe extern "C" fn SettingValue_from_accuracy(
 pub unsafe extern "C" fn SettingValue_from_digits_format(
     value: *const c_char,
 ) -> NullableOwnedSettingValue {
-    let value = str(value);
+    let value = str(&value);
     let value = match value {
         "SingleDigitSeconds" => DigitsFormat::SingleDigitSeconds,
         "DoubleDigitSeconds" => DigitsFormat::DoubleDigitSeconds,
@@ -93,7 +93,7 @@ pub unsafe extern "C" fn SettingValue_from_optional_timing_method(
     if value.is_null() {
         alloc(None::<TimingMethod>.into())
     } else {
-        let value = str(value);
+        let value = str(&value);
         let value = match value {
             "RealTime" => TimingMethod::RealTime,
             "GameTime" => TimingMethod::GameTime,

@@ -123,8 +123,8 @@ where
     })
 }
 
-unsafe fn str(s: *const c_char) -> &'static str {
-    CStr::from_ptr(s as _).to_str().unwrap()
+unsafe fn str<'a>(s: &'a *const c_char) -> &'a str {
+    CStr::from_ptr(*s as _).to_str().unwrap()
 }
 
 fn alloc<T>(data: T) -> *mut T {
@@ -139,10 +139,10 @@ unsafe fn own_drop<T>(data: *mut T) {
     Box::from_raw(data);
 }
 
-unsafe fn acc_mut<T>(data: *mut T) -> &'static mut T {
-    &mut *data
+unsafe fn acc_mut<'a, T>(p: &'a *mut T) -> &mut T {
+    &mut **p
 }
 
-unsafe fn acc<T>(data: *const T) -> &'static T {
-    &*data
+unsafe fn acc<'a, T>(p: &'a *const T) -> &T {
+    &**p
 }

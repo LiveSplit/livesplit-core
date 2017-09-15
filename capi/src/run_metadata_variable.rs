@@ -14,12 +14,12 @@ pub unsafe extern "C" fn RunMetadataVariable_drop(this: OwnedRunMetadataVariable
 pub unsafe extern "C" fn RunMetadataVariable_name(
     this: *const RunMetadataVariable,
 ) -> *const c_char {
-    output_str(acc(acc(this).0))
+    output_str(acc(&acc(&this).0))
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn RunMetadataVariable_value(
     this: *const RunMetadataVariable,
 ) -> *const c_char {
-    output_str(acc(acc(this).1))
+    output_str(acc(&acc(&this).1))
 }

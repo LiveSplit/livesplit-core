@@ -30,8 +30,8 @@ pub unsafe extern "C" fn SplitsComponent_state_as_json(
     layout_settings: *const GeneralLayoutSettings,
 ) -> Json {
     output_vec(|o| {
-        acc_mut(this)
-            .state(acc(timer), acc(layout_settings))
+        acc_mut(&this)
+            .state(acc(&timer), acc(&layout_settings))
             .write_json(o)
             .unwrap();
     })
@@ -43,18 +43,18 @@ pub unsafe extern "C" fn SplitsComponent_state(
     timer: *const Timer,
     layout_settings: *const GeneralLayoutSettings,
 ) -> OwnedSplitsComponentState {
-    alloc(acc_mut(this).state(acc(timer), acc(layout_settings)))
+    alloc(acc_mut(&this).state(acc(&timer), acc(&layout_settings)))
 }
 
 
 #[no_mangle]
 pub unsafe extern "C" fn SplitsComponent_scroll_up(this: *mut SplitsComponent) {
-    acc_mut(this).scroll_up();
+    acc_mut(&this).scroll_up();
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn SplitsComponent_scroll_down(this: *mut SplitsComponent) {
-    acc_mut(this).scroll_down();
+    acc_mut(&this).scroll_down();
 }
 
 #[no_mangle]
@@ -62,7 +62,7 @@ pub unsafe extern "C" fn SplitsComponent_set_visual_split_count(
     this: *mut SplitsComponent,
     count: usize,
 ) {
-    acc_mut(this).settings_mut().visual_split_count = count;
+    acc_mut(&this).settings_mut().visual_split_count = count;
 }
 
 #[no_mangle]
@@ -70,7 +70,7 @@ pub unsafe extern "C" fn SplitsComponent_set_split_preview_count(
     this: *mut SplitsComponent,
     count: usize,
 ) {
-    acc_mut(this).settings_mut().split_preview_count = count;
+    acc_mut(&this).settings_mut().split_preview_count = count;
 }
 
 #[no_mangle]
@@ -78,7 +78,7 @@ pub unsafe extern "C" fn SplitsComponent_set_always_show_last_split(
     this: *mut SplitsComponent,
     always_show_last_split: bool,
 ) {
-    acc_mut(this).settings_mut().always_show_last_split = always_show_last_split;
+    acc_mut(&this).settings_mut().always_show_last_split = always_show_last_split;
 }
 
 #[no_mangle]
@@ -86,5 +86,5 @@ pub unsafe extern "C" fn SplitsComponent_set_separator_last_split(
     this: *mut SplitsComponent,
     separator_last_split: bool,
 ) {
-    acc_mut(this).settings_mut().separator_last_split = separator_last_split;
+    acc_mut(&this).settings_mut().separator_last_split = separator_last_split;
 }

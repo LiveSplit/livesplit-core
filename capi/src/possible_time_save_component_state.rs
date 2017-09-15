@@ -15,12 +15,12 @@ pub unsafe extern "C" fn PossibleTimeSaveComponentState_drop(
 pub unsafe extern "C" fn PossibleTimeSaveComponentState_text(
     this: *const PossibleTimeSaveComponentState,
 ) -> *const c_char {
-    output_str(&acc(this).text)
+    output_str(&acc(&this).text)
 }
 
 #[no_mangle]
 pub unsafe extern "C" fn PossibleTimeSaveComponentState_time(
     this: *const PossibleTimeSaveComponentState,
 ) -> *const c_char {
-    output_str(&acc(this).time)
+    output_str(&acc(&this).time)
 }
