@@ -25,7 +25,7 @@ pub struct Run {
 impl Run {
     #[inline]
     pub fn new() -> Self {
-        let mut run = Run {
+        Self {
             game_icon: Image::default(),
             game_name: String::new(),
             category_name: String::new(),
@@ -38,9 +38,7 @@ impl Run {
             segments: Vec::new(),
             custom_comparisons: vec![personal_best::NAME.to_string()],
             comparison_generators: default_generators(),
-        };
-        run.regenerate_comparisons();
-        run
+        }
     }
 
     #[inline]

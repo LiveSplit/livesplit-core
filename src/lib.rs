@@ -9,6 +9,7 @@ extern crate image as imagelib;
 extern crate odds;
 #[macro_use]
 extern crate quick_error;
+extern crate quick_xml;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
