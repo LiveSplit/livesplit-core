@@ -8,7 +8,18 @@ license = "Apache-2.0/MIT"
 description = "livesplit-core is a library that provides a lot of functionality for creating a speedrun timer."
 readme = "README.md"
 keywords = ["speedrun", "timer", "livesplit"]
-exclude = ["ci/*", "capi/*", "js/*", "hotkey/*"]
+include = [
+    "src/*",
+    "Cargo.toml",
+    "LICENSE-APACHE",
+    "LICENSE-MIT",
+    "CODE_OF_CONDUCT.md",
+    "README.md"
+]
+
+[badges]
+travis-ci = { repository = "CryZe/livesplit-core" }
+appveyor = { repository = "CryZe/livesplit-core" }
 
 [profile.release]
 lto = true

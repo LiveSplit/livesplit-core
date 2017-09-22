@@ -1,0 +1,142 @@
+<Run serialization="custom">
+  <Run>
+    <default>
+      <delayedStart>3270</delayedStart>
+      <numberOfAttempts>27</numberOfAttempts>
+      <numberOfCompletedAttempts>3</numberOfCompletedAttempts>
+      <segmented>false</segmented>
+      <configuration serialization="custom">
+        <Config>
+          <default>
+            <values>
+              <entry>
+                <string></string>
+                <map>
+                  <entry>
+                    <string>dimension</string>
+                    <java.awt.Dimension>
+                      <width>320</width>
+                      <height>227</height>
+                    </java.awt.Dimension>
+                  </entry>
+                  <entry>
+                    <string>coordinates</string>
+                    <java.awt.Point>
+                      <x>1955</x>
+                      <y>483</y>
+                    </java.awt.Point>
+                  </entry>
+                </map>
+              </entry>
+            </values>
+          </default>
+        </Config>
+      </configuration>
+      <counters/>
+      <name>Super Mario Bros. Warpless</name>
+      <segments>
+        <Segment serialization="custom">
+          <Segment>
+            <default>
+              <bestTime>
+                <milliseconds>133290</milliseconds>
+              </bestTime>
+              <name>World 1</name>
+              <runTime>
+                <milliseconds>133960</milliseconds>
+              </runTime>
+            </default>
+          </Segment>
+        </Segment>
+        <Segment serialization="custom">
+          <Segment>
+            <default>
+              <bestTime>
+                <milliseconds>165360</milliseconds>
+              </bestTime>
+              <name>World 2</name>
+              <runTime>
+                <milliseconds>166750</milliseconds>
+              </runTime>
+            </default>
+          </Segment>
+        </Segment>
+        <Segment serialization="custom">
+          <Segment>
+            <default>
+              <bestTime>
+                <milliseconds>134610</milliseconds>
+              </bestTime>
+              <name>World 3</name>
+              <runTime>
+                <milliseconds>145800</milliseconds>
+              </runTime>
+            </default>
+          </Segment>
+        </Segment>
+        <Segment serialization="custom">
+          <Segment>
+            <default>
+              <bestTime>
+                <milliseconds>147920</milliseconds>
+              </bestTime>
+              <name>World 4</name>
+              <runTime>
+                <milliseconds>156740</milliseconds>
+              </runTime>
+            </default>
+          </Segment>
+        </Segment>
+        <Segment serialization="custom">
+          <Segment>
+            <default>
+              <bestTime>
+                <milliseconds>144560</milliseconds>
+              </bestTime>
+              <name>World 5</name>
+              <runTime reference="../bestTime"/>
+            </default>
+          </Segment>
+        </Segment>
+        <Segment serialization="custom">
+          <Segment>
+            <default>
+              <bestTime>
+                <milliseconds>145730</milliseconds>
+              </bestTime>
+              <name>World 6</name>
+              <runTime reference="../bestTime"/>
+            </default>
+          </Segment>
+        </Segment>
+        <Segment serialization="custom">
+          <Segment>
+            <default>
+              <bestTime>
+                <milliseconds>179500</milliseconds>
+              </bestTime>
+              <name>World 7</name>
+              <runTime>
+                <milliseconds>205080</milliseconds>
+              </runTime>
+            </default>
+          </Segment>
+        </Segment>
+        <Segment serialization="custom">
+          <Segment>
+            <default>
+              <bestTime>
+                <milliseconds>184190</milliseconds>
+              </bestTime>
+              <name>World 8</name>
+              <runTime>
+                <milliseconds>191080</milliseconds>
+              </runTime>
+            </default>
+          </Segment>
+        </Segment>
+      </segments>
+      <subTitle></subTitle>
+    </default>
+  </Run>
+</Run>

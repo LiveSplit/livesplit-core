@@ -1,0 +1,33 @@
+{
+    "title": "SotN Any% NSC",
+    "attempt_count": 69,
+    "start_delay": "2.800000",
+    "splits": [
+        {
+            "title": "Mist",
+            "time": "11:41.299585",
+            "best_time": "11:32.100735",
+            "best_segment": "11:32.100735"
+        },
+        {
+            "title": "Bat",
+            "time": "14:36.934210",
+            "best_time": "14:16.933388",
+            "best_segment": "2:35.819681"
+        },
+        {
+            "title": "Reverse",
+            "time": "17:51.600311",
+            "best_time": "17:26.241850",
+            "best_segment": "3:08.843658"
+        },
+        {
+            "title": "Dracula",
+            "time": "23:52.151789",
+            "best_time": "23:52.151789",
+            "best_segment": "5:54.446978"
+        }
+    ],
+    "width": 320,
+    "height": 300
+}

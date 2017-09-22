@@ -1,0 +1,146 @@
+<Run serialization="custom">
+  <Run>
+    <default>
+      <delayedStart>3620</delayedStart>
+      <numberOfAttempts>568</numberOfAttempts>
+      <numberOfCompletedAttempts>1</numberOfCompletedAttempts>
+      <segmented>false</segmented>
+      <configuration serialization="custom">
+        <Config>
+          <default>
+            <values>
+              <entry>
+                <string></string>
+                <map>
+                  <entry>
+                    <string>dimension</string>
+                    <java.awt.Dimension>
+                      <width>320</width>
+                      <height>242</height>
+                    </java.awt.Dimension>
+                  </entry>
+                  <entry>
+                    <string>coordinates</string>
+                    <java.awt.Point>
+                      <x>33</x>
+                      <y>302</y>
+                    </java.awt.Point>
+                  </entry>
+                </map>
+              </entry>
+            </values>
+          </default>
+        </Config>
+      </configuration>
+      <counters/>
+      <name>Super Mario Bros any%</name>
+      <segments>
+        <Segment serialization="custom">
+          <Segment>
+            <default>
+              <bestTime>
+                <milliseconds>32110</milliseconds>
+              </bestTime>
+              <name>1-1</name>
+              <runTime>
+                <milliseconds>32180</milliseconds>
+              </runTime>
+            </default>
+          </Segment>
+        </Segment>
+        <Segment serialization="custom">
+          <Segment>
+            <default>
+              <bestTime>
+                <milliseconds>31310</milliseconds>
+              </bestTime>
+              <name>1-2</name>
+              <runTime>
+                <milliseconds>31470</milliseconds>
+              </runTime>
+            </default>
+          </Segment>
+        </Segment>
+        <Segment serialization="custom">
+          <Segment>
+            <default>
+              <bestTime>
+                <milliseconds>37320</milliseconds>
+              </bestTime>
+              <name>4-1</name>
+              <runTime>
+                <milliseconds>37400</milliseconds>
+              </runTime>
+            </default>
+          </Segment>
+        </Segment>
+        <Segment serialization="custom">
+          <Segment>
+            <default>
+              <bestTime>
+                <milliseconds>29340</milliseconds>
+              </bestTime>
+              <name>4-2</name>
+              <runTime>
+                <milliseconds>29390</milliseconds>
+              </runTime>
+            </default>
+          </Segment>
+        </Segment>
+        <Segment serialization="custom">
+          <Segment>
+            <default>
+              <bestTime>
+                <milliseconds>50970</milliseconds>
+              </bestTime>
+              <name>Pipe Jump City</name>
+              <runTime>
+                <milliseconds>51030</milliseconds>
+              </runTime>
+            </default>
+          </Segment>
+        </Segment>
+        <Segment serialization="custom">
+          <Segment>
+            <default>
+              <bestTime>
+                <milliseconds>36690</milliseconds>
+              </bestTime>
+              <name>Jumping Koopas</name>
+              <runTime>
+                <milliseconds>37030</milliseconds>
+              </runTime>
+            </default>
+          </Segment>
+        </Segment>
+        <Segment serialization="custom">
+          <Segment>
+            <default>
+              <bestTime>
+                <milliseconds>35280</milliseconds>
+              </bestTime>
+              <name>Count To 4</name>
+              <runTime>
+                <milliseconds>35310</milliseconds>
+              </runTime>
+            </default>
+          </Segment>
+        </Segment>
+        <Segment serialization="custom">
+          <Segment>
+            <default>
+              <bestTime>
+                <milliseconds>45270</milliseconds>
+              </bestTime>
+              <name>Hammers of Fortune</name>
+              <runTime>
+                <milliseconds>46080</milliseconds>
+              </runTime>
+            </default>
+          </Segment>
+        </Segment>
+      </segments>
+      <subTitle>Goal: 4:57</subTitle>
+    </default>
+  </Run>
+</Run>
