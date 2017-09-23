@@ -219,7 +219,12 @@ where
     }
 }
 
-pub fn parse_base<R, F>(reader: &mut Reader<R>, buf: &mut Vec<u8>, mut f: F) -> Result<()>
+pub fn parse_base<R, F>(
+    reader: &mut Reader<R>,
+    buf: &mut Vec<u8>,
+    tag: &[u8],
+    mut f: F,
+) -> Result<()>
 where
     R: BufRead,
     F: FnMut(&mut Reader<R>, Tag) -> Result<()>,
@@ -229,10 +234,12 @@ where
         loop {
             buf.clear();
             match reader.read_event(buf)? {
-                Event::Start(start) => {
+                Event::Start(start) => if start.name() == tag {
                     let tag = Tag::new(start, ptr_buf);
                     return f(reader, tag);
-                }
+                } else {
+                    return Err(Error::TagNotFound);
+                },
                 Event::Eof => return Err(Error::UnexpectedEndOfFile),
                 _ => {}
             }

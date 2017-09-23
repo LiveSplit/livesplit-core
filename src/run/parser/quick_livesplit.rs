@@ -343,61 +343,53 @@ pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
 
     let mut run = Run::new();
 
-    parse_base(reader, &mut buf, |reader, tag| {
-        if tag.name() == b"Run" {
-            let mut version = Version(1, 0, 0, 0);
-            optional_attribute_err(&tag, b"version", |t| {
-                version = parse_version(t)?;
-                Ok(())
-            })?;
+    parse_base(reader, &mut buf, b"Run", |reader, tag| {
+        let mut version = Version(1, 0, 0, 0);
+        optional_attribute_err(&tag, b"version", |t| {
+            version = parse_version(t)?;
+            Ok(())
+        })?;
 
-            parse_children(reader, tag.into_buf(), |reader, tag| {
-                if tag.name() == b"GameIcon" {
-                    image(
-                        reader,
-                        tag.into_buf(),
-                        &mut str_buf,
-                        |i| run.set_game_icon(i),
-                    )
-                } else if tag.name() == b"GameName" {
-                    text(reader, tag.into_buf(), |t| run.set_game_name(t))
-                } else if tag.name() == b"CategoryName" {
-                    text(reader, tag.into_buf(), |t| run.set_category_name(t))
-                } else if tag.name() == b"Offset" {
-                    time_span(reader, tag.into_buf(), |t| run.set_offset(t))
-                } else if tag.name() == b"AttemptCount" {
-                    text_parsed(reader, tag.into_buf(), |t| run.set_attempt_count(t))
-                } else if tag.name() == b"AttemptHistory" {
-                    parse_attempt_history(version, reader, tag.into_buf(), &mut run)
-                } else if tag.name() == b"RunHistory" {
-                    parse_run_history(version, reader, tag.into_buf(), &mut run)
-                } else if tag.name() == b"Metadata" {
-                    parse_metadata(version, reader, tag.into_buf(), run.metadata_mut())
-                } else if tag.name() == b"Segments" {
-                    parse_children(reader, tag.into_buf(), |reader, tag| {
-                        if tag.name() == b"Segment" {
-                            let segment = parse_segment(
-                                version,
-                                reader,
-                                tag.into_buf(),
-                                &mut str_buf,
-                                &mut run,
-                            )?;
-                            run.push_segment(segment);
-                            Ok(())
-                        } else {
-                            end_tag(reader, tag.into_buf())
-                        }
-                    })
-                } else if tag.name() == b"AutoSplitterSettings" {
-                    // TODO Store this somehow
-                    end_tag(reader, tag.into_buf())
-                } else {
-                    end_tag(reader, tag.into_buf())
-                }
-            })?;
-        }
-        Ok(())
+        parse_children(reader, tag.into_buf(), |reader, tag| {
+            if tag.name() == b"GameIcon" {
+                image(
+                    reader,
+                    tag.into_buf(),
+                    &mut str_buf,
+                    |i| run.set_game_icon(i),
+                )
+            } else if tag.name() == b"GameName" {
+                text(reader, tag.into_buf(), |t| run.set_game_name(t))
+            } else if tag.name() == b"CategoryName" {
+                text(reader, tag.into_buf(), |t| run.set_category_name(t))
+            } else if tag.name() == b"Offset" {
+                time_span(reader, tag.into_buf(), |t| run.set_offset(t))
+            } else if tag.name() == b"AttemptCount" {
+                text_parsed(reader, tag.into_buf(), |t| run.set_attempt_count(t))
+            } else if tag.name() == b"AttemptHistory" {
+                parse_attempt_history(version, reader, tag.into_buf(), &mut run)
+            } else if tag.name() == b"RunHistory" {
+                parse_run_history(version, reader, tag.into_buf(), &mut run)
+            } else if tag.name() == b"Metadata" {
+                parse_metadata(version, reader, tag.into_buf(), run.metadata_mut())
+            } else if tag.name() == b"Segments" {
+                parse_children(reader, tag.into_buf(), |reader, tag| {
+                    if tag.name() == b"Segment" {
+                        let segment =
+                            parse_segment(version, reader, tag.into_buf(), &mut str_buf, &mut run)?;
+                        run.push_segment(segment);
+                        Ok(())
+                    } else {
+                        end_tag(reader, tag.into_buf())
+                    }
+                })
+            } else if tag.name() == b"AutoSplitterSettings" {
+                // TODO Store this somehow
+                end_tag(reader, tag.into_buf())
+            } else {
+                end_tag(reader, tag.into_buf())
+            }
+        })
     })?;
 
     run.set_path(path);

@@ -13,6 +13,7 @@ pub mod urn;
 pub mod wsplit;
 pub mod quick_livesplit;
 pub mod quick_llanfair_gered;
+pub mod quick_llanfair2;
 
 mod timer_kind;
 mod bom_consumer;

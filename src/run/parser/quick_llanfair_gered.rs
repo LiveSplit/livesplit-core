@@ -151,43 +151,36 @@ pub fn parse<R: BufRead>(source: R) -> Result<Run> {
 
     let mut run = Run::new();
 
-    parse_base(reader, &mut buf, |reader, tag| {
-        if tag.name() == b"Run" {
-            single_child(reader, tag.into_buf(), b"Run", |reader, tag| {
-                single_child(reader, tag.into_buf(), b"default", |reader, tag| {
-                    parse_children(
-                        reader,
-                        tag.into_buf(),
-                        |reader, tag| if tag.name() == b"name" {
-                            text(reader, tag.into_buf(), |t| run.set_game_name(t))
-                        } else if tag.name() == b"subTitle" {
-                            text(reader, tag.into_buf(), |t| run.set_category_name(t))
-                        } else if tag.name() == b"delayedStart" {
-                            time_span(reader, tag.into_buf(), |t| {
-                                run.set_offset(TimeSpan::zero() - t);
-                            })
-                        } else if tag.name() == b"numberOfAttempts" {
-                            text_parsed(reader, tag.into_buf(), |t| run.set_attempt_count(t))
-                        } else if tag.name() == b"segments" {
-                            let mut total_time = TimeSpan::zero();
-                            parse_children(reader, tag.into_buf(), |reader, tag| {
-                                let segment = parse_segment(
-                                    &mut total_time,
-                                    reader,
-                                    tag.into_buf(),
-                                    &mut buf2,
-                                )?;
-                                run.push_segment(segment);
-                                Ok(())
-                            })
-                        } else {
-                            end_tag(reader, tag.into_buf())
-                        },
-                    )
-                })
-            })?;
-        }
-        Ok(())
+    parse_base(reader, &mut buf, b"Run", |reader, tag| {
+        single_child(reader, tag.into_buf(), b"Run", |reader, tag| {
+            single_child(reader, tag.into_buf(), b"default", |reader, tag| {
+                parse_children(
+                    reader,
+                    tag.into_buf(),
+                    |reader, tag| if tag.name() == b"name" {
+                        text(reader, tag.into_buf(), |t| run.set_game_name(t))
+                    } else if tag.name() == b"subTitle" {
+                        text(reader, tag.into_buf(), |t| run.set_category_name(t))
+                    } else if tag.name() == b"delayedStart" {
+                        time_span(reader, tag.into_buf(), |t| {
+                            run.set_offset(TimeSpan::zero() - t);
+                        })
+                    } else if tag.name() == b"numberOfAttempts" {
+                        text_parsed(reader, tag.into_buf(), |t| run.set_attempt_count(t))
+                    } else if tag.name() == b"segments" {
+                        let mut total_time = TimeSpan::zero();
+                        parse_children(reader, tag.into_buf(), |reader, tag| {
+                            let segment =
+                                parse_segment(&mut total_time, reader, tag.into_buf(), &mut buf2)?;
+                            run.push_segment(segment);
+                            Ok(())
+                        })
+                    } else {
+                        end_tag(reader, tag.into_buf())
+                    },
+                )
+            })
+        })
     })?;
 
     Ok(run)
