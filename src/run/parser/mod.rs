@@ -16,5 +16,6 @@ pub mod quick_livesplit;
 mod timer_kind;
 mod bom_consumer;
 mod xml_util;
+mod quick_xml_util;
 
 pub use self::timer_kind::TimerKind;
