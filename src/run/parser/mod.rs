@@ -12,6 +12,7 @@ pub mod time_split_tracker;
 pub mod urn;
 pub mod wsplit;
 pub mod quick_livesplit;
+pub mod quick_llanfair_gered;
 
 mod timer_kind;
 mod bom_consumer;

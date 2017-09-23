@@ -62,9 +62,10 @@ deploy:
     appveyor_repo_tag: true
   provider: GitHub
 
-cache:
-  - C:\Users\appveyor\.cargo\registry
-  - target
+# Don't cache on appveyor, as it seems to blow the disk storage every now and then.
+# cache:
+#   - C:\Users\appveyor\.cargo\registry
+#   - target
 
 # branches:
 #   only:

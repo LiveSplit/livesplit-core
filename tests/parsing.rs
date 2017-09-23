@@ -4,7 +4,7 @@ mod parse {
     use std::fs::File;
     use std::io::BufReader;
     use livesplit_core::run::parser::{livesplit, llanfair, llanfair_gered, quick_livesplit,
-                                      time_split_tracker, urn, wsplit};
+                                      quick_llanfair_gered, time_split_tracker, urn, wsplit};
 
     fn file(path: &str) -> BufReader<File> {
         BufReader::new(File::open(path).unwrap())
@@ -13,6 +13,12 @@ mod parse {
     fn livesplit(path: &str) {
         let old = livesplit::parse(file(path), None).unwrap();
         let new = quick_livesplit::parse(file(path), None).unwrap();
+        assert_eq!(old, new);
+    }
+
+    fn parse_llanfair_gered(path: &str) {
+        let old = llanfair_gered::parse(file(path)).unwrap();
+        let new = quick_llanfair_gered::parse(file(path)).unwrap();
         assert_eq!(old, new);
     }
 
@@ -49,12 +55,12 @@ mod parse {
 
     #[test]
     fn llanfair_gered_with_refs() {
-        llanfair_gered::parse(file("tests/run_files/llanfair_gered_with_refs.lfs")).unwrap();
+        parse_llanfair_gered("tests/run_files/llanfair_gered_with_refs.lfs");
     }
 
     #[test]
-    fn llanfair_gered() {
-        llanfair_gered::parse(file("tests/run_files/llanfair_gered.lfs")).unwrap();
+    fn llanfair_gered_icons() {
+        parse_llanfair_gered("tests/run_files/llanfair_gered_icons.lfs");
     }
 
     #[test]

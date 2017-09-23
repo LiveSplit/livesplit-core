@@ -13,9 +13,9 @@ env:
 matrix:
   include:
     # emscripten
-    - env: TARGET=asmjs-unknown-emscripten DISABLE_TESTS=1
+    - env: TARGET=asmjs-unknown-emscripten
       rust: nightly
-    - env: TARGET=wasm32-unknown-emscripten DISABLE_TESTS=1
+    - env: TARGET=wasm32-unknown-emscripten
       rust: nightly
 
     # Linux
@@ -50,10 +50,13 @@ matrix:
 
     # New Architectures
     - env: TARGET=arm-unknown-linux-gnueabi DISABLE_TESTS=1
-    - env: TARGET=arm-unknown-linux-musleabi DISABLE_TESTS=1
     - env: TARGET=armv7-unknown-linux-gnueabihf
-    - env: TARGET=armv7-unknown-linux-musleabihf DISABLE_TESTS=1
     - env: TARGET=sparc64-unknown-linux-gnu DISABLE_TESTS=1
+
+    # Failing due to backtrace incompatibility
+    # https://travis-ci.org/CryZe/livesplit-core/jobs/278851206
+    # - env: TARGET=arm-unknown-linux-musleabi DISABLE_TESTS=1
+    # - env: TARGET=armv7-unknown-linux-musleabihf DISABLE_TESTS=1
 
     # *BSD
     - env: TARGET=i686-unknown-freebsd DISABLE_TESTS=1
@@ -83,7 +86,9 @@ matrix:
       os: osx
       rust: nightly
 
-before_install: set -e
+before_install:
+  - set -e
+  - rustup self update
 
 install:
   - sh ci/install.sh

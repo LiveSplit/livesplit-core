@@ -4,7 +4,7 @@ use quick_xml::events::{attributes, BytesStart, Event};
 use std::ops::Deref;
 use std::borrow::Cow;
 use std::{str, string};
-use std::io::BufRead;
+use std::io::{self, BufRead};
 use std::result::Result as StdResult;
 use std::num::{ParseFloatError, ParseIntError};
 use time;
@@ -14,6 +14,9 @@ quick_error! {
     #[derive(Debug)]
     pub enum Error {
         Xml(err: XmlError) {
+            from()
+        }
+        Io(err: io::Error) {
             from()
         }
         Bool
@@ -109,24 +112,33 @@ where
     R: BufRead,
     F: FnOnce(Cow<str>) -> Result<()>,
 {
+    text_as_bytes_err(reader, buf, |b| f(decode_cow_text(b)?))
+}
+
+pub fn text_as_bytes_err<R, F, T>(reader: &mut Reader<R>, buf: &mut Vec<u8>, f: F) -> Result<T>
+where
+    R: BufRead,
+    F: FnOnce(Cow<[u8]>) -> Result<T>,
+{
+    let val;
     loop {
         buf.clear();
         match reader.read_event(buf)? {
             Event::Start(_) => return Err(Error::UnexpectedInnerTag),
             Event::End(_) => {
-                f(Cow::Borrowed(""))?;
-                return Ok(());
+                return f(Cow::Borrowed(&[]));
             }
             Event::Text(text) | Event::CData(text) => {
-                let text = decode_cow_text(text.unescaped()?)?;
-                f(text)?;
+                let text = text.unescaped()?;
+                val = f(text)?;
                 break;
             }
             Event::Eof => return Err(Error::UnexpectedEndOfFile),
             _ => {}
         }
     }
-    end_tag_immediately(reader, buf)
+    end_tag_immediately(reader, buf)?;
+    Ok(val)
 }
 
 fn end_tag_immediately<R: BufRead>(reader: &mut Reader<R>, buf: &mut Vec<u8>) -> Result<()> {
@@ -172,12 +184,16 @@ where
     F: FnMut(&mut Reader<R>, Tag) -> Result<T>,
 {
     let mut val = None;
-    parse_children(reader, buf, |reader, t| if t.name() == tag {
-        val = Some(f(reader, t)?);
-        Ok(())
-    } else {
-        end_tag(reader, t.into_buf())
-    })?;
+    parse_children(
+        reader,
+        buf,
+        |reader, t| if t.name() == tag && val.is_none() {
+            val = Some(f(reader, t)?);
+            Ok(())
+        } else {
+            end_tag(reader, t.into_buf())
+        },
+    )?;
     val.ok_or(Error::TagNotFound)
 }
 
