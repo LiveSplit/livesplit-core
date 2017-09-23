@@ -2,7 +2,7 @@ use std::slice::{Iter, IterMut};
 use std::cmp::min;
 use Time;
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, PartialEq)]
 pub struct SegmentHistory(Vec<(i32, Time)>);
 
 impl SegmentHistory {

@@ -17,6 +17,12 @@ pub struct Image {
     id: usize,
 }
 
+impl PartialEq for Image {
+    fn eq(&self, other: &Image) -> bool {
+        self.url == other.url
+    }
+}
+
 impl Default for Image {
     fn default() -> Image {
         Image::new(&[])

@@ -1,6 +1,6 @@
 use ordermap::{Iter, OrderMap};
 
-#[derive(Default, Clone, Debug)]
+#[derive(Default, Clone, Debug, PartialEq)]
 pub struct RunMetadata {
     run_id: String,
     platform_name: String,

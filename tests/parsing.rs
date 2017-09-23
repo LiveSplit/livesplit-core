@@ -3,21 +3,23 @@ extern crate livesplit_core;
 mod parse {
     use std::fs::File;
     use std::io::BufReader;
-    use livesplit_core::run::parser::{
-        quick_livesplit as livesplit,
-        llanfair,
-        llanfair_gered,
-        time_split_tracker,
-        wsplit,
-        urn,
-    };
+    use livesplit_core::run::parser::{livesplit, llanfair, llanfair_gered, quick_livesplit,
+                                      time_split_tracker, urn, wsplit};
 
     fn file(path: &str) -> BufReader<File> {
         BufReader::new(File::open(path).unwrap())
     }
 
     fn livesplit(path: &str) {
-        livesplit::parse(file(path), None).unwrap();
+        let old = livesplit::parse(file(path), None).unwrap();
+        let new = quick_livesplit::parse(file(path), None).unwrap();
+        assert_eq!(old, new);
+    }
+
+    #[test]
+    fn livesplit_fuzz_crash() {
+        let path = "tests/run_files/quick_livesplit_fuzz_crash.lss";
+        quick_livesplit::parse(file(path), None).ok();
     }
 
     #[test]

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use {Image, SegmentHistory, Time, TimeSpan, TimingMethod};
 use comparison::personal_best;
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Default, Debug, PartialEq)]
 pub struct Segment {
     name: String,
     icon: Image,
