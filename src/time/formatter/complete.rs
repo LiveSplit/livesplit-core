@@ -1,6 +1,6 @@
 use std::fmt::{Display, Formatter, Result};
 use TimeSpan;
-use super::{TimeFormatter, MINUS};
+use super::{TimeFormatter, ASCII_MINUS};
 
 pub struct Inner(Option<TimeSpan>);
 pub struct Complete;
@@ -22,7 +22,9 @@ impl Display for Inner {
             let mut total_seconds = time.total_seconds();
             if total_seconds < 0.0 {
                 total_seconds *= -1.0;
-                write!(f, "{}", MINUS)?;
+                // Since, this Formatter is used for writing out split files, we
+                // have to use an ASCII Minus here.
+                write!(f, "{}", ASCII_MINUS)?;
             }
             let seconds = total_seconds % 60.0;
             let total_minutes = (total_seconds / 60.0) as u64;
