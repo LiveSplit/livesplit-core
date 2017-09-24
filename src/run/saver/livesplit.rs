@@ -1,174 +1,333 @@
-use std::io::{Result, Write};
-use chrono::{DateTime, Utc};
-use sxd_document::Package;
-use sxd_document::dom::{Document, Element};
-use sxd_document::writer::format_document;
-use time::formatter::{Complete, TimeFormatter};
+use std::io::Write;
+use std::result::Result as StdResult;
+use std::fmt::Display;
+use std::borrow::Cow;
+use std::mem::replace;
 use {Image, Run, Time, TimeSpan, base64};
+use time::formatter::{Complete, TimeFormatter};
+use chrono::{DateTime, Utc};
 use byteorder::{WriteBytesExt, LE};
+use quick_xml::Writer;
+use quick_xml::events::{BytesDecl, BytesEnd, BytesStart, BytesText, Event};
+use quick_xml::errors::Error as XmlError;
 
-static LSS_IMAGE_HEADER: &[u8] = include_bytes!("lss_image_header.bin");
+static LSS_IMAGE_HEADER: &[u8; 156] = include_bytes!("lss_image_header.bin");
 
-fn fmt_bool(value: bool) -> &'static str {
-    if value {
-        "True"
-    } else {
-        "False"
-    }
-}
-
-fn fmt_date(date: DateTime<Utc>) -> String {
-    date.format("%m/%d/%Y %T").to_string()
-}
-
-fn fmt_image(image: &Image) -> String {
-    let url = image.url();
-    if url.starts_with("data:;base64,") {
-        let data = &url["data:;base64,".len()..];
-        if let Ok(mut data) = base64::decode(data) {
-            let len = data.len();
-            let mut buf = Vec::<u8>::with_capacity(0xA2 + len);
-            buf.extend_from_slice(LSS_IMAGE_HEADER);
-            buf.write_u32::<LE>(len as u32).unwrap();
-            buf.push(0x2);
-            buf.append(&mut data);
-            buf.push(0xB);
-            return base64::encode(&buf);
+quick_error! {
+    #[derive(Debug)]
+    pub enum Error {
+        Xml(err: XmlError) {
+            from()
         }
     }
-    String::new()
 }
 
-fn time_span(time: TimeSpan) -> String {
-    Complete.format(time).to_string()
+pub type Result<T> = StdResult<T, Error>;
+
+fn new_tag(name: &[u8]) -> BytesStart {
+    BytesStart::borrowed(name, name.len())
 }
 
-fn time<'a>(document: &Document<'a>, element_name: &str, time: Time) -> Element<'a> {
-    let element = document.create_element(element_name);
+fn write_start<W: Write>(writer: &mut Writer<W>, tag: BytesStart) -> Result<()> {
+    writer.write_event(Event::Start(tag))?;
+    Ok(())
+}
 
+fn write_end<W: Write>(writer: &mut Writer<W>, tag: &[u8]) -> Result<()> {
+    writer.write_event(Event::End(BytesEnd::borrowed(tag)))?;
+    Ok(())
+}
+
+fn split_tag<'a>(tag: &'a BytesStart<'a>) -> (BytesStart<'a>, BytesEnd<'a>) {
+    (
+        BytesStart::borrowed(&tag, tag.name().len()),
+        BytesEnd::borrowed(tag.name()),
+    )
+}
+
+fn bool(value: bool) -> &'static [u8] {
+    if value {
+        b"True"
+    } else {
+        b"False"
+    }
+}
+
+fn scoped<W, F>(writer: &mut Writer<W>, tag: BytesStart, is_empty: bool, scope: F) -> Result<()>
+where
+    W: Write,
+    F: FnOnce(&mut Writer<W>) -> Result<()>,
+{
+    if is_empty {
+        writer.write_event(Event::Empty(tag))?;
+    } else {
+        let (start, end) = split_tag(&tag);
+        writer.write_event(Event::Start(start))?;
+        scope(writer)?;
+        writer.write_event(Event::End(end))?;
+    }
+    Ok(())
+}
+
+fn scoped_iter<W, F, I>(
+    writer: &mut Writer<W>,
+    tag: BytesStart,
+    iter: I,
+    mut scope: F,
+) -> Result<()>
+where
+    W: Write,
+    I: IntoIterator,
+    F: FnMut(&mut Writer<W>, <I as IntoIterator>::Item) -> Result<()>,
+{
+    let mut iter = iter.into_iter().peekable();
+    scoped(writer, tag, iter.peek().is_none(), |writer| {
+        for item in iter {
+            scope(writer, item)?;
+        }
+        Ok(())
+    })
+}
+
+fn text<W: Write, T: AsRef<[u8]>>(writer: &mut Writer<W>, tag: BytesStart, text: T) -> Result<()> {
+    let text = text.as_ref();
+    scoped(writer, tag, text.is_empty(), |writer| {
+        writer.write_event(Event::Text(BytesText::borrowed(text)))?;
+        Ok(())
+    })
+}
+
+fn vec_as_string<F, R>(vec: &mut Vec<u8>, f: F) -> R
+where
+    F: FnOnce(&mut String) -> R,
+{
+    let taken = replace(vec, Vec::new());
+    let mut string = String::from_utf8(taken).unwrap();
+    let result = f(&mut string);
+    let bytes = string.into_bytes();
+    replace(vec, bytes);
+    result
+}
+
+fn image<W: Write>(
+    writer: &mut Writer<W>,
+    tag: BytesStart,
+    image: &Image,
+    buf: &mut Vec<u8>,
+    image_buf: &mut Cow<[u8]>,
+) -> Result<()> {
+    let url = image.url();
+    if url.starts_with("data:;base64,") {
+        let src = &url["data:;base64,".len()..];
+        buf.clear();
+        if base64::decode_config_buf(src, base64::STANDARD, buf).is_ok() {
+            let len = buf.len();
+            let image_buf = image_buf.to_mut();
+            image_buf.truncate(LSS_IMAGE_HEADER.len());
+            image_buf.reserve(len + 6);
+            image_buf.write_u32::<LE>(len as u32).unwrap();
+            image_buf.push(0x2);
+            image_buf.append(buf);
+            image_buf.push(0xB);
+            buf.clear();
+            vec_as_string(buf, |s| {
+                base64::encode_config_buf(image_buf, base64::STANDARD, s)
+            });
+            return text(writer, tag, buf);
+        }
+    }
+    writer.write_event(Event::Empty(tag))?;
+    Ok(())
+}
+
+fn fmt_date(date: DateTime<Utc>, buf: &mut Vec<u8>) -> &[u8] {
+    fmt_buf(date.format("%m/%d/%Y %T"), buf)
+}
+
+fn fmt_buf<D: Display>(value: D, buf: &mut Vec<u8>) -> &[u8] {
+    buf.clear();
+    write!(buf, "{}", value).unwrap();
+    buf
+}
+
+fn write_display<W: Write, D: Display>(
+    writer: &mut Writer<W>,
+    tag: BytesStart,
+    value: D,
+    buf: &mut Vec<u8>,
+) -> Result<()> {
+    text(writer, tag, fmt_buf(value, buf))
+}
+
+fn time_span<W: Write>(
+    writer: &mut Writer<W>,
+    tag: BytesStart,
+    time: TimeSpan,
+    buf: &mut Vec<u8>,
+) -> Result<()> {
+    write_display(writer, tag, Complete.format(time), buf)
+}
+
+fn time_inner<W: Write>(writer: &mut Writer<W>, time: Time, buf: &mut Vec<u8>) -> Result<()> {
     if let Some(time) = time.real_time {
-        add_element(document, &element, "RealTime", &time_span(time));
+        time_span(writer, new_tag(b"RealTime"), time, buf)?;
     }
 
     if let Some(time) = time.game_time {
-        add_element(document, &element, "GameTime", &time_span(time));
+        time_span(writer, new_tag(b"GameTime"), time, buf)?;
     }
 
-    element
+    Ok(())
 }
 
-fn to_element<'a>(document: &Document<'a>, element_name: &str, value: &str) -> Element<'a> {
-    let element = document.create_element(element_name);
-    if !value.is_empty() {
-        let value = document.create_text(value);
-        element.append_child(value);
-    }
-    element
+fn time<W: Write>(
+    writer: &mut Writer<W>,
+    tag: BytesStart,
+    time: Time,
+    buf: &mut Vec<u8>,
+) -> Result<()> {
+    scoped(
+        writer,
+        tag,
+        time.real_time.is_none() && time.game_time.is_none(),
+        |writer| time_inner(writer, time, buf),
+    )
 }
 
-fn add_element(document: &Document, parent: &Element, element_name: &str, value: &str) {
-    parent.append_child(to_element(document, element_name, value));
-}
+pub fn save<W: Write>(run: &Run, writer: W) -> Result<()> {
+    let writer = &mut Writer::new(writer);
 
-pub fn save<W: Write>(run: &Run, mut writer: W) -> Result<()> {
-    let package = Package::new();
-    let doc = &package.as_document();
+    let buf = &mut Vec::new();
+    let image_buf = &mut Cow::Borrowed(&LSS_IMAGE_HEADER[..]);
 
-    let parent = doc.create_element("Run");
-    parent.set_attribute_value("version", "1.7.0");
-    doc.root().append_child(parent);
+    writer.write_event(Event::Decl(BytesDecl::new(b"1.0", Some(b"UTF-8"), None)))?;
+    writer.write_event(Event::Start(
+        BytesStart::borrowed(br#"Run version="1.7.0""#, 3),
+    ))?;
 
-    add_element(doc, &parent, "GameIcon", &fmt_image(run.game_icon()));
-    add_element(doc, &parent, "GameName", run.game_name());
-    add_element(doc, &parent, "CategoryName", run.category_name());
+    image(
+        writer,
+        new_tag(b"GameIcon"),
+        run.game_icon(),
+        buf,
+        image_buf,
+    )?;
+    text(writer, new_tag(b"GameName"), run.game_name())?;
+    text(writer, new_tag(b"CategoryName"), run.category_name())?;
 
-    let metadata = doc.create_element("Metadata");
+    write_start(writer, new_tag(b"Metadata"))?;
 
-    let run_element = doc.create_element("Run");
-    run_element.set_attribute_value("id", run.metadata().run_id());
-    metadata.append_child(run_element);
+    let mut tag = new_tag(b"Run");
+    tag.push_attribute((&b"id"[..], run.metadata().run_id().as_bytes()));
+    writer.write_event(Event::Empty(tag))?;
 
-    let platform = to_element(doc, "Platform", run.metadata().platform_name());
-    platform.set_attribute_value("usesEmulator", fmt_bool(run.metadata().uses_emulator()));
-    metadata.append_child(platform);
+    tag = new_tag(b"Platform");
+    tag.push_attribute((&b"usesEmulator"[..], bool(run.metadata().uses_emulator())));
+    text(writer, tag, run.metadata().platform_name())?;
 
-    add_element(doc, &metadata, "Region", run.metadata().region_name());
+    text(writer, new_tag(b"Region"), run.metadata().region_name())?;
 
-    let variables = doc.create_element("Variables");
-    for (name, value) in run.metadata().variables() {
-        let variable = to_element(doc, "Variable", value);
-        variable.set_attribute_value("name", name);
-        variables.append_child(variable);
-    }
-    metadata.append_child(variables);
-    parent.append_child(metadata);
+    scoped_iter(
+        writer,
+        new_tag(b"Variables"),
+        run.metadata().variables(),
+        |writer, (name, value)| {
+            let mut tag = new_tag(b"Variable");
+            tag.push_attribute((&b"name"[..], name.as_bytes()));
+            text(writer, tag, value)
+        },
+    )?;
+    write_end(writer, b"Metadata")?;
 
-    add_element(doc, &parent, "Offset", &time_span(run.offset()));
-    add_element(
-        doc,
-        &parent,
-        "AttemptCount",
-        &run.attempt_count().to_string(),
-    );
+    time_span(writer, new_tag(b"Offset"), run.offset(), buf)?;
+    write_display(writer, new_tag(b"AttemptCount"), run.attempt_count(), buf)?;
 
-    let attempt_history = doc.create_element("AttemptHistory");
-    for attempt in run.attempt_history() {
-        let element = time(doc, "Attempt", attempt.time());
-        element.set_attribute_value("id", &attempt.index().to_string());
+    scoped_iter(
+        writer,
+        new_tag(b"AttemptHistory"),
+        run.attempt_history(),
+        |writer, attempt| {
+            let mut tag = new_tag(b"Attempt");
+            tag.push_attribute((&b"id"[..], fmt_buf(attempt.index(), buf)));
 
-        if let Some(started) = attempt.started() {
-            element.set_attribute_value("started", &fmt_date(started.time));
-            element.set_attribute_value(
-                "isStartedSynced",
-                fmt_bool(started.synced_with_atomic_clock),
-            );
-        }
+            if let Some(started) = attempt.started() {
+                tag.push_attribute((&b"started"[..], fmt_date(started.time, buf)));
+                tag.push_attribute((
+                    &b"isStartedSynced"[..],
+                    bool(started.synced_with_atomic_clock),
+                ));
+            }
 
-        if let Some(ended) = attempt.ended() {
-            element.set_attribute_value("ended", &fmt_date(ended.time));
-            element.set_attribute_value("isEndedSynced", fmt_bool(ended.synced_with_atomic_clock));
-        }
+            if let Some(ended) = attempt.ended() {
+                tag.push_attribute((&b"ended"[..], fmt_date(ended.time, buf)));
+                tag.push_attribute((
+                    &b"isEndedSynced"[..],
+                    bool(ended.synced_with_atomic_clock),
+                ));
+            }
 
-        if let Some(pause_time) = attempt.pause_time() {
-            add_element(doc, &element, "PauseTime", &time_span(pause_time));
-        }
+            let is_empty = attempt.time().real_time.is_none() &&
+                attempt.time().game_time.is_none() &&
+                attempt.pause_time().is_none();
 
-        attempt_history.append_child(element);
-    }
-    parent.append_child(attempt_history);
+            scoped(writer, tag, is_empty, |writer| {
+                time_inner(writer, attempt.time(), buf)?;
 
-    let segments_element = doc.create_element("Segments");
-    for segment in run.segments() {
-        let segment_element = doc.create_element("Segment");
+                if let Some(pause_time) = attempt.pause_time() {
+                    time_span(writer, new_tag(b"PauseTime"), pause_time, buf)?;
+                }
 
-        add_element(doc, &segment_element, "Name", segment.name());
-        add_element(doc, &segment_element, "Icon", &fmt_image(segment.icon()));
+                Ok(())
+            })
+        },
+    )?;
 
-        let split_times = doc.create_element("SplitTimes");
-        for comparison in run.custom_comparisons() {
-            let split_time = time(doc, "SplitTime", segment.comparison(comparison));
-            split_time.set_attribute_value("name", comparison);
-            split_times.append_child(split_time);
-        }
-        segment_element.append_child(split_times);
+    scoped_iter(
+        writer,
+        new_tag(b"Segments"),
+        run.segments(),
+        |writer, segment| {
+            write_start(writer, new_tag(b"Segment"))?;
 
-        segment_element.append_child(time(doc, "BestSegmentTime", segment.best_segment_time()));
+            text(writer, new_tag(b"Name"), segment.name())?;
+            image(writer, new_tag(b"Icon"), segment.icon(), buf, image_buf)?;
 
-        let history = doc.create_element("SegmentHistory");
-        for &(index, history_time) in segment.segment_history() {
-            let element = time(doc, "Time", history_time);
-            element.set_attribute_value("id", &index.to_string());
-            history.append_child(element);
-        }
-        segment_element.append_child(history);
+            scoped_iter(
+                writer,
+                new_tag(b"SplitTimes"),
+                run.custom_comparisons(),
+                |writer, comparison| {
+                    let mut tag = new_tag(b"SplitTime");
+                    tag.push_attribute((&b"name"[..], comparison.as_bytes()));
+                    time(writer, tag, segment.comparison(comparison), buf)
+                },
+            )?;
 
-        segments_element.append_child(segment_element);
-    }
-    parent.append_child(segments_element);
+            time(
+                writer,
+                new_tag(b"BestSegmentTime"),
+                segment.best_segment_time(),
+                buf,
+            )?;
 
-    let auto_splitter_settings = doc.create_element("AutoSplitterSettings");
+            scoped_iter(
+                writer,
+                new_tag(b"SegmentHistory"),
+                segment.segment_history(),
+                |writer, &(index, history_time)| {
+                    let mut tag = new_tag(b"Time");
+                    tag.push_attribute((&b"id"[..], fmt_buf(index, buf)));
+                    time(writer, tag, history_time, buf)
+                },
+            )?;
+
+            write_end(writer, b"Segment")
+        },
+    )?;
+
     // TODO Add Auto Splitter Settings
-    parent.append_child(auto_splitter_settings);
+    writer.write_event(Event::Empty(new_tag(b"AutoSplitterSettings")))?;
 
-    format_document(doc, &mut writer)
+    write_end(writer, b"Run")?;
+    Ok(())
 }

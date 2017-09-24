@@ -11,13 +11,8 @@ pub mod splitty;
 pub mod time_split_tracker;
 pub mod urn;
 pub mod wsplit;
-pub mod quick_livesplit;
-pub mod quick_llanfair_gered;
-pub mod quick_llanfair2;
 
 mod timer_kind;
-mod bom_consumer;
 mod xml_util;
-mod quick_xml_util;
 
 pub use self::timer_kind::TimerKind;

@@ -3,36 +3,29 @@ extern crate livesplit_core;
 mod parse {
     use std::fs::File;
     use std::io::BufReader;
-    use livesplit_core::run::parser::{livesplit, llanfair, llanfair_gered, quick_livesplit,
-                                      quick_llanfair_gered, time_split_tracker, urn, wsplit,
-                                      llanfair2, quick_llanfair2};
+    use livesplit_core::run::parser::{livesplit, llanfair, llanfair_gered, time_split_tracker,
+                                      urn, wsplit, llanfair2};
 
     fn file(path: &str) -> BufReader<File> {
         BufReader::new(File::open(path).unwrap())
     }
 
     fn livesplit(path: &str) {
-        let old = livesplit::parse(file(path), None).unwrap();
-        let new = quick_livesplit::parse(file(path), None).unwrap();
-        assert_eq!(old, new);
+        livesplit::parse(file(path), None).unwrap();
     }
 
     fn parse_llanfair_gered(path: &str) {
-        let old = llanfair_gered::parse(file(path)).unwrap();
-        let new = quick_llanfair_gered::parse(file(path)).unwrap();
-        assert_eq!(old, new);
+        llanfair_gered::parse(file(path)).unwrap();
     }
 
     fn parse_llanfair2(path: &str) {
-        let old = llanfair2::parse(file(path)).unwrap();
-        let new = quick_llanfair2::parse(file(path)).unwrap();
-        assert_eq!(old, new);
+        llanfair2::parse(file(path)).unwrap();
     }
 
     #[test]
     fn livesplit_fuzz_crash() {
         let path = "tests/run_files/quick_livesplit_fuzz_crash.lss";
-        quick_livesplit::parse(file(path), None).ok();
+        livesplit::parse(file(path), None).err().unwrap();
     }
 
     #[test]

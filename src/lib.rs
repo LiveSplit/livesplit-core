@@ -14,7 +14,6 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
-extern crate sxd_document;
 extern crate unicase;
 pub extern crate livesplit_hotkey as hotkey;
 pub extern crate ordermap;

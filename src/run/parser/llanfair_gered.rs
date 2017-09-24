@@ -1,156 +1,187 @@
-use std::io::{self, Cursor, Read, Seek, SeekFrom};
-use std::num::ParseIntError;
-use std::result::Result as StdResult;
+use std::io::{BufRead, Cursor, Seek, SeekFrom};
 use {RealTime, Run, Segment, Time, TimeSpan};
-use base64::{self, STANDARD};
+use quick_xml::reader::Reader;
 use byteorder::{ReadBytesExt, BE};
 use imagelib::{png, ColorType, ImageBuffer, Rgba};
-use super::xml_util::{self, text};
-use sxd_document::dom::Element;
-use sxd_document::parser::{parse as parse_xml, Error as XmlError};
+use base64::{self, STANDARD};
+use super::xml_util::{end_tag, optional_attribute_err, parse_base, parse_children, single_child,
+                      text, text_as_bytes_err, text_err, text_parsed};
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        Xml(err: (usize, Vec<XmlError>)) {
-            from()
-        }
-        Io(err: io::Error) {
-            from()
-        }
-        Int(err: ParseIntError) {
-            from()
-        }
-        LengthOutOfBounds
-        ElementNotFound
-        AttributeNotFound
-    }
+pub use super::xml_util::{Error, Result};
+
+fn time_span<R, F>(reader: &mut Reader<R>, buf: &mut Vec<u8>, f: F) -> Result<()>
+where
+    R: BufRead,
+    F: FnOnce(TimeSpan),
+{
+    text_err(reader, buf, |text| {
+        let milliseconds = text.parse::<i64>()?;
+        f(TimeSpan::from_milliseconds(milliseconds as f64));
+        Ok(())
+    })
 }
 
-pub type Result<T> = StdResult<T, Error>;
-
-fn child<'d>(element: &Element<'d>, name: &str) -> Result<Element<'d>> {
-    xml_util::child(element, name).ok_or(Error::ElementNotFound)
+fn time<R, F>(reader: &mut Reader<R>, buf: &mut Vec<u8>, f: F) -> Result<()>
+where
+    R: BufRead,
+    F: FnOnce(Time),
+{
+    time_span(reader, buf, |t| f(RealTime(Some(t)).into()))
 }
 
-fn attribute<'d>(element: &Element<'d>, attribute: &str) -> Result<&'d str> {
-    xml_util::attribute(element, attribute).ok_or(Error::AttributeNotFound)
-}
-
-fn time_span(element: &Element, buf: &mut String) -> Result<TimeSpan> {
-    let text = text(element, buf);
-    let milliseconds = text.parse::<i64>()?;
-    Ok(TimeSpan::from_milliseconds(milliseconds as f64))
-}
-
-fn time(element: &Element, buf: &mut String) -> Result<Time> {
-    Ok(RealTime(Some(time_span(element, buf)?)).into())
-}
-
-fn image<'b>(
-    node: &Element,
+fn image<R, F>(
+    reader: &mut Reader<R>,
+    tag_buf: &mut Vec<u8>,
     buf: &mut Vec<u8>,
-    buf2: &'b mut Vec<u8>,
-    str_buf: &mut String,
-) -> Result<&'b [u8]> {
-    let node = child(node, "icon")?;
-    let node = child(&node, "ImageIcon")?;
+    mut f: F,
+) -> Result<()>
+where
+    R: BufRead,
+    F: FnMut(&[u8]),
+{
+    single_child(reader, tag_buf, b"ImageIcon", |reader, tag| {
+        let tag_buf = tag.into_buf();
+        let (width, height, image) = text_as_bytes_err(reader, tag_buf, |t| {
+            buf.clear();
+            base64::decode_config_buf(&t, STANDARD, buf).map_err(|_| Error::TagNotFound)?;
 
-    buf.clear();
-    base64::decode_config_buf(text(&node, str_buf), STANDARD, buf)
-        .map_err(|_| Error::ElementNotFound)?;
+            let (width, height);
+            {
+                let mut cursor = Cursor::new(&buf);
+                cursor.seek(SeekFrom::Current(0xD1))?;
+                height = cursor.read_u32::<BE>()?;
+                width = cursor.read_u32::<BE>()?;
+            }
 
-    let (width, height);
-    {
-        let mut cursor = Cursor::new(&buf);
-        cursor.seek(SeekFrom::Current(0xD1))?;
-        height = cursor.read_u32::<BE>()?;
-        width = cursor.read_u32::<BE>()?;
-    }
+            let len = (width as usize)
+                .checked_mul(height as usize)
+                .and_then(|b| b.checked_mul(4))
+                .ok_or(Error::LengthOutOfBounds)?;
 
-    let len = (width as usize)
-        .checked_mul(height as usize)
-        .and_then(|b| b.checked_mul(4))
-        .ok_or(Error::LengthOutOfBounds)?;
+            if buf.len() < 0xFE + len {
+                return Err(Error::TagNotFound);
+            }
 
-    if buf.len() < 0xFE + len {
-        return Err(Error::ElementNotFound);
-    }
+            let buf = &buf[0xFE..][..len];
+            let image =
+                ImageBuffer::<Rgba<_>, _>::from_raw(width, height, buf).ok_or(Error::TagNotFound)?;
 
-    let buf = &buf[0xFE..][..len];
-    let image =
-        ImageBuffer::<Rgba<_>, _>::from_raw(width, height, buf).ok_or(Error::ElementNotFound)?;
+            Ok((width, height, image))
+        })?;
 
-    buf2.clear();
-    png::PNGEncoder::new(&mut *buf2)
-        .encode(image.as_ref(), width, height, ColorType::RGBA(8))
-        .map_err(|_| Error::ElementNotFound)?;
+        tag_buf.clear();
+        png::PNGEncoder::new(&mut *tag_buf)
+            .encode(image.as_ref(), width, height, ColorType::RGBA(8))
+            .map_err(|_| Error::TagNotFound)?;
 
-    Ok(buf2)
+        f(tag_buf);
+
+        Ok(())
+    })
 }
 
-pub fn parse<R: Read>(mut source: R) -> Result<Run> {
-    let buf = &mut String::new();
-    let mut byte_buf = Vec::new();
-    let mut byte_buf2 = Vec::new();
-    source.read_to_string(buf)?;
-    let package = parse_xml(buf)?;
+fn parse_segment<R>(
+    total_time: &mut TimeSpan,
+    reader: &mut Reader<R>,
+    buf: &mut Vec<u8>,
+    buf2: &mut Vec<u8>,
+) -> Result<Segment>
+where
+    R: BufRead,
+{
+    single_child(reader, buf, b"Segment", |reader, tag| {
+        single_child(reader, tag.into_buf(), b"default", |reader, tag| {
+            let mut segment = Segment::new("");
+            let mut defer_setting_run_time = false;
 
-    let node = package
-        .as_document()
-        .root()
-        .children()
-        .into_iter()
-        .filter_map(|c| c.element())
-        .next()
-        .unwrap();
+            parse_children(
+                reader,
+                tag.into_buf(),
+                |reader, tag| if tag.name() == b"name" {
+                    text(reader, tag.into_buf(), |t| segment.set_name(t))
+                } else if tag.name() == b"bestTime" {
+                    single_child(reader, tag.into_buf(), b"milliseconds", |reader, tag| {
+                        time(reader, tag.into_buf(), |t| {
+                            segment.set_best_segment_time(t);
+                        })
+                    })
+                } else if tag.name() == b"runTime" {
+                    optional_attribute_err(&tag, b"reference", |reference| {
+                        if reference == "../bestTime" {
+                            defer_setting_run_time = true;
+                        }
+                        Ok(())
+                    })?;
+                    if !defer_setting_run_time {
+                        single_child(reader, tag.into_buf(), b"milliseconds", |reader, tag| {
+                            time_span(reader, tag.into_buf(), |t| { *total_time += t; })
+                        })?;
+                        segment.set_personal_best_split_time(RealTime(Some(*total_time)).into());
+                        Ok(())
+                    } else {
+                        end_tag(reader, tag.into_buf())
+                    }
+                } else if tag.name() == b"icon" {
+                    image(reader, tag.into_buf(), buf2, |i| { segment.set_icon(i); })
+                } else {
+                    end_tag(reader, tag.into_buf())
+                },
+            )?;
+
+            if defer_setting_run_time {
+                *total_time += segment
+                    .best_segment_time()
+                    .real_time
+                    .ok_or(Error::TagNotFound)?;
+                segment.set_personal_best_split_time(RealTime(Some(*total_time)).into());
+            }
+
+            Ok(segment)
+        })
+    })
+}
+
+pub fn parse<R: BufRead>(source: R) -> Result<Run> {
+    let reader = &mut Reader::from_reader(source);
+    reader.expand_empty_elements(true);
+    reader.trim_text(true);
+
+    let mut buf = Vec::with_capacity(4096);
+    let mut buf2 = Vec::with_capacity(4096);
 
     let mut run = Run::new();
 
-    let node = child(&node, "Run")?;
-    let node = child(&node, "default")?;
-
-    run.set_game_name(text(&child(&node, "name")?, buf));
-    run.set_category_name(text(&child(&node, "subTitle")?, buf));
-    run.set_offset(
-        TimeSpan::zero() - time_span(&child(&node, "delayedStart")?, buf)?,
-    );
-    run.set_attempt_count(text(&child(&node, "numberOfAttempts")?, buf).parse()?);
-
-    let segments = child(&node, "segments")?;
-
-    let mut total_time = TimeSpan::zero();
-
-    for node in segments.children().into_iter().filter_map(|c| c.element()) {
-        let node = child(&node, "Segment")?;
-        let node = child(&node, "default")?;
-
-        let mut segment = Segment::new(text(&child(&node, "name")?, buf));
-
-        if let Ok(node) = child(&node, "bestTime") {
-            if let Ok(node) = child(&node, "milliseconds") {
-                segment.set_best_segment_time(time(&node, buf)?);
-            }
-        }
-
-        if let Ok(node) = child(&node, "runTime") {
-            if let Ok(node) = child(&node, "milliseconds") {
-                total_time += time_span(&node, buf)?;
-            } else if let Ok("../bestTime") = attribute(&node, "reference") {
-                total_time += segment
-                    .best_segment_time()
-                    .real_time
-                    .ok_or(Error::ElementNotFound)?;
-            }
-            segment.set_personal_best_split_time(RealTime(Some(total_time)).into());
-        }
-
-        if let Ok(image) = image(&node, &mut byte_buf, &mut byte_buf2, buf) {
-            segment.set_icon(image);
-        }
-
-        run.push_segment(segment);
-    }
+    parse_base(reader, &mut buf, b"Run", |reader, tag| {
+        single_child(reader, tag.into_buf(), b"Run", |reader, tag| {
+            single_child(reader, tag.into_buf(), b"default", |reader, tag| {
+                parse_children(
+                    reader,
+                    tag.into_buf(),
+                    |reader, tag| if tag.name() == b"name" {
+                        text(reader, tag.into_buf(), |t| run.set_game_name(t))
+                    } else if tag.name() == b"subTitle" {
+                        text(reader, tag.into_buf(), |t| run.set_category_name(t))
+                    } else if tag.name() == b"delayedStart" {
+                        time_span(reader, tag.into_buf(), |t| {
+                            run.set_offset(TimeSpan::zero() - t);
+                        })
+                    } else if tag.name() == b"numberOfAttempts" {
+                        text_parsed(reader, tag.into_buf(), |t| run.set_attempt_count(t))
+                    } else if tag.name() == b"segments" {
+                        let mut total_time = TimeSpan::zero();
+                        parse_children(reader, tag.into_buf(), |reader, tag| {
+                            let segment =
+                                parse_segment(&mut total_time, reader, tag.into_buf(), &mut buf2)?;
+                            run.push_segment(segment);
+                            Ok(())
+                        })
+                    } else {
+                        end_tag(reader, tag.into_buf())
+                    },
+                )
+            })
+        })
+    })?;
 
     Ok(run)
 }
