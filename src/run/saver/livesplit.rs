@@ -133,7 +133,10 @@ fn image<W: Write>(
             vec_as_string(buf, |s| {
                 base64::encode_config_buf(image_buf, base64::STANDARD, s)
             });
-            return text(writer, tag, buf);
+            return scoped(writer, tag, buf.is_empty(), |writer| {
+                writer.write_event(Event::CData(BytesText::borrowed(buf)))?;
+                Ok(())
+            });
         }
     }
     writer.write_event(Event::Empty(tag))?;
