@@ -4,9 +4,9 @@ use {AtomicDateTime, Run, RunMetadata, Segment, Time, TimeSpan, base64};
 use quick_xml::reader::Reader;
 use chrono::{DateTime, TimeZone, Utc};
 use std::str;
-use super::xml_util::{attribute, attribute_err, collect_children_events, end_tag,
-                      optional_attribute_err, parse_attributes, parse_base, parse_children, text,
-                      text_as_bytes_err, text_err, text_parsed};
+use super::xml_util::{attribute, attribute_err, end_tag, optional_attribute_err, parse_attributes,
+                      parse_base, parse_children, reencode_children, text, text_as_bytes_err,
+                      text_err, text_parsed};
 
 pub use super::xml_util::{Error, Result};
 
@@ -380,7 +380,7 @@ pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
                 })
             } else if tag.name() == b"AutoSplitterSettings" {
                 let settings = run.auto_splitter_settings_mut();
-                collect_children_events(reader, tag.into_buf(), |event| { settings.push(event); })
+                reencode_children(reader, tag.into_buf(), settings)
             } else {
                 end_tag(reader, tag.into_buf())
             }

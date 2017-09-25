@@ -329,12 +329,12 @@ pub fn save<W: Write>(run: &Run, writer: W) -> Result<()> {
         },
     )?;
 
-    scoped_iter(
+    scoped(
         writer,
         new_tag(b"AutoSplitterSettings"),
-        run.auto_splitter_settings(),
-        |writer, event| {
-            writer.write_event(event)?;
+        run.auto_splitter_settings().is_empty(),
+        |writer| {
+            writer.write(run.auto_splitter_settings())?;
             Ok(())
         },
     )?;

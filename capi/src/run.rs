@@ -136,3 +136,18 @@ pub unsafe extern "C" fn Run_attempt_history_index(
 pub unsafe extern "C" fn Run_save_as_lss(this: *const Run) -> *const c_char {
     output_vec(|o| { saver::livesplit::save(acc(this), o).unwrap(); })
 }
+
+#[no_mangle]
+pub unsafe extern "C" fn Run_custom_comparisons_len(this: *const Run) -> usize {
+    acc(this).custom_comparisons().len()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Run_custom_comparison(this: *const Run, index: usize) -> *const c_char {
+    output_str(&acc(this).custom_comparisons()[index])
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Run_auto_splitter_settings(this: *const Run) -> *const c_char {
+    output_vec(|o| o.extend_from_slice(acc(this).auto_splitter_settings()))
+}

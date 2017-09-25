@@ -5,9 +5,6 @@ use {AtomicDateTime, Attempt, Image, RunMetadata, Segment, Time, TimeSpan, Timin
 use comparison::{default_generators, personal_best, ComparisonGenerator};
 use odds::vec::VecFindRemove;
 use unicase;
-use quick_xml::events::Event;
-
-pub type XmlEvent = Event<'static>;
 
 #[derive(Clone, Debug)]
 pub struct Run {
@@ -23,7 +20,7 @@ pub struct Run {
     segments: Vec<Segment>,
     custom_comparisons: Vec<String>,
     comparison_generators: Vec<Box<ComparisonGenerator>>,
-    auto_splitter_settings: Vec<XmlEvent>,
+    auto_splitter_settings: Vec<u8>,
 }
 
 impl PartialEq for Run {
@@ -189,12 +186,12 @@ impl Run {
     }
 
     #[inline]
-    pub fn auto_splitter_settings(&self) -> &[XmlEvent] {
+    pub fn auto_splitter_settings(&self) -> &[u8] {
         &self.auto_splitter_settings
     }
 
     #[inline]
-    pub fn auto_splitter_settings_mut(&mut self) -> &mut Vec<XmlEvent> {
+    pub fn auto_splitter_settings_mut(&mut self) -> &mut Vec<u8> {
         &mut self.auto_splitter_settings
     }
 
