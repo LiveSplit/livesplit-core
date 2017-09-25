@@ -8274,6 +8274,10 @@
     </Segment>
   </Segments>
   <AutoSplitterSettings>
+    <!-- Insert random comment here &gt; -->
+    <?PITarget PIContent&gt; ?>
+    <![CDATA[]]&gt;]]>
+    <Testing wafdg=":> &gt;">&lt;<Hi lol="xd"/>&gt;</Testing>
     <Version>1.2.4</Version>
     <AutoStartEnd>True</AutoStartEnd>
     <AutoSplitIntroEnd>True</AutoSplitIntroEnd>

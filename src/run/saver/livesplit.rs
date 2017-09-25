@@ -216,21 +216,22 @@ pub fn save<W: Write>(run: &Run, writer: W) -> Result<()> {
     text(writer, new_tag(b"CategoryName"), run.category_name())?;
 
     write_start(writer, new_tag(b"Metadata"))?;
+    let metadata = run.metadata();
 
     let mut tag = new_tag(b"Run");
-    tag.push_attribute((&b"id"[..], run.metadata().run_id().as_bytes()));
+    tag.push_attribute((&b"id"[..], metadata.run_id().as_bytes()));
     writer.write_event(Event::Empty(tag))?;
 
     tag = new_tag(b"Platform");
-    tag.push_attribute((&b"usesEmulator"[..], bool(run.metadata().uses_emulator())));
-    text(writer, tag, run.metadata().platform_name())?;
+    tag.push_attribute((&b"usesEmulator"[..], bool(metadata.uses_emulator())));
+    text(writer, tag, metadata.platform_name())?;
 
-    text(writer, new_tag(b"Region"), run.metadata().region_name())?;
+    text(writer, new_tag(b"Region"), metadata.region_name())?;
 
     scoped_iter(
         writer,
         new_tag(b"Variables"),
-        run.metadata().variables(),
+        metadata.variables(),
         |writer, (name, value)| {
             let mut tag = new_tag(b"Variable");
             tag.push_attribute((&b"name"[..], name.as_bytes()));
@@ -325,8 +326,15 @@ pub fn save<W: Write>(run: &Run, writer: W) -> Result<()> {
         },
     )?;
 
-    // TODO Add Auto Splitter Settings
-    writer.write_event(Event::Empty(new_tag(b"AutoSplitterSettings")))?;
+    scoped_iter(
+        writer,
+        new_tag(b"AutoSplitterSettings"),
+        run.auto_splitter_settings(),
+        |writer, event| {
+            writer.write_event(event)?;
+            Ok(())
+        },
+    )?;
 
     write_end(writer, b"Run")?;
     Ok(())

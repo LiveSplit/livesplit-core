@@ -1,6 +1,6 @@
 use quick_xml::reader::Reader;
 use quick_xml::errors::Error as XmlError;
-use quick_xml::events::{attributes, BytesStart, Event};
+use quick_xml::events::{attributes, BytesEnd, BytesStart, BytesText, Event};
 use std::ops::Deref;
 use std::borrow::Cow;
 use std::{str, string};
@@ -149,6 +149,60 @@ fn end_tag_immediately<R: BufRead>(reader: &mut Reader<R>, buf: &mut Vec<u8>) ->
             Event::End(_) => return Ok(()),
             Event::Eof => return Err(Error::UnexpectedEndOfFile),
             _ => {}
+        }
+    }
+}
+
+pub fn collect_children_events<R, F>(
+    reader: &mut Reader<R>,
+    buf: &mut Vec<u8>,
+    mut f: F,
+) -> Result<()>
+where
+    R: BufRead,
+    F: FnMut(Event<'static>),
+{
+    reader.expand_empty_elements(false);
+    let mut depth = 0;
+    loop {
+        buf.clear();
+        match reader.read_event(buf)? {
+            Event::Start(start) => {
+                depth += 1;
+                f(Event::Start(start.into_owned()));
+            }
+            Event::End(end) => {
+                if depth == 0 {
+                    reader.expand_empty_elements(true);
+                    return Ok(());
+                }
+                depth -= 1;
+                f(Event::End(BytesEnd::owned(Vec::from(&*end))));
+            }
+            Event::Empty(val) => {
+                f(Event::Empty(val.into_owned()));
+            }
+            Event::Text(text) => {
+                f(Event::Text(
+                    BytesText::owned(text.unescaped()?.into_owned()),
+                ));
+            }
+            Event::Comment(text) => {
+                f(Event::Comment(BytesText::owned(Vec::from(&*text))));
+            }
+            Event::CData(text) => {
+                f(Event::CData(BytesText::owned(Vec::from(&*text))));
+            }
+            Event::Decl(_) => {
+                // Shouldn't really be a child anyway.
+            }
+            Event::PI(text) => {
+                f(Event::PI(BytesText::owned(Vec::from(&*text))));
+            }
+            Event::DocType(_) => {
+                // A DOCTYPE is not allowed in content.
+            }
+            Event::Eof => return Err(Error::UnexpectedEndOfFile),
         }
     }
 }

@@ -24,7 +24,13 @@ mod parse {
 
     #[test]
     fn livesplit_fuzz_crash() {
-        let path = "tests/run_files/quick_livesplit_fuzz_crash.lss";
+        let path = "tests/run_files/livesplit_fuzz_crash.lss";
+        livesplit::parse(file(path), None).err().unwrap();
+    }
+
+    #[test]
+    fn livesplit_fuzz_crash_utf8() {
+        let path = "tests/run_files/livesplit_fuzz_crash_utf8.lss";
         livesplit::parse(file(path), None).err().unwrap();
     }
 

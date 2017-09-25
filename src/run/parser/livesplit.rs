@@ -4,8 +4,9 @@ use {AtomicDateTime, Run, RunMetadata, Segment, Time, TimeSpan, base64};
 use quick_xml::reader::Reader;
 use chrono::{DateTime, TimeZone, Utc};
 use std::str;
-use super::xml_util::{attribute, attribute_err, end_tag, optional_attribute_err, parse_attributes,
-                      parse_base, parse_children, text, text_err, text_parsed};
+use super::xml_util::{attribute, attribute_err, collect_children_events, end_tag,
+                      optional_attribute_err, parse_attributes, parse_base, parse_children, text,
+                      text_as_bytes_err, text_err, text_parsed};
 
 pub use super::xml_util::{Error, Result};
 
@@ -29,25 +30,24 @@ fn parse_date_time<S: AsRef<str>>(text: S) -> Result<DateTime<Utc>> {
 fn image<R, F>(
     reader: &mut Reader<R>,
     result: &mut Vec<u8>,
-    str_buf: &mut String,
+    image_buf: &mut Vec<u8>,
     f: F,
 ) -> Result<()>
 where
     R: BufRead,
     F: FnOnce(&[u8]),
 {
-    text(reader, result, |text| {
-        str_buf.clear();
-        str_buf.push_str(&text);
-    })?;
-    result.clear();
-    if str_buf.len() >= 216 {
-        if let Ok(data) = base64::decode(&str_buf[212..]) {
-            result.extend_from_slice(&data[2..data.len() - 1]);
+    text_as_bytes_err(reader, result, |text| {
+        if text.len() >= 216 {
+            image_buf.clear();
+            if base64::decode_config_buf(&text[212..], base64::STANDARD, image_buf).is_ok() {
+                f(&image_buf[2..image_buf.len() - 1]);
+                return Ok(());
+            }
         }
-    }
-    f(result);
-    Ok(())
+        f(&[]);
+        Ok(())
+    })
 }
 
 fn time_span<R, F>(reader: &mut Reader<R>, buf: &mut Vec<u8>, f: F) -> Result<()>
@@ -170,7 +170,7 @@ fn parse_segment<R: BufRead>(
     version: Version,
     reader: &mut Reader<R>,
     buf: &mut Vec<u8>,
-    str_buf: &mut String,
+    buf2: &mut Vec<u8>,
     run: &mut Run,
 ) -> Result<Segment> {
     let mut segment = Segment::new("");
@@ -178,23 +178,24 @@ fn parse_segment<R: BufRead>(
     parse_children(reader, buf, |reader, tag| if tag.name() == b"Name" {
         text(reader, tag.into_buf(), |t| segment.set_name(t))
     } else if tag.name() == b"Icon" {
-        image(reader, tag.into_buf(), str_buf, |i| segment.set_icon(i))
+        image(reader, tag.into_buf(), buf2, |i| segment.set_icon(i))
     } else if tag.name() == b"SplitTimes" {
         if version >= Version(1, 3, 0, 0) {
             parse_children(reader, tag.into_buf(), |reader, tag| {
                 if tag.name() == b"SplitTime" {
-                    str_buf.clear();
-                    attribute(&tag, b"name", |t| str_buf.push_str(&t))?;
-                    run.add_custom_comparison(str_buf.as_str());
+                    let mut comparison = String::new();
+                    attribute(&tag, b"name", |t| { comparison = t.into_owned(); })?;
                     if version >= Version(1, 4, 1, 0) {
                         time(reader, tag.into_buf(), |t| {
-                            *segment.comparison_mut(str_buf) = t;
-                        })
+                            *segment.comparison_mut(&comparison) = t;
+                        })?;
                     } else {
                         time_old(reader, tag.into_buf(), |t| {
-                            *segment.comparison_mut(str_buf) = t;
-                        })
+                            *segment.comparison_mut(&comparison) = t;
+                        })?;
                     }
+                    run.add_custom_comparison(comparison);
+                    Ok(())
                 } else {
                     end_tag(reader, tag.into_buf())
                 }
@@ -338,7 +339,7 @@ pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
     reader.trim_text(true);
 
     let mut buf = Vec::with_capacity(4096);
-    let mut str_buf = String::with_capacity(4096);
+    let mut buf2 = Vec::with_capacity(4096);
 
     let mut run = Run::new();
 
@@ -351,12 +352,7 @@ pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
 
         parse_children(reader, tag.into_buf(), |reader, tag| {
             if tag.name() == b"GameIcon" {
-                image(
-                    reader,
-                    tag.into_buf(),
-                    &mut str_buf,
-                    |i| run.set_game_icon(i),
-                )
+                image(reader, tag.into_buf(), &mut buf2, |i| run.set_game_icon(i))
             } else if tag.name() == b"GameName" {
                 text(reader, tag.into_buf(), |t| run.set_game_name(t))
             } else if tag.name() == b"CategoryName" {
@@ -375,7 +371,7 @@ pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
                 parse_children(reader, tag.into_buf(), |reader, tag| {
                     if tag.name() == b"Segment" {
                         let segment =
-                            parse_segment(version, reader, tag.into_buf(), &mut str_buf, &mut run)?;
+                            parse_segment(version, reader, tag.into_buf(), &mut buf2, &mut run)?;
                         run.push_segment(segment);
                         Ok(())
                     } else {
@@ -383,8 +379,8 @@ pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
                     }
                 })
             } else if tag.name() == b"AutoSplitterSettings" {
-                // TODO Store this somehow
-                end_tag(reader, tag.into_buf())
+                let settings = run.auto_splitter_settings_mut();
+                collect_children_events(reader, tag.into_buf(), |event| { settings.push(event); })
             } else {
                 end_tag(reader, tag.into_buf())
             }
