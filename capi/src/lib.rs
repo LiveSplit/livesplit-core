@@ -124,7 +124,11 @@ where
 }
 
 unsafe fn str(s: *const c_char) -> &'static str {
-    CStr::from_ptr(s as _).to_str().unwrap()
+    if s.is_null() {
+        ""
+    } else {
+        CStr::from_ptr(s as _).to_str().unwrap()
+    }
 }
 
 fn alloc<T>(data: T) -> *mut T {

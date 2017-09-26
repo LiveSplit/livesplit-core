@@ -3,6 +3,7 @@ use livesplit_core::run::{parser, saver};
 use super::{acc, acc_mut, alloc, output_str, output_time_span, output_vec, own, own_drop, str};
 use std::io::Cursor;
 use std::slice;
+use std::path::PathBuf;
 use libc::c_char;
 use segment::OwnedSegment;
 use parse_run_result::OwnedParseRunResult;
@@ -21,11 +22,23 @@ pub unsafe extern "C" fn Run_drop(this: OwnedRun) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Run_parse(data: *const u8, length: usize) -> OwnedParseRunResult {
+pub unsafe extern "C" fn Run_parse(
+    data: *const u8,
+    length: usize,
+    path: *const c_char,
+    load_files: bool,
+) -> OwnedParseRunResult {
+    let path = str(path);
+    let path = if !path.is_empty() {
+        Some(PathBuf::from(path))
+    } else {
+        None
+    };
+
     alloc(parser::composite::parse(
         Cursor::new(slice::from_raw_parts(data, length)),
-        None,
-        false,
+        path,
+        load_files,
     ))
 }
 

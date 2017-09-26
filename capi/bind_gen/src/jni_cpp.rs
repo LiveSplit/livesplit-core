@@ -177,9 +177,11 @@ pub fn write<W: Write>(mut writer: W, classes: &BTreeMap<String, Class>) -> Resu
 
 using namespace LiveSplit;
 
-extern "C" JNIEXPORT jlong Java_livesplitcore_LiveSplitCoreNative_Run_1parseString(JNIEnv* jni_env, jobject, jstring data) {
+extern "C" JNIEXPORT jlong Java_livesplitcore_LiveSplitCoreNative_Run_1parseString(JNIEnv* jni_env, jobject, jstring data, jstring path, jboolean load_files) {
     auto cstr_data = jni_env->GetStringUTFChars(data, nullptr);
-    auto result = (jlong)Run_parse(cstr_data, strlen(cstr_data));
+    auto cstr_path = jni_env->GetStringUTFChars(path, nullptr);
+    auto result = (jlong)Run_parse(cstr_data, strlen(cstr_data), cstr_path, (uint8_t)load_files);
+    jni_env->ReleaseStringUTFChars(path, cstr_path);
     jni_env->ReleaseStringUTFChars(data, cstr_data);
     return result;
 }

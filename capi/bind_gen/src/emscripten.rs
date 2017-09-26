@@ -542,22 +542,22 @@ export "#.to_string()
                     writer,
                     "{}",
                     r#"
-    static parseArray(data: Int8Array): ParseRunResult {
+    static parseArray(data: Int8Array, path: string, loadFiles: boolean): ParseRunResult {
         const buf = emscriptenModule._malloc(data.length);
         try {
             emscriptenModule.writeArrayToMemory(data, buf);
-            const ptr = liveSplitCoreNative.Run_parse(buf, data.length);
+            const ptr = liveSplitCoreNative.Run_parse(buf, data.length, path, loadFiles ? 1 : 0);
             return new ParseRunResult(ptr);
         } finally {
             emscriptenModule._free(buf);
         }
     }
-    static parseString(text: string): ParseRunResult {
+    static parseString(text: string, path: string, loadFiles: boolean): ParseRunResult {
         const len = (text.length << 2) + 1;
         const buf = emscriptenModule._malloc(len);
         try {
             const actualLen = emscriptenModule.stringToUTF8(text, buf, len);
-            const ptr = liveSplitCoreNative.Run_parse(buf, actualLen);
+            const ptr = liveSplitCoreNative.Run_parse(buf, actualLen, path, loadFiles ? 1 : 0);
             return new ParseRunResult(ptr);
         } finally {
             emscriptenModule._free(buf);
@@ -571,13 +571,15 @@ export "#.to_string()
                     r#"
     /**
      * @param {Int8Array} data
+     * @param {string} path
+     * @param {boolean} loadFiles
      * @return {ParseRunResult}
      */
-    static parseArray(data) {
+    static parseArray(data, path, loadFiles) {
         const buf = emscriptenModule._malloc(data.length);
         try {
             emscriptenModule.writeArrayToMemory(data, buf);
-            const ptr = liveSplitCoreNative.Run_parse(buf, data.length);
+            const ptr = liveSplitCoreNative.Run_parse(buf, data.length, path, loadFiles ? 1 : 0);
             return new ParseRunResult(ptr);
         } finally {
             emscriptenModule._free(buf);
@@ -585,14 +587,16 @@ export "#.to_string()
     }
     /**
      * @param {string} text
+     * @param {string} path
+     * @param {boolean} loadFiles
      * @return {ParseRunResult}
      */
-    static parseString(text) {
+    static parseString(text, path, loadFiles) {
         const len = (text.length << 2) + 1;
         const buf = emscriptenModule._malloc(len);
         try {
             const actualLen = emscriptenModule.stringToUTF8(text, buf, len);
-            const ptr = liveSplitCoreNative.Run_parse(buf, actualLen);
+            const ptr = liveSplitCoreNative.Run_parse(buf, actualLen, path, loadFiles ? 1 : 0);
             return new ParseRunResult(ptr);
         } finally {
             emscriptenModule._free(buf);

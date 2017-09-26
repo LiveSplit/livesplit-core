@@ -554,20 +554,20 @@ export "#.to_string()
                     writer,
                     "{}",
                     r#"
-    static parseArray(data: Int8Array): ParseRunResult {
+    static parseArray(data: Int8Array, path: string, loadFiles: boolean): ParseRunResult {
         let buf = Buffer.from(data.buffer);
         if (data.byteLength !== data.buffer.byteLength) {
             buf = buf.slice(data.byteOffset, data.byteOffset + data.byteLength);
         }
-        return Run.parse(buf, buf.byteLength);
+        return Run.parse(buf, buf.byteLength, path, loadFiles);
     }
-    static parseFile(file: any): ParseRunResult {
+    static parseFile(file: any, path: string, loadFiles: boolean): ParseRunResult {
         const data = fs.readFileSync(file);
-        return Run.parse(data, data.byteLength);
+        return Run.parse(data, data.byteLength, path, loadFiles);
     }
-    static parseString(text: string): ParseRunResult {
+    static parseString(text: string, path: string, loadFiles: boolean): ParseRunResult {
         const data = new Buffer(text);
-        return Run.parse(data, data.byteLength);
+        return Run.parse(data, data.byteLength, path, loadFiles);
     }"#
                 )?;
             } else {
@@ -577,30 +577,36 @@ export "#.to_string()
                     r#"
     /**
      * @param {Int8Array} data
+     * @param {string} path
+     * @param {boolean} loadFiles
      * @return {ParseRunResult}
      */
-    static parseArray(data) {
+    static parseArray(data, path, loadFiles) {
         let buf = Buffer.from(data.buffer);
         if (data.byteLength !== data.buffer.byteLength) {
             buf = buf.slice(data.byteOffset, data.byteOffset + data.byteLength);
         }
-        return Run.parse(buf, buf.byteLength);
+        return Run.parse(buf, buf.byteLength, path, loadFiles);
     }
     /**
      * @param {string | Buffer | number} file
+     * @param {string} path
+     * @param {boolean} loadFiles
      * @return {ParseRunResult}
      */
-    static parseFile(file) {
+    static parseFile(file, path, loadFiles) {
         const data = fs.readFileSync(file);
-        return Run.parse(data, data.byteLength);
+        return Run.parse(data, data.byteLength, path, loadFiles);
     }
     /**
      * @param {string} text
+     * @param {string} path
+     * @param {boolean} loadFiles
      * @return {ParseRunResult}
      */
-    static parseString(text) {
+    static parseString(text, path, loadFiles) {
         const data = new Buffer(text);
-        return Run.parse(data, data.byteLength);
+        return Run.parse(data, data.byteLength, path, loadFiles);
     }"#
                 )?;
             }

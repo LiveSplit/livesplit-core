@@ -325,8 +325,8 @@ public class {class} extends {base_class} implements AutoCloseable {{
             writer,
             "{}",
             r#"
-    public static ParseRunResult parse(String data) {
-        ParseRunResult result = new ParseRunResult(LiveSplitCoreNative.Run_parseString(data));
+    public static ParseRunResult parse(String data, String path, boolean loadFiles) {
+        ParseRunResult result = new ParseRunResult(LiveSplitCoreNative.Run_parseString(data, path, loadFiles));
         return result;
     }"#
         )?;

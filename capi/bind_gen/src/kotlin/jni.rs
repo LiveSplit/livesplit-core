@@ -338,8 +338,8 @@ open class {class} : {base_class}, AutoCloseable {{
                 writer,
                 "{}",
                 r#"
-    fun parse(data: String): ParseRunResult {
-        val result = ParseRunResult(LiveSplitCoreNative.Run_parseString(data))
+    fun parse(data: String, path: String, loadFiles: Boolean): ParseRunResult {
+        val result = ParseRunResult(LiveSplitCoreNative.Run_parseString(data, path, loadFiles))
         return result
     }"#
             )?;

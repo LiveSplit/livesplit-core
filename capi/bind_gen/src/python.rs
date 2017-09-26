@@ -288,7 +288,7 @@ class {class}({base_class}):
                 writer,
                 r#"
     @staticmethod
-    def parse_file(file):
+    def parse_file(file, path, load_files):
         data = file.read()
         if sys.version_info[0] > 2:
             if isinstance(data, str):
@@ -296,7 +296,7 @@ class {class}({base_class}):
         bytes = bytearray(data)
         bufferType = c_byte * len(bytes)
         buffer = bufferType(*bytes)
-        return Run.parse(buffer, len(bytes))"#
+        return Run.parse(buffer, len(bytes), path, load_files)"#
             )?;
         }
 

@@ -346,7 +346,7 @@ namespace LiveSplitCore
                 writer,
                 "{}",
                 r#"
-        public static ParseRunResult Parse(Stream stream)
+        public static ParseRunResult Parse(Stream stream, string path, bool loadFiles)
         {
             var data = new byte[stream.Length];
             stream.Read(data, 0, data.Length);
@@ -354,7 +354,7 @@ namespace LiveSplitCore
             try
             {
                 Marshal.Copy(data, 0, pnt, data.Length);
-                return Parse(pnt, data.Length);
+                return Parse(pnt, data.Length, path, loadFiles);
             }
             finally
             {
