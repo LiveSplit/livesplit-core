@@ -77,11 +77,15 @@ where
         return Ok(parsed(run, TimerKind::Llanfair));
     }
 
+    // Should be parsed after LiveSplit's parser, as it also parses all
+    // LiveSplit files with the current implementation.
     source.seek(SeekFrom::Start(0))?;
     if let Ok(run) = llanfair_gered::parse(&mut source) {
         return Ok(parsed(run, TimerKind::LlanfairGered));
     }
 
+    // Llanfair 2's format is almost entirely optional so it should be parsed
+    // after all other XML based formats.
     source.seek(SeekFrom::Start(0))?;
     if let Ok(run) = llanfair2::parse(&mut source) {
         return Ok(parsed(run, TimerKind::Llanfair2));

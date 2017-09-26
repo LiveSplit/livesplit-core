@@ -343,6 +343,8 @@ pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
 
     let mut run = Run::new();
 
+    let mut required_flags = 0u8;
+
     parse_base(reader, &mut buf, b"Run", |reader, tag| {
         let mut version = Version(1, 0, 0, 0);
         optional_attribute_err(&tag, b"version", |t| {
@@ -352,14 +354,19 @@ pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
 
         parse_children(reader, tag.into_buf(), |reader, tag| {
             if tag.name() == b"GameIcon" {
+                required_flags |= 1 << 0;
                 image(reader, tag.into_buf(), &mut buf2, |i| run.set_game_icon(i))
             } else if tag.name() == b"GameName" {
+                required_flags |= 1 << 1;
                 text(reader, tag.into_buf(), |t| run.set_game_name(t))
             } else if tag.name() == b"CategoryName" {
+                required_flags |= 1 << 2;
                 text(reader, tag.into_buf(), |t| run.set_category_name(t))
             } else if tag.name() == b"Offset" {
+                required_flags |= 1 << 3;
                 time_span(reader, tag.into_buf(), |t| run.set_offset(t))
             } else if tag.name() == b"AttemptCount" {
+                required_flags |= 1 << 4;
                 text_parsed(reader, tag.into_buf(), |t| run.set_attempt_count(t))
             } else if tag.name() == b"AttemptHistory" {
                 parse_attempt_history(version, reader, tag.into_buf(), &mut run)
@@ -368,6 +375,7 @@ pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
             } else if tag.name() == b"Metadata" {
                 parse_metadata(version, reader, tag.into_buf(), run.metadata_mut())
             } else if tag.name() == b"Segments" {
+                required_flags |= 1 << 5;
                 parse_children(reader, tag.into_buf(), |reader, tag| {
                     if tag.name() == b"Segment" {
                         let segment =
@@ -386,6 +394,10 @@ pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
             }
         })
     })?;
+
+    if required_flags != (1 << 6) - 1 {
+        return Err(Error::TagNotFound);
+    }
 
     run.set_path(path);
 

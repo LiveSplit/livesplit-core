@@ -25,13 +25,18 @@ mod parse {
     #[test]
     fn livesplit_fuzz_crash() {
         let path = "tests/run_files/livesplit_fuzz_crash.lss";
-        livesplit::parse(file(path), None).err().unwrap();
+        livesplit::parse(file(path), None).unwrap_err();
     }
 
     #[test]
     fn livesplit_fuzz_crash_utf8() {
         let path = "tests/run_files/livesplit_fuzz_crash_utf8.lss";
-        livesplit::parse(file(path), None).err().unwrap();
+        livesplit::parse(file(path), None).unwrap_err();
+    }
+
+    #[test]
+    fn livesplit_1_0() {
+        livesplit("tests/run_files/livesplit1.0.lss");
     }
 
     #[test]
@@ -57,6 +62,16 @@ mod parse {
     #[test]
     fn llanfair() {
         llanfair::parse(file("tests/run_files/llanfair")).unwrap();
+    }
+
+    #[test]
+    fn llanfair_gered_doesnt_parse_as_livesplit() {
+        livesplit::parse(file("tests/run_files/llanfair_gered.lfs"), None).unwrap_err();
+    }
+
+    #[test]
+    fn llanfair_gered() {
+        parse_llanfair_gered("tests/run_files/llanfair_gered.lfs");
     }
 
     #[test]
