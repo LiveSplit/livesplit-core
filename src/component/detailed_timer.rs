@@ -3,7 +3,6 @@ use super::timer;
 use time::formatter::{timer as formatter, Accuracy, DigitsFormat, Short, TimeFormatter, DASH};
 use time::formatter::none_wrapper::DashWrapper;
 use comparison::{self, best_segments, none};
-use std::cmp::max;
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use std::borrow::Cow;
@@ -113,7 +112,7 @@ impl Component {
         let last_split_index = if current_phase == TimerPhase::Ended {
             timer.run().len() - 1
         } else {
-            max(0, timer.current_split_index()) as usize
+            timer.current_split_index().unwrap_or(0)
         };
 
         let (comparison1, comparison2) = if current_phase != TimerPhase::NotRunning {
@@ -347,7 +346,7 @@ fn calculate_comparison_time(
             .run()
             .segment(0)
             .comparison_timing_method(comparison, timing_method)
-    } else if timer.current_split_index() > 0 {
+    } else if timer.current_split_index() > Some(0) {
         TimeSpan::option_sub(
             timer
                 .run()
