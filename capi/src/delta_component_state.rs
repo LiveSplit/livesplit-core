@@ -1,6 +1,6 @@
 use livesplit_core::component::delta::State as DeltaComponentState;
-use super::{acc, output_str, output_str_with, own_drop};
-use std::fmt::Write;
+use super::{acc, output_str, output_vec, own_drop};
+use std::io::Write;
 use libc::c_char;
 
 pub type OwnedDeltaComponentState = *mut DeltaComponentState;
@@ -28,5 +28,5 @@ pub unsafe extern "C" fn DeltaComponentState_time(
 pub unsafe extern "C" fn DeltaComponentState_semantic_color(
     this: *const DeltaComponentState,
 ) -> *const c_char {
-    output_str_with(|f| write!(f, "{:?}", acc(this).semantic_color).unwrap())
+    output_vec(|f| write!(f, "{:?}", acc(this).semantic_color).unwrap())
 }

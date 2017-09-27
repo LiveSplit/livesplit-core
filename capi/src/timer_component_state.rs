@@ -1,7 +1,7 @@
 use livesplit_core::component::timer::State as TimerComponentState;
-use super::{acc, output_str, output_str_with, own_drop};
+use super::{acc, output_str, output_vec, own_drop};
 use libc::c_char;
-use std::fmt::Write;
+use std::io::Write;
 
 pub type OwnedTimerComponentState = *mut TimerComponentState;
 
@@ -28,5 +28,5 @@ pub unsafe extern "C" fn TimerComponentState_fraction(
 pub unsafe extern "C" fn TimerComponentState_semantic_color(
     this: *const TimerComponentState,
 ) -> *const c_char {
-    output_str_with(|f| write!(f, "{:?}", acc(this).semantic_color).unwrap())
+    output_vec(|f| write!(f, "{:?}", acc(this).semantic_color).unwrap())
 }

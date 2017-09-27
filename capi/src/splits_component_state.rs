@@ -1,7 +1,7 @@
 use livesplit_core::component::splits::State as SplitsComponentState;
-use super::{acc, output_str, output_str_with, own_drop};
+use super::{acc, output_str, output_vec, own_drop};
 use libc::c_char;
-use std::fmt::Write;
+use std::io::Write;
 
 pub type OwnedSplitsComponentState = *mut SplitsComponentState;
 
@@ -74,7 +74,7 @@ pub unsafe extern "C" fn SplitsComponentState_semantic_color(
     this: *const SplitsComponentState,
     index: usize,
 ) -> *const c_char {
-    output_str_with(|f| {
+    output_vec(|f| {
         write!(f, "{:?}", acc(this).splits[index].semantic_color).unwrap()
     })
 }

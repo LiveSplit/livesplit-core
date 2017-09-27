@@ -1,7 +1,7 @@
 use livesplit_core::run::editor::cleaning::{PotentialCleanUp, SumOfBestCleaner};
-use super::{acc, acc_mut, alloc, output_str_with, own, own_drop};
+use super::{acc, acc_mut, alloc, output_vec, own, own_drop};
 use libc::c_char;
-use std::fmt::Write;
+use std::io::Write;
 use std::ptr;
 
 pub type OwnedSumOfBestCleaner = *mut SumOfBestCleaner<'static>;
@@ -39,5 +39,5 @@ pub unsafe extern "C" fn PotentialCleanUp_drop(this: OwnedPotentialCleanUp) {
 pub unsafe extern "C" fn PotentialCleanUp_message(
     this: *const PotentialCleanUp<'static>,
 ) -> *const c_char {
-    output_str_with(|s| write!(s, "{}", acc(this)).unwrap())
+    output_vec(|s| write!(s, "{}", acc(this)).unwrap())
 }

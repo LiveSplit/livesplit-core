@@ -71,7 +71,6 @@ pub type Json = *const c_char;
 pub type Nullablec_char = c_char;
 
 thread_local! {
-    static OUTPUT_STR: RefCell<String> = RefCell::new(String::new());
     static OUTPUT_VEC: RefCell<Vec<u8>> = RefCell::new(Vec::new());
     static TIME_SPAN: Cell<TimeSpan> = Cell::default();
     static TIME: Cell<Time> = Cell::default();
@@ -94,20 +93,7 @@ fn output_time(time: Time) -> *const Time {
 }
 
 fn output_str<S: AsRef<str>>(s: S) -> *const c_char {
-    output_str_with(|o| { o.push_str(s.as_ref()); })
-}
-
-fn output_str_with<F>(f: F) -> *const c_char
-where
-    F: FnOnce(&mut String),
-{
-    OUTPUT_STR.with(|output| {
-        let mut output = output.borrow_mut();
-        output.clear();
-        f(&mut output);
-        output.push('\0');
-        output.as_ptr() as *const c_char
-    })
+    output_vec(|o| { o.extend_from_slice(s.as_ref().as_bytes()); })
 }
 
 fn output_vec<F>(f: F) -> *const c_char

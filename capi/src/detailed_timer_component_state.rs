@@ -1,7 +1,7 @@
 use livesplit_core::component::detailed_timer::State as DetailedTimerComponentState;
-use super::{acc, output_str, output_str_with, own_drop, Nullablec_char};
+use super::{acc, output_str, output_vec, own_drop, Nullablec_char};
 use libc::c_char;
-use std::fmt::Write;
+use std::io::Write;
 use std::ptr;
 
 pub type OwnedDetailedTimerComponentState = *mut DetailedTimerComponentState;
@@ -29,7 +29,7 @@ pub unsafe extern "C" fn DetailedTimerComponentState_timer_fraction(
 pub unsafe extern "C" fn DetailedTimerComponentState_timer_semantic_color(
     this: *const DetailedTimerComponentState,
 ) -> *const c_char {
-    output_str_with(|f| {
+    output_vec(|f| {
         write!(f, "{:?}", acc(this).timer.semantic_color).unwrap()
     })
 }

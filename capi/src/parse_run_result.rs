@@ -1,7 +1,7 @@
 use livesplit_core::run::parser::composite::{ParsedRun, Result};
-use super::{acc, alloc, output_str_with, own, own_drop};
+use super::{acc, alloc, output_vec, own, own_drop};
 use run::OwnedRun;
-use std::fmt::Write;
+use std::io::Write;
 use libc::c_char;
 
 pub type ParseRunResult = Result<ParsedRun>;
@@ -24,7 +24,7 @@ pub unsafe extern "C" fn ParseRunResult_unwrap(this: OwnedParseRunResult) -> Own
 
 #[no_mangle]
 pub unsafe extern "C" fn ParseRunResult_timer_kind(this: *const ParseRunResult) -> *const c_char {
-    output_str_with(|f| {
+    output_vec(|f| {
         write!(f, "{}", acc(this).as_ref().unwrap().kind).unwrap()
     })
 }

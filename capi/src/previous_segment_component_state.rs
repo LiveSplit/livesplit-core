@@ -1,6 +1,6 @@
 use livesplit_core::component::previous_segment::State as PreviousSegmentComponentState;
-use super::{acc, output_str, output_str_with, own_drop};
-use std::fmt::Write;
+use super::{acc, output_str, output_vec, own_drop};
+use std::io::Write;
 use libc::c_char;
 
 pub type OwnedPreviousSegmentComponentState = *mut PreviousSegmentComponentState;
@@ -30,5 +30,5 @@ pub unsafe extern "C" fn PreviousSegmentComponentState_time(
 pub unsafe extern "C" fn PreviousSegmentComponentState_semantic_color(
     this: *const PreviousSegmentComponentState,
 ) -> *const c_char {
-    output_str_with(|f| write!(f, "{:?}", acc(this).semantic_color).unwrap())
+    output_vec(|f| write!(f, "{:?}", acc(this).semantic_color).unwrap())
 }
