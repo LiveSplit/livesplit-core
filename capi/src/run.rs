@@ -1,9 +1,10 @@
 use livesplit_core::{Attempt, Run, RunMetadata, Segment, TimeSpan};
 use livesplit_core::run::{parser, saver};
 use super::{acc, acc_mut, alloc, output_str, output_time_span, output_vec, own, own_drop, str};
-use std::io::Cursor;
+use std::io::{BufReader, Cursor};
 use std::slice;
 use std::path::PathBuf;
+use std::fs::File;
 use libc::c_char;
 use segment::OwnedSegment;
 use parse_run_result::OwnedParseRunResult;
@@ -40,6 +41,67 @@ pub unsafe extern "C" fn Run_parse(
         path,
         load_files,
     ))
+}
+
+/// On Unix you pass a file descriptor to this function.
+/// On Windows you pass a file handle to this function.
+/// The file descriptor / handle does not get closed.
+#[no_mangle]
+pub unsafe extern "C" fn Run_parse_file_handle(
+    handle: i64,
+    path: *const c_char,
+    load_files: bool,
+) -> OwnedParseRunResult {
+    let path = str(path);
+    let path = if !path.is_empty() {
+        Some(PathBuf::from(path))
+    } else {
+        None
+    };
+
+    #[cfg(unix)]
+    unsafe fn get_file(fd: i64) -> File {
+        use std::os::unix::io::FromRawFd;
+        File::from_raw_fd(fd as _)
+    }
+
+    #[cfg(windows)]
+    unsafe fn get_file(handle: i64) -> File {
+        use std::os::windows::io::FromRawHandle;
+        File::from_raw_handle(handle as *mut () as _)
+    }
+
+    #[cfg(not(any(windows, unix)))]
+    unsafe fn get_file(_: i64) -> File {
+        panic!("File Descriptor Parsing is not implemented for this platform");
+    }
+
+    let file = get_file(handle);
+
+    let run = alloc(parser::composite::parse(
+        BufReader::new(&file),
+        path,
+        load_files,
+    ));
+
+    #[cfg(unix)]
+    fn release_file(file: File) {
+        use std::os::unix::io::IntoRawFd;
+        file.into_raw_fd();
+    }
+
+    #[cfg(windows)]
+    fn release_file(file: File) {
+        use std::os::windows::io::IntoRawHandle;
+        file.into_raw_handle();
+    }
+
+    #[cfg(not(any(windows, unix)))]
+    fn release_file(_: File) {}
+
+    release_file(file);
+
+    run
 }
 
 #[no_mangle]
