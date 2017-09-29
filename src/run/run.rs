@@ -270,8 +270,8 @@ impl Run {
             .collect()
     }
 
-    pub fn extended_name(&self, use_extended_category_name: bool) -> String {
-        let mut name = self.game_name().to_owned();
+    pub fn extended_name(&self, use_extended_category_name: bool) -> Cow<str> {
+        let mut name = Cow::Borrowed(self.game_name());
 
         let category_name = if use_extended_category_name {
             self.extended_category_name(false, false, true)
@@ -281,10 +281,12 @@ impl Run {
 
         if !category_name.is_empty() {
             if !name.is_empty() {
+                let name = name.to_mut();
                 name.push_str(" - ");
+                name.push_str(&category_name);
+            } else {
+                name = category_name;
             }
-
-            name.push_str(&category_name);
         }
 
         name
