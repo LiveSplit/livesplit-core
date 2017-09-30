@@ -29,11 +29,11 @@ panic = "abort"
 members = ["capi", "capi/bind_gen", "js"]
 
 [dependencies]
-base64 = "0.6.0"
+base64 = "0.7.0"
 byteorder = "1.1.0"
 chrono = { version = "0.4.0", features = ["serde"] }
-derive_more = "0.6.0"
-image = "0.14.0"
+derive_more = "0.7.0"
+image = "0.16.0"
 livesplit-hotkey = { path = "hotkey", version = "0.2.0" }
 odds = "0.2.25"
 ordermap = "0.2.10"
