@@ -114,7 +114,9 @@ where
                     })?;
                     if !defer_setting_run_time {
                         single_child(reader, tag.into_buf(), b"milliseconds", |reader, tag| {
-                            time_span(reader, tag.into_buf(), |t| { *total_time += t; })
+                            time_span(reader, tag.into_buf(), |t| {
+                                *total_time += t;
+                            })
                         })?;
                         segment.set_personal_best_split_time(RealTime(Some(*total_time)).into());
                         Ok(())
@@ -122,7 +124,9 @@ where
                         end_tag(reader, tag.into_buf())
                     }
                 } else if tag.name() == b"icon" {
-                    image(reader, tag.into_buf(), buf2, |i| { segment.set_icon(i); })
+                    image(reader, tag.into_buf(), buf2, |i| {
+                        segment.set_icon(i);
+                    })
                 } else {
                     end_tag(reader, tag.into_buf())
                 },

@@ -144,8 +144,9 @@ pub fn parse<R: Read + Seek>(mut source: R) -> Result<Run> {
             }
             0x70 => 0,
             _ => {
-                // Since there is always a best segment when there is a best time in Llanfair,
-                // I assume that there will never be another Time object declaration before this data.
+                // Since there is always a best segment when there is a best
+                // time in Llanfair, I assume that there will never be another
+                // Time object declaration before this data.
                 source.seek(SeekFrom::Current(0x5))?;
                 source.read_u64::<BE>()?
             }

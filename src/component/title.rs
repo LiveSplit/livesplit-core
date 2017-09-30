@@ -125,8 +125,8 @@ impl Component {
             None
         };
 
-        let is_centered = self.settings.center_text || run.game_icon().is_empty() ||
-            !self.settings.display_game_icon;
+        let is_centered = self.settings.center_text || run.game_icon().is_empty()
+            || !self.settings.display_game_icon;
 
         let game_name = if self.settings.show_game_name {
             run.game_name()

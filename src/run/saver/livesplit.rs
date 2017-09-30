@@ -270,9 +270,8 @@ pub fn save<W: Write>(run: &Run, writer: W) -> Result<()> {
                 ));
             }
 
-            let is_empty = attempt.time().real_time.is_none() &&
-                attempt.time().game_time.is_none() &&
-                attempt.pause_time().is_none();
+            let is_empty = attempt.time().real_time.is_none() && attempt.time().game_time.is_none()
+                && attempt.pause_time().is_none();
 
             scoped(writer, tag, is_empty, |writer| {
                 time_inner(writer, attempt.time(), buf)?;

@@ -3,11 +3,10 @@ use settings::SemanticColor;
 use comparison::{best_segments, personal_best};
 
 /// Gets the last non-live delta in the run starting from `split_number`.
-///
-/// `run`: The current run.
-/// `split_number`: The split number to start checking deltas from.
-/// `comparison`: The comparison that you are comparing with.
-/// `method`: The timing method that you are using.
+/// - `run`: The current run.
+/// - `split_number`: The split number to start checking deltas from.
+/// - `comparison`: The comparison that you are comparing with.
+/// - `method`: The timing method that you are using.
 ///
 /// Returns the last non-live delta or None if there have been no deltas yet.
 pub fn last_delta(
@@ -70,12 +69,13 @@ fn segment_time_or_segment_delta(
 }
 
 /// Gets the length of the last segment that leads up to a certain split.
+/// - `timer`: The current timer.
+/// - `split_number`: The index of the split that represents the end of the
+///   segment.
+/// - `method`: The timing method that you are using.
 ///
-/// `timer`: The current timer.
-/// `split_number`: The index of the split that represents the end of the segment.
-/// `method`: The timing method that you are using.
-///
-/// Returns the length of the segment leading up to `split_number`, returning None if the split is not completed yet.
+/// Returns the length of the segment leading up to `split_number`, returning
+/// None if the split is not completed yet.
 pub fn previous_segment_time(
     timer: &Timer,
     split_number: usize,
@@ -91,13 +91,15 @@ pub fn previous_segment_time(
     )
 }
 
-/// Gets the length of the last segment that leads up to a certain split, using the live segment time if the split is not completed yet.
+/// Gets the length of the last segment that leads up to a certain split, using
+/// the live segment time if the split is not completed yet.
+/// - `timer`: The current timer.
+/// - `split_number`: The index of the split that represents the end of the
+///   segment.
+/// - `method`: The timing method that you are using.
 ///
-/// `timer`: The current timer.
-/// `split_number`: The index of the split that represents the end of the segment.
-/// `method`: The timing method that you are using.
-///
-/// Returns the length of the segment leading up to `split_number`, returning the live segment time if the split is not completed yet.
+/// Returns the length of the segment leading up to `split_number`, returning
+/// the live segment time if the split is not completed yet.
 pub fn live_segment_time(
     timer: &Timer,
     split_number: usize,
@@ -107,13 +109,13 @@ pub fn live_segment_time(
 }
 
 /// Gets the amount of time lost or gained on a certain split.
+/// - `timer`: The current timer.
+/// - `split_number`: The index of the split for which the delta is calculated.
+/// - `comparison`: The comparison that you are comparing with.
+/// - `method`: The timing method that you are using.
 ///
-/// `timer`: The current timer.
-/// `split_number`: The index of the split for which the delta is calculated.
-/// `comparison`: The comparison that you are comparing with.
-/// `method`: The timing method that you are using.
-///
-/// Returns the segment delta for a certain split, returning None if the split is not completed yet.
+/// Returns the segment delta for a certain split, returning None if the split
+/// is not completed yet.
 pub fn previous_segment_delta(
     timer: &Timer,
     split_number: usize,
@@ -123,14 +125,15 @@ pub fn previous_segment_delta(
     segment_time_or_segment_delta(timer, split_number, false, false, comparison, method)
 }
 
-/// Gets the amount of time lost or gained on a certain split, using the live segment delta if the split is not completed yet.
+/// Gets the amount of time lost or gained on a certain split, using the live
+/// segment delta if the split is not completed yet.
+/// - `timer`: The current timer.
+/// - `split_number`: The index of the split for which the delta is calculated.
+/// - `comparison`: The comparison that you are comparing with.
+/// - `method`: The timing method that you are using.
 ///
-/// `timer`: The current timer.
-/// `split_number`: The index of the split for which the delta is calculated.
-/// `comparison`: The comparison that you are comparing with.
-/// `method`: The timing method that you are using.
-///
-/// Returns the segment delta for a certain split, returning the live segment delta if the split is not completed yet.
+/// Returns the segment delta for a certain split, returning the live segment
+/// delta if the split is not completed yet.
 pub fn live_segment_delta(
     timer: &Timer,
     split_number: usize,
@@ -141,11 +144,11 @@ pub fn live_segment_delta(
 }
 
 /// Checks whether the live segment should now be shown.
-///
-/// `timer`: The current timer.
-/// `show_when_behind`: Specifies whether or not to start showing the live segment once you are behind.
-/// `comparison`: The comparison that you are comparing with.
-/// `method`: The timing method that you are using.
+/// - `timer`: The current timer.
+/// - `show_when_behind`: Specifies whether or not to start showing the live
+///   segment once you are behind.
+/// - `comparison`: The comparison that you are comparing with.
+/// - `method`: The timing method that you are using.
 ///
 /// Returns the current live delta.
 pub fn check_live_delta(
@@ -168,11 +171,11 @@ pub fn check_live_delta(
             live_segment_delta(timer, split_index, best_segments::NAME, method);
         let comparison_delta = live_segment_delta(timer, split_index, comparison, method);
 
-        if show_when_behind && current_time > current_split ||
-            use_best_segment &&
-                TimeSpan::option_op(current_segment, best_segment, |c, b| c > b).unwrap_or(false) &&
-                best_segment_delta.map_or(false, |d| d > TimeSpan::zero()) ||
-            comparison_delta.map_or(false, |d| d > TimeSpan::zero())
+        if show_when_behind && current_time > current_split
+            || use_best_segment
+                && TimeSpan::option_op(current_segment, best_segment, |c, b| c > b).unwrap_or(false)
+                && best_segment_delta.map_or(false, |d| d > TimeSpan::zero())
+            || comparison_delta.map_or(false, |d| d > TimeSpan::zero())
         {
             return TimeSpan::option_sub(current_time, current_split);
         }
@@ -181,14 +184,14 @@ pub fn check_live_delta(
 }
 
 /// Chooses a split color from the Layout Settings based on the current run.
-///
-/// `timer`: The current timer.
-/// `time_difference`: The delta that you want to find a color for.
-/// `split_number`: The split number that is associated with this delta.
-/// `show_segment_deltas`: Can show ahead gaining and behind losing colors if true.
-/// `show_best_segments`: Can show the best segment color if true.
-/// `comparison`: The comparison that you are comparing this delta to.
-/// `method`: The timing method of this delta.
+/// - `timer`: The current timer.
+/// - `time_difference`: The delta that you want to find a color for.
+/// - `split_number`: The split number that is associated with this delta.
+/// - `show_segment_deltas`: Can show ahead gaining and behind losing colors if
+///   true.
+/// - `show_best_segments`: Can show the best segment color if true.
+/// - `comparison`: The comparison that you are comparing this delta to.
+/// - `method`: The timing method of this delta.
 ///
 /// Returns the chosen color.
 pub fn split_color(
@@ -224,11 +227,11 @@ pub fn split_color(
     }
 }
 
-/// Calculates whether or not the Split Times for the indicated split qualify as a Best Segment.
-///
-/// `timer`: The current timer.
-/// `split_number`: The split to check.
-/// `method`: The timing method to use.
+/// Calculates whether or not the Split Times for the indicated split qualify as
+/// a Best Segment.
+/// - `timer`: The current timer.
+/// - `split_number`: The split to check.
+/// - `method`: The timing method to use.
 ///
 /// Returns whether or not the indicated split is a Best Segment.
 pub fn check_best_segment(timer: &Timer, split_number: usize, method: TimingMethod) -> bool {

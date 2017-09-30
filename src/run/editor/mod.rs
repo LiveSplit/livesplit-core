@@ -188,8 +188,8 @@ impl Editor {
             .last()
             .unwrap()
             .personal_best_split_time();
-        if pb_split_time.real_time != self.previous_personal_best_time.real_time ||
-            pb_split_time.game_time != self.previous_personal_best_time.game_time
+        if pb_split_time.real_time != self.previous_personal_best_time.real_time
+            || pb_split_time.game_time != self.previous_personal_best_time.game_time
         {
             self.run.metadata_mut().set_run_id("");
             self.previous_personal_best_time = pb_split_time;
@@ -401,8 +401,8 @@ impl Editor {
             let first_history = first.segment_history().get(run_index);
             let second_history = second.segment_history().get(run_index);
             if let (Some(first_history), Some(second_history)) = (first_history, second_history) {
-                if first_history.real_time.is_some() != second_history.real_time.is_some() ||
-                    first_history.game_time.is_some() != second_history.game_time.is_some()
+                if first_history.real_time.is_some() != second_history.real_time.is_some()
+                    || first_history.game_time.is_some() != second_history.game_time.is_some()
                 {
                     first.segment_history_mut().remove(run_index);
                     second.segment_history_mut().remove(run_index);

@@ -298,8 +298,8 @@ impl Component {
         let mut points_list = Vec::new();
         if !draw_info.deltas.is_empty() {
             let mut height_one = if total_delta != TimeSpan::zero() {
-                (-draw_info.max_delta.total_milliseconds() / total_delta.total_milliseconds()) as
-                    f32 * (graph_height - graph_edge) * 2.0 + graph_edge
+                (-draw_info.max_delta.total_milliseconds() / total_delta.total_milliseconds())
+                    as f32 * (graph_height - graph_edge) * 2.0 + graph_edge
             } else {
                 graph_height
             };
@@ -351,8 +351,8 @@ impl Component {
     }
 
     fn check_best_segment(&self, timer: &Timer, split_number: usize) -> bool {
-        self.settings.show_best_segments && split_number < timer.run().len() &&
-            analysis::check_best_segment(timer, split_number, timer.current_timing_method())
+        self.settings.show_best_segments && split_number < timer.run().len()
+            && analysis::check_best_segment(timer, split_number, timer.current_timing_method())
     }
 
     fn calculate_left_side_coordinates(
@@ -368,10 +368,10 @@ impl Component {
         y: usize,
     ) {
         if total_delta != TimeSpan::zero() {
-            *height_one = (delta.total_milliseconds() as f32 -
-                draw_info.max_delta.total_milliseconds() as f32) /
-                total_delta.total_milliseconds() as f32 *
-                (graph_height - graph_edge) * 2.0 + graph_edge;
+            *height_one = (delta.total_milliseconds() as f32
+                - draw_info.max_delta.total_milliseconds() as f32)
+                / total_delta.total_milliseconds() as f32
+                * (graph_height - graph_edge) * 2.0 + graph_edge;
         } else {
             *height_one = graph_height;
         }
@@ -380,9 +380,9 @@ impl Component {
             if let Some(split_time) =
                 timer.run().segment(y).split_time()[timer.current_timing_method()]
             {
-                *width_one = (split_time.total_milliseconds() as f32 /
-                    draw_info.final_split.total_milliseconds() as f32) *
-                    WIDTH;
+                *width_one = (split_time.total_milliseconds() as f32
+                    / draw_info.final_split.total_milliseconds() as f32)
+                    * WIDTH;
             }
         }
     }
@@ -404,15 +404,16 @@ impl Component {
         } else if let Some(split_time) =
             timer.run().segment(y).split_time()[timer.current_timing_method()]
         {
-            *width_two = (split_time.total_milliseconds() as f32 /
-                draw_info.final_split.total_milliseconds() as f32) * WIDTH;
+            *width_two = (split_time.total_milliseconds() as f32
+                / draw_info.final_split.total_milliseconds() as f32)
+                * WIDTH;
         }
 
         if total_delta != TimeSpan::zero() {
-            *height_two = (delta.total_milliseconds() as f32 -
-                draw_info.max_delta.total_milliseconds() as f32) /
-                total_delta.total_milliseconds() as f32 *
-                (graph_height - graph_edge) * 2.0 + graph_edge;
+            *height_two = (delta.total_milliseconds() as f32
+                - draw_info.max_delta.total_milliseconds() as f32)
+                / total_delta.total_milliseconds() as f32
+                * (graph_height - graph_edge) * 2.0 + graph_edge;
         } else {
             *height_two = graph_height;
         }
@@ -479,13 +480,13 @@ impl Component {
         }
         if current_phase != TimerPhase::NotRunning && total_delta < TimeSpan::zero() {
             grid_value_y = 1000.0;
-            while (-total_delta.total_milliseconds() as f32) / grid_value_y >
-                (graph_height - graph_edge) * 2.0 / 20.0
+            while (-total_delta.total_milliseconds() as f32) / grid_value_y
+                > (graph_height - graph_edge) * 2.0 / 20.0
             {
                 grid_value_y *= 6.0;
             }
-            grid_value_y = (grid_value_y / (-total_delta.total_milliseconds() as f32)) *
-                (graph_height - graph_edge) * 2.0;
+            grid_value_y = (grid_value_y / (-total_delta.total_milliseconds() as f32))
+                * (graph_height - graph_edge) * 2.0;
         } else {
             grid_value_y = -1.0;
         }
@@ -501,13 +502,13 @@ impl Component {
         let mut graph_edge = 0.0;
         let graph_height = HEIGHT / 2.0; // TODO Make const
         let middle = if total_delta != TimeSpan::zero() {
-            graph_edge = GRAPH_EDGE_VALUE /
-                (-total_delta.total_milliseconds() as f32 + 2.0 * GRAPH_EDGE_VALUE) *
-                (graph_height * 2.0 - GRAPH_EDGE_MIN * 2.0);
+            graph_edge = GRAPH_EDGE_VALUE
+                / (-total_delta.total_milliseconds() as f32 + 2.0 * GRAPH_EDGE_VALUE)
+                * (graph_height * 2.0 - GRAPH_EDGE_MIN * 2.0);
             graph_edge += GRAPH_EDGE_MIN;
-            (-(draw_info.max_delta.total_milliseconds() as f32 /
-                total_delta.total_milliseconds() as f32)) *
-                (graph_height - graph_edge) * 2.0 + graph_edge
+            (-(draw_info.max_delta.total_milliseconds() as f32
+                / total_delta.total_milliseconds() as f32))
+                * (graph_height - graph_edge) * 2.0 + graph_edge
         } else {
             graph_height
         };
@@ -562,7 +563,8 @@ impl Component {
                 let timing_method = timer.current_timing_method();
                 let mut best_segment =
                     analysis::check_live_delta(timer, true, comparison, timing_method);
-                // TODO Try if let instead of checking current phase up there, so we can skip this unwrap
+                // TODO Try if let instead of checking current phase up there,
+                // so we can skip this unwrap
                 let current_split =
                     timer.current_split().unwrap().comparison(comparison)[timing_method];
                 let current_time = timer.current_time()[timing_method];

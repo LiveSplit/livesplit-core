@@ -103,9 +103,13 @@ where
     let mut time = Time::new();
 
     parse_children(reader, buf, |reader, tag| if tag.name() == b"RealTime" {
-        time_span_opt(reader, tag.into_buf(), |t| { time.real_time = t; })
+        time_span_opt(reader, tag.into_buf(), |t| {
+            time.real_time = t;
+        })
     } else if tag.name() == b"GameTime" {
-        time_span_opt(reader, tag.into_buf(), |t| { time.game_time = t; })
+        time_span_opt(reader, tag.into_buf(), |t| {
+            time.game_time = t;
+        })
     } else {
         end_tag(reader, tag.into_buf())
     })?;
@@ -153,8 +157,12 @@ fn parse_metadata<R: BufRead>(
             parse_children(reader, tag.into_buf(), |reader, tag| {
                 let mut name = String::new();
                 let mut value = String::new();
-                attribute(&tag, b"name", |t| { name = t.into_owned(); })?;
-                text(reader, tag.into_buf(), |t| { value = t.into_owned(); })?;
+                attribute(&tag, b"name", |t| {
+                    name = t.into_owned();
+                })?;
+                text(reader, tag.into_buf(), |t| {
+                    value = t.into_owned();
+                })?;
                 metadata.add_variable(name, value);
                 Ok(())
             })
@@ -184,7 +192,9 @@ fn parse_segment<R: BufRead>(
             parse_children(reader, tag.into_buf(), |reader, tag| {
                 if tag.name() == b"SplitTime" {
                     let mut comparison = String::new();
-                    attribute(&tag, b"name", |t| { comparison = t.into_owned(); })?;
+                    attribute(&tag, b"name", |t| {
+                        comparison = t.into_owned();
+                    })?;
                     if version >= Version(1, 4, 1, 0) {
                         time(reader, tag.into_buf(), |t| {
                             *segment.comparison_mut(&comparison) = t;
@@ -311,11 +321,17 @@ fn parse_attempt_history<R: BufRead>(
 
             parse_children(reader, tag.into_buf(), |reader, tag| {
                 if tag.name() == b"RealTime" {
-                    time_span_opt(reader, tag.into_buf(), |t| { time.real_time = t; })
+                    time_span_opt(reader, tag.into_buf(), |t| {
+                        time.real_time = t;
+                    })
                 } else if tag.name() == b"GameTime" {
-                    time_span_opt(reader, tag.into_buf(), |t| { time.game_time = t; })
+                    time_span_opt(reader, tag.into_buf(), |t| {
+                        time.game_time = t;
+                    })
                 } else if tag.name() == b"PauseTime" {
-                    time_span_opt(reader, tag.into_buf(), |t| { pause_time = t; })
+                    time_span_opt(reader, tag.into_buf(), |t| {
+                        pause_time = t;
+                    })
                 } else {
                     end_tag(reader, tag.into_buf())
                 }

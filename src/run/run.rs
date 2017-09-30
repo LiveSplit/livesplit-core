@@ -25,14 +25,14 @@ pub struct Run {
 
 impl PartialEq for Run {
     fn eq(&self, other: &Run) -> bool {
-        self.game_icon == other.game_icon && self.game_name == other.game_name &&
-            self.category_name == other.category_name && self.offset == other.offset &&
-            self.attempt_count == other.attempt_count &&
-            self.attempt_history == other.attempt_history &&
-            self.metadata == other.metadata && self.has_changed == other.has_changed &&
-            self.path == other.path && self.segments == other.segments &&
-            self.custom_comparisons == other.custom_comparisons &&
-            self.comparison_generators
+        self.game_icon == other.game_icon && self.game_name == other.game_name
+            && self.category_name == other.category_name && self.offset == other.offset
+            && self.attempt_count == other.attempt_count
+            && self.attempt_history == other.attempt_history
+            && self.metadata == other.metadata && self.has_changed == other.has_changed
+            && self.path == other.path && self.segments == other.segments
+            && self.custom_comparisons == other.custom_comparisons
+            && self.comparison_generators
                 .iter()
                 .map(|c| c.name())
                 .eq(other.comparison_generators.iter().map(|c| c.name()))
@@ -264,8 +264,8 @@ impl Run {
         extended_name
             .chars()
             .filter(|&c| {
-                c != '\\' && c != '/' && c != ':' && c != '*' && c != '?' && c != '"' && c != '<' &&
-                    c != '>' && c != '|'
+                c != '\\' && c != '/' && c != ':' && c != '*' && c != '?' && c != '"' && c != '<'
+                    && c != '>' && c != '|'
             })
             .collect()
     }

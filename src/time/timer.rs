@@ -178,8 +178,8 @@ impl Timer {
 
     pub fn split(&mut self) {
         let current_time = self.current_time();
-        if self.phase == Running &&
-            current_time
+        if self.phase == Running
+            && current_time
                 .real_time
                 .map_or(false, |t| t >= TimeSpan::zero())
         {
@@ -206,8 +206,8 @@ impl Timer {
     }
 
     pub fn skip_split(&mut self) {
-        if (self.phase == Running || self.phase == Paused) &&
-            self.current_split_index < self.run.len() as isize - 1
+        if (self.phase == Running || self.phase == Paused)
+            && self.current_split_index < self.run.len() as isize - 1
         {
             self.current_split_mut().unwrap().clear_split_time();
             self.current_split_index += 1;
@@ -357,9 +357,7 @@ impl Timer {
 
     pub fn get_pause_time(&self) -> Option<TimeSpan> {
         match self.current_phase() {
-            Paused => Some(
-                TimeStamp::now() - self.start_time_with_offset - self.time_paused_at,
-            ),
+            Paused => Some(TimeStamp::now() - self.start_time_with_offset - self.time_paused_at),
             Running | Ended if self.start_time_with_offset != self.adjusted_start_time => {
                 Some(self.adjusted_start_time - self.start_time_with_offset)
             }

@@ -131,16 +131,16 @@ impl Component {
 
             let mut hide_comparison = self.settings.hide_second_comparison;
 
-            if hide_comparison || !timer.run().comparisons().any(|c| c == comparison2) ||
-                comparison2 == none::NAME
+            if hide_comparison || !timer.run().comparisons().any(|c| c == comparison2)
+                || comparison2 == none::NAME
             {
                 hide_comparison = true;
                 if !timer.run().comparisons().any(|c| c == comparison1) || comparison1 == none::NAME
                 {
                     comparison1 = timer.current_comparison();
                 }
-            } else if !timer.run().comparisons().any(|c| c == comparison1) ||
-                comparison1 == none::NAME
+            } else if !timer.run().comparisons().any(|c| c == comparison1)
+                || comparison1 == none::NAME
             {
                 hide_comparison = true;
                 comparison1 = comparison2;

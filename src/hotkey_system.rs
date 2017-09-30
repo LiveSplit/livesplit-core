@@ -17,16 +17,24 @@ impl HotkeySystem {
         let hook = Hook::new()?;
 
         let inner = timer.clone();
-        hook.register(config.split, move || { inner.write().split_or_start(); })?;
+        hook.register(config.split, move || {
+            inner.write().split_or_start();
+        })?;
 
         let inner = timer.clone();
-        hook.register(config.reset, move || { inner.write().reset(true); })?;
+        hook.register(config.reset, move || {
+            inner.write().reset(true);
+        })?;
 
         let inner = timer.clone();
-        hook.register(config.undo, move || { inner.write().undo_split(); })?;
+        hook.register(config.undo, move || {
+            inner.write().undo_split();
+        })?;
 
         let inner = timer.clone();
-        hook.register(config.skip, move || { inner.write().skip_split(); })?;
+        hook.register(config.skip, move || {
+            inner.write().skip_split();
+        })?;
 
         let inner = timer.clone();
         hook.register(config.pause, move || {
@@ -58,8 +66,9 @@ impl HotkeySystem {
     pub fn set_split(&mut self, hotkey: KeyCode) -> Result<()> {
         self.hook.unregister(self.config.split)?;
         let inner = self.timer.clone();
-        self.hook
-            .register(hotkey, move || { inner.write().split_or_start(); })?;
+        self.hook.register(hotkey, move || {
+            inner.write().split_or_start();
+        })?;
         self.config.split = hotkey;
         Ok(())
     }
@@ -67,8 +76,9 @@ impl HotkeySystem {
     pub fn set_reset(&mut self, hotkey: KeyCode) -> Result<()> {
         self.hook.unregister(self.config.reset)?;
         let inner = self.timer.clone();
-        self.hook
-            .register(hotkey, move || { inner.write().reset(true); })?;
+        self.hook.register(hotkey, move || {
+            inner.write().reset(true);
+        })?;
         self.config.reset = hotkey;
         Ok(())
     }
@@ -76,8 +86,9 @@ impl HotkeySystem {
     pub fn set_pause(&mut self, hotkey: KeyCode) -> Result<()> {
         self.hook.unregister(self.config.pause)?;
         let inner = self.timer.clone();
-        self.hook
-            .register(hotkey, move || { inner.write().toggle_pause_or_start(); })?;
+        self.hook.register(hotkey, move || {
+            inner.write().toggle_pause_or_start();
+        })?;
         self.config.pause = hotkey;
         Ok(())
     }
@@ -85,8 +96,9 @@ impl HotkeySystem {
     pub fn set_skip(&mut self, hotkey: KeyCode) -> Result<()> {
         self.hook.unregister(self.config.skip)?;
         let inner = self.timer.clone();
-        self.hook
-            .register(hotkey, move || { inner.write().skip_split(); })?;
+        self.hook.register(hotkey, move || {
+            inner.write().skip_split();
+        })?;
         self.config.skip = hotkey;
         Ok(())
     }
@@ -94,8 +106,9 @@ impl HotkeySystem {
     pub fn set_undo(&mut self, hotkey: KeyCode) -> Result<()> {
         self.hook.unregister(self.config.undo)?;
         let inner = self.timer.clone();
-        self.hook
-            .register(hotkey, move || { inner.write().undo_split(); })?;
+        self.hook.register(hotkey, move || {
+            inner.write().undo_split();
+        })?;
         self.config.undo = hotkey;
         Ok(())
     }
@@ -113,10 +126,9 @@ impl HotkeySystem {
     pub fn set_next_comparison(&mut self, hotkey: KeyCode) -> Result<()> {
         self.hook.unregister(self.config.next_comparison)?;
         let inner = self.timer.clone();
-        self.hook.register(
-            hotkey,
-            move || { inner.write().switch_to_next_comparison(); },
-        )?;
+        self.hook.register(hotkey, move || {
+            inner.write().switch_to_next_comparison();
+        })?;
         self.config.next_comparison = hotkey;
         Ok(())
     }

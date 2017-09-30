@@ -132,10 +132,10 @@ impl Component {
         let skip_count = min(
             max(
                 0,
-                current_split as isize -
-                    (self.settings.visual_split_count as isize - 2 -
-                        self.settings.split_preview_count as isize +
-                        always_show_last_split),
+                current_split as isize
+                    - (self.settings.visual_split_count as isize - 2
+                        - self.settings.split_preview_count as isize
+                        + always_show_last_split),
             ),
             timer.run().len() as isize - self.settings.visual_split_count as isize,
         );
@@ -147,8 +147,8 @@ impl Component {
         let take_count = self.settings.visual_split_count + always_show_last_split as usize - 1;
         let always_show_last_split = self.settings.always_show_last_split;
 
-        let show_final_separator = self.settings.separator_last_split && always_show_last_split &&
-            skip_count + take_count + 1 < timer.run().len();
+        let show_final_separator = self.settings.separator_last_split && always_show_last_split
+            && skip_count + take_count + 1 < timer.run().len();
 
         let mut icon_changes = Vec::new();
 
@@ -161,8 +161,8 @@ impl Component {
                 .zip(self.icon_ids.iter_mut())
                 .skip(skip_count)
                 .filter(|&((i, _), _)| {
-                    i - skip_count < take_count ||
-                        (always_show_last_split && i + 1 == timer.run().len())
+                    i - skip_count < take_count
+                        || (always_show_last_split && i + 1 == timer.run().len())
                 })
                 .map(|((i, segment), icon_id)| {
                     let split = segment.split_time()[method];

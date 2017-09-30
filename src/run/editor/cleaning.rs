@@ -213,8 +213,8 @@ fn check_prediction<'a>(
                     time_between: segment_history_element[method]
                         .expect("Cleanup path is shorter but doesn't have a time"),
                     combined_sum_of_best: predictions[ending_index + 1].map(|t| {
-                        t -
-                            predictions[(starting_index + 1) as usize]
+                        t
+                            - predictions[(starting_index + 1) as usize]
                                 .expect("Start time must not be empty")
                     }),
                     attempt: run.attempt_history()
