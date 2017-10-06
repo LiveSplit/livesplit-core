@@ -493,13 +493,29 @@ impl Editor {
         if validate_comparison_name(&self.run, &comparison) {
             self.run.add_custom_comparison(comparison.as_str());
 
-            for segment in run.segments().iter().take(run.len().saturating_sub(1)) {
-                if let Some(my_segment) = self.run
-                    .segments_mut()
-                    .iter_mut()
-                    .find(|s| unicase::eq(segment.name(), s.name()))
-                {
-                    *my_segment.comparison_mut(&comparison) = segment.personal_best_split_time();
+            // TODO Borrowcheck (remaining_segments isn't used after this block
+            // anymore. NLL should fix this)
+            {
+                let mut remaining_segments = self.run.segments_mut().as_mut_slice();
+
+                for segment in run.segments().iter().take(run.len().saturating_sub(1)) {
+                    // TODO Borrowcheck (new_start is only necessary because the
+                    // remaining_segments reassignment doesn't work inside this
+                    // if)
+                    let new_start = if let Some((segment_index, my_segment)) = remaining_segments
+                        .iter_mut()
+                        .enumerate()
+                        .find(|&(_, ref s)| unicase::eq(segment.name(), s.name()))
+                    {
+                        *my_segment.comparison_mut(&comparison) =
+                            segment.personal_best_split_time();
+                        segment_index + 1
+                    } else {
+                        0
+                    };
+                    // TODO Borrowcheck (get rid of the move block around
+                    // remaining_segments)
+                    remaining_segments = &mut { remaining_segments }[new_start..];
                 }
             }
 
