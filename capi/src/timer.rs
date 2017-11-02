@@ -1,5 +1,5 @@
-use livesplit_core::{Run, TimeSpan, Timer, TimerPhase, TimingMethod};
-use super::{acc, acc_mut, alloc, output_str, output_time_span, own, own_drop};
+use livesplit_core::{Run, TimeSpan, Timer, Time, TimerPhase, TimingMethod};
+use super::{acc, acc_mut, alloc, output_str, output_time_span, output_time, own, own_drop};
 use run::{NullableOwnedRun, OwnedRun};
 use libc::c_char;
 use shared_timer::OwnedSharedTimer;
@@ -186,4 +186,9 @@ pub unsafe extern "C" fn Timer_get_run(this: *const Timer) -> *const Run {
 #[no_mangle]
 pub unsafe extern "C" fn Timer_print_debug(this: *const Timer) {
     println!("{:#?}", acc(this));
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn Timer_current_time(this: *const Timer) -> *const Time {
+    output_time(acc(this).current_time())
 }
