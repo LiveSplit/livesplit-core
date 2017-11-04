@@ -101,21 +101,15 @@ impl Component {
     pub fn state(&self, timer: &Timer, layout_settings: &GeneralLayoutSettings) -> State {
         let mut time_change = None;
         let mut previous_possible = None;
-        let mut live_segment = false;
         let resolved_comparison = comparison::resolve(&self.settings.comparison_override, timer);
         let comparison = comparison::or_current(resolved_comparison, timer);
+        let live_segment = analysis::check_live_delta(timer, false, comparison, timer.current_timing_method());
 
         let phase = timer.current_phase();
         let method = timer.current_timing_method();
         let semantic_color = if phase != TimerPhase::NotRunning {
             let split_index = timer.current_split_index().unwrap();
-            if (phase == TimerPhase::Running || phase == TimerPhase::Paused)
-                && analysis::check_live_delta(timer, false, comparison, method).is_some()
-            {
-                live_segment = true;
-            }
-
-            if live_segment {
+            if live_segment.is_some() {
                 time_change = analysis::live_segment_delta(timer, split_index, comparison, method);
                 if self.settings.show_possible_time_save {
                     previous_possible = analysis::possible_time_save::calculate(
@@ -139,7 +133,7 @@ impl Component {
             };
 
             if let Some(time_change) = time_change {
-                if live_segment {
+                if live_segment.is_some() {
                     analysis::split_color(
                         timer,
                         time_change.into(),
@@ -181,7 +175,7 @@ impl Component {
 
         let visual_color = semantic_color.visualize(layout_settings);
 
-        let text = self.text(live_segment, resolved_comparison);
+        let text = self.text(live_segment.is_some(), resolved_comparison);
         let mut time = Delta::custom(self.settings.drop_decimals, self.settings.accuracy)
             .format(time_change)
             .to_string();

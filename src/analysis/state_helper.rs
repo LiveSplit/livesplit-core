@@ -145,7 +145,8 @@ pub fn live_segment_delta(
 
 /// Checks whether the live segment should now be shown.
 /// - `timer`: The current timer.
-/// - `show_when_behind`: Specifies whether or not to start showing the live
+/// - `split_delta`: Specifies whether to return a split delta 
+///   rather than a segment delta and to start showing the live 
 ///   segment once you are behind.
 /// - `comparison`: The comparison that you are comparing with.
 /// - `method`: The timing method that you are using.
@@ -153,7 +154,7 @@ pub fn live_segment_delta(
 /// Returns the current live delta.
 pub fn check_live_delta(
     timer: &Timer,
-    show_when_behind: bool,
+    split_delta: bool,
     comparison: &str,
     method: TimingMethod,
 ) -> Option<TimeSpan> {
@@ -171,13 +172,17 @@ pub fn check_live_delta(
             live_segment_delta(timer, split_index, best_segments::NAME, method);
         let comparison_delta = live_segment_delta(timer, split_index, comparison, method);
 
-        if show_when_behind && current_time > current_split
+        if split_delta && current_time > current_split
             || use_best_segment
                 && TimeSpan::option_op(current_segment, best_segment, |c, b| c > b).unwrap_or(false)
                 && best_segment_delta.map_or(false, |d| d > TimeSpan::zero())
             || comparison_delta.map_or(false, |d| d > TimeSpan::zero())
         {
-            return TimeSpan::option_sub(current_time, current_split);
+            if split_delta {
+                return TimeSpan::option_sub(current_time, current_split);
+            } else {
+                return comparison_delta;
+            }
         }
     }
     None
