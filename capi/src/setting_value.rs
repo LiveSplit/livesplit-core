@@ -1,4 +1,4 @@
-use livesplit_core::settings::{Color, Gradient, Value as SettingValue};
+use livesplit_core::settings::{Alignment, Color, Gradient, Value as SettingValue};
 use livesplit_core::time::formatter::{Accuracy, DigitsFormat};
 use livesplit_core::TimingMethod;
 use {alloc, own_drop, str};
@@ -168,4 +168,18 @@ pub unsafe extern "C" fn SettingValue_from_horizontal_gradient(
     alloc(
         Gradient::Horizontal(Color::from((r1, g1, b1, a1)), Color::from((r2, g2, b2, a2))).into(),
     )
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn SettingValue_from_alignment(
+    value: *const c_char,
+) -> NullableOwnedSettingValue {
+    let value = str(value);
+    let value = match value {
+        "Center" => Alignment::Center,
+        "Left" => Alignment::Left,
+        "Auto" => Alignment::Auto,
+        _ => return ptr::null_mut(),
+    };
+    alloc(value.into())
 }

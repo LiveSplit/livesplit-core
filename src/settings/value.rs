@@ -1,5 +1,5 @@
 use TimingMethod;
-use super::{Color, Gradient};
+use super::{Color, Gradient, Alignment};
 use time::formatter::{Accuracy, DigitsFormat};
 use std::result::Result as StdResult;
 
@@ -17,6 +17,7 @@ pub enum Value {
     Color(Color),
     OptionalColor(Option<Color>),
     Gradient(Gradient),
+    Alignment(Alignment),
 }
 
 quick_error! {
@@ -113,6 +114,13 @@ impl Value {
             _ => Err(Error::WrongType),
         }
     }
+
+    pub fn into_alignment(self) -> Result<Alignment> {
+        match self {
+            Value::Alignment(v) => Ok(v),
+            _ => Err(Error::WrongType),
+        }
+    }
 }
 
 impl Into<bool> for Value {
@@ -184,5 +192,11 @@ impl Into<Option<Color>> for Value {
 impl Into<Gradient> for Value {
     fn into(self) -> Gradient {
         self.into_gradient().unwrap()
+    }
+}
+
+impl Into<Alignment> for Value {
+    fn into(self) -> Alignment {
+        self.into_alignment().unwrap()
     }
 }
