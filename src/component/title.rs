@@ -2,7 +2,7 @@ use Timer;
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use std::borrow::Cow;
-use settings::{Color, Field, Gradient, SettingsDescription, Value};
+use settings::{Alignment, Color, Field, Gradient, SettingsDescription, Value};
 
 #[derive(Default, Clone)]
 pub struct Component {
@@ -19,7 +19,7 @@ pub struct Settings {
     pub show_category_name: bool,
     pub show_finished_runs_count: bool,
     pub show_attempt_count: bool,
-    pub center_text: bool,
+    pub text_alignment: Alignment,
     pub display_as_single_line: bool,
     pub display_game_icon: bool,
     pub show_region: bool,
@@ -51,7 +51,7 @@ impl Default for Settings {
             show_category_name: true,
             show_finished_runs_count: false,
             show_attempt_count: true,
-            center_text: false,
+            text_alignment: Alignment::Auto,
             display_as_single_line: false,
             display_game_icon: true,
             show_region: false,
@@ -125,8 +125,13 @@ impl Component {
             None
         };
 
-        let is_centered = self.settings.center_text || run.game_icon().is_empty()
-            || !self.settings.display_game_icon;
+        let is_centered = match self.settings.text_alignment {
+            Alignment::Center => true,
+            Alignment::Left => false,
+            Alignment::Auto => {
+                run.game_icon().is_empty() || !self.settings.display_game_icon
+            }
+        };
 
         let game_name = if self.settings.show_game_name {
             run.game_name()
@@ -194,7 +199,7 @@ impl Component {
                 "Show Attempt Count".into(),
                 self.settings.show_attempt_count.into(),
             ),
-            Field::new("Center Text".into(), self.settings.center_text.into()),
+            Field::new("Text Alignment".into(), self.settings.text_alignment.into()),
             Field::new(
                 "Display Text as Single Line".into(),
                 self.settings.display_as_single_line.into(),
@@ -217,7 +222,7 @@ impl Component {
             3 => self.settings.show_category_name = value.into(),
             4 => self.settings.show_finished_runs_count = value.into(),
             5 => self.settings.show_attempt_count = value.into(),
-            6 => self.settings.center_text = value.into(),
+            6 => self.settings.text_alignment = value.into(),
             7 => self.settings.display_as_single_line = value.into(),
             8 => self.settings.display_game_icon = value.into(),
             9 => self.settings.show_region = value.into(),

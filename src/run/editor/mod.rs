@@ -205,45 +205,40 @@ impl Editor {
 
     fn update_segment_list(&mut self) {
         let method = self.selected_method;
-        let mut previous_time = TimeSpan::zero();
+        let mut previous_time = Some(TimeSpan::zero());
         self.segment_times.clear();
         for segment in self.run.segments() {
-            if let Some(time) = segment.personal_best_split_time()[method] {
-                self.segment_times.push(Some(time - previous_time));
-                previous_time = time;
-            } else {
-                self.segment_times.push(None);
+            let split_time = segment.personal_best_split_time()[method];
+            self.segment_times.push(TimeSpan::option_sub(
+                split_time,
+                previous_time,
+            ));
+            if split_time.is_some() {
+                previous_time = split_time;
             }
         }
     }
 
     fn fix_splits_from_segments(&mut self) {
         let method = self.selected_method;
-        let mut previous_time = TimeSpan::zero();
-        let mut decrement = TimeSpan::zero();
-        for (segment_time, segment) in self.segment_times
-            .iter_mut()
-            .zip(self.run.segments_mut().iter_mut())
+        let mut previous_time = Some(TimeSpan::zero());
+        for (segment_time, segment) in
+            self.segment_times.iter_mut().zip(
+                self.run
+                    .segments_mut()
+                    .iter_mut(),
+            )
         {
-            if let Some(ref mut segment_time) = *segment_time {
-                let pb_time = &mut segment.personal_best_split_time_mut()[method];
-                if pb_time.is_none() {
-                    decrement = *segment_time;
-                } else {
-                    *segment_time -= decrement;
-                    decrement = TimeSpan::zero();
-                }
-                let new_time = previous_time + *segment_time;
-                *pb_time = Some(new_time);
-                previous_time = new_time;
-            } else {
-                if let Some(time) = segment.personal_best_split_time()[method] {
-                    previous_time = time;
-                }
-                segment.personal_best_split_time_mut()[method] = None;
+            {
+                let time = segment.personal_best_split_time_mut();
+                time[method] = TimeSpan::option_add(previous_time, *segment_time);
+            }
+            if segment_time.is_some() {
+                previous_time = segment.personal_best_split_time()[method];
             }
         }
     }
+
 
     pub fn insert_segment_above(&mut self) {
         let selected_segment = self.selected_segment_index();
