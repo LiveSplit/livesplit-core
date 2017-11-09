@@ -22,7 +22,9 @@ pub unsafe extern "C" fn RunEditor_close(this: OwnedRunEditor) -> OwnedRun {
 
 #[no_mangle]
 pub unsafe extern "C" fn RunEditor_state_as_json(this: *mut RunEditor) -> Json {
-    output_vec(|o| { acc_mut(this).state().write_json(o).unwrap(); })
+    output_vec(|o| {
+        acc_mut(this).state().write_json(o).unwrap();
+    })
 }
 
 #[no_mangle]

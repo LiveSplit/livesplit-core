@@ -1,5 +1,5 @@
-use livesplit_core::{Run, TimeSpan, Timer, Time, TimerPhase, TimingMethod};
-use super::{acc, acc_mut, alloc, output_str, output_time_span, output_time, own, own_drop};
+use livesplit_core::{Run, Time, TimeSpan, Timer, TimerPhase, TimingMethod};
+use super::{acc, acc_mut, alloc, output_str, output_time, output_time_span, own, own_drop};
 use run::{NullableOwnedRun, OwnedRun};
 use libc::c_char;
 use shared_timer::OwnedSharedTimer;

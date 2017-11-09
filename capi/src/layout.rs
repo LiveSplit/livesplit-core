@@ -47,7 +47,9 @@ pub unsafe extern "C" fn Layout_state_as_json(this: *mut Layout, timer: *const T
 
 #[no_mangle]
 pub unsafe extern "C" fn Layout_settings_as_json(this: *const Layout) -> Json {
-    output_vec(|o| { acc(this).settings().write_json(o).unwrap(); })
+    output_vec(|o| {
+        acc(this).settings().write_json(o).unwrap();
+    })
 }
 
 #[no_mangle]

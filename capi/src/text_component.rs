@@ -23,7 +23,9 @@ pub unsafe extern "C" fn TextComponent_into_generic(this: OwnedTextComponent) ->
 
 #[no_mangle]
 pub unsafe extern "C" fn TextComponent_state_as_json(this: *const TextComponent) -> Json {
-    output_vec(|o| { acc(this).state().write_json(o).unwrap(); })
+    output_vec(|o| {
+        acc(this).state().write_json(o).unwrap();
+    })
 }
 
 #[no_mangle]

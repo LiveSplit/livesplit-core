@@ -22,7 +22,9 @@ pub unsafe extern "C" fn LayoutEditor_close(this: OwnedLayoutEditor) -> OwnedLay
 
 #[no_mangle]
 pub unsafe extern "C" fn LayoutEditor_state_as_json(this: *const LayoutEditor) -> Json {
-    output_vec(|o| { acc(this).state().write_json(o).unwrap(); })
+    output_vec(|o| {
+        acc(this).state().write_json(o).unwrap();
+    })
 }
 
 #[no_mangle]

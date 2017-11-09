@@ -149,9 +149,7 @@ pub unsafe extern "C" fn SettingValue_from_vertical_gradient(
     b2: f32,
     a2: f32,
 ) -> OwnedSettingValue {
-    alloc(
-        Gradient::Vertical(Color::from((r1, g1, b1, a1)), Color::from((r2, g2, b2, a2))).into(),
-    )
+    alloc(Gradient::Vertical(Color::from((r1, g1, b1, a1)), Color::from((r2, g2, b2, a2))).into())
 }
 
 #[no_mangle]
@@ -165,9 +163,7 @@ pub unsafe extern "C" fn SettingValue_from_horizontal_gradient(
     b2: f32,
     a2: f32,
 ) -> OwnedSettingValue {
-    alloc(
-        Gradient::Horizontal(Color::from((r1, g1, b1, a1)), Color::from((r2, g2, b2, a2))).into(),
-    )
+    alloc(Gradient::Horizontal(Color::from((r1, g1, b1, a1)), Color::from((r2, g2, b2, a2))).into())
 }
 
 #[no_mangle]

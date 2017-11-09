@@ -93,7 +93,9 @@ fn output_time(time: Time) -> *const Time {
 }
 
 fn output_str<S: AsRef<str>>(s: S) -> *const c_char {
-    output_vec(|o| { o.extend_from_slice(s.as_ref().as_bytes()); })
+    output_vec(|o| {
+        o.extend_from_slice(s.as_ref().as_bytes());
+    })
 }
 
 fn output_vec<F>(f: F) -> *const c_char

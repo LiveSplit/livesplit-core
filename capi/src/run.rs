@@ -209,7 +209,9 @@ pub unsafe extern "C" fn Run_attempt_history_index(
 
 #[no_mangle]
 pub unsafe extern "C" fn Run_save_as_lss(this: *const Run) -> *const c_char {
-    output_vec(|o| { saver::livesplit::save(acc(this), o).unwrap(); })
+    output_vec(|o| {
+        saver::livesplit::save(acc(this), o).unwrap();
+    })
 }
 
 #[no_mangle]
