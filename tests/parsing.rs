@@ -3,6 +3,7 @@ extern crate livesplit_core;
 mod parse {
     use std::fs::File;
     use std::io::BufReader;
+    use livesplit_core::Run;
     use livesplit_core::run::parser::{livesplit, llanfair, llanfair_gered, time_split_tracker,
                                       urn, wsplit, llanfair2};
 
@@ -10,8 +11,8 @@ mod parse {
         BufReader::new(File::open(path).unwrap())
     }
 
-    fn livesplit(path: &str) {
-        livesplit::parse(file(path), None).unwrap();
+    fn livesplit(path: &str) -> Run {
+        livesplit::parse(file(path), None).unwrap()
     }
 
     fn parse_llanfair_gered(path: &str) {
@@ -41,7 +42,7 @@ mod parse {
 
     #[test]
     fn livesplit_1_4() {
-        livesplit("tests/run_files/livesplit1.4");
+        livesplit("tests/run_files/livesplit1.4.lss");
     }
 
     #[test]
@@ -51,7 +52,7 @@ mod parse {
 
     #[test]
     fn livesplit_1_6() {
-        livesplit("tests/run_files/livesplit1.6");
+        livesplit("tests/run_files/livesplit1.6.lss");
     }
 
     #[test]
