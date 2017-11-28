@@ -145,8 +145,8 @@ pub fn live_segment_delta(
 
 /// Checks whether the live segment should now be shown.
 /// - `timer`: The current timer.
-/// - `split_delta`: Specifies whether to return a split delta 
-///   rather than a segment delta and to start showing the live 
+/// - `split_delta`: Specifies whether to return a split delta
+///   rather than a segment delta and to start showing the live
 ///   segment once you are behind.
 /// - `comparison`: The comparison that you are comparing with.
 /// - `method`: The timing method that you are using.

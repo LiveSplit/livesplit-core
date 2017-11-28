@@ -183,10 +183,10 @@ where
             Event::Text(text) => {
                 writer.write_event(Event::Text(BytesText::borrowed(&text.unescaped()?)))?;
             }
-            event @ Event::Comment(_) |
-            event @ Event::CData(_) |
-            event @ Event::PI(_) |
-            event @ Event::Empty(_) => {
+            event @ Event::Comment(_)
+            | event @ Event::CData(_)
+            | event @ Event::PI(_)
+            | event @ Event::Empty(_) => {
                 writer.write_event(event)?;
             }
             Event::Decl(_) => {
@@ -231,16 +231,14 @@ where
     F: FnMut(&mut Reader<R>, Tag) -> Result<T>,
 {
     let mut val = None;
-    parse_children(
-        reader,
-        buf,
-        |reader, t| if t.name() == tag && val.is_none() {
+    parse_children(reader, buf, |reader, t| {
+        if t.name() == tag && val.is_none() {
             val = Some(f(reader, t)?);
             Ok(())
         } else {
             end_tag(reader, t.into_buf())
-        },
-    )?;
+        }
+    })?;
     val.ok_or(Error::TagNotFound)
 }
 
@@ -312,11 +310,13 @@ pub fn optional_attribute_err<'a, F>(tag: &BytesStart<'a>, key: &[u8], mut f: F)
 where
     F: FnMut(Cow<str>) -> Result<()>,
 {
-    parse_attributes(tag, |k, v| if k == key {
-        f(v.get()?)?;
-        Ok(false)
-    } else {
-        Ok(true)
+    parse_attributes(tag, |k, v| {
+        if k == key {
+            f(v.get()?)?;
+            Ok(false)
+        } else {
+            Ok(true)
+        }
     })
 }
 
@@ -325,12 +325,14 @@ where
     F: FnMut(Cow<str>) -> Result<()>,
 {
     let mut called = false;
-    parse_attributes(tag, |k, v| if k == key {
-        f(v.get()?)?;
-        called = true;
-        Ok(false)
-    } else {
-        Ok(true)
+    parse_attributes(tag, |k, v| {
+        if k == key {
+            f(v.get()?)?;
+            called = true;
+            Ok(false)
+        } else {
+            Ok(true)
+        }
     })?;
     if called {
         Ok(())

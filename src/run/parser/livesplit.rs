@@ -102,16 +102,18 @@ where
 {
     let mut time = Time::new();
 
-    parse_children(reader, buf, |reader, tag| if tag.name() == b"RealTime" {
-        time_span_opt(reader, tag.into_buf(), |t| {
-            time.real_time = t;
-        })
-    } else if tag.name() == b"GameTime" {
-        time_span_opt(reader, tag.into_buf(), |t| {
-            time.game_time = t;
-        })
-    } else {
-        end_tag(reader, tag.into_buf())
+    parse_children(reader, buf, |reader, tag| {
+        if tag.name() == b"RealTime" {
+            time_span_opt(reader, tag.into_buf(), |t| {
+                time.real_time = t;
+            })
+        } else if tag.name() == b"GameTime" {
+            time_span_opt(reader, tag.into_buf(), |t| {
+                time.game_time = t;
+            })
+        } else {
+            end_tag(reader, tag.into_buf())
+        }
     })?;
 
     f(time);
@@ -142,32 +144,34 @@ fn parse_metadata<R: BufRead>(
     metadata: &mut RunMetadata,
 ) -> Result<()> {
     if version >= Version(1, 6, 0, 0) {
-        parse_children(reader, buf, |reader, tag| if tag.name() == b"Run" {
-            attribute(&tag, b"id", |t| metadata.set_run_id(t))?;
-            end_tag(reader, tag.into_buf())
-        } else if tag.name() == b"Platform" {
-            attribute_err(&tag, b"usesEmulator", |t| {
-                metadata.set_emulator_usage(parse_bool(t)?);
-                Ok(())
-            })?;
-            text(reader, tag.into_buf(), |t| metadata.set_platform_name(t))
-        } else if tag.name() == b"Region" {
-            text(reader, tag.into_buf(), |t| metadata.set_region_name(t))
-        } else if tag.name() == b"Variables" {
-            parse_children(reader, tag.into_buf(), |reader, tag| {
-                let mut name = String::new();
-                let mut value = String::new();
-                attribute(&tag, b"name", |t| {
-                    name = t.into_owned();
+        parse_children(reader, buf, |reader, tag| {
+            if tag.name() == b"Run" {
+                attribute(&tag, b"id", |t| metadata.set_run_id(t))?;
+                end_tag(reader, tag.into_buf())
+            } else if tag.name() == b"Platform" {
+                attribute_err(&tag, b"usesEmulator", |t| {
+                    metadata.set_emulator_usage(parse_bool(t)?);
+                    Ok(())
                 })?;
-                text(reader, tag.into_buf(), |t| {
-                    value = t.into_owned();
-                })?;
-                metadata.add_variable(name, value);
-                Ok(())
-            })
-        } else {
-            end_tag(reader, tag.into_buf())
+                text(reader, tag.into_buf(), |t| metadata.set_platform_name(t))
+            } else if tag.name() == b"Region" {
+                text(reader, tag.into_buf(), |t| metadata.set_region_name(t))
+            } else if tag.name() == b"Variables" {
+                parse_children(reader, tag.into_buf(), |reader, tag| {
+                    let mut name = String::new();
+                    let mut value = String::new();
+                    attribute(&tag, b"name", |t| {
+                        name = t.into_owned();
+                    })?;
+                    text(reader, tag.into_buf(), |t| {
+                        value = t.into_owned();
+                    })?;
+                    metadata.add_variable(name, value);
+                    Ok(())
+                })
+            } else {
+                end_tag(reader, tag.into_buf())
+            }
         })
     } else {
         end_tag(reader, buf)
@@ -183,73 +187,75 @@ fn parse_segment<R: BufRead>(
 ) -> Result<Segment> {
     let mut segment = Segment::new("");
 
-    parse_children(reader, buf, |reader, tag| if tag.name() == b"Name" {
-        text(reader, tag.into_buf(), |t| segment.set_name(t))
-    } else if tag.name() == b"Icon" {
-        image(reader, tag.into_buf(), buf2, |i| segment.set_icon(i))
-    } else if tag.name() == b"SplitTimes" {
-        if version >= Version(1, 3, 0, 0) {
-            parse_children(reader, tag.into_buf(), |reader, tag| {
-                if tag.name() == b"SplitTime" {
-                    let mut comparison = String::new();
-                    attribute(&tag, b"name", |t| {
-                        comparison = t.into_owned();
-                    })?;
-                    if version >= Version(1, 4, 1, 0) {
-                        time(reader, tag.into_buf(), |t| {
-                            *segment.comparison_mut(&comparison) = t;
+    parse_children(reader, buf, |reader, tag| {
+        if tag.name() == b"Name" {
+            text(reader, tag.into_buf(), |t| segment.set_name(t))
+        } else if tag.name() == b"Icon" {
+            image(reader, tag.into_buf(), buf2, |i| segment.set_icon(i))
+        } else if tag.name() == b"SplitTimes" {
+            if version >= Version(1, 3, 0, 0) {
+                parse_children(reader, tag.into_buf(), |reader, tag| {
+                    if tag.name() == b"SplitTime" {
+                        let mut comparison = String::new();
+                        attribute(&tag, b"name", |t| {
+                            comparison = t.into_owned();
                         })?;
+                        if version >= Version(1, 4, 1, 0) {
+                            time(reader, tag.into_buf(), |t| {
+                                *segment.comparison_mut(&comparison) = t;
+                            })?;
+                        } else {
+                            time_old(reader, tag.into_buf(), |t| {
+                                *segment.comparison_mut(&comparison) = t;
+                            })?;
+                        }
+                        run.add_custom_comparison(comparison);
+                        Ok(())
                     } else {
-                        time_old(reader, tag.into_buf(), |t| {
-                            *segment.comparison_mut(&comparison) = t;
-                        })?;
+                        end_tag(reader, tag.into_buf())
                     }
-                    run.add_custom_comparison(comparison);
+                })
+            } else {
+                end_tag(reader, tag.into_buf())
+            }
+        } else if tag.name() == b"PersonalBestSplitTime" {
+            if version < Version(1, 3, 0, 0) {
+                time_old(reader, tag.into_buf(), |t| {
+                    segment.set_personal_best_split_time(t);
+                })
+            } else {
+                end_tag(reader, tag.into_buf())
+            }
+        } else if tag.name() == b"BestSegmentTime" {
+            if version >= Version(1, 4, 1, 0) {
+                time(reader, tag.into_buf(), |t| {
+                    segment.set_best_segment_time(t);
+                })
+            } else {
+                time_old(reader, tag.into_buf(), |t| {
+                    segment.set_best_segment_time(t);
+                })
+            }
+        } else if tag.name() == b"SegmentHistory" {
+            parse_children(reader, tag.into_buf(), |reader, tag| {
+                let mut index = 0;
+                attribute_err(&tag, b"id", |t| {
+                    index = t.parse()?;
                     Ok(())
+                })?;
+                if version >= Version(1, 4, 1, 0) {
+                    time(reader, tag.into_buf(), |t| {
+                        segment.segment_history_mut().insert(index, t);
+                    })
                 } else {
-                    end_tag(reader, tag.into_buf())
+                    time_old(reader, tag.into_buf(), |t| {
+                        segment.segment_history_mut().insert(index, t);
+                    })
                 }
             })
         } else {
             end_tag(reader, tag.into_buf())
         }
-    } else if tag.name() == b"PersonalBestSplitTime" {
-        if version < Version(1, 3, 0, 0) {
-            time_old(reader, tag.into_buf(), |t| {
-                segment.set_personal_best_split_time(t);
-            })
-        } else {
-            end_tag(reader, tag.into_buf())
-        }
-    } else if tag.name() == b"BestSegmentTime" {
-        if version >= Version(1, 4, 1, 0) {
-            time(reader, tag.into_buf(), |t| {
-                segment.set_best_segment_time(t);
-            })
-        } else {
-            time_old(reader, tag.into_buf(), |t| {
-                segment.set_best_segment_time(t);
-            })
-        }
-    } else if tag.name() == b"SegmentHistory" {
-        parse_children(reader, tag.into_buf(), |reader, tag| {
-            let mut index = 0;
-            attribute_err(&tag, b"id", |t| {
-                index = t.parse()?;
-                Ok(())
-            })?;
-            if version >= Version(1, 4, 1, 0) {
-                time(reader, tag.into_buf(), |t| {
-                    segment.segment_history_mut().insert(index, t);
-                })
-            } else {
-                time_old(reader, tag.into_buf(), |t| {
-                    segment.segment_history_mut().insert(index, t);
-                })
-            }
-        })
-    } else {
-        end_tag(reader, tag.into_buf())
     })?;
 
     Ok(segment)

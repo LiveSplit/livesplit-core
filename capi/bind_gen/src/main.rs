@@ -105,22 +105,8 @@ fn get_type(ty: &TyKind) -> Type {
                 name = String::from("u8");
             }
             let is_custom = match &name as &str {
-                "u8" |
-                "u16" |
-                "u32" |
-                "u64" |
-                "i8" |
-                "i16" |
-                "i32" |
-                "i64" |
-                "()" |
-                "bool" |
-                "c_char" |
-                "usize" |
-                "isize" |
-                "f32" |
-                "f64" |
-                "Json" => false,
+                "u8" | "u16" | "u32" | "u64" | "i8" | "i16" | "i32" | "i64" | "()" | "bool"
+                | "c_char" | "usize" | "isize" | "f32" | "f64" | "Json" => false,
                 _ => true,
             };
             return Type {
@@ -147,8 +133,8 @@ fn main() {
         if let &ItemKind::Mod(ref module) = &item.node {
             for item in &module.items {
                 if let &ItemKind::Fn(ref decl, _, _, Abi::C, _, _) = &item.node {
-                    if item.vis == Visibility::Public &&
-                        item.attrs.iter().any(|a| a.check_name("no_mangle"))
+                    if item.vis == Visibility::Public
+                        && item.attrs.iter().any(|a| a.check_name("no_mangle"))
                     {
                         let output = if let &FunctionRetTy::Ty(ref output) = &decl.output {
                             get_type(&output.node)

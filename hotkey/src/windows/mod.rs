@@ -1,4 +1,3 @@
-
 extern crate kernel32;
 extern crate parking_lot;
 extern crate user32;
@@ -138,9 +137,11 @@ impl Hook {
 
         let hotkey_map = hotkeys.clone();
 
-        thread::spawn(move || while let Ok(key) = events_rx.recv() {
-            if let Some(callback) = hotkey_map.lock().get_mut(&key) {
-                callback();
+        thread::spawn(move || {
+            while let Ok(key) = events_rx.recv() {
+                if let Some(callback) = hotkey_map.lock().get_mut(&key) {
+                    callback();
+                }
             }
         });
 

@@ -94,10 +94,8 @@ where
             let mut segment = Segment::new("");
             let mut defer_setting_run_time = false;
 
-            parse_children(
-                reader,
-                tag.into_buf(),
-                |reader, tag| if tag.name() == b"name" {
+            parse_children(reader, tag.into_buf(), |reader, tag| {
+                if tag.name() == b"name" {
                     text(reader, tag.into_buf(), |t| segment.set_name(t))
                 } else if tag.name() == b"bestTime" {
                     single_child(reader, tag.into_buf(), b"milliseconds", |reader, tag| {
@@ -129,8 +127,8 @@ where
                     })
                 } else {
                     end_tag(reader, tag.into_buf())
-                },
-            )?;
+                }
+            })?;
 
             if defer_setting_run_time {
                 *total_time += segment
@@ -158,10 +156,8 @@ pub fn parse<R: BufRead>(source: R) -> Result<Run> {
     parse_base(reader, &mut buf, b"Run", |reader, tag| {
         single_child(reader, tag.into_buf(), b"Run", |reader, tag| {
             single_child(reader, tag.into_buf(), b"default", |reader, tag| {
-                parse_children(
-                    reader,
-                    tag.into_buf(),
-                    |reader, tag| if tag.name() == b"name" {
+                parse_children(reader, tag.into_buf(), |reader, tag| {
+                    if tag.name() == b"name" {
                         text(reader, tag.into_buf(), |t| run.set_game_name(t))
                     } else if tag.name() == b"subTitle" {
                         text(reader, tag.into_buf(), |t| run.set_category_name(t))
@@ -181,8 +177,8 @@ pub fn parse<R: BufRead>(source: R) -> Result<Run> {
                         })
                     } else {
                         end_tag(reader, tag.into_buf())
-                    },
-                )
+                    }
+                })
             })
         })
     })?;

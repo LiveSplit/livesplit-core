@@ -102,18 +102,20 @@ fn parse_segment<R: BufRead>(
 ) -> Result<Segment> {
     let mut segment = Segment::new("");
 
-    parse_children(reader, buf, |reader, tag| if tag.name() == b"name" {
-        text(reader, tag.into_buf(), |t| segment.set_name(t))
-    } else if tag.name() == b"icon" {
-        image(reader, tag.into_buf(), image_buf, |i| segment.set_icon(i))
-    } else if tag.name() == b"time" {
-        time(reader, tag.into_buf(), |t| {
-            segment.set_personal_best_split_time(t)
-        })
-    } else if tag.name() == b"best" {
-        time(reader, tag.into_buf(), |t| segment.set_best_segment_time(t))
-    } else {
-        end_tag(reader, tag.into_buf())
+    parse_children(reader, buf, |reader, tag| {
+        if tag.name() == b"name" {
+            text(reader, tag.into_buf(), |t| segment.set_name(t))
+        } else if tag.name() == b"icon" {
+            image(reader, tag.into_buf(), image_buf, |i| segment.set_icon(i))
+        } else if tag.name() == b"time" {
+            time(reader, tag.into_buf(), |t| {
+                segment.set_personal_best_split_time(t)
+            })
+        } else if tag.name() == b"best" {
+            time(reader, tag.into_buf(), |t| segment.set_best_segment_time(t))
+        } else {
+            end_tag(reader, tag.into_buf())
+        }
     })?;
 
     Ok(segment)
@@ -130,10 +132,8 @@ pub fn parse<R: BufRead>(source: R) -> Result<Run> {
     let mut run = Run::new();
 
     parse_base(reader, &mut buf, b"run", |reader, tag| {
-        parse_children(
-            reader,
-            tag.into_buf(),
-            |reader, tag| if tag.name() == b"game" {
+        parse_children(reader, tag.into_buf(), |reader, tag| {
+            if tag.name() == b"game" {
                 text(reader, tag.into_buf(), |t| run.set_game_name(t))
             } else if tag.name() == b"category" {
                 text(reader, tag.into_buf(), |t| run.set_category_name(t))
@@ -161,8 +161,8 @@ pub fn parse<R: BufRead>(source: R) -> Result<Run> {
                 })
             } else {
                 end_tag(reader, tag.into_buf())
-            },
-        )
+            }
+        })
     })?;
 
     Ok(run)

@@ -1,8 +1,11 @@
-use Timer;
+use {Timer, TimerPhase};
 use serde_json::{to_writer, Result};
 use std::io::Write;
 use std::borrow::Cow;
 use settings::{Alignment, Color, Field, Gradient, SettingsDescription, Value};
+
+#[cfg(test)]
+mod tests;
 
 #[derive(Default, Clone)]
 pub struct Component {
@@ -98,12 +101,18 @@ impl Component {
         let run = timer.run();
 
         let finished_runs = if self.settings.show_finished_runs_count {
-            Some(timer
+            let mut count = timer
                 .run()
                 .attempt_history()
                 .iter()
                 .filter(|a| a.time().real_time.is_some())
-                .count() as u32)
+                .count() as u32;
+
+            if timer.current_phase() == TimerPhase::Ended {
+                count += 1;
+            }
+
+            Some(count)
         } else {
             None
         };
@@ -128,9 +137,7 @@ impl Component {
         let is_centered = match self.settings.text_alignment {
             Alignment::Center => true,
             Alignment::Left => false,
-            Alignment::Auto => {
-                run.game_icon().is_empty() || !self.settings.display_game_icon
-            }
+            Alignment::Auto => run.game_icon().is_empty() || !self.settings.display_game_icon,
         };
 
         let game_name = if self.settings.show_game_name {

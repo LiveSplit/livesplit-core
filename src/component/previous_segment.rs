@@ -103,7 +103,8 @@ impl Component {
         let mut previous_possible = None;
         let resolved_comparison = comparison::resolve(&self.settings.comparison_override, timer);
         let comparison = comparison::or_current(resolved_comparison, timer);
-        let live_segment = analysis::check_live_delta(timer, false, comparison, timer.current_timing_method());
+        let live_segment =
+            analysis::check_live_delta(timer, false, comparison, timer.current_timing_method());
 
         let phase = timer.current_phase();
         let method = timer.current_timing_method();

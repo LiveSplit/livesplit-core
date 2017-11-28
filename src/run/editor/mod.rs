@@ -209,10 +209,8 @@ impl Editor {
         self.segment_times.clear();
         for segment in self.run.segments() {
             let split_time = segment.personal_best_split_time()[method];
-            self.segment_times.push(TimeSpan::option_sub(
-                split_time,
-                previous_time,
-            ));
+            self.segment_times
+                .push(TimeSpan::option_sub(split_time, previous_time));
             if split_time.is_some() {
                 previous_time = split_time;
             }
@@ -222,12 +220,9 @@ impl Editor {
     fn fix_splits_from_segments(&mut self) {
         let method = self.selected_method;
         let mut previous_time = Some(TimeSpan::zero());
-        for (segment_time, segment) in
-            self.segment_times.iter_mut().zip(
-                self.run
-                    .segments_mut()
-                    .iter_mut(),
-            )
+        for (segment_time, segment) in self.segment_times
+            .iter_mut()
+            .zip(self.run.segments_mut().iter_mut())
         {
             {
                 let time = segment.personal_best_split_time_mut();

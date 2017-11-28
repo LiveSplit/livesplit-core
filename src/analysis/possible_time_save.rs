@@ -41,10 +41,12 @@ pub fn calculate(
         }
     }
 
-    time.map(|t| if t < TimeSpan::zero() {
-        TimeSpan::zero()
-    } else {
-        t
+    time.map(|t| {
+        if t < TimeSpan::zero() {
+            TimeSpan::zero()
+        } else {
+            t
+        }
     })
 }
 

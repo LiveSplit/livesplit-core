@@ -1,5 +1,5 @@
 use TimingMethod;
-use super::{Color, Gradient, Alignment};
+use super::{Alignment, Color, Gradient};
 use time::formatter::{Accuracy, DigitsFormat};
 use std::result::Result as StdResult;
 
