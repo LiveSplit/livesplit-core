@@ -14,18 +14,18 @@ pub fn calculate(timer: &Timer, comparison: &str) -> Option<TimeSpan> {
                 timing_method,
             ).unwrap_or_default();
 
-            let live_delta = TimeSpan::option_sub(
-                timer.current_time()[timing_method],
-                timer.current_split().unwrap().comparison(comparison)[timing_method],
-            );
+            catch! {
+                let live_delta = timer.current_time()[timing_method]?
+                    - timer.current_split().unwrap().comparison(comparison)[timing_method]?;
 
-            if let Some(live_delta) = live_delta {
                 if live_delta > delta {
                     delta = live_delta;
                 }
-            }
+            };
 
-            last_segment.comparison(comparison)[timing_method].map(|c| delta + c)
+            catch! {
+                last_segment.comparison(comparison)[timing_method]? + delta
+            }
         }
         TimerPhase::Ended => last_segment.split_time()[timing_method],
         TimerPhase::NotRunning => last_segment.comparison(comparison)[timing_method],

@@ -105,15 +105,10 @@ impl Timer {
             Ended => self.run.segments().last().unwrap().split_time().game_time,
             _ => if self.is_game_time_paused() {
                 self.game_time_pause_time
+            } else if self.is_game_time_initialized() {
+                catch! { real_time? - self.loading_times() }
             } else {
-                TimeSpan::option_sub(
-                    real_time,
-                    if self.is_game_time_initialized() {
-                        Some(self.loading_times())
-                    } else {
-                        None
-                    },
-                )
+                None
             },
         };
 
@@ -388,10 +383,8 @@ impl Timer {
     pub fn unpause_game_time(&mut self) {
         if self.is_game_time_paused() {
             let current_time = self.current_time();
-            self.set_loading_times(
-                TimeSpan::option_sub(current_time.real_time, current_time.game_time)
-                    .unwrap_or_default(),
-            );
+            let diff = catch! { current_time.real_time? - current_time.game_time? };
+            self.set_loading_times(diff.unwrap_or_default());
             self.is_game_time_paused = false;
         }
     }

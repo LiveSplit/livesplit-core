@@ -20,7 +20,7 @@ fn generate(segments: &mut [Segment], method: TimingMethod) {
         let mut remaining_segments = segments.iter_mut();
 
         let mut total_time = TimeSpan::zero();
-        while let Some(segment) = remaining_segments.next() {
+        for segment in remaining_segments.by_ref() {
             let segment_time = segment.segment_history().get(attempt_id).map(|t| t[method]);
 
             let split_time = match segment_time {

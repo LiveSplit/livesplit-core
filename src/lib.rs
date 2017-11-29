@@ -20,6 +20,12 @@ pub extern crate ordermap;
 pub extern crate palette;
 pub extern crate parking_lot;
 
+macro_rules! catch {
+    ($($code:tt)*) => {
+        (|| { Some({ $($code)* }) })()
+    }
+}
+
 mod hotkey_config;
 mod hotkey_system;
 mod image;

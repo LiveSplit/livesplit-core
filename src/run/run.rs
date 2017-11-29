@@ -6,7 +6,7 @@ use comparison::{default_generators, personal_best, ComparisonGenerator};
 use odds::vec::VecFindRemove;
 use unicase;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Run {
     game_icon: Image,
     game_name: String,
@@ -19,23 +19,19 @@ pub struct Run {
     path: Option<PathBuf>,
     segments: Vec<Segment>,
     custom_comparisons: Vec<String>,
-    comparison_generators: Vec<Box<ComparisonGenerator>>,
+    comparison_generators: ComparisonGenerators,
     auto_splitter_settings: Vec<u8>,
 }
 
-impl PartialEq for Run {
-    fn eq(&self, other: &Run) -> bool {
-        self.game_icon == other.game_icon && self.game_name == other.game_name
-            && self.category_name == other.category_name && self.offset == other.offset
-            && self.attempt_count == other.attempt_count
-            && self.attempt_history == other.attempt_history
-            && self.metadata == other.metadata && self.has_changed == other.has_changed
-            && self.path == other.path && self.segments == other.segments
-            && self.custom_comparisons == other.custom_comparisons
-            && self.comparison_generators
-                .iter()
-                .map(|c| c.name())
-                .eq(other.comparison_generators.iter().map(|c| c.name()))
+#[derive(Clone, Debug)]
+struct ComparisonGenerators(Vec<Box<ComparisonGenerator>>);
+
+impl PartialEq for ComparisonGenerators {
+    fn eq(&self, other: &ComparisonGenerators) -> bool {
+        self.0
+            .iter()
+            .map(|c| c.name())
+            .eq(other.0.iter().map(|c| c.name()))
     }
 }
 
@@ -54,7 +50,7 @@ impl Run {
             path: None,
             segments: Vec::new(),
             custom_comparisons: vec![personal_best::NAME.to_string()],
-            comparison_generators: default_generators(),
+            comparison_generators: ComparisonGenerators(default_generators()),
             auto_splitter_settings: Vec::new(),
         }
     }
@@ -181,7 +177,7 @@ impl Run {
     pub fn comparisons(&self) -> ComparisonsIter {
         ComparisonsIter {
             custom: &self.custom_comparisons,
-            generators: &self.comparison_generators,
+            generators: &self.comparison_generators.0,
         }
     }
 
@@ -253,7 +249,7 @@ impl Run {
 
     #[inline]
     pub fn regenerate_comparisons(&mut self) {
-        for generator in &mut self.comparison_generators {
+        for generator in &mut self.comparison_generators.0 {
             generator.generate(&mut self.segments, &self.attempt_history);
         }
     }
@@ -458,7 +454,7 @@ impl Run {
                         cache.clear();
                     }
                 } else {
-                    // Remove null times in history that aren't followed by a non-null time
+                    // Remove None times in history that aren't followed by a non-None time
                     self.remove_items_from_cache(index, &mut cache);
                 }
             }

@@ -9,7 +9,7 @@ impl SegmentHistory {
     pub fn try_get_min_index(&self) -> Option<i32> {
         // This assumes that the first element is the minimum,
         // which is only true for an ordered map
-        self.0.first().map(|&(i, _)| i)
+        Some(self.0.first()?.0)
     }
 
     /// Defaults to a maximum of 1
@@ -20,7 +20,7 @@ impl SegmentHistory {
     pub fn try_get_max_index(&self) -> Option<i32> {
         // This assumes that the last element is the maximum,
         // which is only true for an ordered map
-        self.0.last().map(|&(i, _)| i)
+        Some(self.0.last()?.0)
     }
 
     fn get_pos(&self, index: i32) -> Result<usize, usize> {
@@ -36,19 +36,14 @@ impl SegmentHistory {
 
     #[inline]
     pub fn get(&self, index: i32) -> Option<Time> {
-        self.get_pos(index)
-            .ok()
-            .and_then(|p| self.0.get(p))
-            .map(|&(_, t)| t)
+        let pos = self.get_pos(index).ok()?;
+        Some(self.0.get(pos)?.1)
     }
 
     #[inline]
     pub fn get_mut(&mut self, index: i32) -> Option<&mut Time> {
-        if let Ok(pos) = self.get_pos(index) {
-            Some(&mut self.0[pos].1)
-        } else {
-            None
-        }
+        let pos = self.get_pos(index).ok()?;
+        Some(&mut self.0.get_mut(pos)?.1)
     }
 
     #[inline]

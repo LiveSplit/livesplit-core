@@ -25,29 +25,30 @@ pub fn calculate(
         }
     }
 
-    let mut time = TimeSpan::option_op(
-        segment.comparison(comparison)[method],
-        best_segments,
-        |c, b| c - b - prev_time,
-    );
+    catch! {
+        let mut time = segment.comparison(comparison)[method]? - best_segments? - prev_time;
 
-    if live && timer.current_split_index() == Some(segment_index) {
-        let segment_delta = analysis::live_segment_delta(timer, segment_index, comparison, method);
-        if let (Some(segment_delta), Some(time)) = (segment_delta, time.as_mut()) {
-            let segment_delta = TimeSpan::zero() - segment_delta;
-            if segment_delta < *time {
-                *time = segment_delta;
-            }
-        }
-    }
+        catch! {
+            if live && timer.current_split_index()? == segment_index {
+                let segment_delta = analysis::live_segment_delta(
+                    timer,
+                    segment_index,
+                    comparison,
+                    method,
+                )?;
+                let segment_delta = TimeSpan::zero() - segment_delta;
+                if segment_delta < time {
+                    time = segment_delta;
+                }
+            };
+        };
 
-    time.map(|t| {
-        if t < TimeSpan::zero() {
+        if time < TimeSpan::zero() {
             TimeSpan::zero()
         } else {
-            t
+            time
         }
-    })
+    }
 }
 
 pub fn calculate_total(timer: &Timer, segment_index: usize, comparison: &str) -> TimeSpan {
