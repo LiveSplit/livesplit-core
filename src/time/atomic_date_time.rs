@@ -23,16 +23,6 @@ impl AtomicDateTime {
             synced_with_atomic_clock: false,
         }
     }
-
-    pub fn option_op<F, R>(a: Option<AtomicDateTime>, b: Option<AtomicDateTime>, f: F) -> Option<R>
-    where
-        F: FnOnce(AtomicDateTime, AtomicDateTime) -> R,
-    {
-        match (a, b) {
-            (Some(a), Some(b)) => Some(f(a, b)),
-            _ => None,
-        }
-    }
 }
 
 impl Sub for AtomicDateTime {

@@ -73,7 +73,6 @@ pub fn or_current<'a>(comparison: Option<&'a str>, timer: &'a Timer) -> &'a str 
 }
 
 pub fn resolve<'a>(comparison: &Option<String>, timer: &'a Timer) -> Option<&'a str> {
-    comparison
-        .as_ref()
-        .and_then(|c| timer.run().comparisons().find(|&rc| c == rc))
+    let comparison = comparison.as_ref()?;
+    timer.run().comparisons().find(|&rc| comparison == rc)
 }

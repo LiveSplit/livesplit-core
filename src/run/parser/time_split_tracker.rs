@@ -52,12 +52,12 @@ pub fn parse<R: BufRead>(source: R, path_for_loading_other_files: Option<PathBuf
     let mut splits = line.split('\t');
     run.set_attempt_count(splits.next().ok_or(Error::ExpectedAttemptCount)?.parse()?);
     run.set_offset(splits.next().ok_or(Error::ExpectedOffset)?.parse()?);
-    if let (&Some(ref path), Some(file)) = (&path, splits.next()) {
-        let path = path.with_file_name(file);
-        if let Ok(image) = Image::from_file(path, &mut buf) {
-            run.set_game_icon(image);
-        }
-    }
+
+    catch! {
+        let path = path.as_ref()?.with_file_name(splits.next()?);
+        let image = Image::from_file(path, &mut buf).ok()?;
+        run.set_game_icon(image);
+    };
 
     let line = lines.next().ok_or(Error::ExpectedTitleLine)??;
     let mut splits = line.split('\t');
@@ -87,15 +87,14 @@ pub fn parse<R: BufRead>(source: R, path_for_loading_other_files: Option<PathBuf
 
         let line = lines.next().ok_or(Error::ExpectedIconLine)??;
 
-        if let Some(ref path) = path {
+        catch! {
             let file = line.trim_right();
             if !file.is_empty() {
-                let path = path.with_file_name(file);
-                if let Ok(image) = Image::from_file(path, &mut buf) {
-                    segment.set_icon(image);
-                }
+                let path = path.as_ref()?.with_file_name(file);
+                let image = Image::from_file(path, &mut buf).ok()?;
+                segment.set_icon(image);
             }
-        }
+        };
 
         run.push_segment(segment);
     }
@@ -133,13 +132,13 @@ fn parse_history(run: &mut Run, path: Option<PathBuf>) -> StdResult<(), ()> {
             let mut final_time = Time::default();
             let mut ended = None;
             if completed {
-                if let Some(&last_split_time) = split_times.last() {
-                    final_time.real_time = last_split_time;
-                    if let Some(final_time) = final_time.real_time {
-                        let ended_date = started + final_time.to_duration();
-                        ended = Some(AtomicDateTime::new(ended_date, false));
-                    }
-                }
+                catch! {
+                    let last_split_time = split_times.last()?;
+                    final_time.real_time = *last_split_time;
+                    let final_time = final_time.real_time?;
+                    let ended_date = started + final_time.to_duration();
+                    ended = Some(AtomicDateTime::new(ended_date, false));
+                };
             }
 
             run.add_attempt_with_index(
@@ -163,11 +162,10 @@ fn parse_history(run: &mut Run, path: Option<PathBuf>) -> StdResult<(), ()> {
                 segment
                     .segment_history_mut()
                     .insert(attempt_id, segment_time);
-                if TimeSpan::option_op(
-                    segment_time.real_time,
-                    segment.best_segment_time().real_time,
-                    |a, b| a < b,
-                ).unwrap_or(false)
+
+                if catch! {
+                    segment_time.real_time? < segment.best_segment_time().real_time?
+                }.unwrap_or(false)
                 {
                     segment.set_best_segment_time(segment_time);
                 }

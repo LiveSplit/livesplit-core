@@ -37,34 +37,28 @@ fn segment_time_or_segment_delta(
         timer.current_time()[method]
     } else {
         timer.run().segment(split_number).split_time()[method]
-    };
+    }?;
 
-    if let Some(current_time) = current_time {
-        let split_number_comparison = timer
-            .run()
-            .segment(split_number)
-            .comparison_timing_method(comparison, method);
+    let split_number_comparison = timer
+        .run()
+        .segment(split_number)
+        .comparison_timing_method(comparison, method);
 
-        for segment in timer.run().segments()[..split_number].iter().rev() {
-            if let Some(split_time) = segment.split_time()[method] {
-                if segment_time {
-                    return Some(current_time - split_time);
-                } else if let Some(comparison) =
-                    segment.comparison_timing_method(comparison, method)
-                {
-                    return split_number_comparison
-                        .map(|s| (current_time - s) - (split_time - comparison));
-                }
+    for segment in timer.run().segments()[..split_number].iter().rev() {
+        if let Some(split_time) = segment.split_time()[method] {
+            if segment_time {
+                return Some(current_time - split_time);
+            } else if let Some(comparison) = segment.comparison_timing_method(comparison, method) {
+                return split_number_comparison
+                    .map(|s| (current_time - s) - (split_time - comparison));
             }
         }
+    }
 
-        if segment_time {
-            Some(current_time)
-        } else {
-            split_number_comparison.map(|s| current_time - s)
-        }
+    if segment_time {
+        Some(current_time)
     } else {
-        None
+        split_number_comparison.map(|s| current_time - s)
     }
 }
 
@@ -173,13 +167,12 @@ pub fn check_live_delta(
         let comparison_delta = live_segment_delta(timer, split_index, comparison, method);
 
         if split_delta && current_time > current_split
-            || use_best_segment
-                && TimeSpan::option_op(current_segment, best_segment, |c, b| c > b).unwrap_or(false)
+            || use_best_segment && catch! { current_segment? > best_segment? }.unwrap_or(false)
                 && best_segment_delta.map_or(false, |d| d > TimeSpan::zero())
             || comparison_delta.map_or(false, |d| d > TimeSpan::zero())
         {
             if split_delta {
-                return TimeSpan::option_sub(current_time, current_split);
+                return catch! { current_time? - current_split? };
             } else {
                 return comparison_delta;
             }

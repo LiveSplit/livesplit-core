@@ -30,9 +30,10 @@ impl Attempt {
     /// This either returns a 1.6+ Time Stamp based duration
     /// or the duration of the run (assuming it's not resetted)
     /// if it's from before LiveSplit 1.6. If it is from before
-    /// 1.6 and resetted then it will return null.
+    /// 1.6 and resetted then it will return None.
     pub fn duration(&self) -> Option<TimeSpan> {
-        AtomicDateTime::option_op(self.started, self.ended, |s, e| e - s).or(self.time.real_time)
+        let diff = catch! { self.ended? - self.started? };
+        diff.or(self.time.real_time)
     }
 
     #[inline]

@@ -347,15 +347,15 @@ fn calculate_comparison_time(
             .segment(0)
             .comparison_timing_method(comparison, timing_method)
     } else if timer.current_split_index() > Some(0) {
-        TimeSpan::option_sub(
+        Some(
             timer
                 .run()
                 .segment(last_split_index)
-                .comparison_timing_method(comparison, timing_method),
-            timer
-                .run()
-                .segment(last_split_index - 1)
-                .comparison_timing_method(comparison, timing_method),
+                .comparison_timing_method(comparison, timing_method)?
+                - timer
+                    .run()
+                    .segment(last_split_index - 1)
+                    .comparison_timing_method(comparison, timing_method)?,
         )
     } else {
         None
@@ -376,6 +376,6 @@ fn calculate_segment_time(
     if timer.current_phase() == TimerPhase::NotRunning {
         Some(timer.run().offset())
     } else {
-        TimeSpan::option_sub(timer.current_time()[timing_method], last_split)
+        Some(timer.current_time()[timing_method]? - last_split?)
     }
 }

@@ -52,8 +52,8 @@ impl Time {
         F: FnMut(TimeSpan, TimeSpan) -> TimeSpan,
     {
         Time {
-            real_time: TimeSpan::option_op(a.real_time, b.real_time, &mut f),
-            game_time: TimeSpan::option_op(a.game_time, b.game_time, &mut f),
+            real_time: catch! { f(a.real_time?, b.real_time?) },
+            game_time: catch! { f(a.game_time?, b.game_time?) },
         }
     }
 }

@@ -210,7 +210,7 @@ impl Editor {
         for segment in self.run.segments() {
             let split_time = segment.personal_best_split_time()[method];
             self.segment_times
-                .push(TimeSpan::option_sub(split_time, previous_time));
+                .push(catch! { split_time? - previous_time? });
             if split_time.is_some() {
                 previous_time = split_time;
             }
@@ -226,7 +226,7 @@ impl Editor {
         {
             {
                 let time = segment.personal_best_split_time_mut();
-                time[method] = TimeSpan::option_add(previous_time, *segment_time);
+                time[method] = catch! { previous_time? + (*segment_time)? };
             }
             if segment_time.is_some() {
                 previous_time = segment.personal_best_split_time()[method];
@@ -297,7 +297,7 @@ impl Editor {
                 let current_segment = segment_history_element[method];
                 if let Some(current_segment) = current_segment {
                     for current_index in current_index..self.run.len() {
-                        // Add the removed segment's history times to the next non null times
+                        // Add the removed segment's history times to the next non None times
                         if let Some(&mut Some(ref mut segment)) = self.run
                             .segment_mut(current_index)
                             .segment_history_mut()
@@ -318,10 +318,10 @@ impl Editor {
         }
 
         // Set the new Best Segment time to be the sum of the two Best Segments
-        let min_best_segment = TimeSpan::option_add(
-            self.run.segment(index).best_segment_time()[method],
-            self.run.segment(current_index).best_segment_time()[method],
-        );
+        let min_best_segment = catch! {
+            self.run.segment(index).best_segment_time()[method]?
+                + self.run.segment(current_index).best_segment_time()[method]?
+        };
 
         if let Some(mut min_best_segment) = min_best_segment {
             // Use any element in the history that has a lower time than this sum
@@ -387,7 +387,7 @@ impl Editor {
 
         for run_index in min_index..max_index + 1 {
             // Remove both segment history elements if one of them
-            // has a null time and the other has has a non null time
+            // has a None time and the other has has a non None time
             let first_history = first.segment_history().get(run_index);
             let second_history = second.segment_history().get(run_index);
             if let (Some(first_history), Some(second_history)) = (first_history, second_history) {

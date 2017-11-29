@@ -26,24 +26,6 @@ impl TimeSpan {
         ))
     }
 
-    pub fn option_op<F, R>(a: Option<TimeSpan>, b: Option<TimeSpan>, f: F) -> Option<R>
-    where
-        F: FnOnce(TimeSpan, TimeSpan) -> R,
-    {
-        match (a, b) {
-            (Some(a), Some(b)) => Some(f(a, b)),
-            _ => None,
-        }
-    }
-
-    pub fn option_add(a: Option<TimeSpan>, b: Option<TimeSpan>) -> Option<TimeSpan> {
-        TimeSpan::option_op(a, b, |a, b| a + b)
-    }
-
-    pub fn option_sub(a: Option<TimeSpan>, b: Option<TimeSpan>) -> Option<TimeSpan> {
-        TimeSpan::option_op(a, b, |a, b| a - b)
-    }
-
     pub fn to_duration(&self) -> Duration {
         self.0
     }

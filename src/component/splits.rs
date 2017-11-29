@@ -1,7 +1,7 @@
 use std::cmp::{max, min};
 use std::io::Write;
 use serde_json::{to_writer, Result};
-use {analysis, GeneralLayoutSettings, TimeSpan, Timer};
+use {analysis, GeneralLayoutSettings, Timer};
 use analysis::split_color;
 use time::formatter::{Delta, Regular, TimeFormatter};
 use time::formatter::none_wrapper::{DashWrapper, EmptyWrapper};
@@ -171,7 +171,7 @@ impl Component {
                     let comparison_time = segment.comparison(comparison)[method];
 
                     let (time, delta, semantic_color) = if current_split > Some(i) {
-                        let delta = TimeSpan::option_sub(split, comparison_time);
+                        let delta = catch! { split? - comparison_time? };
                         (
                             split,
                             delta,
