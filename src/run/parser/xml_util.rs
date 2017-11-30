@@ -12,41 +12,57 @@ use time;
 use chrono::ParseError as ChronoError;
 
 quick_error! {
+    /// The Error type for XML-based splits files that couldn't be parsed.
     #[derive(Debug)]
     pub enum Error {
+        /// Failed to parse the XML.
         Xml(err: XmlError) {
             from()
         }
+        /// Failed to read from the source.
         Io(err: io::Error) {
             from()
         }
-        Bool
-        UnexpectedEndOfFile
-        UnexpectedInnerTag
-        AttributeNotFound
-        TagNotFound
-        LengthOutOfBounds
+        /// Failed to parse a boolean.
+        Bool {}
+        /// Didn't expect the end of the file.
+        UnexpectedEndOfFile {}
+        /// Didn't expect an inner element.
+        UnexpectedElement {}
+        /// A required attribute has not been found on an element.
+        AttributeNotFound {}
+        /// A required element has not been found.
+        ElementNotFound {}
+        /// The length of a buffer was too large.
+        LengthOutOfBounds {}
+        /// Failed to decode a string slice as UTF-8.
         Utf8Str(err: str::Utf8Error) {
             from()
         }
+        /// Failed to decode a string as UTF-8.
         Utf8String(err: string::FromUtf8Error) {
             from()
         }
+        /// Failed to parse an integer.
         Int(err: ParseIntError) {
             from()
         }
+        /// Failed to parse a floating point number.
         Float(err: ParseFloatError) {
             from()
         }
+        /// Failed to parse a time.
         Time(err: time::ParseError) {
             from()
         }
+        /// Failed to parse a date.
         Date(err: ChronoError) {
             from()
         }
     }
 }
 
+/// The Result type for Parsers that parse XML-based splits files.
 pub type Result<T> = StdResult<T, Error>;
 
 pub struct Tag<'a>(BytesStart<'a>, *mut Vec<u8>);
@@ -125,7 +141,7 @@ where
     loop {
         buf.clear();
         match reader.read_event(buf)? {
-            Event::Start(_) => return Err(Error::UnexpectedInnerTag),
+            Event::Start(_) => return Err(Error::UnexpectedElement),
             Event::End(_) => {
                 return f(Cow::Borrowed(&[]));
             }
@@ -146,7 +162,7 @@ fn end_tag_immediately<R: BufRead>(reader: &mut Reader<R>, buf: &mut Vec<u8>) ->
     loop {
         buf.clear();
         match reader.read_event(buf)? {
-            Event::Start(_) => return Err(Error::UnexpectedInnerTag),
+            Event::Start(_) => return Err(Error::UnexpectedElement),
             Event::End(_) => return Ok(()),
             Event::Eof => return Err(Error::UnexpectedEndOfFile),
             _ => {}
@@ -239,7 +255,7 @@ where
             end_tag(reader, t.into_buf())
         }
     })?;
-    val.ok_or(Error::TagNotFound)
+    val.ok_or(Error::ElementNotFound)
 }
 
 pub fn parse_children<R, F>(reader: &mut Reader<R>, buf: &mut Vec<u8>, mut f: F) -> Result<()>
@@ -283,7 +299,7 @@ where
                     let tag = Tag::new(start, ptr_buf);
                     return f(reader, tag);
                 } else {
-                    return Err(Error::TagNotFound);
+                    return Err(Error::ElementNotFound);
                 },
                 Event::Eof => return Err(Error::UnexpectedEndOfFile),
                 _ => {}

@@ -1,13 +1,23 @@
 use hotkey::KeyCode;
 
+/// The configuration to use for a Hotkey System. It describes with keys to use
+/// as hotkeys for the different actions.
 #[derive(Debug, Eq, PartialEq, Hash)]
 pub struct HotkeyConfig {
+    /// The key to use for splitting and starting a new attempt.
     pub split: KeyCode,
+    /// The key to use for resetting the current attempt.
     pub reset: KeyCode,
+    /// The key to use for undoing the last split.
     pub undo: KeyCode,
+    /// The key to use for skipping the current split.
     pub skip: KeyCode,
+    /// The key to use for pausing the current attempt and starting a new
+    /// attempt.
     pub pause: KeyCode,
+    /// The key to use for switching to the previous comparison.
     pub previous_comparison: KeyCode,
+    /// The key to use for switching to the next comparison.
     pub next_comparison: KeyCode,
 }
 

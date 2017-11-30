@@ -1,3 +1,5 @@
+//! Provides the parser for Urn splits files.
+
 use std::io::Read;
 use std::result::Result as StdResult;
 use serde_json::de::from_reader;
@@ -5,17 +7,22 @@ use serde_json::Error as JsonError;
 use {time, Run, Segment, Time, TimeSpan};
 
 quick_error! {
+    /// The Error type for splits files that couldn't be parsed by the Urn
+    /// Parser.
     #[derive(Debug)]
     pub enum Error {
+        /// Failed to parse a time.
         Time(err: time::ParseError) {
             from()
         }
+        /// Failed to parse JSON.
         Json(err: JsonError) {
             from()
         }
     }
 }
 
+/// The Result type for the Urn Parser.
 pub type Result<T> = StdResult<T, Error>;
 
 #[derive(Deserialize)]
@@ -47,6 +54,7 @@ fn parse_time(time: &str) -> Result<Time> {
     Ok(Time::new().with_real_time(real_time))
 }
 
+/// Attempts to parse a Urn splits file.
 pub fn parse<R: Read>(source: R) -> Result<Run> {
     let mut run = Run::new();
 
@@ -62,10 +70,10 @@ pub fn parse<R: Read>(source: R) -> Result<Run> {
         run.set_offset(-start_delay.parse()?);
     }
 
-    // Best Split Times can be used for the Segment History
-    // Every single best split time should be included as its own run,
-    // since the best split times could be apart from each other less
-    // than the best segments, so we have to assume they are from different runs.
+    // Best Split Times can be used for the Segment History Every single best
+    // split time should be included as its own run, since the best split times
+    // could be apart from each other less than the best segments, so we have to
+    // assume they are from different runs.
     let mut attempt_history_index = 1;
 
     if let Some(splits) = splits.splits {

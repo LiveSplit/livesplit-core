@@ -121,67 +121,67 @@ pub unsafe extern "C" fn RunEditor_move_segments_down(this: *mut RunEditor) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn RunEditor_selected_set_icon(
+pub unsafe extern "C" fn RunEditor_active_set_icon(
     this: *mut RunEditor,
     data: *const u8,
     length: usize,
 ) {
     acc_mut(this)
-        .selected_segment()
+        .active_segment()
         .set_icon(slice::from_raw_parts(data, length));
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn RunEditor_selected_remove_icon(this: *mut RunEditor) {
-    acc_mut(this).selected_segment().remove_icon();
+pub unsafe extern "C" fn RunEditor_active_remove_icon(this: *mut RunEditor) {
+    acc_mut(this).active_segment().remove_icon();
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn RunEditor_selected_set_name(this: *mut RunEditor, name: *const c_char) {
-    acc_mut(this).selected_segment().set_name(str(name));
+pub unsafe extern "C" fn RunEditor_active_set_name(this: *mut RunEditor, name: *const c_char) {
+    acc_mut(this).active_segment().set_name(str(name));
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn RunEditor_selected_parse_and_set_split_time(
+pub unsafe extern "C" fn RunEditor_active_parse_and_set_split_time(
     this: *mut RunEditor,
     time: *const c_char,
 ) -> bool {
     acc_mut(this)
-        .selected_segment()
+        .active_segment()
         .parse_and_set_split_time(str(time))
         .is_ok()
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn RunEditor_selected_parse_and_set_segment_time(
+pub unsafe extern "C" fn RunEditor_active_parse_and_set_segment_time(
     this: *mut RunEditor,
     time: *const c_char,
 ) -> bool {
     acc_mut(this)
-        .selected_segment()
+        .active_segment()
         .parse_and_set_segment_time(str(time))
         .is_ok()
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn RunEditor_selected_parse_and_set_best_segment_time(
+pub unsafe extern "C" fn RunEditor_active_parse_and_set_best_segment_time(
     this: *mut RunEditor,
     time: *const c_char,
 ) -> bool {
     acc_mut(this)
-        .selected_segment()
+        .active_segment()
         .parse_and_set_best_segment_time(str(time))
         .is_ok()
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn RunEditor_selected_parse_and_set_comparison_time(
+pub unsafe extern "C" fn RunEditor_active_parse_and_set_comparison_time(
     this: *mut RunEditor,
     comparison: *const c_char,
     time: *const c_char,
 ) -> bool {
     acc_mut(this)
-        .selected_segment()
+        .active_segment()
         .parse_and_set_comparison_time(str(comparison), str(time))
         .is_ok()
 }

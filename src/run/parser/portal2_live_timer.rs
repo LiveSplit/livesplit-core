@@ -1,25 +1,37 @@
+//! Provides the parser for Portal 2 Live Timer splits files.
+
 use std::io::{self, BufRead};
 use std::result::Result as StdResult;
 use std::num::ParseFloatError;
 use {GameTime, Run, Segment, TimeSpan};
 
 quick_error! {
+    /// The Error types for splits files that couldn't be parsed by the Portal 2
+    /// Live Timer Parser.
     #[derive(Debug)]
     pub enum Error {
-        ExpectedMap
-        ExpectedMapName
-        ExpectedDifferentMapName
-        ExpectedStartTicks
-        ExpectedEndTicks
+        /// Expected another map, but didn't find it.
+        ExpectedMap {}
+        /// Expected the map's name, but didn't find it.
+        ExpectedMapName {}
+        /// Expected a different map.
+        ExpectedDifferentMapName {}
+        /// Expected the start ticks of the map, but didn't find it.
+        ExpectedStartTicks {}
+        /// Expected the end ticks of the map, but didn't find it.
+        ExpectedEndTicks {}
+        /// Couldn't parse the amount of ticks.
         Ticks(err: ParseFloatError) {
             from()
         }
+        /// Failed to read from the source.
         Io(err: io::Error) {
             from()
         }
     }
 }
 
+/// The Result type for the Portal 2 Live Timer Parser.
 pub type Result<T> = StdResult<T, Error>;
 
 static CHAPTERS: [(&str, &[&str]); 9] = [
@@ -135,6 +147,7 @@ static CHAPTERS: [(&str, &[&str]); 9] = [
     ),
 ];
 
+/// Attempts to parse a Portal 2 Live Timer splits file.
 pub fn parse<R: BufRead>(source: R) -> Result<Run> {
     let mut run = Run::new();
 

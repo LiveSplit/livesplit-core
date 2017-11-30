@@ -1,3 +1,35 @@
+//! The composite parser can be used, if the file type of the splits file is not
+//! known, which tries to figure out which splits file format is used and parses
+//! it with the parser for that format.
+//!
+//! # Examples
+//!
+//! Using the composite parser to parse a splits file of an unknown file format.
+//!
+//! ```no_run
+//! use livesplit_core::run::parser::composite;
+//! use std::fs::File;
+//! use std::io::BufReader;
+//! use std::path::PathBuf;
+//!
+//! // Load the file.
+//! let path = PathBuf::from("path/to/splits_file");
+//! let file = BufReader::new(File::open(&path).expect("File not found"));
+//!
+//! // We want to load additional files from the file system, like segment icons.
+//! let load_files = true;
+//!
+//! // Actually parse the file.
+//! let result = composite::parse(file, Some(path), load_files);
+//! let parsed = result.expect("Not a valid splits file");
+//!
+//! // Print out the detected file format.
+//! println!("Splits File Format: {}", parsed.kind);
+//!
+//! // Get out the Run object.
+//! let run = parsed.run;
+//! ```
+
 use std::path::PathBuf;
 use std::io::{self, BufRead, Seek, SeekFrom};
 use std::result::Result as StdResult;
@@ -6,19 +38,28 @@ use super::{face_split, livesplit, llanfair, llanfair_gered, shit_split, splitte
             time_split_tracker, urn, wsplit, TimerKind, llanfair2, portal2_live_timer};
 
 quick_error! {
+    /// The Error type for splits files that couldn't be parsed by the Composite
+    /// Parser.
     #[derive(Debug)]
     pub enum Error {
+        /// Failed to seek back when trying to parse with a different parser.
         Seek(err: io::Error) {
             from()
         }
-        NoParserParsedIt
+        /// No parser was able to parse the splits file.
+        NoParserParsedIt {}
     }
 }
 
+/// The Result type for the Composite Parser.
 pub type Result<T> = StdResult<T, Error>;
 
+/// A run parsed by the Composite Parser. This contains the Run itself and
+/// information about which parser parsed it.
 pub struct ParsedRun {
+    /// The parsed run.
     pub run: Run,
+    /// The parser that parsed it.
     pub kind: TimerKind,
 }
 
@@ -26,11 +67,18 @@ fn parsed(run: Run, kind: TimerKind) -> ParsedRun {
     ParsedRun { run, kind }
 }
 
+/// Attempts to parse a splits file by invoking the corresponding parser for the
+/// file format detected. A path to the splits file can be provided, which helps
+/// saving the splits file again later. Additionally you need to specify if
+/// additional files, like external images are allowed to be loaded. If you are
+/// using livesplit-core in a server-like environment, set this to `false`. Only
+/// client-side applications should set this to `true`.
 pub fn parse<R>(mut source: R, path: Option<PathBuf>, load_files: bool) -> Result<ParsedRun>
 where
     R: BufRead + Seek,
 {
-    let files_path = if load_files { path.clone() } else { None };
+    let files_path =
+        if load_files { path.clone() } else { None };
 
     source.seek(SeekFrom::Start(0))?;
     if let Ok(run) = livesplit::parse(&mut source, path) {

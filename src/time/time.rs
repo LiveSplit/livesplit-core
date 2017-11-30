@@ -1,18 +1,26 @@
 use std::ops::{Add, AddAssign, Index, IndexMut, Sub, SubAssign};
 use {TimeSpan, TimingMethod};
 
+/// A time that can store a Real Time and a Game Time. Both of them are
+/// optional.
 #[derive(Copy, Clone, Default, Debug, Eq, PartialEq)]
 pub struct Time {
+    /// The Real Time value.
     pub real_time: Option<TimeSpan>,
+    /// The Game Time value.
     pub game_time: Option<TimeSpan>,
 }
 
 impl Time {
+    /// Creates a new Time with empty Real Time and Game Time.
     #[inline]
     pub fn new() -> Self {
         Time::default()
     }
 
+    /// Creates a new Time where Real Time and Game Time are zero. Keep in mind
+    /// that a zero Time Span is not the same as a `None` Time Span as created
+    /// by `Time::new()`.
     #[inline]
     pub fn zero() -> Self {
         Time {
@@ -21,6 +29,8 @@ impl Time {
         }
     }
 
+    /// Creates a new Time based on the current one where the Real Time is
+    /// replaced by the given Time Span.
     #[inline]
     pub fn with_real_time(self, real_time: Option<TimeSpan>) -> Self {
         Time {
@@ -29,6 +39,8 @@ impl Time {
         }
     }
 
+    /// Creates a new Time based on the current one where the Game Time is
+    /// replaced by the given Time Span.
     #[inline]
     pub fn with_game_time(self, game_time: Option<TimeSpan>) -> Self {
         Time {
@@ -37,6 +49,8 @@ impl Time {
         }
     }
 
+    /// Creates a new Time based on the current one where the specified timing
+    /// method is replaced by the given Time Span.
     #[inline]
     pub fn with_timing_method(
         mut self,
@@ -47,6 +61,8 @@ impl Time {
         self
     }
 
+    /// Applies an operation to both Timing Methods of the two times provided
+    /// and creates a new Time from the result.
     pub fn op<F>(a: Time, b: Time, mut f: F) -> Time
     where
         F: FnMut(TimeSpan, TimeSpan) -> TimeSpan,
@@ -58,6 +74,7 @@ impl Time {
     }
 }
 
+/// Represents a Time Span intended to be used as a Real Time.
 pub struct RealTime(pub Option<TimeSpan>);
 
 impl From<RealTime> for Time {
@@ -66,6 +83,7 @@ impl From<RealTime> for Time {
     }
 }
 
+/// Represents a Time Span intended to be used as a Game Time.
 pub struct GameTime(pub Option<TimeSpan>);
 
 impl From<GameTime> for Time {

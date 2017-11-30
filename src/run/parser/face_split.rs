@@ -1,3 +1,5 @@
+//! Provides the parser for FaceSplit splits files.
+
 use std::borrow::Cow;
 use std::io::{self, BufRead};
 use std::result::Result as StdResult;
@@ -5,25 +7,36 @@ use std::num::ParseIntError;
 use {time, Image, RealTime, Run, Segment, Time, TimeSpan};
 
 quick_error! {
+    /// The Error type for splits files that couldn't be parsed by the FaceSplit
+    /// Parser.
     #[derive(Debug)]
     pub enum Error {
-        ExpectedTitle
-        ExpectedAttemptCount
-        ExpectedSplitName
-        ExpectedSplitTime
-        ExpectedBestSegmentTime
+        /// Expected the title, but didn't find it.
+        ExpectedTitle {}
+        /// Expected the attempt count, but didn't find it.
+        ExpectedAttemptCount {}
+        /// Expected the name of the segment, but didn't find it.
+        ExpectedSegmentName {}
+        /// Expected the split time, but didn't find it.
+        ExpectedSplitTime {}
+        /// Expected the best segment time, but didn't find it.
+        ExpectedBestSegmentTime {}
+        /// Failed to parse the amount of attempts.
         Attempt(err: ParseIntError) {
             from()
         }
+        /// Failed to parse a time.
         Time(err: time::ParseError) {
             from()
         }
+        /// Failed to read from the source.
         Io(err: io::Error) {
             from()
         }
     }
 }
 
+/// The Result type for the FaceSplit Parser.
 pub type Result<T> = StdResult<T, Error>;
 
 fn parse_time(time: &str) -> Result<Time> {
@@ -45,6 +58,11 @@ fn replace<'a>(text: &'a str, a: &'a str, b: &str) -> Cow<'a, str> {
     }
 }
 
+/// Attempts to parse a FaceSplit splits file. In addition to the source to
+/// parse, you need to specify if additional files for the icons should be
+/// loaded from the file system. If you are using livesplit-core in a
+/// server-like environment, set this to `false`. Only client-side applications
+/// should set this to `true`.
 pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
     let mut run = Run::new();
     let mut icon_buf = Vec::new();
@@ -60,7 +78,7 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
         let mut splits = line.splitn(5, '-');
 
         let segment_name = replace(
-            splits.next().ok_or(Error::ExpectedSplitName)?,
+            splits.next().ok_or(Error::ExpectedSegmentName)?,
             r#""?""#,
             "-",
         );

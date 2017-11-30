@@ -29,9 +29,7 @@ pub unsafe extern "C" fn DetailedTimerComponentState_timer_fraction(
 pub unsafe extern "C" fn DetailedTimerComponentState_timer_semantic_color(
     this: *const DetailedTimerComponentState,
 ) -> *const c_char {
-    output_vec(|f| {
-        write!(f, "{:?}", acc(this).timer.semantic_color).unwrap()
-    })
+    output_vec(|f| write!(f, "{:?}", acc(this).timer.semantic_color).unwrap())
 }
 
 #[no_mangle]

@@ -1,31 +1,53 @@
+//! The comparison module provides all the different automatically generated
+//! comparisons, like the Best Segments and the Average Segments. Additionally
+//! functions for dealing with comparisons, like shortening a comparison, are
+//! provided.
+
 pub mod average_segments;
 pub mod best_segments;
 pub mod best_split_times;
+pub mod latest_run;
 pub mod none;
 pub mod worst_segments;
-pub mod latest_run;
 
 pub use self::average_segments::AverageSegments;
 pub use self::best_segments::BestSegments;
 pub use self::best_split_times::BestSplitTimes;
+pub use self::latest_run::LatestRun;
 pub use self::none::None;
 pub use self::worst_segments::WorstSegments;
-pub use self::latest_run::LatestRun;
 
 use std::fmt::Debug;
 use {Attempt, Segment, Timer};
 
+/// Defines the Personal Best comparison. This module mostly just serves for
+/// providing the names of the comparison, as the Personal Best is not a
+/// Comparison Generator.
 pub mod personal_best {
+    /// The short name of this comparison. Suitable for situations where not a lot
+    /// of space for text is available.
     pub const SHORT_NAME: &str = "PB";
+    /// The name of this comparison.
     pub const NAME: &str = "Personal Best";
 }
 
+/// A Comparison Generator automatically generates a comparison based on what
+/// kind of generator it is. Comparison Generators stored in a Run automatically
+/// get called between all attempts to refresh the comparison's information.
 pub trait ComparisonGenerator: Debug + Sync + Send + ComparisonGeneratorClone {
+    /// The name of the comparison.
     fn name(&self) -> &str;
+    /// Generate the comparison. The comparison generator is expected to modify
+    /// the comparison's times for each segment. The Attempt History is
+    /// provided, in case the comparison generator requires information from the
+    /// previous attempts.
     fn generate(&mut self, segments: &mut [Segment], attempts: &[Attempt]);
 }
 
+/// Provides the ability to clone a Comparison Generator, even when it is stored
+/// as a Trait Object.
 pub trait ComparisonGeneratorClone {
+    /// Clones the Comparison Generator as a Trait Object.
     fn clone_box(&self) -> Box<ComparisonGenerator>;
 }
 
@@ -44,6 +66,8 @@ impl Clone for Box<ComparisonGenerator> {
     }
 }
 
+/// Creates a list of all the Comparison Generators that are active by default.
+/// Which comparison generators are in this list may change in future versions.
 pub fn default_generators() -> Vec<Box<ComparisonGenerator>> {
     vec![
         Box::new(BestSegments),
@@ -55,6 +79,11 @@ pub fn default_generators() -> Vec<Box<ComparisonGenerator>> {
     ]
 }
 
+/// Shortens a comparison name. If the name of the comparison matches one of the
+/// comparison generators, the short name of that comparison generator is
+/// returned. Otherwise the comparison name is returned without being shortened.
+/// Additional shortening logic for other comparison names may happen in the
+/// future.
 pub fn shorten(comparison: &str) -> &str {
     match comparison {
         personal_best::NAME => personal_best::SHORT_NAME,
@@ -68,10 +97,15 @@ pub fn shorten(comparison: &str) -> &str {
     }
 }
 
+/// Helper function for accessing either the given comparison or a Timer's
+/// current comparison if the given comparison is `None`.
 pub fn or_current<'a>(comparison: Option<&'a str>, timer: &'a Timer) -> &'a str {
     comparison.unwrap_or_else(|| timer.current_comparison())
 }
 
+/// Tries to resolve the given comparison based on a Timer object. If either
+/// `None` is given or the comparison doesn't exist, `None` is returned.
+/// Otherwise the comparison name stored in the Timer is returned by reference.
 pub fn resolve<'a>(comparison: &Option<String>, timer: &'a Timer) -> Option<&'a str> {
     let comparison = comparison.as_ref()?;
     timer.run().comparisons().find(|&rc| comparison == rc)

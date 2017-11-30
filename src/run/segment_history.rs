@@ -2,24 +2,33 @@ use std::slice::{Iter, IterMut};
 use std::cmp::min;
 use Time;
 
+/// Stores the segment times achieved for a certain segment. Each segment is
+/// tagged with an index. Only segment times with an index larger than 0 are
+/// considered times actually achieved by the runner, while the others are
+/// artifacts of route changes and similar algorithmic changes.
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct SegmentHistory(Vec<(i32, Time)>);
 
 impl SegmentHistory {
+    /// Returns the minimum index of all the segment times. Returns `None` if
+    /// there's no segment times in this history.
     pub fn try_get_min_index(&self) -> Option<i32> {
         // This assumes that the first element is the minimum,
-        // which is only true for an ordered map
+        // which is only true for an ordered map.
         Some(self.0.first()?.0)
     }
 
-    /// Defaults to a maximum of 1
+    /// Returns the minimum index of all the segment times. If there's no
+    /// segment times or the minimum is less than 1, 1 is returned instead.
     pub fn min_index(&self) -> i32 {
         self.try_get_min_index().map_or(1, |m| min(m, 1))
     }
 
+    /// Returns the maximum index of all the segment times. Returns `None` if
+    /// there's no segment times in this history.
     pub fn try_get_max_index(&self) -> Option<i32> {
         // This assumes that the last element is the maximum,
-        // which is only true for an ordered map
+        // which is only true for an ordered map.
         Some(self.0.last()?.0)
     }
 
@@ -27,6 +36,9 @@ impl SegmentHistory {
         self.0.binary_search_by_key(&index, |&(i, _)| i)
     }
 
+    /// Inserts a new segment time into the Segment History, with the index
+    /// provided. If there's already a segment time with that index, the time is
+    /// not inserted.
     #[inline]
     pub fn insert(&mut self, index: i32, time: Time) {
         if let Err(pos) = self.get_pos(index) {
@@ -34,18 +46,24 @@ impl SegmentHistory {
         }
     }
 
+    /// Accesses the segment time with the given index. If there's no segment
+    /// time with that index, `None` is returned instead.
     #[inline]
     pub fn get(&self, index: i32) -> Option<Time> {
         let pos = self.get_pos(index).ok()?;
         Some(self.0.get(pos)?.1)
     }
 
+    /// Grants mutable access to the segment time with the given index. If
+    /// there's no segment time with that index, `None` is returned instead.
     #[inline]
     pub fn get_mut(&mut self, index: i32) -> Option<&mut Time> {
         let pos = self.get_pos(index).ok()?;
         Some(&mut self.0.get_mut(pos)?.1)
     }
 
+    /// Removes the segment time with the given index. If it doesn't exist,
+    /// nothing is done.
     #[inline]
     pub fn remove(&mut self, index: i32) {
         if let Ok(pos) = self.get_pos(index) {
@@ -53,11 +71,14 @@ impl SegmentHistory {
         }
     }
 
+    /// Removes all the segment times from the Segment History.
     #[inline]
     pub fn clear(&mut self) {
         self.0.clear();
     }
 
+    /// Removes all the segment times from the Segment History, where the given
+    /// closure returns `false`.
     #[inline]
     pub fn retain<F>(&mut self, f: F)
     where
@@ -66,16 +87,26 @@ impl SegmentHistory {
         self.0.retain(f);
     }
 
+    /// Iterates over all the segment times and their indices.
     #[inline]
     pub fn iter(&self) -> Iter<(i32, Time)> {
         IntoIterator::into_iter(self)
     }
 
+    /// Mutably iterates over all the segment times and their indices.
+    ///
+    /// # Warning
+    ///
+    /// While you are allowed to change the indices, you need to ensure they
+    /// stay in rising order.
     #[inline]
     pub fn iter_mut(&mut self) -> IterMut<(i32, Time)> {
-        IntoIterator::into_iter(self)
+        self.0.iter_mut()
     }
 
+    /// Iterates over the actual segment times achieved by the runner. Segment
+    /// times created by route changes or other algorithmic changes are filtered
+    /// out.
     #[inline]
     pub fn iter_actual_runs(&self) -> Iter<(i32, Time)> {
         let start = match self.get_pos(1) {
@@ -91,14 +122,5 @@ impl<'a> IntoIterator for &'a SegmentHistory {
 
     fn into_iter(self) -> Iter<'a, (i32, Time)> {
         self.0.iter()
-    }
-}
-
-impl<'a> IntoIterator for &'a mut SegmentHistory {
-    type Item = &'a mut (i32, Time);
-    type IntoIter = IterMut<'a, (i32, Time)>;
-
-    fn into_iter(self) -> IterMut<'a, (i32, Time)> {
-        self.0.iter_mut()
     }
 }

@@ -1,6 +1,12 @@
+//! The editor module provides an editor for Run objects. The editor ensures
+//! that all the different invariants of the Run objects are upheld no matter
+//! what kind of operations are being applied to the Run. It provides the
+//! current state of the editor as state objects that can be visualized by any
+//! kind of User Interface.
+
 use std::num::ParseIntError;
 use std::mem::swap;
-use {unicase, Image, Run, Segment, Time, TimeSpan, TimingMethod};
+use {comparison, unicase, Image, Run, Segment, Time, TimeSpan, TimingMethod};
 use time::ParseError as ParseTimeSpanError;
 
 pub mod cleaning;
@@ -14,22 +20,32 @@ pub use self::state::{Buttons as ButtonsState, Segment as SegmentState, State};
 pub use self::cleaning::SumOfBestCleaner;
 
 quick_error! {
+    /// Describes an Error that occurred while parsing a time.
     #[derive(Debug)]
     pub enum ParseError {
+        /// Couldn't parse the time.
         TimeSpan(err: ParseTimeSpanError) {
             from()
         }
-        NegativeTimeNotAllowed
+        /// Negative times are not allowed here.
+        NegativeTimeNotAllowed {}
     }
 }
 
 quick_error! {
+    /// Describes an Error that occurred while opening the Run Editor.
     #[derive(Debug)]
     pub enum OpenError {
-        EmptyRun
+        /// The Run Editor couldn't be opened because an empty run with no
+        /// segments was provided.
+        EmptyRun {}
     }
 }
 
+/// The Run Editor allows modifying Runs while ensuring that all the different
+/// invariants of the Run objects are upheld no matter what kind of operations
+/// are being applied to the Run. It provides the current state of the editor as
+/// state objects that can be visualized by any kind of User Interface.
 pub struct Editor {
     run: Run,
     selected_method: TimingMethod,
@@ -41,6 +57,8 @@ pub struct Editor {
 }
 
 impl Editor {
+    /// Creates a new Run Editor that modifies the Run provided. Creation of the
+    /// Run Editor fails when a Run with no segments is provided.
     pub fn new(run: Run) -> Result<Self, OpenError> {
         let len = run.len();
         if len == 0 {
@@ -64,27 +82,41 @@ impl Editor {
         Ok(editor)
     }
 
+    /// Closes the Run Editor and gives back access to the modified Run object.
+    /// In case you want to implement a Cancel Button, just drop the Run object
+    /// you get here.
     pub fn close(self) -> Run {
         self.run
     }
 
+    /// Accesses the timing method that is currently selected for being
+    /// modified.
     pub fn selected_timing_method(&self) -> TimingMethod {
         self.selected_method
     }
 
+    /// Selects a different timing method for being modified.
     pub fn select_timing_method(&mut self, method: TimingMethod) {
         self.selected_method = method;
         self.update_segment_list();
     }
 
-    fn selected_segment_index(&self) -> usize {
+    fn active_segment_index(&self) -> usize {
         *self.selected_segments.last().unwrap()
     }
 
-    pub fn selected_segment(&mut self) -> SegmentRow {
-        SegmentRow::new(self.selected_segment_index(), self)
+    /// Grants mutable access to the actively selected segment row. You can
+    /// select multiple segment rows at the same time, but only the one that is
+    /// most recently selected is the active segment.
+    pub fn active_segment(&mut self) -> SegmentRow {
+        SegmentRow::new(self.active_segment_index(), self)
     }
 
+    /// Unselects the segment with the given index. If it's not selected or the
+    /// index is out of bounds, nothing happens. The segment is not unselected,
+    /// when it is the only segment that is selected. If the active segment is
+    /// unselected, the most recently selected segment remaining becomes the
+    /// active segment.
     pub fn unselect(&mut self, index: usize) {
         self.selected_segments.retain(|&i| i != index);
         if self.selected_segments.is_empty() {
@@ -92,12 +124,31 @@ impl Editor {
         }
     }
 
+    /// In addition to the segments that are already selected, the segment with
+    /// the given index is being selected. The segment chosen also becomes the
+    /// active segment.
+    ///
+    /// # Panics
+    ///
+    /// This panics if the index of the segment provided is out of bounds.
     pub fn select_additionally(&mut self, index: usize) {
+        if index >= self.run.len() {
+            panic!("Index out of bounds for segment selection.");
+        }
         self.selected_segments.retain(|&i| i != index);
         self.selected_segments.push(index);
     }
 
+    /// Selects the segment with the given index. All other segments are
+    /// unselected. The segment chosen also becomes the active segment.
+    ///
+    /// # Panics
+    ///
+    /// This panics if the index of the segment provided is out of bounds.
     pub fn select_only(&mut self, index: usize) {
+        if index >= self.run.len() {
+            panic!("Index out of bounds for segment selection.");
+        }
         self.selected_segments.clear();
         self.selected_segments.push(index);
     }
@@ -106,10 +157,12 @@ impl Editor {
         self.run.mark_as_changed();
     }
 
+    /// Accesses the name of the game.
     pub fn game_name(&self) -> &str {
         self.run.game_name()
     }
 
+    /// Sets the name of the game.
     pub fn set_game_name<S>(&mut self, name: S)
     where
         S: AsRef<str>,
@@ -118,10 +171,12 @@ impl Editor {
         self.raise_run_edited();
     }
 
+    /// Accesses the name of the category.
     pub fn category_name(&self) -> &str {
         self.run.category_name()
     }
 
+    /// Sets the name of the category.
     pub fn set_category_name<S>(&mut self, name: S)
     where
         S: AsRef<str>,
@@ -130,15 +185,22 @@ impl Editor {
         self.raise_run_edited();
     }
 
+    /// Accesses the timer offset. The timer offset specifies the time, the
+    /// timer starts at when starting a new attempt.
     pub fn offset(&self) -> TimeSpan {
         self.run.offset()
     }
 
+    /// Sets the timer offset. The timer offset specifies the time, the timer
+    /// starts at when starting a new attempt.
     pub fn set_offset(&mut self, offset: TimeSpan) {
         self.run.set_offset(offset);
         self.raise_run_edited();
     }
 
+    /// Parses and sets the timer offset from the string provided. The timer
+    /// offset specifies the time, the timer starts at when starting a new
+    /// attempt.
     pub fn parse_and_set_offset<S>(&mut self, offset: S) -> Result<(), ParseError>
     where
         S: AsRef<str>,
@@ -147,15 +209,22 @@ impl Editor {
         Ok(())
     }
 
+    /// Accesses the attempt count.
     pub fn attempt_count(&self) -> u32 {
         self.run.attempt_count()
     }
 
+    /// Sets the attempt count. Changing this has no affect on the attempt
+    /// history or the segment history. This number is mostly just a visual
+    /// number for the runner.
     pub fn set_attempt_count(&mut self, attempts: u32) {
         self.run.set_attempt_count(attempts);
         self.raise_run_edited();
     }
 
+    /// Parses and sets the attempt count from the string provided. Changing
+    /// this has no affect on the attempt history or the segment history. This
+    /// number is mostly just a visual number for the runner.
     pub fn parse_and_set_attempt_count<S>(&mut self, attempts: S) -> Result<(), ParseIntError>
     where
         S: AsRef<str>,
@@ -164,20 +233,24 @@ impl Editor {
         Ok(())
     }
 
+    /// Accesses the game's icon.
     pub fn game_icon(&self) -> &Image {
         self.run.game_icon()
     }
 
+    /// Sets the game's icon.
     pub fn set_game_icon<D: Into<Image>>(&mut self, image: D) {
         self.run.set_game_icon(image);
         self.raise_run_edited();
     }
 
+    /// Removes the game's icon.
     pub fn remove_game_icon(&mut self) {
         self.run.set_game_icon(&[]);
         self.raise_run_edited();
     }
 
+    /// Accesses all the custom comparisons that exist on the Run.
     pub fn custom_comparisons(&self) -> &[String] {
         self.run.custom_comparisons()
     }
@@ -234,28 +307,33 @@ impl Editor {
         }
     }
 
-
+    /// Inserts a new empty segment above the active segment and adjusts the
+    /// Run's history information accordingly. The newly created segment is then
+    /// the only selected segment and also the active segment.
     pub fn insert_segment_above(&mut self) {
-        let selected_segment = self.selected_segment_index();
+        let active_segment = self.active_segment_index();
 
         let mut segment = Segment::new("");
-        self.run.import_best_segment(selected_segment);
+        self.run.import_best_segment(active_segment);
 
         let max_index = self.run.max_attempt_history_index().unwrap_or(0);
         let min_index = self.run.min_segment_history_index();
         for x in min_index..max_index + 1 {
             segment.segment_history_mut().insert(x, Default::default());
         }
-        self.run.segments_mut().insert(selected_segment, segment);
+        self.run.segments_mut().insert(active_segment, segment);
 
-        self.select_only(selected_segment);
+        self.select_only(active_segment);
 
         self.fix();
     }
 
+    /// Inserts a new empty segment below the active segment and adjusts the
+    /// Run's history information accordingly. The newly created segment is then
+    /// the only selected segment and also the active segment.
     pub fn insert_segment_below(&mut self) {
-        let selected_segment = self.selected_segment_index();
-        let next_segment = selected_segment + 1;
+        let active_segment = self.active_segment_index();
+        let next_segment = active_segment + 1;
 
         let mut segment = Segment::new("");
         if next_segment < self.run.len() {
@@ -297,7 +375,8 @@ impl Editor {
                 let current_segment = segment_history_element[method];
                 if let Some(current_segment) = current_segment {
                     for current_index in current_index..self.run.len() {
-                        // Add the removed segment's history times to the next non None times
+                        // Add the removed segment's history times to the next
+                        // non None times
                         if let Some(&mut Some(ref mut segment)) = self.run
                             .segment_mut(current_index)
                             .segment_history_mut()
@@ -324,7 +403,8 @@ impl Editor {
         };
 
         if let Some(mut min_best_segment) = min_best_segment {
-            // Use any element in the history that has a lower time than this sum
+            // Use any element in the history that has a lower time than this
+            // sum
             for time in self.run
                 .segment(current_index)
                 .segment_history()
@@ -340,10 +420,17 @@ impl Editor {
         }
     }
 
+    /// Checks if the currently selected segments can be removed. If all
+    /// segments are selected, they can't be removed.
     pub fn can_remove_segments(&self) -> bool {
         self.run.len() > self.selected_segments.len()
     }
 
+    /// Removes all the selected segments, unless all of them are selected. The
+    /// run's information is automatically adjusted properly. The next
+    /// not-to-be-removed segment after the active segment becomes the new
+    /// active segment. If there's none, then the next not-to-be-removed segment
+    /// before the active segment, becomes the new active segment.
     pub fn remove_segments(&mut self) {
         if !self.can_remove_segments() {
             return;
@@ -359,7 +446,7 @@ impl Editor {
             }
         }
 
-        let selected_segment = self.selected_segment_index();
+        let selected_segment = self.active_segment_index();
         let above_count = self.selected_segments
             .iter()
             .filter(|&&i| i < selected_segment)
@@ -386,8 +473,8 @@ impl Editor {
         let second = &mut b[0];
 
         for run_index in min_index..max_index + 1 {
-            // Remove both segment history elements if one of them
-            // has a None time and the other has has a non None time
+            // Remove both segment history elements if one of them has a None
+            // time and the other has has a non None time
             let first_history = first.segment_history().get(run_index);
             let second_history = second.segment_history().get(run_index);
             if let (Some(first_history), Some(second_history)) = (first_history, second_history) {
@@ -401,7 +488,8 @@ impl Editor {
         }
 
         for (comparison, first_time) in first.comparisons_mut() {
-            // Fix the comparison times based on the new positions of the two segments
+            // Fix the comparison times based on the new positions of the two
+            // segments
             let previous_time = previous
                 .map(|p| p.comparison(comparison))
                 .unwrap_or_else(Time::zero);
@@ -416,10 +504,15 @@ impl Editor {
         swap(first, second);
     }
 
+    /// Checks if the currently selected segments can be moved up. If any one of
+    /// the selected segments is the first segment, then they can't be moved.
     pub fn can_move_segments_up(&self) -> bool {
         !self.selected_segments.iter().any(|&s| s == 0)
     }
 
+    /// Moves all the selected segments up, unless the first segment is
+    /// selected. The run's information is automatically adjusted properly. The
+    /// active segment stays the active segment.
     pub fn move_segments_up(&mut self) {
         if !self.can_move_segments_up() {
             return;
@@ -438,11 +531,16 @@ impl Editor {
         self.fix();
     }
 
+    /// Checks if the currently selected segments can be moved down. If any one
+    /// of the selected segments is the last segment, then they can't be moved.
     pub fn can_move_segments_down(&self) -> bool {
         let last_index = self.run.len() - 1;
         !self.selected_segments.iter().any(|&s| s == last_index)
     }
 
+    /// Moves all the selected segments down, unless the last segment is
+    /// selected. The run's information is automatically adjusted properly. The
+    /// active segment stays the active segment.
     pub fn move_segments_down(&mut self) {
         if !self.can_move_segments_down() {
             return;
@@ -463,6 +561,8 @@ impl Editor {
         self.fix();
     }
 
+    /// Adds a new custom comparison. It can't be added if it starts with
+    /// `[Race]` or already exists.
     pub fn add_comparison<S: Into<String>>(&mut self, comparison: S) -> Result<(), ()> {
         let comparison = comparison.into();
         if validate_comparison_name(&self.run, &comparison) {
@@ -474,6 +574,9 @@ impl Editor {
         }
     }
 
+    /// Imports the Personal Best from the provided run as a comparison. The
+    /// comparison can't be added if its name starts with `[Race]` or it already
+    /// exists.
     pub fn import_comparison<S: Into<String>>(
         &mut self,
         run: &Run,
@@ -522,10 +625,20 @@ impl Editor {
         }
     }
 
+    /// Removes the chosen custom comparison. You can't remove a Comparison
+    /// Generator's Comparison or the Personal Best.
     pub fn remove_comparison(&mut self, comparison: &str) {
+        if comparison == comparison::personal_best::NAME {
+            return;
+        }
+
         self.run
             .custom_comparisons_mut()
             .retain(|c| c != comparison);
+
+        if self.run.comparisons().any(|c| c == comparison) {
+            return;
+        }
 
         for segment in self.run.segments_mut() {
             segment.comparisons_mut().remove(comparison);
@@ -534,6 +647,8 @@ impl Editor {
         self.fix();
     }
 
+    /// Renames a comparison. The comparison can't be renamed if the new name of
+    /// the comparison starts with `[Race]` or it already exists.
     pub fn rename_comparison(&mut self, old: &str, new: &str) -> Result<(), ()> {
         if old == new {
             return Ok(());
@@ -562,16 +677,28 @@ impl Editor {
         }
     }
 
+    /// Clears out the Attempt History and the Segment Histories of all the
+    /// segments.
     pub fn clear_history(&mut self) {
         self.run.clear_history();
         self.fix();
     }
 
+    /// Clears out the Attempt History, the Segment Histories, all the times,
+    /// sets the Attempt Count to 0 and clears the speedrun.com run id
+    /// association. All Custom Comparisons other than `Personal Best` are
+    /// deleted as well.
     pub fn clear_times(&mut self) {
         self.run.clear_times();
         self.fix();
     }
 
+    /// Creates a Sum of Best Cleaner which allows you to interactively remove
+    /// potential issues in the segment history that lead to an inaccurate Sum
+    /// of Best. If you skip a split, whenever you will do the next split, the
+    /// combined segment time might be faster than the sum of the individual
+    /// best segments. The Sum of Best Cleaner will point out all of these and
+    /// allows you to delete them individually if any of them seem wrong.
     pub fn clean_sum_of_best(&mut self) -> SumOfBestCleaner {
         SumOfBestCleaner::new(&mut self.run)
     }

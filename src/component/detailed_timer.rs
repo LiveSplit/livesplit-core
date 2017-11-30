@@ -1,3 +1,9 @@
+//! Provides the Detailed Timer Component and relevant types for using it. The
+//! Detailed Timer Component is a component that shows two timers, one for the
+//! total time of the current attempt and one showing the time of just the
+//! current segment. Other information like segment times of up to two
+//! comparisons, the segment icon and the segment's name can also be shown.
+
 use {GeneralLayoutSettings, TimeSpan, Timer, TimerPhase, TimingMethod};
 use super::timer;
 use time::formatter::{timer as formatter, Accuracy, DigitsFormat, Short, TimeFormatter, DASH};
@@ -8,6 +14,10 @@ use std::io::Write;
 use std::borrow::Cow;
 use settings::{Field, Gradient, SemanticColor, SettingsDescription, Value};
 
+/// The Detailed Timer Component is a component that shows two timers, one for
+/// the total time of the current attempt and one showing the time of just the
+/// current segment. Other information like segment times of up to two
+/// comparisons, the segment icon and the segment's name can also be shown.
 #[derive(Default, Clone)]
 pub struct Component {
     icon_id: usize,
@@ -15,33 +25,59 @@ pub struct Component {
     settings: Settings,
 }
 
+/// The Settings for this component.
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Settings {
+    /// The background shown behind the component.
     pub background: Gradient,
+    /// The first comparison to show the segment time of. If it's not specified,
+    /// the current comparison is used.
     pub comparison1: Option<String>,
+    /// The first comparison to show the segment time of. If it's not specified,
+    /// the current comparison is used, unless the first comparison is also
+    /// `None`. This is not shown if the second comparison is hidden.
     pub comparison2: Option<String>,
+    /// Specifies whether to only show a single comparison.
     pub hide_second_comparison: bool,
+    /// The settings of the attempt timer.
     pub timer: timer::Settings,
+    /// The settings of the segment timer.
     pub segment_timer: timer::Settings,
+    /// Specifies whether the segment icon should be shown.
     pub display_icon: bool,
+    /// Specifies whether the segment name should be shown.
     pub show_segment_name: bool,
 }
 
+/// The state object describes the information to visualize for this component.
 #[derive(Serialize, Deserialize)]
 pub struct State {
+    /// The background shown behind the component.
     pub background: Gradient,
+    /// The state of the attempt timer.
     pub timer: timer::State,
+    /// The state of the segment timer.
     pub segment_timer: timer::State,
+    /// The first comparison to visualize.
     pub comparison1: Option<ComparisonState>,
+    /// The second comparison to visualize.
     pub comparison2: Option<ComparisonState>,
+    /// The name of the segment.
     pub segment_name: Option<String>,
+    /// The segment's icon encoded as a Data URL. This value is only specified
+    /// whenever the icon changes. If you explicitly want to query this value,
+    /// remount the component. The String itself may be empty. This indicates
+    /// that there is no icon.
     pub icon_change: Option<String>,
 }
 
+/// The state object describing a comparison to visualize.
 #[derive(Serialize, Deserialize)]
 pub struct ComparisonState {
+    /// The name of the comparison.
     pub name: String,
+    /// The time to show for the comparison.
     pub time: String,
 }
 
@@ -67,6 +103,7 @@ impl Default for Settings {
 }
 
 impl State {
+    /// Encodes the state object's information as JSON.
     pub fn write_json<W>(&self, writer: W) -> Result<()>
     where
         W: Write,
@@ -76,10 +113,12 @@ impl State {
 }
 
 impl Component {
+    /// Creates a new Detailed Timer Component.
     pub fn new() -> Self {
         Self::with_settings(Default::default())
     }
 
+    /// Creates a new Detailed Timer Component with the given settings.
     pub fn with_settings(settings: Settings) -> Self {
         let timer = timer::Component::with_settings(settings.timer.clone());
         Self {
@@ -89,19 +128,24 @@ impl Component {
         }
     }
 
+    /// Accesses the settings of the component.
     pub fn settings(&self) -> &Settings {
         &self.settings
     }
 
+    /// Sets the settings of the component.
     pub fn set_settings(&mut self, settings: Settings) {
         self.settings = settings;
         *self.timer.settings_mut() = self.settings.timer.clone();
     }
 
+    /// Accesses the name of the component.
     pub fn name(&self) -> Cow<str> {
         "Detailed Timer".into()
     }
 
+    /// Calculates the component's state based on the timer and layout settings
+    /// provided.
     pub fn state(&mut self, timer: &Timer, layout_settings: &GeneralLayoutSettings) -> State {
         let current_phase = timer.current_phase();
         let timing_method = self.settings
@@ -206,18 +250,14 @@ impl Component {
 
         let formatter = DashWrapper::new(Short::new());
 
-        let comparison1 = comparison1.map(|(name, time)| {
-            ComparisonState {
-                name: name.to_string(),
-                time: formatter.format(time).to_string(),
-            }
+        let comparison1 = comparison1.map(|(name, time)| ComparisonState {
+            name: name.to_string(),
+            time: formatter.format(time).to_string(),
         });
 
-        let comparison2 = comparison2.map(|(name, time)| {
-            ComparisonState {
-                name: name.to_string(),
-                time: formatter.format(time).to_string(),
-            }
+        let comparison2 = comparison2.map(|(name, time)| ComparisonState {
+            name: name.to_string(),
+            time: formatter.format(time).to_string(),
         });
 
         let icon_id = &mut self.icon_id;
@@ -249,10 +289,17 @@ impl Component {
         }
     }
 
+    /// Remounts the component as if it was freshly initialized. The segment
+    /// icons shown by this component are only provided in the state objects
+    /// whenever the icon changes or whenever the component's state is first
+    /// queried. Remounting returns the segment icon again, whenever its state
+    /// is queried the next time.
     pub fn remount(&mut self) {
         self.icon_id = 0;
     }
 
+    /// Accesses a generic description of the settings available for this
+    /// component and their current values.
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new("Background".into(), self.settings.background.into()),
@@ -301,6 +348,13 @@ impl Component {
         ])
     }
 
+    /// Sets a setting's value by its index to the given value.
+    ///
+    /// # Panics
+    ///
+    /// This panics if the type of the value to be set is not compatible with
+    /// the type of the setting's value. A panic can also occur if the index of
+    /// the setting provided is out of bounds.
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
             0 => self.settings.background = value.into(),

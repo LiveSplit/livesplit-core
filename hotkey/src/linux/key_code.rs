@@ -298,7 +298,6 @@ pub enum KeyCode {
     Ssharp = 0x0df,
 }
 
-
 // pub enum Bla {
 //     BackSpace = 0xFF08,
 //     Tab = 0xFF09,

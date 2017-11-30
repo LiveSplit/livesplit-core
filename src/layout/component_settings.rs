@@ -3,22 +3,38 @@ use component::{blank_space, current_comparison, current_pace, delta, detailed_t
                 possible_time_save, previous_segment, separator, splits, sum_of_best, text, timer,
                 title, total_playtime};
 
+/// The settings for one of the components available.
 #[derive(Clone, Serialize, Deserialize)]
 pub enum ComponentSettings {
+    /// The Settings for the Blank Space Component.
     BlankSpace(blank_space::Settings),
+    /// The Settings for the Current Comparison Component.
     CurrentComparison(current_comparison::Settings),
+    /// The Settings for the Current Pace Component.
     CurrentPace(current_pace::Settings),
+    /// The Settings for the Delta Component.
     Delta(delta::Settings),
+    /// The Settings for the Detailed Timer Component.
     DetailedTimer(detailed_timer::Settings),
+    /// The Settings for the Graph Component.
     Graph(graph::Settings),
+    /// The Settings for the Possible Time Save Component.
     PossibleTimeSave(possible_time_save::Settings),
+    /// The Settings for the Previous Segment Component.
     PreviousSegment(previous_segment::Settings),
+    /// The Settings for the Separator Component.
     Separator,
+    /// The Settings for the Splits Component.
     Splits(splits::Settings),
+    /// The Settings for the Sum Of Best Component.
     SumOfBest(sum_of_best::Settings),
+    /// The Settings for the Text Component.
     Text(text::Settings),
+    /// The Settings for the Timer Component.
     Timer(timer::Settings),
+    /// The Settings for the Title Component.
     Title(title::Settings),
+    /// The Settings for the Total Playtime Component.
     TotalPlaytime(total_playtime::Settings),
 }
 

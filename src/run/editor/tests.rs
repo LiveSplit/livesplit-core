@@ -10,26 +10,26 @@ fn new_best_segment() {
     let mut editor = Editor::new(run).unwrap();
 
     editor
-        .selected_segment()
+        .active_segment()
         .parse_and_set_split_time("1:00")
         .unwrap();
 
     editor.select_only(1);
 
     editor
-        .selected_segment()
+        .active_segment()
         .parse_and_set_split_time("3:00")
         .unwrap();
 
     editor.insert_segment_above();
 
     editor
-        .selected_segment()
+        .active_segment()
         .parse_and_set_split_time("2:30")
         .unwrap();
 
     editor
-        .selected_segment()
+        .active_segment()
         .parse_and_set_split_time("2:00")
         .unwrap();
 
@@ -59,4 +59,26 @@ fn new_best_segment() {
         run.segment(2).best_segment_time().real_time,
         Some("0:30".parse().unwrap())
     );
+}
+
+#[test]
+#[should_panic(expected = "Index out of bounds for segment selection.")]
+fn select_only_oob() {
+    let mut run = Run::new();
+    run.push_segment(Segment::new(""));
+
+    let mut editor = Editor::new(run).unwrap();
+
+    editor.select_only(1);
+}
+
+#[test]
+#[should_panic(expected = "Index out of bounds for segment selection.")]
+fn select_additionally_oob() {
+    let mut run = Run::new();
+    run.push_segment(Segment::new(""));
+
+    let mut editor = Editor::new(run).unwrap();
+
+    editor.select_additionally(1);
 }

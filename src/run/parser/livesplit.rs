@@ -1,3 +1,5 @@
+//! Provides the parser for LiveSplit splits files.
+
 use std::io::BufRead;
 use std::path::PathBuf;
 use {AtomicDateTime, Run, RunMetadata, Segment, Time, TimeSpan, base64};
@@ -355,6 +357,9 @@ fn parse_attempt_history<R: BufRead>(
     }
 }
 
+/// Attempts to parse a LiveSplit splits file. In addition to the source to
+/// parse, you can provide a path to the splits file, which helps saving the
+/// splits file again later.
 pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
     let reader = &mut Reader::from_reader(source);
     reader.expand_empty_elements(true);
@@ -418,7 +423,7 @@ pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
     })?;
 
     if required_flags != (1 << 6) - 1 {
-        return Err(Error::TagNotFound);
+        return Err(Error::ElementNotFound);
     }
 
     run.set_path(path);

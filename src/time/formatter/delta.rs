@@ -7,17 +7,41 @@ pub struct Inner {
     drop_decimals: bool,
     accuracy: Accuracy,
 }
+
+/// The Delta Time Formatter formats Time Spans as a comparison of two
+/// durations, so that it visualizes the difference between both of them.
+/// Therefore it always shows whether it is a positive or negative difference,
+/// by prepending a plus or minus sign. You can choose how many digits of the
+/// fractional part are visualized. Additionally there's an option for removing
+/// the fractional part for deltas that are larger than 1 minute.
+///
+/// # Example Formatting
+///
+/// * Empty Time `—`
+/// * Seconds `+23.1`
+/// * Minutes without Decimal Dropping `+12:34.9`
+/// * Minutes with Decimal Dropping `+12:34`
+/// * Hours without Decimal Dropping `+12:34:56.1`
+/// * Hours with Decimal Dropping `+12:34:56`
+/// * Negative Times `−23.1`
 pub struct Delta(bool, Accuracy);
 
 impl Delta {
+    /// Creates a new default Delta Time Formatter that drops the fractional
+    /// part and uses tenths when showing the fractional part.
     pub fn new() -> Self {
         Default::default()
     }
 
+    /// Creates a new custom Delta Time Formatter where you can specify whether
+    /// the fractional part should be dropped for deltas that are larger than 1
+    /// minute and how many digits to show for the fractional part.
     pub fn custom(drop_decimals: bool, accuracy: Accuracy) -> Self {
         Delta(drop_decimals, accuracy)
     }
 
+    /// Creates a new Delta Time Formatter that drops the fractional part and
+    /// uses tenths when showing the fractional part.
     pub fn with_decimal_dropping() -> Self {
         Delta(true, Accuracy::Tenths)
     }

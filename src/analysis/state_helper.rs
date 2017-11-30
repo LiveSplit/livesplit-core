@@ -1,8 +1,11 @@
+//! Provides different helper functions.
+
 use {Run, TimeSpan, Timer, TimerPhase, TimingMethod};
 use settings::SemanticColor;
 use comparison::{best_segments, personal_best};
 
 /// Gets the last non-live delta in the run starting from `split_number`.
+///
 /// - `run`: The current run.
 /// - `split_number`: The split number to start checking deltas from.
 /// - `comparison`: The comparison that you are comparing with.
@@ -63,6 +66,7 @@ fn segment_time_or_segment_delta(
 }
 
 /// Gets the length of the last segment that leads up to a certain split.
+///
 /// - `timer`: The current timer.
 /// - `split_number`: The index of the split that represents the end of the
 ///   segment.
@@ -87,6 +91,7 @@ pub fn previous_segment_time(
 
 /// Gets the length of the last segment that leads up to a certain split, using
 /// the live segment time if the split is not completed yet.
+///
 /// - `timer`: The current timer.
 /// - `split_number`: The index of the split that represents the end of the
 ///   segment.
@@ -103,6 +108,7 @@ pub fn live_segment_time(
 }
 
 /// Gets the amount of time lost or gained on a certain split.
+///
 /// - `timer`: The current timer.
 /// - `split_number`: The index of the split for which the delta is calculated.
 /// - `comparison`: The comparison that you are comparing with.
@@ -121,6 +127,7 @@ pub fn previous_segment_delta(
 
 /// Gets the amount of time lost or gained on a certain split, using the live
 /// segment delta if the split is not completed yet.
+///
 /// - `timer`: The current timer.
 /// - `split_number`: The index of the split for which the delta is calculated.
 /// - `comparison`: The comparison that you are comparing with.
@@ -138,10 +145,11 @@ pub fn live_segment_delta(
 }
 
 /// Checks whether the live segment should now be shown.
+///
 /// - `timer`: The current timer.
 /// - `split_delta`: Specifies whether to return a split delta
-///   rather than a segment delta and to start showing the live
-///   segment once you are behind.
+///    rather than a segment delta and to start showing the live
+///    segment once you are behind.
 /// - `comparison`: The comparison that you are comparing with.
 /// - `method`: The timing method that you are using.
 ///
@@ -182,11 +190,12 @@ pub fn check_live_delta(
 }
 
 /// Chooses a split color from the Layout Settings based on the current run.
+///
 /// - `timer`: The current timer.
 /// - `time_difference`: The delta that you want to find a color for.
 /// - `split_number`: The split number that is associated with this delta.
 /// - `show_segment_deltas`: Can show ahead gaining and behind losing colors if
-///   true.
+///    true.
 /// - `show_best_segments`: Can show the best segment color if true.
 /// - `comparison`: The comparison that you are comparing this delta to.
 /// - `method`: The timing method of this delta.
@@ -227,6 +236,7 @@ pub fn split_color(
 
 /// Calculates whether or not the Split Times for the indicated split qualify as
 /// a Best Segment.
+///
 /// - `timer`: The current timer.
 /// - `split_number`: The split to check.
 /// - `method`: The timing method to use.

@@ -1,18 +1,31 @@
 use std::fmt;
 
+/// Describes the different Timers available that store splits files.
 #[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
 pub enum TimerKind {
+    /// LiveSplit
     LiveSplit,
+    /// WSplit
     WSplit,
+    /// SplitterZ
     SplitterZ,
+    /// ShitSplit
     ShitSplit,
+    /// Splitty
     Splitty,
+    /// Time Split Tracker
     TimeSplitTracker,
+    /// Portal 2 Live Timer
     Portal2LiveTimer,
+    /// FaceSplit
     FaceSplit,
+    /// Llanfair
     Llanfair,
+    /// Gered's fork of Llanfair
     LlanfairGered,
+    /// The Rewrite of Llanfair
     Llanfair2,
+    /// Urn
     Urn,
 }
 

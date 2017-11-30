@@ -1,3 +1,12 @@
+//! Provides functionality for calculating the Sum of Best Segments for whole
+//! runs or specific parts. The Sum of Best Segments is the fastest time
+//! possible to complete a run of a category, based on information collected
+//! from all the previous attempts. This often matches up with the sum of the
+//! best segment times of all the segments, but that may not always be the case,
+//! as skipped segments may introduce combined segments that may be faster than
+//! the actual sum of their best segment times. The name is therefore a bit
+//! misleading, but sticks around for historical reasons.
+
 use {Segment, TimeSpan, TimingMethod};
 use super::{track_branch, track_current_run, track_personal_best_run};
 
@@ -61,6 +70,18 @@ fn populate_predictions(
     }
 }
 
+/// Calculates the Sum of Best Segments for the timing method provided. This is
+/// the fastest time possible to complete a run of a category, based on
+/// information collected from all the previous attempts. This often matches up
+/// with the sum of the best segment times of all the segments, but that may not
+/// always be the case, as skipped segments may introduce combined segments that
+/// may be faster than the actual sum of their best segment times. The name is
+/// therefore a bit misleading, but sticks around for historical reasons. You
+/// can choose to do a simple calculation instead, which calculates the actual
+/// sum of the best segment times instead. If there's an active attempt, you can
+/// choose to take it into account as well. This lower level function requires
+/// you to provide a buffer to fill up with the shortest paths to reach each of
+/// the segments.
 #[allow(needless_range_loop, unknown_lints)]
 pub fn calculate(
     segments: &[Segment],

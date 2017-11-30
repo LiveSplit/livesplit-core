@@ -46,7 +46,6 @@ pub unsafe extern "C" fn SplitsComponent_state(
     alloc(acc_mut(this).state(acc(timer), acc(layout_settings)))
 }
 
-
 #[no_mangle]
 pub unsafe extern "C" fn SplitsComponent_scroll_up(this: *mut SplitsComponent) {
     acc_mut(this).scroll_up();

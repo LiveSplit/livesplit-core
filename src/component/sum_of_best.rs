@@ -1,3 +1,12 @@
+//! Provides the Sum of Best Segments Component. The Sum of Best Segments
+//! Component shows the fastest time possible to complete a run of this
+//! category, based on information collected from all the previous attempts.
+//! This often matches up with the sum of the best segment times of all the
+//! segments, but that may not always be the case, as skipped segments may
+//! introduce combined segments that may be faster than the actual sum of their
+//! best segment times. The name is therefore a bit misleading, but sticks
+//! around for historical reasons.
+
 use Timer;
 use time::formatter::{Accuracy, Regular, TimeFormatter};
 use serde_json::{to_writer, Result};
@@ -7,17 +16,31 @@ use std::borrow::Cow;
 use settings::{Color, Field, Gradient, SettingsDescription, Value};
 use super::DEFAULT_INFO_TEXT_GRADIENT;
 
+/// The Sum of Best Segments Component shows the fastest time possible to
+/// complete a run of this category, based on information collected from all the
+/// previous attempts. This often matches up with the sum of the best segment
+/// times of all the segments, but that may not always be the case, as skipped
+/// segments may introduce combined segments that may be faster than the actual
+/// sum of their best segment times. The name is therefore a bit misleading, but
+/// sticks around for historical reasons.
 #[derive(Default, Clone)]
 pub struct Component {
     settings: Settings,
 }
 
+/// The Settings for this component.
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Settings {
+    /// The background shown behind the component.
     pub background: Gradient,
+    /// The color of the label. If `None` is specified, the color is taken from
+    /// the layout.
     pub label_color: Option<Color>,
+    /// The color of the value. If `None` is specified, the color is taken from
+    /// the layout.
     pub value_color: Option<Color>,
+    /// The accuracy of the time shown.
     pub accuracy: Accuracy,
 }
 
@@ -32,16 +55,25 @@ impl Default for Settings {
     }
 }
 
+/// The state object describes the information to visualize for this component.
 #[derive(Serialize, Deserialize)]
 pub struct State {
+    /// The background shown behind the component.
     pub background: Gradient,
+    /// The color of the label. If `None` is specified, the color is taken from
+    /// the layout.
     pub label_color: Option<Color>,
+    /// The color of the value. If `None` is specified, the color is taken from
+    /// the layout.
     pub value_color: Option<Color>,
+    /// The label's text.
     pub text: String,
+    /// The sum of best segments.
     pub time: String,
 }
 
 impl State {
+    /// Encodes the state object's information as JSON.
     pub fn write_json<W>(&self, writer: W) -> Result<()>
     where
         W: Write,
@@ -51,14 +83,12 @@ impl State {
 }
 
 impl Component {
+    /// Creates a new Sum of Best Segments Component.
     pub fn new() -> Self {
         Default::default()
     }
 
-    pub fn name(&self) -> Cow<str> {
-        "Sum of Best Segments".into()
-    }
-
+    /// Creates a new Sum of Best Segments Component with the given settings.
     pub fn with_settings(settings: Settings) -> Self {
         Self {
             settings,
@@ -66,14 +96,22 @@ impl Component {
         }
     }
 
+    /// Accesses the settings of the component.
     pub fn settings(&self) -> &Settings {
         &self.settings
     }
 
+    /// Grants mutable access to the settings of the component.
     pub fn settings_mut(&mut self) -> &mut Settings {
         &mut self.settings
     }
 
+    /// Accesses the name of the component.
+    pub fn name(&self) -> Cow<str> {
+        "Sum of Best Segments".into()
+    }
+
+    /// Calculates the component's state based on the timer provided.
     pub fn state(&self, timer: &Timer) -> State {
         let time = calculate_best(
             timer.run().segments(),
@@ -93,6 +131,8 @@ impl Component {
         }
     }
 
+    /// Accesses a generic description of the settings available for this
+    /// component and their current values.
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new("Background".into(), self.settings.background.into()),
@@ -102,6 +142,13 @@ impl Component {
         ])
     }
 
+    /// Sets a setting's value by its index to the given value.
+    ///
+    /// # Panics
+    ///
+    /// This panics if the type of the value to be set is not compatible with
+    /// the type of the setting's value. A panic can also occur if the index of
+    /// the setting provided is out of bounds.
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
             0 => self.settings.background = value.into(),

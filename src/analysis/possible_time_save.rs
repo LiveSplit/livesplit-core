@@ -1,5 +1,19 @@
+//! Provides functions for calculating how much time save there is for either
+//! single segments of the remainder an active attempt. This information is
+//! based on the best segments. Considering the best segments don't represent
+//! the theoretically perfect segment times, this information is only an
+//! approximation of how much time can actually be saved.
+
 use {analysis, TimeSpan, Timer};
 
+/// Calculates how much time a segment of the given comparison could save based
+/// on the best segments. Considering the best segments don't represent the
+/// theoretically perfect segment times, this information is only an
+/// approximation of how much time can actually be saved. If the parameter
+/// `live` is set to `true`, then the segment time of the current attempt is
+/// used if it gets longer than the segment time of the segment the possible
+/// time save is calculated for. So the possible time save shrinks towards zero
+/// as time goes on. The time returned by this function can never be below zero.
 pub fn calculate(
     timer: &Timer,
     segment_index: usize,
@@ -51,6 +65,13 @@ pub fn calculate(
     }
 }
 
+/// Calculates how much time the given comparison could save for the remainder
+/// of the run based on the best segments. Considering the best segments don't
+/// represent the theoretically perfect segment times, this information is only
+/// an approximation of how much time can actually be saved. This information is
+/// inherently based on the current attempt. So if the current attempt is losing
+/// time compared to the comparison, less time can be saved. The time returned
+/// by this function can never be below zero.
 pub fn calculate_total(timer: &Timer, segment_index: usize, comparison: &str) -> TimeSpan {
     let mut total = TimeSpan::zero();
 

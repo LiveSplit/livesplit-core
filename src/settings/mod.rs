@@ -1,3 +1,6 @@
+//! The settings module provides the ability to customize components and various
+//! other settings.
+
 mod alignment;
 mod color;
 mod field;

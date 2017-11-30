@@ -1,30 +1,44 @@
+//! Provides the parser for ShitSplit splits files.
+
 use std::io::{self, BufRead};
 use std::result::Result as StdResult;
 use std::num::ParseIntError;
 use {time, GameTime, Run, Segment, TimeSpan};
 
 quick_error! {
+    /// The Error type for splits files that couldn't be parsed by the ShitSplit
+    /// Parser.
     #[derive(Debug)]
     pub enum Error {
-        Empty
-        ExpectedCategoryName
-        ExpectedAttemptCount
-        ExpectedWorldName
-        ExpectedWorldTime
+        /// An empty splits file was provided.
+        Empty {}
+        /// Expected the name of the category, but didn't find it.
+        ExpectedCategoryName {}
+        /// Expected the attempt count, but didn't find it.
+        ExpectedAttemptCount {}
+        /// Expected the name of the world, but didn't find it.
+        ExpectedWorldName {}
+        /// Expected the time of the world, but didn't find it.
+        ExpectedWorldTime {}
+        /// Failed to parse the amount of attempts.
         Attempt(err: ParseIntError) {
             from()
         }
+        /// Failed to parse a time.
         Time(err: time::ParseError) {
             from()
         }
+        /// Failed to read from the source.
         Io(err: io::Error) {
             from()
         }
     }
 }
 
+/// The Result type for the ShitSplit Parser.
 pub type Result<T> = StdResult<T, Error>;
 
+/// Attempts to parse a ShitSplit splits file.
 pub fn parse<R: BufRead>(source: R) -> Result<Run> {
     let mut run = Run::new();
 

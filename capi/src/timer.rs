@@ -154,8 +154,8 @@ pub unsafe extern "C" fn Timer_pause_game_time(this: *mut Timer) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn Timer_unpause_game_time(this: *mut Timer) {
-    acc_mut(this).unpause_game_time();
+pub unsafe extern "C" fn Timer_resume_game_time(this: *mut Timer) {
+    acc_mut(this).resume_game_time();
 }
 
 #[no_mangle]
