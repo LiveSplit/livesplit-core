@@ -211,7 +211,8 @@ fn parse_segment<R: BufRead>(
                                 *segment.comparison_mut(&comparison) = t;
                             })?;
                         }
-                        run.add_custom_comparison(comparison);
+                        let _ = run.add_custom_comparison(comparison)
+                            .map_err(|_| Error::InvalidComparisonName);
                         Ok(())
                     } else {
                         end_tag(reader, tag.into_buf())

@@ -3,6 +3,7 @@ use std::cmp::max;
 use std::collections::HashSet;
 use std::path::PathBuf;
 use {AtomicDateTime, Attempt, Image, RunMetadata, Segment, Time, TimeSpan, TimingMethod};
+use super::validate_comparison_name;
 use comparison::{default_generators, personal_best, ComparisonGenerator};
 use ordered_float::OrderedFloat;
 use unicase;
@@ -341,10 +342,13 @@ impl Run {
     /// Adds a new custom comparison. If a custom comparison with that name
     /// already exists, it is not added.
     #[inline]
-    pub fn add_custom_comparison<S: Into<String>>(&mut self, comparison: S) {
+    pub fn add_custom_comparison<S: Into<String>>(&mut self, comparison: S) -> Result<(), ()> {
         let comparison = comparison.into();
-        if !self.custom_comparisons.contains(&comparison) {
+        if validate_comparison_name(&self, &comparison) {
             self.custom_comparisons.push(comparison);
+            Ok(())
+        } else {
+            Err(())
         }
     }
 

@@ -31,6 +31,10 @@ quick_error! {
         ExpectedComparisonTime {}
         /// Expected the line containing the icon, but didn't find it.
         ExpectedIconLine {}
+        /// Parsed comparison has an invalid name.
+        InvalidComparisonName {
+            from()
+        }
         /// Failed to parse an integer.
         Int(err: ParseIntError) {
             from()
@@ -124,7 +128,8 @@ pub fn parse<R: BufRead>(source: R, path_for_loading_other_files: Option<PathBuf
     parse_history(&mut run, path).ok();
 
     for comparison in comparisons {
-        run.add_custom_comparison(comparison);
+        let _ = run.add_custom_comparison(comparison)
+            .map_err(|_| Error::InvalidComparisonName);
     }
 
     Ok(run)

@@ -35,6 +35,10 @@ quick_error! {
         ElementNotFound {}
         /// The length of a buffer was too large.
         LengthOutOfBounds {}
+        /// Parsed comparison has an invalid name.
+        InvalidComparisonName {
+            from()
+        }
         /// Failed to decode a string slice as UTF-8.
         Utf8Str(err: str::Utf8Error) {
             from()
