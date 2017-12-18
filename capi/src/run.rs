@@ -180,6 +180,11 @@ pub unsafe extern "C" fn Run_metadata(this: *const Run) -> *const RunMetadata {
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn Run_stop_time(this: *const Run) -> *const TimeSpan {
+    output_time_span(acc(this).stop_time())
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn Run_offset(this: *const Run) -> *const TimeSpan {
     output_time_span(acc(this).offset())
 }

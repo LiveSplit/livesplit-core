@@ -129,6 +129,17 @@ impl Editor {
         self.run.set_category_name(name);
         self.raise_run_edited();
     }
+	
+	pub fn stop_time(&self) -> TimeSpan {
+		self.run.stop_time()
+	}
+	
+	pub fn set_stop_time(&mut self, stop_time: TimeSpan) {
+		self.run.set_stop_time(stop_time);
+		self.raise_run_edited();
+	}
+	
+
 
     pub fn offset(&self) -> TimeSpan {
         self.run.offset()

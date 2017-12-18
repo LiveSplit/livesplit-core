@@ -243,6 +243,7 @@ export interface RunEditorStateJson {
     icon_change: string | null,
     game: string,
     category: string,
+    stop_time: string,
     offset: string,
     attempts: number,
     timing_method: TimingMethodJson,

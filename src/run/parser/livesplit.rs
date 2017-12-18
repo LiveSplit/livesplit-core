@@ -384,11 +384,14 @@ pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
             } else if tag.name() == b"CategoryName" {
                 required_flags |= 1 << 2;
                 text(reader, tag.into_buf(), |t| run.set_category_name(t))
+			} else if tag.name() == b"StopTime" {
+				required_flags |= 1 << 3;
+				time_span(reader, tag.into_buf(), |t| run.set_stop_time(t))
             } else if tag.name() == b"Offset" {
-                required_flags |= 1 << 3;
+                required_flags |= 1 << 4;
                 time_span(reader, tag.into_buf(), |t| run.set_offset(t))
             } else if tag.name() == b"AttemptCount" {
-                required_flags |= 1 << 4;
+                required_flags |= 1 << 5;
                 text_parsed(reader, tag.into_buf(), |t| run.set_attempt_count(t))
             } else if tag.name() == b"AttemptHistory" {
                 parse_attempt_history(version, reader, tag.into_buf(), &mut run)

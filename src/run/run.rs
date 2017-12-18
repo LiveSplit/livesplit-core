@@ -11,6 +11,7 @@ pub struct Run {
     game_icon: Image,
     game_name: String,
     category_name: String,
+    stop_time: TimeSpan,
     offset: TimeSpan,
     attempt_count: u32,
     attempt_history: Vec<Attempt>,
@@ -42,6 +43,7 @@ impl Run {
             game_icon: Image::default(),
             game_name: String::new(),
             category_name: String::new(),
+	    stop_time: TimeSpan::zero(),
             offset: TimeSpan::zero(),
             attempt_count: 0,
             attempt_history: Vec::new(),
@@ -99,6 +101,11 @@ impl Run {
     }
 
     #[inline]
+    pub fn set_stop_time(&mut self, stop_time: TimeSpan) {
+	self.stop_time = stop_time;
+    }
+
+    #[inline]
     pub fn set_offset(&mut self, offset: TimeSpan) {
         self.offset = offset;
     }
@@ -121,6 +128,11 @@ impl Run {
     #[inline]
     pub fn metadata_mut(&mut self) -> &mut RunMetadata {
         &mut self.metadata
+    }
+
+    #[inline]
+    pub fn stop_time(&self) -> TimeSpan {
+	self.stop_time
     }
 
     #[inline]

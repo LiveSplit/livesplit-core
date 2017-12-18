@@ -243,6 +243,7 @@ pub fn save<W: Write>(run: &Run, writer: W) -> Result<()> {
     )?;
     write_end(writer, b"Metadata")?;
 
+    time_span(writer, new_tag(b"StopTime"), run.stop_time(), buf)?;
     time_span(writer, new_tag(b"Offset"), run.offset(), buf)?;
     write_display(writer, new_tag(b"AttemptCount"), run.attempt_count(), buf)?;
 

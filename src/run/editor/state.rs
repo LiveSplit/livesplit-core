@@ -10,6 +10,7 @@ pub struct State {
     pub icon_change: Option<String>,
     pub game: String,
     pub category: String,
+    pub stop_time: String,
     pub offset: String,
     pub attempts: u32,
     pub timing_method: TimingMethod,
@@ -62,6 +63,7 @@ impl Editor {
             .map(str::to_owned);
         let game = self.game_name().to_string();
         let category = self.category_name().to_string();
+	let stop_time = formatter.format(self.stop_time()).to_string();
         let offset = formatter.format(self.offset()).to_string();
         let attempts = self.attempt_count();
         let timing_method = self.selected_timing_method();
@@ -122,6 +124,7 @@ impl Editor {
             icon_change: icon_change,
             game: game,
             category: category,
+            stop_time: stop_time,
             offset: offset,
             attempts: attempts,
             timing_method: timing_method,

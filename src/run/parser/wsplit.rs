@@ -37,6 +37,11 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
                 run.set_category_name(&line["Title=".len()..]);
             } else if line.starts_with("Attempts=") {
                 run.set_attempt_count(line["Attempts=".len()..].parse()?);
+	    } else if line.starts_with("StopTime=") {
+	    	let stop_time = &line["StopTime=".len()..];
+		if !stop_time.is_empty() {
+		    run.set_stop_time(TimeSpan::from_milliseconds(-stop_time.parse::<f64>()?));
+		}
             } else if line.starts_with("Offset=") {
                 let offset = &line["Offset=".len()..];
                 if !offset.is_empty() {
