@@ -29,19 +29,19 @@ panic = "abort"
 members = ["capi", "capi/bind_gen", "js"]
 
 [dependencies]
-base64 = "0.7.0"
-byteorder = "1.1.0"
+base64 = "0.9.0"
+byteorder = "1.2.1"
 chrono = { version = "0.4.0", features = ["serde"] }
 derive_more = "0.7.0"
-image = "0.16.0"
-livesplit-hotkey = { path = "hotkey", version = "0.2.0" }
-odds = "0.2.25"
-ordermap = "0.2.10"
+image = "0.18.0"
+livesplit-hotkey = { path = "hotkey", version = "0.2.1" }
+odds = { version = "0.3.1", features = ["std-vec"] }
+ordermap = "0.3.2"
 palette = "0.2.1"
-parking_lot = "0.4.3"
+parking_lot = "0.5.3"
 quick-error = "1.2.0"
-serde = "1.0.2"
-serde_derive = "1.0.2"
-serde_json = "1.0.1"
-unicase = "2.0.0"
-quick-xml = "0.9.3"
+quick-xml = "0.10.1"
+serde = "1.0.24"
+serde_derive = "1.0.24"
+serde_json = "1.0.8"
+unicase = "2.1.0"

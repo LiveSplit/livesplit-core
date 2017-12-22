@@ -1,6 +1,4 @@
-extern crate kernel32;
 extern crate parking_lot;
-extern crate user32;
 extern crate winapi;
 
 mod key_code;
@@ -9,11 +7,14 @@ pub use self::key_code::KeyCode;
 use std::cell::RefCell;
 use std::{mem, ptr, thread};
 use std::sync::mpsc::{channel, Sender};
-use self::winapi::{c_int, DWORD, HHOOK, KBDLLHOOKSTRUCT, LPARAM, LRESULT, UINT, WH_KEYBOARD_LL,
-                   WM_KEYDOWN, WPARAM};
-use self::user32::{CallNextHookEx, GetMessageW, PostThreadMessageW, SetWindowsHookExW,
-                   UnhookWindowsHookEx};
-use self::kernel32::{GetCurrentThreadId, GetModuleHandleW};
+use self::winapi::ctypes::c_int;
+use self::winapi::shared::minwindef::{DWORD, LPARAM, LRESULT, UINT, WPARAM};
+use self::winapi::shared::windef::HHOOK;
+use self::winapi::um::libloaderapi::GetModuleHandleW;
+use self::winapi::um::processthreadsapi::GetCurrentThreadId;
+use self::winapi::um::winuser::{CallNextHookEx, GetMessageW, PostThreadMessageW, SetWindowsHookExW,
+                                UnhookWindowsHookEx};
+use self::winapi::um::winuser::{KBDLLHOOKSTRUCT, WH_KEYBOARD_LL, WM_KEYDOWN};
 use std::sync::Arc;
 use std::collections::hash_map::{Entry, HashMap};
 use self::parking_lot::Mutex;
