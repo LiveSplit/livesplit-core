@@ -1,5 +1,5 @@
 //! The comparison module provides all the different automatically generated
-//! comparisons, like the Best Segments and the Average Segments. Additionally
+//! comparisons, like the Best Segments and the Average Segments. Additionally,
 //! functions for dealing with comparisons, like shortening a comparison, are
 //! provided.
 

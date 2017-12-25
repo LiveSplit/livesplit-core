@@ -19,8 +19,8 @@ use {Segment, Time, TimeSpan, TimingMethod};
 /// always be the case, as skipped segments may introduce combined segments that
 /// may be faster than the actual sum of their best segment times. The name is
 /// therefore a bit misleading, but sticks around for historical reasons. You
-/// can choose to do a simple calculation instead, which calculates the actual
-/// sum of the best segment times instead. If there's an active attempt, you can
+/// can choose to do a simple calculation instead, which excludes the Segment
+/// History from the calculation process. If there's an active attempt, you can
 /// choose to take it into account as well.
 pub fn calculate_best(
     segments: &[Segment],

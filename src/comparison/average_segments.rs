@@ -1,7 +1,7 @@
 //! Defines the Comparison Generator for calculating the Average Segments of a
 //! Run. The Average Segments are calculated through a weighted arithmetic mean
-//! that gives more recent segments a larger weight, so that the Average
-//! Segments are more suitable for representing the current performance of a
+//! that gives more recent segments a larger weight so that the Average
+//! Segments are more suited to represent the current performance of a
 //! runner.
 
 use super::ComparisonGenerator;
@@ -9,8 +9,8 @@ use {Attempt, Segment, TimeSpan, TimingMethod};
 
 /// The Comparison Generator for calculating the Average Segments of a Run. The
 /// Average Segments are calculated through a weighted arithmetic mean that
-/// gives more recent segments a larger weight, so that the Average Segments are
-/// more suitable for representing the current performance of a runner.
+/// gives more recent segments a larger weight so that the Average Segments are
+/// more suited to represent the current performance of a runner.
 #[derive(Copy, Clone, Debug)]
 pub struct AverageSegments;
 
