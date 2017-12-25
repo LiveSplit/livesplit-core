@@ -6,12 +6,6 @@
 
 use {analysis, TimeSpan, Timer};
 
-pub fn calculate(
-    timer: &Timer,
-    segment_index: usize,
-    comparison: &str,
-    live: bool,
-) -> Option<TimeSpan> {
 /// Calculates how much time could be saved on the given segment with the given
 /// comparison. This information is based on the best segments. Considering the
 /// best segments don't represent theoretically perfect segment times, this
@@ -21,6 +15,12 @@ pub fn calculate(
 /// segment the possible time save is calculated for. So the possible time save
 /// shrinks towards zero as time goes on. The time returned by this function can
 /// never be below zero.
+pub fn calculate(
+    timer: &Timer,
+    segment_index: usize,
+    comparison: &str,
+    live: bool,
+) -> Option<TimeSpan> {
     let segments = timer.run().segments();
     let method = timer.current_timing_method();
     let mut prev_time = TimeSpan::zero();
