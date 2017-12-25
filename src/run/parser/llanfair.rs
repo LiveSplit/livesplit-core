@@ -1,3 +1,5 @@
+//! Provides the parser for Llanfair splits files.
+
 use std::io::{self, Read, Seek, SeekFrom};
 use std::result::Result as StdResult;
 use std::str::{Utf8Error, from_utf8};
@@ -6,18 +8,25 @@ use imagelib::{png, ColorType, ImageBuffer, Rgba};
 use {Image, RealTime, Run, Segment, Time, TimeSpan};
 
 quick_error! {
+    /// The Error type for splits files that couldn't be parsed by the Llanfair
+    /// Parser.
     #[derive(Debug)]
     pub enum Error {
+        /// The length of an image or string was larger than the total remaining
+        /// splits file.
         LengthOutOfBounds {}
+        /// Failed to decode a string as UTF-8.
         Utf8(err: Utf8Error) {
             from()
         }
+        /// Failed to read from the source.
         Io(err: io::Error) {
             from()
         }
     }
 }
 
+/// The Result type for the Llanfair Parser.
 pub type Result<T> = StdResult<T, Error>;
 
 fn to_time(milliseconds: u64) -> Time {
@@ -40,6 +49,7 @@ fn read_string<R: Read>(mut source: R, buf: &mut Vec<u8>, max_length: u64) -> Re
     from_utf8(buf).map_err(Into::into)
 }
 
+/// Attempts to parse a Llanfair splits file.
 pub fn parse<R: Read + Seek>(mut source: R) -> Result<Run> {
     let mut run = Run::new();
     let mut buf = Vec::new();

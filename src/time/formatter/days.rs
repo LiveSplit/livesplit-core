@@ -6,10 +6,24 @@ pub struct Inner {
     time: Option<TimeSpan>,
 }
 
+/// The Days Time Formatter formats Time Spans so that times >24h are prefixed
+/// with the amount of days, wrapping the hours around to 0. There's no
+/// fractional part for times. The minutes are always shown.
+///
+/// # Example Formatting
+///
+/// * Empty Time `0:00`
+/// * Seconds `0:23`
+/// * Minutes `12:34`
+/// * Hours `12:34:56`
+/// * Negative Times `−12:34:56`
+/// * Days `89d 12:34:56`
+/// * Negative Days `−89d 12:34:56`
 #[derive(Default)]
 pub struct Days;
 
 impl Days {
+    /// Creates a new Days Time Formatter.
     pub fn new() -> Self {
         Days
     }
@@ -52,7 +66,7 @@ impl Display for Inner {
                 write!(f, "{}:{:02}", minutes, seconds)
             }
         } else {
-            write!(f, "0")
+            write!(f, "0:00")
         }
     }
 }

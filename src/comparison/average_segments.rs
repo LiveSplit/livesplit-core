@@ -1,10 +1,23 @@
+//! Defines the Comparison Generator for calculating the Average Segments of a
+//! Run. The Average Segments are calculated through a weighted arithmetic mean
+//! that gives more recent segments a larger weight, so that the Average
+//! Segments are more suitable for representing the current performance of a
+//! runner.
+
 use super::ComparisonGenerator;
 use {Attempt, Segment, TimeSpan, TimingMethod};
 
+/// The Comparison Generator for calculating the Average Segments of a Run. The
+/// Average Segments are calculated through a weighted arithmetic mean that
+/// gives more recent segments a larger weight, so that the Average Segments are
+/// more suitable for representing the current performance of a runner.
 #[derive(Copy, Clone, Debug)]
 pub struct AverageSegments;
 
+/// The short name of this comparison. Suitable for situations where not a lot
+/// of space for text is available.
 pub const SHORT_NAME: &str = "Average";
+/// The name of this comparison.
 pub const NAME: &str = "Average Segments";
 
 const WEIGHT: f64 = 0.75;

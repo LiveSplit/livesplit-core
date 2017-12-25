@@ -1,3 +1,29 @@
+//! The LiveSplit Saver saves Runs as LiveSplit splits files (*.lss).
+//!
+//! # Examples
+//!
+//! Using the LiveSplit Saver to save a Run as a LiveSplit splits file.
+//!
+//! ```no_run
+//! use livesplit_core::run::saver::livesplit;
+//! use livesplit_core::{Run, Segment};
+//! use std::fs::File;
+//! use std::io::BufWriter;
+//!
+//! // Create a run object that we can use.
+//! let mut run = Run::new();
+//! run.set_game_name("Super Mario Odyssey");
+//! run.set_category_name("Any%");
+//! run.push_segment(Segment::new("Cap Kingdom"));
+//!
+//! // Create the splits file.
+//! let file = File::create("path/to/splits_file.lss");
+//! let writer = BufWriter::new(file.expect("Failed creating the file"));
+//!
+//! // Save the splits file as a LiveSplit splits file.
+//! livesplit::save(&run, writer).expect("Couldn't save the splits file");
+//! ```
+
 use std::io::Write;
 use std::result::Result as StdResult;
 use std::fmt::Display;
@@ -15,13 +41,17 @@ static LSS_IMAGE_HEADER: &[u8; 156] = include_bytes!("lss_image_header.bin");
 
 quick_error! {
     #[derive(Debug)]
+    /// The Error type for splits files that couldn't be saved by the LiveSplit
+    /// Saver.
     pub enum Error {
+        /// Failed writing as XML.
         Xml(err: XmlError) {
             from()
         }
     }
 }
 
+/// The Result type for the LiveSplit Saver.
 pub type Result<T> = StdResult<T, Error>;
 
 fn new_tag(name: &[u8]) -> BytesStart {
@@ -197,6 +227,7 @@ fn time<W: Write>(
     )
 }
 
+/// Saves Runs as LiveSplit splits files (*.lss).
 pub fn save<W: Write>(run: &Run, writer: W) -> Result<()> {
     let writer = &mut Writer::new(writer);
 
@@ -204,9 +235,10 @@ pub fn save<W: Write>(run: &Run, writer: W) -> Result<()> {
     let image_buf = &mut Cow::Borrowed(&LSS_IMAGE_HEADER[..]);
 
     writer.write_event(Event::Decl(BytesDecl::new(b"1.0", Some(b"UTF-8"), None)))?;
-    writer.write_event(Event::Start(
-        BytesStart::borrowed(br#"Run version="1.7.0""#, 3),
-    ))?;
+    writer.write_event(Event::Start(BytesStart::borrowed(
+        br#"Run version="1.7.0""#,
+        3,
+    )))?;
 
     image(
         writer,
@@ -264,10 +296,7 @@ pub fn save<W: Write>(run: &Run, writer: W) -> Result<()> {
 
             if let Some(ended) = attempt.ended() {
                 tag.push_attribute((&b"ended"[..], fmt_date(ended.time, buf)));
-                tag.push_attribute((
-                    &b"isEndedSynced"[..],
-                    bool(ended.synced_with_atomic_clock),
-                ));
+                tag.push_attribute((&b"isEndedSynced"[..], bool(ended.synced_with_atomic_clock)));
             }
 
             let is_empty = attempt.time().real_time.is_none() && attempt.time().game_time.is_none()

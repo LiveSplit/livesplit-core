@@ -1,3 +1,5 @@
+//! Provides the parser for splits files used by the Llanfair Rewrite.
+
 use std::io::BufRead;
 use {RealTime, Run, Segment, Time, TimeSpan};
 use quick_xml::reader::Reader;
@@ -30,7 +32,6 @@ where
 {
     time_span(reader, buf, |t| f(RealTime(Some(t)).into()))
 }
-
 
 fn image<R, F>(
     reader: &mut Reader<R>,
@@ -78,17 +79,17 @@ where
         })
     })?;
 
-    let height = height.ok_or(Error::TagNotFound)?;
-    let width = width.ok_or(Error::TagNotFound)?;
+    let height = height.ok_or(Error::ElementNotFound)?;
+    let width = width.ok_or(Error::ElementNotFound)?;
 
     let image_buf = image_buf.as_slice();
-    let image =
-        ImageBuffer::<Rgba<_>, _>::from_raw(width, height, image_buf).ok_or(Error::TagNotFound)?;
+    let image = ImageBuffer::<Rgba<_>, _>::from_raw(width, height, image_buf)
+        .ok_or(Error::ElementNotFound)?;
 
     buf.clear();
     png::PNGEncoder::new(&mut *buf)
         .encode(image.as_ref(), width, height, ColorType::RGBA(8))
-        .map_err(|_| Error::TagNotFound)?;
+        .map_err(|_| Error::ElementNotFound)?;
 
     f(buf);
 
@@ -121,6 +122,7 @@ fn parse_segment<R: BufRead>(
     Ok(segment)
 }
 
+/// Attempts to parse a splits file used by the Llanfair Rewrite.
 pub fn parse<R: BufRead>(source: R) -> Result<Run> {
     let reader = &mut Reader::from_reader(source);
     reader.expand_empty_elements(true);

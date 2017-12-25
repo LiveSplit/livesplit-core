@@ -1,6 +1,16 @@
-use {TimeSpan, Timer, TimerPhase};
-use analysis;
+//! Calculates the delta of the current attempt to the comparison provided.
+//! Additionally a value is returned that indicates whether the delta value is a
+//! live delta. A live delta indicates that the value is actively changing at
+//! the moment. This may be the case when the current attempt is slower than the
+//! comparison at the current split.
 
+use {analysis, TimeSpan, Timer, TimerPhase};
+
+/// Calculates the delta of the current attempt to the comparison provided.
+/// Additionally a value is returned that indicates whether the delta value is a
+/// live delta. A live delta indicates that the value is actively changing at
+/// the moment. This may be the case when the current attempt is slower than the
+/// comparison at the current split.
 pub fn calculate(timer: &Timer, comparison: &str) -> (Option<TimeSpan>, bool) {
     let timing_method = timer.current_timing_method();
     let last_segment = timer.run().segments().last().unwrap();

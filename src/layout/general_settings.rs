@@ -1,19 +1,36 @@
 use settings::{Color, Field, Gradient, SettingsDescription, Value};
 
+/// The general settings of the layout that apply to all components.
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct GeneralSettings {
+    /// The background to show behind the layout.
     pub background: Gradient,
+    /// The color to use for when the runner achieved a best segment.
     pub best_segment_color: Color,
+    /// The color to use for when the runner is ahead of the comparison and is
+    /// also gaining even more time.
     pub ahead_gaining_time_color: Color,
+    /// The color to use for when the runner is ahead of the comparison, but is
+    /// losing time to the comparison.
     pub ahead_losing_time_color: Color,
+    /// The color to use for when the runner is behind the comparison, but is
+    /// gaining back time.
     pub behind_gaining_time_color: Color,
+    /// The color to use for when the runner is behind the comparison and is
+    /// losing even more time.
     pub behind_losing_time_color: Color,
+    /// The color to use for when there is no active attempt.
     pub not_running_color: Color,
+    /// The color to use for when the runner achieved a new Personal Best.
     pub personal_best_color: Color,
+    /// The color to use for when the timer is paused.
     pub paused_color: Color,
+    /// The color of thin separators.
     pub thin_separators_color: Color,
+    /// The color of normal separators.
     pub separators_color: Color,
+    /// The text color to use for text that doesn't specify its own color.
     pub text_color: Color,
 }
 
@@ -37,6 +54,8 @@ impl Default for GeneralSettings {
 }
 
 impl GeneralSettings {
+    /// Accesses a generic description of the general settings available for the
+    /// layout and their current values.
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new("Background".into(), self.background.into()),
@@ -66,6 +85,13 @@ impl GeneralSettings {
         ])
     }
 
+    /// Sets a setting's value by its index to the given value.
+    ///
+    /// # Panics
+    ///
+    /// This panics if the type of the value to be set is not compatible with
+    /// the type of the setting's value. A panic can also occur if the index of
+    /// the setting provided is out of bounds.
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
             0 => self.background = value.into(),

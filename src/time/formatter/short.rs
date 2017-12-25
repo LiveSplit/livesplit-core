@@ -7,15 +7,32 @@ pub struct Inner {
     accuracy: Accuracy,
 }
 
+/// The Short Time Formatter is suitable for situations where you want a short
+/// visualization of a Time Span, but also a somewhat accurate one. This
+/// specifically means that the fractional part of the time is always shown and
+/// the minutes and hours are only shown when necessary. The default accuracy is
+/// to show 2 digits of the fractional part, but this can be configured.
+///
+/// # Example Formatting
+///
+/// * Empty Time `0.00`
+/// * Seconds `23.12`
+/// * Minutes `12:34.98`
+/// * Hours `12:34:56.12`
+/// * Negative Times `−23.12`
 pub struct Short {
     accuracy: Accuracy,
 }
 
 impl Short {
+    /// Creates a new Short Time Formatter that uses hundredths for showing the
+    /// fractional part.
     pub fn new() -> Self {
         Default::default()
     }
 
+    /// Creates a new Short Time Formatter that uses the accuracy provided for
+    /// showing the fractional part.
     pub fn with_accuracy(accuracy: Accuracy) -> Self {
         Short { accuracy: accuracy }
     }

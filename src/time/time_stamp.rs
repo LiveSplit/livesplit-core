@@ -2,10 +2,13 @@ use std::time::Instant;
 use std::ops::Sub;
 use TimeSpan;
 
+/// A Time Stamp stores a point in time, that can be used to calculate Time
+/// Spans.
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct TimeStamp(Instant, TimeSpan);
 
 impl TimeStamp {
+    /// Creates a new Time Stamp, representing the current point in time.
     pub fn now() -> Self {
         TimeStamp(Instant::now(), TimeSpan::zero())
     }

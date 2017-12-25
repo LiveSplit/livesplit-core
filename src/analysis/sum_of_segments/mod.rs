@@ -1,8 +1,27 @@
+//! Provides functionality for calculating the Sum of Best Segments and the Sum
+//! of Worst Segments for whole runs or specific parts. The Sum of Best Segments
+//! is the fastest time possible to complete a run of a category, based on
+//! information collected from all the previous attempts. This often matches up
+//! with the sum of the best segment times of all the segments, but that may not
+//! always be the case, as skipped segments may introduce combined segments that
+//! may be faster than the actual sum of their best segment times. The name is
+//! therefore a bit misleading, but sticks around for historical reasons.
+
 pub mod best;
 pub mod worst;
 
 use {Segment, Time, TimeSpan, TimingMethod};
 
+/// Calculates the Sum of Best Segments for the timing method provided. This is
+/// the fastest time possible to complete a run of a category, based on
+/// information collected from all the previous attempts. This often matches up
+/// with the sum of the best segment times of all the segments, but that may not
+/// always be the case, as skipped segments may introduce combined segments that
+/// may be faster than the actual sum of their best segment times. The name is
+/// therefore a bit misleading, but sticks around for historical reasons. You
+/// can choose to do a simple calculation instead, which calculates the actual
+/// sum of the best segment times instead. If there's an active attempt, you can
+/// choose to take it into account as well.
 pub fn calculate_best(
     segments: &[Segment],
     simple_calculation: bool,
@@ -22,6 +41,12 @@ pub fn calculate_best(
     )
 }
 
+/// Calculates the Sum of Worst Segments for the timing method provided. This is
+/// the slowest time possible to complete a run of a category, based on
+/// information collected from all the previous attempts. This obviously isn't
+/// really the worst possible time, but may be useful information regardless.
+/// If there's an active attempt, you can choose to take it into account as
+/// well.
 pub fn calculate_worst(
     segments: &[Segment],
     use_current_run: bool,
@@ -92,6 +117,11 @@ fn track_personal_best_run(
     (0, Time::default())
 }
 
+/// Follows a path starting from a certain segment in a certain attempt to the
+/// next split that didn't get skipped. Returns the index of the segment after
+/// the segment that has the next split time and a sum of the combined segment
+/// times and the current time provided. If the tracked attempt ends before a
+/// split time is found, the index returned is 0.
 pub fn track_branch(
     segments: &[Segment],
     current_time: Option<TimeSpan>,

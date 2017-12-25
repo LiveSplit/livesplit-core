@@ -1,3 +1,10 @@
+//! The cleaning module provides the Sum of Best Cleaner which allows you to
+//! interactively remove potential issues in the segment history that lead to an
+//! inaccurate Sum of Best. If you skip a split, whenever you will do the next
+//! split, the combined segment time might be faster than the sum of the
+//! individual best segments. The Sum of Best Cleaner will point out all of
+//! these and allows you to delete them individually if any of them seem wrong.
+
 use {Attempt, Run, Segment, TimeSpan, TimingMethod};
 use analysis::sum_of_segments::{best, track_branch};
 use std::mem::replace;
@@ -5,6 +12,12 @@ use std::fmt;
 use time::formatter::{Short, TimeFormatter};
 use chrono::Local;
 
+/// A Sum of Best Cleaner allows you to interactively remove potential issues in
+/// the segment history that lead to an inaccurate Sum of Best. If you skip a
+/// split, whenever you will do the next split, the combined segment time might
+/// be faster than the sum of the individual best segments. The Sum of Best
+/// Cleaner will point out all of these and allows you to delete them
+/// individually if any of them seem wrong.
 pub struct SumOfBestCleaner<'r> {
     run: &'r mut Run,
     predictions: Vec<Option<TimeSpan>>,
@@ -30,6 +43,10 @@ struct IteratingHistoryState {
     skip_count: usize,
 }
 
+/// Describes a potential clean up that could be applied. You can use the
+/// Display implementation to print out the details of this potential clean up.
+/// A potential clean up can then be turned into an actual clean up in order to
+/// apply it to the Run.
 pub struct PotentialCleanUp<'r> {
     starting_segment: Option<&'r Segment>,
     ending_segment: &'r Segment,
@@ -40,6 +57,7 @@ pub struct PotentialCleanUp<'r> {
     clean_up: CleanUp,
 }
 
+/// Describes an actual clean up that is about to be applied.
 pub struct CleanUp {
     ending_index: usize,
     run_index: i32,
@@ -99,6 +117,7 @@ impl<'a> From<PotentialCleanUp<'a>> for CleanUp {
 }
 
 impl<'r> SumOfBestCleaner<'r> {
+    /// Creates a new Sum of Best Cleaner for the provided Run object.
     pub fn new(run: &'r mut Run) -> Self {
         let predictions = Vec::with_capacity(run.len() + 1);
         Self {
@@ -108,6 +127,7 @@ impl<'r> SumOfBestCleaner<'r> {
         }
     }
 
+    /// Applies a clean up to the Run.
     pub fn apply(&mut self, clean_up: CleanUp) {
         self.run
             .segment_mut(clean_up.ending_index)
@@ -117,6 +137,8 @@ impl<'r> SumOfBestCleaner<'r> {
         self.run.mark_as_changed();
     }
 
+    /// Returns the next potential clean up. If there are no more potential
+    /// clean ups, `None` is returned.
     pub fn next_potential_clean_up(&mut self) -> Option<PotentialCleanUp> {
         loop {
             match replace(&mut self.state, State::Poisoned) {

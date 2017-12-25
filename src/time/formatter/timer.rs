@@ -1,21 +1,41 @@
+//! The timer module provides a pair of Time Formatters that splits up the
+//! visualized time into the main part of the time and the fractional part. This
+//! is the Time Formatter pair used by the Timer Component.
+
 use std::fmt::{Display, Formatter, Result};
 use TimeSpan;
 use super::{extract_hundredths, extract_tenths, Accuracy, DigitsFormat, TimeFormatter, MINUS};
 
+/// A Time Span to be formatted as the main part of the Time Formatter Pair.
 pub struct TimeInner {
     time: Option<TimeSpan>,
     digits_format: DigitsFormat,
 }
 
+/// The Time Formatter that visualizes the main part of the Time Formatter Pair
+/// for the Timer Component. This Time Formatter shows no fractional part and
+/// prefixes as many zeros as you want. By default no zeros are used as a prefix.
+///
+/// # Example Formatting
+///
+/// * Empty Time `0`
+/// * Seconds `23`
+/// * Minutes `12:34`
+/// * Hours `12:34:56`
+/// * Negative Times `−23`
 pub struct Time {
     digits_format: DigitsFormat,
 }
 
 impl Time {
+    /// Creates a new default Time Formatter that doesn't prefix any zeros.
     pub fn new() -> Self {
         Default::default()
     }
 
+    /// Creates a new Time Formatter that uses the digits format specified to
+    /// determine how many digits to always show. Zeros are prefixed to fill up
+    /// the missing digits.
     pub fn with_digits_format(digits_format: DigitsFormat) -> Self {
         Time { digits_format }
     }
@@ -81,20 +101,37 @@ impl Display for TimeInner {
     }
 }
 
+/// A Time Span to be formatted as the fractional part of the Time Formatter
+/// Pair.
 pub struct FractionInner {
     time: Option<TimeSpan>,
     accuracy: Accuracy,
 }
 
+/// The Time Formatter that visualizes the fractional part of the Time Formatter
+/// Pair for the Timer Component. This Time Formatter shows only the fractional
+/// part of the time and uses as many digits for it as you want. By default 2
+/// digits of the fractional part are shown.
+///
+/// # Example Formatting
+///
+/// * Empty Time `.00`
+/// * No Fractional Part `​`
+/// * Tenths `.1`
+/// * Hundredths `.12`
 pub struct Fraction {
     accuracy: Accuracy,
 }
 
 impl Fraction {
+    /// Creates a new default Time Formatter that uses hundredths for showing
+    /// the fractional part.
     pub fn new() -> Self {
         Default::default()
     }
 
+    /// Creates a new Time Formatter that uses the accuracy provided for showing
+    /// the fractional part.
     pub fn with_accuracy(accuracy: Accuracy) -> Self {
         Fraction { accuracy }
     }

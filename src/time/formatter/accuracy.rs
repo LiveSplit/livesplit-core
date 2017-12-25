@@ -1,14 +1,19 @@
+/// The Accuracy describes how many digits to show for the fractional part of a
+/// time.
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Serialize, Deserialize)]
 pub enum Accuracy {
-    /// No Fractional Part
+    /// Don't show any fractional part.
     Seconds,
-    /// .2
+    /// Show the tenths of the times (12:34.5).
     Tenths,
-    /// .23
+    /// Show the hundredths of the times (12:34.56).
     Hundredths,
 }
 
 impl Accuracy {
+    /// Formats the seconds provided with the chosen accuracy. If there should
+    /// be a zero prefix, the seconds are prefixed with a 0, if they are less
+    /// than 10s.
     pub fn format_seconds(self, seconds: f64, zero_prefix: bool) -> FormattedSeconds {
         FormattedSeconds {
             accuracy: self,

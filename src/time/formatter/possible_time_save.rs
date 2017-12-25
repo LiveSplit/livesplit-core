@@ -7,15 +7,33 @@ pub struct Inner {
     accuracy: Accuracy,
 }
 
+/// The Possible Time Save Time Formatter formats Time Spans for them to be
+/// shown as Time Saves. This specifically means that the fractional part of the
+/// time is always shown and the minutes and hours are only shown when
+/// necessary. The default accuracy is to show 2 digits of the fractional part,
+/// but this can be configured. Unlike the Short Time Formatter, the Possible
+/// Time Save Formatter shows a dash when there's an empty time.
+///
+/// # Example Formatting
+///
+/// * Empty Time `—`
+/// * Seconds `23.12`
+/// * Minutes `12:34.98`
+/// * Hours `12:34:56.12`
+/// * Negative Times `−23.12`
 pub struct PossibleTimeSave {
     accuracy: Accuracy,
 }
 
 impl PossibleTimeSave {
+    /// Creates a new Possible Time Save Time Formatter that uses hundredths for
+    /// showing the fractional part.
     pub fn new() -> Self {
         Default::default()
     }
 
+    /// Creates a new Possible Time Save Time Formatter that uses the accuracy
+    /// provided for showing the fractional part.
     pub fn with_accuracy(accuracy: Accuracy) -> Self {
         PossibleTimeSave { accuracy: accuracy }
     }

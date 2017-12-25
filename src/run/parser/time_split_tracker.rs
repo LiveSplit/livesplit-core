@@ -1,3 +1,5 @@
+//! Provides the parser for Time Split Tracker splits files.
+
 use std::io::{self, BufRead, BufReader};
 use std::fs::File;
 use std::path::PathBuf;
@@ -7,29 +9,44 @@ use chrono::{TimeZone, Utc};
 use {time, AtomicDateTime, Image, RealTime, Run, Segment, Time, TimeSpan};
 
 quick_error! {
+    /// The Error type for splits files that couldn't be parsed by the Time
+    /// Split Tracker Parser.
     #[derive(Debug)]
     pub enum Error {
-        Empty
-        ExpectedAttemptCount
-        ExpectedOffset
-        ExpectedTitleLine
-        ExpectedCategoryName
-        ExpectedSplitName
-        ExpectedBestSegment
-        ExpectedComparisonTime
-        ExpectedIconLine
+        /// An empty splits file was provided.
+        Empty {}
+        /// Expected the attempt count, but didn't find it.
+        ExpectedAttemptCount {}
+        /// Expected the start time offset, but didn't find it.
+        ExpectedOffset {}
+        /// Expected the line containing the title, but didn't find it.
+        ExpectedTitleLine {}
+        /// Expected the name of the category, but didn't find it.
+        ExpectedCategoryName {}
+        /// Expected the name of the segment, but didn't find it.
+        ExpectedSegmentName {}
+        /// Expected the best segment time, but didn't find it.
+        ExpectedBestSegment {}
+        /// Expected the time for a comparison, but didn't find it.
+        ExpectedComparisonTime {}
+        /// Expected the line containing the icon, but didn't find it.
+        ExpectedIconLine {}
+        /// Failed to parse an integer.
         Int(err: ParseIntError) {
             from()
         }
+        /// Failed to parse a time.
         Time(err: time::ParseError) {
             from()
         }
+        /// Failed to read from the source.
         Io(err: io::Error) {
             from()
         }
     }
 }
 
+/// The Result type for the Time Split Tracker parser.
 pub type Result<T> = StdResult<T, Error>;
 
 fn parse_time_optional(time: &str) -> Result<Option<TimeSpan>> {
@@ -41,6 +58,11 @@ fn parse_time_optional(time: &str) -> Result<Option<TimeSpan>> {
     }
 }
 
+/// Attempts to parse a Time Split Tracker splits file. In addition to the
+/// source to parse, you can specify the path of the splits file, which is then
+/// use to load the run log file from the file system. This is entirely
+/// optional. If you are using livesplit-core in a server-like environment, set
+/// this to `None`. Only client-side applications should provide the path here.
 pub fn parse<R: BufRead>(source: R, path_for_loading_other_files: Option<PathBuf>) -> Result<Run> {
     let mut run = Run::new();
     let mut buf = Vec::new();
@@ -72,7 +94,7 @@ pub fn parse<R: BufRead>(source: R, path_for_loading_other_files: Option<PathBuf
         }
 
         let mut splits = line.split('\t');
-        let mut segment = Segment::new(splits.next().ok_or(Error::ExpectedSplitName)?);
+        let mut segment = Segment::new(splits.next().ok_or(Error::ExpectedSegmentName)?);
         let best_segment = parse_time_optional(splits.next().ok_or(Error::ExpectedBestSegment)?)?;
         segment.set_best_segment_time(RealTime(best_segment).into());
 

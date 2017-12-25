@@ -74,9 +74,7 @@ pub unsafe extern "C" fn SplitsComponentState_semantic_color(
     this: *const SplitsComponentState,
     index: usize,
 ) -> *const c_char {
-    output_vec(|f| {
-        write!(f, "{:?}", acc(this).splits[index].semantic_color).unwrap()
-    })
+    output_vec(|f| write!(f, "{:?}", acc(this).splits[index].semantic_color).unwrap())
 }
 
 #[no_mangle]

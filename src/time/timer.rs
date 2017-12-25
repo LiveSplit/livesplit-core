@@ -5,6 +5,38 @@ use parking_lot::RwLock;
 use std::sync::Arc;
 use std::mem;
 
+/// A Timer provides all the capabilities necessary for doing speedrun attempts.
+///
+/// # Examples
+///
+/// ```
+/// use livesplit_core::{Run, Segment, Timer, TimerPhase};
+///
+/// // Create a run object that we can use with at least one segment.
+/// let mut run = Run::new();
+/// run.set_game_name("Super Mario Odyssey");
+/// run.set_category_name("Any%");
+/// run.push_segment(Segment::new("Cap Kingdom"));
+///
+/// // Create the timer from the run.
+/// let mut timer = Timer::new(run).expect("Run with at least one segment provided");
+///
+/// // Start a new attempt.
+/// timer.start();
+/// assert_eq!(timer.current_phase(), TimerPhase::Running);
+///
+/// // Create a split.
+/// timer.split();
+///
+/// // The run should be finished now.
+/// assert_eq!(timer.current_phase(), TimerPhase::Ended);
+///
+/// // Reset the attempt and confirm that we want to store the attempt.
+/// timer.reset(true);
+///
+/// // The attempt is now over.
+/// assert_eq!(timer.current_phase(), TimerPhase::NotRunning);
+/// ```
 #[derive(Debug, Clone)]
 pub struct Timer {
     run: Run,
@@ -16,7 +48,7 @@ pub struct Timer {
     attempt_ended: Option<AtomicDateTime>,
     start_time: TimeStamp,
     start_time_with_offset: TimeStamp,
-    // This gets adjusted after unpausing
+    // This gets adjusted after resuming
     adjusted_start_time: TimeStamp,
     time_paused_at: TimeSpan,
     is_game_time_paused: bool,
@@ -24,16 +56,24 @@ pub struct Timer {
     loading_times: Option<TimeSpan>,
 }
 
+/// A Shared Timer is a wrapper around the Timer that can be shared across
+/// multiple threads with multiple owners.
 pub type SharedTimer = Arc<RwLock<Timer>>;
 
 quick_error! {
+    /// The Error type for creating a new Timer from a Run.
     #[derive(Debug)]
     pub enum CreationError {
-        EmptyRun
+        /// The Timer couldn't be created, because the Run has no segments.
+        EmptyRun {}
     }
 }
 
 impl Timer {
+    /// Creates a new Timer based on a Run object storing all the information
+    /// about the splits. The Run object needs to have at least one segment, so
+    /// that the Timer can store the final time. If a Run object with no
+    /// segments is provided, the Timer creation fails.
     #[inline]
     pub fn new(mut run: Run) -> Result<Self, CreationError> {
         if run.is_empty() {
@@ -61,10 +101,18 @@ impl Timer {
         })
     }
 
+    /// Consumes the Timer and creates a Shared Timer that can be shared across
+    /// multiple threads with multiple owners.
     pub fn into_shared(self) -> SharedTimer {
         Arc::new(RwLock::new(self))
     }
 
+    /// Replaces the Run object used by the Timer with the Run object provided.
+    /// If the Run provided contains no segments, it can't be used for timing
+    /// and is returned as the `Err` case of the `Result`. Otherwise the Run
+    /// that was in use by the Timer is being returned. Before the Run is
+    /// returned, the current attempt is reset and the splits are being updated
+    /// depending on the `update_splits` parameter.
     pub fn replace_run(&mut self, run: Run, update_splits: bool) -> Result<Run, Run> {
         if run.is_empty() {
             return Err(run);
@@ -78,20 +126,28 @@ impl Timer {
         Ok(mem::replace(&mut self.run, run))
     }
 
+    /// Sets the Run object used by the Timer with the Run object provided. If
+    /// the Run provided contains no segments, it can't be used for timing and
+    /// is returned as the Err case of the Result. The Run object in use by the
+    /// Timer is dropped by this method.
     pub fn set_run(&mut self, run: Run) -> Result<(), Run> {
         self.replace_run(run, false).map(|_| ())
     }
 
+    /// Accesses the Run in use by the Timer.
     #[inline]
     pub fn run(&self) -> &Run {
         &self.run
     }
 
+    /// Returns the current Timer Phase.
     #[inline]
     pub fn current_phase(&self) -> TimerPhase {
         self.phase
     }
 
+    /// Returns the current time of the Timer. The Game Time is None if the
+    /// Game Time has not been initialized.
     pub fn current_time(&self) -> Time {
         let real_time = match self.phase {
             NotRunning => Some(self.run.offset()),
@@ -117,21 +173,27 @@ impl Timer {
             .with_game_time(game_time)
     }
 
+    /// Returns the currently selected Timing Method.
     #[inline]
     pub fn current_timing_method(&self) -> TimingMethod {
         self.current_timing_method
     }
 
+    /// Sets the current Timing Method to the Timing Method provided.
     #[inline]
     pub fn set_current_timing_method(&mut self, method: TimingMethod) {
         self.current_timing_method = method;
     }
 
+    /// Returns the current comparison that is being compared against. This may
+    /// be a custom comparison or one of the Comparison Generators.
     #[inline]
     pub fn current_comparison(&self) -> &str {
         &self.current_comparison
     }
 
+    /// Accesses the split the attempt is currently on. If there's no attempt in
+    /// progress or the run finished, `None` is returned instead.
     pub fn current_split(&self) -> Option<&Segment> {
         self.current_split_index
             .and_then(|i| self.run.segments().get(i))
@@ -142,11 +204,15 @@ impl Timer {
             .and_then(move |i| self.run.segments_mut().get_mut(i))
     }
 
+    /// Accesses the index of the split the attempt is currently on. If there's
+    /// no attempt in progress, `None` is returned instead.
     #[inline]
     pub fn current_split_index(&self) -> Option<usize> {
         self.current_split_index
     }
 
+    /// Starts the Timer if there is no attempt in progress. If that's not the
+    /// case, nothing happens.
     pub fn start(&mut self) {
         if self.phase == NotRunning {
             self.phase = Running;
@@ -163,6 +229,8 @@ impl Timer {
         }
     }
 
+    /// If an attempt is in progress, stores the current time as the time of the
+    /// current split. The attempt ends if the last split time is stored.
     pub fn split(&mut self) {
         let current_time = self.current_time();
         if self.phase == Running
@@ -184,6 +252,8 @@ impl Timer {
         }
     }
 
+    /// Starts a new attempt or stores the current time as the time of the
+    /// current split. The attempt ends if the last split time is stored.
     pub fn split_or_start(&mut self) {
         if self.phase == NotRunning {
             self.start();
@@ -192,6 +262,8 @@ impl Timer {
         }
     }
 
+    /// Skips the current split if an attempt is in progress and the
+    /// current split is not the last split.
     pub fn skip_split(&mut self) {
         if (self.phase == Running || self.phase == Paused)
             && self.current_split_index < self.run.len().checked_sub(1)
@@ -204,6 +276,9 @@ impl Timer {
         }
     }
 
+    /// Removes the split time from the last split if an attempt is in progress
+    /// and there is a previous split. The Timer Phase also switches to
+    /// `Running` if it previously was `Ended`.
     pub fn undo_split(&mut self) {
         if self.phase != NotRunning && self.current_split_index > Some(0) {
             if self.phase == Ended {
@@ -217,12 +292,16 @@ impl Timer {
         }
     }
 
+    /// Resets the current attempt if there is one in progress. If the splits
+    /// are to be updated, all the information of the current attempt are stored
+    /// in the Run's history. Otherwise the current attempt's information is
+    /// discarded.
     pub fn reset(&mut self, update_splits: bool) {
         if self.phase != NotRunning {
             if self.phase != Ended {
                 self.attempt_ended = Some(AtomicDateTime::now());
             }
-            self.unpause_game_time();
+            self.resume_game_time();
             self.set_loading_times(TimeSpan::zero());
 
             if update_splits {
@@ -250,6 +329,7 @@ impl Timer {
         // TODO OnReset
     }
 
+    /// Pauses an active attempt that is not paused.
     pub fn pause(&mut self) {
         if self.phase == Running {
             self.time_paused_at = self.current_time().real_time.unwrap();
@@ -259,6 +339,7 @@ impl Timer {
         }
     }
 
+    /// Resumes an attempt that is paused.
     pub fn resume(&mut self) {
         if self.phase == Paused {
             self.adjusted_start_time = TimeStamp::now() - self.time_paused_at;
@@ -268,6 +349,7 @@ impl Timer {
         }
     }
 
+    /// Toggles an active attempt between `Paused` and `Running`.
     pub fn toggle_pause(&mut self) {
         match self.phase {
             Running => self.pause(),
@@ -276,6 +358,8 @@ impl Timer {
         }
     }
 
+    /// Toggles an active attempt between `Paused` and `Running` or starts an
+    /// attempt if there's none in progress.
     pub fn toggle_pause_or_start(&mut self) {
         match self.phase {
             Running => self.pause(),
@@ -285,6 +369,16 @@ impl Timer {
         }
     }
 
+    /// Removes all the pause times from the current time. If the current
+    /// attempt is paused, it also resumes that attempt. Additionally, if the
+    /// attempt is finished, the final split time is adjusted to not include the
+    /// pause times as well.
+    ///
+    /// # Warning
+    ///
+    /// This behavior is not entirely optimal, as generally only the final split
+    /// time is modified, while all other split times are left unmodified, which
+    /// may not be what actually happened during the run.
     pub fn undo_all_pauses(&mut self) {
         match self.current_phase() {
             Paused => self.resume(),
@@ -310,6 +404,7 @@ impl Timer {
         // TODO OnUndoAllPauses
     }
 
+    /// Switches the current comparison to the next comparison in the list.
     pub fn switch_to_next_comparison(&mut self) {
         let mut comparisons = self.run.comparisons();
         let len = comparisons.len();
@@ -322,6 +417,7 @@ impl Timer {
         // TODO OnNextComparison
     }
 
+    /// Switches the current comparison to the previous comparison in the list.
     pub fn switch_to_previous_comparison(&mut self) {
         let mut comparisons = self.run.comparisons();
         let len = comparisons.len();
@@ -334,6 +430,13 @@ impl Timer {
         // TODO OnPreviousComparison
     }
 
+    /// Returns the total duration of the current attempt. This is not affected
+    /// by the start offset of the run. So if the start offset is -10s and the
+    /// `start()` method was called 2s ago, the current time is -8s but the
+    /// current attempt duration is 2s. If the timer is then however paused for
+    /// 5s, the current attempt duration is still 2s. So the current attempt
+    /// duration only counts the time the Timer Phase has actually been
+    /// `Running`.
     pub fn current_attempt_duration(&self) -> TimeSpan {
         match self.current_phase() {
             NotRunning => TimeSpan::zero(),
@@ -342,6 +445,8 @@ impl Timer {
         }
     }
 
+    /// Returns the total amount of time the current attempt has been paused
+    /// for. None is returned if there have not been any pauses.
     pub fn get_pause_time(&self) -> Option<TimeSpan> {
         match self.current_phase() {
             Paused => Some(TimeStamp::now() - self.start_time_with_offset - self.time_paused_at),
@@ -352,26 +457,35 @@ impl Timer {
         }
     }
 
+    /// Returns whether Game Time is currently initialized. Game Time
+    /// automatically gets uninitialized for each new attempt.
     #[inline]
     pub fn is_game_time_initialized(&self) -> bool {
         self.loading_times.is_some()
     }
 
+    /// Initializes Game Time for the current attempt. Game Time automatically
+    /// gets uninitialized for each new attempt.
     #[inline]
     pub fn initialize_game_time(&mut self) {
         self.loading_times = Some(self.loading_times());
     }
 
+    /// Uninitializes Game Time for the current attempt.
     #[inline]
     pub fn uninitialize_game_time(&mut self) {
         self.loading_times = None;
     }
 
+    /// Returns whether the Game Timer is currently paused. If the Game Timer is
+    /// not paused, it automatically increments similar to Real Time.
     #[inline]
     pub fn is_game_time_paused(&self) -> bool {
         self.is_game_time_paused
     }
 
+    /// Pauses the Game Timer such that it doesn't automatically increment
+    /// similar to Real Time.
     pub fn pause_game_time(&mut self) {
         if !self.is_game_time_paused() {
             let current_time = self.current_time();
@@ -380,7 +494,9 @@ impl Timer {
         }
     }
 
-    pub fn unpause_game_time(&mut self) {
+    /// Resumes the Game Timer such that it automatically increments similar to
+    /// Real Time, starting from the Game Time it was paused at.
+    pub fn resume_game_time(&mut self) {
         if self.is_game_time_paused() {
             let current_time = self.current_time();
             let diff = catch! { current_time.real_time? - current_time.game_time? };
@@ -389,6 +505,10 @@ impl Timer {
         }
     }
 
+    /// Sets the Game Time to the time specified. This also works if the Game
+    /// Time is paused, which can be used as away of updating the Game Timer
+    /// periodically without it automatically moving forward. This ensures that
+    /// the Game Timer never shows any time that is not coming from the game.
     #[inline]
     pub fn set_game_time(&mut self, game_time: TimeSpan) {
         if self.is_game_time_paused() {
@@ -398,11 +518,15 @@ impl Timer {
         self.loading_times = Some(loading_times);
     }
 
+    /// Accesses the loading times. Loading times are defined as Game Time - Real Time.
     #[inline]
     pub fn loading_times(&self) -> TimeSpan {
         self.loading_times.unwrap_or_default()
     }
 
+    /// Instead of setting the Game Time directly, this method can be used to
+    /// just specify the amount of time the game has been loading. The Game Time
+    /// is then automatically determined by Real Time - Loading Times.
     #[inline]
     pub fn set_loading_times(&mut self, time: TimeSpan) {
         self.loading_times = Some(time);

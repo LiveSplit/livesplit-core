@@ -1,4 +1,40 @@
 #![allow(unknown_lints)]
+#![warn(missing_docs)]
+// Necessary for some larger quick-error based errors.
+#![recursion_limit = "128"]
+
+//! livesplit-core is a library that provides a lot of functionality for creating a speedrun timer.
+//!
+//! # Examples
+//!
+//! ```
+//! use livesplit_core::{Run, Segment, Timer, TimerPhase};
+//!
+//! // Create a run object that we can use with at least one segment.
+//! let mut run = Run::new();
+//! run.set_game_name("Super Mario Odyssey");
+//! run.set_category_name("Any%");
+//! run.push_segment(Segment::new("Cap Kingdom"));
+//!
+//! // Create the timer from the run.
+//! let mut timer = Timer::new(run).expect("Run with at least one segment provided");
+//!
+//! // Start a new attempt.
+//! timer.start();
+//! assert_eq!(timer.current_phase(), TimerPhase::Running);
+//!
+//! // Create a split.
+//! timer.split();
+//!
+//! // The run should be finished now.
+//! assert_eq!(timer.current_phase(), TimerPhase::Ended);
+//!
+//! // Reset the attempt and confirm that we want to store the attempt.
+//! timer.reset(true);
+//!
+//! // The attempt is now over.
+//! assert_eq!(timer.current_phase(), TimerPhase::NotRunning);
+//! ```
 
 extern crate base64;
 extern crate byteorder;

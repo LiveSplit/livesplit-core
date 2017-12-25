@@ -1,6 +1,12 @@
-use {TimeSpan, Timer, TimerPhase};
-use analysis;
+//! Calculates the current pace of the active attempt based on the comparison
+//! provided. If there's no active attempt, the final time of the comparison is
+//! returned instead.
 
+use {analysis, TimeSpan, Timer, TimerPhase};
+
+/// Calculates the current pace of the active attempt based on the comparison
+/// provided. If there's no active attempt, the final time of the comparison is
+/// returned instead.
 pub fn calculate(timer: &Timer, comparison: &str) -> Option<TimeSpan> {
     let timing_method = timer.current_timing_method();
     let last_segment = timer.run().segments().last().unwrap();

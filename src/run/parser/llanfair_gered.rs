@@ -1,3 +1,5 @@
+//! Provides the parser for splits files used by Gered's Llanfair fork.
+
 use std::io::{BufRead, Cursor, Seek, SeekFrom};
 use {RealTime, Run, Segment, Time, TimeSpan};
 use quick_xml::reader::Reader;
@@ -43,7 +45,7 @@ where
         let tag_buf = tag.into_buf();
         let (width, height, image) = text_as_bytes_err(reader, tag_buf, |t| {
             buf.clear();
-            base64::decode_config_buf(&t, STANDARD, buf).map_err(|_| Error::TagNotFound)?;
+            base64::decode_config_buf(&t, STANDARD, buf).map_err(|_| Error::ElementNotFound)?;
 
             let (width, height);
             {
@@ -59,12 +61,12 @@ where
                 .ok_or(Error::LengthOutOfBounds)?;
 
             if buf.len() < 0xFE + len {
-                return Err(Error::TagNotFound);
+                return Err(Error::ElementNotFound);
             }
 
             let buf = &buf[0xFE..][..len];
-            let image =
-                ImageBuffer::<Rgba<_>, _>::from_raw(width, height, buf).ok_or(Error::TagNotFound)?;
+            let image = ImageBuffer::<Rgba<_>, _>::from_raw(width, height, buf)
+                .ok_or(Error::ElementNotFound)?;
 
             Ok((width, height, image))
         })?;
@@ -72,7 +74,7 @@ where
         tag_buf.clear();
         png::PNGEncoder::new(&mut *tag_buf)
             .encode(image.as_ref(), width, height, ColorType::RGBA(8))
-            .map_err(|_| Error::TagNotFound)?;
+            .map_err(|_| Error::ElementNotFound)?;
 
         f(tag_buf);
 
@@ -134,7 +136,7 @@ where
                 *total_time += segment
                     .best_segment_time()
                     .real_time
-                    .ok_or(Error::TagNotFound)?;
+                    .ok_or(Error::ElementNotFound)?;
                 segment.set_personal_best_split_time(RealTime(Some(*total_time)).into());
             }
 
@@ -143,6 +145,7 @@ where
     })
 }
 
+/// Attempts to parse a splits file used by Gered's Llanfair fork.
 pub fn parse<R: BufRead>(source: R) -> Result<Run> {
     let reader = &mut Reader::from_reader(source);
     reader.expand_empty_elements(true);

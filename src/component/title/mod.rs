@@ -1,3 +1,8 @@
+//! Provides the Title Component and relevant types for using it. The Title
+//! Component is a component that shows the name of the game and the category
+//! that is being run. Additionally the game's icon, the attempt count and the
+//! amount of successfully finished attempts can be shown.
+
 use {Timer, TimerPhase};
 use serde_json::{to_writer, Result};
 use std::io::Write;
@@ -7,38 +12,85 @@ use settings::{Alignment, Color, Field, Gradient, SettingsDescription, Value};
 #[cfg(test)]
 mod tests;
 
+/// The Title Component is a component that shows the name of the game and the
+/// category that is being run. Additionally the game's icon, the attempt count
+/// and the amount of successfully finished attempts can be shown.
 #[derive(Default, Clone)]
 pub struct Component {
     icon_id: usize,
     settings: Settings,
 }
 
+/// The Settings for this component.
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Settings {
+    /// The background shown behind the component.
     pub background: Gradient,
+    /// The color of the title text. If `None` is specified, the color is taken
+    /// from the layout.
     pub text_color: Option<Color>,
+    /// Specifies whether the game name should be part of the title that is
+    /// being shown.
     pub show_game_name: bool,
+    /// Specifies whether the category name should be part of the title that is
+    /// being shown.
     pub show_category_name: bool,
+    /// Specifies whether the amount of successfully finished attempts should be
+    /// shown.
     pub show_finished_runs_count: bool,
+    /// Specifies whether the total amount of attempts should be shown.
     pub show_attempt_count: bool,
+    /// Specifies the alignment of the title.
     pub text_alignment: Alignment,
+    /// Specifies if the title should be shown as a single line, instead of
+    /// being separated into one line for the game name and one for the category
+    /// name.
     pub display_as_single_line: bool,
+    /// Specifies whether the game's icon should be shown, in case there is a
+    /// game icon stored in the Run.
     pub display_game_icon: bool,
+    /// The category name can be extended by additional information. This
+    /// extends it by the game's region, if it is provided by the run's
+    /// metadata.
     pub show_region: bool,
+    /// The category name can be extended by additional information. This
+    /// extends it by the platform the game is being played on, if it is
+    /// provided by the run's metadata.
     pub show_platform: bool,
+    /// The category name can be extended by additional information. This
+    /// extends it by additional variables provided by the run's metadata.
     pub show_variables: bool,
 }
 
+/// The state object describes the information to visualize for this component.
 #[derive(Serialize, Deserialize)]
 pub struct State {
+    /// The background shown behind the component.
     pub background: Gradient,
+    /// The color of the text. If `None` is specified, the color is taken from
+    /// the layout.
     pub text_color: Option<Color>,
+    /// The game's icon encoded as a Data URL. This value is only specified
+    /// whenever the icon changes. If you explicitly want to query this value,
+    /// remount the component. The String itself may be empty. This indicates
+    /// that there is no icon.
     pub icon_change: Option<String>,
+    /// The first title line to show. This is either the game's name, or a
+    /// combination of the game's name and the category.
     pub line1: String,
+    /// By default the category name is shown on the second line. Based on the
+    /// settings, it can however instead be shown in a single line together with
+    /// the game name.
     pub line2: Option<String>,
+    /// Specifies whether the title should centered or aligned to the left
+    /// instead.
     pub is_centered: bool,
+    /// The amount of successfully finished attempts. If `None` is specified,
+    /// the amount of successfully finished attempts isn't supposed to be shown.
     pub finished_runs: Option<u32>,
+    /// The amount of total attempts. If `None` is specified, the amount of
+    /// total attempts isn't supposed to be shown.
     pub attempts: Option<u32>,
 }
 
@@ -65,6 +117,7 @@ impl Default for Settings {
 }
 
 impl State {
+    /// Encodes the state object's information as JSON.
     pub fn write_json<W>(&self, writer: W) -> Result<()>
     where
         W: Write,
@@ -74,10 +127,12 @@ impl State {
 }
 
 impl Component {
+    /// Creates a new Title Component.
     pub fn new() -> Self {
         Default::default()
     }
 
+    /// Creates a new Title Component with the given settings.
     pub fn with_settings(settings: Settings) -> Self {
         Self {
             settings,
@@ -85,18 +140,22 @@ impl Component {
         }
     }
 
+    /// Accesses the settings of the component.
     pub fn settings(&self) -> &Settings {
         &self.settings
     }
 
+    /// Grants mutable access to the settings of the component.
     pub fn settings_mut(&mut self) -> &mut Settings {
         &mut self.settings
     }
 
+    /// Accesses the name of the component.
     pub fn name(&self) -> Cow<str> {
         "Title".into()
     }
 
+    /// Calculates the component's state based on the timer provided.
     pub fn state(&mut self, timer: &Timer) -> State {
         let run = timer.run();
 
@@ -185,10 +244,17 @@ impl Component {
         }
     }
 
+    /// Remounts the component as if it was freshly initialized. The game icon
+    /// shown by this component is only provided in the state objects whenever
+    /// the icon changes or whenever the component's state is first queried.
+    /// Remounting returns the game icon again, whenever its state is queried
+    /// the next time.
     pub fn remount(&mut self) {
         self.icon_id = 0;
     }
 
+    /// Accesses a generic description of the settings available for this
+    /// component and their current values.
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new("Background".into(), self.settings.background.into()),
@@ -221,6 +287,13 @@ impl Component {
         ])
     }
 
+    /// Sets a setting's value by its index to the given value.
+    ///
+    /// # Panics
+    ///
+    /// This panics if the type of the value to be set is not compatible with
+    /// the type of the setting's value. A panic can also occur if the index of
+    /// the setting provided is out of bounds.
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
             0 => self.settings.background = value.into(),

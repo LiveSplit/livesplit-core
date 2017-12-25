@@ -1,16 +1,24 @@
 use palette::{Hsla, Rgba};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
+/// Colors can be used to describe what color to use for visualizing
+/// backgrounds, texts, lines and various other elements that are being shown.
+/// They are stored as RGBA colors with 32-bit float point numbers ranging from
+/// 0.0 to 1.0 per channel.
 #[derive(Copy, Clone, PartialEq, From)]
 pub struct Color {
+    /// The Red, Green, Blue, Alpha (RGBA) encoding of the color.
     pub rgba: Rgba<f32>,
 }
 
 impl Color {
+    /// Creates a new transparent color.
     pub fn transparent() -> Self {
         (0.0, 0.0, 0.0, 0.0).into()
     }
 
+    /// Creates a new color by providing the Hue, Saturation, Lightness and
+    /// Alpha (HSLA) for it.
     pub fn hsla(hue: f32, saturation: f32, lightness: f32, alpha: f32) -> Self {
         Self {
             rgba: Hsla::new(hue.into(), saturation, lightness, alpha).into(),

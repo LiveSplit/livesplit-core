@@ -264,7 +264,7 @@ export interface RunEditorRowJson {
     segment_time: string,
     best_segment_time: string,
     comparison_times: string[],
-    selected: "NotSelected" | "Selected" | "CurrentRow",
+    selected: "NotSelected" | "Selected" | "Active",
 }
 
 export type SemanticColor = "Default" |

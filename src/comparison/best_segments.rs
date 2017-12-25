@@ -1,11 +1,17 @@
+//! Defines the Comparison Generator for calculating the Best Segments of a Run.
+
 use super::ComparisonGenerator;
 use {Attempt, Segment, Time, TimingMethod};
 use analysis::sum_of_segments::best::calculate;
 
+/// The Comparison Generator for calculating the Best Segments of a Run.
 #[derive(Copy, Clone, Debug)]
 pub struct BestSegments;
 
+/// The short name of this comparison. Suitable for situations where not a lot
+/// of space for text is available.
 pub const SHORT_NAME: &str = "Best";
+/// The name of this comparison.
 pub const NAME: &str = "Best Segments";
 
 impl ComparisonGenerator for BestSegments {

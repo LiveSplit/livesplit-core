@@ -24,7 +24,5 @@ pub unsafe extern "C" fn ParseRunResult_unwrap(this: OwnedParseRunResult) -> Own
 
 #[no_mangle]
 pub unsafe extern "C" fn ParseRunResult_timer_kind(this: *const ParseRunResult) -> *const c_char {
-    output_vec(|f| {
-        write!(f, "{}", acc(this).as_ref().unwrap().kind).unwrap()
-    })
+    output_vec(|f| write!(f, "{}", acc(this).as_ref().unwrap().kind).unwrap())
 }

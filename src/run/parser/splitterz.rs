@@ -1,3 +1,5 @@
+//! Provides the parser for SplitterZ splits files.
+
 use std::borrow::Cow;
 use std::io::{self, BufRead};
 use std::result::Result as StdResult;
@@ -5,26 +7,38 @@ use std::num::ParseIntError;
 use {time, Image, Run, Segment, Time, TimeSpan};
 
 quick_error! {
+    /// The Error type for splits files that couldn't be parsed by the SplitterZ
+    /// Parser.
     #[derive(Debug)]
     pub enum Error {
-        Empty
-        ExpectedCategoryName
-        ExpectedAttemptCount
-        ExpectedSplitName
-        ExpectedSplitTime
-        ExpectedBestSegment
+        /// An empty splits file was provided.
+        Empty {}
+        /// Expected the name of the category, but didn't find it.
+        ExpectedCategoryName {}
+        /// Expected the attempt count, but didn't find it.
+        ExpectedAttemptCount {}
+        /// Expected the name of the segment, but didn't find it.
+        ExpectedSegmentName {}
+        /// Expected the split time, but didn't find it.
+        ExpectedSplitTime {}
+        /// Expected the best segment time, but didn't find it.
+        ExpectedBestSegment {}
+        /// Failed to parse the amount of attempts.
         Attempt(err: ParseIntError) {
             from()
         }
+        /// Failed to parse a time.
         Time(err: time::ParseError) {
             from()
         }
+        /// Failed to read from the source.
         Io(err: io::Error) {
             from()
         }
     }
 }
 
+/// The Result type for the SplitterZ parser.
 pub type Result<T> = StdResult<T, Error>;
 
 fn unescape(text: &str) -> Cow<str> {
@@ -35,6 +49,11 @@ fn unescape(text: &str) -> Cow<str> {
     }
 }
 
+/// Attempts to parse a SplitterZ splits file. In addition to the source to
+/// parse, you need to specify if additional files for the icons should be
+/// loaded from the file system. If you are using livesplit-core in a
+/// server-like environment, set this to `false`. Only client-side applications
+/// should set this to `true`.
 pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
     let mut run = Run::new();
 
@@ -53,7 +72,7 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
             let mut splits = line.split(',');
 
             let mut segment =
-                Segment::new(unescape(splits.next().ok_or(Error::ExpectedSplitName)?));
+                Segment::new(unescape(splits.next().ok_or(Error::ExpectedSegmentName)?));
 
             let time: TimeSpan = splits.next().ok_or(Error::ExpectedSplitTime)?.parse()?;
             if time != TimeSpan::zero() {

@@ -78,9 +78,10 @@ unsafe extern "system" fn callback_proc(code: c_int, wparam: WPARAM, lparam: LPA
 
 impl Hook {
     pub fn new() -> Result<Self> {
-        let hotkeys = Arc::new(Mutex::new(
-            HashMap::<KeyCode, Box<FnMut() + Send + 'static>>::new(),
-        ));
+        let hotkeys = Arc::new(Mutex::new(HashMap::<
+            KeyCode,
+            Box<FnMut() + Send + 'static>,
+        >::new()));
 
         let (initialized_tx, initialized_rx) = channel();
         let (events_tx, events_rx) = channel();

@@ -1,3 +1,9 @@
+//! Provides functionality for calculating the Sum of Worst Segments for whole
+//! runs or specific parts. The Sum of Worst Segments is the slowest time
+//! possible to complete a run of a category, based on information collected
+//! from all the previous attempts. This obviously isn't really the worst
+//! possible time, but may be useful information regardless.
+
 use {Segment, TimeSpan, TimingMethod};
 use super::{track_branch, track_current_run, track_personal_best_run};
 
@@ -54,6 +60,13 @@ fn populate_predictions(
     }
 }
 
+/// Calculates the Sum of Worst Segments for the timing method provided. This is
+/// the slowest time possible to complete a run of a category, based on
+/// information collected from all the previous attempts. This obviously isn't
+/// really the worst possible time, but may be useful information regardless. If
+/// there's an active attempt, you can choose to take it into account as well.
+/// This lower level function requires you to provide a buffer to fill up with
+/// the slowest paths to reach each of the segments.
 #[allow(needless_range_loop, unknown_lints)]
 pub fn calculate(
     segments: &[Segment],

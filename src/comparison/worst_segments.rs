@@ -1,11 +1,17 @@
+//! Defines the Comparison Generator for calculating the Worst Segments of a Run.
+
 use super::ComparisonGenerator;
 use {Attempt, Segment, Time, TimingMethod};
 use analysis::sum_of_segments::worst::calculate;
 
+/// The Comparison Generator for calculating the Worst Segments of a Run.
 #[derive(Copy, Clone, Debug)]
 pub struct WorstSegments;
 
+/// The short name of this comparison. Suitable for situations where not a lot
+/// of space for text is available.
 pub const SHORT_NAME: &str = "Worst";
+/// The name of this comparison.
 pub const NAME: &str = "Worst Segments";
 
 impl ComparisonGenerator for WorstSegments {

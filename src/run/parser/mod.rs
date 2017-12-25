@@ -1,3 +1,36 @@
+//! The parser module provides all the different parsers available for parsing
+//! splits files into Runs. If the file type of the splits file is not known,
+//! the composite parser can be used, which tries to figure out which splits
+//! file format is used and parses it with the parser for that format.
+//!
+//! # Examples
+//!
+//! Using the composite parser to parse a splits file of an unknown file format.
+//!
+//! ```no_run
+//! use livesplit_core::run::parser::composite;
+//! use std::fs::File;
+//! use std::io::BufReader;
+//! use std::path::PathBuf;
+//!
+//! // Load the file.
+//! let path = PathBuf::from("path/to/splits_file");
+//! let file = BufReader::new(File::open(&path).expect("File not found"));
+//!
+//! // We want to load additional files from the file system, like segment icons.
+//! let load_files = true;
+//!
+//! // Actually parse the file.
+//! let result = composite::parse(file, Some(path), load_files);
+//! let parsed = result.expect("Not a valid splits file");
+//!
+//! // Print out the detected file format.
+//! println!("Splits File Format: {}", parsed.kind);
+//!
+//! // Get out the Run object.
+//! let run = parsed.run;
+//! ```
+
 pub mod composite;
 pub mod face_split;
 pub mod livesplit;

@@ -3,7 +3,31 @@ use TimeSpan;
 use super::{TimeFormatter, ASCII_MINUS};
 
 pub struct Inner(Option<TimeSpan>);
+
+/// The Complete Time Formatter formats Time Spans in a way that preserves as
+/// much information as possible. The hours and minutes are always shown and a
+/// fractional part of 7 digits is used. If there's >24h, then a day prefix is
+/// attached (with the hours wrapping around to 0): `dd.hh:mm:ss.fffffff`
+///
+/// This formatter uses an ASCII minus for negative times and shows a zero time
+/// for empty times.
+///
+/// # Example Formatting
+///
+/// * Empty Time `00:00:00.0000000`
+/// * Seconds `00:00:23.1234000`
+/// * Minutes `00:12:34.9876543`
+/// * Hours `12:34:56.1234567`
+/// * Negative Times `-12:34:56.1234567`
+/// * Days `89.12:34:56.1234567`
 pub struct Complete;
+
+impl Complete {
+    /// Creates a new Complete Time Formatter.
+    pub fn new() -> Self {
+        Complete
+    }
+}
 
 impl<'a> TimeFormatter<'a> for Complete {
     type Inner = Inner;

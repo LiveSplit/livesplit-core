@@ -1,3 +1,8 @@
+//! Provides the Timer Component and relevant types for using it. The Timer
+//! Component is a component that shows the total time of the current attempt as
+//! a digital clock. The color of the time shown is based on a how well the
+//! current attempt is doing compared to the chosen comparison.
+
 use {GeneralLayoutSettings, TimeSpan, Timer, TimerPhase, TimingMethod};
 use time::formatter::{timer as formatter, Accuracy, DigitsFormat, TimeFormatter};
 use analysis::split_color;
@@ -7,20 +12,38 @@ use std::borrow::Cow;
 use settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
 use palette::{Hsv, Rgb};
 
+/// The Timer Component is a component that shows the total time of the current
+/// attempt as a digital clock. The color of the time shown is based on a how
+/// well the current attempt is doing compared to the chosen comparison.
 #[derive(Default, Clone)]
 pub struct Component {
     settings: Settings,
 }
 
+/// The Settings for this component.
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Settings {
+    /// The background shown behind the component.
     pub background: Gradient,
+    /// Specifies the Timing Method to use. If set to `None` the Timing Method
+    /// of the Timer is used for showing the time. Otherwise the Timing Method
+    /// provided is used.
     pub timing_method: Option<TimingMethod>,
+    /// The height of the timer.
     pub height: u32,
+    /// Instead of automatically determining the color of the time shown, based
+    /// on a how well the current attempt is doing, a specific color to always
+    /// be used can be provided instead.
     pub color_override: Option<Color>,
+    /// The Timer Component automatically converts the color it is supposed to
+    /// use into a gradient and shows that. If this is set to `false` the actual
+    /// color is used instead of a gradient.
     pub show_gradient: bool,
+    /// Determines how many digits are to always be shown. If the duration is
+    /// lower than the digits to be shown, they are filled up with zeros.
     pub digits_format: DigitsFormat,
+    /// The accuracy of the time shown.
     pub accuracy: Accuracy,
 }
 
@@ -38,18 +61,27 @@ impl Default for Settings {
     }
 }
 
+/// The state object describes the information to visualize for this component.
 #[derive(Serialize, Deserialize)]
 pub struct State {
+    /// The background shown behind the component.
     pub background: Gradient,
+    /// The time shown by the component without the fractional part.
     pub time: String,
+    /// The fractional part of the time shown (including the dot).
     pub fraction: String,
+    /// The semantic coloring information the time carries.
     pub semantic_color: SemanticColor,
+    /// The top color of the timer's gradient.
     pub top_color: Color,
+    /// The bottom color of the timer's gradient.
     pub bottom_color: Color,
+    /// The height of the timer.
     pub height: u32,
 }
 
 impl State {
+    /// Encodes the state object's information as JSON.
     pub fn write_json<W>(&self, writer: W) -> Result<()>
     where
         W: Write,
@@ -59,10 +91,12 @@ impl State {
 }
 
 impl Component {
+    /// Creates a new Timer Component.
     pub fn new() -> Self {
         Default::default()
     }
 
+    /// Creates a new Timer Component with the given settings.
     pub fn with_settings(settings: Settings) -> Self {
         Self {
             settings,
@@ -70,18 +104,23 @@ impl Component {
         }
     }
 
+    /// Accesses the settings of the component.
     pub fn settings(&self) -> &Settings {
         &self.settings
     }
 
+    /// Grants mutable access to the settings of the component.
     pub fn settings_mut(&mut self) -> &mut Settings {
         &mut self.settings
     }
 
+    /// Accesses the name of the component.
     pub fn name(&self) -> Cow<str> {
         "Timer".into()
     }
 
+    /// Calculates the component's state based on the timer and the layout
+    /// settings provided.
     pub fn state(&self, timer: &Timer, layout_settings: &GeneralLayoutSettings) -> State {
         let method = self.settings
             .timing_method
@@ -156,6 +195,8 @@ impl Component {
         }
     }
 
+    /// Accesses a generic description of the settings available for this
+    /// component and their current values.
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new("Background".into(), self.settings.background.into()),
@@ -168,6 +209,13 @@ impl Component {
         ])
     }
 
+    /// Sets a setting's value by its index to the given value.
+    ///
+    /// # Panics
+    ///
+    /// This panics if the type of the value to be set is not compatible with
+    /// the type of the setting's value. A panic can also occur if the index of
+    /// the setting provided is out of bounds.
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
             0 => self.settings.background = value.into(),
@@ -182,6 +230,8 @@ impl Component {
     }
 }
 
+/// Calculates the top and bottom color the Timer Component would use for the
+/// gradient of the times it is showing.
 pub fn top_and_bottom_color(color: Color) -> (Color, Color) {
     let hsv: Hsv = color.rgba.into();
 

@@ -1,3 +1,5 @@
+//! Provides the parser for Splitty splits files.
+
 use std::io::Read;
 use std::result::Result as StdResult;
 use serde_json::de::from_reader;
@@ -5,14 +7,18 @@ use serde_json::Error as JsonError;
 use {Run, Segment, Time, TimeSpan, TimingMethod};
 
 quick_error! {
+    /// The Error type for splits files that couldn't be parsed by the Splitty
+    /// Parser.
     #[derive(Debug)]
     pub enum Error {
+        /// Failed to parse JSON.
         Json(err: JsonError) {
             from()
         }
     }
 }
 
+/// The Result type for the Splitty Parser.
 pub type Result<T> = StdResult<T, Error>;
 
 #[derive(Deserialize)]
@@ -41,6 +47,7 @@ fn parse_time(milliseconds: Option<f64>, method: TimingMethod) -> Time {
     time
 }
 
+/// Attempts to parse a Splitty splits file.
 pub fn parse<R: Read>(source: R) -> Result<Run> {
     let mut run = Run::new();
 

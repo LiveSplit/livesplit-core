@@ -1,3 +1,6 @@
+//! The analysis module provides a variety of functions for calculating
+//! information about runs.
+
 pub mod state_helper;
 pub mod current_pace;
 pub mod delta;
