@@ -9,11 +9,11 @@ use {Attempt, Segment, TimeSpan, TimingMethod};
 use super::ComparisonGenerator;
 
 /// The Comparison Generator for calculating the Latest Run. Using the
-//! Segment History, this comparison reconstructs the splits of the furthest,
-//! most recent attempt. If at least one attempt has been finished, this
-//! comparison will show the most recent finished attempt. If no attempts have
-//! been finished yet, this comparison will show the attempt that got the
-//! furthest.
+/// Segment History, this comparison reconstructs the splits of the furthest,
+/// most recent attempt. If at least one attempt has been finished, this
+/// comparison will show the most recent finished attempt. If no attempts have
+/// been finished yet, this comparison will show the attempt that got the
+/// furthest.
 #[derive(Copy, Clone, Debug)]
 pub struct LatestRun;
 
