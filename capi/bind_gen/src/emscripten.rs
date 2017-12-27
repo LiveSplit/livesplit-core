@@ -418,11 +418,11 @@ export "#.to_string()
             emscriptenModule._free(buf);
         }
     }
-    selectedSetIconFromArray(data: Int8Array) {
+    activeSetIconFromArray(data: Int8Array) {
         const buf = emscriptenModule._malloc(data.length);
         try {
             emscriptenModule.writeArrayToMemory(data, buf);
-            this.selectedSetIcon(buf, data.length);
+            this.activeSetIcon(buf, data.length);
         } finally {
             emscriptenModule._free(buf);
         }
@@ -448,11 +448,11 @@ export "#.to_string()
     /**
      * @param {Int8Array} data
      */
-    selectedSetIconFromArray(data) {
+    activeSetIconFromArray(data) {
         const buf = emscriptenModule._malloc(data.length);
         try {
             emscriptenModule.writeArrayToMemory(data, buf);
-            this.selectedSetIcon(buf, data.length);
+            this.activeSetIcon(buf, data.length);
         } finally {
             emscriptenModule._free(buf);
         }

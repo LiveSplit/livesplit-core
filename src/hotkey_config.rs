@@ -37,7 +37,23 @@ impl Default for HotkeyConfig {
     }
 }
 
-#[cfg(not(any(windows, target_os = "linux")))]
+#[cfg(any(target_os = "emscripten"))]
+impl Default for HotkeyConfig {
+    fn default() -> Self {
+        use hotkey::KeyCode::*;
+        Self {
+            split: Numpad1,
+            reset: Numpad3,
+            undo: Numpad8,
+            skip: Numpad2,
+            pause: Numpad5,
+            previous_comparison: Numpad4,
+            next_comparison: Numpad6,
+        }
+    }
+}
+
+#[cfg(not(any(windows, target_os = "linux", target_os = "emscripten")))]
 impl Default for HotkeyConfig {
     fn default() -> Self {
         Self {

@@ -113,7 +113,7 @@ impl Timer {
     /// that was in use by the Timer is being returned. Before the Run is
     /// returned, the current attempt is reset and the splits are being updated
     /// depending on the `update_splits` parameter.
-    pub fn replace_run(&mut self, run: Run, update_splits: bool) -> Result<Run, Run> {
+    pub fn replace_run(&mut self, mut run: Run, update_splits: bool) -> Result<Run, Run> {
         if run.is_empty() {
             return Err(run);
         }
@@ -122,6 +122,8 @@ impl Timer {
         if !run.comparisons().any(|c| c == self.current_comparison) {
             self.current_comparison = personal_best::NAME.to_string();
         }
+
+        run.regenerate_comparisons();
 
         Ok(mem::replace(&mut self.run, run))
     }

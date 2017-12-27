@@ -21,5 +21,9 @@ x11-dl = "2.13.0"
 mio = "0.6.6"
 promising-future = "0.2.4"
 
+[target.'cfg(target_os = "emscripten")'.dependencies]
+stdweb = "0.2.0"
+parking_lot = "0.5.3"
+
 [dependencies]
 quick-error = "1.2.0"

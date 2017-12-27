@@ -12,8 +12,8 @@ use self::winapi::shared::minwindef::{DWORD, LPARAM, LRESULT, UINT, WPARAM};
 use self::winapi::shared::windef::HHOOK;
 use self::winapi::um::libloaderapi::GetModuleHandleW;
 use self::winapi::um::processthreadsapi::GetCurrentThreadId;
-use self::winapi::um::winuser::{CallNextHookEx, GetMessageW, PostThreadMessageW, SetWindowsHookExW,
-                                UnhookWindowsHookEx};
+use self::winapi::um::winuser::{CallNextHookEx, GetMessageW, PostThreadMessageW,
+                                SetWindowsHookExW, UnhookWindowsHookEx};
 use self::winapi::um::winuser::{KBDLLHOOKSTRUCT, WH_KEYBOARD_LL, WM_KEYDOWN};
 use std::sync::Arc;
 use std::collections::hash_map::{Entry, HashMap};
@@ -149,10 +149,7 @@ impl Hook {
 
         let thread_id = initialized_rx.recv().map_err(|_| Error::ThreadStopped)??;
 
-        Ok(Hook {
-            thread_id: thread_id,
-            hotkeys: hotkeys,
-        })
+        Ok(Hook { thread_id, hotkeys })
     }
 
     pub fn register<F>(&self, hotkey: KeyCode, callback: F) -> Result<()>

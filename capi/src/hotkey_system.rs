@@ -1,6 +1,6 @@
 use livesplit_core::HotkeySystem;
 use shared_timer::OwnedSharedTimer;
-use super::{alloc, own, own_drop};
+use super::{acc, alloc, own, own_drop};
 use std::ptr;
 
 pub type OwnedHotkeySystem = *mut HotkeySystem;
@@ -20,4 +20,14 @@ pub unsafe extern "C" fn HotkeySystem_new(
 #[no_mangle]
 pub unsafe extern "C" fn HotkeySystem_drop(this: OwnedHotkeySystem) {
     own_drop(this);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn HotkeySystem_deactivate(this: *const HotkeySystem) {
+    acc(this).deactivate();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn HotkeySystem_activate(this: *const HotkeySystem) {
+    acc(this).activate();
 }
