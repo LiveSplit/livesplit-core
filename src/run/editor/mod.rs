@@ -89,6 +89,12 @@ impl Editor {
         self.run
     }
 
+    /// Accesses the Run being edited by the Run Editor.
+    #[inline]
+    pub fn run(&self) -> &Run {
+        &self.run
+    }
+
     /// Accesses the timing method that is currently selected for being
     /// modified.
     pub fn selected_timing_method(&self) -> TimingMethod {

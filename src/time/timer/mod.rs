@@ -5,6 +5,9 @@ use parking_lot::RwLock;
 use std::sync::Arc;
 use std::mem;
 
+#[cfg(test)]
+mod tests;
+
 /// A Timer provides all the capabilities necessary for doing speedrun attempts.
 ///
 /// # Examples
@@ -105,6 +108,15 @@ impl Timer {
     /// multiple threads with multiple owners.
     pub fn into_shared(self) -> SharedTimer {
         Arc::new(RwLock::new(self))
+    }
+
+    /// Takes out the Run from the Timer and resets the current attempt if there
+    /// is one in progress. If the splits are to be updated, all the information
+    /// of the current attempt are stored in the Run's history. Otherwise the
+    /// current attempt's information is discarded.
+    pub fn into_run(mut self, update_splits: bool) -> Run {
+        self.reset(update_splits);
+        self.run
     }
 
     /// Replaces the Run object used by the Timer with the Run object provided.
@@ -604,7 +616,7 @@ impl Timer {
     }
 
     fn set_run_as_pb(&mut self) {
-        self.run.import_segment_history();
+        self.run.import_pb_into_segment_history();
         self.run.fix_splits();
         for segment in self.run.segments_mut() {
             let split_time = segment.split_time();

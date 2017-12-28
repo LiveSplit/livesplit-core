@@ -43,6 +43,7 @@ extern crate chrono;
 extern crate derive_more;
 extern crate image as imagelib;
 extern crate odds;
+extern crate ordered_float;
 #[macro_use]
 extern crate quick_error;
 extern crate quick_xml;
@@ -51,6 +52,7 @@ extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;
 extern crate unicase;
+
 pub extern crate livesplit_hotkey as hotkey;
 pub extern crate ordermap;
 pub extern crate palette;
