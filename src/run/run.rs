@@ -555,7 +555,7 @@ impl Run {
                         }
                     }
 
-                    previous_time = segment.comparison_mut(comparison)[method].unwrap();
+                    previous_time = time;
                 }
             }
         }

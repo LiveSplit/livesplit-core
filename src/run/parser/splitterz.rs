@@ -108,7 +108,6 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::io::Cursor;
 
     #[test]
     fn counters() {
@@ -121,7 +120,7 @@ Counter,1,True
 Counter,1,True
 "#;
 
-        let run = parse(Cursor::new(RUN), false).unwrap();
+        let run = parse(RUN, false).unwrap();
         assert_eq!(run.len(), 3);
     }
 }

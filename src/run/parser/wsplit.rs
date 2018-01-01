@@ -46,6 +46,7 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
     let mut icon_buf = Vec::new();
     let mut icons_list = Vec::new();
     let mut old_run_exists = false;
+    let mut goal = None;
 
     for line in source.lines() {
         let line = line?;
@@ -76,6 +77,8 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
                         icons_list.push(Image::default());
                     }
                 }
+            } else if line.starts_with("Goal=") {
+                goal = Some(line["Goal=".len()..].to_owned());
             } else {
                 // must be a split Kappa
                 let mut split_info = line.split(',');
@@ -113,6 +116,15 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
         }
     }
 
+    if let Some(goal) = goal {
+        if run.category_name().is_empty() {
+            run.set_category_name(goal);
+        } else {
+            let category_name = format!("{} (Goal: {})", run.category_name(), goal);
+            run.set_category_name(category_name);
+        }
+    }
+
     if old_run_exists {
         run.add_custom_comparison("Old Run");
     }
@@ -122,4 +134,25 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
     }
 
     Ok(run)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn goal_parsing() {
+        const RUN: &[u8] = br#"Title=WarioWare, Inc
+Attempts=1
+Offset=0
+Size=374,61
+Goal=sub 2h
+Introduction,0,85.48,85.48
+Jimmy,0,219.68,134.2
+"#;
+
+        let run = parse(RUN, false).unwrap();
+        assert_eq!(run.category_name(), "WarioWare, Inc (Goal: sub 2h)");
+        assert_eq!(run.len(), 2);
+    }
 }

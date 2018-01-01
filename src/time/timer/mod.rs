@@ -112,7 +112,7 @@ impl Timer {
 
     /// Takes out the Run from the Timer and resets the current attempt if there
     /// is one in progress. If the splits are to be updated, all the information
-    /// of the current attempt are stored in the Run's history. Otherwise the
+    /// of the current attempt is stored in the Run's history. Otherwise the
     /// current attempt's information is discarded.
     pub fn into_run(mut self, update_splits: bool) -> Run {
         self.reset(update_splits);
@@ -307,7 +307,7 @@ impl Timer {
     }
 
     /// Resets the current attempt if there is one in progress. If the splits
-    /// are to be updated, all the information of the current attempt are stored
+    /// are to be updated, all the information of the current attempt is stored
     /// in the Run's history. Otherwise the current attempt's information is
     /// discarded.
     pub fn reset(&mut self, update_splits: bool) {
