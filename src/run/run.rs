@@ -493,6 +493,10 @@ impl Run {
     /// Applies some fixing algorithms on the Run. This includes fixing the
     /// comparison times and history, removing duplicates in the segment
     /// histories and removing empty times.
+    ///
+    /// # Panics
+    ///
+    /// This panics if the Run has no segments.
     pub fn fix_splits(&mut self) {
         for &method in &TimingMethod::all() {
             self.fix_comparison_times_and_history(method);
@@ -635,16 +639,24 @@ impl Run {
     }
 
     /// Returns the minimum index in use by all the Segment Histories.
+    ///
+    /// # Panics
+    ///
+    /// This panics if the Run has no segments.
     pub fn min_segment_history_index(&self) -> i32 {
         self.segments
             .iter()
             .map(|s| s.segment_history().min_index())
             .min()
-            .unwrap()
+            .expect("Can't calculate the minimum segment history index for an empty Run.")
     }
 
     /// Fixes the Segment History by calculating the segment times from the
     /// Personal Best times and adding those to the Segment History.
+    ///
+    /// # Panics
+    ///
+    /// This panics if the Run has no segments.
     pub fn import_pb_into_segment_history(&mut self) {
         let mut index = self.min_segment_history_index();
         for &timing_method in &TimingMethod::all() {
@@ -665,8 +677,12 @@ impl Run {
         }
     }
 
-    /// Fixes the Segment History by adding the Best Segment Times to the
+    /// Fixes a segment's Segment History by adding its Best Segment Time to its
     /// Segment History.
+    ///
+    /// # Panics
+    ///
+    /// This panics if the segment index provided is out of bounds.
     pub fn import_best_segment(&mut self, segment_index: usize) {
         let best_segment_time = self.segments[segment_index].best_segment_time();
         if best_segment_time.real_time.is_some() || best_segment_time.game_time.is_some() {
@@ -677,13 +693,20 @@ impl Run {
         }
     }
 
-    /// Updates the Segment History by adding the Split Times of the current
+    /// Updates the Segment History by adding the split times of the most recent
     /// attempt up to the provided current split index to the Segment History.
+    ///
+    /// # Panics
+    ///
+    /// This panics if there is no attempt in the Attempt History.
     pub fn update_segment_history(&mut self, current_split_index: usize) {
         let mut last_split_time = Time::zero();
 
         let segments = self.segments.iter_mut().take(current_split_index);
-        let index = self.attempt_history.last().unwrap().index();
+        let index = self.attempt_history
+            .last()
+            .expect("There is no attempt in the Attempt History.")
+            .index();
 
         for segment in segments {
             let split_time = segment.split_time();
