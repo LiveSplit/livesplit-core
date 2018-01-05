@@ -32,8 +32,6 @@ pub fn calculate_best(
     predictions.resize(segments.len() + 1, None);
     best::calculate(
         segments,
-        0,
-        segments.len(),
         &mut predictions,
         simple_calculation,
         use_current_run,
@@ -54,14 +52,7 @@ pub fn calculate_worst(
 ) -> Option<TimeSpan> {
     let mut predictions = Vec::with_capacity(segments.len() + 1);
     predictions.resize(segments.len() + 1, None);
-    worst::calculate(
-        segments,
-        0,
-        segments.len(),
-        &mut predictions,
-        use_current_run,
-        method,
-    )
+    worst::calculate(segments, &mut predictions, use_current_run, method)
 }
 
 fn track_current_run(

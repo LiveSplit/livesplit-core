@@ -3,7 +3,7 @@
 use std::io::{self, BufRead};
 use std::result::Result as StdResult;
 use std::num::{ParseFloatError, ParseIntError};
-use {Image, Run, Segment, Time, TimeSpan};
+use {Image, RealTime, Run, Segment, TimeSpan};
 
 quick_error! {
     /// The Error type for splits files that couldn't be parsed by the WSplit
@@ -88,29 +88,23 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
                 let pb_time = split_info.next().ok_or(Error::ExpectedPbTime)?;
                 let best_time = split_info.next().ok_or(Error::ExpectedBestTime)?;
 
+                let pb_time = TimeSpan::from_seconds(pb_time.parse()?);
+                let best_time = TimeSpan::from_seconds(best_time.parse()?);
+                let old_time = TimeSpan::from_seconds(old_time.parse()?);
+
                 let mut segment = Segment::new(segment_name);
-                let pb_real_time = TimeSpan::from_seconds(pb_time.parse()?);
-                let best_real_time = TimeSpan::from_seconds(best_time.parse()?);
-                let old_real_time = TimeSpan::from_seconds(old_time.parse()?);
 
-                let mut pb_time = Time::new();
-                let mut best_time = Time::new();
-                let mut old_time = Time::new();
-
-                if pb_real_time != TimeSpan::zero() {
-                    pb_time.real_time = Some(pb_real_time);
+                if pb_time != TimeSpan::zero() {
+                    segment.set_personal_best_split_time(RealTime(Some(pb_time)).into());
                 }
-                if best_real_time != TimeSpan::zero() {
-                    best_time.real_time = Some(best_real_time);
+                if best_time != TimeSpan::zero() {
+                    segment.set_best_segment_time(RealTime(Some(best_time)).into());
                 }
-                if old_real_time != TimeSpan::zero() {
-                    old_time.real_time = Some(old_real_time);
-                    *segment.comparison_mut("Old Run") = old_time;
+                if old_time != TimeSpan::zero() {
+                    *segment.comparison_mut("Old Run") = RealTime(Some(old_time)).into();
                     old_run_exists = true;
                 }
 
-                segment.set_personal_best_split_time(pb_time);
-                segment.set_best_segment_time(best_time);
                 run.push_segment(segment);
             }
         }

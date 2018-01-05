@@ -66,18 +66,24 @@ fn populate_predictions(
 /// really the worst possible time, but may be useful information regardless. If
 /// there's an active attempt, you can choose to take it into account as well.
 /// This lower level function requires you to provide a buffer to fill up with
-/// the slowest paths to reach each of the segments.
-#[allow(needless_range_loop, unknown_lints)]
+/// the slowest paths to reach each of the segments. This means that the first
+/// segment will always be reached at a time of 0:00. However, if you are
+/// interested in the total Sum of Worst Segments, then you can't look at the
+/// predictions value with the index of the last segment, as that only tells you
+/// what the worst time to reach that segment is, not the worst time to complete
+/// it. This means that the predictions buffer needs to have one more element
+/// than the list of segments provided, so that you can properly query the total
+/// Sum of Worst Segments. This value is also the value that is being returned.
+#[allow(needless_range_loop)]
 pub fn calculate(
     segments: &[Segment],
-    start_index: usize,
-    end_index: usize, // Exclusive
     predictions: &mut [Option<TimeSpan>],
     use_current_run: bool,
     method: TimingMethod,
 ) -> Option<TimeSpan> {
-    predictions[start_index] = Some(TimeSpan::zero());
-    for segment_index in start_index..end_index {
+    predictions[0] = Some(TimeSpan::zero());
+    let end_index = segments.len();
+    for segment_index in 0..end_index {
         let current_time = predictions[segment_index];
         populate_predictions(
             segments,

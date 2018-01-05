@@ -25,16 +25,12 @@ impl ComparisonGenerator for WorstSegments {
 
         calculate(
             segments,
-            0,
-            segments.len(),
             &mut real_time_predictions,
             false,
             TimingMethod::RealTime,
         );
         calculate(
             segments,
-            0,
-            segments.len(),
             &mut game_time_predictions,
             false,
             TimingMethod::GameTime,

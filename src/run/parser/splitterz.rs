@@ -4,7 +4,7 @@ use std::borrow::Cow;
 use std::io::{self, BufRead};
 use std::result::Result as StdResult;
 use std::num::ParseIntError;
-use {time, Image, Run, Segment, Time, TimeSpan};
+use {time, Image, RealTime, Run, Segment, TimeSpan};
 
 quick_error! {
     /// The Error type for splits files that couldn't be parsed by the SplitterZ
@@ -76,12 +76,12 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
 
             let time: TimeSpan = splits.next().ok_or(Error::ExpectedSplitTime)?.parse()?;
             if time != TimeSpan::zero() {
-                segment.set_personal_best_split_time(Time::new().with_real_time(Some(time)));
+                segment.set_personal_best_split_time(RealTime(Some(time)).into());
             }
 
             let time: TimeSpan = splits.next().ok_or(Error::ExpectedBestSegment)?.parse()?;
             if time != TimeSpan::zero() {
-                segment.set_best_segment_time(Time::new().with_real_time(Some(time)));
+                segment.set_best_segment_time(RealTime(Some(time)).into());
             }
 
             if load_icons {

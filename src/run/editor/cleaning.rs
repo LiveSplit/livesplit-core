@@ -260,13 +260,5 @@ fn next_timing_method(run: &Run, predictions: &mut Vec<Option<TimeSpan>>, method
 
     predictions.clear();
     predictions.resize(segments.len() + 1, None);
-    best::calculate(
-        segments,
-        0,
-        segments.len(),
-        predictions,
-        true,
-        false,
-        method,
-    );
+    best::calculate(segments, predictions, true, false, method);
 }
