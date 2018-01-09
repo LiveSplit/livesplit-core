@@ -12,6 +12,17 @@ env:
 
 matrix:
   include:
+    # weird error
+    # https://travis-ci.org/CryZe/livesplit-core/jobs/327011754
+    # - env: TARGET=sparcv9-sun-solaris
+
+    # no-std
+    # - env: TARGET=x86_64-unknown-dragonfly
+    # - env: TARGET=thumbv6m-none-eabi
+    # - env: TARGET=thumbv7em-none-eabi
+    # - env: TARGET=thumbv7m-none-eab
+    # - env: TARGET=thumbv7em-none-eabihf
+
     # emscripten
     - env: TARGET=asmjs-unknown-emscripten
       rust: nightly
@@ -23,6 +34,7 @@ matrix:
     - env: TARGET=i686-unknown-linux-musl
     - env: TARGET=x86_64-unknown-linux-gnu
     - env: TARGET=x86_64-unknown-linux-musl
+    - env: TARGET=i586-unknown-linux-gnu
 
     # iOS
     - env: TARGET=aarch64-apple-ios DISABLE_TESTS=1
@@ -41,6 +53,7 @@ matrix:
     - env: TARGET=aarch64-linux-android DISABLE_TESTS=1
     - env: TARGET=armv7-linux-androideabi DISABLE_TESTS=1
     - env: TARGET=i686-linux-android DISABLE_TESTS=1
+    - env: TARGET=x86_64-linux-android
 
     # OSX
     - env: TARGET=i686-apple-darwin
