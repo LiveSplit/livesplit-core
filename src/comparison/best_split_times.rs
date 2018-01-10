@@ -1,19 +1,15 @@
 //! Defines the Comparison Generator for the Best Split Times. The Best Split
-//! Times are the fastest actual split times a runner got for each individual
-//! split. This differs from the Personal Best, as the Personal Best only
-//! represents the fastest split time for the final split, but other runs that
-//! may have had major mistakes later on and possibly may have been reset, could
-//! have had a better pace for earlier splits.
+//! Times represent the best pace that the runner was ever on up to each split
+//! in the run. The Best Split Times are calculated by taking the best split
+//! time for each individual split from all of the runner's attempts.
 
 use super::ComparisonGenerator;
 use {Attempt, Segment, TimeSpan, TimingMethod};
 
-/// The Comparison Generator for the Best Split Times. The Best Split
-/// Times are the fastest actual split times a runner got for each individual
-/// split. This differs from the Personal Best, as the Personal Best only
-/// represents the fastest split time for the final split, but other runs that
-/// may have had major mistakes later on and possibly may have been reset, could
-/// have had a better pace for earlier splits.
+/// The Comparison Generator for the Best Split Times. The Best Split Times
+/// represent the best pace that the runner was ever on up to each split in the
+/// run. The Best Split Times are calculated by taking the best split time for
+/// each individual split from all of the runner's attempts.
 #[derive(Copy, Clone, Debug)]
 pub struct BestSplitTimes;
 

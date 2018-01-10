@@ -1,18 +1,19 @@
-//! Defines the Comparison Generator for calculating the Latest Run. This
-//! comparison reconstructs the splits of the most recent attempt from the
-//! history that got the furthest. So if no attempts have been finished yet,
-//! this comparison will show the attempt that got the furthest and when there
-//! have been finished attempts, then only the most recent finished attempt will
-//! be chosen.
+//! Defines the Comparison Generator for calculating the Latest Run. Using the
+//! Segment History, this comparison reconstructs the splits of the furthest,
+//! most recent attempt. If at least one attempt has been finished, this
+//! comparison will show the most recent finished attempt. If no attempts have
+//! been finished yet, this comparison will show the attempt that got the
+//! furthest.
 
 use {Attempt, Segment, TimeSpan, TimingMethod};
 use super::ComparisonGenerator;
 
-/// The Comparison Generator for calculating the Latest Run. This comparison
-/// reconstructs the splits of the most recent attempt from the history that got
-/// the furthest. So if no attempts have been finished yet, this comparison will
-/// show the attempt that got the furthest and when there have been finished
-/// attempts, then only the most recent finished attempt will be chosen.
+/// The Comparison Generator for calculating the Latest Run. Using the
+/// Segment History, this comparison reconstructs the splits of the furthest,
+/// most recent attempt. If at least one attempt has been finished, this
+/// comparison will show the most recent finished attempt. If no attempts have
+/// been finished yet, this comparison will show the attempt that got the
+/// furthest.
 #[derive(Copy, Clone, Debug)]
 pub struct LatestRun;
 

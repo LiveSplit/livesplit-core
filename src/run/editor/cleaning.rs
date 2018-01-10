@@ -1,5 +1,5 @@
 //! The cleaning module provides the Sum of Best Cleaner which allows you to
-//! interactively remove potential issues in the segment history that lead to an
+//! interactively remove potential issues in the Segment History that lead to an
 //! inaccurate Sum of Best. If you skip a split, whenever you will do the next
 //! split, the combined segment time might be faster than the sum of the
 //! individual best segments. The Sum of Best Cleaner will point out all of
@@ -13,7 +13,7 @@ use time::formatter::{Short, TimeFormatter};
 use chrono::Local;
 
 /// A Sum of Best Cleaner allows you to interactively remove potential issues in
-/// the segment history that lead to an inaccurate Sum of Best. If you skip a
+/// the Segment History that lead to an inaccurate Sum of Best. If you skip a
 /// split, whenever you will do the next split, the combined segment time might
 /// be faster than the sum of the individual best segments. The Sum of Best
 /// Cleaner will point out all of these and allows you to delete them

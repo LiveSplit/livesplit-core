@@ -1,7 +1,6 @@
 //! Provides functionality to calculate the total playtime for either a Run or a
-//! Timer. For a Run all the durations stored in the Attempt History are summed
-//! together, while for a Timer the current attempt's duration is also factored
-//! in additionally.
+//! Timer. For a Run, all the durations stored in the Attempt History are summed
+//! together. For a Timer, the current attempt's duration is also factored in.
 
 use {Run, TimeSpan, Timer, TimingMethod};
 
