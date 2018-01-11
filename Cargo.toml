@@ -28,6 +28,12 @@ panic = "abort"
 [workspace]
 members = ["capi", "capi/bind_gen", "js"]
 
+[[bench]]
+name = "balanced_pb"
+
+[[bench]]
+name = "parsing"
+
 [dependencies]
 base64 = "0.9.0"
 byteorder = "1.2.1"

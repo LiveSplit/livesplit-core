@@ -3,7 +3,11 @@
 //! functions for dealing with comparisons, like shortening a comparison, are
 //! provided.
 
+#[cfg(test)]
+mod tests;
+
 pub mod average_segments;
+pub mod balanced_pb;
 pub mod best_segments;
 pub mod best_split_times;
 pub mod latest_run;
@@ -11,6 +15,7 @@ pub mod none;
 pub mod worst_segments;
 
 pub use self::average_segments::AverageSegments;
+pub use self::balanced_pb::BalancedPB;
 pub use self::best_segments::BestSegments;
 pub use self::best_split_times::BestSplitTimes;
 pub use self::latest_run::LatestRun;
