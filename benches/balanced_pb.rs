@@ -6,8 +6,10 @@ extern crate test;
 use test::Bencher;
 
 use livesplit_core::{Run, Segment, TimeSpan, Timer};
-use livesplit_core::comparison::balanced_pb::{BalancedPB, NAME};
-use livesplit_core::time::formatter::{Short, TimeFormatter};
+use livesplit_core::comparison::balanced_pb::BalancedPB;
+use std::fs::File;
+use std::io::BufReader;
+use livesplit_core::run::parser::livesplit;
 
 fn run_with_splits(timer: &mut Timer, splits: &[f64]) {
     timer.start();
@@ -23,9 +25,7 @@ fn run_with_splits(timer: &mut Timer, splits: &[f64]) {
 }
 
 #[bench]
-fn bench(b: &mut Bencher) {
-    let s = TimeSpan::from_seconds;
-
+fn fake_splits(b: &mut Bencher) {
     let mut run = Run::new();
 
     run.push_segment(Segment::new("First"));
@@ -42,6 +42,16 @@ fn bench(b: &mut Bencher) {
     run_with_splits(&mut timer, &[0.2, 2.8, 3.0]);
 
     let mut run = timer.into_run(false);
+
+    b.iter(|| run.regenerate_comparisons());
+}
+
+#[bench]
+fn actual_splits(b: &mut Bencher) {
+    let reader = BufReader::new(File::open("tests/run_files/livesplit1.6.lss").unwrap());
+    let mut run = livesplit::parse(reader, None).unwrap();
+    run.comparison_generators_mut().clear();
+    run.comparison_generators_mut().push(Box::new(BalancedPB));
 
     b.iter(|| run.regenerate_comparisons());
 }

@@ -31,13 +31,14 @@ fn calculate(
     TimeSpan::from_milliseconds(perc_up + perc_down)
 }
 
-fn generate(segments: &mut [Segment], attempts: &[Attempt], method: TimingMethod) {
-    // TODO Reuse. Actually it seems like this can be folded completely away
-    // into the next loop, so we don't need a Vec at all (only the inner ones)
-    // Actually, there's side effects between the segments in the first loop, so
-    // we might not be able to do it after all.
-    let mut all_history = vec![Vec::new(); segments.len()];
-
+fn generate(
+    segments: &mut [Segment],
+    attempts: &[Attempt],
+    method: TimingMethod,
+    all_history: &mut [Vec<(isize, TimeSpan)>],
+    weighted_lists: &mut [Option<Vec<(f64, TimeSpan)>>],
+    time_span_buf: &mut Vec<TimeSpan>,
+) {
     for attempt in attempts {
         let attempt_index = attempt.index();
         let mut history_starting_index = -1;
@@ -45,7 +46,7 @@ fn generate(segments: &mut [Segment], attempts: &[Attempt], method: TimingMethod
         for (segment_index, (segment, all_history)) in
             segments.iter().zip(all_history.iter_mut()).enumerate()
         {
-            let segment_index = segment_index as i64;
+            let segment_index = segment_index as isize;
 
             if let Some(history) = segment.segment_history().get(attempt_index) {
                 if let Some(history) = history[method] {
@@ -58,12 +59,13 @@ fn generate(segments: &mut [Segment], attempts: &[Attempt], method: TimingMethod
         }
     }
 
-    // TODO Reuse
-    let mut weighted_lists = Vec::new();
     let mut overall_starting_index = -1;
 
-    for (current_index, (current_list, segment)) in
-        all_history.into_iter().zip(segments.iter()).enumerate()
+    for (current_index, ((current_list, segment), weighted_list_slot)) in all_history
+        .iter_mut()
+        .zip(segments.iter())
+        .zip(weighted_lists.iter_mut())
+        .enumerate()
     {
         let mut null_segment = false;
         let current_pb_time = segment.personal_best_split_time()[method];
@@ -73,63 +75,62 @@ fn generate(segments: &mut [Segment], attempts: &[Attempt], method: TimingMethod
             None
         };
 
-        // TODO More allocations :(
-        let mut final_list = current_list
-            .into_iter()
-            .filter(|&(index, _)| index == overall_starting_index)
-            .map(|(_, time)| time)
-            .collect::<Vec<_>>();
+        time_span_buf.clear();
+        time_span_buf.extend(
+            current_list
+                .drain(..)
+                .filter(|&(index, _)| index == overall_starting_index)
+                .map(|(_, time)| time),
+        );
 
-        if !final_list.is_empty() {
-            overall_starting_index = current_index as i64;
+        if !time_span_buf.is_empty() {
+            overall_starting_index = current_index as isize;
         } else if let Some(diff) = catch! { current_pb_time? - previous_pb_time? } {
-            final_list.push(diff);
-            overall_starting_index = current_index as i64;
+            time_span_buf.push(diff);
+            overall_starting_index = current_index as isize;
         } else {
             null_segment = true;
         }
 
         if !null_segment {
-            let count = final_list.len();
-            // TODO More allocations FeelsBadMan at this point
-            let mut temp_list = final_list
-                .into_iter()
-                .enumerate()
-                .map(|(i, time)| (get_weight(i, count), time))
-                .collect::<Vec<_>>();
+            let count = time_span_buf.len();
 
-            // TODO Aaarghhh >:(
-            let mut weighted_list = Vec::new();
+            // This reuses the Vec from the previous timing method if possible.
+            let weighted_list = weighted_list_slot.get_or_insert_with(Vec::new);
+            weighted_list.clear();
+            weighted_list.extend(
+                time_span_buf
+                    .drain(..)
+                    .enumerate()
+                    .map(|(i, time)| (get_weight(i, count), time)),
+            );
 
-            if temp_list.len() > 1 {
-                temp_list
+            if weighted_list.len() > 1 {
+                weighted_list
                     .sort_unstable_by_key(|&(_, time)| OrderedFloat(time.total_milliseconds()));
 
-                let total_weight = temp_list.iter().map(|&(weight, _)| weight).sum::<f64>();
+                let total_weight = weighted_list.iter().map(|&(weight, _)| weight).sum::<f64>();
                 // TODO That's the smallest time's weight, not the actual
                 // smallest weight. Is that intended?
-                let smallest_weight = temp_list[0].0;
+                let smallest_weight = weighted_list[0].0;
                 let range_weight = total_weight - smallest_weight;
 
                 let mut agg_weight = 0.0;
-                for (weight, time) in temp_list {
-                    agg_weight += weight;
-                    // TODO Possibly use extend instead for better reallocation behavior
-                    weighted_list.push((reweight(agg_weight, smallest_weight, range_weight), time));
+                for &mut (ref mut weight, _) in weighted_list.iter_mut() {
+                    agg_weight += *weight;
+                    *weight = reweight(agg_weight, smallest_weight, range_weight);
                 }
 
-                // TODO What's the point of sorting this? temp_list was already
-                // sorted by the times and was inserted in that order.
-                // weighted_list was empty before.
-                weighted_list
-                    .sort_unstable_by_key(|&(_, time)| OrderedFloat(time.total_milliseconds()));
+            // TODO What's the point of sorting this? temp_list was already
+            // sorted by the times and was inserted in that order.
+            // weighted_list was empty before.
+            // weighted_list
+            //     .sort_unstable_by_key(|&(_, time)| OrderedFloat(time.total_milliseconds()));
             } else {
-                weighted_list.push((1.0, temp_list[0].1));
+                weighted_list[0].0 = 1.0;
             }
-
-            weighted_lists.push(Some(weighted_list));
         } else {
-            weighted_lists.push(None);
+            *weighted_list_slot = None;
         }
     }
 
@@ -137,20 +138,15 @@ fn generate(segments: &mut [Segment], attempts: &[Attempt], method: TimingMethod
         .last()
         .and_then(|s| s.personal_best_split_time()[method]);
 
-    // TODO Damn, we actually reuse something this time. However even this list
-    // may be completely unnecessary. Also it seems like these should be
-    // optional. If we can't get rid of this, try to reuse it across both timing
-    // methods.
-    let mut output_splits = Vec::new();
     let (mut perc_min, mut perc_max) = (0.0, 1.0);
     let mut loop_protection = 0;
 
     loop {
         let mut run_sum = TimeSpan::zero();
-        output_splits.clear();
         let percentile = 0.5 * (perc_max - perc_min) + perc_min;
 
-        for weighted_list in &weighted_lists {
+        time_span_buf.clear();
+        for weighted_list in weighted_lists.iter() {
             if let &Some(ref weighted_list) = weighted_list {
                 let mut current_value = TimeSpan::zero();
                 if weighted_list.len() > 1 {
@@ -168,11 +164,11 @@ fn generate(segments: &mut [Segment], attempts: &[Attempt], method: TimingMethod
                 } else {
                     current_value = weighted_list[0].1;
                 }
-                output_splits.push(current_value);
                 run_sum += current_value;
+                time_span_buf.push(current_value);
             } else {
-                output_splits.push(TimeSpan::zero());
-            }
+                time_span_buf.push(TimeSpan::zero());
+            };
         }
 
         if let Some(goal_time) = goal_time {
@@ -192,7 +188,7 @@ fn generate(segments: &mut [Segment], attempts: &[Attempt], method: TimingMethod
     }
 
     let mut total_time = TimeSpan::zero();
-    for (segment, &output_time) in segments.iter_mut().zip(output_splits.iter()) {
+    for (segment, &output_time) in segments.iter_mut().zip(time_span_buf.iter()) {
         total_time += output_time;
         segment.comparison_mut(NAME)[method] = if output_time == TimeSpan::zero() {
             None
@@ -208,7 +204,25 @@ impl ComparisonGenerator for BalancedPB {
     }
 
     fn generate(&mut self, segments: &mut [Segment], attempts: &[Attempt]) {
-        generate(segments, attempts, TimingMethod::RealTime);
-        generate(segments, attempts, TimingMethod::GameTime);
+        let mut all_history = vec![Vec::new(); segments.len()];
+        let mut weighted_lists = vec![None; segments.len()];
+        let mut time_span_buf = Vec::with_capacity(segments.len());
+
+        generate(
+            segments,
+            attempts,
+            TimingMethod::RealTime,
+            &mut all_history,
+            &mut weighted_lists,
+            &mut time_span_buf,
+        );
+        generate(
+            segments,
+            attempts,
+            TimingMethod::GameTime,
+            &mut all_history,
+            &mut weighted_lists,
+            &mut time_span_buf,
+        );
     }
 }
