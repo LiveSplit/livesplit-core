@@ -1,7 +1,32 @@
+//! Defines the Comparison Generator for calculating a comparison which has the
+//! same final time as the runner's Personal Best. Unlike the Personal Best
+//! however, all the other split times are automatically balanced by the
+//! runner's history in order to balance out the mistakes present in the
+//! Personal Best throughout the comparison. Running against an unbalanced
+//! Personal Best can cause frustrations. A Personal Best with a mediocre early
+//! game and a really good end game has a high chance of the runner losing a lot
+//! of time compared to the Personal Best towards the end of a run. This may
+//! discourage the runner, which may lead them to reset the attempt. That's the
+//! perfect situation to compare against the Balanced Personal Best comparison
+//! instead, as all of the mistakes of the early game in such a situation would
+//! be smoothed out throughout the whole comparison.
+
 use super::ComparisonGenerator;
 use {Attempt, Segment, TimeSpan, TimingMethod};
 use ordered_float::OrderedFloat;
 
+/// The Comparison Generator for calculating a comparison which has the same
+/// final time as the runner's Personal Best. Unlike the Personal Best however,
+/// all the other split times are automatically balanced by the runner's history
+/// in order to balance out the mistakes present in the Personal Best throughout
+/// the comparison. Running against an unbalanced Personal Best can cause
+/// frustrations. A Personal Best with a mediocre early game and a really good
+/// end game has a high chance of the runner losing a lot of time compared to
+/// the Personal Best towards the end of a run. This may discourage the runner,
+/// which may lead them to reset the attempt. That's the perfect situation to
+/// compare against the Balanced Personal Best comparison instead, as all of the
+/// mistakes of the early game in such a situation would be smoothed out
+/// throughout the whole comparison.
 #[derive(Copy, Clone, Debug)]
 pub struct BalancedPB;
 
@@ -46,6 +71,8 @@ fn generate(
         for (segment_index, (segment, all_history)) in
             segments.iter().zip(all_history.iter_mut()).enumerate()
         {
+            // We assume that all the all_history lists are empty when entering this function.
+            // This requires us to leave the function with all of those lists empty again.
             let segment_index = segment_index as isize;
 
             if let Some(history) = segment.segment_history().get(attempt_index) {
@@ -75,8 +102,13 @@ fn generate(
             None
         };
 
+        // The time_span_buf may not be empty throughout all the iterations and
+        // even the initial one may not be. So we have to clear it just in case.
         time_span_buf.clear();
         time_span_buf.extend(
+            // Drain the all_history current list to ensure we leave the
+            // function with it being empty. (See above for why this is
+            // important)
             current_list
                 .drain(..)
                 .filter(|&(index, _)| index == overall_starting_index)
@@ -100,9 +132,9 @@ fn generate(
             weighted_list.clear();
             weighted_list.extend(
                 time_span_buf
-                    .drain(..)
+                    .iter()
                     .enumerate()
-                    .map(|(i, time)| (get_weight(i, count), time)),
+                    .map(|(i, &time)| (get_weight(i, count), time)),
             );
 
             if weighted_list.len() > 1 {
