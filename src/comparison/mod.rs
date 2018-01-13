@@ -93,6 +93,7 @@ pub fn shorten(comparison: &str) -> &str {
     match comparison {
         personal_best::NAME => personal_best::SHORT_NAME,
         average_segments::NAME => average_segments::SHORT_NAME,
+        balanced_pb::NAME => balanced_pb::SHORT_NAME,
         best_segments::NAME => best_segments::SHORT_NAME,
         best_split_times::NAME => best_split_times::SHORT_NAME,
         latest_run::NAME => latest_run::SHORT_NAME,
