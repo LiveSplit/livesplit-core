@@ -48,6 +48,32 @@ fn map_var(var: &str) -> &str {
     }
 }
 
+fn write_class_comments<W: Write>(mut writer: W, comments: &[String]) -> Result<()> {
+    write!(
+        writer,
+        r#"
+    """"#
+    )?;
+
+    for comment in comments {
+        write!(
+            writer,
+            r#"{}
+    "#,
+            comment
+                .replace("<NULL>", "None")
+                .replace("<TRUE>", "True")
+                .replace("<FALSE>", "False")
+        )?;
+    }
+
+    write!(
+        writer,
+        r#""""
+"#
+    )
+}
+
 fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
     let is_static = function.is_static();
     let has_return_type = function.has_return_type();
@@ -80,6 +106,26 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
     write!(
         writer,
         r#"):
+        "#
+    )?;
+
+    write!(writer, r#"""""#)?;
+
+    for comment in &function.comments {
+        write!(
+            writer,
+            r#"{}
+        "#,
+            comment
+                .replace("<NULL>", "None")
+                .replace("<TRUE>", "True")
+                .replace("<FALSE>", "False")
+        )?;
+    }
+
+    write!(
+        writer,
+        r#""""
         "#
     )?;
 
@@ -220,6 +266,8 @@ class {class}:"#,
             class = class_name_ref
         )?;
 
+        write_class_comments(&mut writer, &class.comments)?;
+
         for function in &class.shared_fns {
             write_fn(&mut writer, function)?;
         }
@@ -235,6 +283,8 @@ class {class}({base_class}):"#,
             base_class = class_name_ref
         )?;
 
+        write_class_comments(&mut writer, &class.comments)?;
+
         for function in &class.mut_fns {
             write_fn(&mut writer, function)?;
         }
@@ -245,11 +295,18 @@ class {class}({base_class}):"#,
     def __init__(self, ptr):
         self.ptr = ptr
 
-class {class}({base_class}):
-    def drop(self):
-        if self.ptr != None:"#,
+class {class}({base_class}):"#,
             class = class_name,
             base_class = class_name_ref_mut
+        )?;
+
+        write_class_comments(&mut writer, &class.comments)?;
+
+        write!(
+            writer,
+            r#"
+    def drop(self):
+        if self.ptr != None:"#,
         )?;
 
         if let Some(function) = class.own_fns.iter().find(|f| f.method == "drop") {

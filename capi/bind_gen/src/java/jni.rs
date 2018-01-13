@@ -4,6 +4,7 @@ use heck::MixedCase;
 use std::collections::BTreeMap;
 use std::path::Path;
 use std::fs::File;
+use super::write_class_comments;
 
 fn get_hl_type(ty: &Type) -> String {
     if ty.is_custom {
@@ -59,6 +60,34 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
         method = "finish".into();
     } else if method == "new" {
         method = "create".into();
+    } else if method == "default" {
+        method = "createDefault".into();
+    }
+
+    if !function.comments.is_empty() {
+        write!(
+            writer,
+            r#"
+    /**"#
+        )?;
+
+        for comment in &function.comments {
+            write!(
+                writer,
+                r#"
+     * {}"#,
+                comment
+                    .replace("<NULL>", "null")
+                    .replace("<TRUE>", "true")
+                    .replace("<FALSE>", "false")
+            )?;
+        }
+
+        write!(
+            writer,
+            r#"
+     */"#
+        )?;
     }
 
     if is_constructor {
@@ -209,7 +238,14 @@ fn write_class_ref<P: AsRef<Path>>(path: P, class_name: &str, class: &Class) -> 
     write!(
         writer,
         r#"package livesplitcore;
+"#
+    )?;
 
+    write_class_comments(&mut writer, &class.comments)?;
+
+    write!(
+        writer,
+        r#"
 public class {class} {{
     long ptr;"#,
         class = class_name_ref
@@ -256,7 +292,14 @@ fn write_class_ref_mut<P: AsRef<Path>>(path: P, class_name: &str, class: &Class)
     write!(
         writer,
         r#"package livesplitcore;
+"#
+    )?;
 
+    write_class_comments(&mut writer, &class.comments)?;
+
+    write!(
+        writer,
+        r#"
 public class {class} extends {base_class} {{"#,
         class = class_name_ref_mut,
         base_class = class_name_ref
@@ -284,7 +327,14 @@ fn write_class<P: AsRef<Path>>(path: P, class_name: &str, class: &Class) -> Resu
     write!(
         writer,
         r#"package livesplitcore;
+"#
+    )?;
 
+    write_class_comments(&mut writer, &class.comments)?;
+
+    write!(
+        writer,
+        r#"
 public class {class} extends {base_class} implements AutoCloseable {{
     private void drop() {{
         if (ptr != 0) {{"#,

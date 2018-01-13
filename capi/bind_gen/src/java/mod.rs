@@ -2,7 +2,7 @@ use std::path::Path;
 use std::collections::BTreeMap;
 use {Class, Result};
 use std::fs::{create_dir_all, File};
-use std::io::BufWriter;
+use std::io::{BufWriter, Write};
 use jni_cpp;
 
 mod jna;
@@ -26,4 +26,30 @@ pub fn write<P: AsRef<Path>>(path: P, classes: &BTreeMap<String, Class>) -> Resu
     path.pop();
 
     Ok(())
+}
+
+fn write_class_comments<W: Write>(mut writer: W, comments: &[String]) -> Result<()> {
+    write!(
+        writer,
+        r#"
+/**"#
+    )?;
+
+    for comment in comments {
+        write!(
+            writer,
+            r#"
+ * {}"#,
+            comment
+                .replace("<NULL>", "null")
+                .replace("<TRUE>", "true")
+                .replace("<FALSE>", "false")
+        )?;
+    }
+
+    write!(
+        writer,
+        r#"
+ */"#
+    )
 }

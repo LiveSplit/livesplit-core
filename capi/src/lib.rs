@@ -1,4 +1,7 @@
 #![allow(non_snake_case, non_camel_case_types)]
+#![warn(missing_docs)]
+
+//! mod
 
 extern crate libc;
 extern crate livesplit_core;
@@ -59,6 +62,7 @@ pub mod total_playtime_component_state;
 pub mod total_playtime_component;
 pub mod run_editor;
 pub mod sum_of_best_cleaner;
+pub mod potential_clean_up;
 pub mod shared_timer;
 pub mod timer_read_lock;
 pub mod timer_write_lock;
@@ -67,7 +71,9 @@ use segment_history_element::SegmentHistoryElement;
 use run_metadata_variable::RunMetadataVariable;
 use livesplit_core::{Time, TimeSpan};
 
+/// type
 pub type Json = *const c_char;
+/// type
 pub type Nullablec_char = c_char;
 
 thread_local! {

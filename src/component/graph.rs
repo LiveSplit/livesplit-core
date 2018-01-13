@@ -81,8 +81,8 @@ pub struct State {
     /// color to visualize the region beneath that graph segment.
     pub is_live_delta_active: bool,
     /// Describes whether the graph is flipped vertically. For visualizing the
-    /// graph, this usually doesn't need to be interpreted for visualizing the
-    /// graph, as this information is entirely encoded into the other variables.
+    /// graph, this usually doesn't need to be interpreted, as this information
+    /// is entirely encoded into the other variables.
     pub is_flipped: bool,
     /// The background color to use for the top region of the graph. The top
     /// region ends at the y coordinate of the middle.

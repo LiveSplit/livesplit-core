@@ -22,6 +22,7 @@ use syntex_syntax::abi::Abi;
 use syntex_syntax::ast::{FunctionRetTy, ItemKind, Mutability, PatKind, TyKind, Visibility};
 use syntex_syntax::parse::{parse_crate_from_file, ParseSess};
 use syntex_syntax::codemap::FilePathMapping;
+use std::rc::Rc;
 
 #[derive(StructOpt)]
 #[structopt(about = "Generates bindings for livesplit-core")]
@@ -53,6 +54,8 @@ pub struct Function {
     method: String,
     inputs: Vec<(String, Type)>,
     output: Type,
+    comments: Vec<String>,
+    class_comments: Rc<Vec<String>>,
 }
 
 impl Function {
@@ -71,6 +74,7 @@ impl Function {
 
 #[derive(Debug, Default)]
 pub struct Class {
+    comments: Rc<Vec<String>>,
     static_fns: Vec<Function>,
     shared_fns: Vec<Function>,
     mut_fns: Vec<Function>,
@@ -131,11 +135,29 @@ fn main() {
 
     for item in &items {
         if let &ItemKind::Mod(ref module) = &item.node {
+            let class_comments = Rc::new(
+                item.attrs
+                    .iter()
+                    .filter(|a| a.check_name("doc"))
+                    .filter_map(|a| a.with_desugared_doc(|a| a.meta()))
+                    .filter_map(|m| m.value_str())
+                    .map(|s| s.as_str().trim().to_string())
+                    .collect::<Vec<_>>(),
+            );
+
             for item in &module.items {
                 if let &ItemKind::Fn(ref decl, _, _, Abi::C, _, _) = &item.node {
                     if item.vis == Visibility::Public
                         && item.attrs.iter().any(|a| a.check_name("no_mangle"))
                     {
+                        let comments = item.attrs
+                            .iter()
+                            .filter(|a| a.check_name("doc"))
+                            .filter_map(|a| a.with_desugared_doc(|a| a.meta()))
+                            .filter_map(|m| m.value_str())
+                            .map(|s| s.as_str().trim().to_string())
+                            .collect::<Vec<_>>();
+
                         let output = if let &FunctionRetTy::Ty(ref output) = &decl.output {
                             get_type(&output.node)
                         } else {
@@ -169,11 +191,13 @@ fn main() {
                         }
 
                         functions.push(Function {
-                            name: name,
-                            class: class,
-                            method: method,
-                            output: output,
-                            inputs: inputs,
+                            name,
+                            class,
+                            method,
+                            output,
+                            inputs,
+                            comments,
+                            class_comments: class_comments.clone(),
                         });
                     }
                 }
@@ -193,6 +217,9 @@ fn fns_to_classes(functions: Vec<Function>) -> BTreeMap<String, Class> {
         let class = classes
             .entry(function.class.clone())
             .or_insert_with(Class::default);
+
+        class.comments = function.class_comments.clone();
+
         let kind = if let Some(&(ref name, ref ty)) = function.inputs.get(0) {
             if name == "this" {
                 Some(ty.kind)

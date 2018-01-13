@@ -70,6 +70,28 @@ fn ptr_of(var: &str) -> String {
     }
 }
 
+fn write_class_comments<W: Write>(mut writer: W, comments: &[String]) -> Result<()> {
+    write!(
+        writer,
+        r#"
+"#
+    )?;
+
+    for comment in comments {
+        write!(
+            writer,
+            r#"
+    # {}"#,
+            comment
+                .replace("<NULL>", "nil")
+                .replace("<TRUE>", "true")
+                .replace("<FALSE>", "false")
+        )?;
+    }
+
+    Ok(())
+}
+
 fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
     let is_static = function.is_static();
     let has_return_type = function.has_return_type();
@@ -79,12 +101,25 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         method = "create";
     }
 
+    for comment in &function.comments {
+        write!(
+            writer,
+            r#"
+        # {}"#,
+            comment
+                .replace("<NULL>", "nil")
+                .replace("<TRUE>", "true")
+                .replace("<FALSE>", "false")
+        )?;
+    }
+
     for &(ref name, ref typ) in function.inputs.iter().skip(if is_static { 0 } else { 1 }) {
         write!(
             writer,
             r"
-        # @param [{}] {}",
+        # @param [{}{}] {}",
             get_hl_type(typ),
+            if typ.is_nullable { ", nil" } else { "" },
             name
         )?;
     }
@@ -93,8 +128,13 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         write!(
             writer,
             r"
-        # @return [{}]",
-            return_type
+        # @return [{}{}]",
+            return_type,
+            if function.output.is_nullable {
+                ", nil"
+            } else {
+                ""
+            }
         )?;
     }
 
@@ -259,8 +299,7 @@ module LiveSplitCore
         def initialize(ptr)
             @ptr = ptr
         end
-    end
-    "#
+    end"#
     )?;
 
     for (class_name, class) in classes {
@@ -268,10 +307,11 @@ module LiveSplitCore
         let class_name_ref = format!("{}Ref", class_name);
         let class_name_ref_mut = format!("{}RefMut", class_name);
 
+        write_class_comments(&mut writer, &class.comments)?;
+
         write!(
             writer,
             r#"
-
     class {class}
         attr_accessor :handle"#,
             class = class_name_ref
@@ -305,8 +345,14 @@ module LiveSplitCore
         def initialize(ptr)
             @handle = LSCHandle.new ptr
         end
-    end
+    end"#
+        )?;
 
+        write_class_comments(&mut writer, &class.comments)?;
+
+        write!(
+            writer,
+            r#"
     class {class} < {base_class}"#,
             class = class_name_ref_mut,
             base_class = class_name_ref
@@ -322,8 +368,14 @@ module LiveSplitCore
         def initialize(ptr)
             @handle = LSCHandle.new ptr
         end
-    end
+    end"#,
+        )?;
 
+        write_class_comments(&mut writer, &class.comments)?;
+
+        write!(
+            writer,
+            r#"
     class {class} < {base_class}
         def self.finalize(handle)
             proc {{

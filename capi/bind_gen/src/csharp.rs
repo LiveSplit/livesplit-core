@@ -57,12 +57,64 @@ fn get_ll_type(ty: &Type, output: bool) -> &str {
     }
 }
 
+fn write_class_comments<W: Write>(mut writer: W, comments: &[String]) -> Result<()> {
+    write!(
+        writer,
+        r#"
+    /// <summary>"#
+    )?;
+
+    for comment in comments {
+        write!(
+            writer,
+            r#"
+    /// {}"#,
+            comment
+                .replace("<NULL>", "null")
+                .replace("<TRUE>", "true")
+                .replace("<FALSE>", "false")
+        )?;
+    }
+
+    write!(
+        writer,
+        r#"
+    /// </summary>"#
+    )
+}
+
 fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> Result<()> {
     let is_static = function.is_static();
     let has_return_type = function.has_return_type();
     let return_type = get_hl_type(&function.output);
     let return_type_ll = get_ll_type(&function.output, true);
     let is_constructor = function.method == "new" && !function.output.is_nullable;
+
+    if !function.comments.is_empty() {
+        write!(
+            writer,
+            r#"
+        /// <summary>"#
+        )?;
+
+        for comment in &function.comments {
+            write!(
+                writer,
+                r#"
+        /// {}"#,
+                comment
+                    .replace("<NULL>", "null")
+                    .replace("<TRUE>", "true")
+                    .replace("<FALSE>", "false")
+            )?;
+        }
+
+        write!(
+            writer,
+            r#"
+        /// </summary>"#
+        )?;
+    }
 
     if is_constructor {
         write!(
@@ -232,6 +284,8 @@ namespace LiveSplitCore
         let class_name_ref = format!("{}Ref", class_name);
         let class_name_ref_mut = format!("{}RefMut", class_name);
 
+        write_class_comments(&mut writer, &class.comments)?;
+
         write!(
             writer,
             r#"
@@ -275,7 +329,15 @@ namespace LiveSplitCore
             this.ptr = ptr;
         }}
     }}
+"#,
+            base_class = class_name_ref
+        )?;
 
+        write_class_comments(&mut writer, &class.comments)?;
+
+        write!(
+            writer,
+            r#"
     public class {class} : {base_class}
     {{"#,
             class = class_name_ref_mut,
@@ -290,14 +352,16 @@ namespace LiveSplitCore
             writer,
             r#"
         internal {class}(IntPtr ptr) : base(ptr) {{ }}
-    }}"#,
+    }}
+"#,
             class = class_name_ref_mut
         )?;
+
+        write_class_comments(&mut writer, &class.comments)?;
 
         write!(
             writer,
             r#"
-
     public class {class} : {base_class}, IDisposable
     {{
         private void Drop()

@@ -27,9 +27,9 @@ impl RunMetadata {
         &self.run_id
     }
 
-    /// Sets the speedrun.com Run ID of the run. Ensure that the record on
-    /// speedrun.com matches up with the Personal Best of this run. This may be
-    /// empty if there's no association.
+    /// Sets the speedrun.com Run ID of the run. You need to ensure that the
+    /// record on speedrun.com matches up with the Personal Best of this run.
+    /// This may be empty if there's no association.
     #[inline]
     pub fn set_run_id<S>(&mut self, id: S)
     where

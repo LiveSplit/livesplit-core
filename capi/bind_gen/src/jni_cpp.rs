@@ -17,7 +17,7 @@ fn get_c_type(ty: &Type) -> Cow<str> {
         "usize" => "size_t",
         "f32" => "float",
         "f64" => "double",
-        "bool" => "uint8_t",
+        "bool" => "bool",
         "()" => "void",
         "c_char" => "char",
         "Json" => "char const*",

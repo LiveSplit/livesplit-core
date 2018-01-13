@@ -70,6 +70,32 @@ fn get_ll_type(ty: &Type) -> &str {
     }
 }
 
+fn write_class_comments<W: Write>(mut writer: W, comments: &[String]) -> Result<()> {
+    write!(
+        writer,
+        r#"
+/**"#
+    )?;
+
+    for comment in comments {
+        write!(
+            writer,
+            r#"
+ * {}"#,
+            comment
+                .replace("<NULL>", "null")
+                .replace("<TRUE>", "true")
+                .replace("<FALSE>", "false")
+        )?;
+    }
+
+    write!(
+        writer,
+        r#"
+ */"#
+    )
+}
+
 fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> Result<()> {
     let is_static = function.is_static();
     let has_return_type = function.has_return_type();
@@ -78,13 +104,35 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
     let method = function.method.to_mixed_case();
     let is_json = has_return_type && function.output.name == "Json";
 
-    if !type_script {
+    if !function.comments.is_empty() || !type_script {
         write!(
             writer,
             r#"
     /**"#
         )?;
 
+        for comment in &function.comments {
+            write!(
+                writer,
+                r#"
+     * {}"#,
+                comment
+                    .replace("<NULL>", "null")
+                    .replace("<TRUE>", "true")
+                    .replace("<FALSE>", "false")
+            )?;
+        }
+
+        if type_script {
+            write!(
+                writer,
+                r#"
+     */"#
+            )?;
+        }
+    }
+
+    if !type_script {
         for &(ref name, ref ty) in function.inputs.iter().skip(if is_static { 0 } else { 1 }) {
             write!(
                 writer,
@@ -318,6 +366,8 @@ const liveSplitCoreNative = ffi.Library('livesplit_core', {"#
         let class_name_ref = format!("{}Ref", class_name);
         let class_name_ref_mut = format!("{}RefMut", class_name);
 
+        write_class_comments(&mut writer, &class.comments)?;
+
         write!(
             writer,
             r#"
@@ -403,20 +453,27 @@ const liveSplitCoreNative = ffi.Library('livesplit_core', {"#
         this.ptr = ptr;
     }}
 }}
+"#
+        )?;
+
+        if !type_script {
+            write!(
+                writer,
+                r#"exports.{base_class} = {base_class};
+"#,
+                base_class = class_name_ref
+            )?;
+        }
+
+        write_class_comments(&mut writer, &class.comments)?;
+
+        write!(
+            writer,
+            r#"
 {export}class {class} extends {base_class} {{"#,
             class = class_name_ref_mut,
             base_class = class_name_ref,
-            export = if type_script {
-                r#"
-export "#.to_string()
-            } else {
-                format!(
-                    r#"exports.{base_class} = {base_class};
-
-"#,
-                    base_class = class_name_ref
-                )
-            }
+            export = if type_script { "export " } else { "" }
         )?;
 
         for function in &class.mut_fns {
@@ -477,20 +534,27 @@ export "#.to_string()
             writer,
             r#"
 }}
+"#
+        )?;
+
+        if !type_script {
+            write!(
+                writer,
+                r#"exports.{base_class} = {base_class};
+"#,
+                base_class = class_name_ref_mut
+            )?;
+        }
+
+        write_class_comments(&mut writer, &class.comments)?;
+
+        write!(
+            writer,
+            r#"
 {export}class {class} extends {base_class} {{"#,
             class = class_name,
             base_class = class_name_ref_mut,
-            export = if type_script {
-                r#"
-export "#.to_string()
-            } else {
-                format!(
-                    r#"exports.{base_class} = {base_class};
-
-"#,
-                    base_class = class_name_ref_mut
-                )
-            }
+            export = if type_script { "export " } else { "" }
         )?;
 
         if type_script {

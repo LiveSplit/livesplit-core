@@ -52,6 +52,32 @@ fn get_ll_type(ty: &Type) -> &str {
     }
 }
 
+fn write_class_comments<W: Write>(mut writer: W, comments: &[String]) -> Result<()> {
+    write!(
+        writer,
+        r#"
+/**"#
+    )?;
+
+    for comment in comments {
+        write!(
+            writer,
+            r#"
+ * {}"#,
+            comment
+                .replace("<NULL>", "null")
+                .replace("<TRUE>", "true")
+                .replace("<FALSE>", "false")
+        )?;
+    }
+
+    write!(
+        writer,
+        r#"
+ */"#
+    )
+}
+
 fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> Result<()> {
     let is_static = function.is_static();
     let has_return_type = function.has_return_type();
@@ -60,13 +86,35 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
     let method = function.method.to_mixed_case();
     let is_json = has_return_type && function.output.name == "Json";
 
-    if !type_script {
+    if !function.comments.is_empty() || !type_script {
         write!(
             writer,
             r#"
     /**"#
         )?;
 
+        for comment in &function.comments {
+            write!(
+                writer,
+                r#"
+     * {}"#,
+                comment
+                    .replace("<NULL>", "null")
+                    .replace("<TRUE>", "true")
+                    .replace("<FALSE>", "false")
+            )?;
+        }
+
+        if type_script {
+            write!(
+                writer,
+                r#"
+     */"#
+            )?;
+        }
+    }
+
+    if !type_script {
         for &(ref name, ref ty) in function.inputs.iter().skip(if is_static { 0 } else { 1 }) {
             write!(
                 writer,
@@ -298,6 +346,8 @@ const liveSplitCoreNative = {};"#
         let class_name_ref = format!("{}Ref", class_name);
         let class_name_ref_mut = format!("{}RefMut", class_name);
 
+        write_class_comments(&mut writer, &class.comments)?;
+
         write!(
             writer,
             r#"
@@ -364,6 +414,9 @@ const liveSplitCoreNative = {};"#
             write!(
                 writer,
                 r#"
+    /**
+     * This constructor is an implementation detail. Do not use this.
+     */
     constructor(ptr: number) {{"#
             )?;
         } else {
@@ -371,6 +424,7 @@ const liveSplitCoreNative = {};"#
                 writer,
                 r#"
     /**
+     * This constructor is an implementation detail. Do not use this.
      * @param {{number}} ptr
      */
     constructor(ptr) {{"#
@@ -383,20 +437,27 @@ const liveSplitCoreNative = {};"#
         this.ptr = ptr;
     }}
 }}
+"#
+        )?;
+
+        if !type_script {
+            write!(
+                writer,
+                r#"exports.{base_class} = {base_class};
+"#,
+                base_class = class_name_ref
+            )?;
+        }
+
+        write_class_comments(&mut writer, &class.comments)?;
+
+        write!(
+            writer,
+            r#"
 {export}class {class} extends {base_class} {{"#,
             class = class_name_ref_mut,
             base_class = class_name_ref,
-            export = if type_script {
-                r#"
-export "#.to_string()
-            } else {
-                format!(
-                    r#"exports.{base_class} = {base_class};
-
-"#,
-                    base_class = class_name_ref
-                )
-            }
+            export = if type_script { "export " } else { "" }
         )?;
 
         for function in &class.mut_fns {
@@ -465,26 +526,39 @@ export "#.to_string()
             writer,
             r#"
 }}
+"#
+        )?;
+
+        if !type_script {
+            write!(
+                writer,
+                r#"exports.{base_class} = {base_class};
+"#,
+                base_class = class_name_ref_mut
+            )?;
+        }
+
+        write_class_comments(&mut writer, &class.comments)?;
+
+        write!(
+            writer,
+            r#"
 {export}class {class} extends {base_class} {{"#,
             class = class_name,
             base_class = class_name_ref_mut,
-            export = if type_script {
-                r#"
-export "#.to_string()
-            } else {
-                format!(
-                    r#"exports.{base_class} = {base_class};
-
-"#,
-                    base_class = class_name_ref_mut
-                )
-            }
+            export = if type_script { "export " } else { "" }
         )?;
 
         if type_script {
             write!(
                 writer,
                 r#"
+    /**
+     * Allows for scoped usage of the object. The object is guaranteed to get
+     * disposed once this function returns. You are free to dispose the object
+     * early yourself anywhere within the scope. The scope's return value gets
+     * carried to the outside of this function.
+     */
     with<T>(closure: (obj: {class}) => T): T {{"#,
                 class = class_name
             )?;
@@ -493,6 +567,10 @@ export "#.to_string()
                 writer,
                 r#"
     /**
+     * Allows for scoped usage of the object. The object is guaranteed to get
+     * disposed once this function returns. You are free to dispose the object
+     * early yourself anywhere within the scope. The scope's return value gets
+     * carried to the outside of this function.
      * @param {{function({class})}} closure
      */
     with(closure) {{"#,
@@ -509,6 +587,11 @@ export "#.to_string()
             this.dispose();
         }}
     }}
+    /**
+     * Disposes the object, allowing it to clean up all of its memory. You need
+     * to call this for every object that you don't use anymore and hasn't
+     * already been disposed.
+     */
     dispose() {{
         if (this.ptr != 0) {{"#
         )?;

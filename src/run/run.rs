@@ -148,13 +148,13 @@ impl Run {
         &mut self.metadata
     }
 
-    /// Sets the Time an attempt of this Run should start at.
+    /// Sets the time an attempt of this Run should start at.
     #[inline]
     pub fn set_offset(&mut self, offset: TimeSpan) {
         self.offset = offset;
     }
 
-    /// Accesses the Time an attempt of this Run should start at.
+    /// Accesses the time an attempt of this Run should start at.
     #[inline]
     pub fn offset(&self) -> TimeSpan {
         self.offset

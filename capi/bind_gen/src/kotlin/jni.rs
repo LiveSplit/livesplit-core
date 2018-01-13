@@ -47,6 +47,32 @@ fn get_ll_type<'a>(ty: &'a Type) -> &'a str {
     }
 }
 
+fn write_class_comments<W: Write>(mut writer: W, comments: &[String]) -> Result<()> {
+    write!(
+        writer,
+        r#"
+/**"#
+    )?;
+
+    for comment in comments {
+        write!(
+            writer,
+            r#"
+ * {}"#,
+            comment
+                .replace("<NULL>", "null")
+                .replace("<TRUE>", "true")
+                .replace("<FALSE>", "false")
+        )?;
+    }
+
+    write!(
+        writer,
+        r#"
+ */"#
+    )
+}
+
 fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
     let is_static = function.is_static();
     let has_return_type = function.has_return_type();
@@ -59,6 +85,34 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         method = "finish".into();
     } else if method == "new" {
         method = "create".into();
+    } else if method == "default" {
+        method = "createDefault".into();
+    }
+
+    if !function.comments.is_empty() {
+        write!(
+            writer,
+            r#"
+    /**"#
+        )?;
+
+        for comment in &function.comments {
+            write!(
+                writer,
+                r#"
+     * {}"#,
+                comment
+                    .replace("<NULL>", "null")
+                    .replace("<TRUE>", "true")
+                    .replace("<FALSE>", "false")
+            )?;
+        }
+
+        write!(
+            writer,
+            r#"
+     */"#
+        )?;
     }
 
     if is_constructor {
@@ -213,7 +267,14 @@ fn write_class_ref<P: AsRef<Path>>(path: P, class_name: &str, class: &Class) -> 
     write!(
         writer,
         r#"package livesplitcore
+"#
+    )?;
 
+    write_class_comments(&mut writer, &class.comments)?;
+
+    write!(
+        writer,
+        r#"
 open class {class} internal constructor(var ptr: Long) {{"#,
         class = class_name_ref
     )?;
@@ -257,7 +318,14 @@ fn write_class_ref_mut<P: AsRef<Path>>(path: P, class_name: &str, class: &Class)
     write!(
         writer,
         r#"package livesplitcore
+"#
+    )?;
 
+    write_class_comments(&mut writer, &class.comments)?;
+
+    write!(
+        writer,
+        r#"
 open class {class} internal constructor(ptr: Long) : {base_class}(ptr) {{"#,
         class = class_name_ref_mut,
         base_class = class_name_ref
@@ -281,7 +349,14 @@ fn write_class<P: AsRef<Path>>(path: P, class_name: &str, class: &Class) -> Resu
     write!(
         writer,
         r#"package livesplitcore
+"#
+    )?;
 
+    write_class_comments(&mut writer, &class.comments)?;
+
+    write!(
+        writer,
+        r#"
 open class {class} : {base_class}, AutoCloseable {{
     private fun drop() {{
         if (ptr != 0L) {{"#,

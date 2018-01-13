@@ -16,7 +16,7 @@ fn get_type(ty: &Type) -> Cow<str> {
         "usize" => "size_t",
         "f32" => "float",
         "f64" => "double",
-        "bool" => "uint8_t",
+        "bool" => "bool",
         "()" => "void",
         "c_char" => "char",
         "Json" => "char const*",
@@ -39,8 +39,8 @@ pub fn write<W: Write>(mut writer: W, classes: &BTreeMap<String, Class>) -> Resu
     write!(
         writer,
         "{}",
-        r#"#ifndef _LIVESPLIT_CORE_H_
-#define _LIVESPLIT_CORE_H_
+        r#"#ifndef LIVESPLIT_CORE_H
+#define LIVESPLIT_CORE_H
 
 #ifdef __cplusplus
 #define restrict __restrict
@@ -50,6 +50,7 @@ extern "C" {
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 
 "#
     )?;
@@ -76,9 +77,40 @@ typedef struct {0}_s const* {0}Ref;
             .chain(class.shared_fns.iter())
             .chain(class.mut_fns.iter())
         {
+            if function.method == "drop" {
+                writeln!(
+                    writer,
+                    r#"/**
+Frees the object, allowing it to clean up all of its memory. You need
+to call this for every object that you don't use anymore and hasn't
+already been freed.
+*/"#
+                )?;
+            } else if !function.comments.is_empty() {
+                write!(writer, r#"/**"#)?;
+
+                for comment in &function.comments {
+                    write!(
+                        writer,
+                        r#"
+{}"#,
+                        comment
+                            .replace("<NULL>", "NULL")
+                            .replace("<TRUE>", "true")
+                            .replace("<FALSE>", "false")
+                    )?;
+                }
+
+                writeln!(
+                    writer,
+                    r#"
+*/"#
+                )?;
+            }
+
             write!(
                 writer,
-                r#"extern {} {}("#,
+                r#"{} {}("#,
                 get_type(&function.output),
                 function.name
             )?;

@@ -72,7 +72,7 @@ pub struct State {
     pub value_color: Option<Color>,
     /// The label's text.
     pub text: String,
-    /// The current pace.
+    /// The current possible time save.
     pub time: String,
 }
 

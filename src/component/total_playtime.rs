@@ -11,8 +11,8 @@ use std::borrow::Cow;
 use settings::{Color, Field, Gradient, SettingsDescription, Value};
 use super::DEFAULT_INFO_TEXT_GRADIENT;
 
-/// The Total Playtime is a component that shows the total amount of time that
-/// the current category has been played for.
+/// The Total Playtime Component is a component that shows the total amount of
+/// time that the current category has been played for.
 #[derive(Default, Clone)]
 pub struct Component {
     settings: Settings,

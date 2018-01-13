@@ -16,7 +16,7 @@ fn get_type(ty: &Type) -> Cow<str> {
         "usize" => "size_t",
         "f32" => "float",
         "f64" => "double",
-        "bool" => "uint8_t",
+        "bool" => "bool",
         "()" => "void",
         "c_char" => "char",
         "Json" => "char const*",
@@ -43,8 +43,8 @@ pub fn write<W: Write>(mut writer: W, classes: &BTreeMap<String, Class>) -> Resu
     write!(
         writer,
         "{}",
-        r#"#ifndef _LIVESPLIT_CORE_H_
-#define _LIVESPLIT_CORE_H_
+        r#"#ifndef LIVESPLIT_CORE_H
+#define LIVESPLIT_CORE_H
 
 #ifdef __cplusplus
 namespace LiveSplit {
@@ -53,6 +53,7 @@ extern "C" {
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdbool.h>
 "#
     )?;
 
@@ -68,7 +69,7 @@ extern "C" {
         {
             write!(
                 writer,
-                r#"extern {} {}("#,
+                r#"{} {}("#,
                 get_type(&function.output),
                 function.name
             )?;

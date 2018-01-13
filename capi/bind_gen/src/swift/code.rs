@@ -45,11 +45,63 @@ fn get_ll_type(ty: &Type) -> &str {
     }
 }
 
+fn write_class_comments<W: Write>(mut writer: W, comments: &[String]) -> Result<()> {
+    write!(
+        writer,
+        r#"
+/**"#
+    )?;
+
+    for comment in comments {
+        write!(
+            writer,
+            r#"
+    {}"#,
+            comment
+                .replace("<NULL>", "nil")
+                .replace("<TRUE>", "true")
+                .replace("<FALSE>", "false")
+        )?;
+    }
+
+    write!(
+        writer,
+        r#"
+*/"#
+    )
+}
+
 fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
     let is_static = function.is_static();
     let has_return_type = function.has_return_type();
     let return_type = get_hl_type(&function.output);
     let is_constructor = function.method == "new";
+
+    if !function.comments.is_empty() {
+        write!(
+            writer,
+            r#"
+    /**"#
+        )?;
+
+        for comment in &function.comments {
+            write!(
+                writer,
+                r#"
+        {}"#,
+                comment
+                    .replace("<NULL>", "nil")
+                    .replace("<TRUE>", "true")
+                    .replace("<FALSE>", "false")
+            )?;
+        }
+
+        write!(
+            writer,
+            r#"
+    */"#
+        )?;
+    }
 
     if is_constructor {
         write!(
@@ -238,6 +290,8 @@ pub fn write<W: Write>(mut writer: W, classes: &BTreeMap<String, Class>) -> Resu
         let class_name_ref = format!("{}Ref", class_name);
         let class_name_ref_mut = format!("{}RefMut", class_name);
 
+        write_class_comments(&mut writer, &class.comments)?;
+
         write!(
             writer,
             r#"
@@ -275,7 +329,14 @@ public class {class} {{
         self.ptr = ptr
     }}
 }}
+"#
+        )?;
 
+        write_class_comments(&mut writer, &class.comments)?;
+
+        write!(
+            writer,
+            r#"
 public class {class}: {base_class} {{"#,
             class = class_name_ref_mut,
             base_class = class_name_ref
@@ -291,13 +352,15 @@ public class {class}: {base_class} {{"#,
     override init(ptr: UnsafeMutableRawPointer?) {{
         super.init(ptr: ptr)
     }}
-}}"#
+}}
+"#
         )?;
+
+        write_class_comments(&mut writer, &class.comments)?;
 
         write!(
             writer,
             r#"
-
 public class {class} : {base_class} {{
     private func drop() {{
         if self.ptr != Optional.none {{"#,

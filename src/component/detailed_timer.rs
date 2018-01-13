@@ -63,7 +63,8 @@ pub struct State {
     pub comparison1: Option<ComparisonState>,
     /// The second comparison to visualize.
     pub comparison2: Option<ComparisonState>,
-    /// The name of the segment.
+    /// The name of the segment. This may be `None` if it's not supposed to be
+    /// visualized.
     pub segment_name: Option<String>,
     /// The segment's icon encoded as a Data URL. This value is only specified
     /// whenever the icon changes. If you explicitly want to query this value,
