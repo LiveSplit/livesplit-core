@@ -83,7 +83,7 @@ fn generate(
 
         // End early if we don't have any segment times anymore
         if weighted_segment_times.is_empty() {
-            len = i + 1;
+            len = i;
             break;
         }
 

@@ -15,6 +15,23 @@ fn run_with_splits(timer: &mut Timer, splits: &[f64]) {
     timer.reset(true);
 }
 
+fn run_with_splits_opt(timer: &mut Timer, splits: &[Option<f64>]) {
+    timer.start();
+    timer.initialize_game_time();
+    timer.pause_game_time();
+
+    for &split in splits {
+        if let Some(split) = split {
+            timer.set_game_time(TimeSpan::from_seconds(split));
+            timer.split();
+        } else {
+            timer.skip_split();
+        }
+    }
+
+    timer.reset(true);
+}
+
 #[test]
 fn test() {
     let s = TimeSpan::from_seconds;
@@ -66,4 +83,21 @@ fn test() {
         );
         assert_eq!(run.segment(2).comparison(NAME).game_time, Some(s(3.0)));
     }
+}
+
+#[test]
+fn index_bug() {
+    let mut run = Run::new();
+
+    run.push_segment(Segment::new("First"));
+    run.push_segment(Segment::new("Second"));
+    run.push_segment(Segment::new("Third"));
+
+    run.comparison_generators_mut().clear();
+    run.comparison_generators_mut().push(Box::new(BalancedPB));
+
+    let mut timer = Timer::new(run).unwrap();
+
+    run_with_splits(&mut timer, &[1.0, 2.0]);
+    run_with_splits_opt(&mut timer, &[None, None, Some(3.0)]);
 }

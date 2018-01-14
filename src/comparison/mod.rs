@@ -79,6 +79,7 @@ pub fn default_generators() -> Vec<Box<ComparisonGenerator>> {
         Box::new(BestSplitTimes),
         Box::new(AverageSegments),
         Box::new(WorstSegments),
+        Box::new(BalancedPB),
         Box::new(LatestRun),
         Box::new(None),
     ]
