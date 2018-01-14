@@ -245,6 +245,18 @@ impl Run {
         }
     }
 
+    /// Accesses the Comparison Generators in use by this Run.
+    #[inline]
+    pub fn comparison_generators(&self) -> &[Box<ComparisonGenerator>] {
+        &self.comparison_generators.0
+    }
+
+    /// Grants mutable access to the Comparison Generators in use by this Run.
+    #[inline]
+    pub fn comparison_generators_mut(&mut self) -> &mut Vec<Box<ComparisonGenerator>> {
+        &mut self.comparison_generators.0
+    }
+
     /// Accesses the Auto Splitter Settings that are encoded as XML.
     #[inline]
     pub fn auto_splitter_settings(&self) -> &[u8] {
