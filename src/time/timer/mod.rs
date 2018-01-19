@@ -622,5 +622,6 @@ impl Timer {
             let split_time = segment.split_time();
             segment.set_personal_best_split_time(split_time);
         }
+        self.run.clear_run_id();
     }
 }

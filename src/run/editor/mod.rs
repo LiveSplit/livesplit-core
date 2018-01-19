@@ -175,6 +175,7 @@ impl Editor {
     {
         self.run.set_game_name(name);
         self.raise_run_edited();
+        self.run.clear_run_id();
     }
 
     /// Accesses the name of the category.
@@ -189,6 +190,7 @@ impl Editor {
     {
         self.run.set_category_name(name);
         self.raise_run_edited();
+        self.run.clear_run_id();
     }
 
     /// Accesses the timer offset. The timer offset specifies the time, the
@@ -270,7 +272,7 @@ impl Editor {
         if pb_split_time.real_time != self.previous_personal_best_time.real_time
             || pb_split_time.game_time != self.previous_personal_best_time.game_time
         {
-            self.run.metadata_mut().set_run_id("");
+            self.run.clear_run_id();
             self.previous_personal_best_time = pb_split_time;
         }
         self.raise_run_edited();

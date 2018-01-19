@@ -537,7 +537,7 @@ impl Run {
             segment.set_best_segment_time(Time::default());
         }
         self.attempt_count = 0;
-        self.metadata.set_run_id("");
+        self.clear_run_id();
     }
 
     fn fix_comparison_times_and_history(&mut self, method: TimingMethod) {

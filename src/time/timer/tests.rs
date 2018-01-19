@@ -360,3 +360,79 @@ fn import_best_segment_with_game_time_usage() {
     assert_eq!(history.get(0).and_then(|t| t.game_time), best);
     assert_eq!(history.get(1).and_then(|t| t.game_time), Some(first));
 }
+
+#[test]
+fn clears_run_id_when_pbing() {
+    let mut timer = timer();
+
+    // Get a PB
+
+    timer.set_current_timing_method(TimingMethod::GameTime);
+
+    let first = TimeSpan::from_seconds(5.0);
+    timer.set_game_time(first);
+    timer.split();
+
+    let second = TimeSpan::from_seconds(10.0);
+    timer.set_game_time(second);
+    timer.split();
+
+    let third = TimeSpan::from_seconds(15.0);
+    timer.set_game_time(third);
+    timer.split();
+
+    let mut run = timer.into_run(true);
+
+    // Set the run id
+
+    assert_eq!(run.metadata().run_id(), "");
+    run.metadata_mut().set_run_id("34567");
+    assert_eq!(run.metadata().run_id(), "34567");
+
+    // Do a new run, but this time don't pb. Run ID should be the same.
+
+    let mut timer = Timer::new(run).unwrap();
+    timer.set_current_timing_method(TimingMethod::GameTime);
+
+    timer.start();
+    timer.initialize_game_time();
+    timer.pause_game_time();
+
+    let first = TimeSpan::from_seconds(6.0);
+    timer.set_game_time(first);
+    timer.split();
+
+    let second = TimeSpan::from_seconds(11.0);
+    timer.set_game_time(second);
+    timer.split();
+
+    let third = TimeSpan::from_seconds(16.0);
+    timer.set_game_time(third);
+    timer.split();
+
+    timer.reset(true);
+
+    assert_eq!(timer.run().metadata().run_id(), "34567");
+
+    // Do a new run and PB. Run ID should be cleared.
+
+    timer.start();
+    timer.initialize_game_time();
+    timer.pause_game_time();
+
+    let first = TimeSpan::from_seconds(4.0);
+    timer.set_game_time(first);
+    timer.split();
+
+    let second = TimeSpan::from_seconds(9.0);
+    timer.set_game_time(second);
+    timer.split();
+
+    let third = TimeSpan::from_seconds(14.0);
+    timer.set_game_time(third);
+    timer.split();
+
+    timer.reset(true);
+
+    assert_eq!(timer.run().metadata().run_id(), "");
+}
