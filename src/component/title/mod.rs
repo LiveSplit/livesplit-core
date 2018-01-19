@@ -1,7 +1,7 @@
 //! Provides the Title Component and relevant types for using it. The Title
 //! Component is a component that shows the name of the game and the category
-//! that is being run. Additionally the game's icon, the attempt count and the
-//! amount of successfully finished attempts can be shown.
+//! that is being run. Additionally, the game icon, the attempt count, and the
+//! total number of finished runs can be shown.
 
 use {Timer, TimerPhase};
 use serde_json::{to_writer, Result};
@@ -13,8 +13,8 @@ use settings::{Alignment, Color, Field, Gradient, SettingsDescription, Value};
 mod tests;
 
 /// The Title Component is a component that shows the name of the game and the
-/// category that is being run. Additionally the game's icon, the attempt count
-/// and the amount of successfully finished attempts can be shown.
+/// category that is being run. Additionally, the game icon, the attempt count,
+/// and the total number of finished runs can be shown.
 #[derive(Default, Clone)]
 pub struct Component {
     icon_id: usize,

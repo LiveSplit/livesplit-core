@@ -1,10 +1,9 @@
 //! Provides the Previous Segment Component and relevant types for using it. The
 //! Previous Segment Component is a component that shows how much time was saved
-//! or lost based in the last segment based on the chosen comparison.
-//! Additionally the time save that would've been possible in the previous
-//! segment can be displayed. This component switches to a `Live Segment` view
-//! that shows active time loss, whenever the runner is losing time on the
-//! current segment.
+//! or lost during the previous segment based on the chosen comparison.
+//! Additionally, the potential time save for the previous segment can be
+//! displayed. This component switches to a `Live Segment` view that shows
+//! active time loss whenever the runner is losing time on the current segment.
 
 use {analysis, comparison, GeneralLayoutSettings, Timer, TimerPhase};
 use time::formatter::{Accuracy, Delta, PossibleTimeSave, TimeFormatter};
@@ -16,11 +15,10 @@ use settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value
 use super::DEFAULT_INFO_TEXT_GRADIENT;
 
 /// The Previous Segment Component is a component that shows how much time was
-/// saved or lost based in the last segment based on the chosen comparison.
-/// Additionally the time save that would've been possible in the previous
-/// segment can be displayed. This component switches to a `Live Segment` view
-/// that shows active time loss, whenever the runner is losing time on the
-/// current segment.
+/// saved or lost during the previous segment based on the chosen comparison.
+/// Additionally, the potential time save for the previous segment can be
+/// displayed. This component switches to a `Live Segment` view that shows
+/// active time loss whenever the runner is losing time on the current segment.
 #[derive(Default, Clone)]
 pub struct Component {
     settings: Settings,

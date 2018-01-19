@@ -17,10 +17,10 @@ pub struct State {
     pub game: String,
     /// The name of the category the Run is for.
     pub category: String,
-    /// The timer offset specifies the time, the timer starts at when starting a
+    /// The timer offset specifies the time that the timer starts at when starting a
     /// new attempt.
     pub offset: String,
-    /// The amount of times this Run has been attempted for by the runner. This
+    /// The number of times this Run has been attempted by the runner. This
     /// is mostly just a visual number and has no effect on any history.
     pub attempts: u32,
     /// The timing method that is currently selected to be visualized and

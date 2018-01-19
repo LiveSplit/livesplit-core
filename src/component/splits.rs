@@ -1,7 +1,7 @@
 //! Provides the Splits Component and relevant types for using it. The Splits
 //! Component is the main component for visualizing all the split times. Each
 //! segment is shown in a tabular fashion showing the segment icon, segment
-//! name, the delta compared to the chosen comparison and the split time. The
+//! name, the delta compared to the chosen comparison, and the split time. The
 //! list provides scrolling functionality, so not every segment needs to be
 //! shown all the time.
 
@@ -17,7 +17,7 @@ use settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value
 
 /// The Splits Component is the main component for visualizing all the split
 /// times. Each segment is shown in a tabular fashion showing the segment icon,
-/// segment name, the delta compared to the chosen comparison and the split
+/// segment name, the delta compared to the chosen comparison, and the split
 /// time. The list provides scrolling functionality, so not every segment needs
 /// to be shown all the time.
 #[derive(Default, Clone)]
@@ -39,8 +39,8 @@ pub struct Settings {
     pub visual_split_count: usize,
     /// If there's more segments than segments that are shown, the window
     /// showing the segments automatically scrolls up and down when the current
-    /// segment changes. This count determines how many future segments are at
-    /// least to be shown in this scrolling window, when it automatically
+    /// segment changes. This count determines the minimum number of future
+    /// segments to be shown in this scrolling window when it automatically
     /// scrolls.
     pub split_preview_count: usize,
     /// If not every segment is shown in the scrolling window of segments, then

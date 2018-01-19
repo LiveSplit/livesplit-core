@@ -8,11 +8,10 @@ use super::Color;
 pub enum SemanticColor {
     /// There's no meaningful information for this color.
     Default,
-    /// The runner is ahead of the comparison and is also gaining even more
+    /// The runner is ahead of the comparison and is gaining even more
     /// time.
     AheadGainingTime,
-    /// The runner is ahead of the comparison, but is losing time to the
-    /// comparison.
+    /// The runner is ahead of the comparison, but is losing time.
     AheadLosingTime,
     /// The runner is behind the comparison and is losing even more time.
     BehindLosingTime,
