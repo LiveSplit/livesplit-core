@@ -51,12 +51,14 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
     let is_static = function.is_static();
     let has_return_type = function.has_return_type();
     let return_type = get_hl_type(&function.output);
-    let is_constructor = function.method == "new";
+    let is_constructor = function.method == "new" && !function.output.is_nullable;
     let mut method = function.method.to_mixed_case();
     if method == "clone" {
         method = "copy".into();
     } else if method == "close" {
         method = "finish".into();
+    } else if method == "new" {
+        method = "create".into();
     }
 
     if is_constructor {
@@ -326,7 +328,7 @@ open class {class} : {base_class}, AutoCloseable {{
         )?;
 
         for function in &class.static_fns {
-            if function.method != "new" {
+            if function.method != "new" || function.output.is_nullable {
                 write_fn(&mut writer, function)?;
             } else {
                 constructor = Some(function);

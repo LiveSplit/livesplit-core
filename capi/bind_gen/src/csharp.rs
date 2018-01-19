@@ -62,7 +62,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
     let has_return_type = function.has_return_type();
     let return_type = get_hl_type(&function.output);
     let return_type_ll = get_ll_type(&function.output, true);
-    let is_constructor = function.method == "new";
+    let is_constructor = function.method == "new" && !function.output.is_nullable;
 
     if is_constructor {
         write!(

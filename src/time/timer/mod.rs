@@ -236,7 +236,7 @@ impl Timer {
             self.start_time_with_offset = self.start_time - self.run.offset();
             self.adjusted_start_time = self.start_time_with_offset;
             self.time_paused_at = self.run.offset();
-            self.uninitialize_game_time();
+            self.deinitialize_game_time();
             self.run.start_next_run();
 
             // TODO OnStart
@@ -485,9 +485,9 @@ impl Timer {
         self.loading_times = Some(self.loading_times());
     }
 
-    /// Uninitializes Game Time for the current attempt.
+    /// Deinitializes Game Time for the current attempt.
     #[inline]
-    pub fn uninitialize_game_time(&mut self) {
+    pub fn deinitialize_game_time(&mut self) {
         self.loading_times = None;
     }
 

@@ -138,9 +138,10 @@ pub unsafe extern "C" fn Timer_initialize_game_time(this: *mut Timer) {
     acc_mut(this).initialize_game_time();
 }
 
+/// conflict
 #[no_mangle]
-pub unsafe extern "C" fn Timer_uninitialize_game_time(this: *mut Timer) {
-    acc_mut(this).uninitialize_game_time();
+pub unsafe extern "C" fn Timer_deinitialize_game_time(this: *mut Timer) {
+    acc_mut(this).deinitialize_game_time();
 }
 
 #[no_mangle]
