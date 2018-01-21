@@ -1,5 +1,5 @@
 //! Provides the Blank Space Component and relevant types for using it. The
-//! Blank Space Component is simply an empty component, that doesn't show
+//! Blank Space Component is simply an empty component that doesn't show
 //! anything other than a background. It mostly serves as padding between other
 //! components.
 
@@ -9,7 +9,7 @@ use std::io::Write;
 use std::borrow::Cow;
 use settings::{Field, Gradient, SettingsDescription, Value};
 
-/// The Blank Space Component is simply an empty component, that doesn't show
+/// The Blank Space Component is simply an empty component that doesn't show
 /// anything other than a background. It mostly serves as padding between other
 /// components.
 #[derive(Default, Clone)]

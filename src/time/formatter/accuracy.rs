@@ -4,9 +4,9 @@
 pub enum Accuracy {
     /// Don't show any fractional part.
     Seconds,
-    /// Show the tenths of the times (12:34.5).
+    /// Show tenths of a second (12:34.5).
     Tenths,
-    /// Show the hundredths of the times (12:34.56).
+    /// Show hundredths of a second (12:34.56).
     Hundredths,
 }
 

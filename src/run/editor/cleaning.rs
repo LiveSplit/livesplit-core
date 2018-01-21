@@ -1,9 +1,10 @@
 //! The cleaning module provides the Sum of Best Cleaner which allows you to
 //! interactively remove potential issues in the Segment History that lead to an
-//! inaccurate Sum of Best. If you skip a split, whenever you will do the next
+//! inaccurate Sum of Best. If you skip a split, whenever you get to the next
 //! split, the combined segment time might be faster than the sum of the
-//! individual best segments. The Sum of Best Cleaner will point out all of
-//! these and allows you to delete them individually if any of them seem wrong.
+//! individual best segments. The Sum of Best Cleaner will point out all
+//! occurrences of this and allows you to delete them individually if any of
+//! them seem wrong.
 
 use {Attempt, Run, Segment, TimeSpan, TimingMethod};
 use analysis::sum_of_segments::{best, track_branch};
@@ -14,9 +15,9 @@ use chrono::Local;
 
 /// A Sum of Best Cleaner allows you to interactively remove potential issues in
 /// the Segment History that lead to an inaccurate Sum of Best. If you skip a
-/// split, whenever you will do the next split, the combined segment time might
+/// split, whenever you get to the next split, the combined segment time might
 /// be faster than the sum of the individual best segments. The Sum of Best
-/// Cleaner will point out all of these and allows you to delete them
+/// Cleaner will point out all occurrences of this and allows you to delete them
 /// individually if any of them seem wrong.
 pub struct SumOfBestCleaner<'r> {
     run: &'r mut Run,

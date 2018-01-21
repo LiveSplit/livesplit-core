@@ -1,6 +1,6 @@
 //! Provides the Current Comparison Component and relevant types for using it.
 //! The Current Comparison Component is a component that shows the name of the
-//! comparison that is currently selected for being compared against.
+//! comparison that is currently selected to be compared against.
 
 use Timer;
 use serde_json::{to_writer, Result};
@@ -10,7 +10,7 @@ use settings::{Color, Field, Gradient, SettingsDescription, Value};
 use super::DEFAULT_INFO_TEXT_GRADIENT;
 
 /// The Current Comparison Component is a component that shows the name of the
-/// comparison that is currently selected for being compared against.
+/// comparison that is currently selected to be compared against.
 #[derive(Default, Clone)]
 pub struct Component {
     settings: Settings,

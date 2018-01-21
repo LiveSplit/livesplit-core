@@ -9,10 +9,10 @@ pub struct GeneralSettings {
     /// The color to use for when the runner achieved a best segment.
     pub best_segment_color: Color,
     /// The color to use for when the runner is ahead of the comparison and is
-    /// also gaining even more time.
+    /// gaining even more time.
     pub ahead_gaining_time_color: Color,
     /// The color to use for when the runner is ahead of the comparison, but is
-    /// losing time to the comparison.
+    /// losing time.
     pub ahead_losing_time_color: Color,
     /// The color to use for when the runner is behind the comparison, but is
     /// gaining back time.
