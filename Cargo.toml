@@ -1,6 +1,6 @@
 [package]
 name = "livesplit-core"
-version = "0.8.1"
+version = "0.9.0"
 authors = ["Christopher Serr <christopher.serr@gmail.com>"]
 documentation = "https://docs.rs/livesplit-core/"
 repository = "https://github.com/CryZe/livesplit-core"
@@ -40,14 +40,14 @@ byteorder = "1.2.1"
 chrono = { version = "0.4.0", features = ["serde"] }
 derive_more = "0.7.0"
 image = "0.18.0"
-livesplit-hotkey = { path = "hotkey", version = "0.2.1" }
+livesplit-hotkey = { path = "hotkey", version = "0.3.0" }
 odds = { version = "0.3.1", features = ["std-vec"] }
 ordered-float = "0.5.0"
 ordermap = "0.3.2"
 palette = "0.2.1"
 parking_lot = "0.5.3"
 quick-error = "1.2.0"
-quick-xml = "0.10.1"
+quick-xml = "0.11.0"
 serde = "1.0.24"
 serde_derive = "1.0.24"
 serde_json = "1.0.8"

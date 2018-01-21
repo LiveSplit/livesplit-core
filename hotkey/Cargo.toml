@@ -1,6 +1,6 @@
 [package]
 name = "livesplit-hotkey"
-version = "0.2.1"
+version = "0.3.0"
 authors = ["Christopher Serr <christopher.serr@gmail.com>"]
 documentation = "https://docs.rs/livesplit-hotkey/"
 repository = "https://github.com/CryZe/livesplit-core/tree/master/hotkey"
@@ -22,7 +22,7 @@ mio = "0.6.6"
 promising-future = "0.2.4"
 
 [target.'cfg(target_os = "emscripten")'.dependencies]
-stdweb = "0.2.0"
+stdweb = "0.3.0"
 parking_lot = "0.5.3"
 
 [dependencies]
