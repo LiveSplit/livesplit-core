@@ -5,7 +5,7 @@
 use livesplit_core::component::text::Component as TextComponent;
 use super::{acc, acc_mut, alloc, output_vec, own, own_drop, str, Json};
 use text_component_state::OwnedTextComponentState;
-use libc::c_char;
+use std::os::raw::c_char;
 use component::OwnedComponent;
 
 /// type

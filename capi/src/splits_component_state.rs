@@ -2,7 +2,7 @@
 
 use livesplit_core::component::splits::State as SplitsComponentState;
 use super::{acc, output_str, output_vec, own_drop};
-use libc::c_char;
+use std::os::raw::c_char;
 use std::io::Write;
 
 /// type

@@ -21,7 +21,14 @@ pub use emscripten::*;
 #[macro_use]
 extern crate stdweb;
 
-#[cfg(not(any(windows, target_os = "linux", target_os = "emscripten")))]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+pub mod wasm;
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+pub use wasm::*;
+
+#[cfg(not(any(windows, target_os = "linux", target_os = "emscripten",
+              all(target_arch = "wasm32", target_os = "unknown"))))]
 pub mod other;
-#[cfg(not(any(windows, target_os = "linux", target_os = "emscripten")))]
+#[cfg(not(any(windows, target_os = "linux", target_os = "emscripten",
+              all(target_arch = "wasm32", target_os = "unknown"))))]
 pub use other::*;

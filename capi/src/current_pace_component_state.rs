@@ -2,7 +2,7 @@
 
 use livesplit_core::component::current_pace::State as CurrentPaceComponentState;
 use super::{acc, output_str, own_drop};
-use libc::c_char;
+use std::os::raw::c_char;
 
 /// type
 pub type OwnedCurrentPaceComponentState = *mut CurrentPaceComponentState;

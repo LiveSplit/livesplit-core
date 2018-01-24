@@ -3,7 +3,7 @@
 
 use livesplit_core::RunMetadata;
 use super::{acc, alloc, output_str};
-use libc::c_char;
+use std::os::raw::c_char;
 use run_metadata_variables_iter::OwnedRunMetadataVariablesIter;
 
 /// type

@@ -15,8 +15,8 @@ Set-Location $STAGE
 $ZIP = "$SRC_DIR\$($Env:CRATE_NAME)-$($Env:APPVEYOR_REPO_TAG_NAME)-$($Env:TARGET).zip"
 
 Copy-Item "$SRC_DIR\capi\bindings" '.\' -recurse
-Copy-Item "$SRC_DIR\target\$($Env:TARGET)\release\livesplit_core_capi.dll" '.\livesplit_core.dll'
-Copy-Item "$SRC_DIR\target\$($Env:TARGET)\release\livesplit_core_capi.lib" '.\livesplit_core.lib'
+Copy-Item "$SRC_DIR\target\$($Env:TARGET)\release\livesplit_core.dll" '.\livesplit_core.dll'
+Copy-Item "$SRC_DIR\target\$($Env:TARGET)\release\livesplit_core.lib" '.\livesplit_core.lib'
 
 7z a "$ZIP" *
 

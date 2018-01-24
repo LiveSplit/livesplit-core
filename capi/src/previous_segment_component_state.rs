@@ -3,7 +3,7 @@
 use livesplit_core::component::previous_segment::State as PreviousSegmentComponentState;
 use super::{acc, output_str, output_vec, own_drop};
 use std::io::Write;
-use libc::c_char;
+use std::os::raw::c_char;
 
 /// type
 pub type OwnedPreviousSegmentComponentState = *mut PreviousSegmentComponentState;

@@ -38,10 +38,8 @@
 
 extern crate base64;
 extern crate byteorder;
-extern crate chrono;
 #[macro_use]
 extern crate derive_more;
-extern crate image as imagelib;
 extern crate odds;
 extern crate ordered_float;
 #[macro_use]
@@ -55,8 +53,13 @@ extern crate unicase;
 
 pub extern crate livesplit_hotkey as hotkey;
 pub extern crate ordermap;
-pub extern crate palette;
-pub extern crate parking_lot;
+
+mod platform;
+
+pub use platform::{palette, parking_lot};
+use platform::{chrono, imagelib};
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+pub use platform::*;
 
 macro_rules! catch {
     ($($code:tt)*) => {

@@ -3,10 +3,9 @@
 
 //! mod
 
-extern crate libc;
 extern crate livesplit_core;
 
-use libc::c_char;
+use std::os::raw::c_char;
 use std::ffi::CStr;
 use std::cell::{Cell, RefCell};
 use std::mem;

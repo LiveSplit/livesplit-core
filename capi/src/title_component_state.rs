@@ -2,7 +2,7 @@
 
 use livesplit_core::component::title::State as TitleComponentState;
 use super::{acc, output_str, own_drop, Nullablec_char};
-use libc::c_char;
+use std::os::raw::c_char;
 use std::ptr;
 
 /// type

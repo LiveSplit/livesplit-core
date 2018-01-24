@@ -7,7 +7,7 @@ use livesplit_core::{Run, RunEditor, TimingMethod};
 use super::{acc, acc_mut, alloc, output_vec, own, str, Json};
 use run::OwnedRun;
 use sum_of_best_cleaner::OwnedSumOfBestCleaner;
-use libc::c_char;
+use std::os::raw::c_char;
 use std::{ptr, slice};
 
 /// type

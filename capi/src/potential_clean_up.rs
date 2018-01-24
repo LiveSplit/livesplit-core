@@ -5,7 +5,7 @@
 
 use livesplit_core::run::editor::cleaning::PotentialCleanUp;
 use super::{acc, output_vec, own_drop};
-use libc::c_char;
+use std::os::raw::c_char;
 use std::io::Write;
 
 /// type

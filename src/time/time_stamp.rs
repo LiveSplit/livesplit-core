@@ -1,4 +1,4 @@
-use std::time::Instant;
+use platform::Instant;
 use std::ops::Sub;
 use TimeSpan;
 

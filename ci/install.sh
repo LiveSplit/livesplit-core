@@ -26,6 +26,9 @@ main() {
         x86_64-apple-ios)
             rustup target install x86_64-apple-ios
             ;;
+        wasm32-unknown-unknown)
+            rustup target install wasm32-unknown-unknown
+            ;;
     esac
 
     # This fetches latest stable release

@@ -4,7 +4,7 @@
 
 use livesplit_core::{Segment, SegmentHistory, Time};
 use super::{acc, alloc, output_str, output_time, own_drop, str};
-use libc::c_char;
+use std::os::raw::c_char;
 
 /// type
 pub type OwnedSegment = *mut Segment;

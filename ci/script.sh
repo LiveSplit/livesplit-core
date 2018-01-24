@@ -14,10 +14,18 @@ main() {
             cross build -p livesplit --target $TARGET --release
             return
             ;;
+        wasm32-unknown-unknown)
+            cross build -p cdylib --target $TARGET --release
+            return
+            ;;
     esac
 
-    cross build -p livesplit-core-capi --target $TARGET
-    cross build -p livesplit-core-capi --target $TARGET --release
+    cross build -p staticlib --target $TARGET
+    cross build -p staticlib --target $TARGET --release
+    if [ -z $NO_DYLIB ]; then
+        cross build -p cdylib --target $TARGET
+        cross build -p cdylib --target $TARGET --release
+    fi
 
     if [ ! -z $DISABLE_TESTS ]; then
         return

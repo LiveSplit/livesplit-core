@@ -2,7 +2,7 @@
 
 use livesplit_core::component::detailed_timer::State as DetailedTimerComponentState;
 use super::{acc, output_str, output_vec, own_drop, Nullablec_char};
-use libc::c_char;
+use std::os::raw::c_char;
 use std::io::Write;
 use std::ptr;
 

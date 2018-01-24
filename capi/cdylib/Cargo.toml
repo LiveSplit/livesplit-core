@@ -1,0 +1,11 @@
+[package]
+name = "cdylib"
+version = "0.1.0"
+authors = ["Christopher Serr <christopher.serr@gmail.com>"]
+
+[dependencies]
+livesplit-core-capi = { path = ".." }
+
+[lib]
+name = "livesplit_core"
+crate-type = ["cdylib"]

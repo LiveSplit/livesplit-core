@@ -3,7 +3,7 @@
 
 use livesplit_core::AtomicDateTime;
 use {acc, output_str, own_drop};
-use libc::c_char;
+use std::os::raw::c_char;
 
 /// type
 pub type OwnedAtomicDateTime = *mut AtomicDateTime;

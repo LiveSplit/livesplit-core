@@ -3,7 +3,7 @@
 //! are used in the category.
 
 use super::{acc, output_str, own_drop};
-use libc::c_char;
+use std::os::raw::c_char;
 
 /// type
 pub type RunMetadataVariable = (*const String, *const String);

@@ -5,7 +5,7 @@ use livesplit_core::settings::{Alignment, Color, Gradient, Value as SettingValue
 use livesplit_core::time::formatter::{Accuracy, DigitsFormat};
 use livesplit_core::TimingMethod;
 use {alloc, own_drop, str};
-use libc::c_char;
+use std::os::raw::c_char;
 use std::ptr;
 
 /// type

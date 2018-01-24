@@ -23,29 +23,31 @@ matrix:
     # - env: TARGET=thumbv7m-none-eab
     # - env: TARGET=thumbv7em-none-eabihf
 
-    # emscripten
+    # Web
     - env: TARGET=asmjs-unknown-emscripten
       rust: nightly
     - env: TARGET=wasm32-unknown-emscripten
       rust: nightly
+    - env: TARGET=wasm32-unknown-unknown
+      rust: nightly
 
     # Linux
     - env: TARGET=i686-unknown-linux-gnu
-    - env: TARGET=i686-unknown-linux-musl
+    - env: TARGET=i686-unknown-linux-musl NO_DYLIB=1
     - env: TARGET=x86_64-unknown-linux-gnu
-    - env: TARGET=x86_64-unknown-linux-musl
+    - env: TARGET=x86_64-unknown-linux-musl NO_DYLIB=1
     - env: TARGET=i586-unknown-linux-gnu
 
     # iOS
-    - env: TARGET=aarch64-apple-ios DISABLE_TESTS=1
+    - env: TARGET=aarch64-apple-ios DISABLE_TESTS=1 NO_DYLIB=1
       os: osx
-    - env: TARGET=armv7-apple-ios DISABLE_TESTS=1
+    - env: TARGET=armv7-apple-ios DISABLE_TESTS=1 NO_DYLIB=1
       os: osx
-    - env: TARGET=armv7s-apple-ios DISABLE_TESTS=1
+    - env: TARGET=armv7s-apple-ios DISABLE_TESTS=1 NO_DYLIB=1
       os: osx
-    - env: TARGET=i386-apple-ios DISABLE_TESTS=1
+    - env: TARGET=i386-apple-ios DISABLE_TESTS=1 NO_DYLIB=1
       os: osx
-    - env: TARGET=x86_64-apple-ios DISABLE_TESTS=1
+    - env: TARGET=x86_64-apple-ios DISABLE_TESTS=1 NO_DYLIB=1
       os: osx
 
     # Android
@@ -121,7 +123,7 @@ deploy:
   file_glob: true
   file: $CRATE_NAME-$TRAVIS_TAG-$TARGET.*
   on:
-    condition: $TRAVIS_RUST_VERSION == 'stable' || $TARGET = 'asmjs-unknown-emscripten' || $TARGET == 'wasm32-unknown-emscripten'
+    condition: $TRAVIS_RUST_VERSION == 'stable' || $TARGET = 'asmjs-unknown-emscripten' || $TARGET == 'wasm32-unknown-emscripten' || $TARGET == 'wasm32-unknown-unknown'
     tags: true
   provider: releases
   skip_cleanup: true

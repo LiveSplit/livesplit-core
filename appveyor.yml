@@ -42,14 +42,17 @@ install:
 test_script:
   # we don't run the "test phase" when doing deploys
   - if [%APPVEYOR_REPO_TAG%]==[false] (
-      cargo build -p livesplit-core-capi --target %TARGET% &&
-      cargo build -p livesplit-core-capi --target %TARGET% --release &&
+      cargo build -p staticlib --target %TARGET% &&
+      cargo build -p cdylib --target %TARGET% &&
+      cargo build -p staticlib --target %TARGET% --release &&
+      cargo build -p cdylib --target %TARGET% --release &&
       cargo test -p livesplit-core --target %TARGET% &&
       cargo test -p livesplit-core --target %TARGET% --release
     )
 
 before_deploy:
-  - cargo rustc -p livesplit-core-capi --target %TARGET% --release
+  - cargo rustc -p staticlib --target %TARGET% --release
+  - cargo rustc -p cdylib --target %TARGET% --release
   - ps: ci\before_deploy.ps1
 
 deploy:

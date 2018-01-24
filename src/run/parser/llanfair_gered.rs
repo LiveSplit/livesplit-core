@@ -65,7 +65,7 @@ where
             }
 
             let buf = &buf[0xFE..][..len];
-            let image = ImageBuffer::<Rgba<_>, _>::from_raw(width, height, buf)
+            let image = ImageBuffer::<Rgba<u8>, _>::from_raw(width, height, buf)
                 .ok_or(Error::ElementNotFound)?;
 
             Ok((width, height, image))

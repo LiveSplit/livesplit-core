@@ -5,7 +5,7 @@ use livesplit_core::run::parser::composite::{ParsedRun, Result};
 use super::{acc, alloc, output_vec, own, own_drop};
 use run::OwnedRun;
 use std::io::Write;
-use libc::c_char;
+use std::os::raw::c_char;
 
 /// type
 pub type ParseRunResult = Result<ParsedRun>;

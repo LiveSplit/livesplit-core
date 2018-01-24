@@ -2,7 +2,7 @@
 
 use livesplit_core::component::possible_time_save::State as PossibleTimeSaveComponentState;
 use super::{acc, output_str, own_drop};
-use libc::c_char;
+use std::os::raw::c_char;
 
 /// type
 pub type OwnedPossibleTimeSaveComponentState = *mut PossibleTimeSaveComponentState;

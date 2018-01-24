@@ -83,7 +83,7 @@ where
     let width = width.ok_or(Error::ElementNotFound)?;
 
     let image_buf = image_buf.as_slice();
-    let image = ImageBuffer::<Rgba<_>, _>::from_raw(width, height, image_buf)
+    let image = ImageBuffer::<Rgba<u8>, _>::from_raw(width, height, image_buf)
         .ok_or(Error::ElementNotFound)?;
 
     buf.clear();

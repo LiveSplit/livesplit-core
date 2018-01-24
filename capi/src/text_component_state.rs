@@ -3,7 +3,7 @@
 use livesplit_core::component::text::State as TextComponentState;
 use livesplit_core::component::text::Text;
 use super::{acc, output_str, own_drop};
-use libc::c_char;
+use std::os::raw::c_char;
 
 /// type
 pub type OwnedTextComponentState = *mut TextComponentState;

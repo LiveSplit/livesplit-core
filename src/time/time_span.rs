@@ -1,6 +1,6 @@
 use std::ops::{AddAssign, SubAssign};
 use std::str::FromStr;
-use std::time::Duration as StdDuration;
+use platform::Duration as StdDuration;
 use std::num::ParseFloatError;
 use chrono::Duration;
 

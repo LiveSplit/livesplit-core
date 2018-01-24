@@ -7,7 +7,7 @@ use std::io::{BufReader, Cursor};
 use std::slice;
 use std::path::PathBuf;
 use std::fs::File;
-use libc::c_char;
+use std::os::raw::c_char;
 use segment::OwnedSegment;
 use parse_run_result::OwnedParseRunResult;
 
