@@ -1,5 +1,7 @@
 #![allow(missing_docs)]
 
+extern crate png;
+
 pub mod palette;
 
 // Parses Date Times by ignoring them
