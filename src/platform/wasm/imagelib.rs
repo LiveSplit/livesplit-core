@@ -9,7 +9,7 @@ pub struct Rgba<T>(PhantomData<T>);
 
 pub mod png {
     use super::ColorType;
-    use super::super::png::Encoder;
+    use super::super::png::{self as pnglib, HasParameters};
     use std::io::Write;
 
     pub struct PNGEncoder<W>(W);
@@ -20,7 +20,11 @@ pub mod png {
         }
 
         pub fn encode(&mut self, d: &[u8], w: u32, h: u32, _: ColorType) -> Result<(), ()> {
-            Encoder::new(&mut self.0, w, h)
+            let mut encoder = pnglib::Encoder::new(&mut self.0, w, h);
+            encoder
+                .set(pnglib::ColorType::RGBA)
+                .set(pnglib::BitDepth::Eight);
+            encoder
                 .write_header()
                 .map_err(|_| ())?
                 .write_image_data(d)
