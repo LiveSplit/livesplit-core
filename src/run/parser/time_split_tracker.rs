@@ -5,6 +5,7 @@ use std::fs::File;
 use std::path::PathBuf;
 use std::result::Result as StdResult;
 use std::num::ParseIntError;
+use super::super::run::ComparisonError;
 use chrono::{TimeZone, Utc};
 use {time, AtomicDateTime, Image, RealTime, Run, Segment, Time, TimeSpan};
 
@@ -31,10 +32,6 @@ quick_error! {
         ExpectedComparisonTime {}
         /// Expected the line containing the icon, but didn't find it.
         ExpectedIconLine {}
-        /// Parsed comparison has an invalid name.
-        InvalidComparisonName {
-            from()
-        }
         /// Failed to parse an integer.
         Int(err: ParseIntError) {
             from()
@@ -128,8 +125,21 @@ pub fn parse<R: BufRead>(source: R, path_for_loading_other_files: Option<PathBuf
     parse_history(&mut run, path).ok();
 
     for comparison in comparisons {
-        let _ = run.add_custom_comparison(comparison)
-            .map_err(|_| Error::InvalidComparisonName);
+        let mut name = comparison.to_string();
+        let mut number = 0;
+        loop {
+            match run.add_custom_comparison(name.clone()) {
+                Ok(_) => break,
+                Err(ref e) if *e == ComparisonError::DuplicateName => {
+                    name = format!("{}{}", name, number);
+                    number += 1;
+                }
+                Err(ref e) if *e == ComparisonError::NameStartsWithRace => {
+                    name = format!("{}{}", "[ok]", name);
+                }
+                Err(_) => panic!("Impossible Case"),
+            }
+        }
     }
 
     Ok(run)

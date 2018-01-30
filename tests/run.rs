@@ -2,7 +2,7 @@ extern crate livesplit_core;
 
 mod run {
     use livesplit_core::{Run, Segment};
-    use livesplit_core::run::Editor;
+    use livesplit_core::run::{ComparisonError, Editor};
 
     #[test]
     fn add_comparison() {
@@ -15,7 +15,7 @@ mod run {
     fn add_duplicate_comparison() {
         let mut run = Run::new();
         let c = run.add_custom_comparison("Best Segments");
-        assert_eq!(c, Err(()));
+        assert_eq!(c, Err(ComparisonError::DuplicateName));
     }
 
     #[test]
@@ -33,7 +33,7 @@ mod run {
         run.push_segment(Segment::new("s"));
         let mut editor = Editor::new(run).unwrap();
         let c = editor.add_comparison("Best Segments");
-        assert_eq!(c, Err(()));
+        assert_eq!(c, Err(ComparisonError::DuplicateName));
     }
 
     #[test]

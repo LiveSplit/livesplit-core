@@ -7,7 +7,7 @@
 use std::num::ParseIntError;
 use std::mem::swap;
 use {comparison, unicase, Image, Run, Segment, Time, TimeSpan, TimingMethod};
-use super::validate_comparison_name;
+use super::run::ComparisonError;
 use time::ParseError as ParseTimeSpanError;
 
 pub mod cleaning;
@@ -572,7 +572,10 @@ impl Editor {
 
     /// Adds a new custom comparison. It can't be added if it starts with
     /// `[Race]` or already exists.
-    pub fn add_comparison<S: Into<String>>(&mut self, comparison: S) -> Result<(), ()> {
+    pub fn add_comparison<S: Into<String>>(
+        &mut self,
+        comparison: S,
+    ) -> Result<(), ComparisonError> {
         let comparison = comparison.into();
         self.run.add_custom_comparison(comparison)?;
         self.fix();
@@ -586,7 +589,7 @@ impl Editor {
         &mut self,
         run: &Run,
         comparison: S,
-    ) -> Result<(), ()> {
+    ) -> Result<(), ComparisonError> {
         let comparison = comparison.into();
         self.run.add_custom_comparison(comparison.as_str())?;
         // TODO Borrowcheck (remaining_segments isn't used after this block
@@ -653,26 +656,27 @@ impl Editor {
             return Ok(());
         }
 
-        if validate_comparison_name(&self.run, new) {
-            let position = self.run
-                .custom_comparisons()
-                .iter()
-                .position(|c| c == old)
-                .ok_or(())?;
+        match self.run.validate_comparison_name(new) {
+            Ok(()) => {
+                let position = self.run
+                    .custom_comparisons()
+                    .iter()
+                    .position(|c| c == old)
+                    .ok_or(())?;
 
-            self.run.custom_comparisons_mut()[position] = new.to_string();
+                self.run.custom_comparisons_mut()[position] = new.to_string();
 
-            for segment in self.run.segments_mut() {
-                if let Some(time) = segment.comparisons_mut().remove(old) {
-                    *segment.comparison_mut(new) = time;
+                for segment in self.run.segments_mut() {
+                    if let Some(time) = segment.comparisons_mut().remove(old) {
+                        *segment.comparison_mut(new) = time;
+                    }
                 }
+
+                self.fix();
+
+                Ok(())
             }
-
-            self.fix();
-
-            Ok(())
-        } else {
-            Err(())
+            _ => Err(()),
         }
     }
 

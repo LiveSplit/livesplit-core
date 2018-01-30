@@ -29,13 +29,7 @@ mod tests;
 
 pub use self::attempt::Attempt;
 pub use self::run_metadata::RunMetadata;
-pub use self::run::{ComparisonsIter, Run};
+pub use self::run::{ComparisonError, ComparisonsIter, Run};
 pub use self::segment_history::SegmentHistory;
 pub use self::segment::Segment;
 pub use self::editor::Editor;
-
-/// Checks a given name against the current comparisons in the Run to
-/// ensure that it is valid for use.
-pub fn validate_comparison_name(run: &Run, new: &str) -> bool {
-    !new.starts_with("[Race]") && !run.comparisons().any(|c| c == new)
-}
