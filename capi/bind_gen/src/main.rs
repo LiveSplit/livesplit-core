@@ -2,7 +2,7 @@ extern crate heck;
 extern crate structopt;
 #[macro_use]
 extern crate structopt_derive;
-extern crate syntex_syntax;
+extern crate syn;
 
 mod c;
 mod csharp;
@@ -18,12 +18,11 @@ mod typescript;
 mod wasm;
 
 use structopt::StructOpt;
-use std::path::Path;
-use syntex_syntax::abi::Abi;
-use syntex_syntax::ast::{FunctionRetTy, ItemKind, Mutability, PatKind, TyKind, Visibility};
-use syntex_syntax::parse::{parse_crate_from_file, ParseSess};
-use syntex_syntax::codemap::FilePathMapping;
+use std::fs::{create_dir_all, remove_dir_all, File};
+use std::io::{BufWriter, Read, Result};
+use std::path::PathBuf;
 use std::rc::Rc;
+use syn::{parse_file, FnArg, Item, ItemFn, Lit, Meta, Pat, ReturnType, Type as SynType, Visibility};
 
 #[derive(StructOpt)]
 #[structopt(about = "Generates bindings for livesplit-core")]
@@ -82,85 +81,128 @@ pub struct Class {
     own_fns: Vec<Function>,
 }
 
-fn get_type(ty: &TyKind) -> Type {
-    if let &TyKind::Ptr(ref ptr) = ty {
-        let mut ty = get_type(&ptr.ty.node);
-        ty.kind = if ptr.mutbl == Mutability::Mutable {
-            TypeKind::RefMut
-        } else {
-            TypeKind::Ref
-        };
-        return ty;
-    } else if let &TyKind::Path(_, ref path) = ty {
-        if let Some(segment) = path.segments.last() {
-            let mut name = segment.identifier.name.to_string();
-            let is_nullable = if name.starts_with("Nullable") {
-                name = name["Nullable".len()..].to_string();
-                true
+fn get_type(ty: &SynType) -> Type {
+    match *ty {
+        SynType::Ptr(ref ptr) => {
+            let mut ty = get_type(&ptr.elem);
+            ty.kind = if ptr.mutability.is_some() {
+                TypeKind::RefMut
             } else {
-                false
+                TypeKind::Ref
             };
-
-            if name.starts_with("Owned") {
-                name = name["Owned".len()..].to_string();
-            }
-            if name == "TimingMethod" {
-                name = String::from("u8");
-            } else if name == "TimerPhase" {
-                name = String::from("u8");
-            }
-            let is_custom = match &name as &str {
-                "u8" | "u16" | "u32" | "u64" | "i8" | "i16" | "i32" | "i64" | "()" | "bool"
-                | "c_char" | "usize" | "isize" | "f32" | "f64" | "Json" => false,
-                _ => true,
-            };
-            return Type {
-                kind: TypeKind::Value,
-                is_custom,
-                is_nullable,
-                name,
-            };
+            ty
         }
+        SynType::Path(ref path) => {
+            if let Some(segment) = path.path.segments.iter().last() {
+                let mut name = segment.ident.to_string();
+                let is_nullable = if name.starts_with("Nullable") {
+                    name = name["Nullable".len()..].to_string();
+                    true
+                } else {
+                    false
+                };
+
+                if name.starts_with("Owned") {
+                    name = name["Owned".len()..].to_string();
+                }
+                if name == "TimingMethod" {
+                    name = String::from("u8");
+                } else if name == "TimerPhase" {
+                    name = String::from("u8");
+                }
+                let is_custom = match &name as &str {
+                    "u8" | "u16" | "u32" | "u64" | "i8" | "i16" | "i32" | "i64" | "()" | "bool"
+                    | "c_char" | "usize" | "isize" | "f32" | "f64" | "Json" => false,
+                    _ => true,
+                };
+                Type {
+                    kind: TypeKind::Value,
+                    is_custom,
+                    is_nullable,
+                    name,
+                }
+            } else {
+                panic!("Weird path")
+            }
+        }
+        _ => panic!("Weird type"),
     }
-    panic!("Unknown type {:#?}", ty);
 }
 
 fn main() {
     let opt = Opt::from_args();
 
-    let sess = ParseSess::new(FilePathMapping::empty());
-    let ast = parse_crate_from_file(Path::new("../src/lib.rs"), &sess).unwrap();
-    let items = ast.module.items;
+    let mut contents = String::new();
+    File::open("../src/lib.rs")
+        .unwrap()
+        .read_to_string(&mut contents)
+        .unwrap();
+
+    let file = parse_file(&contents).unwrap();
 
     let mut functions = Vec::new();
 
-    for item in &items {
-        if let &ItemKind::Mod(ref module) = &item.node {
+    for item in &file.items {
+        if let &Item::Mod(ref module) = item {
+            contents.clear();
+            File::open(format!("../src/{}.rs", module.ident))
+                .unwrap()
+                .read_to_string(&mut contents)
+                .unwrap();
+            let file = parse_file(&contents).unwrap();
+
             let class_comments = Rc::new(
-                item.attrs
+                file.attrs
                     .iter()
-                    .filter(|a| a.check_name("doc"))
-                    .filter_map(|a| a.with_desugared_doc(|a| a.meta()))
-                    .filter_map(|m| m.value_str())
-                    .map(|s| s.as_str().trim().to_string())
+                    .filter_map(|a| match a.interpret_meta() {
+                        Some(Meta::NameValue(v)) => Some(v),
+                        _ => None,
+                    })
+                    .filter(|m| m.ident.as_ref() == "doc")
+                    .filter_map(|m| match m.lit {
+                        Lit::Str(s) => Some(s.value()[3..].trim().to_string()),
+                        _ => None,
+                    })
                     .collect::<Vec<_>>(),
             );
 
-            for item in &module.items {
-                if let &ItemKind::Fn(ref decl, _, _, Abi::C, _, _) = &item.node {
-                    if item.vis == Visibility::Public
-                        && item.attrs.iter().any(|a| a.check_name("no_mangle"))
-                    {
-                        let comments = item.attrs
+            for item in &file.items {
+                if let &Item::Fn(ItemFn {
+                    vis: Visibility::Public(_),
+                    ref abi,
+                    ref attrs,
+                    ref decl,
+                    ref ident,
+                    ..
+                }) = item
+                {
+                    if abi.as_ref()
+                        .and_then(|a| a.name.as_ref())
+                        .map_or(false, |n| n.value() == "C")
+                        && attrs
                             .iter()
-                            .filter(|a| a.check_name("doc"))
-                            .filter_map(|a| a.with_desugared_doc(|a| a.meta()))
-                            .filter_map(|m| m.value_str())
-                            .map(|s| s.as_str().trim().to_string())
-                            .collect::<Vec<_>>();
+                            .filter_map(|a| a.interpret_meta())
+                            .filter_map(|m| match m {
+                                Meta::Word(w) => Some(w),
+                                _ => None,
+                            })
+                            .any(|w| w.as_ref() == "no_mangle")
+                    {
+                        let comments = attrs
+                            .iter()
+                            .filter_map(|a| match a.interpret_meta() {
+                                Some(Meta::NameValue(v)) => Some(v),
+                                _ => None,
+                            })
+                            .filter(|m| m.ident.as_ref() == "doc")
+                            .filter_map(|m| match m.lit {
+                                Lit::Str(s) => Some(s.value()[3..].trim().to_string()),
+                                _ => None,
+                            })
+                            .collect();
 
-                        let output = if let &FunctionRetTy::Ty(ref output) = &decl.output {
-                            get_type(&output.node)
+                        let output = if let ReturnType::Type(_, ref ty) = decl.output {
+                            get_type(ty)
                         } else {
                             Type {
                                 kind: TypeKind::Value,
@@ -173,16 +215,20 @@ fn main() {
                         let inputs = decl.inputs
                             .iter()
                             .map(|i| {
-                                let name = if let &PatKind::Ident(_, ref ident, _) = &i.pat.node {
-                                    ident.node.name.to_string()
+                                let c = match i {
+                                    &FnArg::Captured(ref c) => c,
+                                    _ => panic!("Found a weird fn argument"),
+                                };
+                                let name = if let Pat::Ident(ref ident) = c.pat {
+                                    ident.ident.to_string()
                                 } else {
                                     String::from("parameter")
                                 };
-                                (name, get_type(&i.ty.node))
+                                (name, get_type(&c.ty))
                             })
                             .collect();
 
-                        let name = item.ident.name.to_string();
+                        let name = ident.to_string();
                         let class;
                         let method;
                         {
@@ -240,10 +286,6 @@ fn fns_to_classes(functions: Vec<Function>) -> BTreeMap<String, Class> {
 
     classes
 }
-
-use std::fs::{create_dir_all, remove_dir_all, File};
-use std::io::{BufWriter, Result};
-use std::path::PathBuf;
 
 fn write_files(classes: &BTreeMap<String, Class>, opt: &Opt) -> Result<()> {
     let mut path = PathBuf::from("..");
