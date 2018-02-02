@@ -4,6 +4,7 @@ export type ComponentStateJson =
     { CurrentComparison: CurrentComparisonComponentStateJson } |
     { CurrentPace: CurrentPaceComponentStateJson } |
     { Delta: DeltaComponentStateJson } |
+    { DetailedTimer: DetailedTimerComponentStateJson } |
     { Graph: GraphComponentStateJson } |
     { PossibleTimeSave: PossibleTimeSaveComponentStateJson } |
     { PreviousSegment: PreviousSegmentComponentStateJson } |
@@ -31,6 +32,9 @@ export type Gradient =
     { Plain: Color } |
     { Vertical: Color[] } |
     { Horizontal: Color[] };
+
+/** Describes the Alignment of the Title in the Title Component. */
+export type Alignment = "Auto" | "Left" | "Center";
 
 /** The state object describes the information to visualize for the layout. */
 export interface LayoutStateJson {
@@ -79,8 +83,7 @@ export enum TimerPhase {
     Paused = 3,
 }
 
-/** The state object describes the information to visualize for this component.
- * */
+/** The state object describes the information to visualize for this component. */
 export interface BlankSpaceComponentStateJson {
     /** The background shown behind the component. */
     background: Gradient,
@@ -88,8 +91,7 @@ export interface BlankSpaceComponentStateJson {
     height: number,
 }
 
-/** The state object describes the information to visualize for this component.
- * */
+/** The state object describes the information to visualize for this component. */
 export interface TimerComponentStateJson {
     /** The background shown behind the component. */
     background: Gradient,
@@ -107,8 +109,7 @@ export interface TimerComponentStateJson {
     height: number,
 }
 
-/** The state object describes the information to visualize for this component.
- * */
+/** The state object describes the information to visualize for this component. */
 export interface TitleComponentStateJson {
     /** The background shown behind the component. */
     background: Gradient,
@@ -152,8 +153,7 @@ export interface TitleComponentStateJson {
     attempts: number | null,
 }
 
-/** The state object describes the information to visualize for this component.
- * */
+/** The state object describes the information to visualize for this component. */
 export interface SplitsComponentStateJson {
     /** The list of all the segments to visualize. */
     splits: SplitStateJson[],
@@ -197,8 +197,7 @@ export interface SplitsComponentIconChangeJson {
     icon: string,
 }
 
-/** The state object that describes a single segment's information to visualize.
- * */
+/** The state object that describes a single segment's information to visualize. */
 export interface SplitStateJson {
     /** The name of the segment. */
     name: string,
@@ -224,8 +223,7 @@ export interface SplitStateJson {
     index: number,
 }
 
-/** The state object describes the information to visualize for this component.
- * */
+/** The state object describes the information to visualize for this component. */
 export interface PreviousSegmentComponentStateJson {
     /** The background shown behind the component. */
     background: Gradient,
@@ -244,8 +242,7 @@ export interface PreviousSegmentComponentStateJson {
     visual_color: Color,
 }
 
-/** The state object describes the information to visualize for this component.
- * */
+/** The state object describes the information to visualize for this component. */
 export interface SumOfBestComponentStateJson {
     /** The background shown behind the component. */
     background: Gradient,
@@ -265,8 +262,7 @@ export interface SumOfBestComponentStateJson {
     time: string,
 }
 
-/** The state object describes the information to visualize for this component.
- * */
+/** The state object describes the information to visualize for this component. */
 export interface PossibleTimeSaveComponentStateJson {
     /** The background shown behind the component. */
     background: Gradient,
@@ -367,8 +363,7 @@ export type TextComponentStateJson =
     { Center: string } |
     { Split: string[] };
 
-/** The state object describes the information to visualize for this component.
- * */
+/** The state object describes the information to visualize for this component. */
 export interface TotalPlaytimeComponentStateJson {
     /** The background shown behind the component. */
     background: Gradient,
@@ -388,8 +383,7 @@ export interface TotalPlaytimeComponentStateJson {
     time: string,
 }
 
-/** The state object describes the information to visualize for this component.
- * */
+/** The state object describes the information to visualize for this component. */
 export interface CurrentPaceComponentStateJson {
     /** The background shown behind the component. */
     background: Gradient,
@@ -409,8 +403,7 @@ export interface CurrentPaceComponentStateJson {
     time: string,
 }
 
-/** The state object describes the information to visualize for this component.
- * */
+/** The state object describes the information to visualize for this component. */
 export interface DeltaComponentStateJson {
     /** The background shown behind the component. */
     background: Gradient,
@@ -429,8 +422,7 @@ export interface DeltaComponentStateJson {
     visual_color: Color,
 }
 
-/** The state object describes the information to visualize for this component.
- * */
+/** The state object describes the information to visualize for this component. */
 export interface CurrentComparisonComponentStateJson {
     /** The background shown behind the component. */
     background: Gradient,
@@ -453,8 +445,7 @@ export interface CurrentComparisonComponentStateJson {
     comparison: string,
 }
 
-/** The state object describes the information to visualize for this component.
- * */
+/** The state object describes the information to visualize for this component. */
 export interface DetailedTimerComponentStateJson {
     /** The background shown behind the component. */
     background: Gradient,
@@ -567,7 +558,8 @@ export type SettingsDescriptionValueJson =
     { OptionalTimingMethod: TimingMethodJson | null } |
     { Color: Color } |
     { OptionalColor: Color | null } |
-    { Gradient: Gradient };
+    { Gradient: Gradient } |
+    { Alignment: Alignment };
 
 /**
  * The Accuracy describes how many digits to show for the fractional part of a
