@@ -32,4 +32,4 @@ pub use self::run_metadata::RunMetadata;
 pub use self::run::{ComparisonError, ComparisonsIter, Run};
 pub use self::segment_history::SegmentHistory;
 pub use self::segment::Segment;
-pub use self::editor::Editor;
+pub use self::editor::{Editor, RenameError};

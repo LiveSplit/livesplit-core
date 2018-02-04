@@ -5,7 +5,7 @@ use std::fs::File;
 use std::path::PathBuf;
 use std::result::Result as StdResult;
 use std::num::ParseIntError;
-use super::super::run::ComparisonError;
+use super::super::ComparisonError;
 use chrono::{TimeZone, Utc};
 use {time, AtomicDateTime, Image, RealTime, Run, Segment, Time, TimeSpan};
 
@@ -86,7 +86,27 @@ pub fn parse<R: BufRead>(source: R, path_for_loading_other_files: Option<PathBuf
     let mut splits = line.split('\t');
     run.set_category_name(splits.next().ok_or(Error::ExpectedCategoryName)?);
     splits.next(); // Skip one element
-    let comparisons = splits.collect::<Vec<_>>();
+    let mut comparisons = splits.map(|s| s.to_string()).collect::<Vec<_>>();
+
+    for comparison in comparisons.iter_mut() {
+        let mut name = comparison.to_owned();
+        let mut good_name = name.to_owned();
+        let mut number = 2;
+        loop {
+            match run.add_custom_comparison(good_name.clone()) {
+                Ok(_) => break,
+                Err(ComparisonError::DuplicateName) => {
+                    good_name = format!("{}{}", name, number);
+                    number += 1;
+                }
+                Err(ComparisonError::NameStartsWithRace) => {
+                    name = name[6..].to_string();
+                    good_name = name.to_owned();
+                }
+            }
+        }
+        *comparison = good_name;
+    }
 
     while let Some(line) = lines.next() {
         let line = line?;
@@ -124,23 +144,6 @@ pub fn parse<R: BufRead>(source: R, path_for_loading_other_files: Option<PathBuf
 
     parse_history(&mut run, path).ok();
 
-    for comparison in comparisons {
-        let mut name = comparison.to_string();
-        let mut number = 0;
-        loop {
-            match run.add_custom_comparison(name.clone()) {
-                Ok(_) => break,
-                Err(ref e) if *e == ComparisonError::DuplicateName => {
-                    name = format!("{}{}", name, number);
-                    number += 1;
-                }
-                Err(ref e) if *e == ComparisonError::NameStartsWithRace => {
-                    name = format!("{}{}", "[ok]", name);
-                }
-                Err(_) => panic!("Impossible Case"),
-            }
-        }
-    }
 
     Ok(run)
 }

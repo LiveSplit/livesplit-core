@@ -51,15 +51,18 @@ impl PartialEq for ComparisonGenerators {
     }
 }
 
-/// Error type for an invalid comparison name
-#[derive(PartialEq, Debug)]
-pub enum ComparisonError {
-    /// Comparison name starts with "[Race]"
-    NameStartsWithRace,
-    /// Comparison name is a duplicate
-    DuplicateName,
+quick_error! {
+    /// Error type for an invalid comparison name
+    #[derive(PartialEq, Debug)]
+    pub enum ComparisonError {
+        /// Comparison name starts with "[Race]"
+        NameStartsWithRace {}
+        /// Comparison name is a duplicate
+        DuplicateName {}
+    }
 }
 
+pub type ComparisonResult<T> = Result<T, ComparisonError>;
 
 impl Run {
     /// Creates a new Run object with no segments.
@@ -354,15 +357,11 @@ impl Run {
     pub fn add_custom_comparison<S: Into<String>>(
         &mut self,
         comparison: S,
-    ) -> Result<(), ComparisonError> {
+    ) -> ComparisonResult<()> {
         let comparison = comparison.into();
-        match self.validate_comparison_name(&comparison) {
-            Ok(()) => {
-                self.custom_comparisons.push(comparison);
-                Ok(())
-            }
-            Err(e) => Err(e),
-        }
+        self.validate_comparison_name(&comparison)?;
+        self.custom_comparisons.push(comparison);
+        Ok(())
     }
 
     /// Recalculates all the comparison times the Comparison Generators provide.
@@ -752,10 +751,7 @@ impl Run {
 
     /// Checks a given name against the current comparisons in the Run to
     /// ensure that it is valid for use.
-    pub fn validate_comparison_name(
-        &self,
-        new: &str,
-    ) -> ::std::result::Result<(), ComparisonError> {
+    pub fn validate_comparison_name(&self, new: &str) -> ComparisonResult<()> {
         if new.starts_with("[Race]") {
             Err(ComparisonError::NameStartsWithRace)
         } else if self.comparisons().any(|c| c == new) {

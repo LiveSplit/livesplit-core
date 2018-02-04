@@ -1,8 +1,8 @@
 extern crate livesplit_core;
 
 mod run {
-    use livesplit_core::{Run, Segment};
-    use livesplit_core::run::{ComparisonError, Editor};
+    use livesplit_core::Run;
+    use livesplit_core::run::ComparisonError;
 
     #[test]
     fn add_comparison() {
@@ -17,6 +17,11 @@ mod run {
         let c = run.add_custom_comparison("Best Segments");
         assert_eq!(c, Err(ComparisonError::DuplicateName));
     }
+}
+
+mod editor {
+    use livesplit_core::{Run, Segment};
+    use livesplit_core::run::{ComparisonError, Editor, RenameError};
 
     #[test]
     fn add_comparison_editor() {
@@ -44,5 +49,36 @@ mod run {
         let mut editor = Editor::new(run).unwrap();
         let c = editor.rename_comparison("Custom", "My Comparison");
         assert_eq!(c, Ok(()));
+    }
+
+    #[test]
+    fn rename_comparison_bad_name() {
+        let mut run = Run::new();
+        run.push_segment(Segment::new("s"));
+        run.add_custom_comparison("Custom").ok();
+        let mut editor = Editor::new(run).unwrap();
+        let c = editor.rename_comparison("Bad", "My Comparison");
+        assert_eq!(c, Err(RenameError::OldNameNotFound));
+    }
+
+    #[test]
+    fn rename_comparison_name_starts_with_race() {
+        let mut run = Run::new();
+        run.push_segment(Segment::new("s"));
+        run.add_custom_comparison("Custom").ok();
+        let mut editor = Editor::new(run).unwrap();
+        let c = editor.rename_comparison("Custom", "[Race]Custom");
+        assert_eq!(c, Err(RenameError::InvalidName(ComparisonError::NameStartsWithRace)));
+    }
+    
+    #[test]
+    fn rename_comparison_duplicate_name() {
+        let mut run = Run::new();
+        run.push_segment(Segment::new("s"));
+        run.add_custom_comparison("Custom").ok();
+        run.add_custom_comparison("Custom2").ok();
+        let mut editor = Editor::new(run).unwrap();
+        let c = editor.rename_comparison("Custom2", "Custom");
+        assert_eq!(c, Err(RenameError::InvalidName(ComparisonError::DuplicateName)));
     }
 }

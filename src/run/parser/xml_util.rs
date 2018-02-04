@@ -10,6 +10,7 @@ use std::result::Result as StdResult;
 use std::num::{ParseFloatError, ParseIntError};
 use time;
 use chrono::ParseError as ChronoError;
+use super::super::ComparisonError;
 
 quick_error! {
     /// The Error type for XML-based splits files that couldn't be parsed.
@@ -36,7 +37,7 @@ quick_error! {
         /// The length of a buffer was too large.
         LengthOutOfBounds {}
         /// Parsed comparison has an invalid name.
-        InvalidComparisonName {
+        InvalidComparisonName(err: ComparisonError) {
             from()
         }
         /// Failed to decode a string slice as UTF-8.

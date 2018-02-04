@@ -97,7 +97,8 @@ mod parse {
 
     #[test]
     fn time_split_tracker() {
-        time_split_tracker::parse(file("tests/run_files/timesplittracker.txt"), None).unwrap();
+        let run = time_split_tracker::parse(file("tests/run_files/timesplittracker.txt"), None).unwrap();
+        assert_eq!(run.custom_comparisons(), ["Personal Best", "Time", "Custom Comparison", "Race", "Race2"]);
     }
 
     #[test]
