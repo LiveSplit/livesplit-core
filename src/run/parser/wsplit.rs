@@ -120,7 +120,8 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
     }
 
     if old_run_exists {
-        run.add_custom_comparison("Old Run");
+        run.add_custom_comparison("Old Run")
+            .expect("WSplit: Old Run");
     }
 
     for (icon, segment) in icons_list.into_iter().zip(run.segments_mut().iter_mut()) {

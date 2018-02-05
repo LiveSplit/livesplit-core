@@ -3,6 +3,7 @@
 use std::io::BufRead;
 use std::path::PathBuf;
 use {AtomicDateTime, Run, RunMetadata, Segment, Time, TimeSpan, base64};
+use super::super::run::ComparisonError;
 use quick_xml::reader::Reader;
 use chrono::{DateTime, TimeZone, Utc};
 use std::str;
@@ -211,7 +212,11 @@ fn parse_segment<R: BufRead>(
                                 *segment.comparison_mut(&comparison) = t;
                             })?;
                         }
-                        run.add_custom_comparison(comparison);
+                        if let Err(ComparisonError::NameStartsWithRace) =
+                            run.add_custom_comparison(comparison)
+                        {
+                            return Err(ComparisonError::NameStartsWithRace.into());
+                        }
                         Ok(())
                     } else {
                         end_tag(reader, tag.into_buf())

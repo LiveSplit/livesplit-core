@@ -51,6 +51,19 @@ impl PartialEq for ComparisonGenerators {
     }
 }
 
+quick_error! {
+    /// Error type for an invalid comparison name
+    #[derive(PartialEq, Debug)]
+    pub enum ComparisonError {
+        /// Comparison name starts with "[Race]"
+        NameStartsWithRace {}
+        /// Comparison name is a duplicate
+        DuplicateName {}
+    }
+}
+
+pub type ComparisonResult<T> = Result<T, ComparisonError>;
+
 impl Run {
     /// Creates a new Run object with no segments.
     #[inline]
@@ -341,11 +354,14 @@ impl Run {
     /// Adds a new custom comparison. If a custom comparison with that name
     /// already exists, it is not added.
     #[inline]
-    pub fn add_custom_comparison<S: Into<String>>(&mut self, comparison: S) {
+    pub fn add_custom_comparison<S: Into<String>>(
+        &mut self,
+        comparison: S,
+    ) -> ComparisonResult<()> {
         let comparison = comparison.into();
-        if !self.custom_comparisons.contains(&comparison) {
-            self.custom_comparisons.push(comparison);
-        }
+        self.validate_comparison_name(&comparison)?;
+        self.custom_comparisons.push(comparison);
+        Ok(())
     }
 
     /// Recalculates all the comparison times the Comparison Generators provide.
@@ -730,6 +746,18 @@ impl Run {
             if let Some(time) = split_time.game_time {
                 last_split_time.game_time = Some(time);
             }
+        }
+    }
+
+    /// Checks a given name against the current comparisons in the Run to
+    /// ensure that it is valid for use.
+    pub fn validate_comparison_name(&self, new: &str) -> ComparisonResult<()> {
+        if new.starts_with("[Race]") {
+            Err(ComparisonError::NameStartsWithRace)
+        } else if self.comparisons().any(|c| c == new) {
+            Err(ComparisonError::DuplicateName)
+        } else {
+            Ok(())
         }
     }
 }

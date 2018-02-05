@@ -7,6 +7,7 @@
 use std::num::ParseIntError;
 use std::mem::swap;
 use {comparison, unicase, Image, Run, Segment, Time, TimeSpan, TimingMethod};
+use super::run::{ComparisonError, ComparisonResult};
 use time::ParseError as ParseTimeSpanError;
 
 pub mod cleaning;
@@ -39,6 +40,19 @@ quick_error! {
         /// The Run Editor couldn't be opened because an empty run with no
         /// segments was provided.
         EmptyRun {}
+    }
+}
+
+quick_error! {
+    /// Error type for a failed Rename
+    #[derive(PartialEq, Debug)]
+    pub enum RenameError {
+        /// Old Comparison was not found durring rename.
+        OldNameNotFound {}
+        /// Name was invalid
+        InvalidName(err: ComparisonError) {
+            from()
+        }
     }
 }
 
@@ -571,15 +585,11 @@ impl Editor {
 
     /// Adds a new custom comparison. It can't be added if it starts with
     /// `[Race]` or already exists.
-    pub fn add_comparison<S: Into<String>>(&mut self, comparison: S) -> Result<(), ()> {
+    pub fn add_comparison<S: Into<String>>(&mut self, comparison: S) -> ComparisonResult<()> {
         let comparison = comparison.into();
-        if validate_comparison_name(&self.run, &comparison) {
-            self.run.add_custom_comparison(comparison);
-            self.fix();
-            Ok(())
-        } else {
-            Err(())
-        }
+        self.run.add_custom_comparison(comparison)?;
+        self.fix();
+        Ok(())
     }
 
     /// Imports the Personal Best from the provided run as a comparison. The
@@ -589,48 +599,42 @@ impl Editor {
         &mut self,
         run: &Run,
         comparison: S,
-    ) -> Result<(), ()> {
+    ) -> ComparisonResult<()> {
         let comparison = comparison.into();
-        if validate_comparison_name(&self.run, &comparison) {
-            self.run.add_custom_comparison(comparison.as_str());
+        self.run.add_custom_comparison(comparison.as_str())?;
+        // TODO Borrowcheck (remaining_segments isn't used after this block
+        // anymore. NLL should fix this)
+        {
+            let mut remaining_segments = self.run.segments_mut().as_mut_slice();
 
-            // TODO Borrowcheck (remaining_segments isn't used after this block
-            // anymore. NLL should fix this)
-            {
-                let mut remaining_segments = self.run.segments_mut().as_mut_slice();
-
-                for segment in run.segments().iter().take(run.len().saturating_sub(1)) {
-                    // TODO Borrowcheck (new_start is only necessary because the
-                    // remaining_segments reassignment doesn't work inside this
-                    // if)
-                    let new_start = if let Some((segment_index, my_segment)) = remaining_segments
-                        .iter_mut()
-                        .enumerate()
-                        .find(|&(_, ref s)| unicase::eq(segment.name(), s.name()))
-                    {
-                        *my_segment.comparison_mut(&comparison) =
-                            segment.personal_best_split_time();
-                        segment_index + 1
-                    } else {
-                        0
-                    };
-                    // TODO Borrowcheck (get rid of the move block around
-                    // remaining_segments)
-                    remaining_segments = &mut { remaining_segments }[new_start..];
-                }
+            for segment in run.segments().iter().take(run.len().saturating_sub(1)) {
+                // TODO Borrowcheck (new_start is only necessary because the
+                // remaining_segments reassignment doesn't work inside this
+                // if)
+                let new_start = if let Some((segment_index, my_segment)) = remaining_segments
+                    .iter_mut()
+                    .enumerate()
+                    .find(|&(_, ref s)| unicase::eq(segment.name(), s.name()))
+                {
+                    *my_segment.comparison_mut(&comparison) = segment.personal_best_split_time();
+                    segment_index + 1
+                } else {
+                    0
+                };
+                // TODO Borrowcheck (get rid of the move block around
+                // remaining_segments)
+                remaining_segments = &mut { remaining_segments }[new_start..];
             }
-
-            if let (Some(my_segment), Some(segment)) =
-                (self.run.segments_mut().last_mut(), run.segments().last())
-            {
-                *my_segment.comparison_mut(&comparison) = segment.personal_best_split_time();
-            }
-
-            self.fix();
-            Ok(())
-        } else {
-            Err(())
         }
+
+        if let (Some(my_segment), Some(segment)) =
+            (self.run.segments_mut().last_mut(), run.segments().last())
+        {
+            *my_segment.comparison_mut(&comparison) = segment.personal_best_split_time();
+        }
+
+        self.fix();
+        Ok(())
     }
 
     /// Removes the chosen custom comparison. You can't remove a Comparison
@@ -657,32 +661,32 @@ impl Editor {
 
     /// Renames a comparison. The comparison can't be renamed if the new name of
     /// the comparison starts with `[Race]` or it already exists.
-    pub fn rename_comparison(&mut self, old: &str, new: &str) -> Result<(), ()> {
+    pub fn rename_comparison(&mut self, old: &str, new: &str) -> Result<(), RenameError> {
         if old == new {
             return Ok(());
         }
 
-        if validate_comparison_name(&self.run, new) {
-            let position = self.run
-                .custom_comparisons()
-                .iter()
-                .position(|c| c == old)
-                .ok_or(())?;
+        self.run.validate_comparison_name(new)?;
 
-            self.run.custom_comparisons_mut()[position] = new.to_string();
+        {
+            let comparison_name = self.run.custom_comparisons_mut()
+                .iter_mut()
+                .find(|c| *c == old)
+                .ok_or(RenameError::OldNameNotFound)?;
 
-            for segment in self.run.segments_mut() {
-                if let Some(time) = segment.comparisons_mut().remove(old) {
-                    *segment.comparison_mut(new) = time;
-                }
-            }
-
-            self.fix();
-
-            Ok(())
-        } else {
-            Err(())
+            comparison_name.clear();
+            comparison_name.push_str(new);
         }
+
+        for segment in self.run.segments_mut() {
+            if let Some(time) = segment.comparisons_mut().remove(old) {
+                *segment.comparison_mut(new) = time;
+            }
+        }
+
+        self.fix();
+
+        Ok(())
     }
 
     /// Clears out the Attempt History and the Segment Histories of all the
@@ -710,8 +714,4 @@ impl Editor {
     pub fn clean_sum_of_best(&mut self) -> SumOfBestCleaner {
         SumOfBestCleaner::new(&mut self.run)
     }
-}
-
-fn validate_comparison_name(run: &Run, comparison: &str) -> bool {
-    !comparison.starts_with("[Race]") && !run.comparisons().any(|c| c == comparison)
 }
