@@ -18,7 +18,7 @@ pub unsafe extern "C" fn TextComponentState_drop(this: OwnedTextComponentState) 
 /// string is returned instead.
 #[no_mangle]
 pub unsafe extern "C" fn TextComponentState_left(this: *const TextComponentState) -> *const c_char {
-    if let &TextComponentState(Text::Split(ref left, _)) = acc(this) {
+    if let Text::Split(ref left, _) = acc(this).text {
         output_str(left)
     } else {
         output_str("")
@@ -31,7 +31,7 @@ pub unsafe extern "C" fn TextComponentState_left(this: *const TextComponentState
 pub unsafe extern "C" fn TextComponentState_right(
     this: *const TextComponentState,
 ) -> *const c_char {
-    if let &TextComponentState(Text::Split(_, ref right)) = acc(this) {
+    if let Text::Split(_, ref right) = acc(this).text {
         output_str(right)
     } else {
         output_str("")
@@ -44,7 +44,7 @@ pub unsafe extern "C" fn TextComponentState_right(
 pub unsafe extern "C" fn TextComponentState_center(
     this: *const TextComponentState,
 ) -> *const c_char {
-    if let &TextComponentState(Text::Center(ref center)) = acc(this) {
+    if let Text::Center(ref center) = acc(this).text {
         output_str(center)
     } else {
         output_str("")
@@ -54,7 +54,7 @@ pub unsafe extern "C" fn TextComponentState_center(
 /// Returns whether the text is split up into a left and right part.
 #[no_mangle]
 pub unsafe extern "C" fn TextComponentState_is_split(this: *const TextComponentState) -> bool {
-    if let &TextComponentState(Text::Split(_, _)) = acc(this) {
+    if let Text::Split(_, _) = acc(this).text {
         true
     } else {
         false

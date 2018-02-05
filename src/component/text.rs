@@ -6,8 +6,9 @@
 use std::io::Write;
 use serde_json::{to_writer, Result};
 use std::borrow::Cow;
-use settings::{Field, SettingsDescription, Value};
+use settings::{Field, Gradient, SettingsDescription, Value};
 use std::mem::replace;
+use super::DEFAULT_INFO_TEXT_GRADIENT;
 
 /// The Text Component simply visualizes any given text. This can either be a
 /// single centered text, or split up into a left and right text, which is
@@ -21,6 +22,8 @@ pub struct Component {
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Settings {
+    /// The background shown behind the component.
+    pub background: Gradient,
     /// The text to be shown.
     pub text: Text,
 }
@@ -72,11 +75,17 @@ impl Text {
 
 /// The state object describes the information to visualize for this component.
 #[derive(Serialize, Deserialize)]
-pub struct State(pub Text);
+pub struct State {
+    /// The background shown behind the component.
+    pub background: Gradient,
+    /// The text to show for the component.
+    pub text: Text,
+}
 
 impl Default for Settings {
     fn default() -> Self {
         Self {
+            background: DEFAULT_INFO_TEXT_GRADIENT,
             text: Text::Center(String::from("")),
         }
     }
@@ -140,7 +149,10 @@ impl Component {
 
     /// Calculates the component's state.
     pub fn state(&self) -> State {
-        State(self.settings.text.clone())
+        State {
+            background: self.settings.background.clone(),
+            text: self.settings.text.clone(),
+        }
     }
 
     /// Accesses a generic description of the settings available for this
@@ -154,7 +166,11 @@ impl Component {
             ),
         };
 
-        let mut fields = vec![Field::new("Split".into(), second.is_some().into()), first];
+        let mut fields = vec![
+            Field::new("Background".into(), self.settings.background.into()),
+            Field::new("Split".into(), second.is_some().into()),
+            first,
+        ];
 
         if let Some(second) = second {
             fields.push(second);
@@ -172,7 +188,8 @@ impl Component {
     /// the setting provided is out of bounds.
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
-            0 => {
+            0 => self.settings.background = value.into(),
+            1 => {
                 self.settings.text = match (value.into_bool().unwrap(), &mut self.settings.text) {
                     (true, &mut Text::Center(ref mut center)) => {
                         Text::Split(replace(center, String::new()), String::new())
@@ -190,11 +207,11 @@ impl Component {
                     _ => return,
                 };
             }
-            1 => match self.settings.text {
+            2 => match self.settings.text {
                 Text::Center(ref mut center) => *center = value.into(),
                 Text::Split(ref mut left, _) => *left = value.into(),
             },
-            2 => match self.settings.text {
+            3 => match self.settings.text {
                 Text::Center(_) => panic!("Set right text when there's only a center text"),
                 Text::Split(_, ref mut right) => *right = value.into(),
             },
