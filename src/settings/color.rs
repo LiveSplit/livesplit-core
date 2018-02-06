@@ -34,6 +34,14 @@ impl From<[f32; 4]> for Color {
     }
 }
 
+impl From<[u8; 4]> for Color {
+    fn from(rgba: [u8; 4]) -> Self {
+        Self {
+            rgba: Rgba::from_pixel(&rgba),
+        }
+    }
+}
+
 impl From<(f32, f32, f32, f32)> for Color {
     fn from(rgba: (f32, f32, f32, f32)) -> Self {
         Self {

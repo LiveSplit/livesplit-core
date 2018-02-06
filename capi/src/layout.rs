@@ -2,11 +2,11 @@
 //! variety of information the runner is interested in.
 
 use livesplit_core::{Layout, Timer};
-use livesplit_core::layout::LayoutSettings;
+use livesplit_core::layout::{parser, LayoutSettings};
 use super::{acc, acc_mut, alloc, output_vec, own, own_drop, str, Json};
 use component::OwnedComponent;
 use std::io::Cursor;
-use std::ptr;
+use std::{ptr, slice};
 
 /// type
 pub type OwnedLayout = *mut Layout;
@@ -47,6 +47,21 @@ pub unsafe extern "C" fn Layout_parse_json(settings: Json) -> NullableOwnedLayou
     let settings = Cursor::new(str(settings).as_bytes());
     if let Ok(settings) = LayoutSettings::from_json(settings) {
         alloc(Layout::from_settings(settings))
+    } else {
+        ptr::null_mut()
+    }
+}
+
+/// Parses a layout saved by the original LiveSplit. This is lossy, as not
+/// everything can be converted completely. <NULL> is returned if it couldn't be
+/// parsed at all.
+#[no_mangle]
+pub unsafe extern "C" fn Layout_parse_original_livesplit(
+    data: *const u8,
+    length: usize,
+) -> NullableOwnedLayout {
+    if let Ok(parsed) = parser::parse(Cursor::new(slice::from_raw_parts(data, length))) {
+        alloc(parsed)
     } else {
         ptr::null_mut()
     }

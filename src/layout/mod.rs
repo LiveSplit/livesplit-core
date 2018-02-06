@@ -3,6 +3,8 @@
 //! variety of information the runner is interested in.
 
 pub mod editor;
+pub mod parser;
+
 mod component_settings;
 mod component_state;
 mod component;
