@@ -4,7 +4,7 @@ use std::io::BufRead;
 use std::path::PathBuf;
 use {AtomicDateTime, Run, RunMetadata, Segment, Time, TimeSpan, base64};
 use super::super::run::ComparisonError;
-use quick_xml::reader::Reader;
+use quick_xml::Reader;
 use chrono::{DateTime, TimeZone, Utc};
 use std::str;
 use super::xml_util::{attribute, attribute_err, end_tag, optional_attribute_err, parse_attributes,

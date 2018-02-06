@@ -33,9 +33,8 @@ use {Image, Run, Time, TimeSpan, Timer, TimerPhase, base64};
 use time::formatter::{Complete, TimeFormatter};
 use chrono::{DateTime, Utc};
 use byteorder::{WriteBytesExt, LE};
-use quick_xml::Writer;
+use quick_xml::{Error as XmlError, Writer};
 use quick_xml::events::{BytesDecl, BytesEnd, BytesStart, BytesText, Event};
-use quick_xml::errors::Error as XmlError;
 
 static LSS_IMAGE_HEADER: &[u8; 156] = include_bytes!("lss_image_header.bin");
 
@@ -122,7 +121,7 @@ where
 fn text<W: Write, T: AsRef<[u8]>>(writer: &mut Writer<W>, tag: BytesStart, text: T) -> Result<()> {
     let text = text.as_ref();
     scoped(writer, tag, text.is_empty(), |writer| {
-        writer.write_event(Event::Text(BytesText::borrowed(text)))?;
+        writer.write_event(Event::Text(BytesText::from_plain(text)))?;
         Ok(())
     })
 }
@@ -164,7 +163,7 @@ fn image<W: Write>(
                 base64::encode_config_buf(image_buf, base64::STANDARD, s)
             });
             return scoped(writer, tag, buf.is_empty(), |writer| {
-                writer.write_event(Event::CData(BytesText::borrowed(buf)))?;
+                writer.write_event(Event::CData(BytesText::from_plain(buf)))?;
                 Ok(())
             });
         }

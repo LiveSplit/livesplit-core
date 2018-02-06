@@ -2,7 +2,7 @@
 
 use std::io::{BufRead, Cursor, Seek, SeekFrom};
 use {RealTime, Run, Segment, Time, TimeSpan};
-use quick_xml::reader::Reader;
+use quick_xml::Reader;
 use byteorder::{ReadBytesExt, BE};
 use imagelib::{png, ColorType, ImageBuffer, Rgba};
 use base64::{self, STANDARD};

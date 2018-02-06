@@ -1,7 +1,5 @@
-use quick_xml::reader::Reader;
-use quick_xml::Writer;
-use quick_xml::errors::Error as XmlError;
-use quick_xml::events::{attributes, BytesStart, BytesText, Event};
+use quick_xml::{Error as XmlError, Reader, Writer};
+use quick_xml::events::{attributes, BytesStart, Event};
 use std::ops::Deref;
 use std::borrow::Cow;
 use std::{str, string};
@@ -201,10 +199,8 @@ where
                 depth -= 1;
                 writer.write_event(Event::End(end))?;
             }
-            Event::Text(text) => {
-                writer.write_event(Event::Text(BytesText::borrowed(&text.unescaped()?)))?;
-            }
-            event @ Event::Comment(_)
+            event @ Event::Text(_)
+            | event @ Event::Comment(_)
             | event @ Event::CData(_)
             | event @ Event::PI(_)
             | event @ Event::Empty(_) => {

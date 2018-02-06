@@ -7,4 +7,4 @@ version = "0.1.0"
 heck = "0.2.1"
 structopt = "0.1.0"
 structopt-derive = "0.1.0"
-syn = { version = "0.12.10", default-features = false, features = ["parsing", "full"] }
+syn = { version = "0.12.10", default-features = false, features = ["parsing", "full", "printing"] }

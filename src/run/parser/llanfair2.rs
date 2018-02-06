@@ -2,7 +2,7 @@
 
 use std::io::BufRead;
 use {RealTime, Run, Segment, Time, TimeSpan};
-use quick_xml::reader::Reader;
+use quick_xml::Reader;
 use std::cmp::min;
 use byteorder::{ByteOrder, BE};
 use imagelib::{png, ColorType, ImageBuffer, Rgba};
