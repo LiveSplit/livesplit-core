@@ -3,7 +3,8 @@
     clippy::correctness,
     clippy::perf,
     clippy::style,
-    clippy::complexity
+    clippy::complexity,
+    rust_2018_idioms
 )]
 // Necessary for some larger quick-error based errors.
 #![recursion_limit = "128"]

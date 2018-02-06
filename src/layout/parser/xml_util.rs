@@ -1,4 +1,3 @@
-use super::super::ComparisonError;
 use crate::timing;
 use chrono::ParseError as ChronoError;
 use quick_xml::events::{attributes, BytesStart, Event};
@@ -34,10 +33,13 @@ quick_error! {
         ElementNotFound {}
         /// The length of a buffer was too large.
         LengthOutOfBounds {}
-        /// Parsed comparison has an invalid name.
-        InvalidComparisonName(err: ComparisonError) {
-            from()
-        }
+        UnexpectedGradientType {}
+        Accuracy {}
+        DigitsFormat {}
+        TimingMethod {}
+        Alignment {}
+        UnexpectedColumnType {}
+        Empty {}
         /// Failed to decode a string slice as UTF-8.
         Utf8Str(err: str::Utf8Error) {
             from()
@@ -94,10 +96,6 @@ impl<'a> AttributeValue<'a> {
     pub fn get(self) -> Result<Cow<'a, str>> {
         decode_cow_text(self.0.unescaped_value()?)
     }
-
-    pub fn get_raw(&self) -> &'a [u8] {
-        &self.0.value
-    }
 }
 
 fn decode_cow_text(cow: Cow<'_, [u8]>) -> Result<Cow<'_, str>> {
@@ -144,7 +142,6 @@ where
     R: BufRead,
     F: FnOnce(Cow<'_, [u8]>) -> Result<T>,
 {
-    let val;
     loop {
         buf.clear();
         match reader.read_event(buf)? {
@@ -154,15 +151,41 @@ where
             }
             Event::Text(text) | Event::CData(text) => {
                 let text = text.unescaped()?;
-                val = f(text)?;
-                break;
+                let val = f(text)?;
+                end_tag_immediately(reader, buf)?;
+                return Ok(val);
             }
             Event::Eof => return Err(Error::UnexpectedEndOfFile),
             _ => {}
         }
     }
-    end_tag_immediately(reader, buf)?;
-    Ok(val)
+}
+
+pub fn text_as_escaped_bytes_err<R, F, T>(
+    reader: &mut Reader<R>,
+    buf: &mut Vec<u8>,
+    f: F,
+) -> Result<T>
+where
+    R: BufRead,
+    F: FnOnce(&[u8]) -> Result<T>,
+{
+    loop {
+        buf.clear();
+        match reader.read_event(buf)? {
+            Event::Start(_) => return Err(Error::UnexpectedElement),
+            Event::End(_) => {
+                return f(&[]);
+            }
+            Event::Text(text) | Event::CData(text) => {
+                let val = f(&text)?;
+                end_tag_immediately(reader, buf)?;
+                return Ok(val);
+            }
+            Event::Eof => return Err(Error::UnexpectedEndOfFile),
+            _ => {}
+        }
+    }
 }
 
 fn end_tag_immediately<R: BufRead>(reader: &mut Reader<R>, buf: &mut Vec<u8>) -> Result<()> {

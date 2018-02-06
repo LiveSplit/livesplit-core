@@ -1,4 +1,4 @@
-use palette::{Hsla, LinSrgba};
+use palette::{Hsla, LinSrgba, Pixel};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// Colors can be used to describe what color to use for visualizing
@@ -17,6 +17,16 @@ impl Color {
         (0.0, 0.0, 0.0, 0.0).into()
     }
 
+    /// Creates a new white color.
+    pub fn white() -> Self {
+        (1.0, 1.0, 1.0, 1.0).into()
+    }
+
+    /// Creates a new black color.
+    pub fn black() -> Self {
+        (0.0, 0.0, 0.0, 1.0).into()
+    }
+
     /// Creates a new color by providing the Hue, Saturation, Lightness and
     /// Alpha (HSLA) for it.
     pub fn hsla(hue: f32, saturation: f32, lightness: f32, alpha: f32) -> Self {
@@ -30,6 +40,14 @@ impl From<[f32; 4]> for Color {
     fn from(rgba: [f32; 4]) -> Self {
         Self {
             rgba: LinSrgba::from_components((rgba[0], rgba[1], rgba[2], rgba[3])),
+        }
+    }
+}
+
+impl From<[u8; 4]> for Color {
+    fn from(rgba: [u8; 4]) -> Self {
+        Self {
+            rgba: LinSrgba::from_raw(&rgba).into_format(),
         }
     }
 }

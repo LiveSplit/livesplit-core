@@ -133,10 +133,10 @@ where
     time_span_opt(reader, buf, |t| f(Time::new().with_real_time(t)))
 }
 
-fn parse_bool<S: AsRef<str>>(text: S) -> Result<bool> {
-    match text.as_ref() {
-        "True" => Ok(true),
-        "False" => Ok(false),
+fn parse_bool(value: &[u8]) -> Result<bool> {
+    match value {
+        b"True" => Ok(true),
+        b"False" => Ok(false),
         _ => Err(Error::Bool),
     }
 }
@@ -154,7 +154,7 @@ fn parse_metadata<R: BufRead>(
                 end_tag(reader, tag.into_buf())
             } else if tag.name() == b"Platform" {
                 attribute_err(&tag, b"usesEmulator", |t| {
-                    metadata.set_emulator_usage(parse_bool(t)?);
+                    metadata.set_emulator_usage(parse_bool(t.as_bytes())?);
                     Ok(())
                 })?;
                 text(reader, tag.into_buf(), |t| metadata.set_platform_name(t))
@@ -322,11 +322,11 @@ fn parse_attempt_history<R: BufRead>(
                 } else if k == b"started" {
                     started = Some(parse_date_time(v.get()?)?);
                 } else if k == b"isStartedSynced" {
-                    started_synced = parse_bool(v.get()?)?;
+                    started_synced = parse_bool(v.get_raw())?;
                 } else if k == b"ended" {
                     ended = Some(parse_date_time(v.get()?)?);
                 } else if k == b"isEndedSynced" {
-                    ended_synced = parse_bool(v.get()?)?;
+                    ended_synced = parse_bool(v.get_raw())?;
                 }
                 Ok(true)
             })?;

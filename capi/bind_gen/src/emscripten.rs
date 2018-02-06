@@ -620,6 +620,46 @@ const liveSplitCoreNative = {};"#
             }
         }
 
+        if class_name == "Layout" {
+            if type_script {
+                write!(
+                    writer,
+                    "{}",
+                    r#"
+    static parseOriginalLivesplitString(text: string): Layout | null {
+        const len = (text.length << 2) + 1;
+        const buf = emscriptenModule._malloc(len);
+        try {
+            const actualLen = emscriptenModule.stringToUTF8(text, buf, len);
+            return Layout.parseOriginalLivesplit(buf, actualLen);
+        } finally {
+            emscriptenModule._free(buf);
+        }
+    }"#
+                )?;
+            } else {
+                write!(
+                    writer,
+                    "{}",
+                    r#"
+    /**
+     * @param {string} text
+     * @return {Layout | null}
+     */
+    static parseOriginalLivesplitString(text) {
+        const len = (text.length << 2) + 1;
+        const buf = emscriptenModule._malloc(len);
+        try {
+            const actualLen = emscriptenModule.stringToUTF8(text, buf, len);
+            return Layout.parseOriginalLivesplit(buf, actualLen);
+        } finally {
+            emscriptenModule._free(buf);
+        }
+    }"#
+                )?;
+            }
+        }
+
         if class_name == "Run" {
             if type_script {
                 write!(
