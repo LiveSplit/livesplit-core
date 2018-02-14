@@ -27,6 +27,8 @@ pub enum TimerKind {
     Llanfair2,
     /// Urn
     Urn,
+    /// SourceLiveTimer
+    SourceLiveTimer,
 }
 
 impl fmt::Display for TimerKind {
@@ -44,6 +46,7 @@ impl fmt::Display for TimerKind {
             TimerKind::LlanfairGered => write!(f, "Llanfair (Gered's fork)"),
             TimerKind::Llanfair2 => write!(f, "Llanfair Rewrite"),
             TimerKind::Urn => write!(f, "Urn"),
+            TimerKind::SourceLiveTimer => write!(f, "SourceLiveTimer"),
         }
     }
 }

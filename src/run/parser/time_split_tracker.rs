@@ -144,7 +144,6 @@ pub fn parse<R: BufRead>(source: R, path_for_loading_other_files: Option<PathBuf
 
     parse_history(&mut run, path).ok();
 
-
     Ok(run)
 }
 

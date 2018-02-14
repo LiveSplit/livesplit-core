@@ -34,8 +34,9 @@ use std::path::PathBuf;
 use std::io::{self, BufRead, Seek, SeekFrom};
 use std::result::Result as StdResult;
 use Run;
-use super::{face_split, livesplit, llanfair, llanfair_gered, shit_split, splitterz, splitty,
-            time_split_tracker, urn, wsplit, TimerKind, llanfair2, portal2_live_timer};
+use super::{face_split, livesplit, llanfair, llanfair_gered, shit_split, source_live_timer,
+            splitterz, splitty, time_split_tracker, urn, wsplit, TimerKind, llanfair2,
+            portal2_live_timer};
 
 quick_error! {
     /// The Error type for splits files that couldn't be parsed by the Composite
@@ -137,6 +138,13 @@ where
     source.seek(SeekFrom::Start(0))?;
     if let Ok(run) = llanfair2::parse(&mut source) {
         return Ok(parsed(run, TimerKind::Llanfair2));
+    }
+
+    // SourceLiveTimer needs to be before Urn because of a false positive
+    // due to the nature of parsing json files.
+    source.seek(SeekFrom::Start(0))?;
+    if let Ok(run) = source_live_timer::parse(&mut source) {
+        return Ok(parsed(run, TimerKind::SourceLiveTimer));
     }
 
     source.seek(SeekFrom::Start(0))?;

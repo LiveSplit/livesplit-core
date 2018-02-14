@@ -39,6 +39,7 @@ pub mod llanfair2;
 pub mod llanfair_gered;
 pub mod portal2_live_timer;
 pub mod shit_split;
+pub mod source_live_timer;
 pub mod splitterz;
 pub mod splitty;
 pub mod time_split_tracker;
