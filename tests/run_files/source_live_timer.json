@@ -1,0 +1,321 @@
+{
+  "Category": "Portal 2 Coop",
+  "RunName": "Portal 2 Coop",
+  "Splits": [
+    {
+      "Map": "mp_coop_start",
+      "Name": "Calibration",
+      "Ticks": 5284,
+      "Segment": 5284,
+      "BestSegment": 5284
+    },
+    {
+      "Map": "mp_coop_lobby_3",
+      "Name": "Lobby 1",
+      "Ticks": 6683,
+      "Segment": 1399,
+      "BestSegment": 1399
+    },
+    {
+      "Map": "mp_coop_doors",
+      "Name": "Doors",
+      "Ticks": 8510,
+      "Segment": 1827,
+      "BestSegment": 1827
+    },
+    {
+      "Map": "mp_coop_race_2",
+      "Name": "Buttons",
+      "Ticks": 11210,
+      "Segment": 2700,
+      "BestSegment": 2700
+    },
+    {
+      "Map": "mp_coop_laser_2",
+      "Name": "Lasers",
+      "Ticks": 14708,
+      "Segment": 3498,
+      "BestSegment": 3498
+    },
+    {
+      "Map": "mp_coop_rat_maze",
+      "Name": "Rat Maze",
+      "Ticks": 18455,
+      "Segment": 3747,
+      "BestSegment": 3747
+    },
+    {
+      "Map": "mp_coop_laser_crusher",
+      "Name": "Laser Crushers",
+      "Ticks": 20702,
+      "Segment": 2247,
+      "BestSegment": 2247
+    },
+    {
+      "Map": "mp_coop_teambts",
+      "Name": "Behind the Scenes",
+      "Ticks": 23421,
+      "Segment": 2719,
+      "BestSegment": 2719
+    },
+    {
+      "Map": "mp_coop_lobby_3",
+      "Name": "Lobby 2",
+      "Ticks": 24726,
+      "Segment": 1305,
+      "BestSegment": 1305
+    },
+    {
+      "Map": "mp_coop_fling_3",
+      "Name": "Flings",
+      "Ticks": 28109,
+      "Segment": 3383,
+      "BestSegment": 3383
+    },
+    {
+      "Map": "mp_coop_infinifling_train",
+      "Name": "Infinifling",
+      "Ticks": 31055,
+      "Segment": 2946,
+      "BestSegment": 2946
+    },
+    {
+      "Map": "mp_coop_come_along",
+      "Name": "Team Retrieval",
+      "Ticks": 33952,
+      "Segment": 2897,
+      "BestSegment": 2897
+    },
+    {
+      "Map": "mp_coop_fling_1",
+      "Name": "Vertical Flings",
+      "Ticks": 35891,
+      "Segment": 1939,
+      "BestSegment": 1939
+    },
+    {
+      "Map": "mp_coop_catapult_1",
+      "Name": "Catapults",
+      "Ticks": 40013,
+      "Segment": 4122,
+      "BestSegment": 4122
+    },
+    {
+      "Map": "mp_coop_multifling_1",
+      "Name": "Multifling",
+      "Ticks": 44558,
+      "Segment": 4545,
+      "BestSegment": 4545
+    },
+    {
+      "Map": "mp_coop_fling_crushers",
+      "Name": "Fling Crushers",
+      "Ticks": 47647,
+      "Segment": 3089,
+      "BestSegment": 3089
+    },
+    {
+      "Map": "mp_coop_fan",
+      "Name": "Industrial Fan",
+      "Ticks": 51825,
+      "Segment": 4178,
+      "BestSegment": 4178
+    },
+    {
+      "Map": "mp_coop_lobby_3",
+      "Name": "Lobby 3",
+      "Ticks": 53689,
+      "Segment": 1864,
+      "BestSegment": 1864
+    },
+    {
+      "Map": "mp_coop_wall_intro",
+      "Name": "Cooperative Bridges",
+      "Ticks": 56743,
+      "Segment": 3054,
+      "BestSegment": 3054
+    },
+    {
+      "Map": "mp_coop_wall_2",
+      "Name": "Bridge Swap",
+      "Ticks": 59058,
+      "Segment": 2315,
+      "BestSegment": 2315
+    },
+    {
+      "Map": "mp_coop_catapult_wall_intro",
+      "Name": "Fling Block",
+      "Ticks": 62185,
+      "Segment": 3127,
+      "BestSegment": 3127
+    },
+    {
+      "Map": "mp_coop_wall_block",
+      "Name": "Catapult Block",
+      "Ticks": 65938,
+      "Segment": 3753,
+      "BestSegment": 3753
+    },
+    {
+      "Map": "mp_coop_catapult_2",
+      "Name": "Bridge Fling",
+      "Ticks": 69652,
+      "Segment": 3714,
+      "BestSegment": 3714
+    },
+    {
+      "Map": "mp_coop_turret_walls",
+      "Name": "Turret Walls",
+      "Ticks": 75837,
+      "Segment": 6185,
+      "BestSegment": 6185
+    },
+    {
+      "Map": "mp_coop_turret_ball",
+      "Name": "Turret Assassin",
+      "Ticks": 80553,
+      "Segment": 4716,
+      "BestSegment": 4716
+    },
+    {
+      "Map": "mp_coop_wall_5",
+      "Name": "Bridge Testing",
+      "Ticks": 87508,
+      "Segment": 6955,
+      "BestSegment": 6955
+    },
+    {
+      "Map": "mp_coop_lobby_3",
+      "Name": "Lobby 4",
+      "Ticks": 91783,
+      "Segment": 4275,
+      "BestSegment": 4275
+    },
+    {
+      "Map": "mp_coop_tbeam_redirect",
+      "Name": "Cooperative Funnels",
+      "Ticks": 94864,
+      "Segment": 3081,
+      "BestSegment": 3081
+    },
+    {
+      "Map": "mp_coop_tbeam_drill",
+      "Name": "Funnel Drill",
+      "Ticks": 98203,
+      "Segment": 3339,
+      "BestSegment": 3339
+    },
+    {
+      "Map": "mp_coop_tbeam_catch_grind_1",
+      "Name": "Funnel Catch",
+      "Ticks": 100247,
+      "Segment": 2044,
+      "BestSegment": 2044
+    },
+    {
+      "Map": "mp_coop_tbeam_laser_1",
+      "Name": "Funnel Laser",
+      "Ticks": 102595,
+      "Segment": 2348,
+      "BestSegment": 2348
+    },
+    {
+      "Map": "mp_coop_tbeam_polarity",
+      "Name": "Cooperative Polarity",
+      "Ticks": 106208,
+      "Segment": 3613,
+      "BestSegment": 3613
+    },
+    {
+      "Map": "mp_coop_tbeam_polarity2",
+      "Name": "Funnel Hop",
+      "Ticks": 109341,
+      "Segment": 3133,
+      "BestSegment": 3133
+    },
+    {
+      "Map": "mp_coop_tbeam_polarity3",
+      "Name": "Advanced Polarity",
+      "Ticks": 112969,
+      "Segment": 3628,
+      "BestSegment": 3628
+    },
+    {
+      "Map": "mp_coop_tbeam_maze",
+      "Name": "Funnel Maze",
+      "Ticks": 117768,
+      "Segment": 4799,
+      "BestSegment": 4799
+    },
+    {
+      "Map": "mp_coop_tbeam_end",
+      "Name": "Turret Warehouse",
+      "Ticks": 124478,
+      "Segment": 6710,
+      "BestSegment": 6710
+    },
+    {
+      "Map": "mp_coop_lobby_3",
+      "Name": "Lobby 5",
+      "Ticks": 127744,
+      "Segment": 3266,
+      "BestSegment": 3266
+    },
+    {
+      "Map": "mp_coop_paint_come_along",
+      "Name": "Repulsion Jumps",
+      "Ticks": 129762,
+      "Segment": 2018,
+      "BestSegment": 2018
+    },
+    {
+      "Map": "mp_coop_paint_redirect",
+      "Name": "Double Bounce",
+      "Ticks": 133448,
+      "Segment": 3686,
+      "BestSegment": 3686
+    },
+    {
+      "Map": "mp_coop_paint_bridge",
+      "Name": "Bridge Repulsion",
+      "Ticks": 138537,
+      "Segment": 5089,
+      "BestSegment": 5089
+    },
+    {
+      "Map": "mp_coop_paint_walljumps",
+      "Name": "Wall Repulsion",
+      "Ticks": 141451,
+      "Segment": 2914,
+      "BestSegment": 2914
+    },
+    {
+      "Map": "mp_coop_paint_speed_fling",
+      "Name": "Propulsion Crushers",
+      "Ticks": 145656,
+      "Segment": 4205,
+      "BestSegment": 4205
+    },
+    {
+      "Map": "mp_coop_paint_red_racer",
+      "Name": "Turret Ninja",
+      "Ticks": 149479,
+      "Segment": 3823,
+      "BestSegment": 3823
+    },
+    {
+      "Map": "mp_coop_paint_speed_catch",
+      "Name": "Propulsion Retrieval",
+      "Ticks": 152654,
+      "Segment": 3175,
+      "BestSegment": 3175
+    },
+    {
+      "Map": "mp_coop_paint_longjump_intro",
+      "Name": "Vault Entrance",
+      "Ticks": 159383,
+      "Segment": 6729,
+      "BestSegment": 6729
+    }
+  ]
+}

@@ -4,8 +4,9 @@ mod parse {
     use std::fs::File;
     use std::io::BufReader;
     use livesplit_core::Run;
-    use livesplit_core::run::parser::{livesplit, llanfair, llanfair_gered, time_split_tracker,
-                                      urn, wsplit, llanfair2};
+    use livesplit_core::run::parser::{composite, livesplit, llanfair, llanfair_gered,
+                                      source_live_timer, time_split_tracker, urn, wsplit,
+                                      TimerKind, llanfair2};
 
     fn file(path: &str) -> BufReader<File> {
         BufReader::new(File::open(path).unwrap())
@@ -97,8 +98,18 @@ mod parse {
 
     #[test]
     fn time_split_tracker() {
-        let run = time_split_tracker::parse(file("tests/run_files/timesplittracker.txt"), None).unwrap();
-        assert_eq!(run.custom_comparisons(), ["Personal Best", "Time", "Custom Comparison", "Race", "Race2"]);
+        let run =
+            time_split_tracker::parse(file("tests/run_files/timesplittracker.txt"), None).unwrap();
+        assert_eq!(
+            run.custom_comparisons(),
+            [
+                "Personal Best",
+                "Time",
+                "Custom Comparison",
+                "Race",
+                "Race2"
+            ]
+        );
     }
 
     #[test]
@@ -109,5 +120,25 @@ mod parse {
     #[test]
     fn urn() {
         urn::parse(file("tests/run_files/urn.json")).unwrap();
+    }
+
+    #[test]
+    fn source_live_timer() {
+        source_live_timer::parse(file("tests/run_files/source_live_timer.json")).unwrap();
+    }
+
+    #[test]
+    fn source_live_timer1() {
+        source_live_timer::parse(file("tests/run_files/source_live_timer2.json")).unwrap();
+    }
+
+    #[test]
+    fn check_timer_type() {
+        let slt =
+            composite::parse(file("tests/run_files/source_live_timer.json"), None, false).unwrap();
+        assert_eq!(slt.kind, TimerKind::SourceLiveTimer);
+
+        let urn = composite::parse(file("tests/run_files/urn.json"), None, false).unwrap();
+        assert_eq!(urn.kind, TimerKind::Urn);
     }
 }
