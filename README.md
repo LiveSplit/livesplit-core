@@ -43,4 +43,4 @@ The bindings will then be available in `capi/bindings`.
 
 ## Download
 
-Builds for a lot of common platforms are available over here: [Releases](https://github.com/CryZe/livesplit-core/releases)
+Builds for a lot of common platforms are available over here: [Releases](https://github.com/LiveSplit/livesplit-core/releases)
