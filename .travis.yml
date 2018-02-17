@@ -13,7 +13,7 @@ env:
 matrix:
   include:
     # weird error
-    # https://travis-ci.org/CryZe/livesplit-core/jobs/327011754
+    # https://travis-ci.org/LiveSplit/livesplit-core/jobs/327011754
     # - env: TARGET=sparcv9-sun-solaris
 
     # no-std
@@ -69,7 +69,7 @@ matrix:
     - env: TARGET=sparc64-unknown-linux-gnu DISABLE_TESTS=1
 
     # Failing due to backtrace incompatibility
-    # https://travis-ci.org/CryZe/livesplit-core/jobs/278851206
+    # https://travis-ci.org/LiveSplit/livesplit-core/jobs/278851206
     # - env: TARGET=arm-unknown-linux-musleabi DISABLE_TESTS=1
     # - env: TARGET=armv7-unknown-linux-musleabihf DISABLE_TESTS=1
 

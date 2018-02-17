@@ -18,7 +18,7 @@ include = [
 ]
 
 [badges]
-travis-ci = { repository = "CryZe/livesplit-core" }
+travis-ci = { repository = "LiveSplit/livesplit-core" }
 appveyor = { repository = "CryZe/livesplit-core" }
 
 [profile.release]

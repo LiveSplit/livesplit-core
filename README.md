@@ -1,6 +1,6 @@
 <h1> <img src="https://raw.githubusercontent.com/LiveSplit/LiveSplit/master/LiveSplit/Resources/Icon.png" alt="LiveSplit" height="42" width="45" align="top"/> livesplit-core</h1>
 
-[![Build Status](https://travis-ci.org/CryZe/livesplit-core.svg?branch=master)](https://travis-ci.org/CryZe/livesplit-core)
+[![Build Status](https://travis-ci.org/LiveSplit/livesplit-core.svg?branch=master)](https://travis-ci.org/LiveSplit/livesplit-core)
 [![Build status](https://ci.appveyor.com/api/projects/status/bvv4un099w94kari/branch/master?svg=true)](https://ci.appveyor.com/project/CryZe/livesplit-core/branch/master)
 [![crates.io](https://img.shields.io/crates/v/livesplit-core.svg)](https://crates.io/crates/livesplit-core)
 [![npm](https://img.shields.io/npm/v/livesplit-core.svg)](https://www.npmjs.com/package/livesplit-core)
