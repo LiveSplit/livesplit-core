@@ -3,11 +3,11 @@
 
 use super::{acc_mut, own_drop, RUN_METADATA_VARIABLE};
 use std::ptr;
-use livesplit_core::ordermap;
+use livesplit_core::indexmap;
 use run_metadata_variable::{NullableRunMetadataVariable, RunMetadataVariable};
 
 /// type
-pub type RunMetadataVariablesIter = ordermap::Iter<'static, String, String>;
+pub type RunMetadataVariablesIter = indexmap::map::Iter<'static, String, String>;
 /// type
 pub type OwnedRunMetadataVariablesIter = *mut RunMetadataVariablesIter;
 

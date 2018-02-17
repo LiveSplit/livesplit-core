@@ -32,10 +32,13 @@ members = ["capi", "capi/bind_gen", "capi/js", "capi/staticlib", "capi/cdylib"]
 base64 = "0.9.0"
 byteorder = "1.2.1"
 derive_more = "0.7.0"
+image = { version = "0.18.0", features = ["png_codec"], default-features = false }
+indexmap = { version = "0.4.1", default-features = false }
 livesplit-hotkey = { path = "hotkey", version = "0.3.0" }
-odds = { version = "0.3.1", features = ["std-vec"] }
+odds = { version = "0.3.1", features = ["std-vec"], default-features = false }
 ordered-float = "0.5.0"
-ordermap = "0.3.2"
+palette = { version = "0.3.0", default-features = false }
+parking_lot = { version = "0.5.3", default-features = false }
 quick-error = "1.2.0"
 quick-xml = "0.11.0"
 serde = "1.0.24"
@@ -46,14 +49,4 @@ unicase = "2.1.0"
 [target.'cfg(not(all(target_arch = "wasm32", target_os = "unknown")))'.dependencies]
 # Blocked by chrono's time dependency
 # https://github.com/chronotope/chrono/pull/137
-chrono = { version = "0.4.0", features = ["serde"] }
-# Blocked by rand 0.4.0 not being used yet and rustc-serialize being broken
-# https://github.com/rust-lang-deprecated/rustc-serialize/pull/190
-image = "0.18.0"
-# Same as image
-palette = "0.2.1"
-# Blocked by rand 0.4.0 not being used yet
-parking_lot = "0.5.3"
-
-[target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
-png = "0.11.0"
+chrono = { version = "0.4.0", features = ["serde"], default-features = false }

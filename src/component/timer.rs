@@ -10,7 +10,8 @@ use serde_json::{to_writer, Result};
 use std::io::Write;
 use std::borrow::Cow;
 use settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
-use palette::{Hsv, Rgb};
+use palette::Hsv;
+use palette::rgb::Rgb;
 
 /// The Timer Component is a component that shows the total time of the current
 /// attempt as a digital clock. The color of the time shown is based on a how

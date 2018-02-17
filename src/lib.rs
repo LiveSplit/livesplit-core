@@ -40,6 +40,7 @@ extern crate base64;
 extern crate byteorder;
 #[macro_use]
 extern crate derive_more;
+extern crate image as imagelib;
 extern crate odds;
 extern crate ordered_float;
 #[macro_use]
@@ -51,13 +52,14 @@ extern crate serde_derive;
 extern crate serde_json;
 extern crate unicase;
 
+pub extern crate indexmap;
 pub extern crate livesplit_hotkey as hotkey;
-pub extern crate ordermap;
+pub extern crate palette;
+pub extern crate parking_lot;
 
 mod platform;
 
-pub use platform::{palette, parking_lot};
-use platform::{chrono, imagelib};
+use platform::chrono;
 #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 pub use platform::*;
 

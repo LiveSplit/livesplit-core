@@ -1,4 +1,4 @@
-use ordermap::{Iter, OrderMap};
+use indexmap::map::{IndexMap, Iter};
 
 /// The Run Metadata stores additional information about a run, like the
 /// platform and region of the game. All of this information is optional.
@@ -8,7 +8,7 @@ pub struct RunMetadata {
     platform_name: String,
     uses_emulator: bool,
     region_name: String,
-    variables: OrderMap<String, String>,
+    variables: IndexMap<String, String>,
 }
 
 impl RunMetadata {

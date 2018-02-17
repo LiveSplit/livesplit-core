@@ -1,18 +1,9 @@
 #![allow(missing_docs)]
 
-extern crate png;
-
-pub mod palette;
-
 // Parses Date Times by ignoring them
 // Doesn't add Durations to Date Times
 // Durations are represented by 64-bit floats
 pub mod chrono;
-
-pub mod imagelib;
-
-// Fully functioning by using std's data structures
-pub mod parking_lot;
 
 mod time;
 

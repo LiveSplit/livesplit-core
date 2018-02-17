@@ -1,4 +1,4 @@
-use palette::{Hsla, Rgba};
+use palette::{Hsla, LinSrgba};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// Colors can be used to describe what color to use for visualizing
@@ -8,7 +8,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 #[derive(Copy, Clone, PartialEq, From)]
 pub struct Color {
     /// The Red, Green, Blue, Alpha (RGBA) encoding of the color.
-    pub rgba: Rgba<f32>,
+    pub rgba: LinSrgba,
 }
 
 impl Color {
@@ -29,7 +29,7 @@ impl Color {
 impl From<[f32; 4]> for Color {
     fn from(rgba: [f32; 4]) -> Self {
         Self {
-            rgba: Rgba::from_pixel(&rgba),
+            rgba: LinSrgba::from_pixel(&rgba),
         }
     }
 }
@@ -37,7 +37,7 @@ impl From<[f32; 4]> for Color {
 impl From<(f32, f32, f32, f32)> for Color {
     fn from(rgba: (f32, f32, f32, f32)) -> Self {
         Self {
-            rgba: Rgba::from_pixel(&rgba),
+            rgba: LinSrgba::from_pixel(&rgba),
         }
     }
 }
@@ -47,7 +47,7 @@ impl Serialize for Color {
     where
         S: Serializer,
     {
-        let rgba: [f32; 4] = self.rgba.to_pixel();
+        let rgba: [f32; 4] = self.rgba.into_pixel();
         rgba.serialize(serializer)
     }
 }

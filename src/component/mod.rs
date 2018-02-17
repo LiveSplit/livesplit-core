@@ -20,7 +20,9 @@ pub mod title;
 pub mod total_playtime;
 
 use settings::{Color, Gradient};
-use palette::{Alpha, Rgb};
+use palette::Alpha;
+use palette::rgb::Rgb;
+use std::marker::PhantomData;
 
 const DEFAULT_INFO_TEXT_GRADIENT: Gradient = Gradient::Vertical(
     Color {
@@ -30,6 +32,7 @@ const DEFAULT_INFO_TEXT_GRADIENT: Gradient = Gradient::Vertical(
                 red: 1.0,
                 green: 1.0,
                 blue: 1.0,
+                standard: PhantomData,
             },
         },
     },
@@ -40,6 +43,7 @@ const DEFAULT_INFO_TEXT_GRADIENT: Gradient = Gradient::Vertical(
                 red: 1.0,
                 green: 1.0,
                 blue: 1.0,
+                standard: PhantomData,
             },
         },
     },
