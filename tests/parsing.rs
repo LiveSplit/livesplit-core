@@ -5,8 +5,8 @@ mod parse {
     use std::io::{BufReader, Cursor};
     use livesplit_core::Run;
     use livesplit_core::run::parser::{composite, livesplit, llanfair, llanfair_gered,
-                                      source_live_timer, time_split_tracker, urn, wsplit,
-                                      TimerKind, llanfair2};
+                                      source_live_timer, splitterz, time_split_tracker, urn,
+                                      wsplit, TimerKind, llanfair2};
 
     fn file(path: &str) -> BufReader<File> {
         BufReader::new(File::open(path).unwrap())
@@ -115,6 +115,11 @@ mod parse {
                 "Race2"
             ]
         );
+    }
+
+    #[test]
+    fn splitterz() {
+        splitterz::parse(file("tests/run_files/splitterz"), false).unwrap();
     }
 
     #[test]
