@@ -2,7 +2,7 @@ extern crate livesplit_core;
 
 mod parse {
     use std::fs::File;
-    use std::io::BufReader;
+    use std::io::{BufReader, Cursor};
     use livesplit_core::Run;
     use livesplit_core::run::parser::{composite, livesplit, llanfair, llanfair_gered,
                                       source_live_timer, time_split_tracker, urn, wsplit,
@@ -67,6 +67,11 @@ mod parse {
     }
 
     #[test]
+    fn zeroed_out_doesnt_parse_as_llanfair() {
+        llanfair::parse(Cursor::new(&mut [0u8; 64][..])).unwrap_err();
+    }
+
+    #[test]
     fn llanfair_gered_doesnt_parse_as_livesplit() {
         livesplit::parse(file("tests/run_files/llanfair_gered.lfs"), None).unwrap_err();
     }
@@ -128,7 +133,7 @@ mod parse {
     }
 
     #[test]
-    fn source_live_timer1() {
+    fn source_live_timer2() {
         source_live_timer::parse(file("tests/run_files/source_live_timer2.json")).unwrap();
     }
 

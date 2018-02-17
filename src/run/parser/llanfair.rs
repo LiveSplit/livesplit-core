@@ -12,6 +12,8 @@ quick_error! {
     /// Parser.
     #[derive(Debug)]
     pub enum Error {
+        /// The Header doesn't match the header of a Llanfair file.
+        InvalidHeader {}
         /// The length of an image or string was larger than the total remaining
         /// splits file.
         LengthOutOfBounds {}
@@ -51,12 +53,32 @@ fn read_string<R: Read>(mut source: R, buf: &mut Vec<u8>, max_length: u64) -> Re
 
 /// Attempts to parse a Llanfair splits file.
 pub fn parse<R: Read + Seek>(mut source: R) -> Result<Run> {
-    let mut run = Run::new();
     let mut buf = Vec::new();
     let mut buf2 = Vec::new();
 
+    // The protocol is documented here:
+    // https://docs.oracle.com/javase/7/docs/platform/serialization/spec/protocol.html
+
+    const HEADER: [u8; 30] = [
+        0xAC, 0xED, // Magic
+        0x00, 0x05, // Version
+        0x73, // New Object
+        0x72, // New Class Declaration
+        0x00, 0x16, // Length of Class Name
+        // org.fenix.llanfair.Run
+        0x6F, 0x72, 0x67, 0x2E, 0x66, 0x65, 0x6E, 0x69, 0x78, 0x2E, 0x6C,
+        0x6C, 0x61, 0x6E, 0x66, 0x61, 0x69, 0x72, 0x2E, 0x52, 0x75, 0x6E,
+    ];
+    let mut header_buf = [0; 30];
+    source.read_exact(&mut header_buf)?;
+    if HEADER != header_buf {
+        return Err(Error::InvalidHeader);
+    }
+
     // Determine total length of the source
     let total_len = source.seek(SeekFrom::End(0))?;
+
+    let mut run = Run::new();
 
     // Skip to the goal string
     source.seek(SeekFrom::Start(0xc5))?;
@@ -69,9 +91,10 @@ pub fn parse<R: Read + Seek>(mut source: R) -> Result<Run> {
     source.seek(SeekFrom::Current(0x6))?;
     let segment_count = source.read_u32::<BE>()?;
 
-    // The object header changes if there is no instance of one of the object used by the Run class.
-    // The 2 objects that can be affected are the Time object and the ImageIcon object.
-    // The next step of the import algorithm is to check for their presence.
+    // The object header changes if there is no instance of one of the object
+    // used by the Run class. The 2 objects that can be affected are the Time
+    // object and the ImageIcon object. The next step of the import algorithm is
+    // to check for their presence.
     let (mut time_encountered, mut icon_encountered) = (false, false);
 
     let mut aggregate_time_ms = 0;
