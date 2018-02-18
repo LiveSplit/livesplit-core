@@ -34,7 +34,7 @@ struct Splits {
 struct Split {
     Map: String,
     Name: Option<String>,
-    Segment: Option<u64>,
+    Ticks: Option<u64>,
     BestSegment: Option<u64>,
 }
 
@@ -82,20 +82,16 @@ pub fn parse<R: Read>(source: R) -> Result<Run> {
 
             let mut segment = Segment::new(name);
 
-            let pb_split_time = if let Some(segment) = split.Segment {
-                time_span_from_ticks(run.category_name(), segment)
-            } else {
-                TimeSpan::zero()
-            };
+            if let Some(ticks) = split.Ticks {
+                let pb_split_time = Some(time_span_from_ticks(run.category_name(), ticks));
+                segment.set_personal_best_split_time(GameTime(pb_split_time).into());
+            }
 
-            let best_split_time = if let Some(best) = split.BestSegment {
-                time_span_from_ticks(run.category_name(), best)
-            } else {
-                pb_split_time
-            };
+            if let Some(best) = split.BestSegment {
+                let best_segment_time = Some(time_span_from_ticks(run.category_name(), best));
+                segment.set_best_segment_time(GameTime(best_segment_time).into());
+            }
 
-            segment.set_personal_best_split_time(Time::from(GameTime(Some(pb_split_time))));
-            segment.set_best_segment_time(Time::from(GameTime(Some(best_split_time))));
             run.push_segment(segment);
         }
     }
