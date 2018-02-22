@@ -1,7 +1,9 @@
 //! A Timer provides all the capabilities necessary for doing speedrun attempts.
 
 use livesplit_core::{Run, Time, TimeSpan, Timer, TimerPhase, TimingMethod};
-use super::{acc, acc_mut, alloc, output_str, output_time, output_time_span, own, own_drop};
+use super::{acc, acc_mut, alloc, output_str, output_time, output_time_span, output_vec, own,
+            own_drop};
+use livesplit_core::run::saver;
 use run::{NullableOwnedRun, OwnedRun};
 use std::os::raw::c_char;
 use shared_timer::OwnedSharedTimer;
@@ -269,6 +271,14 @@ pub unsafe extern "C" fn Timer_current_phase(this: *const Timer) -> TimerPhase {
 #[no_mangle]
 pub unsafe extern "C" fn Timer_get_run(this: *const Timer) -> *const Run {
     acc(this).run()
+}
+
+/// Saves the Run in use by the Timer as a LiveSplit splits file (*.lss).
+#[no_mangle]
+pub unsafe extern "C" fn Timer_save_as_lss(this: *const Timer) -> *const c_char {
+    output_vec(|o| {
+        saver::livesplit::save_timer(acc(this), o).unwrap();
+    })
 }
 
 /// Prints out debug information representing the whole state of the Timer. This

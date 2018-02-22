@@ -21,7 +21,7 @@
 //! let writer = BufWriter::new(file.expect("Failed creating the file"));
 //!
 //! // Save the splits file as a LiveSplit splits file.
-//! livesplit::save(&run, writer).expect("Couldn't save the splits file");
+//! livesplit::save_run(&run, writer).expect("Couldn't save the splits file");
 //! ```
 
 use std::io::Write;
@@ -29,7 +29,7 @@ use std::result::Result as StdResult;
 use std::fmt::Display;
 use std::borrow::Cow;
 use std::mem::replace;
-use {Image, Run, Time, TimeSpan, base64};
+use {Image, Run, Time, TimeSpan, Timer, TimerPhase, base64};
 use time::formatter::{Complete, TimeFormatter};
 use chrono::{DateTime, Utc};
 use byteorder::{WriteBytesExt, LE};
@@ -227,8 +227,23 @@ fn time<W: Write>(
     )
 }
 
-/// Saves Runs as LiveSplit splits files (*.lss).
-pub fn save<W: Write>(run: &Run, writer: W) -> Result<()> {
+/// Saves the Run in use by the Timer provided as a LiveSplit splits file
+/// (*.lss).
+pub fn save_timer<W: Write>(timer: &Timer, writer: W) -> Result<()> {
+    let run;
+    let run = if timer.current_phase() == TimerPhase::NotRunning {
+        timer.run()
+    } else {
+        run = timer.clone().into_run(true);
+        &run
+    };
+    save_run(run, writer)
+}
+
+/// Saves a Run as a LiveSplit splits file (*.lss). Use the `save_timer`
+/// function if the Run is in use by a timer in order to properly save the
+/// current attempt as well.
+pub fn save_run<W: Write>(run: &Run, writer: W) -> Result<()> {
     let writer = &mut Writer::new(writer);
 
     let buf = &mut Vec::new();

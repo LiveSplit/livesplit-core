@@ -22,7 +22,7 @@
 //! let writer = BufWriter::new(file.expect("Failed creating the file"));
 //!
 //! // Save the splits file as a LiveSplit splits file.
-//! livesplit::save(&run, writer).expect("Couldn't save the splits file");
+//! livesplit::save_run(&run, writer).expect("Couldn't save the splits file");
 //! ```
 
 pub mod livesplit;

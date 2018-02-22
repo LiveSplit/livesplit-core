@@ -259,11 +259,13 @@ pub unsafe extern "C" fn Run_attempt_history_index(
     &acc(this).attempt_history()[index]
 }
 
-/// Saves the Run as a LiveSplit splits file (*.lss).
+/// Saves a Run as a LiveSplit splits file (*.lss). If the run is actively in
+/// use by a timer, use the appropriate method on the timer instead, in order to
+/// properly save the current attempt as well.
 #[no_mangle]
 pub unsafe extern "C" fn Run_save_as_lss(this: *const Run) -> *const c_char {
     output_vec(|o| {
-        saver::livesplit::save(acc(this), o).unwrap();
+        saver::livesplit::save_run(acc(this), o).unwrap();
     })
 }
 
