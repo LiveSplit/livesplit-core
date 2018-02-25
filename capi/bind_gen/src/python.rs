@@ -162,6 +162,8 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
                 "self.ptr".to_string()
             } else if typ.is_custom {
                 format!("{}.ptr", name)
+            } else if typ.name == "c_char" {
+                format!("{}.encode()", name)
             } else {
                 name.to_string()
             }
@@ -170,8 +172,12 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
 
     write!(writer, ")")?;
 
-    if has_return_type && function.output.is_custom {
-        write!(writer, r#")"#)?;
+    if has_return_type {
+        if function.output.is_custom {
+            write!(writer, r#")"#)?;
+        } else if function.output.name == "c_char" {
+            write!(writer, r#".decode()"#)?;
+        }
     }
 
     for &(ref name, ref typ) in function.inputs.iter() {
