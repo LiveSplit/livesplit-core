@@ -11,7 +11,7 @@ fn escaping_works_for_segment_name() {
     run.push_segment(Segment::new("A < B"));
 
     let mut buf = Vec::new();
-    saver::livesplit::save(&run, &mut buf).unwrap();
+    saver::livesplit::save_run(&run, &mut buf).unwrap();
     assert!(TwoWaySearcher::new(b"A &lt; B").search_in(&buf).is_some());
 
     run = parser::livesplit::parse(buf.as_slice(), None).unwrap();
@@ -25,7 +25,7 @@ fn escaping_works_for_auto_splitter_settings() {
         .extend(b"<Hi>A &lt; B</Hi>");
 
     let mut buf = Vec::new();
-    saver::livesplit::save(&run, &mut buf).unwrap();
+    saver::livesplit::save_run(&run, &mut buf).unwrap();
     assert!(TwoWaySearcher::new(b"A &lt; B").search_in(&buf).is_some());
 
     run = parser::livesplit::parse(buf.as_slice(), None).unwrap();
