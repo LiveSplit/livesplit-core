@@ -54,7 +54,7 @@ fn parse_time(time: &str) -> Result<Time> {
     Ok(Time::new().with_real_time(real_time))
 }
 
-/// Attempts to parse a Urn splits file.
+/// Attempts to parse an Urn splits file.
 pub fn parse<R: Read>(source: R) -> Result<Run> {
     let mut run = Run::new();
 

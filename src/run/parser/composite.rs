@@ -35,7 +35,7 @@ use std::io::{self, BufRead, Seek, SeekFrom};
 use std::result::Result as StdResult;
 use Run;
 use super::{face_split, livesplit, llanfair, llanfair_gered, shit_split, source_live_timer,
-            splitterz, splitty, time_split_tracker, urn, wsplit, TimerKind, llanfair2,
+            splitterz, splitty, time_split_tracker, urn, worstrun, wsplit, TimerKind, llanfair2,
             portal2_live_timer};
 
 quick_error! {
@@ -145,6 +145,20 @@ where
     source.seek(SeekFrom::Start(0))?;
     if let Ok(run) = source_live_timer::parse(&mut source) {
         return Ok(parsed(run, TimerKind::SourceLiveTimer));
+    }
+
+    // Both worstrun and Urn accept entirely empty JSON files. Therefore it's
+    // very hard to determine which format we should be parsing those files as.
+    // We poke at the format first to see if there's a game and category key in
+    // there. If there is then we assume it's a worstrun file. This is somewhat
+    // suboptimal as we parse worstrun files that don't have those keys (they
+    // are optional) as Urn files.
+    source.seek(SeekFrom::Start(0))?;
+    if worstrun::poke(&mut source) {
+        source.seek(SeekFrom::Start(0))?;
+        if let Ok(run) = worstrun::parse(&mut source) {
+            return Ok(parsed(run, TimerKind::Worstrun));
+        }
     }
 
     source.seek(SeekFrom::Start(0))?;

@@ -6,7 +6,7 @@ mod parse {
     use livesplit_core::Run;
     use livesplit_core::run::parser::{composite, livesplit, llanfair, llanfair_gered,
                                       source_live_timer, splitterz, time_split_tracker, urn,
-                                      wsplit, TimerKind, llanfair2};
+                                      worstrun, wsplit, TimerKind, llanfair2};
 
     fn file(path: &str) -> BufReader<File> {
         BufReader::new(File::open(path).unwrap())
@@ -143,12 +143,26 @@ mod parse {
     }
 
     #[test]
-    fn check_timer_type() {
-        let slt =
-            composite::parse(file("tests/run_files/source_live_timer.json"), None, false).unwrap();
-        assert_eq!(slt.kind, TimerKind::SourceLiveTimer);
+    fn worstrun() {
+        worstrun::parse(file("tests/run_files/worstrun.json")).unwrap();
+    }
 
-        let urn = composite::parse(file("tests/run_files/urn.json"), None, false).unwrap();
-        assert_eq!(urn.kind, TimerKind::Urn);
+    #[test]
+    fn worstrun_prefers_parsing_as_itself() {
+        let run = composite::parse(file("tests/run_files/worstrun.json"), None, false).unwrap();
+        assert_eq!(run.kind, TimerKind::Worstrun);
+    }
+
+    #[test]
+    fn urn_prefers_parsing_as_itself() {
+        let run = composite::parse(file("tests/run_files/urn.json"), None, false).unwrap();
+        assert_eq!(run.kind, TimerKind::Urn);
+    }
+
+    #[test]
+    fn source_live_time_prefers_parsing_as_itself() {
+        let run =
+            composite::parse(file("tests/run_files/source_live_timer.json"), None, false).unwrap();
+        assert_eq!(run.kind, TimerKind::SourceLiveTimer);
     }
 }

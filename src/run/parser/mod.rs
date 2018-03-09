@@ -44,6 +44,7 @@ pub mod splitterz;
 pub mod splitty;
 pub mod time_split_tracker;
 pub mod urn;
+pub mod worstrun;
 pub mod wsplit;
 
 mod timer_kind;
