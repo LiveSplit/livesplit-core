@@ -2,8 +2,8 @@ extern crate livesplit_core;
 
 mod parse {
     use livesplit_core::run::parser::{
-        composite, livesplit, llanfair, llanfair2, llanfair_gered, source_live_timer, splitterz,
-        time_split_tracker, urn, worstrun, wsplit, TimerKind,
+        composite, livesplit, llanfair, llanfair2, llanfair_gered, portal2_live_timer,
+        source_live_timer, splitterz, time_split_tracker, urn, worstrun, wsplit, TimerKind,
     };
     use livesplit_core::Run;
     use std::fs::File;
@@ -144,8 +144,25 @@ mod parse {
     }
 
     #[test]
+    fn portal2_live_timer() {
+        portal2_live_timer::parse(file("tests/run_files/portal2_live_timer1.csv")).unwrap();
+    }
+
+    #[test]
+    fn portal2_live_timer2() {
+        portal2_live_timer::parse(file("tests/run_files/portal2_live_timer2.csv")).unwrap();
+    }
+
+    #[test]
     fn worstrun() {
         worstrun::parse(file("tests/run_files/worstrun.json")).unwrap();
+    }
+
+    #[test]
+    fn portal2_live_timer_prefers_parsing_as_itself() {
+        let run =
+            composite::parse(file("tests/run_files/portal2_live_timer1.csv"), None, false).unwrap();
+        assert_eq!(run.kind, TimerKind::Portal2LiveTimer);
     }
 
     #[test]

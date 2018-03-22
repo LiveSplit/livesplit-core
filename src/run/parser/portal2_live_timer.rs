@@ -69,8 +69,8 @@ static CHAPTERS: [(&str, &[&str]); 9] = [
             "sp_a2_ricochet",
             "sp_a2_bridge_intro",
             "sp_a2_bridge_the_gap",
-            "sp_a2_laser_relays",
             "sp_a2_turret_intro",
+            "sp_a2_laser_relays",
             "sp_a2_turret_blocker",
             "sp_a2_laser_vs_turret",
             "sp_a2_pull_the_rug",
@@ -113,8 +113,6 @@ static CHAPTERS: [(&str, &[&str]); 9] = [
         &[
             "sp_a3_speed_ramp",
             "sp_a3_speed_flings",
-            "sp_a3_speed_flings",
-            "sp_a3_speed_flings",
             "sp_a3_portal_intro",
             "sp_a3_end",
         ],
@@ -132,7 +130,6 @@ static CHAPTERS: [(&str, &[&str]); 9] = [
             "sp_a4_laser_catapult",
             "sp_a4_laser_platform",
             "sp_a4_speed_tb_catch",
-            "sp_a4_jump_polarity",
             "sp_a4_jump_polarity",
         ],
     ),
@@ -159,18 +156,33 @@ pub fn parse<R: BufRead>(source: R) -> Result<Run> {
 
     let mut aggregate_ticks = 0.0;
 
+    let mut line = lines.next().ok_or(Error::ExpectedMap)??;
     for &(chapter_name, maps) in &CHAPTERS {
         for &map in maps {
-            let line = lines.next().ok_or(Error::ExpectedMap)??;
-            let mut splits = line.split(',');
-            let map_name = splits.next().ok_or(Error::ExpectedMapName)?;
-            if map_name != map {
-                return Err(Error::ExpectedDifferentMapName);
+            {
+                let mut splits = line.split(',');
+                let map_name = splits.next().ok_or(Error::ExpectedMapName)?;
+                if map_name != map {
+                    return Err(Error::ExpectedDifferentMapName);
+                }
+                let start_ticks: f64 = splits.next().ok_or(Error::ExpectedStartTicks)?.parse()?;
+                let end_ticks: f64 = splits.next().ok_or(Error::ExpectedEndTicks)?.parse()?;
+                let map_ticks = end_ticks - start_ticks;
+                aggregate_ticks += map_ticks;
             }
-            let start_ticks: f64 = splits.next().ok_or(Error::ExpectedStartTicks)?.parse()?;
-            let end_ticks: f64 = splits.next().ok_or(Error::ExpectedEndTicks)?.parse()?;
-            let map_ticks = end_ticks - start_ticks;
-            aggregate_ticks += map_ticks;
+
+            while let Some(Ok(next_line)) = lines.next() {
+                line = next_line;
+                let mut splits = line.split(',');
+                if splits.next() == Some(map) {
+                    let start_ticks: f64 = splits.next().ok_or(Error::ExpectedStartTicks)?.parse()?;
+                    let end_ticks: f64 = splits.next().ok_or(Error::ExpectedEndTicks)?.parse()?;
+                    let map_ticks = end_ticks - start_ticks;
+                    aggregate_ticks += map_ticks;
+                } else {
+                    break;
+                }
+            }
         }
 
         let time = GameTime(Some(TimeSpan::from_seconds(aggregate_ticks / 60.0))).into();
