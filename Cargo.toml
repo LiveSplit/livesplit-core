@@ -9,12 +9,12 @@ description = "livesplit-core is a library that provides a lot of functionality 
 readme = "README.md"
 keywords = ["speedrun", "timer", "livesplit"]
 include = [
-    "src/*",
-    "Cargo.toml",
-    "LICENSE-APACHE",
-    "LICENSE-MIT",
-    "CODE_OF_CONDUCT.md",
-    "README.md"
+    "/src/*",
+    "/Cargo.toml",
+    "/LICENSE-APACHE",
+    "/LICENSE-MIT",
+    "/CODE_OF_CONDUCT.md",
+    "/README.md"
 ]
 
 [badges]
@@ -52,4 +52,4 @@ memmem = "0.1.1"
 [target.'cfg(not(all(target_arch = "wasm32", target_os = "unknown")))'.dependencies]
 # Blocked by chrono's time dependency
 # https://github.com/chronotope/chrono/pull/137
-chrono = { version = "0.4.0", features = ["serde"], default-features = false }
+chrono = { version = "0.4.0", features = ["serde", "clock"], default-features = false }
