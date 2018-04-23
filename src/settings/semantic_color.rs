@@ -1,4 +1,6 @@
+#[cfg(feature = "layout")]
 use super::Color;
+#[cfg(feature = "layout")]
 use layout;
 
 /// A Semantic Color describes a color by some meaningful event that is
@@ -41,6 +43,7 @@ impl SemanticColor {
     /// The General Settings store actual Color values for each of the different
     /// events. Using this method, you can use these to convert a Semantic Color
     /// to an actual Color.
+    #[cfg(feature = "layout")]
     pub fn visualize(&self, settings: &layout::GeneralSettings) -> Color {
         match *self {
             SemanticColor::Default => settings.text_color,

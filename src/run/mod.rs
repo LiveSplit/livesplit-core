@@ -16,7 +16,9 @@
 //! ```
 
 mod attempt;
+#[cfg(feature = "editing")]
 pub mod editor;
+#[cfg(feature = "parsing")]
 pub mod parser;
 mod run;
 mod run_metadata;
@@ -28,6 +30,7 @@ mod segment_history;
 mod tests;
 
 pub use self::attempt::Attempt;
+#[cfg(feature = "editing")]
 pub use self::editor::{Editor, RenameError};
 pub use self::run::{ComparisonError, ComparisonsIter, Run};
 pub use self::run_metadata::RunMetadata;

@@ -32,19 +32,32 @@
 //! ```
 
 pub mod composite;
+#[cfg(feature = "face_split_parsing")]
 pub mod face_split;
 pub mod livesplit;
+#[cfg(feature = "llanfair_parsing")]
 pub mod llanfair;
+#[cfg(feature = "llanfair2_parsing")]
 pub mod llanfair2;
+#[cfg(feature = "llanfair_gered_parsing")]
 pub mod llanfair_gered;
+#[cfg(feature = "portal2_live_timer_parsing")]
 pub mod portal2_live_timer;
+#[cfg(feature = "shit_split_parsing")]
 pub mod shit_split;
+#[cfg(feature = "source_live_timer_parsing")]
 pub mod source_live_timer;
+#[cfg(feature = "splitterz_parsing")]
 pub mod splitterz;
+#[cfg(feature = "splitty_parsing")]
 pub mod splitty;
+#[cfg(feature = "time_split_tracker_parsing")]
 pub mod time_split_tracker;
+#[cfg(feature = "urn_parsing")]
 pub mod urn;
+#[cfg(feature = "worstrun_parsing")]
 pub mod worstrun;
+#[cfg(feature = "wsplit_parsing")]
 pub mod wsplit;
 
 mod timer_kind;

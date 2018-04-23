@@ -1,5 +1,6 @@
 #![allow(unknown_lints)]
 #![warn(missing_docs)]
+#![warn(unused_extern_crates)]
 // Necessary for some larger quick-error based errors.
 #![recursion_limit = "128"]
 
@@ -40,8 +41,8 @@ extern crate base64;
 extern crate byteorder;
 #[macro_use]
 extern crate derive_more;
+#[cfg(feature = "imagelib")]
 extern crate image as imagelib;
-extern crate odds;
 extern crate ordered_float;
 #[macro_use]
 extern crate quick_error;
@@ -53,6 +54,7 @@ extern crate serde_json;
 extern crate unicase;
 
 pub extern crate indexmap;
+#[cfg(feature = "hotkeys")]
 pub extern crate livesplit_hotkey as hotkey;
 pub extern crate palette;
 pub extern crate parking_lot;
@@ -71,21 +73,30 @@ macro_rules! catch {
 
 pub mod analysis;
 pub mod comparison;
+#[cfg(feature = "layout")]
 pub mod component;
+#[cfg(feature = "hotkeys")]
 mod hotkey_config;
+#[cfg(feature = "hotkeys")]
 mod hotkey_system;
 mod image;
+#[cfg(feature = "layout")]
 pub mod layout;
 pub mod run;
 pub mod settings;
 pub mod time;
 
+#[cfg(feature = "hotkeys")]
 pub use self::hotkey_config::HotkeyConfig;
+#[cfg(feature = "hotkeys")]
 pub use self::hotkey_system::HotkeySystem;
 pub use self::image::Image;
+#[cfg(feature = "layout")]
 pub use self::layout::{Component, Editor as LayoutEditor,
                        GeneralSettings as GeneralLayoutSettings, Layout};
-pub use self::run::{Attempt, Editor as RunEditor, Run, RunMetadata, Segment, SegmentHistory};
+#[cfg(feature = "editing")]
+pub use self::run::Editor as RunEditor;
+pub use self::run::{Attempt, Run, RunMetadata, Segment, SegmentHistory};
 pub use self::time::{AtomicDateTime, GameTime, RealTime, SharedTimer, Time, TimeSpan, TimeStamp,
                      Timer, TimerPhase, TimingMethod};
 pub use chrono::{DateTime, Utc};
