@@ -3,12 +3,12 @@
 //! are being applied to the Run. It provides the current state of the editor as
 //! state objects that can be visualized by any kind of User Interface.
 
-use livesplit_core::{Run, RunEditor, TimingMethod};
 use super::{acc, acc_mut, alloc, output_vec, own, str, Json};
+use livesplit_core::{Run, RunEditor, TimingMethod};
 use run::OwnedRun;
-use sum_of_best_cleaner::OwnedSumOfBestCleaner;
 use std::os::raw::c_char;
 use std::{ptr, slice};
+use sum_of_best_cleaner::OwnedSumOfBestCleaner;
 
 /// type
 pub type OwnedRunEditor = *mut RunEditor;

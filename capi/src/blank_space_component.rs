@@ -2,11 +2,11 @@
 //! anything other than a background. It mostly serves as padding between other
 //! components.
 
-use livesplit_core::component::blank_space::Component as BlankSpaceComponent;
-use livesplit_core::Timer;
 use super::{acc, acc_mut, alloc, output_vec, own, own_drop, Json};
 use blank_space_component_state::OwnedBlankSpaceComponentState;
 use component::OwnedComponent;
+use livesplit_core::component::blank_space::Component as BlankSpaceComponent;
+use livesplit_core::Timer;
 
 /// type
 pub type OwnedBlankSpaceComponent = *mut BlankSpaceComponent;

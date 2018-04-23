@@ -1,9 +1,9 @@
 //! The Separator Component is a simple component that only serves to render
 //! separators between components.
 
-use livesplit_core::component::separator::Component as SeparatorComponent;
 use super::{alloc, own, own_drop};
 use component::OwnedComponent;
+use livesplit_core::component::separator::Component as SeparatorComponent;
 
 /// type
 pub type OwnedSeparatorComponent = *mut SeparatorComponent;

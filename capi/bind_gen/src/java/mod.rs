@@ -1,9 +1,9 @@
-use std::path::Path;
+use jni_cpp;
 use std::collections::BTreeMap;
-use {Class, Result};
 use std::fs::{create_dir_all, File};
 use std::io::{BufWriter, Write};
-use jni_cpp;
+use std::path::Path;
+use {Class, Result};
 
 mod jna;
 mod jni;

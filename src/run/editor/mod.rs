@@ -4,11 +4,11 @@
 //! current state of the editor as state objects that can be visualized by any
 //! kind of User Interface.
 
-use std::num::ParseIntError;
-use std::mem::swap;
-use {comparison, unicase, Image, Run, Segment, Time, TimeSpan, TimingMethod};
 use super::run::{ComparisonError, ComparisonResult};
+use std::mem::swap;
+use std::num::ParseIntError;
 use time::ParseError as ParseTimeSpanError;
+use {comparison, unicase, Image, Run, Segment, Time, TimeSpan, TimingMethod};
 
 pub mod cleaning;
 mod segment_row;
@@ -16,9 +16,9 @@ mod state;
 #[cfg(test)]
 mod tests;
 
+pub use self::cleaning::SumOfBestCleaner;
 pub use self::segment_row::SegmentRow;
 pub use self::state::{Buttons as ButtonsState, Segment as SegmentState, State};
-pub use self::cleaning::SumOfBestCleaner;
 
 quick_error! {
     /// Describes an Error that occurred while parsing a time.
@@ -669,7 +669,8 @@ impl Editor {
         self.run.validate_comparison_name(new)?;
 
         {
-            let comparison_name = self.run.custom_comparisons_mut()
+            let comparison_name = self.run
+                .custom_comparisons_mut()
                 .iter_mut()
                 .find(|c| *c == old)
                 .ok_or(RenameError::OldNameNotFound)?;

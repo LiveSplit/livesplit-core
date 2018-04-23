@@ -1,6 +1,6 @@
+use super::{Accuracy, TimeFormatter, MINUS};
 use std::fmt::{Display, Formatter, Result};
 use TimeSpan;
-use super::{Accuracy, TimeFormatter, MINUS};
 
 pub struct Inner {
     time: Option<TimeSpan>,

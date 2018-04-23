@@ -2,8 +2,8 @@
 //! an atomic clock as possible.
 
 use livesplit_core::AtomicDateTime;
-use {acc, output_str, own_drop};
 use std::os::raw::c_char;
+use {acc, output_str, own_drop};
 
 /// type
 pub type OwnedAtomicDateTime = *mut AtomicDateTime;

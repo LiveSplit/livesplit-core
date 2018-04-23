@@ -16,20 +16,20 @@
 //! ```
 
 mod attempt;
-mod run_metadata;
-mod run;
-mod segment_history;
-mod segment;
 pub mod editor;
 pub mod parser;
+mod run;
+mod run_metadata;
 pub mod saver;
+mod segment;
+mod segment_history;
 
 #[cfg(test)]
 mod tests;
 
 pub use self::attempt::Attempt;
-pub use self::run_metadata::RunMetadata;
-pub use self::run::{ComparisonError, ComparisonsIter, Run};
-pub use self::segment_history::SegmentHistory;
-pub use self::segment::Segment;
 pub use self::editor::{Editor, RenameError};
+pub use self::run::{ComparisonError, ComparisonsIter, Run};
+pub use self::run_metadata::RunMetadata;
+pub use self::segment::Segment;
+pub use self::segment_history::SegmentHistory;

@@ -1,10 +1,10 @@
 extern crate livesplit_core;
 
-use livesplit_core::{Time, TimeSpan};
 use livesplit_core::comparison::balanced_pb::{BalancedPB, NAME};
+use livesplit_core::run::parser::livesplit;
+use livesplit_core::{Time, TimeSpan};
 use std::fs::File;
 use std::io::BufReader;
-use livesplit_core::run::parser::livesplit;
 
 fn r(t: Time) -> Time {
     Time::new()

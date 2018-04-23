@@ -1,11 +1,11 @@
+use comparison::{default_generators, personal_best, ComparisonGenerator};
+use ordered_float::OrderedFloat;
 use std::borrow::Cow;
 use std::cmp::max;
 use std::collections::HashSet;
 use std::path::PathBuf;
-use {AtomicDateTime, Attempt, Image, RunMetadata, Segment, Time, TimeSpan, TimingMethod};
-use comparison::{default_generators, personal_best, ComparisonGenerator};
-use ordered_float::OrderedFloat;
 use unicase;
+use {AtomicDateTime, Attempt, Image, RunMetadata, Segment, Time, TimeSpan, TimingMethod};
 
 /// A Run stores the split times for a specific game and category of a runner.
 ///

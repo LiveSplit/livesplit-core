@@ -1,10 +1,10 @@
 //! The Run Metadata stores additional information about a run, like the
 //! platform and region of the game. All of this information is optional.
 
-use livesplit_core::RunMetadata;
 use super::{acc, alloc, output_str};
-use std::os::raw::c_char;
+use livesplit_core::RunMetadata;
 use run_metadata_variables_iter::OwnedRunMetadataVariablesIter;
+use std::os::raw::c_char;
 
 /// type
 pub type OwnedRunMetadata = *mut RunMetadata;

@@ -3,11 +3,11 @@
 //! current segment. Other information, like segment times of up to two
 //! comparisons, the segment icon, and the segment's name, can also be shown.
 
+use super::{acc, acc_mut, alloc, output_vec, own, own_drop, Json};
+use component::OwnedComponent;
+use detailed_timer_component_state::OwnedDetailedTimerComponentState;
 use livesplit_core::component::detailed_timer::Component as DetailedTimerComponent;
 use livesplit_core::{GeneralLayoutSettings, Timer};
-use super::{acc, acc_mut, alloc, output_vec, own, own_drop, Json};
-use detailed_timer_component_state::OwnedDetailedTimerComponentState;
-use component::OwnedComponent;
 
 /// type
 pub type OwnedDetailedTimerComponent = *mut DetailedTimerComponent;

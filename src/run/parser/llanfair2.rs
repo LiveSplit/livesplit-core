@@ -1,13 +1,13 @@
 //! Provides the parser for splits files used by the Llanfair Rewrite.
 
-use std::io::BufRead;
-use {RealTime, Run, Segment, Time, TimeSpan};
-use quick_xml::Reader;
-use std::cmp::min;
-use byteorder::{ByteOrder, BE};
-use imagelib::{png, ColorType, ImageBuffer, Rgba};
 use super::xml_util::{end_tag, parse_base, parse_children, single_child, text, text_err,
                       text_parsed};
+use byteorder::{ByteOrder, BE};
+use imagelib::{png, ColorType, ImageBuffer, Rgba};
+use quick_xml::Reader;
+use std::cmp::min;
+use std::io::BufRead;
+use {RealTime, Run, Segment, Time, TimeSpan};
 
 pub use super::xml_util::{Error, Result};
 

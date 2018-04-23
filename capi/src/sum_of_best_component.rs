@@ -6,11 +6,11 @@
 //! sum of their best segment times. The name is therefore a bit misleading, but
 //! sticks around for historical reasons.
 
+use super::{acc, alloc, output_vec, own, own_drop, Json};
+use component::OwnedComponent;
 use livesplit_core::component::sum_of_best::Component as SumOfBestComponent;
 use livesplit_core::Timer;
-use super::{acc, alloc, output_vec, own, own_drop, Json};
 use sum_of_best_component_state::OwnedSumOfBestComponentState;
-use component::OwnedComponent;
 
 /// type
 pub type OwnedSumOfBestComponent = *mut SumOfBestComponent;

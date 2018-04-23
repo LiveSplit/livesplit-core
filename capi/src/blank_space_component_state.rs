@@ -1,7 +1,7 @@
 //! The state object describes the information to visualize for this component.
 
-use livesplit_core::component::blank_space::State as BlankSpaceComponentState;
 use super::{acc, own_drop};
+use livesplit_core::component::blank_space::State as BlankSpaceComponentState;
 
 /// type
 pub type OwnedBlankSpaceComponentState = *mut BlankSpaceComponentState;

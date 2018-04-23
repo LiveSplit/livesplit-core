@@ -1,7 +1,7 @@
-use std::io::{Result, Write};
-use {typescript, Class, Function, Type, TypeKind};
 use heck::MixedCase;
 use std::collections::BTreeMap;
+use std::io::{Result, Write};
+use {typescript, Class, Function, Type, TypeKind};
 
 fn get_hl_type_with_null(ty: &Type) -> String {
     let mut formatted = get_hl_type_without_null(ty);

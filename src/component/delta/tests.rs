@@ -1,5 +1,5 @@
-use {GeneralLayoutSettings, Run, Segment, Timer};
 use super::Component;
+use {GeneralLayoutSettings, Run, Segment, Timer};
 
 #[test]
 fn comparison_text() {

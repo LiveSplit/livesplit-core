@@ -2,14 +2,14 @@
 //! Component is a component that shows the how far ahead or behind the current
 //! attempt is compared to the chosen comparison.
 
-use {comparison, GeneralLayoutSettings, Timer};
-use serde_json::{to_writer, Result};
-use std::io::Write;
-use analysis::{delta, state_helper};
-use time::formatter::{Accuracy, Delta, TimeFormatter};
-use std::borrow::Cow;
-use settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
 use super::DEFAULT_INFO_TEXT_GRADIENT;
+use analysis::{delta, state_helper};
+use serde_json::{to_writer, Result};
+use settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
+use std::borrow::Cow;
+use std::io::Write;
+use time::formatter::{Accuracy, Delta, TimeFormatter};
+use {comparison, GeneralLayoutSettings, Timer};
 
 #[cfg(test)]
 mod tests;

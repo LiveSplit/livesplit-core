@@ -1,8 +1,8 @@
 extern crate livesplit_core;
 
 mod run {
-    use livesplit_core::Run;
     use livesplit_core::run::ComparisonError;
+    use livesplit_core::Run;
 
     #[test]
     fn add_comparison() {
@@ -20,8 +20,8 @@ mod run {
 }
 
 mod editor {
-    use livesplit_core::{Run, Segment};
     use livesplit_core::run::{ComparisonError, Editor, RenameError};
+    use livesplit_core::{Run, Segment};
 
     #[test]
     fn add_comparison_editor() {
@@ -68,9 +68,14 @@ mod editor {
         run.add_custom_comparison("Custom").ok();
         let mut editor = Editor::new(run).unwrap();
         let c = editor.rename_comparison("Custom", "[Race]Custom");
-        assert_eq!(c, Err(RenameError::InvalidName(ComparisonError::NameStartsWithRace)));
+        assert_eq!(
+            c,
+            Err(RenameError::InvalidName(
+                ComparisonError::NameStartsWithRace
+            ))
+        );
     }
-    
+
     #[test]
     fn rename_comparison_duplicate_name() {
         let mut run = Run::new();
@@ -79,6 +84,9 @@ mod editor {
         run.add_custom_comparison("Custom2").ok();
         let mut editor = Editor::new(run).unwrap();
         let c = editor.rename_comparison("Custom2", "Custom");
-        assert_eq!(c, Err(RenameError::InvalidName(ComparisonError::DuplicateName)));
+        assert_eq!(
+            c,
+            Err(RenameError::InvalidName(ComparisonError::DuplicateName))
+        );
     }
 }

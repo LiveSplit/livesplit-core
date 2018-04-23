@@ -2,9 +2,9 @@
 //! that have been specified.
 
 use super::{acc_mut, own_drop, RUN_METADATA_VARIABLE};
-use std::ptr;
 use livesplit_core::indexmap;
 use run_metadata_variable::{NullableRunMetadataVariable, RunMetadataVariable};
+use std::ptr;
 
 /// type
 pub type RunMetadataVariablesIter = indexmap::map::Iter<'static, String, String>;

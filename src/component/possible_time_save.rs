@@ -4,15 +4,15 @@
 //! Segments. This component also allows showing the Total Possible Time Save
 //! for the remainder of the current attempt.
 
-use {comparison, Timer, TimerPhase};
+use super::DEFAULT_INFO_TEXT_GRADIENT;
 use analysis::possible_time_save;
-use settings::{Color, Field, Gradient, SettingsDescription, Value};
 use serde_json::{to_writer, Result};
+use settings::{Color, Field, Gradient, SettingsDescription, Value};
 use std::borrow::Cow;
 use std::fmt::Write as FmtWrite;
 use std::io::Write;
 use time::formatter::{Accuracy, PossibleTimeSave, TimeFormatter};
-use super::DEFAULT_INFO_TEXT_GRADIENT;
+use {comparison, Timer, TimerPhase};
 
 /// The Possible Time Save Component is a component that shows how much time the
 /// chosen comparison could've saved for the current segment, based on the Best

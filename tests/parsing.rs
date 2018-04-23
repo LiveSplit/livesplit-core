@@ -1,12 +1,12 @@
 extern crate livesplit_core;
 
 mod parse {
+    use livesplit_core::run::parser::{composite, livesplit, llanfair, llanfair2, llanfair_gered,
+                                      source_live_timer, splitterz, time_split_tracker, urn,
+                                      worstrun, wsplit, TimerKind};
+    use livesplit_core::Run;
     use std::fs::File;
     use std::io::{BufReader, Cursor};
-    use livesplit_core::Run;
-    use livesplit_core::run::parser::{composite, livesplit, llanfair, llanfair_gered,
-                                      source_live_timer, splitterz, time_split_tracker, urn,
-                                      worstrun, wsplit, TimerKind, llanfair2};
 
     fn file(path: &str) -> BufReader<File> {
         BufReader::new(File::open(path).unwrap())
@@ -112,7 +112,7 @@ mod parse {
                 "Time",
                 "Custom Comparison",
                 "Race",
-                "Race2"
+                "Race2",
             ]
         );
     }

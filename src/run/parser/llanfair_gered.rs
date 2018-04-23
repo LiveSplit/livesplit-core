@@ -1,13 +1,13 @@
 //! Provides the parser for splits files used by Gered's Llanfair fork.
 
-use std::io::{BufRead, Cursor, Seek, SeekFrom};
-use {RealTime, Run, Segment, Time, TimeSpan};
-use quick_xml::Reader;
-use byteorder::{ReadBytesExt, BE};
-use imagelib::{png, ColorType, ImageBuffer, Rgba};
-use base64::{self, STANDARD};
 use super::xml_util::{end_tag, optional_attribute_err, parse_base, parse_children, single_child,
                       text, text_as_bytes_err, text_err, text_parsed};
+use base64::{self, STANDARD};
+use byteorder::{ReadBytesExt, BE};
+use imagelib::{png, ColorType, ImageBuffer, Rgba};
+use quick_xml::Reader;
+use std::io::{BufRead, Cursor, Seek, SeekFrom};
+use {RealTime, Run, Segment, Time, TimeSpan};
 
 pub use super::xml_util::{Error, Result};
 

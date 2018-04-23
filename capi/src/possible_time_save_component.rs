@@ -3,11 +3,11 @@
 //! Segments. This component also allows showing the Total Possible Time Save
 //! for the remainder of the current attempt.
 
+use super::{acc, alloc, output_vec, own, own_drop, Json};
+use component::OwnedComponent;
 use livesplit_core::component::possible_time_save::Component as PossibleTimeSaveComponent;
 use livesplit_core::Timer;
-use super::{acc, alloc, output_vec, own, own_drop, Json};
 use possible_time_save_component_state::OwnedPossibleTimeSaveComponentState;
-use component::OwnedComponent;
 
 /// type
 pub type OwnedPossibleTimeSaveComponent = *mut PossibleTimeSaveComponent;

@@ -4,15 +4,15 @@
 //! current segment. Other information, like segment times of up to two
 //! comparisons, the segment icon, and the segment's name, can also be shown.
 
-use {GeneralLayoutSettings, TimeSpan, Timer, TimerPhase, TimingMethod};
 use super::timer;
-use time::formatter::{timer as formatter, Accuracy, DigitsFormat, Short, TimeFormatter, DASH};
-use time::formatter::none_wrapper::DashWrapper;
 use comparison::{self, best_segments, none};
 use serde_json::{to_writer, Result};
-use std::io::Write;
-use std::borrow::Cow;
 use settings::{Field, Gradient, SemanticColor, SettingsDescription, Value};
+use std::borrow::Cow;
+use std::io::Write;
+use time::formatter::none_wrapper::DashWrapper;
+use time::formatter::{timer as formatter, Accuracy, DigitsFormat, Short, TimeFormatter, DASH};
+use {GeneralLayoutSettings, TimeSpan, Timer, TimerPhase, TimingMethod};
 
 /// The Detailed Timer Component is a component that shows two timers, one for
 /// the total time of the current attempt and one showing the time of just the

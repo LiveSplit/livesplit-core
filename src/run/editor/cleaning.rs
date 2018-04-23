@@ -6,12 +6,12 @@
 //! occurrences of this and allows you to delete them individually if any of
 //! them seem wrong.
 
-use {Attempt, Run, Segment, TimeSpan, TimingMethod};
 use analysis::sum_of_segments::{best, track_branch};
-use std::mem::replace;
-use std::fmt;
-use time::formatter::{Short, TimeFormatter};
 use chrono::Local;
+use std::fmt;
+use std::mem::replace;
+use time::formatter::{Short, TimeFormatter};
+use {Attempt, Run, Segment, TimeSpan, TimingMethod};
 
 /// A Sum of Best Cleaner allows you to interactively remove potential issues in
 /// the Segment History that lead to an inaccurate Sum of Best. If you skip a
@@ -236,9 +236,8 @@ fn check_prediction<'a>(
                     time_between: segment_history_element[method]
                         .expect("Cleanup path is shorter but doesn't have a time"),
                     combined_sum_of_best: predictions[ending_index + 1].map(|t| {
-                        t
-                            - predictions[(starting_index + 1) as usize]
-                                .expect("Start time must not be empty")
+                        t - predictions[(starting_index + 1) as usize]
+                            .expect("Start time must not be empty")
                     }),
                     attempt: run.attempt_history()
                         .iter()

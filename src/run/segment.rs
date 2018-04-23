@@ -1,6 +1,6 @@
+use comparison::personal_best;
 use std::collections::HashMap;
 use {Image, SegmentHistory, Time, TimeSpan, TimingMethod};
-use comparison::personal_best;
 
 /// A Segment describes a point in a speedrun that is suitable for storing a
 /// split time. This stores the name of that segment, an icon, the split times

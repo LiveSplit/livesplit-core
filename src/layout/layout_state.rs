@@ -1,6 +1,6 @@
 use super::ComponentState;
-use settings::{Color, Gradient};
 use serde_json::{to_writer, Result};
+use settings::{Color, Gradient};
 use std::io::Write;
 
 /// The state object describes the information to visualize for the layout.

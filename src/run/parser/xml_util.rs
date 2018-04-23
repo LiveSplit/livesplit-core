@@ -1,14 +1,14 @@
-use quick_xml::{Error as XmlError, Reader, Writer};
-use quick_xml::events::{attributes, BytesStart, Event};
-use std::ops::Deref;
-use std::borrow::Cow;
-use std::{str, string};
-use std::io::{self, BufRead};
-use std::result::Result as StdResult;
-use std::num::{ParseFloatError, ParseIntError};
-use time;
-use chrono::ParseError as ChronoError;
 use super::super::ComparisonError;
+use chrono::ParseError as ChronoError;
+use quick_xml::events::{attributes, BytesStart, Event};
+use quick_xml::{Error as XmlError, Reader, Writer};
+use std::borrow::Cow;
+use std::io::{self, BufRead};
+use std::num::{ParseFloatError, ParseIntError};
+use std::ops::Deref;
+use std::result::Result as StdResult;
+use std::{str, string};
+use time;
 
 quick_error! {
     /// The Error type for XML-based splits files that couldn't be parsed.

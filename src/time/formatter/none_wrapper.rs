@@ -2,9 +2,9 @@
 //! allows you to create a new Time Formatter by wrapping another one and
 //! changing its behavior when formatting empty times.
 
+use super::{TimeFormatter, DASH};
 use std::fmt::{Display, Formatter, Result};
 use TimeSpan;
-use super::{TimeFormatter, DASH};
 
 /// A Time Span to be formatted by a None Wrapper.
 pub struct Inner<'a, F: 'a, S: 'a> {

@@ -2,11 +2,11 @@
 //! behind the chosen comparison throughout the whole attempt. All the
 //! individual deltas are shown as points in a graph.
 
+use super::{acc, alloc, output_vec, own, own_drop, Json};
+use component::OwnedComponent;
+use graph_component_state::OwnedGraphComponentState;
 use livesplit_core::component::graph::Component as GraphComponent;
 use livesplit_core::{GeneralLayoutSettings, Timer};
-use super::{acc, alloc, output_vec, own, own_drop, Json};
-use graph_component_state::OwnedGraphComponentState;
-use component::OwnedComponent;
 
 /// type
 pub type OwnedGraphComponent = *mut GraphComponent;

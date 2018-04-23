@@ -2,11 +2,11 @@
 //! attempt as a digital clock. The color of the time shown is based on a how
 //! well the current attempt is doing compared to the chosen comparison.
 
+use super::{acc, alloc, output_vec, own, own_drop, Json};
+use component::OwnedComponent;
 use livesplit_core::component::timer::Component as TimerComponent;
 use livesplit_core::{GeneralLayoutSettings, Timer};
-use super::{acc, alloc, output_vec, own, own_drop, Json};
 use timer_component_state::OwnedTimerComponentState;
-use component::OwnedComponent;
 
 /// type
 pub type OwnedTimerComponent = *mut TimerComponent;

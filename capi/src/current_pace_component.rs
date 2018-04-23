@@ -2,11 +2,11 @@
 //! current attempt's final time, if the current attempt's pace matches the
 //! chosen comparison for the remainder of the run.
 
+use super::{acc, acc_mut, alloc, output_vec, own, own_drop, Json};
+use component::OwnedComponent;
+use current_pace_component_state::OwnedCurrentPaceComponentState;
 use livesplit_core::component::current_pace::Component as CurrentPaceComponent;
 use livesplit_core::Timer;
-use super::{acc, acc_mut, alloc, output_vec, own, own_drop, Json};
-use current_pace_component_state::OwnedCurrentPaceComponentState;
-use component::OwnedComponent;
 
 /// type
 pub type OwnedCurrentPaceComponent = *mut CurrentPaceComponent;

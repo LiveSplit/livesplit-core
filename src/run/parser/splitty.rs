@@ -1,9 +1,9 @@
 //! Provides the parser for Splitty splits files.
 
-use std::io::Read;
-use std::result::Result as StdResult;
 use serde_json::de::from_reader;
 use serde_json::Error as JsonError;
+use std::io::Read;
+use std::result::Result as StdResult;
 use {Run, Segment, Time, TimeSpan, TimingMethod};
 
 quick_error! {

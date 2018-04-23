@@ -2,8 +2,8 @@
 //! split time. This stores the name of that segment, an icon, the split times
 //! of different comparisons, and a history of segment times.
 
-use livesplit_core::{Segment, SegmentHistory, Time};
 use super::{acc, alloc, output_str, output_time, own_drop, str};
+use livesplit_core::{Segment, SegmentHistory, Time};
 use std::os::raw::c_char;
 
 /// type

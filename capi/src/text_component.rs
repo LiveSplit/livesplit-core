@@ -2,11 +2,11 @@
 //! single centered text, or split up into a left and right text, which is
 //! suitable for a situation where you have a label and a value.
 
-use livesplit_core::component::text::Component as TextComponent;
 use super::{acc, acc_mut, alloc, output_vec, own, own_drop, str, Json};
-use text_component_state::OwnedTextComponentState;
-use std::os::raw::c_char;
 use component::OwnedComponent;
+use livesplit_core::component::text::Component as TextComponent;
+use std::os::raw::c_char;
+use text_component_state::OwnedTextComponentState;
 
 /// type
 pub type OwnedTextComponent = *mut TextComponent;

@@ -1,10 +1,10 @@
 //! Provides the parser for Llanfair splits files.
 
-use std::io::{self, Read, Seek, SeekFrom};
-use std::result::Result as StdResult;
-use std::str::{Utf8Error, from_utf8};
 use byteorder::{ReadBytesExt, BE};
 use imagelib::{png, ColorType, ImageBuffer, Rgba};
+use std::io::{self, Read, Seek, SeekFrom};
+use std::result::Result as StdResult;
+use std::str::{from_utf8, Utf8Error};
 use {Image, RealTime, Run, Segment, Time, TimeSpan};
 
 quick_error! {
@@ -60,14 +60,37 @@ pub fn parse<R: Read + Seek>(mut source: R) -> Result<Run> {
     // https://docs.oracle.com/javase/7/docs/platform/serialization/spec/protocol.html
 
     const HEADER: [u8; 30] = [
-        0xAC, 0xED, // Magic
-        0x00, 0x05, // Version
+        0xAC,
+        0xED, // Magic
+        0x00,
+        0x05, // Version
         0x73, // New Object
         0x72, // New Class Declaration
-        0x00, 0x16, // Length of Class Name
+        0x00,
+        0x16, // Length of Class Name
         // org.fenix.llanfair.Run
-        0x6F, 0x72, 0x67, 0x2E, 0x66, 0x65, 0x6E, 0x69, 0x78, 0x2E, 0x6C,
-        0x6C, 0x61, 0x6E, 0x66, 0x61, 0x69, 0x72, 0x2E, 0x52, 0x75, 0x6E,
+        0x6F,
+        0x72,
+        0x67,
+        0x2E,
+        0x66,
+        0x65,
+        0x6E,
+        0x69,
+        0x78,
+        0x2E,
+        0x6C,
+        0x6C,
+        0x61,
+        0x6E,
+        0x66,
+        0x61,
+        0x69,
+        0x72,
+        0x2E,
+        0x52,
+        0x75,
+        0x6E,
     ];
     let mut header_buf = [0; 30];
     source.read_exact(&mut header_buf)?;

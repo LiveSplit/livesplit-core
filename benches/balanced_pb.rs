@@ -5,11 +5,11 @@ extern crate test;
 
 use test::Bencher;
 
-use livesplit_core::{Run, Segment, TimeSpan, Timer};
 use livesplit_core::comparison::balanced_pb::BalancedPB;
+use livesplit_core::run::parser::livesplit;
+use livesplit_core::{Run, Segment, TimeSpan, Timer};
 use std::fs::File;
 use std::io::BufReader;
-use livesplit_core::run::parser::livesplit;
 
 fn run_with_splits(timer: &mut Timer, splits: &[f64]) {
     timer.start();

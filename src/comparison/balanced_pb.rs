@@ -12,8 +12,8 @@
 //! be smoothed out throughout the whole comparison.
 
 use super::ComparisonGenerator;
-use {Attempt, Segment, TimeSpan, TimingMethod};
 use ordered_float::OrderedFloat;
+use {Attempt, Segment, TimeSpan, TimingMethod};
 
 /// The Comparison Generator for calculating a comparison which has the same
 /// final time as the runner's Personal Best. Unlike the Personal Best however,

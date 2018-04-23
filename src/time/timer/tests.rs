@@ -1,5 +1,5 @@
-use {Run, Segment, TimeSpan, Timer, TimingMethod};
 use run::Editor;
+use {Run, Segment, TimeSpan, Timer, TimingMethod};
 
 fn run() -> Run {
     let mut run = Run::new();

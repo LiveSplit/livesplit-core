@@ -1,8 +1,8 @@
 mod key_code;
 pub use self::key_code::KeyCode;
 
-use std::sync::{Arc, Mutex};
 use std::collections::hash_map::{Entry, HashMap};
+use std::sync::{Arc, Mutex};
 use std::{slice, str};
 
 quick_error! {
@@ -49,10 +49,9 @@ pub unsafe extern "C" fn HotkeyHook_callback(
 
 impl Hook {
     pub fn new() -> Result<Self> {
-        let hotkeys = Arc::new(Mutex::new(HashMap::<
-            KeyCode,
-            Box<FnMut() + Send + 'static>,
-        >::new()));
+        let hotkeys = Arc::new(Mutex::new(
+            HashMap::<KeyCode, Box<FnMut() + Send + 'static>>::new(),
+        ));
 
         let hotkey_map = hotkeys.clone();
         let event = Box::new(Box::new(move |code: &str| {

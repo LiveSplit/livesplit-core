@@ -1,12 +1,12 @@
 //! A Timer provides all the capabilities necessary for doing speedrun attempts.
 
-use livesplit_core::{Run, Time, TimeSpan, Timer, TimerPhase, TimingMethod};
 use super::{acc, acc_mut, alloc, output_str, output_time, output_time_span, output_vec, own,
             own_drop};
 use livesplit_core::run::saver;
+use livesplit_core::{Run, Time, TimeSpan, Timer, TimerPhase, TimingMethod};
 use run::{NullableOwnedRun, OwnedRun};
-use std::os::raw::c_char;
 use shared_timer::OwnedSharedTimer;
+use std::os::raw::c_char;
 use std::ptr;
 
 /// type

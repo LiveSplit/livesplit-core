@@ -1,8 +1,8 @@
 //! Defines the Comparison Generator for calculating the Worst Segments of a Run.
 
 use super::ComparisonGenerator;
-use {Attempt, Segment, Time, TimingMethod};
 use analysis::sum_of_segments::worst::calculate;
+use {Attempt, Segment, Time, TimingMethod};
 
 /// The Comparison Generator for calculating the Worst Segments of a Run.
 #[derive(Copy, Clone, Debug)]

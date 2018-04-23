@@ -4,9 +4,9 @@
 //! out on platforms that don't support hotkeys. You can turn off a Hotkey
 //! System temporarily. By default the Hotkey System is activated.
 
+use super::{acc, alloc, own, own_drop};
 use livesplit_core::HotkeySystem;
 use shared_timer::OwnedSharedTimer;
-use super::{acc, alloc, own, own_drop};
 use std::ptr;
 
 /// type

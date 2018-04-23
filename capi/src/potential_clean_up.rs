@@ -3,10 +3,10 @@
 //! up can then be turned into an actual clean up in order to apply it to the
 //! Run.
 
-use livesplit_core::run::editor::cleaning::PotentialCleanUp;
 use super::{acc, output_vec, own_drop};
-use std::os::raw::c_char;
+use livesplit_core::run::editor::cleaning::PotentialCleanUp;
 use std::io::Write;
+use std::os::raw::c_char;
 
 /// type
 pub type OwnedPotentialCleanUp = *mut PotentialCleanUp<'static>;

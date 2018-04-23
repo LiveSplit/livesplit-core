@@ -10,10 +10,10 @@
 
 //! Temporal quantification
 
-use std::{fmt, i64};
+use platform::Duration as StdDuration;
 use std::error::Error;
 use std::ops::{Add, Div, Mul, Neg, Sub};
-use platform::Duration as StdDuration;
+use std::{fmt, i64};
 
 /// The number of nanoseconds in a microsecond.
 const NANOS_PER_MICRO: i32 = 1000;
@@ -35,7 +35,12 @@ const SECS_PER_DAY: i64 = 86400;
 const SECS_PER_WEEK: i64 = 604800;
 
 macro_rules! try_opt {
-    ($e:expr) => (match $e { Some(v) => v, None => return None })
+    ($e:expr) => {
+        match $e {
+            Some(v) => v,
+            None => return None,
+        }
+    };
 }
 
 /// ISO 8601 time duration with nanosecond precision.

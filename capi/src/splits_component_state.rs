@@ -1,9 +1,9 @@
 //! The state object that describes a single segment's information to visualize.
 
-use livesplit_core::component::splits::State as SplitsComponentState;
 use super::{acc, output_str, output_vec, own_drop};
-use std::os::raw::c_char;
+use livesplit_core::component::splits::State as SplitsComponentState;
 use std::io::Write;
+use std::os::raw::c_char;
 
 /// type
 pub type OwnedSplitsComponentState = *mut SplitsComponentState;

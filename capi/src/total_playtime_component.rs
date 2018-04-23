@@ -1,11 +1,11 @@
 //! The Total Playtime Component is a component that shows the total amount of
 //! time that the current category has been played for.
 
+use super::{acc, acc_mut, alloc, output_vec, own, own_drop, Json};
+use component::OwnedComponent;
 use livesplit_core::component::total_playtime::Component as TotalPlaytimeComponent;
 use livesplit_core::Timer;
-use super::{acc, acc_mut, alloc, output_vec, own, own_drop, Json};
 use total_playtime_component_state::OwnedTotalPlaytimeComponentState;
-use component::OwnedComponent;
 
 /// type
 pub type OwnedTotalPlaytimeComponent = *mut TotalPlaytimeComponent;

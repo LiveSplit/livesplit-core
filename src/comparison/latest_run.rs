@@ -5,8 +5,8 @@
 //! been finished yet, this comparison will show the attempt that got the
 //! furthest.
 
-use {Attempt, Segment, TimeSpan, TimingMethod};
 use super::ComparisonGenerator;
+use {Attempt, Segment, TimeSpan, TimingMethod};
 
 /// The Comparison Generator for calculating the Latest Run. Using the
 /// Segment History, this comparison reconstructs the splits of the furthest,

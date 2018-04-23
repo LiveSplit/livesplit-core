@@ -3,12 +3,12 @@
 //! centered text, or split up into a left and right text, which is suitable for
 //! a situation where you have a label and a value.
 
-use std::io::Write;
-use serde_json::{to_writer, Result};
-use std::borrow::Cow;
-use settings::{Field, Gradient, SettingsDescription, Value};
-use std::mem::replace;
 use super::DEFAULT_INFO_TEXT_GRADIENT;
+use serde_json::{to_writer, Result};
+use settings::{Field, Gradient, SettingsDescription, Value};
+use std::borrow::Cow;
+use std::io::Write;
+use std::mem::replace;
 
 /// The Text Component simply visualizes any given text. This can either be a
 /// single centered text, or split up into a left and right text, which is

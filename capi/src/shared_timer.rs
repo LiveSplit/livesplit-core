@@ -1,11 +1,11 @@
 //! A Shared Timer that can be used to share a single timer object with multiple
 //! owners.
 
+use super::{acc, alloc, own, own_drop};
 use livesplit_core::SharedTimer;
 use timer::OwnedTimer;
 use timer_read_lock::OwnedTimerReadLock;
 use timer_write_lock::OwnedTimerWriteLock;
-use super::{acc, alloc, own, own_drop};
 
 /// type
 pub type OwnedSharedTimer = *mut SharedTimer;

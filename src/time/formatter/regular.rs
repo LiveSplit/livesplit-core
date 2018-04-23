@@ -1,5 +1,5 @@
-use std::fmt::{Display, Formatter, Result};
 use super::{Accuracy, TimeFormatter, DASH};
+use std::fmt::{Display, Formatter, Result};
 use TimeSpan;
 
 pub struct Inner {

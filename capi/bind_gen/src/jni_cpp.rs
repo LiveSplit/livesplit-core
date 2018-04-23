@@ -1,8 +1,8 @@
+use heck::MixedCase;
+use std::borrow::Cow;
+use std::collections::BTreeMap;
 use std::io::{Result, Write};
 use {Class, Function, Type, TypeKind};
-use heck::MixedCase;
-use std::collections::BTreeMap;
-use std::borrow::Cow;
 
 fn get_c_type(ty: &Type) -> Cow<str> {
     let mut name = Cow::Borrowed(match ty.name.as_str() {

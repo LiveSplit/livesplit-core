@@ -1,5 +1,5 @@
-use {Run, Segment, Time, TimeSpan};
 use super::Editor;
+use {Run, Segment, Time, TimeSpan};
 
 #[test]
 fn new_best_segment() {

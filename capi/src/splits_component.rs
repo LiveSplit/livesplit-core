@@ -4,11 +4,11 @@
 //! time. The list provides scrolling functionality, so not every segment needs
 //! to be shown all the time.
 
+use super::{acc, acc_mut, alloc, output_vec, own, own_drop, Json};
+use component::OwnedComponent;
 use livesplit_core::component::splits::Component as SplitsComponent;
 use livesplit_core::{GeneralLayoutSettings, Timer};
-use super::{acc, acc_mut, alloc, output_vec, own, own_drop, Json};
 use splits_component_state::OwnedSplitsComponentState;
-use component::OwnedComponent;
 
 /// type
 pub type OwnedSplitsComponent = *mut SplitsComponent;

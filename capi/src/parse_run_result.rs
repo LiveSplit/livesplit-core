@@ -1,8 +1,8 @@
 //! A run parsed by the Composite Parser. This contains the Run itself and
 //! information about which parser parsed it.
 
-use livesplit_core::run::parser::composite::{ParsedRun, Result};
 use super::{acc, alloc, output_vec, own, own_drop};
+use livesplit_core::run::parser::composite::{ParsedRun, Result};
 use run::OwnedRun;
 use std::io::Write;
 use std::os::raw::c_char;
