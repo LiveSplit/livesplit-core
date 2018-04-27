@@ -37,7 +37,7 @@ impl From<[f32; 4]> for Color {
 impl From<[u8; 4]> for Color {
     fn from(rgba: [u8; 4]) -> Self {
         Self {
-            rgba: Rgba::from_pixel(&rgba),
+            rgba: LinSrgba::from_pixel(&rgba),
         }
     }
 }

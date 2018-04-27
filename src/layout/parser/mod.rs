@@ -2,13 +2,80 @@ mod xml_util;
 pub use self::xml_util::{Error, Result};
 
 use std::io::BufRead;
-use self::xml_util::{end_tag, parse_base, parse_children, text_err};
+use self::xml_util::{end_tag, parse_base, parse_children, text, text_err, text_parsed, Tag};
 use super::{Component, Layout};
 use component::{blank_space, current_comparison, current_pace, delta, detailed_timer, graph,
                 possible_time_save, previous_segment, separator, splits, sum_of_best, text, timer,
                 title, total_playtime};
 use quick_xml::reader::Reader;
-use settings::Color;
+use settings::{Color, Gradient};
+use time::formatter::Accuracy;
+
+enum GradientKind {
+    Transparent,
+    Plain,
+    Vertical,
+    Horizontal,
+}
+
+struct GradientBuilder {
+    kind: GradientKind,
+    first: Color,
+    second: Color,
+}
+
+impl GradientBuilder {
+    fn new() -> Self {
+        Self {
+            kind: GradientKind::Transparent,
+            first: Color::transparent(),
+            second: Color::transparent(),
+        }
+    }
+
+    fn parse_background<'a, R>(
+        &mut self,
+        reader: &mut Reader<R>,
+        tag: Tag<'a>,
+    ) -> Result<Option<Tag<'a>>>
+    where
+        R: BufRead,
+    {
+        if tag.name() == b"BackgroundColor" {
+            color(reader, tag.into_buf(), |c| self.first = c)?;
+        } else if tag.name() == b"BackgroundColor2" {
+            color(reader, tag.into_buf(), |c| self.second = c)?;
+        } else if tag.name() == b"BackgroundGradient" {
+            text_err(reader, tag.into_buf(), |text| {
+                self.kind = match &*text {
+                    "Plain" => GradientKind::Plain,
+                    "Vertical" => GradientKind::Vertical,
+                    "Horizontal" => GradientKind::Horizontal,
+                    _ => return Err(Error::UnexpectedGradientType),
+                };
+                Ok(())
+            })?;
+        } else {
+            return Ok(Some(tag));
+        }
+        Ok(None)
+    }
+
+    fn build(self) -> Gradient {
+        match self.kind {
+            GradientKind::Transparent => Gradient::Transparent,
+            GradientKind::Plain => {
+                if self.first == Color::transparent() {
+                    Gradient::Transparent
+                } else {
+                    Gradient::Plain(self.first)
+                }
+            }
+            GradientKind::Horizontal => Gradient::Horizontal(self.first, self.second),
+            GradientKind::Vertical => Gradient::Vertical(self.first, self.second),
+        }
+    }
+}
 
 fn color<R, F>(reader: &mut Reader<R>, buf: &mut Vec<u8>, f: F) -> Result<()>
 where
@@ -24,6 +91,160 @@ where
         f(Color::from([r, g, b, a]));
         Ok(())
     })
+}
+
+fn parse_bool<R, F>(reader: &mut Reader<R>, buf: &mut Vec<u8>, f: F) -> Result<()>
+where
+    R: BufRead,
+    F: FnOnce(bool),
+{
+    text_err(reader, buf, |t| match &*t {
+        "True" => {
+            f(true);
+            Ok(())
+        }
+        "False" => {
+            f(false);
+            Ok(())
+        }
+        _ => Err(Error::Bool),
+    })
+}
+
+fn accuracy<R, F>(reader: &mut Reader<R>, buf: &mut Vec<u8>, f: F) -> Result<()>
+where
+    R: BufRead,
+    F: FnOnce(Accuracy),
+{
+    text_err(reader, buf, |t| {
+        f(match &*t {
+            "Tenths" => Accuracy::Tenths,
+            "Seconds" => Accuracy::Seconds,
+            "Hundredths" => Accuracy::Hundredths,
+            _ => return Err(Error::Accuracy),
+        });
+        Ok(())
+    })
+}
+
+fn blank_space_settings<R>(
+    reader: &mut Reader<R>,
+    buf: &mut Vec<u8>,
+    component: &mut blank_space::Component,
+) -> Result<()>
+where
+    R: BufRead,
+{
+    let settings = component.settings_mut();
+    let mut background_builder = GradientBuilder::new();
+
+    parse_children(reader, buf, |reader, tag| {
+        if let Some(tag) = background_builder.parse_background(reader, tag)? {
+            if tag.name() == b"SpaceHeight" {
+                text_parsed(reader, tag.into_buf(), |h| settings.height = h)
+            } else {
+                end_tag(reader, tag.into_buf())
+            }
+        } else {
+            Ok(())
+        }
+    })?;
+
+    settings.background = background_builder.build();
+
+    Ok(())
+}
+
+fn current_comparison_settings<R>(
+    reader: &mut Reader<R>,
+    buf: &mut Vec<u8>,
+    component: &mut current_comparison::Component,
+) -> Result<()>
+where
+    R: BufRead,
+{
+    let settings = component.settings_mut();
+    let mut background_builder = GradientBuilder::new();
+    let (mut override_label, mut override_value) = (false, false);
+
+    parse_children(reader, buf, |reader, tag| {
+        if let Some(tag) = background_builder.parse_background(reader, tag)? {
+            if tag.name() == b"TextColor" {
+                color(reader, tag.into_buf(), |c| settings.label_color = Some(c))
+            } else if tag.name() == b"OverrideTextColor" {
+                parse_bool(reader, tag.into_buf(), |b| override_label = b)
+            } else if tag.name() == b"TimeColor" {
+                color(reader, tag.into_buf(), |c| settings.value_color = Some(c))
+            } else if tag.name() == b"OverrideTimeColor" {
+                parse_bool(reader, tag.into_buf(), |b| override_value = b)
+            } else {
+                end_tag(reader, tag.into_buf())
+            }
+        } else {
+            Ok(())
+        }
+    })?;
+
+    if !override_label {
+        settings.label_color = None;
+    }
+    if !override_value {
+        settings.value_color = None;
+    }
+    settings.background = background_builder.build();
+
+    Ok(())
+}
+
+fn current_pace_settings<R>(
+    reader: &mut Reader<R>,
+    buf: &mut Vec<u8>,
+    component: &mut current_pace::Component,
+) -> Result<()>
+where
+    R: BufRead,
+{
+    let settings = component.settings_mut();
+    let mut background_builder = GradientBuilder::new();
+    let (mut override_label, mut override_value) = (false, false);
+
+    parse_children(reader, buf, |reader, tag| {
+        if let Some(tag) = background_builder.parse_background(reader, tag)? {
+            if tag.name() == b"TextColor" {
+                color(reader, tag.into_buf(), |c| settings.label_color = Some(c))
+            } else if tag.name() == b"OverrideTextColor" {
+                parse_bool(reader, tag.into_buf(), |b| override_label = b)
+            } else if tag.name() == b"TimeColor" {
+                color(reader, tag.into_buf(), |c| settings.value_color = Some(c))
+            } else if tag.name() == b"OverrideTimeColor" {
+                parse_bool(reader, tag.into_buf(), |b| override_value = b)
+            } else if tag.name() == b"Comparison" {
+                text(reader, tag.into_buf(), |t| {
+                    settings.comparison_override = if t == "Current Comparison" {
+                        None
+                    } else {
+                        Some(t.into_owned())
+                    };
+                })
+            } else if tag.name() == b"Accuracy" {
+                accuracy(reader, tag.into_buf(), |a| settings.accuracy = a)
+            } else {
+                end_tag(reader, tag.into_buf())
+            }
+        } else {
+            Ok(())
+        }
+    })?;
+
+    if !override_label {
+        settings.label_color = None;
+    }
+    if !override_value {
+        settings.value_color = None;
+    }
+    settings.background = background_builder.build();
+
+    Ok(())
 }
 
 fn component<R, F>(reader: &mut Reader<R>, buf: &mut Vec<u8>, f: F) -> Result<()>
@@ -58,6 +279,26 @@ where
                 });
                 Ok(())
             })
+        } else if tag.name() == b"Settings" {
+            // Assumption: Settings always has to come after the Path.
+            // Otherwise we need to cache the settings and load them later.
+            if let Some(ref mut component) = component {
+                match *component {
+                    Component::BlankSpace(ref mut c) => {
+                        blank_space_settings(reader, tag.into_buf(), c)
+                    }
+                    Component::CurrentComparison(ref mut c) => {
+                        current_comparison_settings(reader, tag.into_buf(), c)
+                    }
+                    Component::CurrentPace(ref mut c) => {
+                        current_pace_settings(reader, tag.into_buf(), c)
+                    }
+                    // _ => unimplemented!(),
+                    _ => end_tag(reader, tag.into_buf()), // ignore other components for now
+                }
+            } else {
+                end_tag(reader, tag.into_buf())
+            }
         } else {
             end_tag(reader, tag.into_buf())
         }
