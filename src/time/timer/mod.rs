@@ -1,9 +1,9 @@
-use {AtomicDateTime, Run, Segment, Time, TimeSpan, TimeStamp, TimerPhase, TimingMethod};
 use TimerPhase::*;
 use comparison::personal_best;
 use parking_lot::RwLock;
-use std::sync::Arc;
 use std::mem;
+use std::sync::Arc;
+use {AtomicDateTime, Run, Segment, Time, TimeSpan, TimeStamp, TimerPhase, TimingMethod};
 
 #[cfg(test)]
 mod tests;

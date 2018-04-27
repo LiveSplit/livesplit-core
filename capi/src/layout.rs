@@ -1,10 +1,10 @@
 //! A Layout allows you to combine multiple components together to visualize a
 //! variety of information the runner is interested in.
 
-use livesplit_core::{Layout, Timer};
-use livesplit_core::layout::LayoutSettings;
 use super::{acc, acc_mut, alloc, output_vec, own, own_drop, str, Json};
 use component::OwnedComponent;
+use livesplit_core::layout::LayoutSettings;
+use livesplit_core::{Layout, Timer};
 use std::io::Cursor;
 use std::ptr;
 

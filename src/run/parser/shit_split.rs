@@ -1,8 +1,8 @@
 //! Provides the parser for ShitSplit splits files.
 
 use std::io::{self, BufRead};
-use std::result::Result as StdResult;
 use std::num::ParseIntError;
+use std::result::Result as StdResult;
 use {time, GameTime, Run, Segment, TimeSpan};
 
 quick_error! {

@@ -1,6 +1,6 @@
+use std::collections::BTreeMap;
 use std::io::{Result, Write};
 use {Class, Function, Opt, Type, TypeKind};
-use std::collections::BTreeMap;
 
 fn get_hl_type(ty: &Type) -> String {
     if ty.is_custom {

@@ -1,7 +1,7 @@
 //! A Time Span represents a certain span of time.
 
-use livesplit_core::TimeSpan;
 use super::{acc, alloc, own_drop};
+use livesplit_core::TimeSpan;
 
 /// type
 pub type NullableTimeSpan = TimeSpan;

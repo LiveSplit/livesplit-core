@@ -1,7 +1,7 @@
 //! The state object describes the information to visualize for this component.
 
-use livesplit_core::component::previous_segment::State as PreviousSegmentComponentState;
 use super::{acc, output_str, output_vec, own_drop};
+use livesplit_core::component::previous_segment::State as PreviousSegmentComponentState;
 use std::io::Write;
 use std::os::raw::c_char;
 

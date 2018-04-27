@@ -17,11 +17,11 @@ mod swift;
 mod typescript;
 mod wasm;
 
-use structopt::StructOpt;
 use std::fs::{create_dir_all, remove_dir_all, File};
 use std::io::{BufWriter, Read, Result};
 use std::path::PathBuf;
 use std::rc::Rc;
+use structopt::StructOpt;
 use syn::{parse_file, FnArg, Item, ItemFn, Lit, Meta, Pat, ReturnType, Type as SynType, Visibility};
 
 #[derive(StructOpt)]

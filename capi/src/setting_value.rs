@@ -1,12 +1,12 @@
 //! Describes a setting's value. Such a value can be of a variety of different
 //! types.
 
+use livesplit_core::TimingMethod;
 use livesplit_core::settings::{Alignment, Color, Gradient, Value as SettingValue};
 use livesplit_core::time::formatter::{Accuracy, DigitsFormat};
-use livesplit_core::TimingMethod;
-use {alloc, own_drop, str};
 use std::os::raw::c_char;
 use std::ptr;
+use {alloc, own_drop, str};
 
 /// type
 pub type OwnedSettingValue = *mut SettingValue;

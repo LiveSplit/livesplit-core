@@ -1,7 +1,7 @@
 //! The state object describes the information to visualize for this component.
 
-use livesplit_core::component::possible_time_save::State as PossibleTimeSaveComponentState;
 use super::{acc, output_str, own_drop};
+use livesplit_core::component::possible_time_save::State as PossibleTimeSaveComponentState;
 use std::os::raw::c_char;
 
 /// type

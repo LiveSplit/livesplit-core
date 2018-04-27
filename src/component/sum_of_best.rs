@@ -7,14 +7,14 @@
 //! best segment times. The name is therefore a bit misleading, but sticks
 //! around for historical reasons.
 
-use Timer;
-use time::formatter::{Accuracy, Regular, TimeFormatter};
-use serde_json::{to_writer, Result};
-use analysis::sum_of_segments::calculate_best;
-use std::io::Write;
-use std::borrow::Cow;
-use settings::{Color, Field, Gradient, SettingsDescription, Value};
 use super::DEFAULT_INFO_TEXT_GRADIENT;
+use Timer;
+use analysis::sum_of_segments::calculate_best;
+use serde_json::{to_writer, Result};
+use settings::{Color, Field, Gradient, SettingsDescription, Value};
+use std::borrow::Cow;
+use std::io::Write;
+use time::formatter::{Accuracy, Regular, TimeFormatter};
 
 /// The Sum of Best Segments Component shows the fastest possible time to
 /// complete a run of this category, based on information collected from all the

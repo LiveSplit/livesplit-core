@@ -3,8 +3,8 @@
 //! achieved by the runner, while the others are artifacts of route changes and
 //! similar algorithmic changes.
 
-use livesplit_core::Time;
 use super::{acc, output_time};
+use livesplit_core::Time;
 
 /// type
 pub type SegmentHistoryElement = (i32, Time);

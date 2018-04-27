@@ -2,11 +2,11 @@
 //! category that is being run. Additionally, the game icon, the attempt count,
 //! and the total number of successfully finished runs can be shown.
 
-use livesplit_core::component::title::Component as TitleComponent;
-use livesplit_core::Timer;
 use super::{acc, acc_mut, alloc, output_vec, own, own_drop, Json};
-use title_component_state::OwnedTitleComponentState;
 use component::OwnedComponent;
+use livesplit_core::Timer;
+use livesplit_core::component::title::Component as TitleComponent;
+use title_component_state::OwnedTitleComponentState;
 
 /// type
 pub type OwnedTitleComponent = *mut TitleComponent;

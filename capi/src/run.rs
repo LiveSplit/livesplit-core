@@ -1,15 +1,15 @@
 //! A Run stores the split times for a specific game and category of a runner.
 
-use livesplit_core::{Attempt, Run, RunMetadata, Segment, TimeSpan};
-use livesplit_core::run::{parser, saver};
 use super::{acc, acc_mut, alloc, output_str, output_time_span, output_vec, own, own_drop, str};
-use std::io::{BufReader, Cursor};
-use std::slice;
-use std::path::PathBuf;
-use std::fs::File;
-use std::os::raw::c_char;
-use segment::OwnedSegment;
+use livesplit_core::run::{parser, saver};
+use livesplit_core::{Attempt, Run, RunMetadata, Segment, TimeSpan};
 use parse_run_result::OwnedParseRunResult;
+use segment::OwnedSegment;
+use std::fs::File;
+use std::io::{BufReader, Cursor};
+use std::os::raw::c_char;
+use std::path::PathBuf;
+use std::slice;
 
 /// type
 pub type OwnedRun = *mut Run;

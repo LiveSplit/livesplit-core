@@ -1,7 +1,7 @@
 //! The general settings of the layout that apply to all components.
 
-use livesplit_core::GeneralLayoutSettings;
 use super::{alloc, own_drop};
+use livesplit_core::GeneralLayoutSettings;
 
 /// type
 pub type OwnedGeneralLayoutSettings = *mut GeneralLayoutSettings;

@@ -4,9 +4,9 @@
 
 use Timer;
 use serde_json::{to_writer, Result};
-use std::io::Write;
-use std::borrow::Cow;
 use settings::{SettingsDescription, Value};
+use std::borrow::Cow;
+use std::io::Write;
 
 /// The Separator Component is a simple component that only serves to render
 /// separators between components.

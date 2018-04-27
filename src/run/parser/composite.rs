@@ -30,13 +30,13 @@
 //! let run = parsed.run;
 //! ```
 
-use std::path::PathBuf;
-use std::io::{self, BufRead, Seek, SeekFrom};
-use std::result::Result as StdResult;
-use Run;
 use super::{face_split, livesplit, llanfair, llanfair_gered, shit_split, source_live_timer,
             splitterz, splitty, time_split_tracker, urn, worstrun, wsplit, TimerKind, llanfair2,
             portal2_live_timer};
+use Run;
+use std::io::{self, BufRead, Seek, SeekFrom};
+use std::path::PathBuf;
+use std::result::Result as StdResult;
 
 quick_error! {
     /// The Error type for splits files that couldn't be parsed by the Composite

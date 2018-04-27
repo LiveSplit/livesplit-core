@@ -4,11 +4,12 @@
 //! current state of the editor as state objects that can be visualized by any
 //! kind of User Interface.
 
-use std::num::ParseIntError;
-use std::mem::swap;
-use {comparison, unicase, Image, Run, Segment, Time, TimeSpan, TimingMethod};
 use super::run::{ComparisonError, ComparisonResult};
+use odds::slice::rotate_left;
+use std::mem::swap;
+use std::num::ParseIntError;
 use time::ParseError as ParseTimeSpanError;
+use {comparison, unicase, Image, Run, Segment, Time, TimeSpan, TimingMethod};
 
 pub mod cleaning;
 mod segment_row;
@@ -16,9 +17,9 @@ mod state;
 #[cfg(test)]
 mod tests;
 
+pub use self::cleaning::SumOfBestCleaner;
 pub use self::segment_row::SegmentRow;
 pub use self::state::{Buttons as ButtonsState, Segment as SegmentState, State};
-pub use self::cleaning::SumOfBestCleaner;
 
 quick_error! {
     /// Describes an Error that occurred while parsing a time.
@@ -669,7 +670,8 @@ impl Editor {
         self.run.validate_comparison_name(new)?;
 
         {
-            let comparison_name = self.run.custom_comparisons_mut()
+            let comparison_name = self.run
+                .custom_comparisons_mut()
                 .iter_mut()
                 .find(|c| *c == old)
                 .ok_or(RenameError::OldNameNotFound)?;
@@ -685,6 +687,32 @@ impl Editor {
         }
 
         self.fix();
+
+        Ok(())
+    }
+
+    /// Reorders the custom comparisons by moving the comparison with the
+    /// `src_index` specified to the `dst_index` specified. Returns `Err(())` if
+    /// one of the indices is invalid. The indices are based on the
+    /// `comparison_names` field of the Run Editor's `State`.
+    pub fn move_comparison(&mut self, src_index: usize, dst_index: usize) -> Result<(), ()> {
+        let comparisons = self.run.custom_comparisons_mut();
+        let (src_index, dst_index) = (src_index + 1, dst_index + 1);
+        if src_index >= comparisons.len() || dst_index >= comparisons.len() {
+            return Err(());
+        }
+        if src_index == dst_index {
+            return Ok(());
+        }
+
+        if src_index > dst_index {
+            rotate_left(
+                &mut comparisons[dst_index..src_index + 1],
+                src_index - dst_index,
+            );
+        } else {
+            rotate_left(&mut comparisons[src_index..dst_index + 1], 1);
+        }
 
         Ok(())
     }

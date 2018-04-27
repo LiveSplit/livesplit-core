@@ -3,12 +3,12 @@
 //! are being applied to the Run. It provides the current state of the editor as
 //! state objects that can be visualized by any kind of User Interface.
 
-use livesplit_core::{Run, RunEditor, TimingMethod};
 use super::{acc, acc_mut, alloc, output_vec, own, str, Json};
+use livesplit_core::{Run, RunEditor, TimingMethod};
 use run::OwnedRun;
-use sum_of_best_cleaner::OwnedSumOfBestCleaner;
 use std::os::raw::c_char;
 use std::{ptr, slice};
+use sum_of_best_cleaner::OwnedSumOfBestCleaner;
 
 /// type
 pub type OwnedRunEditor = *mut RunEditor;
@@ -300,6 +300,19 @@ pub unsafe extern "C" fn RunEditor_rename_comparison(
     acc_mut(this)
         .rename_comparison(str(old_name), str(new_name))
         .is_ok()
+}
+
+/// Reorders the custom comparisons by moving the comparison with the source
+/// index specified to the destination index specified. Returns <FALSE> if one
+/// of the indices is invalid. The indices are based on the comparison names of
+/// the Run Editor's state.
+#[no_mangle]
+pub unsafe extern "C" fn RunEditor_move_comparison(
+    this: *mut RunEditor,
+    src_index: usize,
+    dst_index: usize,
+) -> bool {
+    acc_mut(this).move_comparison(src_index, dst_index).is_ok()
 }
 
 /// Clears out the Attempt History and the Segment Histories of all the

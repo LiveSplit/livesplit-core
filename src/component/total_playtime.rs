@@ -2,14 +2,14 @@
 //! Total Playtime is a component that shows the total amount of time that the
 //! current category has been played for.
 
-use Timer;
-use serde_json::{to_writer, Result};
-use std::io::Write;
-use analysis::total_playtime;
-use time::formatter::{Days, Regular, TimeFormatter};
-use std::borrow::Cow;
-use settings::{Color, Field, Gradient, SettingsDescription, Value};
 use super::DEFAULT_INFO_TEXT_GRADIENT;
+use Timer;
+use analysis::total_playtime;
+use serde_json::{to_writer, Result};
+use settings::{Color, Field, Gradient, SettingsDescription, Value};
+use std::borrow::Cow;
+use std::io::Write;
+use time::formatter::{Days, Regular, TimeFormatter};
 
 /// The Total Playtime Component is a component that shows the total amount of
 /// time that the current category has been played for.

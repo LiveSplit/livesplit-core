@@ -5,9 +5,9 @@
 //! Interface.
 
 use super::{Component, Layout, LayoutState};
+use Timer;
 use settings::Value;
 use std::result::Result as StdResult;
-use Timer;
 
 mod state;
 

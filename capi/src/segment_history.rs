@@ -3,8 +3,8 @@
 //! considered times actually achieved by the runner, while the others are
 //! artifacts of route changes and similar algorithmic changes.
 
-use livesplit_core::SegmentHistory;
 use super::{acc, alloc};
+use livesplit_core::SegmentHistory;
 use segment_history_iter::OwnedSegmentHistoryIter;
 
 /// type

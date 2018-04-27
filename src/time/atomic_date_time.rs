@@ -1,6 +1,6 @@
-use std::ops::Sub;
-use chrono::{DateTime, Utc};
 use TimeSpan;
+use chrono::{DateTime, Utc};
+use std::ops::Sub;
 
 /// An Atomic Date Time represents a UTC Date Time that tries to be as close to
 /// an atomic clock as possible.

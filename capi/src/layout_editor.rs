@@ -3,10 +3,10 @@
 //! operations are being applied. It provides the current state of the editor as
 //! state objects that can be visualized by any kind of User Interface.
 
-use livesplit_core::{LayoutEditor, Timer};
-use layout::OwnedLayout;
 use super::{acc, acc_mut, alloc, output_vec, own, Json};
 use component::OwnedComponent;
+use layout::OwnedLayout;
+use livesplit_core::{LayoutEditor, Timer};
 use setting_value::OwnedSettingValue;
 use std::ptr;
 

@@ -2,10 +2,10 @@
 //! by a specific runner in the past. Every time a new attempt is started and
 //! then reset, an Attempt describing general information about it is created.
 
-use livesplit_core::{Attempt, Time};
 use super::{acc, alloc, output_time, output_time_span};
-use std::ptr;
 use atomic_date_time::NullableOwnedAtomicDateTime;
+use livesplit_core::{Attempt, Time};
+use std::ptr;
 use time_span::NullableTimeSpan;
 
 /// type

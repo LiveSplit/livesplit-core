@@ -1,9 +1,9 @@
-use std::io::{BufWriter, Result, Write};
-use {Class, Function, Type, TypeKind};
 use heck::MixedCase;
 use std::collections::BTreeMap;
-use std::path::Path;
 use std::fs::File;
+use std::io::{BufWriter, Result, Write};
+use std::path::Path;
+use {Class, Function, Type, TypeKind};
 
 fn get_hl_type(ty: &Type) -> String {
     if ty.is_custom {

@@ -21,28 +21,28 @@
 //! ```
 
 mod accuracy;
-mod digits_format;
 mod complete;
 mod days;
 mod delta;
+mod digits_format;
+pub mod none_wrapper;
 mod possible_time_save;
 mod regular;
 mod short;
-pub mod none_wrapper;
 pub mod timer;
 
 pub use self::accuracy::Accuracy;
-pub use self::digits_format::DigitsFormat;
 pub use self::complete::Complete;
 pub use self::days::Days;
 pub use self::delta::Delta;
+pub use self::digits_format::DigitsFormat;
 pub use self::possible_time_save::PossibleTimeSave;
 pub use self::regular::Regular;
 pub use self::short::Short;
 
-use std::fmt::Display;
 use TimeSpan;
 use std::cmp::min;
+use std::fmt::Display;
 
 /// Time Formatters can be used to format optional Time Spans in various ways.
 pub trait TimeFormatter<'a> {

@@ -4,11 +4,11 @@
 //! displayed. This component switches to a `Live Segment` view that shows
 //! active time loss whenever the runner is losing time on the current segment.
 
+use super::{acc, alloc, output_vec, own, own_drop, Json};
+use component::OwnedComponent;
 use livesplit_core::component::previous_segment::Component as PreviousSegmentComponent;
 use livesplit_core::{GeneralLayoutSettings, Timer};
-use super::{acc, alloc, output_vec, own, own_drop, Json};
 use previous_segment_component_state::OwnedPreviousSegmentComponentState;
-use component::OwnedComponent;
 
 /// type
 pub type OwnedPreviousSegmentComponent = *mut PreviousSegmentComponent;

@@ -1,9 +1,9 @@
 //! Iterates over all the segment times of a segment and their indices.
 
-use livesplit_core::Time;
 use super::{acc_mut, own_drop, SEGMENT_HISTORY_ELEMENT};
-use std::{ptr, slice};
+use livesplit_core::Time;
 use segment_history_element::{NullableSegmentHistoryElement, SegmentHistoryElement};
+use std::{ptr, slice};
 
 /// type
 pub type SegmentHistoryIter = slice::Iter<'static, (i32, Time)>;

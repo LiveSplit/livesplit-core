@@ -1,11 +1,11 @@
 //! The Delta Component is a component that shows the how far ahead or behind
 //! the current attempt is compared to the chosen comparison.
 
+use super::{acc, acc_mut, alloc, output_vec, own, own_drop, Json};
+use component::OwnedComponent;
+use delta_component_state::OwnedDeltaComponentState;
 use livesplit_core::component::delta::Component as DeltaComponent;
 use livesplit_core::{GeneralLayoutSettings, Timer};
-use super::{acc, acc_mut, alloc, output_vec, own, own_drop, Json};
-use delta_component_state::OwnedDeltaComponentState;
-use component::OwnedComponent;
 
 /// type
 pub type OwnedDeltaComponent = *mut DeltaComponent;

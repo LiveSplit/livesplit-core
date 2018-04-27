@@ -1,10 +1,10 @@
 //! Provides the parser for Llanfair splits files.
 
+use byteorder::{ReadBytesExt, BE};
+use imagelib::{png, ColorType, ImageBuffer, Rgba};
 use std::io::{self, Read, Seek, SeekFrom};
 use std::result::Result as StdResult;
 use std::str::{Utf8Error, from_utf8};
-use byteorder::{ReadBytesExt, BE};
-use imagelib::{png, ColorType, ImageBuffer, Rgba};
 use {Image, RealTime, Run, Segment, Time, TimeSpan};
 
 quick_error! {

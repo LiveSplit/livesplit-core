@@ -1,12 +1,12 @@
 //! Provides the parser for Time Split Tracker splits files.
 
-use std::io::{self, BufRead, BufReader};
-use std::fs::File;
-use std::path::PathBuf;
-use std::result::Result as StdResult;
-use std::num::ParseIntError;
 use super::super::ComparisonError;
 use chrono::{TimeZone, Utc};
+use std::fs::File;
+use std::io::{self, BufRead, BufReader};
+use std::num::ParseIntError;
+use std::path::PathBuf;
+use std::result::Result as StdResult;
 use {time, AtomicDateTime, Image, RealTime, Run, Segment, Time, TimeSpan};
 
 quick_error! {

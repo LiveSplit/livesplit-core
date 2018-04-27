@@ -1,7 +1,7 @@
-use TimingMethod;
 use super::{Alignment, Color, Gradient};
-use time::formatter::{Accuracy, DigitsFormat};
+use TimingMethod;
 use std::result::Result as StdResult;
+use time::formatter::{Accuracy, DigitsFormat};
 
 /// Describes a setting's value. Such a value can be of a variety of different
 /// types.

@@ -5,15 +5,15 @@
 //! list provides scrolling functionality, so not every segment needs to be
 //! shown all the time.
 
+use analysis::split_color;
+use serde_json::{to_writer, Result};
+use settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
+use std::borrow::Cow;
 use std::cmp::{max, min};
 use std::io::Write;
-use serde_json::{to_writer, Result};
-use {analysis, GeneralLayoutSettings, Timer};
-use analysis::split_color;
-use time::formatter::{Delta, Regular, TimeFormatter};
 use time::formatter::none_wrapper::{DashWrapper, EmptyWrapper};
-use std::borrow::Cow;
-use settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
+use time::formatter::{Delta, Regular, TimeFormatter};
+use {analysis, GeneralLayoutSettings, Timer};
 
 /// The Splits Component is the main component for visualizing all the split
 /// times. Each segment is shown in a tabular fashion showing the segment icon,

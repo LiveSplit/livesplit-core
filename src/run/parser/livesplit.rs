@@ -1,15 +1,15 @@
 //! Provides the parser for LiveSplit splits files.
 
-use std::io::BufRead;
-use std::path::PathBuf;
-use {AtomicDateTime, Run, RunMetadata, Segment, Time, TimeSpan, base64};
 use super::super::run::ComparisonError;
-use quick_xml::Reader;
-use chrono::{DateTime, TimeZone, Utc};
-use std::str;
 use super::xml_util::{attribute, attribute_err, end_tag, optional_attribute_err, parse_attributes,
                       parse_base, parse_children, reencode_children, text, text_as_bytes_err,
                       text_err, text_parsed};
+use chrono::{DateTime, TimeZone, Utc};
+use quick_xml::Reader;
+use std::io::BufRead;
+use std::path::PathBuf;
+use std::str;
+use {AtomicDateTime, Run, RunMetadata, Segment, Time, TimeSpan, base64};
 
 pub use super::xml_util::{Error, Result};
 

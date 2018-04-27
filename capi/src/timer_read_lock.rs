@@ -1,8 +1,8 @@
 //! A Timer Read Lock allows temporary read access to a timer. Dispose this to
 //! release the read lock.
 
-use livesplit_core::Timer;
 use super::{acc, own_drop};
+use livesplit_core::Timer;
 use livesplit_core::parking_lot::RwLockReadGuard;
 use std::ops::Deref;
 

@@ -4,9 +4,7 @@ extern crate winapi;
 mod key_code;
 pub use self::key_code::KeyCode;
 
-use std::cell::RefCell;
-use std::{mem, ptr, thread};
-use std::sync::mpsc::{channel, Sender};
+use self::parking_lot::Mutex;
 use self::winapi::ctypes::c_int;
 use self::winapi::shared::minwindef::{DWORD, LPARAM, LRESULT, UINT, WPARAM};
 use self::winapi::shared::windef::HHOOK;
@@ -15,9 +13,11 @@ use self::winapi::um::processthreadsapi::GetCurrentThreadId;
 use self::winapi::um::winuser::{CallNextHookEx, GetMessageW, PostThreadMessageW,
                                 SetWindowsHookExW, UnhookWindowsHookEx};
 use self::winapi::um::winuser::{KBDLLHOOKSTRUCT, WH_KEYBOARD_LL, WM_KEYDOWN};
-use std::sync::Arc;
+use std::cell::RefCell;
 use std::collections::hash_map::{Entry, HashMap};
-use self::parking_lot::Mutex;
+use std::sync::Arc;
+use std::sync::mpsc::{channel, Sender};
+use std::{mem, ptr, thread};
 
 const MSG_EXIT: UINT = 0x400;
 
@@ -78,10 +78,9 @@ unsafe extern "system" fn callback_proc(code: c_int, wparam: WPARAM, lparam: LPA
 
 impl Hook {
     pub fn new() -> Result<Self> {
-        let hotkeys = Arc::new(Mutex::new(HashMap::<
-            KeyCode,
-            Box<FnMut() + Send + 'static>,
-        >::new()));
+        let hotkeys = Arc::new(Mutex::new(
+            HashMap::<KeyCode, Box<FnMut() + Send + 'static>>::new(),
+        ));
 
         let (initialized_tx, initialized_rx) = channel();
         let (events_tx, events_rx) = channel();

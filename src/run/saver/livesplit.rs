@@ -24,17 +24,17 @@
 //! livesplit::save_run(&run, writer).expect("Couldn't save the splits file");
 //! ```
 
-use std::io::Write;
-use std::result::Result as StdResult;
-use std::fmt::Display;
-use std::borrow::Cow;
-use std::mem::replace;
-use {Image, Run, Time, TimeSpan, Timer, TimerPhase, base64};
-use time::formatter::{Complete, TimeFormatter};
-use chrono::{DateTime, Utc};
 use byteorder::{WriteBytesExt, LE};
-use quick_xml::{Error as XmlError, Writer};
+use chrono::{DateTime, Utc};
 use quick_xml::events::{BytesDecl, BytesEnd, BytesStart, BytesText, Event};
+use quick_xml::{Error as XmlError, Writer};
+use std::borrow::Cow;
+use std::fmt::Display;
+use std::io::Write;
+use std::mem::replace;
+use std::result::Result as StdResult;
+use time::formatter::{Complete, TimeFormatter};
+use {Image, Run, Time, TimeSpan, Timer, TimerPhase, base64};
 
 static LSS_IMAGE_HEADER: &[u8; 156] = include_bytes!("lss_image_header.bin");
 

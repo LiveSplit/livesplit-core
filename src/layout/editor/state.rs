@@ -1,7 +1,7 @@
-use serde_json::{to_writer, Result as JsonResult};
-use std::io::Write;
 use super::Editor;
+use serde_json::{to_writer, Result as JsonResult};
 use settings::SettingsDescription;
+use std::io::Write;
 
 /// Represents the current state of the Layout Editor in order to visualize it
 /// properly.

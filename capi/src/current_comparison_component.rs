@@ -1,11 +1,11 @@
 //! The Current Comparison Component is a component that shows the name of the
 //! comparison that is currently selected to be compared against.
 
-use livesplit_core::component::current_comparison::Component as CurrentComparisonComponent;
-use livesplit_core::Timer;
 use super::{acc, acc_mut, alloc, output_vec, own, own_drop, Json};
-use current_comparison_component_state::OwnedCurrentComparisonComponentState;
 use component::OwnedComponent;
+use current_comparison_component_state::OwnedCurrentComparisonComponentState;
+use livesplit_core::Timer;
+use livesplit_core::component::current_comparison::Component as CurrentComparisonComponent;
 
 /// type
 pub type OwnedCurrentComparisonComponent = *mut CurrentComparisonComponent;

@@ -5,9 +5,9 @@ extern crate test;
 
 use test::Bencher;
 
+use livesplit_core::run::parser::livesplit;
 use std::fs::File;
 use std::io::{BufReader, Cursor, Read};
-use livesplit_core::run::parser::livesplit;
 
 #[bench]
 fn huge_game_icon(b: &mut Bencher) {

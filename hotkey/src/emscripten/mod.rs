@@ -3,12 +3,12 @@ extern crate parking_lot;
 mod key_code;
 pub use self::key_code::KeyCode;
 
-use stdweb::web::{window, EventListenerHandle, IEventTarget};
-use stdweb::web::event::{IKeyboardEvent, KeypressEvent};
-use stdweb;
-use std::sync::Arc;
-use std::collections::hash_map::{Entry, HashMap};
 use self::parking_lot::Mutex;
+use std::collections::hash_map::{Entry, HashMap};
+use std::sync::Arc;
+use stdweb;
+use stdweb::web::event::{IKeyboardEvent, KeypressEvent};
+use stdweb::web::{window, EventListenerHandle, IEventTarget};
 
 quick_error! {
     #[derive(Debug)]
@@ -172,10 +172,9 @@ impl Hook {
             });
         }
 
-        let hotkeys = Arc::new(Mutex::new(HashMap::<
-            KeyCode,
-            Box<FnMut() + Send + 'static>,
-        >::new()));
+        let hotkeys = Arc::new(Mutex::new(
+            HashMap::<KeyCode, Box<FnMut() + Send + 'static>>::new(),
+        ));
 
         let hotkey_map = hotkeys.clone();
 

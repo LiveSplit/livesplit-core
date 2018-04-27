@@ -1,5 +1,5 @@
-use std::ops::Sub;
 use ordered_float::OrderedFloat;
+use std::ops::Sub;
 
 extern "C" {
     fn Instant_now() -> f64;

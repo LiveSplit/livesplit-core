@@ -5,10 +5,10 @@
 //! Cleaner will point out all of occurrences of this and allows you to delete
 //! them individually if any of them seem wrong.
 
-use livesplit_core::run::editor::cleaning::SumOfBestCleaner;
 use super::{acc_mut, alloc, own, own_drop};
-use std::ptr;
+use livesplit_core::run::editor::cleaning::SumOfBestCleaner;
 use potential_clean_up::{NullableOwnedPotentialCleanUp, OwnedPotentialCleanUp};
+use std::ptr;
 
 /// type
 pub type OwnedSumOfBestCleaner = *mut SumOfBestCleaner<'static>;

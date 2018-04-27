@@ -2,12 +2,12 @@
 //! The Current Comparison Component is a component that shows the name of the
 //! comparison that is currently selected to be compared against.
 
+use super::DEFAULT_INFO_TEXT_GRADIENT;
 use Timer;
 use serde_json::{to_writer, Result};
-use std::io::Write;
-use std::borrow::Cow;
 use settings::{Color, Field, Gradient, SettingsDescription, Value};
-use super::DEFAULT_INFO_TEXT_GRADIENT;
+use std::borrow::Cow;
+use std::io::Write;
 
 /// The Current Comparison Component is a component that shows the name of the
 /// comparison that is currently selected to be compared against.

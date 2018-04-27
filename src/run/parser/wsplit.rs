@@ -1,8 +1,8 @@
 //! Provides the parser for WSplit splits files.
 
 use std::io::{self, BufRead};
-use std::result::Result as StdResult;
 use std::num::{ParseFloatError, ParseIntError};
+use std::result::Result as StdResult;
 use {Image, RealTime, Run, Segment, TimeSpan};
 
 quick_error! {

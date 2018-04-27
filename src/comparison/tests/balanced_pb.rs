@@ -1,6 +1,6 @@
-use {Run, Segment, TimeSpan, Timer};
 use comparison::balanced_pb::{BalancedPB, NAME};
 use time::formatter::{Short, TimeFormatter};
+use {Run, Segment, TimeSpan, Timer};
 
 fn run_with_splits(timer: &mut Timer, splits: &[f64]) {
     timer.start();

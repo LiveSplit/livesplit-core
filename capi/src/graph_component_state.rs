@@ -1,8 +1,8 @@
 //! The state object describes the information to visualize for this component.
 //! All the coordinates are in the range 0..1.
 
-use livesplit_core::component::graph::State as GraphComponentState;
 use super::{acc, own_drop};
+use livesplit_core::component::graph::State as GraphComponentState;
 
 /// type
 pub type OwnedGraphComponentState = *mut GraphComponentState;

@@ -1,9 +1,9 @@
 use super::{Editor, SegmentRow, TimingMethod};
 use comparison::personal_best;
-use time::formatter::{Accuracy, Short, TimeFormatter};
-use time::formatter::none_wrapper::EmptyWrapper;
 use serde_json::{to_writer, Result as JsonResult};
 use std::io::Write;
+use time::formatter::none_wrapper::EmptyWrapper;
+use time::formatter::{Accuracy, Short, TimeFormatter};
 
 /// Represents the current state of the Run Editor in order to visualize it
 /// properly.
