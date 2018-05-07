@@ -12,22 +12,31 @@ main() {
 
     case $TARGET in
         aarch64-apple-ios)
-            rustup target install aarch64-apple-ios
+            rustup target install $TARGET
             ;;
         armv7-apple-ios)
-            rustup target install armv7-apple-ios
+            rustup target install $TARGET
             ;;
         armv7s-apple-ios)
-            rustup target install armv7s-apple-ios
+            rustup target install $TARGET
             ;;
         i386-apple-ios)
-            rustup target install i386-apple-ios
+            rustup target install $TARGET
             ;;
         x86_64-apple-ios)
-            rustup target install x86_64-apple-ios
+            rustup target install $TARGET
             ;;
         wasm32-unknown-unknown)
-            rustup target install wasm32-unknown-unknown
+            rustup target install $TARGET
+            ;;
+        x86_64-unknown-linux-gnux32)
+            rustup target install $TARGET
+            ;;
+        i586-unknown-linux-musl)
+            rustup target install $TARGET
+            ;;
+        armv5te-unknown-linux-gnueabi)
+            rustup target install $TARGET
             ;;
     esac
 

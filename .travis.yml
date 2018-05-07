@@ -23,6 +23,11 @@ matrix:
     # - env: TARGET=thumbv7m-none-eab
     # - env: TARGET=thumbv7em-none-eabihf
 
+    # Failing due to x32 compile errors
+    # time: Blocked on waiting for 0.1.40 release: https://crates.io/crates/time
+    # parking_lot: Blocked on merge: https://github.com/Amanieu/parking_lot/pull/73
+    # - env: TARGET=x86_64-unknown-linux-gnux32
+
     # Web
     - env: TARGET=asmjs-unknown-emscripten
       rust: nightly
@@ -72,6 +77,8 @@ matrix:
     # https://travis-ci.org/LiveSplit/livesplit-core/jobs/278851206
     # - env: TARGET=arm-unknown-linux-musleabi DISABLE_TESTS=1
     # - env: TARGET=armv7-unknown-linux-musleabihf DISABLE_TESTS=1
+    # - env: TARGET=i586-unknown-linux-musl
+    # - env: TARGET=armv5te-unknown-linux-gnueabi
 
     # *BSD
     - env: TARGET=i686-unknown-freebsd DISABLE_TESTS=1
@@ -86,8 +93,11 @@ matrix:
     - env: TARGET=mipsel-unknown-linux-gnu
     - env: TARGET=powerpc-unknown-linux-gnu DISABLE_TESTS=1
     - env: TARGET=powerpc64-unknown-linux-gnu
-    - env: TARGET=powerpc64le-unknown-linux-gnu
     - env: TARGET=s390x-unknown-linux-gnu DISABLE_TESTS=1
+
+    # Failing due to LLVM 6
+    # https://github.com/LiveSplit/livesplit-core/issues/124
+    # - env: TARGET=powerpc64le-unknown-linux-gnu
 
     # Testing other channels
     - env: TARGET=x86_64-unknown-linux-gnu
