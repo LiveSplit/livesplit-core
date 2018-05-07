@@ -520,7 +520,7 @@ impl Timer {
     }
 
     /// Sets the Game Time to the time specified. This also works if the Game
-    /// Time is paused, which can be used as away of updating the Game Timer
+    /// Time is paused, which can be used as a way of updating the Game Timer
     /// periodically without it automatically moving forward. This ensures that
     /// the Game Timer never shows any time that is not coming from the game.
     #[inline]
