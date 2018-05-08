@@ -1,8 +1,8 @@
 extern crate livesplit_core;
 
 mod run {
-    use livesplit_core::Run;
     use livesplit_core::run::ComparisonError;
+    use livesplit_core::Run;
 
     #[test]
     fn add_comparison() {

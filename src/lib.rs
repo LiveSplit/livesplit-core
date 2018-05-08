@@ -83,9 +83,12 @@ pub mod time;
 pub use self::hotkey_config::HotkeyConfig;
 pub use self::hotkey_system::HotkeySystem;
 pub use self::image::Image;
-pub use self::layout::{Component, Editor as LayoutEditor,
-                       GeneralSettings as GeneralLayoutSettings, Layout};
+pub use self::layout::{
+    Component, Editor as LayoutEditor, GeneralSettings as GeneralLayoutSettings, Layout,
+};
 pub use self::run::{Attempt, Editor as RunEditor, Run, RunMetadata, Segment, SegmentHistory};
-pub use self::time::{AtomicDateTime, GameTime, RealTime, SharedTimer, Time, TimeSpan, TimeStamp,
-                     Timer, TimerPhase, TimingMethod};
+pub use self::time::{
+    AtomicDateTime, GameTime, RealTime, SharedTimer, Time, TimeSpan, TimeStamp, Timer, TimerPhase,
+    TimingMethod,
+};
 pub use chrono::{DateTime, Utc};

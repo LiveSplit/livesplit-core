@@ -4,58 +4,55 @@
 //! displayed. This component switches to a `Live Segment` view that shows
 //! active time loss whenever the runner is losing time on the current segment.
 
-use super::{acc, alloc, output_vec, own, own_drop, Json};
+use super::{output_vec, Json};
 use component::OwnedComponent;
 use livesplit_core::component::previous_segment::Component as PreviousSegmentComponent;
 use livesplit_core::{GeneralLayoutSettings, Timer};
 use previous_segment_component_state::OwnedPreviousSegmentComponentState;
 
 /// type
-pub type OwnedPreviousSegmentComponent = *mut PreviousSegmentComponent;
+pub type OwnedPreviousSegmentComponent = Box<PreviousSegmentComponent>;
 
 /// Creates a new Previous Segment Component.
 #[no_mangle]
-pub unsafe extern "C" fn PreviousSegmentComponent_new() -> OwnedPreviousSegmentComponent {
-    alloc(PreviousSegmentComponent::new())
+pub extern "C" fn PreviousSegmentComponent_new() -> OwnedPreviousSegmentComponent {
+    Box::new(PreviousSegmentComponent::new())
 }
 
 /// drop
 #[no_mangle]
-pub unsafe extern "C" fn PreviousSegmentComponent_drop(this: OwnedPreviousSegmentComponent) {
-    own_drop(this);
+pub extern "C" fn PreviousSegmentComponent_drop(this: OwnedPreviousSegmentComponent) {
+    drop(this);
 }
 
 /// Converts the component into a generic component suitable for using with a
 /// layout.
 #[no_mangle]
-pub unsafe extern "C" fn PreviousSegmentComponent_into_generic(
+pub extern "C" fn PreviousSegmentComponent_into_generic(
     this: OwnedPreviousSegmentComponent,
 ) -> OwnedComponent {
-    alloc(own(this).into())
+    Box::new((*this).into())
 }
 
 /// Encodes the component's state information as JSON.
 #[no_mangle]
-pub unsafe extern "C" fn PreviousSegmentComponent_state_as_json(
-    this: *const PreviousSegmentComponent,
-    timer: *const Timer,
-    layout_settings: *const GeneralLayoutSettings,
+pub extern "C" fn PreviousSegmentComponent_state_as_json(
+    this: &PreviousSegmentComponent,
+    timer: &Timer,
+    layout_settings: &GeneralLayoutSettings,
 ) -> Json {
     output_vec(|o| {
-        acc(this)
-            .state(acc(timer), acc(layout_settings))
-            .write_json(o)
-            .unwrap();
+        this.state(timer, layout_settings).write_json(o).unwrap();
     })
 }
 
 /// Calculates the component's state based on the timer and the layout
 /// settings provided.
 #[no_mangle]
-pub unsafe extern "C" fn PreviousSegmentComponent_state(
-    this: *const PreviousSegmentComponent,
-    timer: *const Timer,
-    layout_settings: *const GeneralLayoutSettings,
+pub extern "C" fn PreviousSegmentComponent_state(
+    this: &PreviousSegmentComponent,
+    timer: &Timer,
+    layout_settings: &GeneralLayoutSettings,
 ) -> OwnedPreviousSegmentComponentState {
-    alloc(acc(this).state(acc(timer), acc(layout_settings)))
+    Box::new(this.state(timer, layout_settings))
 }

@@ -1,6 +1,6 @@
 use super::{TimeFormatter, MINUS};
-use TimeSpan;
 use std::fmt::{Display, Formatter, Result};
+use TimeSpan;
 
 pub struct Inner {
     time: Option<TimeSpan>,

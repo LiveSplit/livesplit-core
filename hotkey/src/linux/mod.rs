@@ -8,8 +8,9 @@ pub use self::key_code::KeyCode;
 use self::mio::unix::EventedFd;
 use self::mio::{Events, Poll, PollOpt, Ready, Registration, SetReadiness, Token};
 use self::promising_future::{future_promise, Promise};
-use self::x11_dl::xlib::{Display, GrabModeAsync, KeyPress, KeyPressMask, Mod2Mask, XErrorEvent,
-                         XKeyEvent, Xlib};
+use self::x11_dl::xlib::{
+    Display, GrabModeAsync, KeyPress, KeyPressMask, Mod2Mask, XErrorEvent, XKeyEvent, Xlib,
+};
 use std::collections::hash_map::{Entry, HashMap};
 use std::os::raw::{c_int, c_uint, c_ulong};
 use std::sync::mpsc::{channel, Sender};

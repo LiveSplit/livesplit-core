@@ -1,7 +1,8 @@
 //! Provides the parser for splits files used by the Llanfair Rewrite.
 
-use super::xml_util::{end_tag, parse_base, parse_children, single_child, text, text_err,
-                      text_parsed};
+use super::xml_util::{
+    end_tag, parse_base, parse_children, single_child, text, text_err, text_parsed,
+};
 use byteorder::{ByteOrder, BE};
 use imagelib::{png, ColorType, ImageBuffer, Rgba};
 use quick_xml::Reader;

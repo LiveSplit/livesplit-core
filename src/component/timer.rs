@@ -4,8 +4,8 @@
 //! current attempt is doing compared to the chosen comparison.
 
 use analysis::split_color;
-use palette::Hsv;
 use palette::rgb::Rgb;
+use palette::Hsv;
 use serde_json::{to_writer, Result};
 use settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
 use std::borrow::Cow;

@@ -10,13 +10,14 @@ use self::winapi::shared::minwindef::{DWORD, LPARAM, LRESULT, UINT, WPARAM};
 use self::winapi::shared::windef::HHOOK;
 use self::winapi::um::libloaderapi::GetModuleHandleW;
 use self::winapi::um::processthreadsapi::GetCurrentThreadId;
-use self::winapi::um::winuser::{CallNextHookEx, GetMessageW, PostThreadMessageW,
-                                SetWindowsHookExW, UnhookWindowsHookEx};
+use self::winapi::um::winuser::{
+    CallNextHookEx, GetMessageW, PostThreadMessageW, SetWindowsHookExW, UnhookWindowsHookEx,
+};
 use self::winapi::um::winuser::{KBDLLHOOKSTRUCT, WH_KEYBOARD_LL, WM_KEYDOWN};
 use std::cell::RefCell;
 use std::collections::hash_map::{Entry, HashMap};
-use std::sync::Arc;
 use std::sync::mpsc::{channel, Sender};
+use std::sync::Arc;
 use std::{mem, ptr, thread};
 
 const MSG_EXIT: UINT = 0x400;

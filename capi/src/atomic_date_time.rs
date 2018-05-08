@@ -2,36 +2,36 @@
 //! an atomic clock as possible.
 
 use livesplit_core::AtomicDateTime;
+use output_str;
 use std::os::raw::c_char;
-use {acc, output_str, own_drop};
 
 /// type
-pub type OwnedAtomicDateTime = *mut AtomicDateTime;
+pub type OwnedAtomicDateTime = Box<AtomicDateTime>;
 /// type
-pub type NullableOwnedAtomicDateTime = OwnedAtomicDateTime;
+pub type NullableOwnedAtomicDateTime = Option<OwnedAtomicDateTime>;
 
 /// drop
 #[no_mangle]
-pub unsafe extern "C" fn AtomicDateTime_drop(this: OwnedAtomicDateTime) {
-    own_drop(this);
+pub extern "C" fn AtomicDateTime_drop(this: OwnedAtomicDateTime) {
+    drop(this);
 }
 
 /// Represents whether the date time is actually properly derived from an
 /// atomic clock. If the synchronization with the atomic clock didn't happen
 /// yet or failed, this is set to <FALSE>.
 #[no_mangle]
-pub unsafe extern "C" fn AtomicDateTime_is_synchronized(this: *const AtomicDateTime) -> bool {
-    acc(this).synced_with_atomic_clock
+pub extern "C" fn AtomicDateTime_is_synchronized(this: &AtomicDateTime) -> bool {
+    this.synced_with_atomic_clock
 }
 
 /// Converts this atomic date time into a RFC 2822 formatted date time.
 #[no_mangle]
-pub unsafe extern "C" fn AtomicDateTime_to_rfc2822(this: *const AtomicDateTime) -> *const c_char {
-    output_str(acc(this).time.to_rfc2822())
+pub extern "C" fn AtomicDateTime_to_rfc2822(this: &AtomicDateTime) -> *const c_char {
+    output_str(this.time.to_rfc2822())
 }
 
 /// Converts this atomic date time into a RFC 3339 formatted date time.
 #[no_mangle]
-pub unsafe extern "C" fn AtomicDateTime_to_rfc3339(this: *const AtomicDateTime) -> *const c_char {
-    output_str(acc(this).time.to_rfc3339())
+pub extern "C" fn AtomicDateTime_to_rfc3339(this: &AtomicDateTime) -> *const c_char {
+    output_str(this.time.to_rfc3339())
 }

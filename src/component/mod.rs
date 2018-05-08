@@ -19,8 +19,8 @@ pub mod timer;
 pub mod title;
 pub mod total_playtime;
 
-use palette::Alpha;
 use palette::rgb::Rgb;
+use palette::Alpha;
 use settings::{Color, Gradient};
 use std::marker::PhantomData;
 

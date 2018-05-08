@@ -3,8 +3,8 @@
 //! changing its behavior when formatting empty times.
 
 use super::{TimeFormatter, DASH};
-use TimeSpan;
 use std::fmt::{Display, Formatter, Result};
+use TimeSpan;
 
 /// A Time Span to be formatted by a None Wrapper.
 pub struct Inner<'a, F: 'a, S: 'a> {

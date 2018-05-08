@@ -1,7 +1,7 @@
 //! Provides the parser for Urn splits files.
 
-use serde_json::Error as JsonError;
 use serde_json::de::from_reader;
+use serde_json::Error as JsonError;
 use std::io::Read;
 use std::result::Result as StdResult;
 use {time, Run, Segment, Time, TimeSpan};

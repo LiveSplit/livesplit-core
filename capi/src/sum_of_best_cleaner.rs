@@ -5,36 +5,32 @@
 //! Cleaner will point out all of occurrences of this and allows you to delete
 //! them individually if any of them seem wrong.
 
-use super::{acc_mut, alloc, own, own_drop};
 use livesplit_core::run::editor::cleaning::SumOfBestCleaner;
 use potential_clean_up::{NullableOwnedPotentialCleanUp, OwnedPotentialCleanUp};
-use std::ptr;
 
 /// type
-pub type OwnedSumOfBestCleaner = *mut SumOfBestCleaner<'static>;
+pub type OwnedSumOfBestCleaner = Box<SumOfBestCleaner<'static>>;
 
 /// drop
 #[no_mangle]
-pub unsafe extern "C" fn SumOfBestCleaner_drop(this: OwnedSumOfBestCleaner) {
-    own_drop(this);
+pub extern "C" fn SumOfBestCleaner_drop(this: OwnedSumOfBestCleaner) {
+    drop(this);
 }
 
 /// Returns the next potential clean up. If there are no more potential
 /// clean ups, <NULL> is returned.
 #[no_mangle]
-pub unsafe extern "C" fn SumOfBestCleaner_next_potential_clean_up(
-    this: *mut SumOfBestCleaner<'static>,
+pub extern "C" fn SumOfBestCleaner_next_potential_clean_up(
+    this: &'static mut SumOfBestCleaner<'static>,
 ) -> NullableOwnedPotentialCleanUp {
-    acc_mut(this)
-        .next_potential_clean_up()
-        .map_or_else(ptr::null_mut, alloc)
+    this.next_potential_clean_up().map(Box::new)
 }
 
 /// Applies a clean up to the Run.
 #[no_mangle]
-pub unsafe extern "C" fn SumOfBestCleaner_apply(
-    this: *mut SumOfBestCleaner<'static>,
+pub extern "C" fn SumOfBestCleaner_apply(
+    this: &'static mut SumOfBestCleaner<'static>,
     clean_up: OwnedPotentialCleanUp,
 ) {
-    acc_mut(this).apply(own(clean_up).into());
+    this.apply((*clean_up).into());
 }

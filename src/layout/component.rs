@@ -1,10 +1,12 @@
 use super::{ComponentSettings, ComponentState, GeneralSettings};
-use Timer;
-use component::{blank_space, current_comparison, current_pace, delta, detailed_timer, graph,
-                possible_time_save, previous_segment, separator, splits, sum_of_best, text, timer,
-                title, total_playtime};
+use component::{
+    blank_space, current_comparison, current_pace, delta, detailed_timer, graph,
+    possible_time_save, previous_segment, separator, splits, sum_of_best, text, timer, title,
+    total_playtime,
+};
 use settings::{SettingsDescription, Value};
 use std::borrow::Cow;
+use Timer;
 
 /// A Component provides information about a run in a way that is easy to
 /// visualize. This type can store any of the components provided by this crate.

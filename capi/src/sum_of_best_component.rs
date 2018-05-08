@@ -6,52 +6,50 @@
 //! sum of their best segment times. The name is therefore a bit misleading, but
 //! sticks around for historical reasons.
 
-use super::{acc, alloc, output_vec, own, own_drop, Json};
+use super::{output_vec, Json};
 use component::OwnedComponent;
-use livesplit_core::Timer;
 use livesplit_core::component::sum_of_best::Component as SumOfBestComponent;
+use livesplit_core::Timer;
 use sum_of_best_component_state::OwnedSumOfBestComponentState;
 
 /// type
-pub type OwnedSumOfBestComponent = *mut SumOfBestComponent;
+pub type OwnedSumOfBestComponent = Box<SumOfBestComponent>;
 
 /// Creates a new Sum of Best Segments Component.
 #[no_mangle]
-pub unsafe extern "C" fn SumOfBestComponent_new() -> OwnedSumOfBestComponent {
-    alloc(SumOfBestComponent::new())
+pub extern "C" fn SumOfBestComponent_new() -> OwnedSumOfBestComponent {
+    Box::new(SumOfBestComponent::new())
 }
 
 /// drop
 #[no_mangle]
-pub unsafe extern "C" fn SumOfBestComponent_drop(this: OwnedSumOfBestComponent) {
-    own_drop(this);
+pub extern "C" fn SumOfBestComponent_drop(this: OwnedSumOfBestComponent) {
+    drop(this);
 }
 
 /// Converts the component into a generic component suitable for using with a
 /// layout.
 #[no_mangle]
-pub unsafe extern "C" fn SumOfBestComponent_into_generic(
-    this: OwnedSumOfBestComponent,
-) -> OwnedComponent {
-    alloc(own(this).into())
+pub extern "C" fn SumOfBestComponent_into_generic(this: OwnedSumOfBestComponent) -> OwnedComponent {
+    Box::new((*this).into())
 }
 
 /// Encodes the component's state information as JSON.
 #[no_mangle]
-pub unsafe extern "C" fn SumOfBestComponent_state_as_json(
-    this: *const SumOfBestComponent,
-    timer: *const Timer,
+pub extern "C" fn SumOfBestComponent_state_as_json(
+    this: &SumOfBestComponent,
+    timer: &Timer,
 ) -> Json {
     output_vec(|o| {
-        acc(this).state(acc(timer)).write_json(o).unwrap();
+        this.state(timer).write_json(o).unwrap();
     })
 }
 
 /// Calculates the component's state based on the timer provided.
 #[no_mangle]
-pub unsafe extern "C" fn SumOfBestComponent_state(
-    this: *const SumOfBestComponent,
-    timer: *const Timer,
+pub extern "C" fn SumOfBestComponent_state(
+    this: &SumOfBestComponent,
+    timer: &Timer,
 ) -> OwnedSumOfBestComponentState {
-    alloc(acc(this).state(acc(timer)))
+    Box::new(this.state(timer))
 }

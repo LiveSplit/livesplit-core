@@ -53,8 +53,16 @@ impl Default for HotkeyConfig {
     }
 }
 
-#[cfg(not(any(windows, target_os = "linux", target_os = "emscripten",
-              all(target_arch = "wasm32", target_os = "unknown"))))]
+#[cfg(
+    not(
+        any(
+            windows,
+            target_os = "linux",
+            target_os = "emscripten",
+            all(target_arch = "wasm32", target_os = "unknown")
+        )
+    )
+)]
 impl Default for HotkeyConfig {
     fn default() -> Self {
         Self {

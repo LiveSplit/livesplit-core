@@ -1,8 +1,8 @@
-use TimerPhase::*;
 use comparison::personal_best;
 use parking_lot::RwLock;
 use std::mem;
 use std::sync::Arc;
+use TimerPhase::*;
 use {AtomicDateTime, Run, Segment, Time, TimeSpan, TimeStamp, TimerPhase, TimingMethod};
 
 #[cfg(test)]

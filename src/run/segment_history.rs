@@ -1,6 +1,6 @@
-use Time;
 use std::cmp::min;
 use std::slice::{Iter, IterMut};
+use Time;
 
 /// Stores the segment times achieved for a certain segment. Each segment is
 /// tagged with an index. Only segment times with an index larger than 0 are

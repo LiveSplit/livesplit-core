@@ -1,7 +1,9 @@
 //! Provides the parser for splits files used by Gered's Llanfair fork.
 
-use super::xml_util::{end_tag, optional_attribute_err, parse_base, parse_children, single_child,
-                      text, text_as_bytes_err, text_err, text_parsed};
+use super::xml_util::{
+    end_tag, optional_attribute_err, parse_base, parse_children, single_child, text,
+    text_as_bytes_err, text_err, text_parsed,
+};
 use base64::{self, STANDARD};
 use byteorder::{ReadBytesExt, BE};
 use imagelib::{png, ColorType, ImageBuffer, Rgba};

@@ -2,27 +2,27 @@
 //! by a specific runner in the past. Every time a new attempt is started and
 //! then reset, an Attempt describing general information about it is created.
 
-use super::{acc, alloc, output_time, output_time_span};
+use super::{output_time, output_time_span};
 use atomic_date_time::NullableOwnedAtomicDateTime;
 use livesplit_core::{Attempt, Time};
 use std::ptr;
 use time_span::NullableTimeSpan;
 
 /// type
-pub type OwnedAttempt = *mut Attempt;
+pub type OwnedAttempt = Box<Attempt>;
 
 /// Accesses the unique index of the attempt. This index is unique for the
 /// Run, not for all of them.
 #[no_mangle]
-pub unsafe extern "C" fn Attempt_index(this: *const Attempt) -> i32 {
-    acc(this).index()
+pub extern "C" fn Attempt_index(this: &Attempt) -> i32 {
+    this.index()
 }
 
 /// Accesses the split time of the last segment. If the attempt got reset
 /// early and didn't finish, this may be empty.
 #[no_mangle]
-pub unsafe extern "C" fn Attempt_time(this: *const Attempt) -> *const Time {
-    output_time(acc(this).time())
+pub extern "C" fn Attempt_time(this: &Attempt) -> *const Time {
+    output_time(this.time())
 }
 
 /// Accesses the amount of time the attempt has been paused for. If it is not
@@ -30,8 +30,8 @@ pub unsafe extern "C" fn Attempt_time(this: *const Attempt) -> *const Time {
 /// possible to differentiate whether a Run has not been paused or it simply
 /// wasn't stored.
 #[no_mangle]
-pub unsafe extern "C" fn Attempt_pause_time(this: *const Attempt) -> *const NullableTimeSpan {
-    if let Some(pause_time) = acc(this).pause_time() {
+pub extern "C" fn Attempt_pause_time(this: &Attempt) -> *const NullableTimeSpan {
+    if let Some(pause_time) = this.pause_time() {
         output_time_span(pause_time)
     } else {
         ptr::null()
@@ -41,21 +41,21 @@ pub unsafe extern "C" fn Attempt_pause_time(this: *const Attempt) -> *const Null
 /// Accesses the point in time the attempt was started at. This returns <NULL>
 /// if this information is not known.
 #[no_mangle]
-pub unsafe extern "C" fn Attempt_started(this: *const Attempt) -> NullableOwnedAtomicDateTime {
-    if let Some(date_time) = acc(this).started() {
-        alloc(date_time)
+pub extern "C" fn Attempt_started(this: &Attempt) -> NullableOwnedAtomicDateTime {
+    if let Some(date_time) = this.started() {
+        Some(Box::new(date_time))
     } else {
-        ptr::null_mut()
+        None
     }
 }
 
 /// Accesses the point in time the attempt was ended at. This returns <NULL> if
 /// this information is not known.
 #[no_mangle]
-pub unsafe extern "C" fn Attempt_ended(this: *const Attempt) -> NullableOwnedAtomicDateTime {
-    if let Some(date_time) = acc(this).ended() {
-        alloc(date_time)
+pub extern "C" fn Attempt_ended(this: &Attempt) -> NullableOwnedAtomicDateTime {
+    if let Some(date_time) = this.ended() {
+        Some(Box::new(date_time))
     } else {
-        ptr::null_mut()
+        None
     }
 }

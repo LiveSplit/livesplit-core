@@ -3,52 +3,52 @@
 //! Segments. This component also allows showing the Total Possible Time Save
 //! for the remainder of the current attempt.
 
-use super::{acc, alloc, output_vec, own, own_drop, Json};
+use super::{output_vec, Json};
 use component::OwnedComponent;
-use livesplit_core::Timer;
 use livesplit_core::component::possible_time_save::Component as PossibleTimeSaveComponent;
+use livesplit_core::Timer;
 use possible_time_save_component_state::OwnedPossibleTimeSaveComponentState;
 
 /// type
-pub type OwnedPossibleTimeSaveComponent = *mut PossibleTimeSaveComponent;
+pub type OwnedPossibleTimeSaveComponent = Box<PossibleTimeSaveComponent>;
 
 /// Creates a new Possible Time Save Component.
 #[no_mangle]
-pub unsafe extern "C" fn PossibleTimeSaveComponent_new() -> OwnedPossibleTimeSaveComponent {
-    alloc(PossibleTimeSaveComponent::new())
+pub extern "C" fn PossibleTimeSaveComponent_new() -> OwnedPossibleTimeSaveComponent {
+    Box::new(PossibleTimeSaveComponent::new())
 }
 
 /// drop
 #[no_mangle]
-pub unsafe extern "C" fn PossibleTimeSaveComponent_drop(this: OwnedPossibleTimeSaveComponent) {
-    own_drop(this);
+pub extern "C" fn PossibleTimeSaveComponent_drop(this: OwnedPossibleTimeSaveComponent) {
+    drop(this);
 }
 
 /// Converts the component into a generic component suitable for using with a
 /// layout.
 #[no_mangle]
-pub unsafe extern "C" fn PossibleTimeSaveComponent_into_generic(
+pub extern "C" fn PossibleTimeSaveComponent_into_generic(
     this: OwnedPossibleTimeSaveComponent,
 ) -> OwnedComponent {
-    alloc(own(this).into())
+    Box::new((*this).into())
 }
 
 /// Encodes the component's state information as JSON.
 #[no_mangle]
-pub unsafe extern "C" fn PossibleTimeSaveComponent_state_as_json(
-    this: *const PossibleTimeSaveComponent,
-    timer: *const Timer,
+pub extern "C" fn PossibleTimeSaveComponent_state_as_json(
+    this: &PossibleTimeSaveComponent,
+    timer: &Timer,
 ) -> Json {
     output_vec(|o| {
-        acc(this).state(acc(timer)).write_json(o).unwrap();
+        this.state(timer).write_json(o).unwrap();
     })
 }
 
 /// Calculates the component's state based on the timer provided.
 #[no_mangle]
-pub unsafe extern "C" fn PossibleTimeSaveComponent_state(
-    this: *const PossibleTimeSaveComponent,
-    timer: *const Timer,
+pub extern "C" fn PossibleTimeSaveComponent_state(
+    this: &PossibleTimeSaveComponent,
+    timer: &Timer,
 ) -> OwnedPossibleTimeSaveComponentState {
-    alloc(acc(this).state(acc(timer)))
+    Box::new(this.state(timer))
 }

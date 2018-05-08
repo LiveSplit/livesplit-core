@@ -2,52 +2,52 @@
 //! current attempt's final time, if the current attempt's pace matches the
 //! chosen comparison for the remainder of the run.
 
-use super::{acc, acc_mut, alloc, output_vec, own, own_drop, Json};
+use super::{output_vec, Json};
 use component::OwnedComponent;
 use current_pace_component_state::OwnedCurrentPaceComponentState;
-use livesplit_core::Timer;
 use livesplit_core::component::current_pace::Component as CurrentPaceComponent;
+use livesplit_core::Timer;
 
 /// type
-pub type OwnedCurrentPaceComponent = *mut CurrentPaceComponent;
+pub type OwnedCurrentPaceComponent = Box<CurrentPaceComponent>;
 
 /// Creates a new Current Pace Component.
 #[no_mangle]
-pub unsafe extern "C" fn CurrentPaceComponent_new() -> OwnedCurrentPaceComponent {
-    alloc(CurrentPaceComponent::new())
+pub extern "C" fn CurrentPaceComponent_new() -> OwnedCurrentPaceComponent {
+    Box::new(CurrentPaceComponent::new())
 }
 
 /// drop
 #[no_mangle]
-pub unsafe extern "C" fn CurrentPaceComponent_drop(this: OwnedCurrentPaceComponent) {
-    own_drop(this);
+pub extern "C" fn CurrentPaceComponent_drop(this: OwnedCurrentPaceComponent) {
+    drop(this);
 }
 
 /// Converts the component into a generic component suitable for using with a
 /// layout.
 #[no_mangle]
-pub unsafe extern "C" fn CurrentPaceComponent_into_generic(
+pub extern "C" fn CurrentPaceComponent_into_generic(
     this: OwnedCurrentPaceComponent,
 ) -> OwnedComponent {
-    alloc(own(this).into())
+    Box::new((*this).into())
 }
 
 /// Encodes the component's state information as JSON.
 #[no_mangle]
-pub unsafe extern "C" fn CurrentPaceComponent_state_as_json(
-    this: *mut CurrentPaceComponent,
-    timer: *const Timer,
+pub extern "C" fn CurrentPaceComponent_state_as_json(
+    this: &mut CurrentPaceComponent,
+    timer: &Timer,
 ) -> Json {
     output_vec(|o| {
-        acc_mut(this).state(acc(timer)).write_json(o).unwrap();
+        this.state(timer).write_json(o).unwrap();
     })
 }
 
 /// Calculates the component's state based on the timer provided.
 #[no_mangle]
-pub unsafe extern "C" fn CurrentPaceComponent_state(
-    this: *mut CurrentPaceComponent,
-    timer: *const Timer,
+pub extern "C" fn CurrentPaceComponent_state(
+    this: &mut CurrentPaceComponent,
+    timer: &Timer,
 ) -> OwnedCurrentPaceComponentState {
-    alloc(acc_mut(this).state(acc(timer)))
+    Box::new(this.state(timer))
 }

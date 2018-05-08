@@ -1,52 +1,52 @@
 //! The Total Playtime Component is a component that shows the total amount of
 //! time that the current category has been played for.
 
-use super::{acc, acc_mut, alloc, output_vec, own, own_drop, Json};
+use super::{output_vec, Json};
 use component::OwnedComponent;
-use livesplit_core::Timer;
 use livesplit_core::component::total_playtime::Component as TotalPlaytimeComponent;
+use livesplit_core::Timer;
 use total_playtime_component_state::OwnedTotalPlaytimeComponentState;
 
 /// type
-pub type OwnedTotalPlaytimeComponent = *mut TotalPlaytimeComponent;
+pub type OwnedTotalPlaytimeComponent = Box<TotalPlaytimeComponent>;
 
 /// Creates a new Total Playtime Component.
 #[no_mangle]
-pub unsafe extern "C" fn TotalPlaytimeComponent_new() -> OwnedTotalPlaytimeComponent {
-    alloc(TotalPlaytimeComponent::new())
+pub extern "C" fn TotalPlaytimeComponent_new() -> OwnedTotalPlaytimeComponent {
+    Box::new(TotalPlaytimeComponent::new())
 }
 
 /// drop
 #[no_mangle]
-pub unsafe extern "C" fn TotalPlaytimeComponent_drop(this: OwnedTotalPlaytimeComponent) {
-    own_drop(this);
+pub extern "C" fn TotalPlaytimeComponent_drop(this: OwnedTotalPlaytimeComponent) {
+    drop(this);
 }
 
 /// Converts the component into a generic component suitable for using with a
 /// layout.
 #[no_mangle]
-pub unsafe extern "C" fn TotalPlaytimeComponent_into_generic(
+pub extern "C" fn TotalPlaytimeComponent_into_generic(
     this: OwnedTotalPlaytimeComponent,
 ) -> OwnedComponent {
-    alloc(own(this).into())
+    Box::new((*this).into())
 }
 
 /// Encodes the component's state information as JSON.
 #[no_mangle]
-pub unsafe extern "C" fn TotalPlaytimeComponent_state_as_json(
-    this: *mut TotalPlaytimeComponent,
-    timer: *const Timer,
+pub extern "C" fn TotalPlaytimeComponent_state_as_json(
+    this: &mut TotalPlaytimeComponent,
+    timer: &Timer,
 ) -> Json {
     output_vec(|o| {
-        acc_mut(this).state(acc(timer)).write_json(o).unwrap();
+        this.state(timer).write_json(o).unwrap();
     })
 }
 
 /// Calculates the component's state based on the timer provided.
 #[no_mangle]
-pub unsafe extern "C" fn TotalPlaytimeComponent_state(
-    this: *mut TotalPlaytimeComponent,
-    timer: *const Timer,
+pub extern "C" fn TotalPlaytimeComponent_state(
+    this: &mut TotalPlaytimeComponent,
+    timer: &Timer,
 ) -> OwnedTotalPlaytimeComponentState {
-    alloc(acc_mut(this).state(acc(timer)))
+    Box::new(this.state(timer))
 }

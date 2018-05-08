@@ -34,7 +34,7 @@ use std::io::Write;
 use std::mem::replace;
 use std::result::Result as StdResult;
 use time::formatter::{Complete, TimeFormatter};
-use {Image, Run, Time, TimeSpan, Timer, TimerPhase, base64};
+use {base64, Image, Run, Time, TimeSpan, Timer, TimerPhase};
 
 static LSS_IMAGE_HEADER: &[u8; 156] = include_bytes!("lss_image_header.bin");
 

@@ -2,50 +2,47 @@
 //! category that is being run. Additionally, the game icon, the attempt count,
 //! and the total number of successfully finished runs can be shown.
 
-use super::{acc, acc_mut, alloc, output_vec, own, own_drop, Json};
+use super::{output_vec, Json};
 use component::OwnedComponent;
-use livesplit_core::Timer;
 use livesplit_core::component::title::Component as TitleComponent;
+use livesplit_core::Timer;
 use title_component_state::OwnedTitleComponentState;
 
 /// type
-pub type OwnedTitleComponent = *mut TitleComponent;
+pub type OwnedTitleComponent = Box<TitleComponent>;
 
 /// Creates a new Title Component.
 #[no_mangle]
-pub unsafe extern "C" fn TitleComponent_new() -> OwnedTitleComponent {
-    alloc(TitleComponent::new())
+pub extern "C" fn TitleComponent_new() -> OwnedTitleComponent {
+    Box::new(TitleComponent::new())
 }
 
 /// drop
 #[no_mangle]
-pub unsafe extern "C" fn TitleComponent_drop(this: OwnedTitleComponent) {
-    own_drop(this);
+pub extern "C" fn TitleComponent_drop(this: OwnedTitleComponent) {
+    drop(this);
 }
 
 /// Converts the component into a generic component suitable for using with a
 /// layout.
 #[no_mangle]
-pub unsafe extern "C" fn TitleComponent_into_generic(this: OwnedTitleComponent) -> OwnedComponent {
-    alloc(own(this).into())
+pub extern "C" fn TitleComponent_into_generic(this: OwnedTitleComponent) -> OwnedComponent {
+    Box::new((*this).into())
 }
 
 /// Encodes the component's state information as JSON.
 #[no_mangle]
-pub unsafe extern "C" fn TitleComponent_state_as_json(
-    this: *mut TitleComponent,
-    timer: *const Timer,
-) -> Json {
+pub extern "C" fn TitleComponent_state_as_json(this: &mut TitleComponent, timer: &Timer) -> Json {
     output_vec(|o| {
-        acc_mut(this).state(acc(timer)).write_json(o).unwrap();
+        this.state(timer).write_json(o).unwrap();
     })
 }
 
 /// Calculates the component's state based on the timer provided.
 #[no_mangle]
-pub unsafe extern "C" fn TitleComponent_state(
-    this: *mut TitleComponent,
-    timer: *const Timer,
+pub extern "C" fn TitleComponent_state(
+    this: &mut TitleComponent,
+    timer: &Timer,
 ) -> OwnedTitleComponentState {
-    alloc(acc_mut(this).state(acc(timer)))
+    Box::new(this.state(timer))
 }

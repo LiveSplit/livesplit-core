@@ -3,8 +3,8 @@
 //! is the Time Formatter pair used by the Timer Component.
 
 use super::{extract_hundredths, extract_tenths, Accuracy, DigitsFormat, TimeFormatter, MINUS};
-use TimeSpan;
 use std::fmt::{Display, Formatter, Result};
+use TimeSpan;
 
 /// A Time Span to be formatted as the main part of the Time Formatter Pair.
 pub struct TimeInner {

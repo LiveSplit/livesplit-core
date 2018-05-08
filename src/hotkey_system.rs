@@ -1,6 +1,6 @@
 use hotkey::{Hook, KeyCode};
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use {HotkeyConfig, SharedTimer};
 
 pub use hotkey::{Error, Result};

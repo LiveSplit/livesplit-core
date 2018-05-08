@@ -1,30 +1,30 @@
 //! The state object describes the information to visualize for this component.
 
-use super::{acc, output_str, own_drop};
+use super::output_str;
 use livesplit_core::component::current_pace::State as CurrentPaceComponentState;
 use std::os::raw::c_char;
 
 /// type
-pub type OwnedCurrentPaceComponentState = *mut CurrentPaceComponentState;
+pub type OwnedCurrentPaceComponentState = Box<CurrentPaceComponentState>;
 
 /// drop
 #[no_mangle]
-pub unsafe extern "C" fn CurrentPaceComponentState_drop(this: OwnedCurrentPaceComponentState) {
-    own_drop(this);
+pub extern "C" fn CurrentPaceComponentState_drop(this: OwnedCurrentPaceComponentState) {
+    drop(this);
 }
 
 /// The label's text.
 #[no_mangle]
-pub unsafe extern "C" fn CurrentPaceComponentState_text(
-    this: *const CurrentPaceComponentState,
+pub extern "C" fn CurrentPaceComponentState_text(
+    this: &CurrentPaceComponentState,
 ) -> *const c_char {
-    output_str(&acc(this).text)
+    output_str(&this.text)
 }
 
 /// The current pace.
 #[no_mangle]
-pub unsafe extern "C" fn CurrentPaceComponentState_time(
-    this: *const CurrentPaceComponentState,
+pub extern "C" fn CurrentPaceComponentState_time(
+    this: &CurrentPaceComponentState,
 ) -> *const c_char {
-    output_str(&acc(this).time)
+    output_str(&this.time)
 }

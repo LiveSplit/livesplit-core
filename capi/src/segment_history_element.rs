@@ -3,7 +3,7 @@
 //! achieved by the runner, while the others are artifacts of route changes and
 //! similar algorithmic changes.
 
-use super::{acc, output_time};
+use super::output_time;
 use livesplit_core::Time;
 
 /// type
@@ -11,18 +11,16 @@ pub type SegmentHistoryElement = (i32, Time);
 /// type
 pub type NullableSegmentHistoryElement = SegmentHistoryElement;
 /// type
-pub type OwnedSegmentHistoryElement = *mut SegmentHistoryElement;
+pub type OwnedSegmentHistoryElement = Box<SegmentHistoryElement>;
 
 /// Accesses the index of the segment history element.
 #[no_mangle]
-pub unsafe extern "C" fn SegmentHistoryElement_index(this: *const SegmentHistoryElement) -> i32 {
-    acc(this).0
+pub extern "C" fn SegmentHistoryElement_index(this: &SegmentHistoryElement) -> i32 {
+    this.0
 }
 
 /// Accesses the segment time of the segment history element.
 #[no_mangle]
-pub unsafe extern "C" fn SegmentHistoryElement_time(
-    this: *const SegmentHistoryElement,
-) -> *const Time {
-    output_time(acc(this).1)
+pub extern "C" fn SegmentHistoryElement_time(this: &SegmentHistoryElement) -> *const Time {
+    output_time(this.1)
 }
