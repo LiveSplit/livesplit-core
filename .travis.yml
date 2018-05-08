@@ -75,6 +75,9 @@ matrix:
 
     # Failing due to backtrace incompatibility
     # https://travis-ci.org/LiveSplit/livesplit-core/jobs/278851206
+    # We have a backtrace dependency due to: quick-xml -> failure -> backtrace
+    # With failure 1.0 there is no more mandatory backtrace dependency, so once
+    # that is released we can submit a PR to quick-xml.
     # - env: TARGET=arm-unknown-linux-musleabi DISABLE_TESTS=1
     # - env: TARGET=armv7-unknown-linux-musleabihf DISABLE_TESTS=1
     # - env: TARGET=i586-unknown-linux-musl
