@@ -83,6 +83,15 @@ pub struct Class {
 
 fn get_type(ty: &SynType) -> Type {
     match *ty {
+        SynType::Reference(ref reference) => {
+            let mut ty = get_type(&reference.elem);
+            ty.kind = if reference.mutability.is_some() {
+                TypeKind::RefMut
+            } else {
+                TypeKind::Ref
+            };
+            ty
+        }
         SynType::Ptr(ref ptr) => {
             let mut ty = get_type(&ptr.elem);
             ty.kind = if ptr.mutability.is_some() {
