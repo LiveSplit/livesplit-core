@@ -151,7 +151,7 @@ pub fn parse<R: BufRead>(source: R) -> Result<Run> {
     run.set_game_name("Portal 2");
     run.set_category_name("Any%");
 
-    let mut lines = source.lines().peekable();
+    let mut lines = source.lines();
     lines.next(); // Skip the header
 
     let mut aggregate_ticks = 0.0;
