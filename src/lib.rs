@@ -38,6 +38,7 @@
 
 extern crate base64;
 extern crate byteorder;
+extern crate chrono;
 #[macro_use]
 extern crate derive_more;
 extern crate image as imagelib;
@@ -59,8 +60,7 @@ pub extern crate parking_lot;
 
 mod platform;
 
-use platform::chrono;
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+#[cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))]
 pub use platform::*;
 
 macro_rules! catch {

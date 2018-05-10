@@ -428,15 +428,16 @@ export async function load(path?: string) {
             },
             Date_now: function (ptr: number) {
                 const date = new Date();
-                const u16Slice = new Uint16Array(instance().exports.memory.buffer, ptr);
-                const u8Slice = new Uint8Array(instance().exports.memory.buffer, ptr);
-                u16Slice[0] = date.getUTCFullYear();
-                u8Slice[2] = date.getUTCMonth() + 1;
-                u8Slice[3] = date.getUTCDate();
-                u8Slice[4] = date.getUTCHours();
-                u8Slice[5] = date.getUTCMinutes();
-                u8Slice[6] = date.getUTCSeconds();
-                u16Slice[4] = date.getUTCMilliseconds();
+                const milliseconds = date.valueOf();
+                const u32Max = 0x100000000;
+                const seconds = milliseconds / 1000;
+                const secondsHigh = (seconds / u32Max) | 0;
+                const secondsLow = (seconds % u32Max) | 0;
+                const nanos = ((milliseconds % 1000) * 1000000) | 0;
+                const u32Slice = new Uint32Array(instance().exports.memory.buffer, ptr);
+                u32Slice[0] = secondsLow;
+                u32Slice[1] = secondsHigh;
+                u32Slice[2] = nanos;
             },
             HotkeyHook_new: function (handle: number) {
                 const listener = (ev: KeyboardEvent) => {
@@ -527,15 +528,16 @@ exports.load = async function (path) {
             },
             Date_now: function (ptr) {
                 const date = new Date();
-                const u16Slice = new Uint16Array(instance().exports.memory.buffer, ptr);
-                const u8Slice = new Uint8Array(instance().exports.memory.buffer, ptr);
-                u16Slice[0] = date.getUTCFullYear();
-                u8Slice[2] = date.getUTCMonth() + 1;
-                u8Slice[3] = date.getUTCDate();
-                u8Slice[4] = date.getUTCHours();
-                u8Slice[5] = date.getUTCMinutes();
-                u8Slice[6] = date.getUTCSeconds();
-                u16Slice[4] = date.getUTCMilliseconds();
+                const milliseconds = date.valueOf();
+                const u32Max = 0x100000000;
+                const seconds = milliseconds / 1000;
+                const secondsHigh = (seconds / u32Max) | 0;
+                const secondsLow = (seconds % u32Max) | 0;
+                const nanos = ((milliseconds % 1000) * 1000000) | 0;
+                const u32Slice = new Uint32Array(instance().exports.memory.buffer, ptr);
+                u32Slice[0] = secondsLow;
+                u32Slice[1] = secondsHigh;
+                u32Slice[2] = nanos;
             },
             HotkeyHook_new: function (handle) {
                 const listener = (ev) => {
