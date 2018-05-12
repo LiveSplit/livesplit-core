@@ -369,15 +369,14 @@ declare namespace WebAssembly {
 
     function instantiate(bufferSource: ArrayBuffer | Uint8Array, importObject?: any): Promise<ResultObject>;
 }
-declare class TextEncoder
-{
+
+declare class TextEncoder {
     constructor(label?: string, options?: TextEncoding.TextEncoderOptions);
     encoding: string;
     encode(input?: string, options?: TextEncoding.TextEncodeOptions): Uint8Array;
 }
 
-declare class TextDecoder
-{
+declare class TextDecoder {
     constructor(utfLabel?: string, options?: TextEncoding.TextDecoderOptions)
     encoding: string;
     fatal: boolean;
@@ -456,8 +455,69 @@ export async function load(path?: string) {
     });
 };
 
-const utf8Encoder = new TextEncoder("UTF-8");
-const utf8Decoder = new TextDecoder("UTF-8");
+let encodeUtf8: (str: string) => Uint8Array;
+if (!(global as any)["TextEncoder"]) {
+    encodeUtf8 = (str) => {
+        var utf8 = [];
+        for (var i = 0; i < str.length; i++) {
+            var charcode = str.charCodeAt(i);
+            if (charcode < 0x80) {
+                utf8.push(charcode);
+            } else if (charcode < 0x800) {
+                utf8.push(0xc0 | (charcode >> 6),
+                    0x80 | (charcode & 0x3f));
+            } else if (charcode < 0xd800 || charcode >= 0xe000) {
+                utf8.push(0xe0 | (charcode >> 12),
+                    0x80 | ((charcode >> 6) & 0x3f),
+                    0x80 | (charcode & 0x3f));
+            } else {
+                i++;
+                charcode = 0x10000 + (((charcode & 0x3ff) << 10)
+                    | (str.charCodeAt(i) & 0x3ff))
+                utf8.push(0xf0 | (charcode >> 18),
+                    0x80 | ((charcode >> 12) & 0x3f),
+                    0x80 | ((charcode >> 6) & 0x3f),
+                    0x80 | (charcode & 0x3f));
+            }
+        }
+        return new Uint8Array(utf8);
+    };
+} else {
+    const encoder = new TextEncoder("UTF-8");
+    encodeUtf8 = (str) => encoder.encode(str);
+}
+
+let decodeUtf8: (data: Uint8Array) => string;
+if (!(global as any)["TextDecoder"]) {
+    decodeUtf8 = (data) => {
+        var str = '',
+            i;
+
+        for (i = 0; i < data.length; i++) {
+            var value = data[i];
+
+            if (value < 0x80) {
+                str += String.fromCharCode(value);
+            } else if (value > 0xBF && value < 0xE0) {
+                str += String.fromCharCode((value & 0x1F) << 6 | data[i + 1] & 0x3F);
+                i += 1;
+            } else if (value > 0xDF && value < 0xF0) {
+                str += String.fromCharCode((value & 0x0F) << 12 | (data[i + 1] & 0x3F) << 6 | data[i + 2] & 0x3F);
+                i += 2;
+            } else {
+                var charCode = ((value & 0x07) << 18 | (data[i + 1] & 0x3F) << 12 | (data[i + 2] & 0x3F) << 6 | data[i + 3] & 0x3F) - 0x010000;
+
+                str += String.fromCharCode(charCode >> 10 | 0xD800, charCode & 0x03FF | 0xDC00);
+                i += 3;
+            }
+        }
+
+        return str;
+    };
+} else {
+    const decoder = new TextDecoder("UTF-8");
+    decodeUtf8 = (data) => decoder.decode(data);
+}
 
 interface Slice {
     ptr: number,
@@ -475,7 +535,7 @@ function allocInt8Array(src: Int8Array): Slice {
 }
 
 function allocString(str: string): Slice {
-    const stringBuffer = utf8Encoder.encode(str);
+    const stringBuffer = encodeUtf8(str);
     const len = stringBuffer.length + 1;
     const ptr = instance().exports.alloc(len);
     const slice = new Uint8Array(instance().exports.memory.buffer, ptr, len);
@@ -493,7 +553,7 @@ function decodeString(ptr: number): string {
         end += 1;
     }
     const slice = memory.slice(ptr, end);
-    return utf8Decoder.decode(slice);
+    return decodeUtf8(slice);
 }
 
 function dealloc(slice: Slice) {
@@ -556,8 +616,70 @@ exports.load = async function (path) {
     });
 };
 
-const utf8Encoder = new TextEncoder("UTF-8");
-const utf8Decoder = new TextDecoder("UTF-8");
+let encodeUtf8;
+if (!global["TextEncoder"]) {
+    encodeUtf8 = (str) => {
+        var utf8 = [];
+        for (var i = 0; i < str.length; i++) {
+            var charcode = str.charCodeAt(i);
+            if (charcode < 0x80) {
+                utf8.push(charcode);
+            } else if (charcode < 0x800) {
+                utf8.push(0xc0 | (charcode >> 6),
+                    0x80 | (charcode & 0x3f));
+            }
+            else if (charcode < 0xd800 || charcode >= 0xe000) {
+                utf8.push(0xe0 | (charcode >> 12),
+                    0x80 | ((charcode >> 6) & 0x3f),
+                    0x80 | (charcode & 0x3f));
+            } else {
+                i++;
+                charcode = 0x10000 + (((charcode & 0x3ff) << 10)
+                    | (str.charCodeAt(i) & 0x3ff))
+                utf8.push(0xf0 | (charcode >> 18),
+                    0x80 | ((charcode >> 12) & 0x3f),
+                    0x80 | ((charcode >> 6) & 0x3f),
+                    0x80 | (charcode & 0x3f));
+            }
+        }
+        return new Uint8Array(utf8);
+    };
+} else {
+    const encoder = new TextEncoder("UTF-8");
+    encodeUtf8 = (str) => encoder.encode(str);
+}
+
+let decodeUtf8;
+if (!global["TextDecoder"]) {
+    decodeUtf8 = (data) => {
+        var str = '',
+            i;
+
+        for (i = 0; i < data.length; i++) {
+            var value = data[i];
+
+            if (value < 0x80) {
+                str += String.fromCharCode(value);
+            } else if (value > 0xBF && value < 0xE0) {
+                str += String.fromCharCode((value & 0x1F) << 6 | data[i + 1] & 0x3F);
+                i += 1;
+            } else if (value > 0xDF && value < 0xF0) {
+                str += String.fromCharCode((value & 0x0F) << 12 | (data[i + 1] & 0x3F) << 6 | data[i + 2] & 0x3F);
+                i += 2;
+            } else {
+                var charCode = ((value & 0x07) << 18 | (data[i + 1] & 0x3F) << 12 | (data[i + 2] & 0x3F) << 6 | data[i + 3] & 0x3F) - 0x010000;
+
+                str += String.fromCharCode(charCode >> 10 | 0xD800, charCode & 0x03FF | 0xDC00);
+                i += 3;
+            }
+        }
+
+        return str;
+    };
+} else {
+    const decoder = new TextDecoder("UTF-8");
+    decodeUtf8 = (data) => decoder.decode(data);
+}
 
 function allocInt8Array(src) {
     const len = src.length;
@@ -570,7 +692,7 @@ function allocInt8Array(src) {
 }
 
 function allocString(str) {
-    const stringBuffer = utf8Encoder.encode(str);
+    const stringBuffer = encodeUtf8(str);
     const len = stringBuffer.length + 1;
     const ptr = instance().exports.alloc(len);
     const slice = new Uint8Array(instance().exports.memory.buffer, ptr, len);
@@ -588,7 +710,7 @@ function decodeString(ptr) {
         end += 1;
     }
     const slice = memory.slice(ptr, end);
-    return utf8Decoder.decode(slice);
+    return decodeUtf8(slice);
 }
 
 function dealloc(slice) {
