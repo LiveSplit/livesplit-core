@@ -26,14 +26,14 @@ pub extern "C" fn SettingValue_from_bool(value: bool) -> OwnedSettingValue {
 
 /// Creates a new setting value from an unsigned integer.
 #[no_mangle]
-pub extern "C" fn SettingValue_from_uint(value: u64) -> OwnedSettingValue {
-    Box::new(value.into())
+pub extern "C" fn SettingValue_from_uint(value: u32) -> OwnedSettingValue {
+    Box::new((value as u64).into())
 }
 
 /// Creates a new setting value from a signed integer.
 #[no_mangle]
-pub extern "C" fn SettingValue_from_int(value: i64) -> OwnedSettingValue {
-    Box::new(value.into())
+pub extern "C" fn SettingValue_from_int(value: i32) -> OwnedSettingValue {
+    Box::new((value as i64).into())
 }
 
 /// Creates a new setting value from a string.
