@@ -368,6 +368,7 @@ declare namespace WebAssembly {
     }
 
     function instantiate(bufferSource: ArrayBuffer | Uint8Array, importObject?: any): Promise<ResultObject>;
+    function instantiateStreaming(source: Response | Promise<Response>, importObject?: any): Promise<ResultObject>;
 }
 
 declare class TextEncoder {
@@ -418,9 +419,7 @@ function instance(): WebAssembly.Instance {
 const handleMap: Map<number, any> = new Map();
 
 export async function load(path?: string) {
-    const response = await fetch(path || 'livesplit_core.wasm');
-    const bytes = await response.arrayBuffer();
-    wasm = await WebAssembly.instantiate(bytes, {
+    const imports = {
         env: {
             Instant_now: function (): number {
                 return performance.now() / 1000;
@@ -452,8 +451,21 @@ export async function load(path?: string) {
                 handleMap.delete(handle);
             },
         },
-    });
-};
+    };
+
+    const request = fetch(path || 'livesplit_core.wasm');
+    if (typeof WebAssembly.instantiateStreaming === "function") {
+        try {
+            wasm = await WebAssembly.instantiateStreaming(request, imports);
+            return;
+        } catch { }
+        // We retry with the normal instantiate here because Chrome 60 seems to
+        // have instantiateStreaming, but it doesn't actually work.
+    }
+    const response = await request;
+    const bytes = await response.arrayBuffer();
+    wasm = await WebAssembly.instantiate(bytes, imports);
+}
 
 let encodeUtf8: (str: string) => Uint8Array;
 if (!(global as any)["TextEncoder"]) {
@@ -579,9 +591,7 @@ function instance() {
 const handleMap = new Map();
 
 exports.load = async function (path) {
-    const response = await fetch(path || 'livesplit_core.wasm');
-    const bytes = await response.arrayBuffer();
-    wasm = await WebAssembly.instantiate(bytes, {
+    const imports = {
         env: {
             Instant_now: function () {
                 return performance.now() / 1000;
@@ -600,7 +610,7 @@ exports.load = async function (path) {
                 u32Slice[2] = nanos;
             },
             HotkeyHook_new: function (handle) {
-                const listener = (ev) => {
+                const listener = (ev: KeyboardEvent) => {
                     const { ptr, len } = allocString(ev.code);
                     instance().exports.HotkeyHook_callback(ptr, len - 1, handle);
                     dealloc({ ptr, len });
@@ -613,8 +623,21 @@ exports.load = async function (path) {
                 handleMap.delete(handle);
             },
         },
-    });
-};
+    };
+
+    const request = fetch(path || 'livesplit_core.wasm');
+    if (typeof WebAssembly.instantiateStreaming === "function") {
+        try {
+            wasm = await WebAssembly.instantiateStreaming(request, imports);
+            return;
+        } catch { }
+        // We retry with the normal instantiate here because Chrome 60 seems to
+        // have instantiateStreaming, but it doesn't actually work.
+    }
+    const response = await request;
+    const bytes = await response.arrayBuffer();
+    wasm = await WebAssembly.instantiate(bytes, imports);
+}
 
 let encodeUtf8;
 if (!global["TextEncoder"]) {
