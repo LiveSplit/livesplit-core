@@ -30,6 +30,11 @@ fn latest_run() {
 }
 
 #[test]
+fn median_segments() {
+    test(comparison::MedianSegments);
+}
+
+#[test]
 fn none() {
     test(comparison::None);
 }

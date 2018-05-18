@@ -1,36 +1,7 @@
+use super::{run_with_splits, run_with_splits_opt};
 use comparison::balanced_pb::{BalancedPB, NAME};
 use time::formatter::{Short, TimeFormatter};
 use {Run, Segment, TimeSpan, Timer};
-
-fn run_with_splits(timer: &mut Timer, splits: &[f64]) {
-    timer.start();
-    timer.initialize_game_time();
-    timer.pause_game_time();
-
-    for &split in splits {
-        timer.set_game_time(TimeSpan::from_seconds(split));
-        timer.split();
-    }
-
-    timer.reset(true);
-}
-
-fn run_with_splits_opt(timer: &mut Timer, splits: &[Option<f64>]) {
-    timer.start();
-    timer.initialize_game_time();
-    timer.pause_game_time();
-
-    for &split in splits {
-        if let Some(split) = split {
-            timer.set_game_time(TimeSpan::from_seconds(split));
-            timer.split();
-        } else {
-            timer.skip_split();
-        }
-    }
-
-    timer.reset(true);
-}
 
 #[test]
 fn test() {
