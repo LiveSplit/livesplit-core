@@ -26,7 +26,7 @@ pub extern "C" fn dealloc(ptr: *mut u8, cap: usize) {
     }
 }
 
-use chrono::{Utc, DateTime, NaiveDateTime};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use std::mem::uninitialized;
 
 #[repr(C)]
@@ -44,6 +44,9 @@ pub fn utc_now() -> DateTime<Utc> {
     unsafe {
         let mut date_time: FFIDateTime = uninitialized();
         Date_now(&mut date_time);
-        DateTime::from_utc(NaiveDateTime::from_timestamp(date_time.secs, date_time.nsecs), Utc)
+        DateTime::from_utc(
+            NaiveDateTime::from_timestamp(date_time.secs, date_time.nsecs),
+            Utc,
+        )
     }
 }

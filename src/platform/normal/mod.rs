@@ -2,7 +2,7 @@
 
 pub use std::time::{Duration, Instant};
 
-use chrono::{Utc, DateTime};
+use chrono::{DateTime, Utc};
 
 pub fn utc_now() -> DateTime<Utc> {
     Utc::now()

@@ -11,6 +11,7 @@ pub mod balanced_pb;
 pub mod best_segments;
 pub mod best_split_times;
 pub mod latest_run;
+pub mod median_segments;
 pub mod none;
 pub mod worst_segments;
 
@@ -19,6 +20,7 @@ pub use self::balanced_pb::BalancedPB;
 pub use self::best_segments::BestSegments;
 pub use self::best_split_times::BestSplitTimes;
 pub use self::latest_run::LatestRun;
+pub use self::median_segments::MedianSegments;
 pub use self::none::None;
 pub use self::worst_segments::WorstSegments;
 
@@ -78,6 +80,7 @@ pub fn default_generators() -> Vec<Box<ComparisonGenerator>> {
         Box::new(BestSegments),
         Box::new(BestSplitTimes),
         Box::new(AverageSegments),
+        Box::new(MedianSegments),
         Box::new(WorstSegments),
         Box::new(BalancedPB),
         Box::new(LatestRun),
@@ -94,6 +97,7 @@ pub fn shorten(comparison: &str) -> &str {
     match comparison {
         personal_best::NAME => personal_best::SHORT_NAME,
         average_segments::NAME => average_segments::SHORT_NAME,
+        median_segments::NAME => median_segments::SHORT_NAME,
         balanced_pb::NAME => balanced_pb::SHORT_NAME,
         best_segments::NAME => best_segments::SHORT_NAME,
         best_split_times::NAME => best_split_times::SHORT_NAME,
