@@ -47,7 +47,8 @@ fn test() {
 
     {
         let run = timer.run();
-        assert_eq!(run.segment(0).comparison(NAME).game_time, Some(s(0.3)));
+        assert!(run.segment(0).comparison(NAME).game_time < Some(s(0.31)));
+        assert!(run.segment(0).comparison(NAME).game_time > Some(s(0.29)));
     }
 
     run_with_splits(&mut timer, &[1.0]);

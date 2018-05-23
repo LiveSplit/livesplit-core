@@ -430,7 +430,8 @@ impl Component {
     }
 
     fn check_best_segment(&self, timer: &Timer, split_number: usize) -> bool {
-        self.settings.show_best_segments && split_number < timer.run().len()
+        self.settings.show_best_segments
+            && split_number < timer.run().len()
             && analysis::check_best_segment(timer, split_number, timer.current_timing_method())
     }
 
@@ -565,7 +566,8 @@ impl Component {
                 grid_value_y *= 6.0;
             }
             grid_value_y = (grid_value_y / (-total_delta.total_milliseconds() as f32))
-                * (graph_height - graph_edge) * 2.0;
+                * (graph_height - graph_edge)
+                * 2.0;
         } else {
             grid_value_y = -1.0;
         }

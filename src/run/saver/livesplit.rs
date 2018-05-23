@@ -313,7 +313,8 @@ pub fn save_run<W: Write>(run: &Run, writer: W) -> Result<()> {
                 tag.push_attribute((&b"isEndedSynced"[..], bool(ended.synced_with_atomic_clock)));
             }
 
-            let is_empty = attempt.time().real_time.is_none() && attempt.time().game_time.is_none()
+            let is_empty = attempt.time().real_time.is_none()
+                && attempt.time().game_time.is_none()
                 && attempt.pause_time().is_none();
 
             scoped(writer, tag, is_empty, |writer| {

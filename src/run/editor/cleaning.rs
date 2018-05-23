@@ -167,7 +167,8 @@ impl<'r> SumOfBestCleaner<'r> {
                     };
                 }
                 State::IteratingHistory(state) => {
-                    let iter = self.run
+                    let iter = self
+                        .run
                         .segment(state.parent.segment_index)
                         .segment_history()
                         .iter()
@@ -239,7 +240,8 @@ fn check_prediction<'a>(
                         t - predictions[(starting_index + 1) as usize]
                             .expect("Start time must not be empty")
                     }),
-                    attempt: run.attempt_history()
+                    attempt: run
+                        .attempt_history()
                         .iter()
                         .find(|attempt| attempt.index() == run_index)
                         .expect("The attempt has to exist"),

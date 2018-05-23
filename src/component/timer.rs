@@ -123,7 +123,8 @@ impl Component {
     /// Calculates the component's state based on the timer and the layout
     /// settings provided.
     pub fn state(&self, timer: &Timer, layout_settings: &GeneralLayoutSettings) -> State {
-        let method = self.settings
+        let method = self
+            .settings
             .timing_method
             .unwrap_or_else(|| timer.current_timing_method());
         let time = timer.current_time();

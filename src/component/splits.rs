@@ -229,7 +229,8 @@ impl Component {
         let take_count = self.settings.visual_split_count + always_show_last_split as usize - 1;
         let always_show_last_split = self.settings.always_show_last_split;
 
-        let show_final_separator = self.settings.separator_last_split && always_show_last_split
+        let show_final_separator = self.settings.separator_last_split
+            && always_show_last_split
             && skip_count + take_count + 1 < timer.run().len();
 
         let mut icon_changes = Vec::new();

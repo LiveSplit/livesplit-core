@@ -175,7 +175,8 @@ pub fn check_live_delta(
         let comparison_delta = live_segment_delta(timer, split_index, comparison, method);
 
         if split_delta && current_time > current_split
-            || use_best_segment && catch! { current_segment? > best_segment? }.unwrap_or(false)
+            || use_best_segment
+                && catch! { current_segment? > best_segment? }.unwrap_or(false)
                 && best_segment_delta.map_or(false, |d| d > TimeSpan::zero())
             || comparison_delta.map_or(false, |d| d > TimeSpan::zero())
         {

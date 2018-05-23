@@ -69,7 +69,8 @@ impl Layout {
     pub fn state(&mut self, timer: &Timer) -> LayoutState {
         let settings = &self.settings;
         LayoutState {
-            components: self.components
+            components: self
+                .components
                 .iter_mut()
                 .map(|c| c.state(timer, settings))
                 .collect(),

@@ -50,7 +50,8 @@ impl State {
 impl Editor {
     /// Calculates the Layout Editor's state in order to visualize it.
     pub fn state(&self) -> State {
-        let components = self.layout
+        let components = self
+            .layout
             .components
             .iter()
             .map(|c| c.name().into_owned())

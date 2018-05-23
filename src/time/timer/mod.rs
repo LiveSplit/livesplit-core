@@ -399,7 +399,8 @@ impl Timer {
             Ended => {
                 let pause_time = Some(self.get_pause_time().unwrap_or_default());
 
-                let split_time = self.run
+                let split_time = self
+                    .run
                     .segments_mut()
                     .iter_mut()
                     .last()

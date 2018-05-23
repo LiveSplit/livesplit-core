@@ -315,7 +315,8 @@ impl Run {
         ended: Option<AtomicDateTime>,
         pause_time: Option<TimeSpan>,
     ) {
-        let index = self.attempt_history
+        let index = self
+            .attempt_history
             .iter()
             .map(Attempt::index)
             .max()
@@ -386,8 +387,15 @@ impl Run {
         extended_name
             .chars()
             .filter(|&c| {
-                c != '\\' && c != '/' && c != ':' && c != '*' && c != '?' && c != '"' && c != '<'
-                    && c != '>' && c != '|'
+                c != '\\'
+                    && c != '/'
+                    && c != ':'
+                    && c != '*'
+                    && c != '?'
+                    && c != '"'
+                    && c != '<'
+                    && c != '>'
+                    && c != '|'
             })
             .collect()
     }
@@ -441,7 +449,8 @@ impl Run {
         let mut is_empty = true;
         let mut has_pushed = false;
 
-        if let Some((i, u)) = self.category_name
+        if let Some((i, u)) = self
+            .category_name
             .find('(')
             .and_then(|i| self.category_name[i..].find(')').map(|u| (i, i + u)))
         {
@@ -731,7 +740,8 @@ impl Run {
         let mut last_split_time = Time::zero();
 
         let segments = self.segments.iter_mut().take(current_split_index);
-        let index = self.attempt_history
+        let index = self
+            .attempt_history
             .last()
             .expect("There is no attempt in the Attempt History.")
             .index();

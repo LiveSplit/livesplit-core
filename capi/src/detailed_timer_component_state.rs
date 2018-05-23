@@ -71,7 +71,8 @@ pub extern "C" fn DetailedTimerComponentState_comparison1_name(
     this: &DetailedTimerComponentState,
 ) -> *const c_char {
     output_str(
-        &this.comparison1
+        &this
+            .comparison1
             .as_ref()
             .expect("Comparison 1 is not visible")
             .name,
@@ -85,7 +86,8 @@ pub extern "C" fn DetailedTimerComponentState_comparison1_time(
     this: &DetailedTimerComponentState,
 ) -> *const c_char {
     output_str(
-        &this.comparison1
+        &this
+            .comparison1
             .as_ref()
             .expect("Comparison 1 is not visible")
             .time,
@@ -107,7 +109,8 @@ pub extern "C" fn DetailedTimerComponentState_comparison2_name(
     this: &DetailedTimerComponentState,
 ) -> *const c_char {
     output_str(
-        &this.comparison2
+        &this
+            .comparison2
             .as_ref()
             .expect("Comparison 2 is not visible")
             .name,
@@ -121,7 +124,8 @@ pub extern "C" fn DetailedTimerComponentState_comparison2_time(
     this: &DetailedTimerComponentState,
 ) -> *const c_char {
     output_str(
-        &this.comparison2
+        &this
+            .comparison2
             .as_ref()
             .expect("Comparison 2 is not visible")
             .time,

@@ -4,6 +4,7 @@
 //! mod
 
 extern crate livesplit_core;
+extern crate serde_json;
 
 use std::cell::{Cell, RefCell};
 use std::ffi::CStr;
@@ -23,6 +24,7 @@ pub mod delta_component;
 pub mod delta_component_state;
 pub mod detailed_timer_component;
 pub mod detailed_timer_component_state;
+pub mod fuzzy_list;
 pub mod general_layout_settings;
 pub mod graph_component;
 pub mod graph_component_state;

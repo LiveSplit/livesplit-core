@@ -102,7 +102,8 @@ impl Editor {
     pub fn state(&mut self) -> State {
         let formatter = EmptyWrapper::new(Short::with_accuracy(Accuracy::Hundredths));
 
-        let icon_change = self.run
+        let icon_change = self
+            .run
             .game_icon()
             .check_for_change(&mut self.game_icon_id)
             .map(str::to_owned);
@@ -111,7 +112,8 @@ impl Editor {
         let offset = formatter.format(self.offset()).to_string();
         let attempts = self.attempt_count();
         let timing_method = self.selected_timing_method();
-        let comparison_names = self.custom_comparisons()
+        let comparison_names = self
+            .custom_comparisons()
             .iter()
             .cloned()
             .filter(|n| n != personal_best::NAME)
@@ -139,7 +141,8 @@ impl Editor {
                     .collect();
             }
 
-            let icon_change = self.run
+            let icon_change = self
+                .run
                 .segment(segment_index)
                 .icon()
                 .check_for_change(&mut self.segment_icon_ids[segment_index])

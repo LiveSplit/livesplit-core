@@ -12,12 +12,14 @@ use time::ParseError as ParseTimeSpanError;
 use {comparison, unicase, Image, Run, Segment, Time, TimeSpan, TimingMethod};
 
 pub mod cleaning;
+mod fuzzy_list;
 mod segment_row;
 mod state;
 #[cfg(test)]
 mod tests;
 
 pub use self::cleaning::SumOfBestCleaner;
+pub use self::fuzzy_list::FuzzyList;
 pub use self::segment_row::SegmentRow;
 pub use self::state::{Buttons as ButtonsState, Segment as SegmentState, State};
 
@@ -279,7 +281,8 @@ impl Editor {
     }
 
     fn times_modified(&mut self) {
-        let pb_split_time = self.run
+        let pb_split_time = self
+            .run
             .segments()
             .last()
             .unwrap()
@@ -316,7 +319,8 @@ impl Editor {
     fn fix_splits_from_segments(&mut self) {
         let method = self.selected_method;
         let mut previous_time = Some(TimeSpan::zero());
-        for (segment_time, segment) in self.segment_times
+        for (segment_time, segment) in self
+            .segment_times
             .iter_mut()
             .zip(self.run.segments_mut().iter_mut())
         {
@@ -400,7 +404,8 @@ impl Editor {
                     for current_index in current_index..self.run.len() {
                         // Add the removed segment's history times to the next
                         // non None times
-                        if let Some(&mut Some(ref mut segment)) = self.run
+                        if let Some(&mut Some(ref mut segment)) = self
+                            .run
                             .segment_mut(current_index)
                             .segment_history_mut()
                             .get_mut(run_index)
@@ -428,7 +433,8 @@ impl Editor {
         if let Some(mut min_best_segment) = min_best_segment {
             // Use any element in the history that has a lower time than this
             // sum
-            for time in self.run
+            for time in self
+                .run
                 .segment(current_index)
                 .segment_history()
                 .iter()
@@ -470,7 +476,8 @@ impl Editor {
         }
 
         let selected_segment = self.active_segment_index();
-        let above_count = self.selected_segments
+        let above_count = self
+            .selected_segments
             .iter()
             .filter(|&&i| i < selected_segment)
             .count();
@@ -670,7 +677,8 @@ impl Editor {
         self.run.validate_comparison_name(new)?;
 
         {
-            let comparison_name = self.run
+            let comparison_name = self
+                .run
                 .custom_comparisons_mut()
                 .iter_mut()
                 .find(|c| *c == old)

@@ -190,7 +190,8 @@ fn main() {
                     ..
                 }) = item
                 {
-                    if abi.as_ref()
+                    if abi
+                        .as_ref()
                         .and_then(|a| a.name.as_ref())
                         .map_or(false, |n| n.value() == "C")
                         && attrs
@@ -226,7 +227,8 @@ fn main() {
                             }
                         };
 
-                        let inputs = decl.inputs
+                        let inputs = decl
+                            .inputs
                             .iter()
                             .map(|i| {
                                 let c = match i {

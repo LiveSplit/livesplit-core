@@ -5,3 +5,4 @@ authors = ["Christopher Serr <christopher.serr@gmail.com>"]
 
 [dependencies]
 livesplit-core = { path = ".." }
+serde_json = "1.0.8"

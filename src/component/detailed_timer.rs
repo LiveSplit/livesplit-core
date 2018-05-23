@@ -149,7 +149,8 @@ impl Component {
     /// provided.
     pub fn state(&mut self, timer: &Timer, layout_settings: &GeneralLayoutSettings) -> State {
         let current_phase = timer.current_phase();
-        let timing_method = self.settings
+        let timing_method = self
+            .settings
             .timer
             .timing_method
             .unwrap_or_else(|| timer.current_timing_method());
@@ -161,13 +162,15 @@ impl Component {
         };
 
         let (comparison1, comparison2) = if current_phase != TimerPhase::NotRunning {
-            let mut comparison1 = self.settings
+            let mut comparison1 = self
+                .settings
                 .comparison1
                 .as_ref()
                 .map(String::as_str)
                 .unwrap_or_else(|| timer.current_comparison());
 
-            let comparison2 = self.settings
+            let comparison2 = self
+                .settings
                 .comparison2
                 .as_ref()
                 .map(String::as_str)
@@ -175,7 +178,8 @@ impl Component {
 
             let mut hide_comparison = self.settings.hide_second_comparison;
 
-            if hide_comparison || !timer.run().comparisons().any(|c| c == comparison2)
+            if hide_comparison
+                || !timer.run().comparisons().any(|c| c == comparison2)
                 || comparison2 == none::NAME
             {
                 hide_comparison = true;
