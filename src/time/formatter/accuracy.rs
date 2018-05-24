@@ -8,6 +8,8 @@ pub enum Accuracy {
     Tenths,
     /// Show hundredths of a second (12:34.56).
     Hundredths,
+    /// Show thousandths of a second, also known as milliseconds (12:34.567).
+    Milliseconds,
 }
 
 impl Accuracy {
@@ -23,7 +25,7 @@ impl Accuracy {
     }
 }
 
-use super::{extract_hundredths, extract_tenths};
+use super::{extract_hundredths, extract_tenths, extract_milliseconds};
 use std::fmt::{Display, Formatter, Result};
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -45,6 +47,7 @@ impl Display for FormattedSeconds {
             Accuracy::Seconds => Ok(()),
             Accuracy::Tenths => write!(f, ".{}", extract_tenths(self.seconds)),
             Accuracy::Hundredths => write!(f, ".{:02}", extract_hundredths(self.seconds)),
+            Accuracy::Milliseconds => write!(f, ".{:03}", extract_milliseconds(self.seconds)),
         }
     }
 }

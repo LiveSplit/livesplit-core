@@ -78,6 +78,7 @@ pub unsafe extern "C" fn SettingValue_from_accuracy(
         "Seconds" => Accuracy::Seconds,
         "Tenths" => Accuracy::Tenths,
         "Hundredths" => Accuracy::Hundredths,
+        "Milliseconds" => Accuracy::Milliseconds,
         _ => return None,
     };
     Some(Box::new(value.into()))

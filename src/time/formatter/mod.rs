@@ -74,3 +74,7 @@ fn extract_tenths(seconds: f64) -> u8 {
 fn extract_hundredths(seconds: f64) -> u8 {
     min(99, ((seconds.abs() % 1.0) * 100.0 + EPSILON).floor() as u8)
 }
+
+fn extract_milliseconds(seconds: f64) -> u16 {
+    min(999, ((seconds.abs() % 1.0) * 1000.0 + EPSILON).floor() as u16)
+}

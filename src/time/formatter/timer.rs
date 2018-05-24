@@ -2,7 +2,7 @@
 //! visualized time into the main part of the time and the fractional part. This
 //! is the Time Formatter pair used by the Timer Component.
 
-use super::{extract_hundredths, extract_tenths, Accuracy, DigitsFormat, TimeFormatter, MINUS};
+use super::{extract_hundredths, extract_tenths, extract_milliseconds, Accuracy, DigitsFormat, TimeFormatter, MINUS};
 use std::fmt::{Display, Formatter, Result};
 use TimeSpan;
 
@@ -163,17 +163,21 @@ impl Display for FractionInner {
     fn fmt(&self, f: &mut Formatter) -> Result {
         if let Some(time) = self.time {
             match self.accuracy {
+                Accuracy::Seconds => Ok(()),
+                Accuracy::Tenths => write!(f, ".{}", extract_tenths(time.total_seconds())),
                 Accuracy::Hundredths => {
                     write!(f, ".{:02}", extract_hundredths(time.total_seconds()))
                 }
-                Accuracy::Tenths => write!(f, ".{}", extract_tenths(time.total_seconds())),
-                Accuracy::Seconds => Ok(()),
+                Accuracy::Milliseconds => {
+                    write!(f, ".{:03}", extract_milliseconds(time.total_seconds()))
+                }
             }
         } else {
             match self.accuracy {
-                Accuracy::Hundredths => write!(f, ".00"),
-                Accuracy::Tenths => write!(f, ".0"),
                 Accuracy::Seconds => Ok(()),
+                Accuracy::Tenths => write!(f, ".0"),
+                Accuracy::Hundredths => write!(f, ".00"),
+                Accuracy::Milliseconds => write!(f, ".000"),
             }
         }
     }
