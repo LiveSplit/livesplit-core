@@ -25,7 +25,7 @@ impl Accuracy {
     }
 }
 
-use super::{extract_hundredths, extract_tenths, extract_milliseconds};
+use super::{extract_hundredths, extract_milliseconds, extract_tenths};
 use std::fmt::{Display, Formatter, Result};
 
 #[derive(Debug, PartialEq, Copy, Clone)]

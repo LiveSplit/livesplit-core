@@ -280,6 +280,62 @@ impl Editor {
         self.run.custom_comparisons()
     }
 
+    /// Sets the name of the region this game is from. This may be empty if it's
+    /// not specified.
+    pub fn set_region_name<S>(&mut self, name: S)
+    where
+        S: AsRef<str>,
+    {
+        self.run.metadata_mut().set_region_name(name);
+        self.raise_run_edited();
+    }
+
+    /// Sets the name of the platform this game is run on. This may be empty if
+    /// it's not specified.
+    pub fn set_platform_name<S>(&mut self, name: S)
+    where
+        S: AsRef<str>,
+    {
+        self.run.metadata_mut().set_platform_name(name);
+        self.raise_run_edited();
+    }
+
+    /// Specifies whether this speedrun is done on an emulator. Keep in mind
+    /// that `false` may also mean that this information is simply not known.
+    pub fn set_emulator_usage(&mut self, uses_emulator: bool) {
+        self.run.metadata_mut().set_emulator_usage(uses_emulator);
+        self.raise_run_edited();
+    }
+
+    /// Sets the variable with the name specified to the value specified. A
+    /// variable is an arbitrary key value pair storing additional information
+    /// about the category. An example of this may be whether Amiibos are used
+    /// in this category. If the variable doesn't exist yet, it is being
+    /// inserted.
+    pub fn set_variable<N, V>(&mut self, name: N, value: V)
+    where
+        N: Into<String>,
+        V: Into<String>,
+    {
+        self.run.metadata_mut().set_variable(name, value);
+        self.raise_run_edited();
+    }
+
+    /// Removes the variable with the name specified.
+    pub fn remove_variable<S>(&mut self, name: S)
+    where
+        S: AsRef<str>,
+    {
+        self.run.metadata_mut().remove_variable(name);
+        self.raise_run_edited();
+    }
+
+    /// Resets all the Metadata Information.
+    pub fn clear_metadata(&mut self) {
+        self.run.metadata_mut().clear();
+        self.raise_run_edited();
+    }
+
     fn times_modified(&mut self) {
         let pb_split_time = self
             .run

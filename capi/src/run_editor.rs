@@ -129,6 +129,53 @@ pub extern "C" fn RunEditor_remove_game_icon(this: &mut RunEditor) {
     this.remove_game_icon();
 }
 
+/// Sets the name of the region this game is from. This may be empty if it's
+/// not specified.
+#[no_mangle]
+pub unsafe extern "C" fn RunEditor_set_region_name(this: &mut RunEditor, name: *const c_char) {
+    this.set_region_name(str(name));
+}
+
+/// Sets the name of the platform this game is run on. This may be empty if
+/// it's not specified.
+#[no_mangle]
+pub unsafe extern "C" fn RunEditor_set_platform_name(this: &mut RunEditor, name: *const c_char) {
+    this.set_platform_name(str(name));
+}
+
+/// Specifies whether this speedrun is done on an emulator. Keep in mind
+/// that <FALSE> may also mean that this information is simply not known.
+#[no_mangle]
+pub extern "C" fn RunEditor_set_emulator_usage(this: &mut RunEditor, uses_emulator: bool) {
+    this.set_emulator_usage(uses_emulator);
+}
+
+/// Sets the variable with the name specified to the value specified. A
+/// variable is an arbitrary key value pair storing additional information
+/// about the category. An example of this may be whether Amiibos are used
+/// in this category. If the variable doesn't exist yet, it is being
+/// inserted.
+#[no_mangle]
+pub unsafe extern "C" fn RunEditor_set_variable(
+    this: &mut RunEditor,
+    name: *const c_char,
+    value: *const c_char,
+) {
+    this.set_variable(str(name), str(value));
+}
+
+/// Removes the variable with the name specified.
+#[no_mangle]
+pub unsafe extern "C" fn RunEditor_remove_variable(this: &mut RunEditor, name: *const c_char) {
+    this.remove_variable(str(name));
+}
+
+/// Resets all the Metadata Information.
+#[no_mangle]
+pub extern "C" fn RunEditor_clear_metadata(this: &mut RunEditor) {
+    this.clear_metadata();
+}
+
 /// Inserts a new empty segment above the active segment and adjusts the
 /// Run's history information accordingly. The newly created segment is then
 /// the only selected segment and also the active segment.

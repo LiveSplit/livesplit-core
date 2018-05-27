@@ -2,7 +2,10 @@
 //! visualized time into the main part of the time and the fractional part. This
 //! is the Time Formatter pair used by the Timer Component.
 
-use super::{extract_hundredths, extract_tenths, extract_milliseconds, Accuracy, DigitsFormat, TimeFormatter, MINUS};
+use super::{
+    extract_hundredths, extract_milliseconds, extract_tenths, Accuracy, DigitsFormat,
+    TimeFormatter, MINUS,
+};
 use std::fmt::{Display, Formatter, Result};
 use TimeSpan;
 

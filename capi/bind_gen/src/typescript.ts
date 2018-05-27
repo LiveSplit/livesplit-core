@@ -567,7 +567,18 @@ export type SettingsDescriptionValueJson =
     { Color: Color } |
     { OptionalColor: Color | null } |
     { Gradient: Gradient } |
-    { Alignment: Alignment };
+    { Alignment: Alignment } |
+    { CustomCombobox: CustomCombobox };
+
+/**
+ * A custom Combobox containing its current value and a list of possible
+ * values.
+ */
+export interface CustomCombobox {
+    value: string,
+    list: string[],
+    mandatory: boolean,
+}
 
 /**
  * The Accuracy describes how many digits to show for the fractional part of a
@@ -629,6 +640,45 @@ export interface RunEditorStateJson {
     comparison_names: string[],
     /** Describes which actions are currently available. */
     buttons: RunEditorButtonsJson,
+    /**
+     * Additional metadata of this Run, like the platform and region of the
+     * game.
+     */
+    metadata: RunMetadataJson,
+}
+
+/**
+ * The Run Metadata stores additional information about a run, like the
+ * platform and region of the game. All of this information is optional.
+ */
+export interface RunMetadataJson {
+    /**
+     * The speedrun.com Run ID of the run. You need to ensure that the record
+     * on speedrun.com matches up with the Personal Best of this run. This may
+     * be empty if there's no association.
+     */
+    run_id: string,
+    /**
+     * The name of the platform this game is run on. This may be empty if it's
+     * not specified.
+     */
+    platform_name: string,
+    /**
+     * Specifies whether this speedrun is done on an emulator. Keep in mind
+     * that `false` may also mean that this information is simply not known.
+     */
+    uses_emulator: boolean,
+    /**
+     * The name of the region this game is from. This may be empty if it's not
+     * specified.
+     */
+    region_name: string,
+    /**
+     * Stores all the variables. A variable is an arbitrary key value pair
+     * storing additional information about the category. An example of this
+     * may be whether Amiibos are used in this category.
+     */
+    variables: { [key: string]: string },
 }
 
 /**

@@ -170,7 +170,7 @@ fn parse_metadata<R: BufRead>(
                     text(reader, tag.into_buf(), |t| {
                         value = t.into_owned();
                     })?;
-                    metadata.add_variable(name, value);
+                    metadata.set_variable(name, value);
                     Ok(())
                 })
             } else {

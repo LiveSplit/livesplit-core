@@ -1,5 +1,6 @@
 use super::{Editor, SegmentRow, TimingMethod};
 use comparison::personal_best;
+use run::RunMetadata;
 use serde_json::{to_writer, Result as JsonResult};
 use std::io::Write;
 use time::formatter::none_wrapper::EmptyWrapper;
@@ -17,8 +18,8 @@ pub struct State {
     pub game: String,
     /// The name of the category the Run is for.
     pub category: String,
-    /// The timer offset specifies the time that the timer starts at when starting a
-    /// new attempt.
+    /// The timer offset specifies the time that the timer starts at when
+    /// starting a new attempt.
     pub offset: String,
     /// The number of times this Run has been attempted by the runner. This
     /// is mostly just a visual number and has no effect on any history.
@@ -32,6 +33,9 @@ pub struct State {
     pub comparison_names: Vec<String>,
     /// Describes which actions are currently available.
     pub buttons: Buttons,
+    /// Additional metadata of this Run, like the platform and region of the
+    /// game.
+    pub metadata: RunMetadata,
 }
 
 /// Describes which actions are currently available. Depending on how many
@@ -177,6 +181,7 @@ impl Editor {
             segments: segments,
             comparison_names: comparison_names,
             buttons: buttons,
+            metadata: self.run.metadata().clone(),
         }
     }
 }

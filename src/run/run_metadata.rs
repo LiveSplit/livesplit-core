@@ -2,13 +2,25 @@ use indexmap::map::{IndexMap, Iter};
 
 /// The Run Metadata stores additional information about a run, like the
 /// platform and region of the game. All of this information is optional.
-#[derive(Default, Clone, Debug, PartialEq)]
+#[derive(Default, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct RunMetadata {
-    run_id: String,
-    platform_name: String,
-    uses_emulator: bool,
-    region_name: String,
-    variables: IndexMap<String, String>,
+    /// The speedrun.com Run ID of the run. You need to ensure that the record
+    /// on speedrun.com matches up with the Personal Best of this run. This may
+    /// be empty if there's no association.
+    pub run_id: String,
+    /// The name of the platform this game is run on. This may be empty if it's
+    /// not specified.
+    pub platform_name: String,
+    /// Specifies whether this speedrun is done on an emulator. Keep in mind
+    /// that `false` may also mean that this information is simply not known.
+    pub uses_emulator: bool,
+    /// The name of the region this game is from. This may be empty if it's not
+    /// specified.
+    pub region_name: String,
+    /// Stores all the variables. A variable is an arbitrary key value pair
+    /// storing additional information about the category. An example of this
+    /// may be whether Amiibos are used in this category.
+    pub variables: IndexMap<String, String>,
 }
 
 impl RunMetadata {
@@ -89,10 +101,12 @@ impl RunMetadata {
         self.region_name.push_str(region_name.as_ref());
     }
 
-    /// Adds a new variable to this run metadata. A variable is an arbitrary key
-    /// value pair storing additional information about the category. An example
-    /// of this may be whether Amiibos are used in this category.
-    pub fn add_variable<N, V>(&mut self, name: N, value: V)
+    /// Sets the variable with the name specified to the value specified. A
+    /// variable is an arbitrary key value pair storing additional information
+    /// about the category. An example of this may be whether Amiibos are used
+    /// in this category. If the variable doesn't exist yet, it is being
+    /// inserted.
+    pub fn set_variable<N, V>(&mut self, name: N, value: V)
     where
         N: Into<String>,
         V: Into<String>,
@@ -100,9 +114,26 @@ impl RunMetadata {
         self.variables.insert(name.into(), value.into());
     }
 
+    /// Removes the variable with the name specified.
+    pub fn remove_variable<S>(&mut self, name: S)
+    where
+        S: AsRef<str>,
+    {
+        self.variables.remove(name.as_ref());
+    }
+
     /// Returns an iterator iterating over all the variables and their values
     /// that have been specified.
     pub fn variables(&self) -> Iter<String, String> {
         self.variables.iter()
+    }
+
+    /// Resets all the Metadata Information.
+    pub fn clear(&mut self) {
+        self.run_id.clear();
+        self.platform_name.clear();
+        self.region_name.clear();
+        self.uses_emulator = false;
+        self.variables.clear();
     }
 }
