@@ -280,6 +280,17 @@ impl Editor {
         self.run.custom_comparisons()
     }
 
+    /// Sets the speedrun.com Run ID of the run. You need to ensure that the
+    /// record on speedrun.com matches up with the Personal Best of this run.
+    /// This may be empty if there's no association.
+    pub fn set_run_id<S>(&mut self, id: S)
+    where
+        S: AsRef<str>,
+    {
+        self.run.metadata_mut().set_run_id(id);
+        self.raise_run_edited();
+    }
+
     /// Sets the name of the region this game is from. This may be empty if it's
     /// not specified.
     pub fn set_region_name<S>(&mut self, name: S)

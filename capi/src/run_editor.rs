@@ -129,6 +129,14 @@ pub extern "C" fn RunEditor_remove_game_icon(this: &mut RunEditor) {
     this.remove_game_icon();
 }
 
+/// Sets the speedrun.com Run ID of the run. You need to ensure that the
+/// record on speedrun.com matches up with the Personal Best of this run.
+/// This may be empty if there's no association.
+#[no_mangle]
+pub unsafe extern "C" fn RunEditor_set_run_id(this: &mut RunEditor, name: *const c_char) {
+    this.set_run_id(str(name));
+}
+
 /// Sets the name of the region this game is from. This may be empty if it's
 /// not specified.
 #[no_mangle]
