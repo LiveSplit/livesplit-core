@@ -122,6 +122,14 @@ pub extern "C" fn Timer_reset(this: &mut Timer, update_splits: bool) {
     this.reset(update_splits);
 }
 
+/// Resets the current attempt if there is one in progress. The splits are
+/// updated such that the current attempt's split times are being stored as
+/// the new Personal Best.
+#[no_mangle]
+pub extern "C" fn Timer_reset_and_set_attempt_as_pb(this: &mut Timer) {
+    this.reset_and_set_attempt_as_pb();
+}
+
 /// Pauses an active attempt that is not paused.
 #[no_mangle]
 pub extern "C" fn Timer_pause(this: &mut Timer) {

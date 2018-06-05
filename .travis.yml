@@ -24,7 +24,7 @@ matrix:
     # - env: TARGET=thumbv7em-none-eabihf
 
     # Failing due to x32 compile errors
-    # parking_lot: Blocked on merge: https://github.com/Amanieu/parking_lot/pull/73
+    # parking_lot: Blocked on waiting for release https://crates.io/crates/parking_lot >0.5.5
     # - env: TARGET=x86_64-unknown-linux-gnux32
 
     # Web

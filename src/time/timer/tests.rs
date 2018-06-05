@@ -1,5 +1,6 @@
 use run::Editor;
-use {Run, Segment, TimeSpan, Timer, TimingMethod};
+use tests_helper::{run_with_splits, run_with_splits_opt, start_run};
+use {Run, Segment, TimeSpan, Timer, TimerPhase, TimingMethod};
 
 fn run() -> Run {
     let mut run = Run::new();
@@ -12,30 +13,26 @@ fn run() -> Run {
 }
 
 fn timer() -> Timer {
-    let mut timer = Timer::new(run()).unwrap();
-
-    timer.start();
-    timer.initialize_game_time();
-    timer.pause_game_time();
-
-    timer
+    Timer::new(run()).unwrap()
 }
 
 #[test]
 fn monotically_increasing_split_times_after_resetting() {
     let mut timer = timer();
 
-    let first = TimeSpan::from_seconds(5.0);
-    timer.set_game_time(first);
-    timer.split();
-
-    let second = TimeSpan::from_seconds(15.0);
-    timer.set_game_time(second);
-    timer.split();
-
-    let third = TimeSpan::from_seconds(10.0);
-    timer.set_game_time(third);
-    timer.split();
+    let (first, second, third) = (
+        TimeSpan::from_seconds(5.0),
+        TimeSpan::from_seconds(15.0),
+        TimeSpan::from_seconds(10.0),
+    );
+    run_with_splits(
+        &mut timer,
+        &[
+            first.total_seconds(),
+            second.total_seconds(),
+            third.total_seconds(),
+        ],
+    );
 
     let run = timer.into_run(true);
 
@@ -64,17 +61,19 @@ fn monotically_increasing_split_times_after_resetting() {
 fn deleting_best_segment_time_clears_segment_history() {
     let mut timer = timer();
 
-    let first = TimeSpan::from_seconds(5.0);
-    timer.set_game_time(first);
-    timer.split();
-
-    let second = TimeSpan::from_seconds(10.0);
-    timer.set_game_time(second);
-    timer.split();
-
-    let third = TimeSpan::from_seconds(15.0);
-    timer.set_game_time(third);
-    timer.split();
+    let (first, second, third) = (
+        TimeSpan::from_seconds(5.0),
+        TimeSpan::from_seconds(10.0),
+        TimeSpan::from_seconds(15.0),
+    );
+    run_with_splits(
+        &mut timer,
+        &[
+            first.total_seconds(),
+            second.total_seconds(),
+            third.total_seconds(),
+        ],
+    );
 
     let run = timer.into_run(true);
     let run2 = run.clone();
@@ -131,17 +130,19 @@ fn deleting_best_segment_time_clears_segment_history() {
 fn modifying_best_segment_time_fixes_segment_history() {
     let mut timer = timer();
 
-    let first = TimeSpan::from_seconds(5.0);
-    timer.set_game_time(first);
-    timer.split();
-
-    let second = TimeSpan::from_seconds(10.0);
-    timer.set_game_time(second);
-    timer.split();
-
-    let third = TimeSpan::from_seconds(15.0);
-    timer.set_game_time(third);
-    timer.split();
+    let (first, second, third) = (
+        TimeSpan::from_seconds(5.0),
+        TimeSpan::from_seconds(10.0),
+        TimeSpan::from_seconds(15.0),
+    );
+    run_with_splits(
+        &mut timer,
+        &[
+            first.total_seconds(),
+            second.total_seconds(),
+            third.total_seconds(),
+        ],
+    );
 
     let run = timer.into_run(true);
     let run2 = run.clone();
@@ -233,23 +234,19 @@ fn import_pb_into_segment_history() {
     let run = editor.close();
     let mut timer = Timer::new(run).unwrap();
 
-    timer.start();
-    timer.initialize_game_time();
-    timer.pause_game_time();
-
-    let real_first = TimeSpan::from_seconds(4.0);
-    timer.set_game_time(real_first);
-    timer.split();
-
-    let real_second = TimeSpan::from_seconds(9.0);
-    timer.set_game_time(real_second);
-    timer.split();
-
-    let real_third = TimeSpan::from_seconds(13.0);
-    timer.set_game_time(real_third);
-    timer.split();
-
-    timer.reset(true);
+    let (real_first, real_second, real_third) = (
+        TimeSpan::from_seconds(4.0),
+        TimeSpan::from_seconds(9.0),
+        TimeSpan::from_seconds(13.0),
+    );
+    run_with_splits(
+        &mut timer,
+        &[
+            real_first.total_seconds(),
+            real_second.total_seconds(),
+            real_third.total_seconds(),
+        ],
+    );
 
     let run = timer.run();
 
@@ -324,21 +321,15 @@ fn import_pb_into_segment_history_and_remove_null_values() {
     let run = editor.close();
     let mut timer = Timer::new(run).unwrap();
 
-    timer.start();
-    timer.initialize_game_time();
-    timer.pause_game_time();
-
-    let real_first = TimeSpan::from_seconds(4.0);
-    timer.set_game_time(real_first);
-    timer.split();
-
-    timer.skip_split();
-
-    let real_third = TimeSpan::from_seconds(14.0);
-    timer.set_game_time(real_third);
-    timer.split();
-
-    timer.reset(true);
+    let (real_first, real_third) = (TimeSpan::from_seconds(4.0), TimeSpan::from_seconds(14.0));
+    run_with_splits_opt(
+        &mut timer,
+        &[
+            Some(real_first.total_seconds()),
+            None,
+            Some(real_third.total_seconds()),
+        ],
+    );
 
     let run = timer.run();
 
@@ -397,8 +388,7 @@ fn import_best_segment_with_game_time_usage() {
     let mut timer = timer();
 
     let first = TimeSpan::from_seconds(5.0);
-    timer.set_game_time(first);
-    timer.split();
+    run_with_splits(&mut timer, &[first.total_seconds()]);
 
     let run = timer.into_run(true);
     let mut editor = Editor::new(run).unwrap();
@@ -435,20 +425,19 @@ fn clears_run_id_when_pbing() {
     let mut timer = timer();
 
     // Get a PB
-
-    timer.set_current_timing_method(TimingMethod::GameTime);
-
-    let first = TimeSpan::from_seconds(5.0);
-    timer.set_game_time(first);
-    timer.split();
-
-    let second = TimeSpan::from_seconds(10.0);
-    timer.set_game_time(second);
-    timer.split();
-
-    let third = TimeSpan::from_seconds(15.0);
-    timer.set_game_time(third);
-    timer.split();
+    let (first, second, third) = (
+        TimeSpan::from_seconds(5.0),
+        TimeSpan::from_seconds(10.0),
+        TimeSpan::from_seconds(15.0),
+    );
+    run_with_splits(
+        &mut timer,
+        &[
+            first.total_seconds(),
+            second.total_seconds(),
+            third.total_seconds(),
+        ],
+    );
 
     let mut run = timer.into_run(true);
 
@@ -461,47 +450,134 @@ fn clears_run_id_when_pbing() {
     // Do a new run, but this time don't pb. Run ID should be the same.
 
     let mut timer = Timer::new(run).unwrap();
-    timer.set_current_timing_method(TimingMethod::GameTime);
 
-    timer.start();
-    timer.initialize_game_time();
-    timer.pause_game_time();
-
-    let first = TimeSpan::from_seconds(6.0);
-    timer.set_game_time(first);
-    timer.split();
-
-    let second = TimeSpan::from_seconds(11.0);
-    timer.set_game_time(second);
-    timer.split();
-
-    let third = TimeSpan::from_seconds(16.0);
-    timer.set_game_time(third);
-    timer.split();
-
-    timer.reset(true);
+    let (first, second, third) = (
+        TimeSpan::from_seconds(6.0),
+        TimeSpan::from_seconds(11.0),
+        TimeSpan::from_seconds(16.0),
+    );
+    run_with_splits(
+        &mut timer,
+        &[
+            first.total_seconds(),
+            second.total_seconds(),
+            third.total_seconds(),
+        ],
+    );
 
     assert_eq!(timer.run().metadata().run_id(), "34567");
 
     // Do a new run and PB. Run ID should be cleared.
 
-    timer.start();
-    timer.initialize_game_time();
-    timer.pause_game_time();
-
-    let first = TimeSpan::from_seconds(4.0);
-    timer.set_game_time(first);
-    timer.split();
-
-    let second = TimeSpan::from_seconds(9.0);
-    timer.set_game_time(second);
-    timer.split();
-
-    let third = TimeSpan::from_seconds(14.0);
-    timer.set_game_time(third);
-    timer.split();
+    let (first, second, third) = (
+        TimeSpan::from_seconds(4.0),
+        TimeSpan::from_seconds(9.0),
+        TimeSpan::from_seconds(14.0),
+    );
+    run_with_splits(
+        &mut timer,
+        &[
+            first.total_seconds(),
+            second.total_seconds(),
+            third.total_seconds(),
+        ],
+    );
 
     timer.reset(true);
 
     assert_eq!(timer.run().metadata().run_id(), "");
+}
+
+#[test]
+fn reset_and_set_attempt_as_pb() {
+    let mut timer = timer();
+
+    // Call it for the phase NotRunning
+    assert_eq!(timer.current_phase(), TimerPhase::NotRunning);
+    timer.reset_and_set_attempt_as_pb();
+    for segment in timer.run().segments() {
+        assert_eq!(segment.personal_best_split_time().game_time, None);
+    }
+
+    // Call it for the phase Running, but don't do any splits yet
+    start_run(&mut timer);
+    assert_eq!(timer.current_phase(), TimerPhase::Running);
+    timer.reset_and_set_attempt_as_pb();
+    assert_eq!(timer.current_phase(), TimerPhase::NotRunning);
+    for segment in timer.run().segments() {
+        assert_eq!(segment.personal_best_split_time().game_time, None);
+    }
+
+    // Call it for the phase Paused, but don't do any splits yet
+    start_run(&mut timer);
+    timer.pause();
+    assert_eq!(timer.current_phase(), TimerPhase::Paused);
+    timer.reset_and_set_attempt_as_pb();
+    assert_eq!(timer.current_phase(), TimerPhase::NotRunning);
+    for segment in timer.run().segments() {
+        assert_eq!(segment.personal_best_split_time().game_time, None);
+    }
+
+    // Call it for the phase Running, this time with splits
+    start_run(&mut timer);
+    let first = TimeSpan::from_seconds(1.0);
+    timer.set_game_time(first);
+    timer.split();
+    let second = TimeSpan::from_seconds(2.0);
+    timer.set_game_time(second);
+    timer.split();
+    assert_eq!(timer.current_phase(), TimerPhase::Running);
+    timer.reset_and_set_attempt_as_pb();
+    assert_eq!(
+        timer.run().segment(0).personal_best_split_time().game_time,
+        Some(first)
+    );
+    assert_eq!(
+        timer.run().segment(1).personal_best_split_time().game_time,
+        Some(second)
+    );
+    assert_eq!(
+        timer.run().segment(2).personal_best_split_time().game_time,
+        None
+    );
+
+    // Call it for the phase Ended
+    start_run(&mut timer);
+    let first = TimeSpan::from_seconds(4.0);
+    timer.set_game_time(first);
+    timer.split();
+    let second = TimeSpan::from_seconds(5.0);
+    timer.set_game_time(second);
+    timer.split();
+    let third = TimeSpan::from_seconds(6.0);
+    timer.set_game_time(third);
+    timer.split();
+    assert_eq!(timer.current_phase(), TimerPhase::Ended);
+    timer.reset_and_set_attempt_as_pb();
+    assert_eq!(
+        timer.run().segment(0).personal_best_split_time().game_time,
+        Some(first)
+    );
+    assert_eq!(
+        timer.run().segment(1).personal_best_split_time().game_time,
+        Some(second)
+    );
+    assert_eq!(
+        timer.run().segment(2).personal_best_split_time().game_time,
+        Some(third)
+    );
+
+    // Verify that the last one got inserted as a finished run into the attempt
+    // history.
+    let mut attempt_history = timer.run().attempt_history().iter().rev();
+    let attempt = attempt_history.next().unwrap();
+    assert_eq!(attempt.time().game_time, Some(third));
+    // Ended can't ever be before the started date time. This used to happen
+    // with the old logic: https://github.com/LiveSplit/LiveSplit/issues/1077
+    assert!(attempt.ended().unwrap().time >= attempt.started().unwrap().time);
+
+    // The attempt before was reset early, so it's supposed to be unfinished.
+    let attempt = attempt_history.next().unwrap();
+    assert_eq!(attempt.time().game_time, None);
+    assert!(attempt.ended().unwrap().time >= attempt.started().unwrap().time);
 }

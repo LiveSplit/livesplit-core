@@ -78,6 +78,8 @@ mod image;
 pub mod layout;
 pub mod run;
 pub mod settings;
+#[cfg(test)]
+mod tests_helper;
 pub mod time;
 
 pub use self::hotkey_config::HotkeyConfig;

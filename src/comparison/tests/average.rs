@@ -1,5 +1,5 @@
-use super::run_with_splits;
 use comparison::average_segments::{AverageSegments, NAME};
+use tests_helper::run_with_splits;
 use {Run, Segment, TimeSpan, Timer};
 
 #[test]

@@ -312,22 +312,34 @@ impl Timer {
     /// discarded.
     pub fn reset(&mut self, update_splits: bool) {
         if self.phase != NotRunning {
-            if self.phase != Ended {
-                self.attempt_ended = Some(AtomicDateTime::now());
-            }
-            self.resume_game_time();
-            self.set_loading_times(TimeSpan::zero());
-
-            if update_splits {
-                self.update_attempt_history();
-                self.update_best_segments();
-                self.update_pb_splits();
-                self.update_segment_history();
-            }
-
+            self.reset_state(update_splits);
             self.reset_splits();
-            self.run.fix_splits();
-            self.run.regenerate_comparisons();
+        }
+    }
+
+    /// Resets the current attempt if there is one in progress. The splits are
+    /// updated such that the current attempt's split times are being stored as
+    /// the new Personal Best.
+    pub fn reset_and_set_attempt_as_pb(&mut self) {
+        if self.phase != NotRunning {
+            self.reset_state(true);
+            self.set_run_as_pb();
+            self.reset_splits();
+        }
+    }
+
+    fn reset_state(&mut self, update_times: bool) {
+        if self.phase != Ended {
+            self.attempt_ended = Some(AtomicDateTime::now());
+        }
+        self.resume_game_time();
+        self.set_loading_times(TimeSpan::zero());
+
+        if update_times {
+            self.update_attempt_history();
+            self.update_best_segments();
+            self.update_pb_splits();
+            self.update_segment_history();
         }
     }
 
@@ -341,6 +353,9 @@ impl Timer {
         }
 
         // TODO OnReset
+
+        self.run.fix_splits();
+        self.run.regenerate_comparisons();
     }
 
     /// Pauses an active attempt that is not paused.
