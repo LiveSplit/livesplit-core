@@ -11,6 +11,7 @@ use std::ffi::CStr;
 use std::os::raw::c_char;
 use std::ptr;
 
+pub mod analysis;
 pub mod atomic_date_time;
 pub mod attempt;
 pub mod blank_space_component;
