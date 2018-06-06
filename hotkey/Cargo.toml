@@ -26,4 +26,4 @@ stdweb = "0.3.0"
 parking_lot = "0.5.3"
 
 [dependencies]
-quick-error = "1.2.0"
+quick-error = "1.2.2"
