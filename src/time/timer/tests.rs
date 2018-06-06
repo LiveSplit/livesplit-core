@@ -567,6 +567,34 @@ fn reset_and_set_attempt_as_pb() {
         Some(third)
     );
 
+    let old_third = third;
+
+    // Call it for the phase Ended, this time with slower splits
+    start_run(&mut timer);
+    let first = TimeSpan::from_seconds(14.0);
+    timer.set_game_time(first);
+    timer.split();
+    let second = TimeSpan::from_seconds(15.0);
+    timer.set_game_time(second);
+    timer.split();
+    let third = TimeSpan::from_seconds(16.0);
+    timer.set_game_time(third);
+    timer.split();
+    assert_eq!(timer.current_phase(), TimerPhase::Ended);
+    timer.reset_and_set_attempt_as_pb();
+    assert_eq!(
+        timer.run().segment(0).personal_best_split_time().game_time,
+        Some(first)
+    );
+    assert_eq!(
+        timer.run().segment(1).personal_best_split_time().game_time,
+        Some(second)
+    );
+    assert_eq!(
+        timer.run().segment(2).personal_best_split_time().game_time,
+        Some(third)
+    );
+
     // Verify that the last one got inserted as a finished run into the attempt
     // history.
     let mut attempt_history = timer.run().attempt_history().iter().rev();
@@ -574,6 +602,11 @@ fn reset_and_set_attempt_as_pb() {
     assert_eq!(attempt.time().game_time, Some(third));
     // Ended can't ever be before the started date time. This used to happen
     // with the old logic: https://github.com/LiveSplit/LiveSplit/issues/1077
+    assert!(attempt.ended().unwrap().time >= attempt.started().unwrap().time);
+
+    // The attempt before is pretty similar.
+    let attempt = attempt_history.next().unwrap();
+    assert_eq!(attempt.time().game_time, Some(old_third));
     assert!(attempt.ended().unwrap().time >= attempt.started().unwrap().time);
 
     // The attempt before was reset early, so it's supposed to be unfinished.
