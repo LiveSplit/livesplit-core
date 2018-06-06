@@ -21,7 +21,7 @@ impl Color {
     /// Alpha (HSLA) for it.
     pub fn hsla(hue: f32, saturation: f32, lightness: f32, alpha: f32) -> Self {
         Self {
-            rgba: Hsla::new(hue.into(), saturation, lightness, alpha).into(),
+            rgba: Hsla::new(hue, saturation, lightness, alpha).into(),
         }
     }
 }
@@ -29,7 +29,7 @@ impl Color {
 impl From<[f32; 4]> for Color {
     fn from(rgba: [f32; 4]) -> Self {
         Self {
-            rgba: LinSrgba::from_pixel(&rgba),
+            rgba: LinSrgba::from_components((rgba[0], rgba[1], rgba[2], rgba[3])),
         }
     }
 }
@@ -37,7 +37,7 @@ impl From<[f32; 4]> for Color {
 impl From<(f32, f32, f32, f32)> for Color {
     fn from(rgba: (f32, f32, f32, f32)) -> Self {
         Self {
-            rgba: LinSrgba::from_pixel(&rgba),
+            rgba: LinSrgba::from_components(rgba),
         }
     }
 }
@@ -47,7 +47,8 @@ impl Serialize for Color {
     where
         S: Serializer,
     {
-        let rgba: [f32; 4] = self.rgba.into_pixel();
+        let (r, g, b, a) = self.rgba.into_components();
+        let rgba: [f32; 4] = [r, g, b, a];
         rgba.serialize(serializer)
     }
 }

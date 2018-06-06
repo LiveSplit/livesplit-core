@@ -4,7 +4,7 @@ name = "bindings"
 version = "0.1.0"
 
 [dependencies]
-heck = "0.2.1"
-structopt = "0.1.0"
-structopt-derive = "0.1.0"
-syn = { version = "0.12.10", default-features = false, features = ["parsing", "full", "printing"] }
+heck = "0.3.0"
+structopt = "0.2.9"
+structopt-derive = "0.2.9"
+syn = { version = "0.14.2", default-features = false, features = ["parsing", "full", "printing"] }

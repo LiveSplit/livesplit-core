@@ -37,9 +37,9 @@ indexmap = { version = "1.0.1", default-features = false, features = ["serde-1"]
 livesplit-hotkey = { path = "hotkey", version = "0.3.0" }
 odds = { version = "0.3.1", features = ["std-vec"], default-features = false }
 ordered-float = "0.5.0"
-palette = { version = "0.3.0", default-features = false }
+palette = { version = "0.4.0", default-features = false }
 parking_lot = { version = "0.5.3", default-features = false }
-quick-error = "1.2.0"
+quick-error = "1.2.2"
 quick-xml = "0.12.1"
 serde = "1.0.55"
 serde_derive = "1.0.55"

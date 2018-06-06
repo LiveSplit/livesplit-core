@@ -4,7 +4,7 @@
 //! current attempt is doing compared to the chosen comparison.
 
 use analysis::split_color;
-use palette::rgb::Rgb;
+use palette::rgb::LinSrgb;
 use palette::Hsv;
 use serde_json::{to_writer, Result};
 use settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
@@ -242,8 +242,8 @@ pub fn top_and_bottom_color(color: Color) -> (Color, Color) {
     let v = hsv.value as f64;
     let a = color.rgba.alpha;
 
-    let top_color = Rgb::from(Hsv::new(h.into(), 0.5 * s, (1.5 * v + 0.1).min(1.0)));
-    let bottom_color = Rgb::from(Hsv::new(h.into(), s, 0.8 * v));
+    let top_color = LinSrgb::from(Hsv::new(h, 0.5 * s, (1.5 * v + 0.1).min(1.0)));
+    let bottom_color = LinSrgb::from(Hsv::new(h, s, 0.8 * v));
 
     let top_color = Color::from((
         top_color.red as f32,

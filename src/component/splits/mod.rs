@@ -251,8 +251,7 @@ impl Component {
                 .zip(self.icon_ids.iter_mut())
                 .skip(skip_count)
                 .filter(|&((i, _), _)| {
-                    i - skip_count < take_count
-                        || (always_show_last_split && i + 1 == run.len())
+                    i - skip_count < take_count || (always_show_last_split && i + 1 == run.len())
                 })
                 .map(|((i, segment), icon_id)| {
                     let split = segment.split_time()[method];

@@ -172,9 +172,9 @@ fn main() {
                         Some(Meta::NameValue(v)) => Some(v),
                         _ => None,
                     })
-                    .filter(|m| m.ident.as_ref() == "doc")
+                    .filter(|m| m.ident.to_string() == "doc")
                     .filter_map(|m| match m.lit {
-                        Lit::Str(s) => Some(s.value()[3..].trim().to_string()),
+                        Lit::Str(s) => Some(s.value().trim().to_string()),
                         _ => None,
                     })
                     .collect::<Vec<_>>(),
@@ -201,7 +201,7 @@ fn main() {
                                 Meta::Word(w) => Some(w),
                                 _ => None,
                             })
-                            .any(|w| w.as_ref() == "no_mangle")
+                            .any(|w| w.to_string() == "no_mangle")
                     {
                         let comments = attrs
                             .iter()
@@ -209,9 +209,9 @@ fn main() {
                                 Some(Meta::NameValue(v)) => Some(v),
                                 _ => None,
                             })
-                            .filter(|m| m.ident.as_ref() == "doc")
+                            .filter(|m| m.ident.to_string() == "doc")
                             .filter_map(|m| match m.lit {
-                                Lit::Str(s) => Some(s.value()[3..].trim().to_string()),
+                                Lit::Str(s) => Some(s.value().trim().to_string()),
                                 _ => None,
                             })
                             .collect();
