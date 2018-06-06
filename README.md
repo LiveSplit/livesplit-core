@@ -5,6 +5,7 @@
 [![crates.io](https://img.shields.io/crates/v/livesplit-core.svg)](https://crates.io/crates/livesplit-core)
 [![npm](https://img.shields.io/npm/v/livesplit-core.svg)](https://www.npmjs.com/package/livesplit-core)
 [![docs.rs](https://docs.rs/livesplit-core/badge.svg)](https://docs.rs/livesplit-core/)
+[![dependency status](https://deps.rs/repo/github/LiveSplit/livesplit-core/status.svg)](https://deps.rs/repo/github/LiveSplit/livesplit-core)
 
 livesplit-core is a library that provides a lot of functionality for creating a speedrun timer.
 It can be used directly from Rust.
