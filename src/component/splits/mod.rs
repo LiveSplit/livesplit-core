@@ -15,6 +15,9 @@ use time::formatter::none_wrapper::{DashWrapper, EmptyWrapper};
 use time::formatter::{Delta, Regular, TimeFormatter};
 use {analysis, GeneralLayoutSettings, Timer};
 
+#[cfg(test)]
+mod tests;
+
 /// The Splits Component is the main component for visualizing all the split
 /// times. Each segment is shown in a tabular fashion showing the segment icon,
 /// segment name, the delta compared to the chosen comparison, and the split
@@ -198,7 +201,13 @@ impl Component {
             self.scroll_offset = 0;
         }
 
-        self.icon_ids.resize(timer.run().len(), 0);
+        let run = timer.run();
+        self.icon_ids.resize(run.len(), 0);
+
+        let mut visual_split_count = self.settings.visual_split_count;
+        if visual_split_count == 0 {
+            visual_split_count = run.len();
+        }
 
         let current_split = timer.current_split_index();
         let method = timer.current_timing_method();
@@ -212,32 +221,30 @@ impl Component {
         let skip_count = min(
             current_split.map_or(0, |c_s| {
                 c_s.saturating_sub(
-                    self.settings
-                        .visual_split_count
+                    visual_split_count
                         .saturating_sub(2)
                         .saturating_sub(self.settings.split_preview_count)
                         .saturating_add(always_show_last_split),
                 ) as isize
             }),
-            timer.run().len() as isize - self.settings.visual_split_count as isize,
+            run.len() as isize - visual_split_count as isize,
         );
         self.scroll_offset = min(
             max(self.scroll_offset, -skip_count),
-            timer.run().len() as isize - skip_count - self.settings.visual_split_count as isize,
+            run.len() as isize - skip_count - visual_split_count as isize,
         );
         let skip_count = max(0, skip_count + self.scroll_offset) as usize;
-        let take_count = self.settings.visual_split_count + always_show_last_split as usize - 1;
+        let take_count = visual_split_count + always_show_last_split as usize - 1;
         let always_show_last_split = self.settings.always_show_last_split;
 
         let show_final_separator = self.settings.separator_last_split
             && always_show_last_split
-            && skip_count + take_count + 1 < timer.run().len();
+            && skip_count + take_count + 1 < run.len();
 
         let mut icon_changes = Vec::new();
 
         State {
-            splits: timer
-                .run()
+            splits: run
                 .segments()
                 .iter()
                 .enumerate()
@@ -245,7 +252,7 @@ impl Component {
                 .skip(skip_count)
                 .filter(|&((i, _), _)| {
                     i - skip_count < take_count
-                        || (always_show_last_split && i + 1 == timer.run().len())
+                        || (always_show_last_split && i + 1 == run.len())
                 })
                 .map(|((i, segment), icon_id)| {
                     let split = segment.split_time()[method];
