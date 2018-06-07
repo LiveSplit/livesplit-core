@@ -250,7 +250,7 @@ pub fn save_run<W: Write>(run: &Run, writer: W) -> Result<()> {
 
     writer.write_event(Event::Decl(BytesDecl::new(b"1.0", Some(b"UTF-8"), None)))?;
     writer.write_event(Event::Start(BytesStart::borrowed(
-        br#"Run version="1.7.0""#,
+        br#"Run version="1.7.1""#,
         3,
     )))?;
 

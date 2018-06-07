@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Run version="1.7.0">
+  <GameIcon />
+  <GameName>SMR: Axeil Edition</GameName>
+  <CategoryName>Crocomire%</CategoryName>
+  <Metadata>
+    <Run id="" />
+    <Platform usesEmulator="False">
+    </Platform>
+    <Region>
+    </Region>
+    <Variables />
+  </Metadata>
+  <Offset>00:00:00</Offset>
+  <AttemptCount>87</AttemptCount>
+  <AttemptHistory>
+    <Attempt id="42" started="04/18/2018 22:44:20" isStartedSynced="True" ended="01/01/0001 06:00:00" isEndedSynced="False">
+      <PauseTime>00:37:15.6150000</PauseTime>
+    </Attempt>
+    <Attempt id="133" started="05/06/2018 23:58:45" isStartedSynced="True" ended="05/06/2018 23:59:08" isEndedSynced="True" />
+    <Attempt id="134" started="05/06/2018 23:59:13" isStartedSynced="True" ended="05/07/2018 00:01:20" isEndedSynced="True" />
+  </AttemptHistory>
+  <Segments>
+    <Segment><Name>Hi</Name></Segment>
+  </Segments>
+  <AutoSplitterSettings />
+</Run>

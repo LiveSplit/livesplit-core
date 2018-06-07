@@ -5,7 +5,7 @@ mod parse {
         composite, livesplit, llanfair, llanfair2, llanfair_gered, portal2_live_timer,
         source_live_timer, splitterz, time_split_tracker, urn, worstrun, wsplit, TimerKind,
     };
-    use livesplit_core::Run;
+    use livesplit_core::{analysis::total_playtime, Run, TimeSpan};
     use std::fs::File;
     use std::io::{BufReader, Cursor};
 
@@ -60,6 +60,13 @@ mod parse {
     #[test]
     fn livesplit_1_6_gametime() {
         livesplit("tests/run_files/livesplit1.6_gametime.lss");
+    }
+
+    #[test]
+    fn livesplit_attempt_ended_bug() {
+        let run = livesplit("tests/run_files/livesplit_attempt_ended_bug.lss");
+        let playtime = total_playtime::calculate(run);
+        assert!(playtime >= TimeSpan::zero());
     }
 
     #[test]

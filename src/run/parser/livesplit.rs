@@ -352,7 +352,13 @@ fn parse_attempt_history<R: BufRead>(
             })?;
 
             let started = started.map(|t| AtomicDateTime::new(t, started_synced));
-            let ended = ended.map(|t| AtomicDateTime::new(t, ended_synced));
+            let mut ended = ended.map(|t| AtomicDateTime::new(t, ended_synced));
+
+            if version <= Version(1, 7, 0, 0)
+                && catch! { ended?.time < started?.time }.unwrap_or(false)
+            {
+                ended = None;
+            }
 
             run.add_attempt_with_index(time, index, started, ended, pause_time);
 
