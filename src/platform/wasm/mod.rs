@@ -23,7 +23,15 @@ pub extern "C" fn round(mut var0: f64) -> f64 {
         if (var3 as u32 > 1074i32 as u32) as i32 != 0 {
             break 'label0;
         }
-        var4 = { let a = f64::from_bits(var0.to_bits() ^ 0x8000_0000_0000_0000); let b = var0; if (var2 < 0i64) as i32 != 0 { a } else { b } };
+        var4 = {
+            let a = f64::from_bits(var0.to_bits() ^ 0x8000_0000_0000_0000);
+            let b = var0;
+            if (var2 < 0i64) as i32 != 0 {
+                a
+            } else {
+                b
+            }
+        };
         'label1: loop {
             if (var3 as u32 > 1021i32 as u32) as i32 != 0 {
                 break 'label1;
@@ -33,7 +41,9 @@ pub extern "C" fn round(mut var0: f64) -> f64 {
         }
         'label2: loop {
             'label3: loop {
-                var5 = var4 + f64::from_bits(0x4330000000000000) + f64::from_bits(0xC330000000000000) - var4;
+                var5 = var4
+                    + f64::from_bits(0x4330000000000000)
+                    + f64::from_bits(0xC330000000000000) - var4;
                 if (var5 > f64::from_bits(0x3FE0000000000000)) as i32 ^ 1i32 != 0 {
                     break 'label3;
                 }
@@ -47,7 +57,15 @@ pub extern "C" fn round(mut var0: f64) -> f64 {
             var0 = var0 + f64::from_bits(0x3FF0000000000000);
             break;
         }
-        var0 = { let a = f64::from_bits(var0.to_bits() ^ 0x8000_0000_0000_0000); let b = var0; if (var2 < 0i64) as i32 != 0 { a } else { b } };
+        var0 = {
+            let a = f64::from_bits(var0.to_bits() ^ 0x8000_0000_0000_0000);
+            let b = var0;
+            if (var2 < 0i64) as i32 != 0 {
+                a
+            } else {
+                b
+            }
+        };
         break;
     }
     var0
@@ -65,7 +83,15 @@ pub extern "C" fn roundf(mut var0: f32) -> f32 {
         if (var3 as u32 > 149i32 as u32) as i32 != 0 {
             break 'label0;
         }
-        var4 = { let a = f32::from_bits(var0.to_bits() ^ 0x8000_0000); let b = var0; if (var2 < 0i32) as i32 != 0 { a } else { b } };
+        var4 = {
+            let a = f32::from_bits(var0.to_bits() ^ 0x8000_0000);
+            let b = var0;
+            if (var2 < 0i32) as i32 != 0 {
+                a
+            } else {
+                b
+            }
+        };
         'label1: loop {
             if (var3 as u32 > 125i32 as u32) as i32 != 0 {
                 break 'label1;
@@ -89,7 +115,15 @@ pub extern "C" fn roundf(mut var0: f32) -> f32 {
             var0 = var0 + f32::from_bits(0x3F800000);
             break;
         }
-        var0 = { let a = f32::from_bits(var0.to_bits() ^ 0x8000_0000); let b = var0; if (var2 < 0i32) as i32 != 0 { a } else { b } };
+        var0 = {
+            let a = f32::from_bits(var0.to_bits() ^ 0x8000_0000);
+            let b = var0;
+            if (var2 < 0i32) as i32 != 0 {
+                a
+            } else {
+                b
+            }
+        };
         break;
     }
     var0
@@ -157,8 +191,7 @@ pub trait Flt:
     const C17D315: Self;
 }
 
-use std::{f32::{self as f, consts as fc},
-           f64::{self as d, consts as dc}};
+use std::f32::{self as f, consts as fc};
 
 impl Flt for f32 {
     const ZERO: Self = 0.0;
