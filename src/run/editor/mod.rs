@@ -298,7 +298,7 @@ impl Editor {
         S: AsRef<str>,
     {
         self.run.metadata_mut().set_region_name(name);
-        self.raise_run_edited();
+        self.metadata_modified();
     }
 
     /// Sets the name of the platform this game is run on. This may be empty if
@@ -308,14 +308,14 @@ impl Editor {
         S: AsRef<str>,
     {
         self.run.metadata_mut().set_platform_name(name);
-        self.raise_run_edited();
+        self.metadata_modified();
     }
 
     /// Specifies whether this speedrun is done on an emulator. Keep in mind
     /// that `false` may also mean that this information is simply not known.
     pub fn set_emulator_usage(&mut self, uses_emulator: bool) {
         self.run.metadata_mut().set_emulator_usage(uses_emulator);
-        self.raise_run_edited();
+        self.metadata_modified();
     }
 
     /// Sets the variable with the name specified to the value specified. A
@@ -329,7 +329,7 @@ impl Editor {
         V: Into<String>,
     {
         self.run.metadata_mut().set_variable(name, value);
-        self.raise_run_edited();
+        self.metadata_modified();
     }
 
     /// Removes the variable with the name specified.
@@ -338,12 +338,17 @@ impl Editor {
         S: AsRef<str>,
     {
         self.run.metadata_mut().remove_variable(name);
-        self.raise_run_edited();
+        self.metadata_modified();
     }
 
     /// Resets all the Metadata Information.
     pub fn clear_metadata(&mut self) {
         self.run.metadata_mut().clear();
+        self.raise_run_edited();
+    }
+
+    fn metadata_modified(&mut self) {
+        self.run.clear_run_id();
         self.raise_run_edited();
     }
 
@@ -354,12 +359,12 @@ impl Editor {
             .last()
             .unwrap()
             .personal_best_split_time();
-        if pb_split_time.real_time != self.previous_personal_best_time.real_time
-            || pb_split_time.game_time != self.previous_personal_best_time.game_time
-        {
+
+        if pb_split_time != self.previous_personal_best_time {
             self.run.clear_run_id();
             self.previous_personal_best_time = pb_split_time;
         }
+
         self.raise_run_edited();
     }
 
@@ -419,6 +424,7 @@ impl Editor {
 
         self.select_only(active_segment);
 
+        self.times_modified();
         self.fix();
     }
 
@@ -443,6 +449,7 @@ impl Editor {
 
         self.select_only(next_segment);
 
+        self.times_modified();
         self.fix();
     }
 
@@ -555,6 +562,7 @@ impl Editor {
         self.selected_segments.clear();
         self.selected_segments.push(new_index);
 
+        self.times_modified();
         self.fix();
     }
 
@@ -625,6 +633,7 @@ impl Editor {
             *segment = segment.saturating_sub(1);
         }
 
+        self.times_modified();
         self.fix();
     }
 
@@ -655,6 +664,7 @@ impl Editor {
             }
         }
 
+        self.times_modified();
         self.fix();
     }
 

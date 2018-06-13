@@ -1,6 +1,8 @@
 use super::Editor;
 use {Run, Segment, Time, TimeSpan};
 
+mod dissociate_run;
+
 #[test]
 fn new_best_segment() {
     let mut run = Run::new();
