@@ -135,7 +135,7 @@ impl<'r> SumOfBestCleaner<'r> {
             .segment_history_mut()
             .remove(clean_up.run_index);
 
-        self.run.mark_as_changed();
+        self.run.mark_as_modified();
     }
 
     /// Returns the next potential clean up. If there are no more potential

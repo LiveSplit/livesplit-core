@@ -31,7 +31,7 @@ pub struct Run {
     attempt_count: u32,
     attempt_history: Vec<Attempt>,
     metadata: RunMetadata,
-    has_changed: bool,
+    has_been_modified: bool,
     path: Option<PathBuf>,
     segments: Vec<Segment>,
     custom_comparisons: Vec<String>,
@@ -76,7 +76,7 @@ impl Run {
             attempt_count: 0,
             attempt_history: Vec::new(),
             metadata: RunMetadata::new(),
-            has_changed: false,
+            has_been_modified: false,
             path: None,
             segments: Vec::new(),
             custom_comparisons: vec![personal_best::NAME.to_string()],
@@ -177,7 +177,7 @@ impl Run {
     /// this is done automatically.
     pub fn start_next_run(&mut self) {
         self.attempt_count += 1;
-        self.has_changed = true;
+        self.has_been_modified = true;
     }
 
     /// Accesses the Segments of this Run object.
@@ -302,8 +302,22 @@ impl Run {
     /// Marks the Run as modified, so that it is known that there are changes
     /// that should be saved.
     #[inline]
-    pub fn mark_as_changed(&mut self) {
-        self.has_changed = true;
+    pub fn mark_as_modified(&mut self) {
+        self.has_been_modified = true;
+    }
+
+    /// Marks the Run as unmodified, so that it is known that all the changes
+    /// have been saved.
+    #[inline]
+    pub fn mark_as_unmodified(&mut self) {
+        self.has_been_modified = false;
+    }
+
+    /// Returns whether the Run has been modified and should be saved so that
+    /// the changes don't get lost.
+    #[inline]
+    pub fn has_been_modified(&self) -> bool {
+        self.has_been_modified
     }
 
     /// Adds a new Attempt to the Run's Attempt History. This is automatically

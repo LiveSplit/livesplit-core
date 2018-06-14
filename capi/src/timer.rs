@@ -285,6 +285,13 @@ pub extern "C" fn Timer_save_as_lss(this: &Timer) -> *const c_char {
     })
 }
 
+/// Marks the Run as unmodified, so that it is known that all the changes
+/// have been saved.
+#[no_mangle]
+pub extern "C" fn Timer_mark_as_unmodified(this: &mut Timer) {
+    this.mark_as_unmodified();
+}
+
 /// Prints out debug information representing the whole state of the Timer. This
 /// is being written to stdout.
 #[no_mangle]

@@ -9,9 +9,15 @@ fn base() -> Editor {
     let mut editor = Editor::new(run).unwrap();
 
     editor.select_only(0);
-    editor.active_segment().parse_and_set_split_time("1").unwrap();
+    editor
+        .active_segment()
+        .parse_and_set_split_time("1")
+        .unwrap();
     editor.select_only(1);
-    editor.active_segment().parse_and_set_split_time("2").unwrap();
+    editor
+        .active_segment()
+        .parse_and_set_split_time("2")
+        .unwrap();
     editor.set_run_id("somerunid");
 
     editor
@@ -49,7 +55,10 @@ fn not_when_changing_offset() {
 fn not_when_changing_first_segment() {
     let mut editor = base();
     editor.select_only(0);
-    editor.active_segment().parse_and_set_split_time("1:23").unwrap();
+    editor
+        .active_segment()
+        .parse_and_set_split_time("1:23")
+        .unwrap();
     assert_ne!(editor.run().metadata().run_id, "");
 }
 
@@ -57,7 +66,10 @@ fn not_when_changing_first_segment() {
 fn when_changing_last_segment() {
     let mut editor = base();
     editor.select_only(1);
-    editor.active_segment().parse_and_set_split_time("1:23").unwrap();
+    editor
+        .active_segment()
+        .parse_and_set_split_time("1:23")
+        .unwrap();
     assert_eq!(editor.run().metadata().run_id, "");
 }
 

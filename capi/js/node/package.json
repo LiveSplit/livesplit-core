@@ -11,7 +11,8 @@
   "files": [
     "README.md",
     "index.js",
-    "livesplit_core.js"
+    "livesplit_core.js",
+    "index.d.ts"
   ],
   "homepage": "https://github.com/LiveSplit/livesplit-core#readme",
   "keywords": [

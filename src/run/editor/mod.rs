@@ -177,7 +177,7 @@ impl Editor {
     }
 
     fn raise_run_edited(&mut self) {
-        self.run.mark_as_changed();
+        self.run.mark_as_modified();
     }
 
     /// Accesses the name of the game.
@@ -781,24 +781,28 @@ impl Editor {
     /// one of the indices is invalid. The indices are based on the
     /// `comparison_names` field of the Run Editor's `State`.
     pub fn move_comparison(&mut self, src_index: usize, dst_index: usize) -> Result<(), ()> {
-        let comparisons = self.run.custom_comparisons_mut();
-        let (src_index, dst_index) = (src_index + 1, dst_index + 1);
-        if src_index >= comparisons.len() || dst_index >= comparisons.len() {
-            return Err(());
-        }
-        if src_index == dst_index {
-            return Ok(());
-        }
+        // TODO Borrowcheck (comparisons isn't used after this block anymore. NLL
+        // should fix this)
+        {
+            let comparisons = self.run.custom_comparisons_mut();
+            let (src_index, dst_index) = (src_index + 1, dst_index + 1);
+            if src_index >= comparisons.len() || dst_index >= comparisons.len() {
+                return Err(());
+            }
+            if src_index == dst_index {
+                return Ok(());
+            }
 
-        if src_index > dst_index {
-            rotate_left(
-                &mut comparisons[dst_index..src_index + 1],
-                src_index - dst_index,
-            );
-        } else {
-            rotate_left(&mut comparisons[src_index..dst_index + 1], 1);
+            if src_index > dst_index {
+                rotate_left(
+                    &mut comparisons[dst_index..src_index + 1],
+                    src_index - dst_index,
+                );
+            } else {
+                rotate_left(&mut comparisons[src_index..dst_index + 1], 1);
+            }
         }
-
+        self.raise_run_edited();
         Ok(())
     }
 

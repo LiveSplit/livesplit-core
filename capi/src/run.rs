@@ -231,6 +231,20 @@ pub extern "C" fn Run_len(this: &Run) -> usize {
     this.len()
 }
 
+/// Marks the Run as modified, so that it is known that there are changes
+/// that should be saved.
+#[no_mangle]
+pub extern "C" fn Run_mark_as_modified(this: &mut Run) {
+    this.mark_as_modified();
+}
+
+/// Returns whether the Run has been modified and should be saved so that the
+/// changes don't get lost.
+#[no_mangle]
+pub extern "C" fn Run_has_been_modified(this: &Run) -> bool {
+    this.has_been_modified()
+}
+
 /// Accesses a certain segment of this Run. You may not provide an out of bounds
 /// index.
 #[no_mangle]

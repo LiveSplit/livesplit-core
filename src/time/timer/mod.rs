@@ -154,6 +154,13 @@ impl Timer {
         &self.run
     }
 
+    /// Marks the Run as unmodified, so that it is known that all the changes
+    /// have been saved.
+    #[inline]
+    pub fn mark_as_unmodified(&mut self) {
+        self.run.mark_as_unmodified();
+    }
+
     /// Returns the current Timer Phase.
     #[inline]
     pub fn current_phase(&self) -> TimerPhase {
@@ -260,7 +267,7 @@ impl Timer {
                 self.phase = Ended;
                 self.attempt_ended = Some(AtomicDateTime::now());
             }
-            self.run.mark_as_changed();
+            self.run.mark_as_modified();
 
             // TODO OnSplit
         }
@@ -284,7 +291,7 @@ impl Timer {
         {
             self.current_split_mut().unwrap().clear_split_time();
             self.current_split_index = self.current_split_index.map(|i| i + 1);
-            self.run.mark_as_changed();
+            self.run.mark_as_modified();
 
             // TODO OnSkipSplit
         }
@@ -300,7 +307,7 @@ impl Timer {
             }
             self.current_split_index = self.current_split_index.map(|i| i - 1);
             self.current_split_mut().unwrap().clear_split_time();
-            self.run.mark_as_changed();
+            self.run.mark_as_modified();
 
             // TODO OnUndoSplit
         }
