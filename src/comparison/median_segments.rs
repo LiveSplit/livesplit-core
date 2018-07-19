@@ -25,6 +25,9 @@ const WEIGHT: f64 = 0.75;
 fn generate(segments: &mut [Segment], medians: &mut Vec<(f64, f64)>, method: TimingMethod) {
     let mut accumulated = Some(TimeSpan::zero());
 
+    // TODO This may actually be possible to be fixed with a window like
+    // iterator.
+    #[allow(needless_range_loop)]
     for i in 0..segments.len() {
         // TODO Borrowcheck. if accumulated.is_some() is only necessary because
         // we can't assign to the outer variable otherwise.
@@ -52,7 +55,7 @@ fn generate(segments: &mut [Segment], medians: &mut Vec<(f64, f64)>, method: Tim
             } else {
                 medians.sort_unstable_by_key(|&(_, time)| OrderedFloat(time));
                 let mut total_weights = 0.0;
-                for &mut (ref mut weight, _) in medians.iter_mut() {
+                for (weight, _) in medians.iter_mut() {
                     *weight += total_weights;
                     total_weights = *weight;
                 }

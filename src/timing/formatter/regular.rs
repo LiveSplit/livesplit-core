@@ -36,7 +36,7 @@ impl Regular {
     /// Creates a new custom Regular Time Formatter where you can specify how
     /// many digits to show for the fractional part.
     pub fn with_accuracy(accuracy: Accuracy) -> Self {
-        Regular { accuracy: accuracy }
+        Regular { accuracy }
     }
 }
 

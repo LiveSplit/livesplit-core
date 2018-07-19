@@ -63,10 +63,7 @@ impl Component {
 
     /// Creates a new Blank Space Component with the given settings.
     pub fn with_settings(settings: Settings) -> Self {
-        Self {
-            settings,
-            ..Default::default()
-        }
+        Self { settings }
     }
 
     /// Accesses the settings of the component.
@@ -97,7 +94,7 @@ impl Component {
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new("Background".into(), self.settings.background.into()),
-            Field::new("Height".into(), (self.settings.height as u64).into()),
+            Field::new("Height".into(), u64::from(self.settings.height).into()),
         ])
     }
 

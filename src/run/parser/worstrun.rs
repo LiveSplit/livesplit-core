@@ -62,7 +62,7 @@ pub fn parse<R: Read>(source: R) -> Result<Run> {
     }
 
     if let Some(initial_delay) = splits.initial_delay {
-        run.set_offset(-TimeSpan::from_milliseconds(initial_delay as _));
+        run.set_offset(-TimeSpan::from_milliseconds(f64::from(initial_delay)));
     }
 
     // worstrun splits don't actually store the PB splits. Instead they store
@@ -74,7 +74,7 @@ pub fn parse<R: Read>(source: R) -> Result<Run> {
         catch! {
             let split_time = splits?.last()?.last_split?;
             if split_time > 0 {
-                attempt_time.real_time = Some(TimeSpan::from_milliseconds(split_time as _));
+                attempt_time.real_time = Some(TimeSpan::from_milliseconds(f64::from(split_time)));
             }
         };
     }
@@ -89,7 +89,7 @@ pub fn parse<R: Read>(source: R) -> Result<Run> {
             let mut attempt_time = Time::default();
             if let Some(split_time) = split.last_split {
                 if split_time > 0 {
-                    let split_time = TimeSpan::from_milliseconds(split_time as _);
+                    let split_time = TimeSpan::from_milliseconds(f64::from(split_time));
                     let segment_time = split_time - last_split_time;
                     last_split_time = split_time;
                     attempt_time.real_time = Some(split_time);
@@ -110,7 +110,7 @@ pub fn parse<R: Read>(source: R) -> Result<Run> {
         // Try the record time first.
         if let Some(record_time) = splits.record_time {
             if record_time > 0 {
-                pb_time = Some(TimeSpan::from_milliseconds(record_time as _));
+                pb_time = Some(TimeSpan::from_milliseconds(f64::from(record_time)));
             }
         }
         // Now try the attempt time of the last segment. Only store it if it's

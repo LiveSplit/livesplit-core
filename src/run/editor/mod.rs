@@ -4,11 +4,11 @@
 //! current state of the editor as state objects that can be visualized by any
 //! kind of User Interface.
 
-use super::run::{ComparisonError, ComparisonResult};
+use super::{ComparisonError, ComparisonResult};
 use odds::slice::rotate_left;
 use std::mem::swap;
 use std::num::ParseIntError;
-use time::ParseError as ParseTimeSpanError;
+use timing::ParseError as ParseTimeSpanError;
 use {comparison, unicase, Image, Run, Segment, Time, TimeSpan, TimingMethod};
 
 pub mod cleaning;
@@ -50,9 +50,9 @@ quick_error! {
     /// Error type for a failed Rename
     #[derive(PartialEq, Debug)]
     pub enum RenameError {
-        /// Old Comparison was not found durring rename.
+        /// Old Comparison was not found during rename.
         OldNameNotFound {}
-        /// Name was invalid
+        /// Name was invalid.
         InvalidName(err: ComparisonError) {
             from()
         }
@@ -85,7 +85,7 @@ impl Editor {
         let personal_best_time = run.segments().last().unwrap().personal_best_split_time();
 
         let mut editor = Self {
-            run: run,
+            run,
             selected_method: TimingMethod::RealTime,
             selected_segments: vec![0],
             previous_personal_best_time: personal_best_time,
@@ -353,8 +353,7 @@ impl Editor {
     }
 
     fn times_modified(&mut self) {
-        let pb_split_time = self
-            .run
+        let pb_split_time = self.run
             .segments()
             .last()
             .unwrap()
@@ -391,8 +390,7 @@ impl Editor {
     fn fix_splits_from_segments(&mut self) {
         let method = self.selected_method;
         let mut previous_time = Some(TimeSpan::zero());
-        for (segment_time, segment) in self
-            .segment_times
+        for (segment_time, segment) in self.segment_times
             .iter_mut()
             .zip(self.run.segments_mut().iter_mut())
         {
@@ -478,8 +476,7 @@ impl Editor {
                     for current_index in current_index..self.run.len() {
                         // Add the removed segment's history times to the next
                         // non None times
-                        if let Some(&mut Some(ref mut segment)) = self
-                            .run
+                        if let Some(Some(segment)) = self.run
                             .segment_mut(current_index)
                             .segment_history_mut()
                             .get_mut(run_index)
@@ -507,8 +504,7 @@ impl Editor {
         if let Some(mut min_best_segment) = min_best_segment {
             // Use any element in the history that has a lower time than this
             // sum
-            for time in self
-                .run
+            for time in self.run
                 .segment(current_index)
                 .segment_history()
                 .iter()
@@ -550,8 +546,7 @@ impl Editor {
         }
 
         let selected_segment = self.active_segment_index();
-        let above_count = self
-            .selected_segments
+        let above_count = self.selected_segments
             .iter()
             .filter(|&&i| i < selected_segment)
             .count();
@@ -699,7 +694,7 @@ impl Editor {
                 let new_start = if let Some((segment_index, my_segment)) = remaining_segments
                     .iter_mut()
                     .enumerate()
-                    .find(|&(_, ref s)| unicase::eq(segment.name(), s.name()))
+                    .find(|(_, s)| unicase::eq(segment.name(), s.name()))
                 {
                     *my_segment.comparison_mut(&comparison) = segment.personal_best_split_time();
                     segment_index + 1
@@ -754,8 +749,7 @@ impl Editor {
         self.run.validate_comparison_name(new)?;
 
         {
-            let comparison_name = self
-                .run
+            let comparison_name = self.run
                 .custom_comparisons_mut()
                 .iter_mut()
                 .find(|c| *c == old)

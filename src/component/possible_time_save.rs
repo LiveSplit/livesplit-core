@@ -11,7 +11,7 @@ use settings::{Color, Field, Gradient, SettingsDescription, Value};
 use std::borrow::Cow;
 use std::fmt::Write as FmtWrite;
 use std::io::Write;
-use time::formatter::{Accuracy, PossibleTimeSave, TimeFormatter};
+use timing::formatter::{Accuracy, PossibleTimeSave, TimeFormatter};
 use {comparison, Timer, TimerPhase};
 
 /// The Possible Time Save Component is a component that shows how much time the
@@ -94,10 +94,7 @@ impl Component {
 
     /// Creates a new Possible Time Save Component with the given settings.
     pub fn with_settings(settings: Settings) -> Self {
-        Self {
-            settings,
-            ..Default::default()
-        }
+        Self { settings }
     }
 
     /// Accesses the settings of the component.

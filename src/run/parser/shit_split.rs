@@ -3,7 +3,7 @@
 use std::io::{self, BufRead};
 use std::num::ParseIntError;
 use std::result::Result as StdResult;
-use {time, GameTime, Run, Segment, TimeSpan};
+use {timing, GameTime, Run, Segment, TimeSpan};
 
 quick_error! {
     /// The Error type for splits files that couldn't be parsed by the ShitSplit
@@ -25,7 +25,7 @@ quick_error! {
             from()
         }
         /// Failed to parse a time.
-        Time(err: time::ParseError) {
+        Time(err: timing::ParseError) {
             from()
         }
         /// Failed to read from the source.

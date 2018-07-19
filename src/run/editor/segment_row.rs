@@ -10,10 +10,7 @@ pub struct SegmentRow<'editor> {
 
 impl<'a> SegmentRow<'a> {
     pub(super) fn new(index: usize, editor: &'a mut Editor) -> Self {
-        SegmentRow {
-            index: index,
-            editor: editor,
-        }
+        SegmentRow { index, editor }
     }
 
     /// Accesses the icon of the segment.

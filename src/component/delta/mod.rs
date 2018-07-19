@@ -8,7 +8,7 @@ use serde_json::{to_writer, Result};
 use settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
 use std::borrow::Cow;
 use std::io::Write;
-use time::formatter::{Accuracy, Delta, TimeFormatter};
+use timing::formatter::{Accuracy, Delta, TimeFormatter};
 use {comparison, GeneralLayoutSettings, Timer};
 
 #[cfg(test)]
@@ -88,10 +88,7 @@ impl Component {
 
     /// Creates a new Delta Component with the given settings.
     pub fn with_settings(settings: Settings) -> Self {
-        Self {
-            settings,
-            ..Default::default()
-        }
+        Self { settings }
     }
 
     /// Accesses the settings of the component.
@@ -106,7 +103,7 @@ impl Component {
 
     /// Accesses the name of the component.
     pub fn name(&self) -> Cow<str> {
-        if let Some(ref comparison) = self.settings.comparison_override {
+        if let Some(comparison) = &self.settings.comparison_override {
             format!("Delta ({})", comparison).into()
         } else {
             "Delta".into()

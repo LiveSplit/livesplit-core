@@ -28,7 +28,7 @@ pub fn calculate(
     let mut best_segments = segment.best_segment_time()[method];
 
     for segment in segments[..segment_index].iter().rev() {
-        if let Some(ref mut best_segments) = best_segments {
+        if let Some(best_segments) = &mut best_segments {
             if let Some(split_time) = segment.comparison(comparison)[method] {
                 prev_time = split_time;
                 break;

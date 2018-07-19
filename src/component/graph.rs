@@ -163,10 +163,7 @@ impl Component {
 
     /// Creates a new Graph Component with the given settings.
     pub fn with_settings(settings: Settings) -> Self {
-        Self {
-            settings,
-            ..Default::default()
-        }
+        Self { settings }
     }
 
     /// Accesses the settings of the component.
@@ -228,7 +225,7 @@ impl Component {
                 "Comparison".into(),
                 self.settings.comparison_override.clone().into(),
             ),
-            Field::new("Height".into(), (self.settings.height as u64).into()),
+            Field::new("Height".into(), u64::from(self.settings.height).into()),
             Field::new(
                 "Show Best Segments".into(),
                 self.settings.show_best_segments.into(),

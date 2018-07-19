@@ -43,7 +43,7 @@ fn time_span_from_ticks(category_name: &str, ticks: u64) -> TimeSpan {
         ticks as f64 / 30.0
     } else {
         // Game is either Portal or Half Life 2
-        ticks as f64 / 66.6666666666667
+        ticks as f64 / 66.666_666_666_666_7
     };
 
     TimeSpan::from_seconds(seconds)

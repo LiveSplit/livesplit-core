@@ -6,7 +6,7 @@
 //! Using a Short Time Formatter to format a Time Span.
 //!
 //! ```
-//! use livesplit_core::time::formatter::{Short, TimeFormatter};
+//! use livesplit_core::timing::formatter::{Short, TimeFormatter};
 //! use livesplit_core::TimeSpan;
 //!
 //! // Create the Short Time Formatter.
@@ -56,7 +56,7 @@ pub trait TimeFormatter<'a> {
         T: Into<Option<TimeSpan>>;
 }
 
-const EPSILON: f64 = 0.0000001;
+const EPSILON: f64 = 0.000_000_1;
 /// The dash symbol to use for generic dashes in text.
 pub const DASH: &str = "—";
 /// The minus symbol to use for negative numbers.

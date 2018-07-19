@@ -99,7 +99,7 @@ impl Hook {
                     )
                 };
 
-                if hook != ptr::null_mut() {
+                if !hook.is_null() {
                     initialized_tx
                         .send(Ok(unsafe { GetCurrentThreadId() }))
                         .map_err(|_| Error::ThreadStopped)?;
@@ -110,7 +110,7 @@ impl Hook {
                 }
 
                 *state.borrow_mut() = Some(State {
-                    hook: hook,
+                    hook,
                     events: events_tx,
                 });
 
@@ -125,8 +125,6 @@ impl Hook {
                     break;
                 } else if ret < 0 {
                     return Err(Error::MessageLoop);
-                } else {
-                    break;
                 }
             }
 

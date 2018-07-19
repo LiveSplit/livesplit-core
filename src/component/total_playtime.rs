@@ -8,7 +8,7 @@ use serde_json::{to_writer, Result};
 use settings::{Color, Field, Gradient, SettingsDescription, Value};
 use std::borrow::Cow;
 use std::io::Write;
-use time::formatter::{Days, Regular, TimeFormatter};
+use timing::formatter::{Days, Regular, TimeFormatter};
 use Timer;
 
 /// The Total Playtime Component is a component that shows the total amount of
@@ -81,10 +81,7 @@ impl Component {
 
     /// Creates a new Total Playtime Component with the given settings.
     pub fn with_settings(settings: Settings) -> Self {
-        Self {
-            settings,
-            ..Default::default()
-        }
+        Self { settings }
     }
 
     /// Accesses the settings of the component.

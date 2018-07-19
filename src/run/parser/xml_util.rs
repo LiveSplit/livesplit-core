@@ -8,7 +8,7 @@ use std::num::{ParseFloatError, ParseIntError};
 use std::ops::Deref;
 use std::result::Result as StdResult;
 use std::{str, string};
-use time;
+use timing;
 
 quick_error! {
     /// The Error type for XML-based splits files that couldn't be parsed.
@@ -55,7 +55,7 @@ quick_error! {
             from()
         }
         /// Failed to parse a time.
-        Time(err: time::ParseError) {
+        Time(err: timing::ParseError) {
             from()
         }
         /// Failed to parse a date.

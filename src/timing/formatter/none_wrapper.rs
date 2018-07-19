@@ -30,7 +30,7 @@ impl<'a, F: 'a + TimeFormatter<'a>, S: AsRef<str>> NoneWrapper<F, S> {
     /// and replaces its empty time formatting by the string provided to this
     /// Wrapper.
     pub fn new(inner: F, none_text: S) -> Self {
-        NoneWrapper(inner, none_text.into())
+        NoneWrapper(inner, none_text)
     }
 }
 

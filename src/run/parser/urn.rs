@@ -4,7 +4,7 @@ use serde_json::de::from_reader;
 use serde_json::Error as JsonError;
 use std::io::Read;
 use std::result::Result as StdResult;
-use {time, Run, Segment, Time, TimeSpan};
+use {timing, Run, Segment, Time, TimeSpan};
 
 quick_error! {
     /// The Error type for splits files that couldn't be parsed by the Urn
@@ -12,7 +12,7 @@ quick_error! {
     #[derive(Debug)]
     pub enum Error {
         /// Failed to parse a time.
-        Time(err: time::ParseError) {
+        Time(err: timing::ParseError) {
             from()
         }
         /// Failed to parse JSON.

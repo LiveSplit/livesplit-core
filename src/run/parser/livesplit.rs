@@ -1,6 +1,6 @@
 //! Provides the parser for LiveSplit splits files.
 
-use super::super::run::ComparisonError;
+use super::super::ComparisonError;
 use super::xml_util::{
     attribute, attribute_err, end_tag, optional_attribute_err, parse_attributes, parse_base,
     parse_children, reencode_children, text, text_as_bytes_err, text_err, text_parsed,
@@ -352,13 +352,13 @@ fn parse_attempt_history<R: BufRead>(
             })?;
 
             let started = started.map(|t| AtomicDateTime::new(t, started_synced));
-            let mut ended = ended.map(|t| AtomicDateTime::new(t, ended_synced));
-
-            if version <= Version(1, 7, 0, 0)
-                && catch! { ended?.time < started?.time }.unwrap_or(false)
+            let ended = if version <= Version(1, 7, 0, 0)
+                && catch! { ended? < started?.time }.unwrap_or(false)
             {
-                ended = None;
-            }
+                None
+            } else {
+                ended.map(|t| AtomicDateTime::new(t, ended_synced))
+            };
 
             run.add_attempt_with_index(time, index, started, ended, pause_time);
 
@@ -393,7 +393,7 @@ pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
 
         parse_children(reader, tag.into_buf(), |reader, tag| {
             if tag.name() == b"GameIcon" {
-                required_flags |= 1 << 0;
+                required_flags |= 1;
                 image(reader, tag.into_buf(), &mut buf2, |i| run.set_game_icon(i))
             } else if tag.name() == b"GameName" {
                 required_flags |= 1 << 1;

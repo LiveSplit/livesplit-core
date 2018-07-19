@@ -16,7 +16,7 @@ pub enum ComponentState {
     /// The state object for the Delta Component.
     Delta(delta::State),
     /// The state object for the Detailed Timer Component.
-    DetailedTimer(detailed_timer::State),
+    DetailedTimer(Box<detailed_timer::State>),
     /// The state object for the Graph Component.
     Graph(graph::State),
     /// The state object for the Possible Time Save Component.

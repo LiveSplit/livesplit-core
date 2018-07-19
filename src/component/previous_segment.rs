@@ -11,7 +11,7 @@ use settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value
 use std::borrow::Cow;
 use std::fmt::Write as FmtWrite;
 use std::io::Write;
-use time::formatter::{Accuracy, Delta, PossibleTimeSave, TimeFormatter};
+use timing::formatter::{Accuracy, Delta, PossibleTimeSave, TimeFormatter};
 use {analysis, comparison, GeneralLayoutSettings, Timer, TimerPhase};
 
 /// The Previous Segment Component is a component that shows how much time was
@@ -95,10 +95,7 @@ impl Component {
 
     /// Creates a new Previous Segment Component with the given settings.
     pub fn with_settings(settings: Settings) -> Self {
-        Self {
-            settings,
-            ..Default::default()
-        }
+        Self { settings }
     }
 
     /// Accesses the settings of the component.

@@ -2,6 +2,8 @@
 #![warn(missing_docs)]
 // Necessary for some larger quick-error based errors.
 #![recursion_limit = "128"]
+// Clippy false positives
+#![allow(block_in_if_condition_stmt, redundant_closure_call)]
 
 //! livesplit-core is a library that provides a lot of functionality for creating a speedrun timer.
 //!
@@ -80,7 +82,7 @@ pub mod run;
 pub mod settings;
 #[cfg(test)]
 mod tests_helper;
-pub mod time;
+pub mod timing;
 
 pub use self::hotkey_config::HotkeyConfig;
 pub use self::hotkey_system::HotkeySystem;
@@ -89,7 +91,7 @@ pub use self::layout::{
     Component, Editor as LayoutEditor, GeneralSettings as GeneralLayoutSettings, Layout,
 };
 pub use self::run::{Attempt, Editor as RunEditor, Run, RunMetadata, Segment, SegmentHistory};
-pub use self::time::{
+pub use self::timing::{
     AtomicDateTime, GameTime, RealTime, SharedTimer, Time, TimeSpan, TimeStamp, Timer, TimerPhase,
     TimingMethod,
 };

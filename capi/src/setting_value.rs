@@ -2,7 +2,7 @@
 //! types.
 
 use livesplit_core::settings::{Alignment, Color, Gradient, Value as SettingValue};
-use livesplit_core::time::formatter::{Accuracy, DigitsFormat};
+use livesplit_core::timing::formatter::{Accuracy, DigitsFormat};
 use livesplit_core::TimingMethod;
 use std::os::raw::c_char;
 use str;

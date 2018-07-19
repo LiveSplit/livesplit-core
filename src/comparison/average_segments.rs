@@ -25,6 +25,9 @@ const WEIGHT: f64 = 0.75;
 fn generate(segments: &mut [Segment], method: TimingMethod) {
     let mut accumulated = Some(TimeSpan::zero());
 
+    // TODO This may actually be possible to be fixed with a window like
+    // iterator.
+    #[allow(needless_range_loop)]
     for i in 0..segments.len() {
         // TODO Borrowcheck. if accumulated.is_some() is only necessary because
         // we can't assign to the outer variable otherwise.

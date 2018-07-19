@@ -9,7 +9,7 @@ use serde_json::{to_writer, Result};
 use settings::{Color, Field, Gradient, SettingsDescription, Value};
 use std::borrow::Cow;
 use std::io::Write;
-use time::formatter::{Accuracy, Regular, TimeFormatter};
+use timing::formatter::{Accuracy, Regular, TimeFormatter};
 use {comparison, Timer, TimerPhase};
 
 /// The Current Pace Component is a component that shows a prediction of the
@@ -86,10 +86,7 @@ impl Component {
 
     /// Creates a new Current Pace Component with the given settings.
     pub fn with_settings(settings: Settings) -> Self {
-        Self {
-            settings,
-            ..Default::default()
-        }
+        Self { settings }
     }
 
     /// Accesses the settings of the component.

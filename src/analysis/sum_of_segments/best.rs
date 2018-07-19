@@ -36,7 +36,7 @@ fn populate_predictions(
             for &(null_segment_index, _) in segments[segment_index]
                 .segment_history()
                 .iter()
-                .filter(|&&(_, t)| t[method].is_none())
+                .filter(|(_, t)| t[method].is_none())
             {
                 let should_track_branch = segment_index
                     .checked_sub(1)

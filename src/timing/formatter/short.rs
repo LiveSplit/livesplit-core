@@ -1,4 +1,4 @@
-use super::{Accuracy, TimeFormatter, DASH, MINUS};
+use super::{Accuracy, TimeFormatter, MINUS};
 use std::fmt::{Display, Formatter, Result};
 use TimeSpan;
 
@@ -7,47 +7,46 @@ pub struct Inner {
     accuracy: Accuracy,
 }
 
-/// The Possible Time Save Time Formatter formats Time Spans for them to be
-/// shown as Time Saves. This specifically means that the fractional part of the
-/// time is always shown and the minutes and hours are only shown when
-/// necessary. The default accuracy is to show 2 digits of the fractional part,
-/// but this can be configured. Unlike the Short Time Formatter, the Possible
-/// Time Save Formatter shows a dash when there's an empty time.
+/// The Short Time Formatter is suitable for situations where you want a short
+/// visualization of a Time Span, but also a somewhat accurate one. This
+/// specifically means that the fractional part of the time is always shown and
+/// the minutes and hours are only shown when necessary. The default accuracy is
+/// to show 2 digits of the fractional part, but this can be configured.
 ///
 /// # Example Formatting
 ///
-/// * Empty Time `—`
+/// * Empty Time `0.00`
 /// * Seconds `23.12`
 /// * Minutes `12:34.98`
 /// * Hours `12:34:56.12`
 /// * Negative Times `−23.12`
-pub struct PossibleTimeSave {
+pub struct Short {
     accuracy: Accuracy,
 }
 
-impl PossibleTimeSave {
-    /// Creates a new Possible Time Save Time Formatter that uses hundredths for
-    /// showing the fractional part.
+impl Short {
+    /// Creates a new Short Time Formatter that uses hundredths for showing the
+    /// fractional part.
     pub fn new() -> Self {
         Default::default()
     }
 
-    /// Creates a new Possible Time Save Time Formatter that uses the accuracy
-    /// provided for showing the fractional part.
+    /// Creates a new Short Time Formatter that uses the accuracy provided for
+    /// showing the fractional part.
     pub fn with_accuracy(accuracy: Accuracy) -> Self {
-        PossibleTimeSave { accuracy: accuracy }
+        Short { accuracy }
     }
 }
 
-impl Default for PossibleTimeSave {
+impl Default for Short {
     fn default() -> Self {
-        PossibleTimeSave {
+        Short {
             accuracy: Accuracy::Hundredths,
         }
     }
 }
 
-impl<'a> TimeFormatter<'a> for PossibleTimeSave {
+impl<'a> TimeFormatter<'a> for Short {
     type Inner = Inner;
 
     fn format<T>(&self, time: T) -> Self::Inner
@@ -92,7 +91,24 @@ impl Display for Inner {
                 write!(f, "{}", self.accuracy.format_seconds(seconds, false))
             }
         } else {
-            write!(f, "{}", DASH)
+            match self.accuracy {
+                Accuracy::Seconds => write!(f, "0"),
+                Accuracy::Tenths => write!(f, "0.0"),
+                Accuracy::Hundredths => write!(f, "0.00"),
+                Accuracy::Milliseconds => write!(f, "0.000"),
+            }
         }
     }
+}
+
+#[test]
+fn test() {
+    let time = "4:20.69".parse::<TimeSpan>().unwrap();
+    let formatted = Short::new().format(time).to_string();
+    assert!(
+        // Modern processors
+        formatted == "4:20.69" ||
+        // Old x86 processors are apparently less precise
+        formatted == "4:20.68"
+    );
 }

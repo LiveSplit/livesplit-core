@@ -76,10 +76,7 @@ impl Component {
 
     /// Creates a new Current Comparison Component with the given settings.
     pub fn with_settings(settings: Settings) -> Self {
-        Self {
-            settings,
-            ..Default::default()
-        }
+        Self { settings }
     }
 
     /// Accesses the settings of the component.

@@ -7,7 +7,7 @@ use std::io::{self, BufRead, BufReader};
 use std::num::ParseIntError;
 use std::path::PathBuf;
 use std::result::Result as StdResult;
-use {time, AtomicDateTime, Image, RealTime, Run, Segment, Time, TimeSpan};
+use {timing, AtomicDateTime, Image, RealTime, Run, Segment, Time, TimeSpan};
 
 quick_error! {
     /// The Error type for splits files that couldn't be parsed by the Time
@@ -37,7 +37,7 @@ quick_error! {
             from()
         }
         /// Failed to parse a time.
-        Time(err: time::ParseError) {
+        Time(err: timing::ParseError) {
             from()
         }
         /// Failed to read from the source.
@@ -88,7 +88,7 @@ pub fn parse<R: BufRead>(source: R, path_for_loading_other_files: Option<PathBuf
     splits.next(); // Skip one element
     let mut comparisons = splits.map(|s| s.to_string()).collect::<Vec<_>>();
 
-    for comparison in comparisons.iter_mut() {
+    for comparison in &mut comparisons {
         let mut name = comparison.to_owned();
         let mut good_name = name.to_owned();
         let mut number = 2;
@@ -161,8 +161,7 @@ fn parse_history(run: &mut Run, path: Option<PathBuf>) -> StdResult<(), ()> {
             let line = line.map_err(|_| ())?;
             let mut splits = line.split('\t');
             let time_stamp = splits.next().ok_or(())?;
-            let started = Utc
-                .datetime_from_str(time_stamp, "%Y/%m/%d %R")
+            let started = Utc.datetime_from_str(time_stamp, "%Y/%m/%d %R")
                 .map_err(|_| ())?;
             let completed = splits.next().ok_or(())? == "C";
             let split_times: Vec<_> = splits

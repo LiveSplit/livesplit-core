@@ -30,7 +30,7 @@ pub extern "C" fn DetailedTimerComponent_drop(this: OwnedDetailedTimerComponent)
 pub extern "C" fn DetailedTimerComponent_into_generic(
     this: OwnedDetailedTimerComponent,
 ) -> OwnedComponent {
-    Box::new((*this).into())
+    Box::new(Box::new(*this).into())
 }
 
 /// Encodes the component's state information as JSON.

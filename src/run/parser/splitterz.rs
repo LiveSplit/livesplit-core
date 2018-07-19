@@ -4,7 +4,7 @@ use std::borrow::Cow;
 use std::io::{self, BufRead};
 use std::num::ParseIntError;
 use std::result::Result as StdResult;
-use {time, Image, RealTime, Run, Segment, TimeSpan};
+use {timing, Image, RealTime, Run, Segment, TimeSpan};
 
 quick_error! {
     /// The Error type for splits files that couldn't be parsed by the SplitterZ
@@ -28,7 +28,7 @@ quick_error! {
             from()
         }
         /// Failed to parse a time.
-        Time(err: time::ParseError) {
+        Time(err: timing::ParseError) {
             from()
         }
         /// Failed to read from the source.

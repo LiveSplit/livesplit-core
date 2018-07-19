@@ -11,8 +11,8 @@ use settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value
 use std::borrow::Cow;
 use std::cmp::{max, min};
 use std::io::Write;
-use time::formatter::none_wrapper::{DashWrapper, EmptyWrapper};
-use time::formatter::{Delta, Regular, TimeFormatter};
+use timing::formatter::none_wrapper::{DashWrapper, EmptyWrapper};
+use timing::formatter::{Delta, Regular, TimeFormatter};
 use {analysis, GeneralLayoutSettings, Timer};
 
 #[cfg(test)]
@@ -244,8 +244,7 @@ impl Component {
         let mut icon_changes = Vec::new();
 
         State {
-            splits: run
-                .segments()
+            splits: run.segments()
                 .iter()
                 .enumerate()
                 .zip(self.icon_ids.iter_mut())
@@ -305,7 +304,7 @@ impl Component {
                 })
                 .collect(),
             icon_changes,
-            show_final_separator: show_final_separator,
+            show_final_separator,
             current_split_gradient: self.settings.current_split_gradient,
         }
     }

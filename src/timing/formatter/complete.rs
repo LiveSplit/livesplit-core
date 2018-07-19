@@ -20,6 +20,7 @@ pub struct Inner(Option<TimeSpan>);
 /// * Hours `12:34:56.1234567`
 /// * Negative Times `-12:34:56.1234567`
 /// * Days `89.12:34:56.1234567`
+#[derive(Default)]
 pub struct Complete;
 
 impl Complete {

@@ -87,7 +87,7 @@ impl Timer {
         let now = TimeStamp::now();
 
         Ok(Timer {
-            run: run,
+            run,
             phase: NotRunning,
             current_split_index: None,
             current_timing_method: TimingMethod::RealTime,
@@ -421,8 +421,7 @@ impl Timer {
             Ended => {
                 let pause_time = Some(self.get_pause_time().unwrap_or_default());
 
-                let split_time = self
-                    .run
+                let split_time = self.run
                     .segments_mut()
                     .iter_mut()
                     .last()

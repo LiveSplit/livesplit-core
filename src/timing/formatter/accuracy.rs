@@ -19,8 +19,8 @@ impl Accuracy {
     pub fn format_seconds(self, seconds: f64, zero_prefix: bool) -> FormattedSeconds {
         FormattedSeconds {
             accuracy: self,
-            seconds: seconds,
-            zero_prefix: zero_prefix,
+            seconds,
+            zero_prefix,
         }
     }
 }

@@ -10,7 +10,7 @@ use serde_json::{to_writer, Result};
 use settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
 use std::borrow::Cow;
 use std::io::Write;
-use time::formatter::{timer as formatter, Accuracy, DigitsFormat, TimeFormatter};
+use timing::formatter::{timer as formatter, Accuracy, DigitsFormat, TimeFormatter};
 use {GeneralLayoutSettings, TimeSpan, Timer, TimerPhase, TimingMethod};
 
 /// The Timer Component is a component that shows the total time of the current
@@ -99,10 +99,7 @@ impl Component {
 
     /// Creates a new Timer Component with the given settings.
     pub fn with_settings(settings: Settings) -> Self {
-        Self {
-            settings,
-            ..Default::default()
-        }
+        Self { settings }
     }
 
     /// Accesses the settings of the component.
@@ -123,8 +120,7 @@ impl Component {
     /// Calculates the component's state based on the timer and the layout
     /// settings provided.
     pub fn state(&self, timer: &Timer, layout_settings: &GeneralLayoutSettings) -> State {
-        let method = self
-            .settings
+        let method = self.settings
             .timing_method
             .unwrap_or_else(|| timer.current_timing_method());
         let time = timer.current_time();
@@ -203,7 +199,7 @@ impl Component {
         SettingsDescription::with_fields(vec![
             Field::new("Background".into(), self.settings.background.into()),
             Field::new("Timing Method".into(), self.settings.timing_method.into()),
-            Field::new("Height".into(), (self.settings.height as u64).into()),
+            Field::new("Height".into(), u64::from(self.settings.height).into()),
             Field::new("Text Color".into(), self.settings.color_override.into()),
             Field::new("Show Gradient".into(), self.settings.show_gradient.into()),
             Field::new("Digits Format".into(), self.settings.digits_format.into()),
@@ -237,9 +233,9 @@ impl Component {
 pub fn top_and_bottom_color(color: Color) -> (Color, Color) {
     let hsv: Hsv = color.rgba.into();
 
-    let h = hsv.hue.to_degrees() as f64;
-    let s = hsv.saturation as f64;
-    let v = hsv.value as f64;
+    let h = f64::from(hsv.hue.to_degrees());
+    let s = f64::from(hsv.saturation);
+    let v = f64::from(hsv.value);
     let a = color.rgba.alpha;
 
     let top_color = LinSrgb::from(Hsv::new(h, 0.5 * s, (1.5 * v + 0.1).min(1.0)));

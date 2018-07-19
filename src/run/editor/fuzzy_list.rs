@@ -15,6 +15,7 @@ use std::usize;
 /// list.push("World");
 /// assert_eq!(list.search("ORL", 10), ["World"]);
 /// ```
+#[derive(Default)]
 pub struct FuzzyList {
     list: Vec<(String, String)>,
 }
@@ -22,7 +23,7 @@ pub struct FuzzyList {
 impl FuzzyList {
     /// Creates a new Fuzzy List.
     pub fn new() -> Self {
-        Self { list: Vec::new() }
+        Default::default()
     }
 
     /// Adds a new element to the list.
@@ -60,7 +61,7 @@ fn match_against(pattern: &str, text: &str) -> Option<usize> {
     for c in text.chars() {
         if pattern_char == Some(c) {
             pattern_char = pattern_chars.next();
-            current_score += 1 + current_score;
+            current_score = 1 + 2 * current_score;
         } else {
             current_score = 0;
         }

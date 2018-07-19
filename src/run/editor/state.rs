@@ -3,8 +3,8 @@ use comparison::personal_best;
 use run::RunMetadata;
 use serde_json::{to_writer, Result as JsonResult};
 use std::io::Write;
-use time::formatter::none_wrapper::EmptyWrapper;
-use time::formatter::{Accuracy, Short, TimeFormatter};
+use timing::formatter::none_wrapper::EmptyWrapper;
+use timing::formatter::{Accuracy, Short, TimeFormatter};
 
 /// Represents the current state of the Run Editor in order to visualize it
 /// properly.
@@ -106,8 +106,7 @@ impl Editor {
     pub fn state(&mut self) -> State {
         let formatter = EmptyWrapper::new(Short::with_accuracy(Accuracy::Hundredths));
 
-        let icon_change = self
-            .run
+        let icon_change = self.run
             .game_icon()
             .check_for_change(&mut self.game_icon_id)
             .map(str::to_owned);
@@ -116,8 +115,7 @@ impl Editor {
         let offset = formatter.format(self.offset()).to_string();
         let attempts = self.attempt_count();
         let timing_method = self.selected_timing_method();
-        let comparison_names = self
-            .custom_comparisons()
+        let comparison_names = self.custom_comparisons()
             .iter()
             .cloned()
             .filter(|n| n != personal_best::NAME)
@@ -145,8 +143,7 @@ impl Editor {
                     .collect();
             }
 
-            let icon_change = self
-                .run
+            let icon_change = self.run
                 .segment(segment_index)
                 .icon()
                 .check_for_change(&mut self.segment_icon_ids[segment_index])
@@ -161,26 +158,26 @@ impl Editor {
             };
 
             segments.push(Segment {
-                icon_change: icon_change,
-                name: name,
-                split_time: split_time,
-                segment_time: segment_time,
-                best_segment_time: best_segment_time,
-                comparison_times: comparison_times,
-                selected: selected,
+                icon_change,
+                name,
+                split_time,
+                segment_time,
+                best_segment_time,
+                comparison_times,
+                selected,
             });
         }
 
         State {
-            icon_change: icon_change,
-            game: game,
-            category: category,
-            offset: offset,
-            attempts: attempts,
-            timing_method: timing_method,
-            segments: segments,
-            comparison_names: comparison_names,
-            buttons: buttons,
+            icon_change,
+            game,
+            category,
+            offset,
+            attempts,
+            timing_method,
+            segments,
+            comparison_names,
+            buttons,
             metadata: self.run.metadata().clone(),
         }
     }

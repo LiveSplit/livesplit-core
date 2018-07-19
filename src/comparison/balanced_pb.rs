@@ -93,7 +93,7 @@ fn generate(
 
         // Cumulative sum of the weights
         let mut sum = 0.0;
-        for &mut (ref mut weight, _) in weighted_segment_times.iter_mut() {
+        for (weight, _) in weighted_segment_times.iter_mut() {
             sum += *weight;
             *weight = sum;
         }
@@ -110,7 +110,7 @@ fn generate(
         let diff = max - min;
 
         if diff != 0.0 {
-            for &mut (ref mut weight, _) in weighted_segment_times.iter_mut() {
+            for (weight, _) in weighted_segment_times.iter_mut() {
                 *weight = (*weight - min) / diff;
             }
         }

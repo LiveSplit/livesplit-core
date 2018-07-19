@@ -21,7 +21,7 @@ pub enum Component {
     /// The Delta Component.
     Delta(delta::Component),
     /// The Detailed Timer Component.
-    DetailedTimer(detailed_timer::Component),
+    DetailedTimer(Box<detailed_timer::Component>),
     /// The Graph Component.
     Graph(graph::Component),
     /// The Possible Time Save Component.
@@ -50,46 +50,40 @@ impl Component {
     /// settings provide general information about how to expose that
     /// information in the state.
     pub fn state(&mut self, timer: &Timer, layout_settings: &GeneralSettings) -> ComponentState {
-        match *self {
-            Component::BlankSpace(ref mut component) => {
-                ComponentState::BlankSpace(component.state(timer))
-            }
-            Component::CurrentComparison(ref mut component) => {
+        match self {
+            Component::BlankSpace(component) => ComponentState::BlankSpace(component.state(timer)),
+            Component::CurrentComparison(component) => {
                 ComponentState::CurrentComparison(component.state(timer))
             }
-            Component::CurrentPace(ref mut component) => {
+            Component::CurrentPace(component) => {
                 ComponentState::CurrentPace(component.state(timer))
             }
-            Component::Delta(ref mut component) => {
+            Component::Delta(component) => {
                 ComponentState::Delta(component.state(timer, layout_settings))
             }
-            Component::DetailedTimer(ref mut component) => {
-                ComponentState::DetailedTimer(component.state(timer, layout_settings))
+            Component::DetailedTimer(component) => {
+                ComponentState::DetailedTimer(Box::new(component.state(timer, layout_settings)))
             }
-            Component::Graph(ref mut component) => {
+            Component::Graph(component) => {
                 ComponentState::Graph(component.state(timer, layout_settings))
             }
-            Component::PossibleTimeSave(ref mut component) => {
+            Component::PossibleTimeSave(component) => {
                 ComponentState::PossibleTimeSave(component.state(timer))
             }
-            Component::PreviousSegment(ref mut component) => {
+            Component::PreviousSegment(component) => {
                 ComponentState::PreviousSegment(component.state(timer, layout_settings))
             }
-            Component::Separator(ref mut component) => {
-                ComponentState::Separator(component.state(timer))
-            }
-            Component::Splits(ref mut component) => {
+            Component::Separator(component) => ComponentState::Separator(component.state(timer)),
+            Component::Splits(component) => {
                 ComponentState::Splits(component.state(timer, layout_settings))
             }
-            Component::SumOfBest(ref mut component) => {
-                ComponentState::SumOfBest(component.state(timer))
-            }
-            Component::Text(ref mut component) => ComponentState::Text(component.state()),
-            Component::Timer(ref mut component) => {
+            Component::SumOfBest(component) => ComponentState::SumOfBest(component.state(timer)),
+            Component::Text(component) => ComponentState::Text(component.state()),
+            Component::Timer(component) => {
                 ComponentState::Timer(component.state(timer, layout_settings))
             }
-            Component::Title(ref mut component) => ComponentState::Title(component.state(timer)),
-            Component::TotalPlaytime(ref mut component) => {
+            Component::Title(component) => ComponentState::Title(component.state(timer)),
+            Component::TotalPlaytime(component) => {
                 ComponentState::TotalPlaytime(component.state(timer))
             }
         }
@@ -100,46 +94,36 @@ impl Component {
     /// want to access a more general description of the settings, access the
     /// Settings Description instead.
     pub fn settings(&self) -> ComponentSettings {
-        match *self {
-            Component::BlankSpace(ref component) => {
+        match self {
+            Component::BlankSpace(component) => {
                 ComponentSettings::BlankSpace(component.settings().clone())
             }
-            Component::CurrentComparison(ref component) => {
+            Component::CurrentComparison(component) => {
                 ComponentSettings::CurrentComparison(component.settings().clone())
             }
-            Component::CurrentPace(ref component) => {
+            Component::CurrentPace(component) => {
                 ComponentSettings::CurrentPace(component.settings().clone())
             }
-            Component::Delta(ref component) => {
-                ComponentSettings::Delta(component.settings().clone())
+            Component::Delta(component) => ComponentSettings::Delta(component.settings().clone()),
+            Component::DetailedTimer(component) => {
+                ComponentSettings::DetailedTimer(Box::new(component.settings().clone()))
             }
-            Component::DetailedTimer(ref component) => {
-                ComponentSettings::DetailedTimer(component.settings().clone())
-            }
-            Component::Graph(ref component) => {
-                ComponentSettings::Graph(component.settings().clone())
-            }
-            Component::PossibleTimeSave(ref component) => {
+            Component::Graph(component) => ComponentSettings::Graph(component.settings().clone()),
+            Component::PossibleTimeSave(component) => {
                 ComponentSettings::PossibleTimeSave(component.settings().clone())
             }
-            Component::PreviousSegment(ref component) => {
+            Component::PreviousSegment(component) => {
                 ComponentSettings::PreviousSegment(component.settings().clone())
             }
             Component::Separator(_) => ComponentSettings::Separator,
-            Component::Splits(ref component) => {
-                ComponentSettings::Splits(component.settings().clone())
-            }
-            Component::SumOfBest(ref component) => {
+            Component::Splits(component) => ComponentSettings::Splits(component.settings().clone()),
+            Component::SumOfBest(component) => {
                 ComponentSettings::SumOfBest(component.settings().clone())
             }
-            Component::Text(ref component) => ComponentSettings::Text(component.settings().clone()),
-            Component::Timer(ref component) => {
-                ComponentSettings::Timer(component.settings().clone())
-            }
-            Component::Title(ref component) => {
-                ComponentSettings::Title(component.settings().clone())
-            }
-            Component::TotalPlaytime(ref component) => {
+            Component::Text(component) => ComponentSettings::Text(component.settings().clone()),
+            Component::Timer(component) => ComponentSettings::Timer(component.settings().clone()),
+            Component::Title(component) => ComponentSettings::Title(component.settings().clone()),
+            Component::TotalPlaytime(component) => {
                 ComponentSettings::TotalPlaytime(component.settings().clone())
             }
         }
@@ -147,29 +131,29 @@ impl Component {
 
     /// Accesses the name of the component.
     pub fn name(&self) -> Cow<str> {
-        match *self {
-            Component::BlankSpace(ref component) => component.name(),
-            Component::CurrentComparison(ref component) => component.name(),
-            Component::CurrentPace(ref component) => component.name(),
-            Component::Delta(ref component) => component.name(),
-            Component::DetailedTimer(ref component) => component.name(),
-            Component::Graph(ref component) => component.name(),
-            Component::PossibleTimeSave(ref component) => component.name(),
-            Component::PreviousSegment(ref component) => component.name(),
-            Component::Separator(ref component) => component.name(),
-            Component::Splits(ref component) => component.name(),
-            Component::SumOfBest(ref component) => component.name(),
-            Component::Text(ref component) => component.name(),
-            Component::Timer(ref component) => component.name(),
-            Component::Title(ref component) => component.name(),
-            Component::TotalPlaytime(ref component) => component.name(),
+        match self {
+            Component::BlankSpace(component) => component.name(),
+            Component::CurrentComparison(component) => component.name(),
+            Component::CurrentPace(component) => component.name(),
+            Component::Delta(component) => component.name(),
+            Component::DetailedTimer(component) => component.name(),
+            Component::Graph(component) => component.name(),
+            Component::PossibleTimeSave(component) => component.name(),
+            Component::PreviousSegment(component) => component.name(),
+            Component::Separator(component) => component.name(),
+            Component::Splits(component) => component.name(),
+            Component::SumOfBest(component) => component.name(),
+            Component::Text(component) => component.name(),
+            Component::Timer(component) => component.name(),
+            Component::Title(component) => component.name(),
+            Component::TotalPlaytime(component) => component.name(),
         }
     }
 
     /// Tells the component to scroll up. This may be interpreted differently
     /// based on the kind of component. Most components will ignore this.
     pub fn scroll_up(&mut self) {
-        if let Component::Splits(ref mut component) = *self {
+        if let Component::Splits(component) = self {
             component.scroll_up();
         }
     }
@@ -177,7 +161,7 @@ impl Component {
     /// Tells the component to scroll down. This may be interpreted differently
     /// based on the kind of component. Most components will ignore this.
     pub fn scroll_down(&mut self) {
-        if let Component::Splits(ref mut component) = *self {
+        if let Component::Splits(component) = self {
             component.scroll_down();
         }
     }
@@ -187,10 +171,10 @@ impl Component {
     /// absolute information again, as if they provide the state for the first
     /// time.
     pub fn remount(&mut self) {
-        match *self {
-            Component::DetailedTimer(ref mut component) => component.remount(),
-            Component::Splits(ref mut component) => component.remount(),
-            Component::Title(ref mut component) => component.remount(),
+        match self {
+            Component::DetailedTimer(component) => component.remount(),
+            Component::Splits(component) => component.remount(),
+            Component::Title(component) => component.remount(),
             _ => {}
         }
     }
@@ -200,22 +184,22 @@ impl Component {
     /// type they are and what value they currently have. This provides a user
     /// interface independent way of changing the settings.
     pub fn settings_description(&self) -> SettingsDescription {
-        match *self {
-            Component::BlankSpace(ref component) => component.settings_description(),
-            Component::CurrentComparison(ref component) => component.settings_description(),
-            Component::CurrentPace(ref component) => component.settings_description(),
-            Component::Delta(ref component) => component.settings_description(),
-            Component::DetailedTimer(ref component) => component.settings_description(),
-            Component::Graph(ref component) => component.settings_description(),
-            Component::PossibleTimeSave(ref component) => component.settings_description(),
-            Component::PreviousSegment(ref component) => component.settings_description(),
-            Component::Separator(ref component) => component.settings_description(),
-            Component::Splits(ref component) => component.settings_description(),
-            Component::SumOfBest(ref component) => component.settings_description(),
-            Component::Text(ref component) => component.settings_description(),
-            Component::Timer(ref component) => component.settings_description(),
-            Component::Title(ref component) => component.settings_description(),
-            Component::TotalPlaytime(ref component) => component.settings_description(),
+        match self {
+            Component::BlankSpace(component) => component.settings_description(),
+            Component::CurrentComparison(component) => component.settings_description(),
+            Component::CurrentPace(component) => component.settings_description(),
+            Component::Delta(component) => component.settings_description(),
+            Component::DetailedTimer(component) => component.settings_description(),
+            Component::Graph(component) => component.settings_description(),
+            Component::PossibleTimeSave(component) => component.settings_description(),
+            Component::PreviousSegment(component) => component.settings_description(),
+            Component::Separator(component) => component.settings_description(),
+            Component::Splits(component) => component.settings_description(),
+            Component::SumOfBest(component) => component.settings_description(),
+            Component::Text(component) => component.settings_description(),
+            Component::Timer(component) => component.settings_description(),
+            Component::Title(component) => component.settings_description(),
+            Component::TotalPlaytime(component) => component.settings_description(),
         }
     }
 
@@ -228,22 +212,22 @@ impl Component {
     /// Settings Description of this component. Additionally, the value needs to
     /// have a compatible type.
     pub fn set_value(&mut self, index: usize, value: Value) {
-        match *self {
-            Component::BlankSpace(ref mut component) => component.set_value(index, value),
-            Component::CurrentComparison(ref mut component) => component.set_value(index, value),
-            Component::CurrentPace(ref mut component) => component.set_value(index, value),
-            Component::Delta(ref mut component) => component.set_value(index, value),
-            Component::DetailedTimer(ref mut component) => component.set_value(index, value),
-            Component::Graph(ref mut component) => component.set_value(index, value),
-            Component::PossibleTimeSave(ref mut component) => component.set_value(index, value),
-            Component::PreviousSegment(ref mut component) => component.set_value(index, value),
-            Component::Separator(ref mut component) => component.set_value(index, value),
-            Component::Splits(ref mut component) => component.set_value(index, value),
-            Component::SumOfBest(ref mut component) => component.set_value(index, value),
-            Component::Text(ref mut component) => component.set_value(index, value),
-            Component::Timer(ref mut component) => component.set_value(index, value),
-            Component::Title(ref mut component) => component.set_value(index, value),
-            Component::TotalPlaytime(ref mut component) => component.set_value(index, value),
+        match self {
+            Component::BlankSpace(component) => component.set_value(index, value),
+            Component::CurrentComparison(component) => component.set_value(index, value),
+            Component::CurrentPace(component) => component.set_value(index, value),
+            Component::Delta(component) => component.set_value(index, value),
+            Component::DetailedTimer(component) => component.set_value(index, value),
+            Component::Graph(component) => component.set_value(index, value),
+            Component::PossibleTimeSave(component) => component.set_value(index, value),
+            Component::PreviousSegment(component) => component.set_value(index, value),
+            Component::Separator(component) => component.set_value(index, value),
+            Component::Splits(component) => component.set_value(index, value),
+            Component::SumOfBest(component) => component.set_value(index, value),
+            Component::Text(component) => component.set_value(index, value),
+            Component::Timer(component) => component.set_value(index, value),
+            Component::Title(component) => component.set_value(index, value),
+            Component::TotalPlaytime(component) => component.set_value(index, value),
         }
     }
 }

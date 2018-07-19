@@ -10,7 +10,7 @@ use analysis::sum_of_segments::{best, track_branch};
 use chrono::Local;
 use std::fmt;
 use std::mem::replace;
-use time::formatter::{Short, TimeFormatter};
+use timing::formatter::{Short, TimeFormatter};
 use {Attempt, Run, Segment, TimeSpan, TimingMethod};
 
 /// A Sum of Best Cleaner allows you to interactively remove potential issues in
@@ -129,6 +129,7 @@ impl<'r> SumOfBestCleaner<'r> {
     }
 
     /// Applies a clean up to the Run.
+    #[allow(needless_pass_by_value)]
     pub fn apply(&mut self, clean_up: CleanUp) {
         self.run
             .segment_mut(clean_up.ending_index)
@@ -148,7 +149,7 @@ impl<'r> SumOfBestCleaner<'r> {
                 State::WithTimingMethod(method) => {
                     next_timing_method(&self.run, &mut self.predictions, method);
                     self.state = State::IteratingRun(IteratingRunState {
-                        method: method,
+                        method,
                         segment_index: 0,
                     });
                 }
@@ -167,8 +168,7 @@ impl<'r> SumOfBestCleaner<'r> {
                     };
                 }
                 State::IteratingHistory(state) => {
-                    let iter = self
-                        .run
+                    let iter = self.run
                         .segment(state.parent.segment_index)
                         .segment_history()
                         .iter()
@@ -240,8 +240,7 @@ fn check_prediction<'a>(
                         t - predictions[(starting_index + 1) as usize]
                             .expect("Start time must not be empty")
                     }),
-                    attempt: run
-                        .attempt_history()
+                    attempt: run.attempt_history()
                         .iter()
                         .find(|attempt| attempt.index() == run_index)
                         .expect("The attempt has to exist"),

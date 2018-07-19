@@ -1,6 +1,6 @@
 use comparison::balanced_pb::{BalancedPB, NAME};
 use tests_helper::{run_with_splits, run_with_splits_opt};
-use time::formatter::{Short, TimeFormatter};
+use timing::formatter::{Short, TimeFormatter};
 use {Run, Segment, TimeSpan, Timer};
 
 #[test]

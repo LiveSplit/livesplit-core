@@ -10,8 +10,8 @@ use serde_json::{to_writer, Result};
 use settings::{Field, Gradient, SemanticColor, SettingsDescription, Value};
 use std::borrow::Cow;
 use std::io::Write;
-use time::formatter::none_wrapper::DashWrapper;
-use time::formatter::{timer as formatter, Accuracy, DigitsFormat, Short, TimeFormatter, DASH};
+use timing::formatter::none_wrapper::DashWrapper;
+use timing::formatter::{timer as formatter, Accuracy, DigitsFormat, Short, TimeFormatter, DASH};
 use {GeneralLayoutSettings, TimeSpan, Timer, TimerPhase, TimingMethod};
 
 /// The Detailed Timer Component is a component that shows two timers, one for
@@ -149,8 +149,7 @@ impl Component {
     /// provided.
     pub fn state(&mut self, timer: &Timer, layout_settings: &GeneralLayoutSettings) -> State {
         let current_phase = timer.current_phase();
-        let timing_method = self
-            .settings
+        let timing_method = self.settings
             .timer
             .timing_method
             .unwrap_or_else(|| timer.current_timing_method());
@@ -162,15 +161,13 @@ impl Component {
         };
 
         let (comparison1, comparison2) = if current_phase != TimerPhase::NotRunning {
-            let mut comparison1 = self
-                .settings
+            let mut comparison1 = self.settings
                 .comparison1
                 .as_ref()
                 .map(String::as_str)
                 .unwrap_or_else(|| timer.current_comparison());
 
-            let comparison2 = self
-                .settings
+            let comparison2 = self.settings
                 .comparison2
                 .as_ref()
                 .map(String::as_str)
@@ -326,11 +323,11 @@ impl Component {
             ),
             Field::new(
                 "Timer Height".into(),
-                (self.settings.timer.height as u64).into(),
+                u64::from(self.settings.timer.height).into(),
             ),
             Field::new(
                 "Segment Timer Height".into(),
-                (self.settings.segment_timer.height as u64).into(),
+                u64::from(self.settings.segment_timer.height).into(),
             ),
             Field::new(
                 "Timer Digits Format".into(),

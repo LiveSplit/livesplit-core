@@ -17,7 +17,7 @@ pub enum ComponentSettings {
     /// The Settings for the Delta Component.
     Delta(delta::Settings),
     /// The Settings for the Detailed Timer Component.
-    DetailedTimer(detailed_timer::Settings),
+    DetailedTimer(Box<detailed_timer::Settings>),
     /// The Settings for the Graph Component.
     Graph(graph::Settings),
     /// The Settings for the Possible Time Save Component.
@@ -55,9 +55,9 @@ impl From<ComponentSettings> for Component {
             ComponentSettings::Delta(settings) => {
                 Component::Delta(delta::Component::with_settings(settings))
             }
-            ComponentSettings::DetailedTimer(settings) => {
-                Component::DetailedTimer(detailed_timer::Component::with_settings(settings))
-            }
+            ComponentSettings::DetailedTimer(settings) => Component::DetailedTimer(Box::new(
+                detailed_timer::Component::with_settings(*settings),
+            )),
             ComponentSettings::Graph(settings) => {
                 Component::Graph(graph::Component::with_settings(settings))
             }

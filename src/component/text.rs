@@ -43,7 +43,7 @@ impl Text {
     /// centered mode.
     pub fn set_center<S: Into<String>>(&mut self, text: S) {
         let text = text.into();
-        if let Text::Center(ref mut inner) = *self {
+        if let Text::Center(inner) = self {
             *inner = text;
         } else {
             *self = Text::Center(text);
@@ -54,7 +54,7 @@ impl Text {
     /// split mode, with the right text being empty.
     pub fn set_left<S: Into<String>>(&mut self, text: S) {
         let text = text.into();
-        if let Text::Split(ref mut inner, _) = *self {
+        if let Text::Split(inner, _) = self {
             *inner = text;
         } else {
             *self = Text::Split(text, String::from(""));
@@ -65,7 +65,7 @@ impl Text {
     /// split mode, with the left text being empty.
     pub fn set_right<S: Into<String>>(&mut self, text: S) {
         let text = text.into();
-        if let Text::Split(_, ref mut inner) = *self {
+        if let Text::Split(_, inner) = self {
             *inner = text;
         } else {
             *self = Text::Split(String::from(""), text);
@@ -109,10 +109,7 @@ impl Component {
 
     /// Creates a new Text Component with the given settings.
     pub fn with_settings(settings: Settings) -> Self {
-        Self {
-            settings,
-            ..Default::default()
-        }
+        Self { settings }
     }
 
     /// Accesses the settings of the component.
@@ -127,9 +124,9 @@ impl Component {
 
     /// Accesses the name of the component.
     pub fn name(&self) -> Cow<str> {
-        let name: Cow<str> = match self.settings.text {
-            Text::Center(ref text) => text.as_str().into(),
-            Text::Split(ref left, ref right) => {
+        let name: Cow<str> = match &self.settings.text {
+            Text::Center(text) => text.as_str().into(),
+            Text::Split(left, right) => {
                 let mut name = String::with_capacity(left.len() + right.len() + 1);
                 name.push_str(left);
                 if !left.is_empty() && !right.is_empty() {
@@ -150,7 +147,7 @@ impl Component {
     /// Calculates the component's state.
     pub fn state(&self) -> State {
         State {
-            background: self.settings.background.clone(),
+            background: self.settings.background,
             text: self.settings.text.clone(),
         }
     }
@@ -158,9 +155,9 @@ impl Component {
     /// Accesses a generic description of the settings available for this
     /// component and their current values.
     pub fn settings_description(&self) -> SettingsDescription {
-        let (first, second) = match self.settings.text {
-            Text::Center(ref text) => (Field::new("Text".into(), text.to_string().into()), None),
-            Text::Split(ref left, ref right) => (
+        let (first, second) = match &self.settings.text {
+            Text::Center(text) => (Field::new("Text".into(), text.to_string().into()), None),
+            Text::Split(left, right) => (
                 Field::new("Left".into(), left.to_string().into()),
                 Some(Field::new("Right".into(), right.to_string().into())),
             ),
@@ -191,10 +188,10 @@ impl Component {
             0 => self.settings.background = value.into(),
             1 => {
                 self.settings.text = match (value.into_bool().unwrap(), &mut self.settings.text) {
-                    (true, &mut Text::Center(ref mut center)) => {
+                    (true, Text::Center(center)) => {
                         Text::Split(replace(center, String::new()), String::new())
                     }
-                    (false, &mut Text::Split(ref mut left, ref mut right)) => {
+                    (false, Text::Split(left, right)) => {
                         let mut value = replace(left, String::new());
                         let right = replace(right, String::new());
                         if !value.is_empty() && !right.is_empty() {
@@ -207,13 +204,13 @@ impl Component {
                     _ => return,
                 };
             }
-            2 => match self.settings.text {
-                Text::Center(ref mut center) => *center = value.into(),
-                Text::Split(ref mut left, _) => *left = value.into(),
+            2 => match &mut self.settings.text {
+                Text::Center(center) => *center = value.into(),
+                Text::Split(left, _) => *left = value.into(),
             },
-            3 => match self.settings.text {
+            3 => match &mut self.settings.text {
                 Text::Center(_) => panic!("Set right text when there's only a center text"),
-                Text::Split(_, ref mut right) => *right = value.into(),
+                Text::Split(_, right) => *right = value.into(),
             },
             _ => panic!("Unsupported Setting Index"),
         }
