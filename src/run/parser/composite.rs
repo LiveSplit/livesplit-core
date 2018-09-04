@@ -32,7 +32,8 @@
 
 use super::{
     face_split, livesplit, llanfair, llanfair2, llanfair_gered, portal2_live_timer, shit_split,
-    source_live_timer, splitterz, splitty, time_split_tracker, urn, worstrun, wsplit, TimerKind,
+    source_live_timer, splits_io, splitterz, splitty, time_split_tracker, urn, worstrun, wsplit,
+    TimerKind,
 };
 use std::io::{self, BufRead, Seek, SeekFrom};
 use std::path::PathBuf;
@@ -139,6 +140,11 @@ where
     source.seek(SeekFrom::Start(0))?;
     if let Ok(run) = llanfair2::parse(&mut source) {
         return Ok(parsed(run, TimerKind::Llanfair2));
+    }
+
+    source.seek(SeekFrom::Start(0))?;
+    if let Ok(run) = splits_io::parse(&mut source) {
+        return Ok(parsed(run, TimerKind::GenericSplitsIO));
     }
 
     // SourceLiveTimer needs to be before Urn because of a false positive

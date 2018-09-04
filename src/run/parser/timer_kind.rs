@@ -31,6 +31,8 @@ pub enum TimerKind {
     SourceLiveTimer,
     /// Worstrun
     Worstrun,
+    /// Generic Splits I/O Timer
+    GenericSplitsIO,
 }
 
 impl fmt::Display for TimerKind {
@@ -50,6 +52,7 @@ impl fmt::Display for TimerKind {
             TimerKind::Urn => write!(f, "Urn"),
             TimerKind::SourceLiveTimer => write!(f, "SourceLiveTimer"),
             TimerKind::Worstrun => write!(f, "worstrun"),
+            TimerKind::GenericSplitsIO => write!(f, "Generic Splits I/O Timer"),
         }
     }
 }

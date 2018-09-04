@@ -49,9 +49,9 @@ fn parse_time(milliseconds: Option<f64>, method: TimingMethod) -> Time {
 
 /// Attempts to parse a Splitty splits file.
 pub fn parse<R: Read>(source: R) -> Result<Run> {
-    let mut run = Run::new();
-
     let splits: Splits = from_reader(source)?;
+
+    let mut run = Run::new();
 
     run.set_game_name(splits.run_name);
     run.set_attempt_count(splits.run_count);

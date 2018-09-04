@@ -3,7 +3,8 @@ extern crate livesplit_core;
 mod parse {
     use livesplit_core::run::parser::{
         composite, livesplit, llanfair, llanfair2, llanfair_gered, portal2_live_timer,
-        source_live_timer, splitterz, time_split_tracker, urn, worstrun, wsplit, TimerKind,
+        source_live_timer, splits_io, splitterz, time_split_tracker, urn, worstrun, wsplit,
+        TimerKind,
     };
     use livesplit_core::{analysis::total_playtime, Run, TimeSpan};
     use std::fs::File;
@@ -163,6 +164,18 @@ mod parse {
     #[test]
     fn worstrun() {
         worstrun::parse(file("tests/run_files/worstrun.json")).unwrap();
+    }
+
+    #[test]
+    fn splits_io() {
+        let run = splits_io::parse(file("tests/run_files/generic_splits_io.json")).unwrap();
+    }
+
+    #[test]
+    fn splits_io_prefers_parsing_as_itself() {
+        let run =
+            composite::parse(file("tests/run_files/generic_splits_io.json"), None, false).unwrap();
+        assert_eq!(run.kind, TimerKind::GenericSplitsIO);
     }
 
     #[test]
