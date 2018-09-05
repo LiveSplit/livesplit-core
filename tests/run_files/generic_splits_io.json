@@ -14,7 +14,7 @@
     "segments": [
         {
             "name": "Cap",
-            "duration": {
+            "endedAt": {
                 "realtimeMS": 143123
             },
             "bestDuration": {

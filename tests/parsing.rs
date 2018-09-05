@@ -168,14 +168,18 @@ mod parse {
 
     #[test]
     fn splits_io() {
-        let run = splits_io::parse(file("tests/run_files/generic_splits_io.json")).unwrap();
+        splits_io::parse(file("tests/run_files/generic_splits_io.json")).unwrap();
     }
 
     #[test]
     fn splits_io_prefers_parsing_as_itself() {
         let run =
             composite::parse(file("tests/run_files/generic_splits_io.json"), None, false).unwrap();
-        assert_eq!(run.kind, TimerKind::GenericSplitsIO);
+        assert!(if let TimerKind::Generic(_) = run.kind {
+            true
+        } else {
+            false
+        });
     }
 
     #[test]

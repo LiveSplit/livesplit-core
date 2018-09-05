@@ -1,7 +1,7 @@
 use std::fmt;
 
 /// Describes the different Timers available that store splits files.
-#[derive(Copy, Clone, Eq, PartialEq, Hash, Debug)]
+#[derive(Clone, Eq, PartialEq, Hash, Debug)]
 pub enum TimerKind {
     /// LiveSplit
     LiveSplit,
@@ -31,13 +31,14 @@ pub enum TimerKind {
     SourceLiveTimer,
     /// Worstrun
     Worstrun,
-    /// Generic Splits I/O Timer
-    GenericSplitsIO,
+    /// A Generic Timer. The name of the timer is associated with the variant.
+    /// "Generic Timer" is used if there is no known name.
+    Generic(String),
 }
 
 impl fmt::Display for TimerKind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
+        match self {
             TimerKind::LiveSplit => write!(f, "LiveSplit"),
             TimerKind::WSplit => write!(f, "WSplit"),
             TimerKind::SplitterZ => write!(f, "SplitterZ"),
@@ -52,7 +53,7 @@ impl fmt::Display for TimerKind {
             TimerKind::Urn => write!(f, "Urn"),
             TimerKind::SourceLiveTimer => write!(f, "SourceLiveTimer"),
             TimerKind::Worstrun => write!(f, "worstrun"),
-            TimerKind::GenericSplitsIO => write!(f, "Generic Splits I/O Timer"),
+            TimerKind::Generic(name) => write!(f, "{}", name),
         }
     }
 }

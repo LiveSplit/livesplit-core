@@ -32,13 +32,25 @@ struct Duration {
     #[serde(rename = "realtimeMS")]
     realtime_ms: Option<f64>,
 }
+/// Run Time represents a moment inside a run, and indicates the duration of the run so far at that
+/// moment. It holds a realtime run duration so far and a gametime run duration so far.
+#[serde(rename = "runTime")]
+#[derive(Clone, PartialEq, Debug, Default, Deserialize, Serialize)]
+struct RunTime {
+    /// Gametime (Milliseconds) is a duration a run so far in milliseconds.
+    #[serde(rename = "gametimeMS")]
+    gametime_ms: Option<f64>,
+    /// Realtime (Milliseconds) is a duration of a run so far in milliseconds.
+    #[serde(rename = "realtimeMS")]
+    realtime_ms: Option<f64>,
+}
 #[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
 struct Attempt {
     /// Attempt Number is the number of lifetime attempts the runner will have made after this one.
     /// The Attempt Number for an attempt is a label, not an index; the first attempt for a
     /// category has an Attempt Number of 1 (not 0).
     #[serde(rename = "attemptNumber")]
-    attempt_number: u32,
+    attempt_number: i64,
     duration: Option<Duration>,
 }
 #[derive(Clone, PartialEq, Debug, Default, Deserialize, Serialize)]
@@ -133,26 +145,38 @@ struct Runner {
     shortname: String,
 }
 #[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
-struct History {
+struct SegmentHistoryElement {
     /// Attempt Number is the number of lifetime attempts the runner will have made on this
     /// category after this one. Generally these attempt numbers should correspond to those in
     /// Attempts -> History, although a number given here may not be present there if the run was
     /// reset before completion.
     #[serde(rename = "attemptNumber")]
-    attempt_number: f64,
-    duration: Option<Duration>,
+    attempt_number: i64,
+    #[serde(rename = "endedAt")]
+    ended_at: Option<RunTime>,
+    /// Is Reset should be true if the runner reset the run during this segment. If so, this and
+    /// all future segments' Ended Ats for this run are ignored.
+    #[serde(rename = "isReset")]
+    is_reset: Option<bool>,
+    /// Is Skipped should be true if the runner skipped over the split that ends this segment,
+    /// rather than splitting. If so, this segment's Ended At is ignored.
+    #[serde(rename = "isSkipped")]
+    is_skipped: Option<bool>,
 }
 #[derive(Clone, PartialEq, Debug, Default, Deserialize, Serialize)]
 struct Segment {
     #[serde(rename = "bestDuration")]
     best_duration: Option<Duration>,
-    duration: Option<Duration>,
+    #[serde(rename = "endedAt")]
+    ended_at: Option<RunTime>,
     /// Histories is an array of previous completions of this segment by this runner.
-    histories: Option<Vec<History>>,
+    histories: Option<Vec<SegmentHistoryElement>>,
+    /// Is Reset should be true if the runner reset the run during this segment. If so, this and
+    /// all future segments' Ended Ats for this run are ignored.
+    #[serde(rename = "isReset")]
+    is_reset: Option<bool>,
     /// Is Skipped should be true if the runner skipped over the split that ends this segment,
-    /// rather than splitting. If so, this segment's Duration is ignored and the next segment's
-    /// Duration will be treated as invalid for historical purposes (but may still used for display
-    /// purposes).
+    /// rather than splitting. If so, this segment's Ended At is ignored.
     #[serde(rename = "isSkipped")]
     is_skipped: Option<bool>,
     /// Name is the runner-provided name of this segment
@@ -230,8 +254,27 @@ impl From<Duration> for Time {
     }
 }
 
-/// Attempts to parse a Portal 2 Live Timer splits file.
-pub fn parse<R: Read>(source: R) -> Result<Run> {
+impl From<Option<RunTime>> for Time {
+    fn from(time: Option<RunTime>) -> Time {
+        time.map(Into::into).unwrap_or_default()
+    }
+}
+
+impl From<RunTime> for Time {
+    fn from(run_time: RunTime) -> Time {
+        let mut time = Time::new();
+        if let Some(ms) = run_time.realtime_ms {
+            time.real_time = Some(TimeSpan::from_milliseconds(ms));
+        }
+        if let Some(ms) = run_time.gametime_ms {
+            time.game_time = Some(TimeSpan::from_milliseconds(ms));
+        }
+        time
+    }
+}
+
+/// Attempts to parse a generic Splits I/O splits file.
+pub fn parse<R: Read>(source: R) -> Result<(Run, String)> {
     let splits: Splits = from_reader(source)?;
 
     let mut run = Run::new();
@@ -247,28 +290,27 @@ pub fn parse<R: Read>(source: R) -> Result<Run> {
             run.set_attempt_count(total);
         }
         for attempt in attempts.histories.into_iter().flat_map(|x| x) {
-            run.add_attempt(attempt.duration.into(), None, None, None);
+            run.add_attempt_with_index(
+                attempt.duration.into(),
+                attempt.attempt_number as i32,
+                None,
+                None,
+                None,
+            );
         }
     }
 
-    let (mut accum_real, mut accum_game) = (TimeSpan::zero(), TimeSpan::zero());
     for split in splits.segments.into_iter().flat_map(|x| x) {
         let mut segment = LiveSplitSegment::new(split.name.unwrap_or_default());
-        if let Some(duration) = split.duration {
-            let mut pb_time = Time::new();
-            let time = Time::from(duration);
-            if let Some(real) = time.real_time {
-                accum_real += real;
-                pb_time.real_time = Some(accum_real);
-            }
-            if let Some(game) = time.game_time {
-                accum_game += game;
-                pb_time.game_time = Some(accum_game);
-            }
-            segment.set_personal_best_split_time(pb_time);
-        }
+        segment.set_personal_best_split_time(split.ended_at.into());
         segment.set_best_segment_time(split.best_duration.into());
-
+        if let Some(mut history) = split.histories {
+            let segment_history = segment.segment_history_mut();
+            history.sort_unstable_by_key(|x| x.attempt_number);
+            for element in history {
+                segment_history.insert(element.attempt_number as i32, element.ended_at.into());
+            }
+        }
         run.push_segment(segment);
     }
 
@@ -278,5 +320,11 @@ pub fn parse<R: Read>(source: R) -> Result<Run> {
         }
     }
 
-    Ok(run)
+    let timer = if splits.timer.longname.is_empty() {
+        String::from("Generic Timer")
+    } else {
+        splits.timer.longname
+    };
+
+    Ok((run, timer))
 }

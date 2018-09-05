@@ -143,8 +143,8 @@ where
     }
 
     source.seek(SeekFrom::Start(0))?;
-    if let Ok(run) = splits_io::parse(&mut source) {
-        return Ok(parsed(run, TimerKind::GenericSplitsIO));
+    if let Ok((run, timer)) = splits_io::parse(&mut source) {
+        return Ok(parsed(run, TimerKind::Generic(timer)));
     }
 
     // SourceLiveTimer needs to be before Urn because of a false positive
