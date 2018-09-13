@@ -1,5 +1,5 @@
 #![allow(unknown_lints)]
-#![warn(missing_docs)]
+#![warn(missing_docs, clippy)]
 // Necessary for some larger quick-error based errors.
 #![recursion_limit = "128"]
 // Clippy false positives
