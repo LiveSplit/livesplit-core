@@ -21,10 +21,10 @@ main() {
     esac
 
     cross build -p staticlib --target $TARGET
-    cross build -p staticlib --target $TARGET --release
+    # cross build -p staticlib --target $TARGET --release
     if [ -z $NO_DYLIB ]; then
         cross build -p cdylib --target $TARGET
-        cross build -p cdylib --target $TARGET --release
+        # cross build -p cdylib --target $TARGET --release
     fi
 
     if [ ! -z $DISABLE_TESTS ]; then
@@ -32,7 +32,7 @@ main() {
     fi
 
     cross test -p livesplit-core --target $TARGET
-    cross test -p livesplit-core --target $TARGET --release
+    # cross test -p livesplit-core --target $TARGET --release
 
     # cross run --target $TARGET
     # cross run --target $TARGET --release

@@ -44,10 +44,7 @@ test_script:
   - if [%APPVEYOR_REPO_TAG%]==[false] (
       cargo build -p staticlib --target %TARGET% &&
       cargo build -p cdylib --target %TARGET% &&
-      cargo build -p staticlib --target %TARGET% --release &&
-      cargo build -p cdylib --target %TARGET% --release &&
-      cargo test -p livesplit-core --target %TARGET% &&
-      cargo test -p livesplit-core --target %TARGET% --release
+      cargo test -p livesplit-core --target %TARGET%
     )
 
 before_deploy:
