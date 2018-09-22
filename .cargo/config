@@ -11,6 +11,8 @@ rustflags = [
     "-C", "link-arg=ALLOW_MEMORY_GROWTH=1",
     "-C", "link-arg=-s",
     "-C", "link-arg=BINARYEN_METHOD='native-wasm'",
+    "-C", "link-arg=-s",
+    "-C", "link-arg=EXTRA_EXPORTED_RUNTIME_METHODS=['cwrap', 'stringToUTF8', 'writeArrayToMemory']",
 ]
 
 [target.wasm32-unknown-emscripten]
@@ -26,4 +28,6 @@ rustflags = [
     "-C", "link-arg=ALLOW_MEMORY_GROWTH=1",
     "-C", "link-arg=-s",
     "-C", "link-arg=BINARYEN_METHOD='native-wasm'",
+    "-C", "link-arg=-s",
+    "-C", "link-arg=EXTRA_EXPORTED_RUNTIME_METHODS=['cwrap', 'stringToUTF8', 'writeArrayToMemory']",
 ]

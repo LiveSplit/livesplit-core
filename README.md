@@ -1,4 +1,4 @@
-<h1> <img src="https://raw.githubusercontent.com/LiveSplit/LiveSplit/master/LiveSplit/Resources/Icon.png" alt="LiveSplit" height="42" width="45" align="top"/> livesplit-core</h1>
+# <img src="https://raw.githubusercontent.com/LiveSplit/LiveSplit/master/LiveSplit/Resources/Icon.png" alt="LiveSplit" height="42" width="45" align="top"/> livesplit-core
 
 [![Build Status](https://travis-ci.org/LiveSplit/livesplit-core.svg?branch=master)](https://travis-ci.org/LiveSplit/livesplit-core)
 [![Build status](https://ci.appveyor.com/api/projects/status/bvv4un099w94kari/branch/master?svg=true)](https://ci.appveyor.com/project/CryZe/livesplit-core/branch/master)
@@ -11,15 +11,15 @@ livesplit-core is a library that provides a lot of functionality for creating a 
 It can be used directly from Rust.
 Additional Bindings are available for the following programming languages:
 
- - C
- - C++
- - C#
- - Java with Java Native Access or Java Native Interface
- - Kotlin with Java Native Interface
- - Swift
- - Ruby
- - Python
- - JavaScript + TypeScript for Node.js, asm.js and WebAssembly
+- C
+- C++
+- C#
+- Java with Java Native Access or Java Native Interface
+- Kotlin with Java Native Interface
+- Swift
+- Ruby
+- Python
+- JavaScript + TypeScript for Node.js, asm.js and WebAssembly
 
 The Documentation for the Library is available here: [API Documentation](https://docs.rs/livesplit-core/)
 
@@ -28,15 +28,18 @@ The Documentation for the Library is available here: [API Documentation](https:/
 You can install Rust with the Installer available on [rustup.rs](https://rustup.rs/).
 Clone the repository and build the library with the following command:
 
-```
-cargo build --release -p livesplit-core-capi
+```bash
+# Dynamic Library
+cargo build --release -p cdylib
+# Static Library
+cargo build --release -p staticlib
 ```
 
 The library will then be available as a shared and static library in the `target` folder.
 
 If you want to build the Bindings for the library too, you need to go into the `capi/bind_gen` folder and run the following command:
 
-```
+```bash
 cargo run
 ```
 
