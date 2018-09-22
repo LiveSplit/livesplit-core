@@ -1,6 +1,6 @@
 [package]
 name = "livesplit-core-capi"
-version = "0.8.1"
+version = "0.10.0"
 authors = ["Christopher Serr <christopher.serr@gmail.com>"]
 
 [dependencies]
