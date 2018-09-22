@@ -5,11 +5,12 @@ asmjs:
 node: asmjs
 	(cd ../bind_gen && cargo run)
 	npm install
-	./node_modules/.bin/tsc
+	npx tsc
 	mv node/livesplit_core.d.ts node/index.d.ts
 	cp ../bindings/emscripten/livesplit_core.js node/index.js
 	cp livesplit.js node/livesplit_core.js
 	cp ../../README.md node/README.md
+	npx typedoc --mode file --out ../../docs
 
 wasm:
 	@-rm ../../target/wasm32-unknown-emscripten/release/deps/*.wasm
