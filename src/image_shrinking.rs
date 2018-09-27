@@ -1,6 +1,6 @@
 use imagelib::{
-    bmp, gif, guess_format, hdr, ico, jpeg, load_from_memory_with_format, png,
-    pnm, tiff, webp, DynamicImage, ImageDecoder, ImageError, ImageFormat,
+    bmp, gif, guess_format, hdr, ico, jpeg, load_from_memory_with_format, png, pnm, tiff, webp,
+    DynamicImage, ImageDecoder, ImageError, ImageFormat,
 };
 use std::borrow::Cow;
 use std::io::Cursor;
@@ -33,11 +33,13 @@ fn shrink_inner(data: &[u8], max_dim: u32) -> Result<Cow<[u8]>, ImageError> {
             image = image.thumbnail(max_dim, max_dim);
         }
         let mut data = Vec::new();
-        let ((width, height), image_data) = match image {
-            DynamicImage::ImageLuma8(ref x) => (x.dimensions(), x.as_ref()),
-            DynamicImage::ImageLumaA8(ref x) => (x.dimensions(), x.as_ref()),
-            DynamicImage::ImageRgb8(ref x) => (x.dimensions(), x.as_ref()),
-            DynamicImage::ImageRgba8(ref x) => (x.dimensions(), x.as_ref()),
+        let ((width, height), image_data) = match &image {
+            DynamicImage::ImageLuma8(x) => (x.dimensions(), x.as_ref()),
+            DynamicImage::ImageLumaA8(x) => (x.dimensions(), x.as_ref()),
+            DynamicImage::ImageRgb8(x) => (x.dimensions(), x.as_ref()),
+            DynamicImage::ImageRgba8(x) => (x.dimensions(), x.as_ref()),
+            DynamicImage::ImageBgr8(x) => (x.dimensions(), x.as_ref()),
+            DynamicImage::ImageBgra8(x) => (x.dimensions(), x.as_ref()),
         };
         png::PNGEncoder::new(&mut data).encode(image_data, width, height, image.color())?;
         Ok(data.into())
