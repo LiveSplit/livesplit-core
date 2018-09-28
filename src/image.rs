@@ -103,12 +103,19 @@ impl Image {
     /// Modifies an image by replacing its image data with the new image data
     /// provided. The image's ID changes to a new unique ID.
     pub fn modify(&mut self, data: &[u8]) {
+        #[cfg(feature = "image-shrinking")]
+        let data = {
+            use image_shrinking::shrink;
+            const MAX_IMAGE_SIZE: u32 = 128;
+
+            shrink(data, MAX_IMAGE_SIZE)
+        };
         self.id = LAST_IMAGE_ID.fetch_add(1, Ordering::SeqCst) + 1;
         self.url.clear();
 
         if !data.is_empty() {
             self.url.push_str("data:;base64,");
-            base64::encode_config_buf(data, STANDARD, &mut self.url);
+            base64::encode_config_buf(&data, STANDARD, &mut self.url);
         }
     }
 

@@ -31,7 +31,8 @@ main() {
         return
     fi
 
-    cross test -p livesplit-core --target $TARGET
+    cross test -p livesplit-core --all-features --target $TARGET
+    cross test -p livesplit-core --no-default-features --target $TARGET
     # cross test -p livesplit-core --target $TARGET --release
 
     # cross run --target $TARGET

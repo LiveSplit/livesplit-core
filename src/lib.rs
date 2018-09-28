@@ -77,6 +77,8 @@ pub mod component;
 mod hotkey_config;
 mod hotkey_system;
 mod image;
+#[cfg(feature = "image-shrinking")]
+mod image_shrinking;
 pub mod layout;
 pub mod run;
 pub mod settings;

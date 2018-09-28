@@ -49,3 +49,7 @@ chrono = { version = "0.4.0", features = ["serde", "clock"], default-features = 
 
 [dev-dependencies]
 memmem = "0.1.1"
+
+[features]
+default = ["image-shrinking"]
+image-shrinking = ["image/webp", "image/pnm", "image/ico", "image/jpeg", "image/gif_codec", "image/tiff", "image/tga", "image/bmp", "image/hdr"]

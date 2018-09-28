@@ -7,11 +7,6 @@ pub use self::time::*;
 use std::mem;
 
 #[no_mangle]
-pub extern "C" fn fmod(a: f64, b: f64) -> f64 {
-    a - (a / b).floor() * b
-}
-
-#[no_mangle]
 pub extern "C" fn alloc(size: usize) -> *mut u8 {
     let mut buf = Vec::with_capacity(size);
     let ptr = buf.as_mut_ptr();
