@@ -12,7 +12,10 @@ use std::borrow::Cow;
 use std::io::Write;
 use timing::formatter::none_wrapper::DashWrapper;
 use timing::formatter::{timer as formatter, Accuracy, DigitsFormat, Short, TimeFormatter, DASH};
-use {GeneralLayoutSettings, TimeSpan, Timer, TimerPhase, TimingMethod};
+use {CachedImageId, GeneralLayoutSettings, TimeSpan, Timer, TimerPhase, TimingMethod};
+
+#[cfg(test)]
+mod tests;
 
 /// The Detailed Timer Component is a component that shows two timers, one for
 /// the total time of the current attempt and one showing the time of just the
@@ -20,7 +23,7 @@ use {GeneralLayoutSettings, TimeSpan, Timer, TimerPhase, TimingMethod};
 /// comparisons, the segment icon, and the segment's name, can also be shown.
 #[derive(Default, Clone)]
 pub struct Component {
-    icon_id: usize,
+    icon_id: CachedImageId,
     timer: timer::Component,
     settings: Settings,
 }
@@ -149,7 +152,8 @@ impl Component {
     /// provided.
     pub fn state(&mut self, timer: &Timer, layout_settings: &GeneralLayoutSettings) -> State {
         let current_phase = timer.current_phase();
-        let timing_method = self.settings
+        let timing_method = self
+            .settings
             .timer
             .timing_method
             .unwrap_or_else(|| timer.current_timing_method());
@@ -161,13 +165,15 @@ impl Component {
         };
 
         let (comparison1, comparison2) = if current_phase != TimerPhase::NotRunning {
-            let mut comparison1 = self.settings
+            let mut comparison1 = self
+                .settings
                 .comparison1
                 .as_ref()
                 .map(String::as_str)
                 .unwrap_or_else(|| timer.current_comparison());
 
-            let comparison2 = self.settings
+            let comparison2 = self
+                .settings
                 .comparison2
                 .as_ref()
                 .map(String::as_str)
@@ -230,7 +236,7 @@ impl Component {
                 time: formatter::Time::with_digits_format(
                     self.settings.segment_timer.digits_format,
                 ).format(t)
-                    .to_string(),
+                .to_string(),
                 fraction: formatter::Fraction::with_accuracy(self.settings.segment_timer.accuracy)
                     .format(t)
                     .to_string(),
@@ -262,17 +268,15 @@ impl Component {
             time: formatter.format(time).to_string(),
         });
 
-        let icon_id = &mut self.icon_id;
-        let icon_change = if self.settings.display_icon {
-            timer
-                .current_split()
-                .and_then(|s| s.icon().check_for_change(icon_id).map(str::to_owned))
-        } else if *icon_id != 0 {
-            *icon_id = 0;
-            Some(String::new())
-        } else {
-            None
-        };
+        let display_icon = self.settings.display_icon;
+        let icon_change = self
+            .icon_id
+            .update_with(
+                timer
+                    .current_split()
+                    .filter(|_| display_icon)
+                    .map(|s| s.icon()),
+            ).map(str::to_owned);
 
         let segment_name = if self.settings.show_segment_name {
             timer.current_split().map(|s| s.name().to_owned())
@@ -297,7 +301,7 @@ impl Component {
     /// queried. Remounting returns the segment icon again, whenever its state
     /// is queried the next time.
     pub fn remount(&mut self) {
-        self.icon_id = 0;
+        self.icon_id.reset();
     }
 
     /// Accesses a generic description of the settings available for this

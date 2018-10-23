@@ -5,6 +5,7 @@ use serde_json::{to_writer, Result as JsonResult};
 use std::io::Write;
 use timing::formatter::none_wrapper::EmptyWrapper;
 use timing::formatter::{Accuracy, Short, TimeFormatter};
+use CachedImageId;
 
 /// Represents the current state of the Run Editor in order to visualize it
 /// properly.
@@ -106,16 +107,17 @@ impl Editor {
     pub fn state(&mut self) -> State {
         let formatter = EmptyWrapper::new(Short::with_accuracy(Accuracy::Hundredths));
 
-        let icon_change = self.run
-            .game_icon()
-            .check_for_change(&mut self.game_icon_id)
+        let icon_change = self
+            .game_icon_id
+            .update_with(self.run.game_icon().into())
             .map(str::to_owned);
         let game = self.game_name().to_string();
         let category = self.category_name().to_string();
         let offset = formatter.format(self.offset()).to_string();
         let attempts = self.attempt_count();
         let timing_method = self.selected_timing_method();
-        let comparison_names = self.custom_comparisons()
+        let comparison_names = self
+            .custom_comparisons()
             .iter()
             .cloned()
             .filter(|n| n != personal_best::NAME)
@@ -128,7 +130,9 @@ impl Editor {
         };
         let mut segments = Vec::with_capacity(self.run.len());
 
-        self.segment_icon_ids.resize(self.run.len(), 0);
+        self.segment_icon_ids
+            .resize(self.run.len(), CachedImageId::default());
+
         for segment_index in 0..self.run.len() {
             let (name, split_time, segment_time, best_segment_time, comparison_times);
             {
@@ -143,10 +147,8 @@ impl Editor {
                     .collect();
             }
 
-            let icon_change = self.run
-                .segment(segment_index)
-                .icon()
-                .check_for_change(&mut self.segment_icon_ids[segment_index])
+            let icon_change = self.segment_icon_ids[segment_index]
+                .update_with(self.run.segment(segment_index).icon().into())
                 .map(str::to_owned);
 
             let selected = if self.active_segment_index() == segment_index {

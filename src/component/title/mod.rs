@@ -7,7 +7,7 @@ use serde_json::{to_writer, Result};
 use settings::{Alignment, Color, Field, Gradient, SettingsDescription, Value};
 use std::borrow::Cow;
 use std::io::Write;
-use {Timer, TimerPhase};
+use {CachedImageId, Timer, TimerPhase};
 
 #[cfg(test)]
 mod tests;
@@ -17,7 +17,7 @@ mod tests;
 /// and the total number of finished runs can be shown.
 #[derive(Default, Clone)]
 pub struct Component {
-    icon_id: usize,
+    icon_id: CachedImageId,
     settings: Settings,
 }
 
@@ -182,21 +182,13 @@ impl Component {
             None
         };
 
-        let icon_change = if self.settings.display_game_icon {
-            run.game_icon()
-                .check_for_change(&mut self.icon_id)
-                .map(str::to_owned)
-        } else if self.icon_id != 0 {
-            self.icon_id = 0;
-            Some(String::new())
-        } else {
-            None
-        };
+        let game_icon = Some(run.game_icon()).filter(|_| self.settings.display_game_icon);
+        let icon_change = self.icon_id.update_with(game_icon).map(str::to_owned);
 
         let is_centered = match self.settings.text_alignment {
             Alignment::Center => true,
             Alignment::Left => false,
-            Alignment::Auto => run.game_icon().is_empty() || !self.settings.display_game_icon,
+            Alignment::Auto => game_icon.is_none(),
         };
 
         let game_name = if self.settings.show_game_name {
@@ -250,7 +242,7 @@ impl Component {
     /// Remounting returns the game icon again, whenever its state is queried
     /// the next time.
     pub fn remount(&mut self) {
-        self.icon_id = 0;
+        self.icon_id.reset();
     }
 
     /// Accesses a generic description of the settings available for this

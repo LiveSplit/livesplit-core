@@ -13,7 +13,7 @@ use std::cmp::{max, min};
 use std::io::Write;
 use timing::formatter::none_wrapper::{DashWrapper, EmptyWrapper};
 use timing::formatter::{Delta, Regular, TimeFormatter};
-use {analysis, GeneralLayoutSettings, Timer};
+use {analysis, CachedImageId, GeneralLayoutSettings, Timer};
 
 #[cfg(test)]
 mod tests;
@@ -25,7 +25,7 @@ mod tests;
 /// to be shown all the time.
 #[derive(Default, Clone)]
 pub struct Component {
-    icon_ids: Vec<usize>,
+    icon_ids: Vec<CachedImageId>,
     settings: Settings,
     current_split_index: Option<usize>,
     scroll_offset: isize,
@@ -202,7 +202,7 @@ impl Component {
         }
 
         let run = timer.run();
-        self.icon_ids.resize(run.len(), 0);
+        self.icon_ids.resize(run.len(), CachedImageId::default());
 
         let mut visual_split_count = self.settings.visual_split_count;
         if visual_split_count == 0 {
@@ -244,15 +244,15 @@ impl Component {
         let mut icon_changes = Vec::new();
 
         State {
-            splits: run.segments()
+            splits: run
+                .segments()
                 .iter()
                 .enumerate()
                 .zip(self.icon_ids.iter_mut())
                 .skip(skip_count)
                 .filter(|&((i, _), _)| {
                     i - skip_count < take_count || (always_show_last_split && i + 1 == run.len())
-                })
-                .map(|((i, segment), icon_id)| {
+                }).map(|((i, segment), icon_id)| {
                     let split = segment.split_time()[method];
                     let comparison_time = segment.comparison(comparison)[method];
 
@@ -285,7 +285,7 @@ impl Component {
 
                     let visual_color = semantic_color.visualize(layout_settings);
 
-                    if let Some(icon_change) = segment.icon().check_for_change(icon_id) {
+                    if let Some(icon_change) = icon_id.update_with(Some(segment.icon())) {
                         icon_changes.push(IconChange {
                             segment_index: i,
                             icon: icon_change.to_owned(),
@@ -301,8 +301,7 @@ impl Component {
                         is_current_split: Some(i) == current_split,
                         index: i,
                     }
-                })
-                .collect(),
+                }).collect(),
             icon_changes,
             show_final_separator,
             current_split_gradient: self.settings.current_split_gradient,

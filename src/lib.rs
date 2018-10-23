@@ -88,7 +88,7 @@ pub mod timing;
 
 pub use self::hotkey_config::HotkeyConfig;
 pub use self::hotkey_system::HotkeySystem;
-pub use self::image::Image;
+pub use self::image::{CachedImageId, Image};
 pub use self::layout::{
     Component, Editor as LayoutEditor, GeneralSettings as GeneralLayoutSettings, Layout,
 };
