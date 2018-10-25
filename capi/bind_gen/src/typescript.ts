@@ -33,6 +33,14 @@ export type Gradient =
     { Vertical: Color[] } |
     { Horizontal: Color[] };
 
+/**
+ * Describes an extended form of a gradient, specifically made for use with
+ * lists. It allows specifying different coloration for the rows in a list.
+ */
+export type ListGradient =
+    { Same: Gradient } |
+    { Alternating: Color[] };
+
 /** Describes the Alignment of the Title in the Title Component. */
 export type Alignment = "Auto" | "Left" | "Center";
 
@@ -612,6 +620,7 @@ export type SettingsDescriptionValueJson =
     { Color: Color } |
     { OptionalColor: Color | null } |
     { Gradient: Gradient } |
+    { ListGradient: ListGradient } |
     { Alignment: Alignment } |
     { CustomCombobox: CustomCombobox };
 

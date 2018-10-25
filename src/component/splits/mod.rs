@@ -7,7 +7,7 @@
 
 use analysis::split_color;
 use serde_json::{to_writer, Result};
-use settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
+use settings::{Color, Field, Gradient, ListGradient, SemanticColor, SettingsDescription, Value};
 use std::borrow::Cow;
 use std::cmp::{max, min};
 use std::io::Write;
@@ -35,6 +35,8 @@ pub struct Component {
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Settings {
+    /// The background shown behind the splits.
+    pub background: ListGradient,
     /// The amount of segments to show in the list at any given time. If this is
     /// set to 0, all the segments are shown. If this is set to a number lower
     /// than the total amount of segments, only a certain window of all the
@@ -113,6 +115,8 @@ pub struct IconChange {
 /// The state object describes the information to visualize for this component.
 #[derive(Serialize, Deserialize)]
 pub struct State {
+    /// The background shown behind the splits.
+    pub background: ListGradient,
     /// The list of all the segments to visualize.
     pub splits: Vec<SplitState>,
     /// This list describes all the icon changes that happened. Each time a
@@ -137,6 +141,10 @@ pub struct State {
 impl Default for Settings {
     fn default() -> Self {
         Settings {
+            background: ListGradient::Alternating(
+                Color::transparent(),
+                Color::from((1.0, 1.0, 1.0, 0.04)),
+            ),
             visual_split_count: 16,
             split_preview_count: 1,
             show_thin_separators: true,
@@ -345,6 +353,7 @@ impl Component {
         }
 
         State {
+            background: self.settings.background,
             splits,
             icon_changes,
             show_thin_separators,

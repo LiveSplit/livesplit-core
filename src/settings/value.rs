@@ -1,4 +1,4 @@
-use super::{Alignment, Color, Gradient};
+use super::{Alignment, Color, Gradient, ListGradient};
 use std::result::Result as StdResult;
 use timing::formatter::{Accuracy, DigitsFormat};
 use TimingMethod;
@@ -33,6 +33,8 @@ pub enum Value {
     OptionalColor(Option<Color>),
     /// A gradient.
     Gradient(Gradient),
+    /// A gradient designed for use with lists.
+    ListGradient(ListGradient),
     /// An alignment for the Title Component's title.
     Alignment(Alignment),
 }
@@ -147,6 +149,16 @@ impl Value {
         }
     }
 
+    /// Tries to convert the value into a list gradient.
+    pub fn into_list_gradient(self) -> Result<ListGradient> {
+        match self {
+            Value::Color(v) => Ok(ListGradient::Same(Gradient::Plain(v))),
+            Value::Gradient(v) => Ok(ListGradient::Same(v)),
+            Value::ListGradient(v) => Ok(v),
+            _ => Err(Error::WrongType),
+        }
+    }
+
     /// Tries to convert the value into an alignment.
     pub fn into_alignment(self) -> Result<Alignment> {
         match self {
@@ -225,6 +237,12 @@ impl Into<Option<Color>> for Value {
 impl Into<Gradient> for Value {
     fn into(self) -> Gradient {
         self.into_gradient().unwrap()
+    }
+}
+
+impl Into<ListGradient> for Value {
+    fn into(self) -> ListGradient {
+        self.into_list_gradient().unwrap()
     }
 }
 

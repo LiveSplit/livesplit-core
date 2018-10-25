@@ -46,7 +46,7 @@ impl Default for GeneralSettings {
             not_running_color: Color::hsla(0.0, 0.0, 0.67, 1.0),
             personal_best_color: Color::hsla(203.0, 1.0, 0.54, 1.0),
             paused_color: Color::hsla(0.0, 0.0, 0.48, 1.0),
-            thin_separators_color: Color::hsla(0.0, 0.0, 1.0, 0.06),
+            thin_separators_color: Color::hsla(0.0, 0.0, 1.0, 0.09),
             separators_color: Color::hsla(0.0, 0.0, 1.0, 0.35),
             text_color: Color::hsla(0.0, 0.0, 1.0, 1.0),
         }
