@@ -24,6 +24,9 @@ pub struct Component {
 pub struct Settings {
     /// The background shown behind the component.
     pub background: Gradient,
+    /// Specifies whether to display the name of the component and its value in
+    /// two separate rows.
+    pub display_two_rows: bool,
     /// Specifies whether the component should show the amount of days, when the
     /// total duration reaches 24 hours or more.
     pub show_days: bool,
@@ -39,6 +42,7 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             background: DEFAULT_INFO_TEXT_GRADIENT,
+            display_two_rows: false,
             show_days: true,
             label_color: None,
             value_color: None,
@@ -61,6 +65,9 @@ pub struct State {
     pub text: String,
     /// The total playtime.
     pub time: String,
+    /// Specifies whether to display the name of the component and its value in
+    /// two separate rows.
+    pub display_two_rows: bool,
 }
 
 impl State {
@@ -115,6 +122,7 @@ impl Component {
             value_color: self.settings.value_color,
             text: String::from("Total Playtime"),
             time,
+            display_two_rows: self.settings.display_two_rows,
         }
     }
 
@@ -123,6 +131,10 @@ impl Component {
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new("Background".into(), self.settings.background.into()),
+            Field::new(
+                "Display 2 Rows".into(),
+                self.settings.display_two_rows.into(),
+            ),
             Field::new("Show Days (>24h)".into(), self.settings.show_days.into()),
             Field::new("Label Color".into(), self.settings.label_color.into()),
             Field::new("Value Color".into(), self.settings.value_color.into()),
@@ -139,9 +151,10 @@ impl Component {
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
             0 => self.settings.background = value.into(),
-            1 => self.settings.show_days = value.into(),
-            2 => self.settings.label_color = value.into(),
-            3 => self.settings.value_color = value.into(),
+            1 => self.settings.display_two_rows = value.into(),
+            2 => self.settings.show_days = value.into(),
+            3 => self.settings.label_color = value.into(),
+            4 => self.settings.value_color = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

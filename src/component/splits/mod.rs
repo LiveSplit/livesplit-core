@@ -46,16 +46,27 @@ pub struct Settings {
     /// segments to be shown in this scrolling window when it automatically
     /// scrolls.
     pub split_preview_count: usize,
-    /// If not every segment is shown in the scrolling window of segments, then
-    /// this determines whether the final segment is always to be shown, as it
-    /// contains valuable information about the total duration of the chosen
-    /// comparison, which is often the runner's Personal Best.
-    pub always_show_last_split: bool,
+    /// Specifies whether thin separators should be shown between the individual
+    /// segments shown by the component.
+    pub show_thin_separators: bool,
     /// If the last segment is to always be shown, this determines whether to
     /// show a more pronounced separator in front of the last segment, if it is
     /// not directly adjacent to the segment shown right before it in the
     /// scrolling window.
     pub separator_last_split: bool,
+    /// If not every segment is shown in the scrolling window of segments, then
+    /// this determines whether the final segment is always to be shown, as it
+    /// contains valuable information about the total duration of the chosen
+    /// comparison, which is often the runner's Personal Best.
+    pub always_show_last_split: bool,
+    /// If there's not enough segments to fill the list of splits, this option
+    /// allows filling the remaining splits with blank space in order to
+    /// maintain the visual split count specified. Otherwise the visual split
+    /// count is reduced to the actual amount of segments.
+    pub fill_with_blank_space: bool,
+    /// Specifies whether to display each split as two rows, with the segment
+    /// name being in one row and the times being in the other.
+    pub display_two_rows: bool,
     /// The gradient to show behind the current segment as an indicator of it
     /// being the current segment.
     pub current_split_gradient: Gradient,
@@ -109,9 +120,15 @@ pub struct State {
     /// this list. If necessary, you may remount this component to reset the
     /// component into a state where these icons are provided again.
     pub icon_changes: Vec<IconChange>,
+    /// Specifies whether thin separators should be shown between the individual
+    /// segments shown by the component.
+    pub show_thin_separators: bool,
     /// Describes whether a more pronounced separator should be shown in front
     /// of the last segment provided.
     pub show_final_separator: bool,
+    /// Specifies whether to display each split as two rows, with the segment
+    /// name being in one row and the times being in the other.
+    pub display_two_rows: bool,
     /// The gradient to show behind the current segment as an indicator of it
     /// being the current segment.
     pub current_split_gradient: Gradient,
@@ -122,8 +139,11 @@ impl Default for Settings {
         Settings {
             visual_split_count: 16,
             split_preview_count: 1,
-            always_show_last_split: true,
+            show_thin_separators: true,
             separator_last_split: true,
+            always_show_last_split: true,
+            fill_with_blank_space: true,
+            display_two_rows: false,
             current_split_gradient: Gradient::Vertical(
                 Color::from((51.0 / 255.0, 115.0 / 255.0, 244.0 / 255.0, 1.0)),
                 Color::from((21.0 / 255.0, 53.0 / 255.0, 116.0 / 255.0, 1.0)),
@@ -241,69 +261,95 @@ impl Component {
             && always_show_last_split
             && skip_count + take_count + 1 < run.len();
 
+        let Settings {
+            show_thin_separators,
+            fill_with_blank_space,
+            display_two_rows,
+            ..
+        } = self.settings;
+
         let mut icon_changes = Vec::new();
 
-        State {
-            splits: run
-                .segments()
-                .iter()
-                .enumerate()
-                .zip(self.icon_ids.iter_mut())
-                .skip(skip_count)
-                .filter(|&((i, _), _)| {
-                    i - skip_count < take_count || (always_show_last_split && i + 1 == run.len())
-                }).map(|((i, segment), icon_id)| {
-                    let split = segment.split_time()[method];
-                    let comparison_time = segment.comparison(comparison)[method];
+        let mut splits: Vec<_> = run
+            .segments()
+            .iter()
+            .enumerate()
+            .zip(self.icon_ids.iter_mut())
+            .skip(skip_count)
+            .filter(|&((i, _), _)| {
+                i - skip_count < take_count || (always_show_last_split && i + 1 == run.len())
+            }).map(|((i, segment), icon_id)| {
+                let split = segment.split_time()[method];
+                let comparison_time = segment.comparison(comparison)[method];
 
-                    let (time, delta, semantic_color) = if current_split > Some(i) {
-                        let delta = catch! { split? - comparison_time? };
-                        (
-                            split,
-                            delta,
-                            split_color(timer, delta, i, true, true, comparison, method),
-                        )
-                    } else if current_split == Some(i) {
-                        (
-                            comparison_time,
-                            analysis::check_live_delta(timer, true, comparison, method),
-                            SemanticColor::Default,
-                        )
-                    } else {
-                        (comparison_time, None, SemanticColor::Default)
-                    };
-
-                    let delta = if current_split > Some(i) {
-                        DashWrapper::new(Delta::with_decimal_dropping())
-                            .format(delta)
-                            .to_string()
-                    } else {
-                        EmptyWrapper::new(Delta::with_decimal_dropping())
-                            .format(delta)
-                            .to_string()
-                    };
-
-                    let visual_color = semantic_color.visualize(layout_settings);
-
-                    if let Some(icon_change) = icon_id.update_with(Some(segment.icon())) {
-                        icon_changes.push(IconChange {
-                            segment_index: i,
-                            icon: icon_change.to_owned(),
-                        });
-                    }
-
-                    SplitState {
-                        name: segment.name().to_string(),
+                let (time, delta, semantic_color) = if current_split > Some(i) {
+                    let delta = catch! { split? - comparison_time? };
+                    (
+                        split,
                         delta,
-                        time: Regular::new().format(time).to_string(),
-                        semantic_color,
-                        visual_color,
-                        is_current_split: Some(i) == current_split,
-                        index: i,
-                    }
-                }).collect(),
+                        split_color(timer, delta, i, true, true, comparison, method),
+                    )
+                } else if current_split == Some(i) {
+                    (
+                        comparison_time,
+                        analysis::check_live_delta(timer, true, comparison, method),
+                        SemanticColor::Default,
+                    )
+                } else {
+                    (comparison_time, None, SemanticColor::Default)
+                };
+
+                let delta = if current_split > Some(i) {
+                    DashWrapper::new(Delta::with_decimal_dropping())
+                        .format(delta)
+                        .to_string()
+                } else {
+                    EmptyWrapper::new(Delta::with_decimal_dropping())
+                        .format(delta)
+                        .to_string()
+                };
+
+                let visual_color = semantic_color.visualize(layout_settings);
+
+                if let Some(icon_change) = icon_id.update_with(Some(segment.icon())) {
+                    icon_changes.push(IconChange {
+                        segment_index: i,
+                        icon: icon_change.to_owned(),
+                    });
+                }
+
+                SplitState {
+                    name: segment.name().to_string(),
+                    delta,
+                    time: Regular::new().format(time).to_string(),
+                    semantic_color,
+                    visual_color,
+                    is_current_split: Some(i) == current_split,
+                    index: i,
+                }
+            }).collect();
+
+        if fill_with_blank_space && splits.len() < visual_split_count {
+            let blank_split_count = visual_split_count - splits.len();
+            for _ in 0..blank_split_count {
+                splits.push(SplitState {
+                    name: String::from(""),
+                    delta: String::from(""),
+                    time: String::from(""),
+                    semantic_color: SemanticColor::Default,
+                    visual_color: SemanticColor::Default.visualize(layout_settings),
+                    is_current_split: false,
+                    index: ::std::usize::MAX ^ 1,
+                });
+            }
+        }
+
+        State {
+            splits,
             icon_changes,
+            show_thin_separators,
             show_final_separator,
+            display_two_rows,
             current_split_gradient: self.settings.current_split_gradient,
         }
     }
@@ -321,12 +367,24 @@ impl Component {
                 Value::UInt(self.settings.split_preview_count as _),
             ),
             Field::new(
-                "Always Show Last Split".into(),
-                self.settings.always_show_last_split.into(),
+                "Show Thin Separators".into(),
+                self.settings.show_thin_separators.into(),
             ),
             Field::new(
                 "Show Separator Before Last Split".into(),
                 self.settings.separator_last_split.into(),
+            ),
+            Field::new(
+                "Always Show Last Split".into(),
+                self.settings.always_show_last_split.into(),
+            ),
+            Field::new(
+                "Fill with Blank Space if Not Enough Splits".into(),
+                self.settings.fill_with_blank_space.into(),
+            ),
+            Field::new(
+                "Display 2 Rows".into(),
+                self.settings.display_two_rows.into(),
             ),
             Field::new(
                 "Current Split Gradient".into(),
@@ -346,9 +404,12 @@ impl Component {
         match index {
             0 => self.settings.visual_split_count = value.into_uint().unwrap() as _,
             1 => self.settings.split_preview_count = value.into_uint().unwrap() as _,
-            2 => self.settings.always_show_last_split = value.into(),
+            2 => self.settings.show_thin_separators = value.into(),
             3 => self.settings.separator_last_split = value.into(),
-            4 => self.settings.current_split_gradient = value.into(),
+            4 => self.settings.always_show_last_split = value.into(),
+            5 => self.settings.fill_with_blank_space = value.into(),
+            6 => self.settings.display_two_rows = value.into(),
+            7 => self.settings.current_split_gradient = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

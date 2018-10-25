@@ -32,6 +32,9 @@ pub struct Settings {
     /// The comparison chosen. Uses the Timer's current comparison if set to
     /// `None`.
     pub comparison_override: Option<String>,
+    /// Specifies whether to display the name of the component and its value in
+    /// two separate rows.
+    pub display_two_rows: bool,
     /// Activates the Total Possible Time Save mode, where the remaining time
     /// save for the current attempt is shown, instead of the time save for the
     /// current segment.
@@ -51,6 +54,7 @@ impl Default for Settings {
         Self {
             background: DEFAULT_INFO_TEXT_GRADIENT,
             comparison_override: None,
+            display_two_rows: false,
             total_possible_time_save: false,
             label_color: None,
             value_color: None,
@@ -74,6 +78,9 @@ pub struct State {
     pub text: String,
     /// The current possible time save.
     pub time: String,
+    /// Specifies whether to display the name of the component and its value in
+    /// two separate rows.
+    pub display_two_rows: bool,
 }
 
 impl State {
@@ -158,6 +165,7 @@ impl Component {
             time: PossibleTimeSave::with_accuracy(self.settings.accuracy)
                 .format(time)
                 .to_string(),
+            display_two_rows: self.settings.display_two_rows,
         }
     }
 
@@ -169,6 +177,10 @@ impl Component {
             Field::new(
                 "Comparison".into(),
                 self.settings.comparison_override.clone().into(),
+            ),
+            Field::new(
+                "Display 2 Rows".into(),
+                self.settings.display_two_rows.into(),
             ),
             Field::new(
                 "Show Total Possible Time Save".into(),
@@ -191,10 +203,11 @@ impl Component {
         match index {
             0 => self.settings.background = value.into(),
             1 => self.settings.comparison_override = value.into(),
-            2 => self.settings.total_possible_time_save = value.into(),
-            3 => self.settings.label_color = value.into(),
-            4 => self.settings.value_color = value.into(),
-            5 => self.settings.accuracy = value.into(),
+            2 => self.settings.display_two_rows = value.into(),
+            3 => self.settings.total_possible_time_save = value.into(),
+            4 => self.settings.label_color = value.into(),
+            5 => self.settings.value_color = value.into(),
+            6 => self.settings.accuracy = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

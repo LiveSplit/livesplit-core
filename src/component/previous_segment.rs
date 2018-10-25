@@ -33,6 +33,9 @@ pub struct Settings {
     /// The comparison chosen. Uses the Timer's current comparison if set to
     /// `None`.
     pub comparison_override: Option<String>,
+    /// Specifies whether to display the name of the component and its value in
+    /// two separate rows.
+    pub display_two_rows: bool,
     /// The color of the label. If `None` is specified, the color is taken from
     /// the layout.
     pub label_color: Option<Color>,
@@ -51,6 +54,7 @@ impl Default for Settings {
         Self {
             background: DEFAULT_INFO_TEXT_GRADIENT,
             comparison_override: None,
+            display_two_rows: false,
             label_color: None,
             drop_decimals: true,
             accuracy: Accuracy::Tenths,
@@ -75,6 +79,9 @@ pub struct State {
     pub semantic_color: SemanticColor,
     /// The visual color of the delta time.
     pub visual_color: Color,
+    /// Specifies whether to display the name of the component and its value in
+    /// two separate rows.
+    pub display_two_rows: bool,
 }
 
 impl State {
@@ -232,6 +239,7 @@ impl Component {
             time,
             semantic_color,
             visual_color,
+            display_two_rows: self.settings.display_two_rows,
         }
     }
 
@@ -243,6 +251,10 @@ impl Component {
             Field::new(
                 "Comparison".into(),
                 self.settings.comparison_override.clone().into(),
+            ),
+            Field::new(
+                "Display 2 Rows".into(),
+                self.settings.display_two_rows.into(),
             ),
             Field::new("Label Color".into(), self.settings.label_color.into()),
             Field::new("Drop Decimals".into(), self.settings.drop_decimals.into()),
@@ -265,10 +277,11 @@ impl Component {
         match index {
             0 => self.settings.background = value.into(),
             1 => self.settings.comparison_override = value.into(),
-            2 => self.settings.label_color = value.into(),
-            3 => self.settings.drop_decimals = value.into(),
-            4 => self.settings.accuracy = value.into(),
-            5 => self.settings.show_possible_time_save = value.into(),
+            2 => self.settings.display_two_rows = value.into(),
+            3 => self.settings.label_color = value.into(),
+            4 => self.settings.drop_decimals = value.into(),
+            5 => self.settings.accuracy = value.into(),
+            6 => self.settings.show_possible_time_save = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

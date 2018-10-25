@@ -34,6 +34,9 @@ pub struct Component {
 pub struct Settings {
     /// The background shown behind the component.
     pub background: Gradient,
+    /// Specifies whether to display the name of the component and its value in
+    /// two separate rows.
+    pub display_two_rows: bool,
     /// The color of the label. If `None` is specified, the color is taken from
     /// the layout.
     pub label_color: Option<Color>,
@@ -48,6 +51,7 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             background: DEFAULT_INFO_TEXT_GRADIENT,
+            display_two_rows: false,
             label_color: None,
             value_color: None,
             accuracy: Accuracy::Seconds,
@@ -70,6 +74,9 @@ pub struct State {
     pub text: String,
     /// The sum of best segments.
     pub time: String,
+    /// Specifies whether to display the name of the component and its value in
+    /// two separate rows.
+    pub display_two_rows: bool,
 }
 
 impl State {
@@ -125,6 +132,7 @@ impl Component {
             time: Regular::with_accuracy(self.settings.accuracy)
                 .format(time)
                 .to_string(),
+            display_two_rows: self.settings.display_two_rows,
         }
     }
 
@@ -133,6 +141,10 @@ impl Component {
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new("Background".into(), self.settings.background.into()),
+            Field::new(
+                "Display 2 Rows".into(),
+                self.settings.display_two_rows.into(),
+            ),
             Field::new("Label Color".into(), self.settings.label_color.into()),
             Field::new("Value Color".into(), self.settings.value_color.into()),
             Field::new("Accuracy".into(), self.settings.accuracy.into()),
@@ -149,9 +161,10 @@ impl Component {
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
             0 => self.settings.background = value.into(),
-            1 => self.settings.label_color = value.into(),
-            2 => self.settings.value_color = value.into(),
-            3 => self.settings.accuracy = value.into(),
+            1 => self.settings.display_two_rows = value.into(),
+            2 => self.settings.label_color = value.into(),
+            3 => self.settings.value_color = value.into(),
+            4 => self.settings.accuracy = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

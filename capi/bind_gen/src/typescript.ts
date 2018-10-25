@@ -165,10 +165,20 @@ export interface SplitsComponentStateJson {
      */
     icon_changes: SplitsComponentIconChangeJson[],
     /**
+     * Specifies whether thin separators should be shown between the individual
+     * segments shown by the component.
+     */
+    show_thin_separators: boolean,
+    /**
      * Describes whether a more pronounced separator should be shown in front of
      * the last segment provided.
      */
     show_final_separator: boolean,
+    /**
+     * Specifies whether to display each split as two rows, with the segment
+     * name being in one row and the times being in the other.
+     */
+    display_two_rows: boolean,
     /**
      * The gradient to show behind the current segment as an indicator of it
      * being the current segment.
@@ -240,6 +250,11 @@ export interface PreviousSegmentComponentStateJson {
     semantic_color: SemanticColor,
     /** The visual color of the delta time. */
     visual_color: Color,
+    /**
+     * Specifies whether to display the name of the component and its value in
+     * two separate rows.
+     */
+    display_two_rows: boolean,
 }
 
 /** The state object describes the information to visualize for this component. */
@@ -260,6 +275,11 @@ export interface SumOfBestComponentStateJson {
     text: string,
     /** The sum of best segments. */
     time: string,
+    /**
+     * Specifies whether to display the name of the component and its value in
+     * two separate rows.
+     */
+    display_two_rows: boolean,
 }
 
 /** The state object describes the information to visualize for this component. */
@@ -280,6 +300,11 @@ export interface PossibleTimeSaveComponentStateJson {
     text: string,
     /** The current possible time save. */
     time: string,
+    /**
+     * Specifies whether to display the name of the component and its value in
+     * two separate rows.
+     */
+    display_two_rows: boolean,
 }
 
 /**
@@ -389,6 +414,11 @@ export interface TotalPlaytimeComponentStateJson {
     text: string,
     /** The total playtime. */
     time: string,
+    /**
+     * Specifies whether to display the name of the component and its value in
+     * two separate rows.
+     */
+    display_two_rows: boolean,
 }
 
 /** The state object describes the information to visualize for this component. */
@@ -409,6 +439,11 @@ export interface CurrentPaceComponentStateJson {
     text: string,
     /** The current pace. */
     time: string,
+    /**
+     * Specifies whether to display the name of the component and its value in
+     * two separate rows.
+     */
+    display_two_rows: boolean,
 }
 
 /** The state object describes the information to visualize for this component. */
@@ -428,6 +463,11 @@ export interface DeltaComponentStateJson {
     semantic_color: SemanticColor,
     /** The visual color of the delta time. */
     visual_color: Color,
+    /**
+     * Specifies whether to display the name of the component and its value in
+     * two separate rows.
+     */
+    display_two_rows: boolean,
 }
 
 /** The state object describes the information to visualize for this component. */
@@ -451,6 +491,11 @@ export interface CurrentComparisonComponentStateJson {
      * against.
      */
     comparison: string,
+    /**
+     * Specifies whether to display the name of the component and its value in
+     * two separate rows.
+     */
+    display_two_rows: boolean,
 }
 
 /** The state object describes the information to visualize for this component. */
