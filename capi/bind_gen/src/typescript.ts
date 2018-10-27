@@ -163,6 +163,8 @@ export interface TitleComponentStateJson {
 
 /** The state object describes the information to visualize for this component. */
 export interface SplitsComponentStateJson {
+    /** The background shown behind the splits. */
+    background: ListGradient,
     /** The list of all the segments to visualize. */
     splits: SplitStateJson[],
     /**

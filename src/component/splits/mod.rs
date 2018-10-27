@@ -367,6 +367,7 @@ impl Component {
     /// component and their current values.
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
+            Field::new("Background".into(), self.settings.background.into()),
             Field::new(
                 "Total Splits".into(),
                 Value::UInt(self.settings.visual_split_count as _),
@@ -411,14 +412,15 @@ impl Component {
     /// the setting provided is out of bounds.
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
-            0 => self.settings.visual_split_count = value.into_uint().unwrap() as _,
-            1 => self.settings.split_preview_count = value.into_uint().unwrap() as _,
-            2 => self.settings.show_thin_separators = value.into(),
-            3 => self.settings.separator_last_split = value.into(),
-            4 => self.settings.always_show_last_split = value.into(),
-            5 => self.settings.fill_with_blank_space = value.into(),
-            6 => self.settings.display_two_rows = value.into(),
-            7 => self.settings.current_split_gradient = value.into(),
+            0 => self.settings.background = value.into(),
+            1 => self.settings.visual_split_count = value.into_uint().unwrap() as _,
+            2 => self.settings.split_preview_count = value.into_uint().unwrap() as _,
+            3 => self.settings.show_thin_separators = value.into(),
+            4 => self.settings.separator_last_split = value.into(),
+            5 => self.settings.always_show_last_split = value.into(),
+            6 => self.settings.fill_with_blank_space = value.into(),
+            7 => self.settings.display_two_rows = value.into(),
+            8 => self.settings.current_split_gradient = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

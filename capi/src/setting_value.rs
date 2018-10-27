@@ -1,7 +1,7 @@
 //! Describes a setting's value. Such a value can be of a variety of different
 //! types.
 
-use livesplit_core::settings::{Alignment, Color, Gradient, Value as SettingValue};
+use livesplit_core::settings::{Alignment, Color, Gradient, ListGradient, Value as SettingValue};
 use livesplit_core::timing::formatter::{Accuracy, DigitsFormat};
 use livesplit_core::TimingMethod;
 use std::os::raw::c_char;
@@ -190,6 +190,24 @@ pub extern "C" fn SettingValue_from_horizontal_gradient(
 ) -> OwnedSettingValue {
     Box::new(
         Gradient::Horizontal(Color::from((r1, g1, b1, a1)), Color::from((r2, g2, b2, a2))).into(),
+    )
+}
+
+/// Creates a new setting value from the alternating gradient provided as two RGBA colors.
+#[no_mangle]
+pub extern "C" fn SettingValue_from_alternating_gradient(
+    r1: f32,
+    g1: f32,
+    b1: f32,
+    a1: f32,
+    r2: f32,
+    g2: f32,
+    b2: f32,
+    a2: f32,
+) -> OwnedSettingValue {
+    Box::new(
+        ListGradient::Alternating(Color::from((r1, g1, b1, a1)), Color::from((r2, g2, b2, a2)))
+            .into(),
     )
 }
 

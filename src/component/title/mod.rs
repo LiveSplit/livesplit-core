@@ -188,7 +188,7 @@ impl Component {
         let is_centered = match self.settings.text_alignment {
             Alignment::Center => true,
             Alignment::Left => false,
-            Alignment::Auto => game_icon.is_none(),
+            Alignment::Auto => game_icon.map_or(true, |i| i.is_empty()),
         };
 
         let game_name = if self.settings.show_game_name {

@@ -1,6 +1,5 @@
 extern crate heck;
 extern crate structopt;
-#[macro_use]
 extern crate structopt_derive;
 extern crate syn;
 
@@ -171,13 +170,11 @@ fn main() {
                     .filter_map(|a| match a.interpret_meta() {
                         Some(Meta::NameValue(v)) => Some(v),
                         _ => None,
-                    })
-                    .filter(|m| m.ident.to_string() == "doc")
+                    }).filter(|m| m.ident.to_string() == "doc")
                     .filter_map(|m| match m.lit {
                         Lit::Str(s) => Some(s.value().trim().to_string()),
                         _ => None,
-                    })
-                    .collect::<Vec<_>>(),
+                    }).collect::<Vec<_>>(),
             );
 
             for item in &file.items {
@@ -200,21 +197,18 @@ fn main() {
                             .filter_map(|m| match m {
                                 Meta::Word(w) => Some(w),
                                 _ => None,
-                            })
-                            .any(|w| w.to_string() == "no_mangle")
+                            }).any(|w| w.to_string() == "no_mangle")
                     {
                         let comments = attrs
                             .iter()
                             .filter_map(|a| match a.interpret_meta() {
                                 Some(Meta::NameValue(v)) => Some(v),
                                 _ => None,
-                            })
-                            .filter(|m| m.ident.to_string() == "doc")
+                            }).filter(|m| m.ident.to_string() == "doc")
                             .filter_map(|m| match m.lit {
                                 Lit::Str(s) => Some(s.value().trim().to_string()),
                                 _ => None,
-                            })
-                            .collect();
+                            }).collect();
 
                         let output = if let ReturnType::Type(_, ref ty) = decl.output {
                             get_type(ty)
@@ -241,8 +235,7 @@ fn main() {
                                     String::from("parameter")
                                 };
                                 (name, get_type(&c.ty))
-                            })
-                            .collect();
+                            }).collect();
 
                         let name = ident.to_string();
                         let class;
