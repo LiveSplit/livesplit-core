@@ -5,7 +5,7 @@
 
 use super::DEFAULT_INFO_TEXT_GRADIENT;
 use serde_json::{to_writer, Result};
-use settings::{Field, Gradient, SettingsDescription, Value};
+use settings::{Color, Field, Gradient, SettingsDescription, Value};
 use std::borrow::Cow;
 use std::io::Write;
 use std::mem::replace;
@@ -24,6 +24,17 @@ pub struct Component {
 pub struct Settings {
     /// The background shown behind the component.
     pub background: Gradient,
+    /// Specifies whether to display the left and right text is supposed to be
+    /// displayed as two rows.
+    pub display_two_rows: bool,
+    /// The color of the left part of the split up text or the whole text if
+    /// it's not split up. If `None` is specified, the color is taken from the
+    /// layout.
+    pub left_center_color: Option<Color>,
+    /// The color of the right part of the split up text. This can be ignored if
+    /// the text is not split up. If `None` is specified, the color is taken
+    /// from the layout.
+    pub right_color: Option<Color>,
     /// The text to be shown.
     pub text: Text,
 }
@@ -39,6 +50,14 @@ pub enum Text {
 }
 
 impl Text {
+    /// Returns whether the text is split up into a left and right part.
+    pub fn is_split(&self) -> bool {
+        match self {
+            Text::Split(_, _) => true,
+            Text::Center(_) => false,
+        }
+    }
+
     /// Sets the centered text. If the current mode is split, it is switched to
     /// centered mode.
     pub fn set_center<S: Into<String>>(&mut self, text: S) {
@@ -78,6 +97,17 @@ impl Text {
 pub struct State {
     /// The background shown behind the component.
     pub background: Gradient,
+    /// Specifies whether to display the left and right text is supposed to be
+    /// displayed as two rows.
+    pub display_two_rows: bool,
+    /// The color of the left part of the split up text or the whole text if
+    /// it's not split up. If `None` is specified, the color is taken from the
+    /// layout.
+    pub left_center_color: Option<Color>,
+    /// The color of the right part of the split up text. This can be ignored if
+    /// the text is not split up. If `None` is specified, the color is taken
+    /// from the layout.
+    pub right_color: Option<Color>,
     /// The text to show for the component.
     pub text: Text,
 }
@@ -86,6 +116,9 @@ impl Default for Settings {
     fn default() -> Self {
         Self {
             background: DEFAULT_INFO_TEXT_GRADIENT,
+            display_two_rows: false,
+            left_center_color: None,
+            right_color: None,
             text: Text::Center(String::from("")),
         }
     }
@@ -148,6 +181,9 @@ impl Component {
     pub fn state(&self) -> State {
         State {
             background: self.settings.background,
+            display_two_rows: self.settings.text.is_split() && self.settings.display_two_rows,
+            left_center_color: self.settings.left_center_color,
+            right_color: self.settings.right_color,
             text: self.settings.text.clone(),
         }
     }
@@ -155,11 +191,16 @@ impl Component {
     /// Accesses a generic description of the settings available for this
     /// component and their current values.
     pub fn settings_description(&self) -> SettingsDescription {
-        let (first, second) = match &self.settings.text {
-            Text::Center(text) => (Field::new("Text".into(), text.to_string().into()), None),
+        let (first, second, color_name) = match &self.settings.text {
+            Text::Center(text) => (
+                Field::new("Text".into(), text.to_string().into()),
+                None,
+                "Text Color",
+            ),
             Text::Split(left, right) => (
                 Field::new("Left".into(), left.to_string().into()),
                 Some(Field::new("Right".into(), right.to_string().into())),
+                "Left Color",
             ),
         };
 
@@ -167,10 +208,19 @@ impl Component {
             Field::new("Background".into(), self.settings.background.into()),
             Field::new("Split".into(), second.is_some().into()),
             first,
+            Field::new(color_name.into(), self.settings.left_center_color.into()),
         ];
 
         if let Some(second) = second {
             fields.push(second);
+            fields.push(Field::new(
+                "Right Color".into(),
+                self.settings.right_color.into(),
+            ));
+            fields.push(Field::new(
+                "Display 2 Rows".into(),
+                self.settings.display_two_rows.into(),
+            ));
         }
 
         SettingsDescription::with_fields(fields)
@@ -189,6 +239,9 @@ impl Component {
             1 => {
                 self.settings.text = match (value.into_bool().unwrap(), &mut self.settings.text) {
                     (true, Text::Center(center)) => {
+                        self.settings.right_color = self.settings.left_center_color;
+                        self.settings.display_two_rows = false;
+
                         Text::Split(replace(center, String::new()), String::new())
                     }
                     (false, Text::Split(left, right)) => {
@@ -208,10 +261,13 @@ impl Component {
                 Text::Center(center) => *center = value.into(),
                 Text::Split(left, _) => *left = value.into(),
             },
-            3 => match &mut self.settings.text {
+            3 => self.settings.left_center_color = value.into(),
+            4 => match &mut self.settings.text {
                 Text::Center(_) => panic!("Set right text when there's only a center text"),
                 Text::Split(_, right) => *right = value.into(),
             },
+            5 => self.settings.right_color = value.into(),
+            6 => self.settings.display_two_rows = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

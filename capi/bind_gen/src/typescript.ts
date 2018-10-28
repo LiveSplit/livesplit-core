@@ -397,6 +397,23 @@ export interface GraphComponentStatePointJson {
 export interface TextComponentStateJson {
     /** The background shown behind the component. */
     background: Gradient,
+    /**
+     * Specifies whether to display the left and right text is supposed to be
+     * displayed as two rows.
+     */
+    display_two_rows: boolean,
+    /**
+     * The color of the left part of the split up text or the whole text if
+     * it's not split up. If `None` is specified, the color is taken from the
+     * layout.
+     */
+    left_center_color: Color,
+    /**
+     * The color of the right part of the split up text. This can be ignored if
+     * the text is not split up. If `None` is specified, the color is taken
+     * from the layout.
+     */
+    right_color: Color,
     /** The text to show for the component. */
     text: TextComponentStateText,
 }
