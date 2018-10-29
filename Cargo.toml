@@ -29,7 +29,7 @@ panic = "abort"
 members = ["capi", "capi/bind_gen", "capi/js", "capi/staticlib", "capi/cdylib"]
 
 [dependencies]
-base64 = "0.9.0"
+base64 = "0.10.0"
 byteorder = "1.2.3"
 derive_more = "0.12.0"
 image = { version = "0.20.0", features = ["png_codec"], default-features = false }
