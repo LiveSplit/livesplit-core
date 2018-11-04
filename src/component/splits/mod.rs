@@ -11,7 +11,6 @@ use settings::{Color, Field, Gradient, ListGradient, SemanticColor, SettingsDesc
 use std::borrow::Cow;
 use std::cmp::{max, min};
 use std::io::Write;
-use timing::formatter::none_wrapper::{DashWrapper, EmptyWrapper};
 use timing::formatter::{Delta, Regular, TimeFormatter};
 use {analysis, CachedImageId, GeneralLayoutSettings, Timer};
 
@@ -72,21 +71,88 @@ pub struct Settings {
     /// The gradient to show behind the current segment as an indicator of it
     /// being the current segment.
     pub current_split_gradient: Gradient,
+    /// The columns to show on the splits. These can be configured in various
+    /// way to show split times, segment times, deltas and so on. The columns
+    /// are defined from right to left.
+    pub columns: Vec<ColumnSettings>,
 }
+
+/// The settings of an individual column showing timing information on each
+/// split.
+#[derive(Clone, Serialize, Deserialize, Default)]
+#[serde(default)]
+pub struct ColumnSettings {
+    // TODO: Implement column names and their headers.
+    /// Specifies the value a segment starts out with before it gets replaced
+    /// with the current attempt's information when splitting.
+    pub start_with: ColumnStartWith,
+    /// Once a certain condition is met, which is usually being on the split or
+    /// already having completed the split, the time gets updated with the value
+    /// specified here.
+    pub update_with: ColumnUpdateWith,
+    // TODO: Implement choosing when to update (when splitting, contextual,
+    // entering segment).
+    // TODO: Implement comparison and timing method overrides.
+}
+
+/// Specifies the value a segment starts out with before it gets replaced
+/// with the current attempt's information when splitting.
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
+pub enum ColumnStartWith {
+    /// The column starts out with an empty value.
+    Empty,
+    /// The column starts out with the times stored in the comparison that is
+    /// being compared against.
+    ComparisonTime,
+    /// The column starts out with the segment times stored in the comparison
+    /// that is being compared against.
+    ComparisonSegmentTime,
+}
+
+/// Once a certain condition is met, which is usually being on the split or
+/// already having completed the split, the time gets updated with the value
+/// specified here.
+#[derive(Clone, Serialize, Deserialize, PartialEq)]
+pub enum ColumnUpdateWith {
+    /// The value doesn't get updated and stays on the value it started out
+    /// with.
+    DontUpdate,
+    /// The value gets replaced by the current attempt's split time.
+    SplitTime,
+    /// The value gets replaced by the delta of the current attempt's and the
+    /// comparison's split time.
+    Delta,
+    /// The value gets replaced by the current attempt's segment time.
+    SegmentTime,
+    /// The value gets replaced by the current attempt's segment delta, which is
+    /// how much faster or slower the current attempt's segment time is compared
+    /// to the comparison's segment time. This matches the Previous Segment
+    /// component.
+    SegmentDelta,
+}
+
+impl Default for ColumnStartWith {
+    fn default() -> Self {
+        ColumnStartWith::Empty
+    }
+}
+
+impl Default for ColumnUpdateWith {
+    fn default() -> Self {
+        ColumnUpdateWith::DontUpdate
+    }
+}
+
+// TODO: Update SplitState in TypeScript bindings.
 
 /// The state object that describes a single segment's information to visualize.
 #[derive(Serialize, Deserialize)]
 pub struct SplitState {
     /// The name of the segment.
     pub name: String,
-    /// The delta to show for this segment.
-    pub delta: String,
-    /// The split time to show for this segment.
-    pub time: String,
-    /// The semantic coloring information the delta time carries.
-    pub semantic_color: SemanticColor,
-    /// The visual color of the delta time.
-    pub visual_color: Color,
+    /// The state of each column from right to left. The amount of columns is
+    /// not guaranteed to be the same across different splits.
+    pub columns: Vec<ColumnState>,
     /// Describes if this segment is the segment the active attempt is currently
     /// on.
     pub is_current_split: bool,
@@ -94,6 +160,17 @@ pub struct SplitState {
     /// differ from the index of this `SplitState` in the `State` object, as
     /// there can be a scrolling window, showing only a subset of segments.
     pub index: usize,
+}
+
+/// Describes the state of a single segment's column to visualize.
+#[derive(Serialize, Deserialize)]
+pub struct ColumnState {
+    /// The value shown in the column.
+    pub value: String,
+    /// The semantic coloring information the value carries.
+    pub semantic_color: SemanticColor,
+    /// The visual color of the value.
+    pub visual_color: Color,
 }
 
 /// Describes the icon to be shown for a certain segment. This is provided
@@ -156,6 +233,16 @@ impl Default for Settings {
                 Color::from((51.0 / 255.0, 115.0 / 255.0, 244.0 / 255.0, 1.0)),
                 Color::from((21.0 / 255.0, 53.0 / 255.0, 116.0 / 255.0, 1.0)),
             ),
+            columns: vec![
+                ColumnSettings {
+                    start_with: ColumnStartWith::ComparisonTime,
+                    update_with: ColumnUpdateWith::SplitTime,
+                },
+                ColumnSettings {
+                    start_with: ColumnStartWith::Empty,
+                    update_with: ColumnUpdateWith::Delta,
+                },
+            ],
         }
     }
 }
@@ -273,6 +360,7 @@ impl Component {
             show_thin_separators,
             fill_with_blank_space,
             display_two_rows,
+            ref columns,
             ..
         } = self.settings;
 
@@ -287,37 +375,124 @@ impl Component {
             .filter(|&((i, _), _)| {
                 i - skip_count < take_count || (always_show_last_split && i + 1 == run.len())
             }).map(|((i, segment), icon_id)| {
-                let split = segment.split_time()[method];
-                let comparison_time = segment.comparison(comparison)[method];
+                let columns = columns
+                    .iter()
+                    .map(|column| {
+                        let mut column_value = None;
+                        let mut is_delta = false;
+                        let mut updated = false;
+                        let mut semantic_color = SemanticColor::Default;
 
-                let (time, delta, semantic_color) = if current_split > Some(i) {
-                    let delta = catch! { split? - comparison_time? };
-                    (
-                        split,
-                        delta,
-                        split_color(timer, delta, i, true, true, comparison, method),
-                    )
-                } else if current_split == Some(i) {
-                    (
-                        comparison_time,
-                        analysis::check_live_delta(timer, true, comparison, method),
-                        SemanticColor::Default,
-                    )
-                } else {
-                    (comparison_time, None, SemanticColor::Default)
-                };
+                        if current_split >= Some(i) {
+                            let is_current_split = current_split == Some(i);
 
-                let delta = if current_split > Some(i) {
-                    DashWrapper::new(Delta::with_decimal_dropping())
-                        .format(delta)
-                        .to_string()
-                } else {
-                    EmptyWrapper::new(Delta::with_decimal_dropping())
-                        .format(delta)
-                        .to_string()
-                };
+                            match column.update_with {
+                                ColumnUpdateWith::DontUpdate => {}
+                                ColumnUpdateWith::SplitTime => {
+                                    if !is_current_split {
+                                        column_value = segment.split_time()[method];
+                                        updated = true;
+                                    }
+                                }
+                                ColumnUpdateWith::Delta => {
+                                    if is_current_split {
+                                        if let Some(live_delta) = analysis::check_live_delta(
+                                            timer, true, comparison, method,
+                                        ) {
+                                            column_value = Some(live_delta);
+                                            updated = true;
+                                            is_delta = true;
+                                        }
+                                    } else {
+                                        column_value = catch! {
+                                            segment.split_time()[method]? -
+                                            segment.comparison(comparison)[method]?
+                                        };
+                                        semantic_color = split_color(
+                                            timer,
+                                            column_value,
+                                            i,
+                                            true,
+                                            true,
+                                            comparison,
+                                            method,
+                                        );
+                                        updated = true;
+                                        is_delta = true;
+                                    }
+                                }
+                                ColumnUpdateWith::SegmentTime => {
+                                    column_value = if is_current_split {
+                                        analysis::live_segment_time(timer, i, method)
+                                    } else {
+                                        analysis::previous_segment_time(timer, i, method)
+                                    };
+                                    updated = true;
+                                }
+                                ColumnUpdateWith::SegmentDelta => {
+                                    if is_current_split {
+                                        if let Some(live_delta) = analysis::check_live_delta(
+                                            timer, false, comparison, method,
+                                        ) {
+                                            column_value = Some(live_delta);
+                                            updated = true;
+                                            is_delta = true;
+                                        }
+                                    } else {
+                                        column_value = analysis::previous_segment_delta(
+                                            timer, i, comparison, method,
+                                        );
+                                        semantic_color = split_color(
+                                            timer,
+                                            column_value,
+                                            i,
+                                            false,
+                                            true,
+                                            comparison,
+                                            method,
+                                        );
+                                        updated = true;
+                                        is_delta = true;
+                                    }
+                                }
+                            }
+                        }
 
-                let visual_color = semantic_color.visualize(layout_settings);
+                        if !updated {
+                            match column.start_with {
+                                ColumnStartWith::Empty => {}
+                                ColumnStartWith::ComparisonTime => {
+                                    column_value = segment.comparison(comparison)[method];
+                                }
+                                ColumnStartWith::ComparisonSegmentTime => {
+                                    column_value = analysis::comparison_segment_time(
+                                        timer.run(),
+                                        i,
+                                        comparison,
+                                        method,
+                                    );
+                                }
+                            }
+                        }
+
+                        let is_empty = column.start_with == ColumnStartWith::Empty && !updated;
+
+                        let value = if is_empty {
+                            String::new()
+                        } else if is_delta {
+                            Delta::with_decimal_dropping()
+                                .format(column_value)
+                                .to_string()
+                        } else {
+                            Regular::new().format(column_value).to_string()
+                        };
+
+                        ColumnState {
+                            value,
+                            semantic_color,
+                            visual_color: semantic_color.visualize(layout_settings),
+                        }
+                    }).collect();
 
                 if let Some(icon_change) = icon_id.update_with(Some(segment.icon())) {
                     icon_changes.push(IconChange {
@@ -328,10 +503,7 @@ impl Component {
 
                 SplitState {
                     name: segment.name().to_string(),
-                    delta,
-                    time: Regular::new().format(time).to_string(),
-                    semantic_color,
-                    visual_color,
+                    columns,
                     is_current_split: Some(i) == current_split,
                     index: i,
                 }
@@ -341,11 +513,8 @@ impl Component {
             let blank_split_count = visual_split_count - splits.len();
             for _ in 0..blank_split_count {
                 splits.push(SplitState {
-                    name: String::from(""),
-                    delta: String::from(""),
-                    time: String::from(""),
-                    semantic_color: SemanticColor::Default,
-                    visual_color: SemanticColor::Default.visualize(layout_settings),
+                    name: String::new(),
+                    columns: Vec::new(),
                     is_current_split: false,
                     index: ::std::usize::MAX ^ 1,
                 });
@@ -366,6 +535,7 @@ impl Component {
     /// Accesses a generic description of the settings available for this
     /// component and their current values.
     pub fn settings_description(&self) -> SettingsDescription {
+        // TODO: Implement settings for split columns.
         SettingsDescription::with_fields(vec![
             Field::new("Background".into(), self.settings.background.into()),
             Field::new(

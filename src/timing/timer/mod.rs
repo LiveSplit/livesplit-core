@@ -246,7 +246,7 @@ impl Timer {
             self.deinitialize_game_time();
             self.run.start_next_run();
 
-            // TODO OnStart
+            // TODO: OnStart
         }
     }
 
@@ -254,10 +254,9 @@ impl Timer {
     /// current split. The attempt ends if the last split time is stored.
     pub fn split(&mut self) {
         let current_time = self.current_time();
-        if self.phase == Running
-            && current_time
-                .real_time
-                .map_or(false, |t| t >= TimeSpan::zero())
+        if self.phase == Running && current_time
+            .real_time
+            .map_or(false, |t| t >= TimeSpan::zero())
         {
             self.current_split_mut()
                 .unwrap()
@@ -269,7 +268,7 @@ impl Timer {
             }
             self.run.mark_as_modified();
 
-            // TODO OnSplit
+            // TODO: OnSplit
         }
     }
 
@@ -293,7 +292,7 @@ impl Timer {
             self.current_split_index = self.current_split_index.map(|i| i + 1);
             self.run.mark_as_modified();
 
-            // TODO OnSkipSplit
+            // TODO: OnSkipSplit
         }
     }
 
@@ -309,7 +308,7 @@ impl Timer {
             self.current_split_mut().unwrap().clear_split_time();
             self.run.mark_as_modified();
 
-            // TODO OnUndoSplit
+            // TODO: OnUndoSplit
         }
     }
 
@@ -359,7 +358,7 @@ impl Timer {
             segment.clear_split_time();
         }
 
-        // TODO OnReset
+        // TODO: OnReset
 
         self.run.fix_splits();
         self.run.regenerate_comparisons();
@@ -371,7 +370,7 @@ impl Timer {
             self.time_paused_at = self.current_time().real_time.unwrap();
             self.phase = Paused;
 
-            // TODO OnPause
+            // TODO: OnPause
         }
     }
 
@@ -381,7 +380,7 @@ impl Timer {
             self.adjusted_start_time = TimeStamp::now() - self.time_paused_at;
             self.phase = Running;
 
-            // TODO OnResume
+            // TODO: OnResume
         }
     }
 
@@ -421,7 +420,8 @@ impl Timer {
             Ended => {
                 let pause_time = Some(self.get_pause_time().unwrap_or_default());
 
-                let split_time = self.run
+                let split_time = self
+                    .run
                     .segments_mut()
                     .iter_mut()
                     .last()
@@ -437,7 +437,7 @@ impl Timer {
 
         self.adjusted_start_time = self.start_time_with_offset;
 
-        // TODO OnUndoAllPauses
+        // TODO: OnUndoAllPauses
     }
 
     /// Switches the current comparison to the next comparison in the list.
@@ -450,7 +450,7 @@ impl Timer {
         let index = (index + 1) % len;
         self.current_comparison = self.run.comparisons().nth(index).unwrap().to_owned();
 
-        // TODO OnNextComparison
+        // TODO: OnNextComparison
     }
 
     /// Switches the current comparison to the previous comparison in the list.
@@ -463,7 +463,7 @@ impl Timer {
         let index = (index + len - 1) % len;
         self.current_comparison = self.run.comparisons().nth(index).unwrap().to_owned();
 
-        // TODO OnPreviousComparison
+        // TODO: OnPreviousComparison
     }
 
     /// Returns the total duration of the current attempt. This is not affected
