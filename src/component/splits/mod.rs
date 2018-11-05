@@ -12,7 +12,7 @@ use std::borrow::Cow;
 use std::cmp::{max, min};
 use std::io::Write;
 use timing::formatter::{Delta, Regular, TimeFormatter};
-use {analysis, CachedImageId, GeneralLayoutSettings, Timer};
+use {analysis, comparison, CachedImageId, GeneralLayoutSettings, Timer, TimingMethod};
 
 #[cfg(test)]
 mod tests;
@@ -92,7 +92,13 @@ pub struct ColumnSettings {
     pub update_with: ColumnUpdateWith,
     // TODO: Implement choosing when to update (when splitting, contextual,
     // entering segment).
-    // TODO: Implement comparison and timing method overrides.
+    /// The comparison chosen. Uses the Timer's current comparison if set to
+    /// `None`.
+    pub comparison_override: Option<String>,
+    /// Specifies the Timing Method to use. If set to `None` the Timing Method
+    /// of the Timer is used for showing the time. Otherwise the Timing Method
+    /// provided is used.
+    pub timing_method: Option<TimingMethod>,
 }
 
 /// Specifies the value a segment starts out with before it gets replaced
@@ -237,10 +243,14 @@ impl Default for Settings {
                 ColumnSettings {
                     start_with: ColumnStartWith::ComparisonTime,
                     update_with: ColumnUpdateWith::SplitTime,
+                    comparison_override: None,
+                    timing_method: None,
                 },
                 ColumnSettings {
                     start_with: ColumnStartWith::Empty,
                     update_with: ColumnUpdateWith::Delta,
+                    comparison_override: None,
+                    timing_method: None,
                 },
             ],
         }
@@ -326,7 +336,6 @@ impl Component {
 
         let current_split = timer.current_split_index();
         let method = timer.current_timing_method();
-        let comparison = timer.current_comparison();
 
         let always_show_last_split = if self.settings.always_show_last_split {
             0
@@ -378,6 +387,11 @@ impl Component {
                 let columns = columns
                     .iter()
                     .map(|column| {
+                        let method = column.timing_method.unwrap_or_else(|| method);
+                        let resolved_comparison =
+                            comparison::resolve(&column.comparison_override, timer);
+                        let comparison = comparison::or_current(resolved_comparison, timer);
+
                         let mut column_value = None;
                         let mut is_delta = false;
                         let mut updated = false;
