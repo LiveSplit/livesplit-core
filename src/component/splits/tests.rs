@@ -40,6 +40,7 @@ fn negative_segment_times() {
         columns: vec![ColumnSettings {
             start_with: ColumnStartWith::Empty,
             update_with: ColumnUpdateWith::SegmentTime,
+            ..Default::default()
         }],
         ..Default::default()
     });

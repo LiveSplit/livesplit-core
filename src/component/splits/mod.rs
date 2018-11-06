@@ -71,6 +71,8 @@ pub struct Settings {
     /// The gradient to show behind the current segment as an indicator of it
     /// being the current segment.
     pub current_split_gradient: Gradient,
+    /// Specifies whether to show the names of the columns above the splits.
+    pub show_column_labels: bool,
     /// The columns to show on the splits. These can be configured in various
     /// way to show split times, segment times, deltas and so on. The columns
     /// are defined from right to left.
@@ -82,7 +84,8 @@ pub struct Settings {
 #[derive(Clone, Serialize, Deserialize, Default)]
 #[serde(default)]
 pub struct ColumnSettings {
-    // TODO: Implement column names and their headers.
+    /// The name of the column.
+    pub name: String,
     /// Specifies the value a segment starts out with before it gets replaced
     /// with the current attempt's information when splitting.
     pub start_with: ColumnStartWith,
@@ -200,6 +203,10 @@ pub struct IconChange {
 pub struct State {
     /// The background shown behind the splits.
     pub background: ListGradient,
+    /// The column labels to visualize about the list of splits. If this is
+    /// `None`, no labels are supposed to be visualized. The list is specified
+    /// from right to left.
+    pub column_labels: Option<Vec<String>>,
     /// The list of all the segments to visualize.
     pub splits: Vec<SplitState>,
     /// This list describes all the icon changes that happened. Each time a
@@ -239,14 +246,17 @@ impl Default for Settings {
                 Color::from((51.0 / 255.0, 115.0 / 255.0, 244.0 / 255.0, 1.0)),
                 Color::from((21.0 / 255.0, 53.0 / 255.0, 116.0 / 255.0, 1.0)),
             ),
+            show_column_labels: false,
             columns: vec![
                 ColumnSettings {
+                    name: String::from("Time"),
                     start_with: ColumnStartWith::ComparisonTime,
                     update_with: ColumnUpdateWith::SplitTime,
                     comparison_override: None,
                     timing_method: None,
                 },
                 ColumnSettings {
+                    name: String::from("+/−"),
                     start_with: ColumnStartWith::Empty,
                     update_with: ColumnUpdateWith::Delta,
                     comparison_override: None,
@@ -535,8 +545,21 @@ impl Component {
             }
         }
 
+        let column_labels = if self.settings.show_column_labels {
+            Some(
+                self.settings
+                    .columns
+                    .iter()
+                    .map(|c| c.name.clone())
+                    .collect(),
+            )
+        } else {
+            None
+        };
+
         State {
             background: self.settings.background,
+            column_labels,
             splits,
             icon_changes,
             show_thin_separators,
