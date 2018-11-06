@@ -165,6 +165,12 @@ export interface TitleComponentStateJson {
 export interface SplitsComponentStateJson {
     /** The background shown behind the splits. */
     background: ListGradient,
+    /**
+     * The column labels to visualize about the list of splits. If this is
+     * `null`, no labels are supposed to be visualized. The list is specified
+     * from right to left.
+     */
+    column_labels: string[] | null,
     /** The list of all the segments to visualize. */
     splits: SplitStateJson[],
     /**
@@ -221,14 +227,11 @@ export interface SplitsComponentIconChangeJson {
 export interface SplitStateJson {
     /** The name of the segment. */
     name: string,
-    /** The delta to show for this segment. */
-    delta: string,
-    /** The split time to show for this segment. */
-    time: string,
-    /** The semantic coloring information the delta time carries. */
-    semantic_color: SemanticColor,
-    /** The visual color of the delta time. */
-    visual_color: Color,
+    /**
+     * The state of each column from right to left. The amount of columns is
+     * not guaranteed to be the same across different splits.
+     */
+    columns: SplitColumnState[],
     /**
      * Describes if this segment is the segment the active attempt is currently
      * on.
@@ -241,6 +244,16 @@ export interface SplitStateJson {
      * showing only a subset of segments.
      */
     index: number,
+}
+
+/** Describes the state of a single segment's column to visualize. */
+export interface SplitColumnState {
+    /** The value shown in the column. */
+    value: string,
+    /** The semantic coloring information the value carries. */
+    semantic_color: SemanticColor,
+    /** The visual color of the value. */
+    visual_color: Color,
 }
 
 /** The state object describes the information to visualize for this component. */

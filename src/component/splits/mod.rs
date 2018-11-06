@@ -152,8 +152,6 @@ impl Default for ColumnUpdateWith {
     }
 }
 
-// TODO: Update SplitState in TypeScript bindings.
-
 /// The state object that describes a single segment's information to visualize.
 #[derive(Serialize, Deserialize)]
 pub struct SplitState {
