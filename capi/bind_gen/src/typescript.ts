@@ -654,6 +654,8 @@ export type SettingsDescriptionValueJson =
     { Gradient: Gradient } |
     { ListGradient: ListGradient } |
     { Alignment: Alignment } |
+    { ColumnStartWith: ColumnStartWith } |
+    { ColumnUpdateWith: ColumnUpdateWith } |
     { CustomCombobox: CustomCombobox };
 
 /**
@@ -665,6 +667,19 @@ export interface CustomCombobox {
     list: string[],
     mandatory: boolean,
 }
+
+/**
+ * Specifies the value a segment starts out with before it gets replaced
+ * with the current attempt's information when splitting.
+ */
+export type ColumnStartWith = "Empty" | "ComparisonTime" | "ComparisonSegmentTime";
+
+/**
+ * Once a certain condition is met, which is usually being on the split or
+ * already having completed the split, the time gets updated with the value
+ * specified here.
+ */
+export type ColumnUpdateWith = "DontUpdate" | "SplitTime" | "Delta" | "SegmentTime" | "SegmentDelta";
 
 /**
  * The Accuracy describes how many digits to show for the fractional part of a

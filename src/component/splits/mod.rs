@@ -106,7 +106,7 @@ pub struct ColumnSettings {
 
 /// Specifies the value a segment starts out with before it gets replaced
 /// with the current attempt's information when splitting.
-#[derive(Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Copy, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ColumnStartWith {
     /// The column starts out with an empty value.
     Empty,
@@ -121,7 +121,7 @@ pub enum ColumnStartWith {
 /// Once a certain condition is met, which is usually being on the split or
 /// already having completed the split, the time gets updated with the value
 /// specified here.
-#[derive(Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Copy, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ColumnUpdateWith {
     /// The value doesn't get updated and stays on the value it started out
     /// with.
@@ -570,8 +570,7 @@ impl Component {
     /// Accesses a generic description of the settings available for this
     /// component and their current values.
     pub fn settings_description(&self) -> SettingsDescription {
-        // TODO: Implement settings for split columns.
-        SettingsDescription::with_fields(vec![
+        let mut settings = SettingsDescription::with_fields(vec![
             Field::new("Background".into(), self.settings.background.into()),
             Field::new(
                 "Total Splits".into(),
@@ -605,7 +604,37 @@ impl Component {
                 "Current Split Gradient".into(),
                 self.settings.current_split_gradient.into(),
             ),
-        ])
+            Field::new(
+                "Show Column Labels".into(),
+                self.settings.show_column_labels.into(),
+            ),
+            Field::new(
+                "Columns".into(),
+                Value::UInt(self.settings.columns.len() as _),
+            ),
+        ]);
+
+        for column in &self.settings.columns {
+            settings
+                .fields
+                .push(Field::new("Column Name".into(), column.name.clone().into()));
+            settings
+                .fields
+                .push(Field::new("Start With".into(), column.start_with.into()));
+            settings
+                .fields
+                .push(Field::new("Update With".into(), column.update_with.into()));
+            settings.fields.push(Field::new(
+                "Comparison".into(),
+                column.comparison_override.clone().into(),
+            ));
+            settings.fields.push(Field::new(
+                "Timing Method".into(),
+                column.timing_method.into(),
+            ));
+        }
+
+        settings
     }
 
     /// Sets a setting's value by its index to the given value.
@@ -626,7 +655,29 @@ impl Component {
             6 => self.settings.fill_with_blank_space = value.into(),
             7 => self.settings.display_two_rows = value.into(),
             8 => self.settings.current_split_gradient = value.into(),
-            _ => panic!("Unsupported Setting Index"),
+            9 => self.settings.show_column_labels = value.into(),
+            10 => {
+                let new_len = value.into_uint().unwrap() as usize;
+                self.settings.columns.resize(new_len, Default::default());
+            }
+            index => {
+                let index = index - 11;
+                const SETTINGS_PER_COLUMN: usize = 5;
+                let column_index = index / SETTINGS_PER_COLUMN;
+                let setting_index = index % SETTINGS_PER_COLUMN;
+                if let Some(column) = self.settings.columns.get_mut(column_index) {
+                    match setting_index {
+                        0 => column.name = value.into(),
+                        1 => column.start_with = value.into(),
+                        2 => column.update_with = value.into(),
+                        3 => column.comparison_override = value.into(),
+                        4 => column.timing_method = value.into(),
+                        _ => unreachable!(),
+                    }
+                } else {
+                    panic!("Unsupported Setting Index")
+                }
+            }
         }
     }
 }

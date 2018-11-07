@@ -1,4 +1,5 @@
 use super::{Alignment, Color, Gradient, ListGradient};
+use component::splits::{ColumnStartWith, ColumnUpdateWith};
 use std::result::Result as StdResult;
 use timing::formatter::{Accuracy, DigitsFormat};
 use TimingMethod;
@@ -37,6 +38,12 @@ pub enum Value {
     ListGradient(ListGradient),
     /// An alignment for the Title Component's title.
     Alignment(Alignment),
+    /// A value describing what a column of the Splits Component starts out
+    /// with.
+    ColumnStartWith(ColumnStartWith),
+    /// A value describing what a column of the Splits Component gets updated
+    /// with.
+    ColumnUpdateWith(ColumnUpdateWith),
 }
 
 quick_error! {
@@ -166,6 +173,24 @@ impl Value {
             _ => Err(Error::WrongType),
         }
     }
+
+    /// Tries to convert the value into a value describing what a splits
+    /// component's column starts out with.
+    pub fn into_column_start_with(self) -> Result<ColumnStartWith> {
+        match self {
+            Value::ColumnStartWith(v) => Ok(v),
+            _ => Err(Error::WrongType),
+        }
+    }
+
+    /// Tries to convert the value into a value describing what a splits
+    /// component's column gets updated with.
+    pub fn into_column_update_with(self) -> Result<ColumnUpdateWith> {
+        match self {
+            Value::ColumnUpdateWith(v) => Ok(v),
+            _ => Err(Error::WrongType),
+        }
+    }
 }
 
 impl Into<bool> for Value {
@@ -249,5 +274,17 @@ impl Into<ListGradient> for Value {
 impl Into<Alignment> for Value {
     fn into(self) -> Alignment {
         self.into_alignment().unwrap()
+    }
+}
+
+impl Into<ColumnStartWith> for Value {
+    fn into(self) -> ColumnStartWith {
+        self.into_column_start_with().unwrap()
+    }
+}
+
+impl Into<ColumnUpdateWith> for Value {
+    fn into(self) -> ColumnUpdateWith {
+        self.into_column_update_with().unwrap()
     }
 }
