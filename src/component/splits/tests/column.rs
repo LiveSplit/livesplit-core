@@ -1,13 +1,10 @@
 use super::{ColumnSettings, ColumnStartWith, ColumnUpdateWith, Component, Settings, State};
-use settings::SemanticColor;
 use tests_helper::{run_with_splits_opt, start_run};
-use {Run, Segment, TimeSpan, Timer, TimingMethod};
-
-const NONE: SemanticColor = SemanticColor::Default;
-const BEST: SemanticColor = SemanticColor::BestSegment;
-const BEHIND_LOSING: SemanticColor = SemanticColor::BehindLosingTime;
-const BEHIND_GAINING: SemanticColor = SemanticColor::BehindGainingTime;
-const AHEAD_GAINING: SemanticColor = SemanticColor::AheadGainingTime;
+use {Run, Segment, TimeSpan, Timer};
+use settings::SemanticColor::{
+    self, AheadGainingTime as AheadGaining, BehindGainingTime as BehindGaining,
+    BehindLosingTime as BehindLosing, BestSegment as Best, Default as Text,
+};
 
 type Values = [([&'static str; 6], [SemanticColor; 6]); 7];
 
@@ -46,62 +43,6 @@ fn check_column_state(state: &State, state_index: usize, expected_values: &Value
 }
 
 #[test]
-fn zero_visual_split_count_always_shows_all_splits() {
-    let mut run = Run::new();
-    for _ in 0..32 {
-        run.push_segment(Segment::new(""));
-    }
-    let timer = Timer::new(run).unwrap();
-    let layout_settings = Default::default();
-    let mut component = Component::with_settings(Settings {
-        visual_split_count: 0,
-        ..Default::default()
-    });
-
-    let mut state = component.state(&timer, &layout_settings);
-    assert_eq!(state.splits.len(), 32);
-
-    component.scroll_down();
-    state = component.state(&timer, &layout_settings);
-    assert_eq!(state.splits.len(), 32);
-
-    component.scroll_down();
-    state = component.state(&timer, &layout_settings);
-    assert_eq!(state.splits.len(), 32);
-
-    component.scroll_up();
-    state = component.state(&timer, &layout_settings);
-    assert_eq!(state.splits.len(), 32);
-}
-
-#[test]
-fn negative_segment_times() {
-    let mut run = Run::new();
-    run.push_segment(Segment::new(""));
-    let mut timer = Timer::new(run).unwrap();
-    let layout_settings = Default::default();
-    let mut component = Component::with_settings(Settings {
-        columns: vec![ColumnSettings {
-            start_with: ColumnStartWith::Empty,
-            update_with: ColumnUpdateWith::SegmentTime,
-            ..Default::default()
-        }],
-        ..Default::default()
-    });
-
-    timer.start();
-
-    // Emulate a negative offset through game time.
-    timer.set_current_timing_method(TimingMethod::GameTime);
-    timer.initialize_game_time();
-    timer.pause_game_time();
-    timer.set_game_time(TimeSpan::from_seconds(-1.0));
-
-    let state = component.state(&timer, &layout_settings);
-    assert_eq!(state.splits[0].columns[0].value, "−0:01");
-}
-
-#[test]
 fn column_empty_delta() {
     check_columns(
         ColumnStartWith::Empty,
@@ -109,37 +50,37 @@ fn column_empty_delta() {
         [
             (
                 ["", "", "", "", "", ""],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["+3.5", "", "", "", "", ""],
-                [BEHIND_LOSING, NONE, NONE, NONE, NONE, NONE],
+                [BehindLosing, Text, Text, Text, Text, Text],
             ),
             (
                 ["+3.5", "—", "", "", "", ""],
-                [BEHIND_LOSING, NONE, NONE, NONE, NONE, NONE],
+                [BehindLosing, Text, Text, Text, Text, Text],
             ),
             (
                 ["+3.5", "—", "—", "", "", ""],
-                [BEHIND_LOSING, NONE, BEST, NONE, NONE, NONE],
+                [BehindLosing, Text, Best, Text, Text, Text],
             ),
             (
                 ["+3.5", "—", "—", "+2.5", "", ""],
-                [BEHIND_LOSING, NONE, BEST, BEHIND_GAINING, NONE, NONE],
+                [BehindLosing, Text, Best, BehindGaining, Text, Text],
             ),
             (
                 ["+3.5", "—", "—", "+2.5", "—", ""],
-                [BEHIND_LOSING, NONE, BEST, BEHIND_GAINING, NONE, NONE],
+                [BehindLosing, Text, Best, BehindGaining, Text, Text],
             ),
             (
                 ["+3.5", "—", "—", "+2.5", "—", "−1:00"],
                 [
-                    BEHIND_LOSING,
-                    NONE,
-                    BEST,
-                    BEHIND_GAINING,
-                    NONE,
-                    AHEAD_GAINING,
+                    BehindLosing,
+                    Text,
+                    Best,
+                    BehindGaining,
+                    Text,
+                    AheadGaining,
                 ],
             ),
         ],
@@ -154,37 +95,37 @@ fn column_empty_segment_delta() {
         [
             (
                 ["", "", "", "", "", ""],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["+3.5", "", "", "", "", ""],
-                [BEHIND_LOSING, NONE, NONE, NONE, NONE, NONE],
+                [BehindLosing, Text, Text, Text, Text, Text],
             ),
             (
                 ["+3.5", "—", "", "", "", ""],
-                [BEHIND_LOSING, NONE, NONE, NONE, NONE, NONE],
+                [BehindLosing, Text, Text, Text, Text, Text],
             ),
             (
                 ["+3.5", "—", "—", "", "", ""],
-                [BEHIND_LOSING, NONE, BEST, NONE, NONE, NONE],
+                [BehindLosing, Text, Best, Text, Text, Text],
             ),
             (
                 ["+3.5", "—", "—", "−1.0", "", ""],
-                [BEHIND_LOSING, NONE, BEST, AHEAD_GAINING, NONE, NONE],
+                [BehindLosing, Text, Best, AheadGaining, Text, Text],
             ),
             (
                 ["+3.5", "—", "—", "−1.0", "—", ""],
-                [BEHIND_LOSING, NONE, BEST, AHEAD_GAINING, NONE, NONE],
+                [BehindLosing, Text, Best, AheadGaining, Text, Text],
             ),
             (
                 ["+3.5", "—", "—", "−1.0", "—", "−1:02"],
                 [
-                    BEHIND_LOSING,
-                    NONE,
-                    BEST,
-                    AHEAD_GAINING,
-                    NONE,
-                    AHEAD_GAINING,
+                    BehindLosing,
+                    Text,
+                    Best,
+                    AheadGaining,
+                    Text,
+                    AheadGaining,
                 ],
             ),
         ],
@@ -199,31 +140,31 @@ fn column_empty_split_time() {
         [
             (
                 ["", "", "", "", "", ""],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:08", "", "", "", "", ""],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:08", "—", "", "", "", ""],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:08", "—", "0:10", "", "", ""],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:08", "—", "0:10", "0:17", "", ""],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:08", "—", "0:10", "0:17", "—", ""],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:08", "—", "0:10", "0:17", "—", "0:25"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
         ],
     )
@@ -237,31 +178,31 @@ fn column_empty_segment_time() {
         [
             (
                 ["0:00", "", "", "", "", ""],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:08", "0:00", "", "", "", ""],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:08", "—", "0:00", "", "", ""],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:08", "—", "0:01", "0:00", "", ""],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:08", "—", "0:01", "0:07", "0:00", ""],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:08", "—", "0:01", "0:07", "—", "0:00"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:08", "—", "0:01", "0:07", "—", "0:07"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
         ],
     )
@@ -275,31 +216,31 @@ fn column_comparison_time_split_time() {
         [
             (
                 ["0:05", "—", "—", "0:15", "0:20", "1:25"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:08", "—", "—", "0:15", "0:20", "1:25"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:08", "—", "—", "0:15", "0:20", "1:25"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:08", "—", "0:10", "0:15", "0:20", "1:25"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:08", "—", "0:10", "0:17", "0:20", "1:25"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:08", "—", "0:10", "0:17", "—", "1:25"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:08", "—", "0:10", "0:17", "—", "0:25"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
         ],
     )
@@ -313,31 +254,31 @@ fn column_comparison_segment_time_segment_time() {
         [
             (
                 ["0:00", "—", "—", "0:10", "0:05", "1:05"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:08", "0:00", "—", "0:10", "0:05", "1:05"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:08", "—", "0:00", "0:10", "0:05", "1:05"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:08", "—", "0:01", "0:00", "0:05", "1:05"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:08", "—", "0:01", "0:07", "0:00", "1:05"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:08", "—", "0:01", "0:07", "—", "0:00"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:08", "—", "0:01", "0:07", "—", "0:07"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
         ],
     )
@@ -351,39 +292,39 @@ fn column_comparison_time_delta() {
         [
             (
                 ["0:05", "—", "—", "0:15", "0:20", "1:25"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["+3.5", "—", "—", "0:15", "0:20", "1:25"],
-                [BEHIND_LOSING, NONE, NONE, NONE, NONE, NONE],
+                [BehindLosing, Text, Text, Text, Text, Text],
             ),
             (
                 ["+3.5", "—", "—", "0:15", "0:20", "1:25"],
-                [BEHIND_LOSING, NONE, NONE, NONE, NONE, NONE],
+                [BehindLosing, Text, Text, Text, Text, Text],
             ),
             (
                 // In the original LiveSplit, we showed the split time for this column type if the comparison time was missing
                 // Instead, we show a dash for the third segment rather than showing the split time
                 ["+3.5", "—", "—", "0:15", "0:20", "1:25"],
-                [BEHIND_LOSING, NONE, BEST, NONE, NONE, NONE],
+                [BehindLosing, Text, Best, Text, Text, Text],
             ),
             (
                 ["+3.5", "—", "—", "+2.5", "0:20", "1:25"],
-                [BEHIND_LOSING, NONE, BEST, BEHIND_GAINING, NONE, NONE],
+                [BehindLosing, Text, Best, BehindGaining, Text, Text],
             ),
             (
                 ["+3.5", "—", "—", "+2.5", "—", "1:25"],
-                [BEHIND_LOSING, NONE, BEST, BEHIND_GAINING, NONE, NONE],
+                [BehindLosing, Text, Best, BehindGaining, Text, Text],
             ),
             (
                 ["+3.5", "—", "—", "+2.5", "—", "−1:00"],
                 [
-                    BEHIND_LOSING,
-                    NONE,
-                    BEST,
-                    BEHIND_GAINING,
-                    NONE,
-                    AHEAD_GAINING,
+                    BehindLosing,
+                    Text,
+                    Best,
+                    BehindGaining,
+                    Text,
+                    AheadGaining,
                 ],
             ),
         ],
@@ -398,39 +339,39 @@ fn column_comparison_segment_time_segment_delta() {
         [
             (
                 ["0:05", "—", "—", "0:10", "0:05", "1:05"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["+3.5", "—", "—", "0:10", "0:05", "1:05"],
-                [BEHIND_LOSING, NONE, NONE, NONE, NONE, NONE],
+                [BehindLosing, Text, Text, Text, Text, Text],
             ),
             (
                 ["+3.5", "—", "—", "0:10", "0:05", "1:05"],
-                [BEHIND_LOSING, NONE, NONE, NONE, NONE, NONE],
+                [BehindLosing, Text, Text, Text, Text, Text],
             ),
             (
                 // In the original LiveSplit, we showed the segment time for this column type if the comparison segment time was missing
                 // Instead, we show a dash for the third segment rather than showing the segment time
                 ["+3.5", "—", "—", "0:10", "0:05", "1:05"],
-                [BEHIND_LOSING, NONE, BEST, NONE, NONE, NONE],
+                [BehindLosing, Text, Best, Text, Text, Text],
             ),
             (
                 ["+3.5", "—", "—", "−1.0", "0:05", "1:05"],
-                [BEHIND_LOSING, NONE, BEST, AHEAD_GAINING, NONE, NONE],
+                [BehindLosing, Text, Best, AheadGaining, Text, Text],
             ),
             (
                 ["+3.5", "—", "—", "−1.0", "—", "1:05"],
-                [BEHIND_LOSING, NONE, BEST, AHEAD_GAINING, NONE, NONE],
+                [BehindLosing, Text, Best, AheadGaining, Text, Text],
             ),
             (
                 ["+3.5", "—", "—", "−1.0", "—", "−1:02"],
                 [
-                    BEHIND_LOSING,
-                    NONE,
-                    BEST,
-                    AHEAD_GAINING,
-                    NONE,
-                    AHEAD_GAINING,
+                    BehindLosing,
+                    Text,
+                    Best,
+                    AheadGaining,
+                    Text,
+                    AheadGaining,
                 ],
             ),
         ],
@@ -445,31 +386,31 @@ fn column_comparison_time_dont_update() {
         [
             (
                 ["0:05", "—", "—", "0:15", "0:20", "1:25"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:05", "—", "—", "0:15", "0:20", "1:25"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:05", "—", "—", "0:15", "0:20", "1:25"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:05", "—", "—", "0:15", "0:20", "1:25"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:05", "—", "—", "0:15", "0:20", "1:25"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:05", "—", "—", "0:15", "0:20", "1:25"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:05", "—", "—", "0:15", "0:20", "1:25"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
         ],
     )
@@ -483,31 +424,31 @@ fn column_comparison_segment_time_dont_update() {
         [
             (
                 ["0:05", "—", "—", "0:10", "0:05", "1:05"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:05", "—", "—", "0:10", "0:05", "1:05"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:05", "—", "—", "0:10", "0:05", "1:05"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:05", "—", "—", "0:10", "0:05", "1:05"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:05", "—", "—", "0:10", "0:05", "1:05"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:05", "—", "—", "0:10", "0:05", "1:05"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
             (
                 ["0:05", "—", "—", "0:10", "0:05", "1:05"],
-                [NONE, NONE, NONE, NONE, NONE, NONE],
+                [Text, Text, Text, Text, Text, Text],
             ),
         ],
     )
