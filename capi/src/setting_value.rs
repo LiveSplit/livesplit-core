@@ -1,7 +1,7 @@
 //! Describes a setting's value. Such a value can be of a variety of different
 //! types.
 
-use livesplit_core::component::splits::{ColumnStartWith, ColumnUpdateWith};
+use livesplit_core::component::splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith};
 use livesplit_core::settings::{Alignment, Color, Gradient, ListGradient, Value as SettingValue};
 use livesplit_core::timing::formatter::{Accuracy, DigitsFormat};
 use livesplit_core::TimingMethod;
@@ -257,6 +257,22 @@ pub unsafe extern "C" fn SettingValue_from_column_update_with(
         "Delta" => ColumnUpdateWith::Delta,
         "SegmentTime" => ColumnUpdateWith::SegmentTime,
         "SegmentDelta" => ColumnUpdateWith::SegmentDelta,
+        _ => return None,
+    };
+    Some(Box::new(value.into()))
+}
+
+/// Creates a new setting value from the column update trigger. If it doesn't
+/// match a known column update trigger, <NULL> is returned.
+#[no_mangle]
+pub unsafe extern "C" fn SettingValue_from_column_update_trigger(
+    value: *const c_char,
+) -> NullableOwnedSettingValue {
+    let value = str(value);
+    let value = match value {
+        "OnStartingSegment" => ColumnUpdateTrigger::OnStartingSegment,
+        "Contextual" => ColumnUpdateTrigger::Contextual,
+        "OnEndingSegment" => ColumnUpdateTrigger::OnEndingSegment,
         _ => return None,
     };
     Some(Box::new(value.into()))

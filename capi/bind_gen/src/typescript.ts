@@ -656,6 +656,7 @@ export type SettingsDescriptionValueJson =
     { Alignment: Alignment } |
     { ColumnStartWith: ColumnStartWith } |
     { ColumnUpdateWith: ColumnUpdateWith } |
+    { ColumnUpdateTrigger: ColumnUpdateTrigger } |
     { CustomCombobox: CustomCombobox };
 
 /**
@@ -680,6 +681,9 @@ export type ColumnStartWith = "Empty" | "ComparisonTime" | "ComparisonSegmentTim
  * specified here.
  */
 export type ColumnUpdateWith = "DontUpdate" | "SplitTime" | "Delta" | "SegmentTime" | "SegmentDelta";
+
+/** Specifies when a column's value gets updated. */
+export type ColumnUpdateTrigger = "OnStartingSegment" | "Contextual" | "OnEndingSegment";
 
 /**
  * The Accuracy describes how many digits to show for the fractional part of a

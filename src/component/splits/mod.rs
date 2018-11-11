@@ -17,6 +17,9 @@ use {analysis, comparison, CachedImageId, GeneralLayoutSettings, Timer, TimingMe
 #[cfg(test)]
 mod tests;
 
+const SETTINGS_BEFORE_COLUMNS: usize = 11;
+const SETTINGS_PER_COLUMN: usize = 6;
+
 /// The Splits Component is the main component for visualizing all the split
 /// times. Each segment is shown in a tabular fashion showing the segment icon,
 /// segment name, the delta compared to the chosen comparison, and the split
@@ -143,16 +146,16 @@ pub enum ColumnUpdateWith {
 /// Specifies when a column's value gets updated.
 #[derive(Copy, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ColumnUpdateTrigger {
-    /// The value gets updated as soon as the segment is entered. The value
-    /// constantly updates until the split happens.
-    OnEnteringSegment,
-    /// The value doesn't immediately get updated when the segment is entered.
+    /// The value gets updated as soon as the segment is started. The value
+    /// constantly updates until the segment ends.
+    OnStartingSegment,
+    /// The value doesn't immediately get updated when the segment is started.
     /// Instead the value constantly gets updated once the segment time is
     /// longer than the best segment time. The final update to the value happens
-    /// when the split happens.
+    /// when the segment ends.
     Contextual,
-    /// The value of a segment gets updated once the segment's split happens.
-    OnSplit,
+    /// The value of a segment gets updated once the segment ends.
+    OnEndingSegment,
 }
 
 impl Default for ColumnSettings {
@@ -266,7 +269,7 @@ impl Default for Settings {
                     name: String::from("Time"),
                     start_with: ColumnStartWith::ComparisonTime,
                     update_with: ColumnUpdateWith::SplitTime,
-                    update_trigger: ColumnUpdateTrigger::OnSplit,
+                    update_trigger: ColumnUpdateTrigger::OnEndingSegment,
                     comparison_override: None,
                     timing_method: None,
                 },
@@ -426,15 +429,18 @@ impl Component {
                             if current_split >= Some(i) {
                                 let is_current_split = current_split == Some(i);
 
-                                // Filter out the on split trigger early, so we only
-                                // have to deal with the other two cases inside.
+                                // Filter out the on ending segment trigger
+                                // early, so we only have to deal with the other
+                                // two cases inside.
                                 let doesnt_update_yet = is_current_split
-                                    && column.update_trigger == ColumnUpdateTrigger::OnSplit;
+                                    && column.update_trigger
+                                        == ColumnUpdateTrigger::OnEndingSegment;
 
                                 if !doesnt_update_yet {
-                                    // Since we filtered out the split trigger, in
-                                    // case of is_current_split, we only need to
-                                    // check for is_contextual.
+                                    // Since we filtered out the on ending
+                                    // segment trigger, in case of
+                                    // is_current_split, we only need to check
+                                    // for is_contextual.
                                     let is_contextual =
                                         column.update_trigger == ColumnUpdateTrigger::Contextual;
 
@@ -625,7 +631,6 @@ impl Component {
     /// Accesses a generic description of the settings available for this
     /// component and their current values.
     pub fn settings_description(&self) -> SettingsDescription {
-        // TODO: Setting for update trigger.
         let mut settings = SettingsDescription::with_fields(vec![
             Field::new("Background".into(), self.settings.background.into()),
             Field::new(
@@ -670,6 +675,10 @@ impl Component {
             ),
         ]);
 
+        settings
+            .fields
+            .reserve_exact(SETTINGS_PER_COLUMN * self.settings.columns.len());
+
         for column in &self.settings.columns {
             settings
                 .fields
@@ -680,6 +689,10 @@ impl Component {
             settings
                 .fields
                 .push(Field::new("Update With".into(), column.update_with.into()));
+            settings.fields.push(Field::new(
+                "Update Trigger".into(),
+                column.update_trigger.into(),
+            ));
             settings.fields.push(Field::new(
                 "Comparison".into(),
                 column.comparison_override.clone().into(),
@@ -717,8 +730,7 @@ impl Component {
                 self.settings.columns.resize(new_len, Default::default());
             }
             index => {
-                let index = index - 11;
-                const SETTINGS_PER_COLUMN: usize = 5;
+                let index = index - SETTINGS_BEFORE_COLUMNS;
                 let column_index = index / SETTINGS_PER_COLUMN;
                 let setting_index = index % SETTINGS_PER_COLUMN;
                 if let Some(column) = self.settings.columns.get_mut(column_index) {
@@ -726,8 +738,9 @@ impl Component {
                         0 => column.name = value.into(),
                         1 => column.start_with = value.into(),
                         2 => column.update_with = value.into(),
-                        3 => column.comparison_override = value.into(),
-                        4 => column.timing_method = value.into(),
+                        3 => column.update_trigger = value.into(),
+                        4 => column.comparison_override = value.into(),
+                        5 => column.timing_method = value.into(),
                         _ => unreachable!(),
                     }
                 } else {

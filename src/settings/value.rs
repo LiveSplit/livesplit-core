@@ -1,5 +1,5 @@
 use super::{Alignment, Color, Gradient, ListGradient};
-use component::splits::{ColumnStartWith, ColumnUpdateWith};
+use component::splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith};
 use std::result::Result as StdResult;
 use timing::formatter::{Accuracy, DigitsFormat};
 use TimingMethod;
@@ -44,6 +44,8 @@ pub enum Value {
     /// A value describing what a column of the Splits Component gets updated
     /// with.
     ColumnUpdateWith(ColumnUpdateWith),
+    /// A value describing when to update a column of the Splits Component.
+    ColumnUpdateTrigger(ColumnUpdateTrigger),
 }
 
 quick_error! {
@@ -191,6 +193,14 @@ impl Value {
             _ => Err(Error::WrongType),
         }
     }
+
+    /// Tries to convert the value into a Column Update Trigger.
+    pub fn into_column_update_trigger(self) -> Result<ColumnUpdateTrigger> {
+        match self {
+            Value::ColumnUpdateTrigger(v) => Ok(v),
+            _ => Err(Error::WrongType),
+        }
+    }
 }
 
 impl Into<bool> for Value {
@@ -286,5 +296,11 @@ impl Into<ColumnStartWith> for Value {
 impl Into<ColumnUpdateWith> for Value {
     fn into(self) -> ColumnUpdateWith {
         self.into_column_update_with().unwrap()
+    }
+}
+
+impl Into<ColumnUpdateTrigger> for Value {
+    fn into(self) -> ColumnUpdateTrigger {
+        self.into_column_update_trigger().unwrap()
     }
 }
