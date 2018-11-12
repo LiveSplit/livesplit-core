@@ -27,6 +27,12 @@ pub enum SemanticColor {
     PersonalBest,
 }
 
+impl Default for SemanticColor {
+    fn default() -> SemanticColor {
+        SemanticColor::Default
+    }
+}
+
 impl SemanticColor {
     /// Replaces a Semantic Color by the Semantic Color provided if it is the
     /// default one.

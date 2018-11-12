@@ -12,7 +12,10 @@ use std::borrow::Cow;
 use std::cmp::{max, min};
 use std::io::Write;
 use timing::formatter::{Delta, Regular, TimeFormatter};
-use {analysis, comparison, CachedImageId, GeneralLayoutSettings, Timer, TimingMethod};
+use {
+    analysis, comparison, CachedImageId, GeneralLayoutSettings, Segment, TimeSpan, Timer,
+    TimingMethod,
+};
 
 #[cfg(test)]
 mod tests;
@@ -404,193 +407,43 @@ impl Component {
 
         let mut icon_changes = Vec::new();
 
-        let mut splits: Vec<_> =
-            run.segments()
-                .iter()
-                .enumerate()
-                .zip(self.icon_ids.iter_mut())
-                .skip(skip_count)
-                .filter(|&((i, _), _)| {
-                    i - skip_count < take_count || (always_show_last_split && i + 1 == run.len())
-                }).map(|((i, segment), icon_id)| {
-                    let columns = columns
-                        .iter()
-                        .map(|column| {
-                            let method = column.timing_method.unwrap_or_else(|| method);
-                            let resolved_comparison =
-                                comparison::resolve(&column.comparison_override, timer);
-                            let comparison = comparison::or_current(resolved_comparison, timer);
+        let mut splits: Vec<_> = run
+            .segments()
+            .iter()
+            .enumerate()
+            .zip(self.icon_ids.iter_mut())
+            .skip(skip_count)
+            .filter(|&((i, _), _)| {
+                i - skip_count < take_count || (always_show_last_split && i + 1 == run.len())
+            }).map(|((i, segment), icon_id)| {
+                let columns = columns
+                    .iter()
+                    .map(|column| {
+                        column_state(
+                            column,
+                            timer,
+                            layout_settings,
+                            segment,
+                            i,
+                            current_split,
+                            method,
+                        )
+                    }).collect();
 
-                            let mut column_value = None;
-                            let mut is_delta = false;
-                            let mut updated = false;
-                            let mut semantic_color = SemanticColor::Default;
+                if let Some(icon_change) = icon_id.update_with(Some(segment.icon())) {
+                    icon_changes.push(IconChange {
+                        segment_index: i,
+                        icon: icon_change.to_owned(),
+                    });
+                }
 
-                            if current_split >= Some(i) {
-                                let is_current_split = current_split == Some(i);
-
-                                // Filter out the on ending segment trigger
-                                // early, so we only have to deal with the other
-                                // two cases inside.
-                                let doesnt_update_yet = is_current_split
-                                    && column.update_trigger
-                                        == ColumnUpdateTrigger::OnEndingSegment;
-
-                                if !doesnt_update_yet {
-                                    // Since we filtered out the on ending
-                                    // segment trigger, in case of
-                                    // is_current_split, we only need to check
-                                    // for is_contextual.
-                                    let is_contextual =
-                                        column.update_trigger == ColumnUpdateTrigger::Contextual;
-
-                                    match column.update_with {
-                                        ColumnUpdateWith::DontUpdate => {}
-                                        ColumnUpdateWith::SplitTime => {
-                                            if is_current_split {
-                                                // TODO: Contextual split time
-                                                column_value = timer.current_time()[method];
-                                                updated = true;
-                                            } else {
-                                                column_value = segment.split_time()[method];
-                                                updated = true;
-                                            }
-                                        }
-                                        ColumnUpdateWith::Delta => {
-                                            if is_current_split {
-                                                if is_contextual {
-                                                    if let Some(live_delta) =
-                                                        analysis::check_live_delta(
-                                                            timer, true, comparison, method,
-                                                        ) {
-                                                        column_value = Some(live_delta);
-                                                        updated = true;
-                                                        is_delta = true;
-                                                    }
-                                                } else {
-                                                    column_value = catch! {
-                                                        timer.current_time()[method]? -
-                                                        segment.comparison(comparison)[method]?
-                                                    };
-                                                    updated = true;
-                                                    is_delta = true;
-                                                }
-                                            } else {
-                                                column_value = catch! {
-                                                    segment.split_time()[method]? -
-                                                    segment.comparison(comparison)[method]?
-                                                };
-                                                semantic_color = split_color(
-                                                    timer,
-                                                    column_value,
-                                                    i,
-                                                    true,
-                                                    true,
-                                                    comparison,
-                                                    method,
-                                                );
-                                                updated = true;
-                                                is_delta = true;
-                                            }
-                                        }
-                                        ColumnUpdateWith::SegmentTime => {
-                                            column_value = if is_current_split {
-                                                // TODO: Contextual segment time
-                                                analysis::live_segment_time(timer, i, method)
-                                            } else {
-                                                analysis::previous_segment_time(timer, i, method)
-                                            };
-                                            updated = true;
-                                        }
-                                        ColumnUpdateWith::SegmentDelta => {
-                                            if is_current_split {
-                                                if is_contextual {
-                                                    if let Some(live_delta) =
-                                                        analysis::check_live_delta(
-                                                            timer, false, comparison, method,
-                                                        ) {
-                                                        column_value = Some(live_delta);
-                                                        updated = true;
-                                                        is_delta = true;
-                                                    }
-                                                } else {
-                                                    column_value = analysis::live_segment_delta(
-                                                        timer, i, comparison, method,
-                                                    );
-                                                    updated = true;
-                                                    is_delta = true;
-                                                }
-                                            } else {
-                                                column_value = analysis::previous_segment_delta(
-                                                    timer, i, comparison, method,
-                                                );
-                                                semantic_color = split_color(
-                                                    timer,
-                                                    column_value,
-                                                    i,
-                                                    false,
-                                                    true,
-                                                    comparison,
-                                                    method,
-                                                );
-                                                updated = true;
-                                                is_delta = true;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            if !updated {
-                                match column.start_with {
-                                    ColumnStartWith::Empty => {}
-                                    ColumnStartWith::ComparisonTime => {
-                                        column_value = segment.comparison(comparison)[method];
-                                    }
-                                    ColumnStartWith::ComparisonSegmentTime => {
-                                        column_value = analysis::comparison_segment_time(
-                                            timer.run(),
-                                            i,
-                                            comparison,
-                                            method,
-                                        );
-                                    }
-                                }
-                            }
-
-                            let is_empty = column.start_with == ColumnStartWith::Empty && !updated;
-
-                            let value = if is_empty {
-                                String::new()
-                            } else if is_delta {
-                                Delta::with_decimal_dropping()
-                                    .format(column_value)
-                                    .to_string()
-                            } else {
-                                Regular::new().format(column_value).to_string()
-                            };
-
-                            ColumnState {
-                                value,
-                                semantic_color,
-                                visual_color: semantic_color.visualize(layout_settings),
-                            }
-                        }).collect();
-
-                    if let Some(icon_change) = icon_id.update_with(Some(segment.icon())) {
-                        icon_changes.push(IconChange {
-                            segment_index: i,
-                            icon: icon_change.to_owned(),
-                        });
-                    }
-
-                    SplitState {
-                        name: segment.name().to_string(),
-                        columns,
-                        is_current_split: Some(i) == current_split,
-                        index: i,
-                    }
-                }).collect();
+                SplitState {
+                    name: segment.name().to_string(),
+                    columns,
+                    is_current_split: Some(i) == current_split,
+                    index: i,
+                }
+            }).collect();
 
         if fill_with_blank_space && splits.len() < visual_split_count {
             let blank_split_count = visual_split_count - splits.len();
@@ -747,6 +600,166 @@ impl Component {
                     panic!("Unsupported Setting Index")
                 }
             }
+        }
+    }
+}
+
+fn column_state(
+    column: &ColumnSettings,
+    timer: &Timer,
+    layout_settings: &GeneralLayoutSettings,
+    segment: &Segment,
+    segment_index: usize,
+    current_split: Option<usize>,
+    method: TimingMethod,
+) -> ColumnState {
+    let method = column.timing_method.unwrap_or_else(|| method);
+    let resolved_comparison = comparison::resolve(&column.comparison_override, timer);
+    let comparison = comparison::or_current(resolved_comparison, timer);
+
+    let update_value = column_update_value(
+        column,
+        timer,
+        segment,
+        segment_index,
+        current_split,
+        method,
+        comparison,
+    );
+
+    let updated = update_value.is_some();
+
+    let (column_value, semantic_color, is_delta) =
+        update_value.unwrap_or_else(|| match column.start_with {
+            ColumnStartWith::Empty => Default::default(),
+            ColumnStartWith::ComparisonTime => (
+                segment.comparison(comparison)[method],
+                SemanticColor::Default,
+                false,
+            ),
+            ColumnStartWith::ComparisonSegmentTime => (
+                analysis::comparison_segment_time(timer.run(), segment_index, comparison, method),
+                SemanticColor::Default,
+                false,
+            ),
+        });
+
+    let is_empty = column.start_with == ColumnStartWith::Empty && !updated;
+
+    let value = if is_empty {
+        String::new()
+    } else if is_delta {
+        Delta::with_decimal_dropping()
+            .format(column_value)
+            .to_string()
+    } else {
+        Regular::new().format(column_value).to_string()
+    };
+
+    ColumnState {
+        value,
+        semantic_color,
+        visual_color: semantic_color.visualize(layout_settings),
+    }
+}
+
+fn column_update_value(
+    column: &ColumnSettings,
+    timer: &Timer,
+    segment: &Segment,
+    segment_index: usize,
+    current_split: Option<usize>,
+    method: TimingMethod,
+    comparison: &str,
+) -> Option<(Option<TimeSpan>, SemanticColor, bool)> {
+    use self::{ColumnUpdateTrigger::*, ColumnUpdateWith::*};
+
+    if current_split < Some(segment_index) {
+        // Didn't reach the segment yet.
+        return None;
+    }
+
+    let is_current_split = current_split == Some(segment_index);
+
+    if is_current_split {
+        if column.update_trigger == OnEndingSegment {
+            // The trigger wants the value to be updated when splitting, not before.
+            return None;
+        }
+
+        if column.update_trigger == Contextual && analysis::check_live_delta(
+            timer,
+            !column.update_with.is_segment_based(),
+            comparison,
+            method,
+        ).is_none()
+        {
+            // It's contextual and the live delta shouldn't be shown yet.
+            return None;
+        }
+    }
+
+    let is_live = is_current_split;
+
+    match (column.update_with, is_live) {
+        (DontUpdate, _) => None,
+
+        (SplitTime, false) => Some((segment.split_time()[method], SemanticColor::Default, false)),
+        (SplitTime, true) => Some((timer.current_time()[method], SemanticColor::Default, false)),
+
+        (Delta, false) => {
+            let value = catch! {
+                segment.split_time()[method]? -
+                segment.comparison(comparison)[method]?
+            };
+            Some((
+                value,
+                split_color(timer, value, segment_index, true, true, comparison, method),
+                true,
+            ))
+        }
+        (Delta, true) => Some((
+            catch! {
+                timer.current_time()[method]? -
+                segment.comparison(comparison)[method]?
+            },
+            SemanticColor::Default,
+            true,
+        )),
+
+        (SegmentTime, false) => Some((
+            analysis::previous_segment_time(timer, segment_index, method),
+            SemanticColor::Default,
+            false,
+        )),
+        (SegmentTime, true) => Some((
+            analysis::live_segment_time(timer, segment_index, method),
+            SemanticColor::Default,
+            false,
+        )),
+
+        (SegmentDelta, false) => {
+            let value = analysis::previous_segment_delta(timer, segment_index, comparison, method);
+            Some((
+                value,
+                split_color(timer, value, segment_index, false, true, comparison, method),
+                true,
+            ))
+        }
+        (SegmentDelta, true) => Some((
+            analysis::live_segment_delta(timer, segment_index, comparison, method),
+            SemanticColor::Default,
+            true,
+        )),
+    }
+}
+
+impl ColumnUpdateWith {
+    fn is_segment_based(self) -> bool {
+        use self::ColumnUpdateWith::*;
+        match self {
+            SegmentDelta | SegmentTime => true,
+            _ => false,
         }
     }
 }
