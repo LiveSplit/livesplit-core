@@ -2,7 +2,7 @@ use super::Color;
 
 /// Describes a Gradient for coloring a region with more than just a single
 /// color.
-#[derive(Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum Gradient {
     /// Don't use any color, keep it transparent.
     Transparent,
@@ -16,7 +16,7 @@ pub enum Gradient {
 
 /// Describes an extended form of a gradient, specifically made for use with
 /// lists. It allows specifying different coloration for the rows in a list.
-#[derive(Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub enum ListGradient {
     /// Use the same gradient for every row in the list.
     Same(Gradient),

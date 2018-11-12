@@ -1,4 +1,7 @@
-use super::{ColumnSettings, ColumnStartWith, ColumnUpdateWith, Component, Settings, State};
+use super::{
+    ColumnSettings, ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith, Component, Settings,
+    State,
+};
 use {Run, Segment, TimeSpan, Timer, TimingMethod};
 
 pub mod column;
@@ -42,6 +45,7 @@ fn negative_segment_times() {
         columns: vec![ColumnSettings {
             start_with: ColumnStartWith::Empty,
             update_with: ColumnUpdateWith::SegmentTime,
+            update_trigger: ColumnUpdateTrigger::OnStartingSegment,
             ..Default::default()
         }],
         ..Default::default()

@@ -5,6 +5,7 @@ pub(crate) fn start_run(timer: &mut Timer) {
     timer.start();
     timer.initialize_game_time();
     timer.pause_game_time();
+    timer.set_game_time(TimeSpan::zero());
 }
 
 pub(crate) fn run_with_splits(timer: &mut Timer, splits: &[f64]) {

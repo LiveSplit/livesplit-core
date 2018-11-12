@@ -175,7 +175,7 @@ impl Default for ColumnSettings {
 }
 
 /// The state object that describes a single segment's information to visualize.
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct SplitState {
     /// The name of the segment.
     pub name: String,
@@ -192,7 +192,7 @@ pub struct SplitState {
 }
 
 /// Describes the state of a single segment's column to visualize.
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct ColumnState {
     /// The value shown in the column.
     pub value: String,
@@ -206,7 +206,7 @@ pub struct ColumnState {
 /// whenever a segment is first shown or whenever its icon changes. If
 /// necessary, you may remount this component to reset the component into a
 /// state where these icons are provided again.
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct IconChange {
     /// The index of the segment of which the icon changed. This is based on the
     /// index in the run, not on the index of the `SplitState` in the `State`
@@ -219,7 +219,7 @@ pub struct IconChange {
 }
 
 /// The state object describes the information to visualize for this component.
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct State {
     /// The background shown behind the splits.
     pub background: ListGradient,
