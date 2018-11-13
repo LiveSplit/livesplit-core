@@ -417,7 +417,7 @@ impl Editor {
 
         let max_index = self.run.max_attempt_history_index().unwrap_or(0);
         let min_index = self.run.min_segment_history_index();
-        for x in min_index..max_index + 1 {
+        for x in min_index..=max_index {
             segment.segment_history_mut().insert(x, Default::default());
         }
         self.run.segments_mut().insert(active_segment, segment);
@@ -442,7 +442,7 @@ impl Editor {
 
         let max_index = self.run.max_attempt_history_index().unwrap_or(0);
         let min_index = self.run.min_segment_history_index();
-        for x in min_index..max_index + 1 {
+        for x in min_index..=max_index {
             segment.segment_history_mut().insert(x, Default::default());
         }
         self.run.segments_mut().insert(next_segment, segment);
@@ -467,7 +467,7 @@ impl Editor {
 
         let max_index = self.run.max_attempt_history_index().unwrap_or(0);
         let min_index = self.run.min_segment_history_index();
-        for run_index in min_index..max_index + 1 {
+        for run_index in min_index..=max_index {
             // If a history element isn't there in the segment that's deleted
             // remove it from the next segment's history as well
             if let Some(segment_history_element) =
@@ -577,7 +577,7 @@ impl Editor {
         let first = &mut a[0];
         let second = &mut b[0];
 
-        for run_index in min_index..max_index + 1 {
+        for run_index in min_index..=max_index {
             // Remove both segment history elements if one of them has a None
             // time and the other has has a non None time
             let first_history = first.segment_history().get(run_index);
@@ -687,13 +687,13 @@ impl Editor {
     ) -> ComparisonResult<()> {
         let comparison = comparison.into();
         self.run.add_custom_comparison(comparison.as_str())?;
-        // TODO Borrowcheck (remaining_segments isn't used after this block
+        // TODO: Borrowcheck (remaining_segments isn't used after this block
         // anymore. NLL should fix this)
         {
             let mut remaining_segments = self.run.segments_mut().as_mut_slice();
 
             for segment in run.segments().iter().take(run.len().saturating_sub(1)) {
-                // TODO Borrowcheck (new_start is only necessary because the
+                // TODO: Borrowcheck (new_start is only necessary because the
                 // remaining_segments reassignment doesn't work inside this
                 // if)
                 let new_start = if let Some((segment_index, my_segment)) = remaining_segments
@@ -706,7 +706,7 @@ impl Editor {
                 } else {
                     0
                 };
-                // TODO Borrowcheck (get rid of the move block around
+                // TODO: Borrowcheck (get rid of the move block around
                 // remaining_segments)
                 remaining_segments = &mut { remaining_segments }[new_start..];
             }
@@ -781,7 +781,7 @@ impl Editor {
     /// one of the indices is invalid. The indices are based on the
     /// `comparison_names` field of the Run Editor's `State`.
     pub fn move_comparison(&mut self, src_index: usize, dst_index: usize) -> Result<(), ()> {
-        // TODO Borrowcheck (comparisons isn't used after this block anymore. NLL
+        // TODO: Borrowcheck (comparisons isn't used after this block anymore. NLL
         // should fix this)
         {
             let comparisons = self.run.custom_comparisons_mut();
@@ -795,11 +795,11 @@ impl Editor {
 
             if src_index > dst_index {
                 rotate_left(
-                    &mut comparisons[dst_index..src_index + 1],
+                    &mut comparisons[dst_index..=src_index],
                     src_index - dst_index,
                 );
             } else {
-                rotate_left(&mut comparisons[src_index..dst_index + 1], 1);
+                rotate_left(&mut comparisons[src_index..=dst_index], 1);
             }
         }
         self.raise_run_edited();

@@ -307,4 +307,4 @@ fn not_when_cleaning_sum_of_best_without_applying_a_fix() {
     assert!(!editor.run().has_been_modified());
 }
 
-// TODO Cleaning Sum of Best
+// TODO: Cleaning Sum of Best

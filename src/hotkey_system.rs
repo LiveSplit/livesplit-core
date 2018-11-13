@@ -94,7 +94,7 @@ impl HotkeySystem {
         })
     }
 
-    // TODO Ignore errors in a lot of situations
+    // TODO: Ignore errors in a lot of situations
     //
     // If unregister works and register fails for example, you won't be able to
     // register again, as unregistering will fail forever. Also in initial start

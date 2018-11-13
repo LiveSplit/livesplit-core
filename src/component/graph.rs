@@ -375,7 +375,10 @@ impl Component {
         if !draw_info.deltas.is_empty() {
             let mut height_one = if total_delta != TimeSpan::zero() {
                 (-draw_info.max_delta.total_milliseconds() / total_delta.total_milliseconds())
-                    as f32 * (graph_height - graph_edge) * 2.0 + graph_edge
+                    as f32
+                    * (graph_height - graph_edge)
+                    * 2.0
+                    + graph_edge
             } else {
                 graph_height
             };
@@ -448,7 +451,9 @@ impl Component {
             *height_one = (delta.total_milliseconds() as f32
                 - draw_info.max_delta.total_milliseconds() as f32)
                 / total_delta.total_milliseconds() as f32
-                * (graph_height - graph_edge) * 2.0 + graph_edge;
+                * (graph_height - graph_edge)
+                * 2.0
+                + graph_edge;
         } else {
             *height_one = graph_height;
         }
@@ -490,7 +495,9 @@ impl Component {
             *height_two = (delta.total_milliseconds() as f32
                 - draw_info.max_delta.total_milliseconds() as f32)
                 / total_delta.total_milliseconds() as f32
-                * (graph_height - graph_edge) * 2.0 + graph_edge;
+                * (graph_height - graph_edge)
+                * 2.0
+                + graph_edge;
         } else {
             *height_two = graph_height;
         }
@@ -578,7 +585,7 @@ impl Component {
         draw_info: &DrawInfo,
     ) -> (f32, f32, f32) {
         let mut graph_edge = 0.0;
-        let graph_height = HEIGHT / 2.0; // TODO Make const
+        let graph_height = HEIGHT / 2.0; // TODO: Make const
         let middle = if total_delta != TimeSpan::zero() {
             graph_edge = GRAPH_EDGE_VALUE
                 / (-total_delta.total_milliseconds() as f32 + 2.0 * GRAPH_EDGE_VALUE)
@@ -586,7 +593,9 @@ impl Component {
             graph_edge += GRAPH_EDGE_MIN;
             (-(draw_info.max_delta.total_milliseconds() as f32
                 / total_delta.total_milliseconds() as f32))
-                * (graph_height - graph_edge) * 2.0 + graph_edge
+                * (graph_height - graph_edge)
+                * 2.0
+                + graph_edge
         } else {
             graph_height
         };
@@ -642,7 +651,7 @@ impl Component {
                 let timing_method = timer.current_timing_method();
                 let mut best_segment =
                     analysis::check_live_delta(timer, true, comparison, timing_method);
-                // TODO Try if let instead of checking current phase up there,
+                // TODO: Try if let instead of checking current phase up there,
                 // so we can skip this unwrap
                 let current_split =
                     timer.current_split().unwrap().comparison(comparison)[timing_method];

@@ -66,34 +66,46 @@ pub extern "C" fn SplitsComponentState_name(
     output_str(&this.splits[index].name)
 }
 
-/// The delta to show for the segment with the specified index. You may not
-/// provide an out of bounds index.
+/// The amount of columns to visualize for the segment with the specified index.
+/// The columns are specified from right to left. You may not provide an out of
+/// bounds index. The amount of columns to visualize may differ from segment to
+/// segment.
 #[no_mangle]
-pub extern "C" fn SplitsComponentState_delta(
+pub extern "C" fn SplitComponentState_columns_len(
     this: &SplitsComponentState,
     index: usize,
-) -> *const c_char {
-    output_str(&this.splits[index].delta)
+) -> usize {
+    this.splits[index].columns.len()
 }
 
-/// The split time to show for the segment with the specified index. You may not
-/// provide an out of bounds index.
+/// The column's value to show for the split and column with the specified
+/// index. The columns are specified from right to left. You may not provide an
+/// out of bounds index.
 #[no_mangle]
-pub extern "C" fn SplitsComponentState_time(
+pub extern "C" fn SplitsComponentState_column_value(
     this: &SplitsComponentState,
     index: usize,
+    column_index: usize,
 ) -> *const c_char {
-    output_str(&this.splits[index].time)
+    output_str(&this.splits[index].columns[column_index].value)
 }
 
-/// The semantic coloring information the delta time carries of the segment with
-/// the specified index. You may not provide an out of bounds index.
+/// The semantic coloring information the column's value carries of the segment
+/// and column with the specified index. The columns are specified from right to
+/// left. You may not provide an out of bounds index.
 #[no_mangle]
-pub extern "C" fn SplitsComponentState_semantic_color(
+pub extern "C" fn SplitsComponentState_column_semantic_color(
     this: &SplitsComponentState,
     index: usize,
+    column_index: usize,
 ) -> *const c_char {
-    output_vec(|f| write!(f, "{:?}", this.splits[index].semantic_color).unwrap())
+    output_vec(|f| {
+        write!(
+            f,
+            "{:?}",
+            this.splits[index].columns[column_index].semantic_color
+        ).unwrap()
+    })
 }
 
 /// Describes if the segment with the specified index is the segment the active

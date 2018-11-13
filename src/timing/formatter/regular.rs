@@ -1,4 +1,4 @@
-use super::{Accuracy, TimeFormatter, DASH};
+use super::{Accuracy, TimeFormatter, DASH, MINUS};
 use std::fmt::{Display, Formatter, Result};
 use TimeSpan;
 
@@ -10,8 +10,7 @@ pub struct Inner {
 /// The Regular Time Formatter formats Time Spans to always show the minutes and
 /// is configurable by how many digits of the fractional part are shown. By
 /// default no fractional part is shown. This Time Formatter is most suitable
-/// for visualizing split times. You may not use this Time Formatter with
-/// negative times.
+/// for visualizing split times.
 ///
 /// # Example Formatting
 ///
@@ -22,6 +21,7 @@ pub struct Inner {
 /// * Seconds with Hundredths `0:23.12`
 /// * Minutes with Hundredths `12:34.98`
 /// * Hours with Hundredths `12:34:56.12`
+/// * Negative Times `−0:23`
 pub struct Regular {
     accuracy: Accuracy,
 }
@@ -65,7 +65,11 @@ impl<'a> TimeFormatter<'a> for Regular {
 impl Display for Inner {
     fn fmt(&self, f: &mut Formatter) -> Result {
         if let Some(time) = self.time {
-            let total_seconds = time.total_seconds();
+            let mut total_seconds = time.total_seconds();
+            if total_seconds < 0.0 {
+                total_seconds *= -1.0;
+                write!(f, "{}", MINUS)?;
+            }
             let seconds = total_seconds % 60.0;
             let total_minutes = (total_seconds / 60.0) as u64;
             let minutes = total_minutes % 60;
