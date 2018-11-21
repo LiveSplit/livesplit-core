@@ -40,16 +40,18 @@ pub type Result<T> = StdResult<T, Error>;
 
 /// Attempts to parse a ShitSplit splits file.
 pub fn parse<R: BufRead>(source: R) -> Result<Run> {
-    let mut run = Run::new();
-
     let mut lines = source.lines();
 
     let line = lines.next().ok_or(Error::Empty)??;
+
     let mut splits = line.split('|');
     let category_name = splits.next().ok_or(Error::ExpectedCategoryName)?;
     if !category_name.starts_with('#') {
         return Err(Error::ExpectedCategoryName);
     }
+
+    let mut run = Run::new();
+
     run.set_category_name(&category_name[1..]);
     run.set_attempt_count(splits.next().ok_or(Error::ExpectedAttemptCount)?.parse()?);
     let mut total_time = TimeSpan::zero();

@@ -2,7 +2,7 @@ extern crate livesplit_core;
 
 mod parse {
     use livesplit_core::run::parser::{
-        composite, livesplit, llanfair, llanfair2, llanfair_gered, portal2_live_timer,
+        composite, flitter, livesplit, llanfair, llanfair2, llanfair_gered, portal2_live_timer,
         source_live_timer, splits_io, splitterz, time_split_tracker, urn, worstrun, wsplit,
         TimerKind,
     };
@@ -142,6 +142,16 @@ mod parse {
     }
 
     #[test]
+    fn flitter() {
+        flitter::parse(file("tests/run_files/flitter.scm")).unwrap();
+    }
+
+    #[test]
+    fn flitter_small() {
+        flitter::parse(file("tests/run_files/flitter-small.scm")).unwrap();
+    }
+
+    #[test]
     fn source_live_timer() {
         source_live_timer::parse(file("tests/run_files/source_live_timer.json")).unwrap();
     }
@@ -206,5 +216,14 @@ mod parse {
         let run =
             composite::parse(file("tests/run_files/source_live_timer.json"), None, false).unwrap();
         assert_eq!(run.kind, TimerKind::SourceLiveTimer);
+    }
+
+    #[test]
+    fn flitter_prefers_parsing_as_itself() {
+        let run = composite::parse(file("tests/run_files/flitter.scm"), None, false).unwrap();
+        assert_eq!(run.kind, TimerKind::Flitter);
+
+        let run = composite::parse(file("tests/run_files/flitter-small.scm"), None, false).unwrap();
+        assert_eq!(run.kind, TimerKind::Flitter);
     }
 }

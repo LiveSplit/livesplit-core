@@ -121,3 +121,33 @@ impl SubAssign for TimeSpan {
         self.0 = self.0 - rhs.0;
     }
 }
+
+use serde::de::{self, Deserialize, Deserializer, Visitor};
+use std::fmt;
+
+impl<'de> Deserialize<'de> for TimeSpan {
+    fn deserialize<D>(deserializer: D) -> Result<TimeSpan, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_str(TimeSpanVisitor)
+    }
+}
+
+struct TimeSpanVisitor;
+
+impl<'de> Visitor<'de> for TimeSpanVisitor {
+    type Value = TimeSpan;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("a string containing a time")
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        v.parse()
+            .map_err(|_| E::custom(format!("Not a valid time string: {:?}", v)))
+    }
+}

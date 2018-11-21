@@ -51,8 +51,9 @@ fn time_span_from_ticks(category_name: &str, ticks: u64) -> TimeSpan {
 
 /// Attempts to parse a SourceLiveTimer splits file.
 pub fn parse<R: Read>(source: R) -> Result<Run> {
-    let mut run = Run::new();
     let splits: Splits = from_reader(source)?;
+
+    let mut run = Run::new();
 
     if splits.Category.starts_with("Portal 2") {
         run.set_game_name("Portal 2");

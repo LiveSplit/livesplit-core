@@ -29,21 +29,19 @@ pub type Result<T> = StdResult<T, Error>;
 struct Splits {
     title: Option<String>,
     attempt_count: Option<u32>,
-    start_delay: Option<String>,
+    start_delay: Option<TimeSpan>,
     splits: Option<Vec<Split>>,
 }
 
 #[derive(Deserialize)]
 struct Split {
     title: Option<String>,
-    time: Option<String>,
-    best_time: Option<String>,
-    best_segment: Option<String>,
+    time: Option<TimeSpan>,
+    best_time: Option<TimeSpan>,
+    best_segment: Option<TimeSpan>,
 }
 
-fn parse_time(time: &str) -> Result<Time> {
-    let real_time = time.parse::<TimeSpan>()?;
-
+fn parse_time(real_time: TimeSpan) -> Time {
     // Empty Time is stored as zero
     let real_time = if real_time != TimeSpan::zero() {
         Some(real_time)
@@ -51,14 +49,14 @@ fn parse_time(time: &str) -> Result<Time> {
         None
     };
 
-    Ok(Time::new().with_real_time(real_time))
+    Time::new().with_real_time(real_time)
 }
 
 /// Attempts to parse an Urn splits file.
 pub fn parse<R: Read>(source: R) -> Result<Run> {
-    let mut run = Run::new();
-
     let splits: Splits = from_reader(source)?;
+
+    let mut run = Run::new();
 
     if let Some(title) = splits.title {
         run.set_category_name(title);
@@ -67,7 +65,7 @@ pub fn parse<R: Read>(source: R) -> Result<Run> {
         run.set_attempt_count(attempt_count);
     }
     if let Some(start_delay) = splits.start_delay {
-        run.set_offset(-start_delay.parse()?);
+        run.set_offset(-start_delay);
     }
 
     // Best Split Times can be used for the Segment History Every single best
@@ -80,14 +78,14 @@ pub fn parse<R: Read>(source: R) -> Result<Run> {
         for split in splits {
             let mut segment = Segment::new(split.title.unwrap_or_default());
             if let Some(time) = split.time {
-                segment.set_personal_best_split_time(parse_time(&time)?);
+                segment.set_personal_best_split_time(parse_time(time));
             }
             if let Some(best_segment) = split.best_segment {
-                segment.set_best_segment_time(parse_time(&best_segment)?);
+                segment.set_best_segment_time(parse_time(best_segment));
             }
 
             if let Some(best_time) = split.best_time {
-                let best_split_time = parse_time(&best_time)?;
+                let best_split_time = parse_time(best_time);
                 if best_split_time.real_time.is_some() {
                     run.add_attempt_with_index(
                         Time::default(),

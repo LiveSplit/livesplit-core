@@ -38,6 +38,17 @@ pub mod personal_best {
     pub const NAME: &str = "Personal Best";
 }
 
+/// Defines the World Record comparison. This module mostly just serves for
+/// providing the names of the comparison, as the World Record is not a
+/// Comparison Generator.
+pub mod world_record {
+    /// The short name of this comparison. Suitable for situations where not a lot
+    /// of space for text is available.
+    pub const SHORT_NAME: &str = "WR";
+    /// The name of this comparison.
+    pub const NAME: &str = "World Record";
+}
+
 /// A Comparison Generator automatically generates a comparison based on what
 /// kind of generator it is. Comparison Generators stored in a Run automatically
 /// get called between all attempts to refresh the comparison's information.
@@ -96,6 +107,7 @@ pub fn default_generators() -> Vec<Box<ComparisonGenerator>> {
 pub fn shorten(comparison: &str) -> &str {
     match comparison {
         personal_best::NAME => personal_best::SHORT_NAME,
+        world_record::NAME => world_record::SHORT_NAME,
         average_segments::NAME => average_segments::SHORT_NAME,
         median_segments::NAME => median_segments::SHORT_NAME,
         balanced_pb::NAME => balanced_pb::SHORT_NAME,

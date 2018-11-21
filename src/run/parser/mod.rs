@@ -33,6 +33,7 @@
 
 pub mod composite;
 pub mod face_split;
+pub mod flitter;
 pub mod livesplit;
 pub mod llanfair;
 pub mod llanfair2;

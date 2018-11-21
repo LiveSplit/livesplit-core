@@ -54,6 +54,7 @@ extern crate serde;
 extern crate serde_derive;
 extern crate serde_json;
 extern crate unicase;
+extern crate utf8;
 
 pub extern crate indexmap;
 pub extern crate livesplit_hotkey as hotkey;

@@ -19,6 +19,8 @@ pub enum TimerKind {
     Portal2LiveTimer,
     /// FaceSplit
     FaceSplit,
+    /// Flitter
+    Flitter,
     /// Llanfair
     Llanfair,
     /// Gered's fork of Llanfair
@@ -47,6 +49,7 @@ impl fmt::Display for TimerKind {
             TimerKind::TimeSplitTracker => write!(f, "Time Split Tracker"),
             TimerKind::Portal2LiveTimer => write!(f, "Portal 2 Live Timer"),
             TimerKind::FaceSplit => write!(f, "FaceSplit"),
+            TimerKind::Flitter => write!(f, "Flitter"),
             TimerKind::Llanfair => write!(f, "Llanfair"),
             TimerKind::LlanfairGered => write!(f, "Llanfair (Gered's fork)"),
             TimerKind::Llanfair2 => write!(f, "Llanfair Rewrite"),

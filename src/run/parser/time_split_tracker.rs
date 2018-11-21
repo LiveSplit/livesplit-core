@@ -161,7 +161,8 @@ fn parse_history(run: &mut Run, path: Option<PathBuf>) -> StdResult<(), ()> {
             let line = line.map_err(|_| ())?;
             let mut splits = line.split('\t');
             let time_stamp = splits.next().ok_or(())?;
-            let started = Utc.datetime_from_str(time_stamp, "%Y/%m/%d %R")
+            let started = Utc
+                .datetime_from_str(time_stamp, "%Y/%m/%d %R")
                 .map_err(|_| ())?;
             let completed = splits.next().ok_or(())? == "C";
             let split_times: Vec<_> = splits

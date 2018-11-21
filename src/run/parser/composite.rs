@@ -31,9 +31,9 @@
 //! ```
 
 use super::{
-    face_split, livesplit, llanfair, llanfair2, llanfair_gered, portal2_live_timer, shit_split,
-    source_live_timer, splits_io, splitterz, splitty, time_split_tracker, urn, worstrun, wsplit,
-    TimerKind,
+    face_split, flitter, livesplit, llanfair, llanfair2, llanfair_gered, portal2_live_timer,
+    shit_split, source_live_timer, splits_io, splitterz, splitty, time_split_tracker, urn,
+    worstrun, wsplit, TimerKind,
 };
 use std::io::{self, BufRead, Seek, SeekFrom};
 use std::path::PathBuf;
@@ -80,8 +80,7 @@ pub fn parse<R>(mut source: R, path: Option<PathBuf>, load_files: bool) -> Resul
 where
     R: BufRead + Seek,
 {
-    let files_path =
-        if load_files { path.clone() } else { None };
+    let files_path = if load_files { path.clone() } else { None };
 
     source.seek(SeekFrom::Start(0))?;
     if let Ok(run) = livesplit::parse(&mut source, path) {
@@ -147,8 +146,13 @@ where
         return Ok(parsed(run, TimerKind::Generic(timer)));
     }
 
-    // SourceLiveTimer needs to be before Urn because of a false positive
-    // due to the nature of parsing json files.
+    // SourceLiveTimer and Flitter need to be before Urn because of a false
+    // positive due to the nature of parsing json files.
+    source.seek(SeekFrom::Start(0))?;
+    if let Ok(run) = flitter::parse(&mut source) {
+        return Ok(parsed(run, TimerKind::Flitter));
+    }
+
     source.seek(SeekFrom::Start(0))?;
     if let Ok(run) = source_live_timer::parse(&mut source) {
         return Ok(parsed(run, TimerKind::SourceLiveTimer));

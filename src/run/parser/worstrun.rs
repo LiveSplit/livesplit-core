@@ -50,9 +50,9 @@ pub(super) fn poke<R: Read>(source: R) -> bool {
 
 /// Attempts to parse a worstrun splits file.
 pub fn parse<R: Read>(source: R) -> Result<Run> {
-    let mut run = Run::new();
-
     let splits: Splits = from_reader(source)?;
+
+    let mut run = Run::new();
 
     if let Some(game) = splits.game {
         run.set_game_name(game);
