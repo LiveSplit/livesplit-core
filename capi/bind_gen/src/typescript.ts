@@ -241,7 +241,7 @@ export interface SplitStateJson {
      * The index of the segment based on all the segments of the run. This may
      * differ from the index of this `SplitStateJson` in the
      * `SplitsComponentStateJson` object, as there can be a scrolling window,
-     * showing only a subset of segments.
+     * showing only a subset of segments. Each index is guaranteed to be unique.
      */
     index: number,
 }

@@ -187,7 +187,8 @@ pub struct SplitState {
     pub is_current_split: bool,
     /// The index of the segment based on all the segments of the run. This may
     /// differ from the index of this `SplitState` in the `State` object, as
-    /// there can be a scrolling window, showing only a subset of segments.
+    /// there can be a scrolling window, showing only a subset of segments. Each
+    /// index is guaranteed to be unique.
     pub index: usize,
 }
 
@@ -447,12 +448,12 @@ impl Component {
 
         if fill_with_blank_space && splits.len() < visual_split_count {
             let blank_split_count = visual_split_count - splits.len();
-            for _ in 0..blank_split_count {
+            for i in 0..blank_split_count {
                 splits.push(SplitState {
                     name: String::new(),
                     columns: Vec::new(),
                     is_current_split: false,
-                    index: ::std::usize::MAX ^ 1,
+                    index: (usize::max_value() ^ 1) - 2 * i,
                 });
             }
         }

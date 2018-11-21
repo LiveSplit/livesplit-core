@@ -62,3 +62,30 @@ fn negative_segment_times() {
     let state = component.state(&timer, &layout_settings);
     assert_eq!(state.splits[0].columns[0].value, "−0:01");
 }
+
+#[test]
+fn unique_split_indices() {
+    let mut run = Run::new();
+    run.push_segment(Segment::new(""));
+    run.push_segment(Segment::new(""));
+    run.push_segment(Segment::new(""));
+    let timer = Timer::new(run).unwrap();
+
+    let mut component = Component::with_settings(Settings {
+        visual_split_count: 20,
+        fill_with_blank_space: true,
+        ..Default::default()
+    });
+
+    let state = component.state(&timer, &Default::default());
+
+    let mut indices = state
+        .splits
+        .into_iter()
+        .map(|s| s.index)
+        .collect::<Vec<_>>();
+
+    indices.sort_unstable();
+
+    assert!(indices.windows(2).all(|pair| pair[0] != pair[1]));
+}
