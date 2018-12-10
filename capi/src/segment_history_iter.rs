@@ -2,7 +2,7 @@
 
 use super::SEGMENT_HISTORY_ELEMENT;
 use livesplit_core::Time;
-use segment_history_element::{NullableSegmentHistoryElement, SegmentHistoryElement};
+use crate::segment_history_element::{NullableSegmentHistoryElement, SegmentHistoryElement};
 use std::{ptr, slice};
 
 /// type

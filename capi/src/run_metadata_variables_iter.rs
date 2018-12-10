@@ -3,7 +3,7 @@
 
 use super::RUN_METADATA_VARIABLE;
 use livesplit_core::indexmap;
-use run_metadata_variable::{NullableRunMetadataVariable, RunMetadataVariable};
+use crate::run_metadata_variable::{NullableRunMetadataVariable, RunMetadataVariable};
 use std::ptr;
 
 /// type

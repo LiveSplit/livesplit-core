@@ -3,11 +3,11 @@
 //! the chosen comparison throughout the whole attempt. All the individual
 //! deltas are shown as points in a graph.
 
+use crate::settings::{Color, Field, SettingsDescription, Value};
+use crate::{analysis, comparison, GeneralLayoutSettings, TimeSpan, Timer, TimerPhase};
 use serde_json::{to_writer, Result};
-use settings::{Color, Field, SettingsDescription, Value};
 use std::borrow::Cow;
 use std::io::Write;
-use {analysis, comparison, GeneralLayoutSettings, TimeSpan, Timer, TimerPhase};
 
 const GRAPH_EDGE_VALUE: f32 = 200.0;
 const GRAPH_EDGE_MIN: f32 = 5.0;
@@ -177,7 +177,7 @@ impl Component {
     }
 
     /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<str> {
+    pub fn name(&self) -> Cow<'_, str> {
         self.text(
             self.settings
                 .comparison_override
@@ -186,7 +186,7 @@ impl Component {
         )
     }
 
-    fn text(&self, comparison: Option<&str>) -> Cow<str> {
+    fn text(&self, comparison: Option<&str>) -> Cow<'_, str> {
         if let Some(comparison) = comparison {
             format!("Graph ({})", comparison::shorten(comparison)).into()
         } else {

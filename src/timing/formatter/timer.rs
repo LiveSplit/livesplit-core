@@ -6,8 +6,8 @@ use super::{
     extract_hundredths, extract_milliseconds, extract_tenths, Accuracy, DigitsFormat,
     TimeFormatter, MINUS,
 };
+use crate::TimeSpan;
 use std::fmt::{Display, Formatter, Result};
-use TimeSpan;
 
 /// A Time Span to be formatted as the main part of the Time Formatter Pair.
 pub struct TimeInner {
@@ -67,7 +67,7 @@ impl<'a> TimeFormatter<'a> for Time {
 }
 
 impl Display for TimeInner {
-    fn fmt(&self, f: &mut Formatter) -> Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         if let Some(time) = self.time {
             let mut total_seconds = time.total_seconds();
             if total_seconds < 0.0 {
@@ -163,7 +163,7 @@ impl<'a> TimeFormatter<'a> for Fraction {
 }
 
 impl Display for FractionInner {
-    fn fmt(&self, f: &mut Formatter) -> Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         if let Some(time) = self.time {
             match self.accuracy {
                 Accuracy::Seconds => Ok(()),

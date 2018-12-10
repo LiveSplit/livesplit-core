@@ -7,10 +7,10 @@
 //! sticks around for historical reasons.
 
 use super::{output_vec, Json};
-use component::OwnedComponent;
+use crate::component::OwnedComponent;
 use livesplit_core::component::sum_of_best::Component as SumOfBestComponent;
 use livesplit_core::Timer;
-use sum_of_best_component_state::OwnedSumOfBestComponentState;
+use crate::sum_of_best_component_state::OwnedSumOfBestComponentState;
 
 /// type
 pub type OwnedSumOfBestComponent = Box<SumOfBestComponent>;

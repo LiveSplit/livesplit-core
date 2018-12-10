@@ -1,9 +1,9 @@
 //! Provides the parser for Portal 2 Live Timer splits files.
 
+use crate::{GameTime, Run, Segment, TimeSpan};
 use std::io::{self, BufRead};
 use std::num::ParseFloatError;
 use std::result::Result as StdResult;
-use {GameTime, Run, Segment, TimeSpan};
 
 quick_error! {
     /// The Error types for splits files that couldn't be parsed by the Portal 2
@@ -175,7 +175,8 @@ pub fn parse<R: BufRead>(source: R) -> Result<Run> {
                 line = next_line;
                 let mut splits = line.split(',');
                 if splits.next() == Some(map) {
-                    let start_ticks: f64 = splits.next().ok_or(Error::ExpectedStartTicks)?.parse()?;
+                    let start_ticks: f64 =
+                        splits.next().ok_or(Error::ExpectedStartTicks)?.parse()?;
                     let end_ticks: f64 = splits.next().ok_or(Error::ExpectedEndTicks)?.parse()?;
                     let map_ticks = end_ticks - start_ticks;
                     aggregate_ticks += map_ticks;

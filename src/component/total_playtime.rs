@@ -3,13 +3,13 @@
 //! current category has been played for.
 
 use super::DEFAULT_INFO_TEXT_GRADIENT;
-use analysis::total_playtime;
+use crate::analysis::total_playtime;
+use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
+use crate::timing::formatter::{Days, Regular, TimeFormatter};
+use crate::Timer;
 use serde_json::{to_writer, Result};
-use settings::{Color, Field, Gradient, SettingsDescription, Value};
 use std::borrow::Cow;
 use std::io::Write;
-use timing::formatter::{Days, Regular, TimeFormatter};
-use Timer;
 
 /// The Total Playtime Component is a component that shows the total amount of
 /// time that the current category has been played for.
@@ -102,7 +102,7 @@ impl Component {
     }
 
     /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<str> {
+    pub fn name(&self) -> Cow<'_, str> {
         "Total Playtime".into()
     }
 

@@ -2,7 +2,7 @@
 //! Comparison intentionally leaves all split times empty.
 
 use super::ComparisonGenerator;
-use {Attempt, Segment, Time};
+use crate::{Attempt, Segment, Time};
 
 /// The Comparison Generator for the None comparison. The None Comparison
 /// intentionally leaves all split times empty.

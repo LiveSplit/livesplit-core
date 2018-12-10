@@ -3,8 +3,8 @@
 //! components.
 
 use super::{output_vec, Json};
-use blank_space_component_state::OwnedBlankSpaceComponentState;
-use component::OwnedComponent;
+use crate::blank_space_component_state::OwnedBlankSpaceComponentState;
+use crate::component::OwnedComponent;
 use livesplit_core::component::blank_space::Component as BlankSpaceComponent;
 use livesplit_core::Timer;
 

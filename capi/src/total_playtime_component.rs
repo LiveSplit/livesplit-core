@@ -2,10 +2,10 @@
 //! time that the current category has been played for.
 
 use super::{output_vec, Json};
-use component::OwnedComponent;
+use crate::component::OwnedComponent;
 use livesplit_core::component::total_playtime::Component as TotalPlaytimeComponent;
 use livesplit_core::Timer;
-use total_playtime_component_state::OwnedTotalPlaytimeComponentState;
+use crate::total_playtime_component_state::OwnedTotalPlaytimeComponentState;
 
 /// type
 pub type OwnedTotalPlaytimeComponent = Box<TotalPlaytimeComponent>;

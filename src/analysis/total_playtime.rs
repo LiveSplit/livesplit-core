@@ -2,7 +2,7 @@
 //! Timer. For a Run, all the durations stored in the Attempt History are summed
 //! together. For a Timer, the current attempt's duration is also factored in.
 
-use {Run, TimeSpan, Timer, TimingMethod};
+use crate::{Run, TimeSpan, Timer, TimingMethod};
 
 /// Allows calculating the total playtime.
 pub trait TotalPlaytime {

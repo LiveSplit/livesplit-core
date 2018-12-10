@@ -2,7 +2,7 @@
 //! provided. If there's no active attempt, the final time of the comparison is
 //! returned instead.
 
-use {analysis, TimeSpan, Timer, TimerPhase};
+use crate::{analysis, TimeSpan, Timer, TimerPhase};
 
 /// Calculates the current pace of the active attempt based on the comparison
 /// provided. If there's no active attempt, the final time of the comparison is
@@ -18,7 +18,8 @@ pub fn calculate(timer: &Timer, comparison: &str) -> Option<TimeSpan> {
                 timer.current_split_index().unwrap(),
                 comparison,
                 timing_method,
-            ).unwrap_or_default();
+            )
+            .unwrap_or_default();
 
             catch! {
                 let live_delta = timer.current_time()[timing_method]?

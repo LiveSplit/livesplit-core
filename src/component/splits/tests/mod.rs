@@ -2,7 +2,7 @@ use super::{
     ColumnSettings, ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith, Component, Settings,
     State,
 };
-use {Run, Segment, TimeSpan, Timer, TimingMethod};
+use crate::{Run, Segment, TimeSpan, Timer, TimingMethod};
 
 pub mod column;
 

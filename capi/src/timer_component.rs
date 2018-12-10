@@ -3,10 +3,10 @@
 //! well the current attempt is doing compared to the chosen comparison.
 
 use super::{output_vec, Json};
-use component::OwnedComponent;
+use crate::component::OwnedComponent;
 use livesplit_core::component::timer::Component as TimerComponent;
 use livesplit_core::{GeneralLayoutSettings, Timer};
-use timer_component_state::OwnedTimerComponentState;
+use crate::timer_component_state::OwnedTimerComponentState;
 
 /// type
 pub type OwnedTimerComponent = Box<TimerComponent>;

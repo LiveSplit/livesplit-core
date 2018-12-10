@@ -3,8 +3,8 @@
 use super::{output_str, output_time, output_time_span, output_vec};
 use livesplit_core::run::saver;
 use livesplit_core::{Run, Time, TimeSpan, Timer, TimerPhase, TimingMethod};
-use run::{NullableOwnedRun, OwnedRun};
-use shared_timer::OwnedSharedTimer;
+use crate::run::{NullableOwnedRun, OwnedRun};
+use crate::shared_timer::OwnedSharedTimer;
 use std::os::raw::c_char;
 use std::ptr;
 

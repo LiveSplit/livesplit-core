@@ -18,8 +18,8 @@ pub use self::general_settings::GeneralSettings;
 pub use self::layout_settings::LayoutSettings;
 pub use self::layout_state::LayoutState;
 
-use component::{previous_segment, splits, timer, title};
-use timing::Timer;
+use crate::component::{previous_segment, splits, timer, title};
+use crate::timing::Timer;
 
 /// A Layout allows you to combine multiple components together to visualize a
 /// variety of information the runner is interested in.
@@ -86,7 +86,8 @@ impl Layout {
     pub fn state(&mut self, timer: &Timer) -> LayoutState {
         let settings = &self.settings;
         LayoutState {
-            components: self.components
+            components: self
+                .components
                 .iter_mut()
                 .map(|c| c.state(timer, settings))
                 .collect(),

@@ -6,7 +6,7 @@
 //! furthest.
 
 use super::ComparisonGenerator;
-use {Attempt, Segment, TimeSpan, TimingMethod};
+use crate::{Attempt, Segment, TimeSpan, TimingMethod};
 
 /// The Comparison Generator for calculating the Latest Run. Using the
 /// Segment History, this comparison reconstructs the splits of the furthest,

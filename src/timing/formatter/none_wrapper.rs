@@ -3,11 +3,11 @@
 //! changing its behavior when formatting empty times.
 
 use super::{TimeFormatter, DASH};
+use crate::TimeSpan;
 use std::fmt::{Display, Formatter, Result};
-use TimeSpan;
 
 /// A Time Span to be formatted by a None Wrapper.
-pub struct Inner<'a, F: 'a, S: 'a> {
+pub struct Inner<'a, F, S> {
     time: Option<TimeSpan>,
     wrapper: &'a NoneWrapper<F, S>,
 }
@@ -36,7 +36,6 @@ impl<'a, F: 'a + TimeFormatter<'a>, S: AsRef<str>> NoneWrapper<F, S> {
 
 impl DashWrapper {
     /// Creates a new Dash Wrapper.
-    #[allow(new_ret_no_self)]
     pub fn new<'a, F: 'a + TimeFormatter<'a>>(inner: F) -> NoneWrapper<F, &'static str> {
         NoneWrapper::new(inner, DASH)
     }
@@ -44,7 +43,6 @@ impl DashWrapper {
 
 impl EmptyWrapper {
     /// Creates a new Empty Wrapper.
-    #[allow(new_ret_no_self)]
     pub fn new<'a, F: 'a + TimeFormatter<'a>>(inner: F) -> NoneWrapper<F, &'static str> {
         NoneWrapper::new(inner, "")
     }
@@ -65,7 +63,7 @@ impl<'a, F: 'a + TimeFormatter<'a>, S: 'a + AsRef<str>> TimeFormatter<'a> for No
 }
 
 impl<'a, F: TimeFormatter<'a>, S: 'a + AsRef<str>> Display for Inner<'a, F, S> {
-    fn fmt(&self, f: &mut Formatter) -> Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         if self.time.is_none() {
             write!(f, "{}", self.wrapper.1.as_ref())
         } else {

@@ -1,9 +1,9 @@
 //! Provides the parser for ShitSplit splits files.
 
+use crate::{timing, GameTime, Run, Segment, TimeSpan};
 use std::io::{self, BufRead};
 use std::num::ParseIntError;
 use std::result::Result as StdResult;
-use {timing, GameTime, Run, Segment, TimeSpan};
 
 quick_error! {
     /// The Error type for splits files that couldn't be parsed by the ShitSplit

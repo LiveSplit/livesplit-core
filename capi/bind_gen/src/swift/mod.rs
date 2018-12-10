@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::fs::{create_dir_all, File};
 use std::io::{BufWriter, Write};
 use std::path::Path;
-use {Class, Result};
+use crate::{Class, Result};
 
 mod code;
 mod header;

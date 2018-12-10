@@ -5,14 +5,16 @@
 //! comparisons, the segment icon, and the segment's name, can also be shown.
 
 use super::timer;
-use comparison::{self, best_segments, none};
+use crate::comparison::{self, best_segments, none};
+use crate::settings::{Field, Gradient, SemanticColor, SettingsDescription, Value};
+use crate::timing::formatter::none_wrapper::DashWrapper;
+use crate::timing::formatter::{
+    timer as formatter, Accuracy, DigitsFormat, Short, TimeFormatter, DASH,
+};
+use crate::{CachedImageId, GeneralLayoutSettings, TimeSpan, Timer, TimerPhase, TimingMethod};
 use serde_json::{to_writer, Result};
-use settings::{Field, Gradient, SemanticColor, SettingsDescription, Value};
 use std::borrow::Cow;
 use std::io::Write;
-use timing::formatter::none_wrapper::DashWrapper;
-use timing::formatter::{timer as formatter, Accuracy, DigitsFormat, Short, TimeFormatter, DASH};
-use {CachedImageId, GeneralLayoutSettings, TimeSpan, Timer, TimerPhase, TimingMethod};
 
 #[cfg(test)]
 mod tests;
@@ -144,7 +146,7 @@ impl Component {
     }
 
     /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<str> {
+    pub fn name(&self) -> Cow<'_, str> {
         "Detailed Timer".into()
     }
 
@@ -235,7 +237,8 @@ impl Component {
                 background,
                 time: formatter::Time::with_digits_format(
                     self.settings.segment_timer.digits_format,
-                ).format(t)
+                )
+                .format(t)
                 .to_string(),
                 fraction: formatter::Fraction::with_accuracy(self.settings.segment_timer.accuracy)
                     .format(t)
@@ -276,7 +279,8 @@ impl Component {
                     .current_split()
                     .filter(|_| display_icon)
                     .map(|s| s.icon()),
-            ).map(str::to_owned);
+            )
+            .map(str::to_owned);
 
         let segment_name = if self.settings.show_segment_name {
             timer.current_split().map(|s| s.name().to_owned())

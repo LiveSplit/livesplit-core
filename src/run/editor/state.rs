@@ -1,11 +1,11 @@
 use super::{Editor, SegmentRow, TimingMethod};
-use comparison::personal_best;
-use run::RunMetadata;
+use crate::comparison::personal_best;
+use crate::run::RunMetadata;
+use crate::timing::formatter::none_wrapper::EmptyWrapper;
+use crate::timing::formatter::{Accuracy, Short, TimeFormatter};
+use crate::CachedImageId;
 use serde_json::{to_writer, Result as JsonResult};
 use std::io::Write;
-use timing::formatter::none_wrapper::EmptyWrapper;
-use timing::formatter::{Accuracy, Short, TimeFormatter};
-use CachedImageId;
 
 /// Represents the current state of the Run Editor in order to visualize it
 /// properly.

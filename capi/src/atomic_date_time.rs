@@ -2,7 +2,7 @@
 //! an atomic clock as possible.
 
 use livesplit_core::AtomicDateTime;
-use output_str;
+use crate::output_str;
 use std::os::raw::c_char;
 
 /// type

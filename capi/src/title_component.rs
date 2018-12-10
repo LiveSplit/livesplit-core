@@ -3,10 +3,10 @@
 //! and the total number of successfully finished runs can be shown.
 
 use super::{output_vec, Json};
-use component::OwnedComponent;
+use crate::component::OwnedComponent;
 use livesplit_core::component::title::Component as TitleComponent;
 use livesplit_core::Timer;
-use title_component_state::OwnedTitleComponentState;
+use crate::title_component_state::OwnedTitleComponentState;
 
 /// type
 pub type OwnedTitleComponent = Box<TitleComponent>;

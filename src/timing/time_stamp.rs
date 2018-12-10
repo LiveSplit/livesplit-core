@@ -1,6 +1,6 @@
-use platform::Instant;
+use crate::platform::Instant;
+use crate::TimeSpan;
 use std::ops::Sub;
-use TimeSpan;
 
 /// A Time Stamp stores a point in time, that can be used to calculate Time
 /// Spans.

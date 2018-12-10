@@ -1,6 +1,6 @@
 use super::{Accuracy, TimeFormatter, DASH, MINUS, PLUS};
+use crate::TimeSpan;
 use std::fmt::{Display, Formatter, Result};
-use TimeSpan;
 
 pub struct Inner {
     time: Option<TimeSpan>,
@@ -69,7 +69,7 @@ impl<'a> TimeFormatter<'a> for Delta {
 }
 
 impl Display for Inner {
-    fn fmt(&self, f: &mut Formatter) -> Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         if let Some(time) = self.time {
             let mut total_seconds = time.total_seconds();
             if total_seconds < 0.0 {

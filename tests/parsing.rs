@@ -1,5 +1,3 @@
-extern crate livesplit_core;
-
 mod parse {
     use livesplit_core::run::parser::{
         composite, flitter, livesplit, llanfair, llanfair2, llanfair_gered, portal2_live_timer,

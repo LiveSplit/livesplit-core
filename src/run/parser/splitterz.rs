@@ -1,10 +1,10 @@
 //! Provides the parser for SplitterZ splits files.
 
+use crate::{timing, Image, RealTime, Run, Segment, TimeSpan};
 use std::borrow::Cow;
 use std::io::{self, BufRead};
 use std::num::ParseIntError;
 use std::result::Result as StdResult;
-use {timing, Image, RealTime, Run, Segment, TimeSpan};
 
 quick_error! {
     /// The Error type for splits files that couldn't be parsed by the SplitterZ
@@ -41,7 +41,7 @@ quick_error! {
 /// The Result type for the SplitterZ parser.
 pub type Result<T> = StdResult<T, Error>;
 
-fn unescape(text: &str) -> Cow<str> {
+fn unescape(text: &str) -> Cow<'_, str> {
     if text.contains('‡') {
         text.replace('‡', ",").into()
     } else {

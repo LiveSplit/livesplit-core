@@ -5,17 +5,19 @@
 //! list provides scrolling functionality, so not every segment needs to be
 //! shown all the time.
 
-use analysis::split_color;
-use serde_json::{to_writer, Result};
-use settings::{Color, Field, Gradient, ListGradient, SemanticColor, SettingsDescription, Value};
-use std::borrow::Cow;
-use std::cmp::{max, min};
-use std::io::Write;
-use timing::formatter::{Delta, Regular, TimeFormatter};
-use {
+use crate::analysis::split_color;
+use crate::settings::{
+    Color, Field, Gradient, ListGradient, SemanticColor, SettingsDescription, Value,
+};
+use crate::timing::formatter::{Delta, Regular, TimeFormatter};
+use crate::{
     analysis, comparison, CachedImageId, GeneralLayoutSettings, Segment, TimeSpan, Timer,
     TimingMethod,
 };
+use serde_json::{to_writer, Result};
+use std::borrow::Cow;
+use std::cmp::{max, min};
+use std::io::Write;
 
 #[cfg(test)]
 mod tests;
@@ -346,7 +348,7 @@ impl Component {
     }
 
     /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<str> {
+    pub fn name(&self) -> Cow<'_, str> {
         "Splits".into()
     }
 
@@ -416,7 +418,8 @@ impl Component {
             .skip(skip_count)
             .filter(|&((i, _), _)| {
                 i - skip_count < take_count || (always_show_last_split && i + 1 == run.len())
-            }).map(|((i, segment), icon_id)| {
+            })
+            .map(|((i, segment), icon_id)| {
                 let columns = columns
                     .iter()
                     .map(|column| {
@@ -429,7 +432,8 @@ impl Component {
                             current_split,
                             method,
                         )
-                    }).collect();
+                    })
+                    .collect();
 
                 if let Some(icon_change) = icon_id.update_with(Some(segment.icon())) {
                     icon_changes.push(IconChange {
@@ -444,7 +448,8 @@ impl Component {
                     is_current_split: Some(i) == current_split,
                     index: i,
                 }
-            }).collect();
+            })
+            .collect();
 
         if fill_with_blank_space && splits.len() < visual_split_count {
             let blank_split_count = visual_split_count - splits.len();
@@ -688,12 +693,14 @@ fn column_update_value(
             return None;
         }
 
-        if column.update_trigger == Contextual && analysis::check_live_delta(
-            timer,
-            !column.update_with.is_segment_based(),
-            comparison,
-            method,
-        ).is_none()
+        if column.update_trigger == Contextual
+            && analysis::check_live_delta(
+                timer,
+                !column.update_with.is_segment_based(),
+                comparison,
+                method,
+            )
+            .is_none()
         {
             // It's contextual and the live delta shouldn't be shown yet.
             return None;

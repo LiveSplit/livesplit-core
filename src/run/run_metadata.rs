@@ -124,7 +124,7 @@ impl RunMetadata {
 
     /// Returns an iterator iterating over all the variables and their values
     /// that have been specified.
-    pub fn variables(&self) -> Iter<String, String> {
+    pub fn variables(&self) -> Iter<'_, String, String> {
         self.variables.iter()
     }
 

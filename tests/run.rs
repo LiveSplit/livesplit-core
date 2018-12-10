@@ -1,5 +1,3 @@
-extern crate livesplit_core;
-
 mod run {
     use livesplit_core::run::ComparisonError;
     use livesplit_core::Run;

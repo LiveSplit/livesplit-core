@@ -4,7 +4,7 @@
 //! artifacts of route changes and similar algorithmic changes.
 
 use livesplit_core::SegmentHistory;
-use segment_history_iter::OwnedSegmentHistoryIter;
+use crate::segment_history_iter::OwnedSegmentHistoryIter;
 
 /// type
 pub type OwnedSegmentHistory = Box<SegmentHistory>;

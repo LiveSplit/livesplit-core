@@ -1,7 +1,7 @@
 use heck::{CamelCase, MixedCase};
 use std::collections::BTreeMap;
 use std::io::{Result, Write};
-use {Class, Function, Type, TypeKind};
+use crate::{Class, Function, Type, TypeKind};
 
 fn get_hl_type(ty: &Type) -> String {
     if ty.is_custom {
@@ -21,11 +21,13 @@ fn get_hl_type(ty: &Type) -> String {
 
 fn get_ll_type(ty: &Type, output: bool) -> &str {
     match (ty.kind, ty.name.as_str()) {
-        (TypeKind::Ref, "c_char") => if output {
-            "LSCoreString"
-        } else {
-            "string"
-        },
+        (TypeKind::Ref, "c_char") => {
+            if output {
+                "LSCoreString"
+            } else {
+                "string"
+            }
+        }
         (TypeKind::Ref, _) | (TypeKind::RefMut, _) => "IntPtr",
         (_, t) if !ty.is_custom => match t {
             "i8" => "sbyte",
@@ -39,18 +41,22 @@ fn get_ll_type(ty: &Type, output: bool) -> &str {
             "usize" => "UIntPtr",
             "f32" => "float",
             "f64" => "double",
-            "bool" => if output {
-                "byte"
-            } else {
-                "bool"
-            },
+            "bool" => {
+                if output {
+                    "byte"
+                } else {
+                    "bool"
+                }
+            }
             "()" => "void",
             "c_char" => "char",
-            "Json" => if output {
-                "LSCoreString"
-            } else {
-                "string"
-            },
+            "Json" => {
+                if output {
+                    "LSCoreString"
+                } else {
+                    "string"
+                }
+            }
             x => x,
         },
         _ => "IntPtr",
@@ -134,7 +140,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
         )?;
     }
 
-    for (i, &(ref name, ref typ)) in function
+    for (i, (name, typ)) in function
         .inputs
         .iter()
         .skip(if is_static { 0 } else { 1 })
@@ -162,7 +168,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
         )?;
     }
 
-    for &(ref name, ref typ) in function.inputs.iter() {
+    for (name, typ) in function.inputs.iter() {
         if typ.is_custom {
             write!(
                 writer,
@@ -191,7 +197,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
 
     write!(writer, r#"LiveSplitCoreNative.{}("#, &function.name)?;
 
-    for (i, &(ref name, ref typ)) in function.inputs.iter().enumerate() {
+    for (i, (name, typ)) in function.inputs.iter().enumerate() {
         if i != 0 {
             write!(writer, ", ")?;
         }
@@ -229,7 +235,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
 
     write!(writer, r#";"#)?;
 
-    for &(ref name, ref typ) in function.inputs.iter() {
+    for (name, typ) in function.inputs.iter() {
         if typ.is_custom && typ.kind == TypeKind::Value {
             write!(
                 writer,
@@ -461,7 +467,7 @@ namespace LiveSplitCore
                 &function.name
             )?;
 
-            for (i, &(ref name, ref typ)) in function.inputs.iter().enumerate() {
+            for (i, (name, typ)) in function.inputs.iter().enumerate() {
                 if i != 0 {
                     write!(writer, ", ")?;
                 }

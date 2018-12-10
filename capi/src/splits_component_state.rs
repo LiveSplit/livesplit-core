@@ -104,7 +104,8 @@ pub extern "C" fn SplitsComponentState_column_semantic_color(
             f,
             "{:?}",
             this.splits[index].columns[column_index].semantic_color
-        ).unwrap()
+        )
+        .unwrap()
     })
 }
 

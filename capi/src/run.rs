@@ -3,8 +3,8 @@
 use super::{output_str, output_time_span, output_vec, str};
 use livesplit_core::run::{parser, saver};
 use livesplit_core::{Attempt, Run, RunMetadata, Segment, TimeSpan};
-use parse_run_result::OwnedParseRunResult;
-use segment::OwnedSegment;
+use crate::parse_run_result::OwnedParseRunResult;
+use crate::segment::OwnedSegment;
 use std::fs::File;
 use std::io::{BufReader, Cursor};
 use std::os::raw::c_char;

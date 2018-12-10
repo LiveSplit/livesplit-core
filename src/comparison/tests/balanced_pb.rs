@@ -1,7 +1,7 @@
-use comparison::balanced_pb::{BalancedPB, NAME};
-use tests_helper::{run_with_splits, run_with_splits_opt};
-use timing::formatter::{Short, TimeFormatter};
-use {Run, Segment, TimeSpan, Timer};
+use crate::comparison::balanced_pb::{BalancedPB, NAME};
+use crate::tests_helper::{run_with_splits, run_with_splits_opt};
+use crate::timing::formatter::{Short, TimeFormatter};
+use crate::{Run, Segment, TimeSpan, Timer};
 
 #[test]
 fn test() {

@@ -6,12 +6,12 @@
 //! occurrences of this and allows you to delete them individually if any of
 //! them seem wrong.
 
-use analysis::sum_of_segments::{best, track_branch};
+use crate::analysis::sum_of_segments::{best, track_branch};
+use crate::timing::formatter::{Short, TimeFormatter};
+use crate::{Attempt, Run, Segment, TimeSpan, TimingMethod};
 use chrono::Local;
 use std::fmt;
 use std::mem::replace;
-use timing::formatter::{Short, TimeFormatter};
-use {Attempt, Run, Segment, TimeSpan, TimingMethod};
 
 /// A Sum of Best Cleaner allows you to interactively remove potential issues in
 /// the Segment History that lead to an inaccurate Sum of Best. If you skip a
@@ -65,7 +65,7 @@ pub struct CleanUp {
 }
 
 impl<'r> fmt::Display for PotentialCleanUp<'r> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let short = Short::new();
 
         let method = match self.method {
@@ -112,7 +112,7 @@ impl<'r> fmt::Display for PotentialCleanUp<'r> {
 }
 
 impl<'a> From<PotentialCleanUp<'a>> for CleanUp {
-    fn from(potential: PotentialCleanUp) -> Self {
+    fn from(potential: PotentialCleanUp<'_>) -> Self {
         potential.clean_up
     }
 }
@@ -129,7 +129,7 @@ impl<'r> SumOfBestCleaner<'r> {
     }
 
     /// Applies a clean up to the Run.
-    #[allow(needless_pass_by_value)]
+    #[allow(clippy::needless_pass_by_value)]
     pub fn apply(&mut self, clean_up: CleanUp) {
         self.run
             .segment_mut(clean_up.ending_index)
@@ -141,7 +141,7 @@ impl<'r> SumOfBestCleaner<'r> {
 
     /// Returns the next potential clean up. If there are no more potential
     /// clean ups, `None` is returned.
-    pub fn next_potential_clean_up(&mut self) -> Option<PotentialCleanUp> {
+    pub fn next_potential_clean_up(&mut self) -> Option<PotentialCleanUp<'_>> {
         loop {
             match replace(&mut self.state, State::Poisoned) {
                 State::Poisoned => unreachable!(),
@@ -168,7 +168,8 @@ impl<'r> SumOfBestCleaner<'r> {
                     };
                 }
                 State::IteratingHistory(state) => {
-                    let iter = self.run
+                    let iter = self
+                        .run
                         .segment(state.parent.segment_index)
                         .segment_history()
                         .iter()
@@ -240,7 +241,8 @@ fn check_prediction<'a>(
                         t - predictions[(starting_index + 1) as usize]
                             .expect("Start time must not be empty")
                     }),
-                    attempt: run.attempt_history()
+                    attempt: run
+                        .attempt_history()
                         .iter()
                         .find(|attempt| attempt.index() == run_index)
                         .expect("The attempt has to exist"),

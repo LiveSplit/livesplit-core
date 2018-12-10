@@ -24,8 +24,8 @@ pub use self::median_segments::MedianSegments;
 pub use self::none::None;
 pub use self::worst_segments::WorstSegments;
 
+use crate::{Attempt, Segment, Timer};
 use std::fmt::Debug;
-use {Attempt, Segment, Timer};
 
 /// Defines the Personal Best comparison. This module mostly just serves for
 /// providing the names of the comparison, as the Personal Best is not a
@@ -66,19 +66,19 @@ pub trait ComparisonGenerator: Debug + Sync + Send + ComparisonGeneratorClone {
 /// as a Trait Object.
 pub trait ComparisonGeneratorClone {
     /// Clones the Comparison Generator as a Trait Object.
-    fn clone_box(&self) -> Box<ComparisonGenerator>;
+    fn clone_box(&self) -> Box<dyn ComparisonGenerator>;
 }
 
 impl<T> ComparisonGeneratorClone for T
 where
     T: 'static + ComparisonGenerator + Clone,
 {
-    fn clone_box(&self) -> Box<ComparisonGenerator> {
+    fn clone_box(&self) -> Box<dyn ComparisonGenerator> {
         Box::new(self.clone())
     }
 }
 
-impl Clone for Box<ComparisonGenerator> {
+impl Clone for Box<dyn ComparisonGenerator> {
     fn clone(&self) -> Self {
         self.clone_box()
     }
@@ -86,7 +86,7 @@ impl Clone for Box<ComparisonGenerator> {
 
 /// Creates a list of all the Comparison Generators that are active by default.
 /// Which comparison generators are in this list may change in future versions.
-pub fn default_generators() -> Vec<Box<ComparisonGenerator>> {
+pub fn default_generators() -> Vec<Box<dyn ComparisonGenerator>> {
     vec![
         Box::new(BestSegments),
         Box::new(BestSplitTimes),

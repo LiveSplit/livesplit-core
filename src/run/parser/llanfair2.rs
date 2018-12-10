@@ -3,12 +3,12 @@
 use super::xml_util::{
     end_tag, parse_base, parse_children, single_child, text, text_err, text_parsed,
 };
+use crate::{RealTime, Run, Segment, Time, TimeSpan};
 use byteorder::{ByteOrder, BE};
-use imagelib::{png, ColorType, ImageBuffer, Rgba};
+use image::{png, ColorType, ImageBuffer, Rgba};
 use quick_xml::Reader;
 use std::cmp::min;
 use std::io::BufRead;
-use {RealTime, Run, Segment, Time, TimeSpan};
 
 pub use super::xml_util::{Error, Result};
 

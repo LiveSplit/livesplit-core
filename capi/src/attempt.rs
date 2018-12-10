@@ -3,10 +3,10 @@
 //! then reset, an Attempt describing general information about it is created.
 
 use super::{output_time, output_time_span};
-use atomic_date_time::NullableOwnedAtomicDateTime;
+use crate::atomic_date_time::NullableOwnedAtomicDateTime;
 use livesplit_core::{Attempt, Time};
 use std::ptr;
-use time_span::NullableTimeSpan;
+use crate::time_span::NullableTimeSpan;
 
 /// type
 pub type OwnedAttempt = Box<Attempt>;

@@ -18,7 +18,7 @@ pub extern "C" fn TextComponentState_drop(this: OwnedTextComponentState) {
 /// string is returned instead.
 #[no_mangle]
 pub extern "C" fn TextComponentState_left(this: &TextComponentState) -> *const c_char {
-    if let Text::Split(ref left, _) = this.text {
+    if let Text::Split(left, _) = &this.text {
         output_str(left)
     } else {
         output_str("")
@@ -29,7 +29,7 @@ pub extern "C" fn TextComponentState_left(this: &TextComponentState) -> *const c
 /// string is returned instead.
 #[no_mangle]
 pub extern "C" fn TextComponentState_right(this: &TextComponentState) -> *const c_char {
-    if let Text::Split(_, ref right) = this.text {
+    if let Text::Split(_, right) = &this.text {
         output_str(right)
     } else {
         output_str("")
@@ -40,7 +40,7 @@ pub extern "C" fn TextComponentState_right(this: &TextComponentState) -> *const 
 /// returned instead.
 #[no_mangle]
 pub extern "C" fn TextComponentState_center(this: &TextComponentState) -> *const c_char {
-    if let Text::Center(ref center) = this.text {
+    if let Text::Center(center) = &this.text {
         output_str(center)
     } else {
         output_str("")

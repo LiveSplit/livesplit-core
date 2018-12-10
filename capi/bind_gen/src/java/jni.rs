@@ -1,10 +1,10 @@
 use super::write_class_comments;
+use crate::{Class, Function, Type, TypeKind};
 use heck::MixedCase;
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::{BufWriter, Result, Write};
 use std::path::Path;
-use {Class, Function, Type, TypeKind};
 
 fn get_hl_type(ty: &Type) -> String {
     if ty.is_custom {
@@ -108,7 +108,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
         )?;
     }
 
-    for (i, &(ref name, ref typ)) in function
+    for (i, (name, typ)) in function
         .inputs
         .iter()
         .skip(if is_static { 0 } else { 1 })
@@ -135,7 +135,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
         )?;
     }
 
-    for &(ref name, ref typ) in function.inputs.iter() {
+    for (name, typ) in function.inputs.iter() {
         if typ.is_custom {
             write!(
                 writer,
@@ -169,7 +169,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
         function.method.to_mixed_case()
     )?;
 
-    for (i, &(ref name, ref typ)) in function.inputs.iter().enumerate() {
+    for (i, (name, typ)) in function.inputs.iter().enumerate() {
         if i != 0 {
             write!(writer, ", ")?;
         }
@@ -194,7 +194,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
 
     write!(writer, r#";"#)?;
 
-    for &(ref name, ref typ) in function.inputs.iter() {
+    for (name, typ) in function.inputs.iter() {
         if typ.is_custom && typ.kind == TypeKind::Value {
             write!(
                 writer,
@@ -427,7 +427,7 @@ public class LiveSplitCoreNative {
                 function.method.to_mixed_case()
             )?;
 
-            for (i, &(ref name, ref typ)) in function.inputs.iter().enumerate() {
+            for (i, (name, typ)) in function.inputs.iter().enumerate() {
                 if i != 0 {
                     write!(writer, ", ")?;
                 }

@@ -5,7 +5,7 @@
 //! runner.
 
 use super::ComparisonGenerator;
-use {Attempt, Segment, TimeSpan, TimingMethod};
+use crate::{Attempt, Segment, TimeSpan, TimingMethod};
 
 /// The Comparison Generator for calculating the Average Segments of a Run. The
 /// Average Segments are calculated through a weighted arithmetic mean that
@@ -27,7 +27,7 @@ fn generate(segments: &mut [Segment], method: TimingMethod) {
 
     // TODO: This may actually be possible to be fixed with a window like
     // iterator.
-    #[allow(needless_range_loop)]
+    #[allow(clippy::needless_range_loop)]
     for i in 0..segments.len() {
         // TODO: Borrowcheck. if accumulated.is_some() is only necessary because
         // we can't assign to the outer variable otherwise.
@@ -40,7 +40,8 @@ fn generate(segments: &mut [Segment], method: TimingMethod) {
                     // Skip all the combined segments
                     let skip = catch! {
                         segments[i.checked_sub(1)?].segment_history().get(id)?[method].is_none()
-                    }.unwrap_or(false);
+                    }
+                    .unwrap_or(false);
 
                     if !skip {
                         total_weights += current_weight;

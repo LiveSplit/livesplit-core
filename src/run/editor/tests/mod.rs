@@ -1,5 +1,5 @@
 use super::Editor;
-use {Run, Segment};
+use crate::{Run, Segment};
 
 mod dissociate_run;
 mod mark_as_modified;

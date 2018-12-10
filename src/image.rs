@@ -90,7 +90,7 @@ impl Image {
     pub fn modify(&mut self, data: &[u8]) {
         #[cfg(feature = "image-shrinking")]
         let data = {
-            use image_shrinking::shrink;
+            use crate::image_shrinking::shrink;
             const MAX_IMAGE_SIZE: u32 = 128;
 
             shrink(data, MAX_IMAGE_SIZE)

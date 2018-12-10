@@ -1,5 +1,5 @@
 use super::super::Editor;
-use {Run, Segment};
+use crate::{Run, Segment};
 
 fn base() -> Editor {
     let mut run = Run::new();

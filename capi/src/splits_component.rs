@@ -5,10 +5,10 @@
 //! to be shown all the time.
 
 use super::{output_vec, Json};
-use component::OwnedComponent;
+use crate::component::OwnedComponent;
 use livesplit_core::component::splits::Component as SplitsComponent;
 use livesplit_core::{GeneralLayoutSettings, Timer};
-use splits_component_state::OwnedSplitsComponentState;
+use crate::splits_component_state::OwnedSplitsComponentState;
 
 /// type
 pub type OwnedSplitsComponent = Box<SplitsComponent>;

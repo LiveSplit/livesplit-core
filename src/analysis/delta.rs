@@ -4,7 +4,7 @@
 //! the moment. This may be the case when the current attempt is slower than the
 //! comparison at the current split.
 
-use {analysis, TimeSpan, Timer, TimerPhase};
+use crate::{analysis, TimeSpan, Timer, TimerPhase};
 
 /// Calculates the delta of the current attempt to the comparison provided.
 /// Additionally a value is returned that indicates whether the delta value is a

@@ -8,7 +8,7 @@
 //! misleading, but sticks around for historical reasons.
 
 use super::{track_branch, track_current_run, track_personal_best_run};
-use {Segment, TimeSpan, TimingMethod};
+use crate::{Segment, TimeSpan, TimingMethod};
 
 fn populate_prediction(prediction: &mut Option<TimeSpan>, predicted_time: Option<TimeSpan>) {
     if let Some(predicted_time) = predicted_time {
@@ -89,7 +89,7 @@ fn populate_predictions(
 /// predictions buffer needs to have one more element than the list of segments
 /// provided, so that you can properly query the total Sum of Best Segments.
 /// This value is also the value that is being returned.
-#[allow(needless_range_loop)]
+#[allow(clippy::needless_range_loop)]
 pub fn calculate(
     segments: &[Segment],
     predictions: &mut [Option<TimeSpan>],

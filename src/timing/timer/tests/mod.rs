@@ -1,6 +1,6 @@
-use run::Editor;
-use tests_helper::{run_with_splits, run_with_splits_opt, start_run};
-use {Run, Segment, TimeSpan, Timer, TimerPhase, TimingMethod};
+use crate::run::Editor;
+use crate::tests_helper::{run_with_splits, run_with_splits_opt, start_run};
+use crate::{Run, Segment, TimeSpan, Timer, TimerPhase, TimingMethod};
 
 mod mark_as_modified;
 

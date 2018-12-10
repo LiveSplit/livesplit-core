@@ -1,5 +1,5 @@
 use super::{Component, Settings};
-use {Run, Segment, Timer};
+use crate::{Run, Segment, Timer};
 
 #[test]
 fn finished_runs_and_attempt_count() {

@@ -1,4 +1,4 @@
-use {TimeSpan, Timer, TimingMethod};
+use crate::{TimeSpan, Timer, TimingMethod};
 
 pub(crate) fn start_run(timer: &mut Timer) {
     timer.set_current_timing_method(TimingMethod::GameTime);

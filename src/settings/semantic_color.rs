@@ -1,5 +1,5 @@
 use super::Color;
-use layout;
+use crate::layout;
 
 /// A Semantic Color describes a color by some meaningful event that is
 /// happening. This information can be visualized as a color, but can also be

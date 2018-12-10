@@ -36,7 +36,7 @@ pub struct FormattedSeconds {
 }
 
 impl Display for FormattedSeconds {
-    fn fmt(&self, f: &mut Formatter) -> Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         let s = self.seconds as u8;
         if self.zero_prefix {
             write!(f, "{:02}", s)?;

@@ -3,15 +3,15 @@
 //! a digital clock. The color of the time shown is based on a how well the
 //! current attempt is doing compared to the chosen comparison.
 
-use analysis::split_color;
+use crate::analysis::split_color;
+use crate::settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
+use crate::timing::formatter::{timer as formatter, Accuracy, DigitsFormat, TimeFormatter};
+use crate::{GeneralLayoutSettings, TimeSpan, Timer, TimerPhase, TimingMethod};
 use palette::rgb::LinSrgb;
 use palette::Hsv;
 use serde_json::{to_writer, Result};
-use settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
 use std::borrow::Cow;
 use std::io::Write;
-use timing::formatter::{timer as formatter, Accuracy, DigitsFormat, TimeFormatter};
-use {GeneralLayoutSettings, TimeSpan, Timer, TimerPhase, TimingMethod};
 
 /// The Timer Component is a component that shows the total time of the current
 /// attempt as a digital clock. The color of the time shown is based on a how
@@ -113,14 +113,15 @@ impl Component {
     }
 
     /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<str> {
+    pub fn name(&self) -> Cow<'_, str> {
         "Timer".into()
     }
 
     /// Calculates the component's state based on the timer and the layout
     /// settings provided.
     pub fn state(&self, timer: &Timer, layout_settings: &GeneralLayoutSettings) -> State {
-        let method = self.settings
+        let method = self
+            .settings
             .timing_method
             .unwrap_or_else(|| timer.current_timing_method());
         let time = timer.current_time();
@@ -143,7 +144,8 @@ impl Component {
                         false,
                         current_comparison,
                         method,
-                    ).or(SemanticColor::AheadGainingTime)
+                    )
+                    .or(SemanticColor::AheadGainingTime)
                 } else {
                     SemanticColor::AheadGainingTime
                 }

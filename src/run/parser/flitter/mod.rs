@@ -1,8 +1,8 @@
 //! Provides the parser for Flitter splits files.
 
+use crate::{comparison::world_record, Run, Segment, Time, TimeSpan};
 use std::io::BufRead;
 use std::result::Result as StdResult;
-use {comparison::world_record, Run, Segment, Time, TimeSpan};
 
 mod s_expressions;
 
@@ -51,28 +51,25 @@ pub fn parse<R: BufRead>(source: R) -> Result<Run> {
         run.add_custom_comparison(world_record::NAME).unwrap();
     }
 
-    // FIXME: NLL
-    {
-        let segments = run.segments_mut();
+    let segments = run.segments_mut();
 
-        segments.extend(splits.split_names.into_iter().map(Segment::new));
+    segments.extend(splits.split_names.into_iter().map(Segment::new));
 
-        if let Some(pb) = splits.personal_best {
-            for (segment, pb) in segments.iter_mut().zip(pb.splits) {
-                segment.set_personal_best_split_time(Time::new().with_real_time(pb.time));
-            }
+    if let Some(pb) = splits.personal_best {
+        for (segment, pb) in segments.iter_mut().zip(pb.splits) {
+            segment.set_personal_best_split_time(Time::new().with_real_time(pb.time));
         }
+    }
 
-        if let Some(golds) = splits.golds {
-            for (segment, gold) in segments.iter_mut().zip(golds) {
-                segment.set_best_segment_time(Time::new().with_real_time(gold.duration));
-            }
+    if let Some(golds) = splits.golds {
+        for (segment, gold) in segments.iter_mut().zip(golds) {
+            segment.set_best_segment_time(Time::new().with_real_time(gold.duration));
         }
+    }
 
-        if let Some(wr) = splits.world_record {
-            for (segment, wr) in segments.iter_mut().zip(wr.splits) {
-                segment.comparison_mut(world_record::NAME).real_time = wr.time;
-            }
+    if let Some(wr) = splits.world_record {
+        for (segment, wr) in segments.iter_mut().zip(wr.splits) {
+            segment.comparison_mut(world_record::NAME).real_time = wr.time;
         }
     }
 

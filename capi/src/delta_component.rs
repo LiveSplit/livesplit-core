@@ -2,8 +2,8 @@
 //! the current attempt is compared to the chosen comparison.
 
 use super::{output_vec, Json};
-use component::OwnedComponent;
-use delta_component_state::OwnedDeltaComponentState;
+use crate::component::OwnedComponent;
+use crate::delta_component_state::OwnedDeltaComponentState;
 use livesplit_core::component::delta::Component as DeltaComponent;
 use livesplit_core::{GeneralLayoutSettings, Timer};
 

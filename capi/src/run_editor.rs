@@ -5,10 +5,10 @@
 
 use super::{output_vec, str, Json};
 use livesplit_core::{Run, RunEditor, TimingMethod};
-use run::OwnedRun;
+use crate::run::OwnedRun;
 use std::os::raw::c_char;
 use std::slice;
-use sum_of_best_cleaner::OwnedSumOfBestCleaner;
+use crate::sum_of_best_cleaner::OwnedSumOfBestCleaner;
 
 /// type
 pub type OwnedRunEditor = Box<RunEditor>;

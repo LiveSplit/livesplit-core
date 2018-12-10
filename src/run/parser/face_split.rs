@@ -1,10 +1,10 @@
 //! Provides the parser for FaceSplit splits files.
 
+use crate::{timing, Image, RealTime, Run, Segment, Time, TimeSpan};
 use std::borrow::Cow;
 use std::io::{self, BufRead};
 use std::num::ParseIntError;
 use std::result::Result as StdResult;
-use {timing, Image, RealTime, Run, Segment, Time, TimeSpan};
 
 quick_error! {
     /// The Error type for splits files that couldn't be parsed by the FaceSplit

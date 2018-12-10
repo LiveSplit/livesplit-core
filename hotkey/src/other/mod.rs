@@ -4,7 +4,7 @@ quick_error! {
     }
 }
 
-pub type Result<T> = ::std::result::Result<T, Error>;
+pub type Result<T> = StdResult<T, Error>;
 
 #[derive(Debug, Eq, PartialEq, Hash, Copy, Clone, Serialize, Deserialize)]
 pub struct KeyCode;
@@ -28,7 +28,7 @@ impl Hook {
     }
 }
 
-use std::{str::FromStr, result::Result as StdResult};
+use std::{result::Result as StdResult, str::FromStr};
 
 impl FromStr for KeyCode {
     type Err = ();
