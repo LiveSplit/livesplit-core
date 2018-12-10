@@ -657,6 +657,7 @@ export type SettingsDescriptionValueJson =
     { ColumnStartWith: ColumnStartWith } |
     { ColumnUpdateWith: ColumnUpdateWith } |
     { ColumnUpdateTrigger: ColumnUpdateTrigger } |
+    { Hotkey: string } |
     { CustomCombobox: CustomCombobox };
 
 /**

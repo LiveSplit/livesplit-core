@@ -29,6 +29,7 @@ pub mod fuzzy_list;
 pub mod general_layout_settings;
 pub mod graph_component;
 pub mod graph_component_state;
+pub mod hotkey_config;
 pub mod hotkey_system;
 pub mod layout;
 pub mod layout_editor;
