@@ -1,8 +1,8 @@
 //! Provides different helper functions.
 
-use comparison::best_segments;
-use settings::SemanticColor;
-use {Run, Segment, TimeSpan, Timer, TimerPhase, TimingMethod};
+use crate::comparison::best_segments;
+use crate::settings::SemanticColor;
+use crate::{Run, Segment, TimeSpan, Timer, TimerPhase, TimingMethod};
 
 /// Gets the last non-live delta in the run starting from `segment_index`.
 ///
@@ -22,7 +22,8 @@ pub fn last_delta(
         &run.segments()[..=segment_index],
         comparison,
         method,
-    ).map(|(split_time, comparison_time)| split_time - comparison_time)
+    )
+    .map(|(split_time, comparison_time)| split_time - comparison_time)
 }
 
 fn find_previous_non_empty_segment<F, T>(segments: &[Segment], check_segment: F) -> Option<T>
@@ -74,7 +75,8 @@ pub fn comparison_segment_time(
         &run.segments()[..segment_index],
         comparison,
         method,
-    ).unwrap_or_default();
+    )
+    .unwrap_or_default();
 
     Some(current_comparison_time - previous_comparison_time)
 }
@@ -93,9 +95,11 @@ fn segment_delta(
             &run.segments()[..segment_index],
             comparison,
             method,
-        ).map(|(split_time, comparison_time)| {
+        )
+        .map(|(split_time, comparison_time)| {
             (current_time - segment_index_comparison) - (split_time - comparison_time)
-        }).unwrap_or_else(|| current_time - segment_index_comparison),
+        })
+        .unwrap_or_else(|| current_time - segment_index_comparison),
     )
 }
 
@@ -129,7 +133,8 @@ pub fn previous_segment_time(
         segment_index,
         timer.run().segment(segment_index).split_time()[method]?,
         method,
-    ).into()
+    )
+    .into()
 }
 
 /// Gets the length of the last segment that leads up to a certain split, using
@@ -152,7 +157,8 @@ pub fn live_segment_time(
         segment_index,
         timer.current_time()[method]?,
         method,
-    ).into()
+    )
+    .into()
 }
 
 /// Gets the amount of time lost or gained on a certain split.

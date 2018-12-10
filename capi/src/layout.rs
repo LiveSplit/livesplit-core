@@ -2,7 +2,7 @@
 //! variety of information the runner is interested in.
 
 use super::{output_vec, str, Json};
-use component::OwnedComponent;
+use crate::component::OwnedComponent;
 use livesplit_core::layout::LayoutSettings;
 use livesplit_core::{Layout, Timer};
 use std::io::Cursor;

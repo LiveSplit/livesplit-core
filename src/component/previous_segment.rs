@@ -6,13 +6,13 @@
 //! active time loss whenever the runner is losing time on the current segment.
 
 use super::DEFAULT_INFO_TEXT_GRADIENT;
+use crate::settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
+use crate::timing::formatter::{Accuracy, Delta, PossibleTimeSave, TimeFormatter};
+use crate::{analysis, comparison, GeneralLayoutSettings, Timer, TimerPhase};
 use serde_json::{to_writer, Result};
-use settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
 use std::borrow::Cow;
 use std::fmt::Write as FmtWrite;
 use std::io::Write;
-use timing::formatter::{Accuracy, Delta, PossibleTimeSave, TimeFormatter};
-use {analysis, comparison, GeneralLayoutSettings, Timer, TimerPhase};
 
 /// The Previous Segment Component is a component that shows how much time was
 /// saved or lost during the previous segment based on the chosen comparison.
@@ -116,7 +116,7 @@ impl Component {
     }
 
     /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<str> {
+    pub fn name(&self) -> Cow<'_, str> {
         self.text(
             false,
             self.settings
@@ -126,7 +126,7 @@ impl Component {
         )
     }
 
-    fn text(&self, live: bool, comparison: Option<&str>) -> Cow<str> {
+    fn text(&self, live: bool, comparison: Option<&str>) -> Cow<'_, str> {
         let text = if live {
             "Live Segment"
         } else {
@@ -229,7 +229,8 @@ impl Component {
                 time,
                 " / {}",
                 PossibleTimeSave::with_accuracy(self.settings.accuracy).format(previous_possible)
-            ).unwrap();
+            )
+            .unwrap();
         }
 
         State {

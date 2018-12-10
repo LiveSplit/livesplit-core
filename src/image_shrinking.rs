@@ -1,4 +1,4 @@
-use imagelib::{
+use image::{
     bmp, gif, guess_format, hdr, ico, jpeg, load_from_memory_with_format, png, pnm, tiff, webp,
     DynamicImage, ImageDecoder, ImageError, ImageFormat,
 };
@@ -9,7 +9,7 @@ fn decode_dims<D: ImageDecoder>(mut decoder: D) -> Result<(u32, u32), ImageError
     decoder.dimensions()
 }
 
-fn shrink_inner(data: &[u8], max_dim: u32) -> Result<Cow<[u8]>, ImageError> {
+fn shrink_inner(data: &[u8], max_dim: u32) -> Result<Cow<'_, [u8]>, ImageError> {
     let format = guess_format(data)?;
 
     let cursor = Cursor::new(data);
@@ -48,6 +48,6 @@ fn shrink_inner(data: &[u8], max_dim: u32) -> Result<Cow<[u8]>, ImageError> {
     }
 }
 
-pub fn shrink(data: &[u8], max_dim: u32) -> Cow<[u8]> {
+pub fn shrink(data: &[u8], max_dim: u32) -> Cow<'_, [u8]> {
     shrink_inner(data, max_dim).unwrap_or_else(|_| data.into())
 }

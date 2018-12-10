@@ -4,12 +4,12 @@ use super::xml_util::{
     end_tag, optional_attribute_err, parse_base, parse_children, single_child, text,
     text_as_bytes_err, text_err, text_parsed,
 };
+use crate::{RealTime, Run, Segment, Time, TimeSpan};
 use base64::{self, STANDARD};
 use byteorder::{ReadBytesExt, BE};
-use imagelib::{png, ColorType, ImageBuffer, Rgba};
+use image::{png, ColorType, ImageBuffer, Rgba};
 use quick_xml::Reader;
 use std::io::{BufRead, Cursor, Seek, SeekFrom};
-use {RealTime, Run, Segment, Time, TimeSpan};
 
 pub use super::xml_util::{Error, Result};
 

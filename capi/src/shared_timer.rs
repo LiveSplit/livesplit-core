@@ -2,9 +2,9 @@
 //! owners.
 
 use livesplit_core::SharedTimer;
-use timer::OwnedTimer;
-use timer_read_lock::OwnedTimerReadLock;
-use timer_write_lock::OwnedTimerWriteLock;
+use crate::timer::OwnedTimer;
+use crate::timer_read_lock::OwnedTimerReadLock;
+use crate::timer_write_lock::OwnedTimerWriteLock;
 
 /// type
 pub type OwnedSharedTimer = Box<SharedTimer>;

@@ -1,6 +1,8 @@
-use hotkey::KeyCode;
+#![allow(clippy::trivially_copy_pass_by_ref)]
+
+use crate::hotkey::KeyCode;
+use crate::settings::{Field, SettingsDescription, Value};
 use serde_json::{self, from_reader, to_writer};
-use settings::{Field, SettingsDescription, Value};
 use std::io::{Read, Write};
 
 /// The configuration to use for a Hotkey System. It describes with keys to use
@@ -28,7 +30,7 @@ pub struct HotkeyConfig {
 #[cfg(any(windows, target_os = "linux"))]
 impl Default for HotkeyConfig {
     fn default() -> Self {
-        use hotkey::KeyCode::*;
+        use crate::hotkey::KeyCode::*;
         Self {
             split: NumPad1,
             reset: NumPad3,
@@ -47,7 +49,7 @@ impl Default for HotkeyConfig {
 ))]
 impl Default for HotkeyConfig {
     fn default() -> Self {
-        use hotkey::KeyCode::*;
+        use crate::hotkey::KeyCode::*;
         Self {
             split: Numpad1,
             reset: Numpad3,
@@ -122,10 +124,10 @@ impl HotkeyConfig {
             self.previous_comparison,
             self.next_comparison,
         ]
-            .iter()
-            .enumerate()
-            .filter(|&(i, _)| i != index)
-            .any(|(_, &v)| v == value);
+        .iter()
+        .enumerate()
+        .filter(|&(i, _)| i != index)
+        .any(|(_, &v)| v == value);
 
         if any {
             return Err(());

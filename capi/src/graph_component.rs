@@ -3,8 +3,8 @@
 //! individual deltas are shown as points in a graph.
 
 use super::{output_vec, Json};
-use component::OwnedComponent;
-use graph_component_state::OwnedGraphComponentState;
+use crate::component::OwnedComponent;
+use crate::graph_component_state::OwnedGraphComponentState;
 use livesplit_core::component::graph::Component as GraphComponent;
 use livesplit_core::{GeneralLayoutSettings, Timer};
 

@@ -5,14 +5,14 @@
 //! for the remainder of the current attempt.
 
 use super::DEFAULT_INFO_TEXT_GRADIENT;
-use analysis::possible_time_save;
+use crate::analysis::possible_time_save;
+use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
+use crate::timing::formatter::{Accuracy, PossibleTimeSave, TimeFormatter};
+use crate::{comparison, Timer, TimerPhase};
 use serde_json::{to_writer, Result};
-use settings::{Color, Field, Gradient, SettingsDescription, Value};
 use std::borrow::Cow;
 use std::fmt::Write as FmtWrite;
 use std::io::Write;
-use timing::formatter::{Accuracy, PossibleTimeSave, TimeFormatter};
-use {comparison, Timer, TimerPhase};
 
 /// The Possible Time Save Component is a component that shows how much time the
 /// chosen comparison could've saved for the current segment, based on the Best
@@ -115,7 +115,7 @@ impl Component {
     }
 
     /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<str> {
+    pub fn name(&self) -> Cow<'_, str> {
         self.text(
             self.settings
                 .comparison_override
@@ -124,7 +124,7 @@ impl Component {
         )
     }
 
-    fn text(&self, comparison: Option<&str>) -> Cow<str> {
+    fn text(&self, comparison: Option<&str>) -> Cow<'_, str> {
         let text = if self.settings.total_possible_time_save {
             "Total Possible Time Save"
         } else {

@@ -1,9 +1,9 @@
 use super::{Alignment, Color, Gradient, ListGradient};
-use component::splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith};
-use hotkey::KeyCode;
+use crate::component::splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith};
+use crate::hotkey::KeyCode;
+use crate::timing::formatter::{Accuracy, DigitsFormat};
+use crate::TimingMethod;
 use std::result::Result as StdResult;
-use timing::formatter::{Accuracy, DigitsFormat};
-use TimingMethod;
 
 /// Describes a setting's value. Such a value can be of a variety of different
 /// types.

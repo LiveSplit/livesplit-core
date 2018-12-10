@@ -1,8 +1,5 @@
 #![feature(test)]
 
-extern crate livesplit_core;
-extern crate test;
-
 use test::Bencher;
 
 use livesplit_core::run::parser::livesplit;

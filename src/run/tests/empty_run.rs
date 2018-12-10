@@ -1,4 +1,4 @@
-use Run;
+use crate::Run;
 
 #[test]
 #[should_panic(expected = "Can't calculate the minimum segment history index for an empty Run.")]

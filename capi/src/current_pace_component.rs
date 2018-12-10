@@ -3,8 +3,8 @@
 //! chosen comparison for the remainder of the run.
 
 use super::{output_vec, Json};
-use component::OwnedComponent;
-use current_pace_component_state::OwnedCurrentPaceComponentState;
+use crate::component::OwnedComponent;
+use crate::current_pace_component_state::OwnedCurrentPaceComponentState;
 use livesplit_core::component::current_pace::Component as CurrentPaceComponent;
 use livesplit_core::Timer;
 

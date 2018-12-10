@@ -1,6 +1,3 @@
-extern crate livesplit_core;
-extern crate memmem;
-
 use livesplit_core::run::{parser, saver};
 use livesplit_core::{Run, Segment};
 use memmem::{Searcher, TwoWaySearcher};

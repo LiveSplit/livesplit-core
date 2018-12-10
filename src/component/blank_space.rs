@@ -3,11 +3,11 @@
 //! anything other than a background. It mostly serves as padding between other
 //! components.
 
+use crate::settings::{Field, Gradient, SettingsDescription, Value};
+use crate::Timer;
 use serde_json::{to_writer, Result};
-use settings::{Field, Gradient, SettingsDescription, Value};
 use std::borrow::Cow;
 use std::io::Write;
-use Timer;
 
 /// The Blank Space Component is simply an empty component that doesn't show
 /// anything other than a background. It mostly serves as padding between other
@@ -77,7 +77,7 @@ impl Component {
     }
 
     /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<str> {
+    pub fn name(&self) -> Cow<'_, str> {
         "Blank Space".into()
     }
 

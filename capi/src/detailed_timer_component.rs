@@ -4,8 +4,8 @@
 //! comparisons, the segment icon, and the segment's name, can also be shown.
 
 use super::{output_vec, Json};
-use component::OwnedComponent;
-use detailed_timer_component_state::OwnedDetailedTimerComponentState;
+use crate::component::OwnedComponent;
+use crate::detailed_timer_component_state::OwnedDetailedTimerComponentState;
 use livesplit_core::component::detailed_timer::Component as DetailedTimerComponent;
 use livesplit_core::{GeneralLayoutSettings, Timer};
 

@@ -4,10 +4,10 @@
 //! state objects that can be visualized by any kind of User Interface.
 
 use super::{output_vec, Json};
-use component::OwnedComponent;
-use layout::OwnedLayout;
+use crate::component::OwnedComponent;
+use crate::layout::OwnedLayout;
 use livesplit_core::{LayoutEditor, Timer};
-use setting_value::OwnedSettingValue;
+use crate::setting_value::OwnedSettingValue;
 
 /// type
 pub type OwnedLayoutEditor = Box<LayoutEditor>;

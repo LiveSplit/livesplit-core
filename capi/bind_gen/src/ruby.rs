@@ -1,6 +1,6 @@
+use crate::{Class, Function, Opt, Type, TypeKind};
 use std::collections::BTreeMap;
 use std::io::{Result, Write};
-use {Class, Function, Opt, Type, TypeKind};
 
 fn get_hl_type(ty: &Type) -> String {
     if ty.is_custom {
@@ -32,7 +32,8 @@ fn get_hl_type(ty: &Type) -> String {
                 x => x,
             },
             _ => "Object",
-        }.to_string()
+        }
+        .to_string()
     }
 }
 
@@ -113,7 +114,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         )?;
     }
 
-    for &(ref name, ref typ) in function.inputs.iter().skip(if is_static { 0 } else { 1 }) {
+    for (name, typ) in function.inputs.iter().skip(if is_static { 0 } else { 1 }) {
         write!(
             writer,
             r"
@@ -146,7 +147,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         method
     )?;
 
-    for (i, &(ref name, _)) in function
+    for (i, (name, _)) in function
         .inputs
         .iter()
         .skip(if is_static { 0 } else { 1 })
@@ -164,7 +165,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
             "#
     )?;
 
-    for &(ref name, ref typ) in function.inputs.iter() {
+    for (name, typ) in function.inputs.iter() {
         if typ.is_custom {
             write!(
                 writer,
@@ -188,7 +189,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
 
     write!(writer, r#"Native.{}("#, &function.name)?;
 
-    for (i, &(ref name, ref typ)) in function.inputs.iter().enumerate() {
+    for (i, (name, typ)) in function.inputs.iter().enumerate() {
         if i != 0 {
             write!(writer, ", ")?;
         }
@@ -211,7 +212,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         write!(writer, r#")"#)?;
     }
 
-    for &(ref name, ref typ) in function.inputs.iter() {
+    for (name, typ) in function.inputs.iter() {
         if typ.is_custom && typ.kind == TypeKind::Value {
             write!(
                 writer,
@@ -277,7 +278,7 @@ module LiveSplitCore
                 function.name
             )?;
 
-            for (i, &(_, ref typ)) in function.inputs.iter().enumerate() {
+            for (i, (_, typ)) in function.inputs.iter().enumerate() {
                 if i != 0 {
                     write!(writer, ", ")?;
                 }

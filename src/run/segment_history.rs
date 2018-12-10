@@ -1,6 +1,6 @@
+use crate::Time;
 use std::cmp::min;
 use std::slice::{Iter, IterMut};
-use Time;
 
 /// Stores the segment times achieved for a certain segment. Each segment is
 /// tagged with an index. Only segment times with an index larger than 0 are
@@ -89,7 +89,7 @@ impl SegmentHistory {
 
     /// Iterates over all the segment times and their indices.
     #[inline]
-    pub fn iter(&self) -> Iter<(i32, Time)> {
+    pub fn iter(&self) -> Iter<'_, (i32, Time)> {
         IntoIterator::into_iter(self)
     }
 
@@ -100,7 +100,7 @@ impl SegmentHistory {
     /// While you are allowed to change the indices, you need to ensure they
     /// stay in rising order.
     #[inline]
-    pub fn iter_mut(&mut self) -> IterMut<(i32, Time)> {
+    pub fn iter_mut(&mut self) -> IterMut<'_, (i32, Time)> {
         self.0.iter_mut()
     }
 
@@ -108,7 +108,7 @@ impl SegmentHistory {
     /// times created by route changes or other algorithmic changes are filtered
     /// out.
     #[inline]
-    pub fn iter_actual_runs(&self) -> Iter<(i32, Time)> {
+    pub fn iter_actual_runs(&self) -> Iter<'_, (i32, Time)> {
         let start = match self.get_pos(1) {
             Ok(pos) | Err(pos) => pos,
         };

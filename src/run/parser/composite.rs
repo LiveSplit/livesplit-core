@@ -35,10 +35,10 @@ use super::{
     shit_split, source_live_timer, splits_io, splitterz, splitty, time_split_tracker, urn,
     worstrun, wsplit, TimerKind,
 };
+use crate::Run;
 use std::io::{self, BufRead, Seek, SeekFrom};
 use std::path::PathBuf;
 use std::result::Result as StdResult;
-use Run;
 
 quick_error! {
     /// The Error type for splits files that couldn't be parsed by the Composite

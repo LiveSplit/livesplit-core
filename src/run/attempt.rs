@@ -1,4 +1,4 @@
-use {AtomicDateTime, Time, TimeSpan};
+use crate::{AtomicDateTime, Time, TimeSpan};
 
 /// An Attempt describes information about an attempt to run a specific category
 /// by a specific runner in the past. Every time a new attempt is started and

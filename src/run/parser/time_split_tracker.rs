@@ -1,13 +1,13 @@
 //! Provides the parser for Time Split Tracker splits files.
 
 use super::super::ComparisonError;
+use crate::{timing, AtomicDateTime, Image, RealTime, Run, Segment, Time, TimeSpan};
 use chrono::{TimeZone, Utc};
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
 use std::num::ParseIntError;
 use std::path::PathBuf;
 use std::result::Result as StdResult;
-use {timing, AtomicDateTime, Image, RealTime, Run, Segment, Time, TimeSpan};
 
 quick_error! {
     /// The Error type for splits files that couldn't be parsed by the Time
@@ -205,7 +205,8 @@ fn parse_history(run: &mut Run, path: Option<PathBuf>) -> StdResult<(), ()> {
 
                 if catch! {
                     segment_time.real_time? < segment.best_segment_time().real_time?
-                }.unwrap_or(false)
+                }
+                .unwrap_or(false)
                 {
                     segment.set_best_segment_time(segment_time);
                 }

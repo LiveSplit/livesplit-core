@@ -1,5 +1,5 @@
+use crate::platform::Duration as StdDuration;
 use chrono::Duration;
-use platform::Duration as StdDuration;
 use std::num::ParseFloatError;
 use std::ops::{AddAssign, SubAssign};
 use std::str::FromStr;
@@ -139,7 +139,7 @@ struct TimeSpanVisitor;
 impl<'de> Visitor<'de> for TimeSpanVisitor {
     type Value = TimeSpan;
 
-    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+    fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         formatter.write_str("a string containing a time")
     }
 

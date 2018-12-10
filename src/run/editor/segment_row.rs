@@ -1,5 +1,5 @@
 use super::{Editor, ParseError};
-use {Image, TimeSpan};
+use crate::{Image, TimeSpan};
 
 /// A Segment Row describes the segment in the Run Editor actively selected for
 /// editing.

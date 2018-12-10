@@ -4,8 +4,8 @@
 //! suited to represent the current performance of a runner.
 
 use super::ComparisonGenerator;
+use crate::{Attempt, Segment, TimeSpan, TimingMethod};
 use ordered_float::OrderedFloat;
-use {Attempt, Segment, TimeSpan, TimingMethod};
 
 /// The Comparison Generator for calculating the Median Segments of a Run. The
 /// Median Segments are calculated through a weighted median that gives more
@@ -27,7 +27,7 @@ fn generate(segments: &mut [Segment], medians: &mut Vec<(f64, f64)>, method: Tim
 
     // TODO: This may actually be possible to be fixed with a window like
     // iterator.
-    #[allow(needless_range_loop)]
+    #[allow(clippy::needless_range_loop)]
     for i in 0..segments.len() {
         // TODO: Borrowcheck. if accumulated.is_some() is only necessary because
         // we can't assign to the outer variable otherwise.
@@ -41,7 +41,8 @@ fn generate(segments: &mut [Segment], medians: &mut Vec<(f64, f64)>, method: Tim
                     // Skip all the combined segments
                     let skip = catch! {
                         segments[i.checked_sub(1)?].segment_history().get(id)?[method].is_none()
-                    }.unwrap_or(false);
+                    }
+                    .unwrap_or(false);
 
                     if !skip {
                         medians.push((current_weight, time.total_seconds()));

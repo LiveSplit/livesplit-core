@@ -5,9 +5,9 @@
 //! Interface.
 
 use super::{Component, Layout, LayoutState};
-use settings::Value;
+use crate::settings::Value;
+use crate::Timer;
 use std::result::Result as StdResult;
-use Timer;
 
 mod state;
 

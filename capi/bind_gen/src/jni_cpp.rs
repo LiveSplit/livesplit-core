@@ -1,10 +1,10 @@
+use crate::{Class, Function, Type, TypeKind};
 use heck::MixedCase;
 use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::io::{Result, Write};
-use {Class, Function, Type, TypeKind};
 
-fn get_c_type(ty: &Type) -> Cow<str> {
+fn get_c_type(ty: &Type) -> Cow<'_, str> {
     let mut name = Cow::Borrowed(match ty.name.as_str() {
         "i8" => "int8_t",
         "i16" => "int16_t",
@@ -36,7 +36,7 @@ fn get_c_type(ty: &Type) -> Cow<str> {
     name
 }
 
-fn get_jni_type<'a>(ty: &'a Type) -> &'a str {
+fn get_jni_type(ty: &Type) -> &str {
     match (ty.kind, ty.name.as_str()) {
         (TypeKind::Ref, "c_char") => "jstring",
         (TypeKind::Ref, _) | (TypeKind::RefMut, _) => "jlong",
@@ -75,7 +75,7 @@ extern "C" JNIEXPORT {} Java_livesplitcore_LiveSplitCoreNative_{}_1{}(JNIEnv* jn
         function.method.to_mixed_case()
     )?;
 
-    for &(ref name, ref typ) in &function.inputs {
+    for (name, typ) in &function.inputs {
         write!(
             writer,
             ", {} {}",
@@ -90,7 +90,7 @@ extern "C" JNIEXPORT {} Java_livesplitcore_LiveSplitCoreNative_{}_1{}(JNIEnv* jn
     "#
     )?;
 
-    for &(ref name, ref typ) in &function.inputs {
+    for (name, typ) in &function.inputs {
         let jni_type = get_jni_type(typ);
         if jni_type == "jstring" {
             write!(
@@ -112,7 +112,7 @@ extern "C" JNIEXPORT {} Java_livesplitcore_LiveSplitCoreNative_{}_1{}(JNIEnv* jn
 
     write!(writer, r#"{}("#, &function.name)?;
 
-    for (i, &(ref name, ref typ)) in function.inputs.iter().enumerate() {
+    for (i, (name, typ)) in function.inputs.iter().enumerate() {
         if i != 0 {
             write!(writer, ", ")?;
         }
@@ -139,7 +139,7 @@ extern "C" JNIEXPORT {} Java_livesplitcore_LiveSplitCoreNative_{}_1{}(JNIEnv* jn
 
     write!(writer, r#";"#)?;
 
-    for &(ref name, ref typ) in &function.inputs {
+    for (name, typ) in &function.inputs {
         let jni_type = get_jni_type(typ);
         if jni_type == "jstring" {
             write!(

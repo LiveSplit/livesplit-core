@@ -1,21 +1,17 @@
-extern crate mio;
-extern crate promising_future;
-extern crate x11_dl;
-
 mod key_code;
 pub use self::key_code::KeyCode;
 
-use self::mio::unix::EventedFd;
-use self::mio::{Events, Poll, PollOpt, Ready, Registration, SetReadiness, Token};
-use self::promising_future::{future_promise, Promise};
-use self::x11_dl::xlib::{
-    Display, GrabModeAsync, KeyPress, KeyPressMask, Mod2Mask, XErrorEvent, XKeyEvent, Xlib,
-};
+use mio::unix::EventedFd;
+use mio::{Events, Poll, PollOpt, Ready, Registration, SetReadiness, Token};
+use promising_future::{future_promise, Promise};
 use std::collections::hash_map::{Entry, HashMap};
 use std::os::raw::{c_int, c_uint, c_ulong};
 use std::sync::mpsc::{channel, Sender};
 use std::thread::{self, JoinHandle};
 use std::{mem, ptr};
+use x11_dl::xlib::{
+    Display, GrabModeAsync, KeyPress, KeyPressMask, Mod2Mask, XErrorEvent, XKeyEvent, Xlib,
+};
 
 quick_error! {
     #[derive(Debug)]
@@ -29,10 +25,14 @@ quick_error! {
     }
 }
 
-pub type Result<T> = ::std::result::Result<T, Error>;
+pub type Result<T> = std::result::Result<T, Error>;
 
 enum Message {
-    Register(KeyCode, Box<FnMut() + Send + 'static>, Promise<Result<()>>),
+    Register(
+        KeyCode,
+        Box<dyn FnMut() + Send + 'static>,
+        Promise<Result<()>>,
+    ),
     Unregister(KeyCode, Promise<Result<()>>),
     End,
 }
@@ -92,14 +92,16 @@ impl Hook {
                 X_TOKEN,
                 Ready::readable() | Ready::writable(),
                 PollOpt::edge(),
-            ).map_err(|_| Error::EPoll)?;
+            )
+            .map_err(|_| Error::EPoll)?;
 
             poll.register(
                 &registration,
                 PING_TOKEN,
                 Ready::readable(),
                 PollOpt::edge(),
-            ).map_err(|_| Error::EPoll)?;
+            )
+            .map_err(|_| Error::EPoll)?;
 
             struct XData(Xlib, *mut Display, c_ulong);
             unsafe impl Send for XData {}
@@ -237,8 +239,8 @@ impl Hook {
 fn test() {
     let hook = Hook::new().unwrap();
     hook.register(KeyCode::NumPad0, || println!("A")).unwrap();
-    thread::sleep(::std::time::Duration::from_secs(5));
+    thread::sleep(std::time::Duration::from_secs(5));
     hook.unregister(KeyCode::NumPad0).unwrap();
     hook.register(KeyCode::NumPad1, || println!("B")).unwrap();
-    thread::sleep(::std::time::Duration::from_secs(5));
+    thread::sleep(std::time::Duration::from_secs(5));
 }

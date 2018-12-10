@@ -32,14 +32,14 @@ pub use self::run_metadata::RunMetadata;
 pub use self::segment::Segment;
 pub use self::segment_history::SegmentHistory;
 
-use comparison::{default_generators, personal_best, ComparisonGenerator};
+use crate::comparison::{default_generators, personal_best, ComparisonGenerator};
+use crate::{AtomicDateTime, Image, Time, TimeSpan, TimingMethod};
 use ordered_float::OrderedFloat;
 use std::borrow::Cow;
 use std::cmp::max;
 use std::collections::HashSet;
 use std::path::PathBuf;
 use unicase;
-use {AtomicDateTime, Image, Time, TimeSpan, TimingMethod};
 
 /// A Run stores the split times for a specific game and category of a runner.
 ///
@@ -74,7 +74,7 @@ pub struct Run {
 }
 
 #[derive(Clone, Debug)]
-struct ComparisonGenerators(Vec<Box<ComparisonGenerator>>);
+struct ComparisonGenerators(Vec<Box<dyn ComparisonGenerator>>);
 
 impl PartialEq for ComparisonGenerators {
     fn eq(&self, other: &ComparisonGenerators) -> bool {
@@ -286,7 +286,7 @@ impl Run {
     /// includes both the custom comparisons defined by the user and the
     /// Comparison Generators.
     #[inline]
-    pub fn comparisons(&self) -> ComparisonsIter {
+    pub fn comparisons(&self) -> ComparisonsIter<'_> {
         ComparisonsIter {
             custom: &self.custom_comparisons,
             generators: &self.comparison_generators.0,
@@ -295,13 +295,13 @@ impl Run {
 
     /// Accesses the Comparison Generators in use by this Run.
     #[inline]
-    pub fn comparison_generators(&self) -> &[Box<ComparisonGenerator>] {
+    pub fn comparison_generators(&self) -> &[Box<dyn ComparisonGenerator>] {
         &self.comparison_generators.0
     }
 
     /// Grants mutable access to the Comparison Generators in use by this Run.
     #[inline]
-    pub fn comparison_generators_mut(&mut self) -> &mut Vec<Box<ComparisonGenerator>> {
+    pub fn comparison_generators_mut(&mut self) -> &mut Vec<Box<dyn ComparisonGenerator>> {
         &mut self.comparison_generators.0
     }
 
@@ -364,7 +364,8 @@ impl Run {
         ended: Option<AtomicDateTime>,
         pause_time: Option<TimeSpan>,
     ) {
-        let index = self.attempt_history
+        let index = self
+            .attempt_history
             .iter()
             .map(Attempt::index)
             .max()
@@ -454,7 +455,7 @@ impl Run {
     ///
     /// If either is empty, the dash is omitted. If an extended category name is
     /// used, the variables of the category are appended in a parenthesis.
-    pub fn extended_name(&self, use_extended_category_name: bool) -> Cow<str> {
+    pub fn extended_name(&self, use_extended_category_name: bool) -> Cow<'_, str> {
         let mut name = Cow::Borrowed(self.game_name());
 
         let category_name = if use_extended_category_name {
@@ -486,8 +487,8 @@ impl Run {
         show_region: bool,
         show_platform: bool,
         show_variables: bool,
-    ) -> Cow<str> {
-        let mut category_name: Cow<str> = Cow::Borrowed(&self.category_name);
+    ) -> Cow<'_, str> {
+        let mut category_name: Cow<'_, str> = Cow::Borrowed(&self.category_name);
         let mut after_parenthesis = "";
 
         if category_name.is_empty() {
@@ -497,7 +498,8 @@ impl Run {
         let mut is_empty = true;
         let mut has_pushed = false;
 
-        if let Some((i, u)) = self.category_name
+        if let Some((i, u)) = self
+            .category_name
             .find('(')
             .and_then(|i| self.category_name[i..].find(')').map(|u| (i, i + u)))
         {
@@ -787,7 +789,8 @@ impl Run {
         let mut last_split_time = Time::zero();
 
         let segments = self.segments.iter_mut().take(current_split_index);
-        let index = self.attempt_history
+        let index = self
+            .attempt_history
             .last()
             .expect("There is no attempt in the Attempt History.")
             .index();
@@ -851,7 +854,7 @@ fn fix_history_from_best_segment_times(segment: &mut Segment, method: TimingMeth
 /// custom comparisons defined by the user and the Comparison Generators.
 pub struct ComparisonsIter<'a> {
     custom: &'a [String],
-    generators: &'a [Box<ComparisonGenerator>],
+    generators: &'a [Box<dyn ComparisonGenerator>],
 }
 
 impl<'a> Iterator for ComparisonsIter<'a> {

@@ -1,9 +1,9 @@
-use comparison::personal_best;
+use crate::comparison::personal_best;
+use crate::TimerPhase::*;
+use crate::{AtomicDateTime, Run, Segment, Time, TimeSpan, TimeStamp, TimerPhase, TimingMethod};
 use parking_lot::RwLock;
 use std::mem;
 use std::sync::Arc;
-use TimerPhase::*;
-use {AtomicDateTime, Run, Segment, Time, TimeSpan, TimeStamp, TimerPhase, TimingMethod};
 
 #[cfg(test)]
 mod tests;
@@ -180,13 +180,15 @@ impl Timer {
         let game_time = match self.phase {
             NotRunning => Some(self.run.offset()),
             Ended => self.run.segments().last().unwrap().split_time().game_time,
-            _ => if self.is_game_time_paused() {
-                self.game_time_pause_time
-            } else if self.is_game_time_initialized() {
-                catch! { real_time? - self.loading_times() }
-            } else {
-                None
-            },
+            _ => {
+                if self.is_game_time_paused() {
+                    self.game_time_pause_time
+                } else if self.is_game_time_initialized() {
+                    catch! { real_time? - self.loading_times() }
+                } else {
+                    None
+                }
+            }
         };
 
         Time::new()
@@ -254,9 +256,10 @@ impl Timer {
     /// current split. The attempt ends if the last split time is stored.
     pub fn split(&mut self) {
         let current_time = self.current_time();
-        if self.phase == Running && current_time
-            .real_time
-            .map_or(false, |t| t >= TimeSpan::zero())
+        if self.phase == Running
+            && current_time
+                .real_time
+                .map_or(false, |t| t >= TimeSpan::zero())
         {
             self.current_split_mut()
                 .unwrap()

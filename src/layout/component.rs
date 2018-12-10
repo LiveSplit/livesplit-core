@@ -1,12 +1,12 @@
 use super::{ComponentSettings, ComponentState, GeneralSettings};
-use component::{
+use crate::component::{
     blank_space, current_comparison, current_pace, delta, detailed_timer, graph,
     possible_time_save, previous_segment, separator, splits, sum_of_best, text, timer, title,
     total_playtime,
 };
-use settings::{SettingsDescription, Value};
+use crate::settings::{SettingsDescription, Value};
+use crate::Timer;
 use std::borrow::Cow;
-use Timer;
 
 /// A Component provides information about a run in a way that is easy to
 /// visualize. This type can store any of the components provided by this crate.
@@ -130,7 +130,7 @@ impl Component {
     }
 
     /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<str> {
+    pub fn name(&self) -> Cow<'_, str> {
         match self {
             Component::BlankSpace(component) => component.name(),
             Component::CurrentComparison(component) => component.name(),

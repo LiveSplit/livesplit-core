@@ -4,7 +4,7 @@
 //! time for each individual split from all of the runner's attempts.
 
 use super::ComparisonGenerator;
-use {Attempt, Segment, TimeSpan, TimingMethod};
+use crate::{Attempt, Segment, TimeSpan, TimingMethod};
 
 /// The Comparison Generator for the Best Split Times. The Best Split Times
 /// represent the best pace that the runner was ever on up to each split in the

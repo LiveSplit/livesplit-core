@@ -3,11 +3,11 @@
 //! that is being run. Additionally, the game icon, the attempt count, and the
 //! total number of finished runs can be shown.
 
+use crate::settings::{Alignment, Color, Field, Gradient, SettingsDescription, Value};
+use crate::{CachedImageId, Timer, TimerPhase};
 use serde_json::{to_writer, Result};
-use settings::{Alignment, Color, Field, Gradient, SettingsDescription, Value};
 use std::borrow::Cow;
 use std::io::Write;
-use {CachedImageId, Timer, TimerPhase};
 
 #[cfg(test)]
 mod tests;
@@ -151,7 +151,7 @@ impl Component {
     }
 
     /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<str> {
+    pub fn name(&self) -> Cow<'_, str> {
         "Title".into()
     }
 

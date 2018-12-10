@@ -6,7 +6,7 @@
 //! them individually if any of them seem wrong.
 
 use livesplit_core::run::editor::cleaning::SumOfBestCleaner;
-use potential_clean_up::{NullableOwnedPotentialCleanUp, OwnedPotentialCleanUp};
+use crate::potential_clean_up::{NullableOwnedPotentialCleanUp, OwnedPotentialCleanUp};
 
 /// type
 pub type OwnedSumOfBestCleaner = Box<SumOfBestCleaner<'static>>;

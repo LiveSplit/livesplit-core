@@ -4,8 +4,8 @@
 //! a situation where you have a label and a value.
 
 use super::DEFAULT_INFO_TEXT_GRADIENT;
+use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
 use serde_json::{to_writer, Result};
-use settings::{Color, Field, Gradient, SettingsDescription, Value};
 use std::borrow::Cow;
 use std::io::Write;
 use std::mem::replace;
@@ -156,8 +156,8 @@ impl Component {
     }
 
     /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<str> {
-        let name: Cow<str> = match &self.settings.text {
+    pub fn name(&self) -> Cow<'_, str> {
+        let name: Cow<'_, str> = match &self.settings.text {
             Text::Center(text) => text.as_str().into(),
             Text::Split(left, right) => {
                 let mut name = String::with_capacity(left.len() + right.len() + 1);

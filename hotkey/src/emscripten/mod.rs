@@ -1,12 +1,9 @@
-extern crate parking_lot;
-
 mod key_code;
 pub use self::key_code::KeyCode;
 
-use self::parking_lot::Mutex;
+use parking_lot::Mutex;
 use std::collections::hash_map::{Entry, HashMap};
 use std::sync::Arc;
-use stdweb;
 use stdweb::web::event::{IKeyboardEvent, KeypressEvent};
 use stdweb::web::{window, EventListenerHandle, IEventTarget};
 
@@ -18,10 +15,10 @@ quick_error! {
     }
 }
 
-pub type Result<T> = ::std::result::Result<T, Error>;
+pub type Result<T> = std::result::Result<T, Error>;
 
 pub struct Hook {
-    hotkeys: Arc<Mutex<HashMap<KeyCode, Box<FnMut() + Send + 'static>>>>,
+    hotkeys: Arc<Mutex<HashMap<KeyCode, Box<dyn FnMut() + Send + 'static>>>>,
     event: Option<EventListenerHandle>,
 }
 
@@ -172,9 +169,10 @@ impl Hook {
             });
         }
 
-        let hotkeys = Arc::new(Mutex::new(
-            HashMap::<KeyCode, Box<FnMut() + Send + 'static>>::new(),
-        ));
+        let hotkeys = Arc::new(Mutex::new(HashMap::<
+            KeyCode,
+            Box<dyn FnMut() + Send + 'static>,
+        >::new()));
 
         let hotkey_map = hotkeys.clone();
 

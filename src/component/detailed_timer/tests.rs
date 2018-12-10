@@ -1,5 +1,5 @@
 use super::{Component, Settings};
-use {Run, Segment, Timer};
+use crate::{Run, Segment, Timer};
 
 #[test]
 fn icon_handling() {
@@ -16,62 +16,48 @@ fn icon_handling() {
 
     let layout_settings = &Default::default();
 
-    assert!(
-        component
-            .state(&timer, layout_settings)
-            .icon_change
-            .filter(|s| s.is_empty())
-            .is_some()
-    );
+    assert!(component
+        .state(&timer, layout_settings)
+        .icon_change
+        .filter(|s| s.is_empty())
+        .is_some());
 
-    assert!(
-        component
-            .state(&timer, layout_settings)
-            .icon_change
-            .is_none()
-    );
+    assert!(component
+        .state(&timer, layout_settings)
+        .icon_change
+        .is_none());
 
     timer.start();
 
-    assert!(
-        component
-            .state(&timer, layout_settings)
-            .icon_change
-            .filter(|s| !s.is_empty())
-            .is_some()
-    );
+    assert!(component
+        .state(&timer, layout_settings)
+        .icon_change
+        .filter(|s| !s.is_empty())
+        .is_some());
 
-    assert!(
-        component
-            .state(&timer, layout_settings)
-            .icon_change
-            .is_none()
-    );
+    assert!(component
+        .state(&timer, layout_settings)
+        .icon_change
+        .is_none());
 
     timer.reset(true);
 
-    assert!(
-        component
-            .state(&timer, layout_settings)
-            .icon_change
-            .filter(|s| s.is_empty())
-            .is_some()
-    );
+    assert!(component
+        .state(&timer, layout_settings)
+        .icon_change
+        .filter(|s| s.is_empty())
+        .is_some());
 
-    assert!(
-        component
-            .state(&timer, layout_settings)
-            .icon_change
-            .is_none()
-    );
+    assert!(component
+        .state(&timer, layout_settings)
+        .icon_change
+        .is_none());
 
     component.remount();
 
-    assert!(
-        component
-            .state(&timer, layout_settings)
-            .icon_change
-            .filter(|s| s.is_empty())
-            .is_some()
-    );
+    assert!(component
+        .state(&timer, layout_settings)
+        .icon_change
+        .filter(|s| s.is_empty())
+        .is_some());
 }

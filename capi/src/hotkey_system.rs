@@ -4,9 +4,9 @@
 //! out on platforms that don't support hotkeys. You can turn off a Hotkey
 //! System temporarily. By default the Hotkey System is activated.
 
-use hotkey_config::OwnedHotkeyConfig;
+use crate::hotkey_config::OwnedHotkeyConfig;
 use livesplit_core::HotkeySystem;
-use shared_timer::OwnedSharedTimer;
+use crate::shared_timer::OwnedSharedTimer;
 
 /// type
 pub type OwnedHotkeySystem = Box<HotkeySystem>;

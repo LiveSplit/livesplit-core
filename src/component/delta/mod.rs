@@ -3,13 +3,13 @@
 //! attempt is compared to the chosen comparison.
 
 use super::DEFAULT_INFO_TEXT_GRADIENT;
-use analysis::{delta, state_helper};
+use crate::analysis::{delta, state_helper};
+use crate::settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
+use crate::timing::formatter::{Accuracy, Delta, TimeFormatter};
+use crate::{comparison, GeneralLayoutSettings, Timer};
 use serde_json::{to_writer, Result};
-use settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
 use std::borrow::Cow;
 use std::io::Write;
-use timing::formatter::{Accuracy, Delta, TimeFormatter};
-use {comparison, GeneralLayoutSettings, Timer};
 
 #[cfg(test)]
 mod tests;
@@ -109,7 +109,7 @@ impl Component {
     }
 
     /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<str> {
+    pub fn name(&self) -> Cow<'_, str> {
         if let Some(comparison) = &self.settings.comparison_override {
             format!("Delta ({})", comparison).into()
         } else {

@@ -1,6 +1,6 @@
+use crate::{Class, Function, Type, TypeKind};
 use std::collections::BTreeMap;
 use std::io::{Result, Write};
-use {Class, Function, Type, TypeKind};
 
 fn get_hl_type(ty: &Type) -> String {
     if ty.is_custom {
@@ -96,7 +96,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         )?;
     }
 
-    for (i, &(ref name, _)) in function.inputs.iter().enumerate() {
+    for (i, (name, _)) in function.inputs.iter().enumerate() {
         if i != 0 {
             write!(writer, ", ")?;
         }
@@ -129,7 +129,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         "#
     )?;
 
-    for &(ref name, ref typ) in function.inputs.iter() {
+    for (name, typ) in function.inputs.iter() {
         if typ.is_custom {
             write!(
                 writer,
@@ -151,7 +151,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
 
     write!(writer, r#"livesplit_core_native.{}("#, &function.name)?;
 
-    for (i, &(ref name, ref typ)) in function.inputs.iter().enumerate() {
+    for (i, (name, typ)) in function.inputs.iter().enumerate() {
         if i != 0 {
             write!(writer, ", ")?;
         }
@@ -180,7 +180,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         }
     }
 
-    for &(ref name, ref typ) in function.inputs.iter() {
+    for (name, typ) in function.inputs.iter() {
         if typ.is_custom && typ.kind == TypeKind::Value {
             write!(
                 writer,
@@ -245,7 +245,7 @@ livesplit_core_native.{}.argtypes = ("#,
                 function.name
             )?;
 
-            for &(_, ref typ) in &function.inputs {
+            for (_, typ) in &function.inputs {
                 write!(writer, "{}, ", get_ll_type(typ))?;
             }
 

@@ -4,10 +4,10 @@
 //! for the remainder of the current attempt.
 
 use super::{output_vec, Json};
-use component::OwnedComponent;
+use crate::component::OwnedComponent;
 use livesplit_core::component::possible_time_save::Component as PossibleTimeSaveComponent;
 use livesplit_core::Timer;
-use possible_time_save_component_state::OwnedPossibleTimeSaveComponentState;
+use crate::possible_time_save_component_state::OwnedPossibleTimeSaveComponentState;
 
 /// type
 pub type OwnedPossibleTimeSaveComponent = Box<PossibleTimeSaveComponent>;

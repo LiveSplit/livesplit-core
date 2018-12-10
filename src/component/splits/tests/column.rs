@@ -1,10 +1,13 @@
-use super::{ColumnSettings, ColumnStartWith, ColumnUpdateWith, ColumnUpdateTrigger, Component, Settings, State};
-use settings::SemanticColor::{
+use super::{
+    ColumnSettings, ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith, Component, Settings,
+    State,
+};
+use crate::settings::SemanticColor::{
     self, AheadGainingTime as AheadGaining, BehindGainingTime as BehindGaining,
     BehindLosingTime as BehindLosing, BestSegment as Best, Default as Text,
 };
-use tests_helper::{run_with_splits_opt, start_run};
-use {Run, Segment, TimeSpan, Timer};
+use crate::tests_helper::{run_with_splits_opt, start_run};
+use crate::{Run, Segment, TimeSpan, Timer};
 
 type Values = &'static [([&'static str; 6], [SemanticColor; 6])];
 
@@ -1119,13 +1122,7 @@ fn column_delta_best_segment_colors() {
     // Set best segment times, but no PB time
     run_with_splits_opt(
         &mut timer,
-        &[
-            Some(5.0),
-            Some(8.0),
-            Some(12.0),
-            None,
-            Some(20.0),
-        ],
+        &[Some(5.0), Some(8.0), Some(12.0), None, Some(20.0)],
     );
 
     start_run(&mut timer);

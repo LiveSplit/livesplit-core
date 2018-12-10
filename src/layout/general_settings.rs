@@ -1,4 +1,4 @@
-use settings::{Color, Field, Gradient, SettingsDescription, Value};
+use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
 
 /// The general settings of the layout that apply to all components.
 #[derive(Clone, Serialize, Deserialize)]

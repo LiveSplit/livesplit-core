@@ -57,7 +57,7 @@ impl de::Error for Error {
     }
 }
 
-pub type Result<T> = ::std::result::Result<T, Error>;
+pub type Result<T> = std::result::Result<T, Error>;
 
 pub struct Deserializer<B: BufRead> {
     decoder: BufReadDecoder<B>,

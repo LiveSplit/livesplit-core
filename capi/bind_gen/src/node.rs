@@ -1,7 +1,7 @@
+use crate::{typescript, Class, Function, Type, TypeKind};
 use heck::MixedCase;
 use std::collections::BTreeMap;
 use std::io::{Result, Write};
-use {typescript, Class, Function, Type, TypeKind};
 
 fn get_hl_type_with_null(ty: &Type) -> String {
     let mut formatted = get_hl_type_without_null(ty);
@@ -41,7 +41,8 @@ fn get_hl_type_without_null(ty: &Type) -> String {
                 x => x,
             },
             _ => unreachable!(),
-        }.to_string()
+        }
+        .to_string()
     }
 }
 
@@ -133,7 +134,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
     }
 
     if !type_script {
-        for &(ref name, ref ty) in function.inputs.iter().skip(if is_static { 0 } else { 1 }) {
+        for (name, ty) in function.inputs.iter().skip(if is_static { 0 } else { 1 }) {
             write!(
                 writer,
                 r#"
@@ -167,7 +168,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
         method
     )?;
 
-    for (i, &(ref name, ref ty)) in function
+    for (i, (name, ty)) in function
         .inputs
         .iter()
         .skip(if is_static { 0 } else { 1 })
@@ -197,7 +198,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
         )?;
     }
 
-    for &(ref name, ref typ) in function.inputs.iter() {
+    for (name, typ) in function.inputs.iter() {
         if typ.is_custom {
             write!(
                 writer,
@@ -224,7 +225,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
 
     write!(writer, r#"liveSplitCoreNative.{}("#, &function.name)?;
 
-    for (i, &(ref name, ref typ)) in function.inputs.iter().enumerate() {
+    for (i, (name, typ)) in function.inputs.iter().enumerate() {
         if i != 0 {
             write!(writer, ", ")?;
         }
@@ -251,7 +252,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
 
     write!(writer, r#";"#)?;
 
-    for &(ref name, ref typ) in function.inputs.iter() {
+    for (name, typ) in function.inputs.iter() {
         if typ.is_custom && typ.kind == TypeKind::Value {
             write!(
                 writer,
@@ -344,7 +345,7 @@ const liveSplitCoreNative = ffi.Library('livesplit_core', {"#
                 get_ll_type(&function.output)
             )?;
 
-            for (i, &(_, ref typ)) in function.inputs.iter().enumerate() {
+            for (i, (_, typ)) in function.inputs.iter().enumerate() {
                 if i != 0 {
                     write!(writer, ", ")?;
                 }

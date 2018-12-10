@@ -1,4 +1,5 @@
 use super::super::ComparisonError;
+use crate::timing;
 use chrono::ParseError as ChronoError;
 use quick_xml::events::{attributes, BytesStart, Event};
 use quick_xml::{Error as XmlError, Reader, Writer};
@@ -8,7 +9,6 @@ use std::num::{ParseFloatError, ParseIntError};
 use std::ops::Deref;
 use std::result::Result as StdResult;
 use std::{str, string};
-use timing;
 
 quick_error! {
     /// The Error type for XML-based splits files that couldn't be parsed.
@@ -96,7 +96,7 @@ impl<'a> AttributeValue<'a> {
     }
 }
 
-fn decode_cow_text(cow: Cow<[u8]>) -> Result<Cow<str>> {
+fn decode_cow_text(cow: Cow<'_, [u8]>) -> Result<Cow<'_, str>> {
     Ok(match cow {
         Cow::Borrowed(b) => Cow::Borrowed(str::from_utf8(b)?),
         Cow::Owned(o) => Cow::Owned(String::from_utf8(o)?),
@@ -119,7 +119,7 @@ where
 pub fn text<R, F>(reader: &mut Reader<R>, buf: &mut Vec<u8>, f: F) -> Result<()>
 where
     R: BufRead,
-    F: FnOnce(Cow<str>),
+    F: FnOnce(Cow<'_, str>),
 {
     text_err(reader, buf, |t| {
         f(t);
@@ -130,7 +130,7 @@ where
 pub fn text_err<R, F>(reader: &mut Reader<R>, buf: &mut Vec<u8>, f: F) -> Result<()>
 where
     R: BufRead,
-    F: FnOnce(Cow<str>) -> Result<()>,
+    F: FnOnce(Cow<'_, str>) -> Result<()>,
 {
     text_as_bytes_err(reader, buf, |b| f(decode_cow_text(b)?))
 }
@@ -138,7 +138,7 @@ where
 pub fn text_as_bytes_err<R, F, T>(reader: &mut Reader<R>, buf: &mut Vec<u8>, f: F) -> Result<T>
 where
     R: BufRead,
-    F: FnOnce(Cow<[u8]>) -> Result<T>,
+    F: FnOnce(Cow<'_, [u8]>) -> Result<T>,
 {
     let val;
     loop {
@@ -245,7 +245,7 @@ pub fn single_child<R, F, T>(
 ) -> Result<T>
 where
     R: BufRead,
-    F: FnMut(&mut Reader<R>, Tag) -> Result<T>,
+    F: FnMut(&mut Reader<R>, Tag<'_>) -> Result<T>,
 {
     let mut val = None;
     parse_children(reader, buf, |reader, t| {
@@ -262,7 +262,7 @@ where
 pub fn parse_children<R, F>(reader: &mut Reader<R>, buf: &mut Vec<u8>, mut f: F) -> Result<()>
 where
     R: BufRead,
-    F: FnMut(&mut Reader<R>, Tag) -> Result<()>,
+    F: FnMut(&mut Reader<R>, Tag<'_>) -> Result<()>,
 {
     unsafe {
         let ptr_buf: *mut Vec<u8> = buf;
@@ -289,19 +289,21 @@ pub fn parse_base<R, F>(
 ) -> Result<()>
 where
     R: BufRead,
-    F: FnMut(&mut Reader<R>, Tag) -> Result<()>,
+    F: FnMut(&mut Reader<R>, Tag<'_>) -> Result<()>,
 {
     unsafe {
         let ptr_buf: *mut Vec<u8> = buf;
         loop {
             buf.clear();
             match reader.read_event(buf)? {
-                Event::Start(start) => if start.name() == tag {
-                    let tag = Tag::new(start, ptr_buf);
-                    return f(reader, tag);
-                } else {
-                    return Err(Error::ElementNotFound);
-                },
+                Event::Start(start) => {
+                    if start.name() == tag {
+                        let tag = Tag::new(start, ptr_buf);
+                        return f(reader, tag);
+                    } else {
+                        return Err(Error::ElementNotFound);
+                    }
+                }
                 Event::Eof => return Err(Error::UnexpectedEndOfFile),
                 _ => {}
             }
@@ -311,7 +313,7 @@ where
 
 pub fn parse_attributes<'a, F>(tag: &BytesStart<'a>, mut f: F) -> Result<()>
 where
-    F: FnMut(&[u8], AttributeValue) -> Result<bool>,
+    F: FnMut(&[u8], AttributeValue<'_>) -> Result<bool>,
 {
     for attribute in tag.attributes() {
         let attribute = attribute?;
@@ -325,7 +327,7 @@ where
 
 pub fn optional_attribute_err<'a, F>(tag: &BytesStart<'a>, key: &[u8], mut f: F) -> Result<()>
 where
-    F: FnMut(Cow<str>) -> Result<()>,
+    F: FnMut(Cow<'_, str>) -> Result<()>,
 {
     parse_attributes(tag, |k, v| {
         if k == key {
@@ -339,7 +341,7 @@ where
 
 pub fn attribute_err<'a, F>(tag: &BytesStart<'a>, key: &[u8], mut f: F) -> Result<()>
 where
-    F: FnMut(Cow<str>) -> Result<()>,
+    F: FnMut(Cow<'_, str>) -> Result<()>,
 {
     let mut called = false;
     parse_attributes(tag, |k, v| {
@@ -360,7 +362,7 @@ where
 
 pub fn attribute<'a, F>(tag: &BytesStart<'a>, key: &[u8], mut f: F) -> Result<()>
 where
-    F: FnMut(Cow<str>),
+    F: FnMut(Cow<'_, str>),
 {
     attribute_err(tag, key, |t| {
         f(t);

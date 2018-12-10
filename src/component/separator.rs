@@ -2,11 +2,11 @@
 //! Separator Component is a simple component that only serves to render
 //! separators between components.
 
+use crate::settings::{SettingsDescription, Value};
+use crate::Timer;
 use serde_json::{to_writer, Result};
-use settings::{SettingsDescription, Value};
 use std::borrow::Cow;
 use std::io::Write;
-use Timer;
 
 /// The Separator Component is a simple component that only serves to render
 /// separators between components.
@@ -34,7 +34,7 @@ impl Component {
     }
 
     /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<str> {
+    pub fn name(&self) -> Cow<'_, str> {
         "Separator".into()
     }
 
@@ -56,6 +56,6 @@ impl Component {
     /// This panics if the type of the value to be set is not compatible with
     /// the type of the setting's value. A panic can also occur if the index of
     /// the setting provided is out of bounds.
-    #[allow(needless_pass_by_value)]
+    #[allow(clippy::needless_pass_by_value)]
     pub fn set_value(&mut self, _index: usize, _value: Value) {}
 }

@@ -4,7 +4,7 @@
 //! theoretically perfect segment times, this information is only an
 //! approximation of how much time can actually be saved.
 
-use {analysis, TimeSpan, Timer};
+use crate::{analysis, TimeSpan, Timer};
 
 /// Calculates how much time could be saved on the given segment with the given
 /// comparison. This information is based on the best segments. Considering the

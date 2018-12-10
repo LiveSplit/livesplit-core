@@ -13,12 +13,12 @@ quick_error! {
     }
 }
 
-pub type Result<T> = ::std::result::Result<T, Error>;
+pub type Result<T> = std::result::Result<T, Error>;
 
-pub type EventListenerHandle = Box<Fn(&str)>;
+pub type EventListenerHandle = Box<dyn Fn(&str)>;
 
 pub struct Hook {
-    hotkeys: Arc<Mutex<HashMap<KeyCode, Box<FnMut() + Send + 'static>>>>,
+    hotkeys: Arc<Mutex<HashMap<KeyCode, Box<dyn FnMut() + Send + 'static>>>>,
     event: Option<Box<EventListenerHandle>>,
 }
 
@@ -49,9 +49,10 @@ pub unsafe extern "C" fn HotkeyHook_callback(
 
 impl Hook {
     pub fn new() -> Result<Self> {
-        let hotkeys = Arc::new(Mutex::new(
-            HashMap::<KeyCode, Box<FnMut() + Send + 'static>>::new(),
-        ));
+        let hotkeys = Arc::new(Mutex::new(HashMap::<
+            KeyCode,
+            Box<dyn FnMut() + Send + 'static>,
+        >::new()));
 
         let hotkey_map = hotkeys.clone();
         let event = Box::new(Box::new(move |code: &str| {

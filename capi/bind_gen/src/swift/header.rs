@@ -1,9 +1,9 @@
+use crate::{Class, Type, TypeKind};
 use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::io::{Result, Write};
-use {Class, Type, TypeKind};
 
-fn get_type(ty: &Type) -> Cow<str> {
+fn get_type(ty: &Type) -> Cow<'_, str> {
     let mut name = Cow::Borrowed(match ty.name.as_str() {
         "i8" => "int8_t",
         "i16" => "int16_t",
@@ -24,11 +24,13 @@ fn get_type(ty: &Type) -> Cow<str> {
     });
     match (ty.is_custom, ty.kind) {
         (false, TypeKind::RefMut) => name.to_mut().push_str("*"),
-        (false, TypeKind::Ref) => if name == "char" {
-            name.to_mut().push_str(" const*")
-        } else {
-            name.to_mut().push_str("*")
-        },
+        (false, TypeKind::Ref) => {
+            if name == "char" {
+                name.to_mut().push_str(" const*")
+            } else {
+                name.to_mut().push_str("*")
+            }
+        }
         (true, TypeKind::Ref) => name = Cow::Borrowed("void*"),
         (true, _) => name = Cow::Borrowed("void*"),
         _ => (),
@@ -74,7 +76,7 @@ extern "C" {
                 function.name
             )?;
 
-            for (i, &(ref name, ref typ)) in function.inputs.iter().enumerate() {
+            for (i, (name, typ)) in function.inputs.iter().enumerate() {
                 if i != 0 {
                     write!(writer, ", ")?;
                 }

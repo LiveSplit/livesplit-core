@@ -40,9 +40,9 @@ pub use self::possible_time_save::PossibleTimeSave;
 pub use self::regular::Regular;
 pub use self::short::Short;
 
+use crate::TimeSpan;
 use std::cmp::min;
 use std::fmt::Display;
-use TimeSpan;
 
 /// Time Formatters can be used to format optional Time Spans in various ways.
 pub trait TimeFormatter<'a> {

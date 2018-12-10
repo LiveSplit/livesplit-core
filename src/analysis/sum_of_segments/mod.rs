@@ -10,7 +10,7 @@
 pub mod best;
 pub mod worst;
 
-use {Segment, Time, TimeSpan, TimingMethod};
+use crate::{Segment, Time, TimeSpan, TimingMethod};
 
 /// Calculates the Sum of Best Segments for the timing method provided. This is
 /// the fastest time possible to complete a run of a category, based on
@@ -91,7 +91,8 @@ fn track_personal_best_run(
         .checked_sub(1)
         .map_or(Some(TimeSpan::zero()), |i| {
             segments[i].personal_best_split_time()[method]
-        }) {
+        })
+    {
         for (segment_index, segment) in segments.iter().enumerate().skip(segment_index) {
             let second_split_time = segment.personal_best_split_time()[method];
             if let Some(second_split_time) = second_split_time {

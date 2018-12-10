@@ -5,12 +5,12 @@ use super::xml_util::{
     attribute, attribute_err, end_tag, optional_attribute_err, parse_attributes, parse_base,
     parse_children, reencode_children, text, text_as_bytes_err, text_err, text_parsed,
 };
+use crate::{AtomicDateTime, Run, RunMetadata, Segment, Time, TimeSpan};
 use chrono::{DateTime, TimeZone, Utc};
 use quick_xml::Reader;
 use std::io::BufRead;
 use std::path::PathBuf;
 use std::str;
-use {base64, AtomicDateTime, Run, RunMetadata, Segment, Time, TimeSpan};
 
 pub use super::xml_util::{Error, Result};
 

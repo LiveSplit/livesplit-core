@@ -1,7 +1,4 @@
-extern crate heck;
-extern crate structopt;
-extern crate structopt_derive;
-extern crate syn;
+use structopt;
 
 mod c;
 mod csharp;
@@ -64,7 +61,7 @@ pub struct Function {
 
 impl Function {
     fn is_static(&self) -> bool {
-        if let Some(&(ref name, _)) = self.inputs.get(0) {
+        if let Some((name, _)) = self.inputs.get(0) {
             name != "this"
         } else {
             true
@@ -86,8 +83,8 @@ pub struct Class {
 }
 
 fn get_type(ty: &SynType) -> Type {
-    match *ty {
-        SynType::Reference(ref reference) => {
+    match ty {
+        SynType::Reference(reference) => {
             let mut ty = get_type(&reference.elem);
             ty.kind = if reference.mutability.is_some() {
                 TypeKind::RefMut
@@ -96,7 +93,7 @@ fn get_type(ty: &SynType) -> Type {
             };
             ty
         }
-        SynType::Ptr(ref ptr) => {
+        SynType::Ptr(ptr) => {
             let mut ty = get_type(&ptr.elem);
             ty.kind = if ptr.mutability.is_some() {
                 TypeKind::RefMut
@@ -105,7 +102,7 @@ fn get_type(ty: &SynType) -> Type {
             };
             ty
         }
-        SynType::Path(ref path) => {
+        SynType::Path(path) => {
             if let Some(segment) = path.path.segments.iter().last() {
                 let mut name = segment.ident.to_string();
                 let is_nullable = if name.starts_with("Nullable") {
@@ -156,7 +153,7 @@ fn main() {
     let mut functions = Vec::new();
 
     for item in &file.items {
-        if let &Item::Mod(ref module) = item {
+        if let Item::Mod(module) = item {
             contents.clear();
             File::open(format!("../src/{}.rs", module.ident))
                 .unwrap()
@@ -170,22 +167,24 @@ fn main() {
                     .filter_map(|a| match a.interpret_meta() {
                         Some(Meta::NameValue(v)) => Some(v),
                         _ => None,
-                    }).filter(|m| m.ident.to_string() == "doc")
+                    })
+                    .filter(|m| m.ident.to_string() == "doc")
                     .filter_map(|m| match m.lit {
                         Lit::Str(s) => Some(s.value().trim().to_string()),
                         _ => None,
-                    }).collect::<Vec<_>>(),
+                    })
+                    .collect::<Vec<_>>(),
             );
 
             for item in &file.items {
                 if let &Item::Fn(ItemFn {
                     vis: Visibility::Public(_),
-                    ref abi,
-                    ref attrs,
-                    ref decl,
-                    ref ident,
+                    abi,
+                    attrs,
+                    decl,
+                    ident,
                     ..
-                }) = item
+                }) = &item
                 {
                     if abi
                         .as_ref()
@@ -197,20 +196,23 @@ fn main() {
                             .filter_map(|m| match m {
                                 Meta::Word(w) => Some(w),
                                 _ => None,
-                            }).any(|w| w.to_string() == "no_mangle")
+                            })
+                            .any(|w| w.to_string() == "no_mangle")
                     {
                         let comments = attrs
                             .iter()
                             .filter_map(|a| match a.interpret_meta() {
                                 Some(Meta::NameValue(v)) => Some(v),
                                 _ => None,
-                            }).filter(|m| m.ident.to_string() == "doc")
+                            })
+                            .filter(|m| m.ident.to_string() == "doc")
                             .filter_map(|m| match m.lit {
                                 Lit::Str(s) => Some(s.value().trim().to_string()),
                                 _ => None,
-                            }).collect();
+                            })
+                            .collect();
 
-                        let output = if let ReturnType::Type(_, ref ty) = decl.output {
+                        let output = if let ReturnType::Type(_, ty) = &decl.output {
                             get_type(ty)
                         } else {
                             Type {
@@ -226,16 +228,17 @@ fn main() {
                             .iter()
                             .map(|i| {
                                 let c = match i {
-                                    &FnArg::Captured(ref c) => c,
+                                    FnArg::Captured(c) => c,
                                     _ => panic!("Found a weird fn argument"),
                                 };
-                                let name = if let Pat::Ident(ref ident) = c.pat {
+                                let name = if let Pat::Ident(ident) = &c.pat {
                                     ident.ident.to_string()
                                 } else {
                                     String::from("parameter")
                                 };
                                 (name, get_type(&c.ty))
-                            }).collect();
+                            })
+                            .collect();
 
                         let name = ident.to_string();
                         let class;
@@ -276,7 +279,7 @@ fn fns_to_classes(functions: Vec<Function>) -> BTreeMap<String, Class> {
 
         class.comments = function.class_comments.clone();
 
-        let kind = if let Some(&(ref name, ref ty)) = function.inputs.get(0) {
+        let kind = if let Some((name, ty)) = function.inputs.get(0) {
             if name == "this" {
                 Some(ty.kind)
             } else {

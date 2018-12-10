@@ -1,4 +1,4 @@
-use comparison::{self, ComparisonGenerator};
+use crate::comparison::{self, ComparisonGenerator};
 
 fn test<T: ComparisonGenerator>(mut generator: T) {
     generator.generate(&mut [], &[]);

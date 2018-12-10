@@ -5,11 +5,11 @@
 //! kind of User Interface.
 
 use super::{ComparisonError, ComparisonResult};
+use crate::timing::ParseError as ParseTimeSpanError;
+use crate::{comparison, CachedImageId, Image, Run, Segment, Time, TimeSpan, TimingMethod};
 use odds::slice::rotate_left;
 use std::mem::swap;
 use std::num::ParseIntError;
-use timing::ParseError as ParseTimeSpanError;
-use {comparison, unicase, CachedImageId, Image, Run, Segment, Time, TimeSpan, TimingMethod};
 
 pub mod cleaning;
 mod fuzzy_list;
@@ -131,7 +131,7 @@ impl Editor {
     /// Grants mutable access to the actively selected segment row. You can
     /// select multiple segment rows at the same time, but only the one that is
     /// most recently selected is the active segment.
-    pub fn active_segment(&mut self) -> SegmentRow {
+    pub fn active_segment(&mut self) -> SegmentRow<'_> {
         SegmentRow::new(self.active_segment_index(), self)
     }
 
@@ -687,28 +687,17 @@ impl Editor {
     ) -> ComparisonResult<()> {
         let comparison = comparison.into();
         self.run.add_custom_comparison(comparison.as_str())?;
-        // TODO: Borrowcheck (remaining_segments isn't used after this block
-        // anymore. NLL should fix this)
-        {
-            let mut remaining_segments = self.run.segments_mut().as_mut_slice();
 
-            for segment in run.segments().iter().take(run.len().saturating_sub(1)) {
-                // TODO: Borrowcheck (new_start is only necessary because the
-                // remaining_segments reassignment doesn't work inside this
-                // if)
-                let new_start = if let Some((segment_index, my_segment)) = remaining_segments
-                    .iter_mut()
-                    .enumerate()
-                    .find(|(_, s)| unicase::eq(segment.name(), s.name()))
-                {
-                    *my_segment.comparison_mut(&comparison) = segment.personal_best_split_time();
-                    segment_index + 1
-                } else {
-                    0
-                };
-                // TODO: Borrowcheck (get rid of the move block around
-                // remaining_segments)
-                remaining_segments = &mut { remaining_segments }[new_start..];
+        let mut remaining_segments = self.run.segments_mut().as_mut_slice();
+
+        for segment in run.segments().iter().take(run.len().saturating_sub(1)) {
+            if let Some((segment_index, my_segment)) = remaining_segments
+                .iter_mut()
+                .enumerate()
+                .find(|(_, s)| unicase::eq(segment.name(), s.name()))
+            {
+                *my_segment.comparison_mut(&comparison) = segment.personal_best_split_time();
+                remaining_segments = &mut remaining_segments[segment_index + 1..];
             }
         }
 
@@ -781,27 +770,24 @@ impl Editor {
     /// one of the indices is invalid. The indices are based on the
     /// `comparison_names` field of the Run Editor's `State`.
     pub fn move_comparison(&mut self, src_index: usize, dst_index: usize) -> Result<(), ()> {
-        // TODO: Borrowcheck (comparisons isn't used after this block anymore. NLL
-        // should fix this)
-        {
-            let comparisons = self.run.custom_comparisons_mut();
-            let (src_index, dst_index) = (src_index + 1, dst_index + 1);
-            if src_index >= comparisons.len() || dst_index >= comparisons.len() {
-                return Err(());
-            }
-            if src_index == dst_index {
-                return Ok(());
-            }
-
-            if src_index > dst_index {
-                rotate_left(
-                    &mut comparisons[dst_index..=src_index],
-                    src_index - dst_index,
-                );
-            } else {
-                rotate_left(&mut comparisons[src_index..=dst_index], 1);
-            }
+        let comparisons = self.run.custom_comparisons_mut();
+        let (src_index, dst_index) = (src_index + 1, dst_index + 1);
+        if src_index >= comparisons.len() || dst_index >= comparisons.len() {
+            return Err(());
         }
+        if src_index == dst_index {
+            return Ok(());
+        }
+
+        if src_index > dst_index {
+            rotate_left(
+                &mut comparisons[dst_index..=src_index],
+                src_index - dst_index,
+            );
+        } else {
+            rotate_left(&mut comparisons[src_index..=dst_index], 1);
+        }
+
         self.raise_run_edited();
         Ok(())
     }
@@ -828,7 +814,7 @@ impl Editor {
     /// combined segment time might be faster than the sum of the individual
     /// best segments. The Sum of Best Cleaner will point out all of these and
     /// allows you to delete them individually if any of them seem wrong.
-    pub fn clean_sum_of_best(&mut self) -> SumOfBestCleaner {
+    pub fn clean_sum_of_best(&mut self) -> SumOfBestCleaner<'_> {
         SumOfBestCleaner::new(&mut self.run)
     }
 }

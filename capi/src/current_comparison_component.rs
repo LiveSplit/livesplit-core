@@ -2,8 +2,8 @@
 //! comparison that is currently selected to be compared against.
 
 use super::{output_vec, Json};
-use component::OwnedComponent;
-use current_comparison_component_state::OwnedCurrentComparisonComponentState;
+use crate::component::OwnedComponent;
+use crate::current_comparison_component_state::OwnedCurrentComparisonComponentState;
 use livesplit_core::component::current_comparison::Component as CurrentComparisonComponent;
 use livesplit_core::Timer;
 

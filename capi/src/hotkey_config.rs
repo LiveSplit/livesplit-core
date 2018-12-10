@@ -4,7 +4,7 @@
 use super::{output_vec, str, Json};
 use livesplit_core::HotkeyConfig;
 use serde_json;
-use setting_value::OwnedSettingValue;
+use crate::setting_value::OwnedSettingValue;
 use std::io::Cursor;
 
 /// type

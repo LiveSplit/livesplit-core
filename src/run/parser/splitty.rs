@@ -1,10 +1,10 @@
 //! Provides the parser for Splitty splits files.
 
+use crate::{Run, Segment, Time, TimeSpan, TimingMethod};
 use serde_json::de::from_reader;
 use serde_json::Error as JsonError;
 use std::io::Read;
 use std::result::Result as StdResult;
-use {Run, Segment, Time, TimeSpan, TimingMethod};
 
 quick_error! {
     /// The Error type for splits files that couldn't be parsed by the Splitty

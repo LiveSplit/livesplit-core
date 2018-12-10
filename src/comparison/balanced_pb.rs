@@ -12,8 +12,8 @@
 //! be smoothed out throughout the whole comparison.
 
 use super::ComparisonGenerator;
+use crate::{Attempt, Segment, TimeSpan, TimingMethod};
 use ordered_float::OrderedFloat;
-use {Attempt, Segment, TimeSpan, TimingMethod};
 
 /// The Comparison Generator for calculating a comparison which has the same
 /// final time as the runner's Personal Best. Unlike the Personal Best however,
@@ -72,7 +72,8 @@ fn generate(
                 // Skip all the combined segments
                 let skip = catch! {
                     segments[i.checked_sub(1)?].segment_history().get(id)?[method].is_none()
-                }.unwrap_or(false);
+                }
+                .unwrap_or(false);
 
                 if !skip {
                     weighted_segment_times.push((current_weight, time));

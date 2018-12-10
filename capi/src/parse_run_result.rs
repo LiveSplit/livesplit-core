@@ -6,7 +6,7 @@ use livesplit_core::run::parser::{
     composite::{ParsedRun, Result},
     TimerKind,
 };
-use run::OwnedRun;
+use crate::run::OwnedRun;
 use std::io::Write;
 use std::os::raw::c_char;
 

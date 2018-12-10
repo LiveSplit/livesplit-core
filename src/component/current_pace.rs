@@ -4,13 +4,13 @@
 //! comparison for the remainder of the run.
 
 use super::DEFAULT_INFO_TEXT_GRADIENT;
-use analysis::current_pace;
+use crate::analysis::current_pace;
+use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
+use crate::timing::formatter::{Accuracy, Regular, TimeFormatter};
+use crate::{comparison, Timer, TimerPhase};
 use serde_json::{to_writer, Result};
-use settings::{Color, Field, Gradient, SettingsDescription, Value};
 use std::borrow::Cow;
 use std::io::Write;
-use timing::formatter::{Accuracy, Regular, TimeFormatter};
-use {comparison, Timer, TimerPhase};
 
 /// The Current Pace Component is a component that shows a prediction of the
 /// current attempt's final time, if the current attempt's pace matches the
@@ -107,7 +107,7 @@ impl Component {
     }
 
     /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<str> {
+    pub fn name(&self) -> Cow<'_, str> {
         self.text(
             self.settings
                 .comparison_override
@@ -116,7 +116,7 @@ impl Component {
         )
     }
 
-    fn text(&self, comparison: Option<&str>) -> Cow<str> {
+    fn text(&self, comparison: Option<&str>) -> Cow<'_, str> {
         if let Some(comparison) = comparison {
             match comparison {
                 comparison::personal_best::NAME => "Current Pace".into(),

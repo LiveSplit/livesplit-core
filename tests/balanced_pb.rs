@@ -1,5 +1,3 @@
-extern crate livesplit_core;
-
 use livesplit_core::comparison::balanced_pb::{BalancedPB, NAME};
 use livesplit_core::run::parser::livesplit;
 use livesplit_core::{Time, TimeSpan};

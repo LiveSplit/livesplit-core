@@ -3,7 +3,7 @@
 
 use livesplit_core::{Time, TimingMethod};
 use std::ptr;
-use time_span::NullableTimeSpan;
+use crate::time_span::NullableTimeSpan;
 
 /// type
 pub type OwnedTime = Box<Time>;

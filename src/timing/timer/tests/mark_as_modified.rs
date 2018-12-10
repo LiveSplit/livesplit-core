@@ -1,4 +1,4 @@
-use {Timer, Run, Segment, TimingMethod, TimeSpan};
+use crate::{Run, Segment, TimeSpan, Timer, TimingMethod};
 
 fn timer() -> Timer {
     use super::timer;

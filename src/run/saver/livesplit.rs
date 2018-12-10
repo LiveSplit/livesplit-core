@@ -24,6 +24,8 @@
 //! livesplit::save_run(&run, writer).expect("Couldn't save the splits file");
 //! ```
 
+use crate::timing::formatter::{Complete, TimeFormatter};
+use crate::{Image, Run, Time, TimeSpan, Timer, TimerPhase};
 use byteorder::{WriteBytesExt, LE};
 use chrono::{DateTime, Utc};
 use quick_xml::events::{BytesDecl, BytesEnd, BytesStart, BytesText, Event};
@@ -33,8 +35,6 @@ use std::fmt::Display;
 use std::io::Write;
 use std::mem::replace;
 use std::result::Result as StdResult;
-use timing::formatter::{Complete, TimeFormatter};
-use {base64, Image, Run, Time, TimeSpan, Timer, TimerPhase};
 
 static LSS_IMAGE_HEADER: &[u8; 156] = include_bytes!("lss_image_header.bin");
 
@@ -53,11 +53,11 @@ quick_error! {
 /// The Result type for the LiveSplit Saver.
 pub type Result<T> = StdResult<T, Error>;
 
-fn new_tag(name: &[u8]) -> BytesStart {
+fn new_tag(name: &[u8]) -> BytesStart<'_> {
     BytesStart::borrowed(name, name.len())
 }
 
-fn write_start<W: Write>(writer: &mut Writer<W>, tag: BytesStart) -> Result<()> {
+fn write_start<W: Write>(writer: &mut Writer<W>, tag: BytesStart<'_>) -> Result<()> {
     writer.write_event(Event::Start(tag))?;
     Ok(())
 }
@@ -82,7 +82,7 @@ fn bool(value: bool) -> &'static [u8] {
     }
 }
 
-fn scoped<W, F>(writer: &mut Writer<W>, tag: BytesStart, is_empty: bool, scope: F) -> Result<()>
+fn scoped<W, F>(writer: &mut Writer<W>, tag: BytesStart<'_>, is_empty: bool, scope: F) -> Result<()>
 where
     W: Write,
     F: FnOnce(&mut Writer<W>) -> Result<()>,
@@ -100,7 +100,7 @@ where
 
 fn scoped_iter<W, F, I>(
     writer: &mut Writer<W>,
-    tag: BytesStart,
+    tag: BytesStart<'_>,
     iter: I,
     mut scope: F,
 ) -> Result<()>
@@ -118,7 +118,11 @@ where
     })
 }
 
-fn text<W: Write, T: AsRef<[u8]>>(writer: &mut Writer<W>, tag: BytesStart, text: T) -> Result<()> {
+fn text<W: Write, T: AsRef<[u8]>>(
+    writer: &mut Writer<W>,
+    tag: BytesStart<'_>,
+    text: T,
+) -> Result<()> {
     let text = text.as_ref();
     scoped(writer, tag, text.is_empty(), |writer| {
         writer.write_event(Event::Text(BytesText::from_plain(text)))?;
@@ -140,10 +144,10 @@ where
 
 fn image<W: Write>(
     writer: &mut Writer<W>,
-    tag: BytesStart,
+    tag: BytesStart<'_>,
     image: &Image,
     buf: &mut Vec<u8>,
-    image_buf: &mut Cow<[u8]>,
+    image_buf: &mut Cow<'_, [u8]>,
 ) -> Result<()> {
     let url = image.url();
     if url.starts_with("data:;base64,") {
@@ -184,7 +188,7 @@ fn fmt_buf<D: Display>(value: D, buf: &mut Vec<u8>) -> &[u8] {
 
 fn write_display<W: Write, D: Display>(
     writer: &mut Writer<W>,
-    tag: BytesStart,
+    tag: BytesStart<'_>,
     value: D,
     buf: &mut Vec<u8>,
 ) -> Result<()> {
@@ -193,7 +197,7 @@ fn write_display<W: Write, D: Display>(
 
 fn time_span<W: Write>(
     writer: &mut Writer<W>,
-    tag: BytesStart,
+    tag: BytesStart<'_>,
     time: TimeSpan,
     buf: &mut Vec<u8>,
 ) -> Result<()> {
@@ -214,7 +218,7 @@ fn time_inner<W: Write>(writer: &mut Writer<W>, time: Time, buf: &mut Vec<u8>) -
 
 fn time<W: Write>(
     writer: &mut Writer<W>,
-    tag: BytesStart,
+    tag: BytesStart<'_>,
     time: Time,
     buf: &mut Vec<u8>,
 ) -> Result<()> {

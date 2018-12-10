@@ -1,24 +1,21 @@
-extern crate parking_lot;
-extern crate winapi;
-
 mod key_code;
 pub use self::key_code::KeyCode;
 
-use self::parking_lot::Mutex;
-use self::winapi::ctypes::c_int;
-use self::winapi::shared::minwindef::{DWORD, LPARAM, LRESULT, UINT, WPARAM};
-use self::winapi::shared::windef::HHOOK;
-use self::winapi::um::libloaderapi::GetModuleHandleW;
-use self::winapi::um::processthreadsapi::GetCurrentThreadId;
-use self::winapi::um::winuser::{
-    CallNextHookEx, GetMessageW, PostThreadMessageW, SetWindowsHookExW, UnhookWindowsHookEx,
-};
-use self::winapi::um::winuser::{KBDLLHOOKSTRUCT, WH_KEYBOARD_LL, WM_KEYDOWN};
+use parking_lot::Mutex;
 use std::cell::RefCell;
 use std::collections::hash_map::{Entry, HashMap};
 use std::sync::mpsc::{channel, Sender};
 use std::sync::Arc;
 use std::{mem, ptr, thread};
+use winapi::ctypes::c_int;
+use winapi::shared::minwindef::{DWORD, LPARAM, LRESULT, UINT, WPARAM};
+use winapi::shared::windef::HHOOK;
+use winapi::um::libloaderapi::GetModuleHandleW;
+use winapi::um::processthreadsapi::GetCurrentThreadId;
+use winapi::um::winuser::{
+    CallNextHookEx, GetMessageW, PostThreadMessageW, SetWindowsHookExW, UnhookWindowsHookEx,
+};
+use winapi::um::winuser::{KBDLLHOOKSTRUCT, WH_KEYBOARD_LL, WM_KEYDOWN};
 
 const MSG_EXIT: UINT = 0x400;
 
@@ -33,11 +30,11 @@ quick_error! {
     }
 }
 
-pub type Result<T> = ::std::result::Result<T, Error>;
+pub type Result<T> = std::result::Result<T, Error>;
 
 pub struct Hook {
     thread_id: DWORD,
-    hotkeys: Arc<Mutex<HashMap<KeyCode, Box<FnMut() + Send + 'static>>>>,
+    hotkeys: Arc<Mutex<HashMap<KeyCode, Box<dyn FnMut() + Send + 'static>>>>,
 }
 
 impl Drop for Hook {
@@ -79,9 +76,10 @@ unsafe extern "system" fn callback_proc(code: c_int, wparam: WPARAM, lparam: LPA
 
 impl Hook {
     pub fn new() -> Result<Self> {
-        let hotkeys = Arc::new(Mutex::new(
-            HashMap::<KeyCode, Box<FnMut() + Send + 'static>>::new(),
-        ));
+        let hotkeys = Arc::new(Mutex::new(HashMap::<
+            KeyCode,
+            Box<dyn FnMut() + Send + 'static>,
+        >::new()));
 
         let (initialized_tx, initialized_rx) = channel();
         let (events_tx, events_rx) = channel();
@@ -175,8 +173,8 @@ impl Hook {
 fn test() {
     let hook = Hook::new().unwrap();
     hook.register(KeyCode::NumPad0, || println!("A")).unwrap();
-    thread::sleep(::std::time::Duration::from_secs(5));
+    thread::sleep(std::time::Duration::from_secs(5));
     hook.unregister(KeyCode::NumPad0).unwrap();
     hook.register(KeyCode::NumPad1, || println!("B")).unwrap();
-    thread::sleep(::std::time::Duration::from_secs(5));
+    thread::sleep(std::time::Duration::from_secs(5));
 }

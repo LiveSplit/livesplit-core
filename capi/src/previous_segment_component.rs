@@ -5,10 +5,10 @@
 //! active time loss whenever the runner is losing time on the current segment.
 
 use super::{output_vec, Json};
-use component::OwnedComponent;
+use crate::component::OwnedComponent;
 use livesplit_core::component::previous_segment::Component as PreviousSegmentComponent;
 use livesplit_core::{GeneralLayoutSettings, Timer};
-use previous_segment_component_state::OwnedPreviousSegmentComponentState;
+use crate::previous_segment_component_state::OwnedPreviousSegmentComponentState;
 
 /// type
 pub type OwnedPreviousSegmentComponent = Box<PreviousSegmentComponent>;

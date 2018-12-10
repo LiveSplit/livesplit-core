@@ -1,9 +1,9 @@
 use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::io::{Result, Write};
-use {Class, Type, TypeKind};
+use crate::{Class, Type, TypeKind};
 
-fn get_type(ty: &Type) -> Cow<str> {
+fn get_type(ty: &Type) -> Cow<'_, str> {
     let mut name = Cow::Borrowed(match ty.name.as_str() {
         "i8" => "int8_t",
         "i16" => "int16_t",
@@ -115,7 +115,7 @@ already been freed.
                 function.name
             )?;
 
-            for (i, &(ref name, ref typ)) in function.inputs.iter().enumerate() {
+            for (i, (name, typ)) in function.inputs.iter().enumerate() {
                 if i != 0 {
                     write!(writer, ", ")?;
                 }

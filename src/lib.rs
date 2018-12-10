@@ -1,9 +1,18 @@
-#![allow(unknown_lints)]
-#![warn(missing_docs, clippy)]
+#![warn(
+    missing_docs,
+    clippy::correctness,
+    clippy::perf,
+    clippy::style,
+    clippy::complexity
+)]
 // Necessary for some larger quick-error based errors.
 #![recursion_limit = "128"]
 // Clippy false positives
-#![allow(block_in_if_condition_stmt, redundant_closure_call)]
+#![allow(
+    clippy::block_in_if_condition_stmt,
+    clippy::redundant_closure_call,
+    clippy::new_ret_no_self
+)]
 
 //! livesplit-core is a library that provides a lot of functionality for creating a speedrun timer.
 //!
@@ -38,33 +47,17 @@
 //! assert_eq!(timer.current_phase(), TimerPhase::NotRunning);
 //! ```
 
-extern crate base64;
-extern crate byteorder;
-extern crate chrono;
 #[macro_use]
 extern crate derive_more;
-extern crate image as imagelib;
-extern crate odds;
-extern crate ordered_float;
 #[macro_use]
 extern crate quick_error;
-extern crate quick_xml;
-extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde_json;
-extern crate unicase;
-extern crate utf8;
-
-pub extern crate indexmap;
-pub extern crate livesplit_hotkey as hotkey;
-pub extern crate palette;
-pub extern crate parking_lot;
 
 mod platform;
 
 #[cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))]
-pub use platform::*;
+pub use crate::platform::*;
 
 macro_rules! catch {
     ($($code:tt)*) => {
@@ -87,15 +80,20 @@ pub mod settings;
 mod tests_helper;
 pub mod timing;
 
-pub use self::hotkey_config::HotkeyConfig;
-pub use self::hotkey_system::HotkeySystem;
-pub use self::image::{CachedImageId, Image};
-pub use self::layout::{
-    Component, Editor as LayoutEditor, GeneralSettings as GeneralLayoutSettings, Layout,
+pub use {
+    crate::{
+        hotkey_config::HotkeyConfig,
+        hotkey_system::HotkeySystem,
+        image::{CachedImageId, Image},
+        layout::{
+            Component, Editor as LayoutEditor, GeneralSettings as GeneralLayoutSettings, Layout,
+        },
+        run::{Attempt, Editor as RunEditor, Run, RunMetadata, Segment, SegmentHistory},
+        timing::{
+            AtomicDateTime, GameTime, RealTime, SharedTimer, Time, TimeSpan, TimeStamp, Timer,
+            TimerPhase, TimingMethod,
+        },
+    },
+    chrono::{DateTime, Utc},
+    indexmap, livesplit_hotkey as hotkey, palette, parking_lot,
 };
-pub use self::run::{Attempt, Editor as RunEditor, Run, RunMetadata, Segment, SegmentHistory};
-pub use self::timing::{
-    AtomicDateTime, GameTime, RealTime, SharedTimer, Time, TimeSpan, TimeStamp, Timer, TimerPhase,
-    TimingMethod,
-};
-pub use chrono::{DateTime, Utc};
