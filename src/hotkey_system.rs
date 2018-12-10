@@ -94,15 +94,11 @@ impl HotkeySystem {
         })
     }
 
-    // TODO: Ignore errors in a lot of situations
-    //
-    // If unregister works and register fails for example, you won't be able to
-    // register again, as unregistering will fail forever. Also in initial start
-    // up code ignore partially failed registers.
-
     /// Sets the key to use for splitting and starting a new attempt.
     pub fn set_split(&mut self, hotkey: KeyCode) -> Result<()> {
-        self.hook.unregister(self.config.split)?;
+        if self.config.split == hotkey {
+            return Ok(());
+        }
         let inner = self.timer.clone();
         let active = self.is_active.clone();
         self.hook.register(hotkey, move || {
@@ -110,13 +106,16 @@ impl HotkeySystem {
                 inner.write().split_or_start();
             }
         })?;
+        self.hook.unregister(self.config.split)?;
         self.config.split = hotkey;
         Ok(())
     }
 
     /// Sets the key to use for resetting the current attempt.
     pub fn set_reset(&mut self, hotkey: KeyCode) -> Result<()> {
-        self.hook.unregister(self.config.reset)?;
+        if self.config.reset == hotkey {
+            return Ok(());
+        }
         let inner = self.timer.clone();
         let active = self.is_active.clone();
         self.hook.register(hotkey, move || {
@@ -124,6 +123,7 @@ impl HotkeySystem {
                 inner.write().reset(true);
             }
         })?;
+        self.hook.unregister(self.config.reset)?;
         self.config.reset = hotkey;
         Ok(())
     }
@@ -131,7 +131,9 @@ impl HotkeySystem {
     /// Sets the key to use for pausing the current attempt and starting a new
     /// attempt.
     pub fn set_pause(&mut self, hotkey: KeyCode) -> Result<()> {
-        self.hook.unregister(self.config.pause)?;
+        if self.config.pause == hotkey {
+            return Ok(());
+        }
         let inner = self.timer.clone();
         let active = self.is_active.clone();
         self.hook.register(hotkey, move || {
@@ -139,13 +141,16 @@ impl HotkeySystem {
                 inner.write().toggle_pause_or_start();
             }
         })?;
+        self.hook.unregister(self.config.pause)?;
         self.config.pause = hotkey;
         Ok(())
     }
 
     /// Sets the key to use for skipping the current split.
     pub fn set_skip(&mut self, hotkey: KeyCode) -> Result<()> {
-        self.hook.unregister(self.config.skip)?;
+        if self.config.skip == hotkey {
+            return Ok(());
+        }
         let inner = self.timer.clone();
         let active = self.is_active.clone();
         self.hook.register(hotkey, move || {
@@ -153,13 +158,16 @@ impl HotkeySystem {
                 inner.write().skip_split();
             }
         })?;
+        self.hook.unregister(self.config.skip)?;
         self.config.skip = hotkey;
         Ok(())
     }
 
     /// Sets the key to use for undoing the last split.
     pub fn set_undo(&mut self, hotkey: KeyCode) -> Result<()> {
-        self.hook.unregister(self.config.undo)?;
+        if self.config.undo == hotkey {
+            return Ok(());
+        }
         let inner = self.timer.clone();
         let active = self.is_active.clone();
         self.hook.register(hotkey, move || {
@@ -167,13 +175,16 @@ impl HotkeySystem {
                 inner.write().undo_split();
             }
         })?;
+        self.hook.unregister(self.config.undo)?;
         self.config.undo = hotkey;
         Ok(())
     }
 
     /// Sets the key to use for switching to the previous comparison.
     pub fn set_previous_comparison(&mut self, hotkey: KeyCode) -> Result<()> {
-        self.hook.unregister(self.config.previous_comparison)?;
+        if self.config.previous_comparison == hotkey {
+            return Ok(());
+        }
         let inner = self.timer.clone();
         let active = self.is_active.clone();
         self.hook.register(hotkey, move || {
@@ -181,13 +192,16 @@ impl HotkeySystem {
                 inner.write().switch_to_previous_comparison();
             }
         })?;
+        self.hook.unregister(self.config.previous_comparison)?;
         self.config.previous_comparison = hotkey;
         Ok(())
     }
 
     /// Sets the key to use for switching to the next comparison.
     pub fn set_next_comparison(&mut self, hotkey: KeyCode) -> Result<()> {
-        self.hook.unregister(self.config.next_comparison)?;
+        if self.config.next_comparison == hotkey {
+            return Ok(());
+        }
         let inner = self.timer.clone();
         let active = self.is_active.clone();
         self.hook.register(hotkey, move || {
@@ -195,6 +209,7 @@ impl HotkeySystem {
                 inner.write().switch_to_next_comparison();
             }
         })?;
+        self.hook.unregister(self.config.next_comparison)?;
         self.config.next_comparison = hotkey;
         Ok(())
     }
@@ -209,5 +224,26 @@ impl HotkeySystem {
     /// active, nothing happens.
     pub fn activate(&self) {
         self.is_active.store(true, Ordering::Release);
+    }
+
+    /// Returns the hotkey configuration currently in use by the Hotkey System.
+    pub fn config(&self) -> HotkeyConfig {
+        self.config
+    }
+
+    /// Applies a new hotkey configuration to the Hotkey System. Each hotkey is
+    /// changed to the one specified in the configuration. This operation may
+    /// fail if you provide a hotkey configuration where a hotkey is used for
+    /// multiple operations.
+    pub fn set_config(&mut self, config: HotkeyConfig) -> Result<()> {
+        self.set_split(config.split)?;
+        self.set_reset(config.reset)?;
+        self.set_undo(config.undo)?;
+        self.set_skip(config.skip)?;
+        self.set_pause(config.pause)?;
+        self.set_previous_comparison(config.previous_comparison)?;
+        self.set_next_comparison(config.next_comparison)?;
+
+        Ok(())
     }
 }

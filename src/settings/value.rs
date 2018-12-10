@@ -1,5 +1,6 @@
 use super::{Alignment, Color, Gradient, ListGradient};
 use component::splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith};
+use hotkey::KeyCode;
 use std::result::Result as StdResult;
 use timing::formatter::{Accuracy, DigitsFormat};
 use TimingMethod;
@@ -46,6 +47,8 @@ pub enum Value {
     ColumnUpdateWith(ColumnUpdateWith),
     /// A value describing when to update a column of the Splits Component.
     ColumnUpdateTrigger(ColumnUpdateTrigger),
+    /// A value describing what hotkey to press to trigger a certain action.
+    Hotkey(KeyCode),
 }
 
 quick_error! {
@@ -201,6 +204,15 @@ impl Value {
             _ => Err(Error::WrongType),
         }
     }
+
+    /// Tries to convert the value into a hotkey.
+    pub fn into_hotkey(self) -> Result<KeyCode> {
+        match self {
+            Value::Hotkey(v) => Ok(v),
+            Value::String(v) => v.parse().map_err(|_| Error::WrongType),
+            _ => Err(Error::WrongType),
+        }
+    }
 }
 
 impl Into<bool> for Value {
@@ -302,5 +314,11 @@ impl Into<ColumnUpdateWith> for Value {
 impl Into<ColumnUpdateTrigger> for Value {
     fn into(self) -> ColumnUpdateTrigger {
         self.into_column_update_trigger().unwrap()
+    }
+}
+
+impl Into<KeyCode> for Value {
+    fn into(self) -> KeyCode {
+        self.into_hotkey().unwrap()
     }
 }

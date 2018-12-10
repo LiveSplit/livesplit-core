@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 // Based on https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code
 
-#[derive(Debug, Eq, PartialEq, Hash, Copy, Clone)]
+#[derive(Debug, Eq, PartialEq, Hash, Copy, Clone, Serialize, Deserialize)]
 pub enum KeyCode {
     Again,
     AltLeft,
