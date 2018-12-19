@@ -80,6 +80,7 @@ pub mod settings;
 #[cfg(test)]
 mod tests_helper;
 pub mod timing;
+mod xml_util;
 
 pub use {
     crate::{

@@ -1,10 +1,5 @@
-mod xml_util;
-pub use self::xml_util::{Error, Result};
+//! Provides the parser for layout files of the original LiveSplit.
 
-use self::xml_util::{
-    end_tag, parse_base, parse_children, text, text_as_escaped_bytes_err, text_err, text_parsed,
-    Tag,
-};
 use super::{Component, Layout};
 use crate::component::{
     blank_space, current_comparison, current_pace, delta, detailed_timer, graph,
@@ -16,8 +11,54 @@ use crate::timing::{
     formatter::{Accuracy, DigitsFormat},
     TimingMethod,
 };
+use crate::xml_util::{
+    end_tag, parse_base, parse_children, text, text_as_escaped_bytes_err, text_err, text_parsed,
+    Error as XmlError, Tag,
+};
 use quick_xml::Reader;
 use std::io::BufRead;
+
+quick_error! {
+    /// The Error type for parsing layout files of the original LiveSplit.
+    #[derive(Debug)]
+    pub enum Error {
+        /// The underlying XML format couldn't be parsed.
+        Xml(err: XmlError) {
+            from()
+        }
+        /// Failed to decode a string slice as UTF-8.
+        Utf8Str(err: std::str::Utf8Error) {
+            from()
+        }
+        /// Failed to decode a string as UTF-8.
+        Utf8String(err: std::string::FromUtf8Error) {
+            from()
+        }
+        /// Failed to parse an integer.
+        Int(err: std::num::ParseIntError) {
+            from()
+        }
+        /// Failed to parse a boolean.
+        Bool {}
+        /// Failed to parse a gradient type.
+        GradientType {}
+        /// Failed to parse an accuracy.
+        Accuracy {}
+        /// Failed to parse a digits format.
+        DigitsFormat {}
+        /// Failed to parse a timing method.
+        TimingMethod {}
+        /// Failed to parse an alignment.
+        Alignment {}
+        /// Failed to parse a column type.
+        ColumnType {}
+        /// Parsed an empty layout, which is considered an invalid layout.
+        Empty {}
+    }
+}
+
+/// The Result type for parsing layout files of the original LiveSplit.
+pub type Result<T> = std::result::Result<T, Error>;
 
 enum GradientKind {
     Transparent,
@@ -48,14 +89,14 @@ impl GradientType for GradientKind {
             b"Plain" => GradientKind::Plain,
             b"Vertical" => GradientKind::Vertical,
             b"Horizontal" => GradientKind::Horizontal,
-            _ => return Err(Error::UnexpectedGradientType),
+            _ => return Err(Error::GradientType),
         })
     }
     fn build(self, first: Color, second: Color) -> Self::Built {
         match self {
             GradientKind::Transparent => Gradient::Transparent,
             GradientKind::Plain => {
-                if first == Color::transparent() {
+                if first.rgba.alpha == 0.0 {
                     Gradient::Transparent
                 } else {
                     Gradient::Plain(first)
@@ -139,7 +180,7 @@ impl<T: GradientType> GradientBuilder<T> {
         } else if tag.name() == self.tag_color2 {
             color(reader, tag.into_buf(), |c| self.second = c)?;
         } else if tag.name() == self.tag_kind {
-            text_as_escaped_bytes_err(reader, tag.into_buf(), |text| {
+            text_as_escaped_bytes_err::<_, _, _, Error>(reader, tag.into_buf(), |text| {
                 self.kind = T::parse(&text)?;
                 Ok(())
             })?;
@@ -286,7 +327,7 @@ where
     let settings = component.settings_mut();
     let mut background_builder = GradientBuilder::new();
 
-    parse_children(reader, buf, |reader, tag| {
+    parse_children::<_, _, Error>(reader, buf, |reader, tag| {
         if let Some(tag) = background_builder.parse_background(reader, tag)? {
             if tag.name() == b"SpaceHeight" {
                 text_parsed(reader, tag.into_buf(), |h| settings.height = h)
@@ -808,7 +849,7 @@ where
                                             ColumnUpdateWith::SegmentDelta, // TODO: With Fallback
                                             ColumnUpdateTrigger::Contextual,
                                         ),
-                                        _ => return Err(Error::UnexpectedColumnType),
+                                        _ => return Err(Error::ColumnType),
                                     };
                                     column.start_with = start_with;
                                     column.update_with = update_with;
@@ -1342,7 +1383,7 @@ fn parse_general_settings<R: BufRead>(
                         background_builder.second = Color::black();
                         GradientKind::Plain
                     }
-                    _ => return Err(Error::UnexpectedGradientType),
+                    _ => return Err(Error::GradientType),
                 };
                 Ok(())
             })
@@ -1356,6 +1397,7 @@ fn parse_general_settings<R: BufRead>(
     Ok(())
 }
 
+/// Attempts to parse a layout file of the original LiveSplit.
 pub fn parse<R: BufRead>(source: R) -> Result<Layout> {
     let reader = &mut Reader::from_reader(source);
     reader.expand_empty_elements(true);

@@ -1,7 +1,7 @@
 //! Provides the parser for LiveSplit splits files.
 
 use super::super::ComparisonError;
-use super::xml_util::{
+use crate::xml_util::{
     attribute, attribute_err, end_tag, optional_attribute_err, parse_attributes, parse_base,
     parse_children, reencode_children, text, text_as_bytes_err, text_err, text_parsed,
 };
@@ -12,7 +12,59 @@ use std::io::BufRead;
 use std::path::PathBuf;
 use std::str;
 
-pub use super::xml_util::{Error, Result};
+use crate::xml_util::Error as XmlError;
+use chrono::ParseError as ChronoError;
+
+quick_error! {
+    /// The Error type for splits files that couldn't be parsed by the LiveSplit
+    /// Parser.
+    #[derive(Debug)]
+    pub enum Error {
+        /// The underlying XML format couldn't be parsed.
+        Xml(err: XmlError) {
+            from()
+        }
+        /// Failed to decode a string slice as UTF-8.
+        Utf8Str(err: std::str::Utf8Error) {
+            from()
+        }
+        /// Failed to decode a string as UTF-8.
+        Utf8String(err: std::string::FromUtf8Error) {
+            from()
+        }
+        /// Failed to parse an integer.
+        Int(err: std::num::ParseIntError) {
+            from()
+        }
+        /// Failed to parse a floating point number.
+        Float(err: std::num::ParseFloatError) {
+            from()
+        }
+        /// Failed to parse a time.
+        Time(err: crate::timing::ParseError) {
+            from()
+        }
+        /// Failed to parse a date.
+        Date(err: ChronoError) {
+            from()
+        }
+        /// Parsed comparison has an invalid name.
+        InvalidComparisonName(err: ComparisonError) {
+            from()
+        }
+        /// Failed to parse a boolean.
+        Bool {}
+    }
+}
+
+/// The Result type for the LiveSplit Parser.
+pub type Result<T> = std::result::Result<T, Error>;
+
+// FIXME: Generalized Type Ascription (GTA 6)
+#[inline]
+fn type_hint<T>(v: Result<T>) -> Result<T> {
+    v
+}
 
 #[derive(Copy, Clone, PartialOrd, PartialEq, Ord, Eq)]
 struct Version(u32, u32, u32, u32);
@@ -150,13 +202,13 @@ fn parse_metadata<R: BufRead>(
     if version >= Version(1, 6, 0, 0) {
         parse_children(reader, buf, |reader, tag| {
             if tag.name() == b"Run" {
-                attribute(&tag, b"id", |t| metadata.set_run_id(t))?;
+                type_hint(attribute(&tag, b"id", |t| metadata.set_run_id(t)))?;
                 end_tag(reader, tag.into_buf())
             } else if tag.name() == b"Platform" {
-                attribute_err(&tag, b"usesEmulator", |t| {
+                type_hint(attribute_err(&tag, b"usesEmulator", |t| {
                     metadata.set_emulator_usage(parse_bool(t.as_bytes())?);
                     Ok(())
-                })?;
+                }))?;
                 text(reader, tag.into_buf(), |t| metadata.set_platform_name(t))
             } else if tag.name() == b"Region" {
                 text(reader, tag.into_buf(), |t| metadata.set_region_name(t))
@@ -164,12 +216,12 @@ fn parse_metadata<R: BufRead>(
                 parse_children(reader, tag.into_buf(), |reader, tag| {
                     let mut name = String::new();
                     let mut value = String::new();
-                    attribute(&tag, b"name", |t| {
+                    type_hint(attribute(&tag, b"name", |t| {
                         name = t.into_owned();
-                    })?;
-                    text(reader, tag.into_buf(), |t| {
+                    }))?;
+                    type_hint(text(reader, tag.into_buf(), |t| {
                         value = t.into_owned();
-                    })?;
+                    }))?;
                     metadata.set_variable(name, value);
                     Ok(())
                 })
@@ -201,9 +253,9 @@ fn parse_segment<R: BufRead>(
                 parse_children(reader, tag.into_buf(), |reader, tag| {
                     if tag.name() == b"SplitTime" {
                         let mut comparison = String::new();
-                        attribute(&tag, b"name", |t| {
+                        type_hint(attribute(&tag, b"name", |t| {
                             comparison = t.into_owned();
-                        })?;
+                        }))?;
                         if version >= Version(1, 4, 1, 0) {
                             time(reader, tag.into_buf(), |t| {
                                 *segment.comparison_mut(&comparison) = t;
@@ -247,10 +299,10 @@ fn parse_segment<R: BufRead>(
         } else if tag.name() == b"SegmentHistory" {
             parse_children(reader, tag.into_buf(), |reader, tag| {
                 let mut index = 0;
-                attribute_err(&tag, b"id", |t| {
+                type_hint(attribute_err(&tag, b"id", |t| {
                     index = t.parse()?;
                     Ok(())
-                })?;
+                }))?;
                 if version >= Version(1, 4, 1, 0) {
                     time(reader, tag.into_buf(), |t| {
                         segment.segment_history_mut().insert(index, t);
@@ -280,10 +332,10 @@ fn parse_run_history<R: BufRead>(
     } else if version >= Version(1, 4, 1, 0) {
         parse_children(reader, buf, |reader, tag| {
             let mut index = 0;
-            attribute_err(&tag, b"id", |t| {
+            type_hint(attribute_err(&tag, b"id", |t| {
                 index = t.parse()?;
                 Ok(())
-            })?;
+            }))?;
             time(reader, tag.into_buf(), |time| {
                 run.add_attempt_with_index(time, index, None, None, None);
             })
@@ -291,10 +343,10 @@ fn parse_run_history<R: BufRead>(
     } else {
         parse_children(reader, buf, |reader, tag| {
             let mut index = 0;
-            attribute_err(&tag, b"id", |t| {
+            type_hint(attribute_err(&tag, b"id", |t| {
                 index = t.parse()?;
                 Ok(())
-            })?;
+            }))?;
             time_old(reader, tag.into_buf(), |time| {
                 run.add_attempt_with_index(time, index, None, None, None);
             })
@@ -316,22 +368,22 @@ fn parse_attempt_history<R: BufRead>(
             let (mut started, mut started_synced) = (None, false);
             let (mut ended, mut ended_synced) = (None, false);
 
-            parse_attributes(&tag, |k, v| {
+            type_hint(parse_attributes(&tag, |k, v| {
                 if k == b"id" {
-                    index = Some(v.get()?.parse()?);
+                    index = Some(v.get::<Error>()?.parse()?);
                 } else if k == b"started" {
-                    started = Some(parse_date_time(v.get()?)?);
+                    started = Some(parse_date_time(v.get::<Error>()?)?);
                 } else if k == b"isStartedSynced" {
                     started_synced = parse_bool(v.get_raw())?;
                 } else if k == b"ended" {
-                    ended = Some(parse_date_time(v.get()?)?);
+                    ended = Some(parse_date_time(v.get::<Error>()?)?);
                 } else if k == b"isEndedSynced" {
                     ended_synced = parse_bool(v.get_raw())?;
                 }
                 Ok(true)
-            })?;
+            }))?;
 
-            let index = index.ok_or(Error::AttributeNotFound)?;
+            let index = index.ok_or(Error::Xml(XmlError::AttributeNotFound))?;
 
             parse_children(reader, tag.into_buf(), |reader, tag| {
                 if tag.name() == b"RealTime" {
@@ -386,10 +438,10 @@ pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
 
     parse_base(reader, &mut buf, b"Run", |reader, tag| {
         let mut version = Version(1, 0, 0, 0);
-        optional_attribute_err(&tag, b"version", |t| {
+        type_hint(optional_attribute_err(&tag, b"version", |t| {
             version = parse_version(t)?;
             Ok(())
-        })?;
+        }))?;
 
         parse_children(reader, tag.into_buf(), |reader, tag| {
             if tag.name() == b"GameIcon" {
@@ -427,7 +479,7 @@ pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
                 })
             } else if tag.name() == b"AutoSplitterSettings" {
                 let settings = run.auto_splitter_settings_mut();
-                reencode_children(reader, tag.into_buf(), settings)
+                reencode_children(reader, tag.into_buf(), settings).map_err(Into::into)
             } else {
                 end_tag(reader, tag.into_buf())
             }
@@ -435,7 +487,7 @@ pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
     })?;
 
     if required_flags != (1 << 6) - 1 {
-        return Err(Error::ElementNotFound);
+        return Err(Error::Xml(XmlError::ElementNotFound));
     }
 
     run.set_path(path);
