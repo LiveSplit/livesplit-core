@@ -626,6 +626,15 @@ const liveSplitCoreNative = {};"#
                     writer,
                     "{}",
                     r#"
+    static parseOriginalLivesplitArray(data: Int8Array): Layout | null {
+        const buf = emscriptenModule._malloc(data.length);
+        try {
+            emscriptenModule.writeArrayToMemory(data, buf);
+            return Layout.parseOriginalLivesplit(buf, data.length);
+        } finally {
+            emscriptenModule._free(buf);
+        }
+    }
     static parseOriginalLivesplitString(text: string): Layout | null {
         const len = (text.length << 2) + 1;
         const buf = emscriptenModule._malloc(len);
@@ -642,6 +651,19 @@ const liveSplitCoreNative = {};"#
                     writer,
                     "{}",
                     r#"
+    /**
+     * @param {Int8Array} data
+     * @return {Layout | null}
+     */
+    static parseOriginalLivesplitArray(data) {
+        const buf = emscriptenModule._malloc(data.length);
+        try {
+            emscriptenModule.writeArrayToMemory(data, buf);
+            return Layout.parseOriginalLivesplit(buf, data.length);
+        } finally {
+            emscriptenModule._free(buf);
+        }
+    }
     /**
      * @param {string} text
      * @return {Layout | null}
