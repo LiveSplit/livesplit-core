@@ -636,9 +636,7 @@ where
             } else if tag.name() == b"Accuracy" {
                 accuracy(reader, tag.into_buf(), |v| settings.accuracy = v)
             } else if tag.name() == b"Comparison" {
-                text(reader, tag.into_buf(), |v| {
-                    settings.comparison_override = Some(v.into_owned())
-                })
+                comparison_override(reader, tag.into_buf(), |v| settings.comparison_override = v)
             } else if tag.name() == b"Display2Rows" {
                 parse_bool(reader, tag.into_buf(), |b| settings.display_two_rows = b)
             } else if tag.name() == b"TotalTimeSave" {
@@ -687,9 +685,7 @@ where
             } else if tag.name() == b"DropDecimals" {
                 parse_bool(reader, tag.into_buf(), |b| settings.drop_decimals = b)
             } else if tag.name() == b"Comparison" {
-                text(reader, tag.into_buf(), |v| {
-                    settings.comparison_override = Some(v.into_owned())
-                })
+                comparison_override(reader, tag.into_buf(), |v| settings.comparison_override = v)
             } else if tag.name() == b"Display2Rows" {
                 parse_bool(reader, tag.into_buf(), |b| settings.display_two_rows = b)
             } else if tag.name() == b"ShowPossibleTimeSave" {
