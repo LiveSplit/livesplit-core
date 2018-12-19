@@ -1,26 +1,23 @@
-#![feature(test)]
-
-use test::Bencher;
+use criterion::{criterion_group, criterion_main, Criterion};
 
 use livesplit_core::run::parser::livesplit;
-use std::fs::File;
-use std::io::{BufReader, Cursor, Read};
+use std::{fs, io::Cursor};
 
-#[bench]
-fn huge_game_icon(b: &mut Bencher) {
-    let mut reader =
-        BufReader::new(File::open("tests/run_files/livesplit1.6_gametime.lss").unwrap());
-    let mut buf = Vec::new();
-    reader.read_to_end(&mut buf).unwrap();
+criterion_main!(benches);
+criterion_group!(benches, huge_game_icon, no_icons);
 
-    b.iter(|| livesplit::parse(Cursor::new(&buf), None).unwrap());
+fn huge_game_icon(c: &mut Criterion) {
+    let buf = fs::read("tests/run_files/livesplit1.6_gametime.lss").unwrap();
+
+    c.bench_function("Parse With Huge Game Icon", move |b| {
+        b.iter(|| livesplit::parse(Cursor::new(&buf), None).unwrap())
+    });
 }
 
-#[bench]
-fn no_icons(b: &mut Bencher) {
-    let mut reader = BufReader::new(File::open("tests/run_files/livesplit1.6.lss").unwrap());
-    let mut buf = Vec::new();
-    reader.read_to_end(&mut buf).unwrap();
+fn no_icons(c: &mut Criterion) {
+    let buf = fs::read("tests/run_files/livesplit1.6.lss").unwrap();
 
-    b.iter(|| livesplit::parse(Cursor::new(&buf), None).unwrap());
+    c.bench_function("Parse without Icons", move |b| {
+        b.iter(|| livesplit::parse(Cursor::new(&buf), None).unwrap())
+    });
 }

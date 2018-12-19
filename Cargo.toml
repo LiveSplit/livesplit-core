@@ -10,6 +10,7 @@ readme = "README.md"
 keywords = ["speedrun", "timer", "livesplit"]
 include = [
     "/src/*",
+    "/bench/*",
     "/Cargo.toml",
     "/LICENSE-APACHE",
     "/LICENSE-MIT",
@@ -51,7 +52,16 @@ utf-8 = "0.7.4"
 
 [dev-dependencies]
 memmem = "0.1.1"
+criterion = "0.2.5"
 
 [features]
 default = ["image-shrinking"]
 image-shrinking = ["image/webp", "image/pnm", "image/ico", "image/jpeg", "image/gif_codec", "image/tiff", "image/tga", "image/bmp", "image/hdr"]
+
+[[bench]]
+name = "balanced_pb"
+harness = false
+
+[[bench]]
+name = "parsing"
+harness = false
