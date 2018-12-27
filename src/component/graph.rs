@@ -585,21 +585,21 @@ impl Component {
         draw_info: &DrawInfo,
     ) -> (f32, f32, f32) {
         let mut graph_edge = 0.0;
-        let graph_height = HEIGHT / 2.0; // TODO: Make const
+        const GRAPH_HEIGHT: f32 = HEIGHT / 2.0;
         let middle = if total_delta != TimeSpan::zero() {
             graph_edge = GRAPH_EDGE_VALUE
                 / (-total_delta.total_milliseconds() as f32 + 2.0 * GRAPH_EDGE_VALUE)
-                * (graph_height * 2.0 - GRAPH_EDGE_MIN * 2.0);
+                * (GRAPH_HEIGHT * 2.0 - GRAPH_EDGE_MIN * 2.0);
             graph_edge += GRAPH_EDGE_MIN;
             (-(draw_info.max_delta.total_milliseconds() as f32
                 / total_delta.total_milliseconds() as f32))
-                * (graph_height - graph_edge)
+                * (GRAPH_HEIGHT - graph_edge)
                 * 2.0
                 + graph_edge
         } else {
-            graph_height
+            GRAPH_HEIGHT
         };
-        (graph_edge, graph_height, middle)
+        (graph_edge, GRAPH_HEIGHT, middle)
     }
 
     fn calculate_final_split(&self, timer: &Timer, draw_info: &mut DrawInfo) {
@@ -651,7 +651,7 @@ impl Component {
                 let timing_method = timer.current_timing_method();
                 let mut best_segment =
                     analysis::check_live_delta(timer, true, comparison, timing_method);
-                // TODO: Try if let instead of checking current phase up there,
+                // FIXME: Try if let instead of checking current phase up there,
                 // so we can skip this unwrap
                 let current_split =
                     timer.current_split().unwrap().comparison(comparison)[timing_method];

@@ -88,7 +88,7 @@ where
                                         ),
                                         "DeltaorSplitTime" => (
                                             ColumnStartWith::ComparisonTime,
-                                            ColumnUpdateWith::Delta, // TODO: With Fallback
+                                            ColumnUpdateWith::Delta, // FIXME: With Fallback
                                             ColumnUpdateTrigger::Contextual,
                                         ),
                                         "SegmentDelta" => (
@@ -103,7 +103,7 @@ where
                                         ),
                                         "SegmentDeltaorSegmentTime" => (
                                             ColumnStartWith::ComparisonSegmentTime,
-                                            ColumnUpdateWith::SegmentDelta, // TODO: With Fallback
+                                            ColumnUpdateWith::SegmentDelta, // FIXME: With Fallback
                                             ColumnUpdateTrigger::Contextual,
                                         ),
                                         _ => return Err(Error::ColumnType),
@@ -137,9 +137,6 @@ where
                             let comparison_override =
                                 settings.columns.pop().and_then(|c| c.comparison_override);
                             settings.columns.clear();
-                            // TODO: Write a test that verifies the order of the
-                            // two columns (The assumption here is that it's
-                            // right to left).
                             settings.columns.push(ColumnSettings {
                                 name: String::from("Time"),
                                 start_with: ColumnStartWith::ComparisonTime,
