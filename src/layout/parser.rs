@@ -353,7 +353,9 @@ where
                     "LiveSplit.PossibleTimeSave.dll" => possible_time_save::Component::new().into(),
                     "LiveSplit.PreviousSegment.dll" => previous_segment::Component::new().into(),
                     "" => separator::Component::new().into(),
-                    "LiveSplit.Splits.dll" => splits::Component::new().into(),
+                    "LiveSplit.Splits.dll" | "LiveSplit.Subsplits.dll" => {
+                        splits::Component::new().into()
+                    }
                     "LiveSplit.SumOfBest.dll" => sum_of_best::Component::new().into(),
                     "LiveSplit.Text.dll" => text::Component::new().into(),
                     "LiveSplit.Timer.dll" => timer::Component::new().into(),
@@ -495,7 +497,9 @@ fn parse_general_settings<R: BufRead>(
     Ok(())
 }
 
-/// Attempts to parse a layout file of the original LiveSplit.
+/// Attempts to parse a layout file of the original LiveSplit. They are only
+/// parsed on a best effort basis, so if something isn't supported by
+/// livesplit-core, then it will be parsed without that option.
 pub fn parse<R: BufRead>(source: R) -> Result<Layout> {
     let reader = &mut Reader::from_reader(source);
     reader.expand_empty_elements(true);

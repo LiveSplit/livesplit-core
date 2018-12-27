@@ -183,6 +183,36 @@ where
                     // OverrideDeltasColor
                     // DeltasColor
                     // LabelsColor
+
+                    // FIXME: Subsplits
+                    // MinimumMajorSplits
+                    // IndentBlankIcons
+                    // IndentSubsplits
+                    // HideSubsplits
+                    // ShowSubsplits
+                    // CurrentSectionOnly
+                    // OverrideSubsplitColor
+                    // SubsplitTopColor
+                    // SubsplitBottomColor
+                    // SubsplitGradient
+                    // ShowHeader
+                    // IndentSectionSplit
+                    // ShowIconSectionSplit
+                    // ShowSectionIcon
+                    // HeaderTopColor
+                    // HeaderBottomColor
+                    // HeaderGradient
+                    // OverrideHeaderColor
+                    // HeaderTextColor
+                    // HeaderText
+                    // HeaderTimesColor
+                    // HeaderTimes
+                    // HeaderAccuracy
+                    // SectionTimer
+                    // SectionTimerColor
+                    // SectionTimerGradient
+                    // SectionTimerAccuracy
+
                     end_tag(reader, tag.into_buf())
                 }
             } else {
