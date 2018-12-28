@@ -11,20 +11,22 @@ use std::io::{Read, Write};
 #[serde(default)]
 pub struct HotkeyConfig {
     /// The key to use for splitting and starting a new attempt.
-    pub split: KeyCode,
+    pub split: Option<KeyCode>,
     /// The key to use for resetting the current attempt.
-    pub reset: KeyCode,
+    pub reset: Option<KeyCode>,
     /// The key to use for undoing the last split.
-    pub undo: KeyCode,
+    pub undo: Option<KeyCode>,
     /// The key to use for skipping the current split.
-    pub skip: KeyCode,
+    pub skip: Option<KeyCode>,
     /// The key to use for pausing the current attempt and starting a new
     /// attempt.
-    pub pause: KeyCode,
+    pub pause: Option<KeyCode>,
     /// The key to use for switching to the previous comparison.
-    pub previous_comparison: KeyCode,
+    pub previous_comparison: Option<KeyCode>,
     /// The key to use for switching to the next comparison.
-    pub next_comparison: KeyCode,
+    pub next_comparison: Option<KeyCode>,
+    /// The key to use for removing all the pause times from the current time.
+    pub undo_all_pauses: Option<KeyCode>,
 }
 
 #[cfg(any(windows, target_os = "linux"))]
@@ -32,13 +34,14 @@ impl Default for HotkeyConfig {
     fn default() -> Self {
         use crate::hotkey::KeyCode::*;
         Self {
-            split: NumPad1,
-            reset: NumPad3,
-            undo: NumPad8,
-            skip: NumPad2,
-            pause: NumPad5,
-            previous_comparison: NumPad4,
-            next_comparison: NumPad6,
+            split: Some(NumPad1),
+            reset: Some(NumPad3),
+            undo: Some(NumPad8),
+            skip: Some(NumPad2),
+            pause: Some(NumPad5),
+            previous_comparison: Some(NumPad4),
+            next_comparison: Some(NumPad6),
+            undo_all_pauses: None,
         }
     }
 }
@@ -51,13 +54,14 @@ impl Default for HotkeyConfig {
     fn default() -> Self {
         use crate::hotkey::KeyCode::*;
         Self {
-            split: Numpad1,
-            reset: Numpad3,
-            undo: Numpad8,
-            skip: Numpad2,
-            pause: Numpad5,
-            previous_comparison: Numpad4,
-            next_comparison: Numpad6,
+            split: Some(Numpad1),
+            reset: Some(Numpad3),
+            undo: Some(Numpad8),
+            skip: Some(Numpad2),
+            pause: Some(Numpad5),
+            previous_comparison: Some(Numpad4),
+            next_comparison: Some(Numpad6),
+            undo_all_pauses: None,
         }
     }
 }
@@ -71,13 +75,14 @@ impl Default for HotkeyConfig {
 impl Default for HotkeyConfig {
     fn default() -> Self {
         Self {
-            split: KeyCode,
-            reset: KeyCode,
-            undo: KeyCode,
-            skip: KeyCode,
-            pause: KeyCode,
-            previous_comparison: KeyCode,
-            next_comparison: KeyCode,
+            split: Some(KeyCode),
+            reset: Some(KeyCode),
+            undo: Some(KeyCode),
+            skip: Some(KeyCode),
+            pause: Some(KeyCode),
+            previous_comparison: Some(KeyCode),
+            next_comparison: Some(KeyCode),
+            undo_all_pauses: None,
         }
     }
 }
@@ -97,6 +102,7 @@ impl HotkeyConfig {
                 self.previous_comparison.into(),
             ),
             Field::new("Next Comparison".into(), self.next_comparison.into()),
+            Field::new("Undo All Pauses".into(), self.undo_all_pauses.into()),
         ])
     }
 
@@ -113,24 +119,27 @@ impl HotkeyConfig {
     /// the type of the setting's value. A panic can also occur if the index of
     /// the setting provided is out of bounds.
     pub fn set_value(&mut self, index: usize, value: Value) -> Result<(), ()> {
-        let value: KeyCode = value.into();
+        let value: Option<KeyCode> = value.into();
 
-        let any = [
-            self.split,
-            self.reset,
-            self.undo,
-            self.skip,
-            self.pause,
-            self.previous_comparison,
-            self.next_comparison,
-        ]
-        .iter()
-        .enumerate()
-        .filter(|&(i, _)| i != index)
-        .any(|(_, &v)| v == value);
+        if value.is_some() {
+            let any = [
+                self.split,
+                self.reset,
+                self.undo,
+                self.skip,
+                self.pause,
+                self.previous_comparison,
+                self.next_comparison,
+                self.undo_all_pauses,
+            ]
+            .iter()
+            .enumerate()
+            .filter(|&(i, _)| i != index)
+            .any(|(_, &v)| v == value);
 
-        if any {
-            return Err(());
+            if any {
+                return Err(());
+            }
         }
 
         match index {
@@ -141,6 +150,7 @@ impl HotkeyConfig {
             4 => self.pause = value,
             5 => self.previous_comparison = value,
             6 => self.next_comparison = value,
+            7 => self.undo_all_pauses = value,
             _ => panic!("Unsupported Setting Index"),
         }
 

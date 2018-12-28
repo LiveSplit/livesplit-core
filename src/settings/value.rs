@@ -48,7 +48,7 @@ pub enum Value {
     /// A value describing when to update a column of the Splits Component.
     ColumnUpdateTrigger(ColumnUpdateTrigger),
     /// A value describing what hotkey to press to trigger a certain action.
-    Hotkey(KeyCode),
+    Hotkey(Option<KeyCode>),
 }
 
 quick_error! {
@@ -206,10 +206,13 @@ impl Value {
     }
 
     /// Tries to convert the value into a hotkey.
-    pub fn into_hotkey(self) -> Result<KeyCode> {
+    pub fn into_hotkey(self) -> Result<Option<KeyCode>> {
         match self {
             Value::Hotkey(v) => Ok(v),
-            Value::String(v) => v.parse().map_err(|_| Error::WrongType),
+            Value::String(v) | Value::OptionalString(Some(v)) => {
+                v.parse().map_err(|_| Error::WrongType).map(Some)
+            }
+            Value::OptionalString(None) => Ok(None),
             _ => Err(Error::WrongType),
         }
     }
@@ -317,8 +320,8 @@ impl Into<ColumnUpdateTrigger> for Value {
     }
 }
 
-impl Into<KeyCode> for Value {
-    fn into(self) -> KeyCode {
+impl Into<Option<KeyCode>> for Value {
+    fn into(self) -> Option<KeyCode> {
         self.into_hotkey().unwrap()
     }
 }
