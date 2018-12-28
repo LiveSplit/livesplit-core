@@ -620,6 +620,68 @@ const liveSplitCoreNative = {};"#
             }
         }
 
+        if class_name == "Layout" {
+            if type_script {
+                write!(
+                    writer,
+                    "{}",
+                    r#"
+    static parseOriginalLivesplitArray(data: Int8Array): Layout | null {
+        const buf = emscriptenModule._malloc(data.length);
+        try {
+            emscriptenModule.writeArrayToMemory(data, buf);
+            return Layout.parseOriginalLivesplit(buf, data.length);
+        } finally {
+            emscriptenModule._free(buf);
+        }
+    }
+    static parseOriginalLivesplitString(text: string): Layout | null {
+        const len = (text.length << 2) + 1;
+        const buf = emscriptenModule._malloc(len);
+        try {
+            const actualLen = emscriptenModule.stringToUTF8(text, buf, len);
+            return Layout.parseOriginalLivesplit(buf, actualLen);
+        } finally {
+            emscriptenModule._free(buf);
+        }
+    }"#
+                )?;
+            } else {
+                write!(
+                    writer,
+                    "{}",
+                    r#"
+    /**
+     * @param {Int8Array} data
+     * @return {Layout | null}
+     */
+    static parseOriginalLivesplitArray(data) {
+        const buf = emscriptenModule._malloc(data.length);
+        try {
+            emscriptenModule.writeArrayToMemory(data, buf);
+            return Layout.parseOriginalLivesplit(buf, data.length);
+        } finally {
+            emscriptenModule._free(buf);
+        }
+    }
+    /**
+     * @param {string} text
+     * @return {Layout | null}
+     */
+    static parseOriginalLivesplitString(text) {
+        const len = (text.length << 2) + 1;
+        const buf = emscriptenModule._malloc(len);
+        try {
+            const actualLen = emscriptenModule.stringToUTF8(text, buf, len);
+            return Layout.parseOriginalLivesplit(buf, actualLen);
+        } finally {
+            emscriptenModule._free(buf);
+        }
+    }"#
+                )?;
+            }
+        }
+
         if class_name == "Run" {
             if type_script {
                 write!(

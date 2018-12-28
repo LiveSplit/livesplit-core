@@ -3,9 +3,10 @@
 
 use super::{output_vec, str, Json};
 use crate::component::OwnedComponent;
-use livesplit_core::layout::LayoutSettings;
+use livesplit_core::layout::{parser, LayoutSettings};
 use livesplit_core::{Layout, Timer};
 use std::io::Cursor;
+use std::slice;
 
 /// type
 pub type OwnedLayout = Box<Layout>;
@@ -46,6 +47,21 @@ pub unsafe extern "C" fn Layout_parse_json(settings: Json) -> NullableOwnedLayou
     let settings = Cursor::new(str(settings).as_bytes());
     if let Ok(settings) = LayoutSettings::from_json(settings) {
         Some(Box::new(Layout::from_settings(settings)))
+    } else {
+        None
+    }
+}
+
+/// Parses a layout saved by the original LiveSplit. This is lossy, as not
+/// everything can be converted completely. <NULL> is returned if it couldn't be
+/// parsed at all.
+#[no_mangle]
+pub unsafe extern "C" fn Layout_parse_original_livesplit(
+    data: *const u8,
+    length: usize,
+) -> NullableOwnedLayout {
+    if let Ok(parsed) = parser::parse(Cursor::new(slice::from_raw_parts(data, length))) {
+        Some(Box::new(parsed))
     } else {
         None
     }

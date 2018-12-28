@@ -675,6 +675,50 @@ const liveSplitCoreNative = ffi.Library('livesplit_core', {"#
     }"#
                 )?;
             }
+        } else if class_name == "Layout" {
+            if type_script {
+                write!(
+                    writer,
+                    "{}",
+                    r#"
+    static parseOriginalLivesplitArray(data: Int8Array): Layout | null {
+        let buf = Buffer.from(data.buffer);
+        if (data.byteLength !== data.buffer.byteLength) {
+            buf = buf.slice(data.byteOffset, data.byteOffset + data.byteLength);
+        }
+        return Layout.parseOriginalLivesplit(buf, buf.byteLength);
+    }
+    static parseOriginalLivesplitString(text: string): Layout | null {
+        const data = new Buffer(text);
+        return Layout.parseOriginalLivesplit(data, data.byteLength);
+    }"#
+                )?;
+            } else {
+                write!(
+                    writer,
+                    "{}",
+                    r#"
+    /**
+     * @param {Int8Array} data
+     * @return {Layout | null}
+     */
+    static parseOriginalLivesplitArray(data) {
+        let buf = Buffer.from(data.buffer);
+        if (data.byteLength !== data.buffer.byteLength) {
+            buf = buf.slice(data.byteOffset, data.byteOffset + data.byteLength);
+        }
+        return Layout.parseOriginalLivesplit(buf, buf.byteLength);
+    }
+    /**
+     * @param {string} text
+     * @return {Layout | null}
+     */
+    static parseOriginalLivesplitString(text) {
+        const data = new Buffer(text);
+        return Layout.parseOriginalLivesplit(data, data.byteLength);
+    }"#
+                )?;
+            }
         }
 
         writeln!(

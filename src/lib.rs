@@ -3,7 +3,8 @@
     clippy::correctness,
     clippy::perf,
     clippy::style,
-    clippy::complexity
+    clippy::complexity,
+    rust_2018_idioms
 )]
 // Necessary for some larger quick-error based errors.
 #![recursion_limit = "128"]
@@ -79,6 +80,7 @@ pub mod settings;
 #[cfg(test)]
 mod tests_helper;
 pub mod timing;
+mod xml_util;
 
 pub use {
     crate::{

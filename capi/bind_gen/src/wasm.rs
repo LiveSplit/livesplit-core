@@ -1056,6 +1056,52 @@ function dealloc(slice) {
     }"#
                 )?;
             }
+        } else if class_name == "Layout" {
+            if type_script {
+                write!(
+                    writer,
+                    "{}",
+                    r#"
+    static parseOriginalLivesplitArray(data: Int8Array): Layout | null {
+        const slice = allocInt8Array(data);
+        const result = Layout.parseOriginalLivesplit(slice.ptr, slice.len);
+        dealloc(slice);
+        return result;
+    }
+    static parseOriginalLivesplitString(text: string): Layout | null {
+        const slice = allocString(text);
+        const result = Layout.parseOriginalLivesplit(slice.ptr, slice.len);
+        dealloc(slice);
+        return result;
+    }"#
+                )?;
+            } else {
+                write!(
+                    writer,
+                    "{}",
+                    r#"
+    /**
+     * @param {Int8Array} data
+     * @return {Layout | null}
+     */
+    static parseOriginalLivesplitArray(data) {
+        const slice = allocInt8Array(data);
+        const result = Layout.parseOriginalLivesplit(slice.ptr, slice.len);
+        dealloc(slice);
+        return result;
+    }
+    /**
+     * @param {string} text
+     * @return {Layout | null}
+     */
+    static parseOriginalLivesplitString(text) {
+        const slice = allocString(text);
+        const result = Layout.parseOriginalLivesplit(slice.ptr, slice.len);
+        dealloc(slice);
+        return result;
+    }"#
+                )?;
+            }
         }
 
         writeln!(

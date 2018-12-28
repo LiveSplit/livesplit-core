@@ -25,13 +25,11 @@ const WEIGHT: f64 = 0.75;
 fn generate(segments: &mut [Segment], method: TimingMethod) {
     let mut accumulated = Some(TimeSpan::zero());
 
-    // TODO: This may actually be possible to be fixed with a window like
+    // FIXME: This may actually be possible to be fixed with a window like
     // iterator.
     #[allow(clippy::needless_range_loop)]
     for i in 0..segments.len() {
-        // TODO: Borrowcheck. if accumulated.is_some() is only necessary because
-        // we can't assign to the outer variable otherwise.
-        if accumulated.is_some() {
+        if let Some(accumulated_val) = &mut accumulated {
             let (mut total_weights, mut total_time) = (0.0, 0.0);
             let mut current_weight = 1.0;
 
@@ -54,8 +52,7 @@ fn generate(segments: &mut [Segment], method: TimingMethod) {
             if total_weights == 0.0 {
                 accumulated = None;
             } else {
-                accumulated =
-                    Some(accumulated.unwrap() + TimeSpan::from_seconds(total_time / total_weights));
+                *accumulated_val += TimeSpan::from_seconds(total_time / total_weights);
             }
         }
         segments[i].comparison_mut(NAME)[method] = accumulated;

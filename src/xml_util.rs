@@ -1,4 +1,3 @@
-use super::super::ComparisonError;
 use crate::timing;
 use chrono::ParseError as ChronoError;
 use quick_xml::events::{attributes, BytesStart, Event};
@@ -7,7 +6,6 @@ use std::borrow::Cow;
 use std::io::{self, BufRead};
 use std::num::{ParseFloatError, ParseIntError};
 use std::ops::Deref;
-use std::result::Result as StdResult;
 use std::{str, string};
 
 quick_error! {
@@ -34,10 +32,6 @@ quick_error! {
         ElementNotFound {}
         /// The length of a buffer was too large.
         LengthOutOfBounds {}
-        /// Parsed comparison has an invalid name.
-        InvalidComparisonName(err: ComparisonError) {
-            from()
-        }
         /// Failed to decode a string slice as UTF-8.
         Utf8Str(err: str::Utf8Error) {
             from()
@@ -66,7 +60,7 @@ quick_error! {
 }
 
 /// The Result type for Parsers that parse XML-based splits files.
-pub type Result<T> = StdResult<T, Error>;
+// pub type Result<T> = StdResult<T, Error>;
 
 pub struct Tag<'a>(BytesStart<'a>, *mut Vec<u8>);
 
@@ -91,35 +85,46 @@ impl<'a> Tag<'a> {
 pub struct AttributeValue<'a>(&'a attributes::Attribute<'a>);
 
 impl<'a> AttributeValue<'a> {
-    pub fn get(self) -> Result<Cow<'a, str>> {
-        decode_cow_text(self.0.unescaped_value()?)
+    pub fn get<E>(self) -> Result<Cow<'a, str>, E>
+    where
+        E: From<Error> + From<string::FromUtf8Error> + From<str::Utf8Error>,
+    {
+        decode_cow_text(self.0.unescaped_value().map_err(Error::Xml)?)
+    }
+
+    pub fn get_raw(&self) -> &'a [u8] {
+        &self.0.value
     }
 }
 
-fn decode_cow_text(cow: Cow<'_, [u8]>) -> Result<Cow<'_, str>> {
+fn decode_cow_text<E>(cow: Cow<'_, [u8]>) -> Result<Cow<'_, str>, E>
+where
+    E: From<string::FromUtf8Error> + From<str::Utf8Error>,
+{
     Ok(match cow {
         Cow::Borrowed(b) => Cow::Borrowed(str::from_utf8(b)?),
         Cow::Owned(o) => Cow::Owned(String::from_utf8(o)?),
     })
 }
 
-pub fn text_parsed<R, F, T>(reader: &mut Reader<R>, buf: &mut Vec<u8>, f: F) -> Result<()>
+pub fn text_parsed<R, F, T, E>(reader: &mut Reader<R>, buf: &mut Vec<u8>, f: F) -> Result<(), E>
 where
     R: BufRead,
     F: FnOnce(T),
     T: str::FromStr,
-    <T as str::FromStr>::Err: Into<Error>,
+    E: From<Error> + From<string::FromUtf8Error> + From<str::Utf8Error> + From<T::Err>,
 {
     text_err(reader, buf, |t| {
-        f(t.parse().map_err(Into::into)?);
+        f(t.parse()?);
         Ok(())
     })
 }
 
-pub fn text<R, F>(reader: &mut Reader<R>, buf: &mut Vec<u8>, f: F) -> Result<()>
+pub fn text<R, F, E>(reader: &mut Reader<R>, buf: &mut Vec<u8>, f: F) -> Result<(), E>
 where
     R: BufRead,
     F: FnOnce(Cow<'_, str>),
+    E: From<Error> + From<string::FromUtf8Error> + From<str::Utf8Error>,
 {
     text_err(reader, buf, |t| {
         f(t);
@@ -127,47 +132,83 @@ where
     })
 }
 
-pub fn text_err<R, F>(reader: &mut Reader<R>, buf: &mut Vec<u8>, f: F) -> Result<()>
+pub fn text_err<R, F, E>(reader: &mut Reader<R>, buf: &mut Vec<u8>, f: F) -> Result<(), E>
 where
     R: BufRead,
-    F: FnOnce(Cow<'_, str>) -> Result<()>,
+    F: FnOnce(Cow<'_, str>) -> Result<(), E>,
+    E: From<Error> + From<string::FromUtf8Error> + From<str::Utf8Error>,
 {
-    text_as_bytes_err(reader, buf, |b| f(decode_cow_text(b)?))
+    text_as_bytes_err(reader, buf, |b| f(decode_cow_text::<E>(b)?))
 }
 
-pub fn text_as_bytes_err<R, F, T>(reader: &mut Reader<R>, buf: &mut Vec<u8>, f: F) -> Result<T>
+pub fn text_as_escaped_bytes_err<R, F, T, E>(
+    reader: &mut Reader<R>,
+    buf: &mut Vec<u8>,
+    f: F,
+) -> Result<T, E>
 where
     R: BufRead,
-    F: FnOnce(Cow<'_, [u8]>) -> Result<T>,
+    F: FnOnce(&[u8]) -> Result<T, E>,
+    E: From<Error>,
 {
-    let val;
     loop {
         buf.clear();
-        match reader.read_event(buf)? {
-            Event::Start(_) => return Err(Error::UnexpectedElement),
+        match reader.read_event(buf).map_err(Error::Xml)? {
+            Event::Start(_) => return Err(Error::UnexpectedElement).map_err(Into::into),
+            Event::End(_) => {
+                return f(&[]);
+            }
+            Event::Text(text) | Event::CData(text) => {
+                let val = f(&text)?;
+                end_tag_immediately(reader, buf)?;
+                return Ok(val);
+            }
+            Event::Eof => return Err(Error::UnexpectedEndOfFile).map_err(Into::into),
+            _ => {}
+        }
+    }
+}
+
+pub fn text_as_bytes_err<R, F, T, E>(
+    reader: &mut Reader<R>,
+    buf: &mut Vec<u8>,
+    f: F,
+) -> Result<T, E>
+where
+    R: BufRead,
+    F: FnOnce(Cow<'_, [u8]>) -> Result<T, E>,
+    E: From<Error>,
+{
+    loop {
+        buf.clear();
+        match reader.read_event(buf).map_err(Error::Xml)? {
+            Event::Start(_) => return Err(Error::UnexpectedElement).map_err(Into::into),
             Event::End(_) => {
                 return f(Cow::Borrowed(&[]));
             }
             Event::Text(text) | Event::CData(text) => {
-                let text = text.unescaped()?;
-                val = f(text)?;
-                break;
+                let text = text.unescaped().map_err(Into::into)?;
+                let val = f(text)?;
+                end_tag_immediately(reader, buf)?;
+                return Ok(val);
             }
-            Event::Eof => return Err(Error::UnexpectedEndOfFile),
+            Event::Eof => return Err(Error::UnexpectedEndOfFile).map_err(Into::into),
             _ => {}
         }
     }
-    end_tag_immediately(reader, buf)?;
-    Ok(val)
 }
 
-fn end_tag_immediately<R: BufRead>(reader: &mut Reader<R>, buf: &mut Vec<u8>) -> Result<()> {
+fn end_tag_immediately<R, E>(reader: &mut Reader<R>, buf: &mut Vec<u8>) -> Result<(), E>
+where
+    R: BufRead,
+    E: From<Error>,
+{
     loop {
         buf.clear();
-        match reader.read_event(buf)? {
-            Event::Start(_) => return Err(Error::UnexpectedElement),
+        match reader.read_event(buf).map_err(Error::Xml)? {
+            Event::Start(_) => return Err(Error::UnexpectedElement).map_err(Into::into),
             Event::End(_) => return Ok(()),
-            Event::Eof => return Err(Error::UnexpectedEndOfFile),
+            Event::Eof => return Err(Error::UnexpectedEndOfFile).map_err(Into::into),
             _ => {}
         }
     }
@@ -177,7 +218,7 @@ pub fn reencode_children<R>(
     reader: &mut Reader<R>,
     buf: &mut Vec<u8>,
     target_buf: &mut Vec<u8>,
-) -> Result<()>
+) -> Result<(), Error>
 where
     R: BufRead,
 {
@@ -217,11 +258,15 @@ where
     }
 }
 
-pub fn end_tag<R: BufRead>(reader: &mut Reader<R>, buf: &mut Vec<u8>) -> Result<()> {
+pub fn end_tag<R, E>(reader: &mut Reader<R>, buf: &mut Vec<u8>) -> Result<(), E>
+where
+    R: BufRead,
+    E: From<Error>,
+{
     let mut depth = 0;
     loop {
         buf.clear();
-        match reader.read_event(buf)? {
+        match reader.read_event(buf).map_err(Error::Xml)? {
             Event::Start(_) => {
                 depth += 1;
             }
@@ -231,24 +276,25 @@ pub fn end_tag<R: BufRead>(reader: &mut Reader<R>, buf: &mut Vec<u8>) -> Result<
                 }
                 depth -= 1;
             }
-            Event::Eof => return Err(Error::UnexpectedEndOfFile),
+            Event::Eof => return Err(Error::UnexpectedEndOfFile).map_err(Into::into),
             _ => {}
         }
     }
 }
 
-pub fn single_child<R, F, T>(
+pub fn single_child<R, F, T, E>(
     reader: &mut Reader<R>,
     buf: &mut Vec<u8>,
     tag: &[u8],
     mut f: F,
-) -> Result<T>
+) -> Result<T, E>
 where
     R: BufRead,
-    F: FnMut(&mut Reader<R>, Tag<'_>) -> Result<T>,
+    F: FnMut(&mut Reader<R>, Tag<'_>) -> Result<T, E>,
+    E: From<Error>,
 {
     let mut val = None;
-    parse_children(reader, buf, |reader, t| {
+    parse_children::<_, _, E>(reader, buf, |reader, t| {
         if t.name() == tag && val.is_none() {
             val = Some(f(reader, t)?);
             Ok(())
@@ -256,67 +302,70 @@ where
             end_tag(reader, t.into_buf())
         }
     })?;
-    val.ok_or(Error::ElementNotFound)
+    val.ok_or(Error::ElementNotFound).map_err(Into::into)
 }
 
-pub fn parse_children<R, F>(reader: &mut Reader<R>, buf: &mut Vec<u8>, mut f: F) -> Result<()>
+pub fn parse_children<R, F, E>(reader: &mut Reader<R>, buf: &mut Vec<u8>, mut f: F) -> Result<(), E>
 where
     R: BufRead,
-    F: FnMut(&mut Reader<R>, Tag<'_>) -> Result<()>,
+    F: FnMut(&mut Reader<R>, Tag<'_>) -> Result<(), E>,
+    E: From<Error>,
 {
     unsafe {
         let ptr_buf: *mut Vec<u8> = buf;
         loop {
             buf.clear();
-            match reader.read_event(buf)? {
+            match reader.read_event(buf).map_err(Error::Xml)? {
                 Event::Start(start) => {
                     let tag = Tag::new(start, ptr_buf);
                     f(reader, tag)?;
                 }
                 Event::End(_) => return Ok(()),
-                Event::Eof => return Err(Error::UnexpectedEndOfFile),
+                Event::Eof => return Err(Error::UnexpectedEndOfFile).map_err(Into::into),
                 _ => {}
             }
         }
     }
 }
 
-pub fn parse_base<R, F>(
+pub fn parse_base<R, F, E>(
     reader: &mut Reader<R>,
     buf: &mut Vec<u8>,
     tag: &[u8],
     mut f: F,
-) -> Result<()>
+) -> Result<(), E>
 where
     R: BufRead,
-    F: FnMut(&mut Reader<R>, Tag<'_>) -> Result<()>,
+    F: FnMut(&mut Reader<R>, Tag<'_>) -> Result<(), E>,
+    E: From<Error>,
 {
     unsafe {
         let ptr_buf: *mut Vec<u8> = buf;
         loop {
             buf.clear();
-            match reader.read_event(buf)? {
+            match reader.read_event(buf).map_err(Error::Xml)? {
                 Event::Start(start) => {
                     if start.name() == tag {
                         let tag = Tag::new(start, ptr_buf);
                         return f(reader, tag);
                     } else {
-                        return Err(Error::ElementNotFound);
+                        return Err(Error::ElementNotFound).map_err(Into::into);
                     }
                 }
-                Event::Eof => return Err(Error::UnexpectedEndOfFile),
+                Event::Eof => return Err(Error::UnexpectedEndOfFile).map_err(Into::into),
                 _ => {}
             }
         }
     }
 }
 
-pub fn parse_attributes<'a, F>(tag: &BytesStart<'a>, mut f: F) -> Result<()>
+pub fn parse_attributes<F, E>(tag: &BytesStart<'_>, mut f: F) -> Result<(), E>
 where
-    F: FnMut(&[u8], AttributeValue<'_>) -> Result<bool>,
+    F: FnMut(&[u8], AttributeValue<'_>) -> Result<bool, E>,
+    E: From<Error>,
 {
     for attribute in tag.attributes() {
-        let attribute = attribute?;
+        let attribute = attribute.map_err(Error::Xml)?;
         let key = attribute.key;
         if !f(key, AttributeValue(&attribute))? {
             return Ok(());
@@ -325,9 +374,10 @@ where
     Ok(())
 }
 
-pub fn optional_attribute_err<'a, F>(tag: &BytesStart<'a>, key: &[u8], mut f: F) -> Result<()>
+pub fn optional_attribute_err<F, E>(tag: &BytesStart<'_>, key: &[u8], mut f: F) -> Result<(), E>
 where
-    F: FnMut(Cow<'_, str>) -> Result<()>,
+    F: FnMut(Cow<'_, str>) -> Result<(), E>,
+    E: From<Error>,
 {
     parse_attributes(tag, |k, v| {
         if k == key {
@@ -339,12 +389,13 @@ where
     })
 }
 
-pub fn attribute_err<'a, F>(tag: &BytesStart<'a>, key: &[u8], mut f: F) -> Result<()>
+pub fn attribute_err<F, E>(tag: &BytesStart<'_>, key: &[u8], mut f: F) -> Result<(), E>
 where
-    F: FnMut(Cow<'_, str>) -> Result<()>,
+    F: FnMut(Cow<'_, str>) -> Result<(), E>,
+    E: From<Error>,
 {
     let mut called = false;
-    parse_attributes(tag, |k, v| {
+    parse_attributes::<_, E>(tag, |k, v| {
         if k == key {
             f(v.get()?)?;
             called = true;
@@ -356,13 +407,14 @@ where
     if called {
         Ok(())
     } else {
-        Err(Error::AttributeNotFound)
+        Err(Error::AttributeNotFound).map_err(Into::into)
     }
 }
 
-pub fn attribute<'a, F>(tag: &BytesStart<'a>, key: &[u8], mut f: F) -> Result<()>
+pub fn attribute<F, E>(tag: &BytesStart<'_>, key: &[u8], mut f: F) -> Result<(), E>
 where
     F: FnMut(Cow<'_, str>),
+    E: From<Error>,
 {
     attribute_err(tag, key, |t| {
         f(t);

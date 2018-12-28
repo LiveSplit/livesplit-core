@@ -248,7 +248,7 @@ impl Timer {
             self.deinitialize_game_time();
             self.run.start_next_run();
 
-            // TODO: OnStart
+            // FIXME: OnStart
         }
     }
 
@@ -271,7 +271,7 @@ impl Timer {
             }
             self.run.mark_as_modified();
 
-            // TODO: OnSplit
+            // FIXME: OnSplit
         }
     }
 
@@ -295,7 +295,7 @@ impl Timer {
             self.current_split_index = self.current_split_index.map(|i| i + 1);
             self.run.mark_as_modified();
 
-            // TODO: OnSkipSplit
+            // FIXME: OnSkipSplit
         }
     }
 
@@ -311,7 +311,7 @@ impl Timer {
             self.current_split_mut().unwrap().clear_split_time();
             self.run.mark_as_modified();
 
-            // TODO: OnUndoSplit
+            // FIXME: OnUndoSplit
         }
     }
 
@@ -361,7 +361,7 @@ impl Timer {
             segment.clear_split_time();
         }
 
-        // TODO: OnReset
+        // FIXME: OnReset
 
         self.run.fix_splits();
         self.run.regenerate_comparisons();
@@ -373,7 +373,7 @@ impl Timer {
             self.time_paused_at = self.current_time().real_time.unwrap();
             self.phase = Paused;
 
-            // TODO: OnPause
+            // FIXME: OnPause
         }
     }
 
@@ -383,7 +383,7 @@ impl Timer {
             self.adjusted_start_time = TimeStamp::now() - self.time_paused_at;
             self.phase = Running;
 
-            // TODO: OnResume
+            // FIXME: OnResume
         }
     }
 
@@ -440,7 +440,7 @@ impl Timer {
 
         self.adjusted_start_time = self.start_time_with_offset;
 
-        // TODO: OnUndoAllPauses
+        // FIXME: OnUndoAllPauses
     }
 
     /// Switches the current comparison to the next comparison in the list.
@@ -453,7 +453,7 @@ impl Timer {
         let index = (index + 1) % len;
         self.current_comparison = self.run.comparisons().nth(index).unwrap().to_owned();
 
-        // TODO: OnNextComparison
+        // FIXME: OnNextComparison
     }
 
     /// Switches the current comparison to the previous comparison in the list.
@@ -466,7 +466,7 @@ impl Timer {
         let index = (index + len - 1) % len;
         self.current_comparison = self.run.comparisons().nth(index).unwrap().to_owned();
 
-        // TODO: OnPreviousComparison
+        // FIXME: OnPreviousComparison
     }
 
     /// Returns the total duration of the current attempt. This is not affected

@@ -50,6 +50,5 @@ pub mod worstrun;
 pub mod wsplit;
 
 mod timer_kind;
-mod xml_util;
 
 pub use self::timer_kind::TimerKind;

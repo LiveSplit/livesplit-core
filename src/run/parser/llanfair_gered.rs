@@ -1,6 +1,6 @@
 //! Provides the parser for splits files used by Gered's Llanfair fork.
 
-use super::xml_util::{
+use crate::xml_util::{
     end_tag, optional_attribute_err, parse_base, parse_children, single_child, text,
     text_as_bytes_err, text_err, text_parsed,
 };
@@ -11,7 +11,44 @@ use image::{png, ColorType, ImageBuffer, Rgba};
 use quick_xml::Reader;
 use std::io::{BufRead, Cursor, Seek, SeekFrom};
 
-pub use super::xml_util::{Error, Result};
+use crate::xml_util::Error as XmlError;
+
+quick_error! {
+    /// The Error type for splits files that couldn't be parsed by the Llanfair (Gered)
+    /// Parser.
+    #[derive(Debug)]
+    pub enum Error {
+        /// The underlying XML format couldn't be parsed.
+        Xml(err: XmlError) {
+            from()
+        }
+        /// Failed to decode a string slice as UTF-8.
+        Utf8Str(err: std::str::Utf8Error) {
+            from()
+        }
+        /// Failed to decode a string as UTF-8.
+        Utf8String(err: std::string::FromUtf8Error) {
+            from()
+        }
+        /// Failed to parse an integer.
+        Int(err: std::num::ParseIntError) {
+            from()
+        }
+        /// The length of a buffer was too large.
+        LengthOutOfBounds {}
+        /// Failed to parse an image.
+        Image {}
+    }
+}
+
+/// The Result type for the Llanfair (Gered) Parser.
+pub type Result<T> = std::result::Result<T, Error>;
+
+// FIXME: Generalized Type Ascription (GTA 6)
+#[inline]
+fn type_hint<T>(v: Result<T>) -> Result<T> {
+    v
+}
 
 fn time_span<R, F>(reader: &mut Reader<R>, buf: &mut Vec<u8>, f: F) -> Result<()>
 where
@@ -47,14 +84,16 @@ where
         let tag_buf = tag.into_buf();
         let (width, height, image) = text_as_bytes_err(reader, tag_buf, |t| {
             buf.clear();
-            base64::decode_config_buf(&t, STANDARD, buf).map_err(|_| Error::ElementNotFound)?;
+            base64::decode_config_buf(&t, STANDARD, buf).map_err(|_| Error::Image)?;
 
             let (width, height);
             {
                 let mut cursor = Cursor::new(&buf);
-                cursor.seek(SeekFrom::Current(0xD1))?;
-                height = cursor.read_u32::<BE>()?;
-                width = cursor.read_u32::<BE>()?;
+                cursor
+                    .seek(SeekFrom::Current(0xD1))
+                    .map_err(|_| Error::Image)?;
+                height = cursor.read_u32::<BE>().map_err(|_| Error::Image)?;
+                width = cursor.read_u32::<BE>().map_err(|_| Error::Image)?;
             }
 
             let len = (width as usize)
@@ -63,12 +102,12 @@ where
                 .ok_or(Error::LengthOutOfBounds)?;
 
             if buf.len() < 0xFE + len {
-                return Err(Error::ElementNotFound);
+                return Err(Error::Image);
             }
 
             let buf = &buf[0xFE..][..len];
-            let image = ImageBuffer::<Rgba<u8>, _>::from_raw(width, height, buf)
-                .ok_or(Error::ElementNotFound)?;
+            let image =
+                ImageBuffer::<Rgba<u8>, _>::from_raw(width, height, buf).ok_or(Error::Image)?;
 
             Ok((width, height, image))
         })?;
@@ -76,7 +115,7 @@ where
         tag_buf.clear();
         png::PNGEncoder::new(&mut *tag_buf)
             .encode(image.as_ref(), width, height, ColorType::RGBA(8))
-            .map_err(|_| Error::ElementNotFound)?;
+            .map_err(|_| Error::Image)?;
 
         f(tag_buf);
 
@@ -108,12 +147,12 @@ where
                         })
                     })
                 } else if tag.name() == b"runTime" {
-                    optional_attribute_err(&tag, b"reference", |reference| {
+                    type_hint(optional_attribute_err(&tag, b"reference", |reference| {
                         if reference == "../bestTime" {
                             defer_setting_run_time = true;
                         }
                         Ok(())
-                    })?;
+                    }))?;
                     if !defer_setting_run_time {
                         single_child(reader, tag.into_buf(), b"milliseconds", |reader, tag| {
                             time_span(reader, tag.into_buf(), |t| {
@@ -138,7 +177,7 @@ where
                 *total_time += segment
                     .best_segment_time()
                     .real_time
-                    .ok_or(Error::ElementNotFound)?;
+                    .ok_or(Error::Xml(XmlError::ElementNotFound))?;
                 segment.set_personal_best_split_time(RealTime(Some(*total_time)).into());
             }
 

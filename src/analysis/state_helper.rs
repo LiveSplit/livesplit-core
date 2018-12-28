@@ -227,7 +227,7 @@ pub fn check_live_delta(
     method: TimingMethod,
 ) -> Option<TimeSpan> {
     if timer.current_phase() == TimerPhase::Running || timer.current_phase() == TimerPhase::Paused {
-        let use_best_segment = true; // TODO: Make this a parameter
+        let use_best_segment = true; // FIXME: Make this a parameter
         let current_split = timer
             .current_split()
             .unwrap()
@@ -277,7 +277,7 @@ pub fn split_color(
     comparison: &str,
     method: TimingMethod,
 ) -> SemanticColor {
-    let use_best_segment = true; // TODO: Make this a parameter
+    let use_best_segment = true; // FIXME: Make this a parameter
 
     if show_best_segments && use_best_segment && check_best_segment(timer, segment_index, method) {
         SemanticColor::BestSegment

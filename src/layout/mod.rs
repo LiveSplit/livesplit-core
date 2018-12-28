@@ -9,6 +9,7 @@ pub mod editor;
 mod general_settings;
 mod layout_settings;
 mod layout_state;
+pub mod parser;
 
 pub use self::component::Component;
 pub use self::component_settings::ComponentSettings;
