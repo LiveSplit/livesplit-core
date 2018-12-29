@@ -6,7 +6,7 @@ use crate::settings::SemanticColor::{
     self, AheadGainingTime as AheadGaining, BehindGainingTime as BehindGaining,
     BehindLosingTime as BehindLosing, BestSegment as Best, Default as Text,
 };
-use crate::tests_helper::{run_with_splits_opt, start_run};
+use crate::tests_helper::{make_progress_run_with_splits_opt, run_with_splits_opt, start_run};
 use crate::{Run, Segment, TimeSpan, Timer};
 
 type Values = &'static [([&'static str; 6], [SemanticColor; 6])];
@@ -1210,6 +1210,91 @@ fn column_delta_best_segment_colors() {
     let state = component.state(&timer, &layout_settings);
     // The segment of 8.1 is longer than the best segment of 8.0, so this is not a best segment
     check_column_color(&state, 4, Text);
+}
+
+#[test]
+fn delta_or_split_time() {
+    // Tests whether the `Delta or Split Time` Column Type behaves the same way
+    // in livesplit-core.
+
+    let mut timer = timer();
+
+    let layout_settings = Default::default();
+    let mut component = Component::with_settings(Settings {
+        columns: vec![ColumnSettings {
+            start_with: ColumnStartWith::ComparisonTime,
+            update_with: ColumnUpdateWith::DeltaWithFallback,
+            ..Default::default()
+        }],
+        fill_with_blank_space: false,
+        ..Default::default()
+    });
+
+    // We prepare splits with every split having a time and the second split
+    // a low best segment.
+    start_run(&mut timer);
+    make_progress_run_with_splits_opt(
+        &mut timer,
+        &[
+            Some(5.0),
+            Some(6.0),
+            Some(15.0),
+            Some(20.0),
+            Some(25.0),
+            Some(30.0),
+        ],
+    );
+    check_column_state(
+        &component.state(&timer, &layout_settings),
+        0,
+        &[(
+            ["0:05", "0:06", "0:15", "0:20", "0:25", "0:30"],
+            [Best, Best, Best, Best, Best, Best],
+        )],
+    );
+    timer.reset(true);
+
+    // We do another run, but this time with the second and second to last split
+    // being skipped.
+    start_run(&mut timer);
+    make_progress_run_with_splits_opt(
+        &mut timer,
+        &[Some(4.0), None, Some(8.0), Some(12.0), None, Some(20.0)],
+    );
+    check_column_state(
+        &component.state(&timer, &layout_settings),
+        0,
+        &[(
+            ["−1.0", "—", "−7.0", "−8.0", "—", "−10.0"],
+            [Best, Text, Best, Best, Text, Best],
+        )],
+    );
+    timer.reset(true);
+
+    // In this third run, we should have split times instead of deltas for the
+    // two skipped splits we had before. The way we set them up, the second to
+    // last one is a best segment and the second split isn't.
+    start_run(&mut timer);
+    make_progress_run_with_splits_opt(
+        &mut timer,
+        &[
+            Some(2.0),
+            Some(4.0),
+            Some(6.0),
+            Some(8.0),
+            Some(12.0),
+            Some(14.0),
+        ],
+    );
+    check_column_state(
+        &component.state(&timer, &layout_settings),
+        0,
+        &[(
+            ["−2.0", "0:04", "−2.0", "−4.0", "0:12", "−6.0"],
+            [Best, Text, Best, Best, Best, Best],
+        )],
+    );
+    timer.reset(true);
 }
 
 fn check_column_color(state: &State, split_index: usize, expected_color: SemanticColor) {

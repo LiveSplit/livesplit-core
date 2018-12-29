@@ -139,6 +139,10 @@ pub enum ColumnUpdateWith {
     /// The value gets replaced by the delta of the current attempt's and the
     /// comparison's split time.
     Delta,
+    /// The value gets replaced by the delta of the current attempt's and the
+    /// comparison's split time. If there is no delta, the value gets replaced
+    /// by the current attempt's split time instead.
+    DeltaWithFallback,
     /// The value gets replaced by the current attempt's segment time.
     SegmentTime,
     /// The value gets replaced by the current attempt's segment delta, which is
@@ -146,6 +150,12 @@ pub enum ColumnUpdateWith {
     /// to the comparison's segment time. This matches the Previous Segment
     /// component.
     SegmentDelta,
+    /// The value gets replaced by the current attempt's segment delta, which is
+    /// how much faster or slower the current attempt's segment time is compared
+    /// to the comparison's segment time. This matches the Previous Segment
+    /// component. If there is no segment delta, then value gets replaced by the
+    /// current attempt's segment time instead.
+    SegmentDeltaWithFallback,
 }
 
 /// Specifies when a column's value gets updated.
@@ -715,18 +725,24 @@ fn column_update_value(
         (SplitTime, false) => Some((segment.split_time()[method], SemanticColor::Default, false)),
         (SplitTime, true) => Some((timer.current_time()[method], SemanticColor::Default, false)),
 
-        (Delta, false) => {
-            let value = catch! {
-                segment.split_time()[method]? -
+        (Delta, false) | (DeltaWithFallback, false) => {
+            let split_time = segment.split_time()[method];
+            let delta = catch! {
+                split_time? -
                 segment.comparison(comparison)[method]?
+            };
+            let (value, is_delta) = if delta.is_none() && column.update_with.has_fallback() {
+                (split_time, false)
+            } else {
+                (delta, true)
             };
             Some((
                 value,
-                split_color(timer, value, segment_index, true, true, comparison, method),
-                true,
+                split_color(timer, delta, segment_index, true, true, comparison, method),
+                is_delta,
             ))
         }
-        (Delta, true) => Some((
+        (Delta, true) | (DeltaWithFallback, true) => Some((
             catch! {
                 timer.current_time()[method]? -
                 segment.comparison(comparison)[method]?
@@ -746,15 +762,23 @@ fn column_update_value(
             false,
         )),
 
-        (SegmentDelta, false) => {
-            let value = analysis::previous_segment_delta(timer, segment_index, comparison, method);
+        (SegmentDelta, false) | (SegmentDeltaWithFallback, false) => {
+            let delta = analysis::previous_segment_delta(timer, segment_index, comparison, method);
+            let (value, is_delta) = if delta.is_none() && column.update_with.has_fallback() {
+                (
+                    analysis::previous_segment_time(timer, segment_index, method),
+                    false,
+                )
+            } else {
+                (delta, true)
+            };
             Some((
                 value,
-                split_color(timer, value, segment_index, false, true, comparison, method),
-                true,
+                split_color(timer, delta, segment_index, false, true, comparison, method),
+                is_delta,
             ))
         }
-        (SegmentDelta, true) => Some((
+        (SegmentDelta, true) | (SegmentDeltaWithFallback, true) => Some((
             analysis::live_segment_delta(timer, segment_index, comparison, method),
             SemanticColor::Default,
             true,
@@ -766,7 +790,14 @@ impl ColumnUpdateWith {
     fn is_segment_based(self) -> bool {
         use self::ColumnUpdateWith::*;
         match self {
-            SegmentDelta | SegmentTime => true,
+            SegmentDelta | SegmentTime | SegmentDeltaWithFallback => true,
+            _ => false,
+        }
+    }
+    fn has_fallback(self) -> bool {
+        use self::ColumnUpdateWith::*;
+        match self {
+            DeltaWithFallback | SegmentDeltaWithFallback => true,
             _ => false,
         }
     }

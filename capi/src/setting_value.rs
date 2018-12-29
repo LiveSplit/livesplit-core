@@ -255,8 +255,10 @@ pub unsafe extern "C" fn SettingValue_from_column_update_with(
         "DontUpdate" => ColumnUpdateWith::DontUpdate,
         "SplitTime" => ColumnUpdateWith::SplitTime,
         "Delta" => ColumnUpdateWith::Delta,
+        "DeltaWithFallback" => ColumnUpdateWith::DeltaWithFallback,
         "SegmentTime" => ColumnUpdateWith::SegmentTime,
         "SegmentDelta" => ColumnUpdateWith::SegmentDelta,
+        "SegmentDeltaWithFallback" => ColumnUpdateWith::SegmentDeltaWithFallback,
         _ => return None,
     };
     Some(Box::new(value.into()))

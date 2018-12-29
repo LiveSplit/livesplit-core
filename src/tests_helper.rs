@@ -19,9 +19,9 @@ pub(crate) fn run_with_splits(timer: &mut Timer, splits: &[f64]) {
     timer.reset(true);
 }
 
-pub(crate) fn run_with_splits_opt(timer: &mut Timer, splits: &[Option<f64>]) {
-    start_run(timer);
-
+/// Same as run_with_splits_opt, but progresses an already active attempt and
+/// doesn't reset it. Useful for checking intermediate states.
+pub(crate) fn make_progress_run_with_splits_opt(timer: &mut Timer, splits: &[Option<f64>]) {
     for &split in splits {
         if let Some(split) = split {
             timer.set_game_time(TimeSpan::from_seconds(split));
@@ -30,6 +30,10 @@ pub(crate) fn run_with_splits_opt(timer: &mut Timer, splits: &[Option<f64>]) {
             timer.skip_split();
         }
     }
+}
 
+pub(crate) fn run_with_splits_opt(timer: &mut Timer, splits: &[Option<f64>]) {
+    start_run(timer);
+    make_progress_run_with_splits_opt(timer, splits);
     timer.reset(true);
 }

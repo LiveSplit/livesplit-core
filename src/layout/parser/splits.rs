@@ -88,7 +88,7 @@ where
                                         ),
                                         "DeltaorSplitTime" => (
                                             ColumnStartWith::ComparisonTime,
-                                            ColumnUpdateWith::Delta, // FIXME: With Fallback
+                                            ColumnUpdateWith::DeltaWithFallback,
                                             ColumnUpdateTrigger::Contextual,
                                         ),
                                         "SegmentDelta" => (
@@ -103,7 +103,7 @@ where
                                         ),
                                         "SegmentDeltaorSegmentTime" => (
                                             ColumnStartWith::ComparisonSegmentTime,
-                                            ColumnUpdateWith::SegmentDelta, // FIXME: With Fallback
+                                            ColumnUpdateWith::SegmentDeltaWithFallback,
                                             ColumnUpdateTrigger::Contextual,
                                         ),
                                         _ => return Err(Error::ColumnType),
