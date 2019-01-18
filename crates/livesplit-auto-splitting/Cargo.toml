@@ -1,0 +1,14 @@
+[package]
+name = "livesplit-auto-splitting"
+version = "0.1.0"
+authors = ["Christopher Serr <christopher.serr@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+anyhow = "1.0.28"
+log = "0.4.8"
+num-traits = "0.2.11"
+num-derive = "0.3.0"
+snafu = "0.6.6"
+wasmtime = { git = "https://github.com/bytecodealliance/wasmtime", default-features = false }
+winapi = { version = "0.3.5", features = ["handleapi", "memoryapi", "processthreadsapi", "psapi", "tlhelp32", "winnt", "wow64apiset"] }
