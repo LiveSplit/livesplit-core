@@ -58,6 +58,8 @@ macro_rules! catch {
 }
 
 pub mod analysis;
+#[cfg(feature = "auto-splitting")]
+pub mod auto_splitting;
 pub mod clear_vec;
 pub mod comparison;
 pub mod component;
