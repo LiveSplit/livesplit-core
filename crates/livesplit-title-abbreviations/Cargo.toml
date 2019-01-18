@@ -1,0 +1,8 @@
+[package]
+name = "livesplit-title-abbreviations"
+version = "0.1.0"
+authors = ["Christopher Serr <christopher.serr@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+unicase = "2.2.0"

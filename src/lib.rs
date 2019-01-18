@@ -75,6 +75,8 @@ mod image;
 #[cfg(feature = "image-shrinking")]
 mod image_shrinking;
 pub mod layout;
+#[cfg(feature = "rendering")]
+pub mod rendering;
 pub mod run;
 pub mod settings;
 #[cfg(test)]
