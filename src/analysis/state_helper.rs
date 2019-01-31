@@ -69,16 +69,20 @@ pub fn comparison_segment_time(
     comparison: &str,
     method: TimingMethod,
 ) -> Option<TimeSpan> {
-    let current_comparison_time = run.segment(segment_index).comparison(comparison)[method]?;
+    if comparison == best_segments::NAME {
+        run.segment(segment_index).best_segment_time()[method]
+    } else {
+        let current_comparison_time = run.segment(segment_index).comparison(comparison)[method]?;
 
-    let previous_comparison_time = find_previous_non_empty_comparison_time(
-        &run.segments()[..segment_index],
-        comparison,
-        method,
-    )
-    .unwrap_or_default();
+        let previous_comparison_time = find_previous_non_empty_comparison_time(
+            &run.segments()[..segment_index],
+            comparison,
+            method,
+        )
+        .unwrap_or_default();
 
-    Some(current_comparison_time - previous_comparison_time)
+        Some(current_comparison_time - previous_comparison_time)
+    }
 }
 
 fn segment_delta(
@@ -88,19 +92,35 @@ fn segment_delta(
     comparison: &str,
     method: TimingMethod,
 ) -> Option<TimeSpan> {
-    let segment_index_comparison = run.segment(segment_index).comparison(comparison)[method]?;
+    if comparison == best_segments::NAME {
+        let mut accumulated_best_segments = run.segment(segment_index).best_segment_time()[method];
+        let previous_split_time =
+            find_previous_non_empty_segment(&run.segments()[..segment_index], |segment| {
+                let split_time = segment.split_time()[method];
+                if split_time.is_none() {
+                    accumulated_best_segments = catch! {
+                        accumulated_best_segments? + segment.best_segment_time()[method]?
+                    };
+                }
+                split_time
+            })
+            .unwrap_or_default();
+        Some((current_time - previous_split_time) - accumulated_best_segments?)
+    } else {
+        let segment_index_comparison = run.segment(segment_index).comparison(comparison)[method]?;
 
-    Some(
-        find_previous_non_empty_split_and_comparison_time(
-            &run.segments()[..segment_index],
-            comparison,
-            method,
+        Some(
+            find_previous_non_empty_split_and_comparison_time(
+                &run.segments()[..segment_index],
+                comparison,
+                method,
+            )
+            .map(|(split_time, comparison_time)| {
+                (current_time - segment_index_comparison) - (split_time - comparison_time)
+            })
+            .unwrap_or_else(|| current_time - segment_index_comparison),
         )
-        .map(|(split_time, comparison_time)| {
-            (current_time - segment_index_comparison) - (split_time - comparison_time)
-        })
-        .unwrap_or_else(|| current_time - segment_index_comparison),
-    )
+    }
 }
 
 fn segment_time(
