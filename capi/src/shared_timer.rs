@@ -1,10 +1,10 @@
 //! A Shared Timer that can be used to share a single timer object with multiple
 //! owners.
 
-use livesplit_core::SharedTimer;
 use crate::timer::OwnedTimer;
 use crate::timer_read_lock::OwnedTimerReadLock;
 use crate::timer_write_lock::OwnedTimerWriteLock;
+use livesplit_core::SharedTimer;
 
 /// type
 pub type OwnedSharedTimer = Box<SharedTimer>;

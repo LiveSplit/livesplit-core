@@ -2,11 +2,11 @@
 //! information about which parser parsed it.
 
 use super::output_vec;
+use crate::run::OwnedRun;
 use livesplit_core::run::parser::{
     composite::{ParsedRun, Result},
     TimerKind,
 };
-use crate::run::OwnedRun;
 use std::io::Write;
 use std::os::raw::c_char;
 

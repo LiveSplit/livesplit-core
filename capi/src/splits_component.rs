@@ -6,9 +6,9 @@
 
 use super::{output_vec, Json};
 use crate::component::OwnedComponent;
+use crate::splits_component_state::OwnedSplitsComponentState;
 use livesplit_core::component::splits::Component as SplitsComponent;
 use livesplit_core::{GeneralLayoutSettings, Timer};
-use crate::splits_component_state::OwnedSplitsComponentState;
 
 /// type
 pub type OwnedSplitsComponent = Box<SplitsComponent>;

@@ -2,8 +2,8 @@
 //! platform and region of the game. All of this information is optional.
 
 use super::output_str;
-use livesplit_core::RunMetadata;
 use crate::run_metadata_variables_iter::OwnedRunMetadataVariablesIter;
+use livesplit_core::RunMetadata;
 use std::os::raw::c_char;
 
 /// type

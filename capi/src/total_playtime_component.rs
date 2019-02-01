@@ -3,9 +3,9 @@
 
 use super::{output_vec, Json};
 use crate::component::OwnedComponent;
+use crate::total_playtime_component_state::OwnedTotalPlaytimeComponentState;
 use livesplit_core::component::total_playtime::Component as TotalPlaytimeComponent;
 use livesplit_core::Timer;
-use crate::total_playtime_component_state::OwnedTotalPlaytimeComponentState;
 
 /// type
 pub type OwnedTotalPlaytimeComponent = Box<TotalPlaytimeComponent>;

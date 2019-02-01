@@ -3,7 +3,6 @@
 
 //! mod
 
-
 use serde_json;
 
 use std::cell::{Cell, RefCell};
@@ -70,9 +69,9 @@ pub mod title_component_state;
 pub mod total_playtime_component;
 pub mod total_playtime_component_state;
 
-use livesplit_core::{Time, TimeSpan};
 use crate::run_metadata_variable::RunMetadataVariable;
 use crate::segment_history_element::SegmentHistoryElement;
+use livesplit_core::{Time, TimeSpan};
 
 /// type
 pub type Json = *const c_char;

@@ -1,7 +1,7 @@
+use crate::{Class, Type, TypeKind};
 use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::io::{Result, Write};
-use crate::{Class, Type, TypeKind};
 
 fn get_type(ty: &Type) -> Cow<'_, str> {
     let mut name = Cow::Borrowed(match ty.name.as_str() {

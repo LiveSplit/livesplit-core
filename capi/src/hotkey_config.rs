@@ -2,9 +2,9 @@
 //! as hotkeys for the different actions.
 
 use super::{output_vec, str, Json};
+use crate::setting_value::OwnedSettingValue;
 use livesplit_core::HotkeyConfig;
 use serde_json;
-use crate::setting_value::OwnedSettingValue;
 use std::io::Cursor;
 
 /// type

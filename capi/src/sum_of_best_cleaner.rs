@@ -5,8 +5,8 @@
 //! Cleaner will point out all of occurrences of this and allows you to delete
 //! them individually if any of them seem wrong.
 
-use livesplit_core::run::editor::cleaning::SumOfBestCleaner;
 use crate::potential_clean_up::{NullableOwnedPotentialCleanUp, OwnedPotentialCleanUp};
+use livesplit_core::run::editor::cleaning::SumOfBestCleaner;
 
 /// type
 pub type OwnedSumOfBestCleaner = Box<SumOfBestCleaner<'static>>;

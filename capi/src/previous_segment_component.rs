@@ -6,9 +6,9 @@
 
 use super::{output_vec, Json};
 use crate::component::OwnedComponent;
+use crate::previous_segment_component_state::OwnedPreviousSegmentComponentState;
 use livesplit_core::component::previous_segment::Component as PreviousSegmentComponent;
 use livesplit_core::{GeneralLayoutSettings, Timer};
-use crate::previous_segment_component_state::OwnedPreviousSegmentComponentState;
 
 /// type
 pub type OwnedPreviousSegmentComponent = Box<PreviousSegmentComponent>;

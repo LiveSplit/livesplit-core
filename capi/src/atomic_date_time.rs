@@ -1,8 +1,8 @@
 //! An Atomic Date Time represents a UTC Date Time that tries to be as close to
 //! an atomic clock as possible.
 
-use livesplit_core::AtomicDateTime;
 use crate::output_str;
+use livesplit_core::AtomicDateTime;
 use std::os::raw::c_char;
 
 /// type

@@ -1,7 +1,7 @@
+use crate::{Class, Function, Type, TypeKind};
 use heck::{CamelCase, MixedCase};
 use std::collections::BTreeMap;
 use std::io::{Result, Write};
-use crate::{Class, Function, Type, TypeKind};
 
 fn get_hl_type(ty: &Type) -> String {
     if ty.is_custom {

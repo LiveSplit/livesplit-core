@@ -4,9 +4,9 @@
 
 use super::{output_vec, Json};
 use crate::component::OwnedComponent;
+use crate::timer_component_state::OwnedTimerComponentState;
 use livesplit_core::component::timer::Component as TimerComponent;
 use livesplit_core::{GeneralLayoutSettings, Timer};
-use crate::timer_component_state::OwnedTimerComponentState;
 
 /// type
 pub type OwnedTimerComponent = Box<TimerComponent>;

@@ -1,12 +1,12 @@
 //! Describes a setting's value. Such a value can be of a variety of different
 //! types.
 
+use crate::str;
 use livesplit_core::component::splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith};
 use livesplit_core::settings::{Alignment, Color, Gradient, ListGradient, Value as SettingValue};
 use livesplit_core::timing::formatter::{Accuracy, DigitsFormat};
 use livesplit_core::TimingMethod;
 use std::os::raw::c_char;
-use crate::str;
 
 /// type
 pub type OwnedSettingValue = Box<SettingValue>;

@@ -1,9 +1,9 @@
 //! A time that can store a Real Time and a Game Time. Both of them are
 //! optional.
 
+use crate::time_span::NullableTimeSpan;
 use livesplit_core::{Time, TimingMethod};
 use std::ptr;
-use crate::time_span::NullableTimeSpan;
 
 /// type
 pub type OwnedTime = Box<Time>;

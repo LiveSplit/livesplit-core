@@ -6,8 +6,8 @@
 use super::{output_vec, Json};
 use crate::component::OwnedComponent;
 use crate::layout::OwnedLayout;
-use livesplit_core::{LayoutEditor, Timer};
 use crate::setting_value::OwnedSettingValue;
+use livesplit_core::{LayoutEditor, Timer};
 
 /// type
 pub type OwnedLayoutEditor = Box<LayoutEditor>;

@@ -4,11 +4,11 @@
 //! state objects that can be visualized by any kind of User Interface.
 
 use super::{output_vec, str, Json};
-use livesplit_core::{Run, RunEditor, TimingMethod};
 use crate::run::OwnedRun;
+use crate::sum_of_best_cleaner::OwnedSumOfBestCleaner;
+use livesplit_core::{Run, RunEditor, TimingMethod};
 use std::os::raw::c_char;
 use std::slice;
-use crate::sum_of_best_cleaner::OwnedSumOfBestCleaner;
 
 /// type
 pub type OwnedRunEditor = Box<RunEditor>;

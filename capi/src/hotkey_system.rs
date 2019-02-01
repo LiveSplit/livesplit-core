@@ -5,8 +5,8 @@
 //! System temporarily. By default the Hotkey System is activated.
 
 use crate::hotkey_config::OwnedHotkeyConfig;
-use livesplit_core::HotkeySystem;
 use crate::shared_timer::OwnedSharedTimer;
+use livesplit_core::HotkeySystem;
 
 /// type
 pub type OwnedHotkeySystem = Box<HotkeySystem>;

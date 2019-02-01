@@ -8,9 +8,9 @@
 
 use super::{output_vec, Json};
 use crate::component::OwnedComponent;
+use crate::sum_of_best_component_state::OwnedSumOfBestComponentState;
 use livesplit_core::component::sum_of_best::Component as SumOfBestComponent;
 use livesplit_core::Timer;
-use crate::sum_of_best_component_state::OwnedSumOfBestComponentState;
 
 /// type
 pub type OwnedSumOfBestComponent = Box<SumOfBestComponent>;

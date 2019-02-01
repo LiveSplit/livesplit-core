@@ -1,8 +1,8 @@
 //! Iterates over all the segment times of a segment and their indices.
 
 use super::SEGMENT_HISTORY_ELEMENT;
-use livesplit_core::Time;
 use crate::segment_history_element::{NullableSegmentHistoryElement, SegmentHistoryElement};
+use livesplit_core::Time;
 use std::{ptr, slice};
 
 /// type

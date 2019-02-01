@@ -4,9 +4,9 @@
 
 use super::{output_vec, str, Json};
 use crate::component::OwnedComponent;
+use crate::text_component_state::OwnedTextComponentState;
 use livesplit_core::component::text::Component as TextComponent;
 use std::os::raw::c_char;
-use crate::text_component_state::OwnedTextComponentState;
 
 /// type
 pub type OwnedTextComponent = Box<TextComponent>;

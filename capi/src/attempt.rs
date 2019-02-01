@@ -4,9 +4,9 @@
 
 use super::{output_time, output_time_span};
 use crate::atomic_date_time::NullableOwnedAtomicDateTime;
+use crate::time_span::NullableTimeSpan;
 use livesplit_core::{Attempt, Time};
 use std::ptr;
-use crate::time_span::NullableTimeSpan;
 
 /// type
 pub type OwnedAttempt = Box<Attempt>;

@@ -2,8 +2,8 @@
 //! that have been specified.
 
 use super::RUN_METADATA_VARIABLE;
-use livesplit_core::indexmap;
 use crate::run_metadata_variable::{NullableRunMetadataVariable, RunMetadataVariable};
+use livesplit_core::indexmap;
 use std::ptr;
 
 /// type

@@ -4,9 +4,9 @@
 
 use super::{output_vec, Json};
 use crate::component::OwnedComponent;
+use crate::title_component_state::OwnedTitleComponentState;
 use livesplit_core::component::title::Component as TitleComponent;
 use livesplit_core::Timer;
-use crate::title_component_state::OwnedTitleComponentState;
 
 /// type
 pub type OwnedTitleComponent = Box<TitleComponent>;

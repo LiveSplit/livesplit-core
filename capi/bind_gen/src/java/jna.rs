@@ -1,10 +1,10 @@
 use super::write_class_comments;
+use crate::{Class, Function, Type, TypeKind};
 use heck::MixedCase;
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::{BufWriter, Result, Write};
 use std::path::Path;
-use crate::{Class, Function, Type, TypeKind};
 
 fn get_hl_type(ty: &Type) -> String {
     if ty.is_custom {
