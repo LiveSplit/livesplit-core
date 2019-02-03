@@ -7,28 +7,39 @@
 //! the actual sum of their best segment times. The name is therefore a bit
 //! misleading, but sticks around for historical reasons.
 
-use super::{track_branch, track_current_run, track_personal_best_run};
+use super::{track_branch, track_current_run, track_personal_best_run, Prediction};
 use crate::{Segment, TimeSpan, TimingMethod};
 
-fn populate_prediction(prediction: &mut Option<TimeSpan>, predicted_time: Option<TimeSpan>) {
+fn populate_prediction(
+    predecessor: usize,
+    target_prediction: &mut Option<Prediction>,
+    predicted_time: Option<TimeSpan>,
+) {
     if let Some(predicted_time) = predicted_time {
-        if prediction.map_or(true, |t| predicted_time < t) {
-            *prediction = Some(predicted_time);
+        if target_prediction.map_or(true, |p| predicted_time < p.time) {
+            *target_prediction = Some(Prediction {
+                time: predicted_time,
+                predecessor,
+            });
         }
     }
 }
 
 fn populate_predictions(
     segments: &[Segment],
-    current_time: Option<TimeSpan>,
+    current_prediction: Option<Prediction>,
     segment_index: usize,
-    predictions: &mut [Option<TimeSpan>],
+    predictions: &mut [Option<Prediction>],
     simple_calculation: bool,
     use_current_run: bool,
     method: TimingMethod,
 ) {
-    if let Some(current_time) = current_time {
+    if let Some(Prediction {
+        time: current_time, ..
+    }) = current_prediction
+    {
         populate_prediction(
+            segment_index,
             &mut predictions[segment_index + 1],
             segments[segment_index].best_segment_time()[method].map(|t| t + current_time),
         );
@@ -55,18 +66,18 @@ fn populate_predictions(
                         null_segment_index,
                         method,
                     );
-                    populate_prediction(&mut predictions[index], time[method]);
+                    populate_prediction(segment_index, &mut predictions[index], time[method]);
                 }
             }
         }
         if use_current_run {
             let (index, time) =
                 track_current_run(segments, Some(current_time), segment_index, method);
-            populate_prediction(&mut predictions[index], time[method]);
+            populate_prediction(segment_index, &mut predictions[index], time[method]);
         }
         let (index, time) =
             track_personal_best_run(segments, Some(current_time), segment_index, method);
-        populate_prediction(&mut predictions[index], time[method]);
+        populate_prediction(segment_index, &mut predictions[index], time[method]);
     }
 }
 
@@ -92,18 +103,17 @@ fn populate_predictions(
 #[allow(clippy::needless_range_loop)]
 pub fn calculate(
     segments: &[Segment],
-    predictions: &mut [Option<TimeSpan>],
+    predictions: &mut [Option<Prediction>],
     simple_calculation: bool,
     use_current_run: bool,
     method: TimingMethod,
 ) -> Option<TimeSpan> {
-    predictions[0] = Some(TimeSpan::zero());
+    predictions[0] = Some(Prediction::default());
     let end_index = segments.len();
     for segment_index in 0..end_index {
-        let current_time = predictions[segment_index];
         populate_predictions(
             segments,
-            current_time,
+            predictions[segment_index],
             segment_index,
             predictions,
             simple_calculation,
@@ -111,5 +121,5 @@ pub fn calculate(
             method,
         );
     }
-    predictions[end_index]
+    Some(predictions[end_index]?.time)
 }

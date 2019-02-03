@@ -10,7 +10,23 @@
 pub mod best;
 pub mod worst;
 
+#[cfg(test)]
+mod tests;
+
 use crate::{Segment, Time, TimeSpan, TimingMethod};
+
+/// Describes the shortest amount of time it takes to reach a certain segment.
+/// Since there is the possibility that the shortest path is actually skipping
+/// segments, there's an additional predecessor index that describes the segment
+/// this prediction is based on. By following all the predecessors backwards,
+/// you can get access to the single fastest route.
+#[derive(Copy, Clone, Default, Debug, PartialEq, Eq)]
+pub struct Prediction {
+    /// The shortest amount of time it takes to reach the segment.
+    pub time: TimeSpan,
+    /// The index of the predecessor that directly leads to this segment.
+    pub predecessor: usize,
+}
 
 /// Calculates the Sum of Best Segments for the timing method provided. This is
 /// the fastest time possible to complete a run of a category, based on
@@ -28,8 +44,7 @@ pub fn calculate_best(
     use_current_run: bool,
     method: TimingMethod,
 ) -> Option<TimeSpan> {
-    let mut predictions = Vec::with_capacity(segments.len() + 1);
-    predictions.resize(segments.len() + 1, None);
+    let mut predictions = vec![None; segments.len() + 1];
     best::calculate(
         segments,
         &mut predictions,
@@ -50,8 +65,7 @@ pub fn calculate_worst(
     use_current_run: bool,
     method: TimingMethod,
 ) -> Option<TimeSpan> {
-    let mut predictions = Vec::with_capacity(segments.len() + 1);
-    predictions.resize(segments.len() + 1, None);
+    let mut predictions = vec![None; segments.len() + 1];
     worst::calculate(segments, &mut predictions, use_current_run, method)
 }
 
