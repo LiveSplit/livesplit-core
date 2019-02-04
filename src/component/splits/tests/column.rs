@@ -3,8 +3,8 @@ use super::{
     State,
 };
 use crate::settings::SemanticColor::{
-    self, AheadGainingTime as AheadGaining, BehindGainingTime as BehindGaining,
-    BehindLosingTime as BehindLosing, BestSegment as Best, Default as Text,
+    self, AheadGainingTime as AheadGaining, BehindLosingTime as BehindLosing, BestSegment as Best,
+    Default as Text,
 };
 use crate::tests_helper::{make_progress_run_with_splits_opt, run_with_splits_opt, start_run};
 use crate::{Run, Segment, TimeSpan, Timer};
@@ -68,16 +68,22 @@ fn column_empty_delta() {
                 [BehindLosing, Text, Best, Text, Text, Text],
             ),
             (
+                // The fourth segment is a best segment because the current
+                // run's combined segment time from the first to the fourth
+                // segment is 9 seconds while the best segments comparison has a
+                // combined segment time of 10 seconds. The third segment is
+                // empty in the best segments comparison because it is not a
+                // part of the shortest path in the Sum of Best calculation.
                 ["+3.5", "—", "—", "+2.5", "", ""],
-                [BehindLosing, Text, Best, BehindGaining, Text, Text],
+                [BehindLosing, Text, Best, Best, Text, Text],
             ),
             (
                 ["+3.5", "—", "—", "+2.5", "—", ""],
-                [BehindLosing, Text, Best, BehindGaining, Text, Text],
+                [BehindLosing, Text, Best, Best, Text, Text],
             ),
             (
                 ["+3.5", "—", "—", "+2.5", "—", "−1:00"],
-                [BehindLosing, Text, Best, BehindGaining, Text, AheadGaining],
+                [BehindLosing, Text, Best, Best, Text, AheadGaining],
             ),
         ],
     );
@@ -106,16 +112,22 @@ fn column_empty_segment_delta() {
                 [BehindLosing, Text, Best, Text, Text, Text],
             ),
             (
+                // The fourth segment is a best segment because the current
+                // run's combined segment time from the first to the fourth
+                // segment is 9 seconds while the best segments comparison has a
+                // combined segment time of 10 seconds. The third segment is
+                // empty in the best segments comparison because it is not a
+                // part of the shortest path in the Sum of Best calculation.
                 ["+3.5", "—", "—", "−1.0", "", ""],
-                [BehindLosing, Text, Best, AheadGaining, Text, Text],
+                [BehindLosing, Text, Best, Best, Text, Text],
             ),
             (
                 ["+3.5", "—", "—", "−1.0", "—", ""],
-                [BehindLosing, Text, Best, AheadGaining, Text, Text],
+                [BehindLosing, Text, Best, Best, Text, Text],
             ),
             (
                 ["+3.5", "—", "—", "−1.0", "—", "−1:02"],
-                [BehindLosing, Text, Best, AheadGaining, Text, AheadGaining],
+                [BehindLosing, Text, Best, Best, Text, AheadGaining],
             ),
         ],
     )
@@ -293,23 +305,29 @@ fn column_comparison_time_delta() {
             ),
             (
                 // In the original LiveSplit, we showed the split time for this
-                // column type if the comparison time was missing Instead, we
+                // column type if the comparison time was missing. Instead, we
                 // show a dash for the third segment rather than showing the
-                // split time
+                // split time.
                 ["+3.5", "—", "—", "0:15", "0:20", "1:25"],
                 [BehindLosing, Text, Best, Text, Text, Text],
             ),
             (
+                // The fourth segment is a best segment because the current
+                // run's combined segment time from the first to the fourth
+                // segment is 9 seconds while the best segments comparison has a
+                // combined segment time of 10 seconds. The third segment is
+                // empty in the best segments comparison because it is not a
+                // part of the shortest path in the Sum of Best calculation.
                 ["+3.5", "—", "—", "+2.5", "0:20", "1:25"],
-                [BehindLosing, Text, Best, BehindGaining, Text, Text],
+                [BehindLosing, Text, Best, Best, Text, Text],
             ),
             (
                 ["+3.5", "—", "—", "+2.5", "—", "1:25"],
-                [BehindLosing, Text, Best, BehindGaining, Text, Text],
+                [BehindLosing, Text, Best, Best, Text, Text],
             ),
             (
                 ["+3.5", "—", "—", "+2.5", "—", "−1:00"],
-                [BehindLosing, Text, Best, BehindGaining, Text, AheadGaining],
+                [BehindLosing, Text, Best, Best, Text, AheadGaining],
             ),
         ],
     )
@@ -335,23 +353,29 @@ fn column_comparison_segment_time_segment_delta() {
             ),
             (
                 // In the original LiveSplit, we showed the segment time for
-                // this column type if the comparison segment time was missing
+                // this column type if the comparison segment time was missing.
                 // Instead, we show a dash for the third segment rather than
-                // showing the segment time
+                // showing the segment time.
                 ["+3.5", "—", "—", "0:10", "0:05", "1:05"],
                 [BehindLosing, Text, Best, Text, Text, Text],
             ),
             (
+                // The fourth segment is a best segment because the current
+                // run's combined segment time from the first to the fourth
+                // segment is 9 seconds while the best segments comparison has a
+                // combined segment time of 10 seconds. The third segment is
+                // empty in the best segments comparison because it is not a
+                // part of the shortest path in the Sum of Best calculation.
                 ["+3.5", "—", "—", "−1.0", "0:05", "1:05"],
-                [BehindLosing, Text, Best, AheadGaining, Text, Text],
+                [BehindLosing, Text, Best, Best, Text, Text],
             ),
             (
                 ["+3.5", "—", "—", "−1.0", "—", "1:05"],
-                [BehindLosing, Text, Best, AheadGaining, Text, Text],
+                [BehindLosing, Text, Best, Best, Text, Text],
             ),
             (
                 ["+3.5", "—", "—", "−1.0", "—", "−1:02"],
-                [BehindLosing, Text, Best, AheadGaining, Text, AheadGaining],
+                [BehindLosing, Text, Best, Best, Text, AheadGaining],
             ),
         ],
     )

@@ -6,7 +6,7 @@
 //! occurrences of this and allows you to delete them individually if any of
 //! them seem wrong.
 
-use crate::analysis::sum_of_segments::{best, track_branch};
+use crate::analysis::sum_of_segments::{best, track_branch, Prediction};
 use crate::timing::formatter::{Short, TimeFormatter};
 use crate::{Attempt, Run, Segment, TimeSpan, TimingMethod};
 use chrono::Local;
@@ -21,7 +21,7 @@ use std::mem::replace;
 /// individually if any of them seem wrong.
 pub struct SumOfBestCleaner<'r> {
     run: &'r mut Run,
-    predictions: Vec<Option<TimeSpan>>,
+    predictions: Vec<Option<Prediction>>,
     state: State,
 }
 
@@ -155,10 +155,10 @@ impl<'r> SumOfBestCleaner<'r> {
                 }
                 State::IteratingRun(state) => {
                     self.state = if state.segment_index < self.run.len() {
-                        let current_time = self.predictions[state.segment_index];
+                        let current_prediction = self.predictions[state.segment_index];
                         State::IteratingHistory(IteratingHistoryState {
                             parent: state,
-                            current_time,
+                            current_time: current_prediction.map(|p| p.time),
                             skip_count: 0,
                         })
                     } else if state.method == TimingMethod::RealTime {
@@ -216,7 +216,7 @@ impl<'r> SumOfBestCleaner<'r> {
 
 fn check_prediction<'a>(
     run: &'a Run,
-    predictions: &[Option<TimeSpan>],
+    predictions: &[Option<Prediction>],
     predicted_time: Option<TimeSpan>,
     starting_index: isize,
     ending_index: usize,
@@ -224,7 +224,7 @@ fn check_prediction<'a>(
     method: TimingMethod,
 ) -> Option<PotentialCleanUp<'a>> {
     if let Some(predicted_time) = predicted_time {
-        if predictions[ending_index + 1].map_or(true, |t| predicted_time < t) {
+        if predictions[ending_index + 1].map_or(true, |p| predicted_time < p.time) {
             if let Some(segment_history_element) =
                 run.segment(ending_index).segment_history().get(run_index)
             {
@@ -237,9 +237,11 @@ fn check_prediction<'a>(
                     ending_segment: run.segment(ending_index),
                     time_between: segment_history_element[method]
                         .expect("Cleanup path is shorter but doesn't have a time"),
-                    combined_sum_of_best: predictions[ending_index + 1].map(|t| {
-                        t - predictions[(starting_index + 1) as usize]
-                            .expect("Start time must not be empty")
+                    combined_sum_of_best: predictions[ending_index + 1].map(|p| {
+                        p.time
+                            - predictions[(starting_index + 1) as usize]
+                                .expect("Start time must not be empty")
+                                .time
                     }),
                     attempt: run
                         .attempt_history()
@@ -258,7 +260,7 @@ fn check_prediction<'a>(
     None
 }
 
-fn next_timing_method(run: &Run, predictions: &mut Vec<Option<TimeSpan>>, method: TimingMethod) {
+fn next_timing_method(run: &Run, predictions: &mut Vec<Option<Prediction>>, method: TimingMethod) {
     let segments = run.segments();
 
     predictions.clear();

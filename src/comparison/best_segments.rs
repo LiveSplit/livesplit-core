@@ -20,32 +20,28 @@ impl ComparisonGenerator for BestSegments {
     }
 
     fn generate(&mut self, segments: &mut [Segment], _: &[Attempt]) {
-        let mut real_time_predictions = vec![None; segments.len() + 1];
-        let mut game_time_predictions = vec![None; segments.len() + 1];
+        let mut predictions = Vec::with_capacity(segments.len() + 1);
 
-        calculate(
-            segments,
-            &mut real_time_predictions,
-            false,
-            false,
-            TimingMethod::RealTime,
-        );
-        calculate(
-            segments,
-            &mut game_time_predictions,
-            false,
-            false,
-            TimingMethod::GameTime,
-        );
-
-        for ((segment, &real_time), &game_time) in segments
+        segments
             .iter_mut()
-            .zip(real_time_predictions[1..].iter())
-            .zip(game_time_predictions[1..].iter())
-        {
-            *segment.comparison_mut(NAME) = Time::new()
-                .with_real_time(real_time)
-                .with_game_time(game_time);
+            .for_each(|s| *s.comparison_mut(NAME) = Time::new());
+
+        for &method in &TimingMethod::all() {
+            predictions.clear();
+            predictions.resize(segments.len() + 1, None);
+
+            calculate(segments, &mut predictions, false, false, method);
+
+            let mut index = predictions
+                .iter()
+                .rposition(|p| p.is_some())
+                .expect("There must always be a first sentinel prediction that is not None");
+            while let Some(segment_index) = index.checked_sub(1) {
+                let prediction =
+                    predictions[index].expect("A predecessor prediction always needs to exist");
+                segments[segment_index].comparison_mut(NAME)[method] = Some(prediction.time);
+                index = prediction.predecessor;
+            }
         }
     }
 }

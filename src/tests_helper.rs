@@ -1,4 +1,16 @@
-use crate::{TimeSpan, Timer, TimingMethod};
+use crate::{Run, Segment, TimeSpan, Timer, TimingMethod};
+
+pub(crate) fn create_run(names: &[&str]) -> Run {
+    let mut run = Run::new();
+    for &name in names {
+        run.push_segment(Segment::new(name));
+    }
+    run
+}
+
+pub(crate) fn create_timer(names: &[&str]) -> Timer {
+    Timer::new(create_run(names)).unwrap()
+}
 
 pub(crate) fn start_run(timer: &mut Timer) {
     timer.set_current_timing_method(TimingMethod::GameTime);
@@ -36,4 +48,8 @@ pub(crate) fn run_with_splits_opt(timer: &mut Timer, splits: &[Option<f64>]) {
     start_run(timer);
     make_progress_run_with_splits_opt(timer, splits);
     timer.reset(true);
+}
+
+pub(crate) fn span(seconds: f64) -> TimeSpan {
+    TimeSpan::from_seconds(seconds)
 }
