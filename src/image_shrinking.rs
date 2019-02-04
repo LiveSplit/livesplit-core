@@ -5,28 +5,24 @@ use image::{
 use std::borrow::Cow;
 use std::io::Cursor;
 
-fn decode_dims<D: ImageDecoder>(mut decoder: D) -> Result<(u32, u32), ImageError> {
-    decoder.dimensions()
-}
-
 fn shrink_inner(data: &[u8], max_dim: u32) -> Result<Cow<'_, [u8]>, ImageError> {
     let format = guess_format(data)?;
 
     let cursor = Cursor::new(data);
     let (width, height) = match format {
-        ImageFormat::PNG => decode_dims(png::PNGDecoder::new(cursor))?,
-        ImageFormat::JPEG => decode_dims(jpeg::JPEGDecoder::new(cursor))?,
-        ImageFormat::GIF => decode_dims(gif::Decoder::new(cursor))?,
-        ImageFormat::WEBP => decode_dims(webp::WebpDecoder::new(cursor))?,
-        ImageFormat::TIFF => decode_dims(tiff::TIFFDecoder::new(cursor)?)?,
-        ImageFormat::BMP => decode_dims(bmp::BMPDecoder::new(cursor))?,
-        ImageFormat::ICO => decode_dims(ico::ICODecoder::new(cursor)?)?,
-        ImageFormat::HDR => decode_dims(hdr::HDRAdapter::new(cursor)?)?,
-        ImageFormat::PNM => decode_dims(pnm::PNMDecoder::new(cursor)?)?,
+        ImageFormat::PNG => png::PNGDecoder::new(cursor)?.dimensions(),
+        ImageFormat::JPEG => jpeg::JPEGDecoder::new(cursor)?.dimensions(),
+        ImageFormat::GIF => gif::Decoder::new(cursor)?.dimensions(),
+        ImageFormat::WEBP => webp::WebpDecoder::new(cursor)?.dimensions(),
+        ImageFormat::TIFF => tiff::TIFFDecoder::new(cursor)?.dimensions(),
+        ImageFormat::BMP => bmp::BMPDecoder::new(cursor)?.dimensions(),
+        ImageFormat::ICO => ico::ICODecoder::new(cursor)?.dimensions(),
+        ImageFormat::HDR => hdr::HDRAdapter::new(cursor)?.dimensions(),
+        ImageFormat::PNM => pnm::PNMDecoder::new(cursor)?.dimensions(),
         ImageFormat::TGA => return Ok(data.into()), // TGA doesn't have a Header
     };
 
-    let is_too_large = width > max_dim || height > max_dim;
+    let is_too_large = width > u64::from(max_dim) || height > u64::from(max_dim);
     if is_too_large || format == ImageFormat::BMP {
         let mut image = load_from_memory_with_format(data, format)?;
         if is_too_large {
