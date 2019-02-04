@@ -526,7 +526,7 @@ impl Run {
 
             if show_variables {
                 for (name, value) in self.metadata.variables() {
-                    let name = name.trim_right_matches('?');
+                    let name = name.trim_end_matches('?');
 
                     if unicase::eq(value.as_str(), "yes") {
                         push(category_name.to_mut(), &[name]);

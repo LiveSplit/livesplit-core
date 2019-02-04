@@ -2,9 +2,9 @@ use base64::{self, STANDARD};
 use std::fs::File;
 use std::io::{self, Read};
 use std::path::Path;
-use std::sync::atomic::{AtomicUsize, Ordering, ATOMIC_USIZE_INIT};
+use std::sync::atomic::{AtomicUsize, Ordering};
 
-static LAST_IMAGE_ID: AtomicUsize = ATOMIC_USIZE_INIT;
+static LAST_IMAGE_ID: AtomicUsize = AtomicUsize::new(0);
 
 /// Images can be used to store segment and game icons. Each image object comes
 /// with an ID that changes whenever the image is modified. IDs are unique

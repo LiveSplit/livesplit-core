@@ -131,7 +131,7 @@ pub fn parse<R: BufRead>(source: R, path_for_loading_other_files: Option<PathBuf
         let line = lines.next().ok_or(Error::ExpectedIconLine)??;
 
         catch! {
-            let file = line.trim_right();
+            let file = line.trim_end();
             if !file.is_empty() {
                 let path = path.as_ref()?.with_file_name(file);
                 let image = Image::from_file(path, &mut buf).ok()?;
