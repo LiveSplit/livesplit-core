@@ -364,7 +364,7 @@ where
     F: FnMut(&[u8], AttributeValue<'_>) -> Result<bool, E>,
     E: From<Error>,
 {
-    for attribute in tag.attributes() {
+    for attribute in tag.attributes().with_checks(false) {
         let attribute = attribute.map_err(Error::Xml)?;
         let key = attribute.key;
         if !f(key, AttributeValue(&attribute))? {
