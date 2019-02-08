@@ -1,0 +1,21 @@
+use crate::{
+    component::previous_segment::State,
+    layout::LayoutState,
+    rendering::{Backend, RenderContext},
+};
+
+pub(in crate::rendering) fn render(
+    context: &mut RenderContext<'_, impl Backend>,
+    dim: [f32; 2],
+    component: &State,
+    layout_state: &LayoutState,
+) {
+    context.render_rectangle([0.0, 0.0], dim, &component.background);
+    context.render_info_text_component(
+        &component.text,
+        &component.time,
+        component.label_color.unwrap_or(layout_state.text_color),
+        component.visual_color,
+        component.display_two_rows,
+    );
+}
