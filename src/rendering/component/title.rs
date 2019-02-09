@@ -2,18 +2,18 @@ use {
     crate::{
         component::title::State,
         layout::LayoutState,
-        rendering::{Backend, IndexPair, RenderContext, MARGIN},
+        rendering::{icon::Icon, Backend, RenderContext, MARGIN},
     },
     livesplit_title_abbreviations::abbreviate,
     ordered_float::OrderedFloat,
 };
 
-pub(in crate::rendering) fn render(
-    context: &mut RenderContext<'_, impl Backend>,
+pub(in crate::rendering) fn render<B: Backend>(
+    context: &mut RenderContext<'_, B>,
     [width, height]: [f32; 2],
     component: &State,
     layout_state: &LayoutState,
-    game_icon: &mut Option<(IndexPair, f32)>,
+    game_icon: &mut Option<Icon<B::Texture>>,
 ) {
     context.render_rectangle([0.0, 0.0], [width, height], &component.background);
     let text_color = component.text_color.unwrap_or(layout_state.text_color);
@@ -21,15 +21,15 @@ pub(in crate::rendering) fn render(
     // TODO: For now let's just assume there's an icon.
 
     if let Some(url) = &component.icon_change {
-        if let Some((old_texture, _)) = game_icon.take() {
-            context.backend.free_texture(old_texture);
+        if let Some(old_icon) = game_icon.take() {
+            context.backend.free_texture(old_icon.texture);
         }
-        *game_icon = context.create_texture(url);
+        *game_icon = context.create_icon(url);
     }
 
-    let left_bound = if let Some(icon) = *game_icon {
+    let left_bound = if let Some(icon) = game_icon {
         let icon_size = 2.0 - 2.0 * MARGIN;
-        context.render_image([MARGIN, MARGIN], [icon_size, icon_size], icon);
+        context.render_icon([MARGIN, MARGIN], [icon_size, icon_size], icon);
         2.0 * MARGIN + icon_size
     } else {
         MARGIN

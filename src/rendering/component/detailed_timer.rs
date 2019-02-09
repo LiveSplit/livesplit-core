@@ -1,29 +1,29 @@
 use crate::{
     component::detailed_timer::State,
     layout::LayoutState,
-    rendering::{component::timer, Backend, IndexPair, RenderContext, MARGIN},
+    rendering::{component::timer, icon::Icon, Backend, RenderContext, MARGIN},
 };
 
-pub(in crate::rendering) fn render(
-    context: &mut RenderContext<'_, impl Backend>,
+pub(in crate::rendering) fn render<B: Backend>(
+    context: &mut RenderContext<'_, B>,
     [width, height]: [f32; 2],
     component: &State,
     layout_state: &LayoutState,
-    detailed_timer_icon: &mut Option<(IndexPair, f32)>,
+    detailed_timer_icon: &mut Option<Icon<B::Texture>>,
 ) {
     context.render_rectangle([0.0, 0.0], [width, height], &component.background);
 
     let icon_size = height - 2.0 * MARGIN;
 
     if let Some(url) = &component.icon_change {
-        if let Some((old_texture, _)) = detailed_timer_icon.take() {
-            context.backend.free_texture(old_texture);
+        if let Some(old_icon) = detailed_timer_icon.take() {
+            context.backend.free_texture(old_icon.texture);
         }
-        *detailed_timer_icon = context.create_texture(url);
+        *detailed_timer_icon = context.create_icon(url);
     }
 
-    let left_side = if let Some(icon) = *detailed_timer_icon {
-        context.render_image([MARGIN, MARGIN], [icon_size, icon_size], icon);
+    let left_side = if let Some(icon) = detailed_timer_icon {
+        context.render_icon([MARGIN, MARGIN], [icon_size, icon_size], icon);
         2.0 * MARGIN + icon_size
     } else {
         MARGIN

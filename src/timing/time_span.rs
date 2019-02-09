@@ -27,7 +27,7 @@ impl TimeSpan {
     /// Creates a new Time Span from a given amount of days.
     pub fn from_days(days: f64) -> Self {
         TimeSpan(Duration::microseconds(
-            (days * 24.0 * 3600.0 * 1_000_000.0) as i64,
+            (days * (24.0 * 3600.0 * 1_000_000.0)) as i64,
         ))
     }
 

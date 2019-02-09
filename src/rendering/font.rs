@@ -169,13 +169,13 @@ pub fn measure_default_layout(font: ScaledFont<'_, '_>, text: &str) -> f32 {
     measure(default_layout(font, text, [0.0; 2]))
 }
 
-pub fn render<'fd>(
+pub fn render<'fd, B: Backend>(
     layout: impl IntoIterator<Item = PositionedGlyph<'fd>>,
     [top, bottom]: [Color; 2],
     font: &Font<'_>,
-    glyph_cache: &mut GlyphCache,
+    glyph_cache: &mut GlyphCache<B::Mesh>,
     transform: &Transform,
-    backend: &mut impl Backend,
+    backend: &mut B,
 ) -> Option<PositionedGlyph<'fd>> {
     let top = decode_color(&top);
     let bottom = decode_color(&bottom);
@@ -183,7 +183,7 @@ pub fn render<'fd>(
 
     let mut last_glyph = None;
     for glyph in layout {
-        let index_pair = glyph_cache.lookup_or_insert(font, glyph.id(), backend);
+        let glyph_mesh = glyph_cache.lookup_or_insert(font, glyph.id(), backend);
         let pos = glyph.position();
         let scale = glyph.scale();
         last_glyph = Some(glyph);
@@ -192,7 +192,7 @@ pub fn render<'fd>(
             .pre_translate([pos.x, pos.y].into())
             .pre_scale(scale.x, scale.y);
 
-        backend.render_mesh(index_pair, transform, colors, None);
+        backend.render_mesh(glyph_mesh, transform, colors, None);
     }
 
     last_glyph

@@ -77,9 +77,9 @@ pub(in crate::rendering) fn render(
         )
         .unwrap();
 
-        let index = context.create_mesh(&mesh);
-        context.render_mesh(index, component.partial_fill_color);
-        context.free_mesh(index);
+        let partial_fill_mesh = context.create_mesh(&mesh);
+        context.render_mesh(&partial_fill_mesh, component.partial_fill_color);
+        context.free_mesh(partial_fill_mesh);
 
         mesh.vertices.clear();
         mesh.indices.clear();
@@ -105,9 +105,9 @@ pub(in crate::rendering) fn render(
     )
     .unwrap();
 
-    let index = context.create_mesh(&mesh);
-    context.render_mesh(index, component.complete_fill_color);
-    context.free_mesh(index);
+    let fill_mesh = context.create_mesh(&mesh);
+    context.render_mesh(&fill_mesh, component.complete_fill_color);
+    context.free_mesh(fill_mesh);
 
     for points in component.points.windows(2) {
         mesh.vertices.clear();
@@ -129,9 +129,9 @@ pub(in crate::rendering) fn render(
             component.graph_lines_color
         };
 
-        let index = context.create_mesh(&mesh);
-        context.render_mesh(index, color);
-        context.free_mesh(index);
+        let line_mesh = context.create_mesh(&mesh);
+        context.render_mesh(&line_mesh, color);
+        context.free_mesh(line_mesh);
     }
 
     for (i, point) in component.points.iter().enumerate().skip(1) {
@@ -152,9 +152,9 @@ pub(in crate::rendering) fn render(
                 component.graph_lines_color
             };
 
-            let index = context.create_mesh(&mesh);
-            context.render_mesh(index, color);
-            context.free_mesh(index);
+            let circle_mesh = context.create_mesh(&mesh);
+            context.render_mesh(&circle_mesh, color);
+            context.free_mesh(circle_mesh);
         }
     }
 

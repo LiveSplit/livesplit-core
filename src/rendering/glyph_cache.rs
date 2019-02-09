@@ -1,5 +1,5 @@
 use super::mesh::{fill_builder, Mesh};
-use super::{Backend, IndexPair};
+use super::Backend;
 use lyon::{
     path::{builder::*, default::Path, math::point},
     tessellation::{FillOptions, FillTessellator},
@@ -7,12 +7,19 @@ use lyon::{
 use rusttype::{Font, GlyphId, Scale, Segment};
 use std::collections::HashMap;
 
-#[derive(Default)]
-pub struct GlyphCache {
-    glyphs: HashMap<GlyphId, IndexPair>,
+pub struct GlyphCache<M> {
+    glyphs: HashMap<GlyphId, M>,
 }
 
-impl GlyphCache {
+impl<M> Default for GlyphCache<M> {
+    fn default() -> Self {
+        Self {
+            glyphs: Default::default(),
+        }
+    }
+}
+
+impl<M> GlyphCache<M> {
     pub fn new() -> Self {
         Default::default()
     }
@@ -21,9 +28,9 @@ impl GlyphCache {
         &mut self,
         font: &Font<'_>,
         glyph: GlyphId,
-        backend: &mut impl Backend,
-    ) -> IndexPair {
-        *self.glyphs.entry(glyph).or_insert_with(|| {
+        backend: &mut impl Backend<Mesh = M>,
+    ) -> &M {
+        self.glyphs.entry(glyph).or_insert_with(|| {
             let metrics = font.v_metrics(Scale::uniform(1.0));
             let delta_h = (metrics.ascent - metrics.descent).recip();
             let offset_h = metrics.descent;

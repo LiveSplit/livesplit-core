@@ -1,10 +1,11 @@
 mod component;
 mod font;
 mod glyph_cache;
+mod icon;
 mod mesh;
 
 use {
-    self::glyph_cache::GlyphCache,
+    self::{glyph_cache::GlyphCache, icon::Icon},
     crate::{
         layout::{ComponentState, LayoutState},
         settings::{Color, Gradient},
@@ -21,47 +22,49 @@ pub const TIMER_FONT: &[u8] = include_bytes!("Timer.ttf");
 pub type Pos = [f32; 2];
 pub type Rgba = [f32; 4];
 pub type Transform = Transform2D<f32>;
-pub type IndexPair = [usize; 3];
 
 const MARGIN: f32 = 0.35;
 const TWO_ROW_HEIGHT: f32 = 1.75;
 
 pub trait Backend {
-    fn create_mesh(&mut self, mesh: &Mesh) -> IndexPair;
+    type Mesh;
+    type Texture;
+
+    fn create_mesh(&mut self, mesh: &Mesh) -> Self::Mesh;
     fn render_mesh(
         &mut self,
-        mesh: IndexPair,
+        mesh: &Self::Mesh,
         transform: Transform,
         colors: [Rgba; 4],
-        texture: Option<IndexPair>,
+        texture: Option<&Self::Texture>,
     );
-    fn free_mesh(&mut self, mesh: IndexPair);
+    fn free_mesh(&mut self, mesh: Self::Mesh);
 
-    fn create_texture(&mut self, width: u32, height: u32, data: &[u8]) -> IndexPair;
-    fn free_texture(&mut self, texture: IndexPair);
+    fn create_texture(&mut self, width: u32, height: u32, data: &[u8]) -> Self::Texture;
+    fn free_texture(&mut self, texture: Self::Texture);
 
     fn resize(&mut self, height: f32);
 }
 
-pub struct Renderer {
+pub struct Renderer<M, T> {
     text_font: Font<'static>,
-    text_glyph_cache: GlyphCache,
+    text_glyph_cache: GlyphCache<M>,
     timer_font: Font<'static>,
-    timer_glyph_cache: GlyphCache,
-    rectangle: Option<IndexPair>,
-    game_icon: Option<(IndexPair, f32)>,
-    split_icons: Vec<Option<(IndexPair, f32)>>,
-    detailed_timer_icon: Option<(IndexPair, f32)>,
+    timer_glyph_cache: GlyphCache<M>,
+    rectangle: Option<M>,
+    game_icon: Option<Icon<T>>,
+    split_icons: Vec<Option<Icon<T>>>,
+    detailed_timer_icon: Option<Icon<T>>,
     height: Option<f32>,
 }
 
-impl Default for Renderer {
+impl<M, T> Default for Renderer<M, T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl Renderer {
+impl<M, T> Renderer<M, T> {
     pub fn new() -> Self {
         Self {
             timer_font: Font::from_bytes(TIMER_FONT).unwrap(),
@@ -76,7 +79,7 @@ impl Renderer {
         }
     }
 
-    pub fn render<B: Backend>(
+    pub fn render<B: Backend<Mesh = M, Texture = T>>(
         &mut self,
         backend: &mut B,
         resolution: (f32, f32),
@@ -180,11 +183,11 @@ impl Renderer {
 struct RenderContext<'b, B: Backend> {
     transform: Transform,
     backend: &'b mut B,
-    rectangle: &'b mut Option<IndexPair>,
+    rectangle: &'b mut Option<B::Mesh>,
     timer_font: &'b mut Font<'static>,
-    timer_glyph_cache: &'b mut GlyphCache,
+    timer_glyph_cache: &'b mut GlyphCache<B::Mesh>,
     text_font: &'b mut Font<'static>,
-    text_glyph_cache: &'b mut GlyphCache,
+    text_glyph_cache: &'b mut GlyphCache<B::Mesh>,
     width: f32,
 }
 
@@ -195,39 +198,41 @@ impl<'b, B: Backend> RenderContext<'b, B> {
             .pre_translate([x1, y1].into())
             .pre_scale(x2 - x1, y2 - y1);
 
-        let index_pair = *self.rectangle.get_or_insert_with({
+        let rectangle = self.rectangle.get_or_insert_with({
             let backend = &mut self.backend;
             move || backend.create_mesh(&mesh::rectangle())
         });
 
-        self.backend
-            .render_mesh(index_pair, transform, colors, None);
+        self.backend.render_mesh(rectangle, transform, colors, None);
     }
 
-    fn create_mesh(&mut self, mesh: &Mesh) -> IndexPair {
+    fn create_mesh(&mut self, mesh: &Mesh) -> B::Mesh {
         self.backend.create_mesh(mesh)
     }
 
-    fn render_mesh(&mut self, mesh: IndexPair, color: Color) {
+    fn render_mesh(&mut self, mesh: &B::Mesh, color: Color) {
         self.backend
             .render_mesh(mesh, self.transform, [decode_color(&color); 4], None)
     }
 
-    fn create_texture(&mut self, image_url: &str) -> Option<(IndexPair, f32)> {
+    fn create_icon(&mut self, image_url: &str) -> Option<Icon<B::Texture>> {
         if image_url.starts_with("data:;base64,") {
             let url = &image_url["data:;base64,".len()..];
             let image_data = base64::decode(url).unwrap();
             let image = image::load_from_memory(&image_data).unwrap().to_rgba();
-            let index = self
+            let texture = self
                 .backend
                 .create_texture(image.width(), image.height(), &image);
-            Some((index, image.width() as f32 / image.height() as f32))
+            Some(Icon {
+                texture,
+                aspect_ratio: image.width() as f32 / image.height() as f32,
+            })
         } else {
             None
         }
     }
 
-    fn free_mesh(&mut self, mesh: IndexPair) {
+    fn free_mesh(&mut self, mesh: B::Mesh) {
         self.backend.free_mesh(mesh)
     }
 
@@ -250,14 +255,14 @@ impl<'b, B: Backend> RenderContext<'b, B> {
         }
     }
 
-    fn render_image(
+    fn render_icon(
         &mut self,
         [mut x, mut y]: Pos,
         [mut width, mut height]: Pos,
-        (texture, aspect_ratio): (IndexPair, f32),
+        icon: &Icon<B::Texture>,
     ) {
         let box_aspect_ratio = width / height;
-        let aspect_ratio_diff = box_aspect_ratio / aspect_ratio;
+        let aspect_ratio_diff = box_aspect_ratio / icon.aspect_ratio;
 
         if aspect_ratio_diff > 1.0 {
             let new_width = width / aspect_ratio_diff;
@@ -276,13 +281,13 @@ impl<'b, B: Backend> RenderContext<'b, B> {
             .pre_translate([x, y].into())
             .pre_scale(width, height);
 
-        let index_pair = *self.rectangle.get_or_insert_with({
+        let rectangle = self.rectangle.get_or_insert_with({
             let backend = &mut self.backend;
             move || backend.create_mesh(&mesh::rectangle())
         });
 
         self.backend
-            .render_mesh(index_pair, transform, [[1.0; 4]; 4], Some(texture));
+            .render_mesh(rectangle, transform, [[1.0; 4]; 4], Some(&icon.texture));
     }
 
     fn render_background(&mut self, background: &Gradient) {

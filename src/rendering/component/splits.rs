@@ -1,16 +1,16 @@
 use crate::{
     component::splits::State,
     layout::LayoutState,
-    rendering::{Backend, IndexPair, RenderContext, MARGIN, TWO_ROW_HEIGHT},
+    rendering::{icon::Icon, Backend, RenderContext, MARGIN, TWO_ROW_HEIGHT},
     settings::{Gradient, ListGradient},
 };
 
-pub(in crate::rendering) fn render(
-    context: &mut RenderContext<'_, impl Backend>,
+pub(in crate::rendering) fn render<B: Backend>(
+    context: &mut RenderContext<'_, B>,
     [width, height]: [f32; 2],
     component: &State,
     layout_state: &LayoutState,
-    split_icons: &mut Vec<Option<(IndexPair, f32)>>,
+    split_icons: &mut Vec<Option<Icon<B::Texture>>>,
 ) {
     let split_background = match component.background {
         ListGradient::Same(gradient) => {
@@ -31,13 +31,13 @@ pub(in crate::rendering) fn render(
 
     for icon_change in &component.icon_changes {
         if icon_change.segment_index >= split_icons.len() {
-            split_icons.resize(icon_change.segment_index + 1, None);
+            split_icons.extend((0..=icon_change.segment_index - split_icons.len()).map(|_| None));
         }
         let icon = &mut split_icons[icon_change.segment_index];
-        if let Some((old_texture, _)) = icon.take() {
-            context.backend.free_texture(old_texture);
+        if let Some(old_icon) = icon.take() {
+            context.backend.free_texture(old_icon.texture);
         }
-        *icon = context.create_texture(&icon_change.icon);
+        *icon = context.create_icon(&icon_change.icon);
     }
 
     const COLUMN_WIDTH: f32 = 3.0;
@@ -88,8 +88,8 @@ pub(in crate::rendering) fn render(
             let icon_size = split_height - 0.2;
             let icon_right = MARGIN + icon_size;
 
-            if let Some(icon) = split_icons.get(split.index).and_then(|&x| x) {
-                context.render_image([MARGIN, 0.1 - 0.5 * 0.05], [icon_size, icon_size], icon);
+            if let Some(Some(icon)) = split_icons.get(split.index) {
+                context.render_icon([MARGIN, 0.1 - 0.5 * 0.05], [icon_size, icon_size], icon);
             }
 
             let mut left_x = width - MARGIN;
