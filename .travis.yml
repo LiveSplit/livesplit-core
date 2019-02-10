@@ -11,6 +11,14 @@ env:
     - CRATE_NAME=livesplit-core
 
 matrix:
+  allow_failures:
+    # Failing for now until this is fixed:
+    # https://github.com/LiveSplit/livesplit-core/issues/164
+    - env: TARGET=asmjs-unknown-emscripten
+      rust: nightly
+    - env: TARGET=wasm32-unknown-emscripten
+      rust: nightly
+
   include:
     # weird error
     # https://travis-ci.org/LiveSplit/livesplit-core/jobs/327011754
