@@ -11,7 +11,7 @@ pub(in crate::rendering) fn render(
     layout_state: &LayoutState,
 ) {
     context.render_rectangle([0.0, 0.0], dim, &component.background);
-    context.render_info_text_component(
+    context.render_info_time_component(
         &component.text,
         &component.time,
         component.label_color.unwrap_or(layout_state.text_color),

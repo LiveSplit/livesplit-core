@@ -54,6 +54,9 @@ euclid = { version = "0.19.5", default-features = false, optional = true }
 livesplit-title-abbreviations = { path = "crates/livesplit-title-abbreviations", version = "0.1.0", optional = true }
 lyon = { version = "0.11.0", default-features = false, optional = true }
 rusttype = { version = "0.7.3", default-features = false, optional = true }
+# Software Rendering
+euc = { version = "0.1.0", default-features = false, optional = true }
+vek = { version = "0.9.6", default-features = false, optional = true }
 
 [dev-dependencies]
 memmem = "0.1.1"
@@ -63,6 +66,7 @@ criterion = "0.2.5"
 default = ["image-shrinking"]
 image-shrinking = ["image/webp", "image/pnm", "image/ico", "image/jpeg", "image/gif_codec", "image/tiff", "image/tga", "image/bmp", "image/hdr"]
 rendering = ["euclid", "livesplit-title-abbreviations", "rusttype", "lyon"]
+software-rendering = ["rendering", "euc", "vek"]
 
 [[bench]]
 name = "balanced_pb"

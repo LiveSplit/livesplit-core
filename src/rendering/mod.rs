@@ -4,6 +4,9 @@ mod glyph_cache;
 mod icon;
 mod mesh;
 
+#[cfg(feature = "software-rendering")]
+pub mod software;
+
 use {
     self::{glyph_cache::GlyphCache, icon::Icon},
     crate::{
