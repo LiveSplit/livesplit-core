@@ -7,13 +7,20 @@ environment:
     CRATE_NAME: livesplit-core
 
   matrix:
+    # Blocked by winapi support:
+    # https://github.com/LiveSplit/livesplit-core/issues/165
+    # - TARGET: aarch64-pc-windows-msvc
+      # RUST_VERSION: stable-x86_64-pc-windows-msvc
+
+    # MSVC
+    - TARGET: i586-pc-windows-msvc
+      RUST_VERSION: stable-i686-pc-windows-msvc
+    - TARGET: i686-pc-windows-msvc
+    - TARGET: x86_64-pc-windows-msvc
+
     # MinGW
     - TARGET: i686-pc-windows-gnu
     - TARGET: x86_64-pc-windows-gnu
-
-    # MSVC
-    - TARGET: i686-pc-windows-msvc
-    - TARGET: x86_64-pc-windows-msvc
 
     # Testing other channels
     - TARGET: x86_64-pc-windows-gnu
@@ -36,6 +43,7 @@ install:
   - curl -sSf -o rustup-init.exe https://win.rustup.rs/
   - rustup-init.exe -y --default-host %TARGET% --default-toolchain %RUST_VERSION%
   - set PATH=%PATH%;C:\Users\appveyor\.cargo\bin
+  - rustup target install %TARGET%
   - rustc -Vv
   - cargo -V
 

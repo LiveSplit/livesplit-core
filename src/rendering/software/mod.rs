@@ -2,7 +2,18 @@
 //! much slower than with a normal GPU, but might be sufficient for situations
 //! where you want to create a screenshot of the layout.
 
-#[cfg(test)]
+#[cfg(all(
+    test,
+
+    // Without MMX the floating point precision is too inaccurate for the
+    // software renderer to produce the correct checksums.
+    // TODO: We use SSE as an approximation, because MMX isn't supported by Rust
+    // just yet.
+    not(all(
+        target_arch = "x86",
+        not(target_feature = "sse"),
+    )),
+))]
 mod tests;
 
 use {

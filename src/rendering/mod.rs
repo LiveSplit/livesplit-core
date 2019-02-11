@@ -219,20 +219,21 @@ impl<'b, B: Backend> RenderContext<'b, B> {
     }
 
     fn create_icon(&mut self, image_url: &str) -> Option<Icon<B::Texture>> {
-        if image_url.starts_with("data:;base64,") {
-            let url = &image_url["data:;base64,".len()..];
-            let image_data = base64::decode(url).unwrap();
-            let image = image::load_from_memory(&image_data).unwrap().to_rgba();
-            let texture = self
-                .backend
-                .create_texture(image.width(), image.height(), &image);
-            Some(Icon {
-                texture,
-                aspect_ratio: image.width() as f32 / image.height() as f32,
-            })
-        } else {
-            None
+        if !image_url.starts_with("data:;base64,") {
+            return None;
         }
+
+        let url = &image_url["data:;base64,".len()..];
+        let image_data = base64::decode(url).ok()?;
+        let image = image::load_from_memory(&image_data).ok()?.to_rgba();
+        let texture = self
+            .backend
+            .create_texture(image.width(), image.height(), &image);
+
+        Some(Icon {
+            texture,
+            aspect_ratio: image.width() as f32 / image.height() as f32,
+        })
     }
 
     fn free_mesh(&mut self, mesh: B::Mesh) {
