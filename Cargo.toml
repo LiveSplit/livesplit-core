@@ -61,6 +61,7 @@ vek = { version = "0.9.6", default-features = false, optional = true }
 [dev-dependencies]
 memmem = "0.1.1"
 criterion = "0.2.5"
+crc = "1.8.1"
 
 [features]
 default = ["image-shrinking"]

@@ -19,8 +19,8 @@ use {
 
 pub use self::mesh::{Mesh, Vertex};
 
-pub const TEXT_FONT: &[u8] = include_bytes!("FiraSans-Regular.ttf");
-pub const TIMER_FONT: &[u8] = include_bytes!("Timer.ttf");
+pub const TEXT_FONT: &[u8] = include_bytes!("fonts/FiraSans-Regular.ttf");
+pub const TIMER_FONT: &[u8] = include_bytes!("fonts/Timer.ttf");
 
 pub type Pos = [f32; 2];
 pub type Rgba = [f32; 4];

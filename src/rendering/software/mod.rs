@@ -2,6 +2,9 @@
 //! much slower than with a normal GPU, but might be sufficient for situations
 //! where you want to create a screenshot of the layout.
 
+#[cfg(test)]
+mod tests;
+
 use {
     crate::{
         layout::LayoutState,
