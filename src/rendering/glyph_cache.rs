@@ -73,7 +73,7 @@ impl<M> GlyphCache<M> {
                 )
                 .unwrap();
 
-            for vertex in &mut glyph_mesh.vertices {
+            for vertex in glyph_mesh.vertices_mut() {
                 vertex.v = (-vertex.y - offset_h) / delta_h;
             }
 

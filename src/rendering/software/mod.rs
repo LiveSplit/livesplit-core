@@ -42,8 +42,9 @@ impl Backend for SoftwareBackend {
     type Mesh = Vec<Vertex>;
     type Texture = Rc<Texture>;
 
-    fn create_mesh(&mut self, Mesh { vertices, indices }: &Mesh) -> Self::Mesh {
-        indices
+    fn create_mesh(&mut self, mesh: &Mesh) -> Self::Mesh {
+        let vertices = mesh.vertices();
+        mesh.indices()
             .iter()
             .map(|&index| {
                 let v = vertices[index as usize];

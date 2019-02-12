@@ -1,3 +1,10 @@
+//! The rendering module provides a renderer for layout states that is
+//! abstracted over different backends so that it can be used with OpenGL,
+//! DirectX, Vulkan, Metal, WebGL or any other rendering framework. An optional
+//! software renderer is available behind the `software-rendering` feature.
+//! While it is slower than using a proper GPU backend, it might be sufficient
+//! for situations where you want to create a screenshot of the layout.
+
 mod component;
 mod font;
 mod glyph_cache;
@@ -18,22 +25,56 @@ use {
 };
 
 pub use self::mesh::{Mesh, Vertex};
+pub use euclid;
 
+/// The default font to be used for general text. The font is encoded as TTF.
 pub const TEXT_FONT: &[u8] = include_bytes!("fonts/FiraSans-Regular.ttf");
+/// The default font to be used for timers. The font is encoded as TTF.
 pub const TIMER_FONT: &[u8] = include_bytes!("fonts/Timer.ttf");
 
+/// Describes a coordinate in 2D space.
 pub type Pos = [f32; 2];
+/// A color encoded as RGBA (red, green, blue, alpha) where each component is
+/// stored as a value between 0 and 1.
 pub type Rgba = [f32; 4];
+/// A transformation matrix to apply to meshes in order to place them into the
+/// scene.
 pub type Transform = Transform2D<f32>;
 
 const MARGIN: f32 = 0.35;
 const TWO_ROW_HEIGHT: f32 = 1.75;
 
+/// The rendering backend for the Renderer is abstracted out into the Backend
+/// trait such that the rendering isn't tied to a specific rendering framework.
 pub trait Backend {
+    /// The type the backend uses for meshes.
     type Mesh;
+    /// The type the backend uses for textures.
     type Texture;
 
+    /// Instructs the backend to create a mesh. The mesh consists out of a
+    /// vertex buffer and an index buffer that describes pairs of three indices
+    /// of the vertex buffer that form a triangle each.
     fn create_mesh(&mut self, mesh: &Mesh) -> Self::Mesh;
+
+    /// Instructs the backend to render out a mesh. The rendering uses no
+    /// backface culling or depth buffering. The colors are supposed to be alpha
+    /// blended and don't use sRGB. The transform represents a transformation
+    /// matrix to be applied to the mesh's vertices in order to place it in the
+    /// scene. The scene's coordinates are within 0..1 for both x (left..right)
+    /// and y (up..down). There may be a texture that needs to be applied to the
+    /// mesh based on its u and v texture coordinates. There also are four
+    /// colors for are interpolated between based on the u and v texture
+    /// coordinates. The colors are positioned in UV texture space in the
+    /// following way:
+    /// ```rust,ignore
+    /// [
+    ///     (0, 0), // Top Left
+    ///     (1, 0), // Top Right
+    ///     (1, 1), // Bottom Right
+    ///     (0, 1), // Bottom Left
+    /// ]
+    /// ```
     fn render_mesh(
         &mut self,
         mesh: &Self::Mesh,
@@ -41,14 +82,24 @@ pub trait Backend {
         colors: [Rgba; 4],
         texture: Option<&Self::Texture>,
     );
+
+    /// Instructs the backend to free a mesh as it is not needed anymore.
     fn free_mesh(&mut self, mesh: Self::Mesh);
 
+    /// Instructs the backend to create a texture out of the texture data
+    /// provided. The texture's resolution is provided as well. The data is an
+    /// array of chunks of RGBA8 encoded pixels (red, green, blue, alpha with
+    /// each channel being an u8).
     fn create_texture(&mut self, width: u32, height: u32, data: &[u8]) -> Self::Texture;
+
+    /// Instructs the backend to free a texture as it is not needed anymore.
     fn free_texture(&mut self, texture: Self::Texture);
 
+    /// Instructs the backend to resize the size of the render target.
     fn resize(&mut self, height: f32);
 }
 
+/// A renderer can be used to render out layout states with the backend chosen.
 pub struct Renderer<M, T> {
     text_font: Font<'static>,
     text_glyph_cache: GlyphCache<M>,
@@ -68,6 +119,7 @@ impl<M, T> Default for Renderer<M, T> {
 }
 
 impl<M, T> Renderer<M, T> {
+    /// Creates a new renderer.
     pub fn new() -> Self {
         Self {
             timer_font: Font::from_bytes(TIMER_FONT).unwrap(),
@@ -82,6 +134,9 @@ impl<M, T> Renderer<M, T> {
         }
     }
 
+    /// Renders the layout state with the backend provided. A resolution needs
+    /// to be provided as well so that the contents are rendered according to
+    /// aspect ratio of the render target.
     pub fn render<B: Backend<Mesh = M, Texture = T>>(
         &mut self,
         backend: &mut B,

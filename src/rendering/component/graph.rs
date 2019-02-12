@@ -81,8 +81,7 @@ pub(in crate::rendering) fn render(
         context.render_mesh(&partial_fill_mesh, component.partial_fill_color);
         context.free_mesh(partial_fill_mesh);
 
-        mesh.vertices.clear();
-        mesh.indices.clear();
+        mesh.clear();
 
         component.points.len() - 1
     } else {
@@ -110,8 +109,7 @@ pub(in crate::rendering) fn render(
     context.free_mesh(fill_mesh);
 
     for points in component.points.windows(2) {
-        mesh.vertices.clear();
-        mesh.indices.clear();
+        mesh.clear();
 
         let p1 = [width * points[0].x, points[0].y].into();
         let p2 = [width * points[1].x, points[1].y].into();
@@ -136,8 +134,7 @@ pub(in crate::rendering) fn render(
 
     for (i, point) in component.points.iter().enumerate().skip(1) {
         if i != component.points.len() - 1 || !component.is_live_delta_active {
-            mesh.vertices.clear();
-            mesh.indices.clear();
+            mesh.clear();
 
             fill_circle(
                 [width * point.x, point.y].into(),
