@@ -1,4 +1,4 @@
-//! The timer module provides a pair of Time Formatters that splits up the
+//! The timing module provides a pair of Time Formatters that splits up the
 //! visualized time into the main part of the time and the fractional part. This
 //! is the Time Formatter pair used by the Timer Component.
 

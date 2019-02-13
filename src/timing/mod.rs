@@ -1,4 +1,4 @@
-//! The timer module provides everything necessary for working with times and
+//! The timing module provides everything necessary for working with times and
 //! measuring them.
 
 mod atomic_date_time;

@@ -62,6 +62,11 @@ mod parse {
     }
 
     #[test]
+    fn livesplit_celeste() {
+        livesplit("tests/run_files/Celeste - Any% (1.2.1.5).lss");
+    }
+
+    #[test]
     fn livesplit_attempt_ended_bug() {
         let run = livesplit("tests/run_files/livesplit_attempt_ended_bug.lss");
         let playtime = total_playtime::calculate(run);

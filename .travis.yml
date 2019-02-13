@@ -9,6 +9,7 @@ services: docker
 env:
   global:
     - CRATE_NAME=livesplit-core
+    - RUST_BACKTRACE=1
 
 matrix:
   allow_failures:
@@ -18,6 +19,11 @@ matrix:
       rust: nightly
     - env: TARGET=wasm32-unknown-emscripten
       rust: nightly
+    # PNG fails decoding on the following systems:
+    # https://github.com/LiveSplit/livesplit-core/issues/166
+    - env: TARGET=mips-unknown-linux-gnu
+    - env: TARGET=mips64-unknown-linux-gnuabi64
+    - env: TARGET=powerpc64-unknown-linux-gnu
 
   include:
     # weird error
