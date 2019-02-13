@@ -80,7 +80,7 @@ pub mod rendering;
 pub mod run;
 pub mod settings;
 #[cfg(test)]
-mod tests_helper;
+pub mod tests_helper;
 pub mod timing;
 mod xml_util;
 

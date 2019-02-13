@@ -10,7 +10,7 @@ readme = "README.md"
 keywords = ["speedrun", "timer", "livesplit"]
 include = [
     "/src/*",
-    "/bench/*",
+    "/benches/*",
     "/Cargo.toml",
     "/LICENSE-APACHE",
     "/LICENSE-MIT",
@@ -75,4 +75,8 @@ harness = false
 
 [[bench]]
 name = "parsing"
+harness = false
+
+[[bench]]
+name = "software_rendering"
 harness = false
