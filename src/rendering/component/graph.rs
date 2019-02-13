@@ -119,7 +119,7 @@ pub(in crate::rendering) fn render(
             false,
             &StrokeOptions::default().with_line_width(LINE_WIDTH),
             &mut stroke_builder(&mut mesh),
-        );
+        ).unwrap();
 
         let color = if points[1].is_best_segment {
             component.best_segment_color
@@ -141,7 +141,7 @@ pub(in crate::rendering) fn render(
                 CIRCLE_RADIUS,
                 &FillOptions::tolerance(0.005).with_normals(false),
                 &mut fill_builder(&mut mesh),
-            );
+            ).unwrap();
 
             let color = if point.is_best_segment {
                 component.best_segment_color

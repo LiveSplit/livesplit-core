@@ -1,7 +1,7 @@
 use super::mesh::{fill_builder, Mesh};
 use super::Backend;
 use lyon::{
-    path::{builder::*, default::Path, math::point},
+    path::{Path, math::point},
     tessellation::{FillOptions, FillTessellator},
 };
 use rusttype::{Font, GlyphId, Scale, Segment};
@@ -67,7 +67,7 @@ impl<M> GlyphCache<M> {
             let mut tessellator = FillTessellator::new();
             tessellator
                 .tessellate_path(
-                    path.path_iter(),
+                    path.iter(),
                     &FillOptions::tolerance(0.005).with_normals(false),
                     &mut fill_builder(&mut glyph_mesh),
                 )
