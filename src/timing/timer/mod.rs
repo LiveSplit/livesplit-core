@@ -224,6 +224,20 @@ impl Timer {
         &self.current_comparison
     }
 
+    /// Tries to set the current comparison to the comparison specified. If the
+    /// comparison doesn't exist `Err` is returned.
+    #[inline]
+    pub fn set_current_comparison<S: AsRef<str>>(&mut self, comparison: S) -> Result<(), ()> {
+        let comparison = comparison.as_ref();
+        if self.run.comparisons().any(|c| c == comparison) {
+            self.current_comparison.clear();
+            self.current_comparison.push_str(comparison);
+            Ok(())
+        } else {
+            Err(())
+        }
+    }
+
     /// Accesses the split the attempt is currently on. If there's no attempt in
     /// progress or the run finished, `None` is returned instead.
     pub fn current_split(&self) -> Option<&Segment> {
