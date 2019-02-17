@@ -38,7 +38,7 @@ fn default() {
 
     let state = layout.state(&timer);
 
-    check(&state, 0xf12f499a, "default");
+    check(&state, 0xe4f643cb, "default");
 }
 
 #[test]
@@ -56,7 +56,7 @@ fn wsplit() {
     let timer = Timer::new(run).unwrap();
     let mut layout = lsl("tests/layout_files/WSplit.lsl");
 
-    check_dims(&layout.state(&timer), [250, 300], 0x09afc02f, "wsplit");
+    check_dims(&layout.state(&timer), [250, 300], 0x094f742f, "wsplit");
 }
 
 #[test]
@@ -74,7 +74,7 @@ fn all_components() {
     check_dims(
         &layout.state(&timer),
         [300, 800],
-        0xcd09c868,
+        0x2b6a2a14,
         "all_components",
     );
 }

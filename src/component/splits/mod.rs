@@ -247,6 +247,11 @@ pub struct State {
     /// this list. If necessary, you may remount this component to reset the
     /// component into a state where these icons are provided again.
     pub icon_changes: Vec<IconChange>,
+    /// Specifies whether the current run has any icons, even those that are not
+    /// currently visible by the splits component. This allows for properly
+    /// indenting the icon column, even when the icons are scrolled outside the
+    /// splits component.
+    pub has_icons: bool,
     /// Specifies whether thin separators should be shown between the individual
     /// segments shown by the component.
     pub show_thin_separators: bool,
@@ -490,6 +495,7 @@ impl Component {
             column_labels,
             splits,
             icon_changes,
+            has_icons: run.segments().iter().any(|s| !s.icon().is_empty()),
             show_thin_separators,
             show_final_separator,
             display_two_rows,

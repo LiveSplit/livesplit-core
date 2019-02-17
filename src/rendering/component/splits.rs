@@ -63,6 +63,9 @@ pub(in crate::rendering) fn render<B: Backend>(
         );
     }
 
+    let icon_size = split_height - 0.2;
+    let icon_right = if component.has_icons { 2.0 * MARGIN + icon_size } else { MARGIN };
+
     for (i, split) in component.splits.iter().enumerate() {
         if component.show_thin_separators && i + 1 != component.splits.len() {
             context.render_rectangle(
@@ -84,10 +87,6 @@ pub(in crate::rendering) fn render<B: Backend>(
         }
 
         {
-            // TODO: For now let's just assume there's an icon.
-            let icon_size = split_height - 0.2;
-            let icon_right = MARGIN + icon_size;
-
             if let Some(Some(icon)) = split_icons.get(split.index) {
                 context.render_icon([MARGIN, 0.1 - 0.5 * 0.05], [icon_size, icon_size], icon);
             }
@@ -112,7 +111,7 @@ pub(in crate::rendering) fn render<B: Backend>(
 
             context.render_text_ellipsis(
                 &split.name,
-                [icon_right + MARGIN, 0.7],
+                [icon_right, 0.7],
                 0.8,
                 [layout_state.text_color; 2],
                 left_x - MARGIN,
