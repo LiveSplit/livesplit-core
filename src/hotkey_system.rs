@@ -110,6 +110,16 @@ impl HotkeySystem {
             })?;
         }
 
+        if let Some(toggle_timing_method) = config.toggle_timing_method {
+            let inner = timer.clone();
+            let active = is_active.clone();
+            hook.register(toggle_timing_method, move || {
+                if active.load(Ordering::Acquire) {
+                    inner.write().toggle_timing_method();
+                }
+            })?;
+        }
+
         Ok(Self {
             config,
             hook,
@@ -288,6 +298,28 @@ impl HotkeySystem {
         Ok(())
     }
 
+    /// Sets the key to use for toggling between the `Real Time` and `Game Time`
+    /// timing methods.
+    pub fn set_toggle_timing_method(&mut self, hotkey: Option<KeyCode>) -> Result<()> {
+        if self.config.toggle_timing_method == hotkey {
+            return Ok(());
+        }
+        let inner = self.timer.clone();
+        let active = self.is_active.clone();
+        if let Some(hotkey) = hotkey {
+            self.hook.register(hotkey, move || {
+                if active.load(Ordering::Acquire) {
+                    inner.write().toggle_timing_method();
+                }
+            })?;
+        }
+        if let Some(toggle_timing_method) = self.config.toggle_timing_method {
+            self.hook.unregister(toggle_timing_method)?;
+        }
+        self.config.toggle_timing_method = hotkey;
+        Ok(())
+    }
+
     /// Deactivates the Hotkey System. No hotkeys will go through until it gets
     /// activated again. If it's already deactivated, nothing happens.
     pub fn deactivate(&self) {
@@ -318,6 +350,7 @@ impl HotkeySystem {
         self.set_previous_comparison(config.previous_comparison)?;
         self.set_next_comparison(config.next_comparison)?;
         self.set_undo_all_pauses(config.undo_all_pauses)?;
+        self.set_toggle_timing_method(config.toggle_timing_method)?;
 
         Ok(())
     }

@@ -21,12 +21,15 @@ pub struct HotkeyConfig {
     /// The key to use for pausing the current attempt and starting a new
     /// attempt.
     pub pause: Option<KeyCode>,
+    /// The key to use for removing all the pause times from the current time.
+    pub undo_all_pauses: Option<KeyCode>,
     /// The key to use for switching to the previous comparison.
     pub previous_comparison: Option<KeyCode>,
     /// The key to use for switching to the next comparison.
     pub next_comparison: Option<KeyCode>,
-    /// The key to use for removing all the pause times from the current time.
-    pub undo_all_pauses: Option<KeyCode>,
+    /// The key to use for toggling between the `Real Time` and `Game Time`
+    /// timing methods.
+    pub toggle_timing_method: Option<KeyCode>,
 }
 
 #[cfg(any(windows, target_os = "linux"))]
@@ -39,9 +42,10 @@ impl Default for HotkeyConfig {
             undo: Some(NumPad8),
             skip: Some(NumPad2),
             pause: Some(NumPad5),
+            undo_all_pauses: None,
             previous_comparison: Some(NumPad4),
             next_comparison: Some(NumPad6),
-            undo_all_pauses: None,
+            toggle_timing_method: None,
         }
     }
 }
@@ -59,9 +63,10 @@ impl Default for HotkeyConfig {
             undo: Some(Numpad8),
             skip: Some(Numpad2),
             pause: Some(Numpad5),
+            undo_all_pauses: None,
             previous_comparison: Some(Numpad4),
             next_comparison: Some(Numpad6),
-            undo_all_pauses: None,
+            toggle_timing_method: None,
         }
     }
 }
@@ -80,9 +85,10 @@ impl Default for HotkeyConfig {
             undo: Some(KeyCode),
             skip: Some(KeyCode),
             pause: Some(KeyCode),
+            undo_all_pauses: None,
             previous_comparison: Some(KeyCode),
             next_comparison: Some(KeyCode),
-            undo_all_pauses: None,
+            toggle_timing_method: None,
         }
     }
 }
@@ -97,12 +103,16 @@ impl HotkeyConfig {
             Field::new("Undo Split".into(), self.undo.into()),
             Field::new("Skip Split".into(), self.skip.into()),
             Field::new("Pause".into(), self.pause.into()),
+            Field::new("Undo All Pauses".into(), self.undo_all_pauses.into()),
             Field::new(
                 "Previous Comparison".into(),
                 self.previous_comparison.into(),
             ),
             Field::new("Next Comparison".into(), self.next_comparison.into()),
-            Field::new("Undo All Pauses".into(), self.undo_all_pauses.into()),
+            Field::new(
+                "Toggle Timing Method".into(),
+                self.toggle_timing_method.into(),
+            ),
         ])
     }
 
@@ -148,9 +158,10 @@ impl HotkeyConfig {
             2 => self.undo = value,
             3 => self.skip = value,
             4 => self.pause = value,
-            5 => self.previous_comparison = value,
-            6 => self.next_comparison = value,
-            7 => self.undo_all_pauses = value,
+            5 => self.undo_all_pauses = value,
+            6 => self.previous_comparison = value,
+            7 => self.next_comparison = value,
+            8 => self.toggle_timing_method = value,
             _ => panic!("Unsupported Setting Index"),
         }
 

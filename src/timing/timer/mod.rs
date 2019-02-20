@@ -208,6 +208,15 @@ impl Timer {
         self.current_timing_method = method;
     }
 
+    /// Toggles between the `Real Time` and `Game Time` timing methods.
+    #[inline]
+    pub fn toggle_timing_method(&mut self) {
+        self.current_timing_method = match self.current_timing_method {
+            TimingMethod::RealTime => TimingMethod::GameTime,
+            TimingMethod::GameTime => TimingMethod::RealTime,
+        };
+    }
+
     /// Returns the current comparison that is being compared against. This may
     /// be a custom comparison or one of the Comparison Generators.
     #[inline]
