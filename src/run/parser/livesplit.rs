@@ -514,7 +514,25 @@ pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
         });
     }
 
+    import_subsplits(&mut run);
+
     run.set_path(path);
 
     Ok(run)
+}
+
+fn import_subsplits(run: &mut Run) {
+    for segment in run.segments_mut() {
+        let name = segment.name_mut();
+        if name.starts_with('-') {
+            name.remove(0);
+        } else if name.starts_with('{') {
+            let mut iter = name[1..].splitn(2, '}');
+            if let (Some(_group_name), Some(split_name)) = (iter.next(), iter.next()) {
+                let split_name = split_name.trim_left();
+                let remove_count = split_name.as_ptr() as usize - name.as_ptr() as usize;
+                name.replace_range(0..remove_count, "");
+            }
+        }
+    }
 }

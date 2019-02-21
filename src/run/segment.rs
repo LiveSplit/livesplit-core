@@ -45,6 +45,12 @@ impl Segment {
         &self.name
     }
 
+    /// Grants mutable access to the name of the segment.
+    #[inline]
+    pub fn name_mut(&mut self) -> &mut String {
+        &mut self.name
+    }
+
     /// Sets the name of the segment.
     #[inline]
     pub fn set_name<S>(&mut self, name: S)
