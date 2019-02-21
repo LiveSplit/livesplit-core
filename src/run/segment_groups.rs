@@ -1,3 +1,11 @@
+use {
+    crate::Segment,
+    std::{
+        iter::Peekable,
+        slice::{self, Iter},
+    },
+};
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct SegmentGroup {
     start: usize,
@@ -34,6 +42,81 @@ impl SegmentGroups {
             Ok(())
         } else {
             Err(group)
+        }
+    }
+
+    pub fn iter_with<'groups, 'segments>(
+        &'groups self,
+        segments: &'segments [Segment],
+    ) -> SegmentGroupsIter<'groups, 'segments> {
+        SegmentGroupsIter {
+            iter: self.0.iter().peekable(),
+            segments,
+            index: 0,
+        }
+    }
+}
+
+pub struct SegmentGroupView<'group, 'segments> {
+    name: Option<&'group str>,
+    segments: &'segments [Segment],
+    ending_segment: &'segments Segment,
+}
+
+impl<'group, 'segments> SegmentGroupView<'group, 'segments> {
+    pub fn group_name(&self) -> Option<&'group str> {
+        self.name
+    }
+
+    pub fn group_name_or_default<'a>(&self) -> &'a str
+    where
+        'group: 'a,
+        'segments: 'a,
+    {
+        self.name.unwrap_or_else(|| self.ending_segment.name())
+    }
+
+    pub fn segments(&self) -> &'segments [Segment] {
+        self.segments
+    }
+
+    pub fn ending_segment(&self) -> &'segments Segment {
+        self.ending_segment
+    }
+
+    pub fn len(&self) -> usize {
+        self.segments.len()
+    }
+}
+
+pub struct SegmentGroupsIter<'groups, 'segments> {
+    iter: Peekable<Iter<'groups, SegmentGroup>>,
+    segments: &'segments [Segment],
+    index: usize,
+}
+
+impl<'groups, 'segments> Iterator for SegmentGroupsIter<'groups, 'segments> {
+    type Item = SegmentGroupView<'groups, 'segments>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let index = self.index;
+        if self.iter.peek().map_or(true, |group| group.start > index) {
+            self.index += 1;
+            let ending_segment = self.segments.get(index)?;
+            Some(SegmentGroupView {
+                name: None,
+                segments: slice::from_ref(ending_segment),
+                ending_segment,
+            })
+        } else {
+            let group = self.iter.next()?;
+            self.index = group.end;
+            let segments = self.segments.get(group.start..group.end)?;
+            Some(SegmentGroupView {
+                name: group.name.as_ref().map(String::as_str),
+                segments,
+                ending_segment: segments.last().unwrap(),
+            })
         }
     }
 }

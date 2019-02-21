@@ -35,7 +35,7 @@ pub use comparisons::Comparisons;
 pub use editor::{Editor, RenameError};
 pub use run_metadata::{CustomVariable, RunMetadata};
 pub use segment::Segment;
-pub use segment_groups::{SegmentGroup, SegmentGroups};
+pub use segment_groups::{SegmentGroup, SegmentGroupView, SegmentGroups, SegmentGroupsIter};
 pub use segment_history::SegmentHistory;
 
 use crate::comparison::{default_generators, personal_best, ComparisonGenerator};
@@ -245,6 +245,11 @@ impl Run {
     #[inline]
     pub fn segment_groups_mut(&mut self) -> &mut SegmentGroups {
         &mut self.segment_groups
+    }
+
+    #[inline]
+    pub fn segment_groups_iter(&self) -> SegmentGroupsIter<'_, '_> {
+        self.segment_groups.iter_with(&self.segments)
     }
 
     /// Pushes the segment provided to the end of the list of segments of this Run.
