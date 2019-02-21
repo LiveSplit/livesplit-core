@@ -5,7 +5,10 @@ use crate::xml_util::{
     attribute, attribute_err, end_tag, optional_attribute_err, parse_attributes, parse_base,
     parse_children, reencode_children, text, text_as_bytes_err, text_err, text_parsed,
 };
-use crate::{AtomicDateTime, Run, RunMetadata, Segment, Time, TimeSpan};
+use crate::{
+    run::{SegmentGroup, SegmentGroups},
+    AtomicDateTime, Run, RunMetadata, Segment, Time, TimeSpan,
+};
 use chrono::{DateTime, TimeZone, Utc};
 use core::str;
 use quick_xml::Reader;
@@ -522,17 +525,41 @@ pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
 }
 
 fn import_subsplits(run: &mut Run) {
-    for segment in run.segments_mut() {
+    let mut groups = SegmentGroups::new();
+    let mut current_group_start = None;
+
+    for (index, segment) in run.segments_mut().iter_mut().enumerate() {
         let name = segment.name_mut();
+
         if name.starts_with('-') {
+            if current_group_start.is_none() {
+                current_group_start = Some(index);
+            }
             name.remove(0);
-        } else if name.starts_with('{') {
-            let mut iter = name[1..].splitn(2, '}');
-            if let (Some(_group_name), Some(split_name)) = (iter.next(), iter.next()) {
-                let split_name = split_name.trim_left();
-                let remove_count = split_name.as_ptr() as usize - name.as_ptr() as usize;
-                name.replace_range(0..remove_count, "");
+        } else {
+            let mut group = current_group_start
+                .take()
+                .map(|range_start| SegmentGroup::new(range_start, index + 1, None).unwrap());
+
+            if name.starts_with('{') {
+                let mut iter = name[1..].splitn(2, '}');
+                if let (Some(group_name), Some(segment_name)) = (iter.next(), iter.next()) {
+                    let segment_name = segment_name.trim_left();
+
+                    if let Some(group) = &mut group {
+                        group.set_name(Some(group_name.to_owned()));
+                    }
+
+                    let remove_count = segment_name.as_ptr() as usize - name.as_ptr() as usize;
+                    name.replace_range(0..remove_count, "");
+                }
+            }
+
+            if let Some(group) = group {
+                groups.push_back(group).unwrap();
             }
         }
     }
+
+    *run.segment_groups_mut() = groups;
 }
