@@ -242,11 +242,20 @@ export interface SplitStateJson {
      * on.
      */
     is_current_split: boolean,
+    /** Describes whether the segment is part of a segment group. */
+    is_subsplit: boolean,
+    /**
+     * Describes whether the row should be considered an even or an odd row.
+     * This is useful for visualizing the rows with alternating colors.
+     */
+    is_even: boolean,
     /**
      * The index of the segment based on all the segments of the run. This may
      * differ from the index of this `SplitStateJson` in the
      * `SplitsComponentStateJson` object, as there can be a scrolling window,
-     * showing only a subset of segments. Each index is guaranteed to be unique.
+     * showing only a subset of segments. Indices are not guaranteed to be
+     * unique, as they may appear in both group headers and in segments within
+     * the groups. Only the pair of index and `is_subsplit` is unique.
      */
     index: number,
 }

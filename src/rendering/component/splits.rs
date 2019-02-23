@@ -2,7 +2,7 @@ use crate::{
     component::splits::State,
     layout::{LayoutDirection, LayoutState},
     rendering::{
-        icon::Icon, vertical_padding, Backend, RenderContext, BOTH_PADDINGS,
+        icon::Icon, vertical_padding, Backend, RenderContext,
         DEFAULT_COMPONENT_HEIGHT, DEFAULT_TEXT_SIZE, PADDING, TEXT_ALIGN_BOTTOM, TEXT_ALIGN_TOP,
         THIN_SEPARATOR_THICKNESS, TWO_ROW_HEIGHT,
     },
@@ -94,13 +94,11 @@ pub(in crate::rendering) fn render<B: Backend>(
     }
 
     let icon_size = split_height - 2.0 * vertical_padding;
-    let icon_right = if component.has_icons {
-        BOTH_PADDINGS + icon_size
-    } else {
-        PADDING
-    };
 
     for (i, split) in component.splits.iter().enumerate() {
+        let icon_left = if split.is_subsplit { 2.5 * PADDING } else { PADDING };
+        let icon_right = if component.has_icons { icon_left + PADDING + icon_size } else { icon_left };
+
         if component.show_thin_separators && i + 1 != component.splits.len() {
             context.render_rectangle(
                 separator_pos,
@@ -116,13 +114,13 @@ pub(in crate::rendering) fn render<B: Backend>(
                 &component.current_split_gradient,
             );
         } else if let Some((even, odd)) = &split_background {
-            let color = if split.index % 2 == 0 { even } else { odd };
+            let color = if split.is_even { even } else { odd };
             context.render_rectangle([0.0, 0.0], split_background_bottom_right, color);
         }
 
         {
             if let Some(Some(icon)) = split_icons.get(split.index) {
-                context.render_icon([PADDING, icon_y], [icon_size, icon_size], icon);
+                context.render_icon([icon_left, icon_y], [icon_size, icon_size], icon);
             }
 
             let mut left_x = split_width - PADDING;

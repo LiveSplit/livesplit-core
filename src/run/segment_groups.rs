@@ -57,18 +57,21 @@ impl SegmentGroups {
     }
 }
 
+#[derive(Debug)]
 pub struct SegmentGroupView<'group, 'segments> {
     name: Option<&'group str>,
     segments: &'segments [Segment],
     ending_segment: &'segments Segment,
+    start_index: usize,
+    end_index: usize,
 }
 
 impl<'group, 'segments> SegmentGroupView<'group, 'segments> {
-    pub fn group_name(&self) -> Option<&'group str> {
+    pub fn name(&self) -> Option<&'group str> {
         self.name
     }
 
-    pub fn group_name_or_default<'a>(&self) -> &'a str
+    pub fn name_or_default<'a>(&self) -> &'a str
     where
         'group: 'a,
         'segments: 'a,
@@ -82,6 +85,14 @@ impl<'group, 'segments> SegmentGroupView<'group, 'segments> {
 
     pub fn ending_segment(&self) -> &'segments Segment {
         self.ending_segment
+    }
+
+    pub fn start_index(&self) -> usize {
+        self.start_index
+    }
+
+    pub fn contains(&self, index: usize) -> bool {
+        index >= self.start_index && index < self.end_index
     }
 
     pub fn len(&self) -> usize {
@@ -99,14 +110,20 @@ impl<'groups, 'segments> Iterator for SegmentGroupsIter<'groups, 'segments> {
     type Item = SegmentGroupView<'groups, 'segments>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let index = self.index;
-        if self.iter.peek().map_or(true, |group| group.start > index) {
+        let start_index = self.index;
+        if self
+            .iter
+            .peek()
+            .map_or(true, |group| group.start > start_index)
+        {
             self.index += 1;
-            let ending_segment = self.segments.get(index)?;
+            let ending_segment = self.segments.get(start_index)?;
             Some(SegmentGroupView {
                 name: None,
                 segments: slice::from_ref(ending_segment),
                 ending_segment,
+                start_index,
+                end_index: self.index,
             })
         } else {
             let group = self.iter.next()?;
@@ -116,6 +133,8 @@ impl<'groups, 'segments> Iterator for SegmentGroupsIter<'groups, 'segments> {
                 name: group.name.as_ref().map(String::as_str),
                 segments,
                 ending_segment: segments.last().unwrap(),
+                start_index,
+                end_index: self.index,
             })
         }
     }
