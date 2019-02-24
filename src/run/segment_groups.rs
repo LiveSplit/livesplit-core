@@ -23,6 +23,14 @@ impl SegmentGroup {
         }
     }
 
+    pub fn new_lossy(start: usize, end: usize, name: Option<String>) -> Self {
+        Self {
+            start,
+            end: end.max(start + 1),
+            name,
+        }
+    }
+
     pub fn set_name(&mut self, name: Option<String>) {
         self.name = name;
     }
@@ -46,6 +54,17 @@ pub struct SegmentGroups(Vec<SegmentGroup>);
 impl SegmentGroups {
     pub fn new() -> Self {
         Default::default()
+    }
+
+    pub fn from_vec_lossy(mut unordered_groups: Vec<SegmentGroup>) -> Self {
+        unordered_groups.sort_unstable_by_key(|g| g.start);
+        let mut min_start = 0;
+        for group in &mut unordered_groups {
+            group.start = group.start.max(min_start);
+            group.end = group.end.max(group.start + 1);
+            min_start = group.end;
+        }
+        Self(unordered_groups)
     }
 
     // TODO: Implement iterator instead (look at SegmentHistory)

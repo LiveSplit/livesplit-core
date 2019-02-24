@@ -4,10 +4,13 @@ mod parse {
     use crate::run_files;
     use livesplit_core::{
         analysis::total_playtime,
-        run::parser::{
-            composite, flitter, livesplit, llanfair, llanfair2, llanfair_gered, portal2_live_timer,
-            source_live_timer, splits_io, splitterino, splitterz, time_split_tracker, urn,
-            worstrun, wsplit, TimerKind,
+        run::{
+            parser::{
+                composite, flitter, livesplit, llanfair, llanfair2, llanfair_gered,
+                portal2_live_timer, source_live_timer, splits_io, splitterino, splitterz,
+                time_split_tracker, urn, worstrun, wsplit, TimerKind,
+            },
+            SegmentGroup,
         },
         Run, TimeSpan,
     };
@@ -67,6 +70,19 @@ mod parse {
     #[test]
     fn livesplit_celeste() {
         livesplit(run_files::CELESTE);
+    }
+
+    #[test]
+    fn segment_groups() {
+        let run = livesplit(run_files::LIVESPLIT_SEGMENT_GROUPS);
+        let groups = run.segment_groups().groups();
+        assert_eq!(groups[0], SegmentGroup::new(1, 4, None).unwrap());
+        assert_eq!(groups[1], SegmentGroup::new(4, 7, None).unwrap());
+        assert_eq!(groups[2], SegmentGroup::new(7, 11, None).unwrap());
+        assert_eq!(groups[3], SegmentGroup::new(11, 15, None).unwrap());
+        assert_eq!(groups[4], SegmentGroup::new(15, 20, None).unwrap());
+        assert_eq!(groups[5], SegmentGroup::new(20, 26, None).unwrap());
+        assert_eq!(groups[6], SegmentGroup::new(26, 33, None).unwrap());
     }
 
     #[test]
