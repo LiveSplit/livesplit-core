@@ -243,6 +243,11 @@ impl Run {
     }
 
     #[inline]
+    pub fn segment_groups(&self) -> &SegmentGroups {
+        &self.segment_groups
+    }
+
+    #[inline]
     pub fn segment_groups_mut(&mut self) -> &mut SegmentGroups {
         &mut self.segment_groups
     }

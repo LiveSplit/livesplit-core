@@ -544,7 +544,7 @@ fn import_subsplits(run: &mut Run) {
             if name.starts_with('{') {
                 let mut iter = name[1..].splitn(2, '}');
                 if let (Some(group_name), Some(segment_name)) = (iter.next(), iter.next()) {
-                    let segment_name = segment_name.trim_left();
+                    let segment_name = segment_name.trim_start();
 
                     if let Some(group) = &mut group {
                         group.set_name(Some(group_name.to_owned()));

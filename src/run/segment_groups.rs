@@ -26,6 +26,18 @@ impl SegmentGroup {
     pub fn set_name(&mut self, name: Option<String>) {
         self.name = name;
     }
+
+    pub fn name(&self) -> Option<&str> {
+        self.name.as_ref().map(String::as_str)
+    }
+
+    pub fn start(&self) -> usize {
+        self.start
+    }
+
+    pub fn end(&self) -> usize {
+        self.end
+    }
 }
 
 #[derive(Debug, Default, Clone, PartialEq)]
@@ -34,6 +46,11 @@ pub struct SegmentGroups(Vec<SegmentGroup>);
 impl SegmentGroups {
     pub fn new() -> Self {
         Default::default()
+    }
+
+    // TODO: Implement iterator instead (look at SegmentHistory)
+    pub fn groups(&self) -> &[SegmentGroup] {
+        &self.0
     }
 
     pub fn push_back(&mut self, group: SegmentGroup) -> Result<(), SegmentGroup> {

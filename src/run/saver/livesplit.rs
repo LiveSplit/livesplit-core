@@ -385,6 +385,24 @@ pub fn save_run<W: Write>(run: &Run, writer: W) -> Result<()> {
         },
     )?;
 
+    scoped_iter(
+        writer,
+        new_tag(b"SegmentGroups"),
+        run.segment_groups().groups(),
+        |writer, group| {
+            let mut tag = new_tag(b"SegmentGroup");
+            tag.push_attribute((&b"start"[..], fmt_buf(group.start(), buf)));
+            tag.push_attribute((&b"end"[..], fmt_buf(group.end(), buf)));
+
+            if let Some(name) = group.name() {
+                text(writer, tag, name)
+            } else {
+                writer.write_event(Event::Empty(tag))?;
+                Ok(())
+            }
+        },
+    )?;
+
     scoped(
         writer,
         new_tag(b"AutoSplitterSettings"),
