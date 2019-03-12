@@ -24,10 +24,9 @@ use {
     derive_more::{Add, Mul},
     euc::{
         buffer::Buffer2d,
-        rasterizer::{self, BackfaceCullingDisabled},
+        rasterizer::{self, BackfaceCullingDisabled, DepthStrategy},
         Interpolate, Pipeline, Target,
     },
-    std::rc::Rc,
     vek::{Mat3, Rgba, Vec2, Vec3},
 };
 
@@ -40,7 +39,7 @@ struct SoftwareBackend {
 
 impl Backend for SoftwareBackend {
     type Mesh = Vec<Vertex>;
-    type Texture = Rc<Texture>;
+    type Texture = Texture;
 
     fn create_mesh(&mut self, mesh: &Mesh) -> Self::Mesh {
         let vertices = mesh.vertices();
@@ -64,15 +63,14 @@ impl Backend for SoftwareBackend {
         texture: Option<&Self::Texture>,
     ) {
         let [x1, y1, z1, x2, y2, z2] = transform.to_column_major_array();
-        MyPipeline::draw::<rasterizer::Triangles<'_, _, BackfaceCullingDisabled>, _>(
-            &Uniforms {
-                transform: Mat3::new(x1, x2, 0.0, y1, y2, 0.0, z1, z2, 0.0),
-                color_tl: Rgba::new(tl[0], tl[1], tl[2], tl[3]),
-                color_tr: Rgba::new(tr[0], tr[1], tr[2], tr[3]),
-                color_bl: Rgba::new(bl[0], bl[1], bl[2], bl[3]),
-                color_br: Rgba::new(br[0], br[1], br[2], br[3]),
-                texture: texture.cloned(),
-            },
+        MyPipeline {
+            transform: Mat3::new(x1, x2, 0.0, y1, y2, 0.0, z1, z2, 0.0),
+            color_tl: Rgba::new(tl[0], tl[1], tl[2], tl[3]),
+            color_tr: Rgba::new(tr[0], tr[1], tr[2], tr[3]),
+            color_bl: Rgba::new(bl[0], bl[1], bl[2], bl[3]),
+            color_br: Rgba::new(br[0], br[1], br[2], br[3]),
+            texture,
+        }.draw::<rasterizer::Triangles<'_, _, BackfaceCullingDisabled>, _>(
             mesh,
             &mut self.color,
             &mut NoDepth(self.dims),
@@ -82,19 +80,17 @@ impl Backend for SoftwareBackend {
     fn free_mesh(&mut self, _: Self::Mesh) {}
 
     fn create_texture(&mut self, width: u32, height: u32, data: &[u8]) -> Self::Texture {
-        Rc::new(Texture {
+        Texture {
             data: data.to_owned(),
             width: width as f32,
             height: height as f32,
             stride: width as usize * 4,
-        })
+        }
     }
     fn free_texture(&mut self, _: Self::Texture) {}
 
     fn resize(&mut self, _: f32) {}
 }
-
-struct MyPipeline;
 
 struct NoDepth([usize; 2]);
 
@@ -152,13 +148,13 @@ struct Texture {
     stride: usize,
 }
 
-struct Uniforms {
+struct MyPipeline<'a> {
     transform: Mat3<f32>,
     color_tl: Rgba<f32>,
     color_tr: Rgba<f32>,
     color_bl: Rgba<f32>,
     color_br: Rgba<f32>,
-    texture: Option<Rc<Texture>>,
+    texture: Option<&'a Texture>,
 }
 
 struct Vertex {
@@ -183,20 +179,19 @@ impl Interpolate for VsOut {
     }
 }
 
-impl Pipeline for MyPipeline {
-    type Uniform = Uniforms;
+impl Pipeline for MyPipeline<'_> {
     type Vertex = Vertex;
     type VsOut = VsOut;
     type Pixel = Rgba<f32>;
 
-    fn vert(uniforms: &Self::Uniform, vertex: &Self::Vertex) -> ([f32; 3], Self::VsOut) {
+    fn vert(&self, vertex: &Self::Vertex) -> ([f32; 3], Self::VsOut) {
         let left =
-            uniforms.color_tl * (1.0 - vertex.texcoord.y) + uniforms.color_bl * vertex.texcoord.y;
+            self.color_tl * (1.0 - vertex.texcoord.y) + self.color_bl * vertex.texcoord.y;
         let right =
-            uniforms.color_tr * (1.0 - vertex.texcoord.y) + uniforms.color_br * vertex.texcoord.y;
+            self.color_tr * (1.0 - vertex.texcoord.y) + self.color_br * vertex.texcoord.y;
         let color = left * (1.0 - vertex.texcoord.x) + right * vertex.texcoord.x;
 
-        let pos = Vec3::new(vertex.position.x, vertex.position.y, 1.0) * uniforms.transform;
+        let pos = Vec3::new(vertex.position.x, vertex.position.y, 1.0) * self.transform;
 
         (
             [2.0 * pos.x - 1.0, -2.0 * pos.y + 1.0, 0.0],
@@ -207,8 +202,8 @@ impl Pipeline for MyPipeline {
         )
     }
 
-    fn frag(uniforms: &Self::Uniform, vsout: &Self::VsOut) -> Self::Pixel {
-        if let Some(texture) = &uniforms.texture {
+    fn frag(&self, vsout: &Self::VsOut) -> Self::Pixel {
+        if let Some(texture) = self.texture {
             let x = vsout.texcoord.x * texture.width;
             let y = vsout.texcoord.y * texture.height;
             let pixel = &texture.data[texture.stride * y as usize + x as usize * 4..];
@@ -224,6 +219,10 @@ impl Pipeline for MyPipeline {
             ) * vsout.color;
         }
         vsout.color
+    }
+
+    fn get_depth_strategy(&self) -> DepthStrategy {
+        DepthStrategy::None
     }
 }
 
