@@ -1,7 +1,7 @@
 use super::mesh::{fill_builder, Mesh};
 use super::Backend;
 use lyon::{
-    path::{Path, math::point},
+    path::{math::point, Path},
     tessellation::{FillOptions, FillTessellator},
 };
 use rusttype::{Font, GlyphId, Scale, Segment};

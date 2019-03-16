@@ -48,6 +48,12 @@ fn subsplits_layout(c: &mut Criterion) {
 
     let state = layout.state(&timer);
 
+    c.bench_function("Software Rendering (Subsplits Layout, 1x1)", move |b| {
+        b.iter(|| software::render(&state, [1, 1]))
+    });
+
+    let state = layout.state(&timer);
+
     c.bench(
         "Software Rendering (Subsplits Layout, Anti Aliased)",
         Benchmark::new(

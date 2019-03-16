@@ -23,7 +23,7 @@ pub(in crate::rendering) fn render(
                 .unwrap_or(layout_state.text_color),
         ),
         Text::Split(left, right) => context.render_info_text_component(
-            &left,
+            &[&left],
             &right,
             component
                 .left_center_color

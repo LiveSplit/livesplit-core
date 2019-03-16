@@ -11,8 +11,21 @@ pub(in crate::rendering) fn render(
     layout_state: &LayoutState,
 ) {
     context.render_rectangle([0.0, 0.0], dim, &component.background);
+    let (a, b);
+    let abbreviations = if component.text.starts_with("Previous Segment") {
+        a = [
+            &component.text,
+            "Previous Segment",
+            "Prev. Segment",
+            "Prev. Seg.",
+        ];
+        &a[..]
+    } else {
+        b = [&component.text, "Live Segment", "Live Seg."];
+        &b[..]
+    };
     context.render_info_time_component(
-        &component.text,
+        abbreviations,
         &component.time,
         component.label_color.unwrap_or(layout_state.text_color),
         component.visual_color,

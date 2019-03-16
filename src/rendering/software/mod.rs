@@ -70,7 +70,8 @@ impl Backend for SoftwareBackend {
             color_bl: Rgba::new(bl[0], bl[1], bl[2], bl[3]),
             color_br: Rgba::new(br[0], br[1], br[2], br[3]),
             texture,
-        }.draw::<rasterizer::Triangles<'_, _, BackfaceCullingDisabled>, _>(
+        }
+        .draw::<rasterizer::Triangles<'_, _, BackfaceCullingDisabled>, _>(
             mesh,
             &mut self.color,
             &mut NoDepth(self.dims),
@@ -185,10 +186,8 @@ impl Pipeline for MyPipeline<'_> {
     type Pixel = Rgba<f32>;
 
     fn vert(&self, vertex: &Self::Vertex) -> ([f32; 3], Self::VsOut) {
-        let left =
-            self.color_tl * (1.0 - vertex.texcoord.y) + self.color_bl * vertex.texcoord.y;
-        let right =
-            self.color_tr * (1.0 - vertex.texcoord.y) + self.color_br * vertex.texcoord.y;
+        let left = self.color_tl * (1.0 - vertex.texcoord.y) + self.color_bl * vertex.texcoord.y;
+        let right = self.color_tr * (1.0 - vertex.texcoord.y) + self.color_br * vertex.texcoord.y;
         let color = left * (1.0 - vertex.texcoord.x) + right * vertex.texcoord.x;
 
         let pos = Vec3::new(vertex.position.x, vertex.position.y, 1.0) * self.transform;

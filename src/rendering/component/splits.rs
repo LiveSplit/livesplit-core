@@ -64,7 +64,11 @@ pub(in crate::rendering) fn render<B: Backend>(
     }
 
     let icon_size = split_height - 0.2;
-    let icon_right = if component.has_icons { 2.0 * MARGIN + icon_size } else { MARGIN };
+    let icon_right = if component.has_icons {
+        2.0 * MARGIN + icon_size
+    } else {
+        MARGIN
+    };
 
     for (i, split) in component.splits.iter().enumerate() {
         if component.show_thin_separators && i + 1 != component.splits.len() {

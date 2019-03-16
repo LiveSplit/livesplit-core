@@ -56,11 +56,12 @@ fn wsplit() {
     let timer = Timer::new(run).unwrap();
     let mut layout = lsl("tests/layout_files/WSplit.lsl");
 
-    check_dims(&layout.state(&timer), [250, 300], 0x094f742f, "wsplit");
+    check_dims(&layout.state(&timer), [250, 300], 0x1f81d9cf, "wsplit");
 }
 
 #[test]
 fn all_components() {
+    let mut layout = lsl("tests/layout_files/All.lsl");
     let run = lss("tests/run_files/livesplit1.6_gametime.lss");
     let mut timer = Timer::new(run).unwrap();
     tests_helper::start_run(&mut timer);
@@ -69,13 +70,20 @@ fn all_components() {
         &[Some(10.0), None, Some(20.0), Some(55.0)],
     );
 
-    let mut layout = lsl("tests/layout_files/All.lsl");
+    let state = layout.state(&timer);
 
     check_dims(
-        &layout.state(&timer),
+        &state,
         [300, 800],
         0x2b6a2a14,
         "all_components",
+    );
+
+    check_dims(
+        &state,
+        [150, 800],
+        0xf9c76ec8,
+        "all_components_thin",
     );
 }
 

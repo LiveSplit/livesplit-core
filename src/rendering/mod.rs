@@ -355,7 +355,7 @@ impl<'b, B: Backend> RenderContext<'b, B> {
 
     fn render_info_time_component(
         &mut self,
-        text: &str,
+        texts: &[&str],
         value: &str,
         text_color: Color,
         value_color: Color,
@@ -372,12 +372,13 @@ impl<'b, B: Backend> RenderContext<'b, B> {
         } else {
             self.render_numbers(value, [width - MARGIN, height - 0.3], 0.8, [value_color; 2])
         };
+        let text = self.choose_abbreviation(texts.iter().cloned(), 0.8, end_x - 2.0 * MARGIN);
         self.render_text_ellipsis(text, [MARGIN, 0.7], 0.8, [text_color; 2], end_x - MARGIN);
     }
 
     fn render_info_text_component(
         &mut self,
-        text: &str,
+        texts: &[&str],
         value: &str,
         text_color: Color,
         value_color: Color,
@@ -399,6 +400,7 @@ impl<'b, B: Backend> RenderContext<'b, B> {
                 [value_color; 2],
             )
         };
+        let text = self.choose_abbreviation(texts.iter().cloned(), 0.8, end_x - 2.0 * MARGIN);
         self.render_text_ellipsis(text, [MARGIN, 0.7], 0.8, [text_color; 2], end_x - MARGIN);
     }
 
@@ -521,6 +523,41 @@ impl<'b, B: Backend> RenderContext<'b, B> {
             self.backend,
         )
         .map_or(pos[0], |g| g.position().x)
+    }
+
+    fn choose_abbreviation<'a>(
+        &self,
+        abbreviations: impl IntoIterator<Item = &'a str>,
+        font_size: f32,
+        max_width: f32,
+    ) -> &'a str {
+        let mut abbreviations = abbreviations.into_iter();
+        let abbreviation = abbreviations.next().unwrap_or("");
+        let width = self.measure_text(abbreviation, font_size);
+        let (mut total_longest, mut total_longest_width) = (abbreviation, width);
+        let (mut within_longest, mut within_longest_width) = if width <= max_width {
+            (abbreviation, width)
+        } else {
+            ("", 0.0)
+        };
+
+        for abbreviation in abbreviations {
+            let width = self.measure_text(abbreviation, font_size);
+            if width <= max_width && width > within_longest_width {
+                within_longest_width = width;
+                within_longest = abbreviation;
+            }
+            if width > total_longest_width {
+                total_longest_width = width;
+                total_longest = abbreviation;
+            }
+        }
+
+        if within_longest.is_empty() {
+            total_longest
+        } else {
+            within_longest
+        }
     }
 
     fn measure_text(&self, text: &str, scale: f32) -> f32 {

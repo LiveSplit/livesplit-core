@@ -2,6 +2,7 @@ use super::glyph_cache::GlyphCache;
 use super::{decode_color, Backend, Pos, Transform};
 use crate::settings::Color;
 use rusttype::{point, Codepoint, Font, GlyphId, PositionedGlyph, Scale};
+use smallvec::SmallVec;
 
 #[derive(Copy, Clone)]
 pub struct ScaledFont<'f, 'fd: 'f> {
@@ -120,36 +121,31 @@ pub fn layout_numbers<'i: 'fd, 'fd>(
 
 pub fn ellipsis<'fd>(
     layout: impl IntoIterator<Item = PositionedGlyph<'fd>>,
-    max_x: f32,
+    mut max_x: f32,
     font: ScaledFont<'_, 'fd>,
 ) -> impl Iterator<Item = PositionedGlyph<'fd>> {
     let ellipsis = font.font.glyph(Codepoint('…' as u32)).scaled(font.scale);
     let ellipsis_width = ellipsis.h_metrics().advance_width;
 
-    let mut ended = false;
-    layout
-        .into_iter()
-        .map(move |glyph| {
-            if glyph.position().x + glyph.unpositioned().h_metrics().advance_width + ellipsis_width
-                >= max_x
-            {
-                (ellipsis.clone().positioned(glyph.position()), true)
-            } else {
-                (glyph, false)
+    let mut glyphs = layout.into_iter().collect::<SmallVec<[_; 32]>>();
+
+    let mut positioned_ellipsis = None;
+    while let Some(glyph) = glyphs.last() {
+        if glyph.position().x + glyph.unpositioned().h_metrics().advance_width > max_x {
+            if positioned_ellipsis.is_none() {
+                max_x -= ellipsis_width;
             }
-        })
-        .take_while(move |&(_, should_end)| {
-            // TODO: at some point it should possibly be take_while_inclusive or
-            // something as this currently evaluates the last element in the map
-            // even though we already know we'll end here
-            if !ended {
-                ended = should_end;
-                true
-            } else {
-                false
-            }
-        })
-        .map(|(glyph, _)| glyph)
+            positioned_ellipsis = Some(ellipsis.clone().positioned(glyph.position()));
+            glyphs.pop();
+        } else {
+            break;
+        }
+    }
+    if let Some(ellipsis) = positioned_ellipsis {
+        glyphs.push(ellipsis);
+    }
+
+    glyphs.into_iter()
 }
 
 pub fn measure<'fd>(layout: impl IntoIterator<Item = PositionedGlyph<'fd>>) -> f32 {

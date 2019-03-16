@@ -1,4 +1,5 @@
 use crate::{
+    comparison,
     component::delta::State,
     layout::LayoutState,
     rendering::{Backend, RenderContext},
@@ -12,7 +13,7 @@ pub(in crate::rendering) fn render(
 ) {
     context.render_rectangle([0.0, 0.0], dim, &component.background);
     context.render_info_time_component(
-        &component.text,
+        &[&component.text, comparison::shorten(&component.text)],
         &component.time,
         component.label_color.unwrap_or(layout_state.text_color),
         component.visual_color,
