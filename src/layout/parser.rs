@@ -213,17 +213,14 @@ impl<T: GradientType> GradientBuilder<T> {
     }
 }
 
-fn color<R, F>(reader: &mut Reader<R>, buf: &mut Vec<u8>, f: F) -> Result<()>
+fn color<R, F>(reader: &mut Reader<R>, buf: &mut Vec<u8>, func: F) -> Result<()>
 where
     R: BufRead,
     F: FnOnce(Color),
 {
     text_err(reader, buf, |text| {
-        let n = u32::from_str_radix(&text, 16)?;
-        let b = (n & 0xFF) as u8;
-        let g = ((n >> 8) & 0xFF) as u8;
-        let r = ((n >> 16) & 0xFF) as u8;
-        let a = ((n >> 24) & 0xFF) as u8;
+        let number = u32::from_str_radix(&text, 16)?;
+        let [a, r, g, b] = number.to_be_bytes();
         let mut color = Color::from([r, g, b, a]);
         let (r, g, b, a) = color.rgba.into_components();
 
@@ -240,7 +237,7 @@ where
         color.rgba.alpha =
             (1.0 - lightness) * (1.0 - (1.0 - a).powf(1.0 / 2.2)) + lightness * a.powf(1.0 / 1.75);
 
-        f(color);
+        func(color);
         Ok(())
     })
 }

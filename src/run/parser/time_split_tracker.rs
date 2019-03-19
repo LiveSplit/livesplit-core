@@ -1,7 +1,7 @@
 //! Provides the parser for Time Split Tracker splits files.
 
 use super::super::ComparisonError;
-use crate::{timing, AtomicDateTime, Image, RealTime, Run, Segment, Time, TimeSpan};
+use crate::{settings::Image, timing, AtomicDateTime, RealTime, Run, Segment, Time, TimeSpan};
 use chrono::{TimeZone, Utc};
 use snafu::{OptionExt, ResultExt};
 use std::fs::File;

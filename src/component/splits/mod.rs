@@ -6,8 +6,10 @@
 //! shown all the time.
 
 use crate::{
-    settings::{Color, Field, Gradient, ListGradient, SettingsDescription, Value},
-    CachedImageId, GeneralLayoutSettings, Timer,
+    settings::{
+        CachedImageId, Color, Field, Gradient, ImageData, ListGradient, SettingsDescription, Value,
+    },
+    GeneralLayoutSettings, Timer,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{to_writer, Result};
@@ -118,9 +120,9 @@ pub struct IconChange {
     /// object. The corresponding index is the `index` field of the `SplitState`
     /// object.
     pub segment_index: usize,
-    /// The segment's icon encoded as a Data URL. The String itself may be
-    /// empty. This indicates that there is no icon.
-    pub icon: String,
+    /// The segment's icon encoded as the raw file bytes. The buffer itself may
+    /// be empty. This indicates that there is no icon.
+    pub icon: ImageData,
 }
 
 /// The state object describes the information to visualize for this component.
@@ -345,7 +347,7 @@ impl Component {
                 if let Some(icon_change) = icon_id.update_with(Some(segment.icon())) {
                     icon_changes.push(IconChange {
                         segment_index: i,
-                        icon: icon_change.to_owned(),
+                        icon: icon_change.into(),
                     });
                 }
 

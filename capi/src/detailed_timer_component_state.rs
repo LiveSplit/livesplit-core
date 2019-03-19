@@ -132,15 +132,25 @@ pub extern "C" fn DetailedTimerComponentState_comparison2_time(
     )
 }
 
-/// The segment's icon encoded as a Data URL. This value is only specified
-/// whenever the icon changes. If you explicitly want to query this value,
-/// remount the component. The String itself may be empty. This indicates
-/// that there is no icon.
+/// The data of the segment's icon. This value is only specified whenever the
+/// icon changes. If you explicitly want to query this value, remount the
+/// component. The buffer itself may be empty. This indicates that there is no
+/// icon.
 #[no_mangle]
-pub extern "C" fn DetailedTimerComponentState_icon_change(
+pub extern "C" fn DetailedTimerComponentState_icon_change_ptr(
     this: &DetailedTimerComponentState,
-) -> *const Nullablec_char {
-    this.icon_change.as_ref().map_or_else(ptr::null, output_str)
+) -> *const u8 {
+    this.icon_change
+        .as_ref()
+        .map_or_else(ptr::null, |i| i.as_ptr())
+}
+
+/// The length of the data of the segment's icon.
+#[no_mangle]
+pub extern "C" fn DetailedTimerComponentState_icon_change_len(
+    this: &DetailedTimerComponentState,
+) -> usize {
+    this.icon_change.as_ref().map_or(0, |i| i.len())
 }
 
 /// The name of the segment. This may be <NULL> if it's not supposed to be

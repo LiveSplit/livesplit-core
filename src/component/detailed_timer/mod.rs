@@ -6,14 +6,14 @@
 
 use super::timer;
 use crate::comparison::{self, best_segments, none};
-use crate::settings::{Field, Gradient, SemanticColor, SettingsDescription, Value};
+use crate::settings::{
+    CachedImageId, Field, Gradient, ImageData, SemanticColor, SettingsDescription, Value,
+};
 use crate::timing::formatter::{
     none_wrapper::DashWrapper, timer as formatter, Accuracy, DigitsFormat, Short, TimeFormatter,
     DASH,
 };
-use crate::{
-    CachedImageId, GeneralLayoutSettings, Segment, TimeSpan, Timer, TimerPhase, TimingMethod,
-};
+use crate::{GeneralLayoutSettings, Segment, TimeSpan, Timer, TimerPhase, TimingMethod};
 use serde::{Deserialize, Serialize};
 use serde_json::{to_writer, Result};
 use std::borrow::Cow;
@@ -74,11 +74,11 @@ pub struct State {
     /// The name of the segment. This may be `None` if it's not supposed to be
     /// visualized.
     pub segment_name: Option<String>,
-    /// The segment's icon encoded as a Data URL. This value is only specified
-    /// whenever the icon changes. If you explicitly want to query this value,
-    /// remount the component. The String itself may be empty. This indicates
-    /// that there is no icon.
-    pub icon_change: Option<String>,
+    /// The segment's icon encoded as the raw file bytes. This value is only
+    /// specified whenever the icon changes. If you explicitly want to query
+    /// this value, remount the component. The buffer itself may be empty. This
+    /// indicates that there is no icon.
+    pub icon_change: Option<ImageData>,
 }
 
 /// The state object describing a comparison to visualize.
@@ -283,7 +283,7 @@ impl Component {
                     .filter(|_| display_icon)
                     .map(Segment::icon),
             )
-            .map(str::to_owned);
+            .map(Into::into);
 
         let segment_name = if self.settings.show_segment_name {
             timer.current_split().map(|s| s.name().to_owned())

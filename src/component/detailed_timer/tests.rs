@@ -19,7 +19,7 @@ fn icon_handling() {
     assert!(component
         .state(&timer, layout_settings)
         .icon_change
-        .filter(String::is_empty)
+        .filter(|i| i.is_empty())
         .is_some());
 
     assert!(component
@@ -45,7 +45,7 @@ fn icon_handling() {
     assert!(component
         .state(&timer, layout_settings)
         .icon_change
-        .filter(String::is_empty)
+        .filter(|i| i.is_empty())
         .is_some());
 
     assert!(component
@@ -58,6 +58,6 @@ fn icon_handling() {
     assert!(component
         .state(&timer, layout_settings)
         .icon_change
-        .filter(String::is_empty)
+        .filter(|i| i.is_empty())
         .is_some());
 }

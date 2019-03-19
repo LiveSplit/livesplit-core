@@ -33,7 +33,7 @@ pub use segment::Segment;
 pub use segment_history::SegmentHistory;
 
 use crate::comparison::{default_generators, personal_best, ComparisonGenerator};
-use crate::{AtomicDateTime, Image, Time, TimeSpan, TimingMethod};
+use crate::{settings::Image, AtomicDateTime, Time, TimeSpan, TimingMethod};
 use ordered_float::OrderedFloat;
 use std::borrow::Cow;
 use std::cmp::max;

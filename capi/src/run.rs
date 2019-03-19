@@ -145,11 +145,17 @@ pub unsafe extern "C" fn Run_set_game_name(this: &mut Run, game: *const c_char) 
     this.set_game_name(str(game));
 }
 
-/// Accesses the Data URL storing the game icon's data. If there is no game
-/// icon, this returns an empty string instead of a URL.
+/// Accesses the game icon's data. If there is no game icon, this returns an
+/// empty buffer.
 #[no_mangle]
-pub extern "C" fn Run_game_icon(this: &Run) -> *const c_char {
-    output_str(this.game_icon().url())
+pub extern "C" fn Run_game_icon_ptr(this: &Run) -> *const u8 {
+    this.game_icon().data().as_ptr()
+}
+
+/// Accesses the amount of bytes the game icon's data takes up.
+#[no_mangle]
+pub extern "C" fn Run_game_icon_len(this: &Run) -> usize {
+    this.game_icon().data().len()
 }
 
 /// Accesses the name of the category this Run is for.

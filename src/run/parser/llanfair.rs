@@ -1,6 +1,6 @@
 //! Provides the parser for Llanfair splits files.
 
-use crate::{Image, RealTime, Run, Segment, Time, TimeSpan};
+use crate::{settings::Image, RealTime, Run, Segment, Time, TimeSpan};
 use byteorder::{ReadBytesExt, BE};
 use image::{png, ColorType, ImageBuffer, Rgba};
 use snafu::{OptionExt, ResultExt};

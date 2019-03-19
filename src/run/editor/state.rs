@@ -1,9 +1,9 @@
 use super::{Editor, SegmentRow, TimingMethod};
 use crate::comparison::personal_best;
 use crate::run::RunMetadata;
+use crate::settings::{CachedImageId, ImageData};
 use crate::timing::formatter::none_wrapper::EmptyWrapper;
 use crate::timing::formatter::{Accuracy, Short, TimeFormatter};
-use crate::CachedImageId;
 use serde::{Deserialize, Serialize};
 use serde_json::{to_writer, Result as JsonResult};
 use std::io::Write;
@@ -12,10 +12,10 @@ use std::io::Write;
 /// properly.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct State {
-    /// The game's icon encoded as a Data URL. This value is only specified
-    /// whenever the icon changes. The String itself may be empty. This
-    /// indicates that there is no icon.
-    pub icon_change: Option<String>,
+    /// The game's icon encoded as the raw file bytes. This value is only
+    /// specified whenever the icon changes. The buffer itself may be empty.
+    /// This indicates that there is no icon.
+    pub icon_change: Option<ImageData>,
     /// The name of the game the Run is for.
     pub game: String,
     /// The name of the category the Run is for.
@@ -61,10 +61,10 @@ pub struct Buttons {
 /// Describes the current state of a segment.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Segment {
-    /// The segment's icon encoded as a Data URL. This value is only specified
-    /// whenever the icon changes. The String itself may be empty. This
-    /// indicates that there is no icon.
-    pub icon_change: Option<String>,
+    /// The segment's icon encoded as the raw file bytes. This value is only
+    /// specified whenever the icon changes. The buffer itself may be empty.
+    /// This indicates that there is no icon.
+    pub icon_change: Option<ImageData>,
     /// The name of the segment.
     pub name: String,
     /// The segment's split time for the active timing method.
@@ -111,7 +111,7 @@ impl Editor {
         let icon_change = self
             .game_icon_id
             .update_with(self.run.game_icon().into())
-            .map(str::to_owned);
+            .map(Into::into);
         let game = self.game_name().to_string();
         let category = self.category_name().to_string();
         let offset = formatter.format(self.offset()).to_string();
@@ -150,7 +150,7 @@ impl Editor {
 
             let icon_change = self.segment_icon_ids[segment_index]
                 .update_with(self.run.segment(segment_index).icon().into())
-                .map(str::to_owned);
+                .map(Into::into);
 
             let selected = if self.active_segment_index() == segment_index {
                 SelectionState::Active

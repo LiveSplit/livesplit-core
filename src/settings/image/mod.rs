@@ -1,24 +1,86 @@
-use base64::{self, STANDARD};
+use base64::{display::Base64Display, STANDARD};
+use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use std::fs::File;
 use std::io::{self, Read};
 use std::path::Path;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
+#[cfg(test)]
+mod tests;
+
 static LAST_IMAGE_ID: AtomicUsize = AtomicUsize::new(0);
 
 /// Images can be used to store segment and game icons. Each image object comes
 /// with an ID that changes whenever the image is modified. IDs are unique
-/// across different images. You can query the image's data as a Data URL.
-/// There's no specific image format you need to use for the images.
+/// across different images. There's no specific image format you need to use
+/// for the images.
 #[derive(Debug, Clone)]
 pub struct Image {
-    url: String,
+    data: Vec<u8>,
     id: usize,
+}
+
+/// Describes an owned representation of an image's data. It is suitable to be
+/// used in state objects. It can efficiently be serialized for various formats.
+/// For binary formats it gets serialized as its raw byte representation, while
+/// for textual formats it gets serialized as a Base64 Data URL instead.
+#[derive(Debug, Clone, derive_more::Deref)]
+pub struct ImageData(pub Box<[u8]>);
+
+impl<T> From<T> for ImageData
+where
+    Box<[u8]>: From<T>,
+{
+    fn from(value: T) -> Self {
+        ImageData(value.into())
+    }
+}
+
+impl Serialize for ImageData {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {
+        if serializer.is_human_readable() {
+            if !self.0.is_empty() {
+                serializer.collect_str(&format_args!(
+                    "data:;base64,{}",
+                    Base64Display::with_config(&self.0, STANDARD)
+                ))
+            } else {
+                serializer.serialize_str("")
+            }
+        } else {
+            serializer.serialize_bytes(&self.0)
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for ImageData {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        if deserializer.is_human_readable() {
+            let data: &'de str = Deserialize::deserialize(deserializer)?;
+            if data.is_empty() {
+                Ok(ImageData(Box::new([])))
+            } else if data.starts_with("data:;base64,") {
+                let image_data =
+                    base64::decode(&data["data:;base64,".len()..]).map_err(de::Error::custom)?;
+                Ok(ImageData(image_data.into_boxed_slice()))
+            } else {
+                Err(de::Error::custom("Invalid Data URL for image"))
+            }
+        } else {
+            Ok(ImageData(Deserialize::deserialize(deserializer)?))
+        }
+    }
 }
 
 impl PartialEq for Image {
     fn eq(&self, other: &Image) -> bool {
-        self.url == other.url
+        self.id == other.id || self.data == other.data
     }
 }
 
@@ -38,7 +100,7 @@ impl Image {
     /// Creates a new image with a unique ID with the image data provided.
     pub fn new(data: &[u8]) -> Self {
         let mut image = Image {
-            url: String::new(),
+            data: Vec::new(),
             id: 0,
         };
         image.modify(data);
@@ -78,11 +140,11 @@ impl Image {
         self.id
     }
 
-    /// Accesses the Data URL storing the image's data. If the image's data is
-    /// empty, this returns an empty string instead of a URL.
+    /// Accesses the image's data. If the image's data is empty, this returns an
+    /// empty slice.
     #[inline]
-    pub fn url(&self) -> &str {
-        &self.url
+    pub fn data(&self) -> &[u8] {
+        &self.data
     }
 
     /// Modifies an image by replacing its image data with the new image data
@@ -95,18 +157,14 @@ impl Image {
 
             shrink(data, MAX_IMAGE_SIZE)
         };
-        self.id = LAST_IMAGE_ID.fetch_add(1, Ordering::SeqCst);
-        self.url.clear();
-
-        if !data.is_empty() {
-            self.url.push_str("data:;base64,");
-            base64::encode_config_buf(&data, STANDARD, &mut self.url);
-        }
+        self.id = LAST_IMAGE_ID.fetch_add(1, Ordering::Relaxed);
+        self.data.clear();
+        self.data.extend_from_slice(&*data);
     }
 
     /// Checks if the image data is empty.
     pub fn is_empty(&self) -> bool {
-        self.url.is_empty()
+        self.data.is_empty()
     }
 }
 
@@ -131,10 +189,10 @@ impl Default for CachedImageId {
 
 impl CachedImageId {
     /// Updates the cached image ID based on the optional image provided to this
-    /// method. If a change is observed the Data URL representing the image's
-    /// data is returned. An empty string is returned when a transition to no
-    /// image or no image data is observed.
-    pub fn update_with<'i>(&mut self, image: Option<&'i Image>) -> Option<&'i str> {
+    /// method. If a change is observed the image's data is returned. An empty
+    /// slice is returned when a transition to no image or no image data is
+    /// observed.
+    pub fn update_with<'i>(&mut self, image: Option<&'i Image>) -> Option<&'i [u8]> {
         let new_value = image.map_or(CachedImageId::NoImage, |i| {
             if i.is_empty() {
                 CachedImageId::NoImage
@@ -145,7 +203,7 @@ impl CachedImageId {
 
         if *self != new_value {
             *self = new_value;
-            Some(image.map_or("", |i| i.url()))
+            Some(image.map_or(&[], |i| &i.data))
         } else {
             None
         }

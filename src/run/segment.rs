@@ -1,5 +1,5 @@
 use crate::comparison::personal_best;
-use crate::{Image, SegmentHistory, Time, TimeSpan, TimingMethod};
+use crate::{settings::Image, SegmentHistory, Time, TimeSpan, TimingMethod};
 use std::collections::HashMap;
 
 /// A Segment describes a point in a speedrun that is suitable for storing a
