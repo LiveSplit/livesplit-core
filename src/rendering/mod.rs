@@ -367,10 +367,12 @@ impl<'b, B: Backend> RenderContext<'b, B> {
         } else {
             1.0
         };
+        let left_of_value_x =
+            self.render_numbers(value, [width - MARGIN, height - 0.3], 0.8, [value_color; 2]);
         let end_x = if display_two_rows {
             width
         } else {
-            self.render_numbers(value, [width - MARGIN, height - 0.3], 0.8, [value_color; 2])
+            left_of_value_x
         };
         let text = self.choose_abbreviation(texts.iter().cloned(), 0.8, end_x - 2.0 * MARGIN);
         self.render_text_ellipsis(text, [MARGIN, 0.7], 0.8, [text_color; 2], end_x - MARGIN);
@@ -390,15 +392,16 @@ impl<'b, B: Backend> RenderContext<'b, B> {
         } else {
             1.0
         };
+        let left_of_value_x = self.render_text_right_align(
+            value,
+            [width - MARGIN, height - 0.3],
+            0.8,
+            [value_color; 2],
+        );
         let end_x = if display_two_rows {
             width
         } else {
-            self.render_text_right_align(
-                value,
-                [width - MARGIN, height - 0.3],
-                0.8,
-                [value_color; 2],
-            )
+            left_of_value_x
         };
         let text = self.choose_abbreviation(texts.iter().cloned(), 0.8, end_x - 2.0 * MARGIN);
         self.render_text_ellipsis(text, [MARGIN, 0.7], 0.8, [text_color; 2], end_x - MARGIN);

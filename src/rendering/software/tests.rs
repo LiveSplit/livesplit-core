@@ -1,6 +1,7 @@
 use {
     super::render,
     crate::{
+        component,
         layout::{self, Layout, LayoutState},
         run::parser::{livesplit, llanfair, wsplit},
         tests_helper, Run, Timer,
@@ -72,19 +73,9 @@ fn all_components() {
 
     let state = layout.state(&timer);
 
-    check_dims(
-        &state,
-        [300, 800],
-        0x2b6a2a14,
-        "all_components",
-    );
+    check_dims(&state, [300, 800], 0x2b6a2a14, "all_components");
 
-    check_dims(
-        &state,
-        [150, 800],
-        0xf9c76ec8,
-        "all_components_thin",
-    );
+    check_dims(&state, [150, 800], 0xf9c76ec8, "all_components_thin");
 }
 
 #[test]
@@ -133,6 +124,29 @@ fn subsplits_layout() {
         [300, 800],
         0x33fefeb8,
         "subsplits_layout",
+    );
+}
+
+#[test]
+fn display_two_rows() {
+    let timer = tests_helper::create_timer(&["A"]);
+    let mut layout = Layout::new();
+    let mut component = component::text::Component::new();
+    let settings = component.settings_mut();
+    settings.display_two_rows = true;
+    settings.text =
+        component::text::Text::Split(String::from("World Record"), String::from("Some Guy"));
+    layout.push(component);
+
+    let mut component = component::delta::Component::new();
+    component.settings_mut().display_two_rows = true;
+    layout.push(component);
+
+    check_dims(
+        &layout.state(&timer),
+        [200, 100],
+        0x39aa87c3,
+        "display_two_rows",
     );
 }
 
