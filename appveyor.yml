@@ -7,10 +7,11 @@ environment:
     CRATE_NAME: livesplit-core
 
   matrix:
-    # Blocked by winapi support:
-    # https://github.com/LiveSplit/livesplit-core/issues/165
-    # - TARGET: aarch64-pc-windows-msvc
-      # RUST_VERSION: stable-x86_64-pc-windows-msvc
+    # Aarch64
+    - TARGET: aarch64-pc-windows-msvc
+      SKIP_TESTS: true
+      APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
+      RUST_VERSION: stable-x86_64-pc-windows-msvc
 
     # MSVC
     - TARGET: i586-pc-windows-msvc
@@ -52,8 +53,10 @@ test_script:
   - if [%APPVEYOR_REPO_TAG%]==[false] (
       cargo build -p staticlib --target %TARGET% &&
       cargo build -p cdylib --target %TARGET% &&
-      cargo test -p livesplit-core --all-features --target %TARGET% &&
-      cargo test -p livesplit-core --no-default-features --target %TARGET%
+      if [%SKIP_TESTS%] neq [true] (
+        cargo test -p livesplit-core --all-features --target %TARGET% &&
+        cargo test -p livesplit-core --no-default-features --target %TARGET%
+      )
     )
 
 before_deploy:
