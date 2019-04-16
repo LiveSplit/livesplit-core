@@ -70,7 +70,7 @@ deploy:
     secure: zZGfrpCR/0TmHcXPwar4hOx6pZeq3C9Wwf/g62pvf135tAwJIVpuZHJjB0sAAd2M
   description: ''
   on:
-    RUST_VERSION: stable
+    RUST_VERSION: /stable.*/
     appveyor_repo_tag: true
   provider: GitHub
 
