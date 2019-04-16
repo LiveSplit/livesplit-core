@@ -17,7 +17,7 @@ fn series_subtitle_handling(name: &str, split_token: &str, list: &mut Vec<String
     if let (Some(series), Some(subtitle)) = (iter.next(), iter.next()) {
         let series_abbreviations = abbreviate(series);
         let subtitle_abbreviations = abbreviate(subtitle);
-        let series_trimmed = series.trim_right();
+        let series_trimmed = series.trim_end();
 
         let is_series_representative =
             ends_with_numeric(series_trimmed) || ends_with_roman_numeral(series_trimmed);
@@ -88,7 +88,7 @@ fn and_handling(name: &str, list: &mut Vec<String>) -> bool {
 fn remove_prefix_word<'a>(text: &'a str, word: &str) -> Option<&'a str> {
     let first_word = text.split_whitespace().next()?;
     if unicase::eq(first_word, word) {
-        Some(text[first_word.len()..].trim_left())
+        Some(text[first_word.len()..].trim_start())
     } else {
         None
     }
@@ -121,8 +121,8 @@ pub fn abbreviate(name: &str) -> Vec<String> {
         let after_parenthesis = &rest[end..];
         let name = format!(
             "{} {}",
-            before_parenthesis.trim_right(),
-            after_parenthesis.trim_left()
+            before_parenthesis.trim_end(),
+            after_parenthesis.trim_start()
         );
         list.extend(abbreviate(&name));
     } else if series_subtitle_handling(&name, ": ", &mut list)

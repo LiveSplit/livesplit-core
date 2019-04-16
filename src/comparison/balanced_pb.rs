@@ -124,8 +124,7 @@ fn generate(
         .iter()
         .enumerate()
         .rev()
-        .filter_map(|(i, s)| s.personal_best_split_time()[method].map(|t| (i + 1, t)))
-        .next()
+        .find_map(|(i, s)| s.personal_best_split_time()[method].map(|t| (i + 1, t)))
         .unwrap_or_default();
     let all_weighted_segment_times = &mut all_weighted_segment_times[..new_len];
 

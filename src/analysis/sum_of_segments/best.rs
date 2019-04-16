@@ -49,14 +49,13 @@ fn populate_predictions(
                 .iter()
                 .filter(|(_, t)| t[method].is_none())
             {
-                let should_track_branch = segment_index
-                    .checked_sub(1)
-                    .and_then(|previous_index| {
-                        segments[previous_index]
-                            .segment_history()
-                            .get(null_segment_index)
-                    })
-                    .map_or(true, |segment_time| segment_time[method].is_some());
+                let should_track_branch = catch! {
+                    segments[segment_index.checked_sub(1)?]
+                        .segment_history()
+                        .get(null_segment_index)?[method]
+                        .is_some()
+                }
+                .unwrap_or(true);
 
                 if should_track_branch {
                     let (index, time) = track_branch(

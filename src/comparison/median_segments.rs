@@ -25,20 +25,18 @@ const WEIGHT: f64 = 0.75;
 fn generate(segments: &mut [Segment], medians: &mut Vec<(f64, f64)>, method: TimingMethod) {
     let mut accumulated = Some(TimeSpan::zero());
 
-    // FIXME: This may actually be possible to be fixed with a window like
-    // iterator.
-    #[allow(clippy::needless_range_loop)]
-    for i in 0..segments.len() {
+    let mut previous_segment: Option<&Segment> = None;
+    for segment in segments {
         if let Some(accumulated_val) = &mut accumulated {
             medians.clear();
 
             let mut current_weight = 1.0;
 
-            for &(id, time) in segments[i].segment_history().iter_actual_runs().rev() {
+            for &(id, time) in segment.segment_history().iter_actual_runs().rev() {
                 if let Some(time) = time[method] {
                     // Skip all the combined segments
                     let skip = catch! {
-                        segments[i.checked_sub(1)?].segment_history().get(id)?[method].is_none()
+                        previous_segment?.segment_history().get(id)?[method].is_none()
                     }
                     .unwrap_or(false);
 
@@ -69,7 +67,8 @@ fn generate(segments: &mut [Segment], medians: &mut Vec<(f64, f64)>, method: Tim
                 *accumulated_val += TimeSpan::from_seconds(segment_time);
             }
         }
-        segments[i].comparison_mut(NAME)[method] = accumulated;
+        segment.comparison_mut(NAME)[method] = accumulated;
+        previous_segment = Some(&*segment);
     }
 }
 
