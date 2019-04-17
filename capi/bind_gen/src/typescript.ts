@@ -688,10 +688,22 @@ export type ColumnStartWith = "Empty" | "ComparisonTime" | "ComparisonSegmentTim
  * already having completed the split, the time gets updated with the value
  * specified here.
  */
-export type ColumnUpdateWith = "DontUpdate" | "SplitTime" | "Delta" | "DeltaWithFallback" | "SegmentTime" | "SegmentDelta" | "SegmentDeltaWithFallback";
+export type ColumnUpdateWith =
+    "DontUpdate" |
+    "SplitTime" |
+    "Delta" |
+    "DeltaWithFallback" |
+    "SegmentTime" |
+    "SegmentDelta" |
+    "SegmentDeltaWithFallback" |
+    "PossibleTimeSave";
 
 /** Specifies when a column's value gets updated. */
-export type ColumnUpdateTrigger = "OnStartingSegment" | "Contextual" | "OnEndingSegment";
+export type ColumnUpdateTrigger =
+    "OnStartingSegment" |
+    "Contextual" |
+    "OnEndingSegment" |
+    "TimeSavedOrLost";
 
 /**
  * The Accuracy describes how many digits to show for the fractional part of a

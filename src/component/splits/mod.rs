@@ -5,14 +5,9 @@
 //! list provides scrolling functionality, so not every segment needs to be
 //! shown all the time.
 
-use crate::analysis::split_color;
-use crate::settings::{
-    Color, Field, Gradient, ListGradient, SemanticColor, SettingsDescription, Value,
-};
-use crate::timing::formatter::{Delta, Regular, TimeFormatter};
 use crate::{
-    analysis, comparison, CachedImageId, GeneralLayoutSettings, Segment, TimeSpan, Timer,
-    TimingMethod,
+    settings::{Color, Field, Gradient, ListGradient, SettingsDescription, Value},
+    CachedImageId, GeneralLayoutSettings, Timer,
 };
 use serde_json::{to_writer, Result};
 use std::borrow::Cow;
@@ -21,6 +16,12 @@ use std::io::Write;
 
 #[cfg(test)]
 mod tests;
+
+mod column;
+
+pub use column::{
+    ColumnSettings, ColumnStartWith, ColumnState, ColumnUpdateTrigger, ColumnUpdateWith,
+};
 
 const SETTINGS_BEFORE_COLUMNS: usize = 11;
 const SETTINGS_PER_COLUMN: usize = 6;
@@ -87,105 +88,6 @@ pub struct Settings {
     pub columns: Vec<ColumnSettings>,
 }
 
-/// The settings of an individual column showing timing information on each
-/// split.
-#[derive(Clone, Serialize, Deserialize)]
-#[serde(default)]
-pub struct ColumnSettings {
-    /// The name of the column.
-    pub name: String,
-    /// Specifies the value a segment starts out with before it gets replaced
-    /// with the current attempt's information when splitting.
-    pub start_with: ColumnStartWith,
-    /// Once a certain condition is met, which is usually being on the split or
-    /// already having completed the split, the time gets updated with the value
-    /// specified here.
-    pub update_with: ColumnUpdateWith,
-    /// Specifies when a column's value gets updated.
-    pub update_trigger: ColumnUpdateTrigger,
-    /// The comparison chosen. Uses the Timer's current comparison if set to
-    /// `None`.
-    pub comparison_override: Option<String>,
-    /// Specifies the Timing Method to use. If set to `None` the Timing Method
-    /// of the Timer is used for showing the time. Otherwise the Timing Method
-    /// provided is used.
-    pub timing_method: Option<TimingMethod>,
-}
-
-/// Specifies the value a segment starts out with before it gets replaced
-/// with the current attempt's information when splitting.
-#[derive(Copy, Clone, Serialize, Deserialize, PartialEq)]
-pub enum ColumnStartWith {
-    /// The column starts out with an empty value.
-    Empty,
-    /// The column starts out with the times stored in the comparison that is
-    /// being compared against.
-    ComparisonTime,
-    /// The column starts out with the segment times stored in the comparison
-    /// that is being compared against.
-    ComparisonSegmentTime,
-}
-
-/// Once a certain condition is met, which is usually being on the split or
-/// already having completed the split, the time gets updated with the value
-/// specified here.
-#[derive(Copy, Clone, Serialize, Deserialize, PartialEq)]
-pub enum ColumnUpdateWith {
-    /// The value doesn't get updated and stays on the value it started out
-    /// with.
-    DontUpdate,
-    /// The value gets replaced by the current attempt's split time.
-    SplitTime,
-    /// The value gets replaced by the delta of the current attempt's and the
-    /// comparison's split time.
-    Delta,
-    /// The value gets replaced by the delta of the current attempt's and the
-    /// comparison's split time. If there is no delta, the value gets replaced
-    /// by the current attempt's split time instead.
-    DeltaWithFallback,
-    /// The value gets replaced by the current attempt's segment time.
-    SegmentTime,
-    /// The value gets replaced by the current attempt's segment delta, which is
-    /// how much faster or slower the current attempt's segment time is compared
-    /// to the comparison's segment time. This matches the Previous Segment
-    /// component.
-    SegmentDelta,
-    /// The value gets replaced by the current attempt's segment delta, which is
-    /// how much faster or slower the current attempt's segment time is compared
-    /// to the comparison's segment time. This matches the Previous Segment
-    /// component. If there is no segment delta, then value gets replaced by the
-    /// current attempt's segment time instead.
-    SegmentDeltaWithFallback,
-}
-
-/// Specifies when a column's value gets updated.
-#[derive(Copy, Clone, Serialize, Deserialize, PartialEq)]
-pub enum ColumnUpdateTrigger {
-    /// The value gets updated as soon as the segment is started. The value
-    /// constantly updates until the segment ends.
-    OnStartingSegment,
-    /// The value doesn't immediately get updated when the segment is started.
-    /// Instead the value constantly gets updated once the segment time is
-    /// longer than the best segment time. The final update to the value happens
-    /// when the segment ends.
-    Contextual,
-    /// The value of a segment gets updated once the segment ends.
-    OnEndingSegment,
-}
-
-impl Default for ColumnSettings {
-    fn default() -> Self {
-        ColumnSettings {
-            name: String::from("Column"),
-            start_with: ColumnStartWith::Empty,
-            update_with: ColumnUpdateWith::DontUpdate,
-            update_trigger: ColumnUpdateTrigger::Contextual,
-            comparison_override: None,
-            timing_method: None,
-        }
-    }
-}
-
 /// The state object that describes a single segment's information to visualize.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SplitState {
@@ -202,17 +104,6 @@ pub struct SplitState {
     /// there can be a scrolling window, showing only a subset of segments. Each
     /// index is guaranteed to be unique.
     pub index: usize,
-}
-
-/// Describes the state of a single segment's column to visualize.
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ColumnState {
-    /// The value shown in the column.
-    pub value: String,
-    /// The semantic coloring information the value carries.
-    pub semantic_color: SemanticColor,
-    /// The visual color of the value.
-    pub visual_color: Color,
 }
 
 /// Describes the icon to be shown for a certain segment. This is provided
@@ -438,7 +329,7 @@ impl Component {
                 let columns = columns
                     .iter()
                     .map(|column| {
-                        column_state(
+                        column::state(
                             column,
                             timer,
                             layout_settings,
@@ -622,189 +513,6 @@ impl Component {
                     panic!("Unsupported Setting Index")
                 }
             }
-        }
-    }
-}
-
-fn column_state(
-    column: &ColumnSettings,
-    timer: &Timer,
-    layout_settings: &GeneralLayoutSettings,
-    segment: &Segment,
-    segment_index: usize,
-    current_split: Option<usize>,
-    method: TimingMethod,
-) -> ColumnState {
-    let method = column.timing_method.unwrap_or_else(|| method);
-    let resolved_comparison = comparison::resolve(&column.comparison_override, timer);
-    let comparison = comparison::or_current(resolved_comparison, timer);
-
-    let update_value = column_update_value(
-        column,
-        timer,
-        segment,
-        segment_index,
-        current_split,
-        method,
-        comparison,
-    );
-
-    let updated = update_value.is_some();
-
-    let (column_value, semantic_color, is_delta) =
-        update_value.unwrap_or_else(|| match column.start_with {
-            ColumnStartWith::Empty => Default::default(),
-            ColumnStartWith::ComparisonTime => (
-                segment.comparison(comparison)[method],
-                SemanticColor::Default,
-                false,
-            ),
-            ColumnStartWith::ComparisonSegmentTime => (
-                analysis::comparison_segment_time(timer.run(), segment_index, comparison, method),
-                SemanticColor::Default,
-                false,
-            ),
-        });
-
-    let is_empty = column.start_with == ColumnStartWith::Empty && !updated;
-
-    let value = if is_empty {
-        String::new()
-    } else if is_delta {
-        Delta::with_decimal_dropping()
-            .format(column_value)
-            .to_string()
-    } else {
-        Regular::new().format(column_value).to_string()
-    };
-
-    ColumnState {
-        value,
-        semantic_color,
-        visual_color: semantic_color.visualize(layout_settings),
-    }
-}
-
-fn column_update_value(
-    column: &ColumnSettings,
-    timer: &Timer,
-    segment: &Segment,
-    segment_index: usize,
-    current_split: Option<usize>,
-    method: TimingMethod,
-    comparison: &str,
-) -> Option<(Option<TimeSpan>, SemanticColor, bool)> {
-    use self::{ColumnUpdateTrigger::*, ColumnUpdateWith::*};
-
-    if current_split < Some(segment_index) {
-        // Didn't reach the segment yet.
-        return None;
-    }
-
-    let is_current_split = current_split == Some(segment_index);
-
-    if is_current_split {
-        if column.update_trigger == OnEndingSegment {
-            // The trigger wants the value to be updated when splitting, not before.
-            return None;
-        }
-
-        if column.update_trigger == Contextual
-            && analysis::check_live_delta(
-                timer,
-                !column.update_with.is_segment_based(),
-                comparison,
-                method,
-            )
-            .is_none()
-        {
-            // It's contextual and the live delta shouldn't be shown yet.
-            return None;
-        }
-    }
-
-    let is_live = is_current_split;
-
-    match (column.update_with, is_live) {
-        (DontUpdate, _) => None,
-
-        (SplitTime, false) => Some((segment.split_time()[method], SemanticColor::Default, false)),
-        (SplitTime, true) => Some((timer.current_time()[method], SemanticColor::Default, false)),
-
-        (Delta, false) | (DeltaWithFallback, false) => {
-            let split_time = segment.split_time()[method];
-            let delta = catch! {
-                split_time? -
-                segment.comparison(comparison)[method]?
-            };
-            let (value, is_delta) = if delta.is_none() && column.update_with.has_fallback() {
-                (split_time, false)
-            } else {
-                (delta, true)
-            };
-            Some((
-                value,
-                split_color(timer, delta, segment_index, true, true, comparison, method),
-                is_delta,
-            ))
-        }
-        (Delta, true) | (DeltaWithFallback, true) => Some((
-            catch! {
-                timer.current_time()[method]? -
-                segment.comparison(comparison)[method]?
-            },
-            SemanticColor::Default,
-            true,
-        )),
-
-        (SegmentTime, false) => Some((
-            analysis::previous_segment_time(timer, segment_index, method),
-            SemanticColor::Default,
-            false,
-        )),
-        (SegmentTime, true) => Some((
-            analysis::live_segment_time(timer, segment_index, method),
-            SemanticColor::Default,
-            false,
-        )),
-
-        (SegmentDelta, false) | (SegmentDeltaWithFallback, false) => {
-            let delta = analysis::previous_segment_delta(timer, segment_index, comparison, method);
-            let (value, is_delta) = if delta.is_none() && column.update_with.has_fallback() {
-                (
-                    analysis::previous_segment_time(timer, segment_index, method),
-                    false,
-                )
-            } else {
-                (delta, true)
-            };
-            Some((
-                value,
-                split_color(timer, delta, segment_index, false, true, comparison, method),
-                is_delta,
-            ))
-        }
-        (SegmentDelta, true) | (SegmentDeltaWithFallback, true) => Some((
-            analysis::live_segment_delta(timer, segment_index, comparison, method),
-            SemanticColor::Default,
-            true,
-        )),
-    }
-}
-
-impl ColumnUpdateWith {
-    fn is_segment_based(self) -> bool {
-        use self::ColumnUpdateWith::*;
-        match self {
-            SegmentDelta | SegmentTime | SegmentDeltaWithFallback => true,
-            _ => false,
-        }
-    }
-    fn has_fallback(self) -> bool {
-        use self::ColumnUpdateWith::*;
-        match self {
-            DeltaWithFallback | SegmentDeltaWithFallback => true,
-            _ => false,
         }
     }
 }
