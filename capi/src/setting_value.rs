@@ -239,6 +239,7 @@ pub unsafe extern "C" fn SettingValue_from_column_start_with(
         "Empty" => ColumnStartWith::Empty,
         "ComparisonTime" => ColumnStartWith::ComparisonTime,
         "ComparisonSegmentTime" => ColumnStartWith::ComparisonSegmentTime,
+        "PossibleTimeSave" => ColumnStartWith::PossibleTimeSave,
         _ => return None,
     };
     Some(Box::new(value.into()))

@@ -698,8 +698,8 @@ export type ColumnUpdateWith =
     "Delta" |
     "DeltaWithFallback" |
     "SegmentTime" |
-    "TimeSavedOrLost" |
-    "TimeSavedOrLostWithFallback";
+    "SegmentDelta" |
+    "SegmentDeltaWithFallback";
 
 /** Specifies when a column's value gets updated. */
 export type ColumnUpdateTrigger =

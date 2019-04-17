@@ -71,13 +71,13 @@ pub enum ColumnUpdateWith {
     /// which is how much faster or slower the current attempt's segment time is
     /// compared to the comparison's segment time. This matches the Previous
     /// Segment component.
-    TimeSavedOrLost,
+    SegmentDelta,
     /// The value gets replaced by the current attempt's time saved or lost,
     /// which is how much faster or slower the current attempt's segment time is
     /// compared to the comparison's segment time. This matches the Previous
     /// Segment component. If there is no time saved or lost, then value gets
     /// replaced by the current attempt's segment time instead.
-    TimeSavedOrLostWithFallback,
+    SegmentDeltaWithFallback,
 }
 
 /// Specifies when a column's value gets updated.
@@ -284,7 +284,7 @@ fn column_update_value(
             ColumnFormatter::Time,
         )),
 
-        (TimeSavedOrLost, false) | (TimeSavedOrLostWithFallback, false) => {
+        (SegmentDelta, false) | (SegmentDeltaWithFallback, false) => {
             let delta = analysis::previous_segment_delta(timer, segment_index, comparison, method);
             let (value, formatter) = if delta.is_none() && column.update_with.has_fallback() {
                 (
@@ -300,7 +300,7 @@ fn column_update_value(
                 formatter,
             ))
         }
-        (TimeSavedOrLost, true) | (TimeSavedOrLostWithFallback, true) => Some((
+        (SegmentDelta, true) | (SegmentDeltaWithFallback, true) => Some((
             analysis::live_segment_delta(timer, segment_index, comparison, method),
             SemanticColor::Default,
             ColumnFormatter::Delta,
@@ -312,14 +312,14 @@ impl ColumnUpdateWith {
     fn is_segment_based(self) -> bool {
         use self::ColumnUpdateWith::*;
         match self {
-            TimeSavedOrLost | SegmentTime | TimeSavedOrLostWithFallback => true,
+            SegmentDelta | SegmentTime | SegmentDeltaWithFallback => true,
             _ => false,
         }
     }
     fn has_fallback(self) -> bool {
         use self::ColumnUpdateWith::*;
         match self {
-            DeltaWithFallback | TimeSavedOrLostWithFallback => true,
+            DeltaWithFallback | SegmentDeltaWithFallback => true,
             _ => false,
         }
     }
