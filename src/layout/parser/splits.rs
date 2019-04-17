@@ -93,7 +93,7 @@ where
                                         ),
                                         "SegmentDelta" => (
                                             ColumnStartWith::Empty,
-                                            ColumnUpdateWith::SegmentDelta,
+                                            ColumnUpdateWith::TimeSavedOrLost,
                                             ColumnUpdateTrigger::Contextual,
                                         ),
                                         "SegmentTime" => (
@@ -103,7 +103,7 @@ where
                                         ),
                                         "SegmentDeltaorSegmentTime" => (
                                             ColumnStartWith::ComparisonSegmentTime,
-                                            ColumnUpdateWith::SegmentDeltaWithFallback,
+                                            ColumnUpdateWith::TimeSavedOrLostWithFallback,
                                             ColumnUpdateTrigger::Contextual,
                                         ),
                                         _ => return Err(Error::ColumnType),

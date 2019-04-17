@@ -93,7 +93,7 @@ fn column_empty_delta() {
 fn column_empty_segment_delta() {
     check_columns(
         ColumnStartWith::Empty,
-        ColumnUpdateWith::SegmentDelta,
+        ColumnUpdateWith::TimeSavedOrLost,
         &[
             (
                 ["", "", "", "", "", ""],
@@ -337,7 +337,7 @@ fn column_comparison_time_delta() {
 fn column_comparison_segment_time_segment_delta() {
     check_columns(
         ColumnStartWith::ComparisonSegmentTime,
-        ColumnUpdateWith::SegmentDelta,
+        ColumnUpdateWith::TimeSavedOrLost,
         &[
             (
                 ["0:05", "—", "—", "0:10", "0:05", "1:05"],
@@ -579,7 +579,7 @@ fn column_delta_update_on_ending_segment() {
 #[test]
 fn column_segment_delta_update_on_ending_segment() {
     check_columns_update_trigger(
-        ColumnUpdateWith::SegmentDelta,
+        ColumnUpdateWith::TimeSavedOrLost,
         ColumnUpdateTrigger::OnEndingSegment,
         &[
             (
@@ -747,7 +747,7 @@ fn column_delta_update_contextual() {
 #[test]
 fn column_segment_delta_update_contextual() {
     check_columns_update_trigger(
-        ColumnUpdateWith::SegmentDelta,
+        ColumnUpdateWith::TimeSavedOrLost,
         ColumnUpdateTrigger::Contextual,
         &[
             (
@@ -915,7 +915,7 @@ fn column_delta_update_on_starting_segment() {
 #[test]
 fn column_segment_delta_update_on_starting_segment() {
     check_columns_update_trigger(
-        ColumnUpdateWith::SegmentDelta,
+        ColumnUpdateWith::TimeSavedOrLost,
         ColumnUpdateTrigger::OnStartingSegment,
         &[
             (

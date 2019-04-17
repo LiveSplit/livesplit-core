@@ -67,20 +67,17 @@ pub enum ColumnUpdateWith {
     DeltaWithFallback,
     /// The value gets replaced by the current attempt's segment time.
     SegmentTime,
-    /// The value gets replaced by the current attempt's segment delta, which is
-    /// how much faster or slower the current attempt's segment time is compared
-    /// to the comparison's segment time. This matches the Previous Segment
-    /// component.
-    SegmentDelta,
-    /// The value gets replaced by the current attempt's segment delta, which is
-    /// how much faster or slower the current attempt's segment time is compared
-    /// to the comparison's segment time. This matches the Previous Segment
-    /// component. If there is no segment delta, then value gets replaced by the
-    /// current attempt's segment time instead.
-    SegmentDeltaWithFallback,
-    /// The values gets replaced by how much time got saved or lost by the
-    /// current attempt on the specific segment.
+    /// The value gets replaced by the current attempt's time saved or lost,
+    /// which is how much faster or slower the current attempt's segment time is
+    /// compared to the comparison's segment time. This matches the Previous
+    /// Segment component.
     TimeSavedOrLost,
+    /// The value gets replaced by the current attempt's time saved or lost,
+    /// which is how much faster or slower the current attempt's segment time is
+    /// compared to the comparison's segment time. This matches the Previous
+    /// Segment component. If there is no time saved or lost, then value gets
+    /// replaced by the current attempt's segment time instead.
+    TimeSavedOrLostWithFallback,
 }
 
 /// Specifies when a column's value gets updated.
@@ -287,7 +284,7 @@ fn column_update_value(
             ColumnFormatter::Time,
         )),
 
-        (SegmentDelta, false) | (SegmentDeltaWithFallback, false) => {
+        (TimeSavedOrLost, false) | (TimeSavedOrLostWithFallback, false) => {
             let delta = analysis::previous_segment_delta(timer, segment_index, comparison, method);
             let (value, formatter) = if delta.is_none() && column.update_with.has_fallback() {
                 (
@@ -303,18 +300,7 @@ fn column_update_value(
                 formatter,
             ))
         }
-        (SegmentDelta, true) | (SegmentDeltaWithFallback, true) => Some((
-            analysis::live_segment_delta(timer, segment_index, comparison, method),
-            SemanticColor::Default,
-            ColumnFormatter::Delta,
-        )),
-
-        (TimeSavedOrLost, false) => Some((
-            analysis::previous_segment_delta(timer, segment_index, comparison, method),
-            SemanticColor::Default,
-            ColumnFormatter::Delta,
-        )),
-        (TimeSavedOrLost, true) => Some((
+        (TimeSavedOrLost, true) | (TimeSavedOrLostWithFallback, true) => Some((
             analysis::live_segment_delta(timer, segment_index, comparison, method),
             SemanticColor::Default,
             ColumnFormatter::Delta,
@@ -326,14 +312,14 @@ impl ColumnUpdateWith {
     fn is_segment_based(self) -> bool {
         use self::ColumnUpdateWith::*;
         match self {
-            SegmentDelta | SegmentTime | SegmentDeltaWithFallback | TimeSavedOrLost => true,
+            TimeSavedOrLost | SegmentTime | TimeSavedOrLostWithFallback => true,
             _ => false,
         }
     }
     fn has_fallback(self) -> bool {
         use self::ColumnUpdateWith::*;
         match self {
-            DeltaWithFallback | SegmentDeltaWithFallback => true,
+            DeltaWithFallback | TimeSavedOrLostWithFallback => true,
             _ => false,
         }
     }

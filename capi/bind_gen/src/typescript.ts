@@ -681,7 +681,11 @@ export interface CustomCombobox {
  * Specifies the value a segment starts out with before it gets replaced
  * with the current attempt's information when splitting.
  */
-export type ColumnStartWith = "Empty" | "ComparisonTime" | "ComparisonSegmentTime";
+export type ColumnStartWith =
+    "Empty" |
+    "ComparisonTime" |
+    "ComparisonSegmentTime" |
+    "PossibleTimeSave";
 
 /**
  * Once a certain condition is met, which is usually being on the split or
@@ -694,16 +698,14 @@ export type ColumnUpdateWith =
     "Delta" |
     "DeltaWithFallback" |
     "SegmentTime" |
-    "SegmentDelta" |
-    "SegmentDeltaWithFallback" |
-    "PossibleTimeSave";
+    "TimeSavedOrLost" |
+    "TimeSavedOrLostWithFallback";
 
 /** Specifies when a column's value gets updated. */
 export type ColumnUpdateTrigger =
     "OnStartingSegment" |
     "Contextual" |
-    "OnEndingSegment" |
-    "TimeSavedOrLost";
+    "OnEndingSegment";
 
 /**
  * The Accuracy describes how many digits to show for the fractional part of a
