@@ -406,6 +406,44 @@ fn column_possible_time_save_dont_update() {
 }
 
 #[test]
+fn column_possible_time_save_segment_delta() {
+    check_columns(
+        ColumnStartWith::PossibleTimeSave,
+        ColumnUpdateWith::SegmentDelta,
+        &[
+            (
+                ["0.00", "—", "—", "0.00", "4.00", "1:04.00"],
+                [Text, Text, Text, Text, Text, Text],
+            ),
+            (
+                ["+3.5", "—", "—", "0.00", "4.00", "1:04.00"],
+                [BehindLosing, Text, Text, Text, Text, Text],
+            ),
+            (
+                ["+3.5", "—", "—", "0.00", "4.00", "1:04.00"],
+                [BehindLosing, Text, Text, Text, Text, Text],
+            ),
+            (
+                ["+3.5", "—", "—", "0.00", "4.00", "1:04.00"],
+                [BehindLosing, Text, Best, Text, Text, Text],
+            ),
+            (
+                ["+3.5", "—", "—", "−1.0", "4.00", "1:04.00"],
+                [BehindLosing, Text, Best, Best, Text, Text],
+            ),
+            (
+                ["+3.5", "—", "—", "−1.0", "—", "1:04.00"],
+                [BehindLosing, Text, Best, Best, Text, Text],
+            ),
+            (
+                ["+3.5", "—", "—", "−1.0", "—", "−1:02"],
+                [BehindLosing, Text, Best, Best, Text, AheadGaining],
+            ),
+        ],
+    )
+}
+
+#[test]
 fn column_comparison_segment_time_dont_update() {
     check_columns(
         ColumnStartWith::ComparisonSegmentTime,
