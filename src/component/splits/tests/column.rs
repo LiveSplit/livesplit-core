@@ -386,34 +386,58 @@ fn column_comparison_time_dont_update() {
     check_columns(
         ColumnStartWith::ComparisonTime,
         ColumnUpdateWith::DontUpdate,
+        &[(
+            ["0:05", "—", "—", "0:15", "0:20", "1:25"],
+            [Text, Text, Text, Text, Text, Text],
+        ); 7],
+    )
+}
+
+#[test]
+fn column_possible_time_save_dont_update() {
+    check_columns(
+        ColumnStartWith::PossibleTimeSave,
+        ColumnUpdateWith::DontUpdate,
+        &[(
+            ["0.00", "—", "—", "0.00", "4.00", "1:04.00"],
+            [Text, Text, Text, Text, Text, Text],
+        ); 7],
+    )
+}
+
+#[test]
+fn column_possible_time_save_segment_delta() {
+    check_columns(
+        ColumnStartWith::PossibleTimeSave,
+        ColumnUpdateWith::SegmentDelta,
         &[
             (
-                ["0:05", "—", "—", "0:15", "0:20", "1:25"],
+                ["0.00", "—", "—", "0.00", "4.00", "1:04.00"],
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:05", "—", "—", "0:15", "0:20", "1:25"],
-                [Text, Text, Text, Text, Text, Text],
+                ["+3.5", "—", "—", "0.00", "4.00", "1:04.00"],
+                [BehindLosing, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:05", "—", "—", "0:15", "0:20", "1:25"],
-                [Text, Text, Text, Text, Text, Text],
+                ["+3.5", "—", "—", "0.00", "4.00", "1:04.00"],
+                [BehindLosing, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:05", "—", "—", "0:15", "0:20", "1:25"],
-                [Text, Text, Text, Text, Text, Text],
+                ["+3.5", "—", "—", "0.00", "4.00", "1:04.00"],
+                [BehindLosing, Text, Best, Text, Text, Text],
             ),
             (
-                ["0:05", "—", "—", "0:15", "0:20", "1:25"],
-                [Text, Text, Text, Text, Text, Text],
+                ["+3.5", "—", "—", "−1.0", "4.00", "1:04.00"],
+                [BehindLosing, Text, Best, Best, Text, Text],
             ),
             (
-                ["0:05", "—", "—", "0:15", "0:20", "1:25"],
-                [Text, Text, Text, Text, Text, Text],
+                ["+3.5", "—", "—", "−1.0", "—", "1:04.00"],
+                [BehindLosing, Text, Best, Best, Text, Text],
             ),
             (
-                ["0:05", "—", "—", "0:15", "0:20", "1:25"],
-                [Text, Text, Text, Text, Text, Text],
+                ["+3.5", "—", "—", "−1.0", "—", "−1:02"],
+                [BehindLosing, Text, Best, Best, Text, AheadGaining],
             ),
         ],
     )
@@ -424,36 +448,10 @@ fn column_comparison_segment_time_dont_update() {
     check_columns(
         ColumnStartWith::ComparisonSegmentTime,
         ColumnUpdateWith::DontUpdate,
-        &[
-            (
-                ["0:05", "—", "—", "0:10", "0:05", "1:05"],
-                [Text, Text, Text, Text, Text, Text],
-            ),
-            (
-                ["0:05", "—", "—", "0:10", "0:05", "1:05"],
-                [Text, Text, Text, Text, Text, Text],
-            ),
-            (
-                ["0:05", "—", "—", "0:10", "0:05", "1:05"],
-                [Text, Text, Text, Text, Text, Text],
-            ),
-            (
-                ["0:05", "—", "—", "0:10", "0:05", "1:05"],
-                [Text, Text, Text, Text, Text, Text],
-            ),
-            (
-                ["0:05", "—", "—", "0:10", "0:05", "1:05"],
-                [Text, Text, Text, Text, Text, Text],
-            ),
-            (
-                ["0:05", "—", "—", "0:10", "0:05", "1:05"],
-                [Text, Text, Text, Text, Text, Text],
-            ),
-            (
-                ["0:05", "—", "—", "0:10", "0:05", "1:05"],
-                [Text, Text, Text, Text, Text, Text],
-            ),
-        ],
+        &[(
+            ["0:05", "—", "—", "0:10", "0:05", "1:05"],
+            [Text, Text, Text, Text, Text, Text],
+        ); 7],
     )
 }
 
