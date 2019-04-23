@@ -150,7 +150,7 @@ where
                                 start_with: ColumnStartWith::Empty,
                                 update_with: ColumnUpdateWith::Delta,
                                 update_trigger: ColumnUpdateTrigger::Contextual,
-                                comparison_override: comparison_override,
+                                comparison_override,
                                 timing_method: None,
                             });
                         }

@@ -26,10 +26,7 @@ where
                 settings.ahead_background_color = c
             })
         } else if tag.name() == b"GridlinesColor" {
-            color(reader, tag.into_buf(), |c| {
-                println!("{:?} <- {:?}", settings.grid_lines_color, c);
-                settings.grid_lines_color = c
-            })
+            color(reader, tag.into_buf(), |c| settings.grid_lines_color = c)
         } else if tag.name() == b"PartialFillColorAhead" {
             // Version >= 1.2
             color(reader, tag.into_buf(), |c| settings.partial_fill_color = c)

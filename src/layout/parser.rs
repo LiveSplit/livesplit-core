@@ -1,6 +1,6 @@
 //! Provides the parser for layout files of the original LiveSplit.
 
-use super::{Component, Layout};
+use super::{Component, Layout, LayoutDirection};
 use crate::{
     component::separator,
     settings::{Alignment, Color, Gradient, ListGradient},
@@ -53,6 +53,8 @@ quick_error! {
         }
         /// Failed to parse a boolean.
         Bool {}
+        /// Failed to parse the layout direction.
+        LayoutDirection {}
         /// Failed to parse a gradient type.
         GradientType {}
         /// Failed to parse an accuracy.
@@ -511,7 +513,16 @@ pub fn parse<R: BufRead>(source: R) -> Result<Layout> {
 
     parse_base(reader, &mut buf, b"Layout", |reader, tag| {
         parse_children(reader, tag.into_buf(), |reader, tag| {
-            if tag.name() == b"Settings" {
+            if tag.name() == b"Mode" {
+                text_err(reader, tag.into_buf(), |text| {
+                    layout.general_settings_mut().direction = match &*text {
+                        "Vertical" => LayoutDirection::Vertical,
+                        "Horizontal" => LayoutDirection::Horizontal,
+                        _ => return Err(Error::LayoutDirection),
+                    };
+                    Ok(())
+                })
+            } else if tag.name() == b"Settings" {
                 parse_general_settings(&mut layout, reader, tag.into_buf())
             } else if tag.name() == b"Components" {
                 parse_children(reader, tag.into_buf(), |reader, tag| {

@@ -1,7 +1,7 @@
 use crate::{
     component::text::{State, Text},
-    layout::LayoutState,
-    rendering::{Backend, RenderContext, MARGIN},
+    layout::{LayoutDirection, LayoutState},
+    rendering::{Backend, RenderContext, DEFAULT_TEXT_SIZE, PADDING, TEXT_ALIGN_TOP},
 };
 
 pub(in crate::rendering) fn render(
@@ -14,10 +14,10 @@ pub(in crate::rendering) fn render(
     match &component.text {
         Text::Center(text) => context.render_text_centered(
             text,
-            MARGIN,
-            width - MARGIN,
-            [0.5 * width, 0.7],
-            0.8,
+            PADDING,
+            width - PADDING,
+            [0.5 * width, TEXT_ALIGN_TOP],
+            DEFAULT_TEXT_SIZE,
             component
                 .left_center_color
                 .unwrap_or(layout_state.text_color),
@@ -25,11 +25,12 @@ pub(in crate::rendering) fn render(
         Text::Split(left, right) => context.render_info_text_component(
             &[&left],
             &right,
+            [width, height],
             component
                 .left_center_color
                 .unwrap_or(layout_state.text_color),
             component.right_color.unwrap_or(layout_state.text_color),
-            component.display_two_rows,
+            component.display_two_rows || layout_state.direction == LayoutDirection::Horizontal,
         ),
     }
 }

@@ -7,6 +7,7 @@ mod component_settings;
 mod component_state;
 pub mod editor;
 mod general_settings;
+mod layout_direction;
 mod layout_settings;
 mod layout_state;
 pub mod parser;
@@ -16,6 +17,7 @@ pub use self::component_settings::ComponentSettings;
 pub use self::component_state::ComponentState;
 pub use self::editor::Editor;
 pub use self::general_settings::GeneralSettings;
+pub use self::layout_direction::LayoutDirection;
 pub use self::layout_settings::LayoutSettings;
 pub use self::layout_state::LayoutState;
 
@@ -92,17 +94,18 @@ impl Layout {
                 .iter_mut()
                 .map(|c| c.state(timer, settings))
                 .collect(),
-            background: self.settings.background,
-            thin_separators_color: self.settings.thin_separators_color,
-            separators_color: self.settings.separators_color,
-            text_color: self.settings.text_color,
+            background: settings.background,
+            thin_separators_color: settings.thin_separators_color,
+            separators_color: settings.separators_color,
+            text_color: settings.text_color,
+            direction: settings.direction,
         }
     }
 
     /// Accesses the settings of the layout.
     pub fn settings(&self) -> LayoutSettings {
         LayoutSettings {
-            components: self.components.iter().map(|c| c.settings()).collect(),
+            components: self.components.iter().map(Component::settings).collect(),
             general: self.settings.clone(),
         }
     }

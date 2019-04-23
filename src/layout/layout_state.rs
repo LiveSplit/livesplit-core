@@ -1,4 +1,4 @@
-use super::ComponentState;
+use super::{ComponentState, LayoutDirection};
 use crate::settings::{Color, Gradient};
 use serde_json::{to_writer, Result};
 use std::io::Write;
@@ -8,6 +8,8 @@ use std::io::Write;
 pub struct LayoutState {
     /// The state objects for all of the components in the layout.
     pub components: Vec<ComponentState>,
+    /// The direction which the components are laid out in.
+    pub direction: LayoutDirection,
     /// The background to show behind the layout.
     pub background: Gradient,
     /// The color of thin separators.

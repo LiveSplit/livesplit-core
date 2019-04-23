@@ -1,6 +1,6 @@
 use crate::{
     component::timer::State,
-    rendering::{Backend, RenderContext, MARGIN},
+    rendering::{Backend, RenderContext, DEFAULT_TEXT_SIZE, PADDING},
 };
 
 pub(in crate::rendering) fn render(
@@ -11,8 +11,8 @@ pub(in crate::rendering) fn render(
     context.render_rectangle([0.0, 0.0], [width, height], &component.background);
     let x = context.render_timer(
         &component.fraction,
-        [width - MARGIN, 0.85 * height],
-        0.8 * height,
+        [width - PADDING, 0.85 * height],
+        DEFAULT_TEXT_SIZE * height,
         [component.bottom_color, component.top_color],
     );
     context.render_timer(

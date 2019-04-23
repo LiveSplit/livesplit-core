@@ -90,7 +90,7 @@ impl Backend for SoftwareBackend {
     }
     fn free_texture(&mut self, _: Self::Texture) {}
 
-    fn resize(&mut self, _: f32) {}
+    fn resize(&mut self, _: f32, _: f32) {}
 }
 
 struct NoDepth([usize; 2]);

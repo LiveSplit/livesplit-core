@@ -1,9 +1,15 @@
 use crate::{
     component::splits::State,
-    layout::LayoutState,
-    rendering::{icon::Icon, Backend, RenderContext, MARGIN, TWO_ROW_HEIGHT},
+    layout::{LayoutDirection, LayoutState},
+    rendering::{
+        icon::Icon, vertical_padding, Backend, RenderContext, BOTH_PADDINGS,
+        DEFAULT_COMPONENT_HEIGHT, DEFAULT_TEXT_SIZE, PADDING, TEXT_ALIGN_BOTTOM, TEXT_ALIGN_TOP,
+        THIN_SEPARATOR_THICKNESS, TWO_ROW_HEIGHT,
+    },
     settings::{Gradient, ListGradient},
 };
+
+pub const COLUMN_WIDTH: f32 = 3.0;
 
 pub(in crate::rendering) fn render<B: Backend>(
     context: &mut RenderContext<'_, B>,
@@ -20,13 +26,37 @@ pub(in crate::rendering) fn render<B: Backend>(
         ListGradient::Alternating(even, odd) => Some((Gradient::Plain(even), Gradient::Plain(odd))),
     };
 
-    let width = context.width;
+    let display_two_rows =
+        component.display_two_rows || layout_state.direction == LayoutDirection::Horizontal;
 
-    let split_height = if component.display_two_rows {
+    let split_height = if display_two_rows {
         TWO_ROW_HEIGHT
     } else {
-        1.0
+        DEFAULT_COMPONENT_HEIGHT
     };
+
+    let vertical_padding = vertical_padding(split_height);
+
+    let (split_width, (delta_x, delta_y), separator_pos, split_background_bottom_right, icon_y) =
+        if layout_state.direction == LayoutDirection::Horizontal {
+            let split_width = width / component.splits.len() as f32;
+            (
+                split_width,
+                (split_width, 0.0),
+                [split_width - THIN_SEPARATOR_THICKNESS, 0.0],
+                [split_width - THIN_SEPARATOR_THICKNESS, split_height],
+                vertical_padding,
+            )
+        } else {
+            (
+                width,
+                (0.0, split_height),
+                [0.0, split_height - THIN_SEPARATOR_THICKNESS],
+                [width, split_height - THIN_SEPARATOR_THICKNESS],
+                vertical_padding - 0.5 * THIN_SEPARATOR_THICKNESS,
+            )
+        };
+
     let transform = context.transform;
 
     for icon_change in &component.icon_changes {
@@ -40,41 +70,41 @@ pub(in crate::rendering) fn render<B: Backend>(
         *icon = context.create_icon(&icon_change.icon);
     }
 
-    const COLUMN_WIDTH: f32 = 3.0;
-
     if let Some(column_labels) = &component.column_labels {
-        let mut right_x = width - MARGIN;
-        for label in column_labels {
-            let left_x = right_x - COLUMN_WIDTH;
-            context.render_text_right_align(
-                label,
-                [right_x, 0.7],
-                0.8,
-                [layout_state.text_color; 2],
-            );
-            right_x = left_x;
-        }
+        if layout_state.direction == LayoutDirection::Vertical {
+            let mut right_x = width - PADDING;
+            for label in column_labels {
+                let left_x = right_x - COLUMN_WIDTH;
+                context.render_text_right_align(
+                    label,
+                    [right_x, TEXT_ALIGN_TOP],
+                    DEFAULT_TEXT_SIZE,
+                    [layout_state.text_color; 2],
+                );
+                right_x = left_x;
+            }
 
-        context.translate(0.0, 1.0);
-        context.render_rectangle(
-            [0.0, -0.05],
-            [width, 0.05],
-            &Gradient::Plain(layout_state.separators_color),
-        );
+            context.translate(0.0, DEFAULT_COMPONENT_HEIGHT);
+            context.render_rectangle(
+                [0.0, -THIN_SEPARATOR_THICKNESS],
+                [width, THIN_SEPARATOR_THICKNESS],
+                &Gradient::Plain(layout_state.separators_color),
+            );
+        }
     }
 
-    let icon_size = split_height - 0.2;
+    let icon_size = split_height - 2.0 * vertical_padding;
     let icon_right = if component.has_icons {
-        2.0 * MARGIN + icon_size
+        BOTH_PADDINGS + icon_size
     } else {
-        MARGIN
+        PADDING
     };
 
     for (i, split) in component.splits.iter().enumerate() {
         if component.show_thin_separators && i + 1 != component.splits.len() {
             context.render_rectangle(
-                [0.0, split_height - 0.05],
-                [width, split_height],
+                separator_pos,
+                [split_width, split_height],
                 &Gradient::Plain(layout_state.thin_separators_color),
             );
         }
@@ -82,53 +112,60 @@ pub(in crate::rendering) fn render<B: Backend>(
         if split.is_current_split {
             context.render_rectangle(
                 [0.0, 0.0],
-                [width, split_height],
+                [split_width, split_height],
                 &component.current_split_gradient,
             );
         } else if let Some((even, odd)) = &split_background {
             let color = if split.index % 2 == 0 { even } else { odd };
-            context.render_rectangle([0.0, 0.0], [width, split_height - 0.05], color);
+            context.render_rectangle([0.0, 0.0], split_background_bottom_right, color);
         }
 
         {
             if let Some(Some(icon)) = split_icons.get(split.index) {
-                context.render_icon([MARGIN, 0.1 - 0.5 * 0.05], [icon_size, icon_size], icon);
+                context.render_icon([PADDING, icon_y], [icon_size, icon_size], icon);
             }
 
-            let mut left_x = width - MARGIN;
+            let mut left_x = split_width - PADDING;
             let mut right_x = left_x;
             for column in &split.columns {
                 if !column.value.is_empty() {
                     left_x = context.render_numbers(
                         &column.value,
-                        [right_x, split_height - 0.3],
-                        0.8,
+                        [right_x, split_height + TEXT_ALIGN_BOTTOM],
+                        DEFAULT_TEXT_SIZE,
                         [column.visual_color; 2],
                     );
                 }
                 right_x -= COLUMN_WIDTH;
             }
 
-            if component.display_two_rows {
-                left_x = width;
+            if display_two_rows {
+                left_x = split_width;
             }
 
             context.render_text_ellipsis(
                 &split.name,
-                [icon_right, 0.7],
-                0.8,
+                [icon_right, TEXT_ALIGN_TOP],
+                DEFAULT_TEXT_SIZE,
                 [layout_state.text_color; 2],
-                left_x - MARGIN,
+                left_x - PADDING,
             );
         }
-        context.translate(0.0, split_height);
+        context.translate(delta_x, delta_y);
     }
     if component.show_final_separator {
-        context.render_rectangle(
-            [0.0, -split_height - 0.05],
-            [width, -split_height + 0.05],
-            &Gradient::Plain(layout_state.separators_color),
-        );
+        let (pos, end) = if layout_state.direction == LayoutDirection::Horizontal {
+            (
+                [-split_width - THIN_SEPARATOR_THICKNESS, 0.0],
+                [-split_width + THIN_SEPARATOR_THICKNESS, split_height],
+            )
+        } else {
+            (
+                [0.0, -split_height - THIN_SEPARATOR_THICKNESS],
+                [split_width, -split_height + THIN_SEPARATOR_THICKNESS],
+            )
+        };
+        context.render_rectangle(pos, end, &Gradient::Plain(layout_state.separators_color));
     }
     context.transform = transform;
 }

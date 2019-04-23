@@ -1,9 +1,12 @@
+use super::LayoutDirection;
 use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
 
 /// The general settings of the layout that apply to all components.
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct GeneralSettings {
+    /// The direction which the components are laid out in.
+    pub direction: LayoutDirection,
     /// The background to show behind the layout.
     pub background: Gradient,
     /// The color to use for when the runner achieved a best segment.
@@ -37,6 +40,7 @@ pub struct GeneralSettings {
 impl Default for GeneralSettings {
     fn default() -> Self {
         Self {
+            direction: LayoutDirection::Vertical,
             background: Gradient::Plain(Color::hsla(0.0, 0.0, 0.06, 1.0)),
             best_segment_color: Color::hsla(50.0, 1.0, 0.5, 1.0),
             ahead_gaining_time_color: Color::hsla(136.0, 1.0, 0.4, 1.0),
@@ -58,6 +62,7 @@ impl GeneralSettings {
     /// layout and their current values.
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
+            Field::new("Layout Direction".into(), self.direction.into()),
             Field::new("Background".into(), self.background.into()),
             Field::new("Best Segment".into(), self.best_segment_color.into()),
             Field::new(
@@ -94,18 +99,19 @@ impl GeneralSettings {
     /// the setting provided is out of bounds.
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
-            0 => self.background = value.into(),
-            1 => self.best_segment_color = value.into(),
-            2 => self.ahead_gaining_time_color = value.into(),
-            3 => self.ahead_losing_time_color = value.into(),
-            4 => self.behind_gaining_time_color = value.into(),
-            5 => self.behind_losing_time_color = value.into(),
-            6 => self.not_running_color = value.into(),
-            7 => self.personal_best_color = value.into(),
-            8 => self.paused_color = value.into(),
-            9 => self.thin_separators_color = value.into(),
-            10 => self.separators_color = value.into(),
-            11 => self.text_color = value.into(),
+            0 => self.direction = value.into(),
+            1 => self.background = value.into(),
+            2 => self.best_segment_color = value.into(),
+            3 => self.ahead_gaining_time_color = value.into(),
+            4 => self.ahead_losing_time_color = value.into(),
+            5 => self.behind_gaining_time_color = value.into(),
+            6 => self.behind_losing_time_color = value.into(),
+            7 => self.not_running_color = value.into(),
+            8 => self.personal_best_color = value.into(),
+            9 => self.paused_color = value.into(),
+            10 => self.thin_separators_color = value.into(),
+            11 => self.separators_color = value.into(),
+            12 => self.text_color = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

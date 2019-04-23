@@ -2,7 +2,7 @@ use {
     super::render,
     crate::{
         component,
-        layout::{self, Layout, LayoutState},
+        layout::{self, Component, Layout, LayoutDirection, LayoutState},
         run::parser::{livesplit, llanfair, wsplit},
         tests_helper, Run, Timer,
     },
@@ -39,7 +39,7 @@ fn default() {
 
     let state = layout.state(&timer);
 
-    check(&state, 0xe4f643cb, "default");
+    check(&state, 0xaa93be84, "default");
 }
 
 #[test]
@@ -48,7 +48,7 @@ fn actual_split_file() {
     let timer = Timer::new(run).unwrap();
     let mut layout = Layout::default_layout();
 
-    check(&layout.state(&timer), 0x7ca4c8db, "actual_split_file");
+    check(&layout.state(&timer), 0x2e274e3e, "actual_split_file");
 }
 
 #[test]
@@ -57,7 +57,7 @@ fn wsplit() {
     let timer = Timer::new(run).unwrap();
     let mut layout = lsl("tests/layout_files/WSplit.lsl");
 
-    check_dims(&layout.state(&timer), [250, 300], 0x1f81d9cf, "wsplit");
+    check_dims(&layout.state(&timer), [250, 300], 0xf3d67b92, "wsplit");
 }
 
 #[test]
@@ -73,9 +73,9 @@ fn all_components() {
 
     let state = layout.state(&timer);
 
-    check_dims(&state, [300, 800], 0x2b6a2a14, "all_components");
+    check_dims(&state, [300, 800], 0x17358ffe, "all_components");
 
-    check_dims(&state, [150, 800], 0xf9c76ec8, "all_components_thin");
+    check_dims(&state, [150, 800], 0xb6d7bba6, "all_components_thin");
 }
 
 #[test]
@@ -95,7 +95,7 @@ fn score_split() {
     state.components.push(ComponentState::Timer(timer_state));
     state.components.push(prev_seg);
 
-    check_dims(&state, [300, 400], 0x2ca22c6d, "score_split");
+    check_dims(&state, [300, 400], 0x271ca3b5, "score_split");
 }
 
 #[test]
@@ -104,7 +104,7 @@ fn dark_layout() {
     let timer = Timer::new(run).unwrap();
     let mut layout = lsl("tests/layout_files/dark.lsl");
 
-    check(&layout.state(&timer), 0x54a82761, "dark_layout");
+    check(&layout.state(&timer), 0xaefa906f, "dark_layout");
 }
 
 #[test]
@@ -122,7 +122,7 @@ fn subsplits_layout() {
     check_dims(
         &layout.state(&timer),
         [300, 800],
-        0x33fefeb8,
+        0xc34c3323,
         "subsplits_layout",
     );
 }
@@ -145,9 +145,61 @@ fn display_two_rows() {
     check_dims(
         &layout.state(&timer),
         [200, 100],
-        0x39aa87c3,
+        0x2f0674f6,
         "display_two_rows",
     );
+}
+
+#[test]
+fn single_line_title() {
+    let mut run = tests_helper::create_run(&["A"]);
+    run.set_game_name("Some Game");
+    run.set_category_name("Some Category");
+    run.set_attempt_count(1337);
+    let timer = Timer::new(run).unwrap();
+    let mut layout = Layout::new();
+    let mut component = component::title::Component::new();
+    let settings = component.settings_mut();
+    settings.display_as_single_line = true;
+    settings.show_attempt_count = true;
+    settings.show_finished_runs_count = true;
+    layout.push(component);
+
+    check_dims(
+        &layout.state(&timer),
+        [150, 30],
+        0x10fb224c,
+        "single_line_title",
+    );
+}
+
+#[test]
+fn horizontal() {
+    let run = lss("tests/run_files/Celeste - Any% (1.2.1.5).lss");
+    let mut timer = Timer::new(run).unwrap();
+    let mut layout = Layout::default_layout();
+    layout.general_settings_mut().direction = LayoutDirection::Horizontal;
+    match &mut layout.components[1] {
+        Component::Splits(splits) => splits.settings_mut().visual_split_count = 4,
+        _ => unreachable!("We wanted to configure the splits"),
+    }
+    layout.push(component::separator::Component::new());
+    layout.push(component::graph::Component::new());
+    layout.push(component::separator::Component::new());
+    layout.push(Box::new(
+        component::detailed_timer::Component::with_settings(component::detailed_timer::Settings {
+            display_icon: true,
+            ..Default::default()
+        }),
+    ));
+
+    tests_helper::start_run(&mut timer);
+    tests_helper::make_progress_run_with_splits_opt(
+        &mut timer,
+        &[Some(10.0), None, Some(20.0), Some(55.0)],
+    );
+
+    check_dims(&layout.state(&timer), [1500, 40], 0x49d1b352, "horizontal");
 }
 
 fn check(state: &LayoutState, expected_checksum: u32, name: &str) {

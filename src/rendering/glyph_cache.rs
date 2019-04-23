@@ -32,7 +32,7 @@ impl<M> GlyphCache<M> {
     ) -> &M {
         self.glyphs.entry(glyph).or_insert_with(|| {
             let metrics = font.v_metrics(Scale::uniform(1.0));
-            let delta_h = (metrics.ascent - metrics.descent).recip();
+            let delta_h = metrics.ascent - metrics.descent;
             let offset_h = metrics.descent;
 
             let glyph = font.glyph(glyph).scaled(Scale::uniform(1.0));
@@ -63,7 +63,7 @@ impl<M> GlyphCache<M> {
 
             let path = builder.build();
 
-            let mut glyph_mesh: Mesh = Mesh::new();
+            let mut glyph_mesh = Mesh::new();
             let mut tessellator = FillTessellator::new();
             tessellator
                 .tessellate_path(
@@ -74,7 +74,7 @@ impl<M> GlyphCache<M> {
                 .unwrap();
 
             for vertex in glyph_mesh.vertices_mut() {
-                vertex.v = (-vertex.y - offset_h) / delta_h;
+                vertex.v = (-vertex.y - offset_h) * delta_h;
             }
 
             backend.create_mesh(&glyph_mesh)
