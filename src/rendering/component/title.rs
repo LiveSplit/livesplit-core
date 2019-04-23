@@ -2,7 +2,10 @@ use {
     crate::{
         component::title::State,
         layout::LayoutState,
-        rendering::{icon::Icon, Backend, RenderContext, MARGIN},
+        rendering::{
+            icon::Icon, vertical_padding, Backend, RenderContext, BOTH_PADDINGS, DEFAULT_TEXT_SIZE,
+            PADDING, TEXT_ALIGN_BOTTOM, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP,
+        },
     },
     livesplit_title_abbreviations::abbreviate,
 };
@@ -25,11 +28,12 @@ pub(in crate::rendering) fn render<B: Backend>(
     }
 
     let left_bound = if let Some(icon) = game_icon {
-        let icon_size = 2.0 - 2.0 * MARGIN;
-        context.render_icon([MARGIN, MARGIN], [icon_size, icon_size], icon);
-        2.0 * MARGIN + icon_size
+        let vertical_padding = vertical_padding(height);
+        let icon_size = height - 2.0 * vertical_padding;
+        context.render_icon([PADDING, vertical_padding], [icon_size, icon_size], icon);
+        BOTH_PADDINGS + icon_size
     } else {
-        MARGIN
+        PADDING
     };
 
     let (line_x, align) = if component.is_centered {
@@ -45,8 +49,8 @@ pub(in crate::rendering) fn render<B: Backend>(
     let abbreviations = abbreviate(&component.line1);
     let line1 = context.choose_abbreviation(
         abbreviations.iter().map(String::as_str),
-        0.8,
-        width - MARGIN - left_bound,
+        DEFAULT_TEXT_SIZE,
+        width - PADDING - left_bound,
     );
 
     let attempts = match (component.finished_runs, component.attempts) {
@@ -54,22 +58,26 @@ pub(in crate::rendering) fn render<B: Backend>(
         (Some(a), _) | (_, Some(a)) => a.to_string(),
         _ => String::new(),
     };
-    let line2_end_x =
-        context.render_numbers(&attempts, [width - MARGIN, 1.63], 0.8, [text_color; 2]);
+    let line2_end_x = context.render_numbers(
+        &attempts,
+        [width - PADDING, height + TEXT_ALIGN_BOTTOM],
+        DEFAULT_TEXT_SIZE,
+        [text_color; 2],
+    );
 
     let (line1_y, line1_end_x) = if let Some(line2) = &component.line2 {
         context.render_text_align(
             line2,
             left_bound,
-            line2_end_x - MARGIN,
-            [line_x, 1.63],
-            0.8,
+            line2_end_x - PADDING,
+            [line_x, height + TEXT_ALIGN_BOTTOM],
+            DEFAULT_TEXT_SIZE,
             align,
             text_color,
         );
-        (0.83, width - MARGIN)
+        (TEXT_ALIGN_TOP, width - PADDING)
     } else {
-        (1.2, line2_end_x - MARGIN)
+        (height / 2.0 + TEXT_ALIGN_CENTER, line2_end_x - PADDING)
     };
 
     context.render_text_align(
@@ -77,7 +85,7 @@ pub(in crate::rendering) fn render<B: Backend>(
         left_bound,
         line1_end_x,
         [line_x, line1_y],
-        0.8,
+        DEFAULT_TEXT_SIZE,
         align,
         text_color,
     );

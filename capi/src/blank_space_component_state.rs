@@ -11,8 +11,8 @@ pub extern "C" fn BlankSpaceComponentState_drop(this: OwnedBlankSpaceComponentSt
     drop(this);
 }
 
-/// The height of the component.
+/// The size of the component.
 #[no_mangle]
-pub extern "C" fn BlankSpaceComponentState_height(this: &BlankSpaceComponentState) -> u32 {
-    this.height
+pub extern "C" fn BlankSpaceComponentState_size(this: &BlankSpaceComponentState) -> u32 {
+    this.size
 }

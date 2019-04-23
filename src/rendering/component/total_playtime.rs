@@ -1,6 +1,6 @@
 use crate::{
     component::total_playtime::State,
-    layout::LayoutState,
+    layout::{LayoutDirection, LayoutState},
     rendering::{Backend, RenderContext},
 };
 
@@ -14,8 +14,9 @@ pub(in crate::rendering) fn render(
     context.render_info_time_component(
         &[&component.text, "Playtime"],
         &component.time,
+        dim,
         component.label_color.unwrap_or(layout_state.text_color),
         component.value_color.unwrap_or(layout_state.text_color),
-        component.display_two_rows,
+        component.display_two_rows || layout_state.direction == LayoutDirection::Horizontal,
     );
 }

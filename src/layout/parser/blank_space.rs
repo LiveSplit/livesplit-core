@@ -19,7 +19,7 @@ where
     parse_children::<_, _, Error>(reader, buf, |reader, tag| {
         if let Some(tag) = background_builder.parse_background(reader, tag)? {
             if tag.name() == b"SpaceHeight" {
-                text_parsed(reader, tag.into_buf(), |h| settings.height = h)
+                text_parsed(reader, tag.into_buf(), |h| settings.size = h)
             } else {
                 // FIXME:
                 // SpaceWidth

@@ -1,7 +1,10 @@
 use crate::{
     component::detailed_timer::State,
     layout::LayoutState,
-    rendering::{component::timer, icon::Icon, Backend, RenderContext, MARGIN},
+    rendering::{
+        component::timer, icon::Icon, vertical_padding, Backend, RenderContext, BOTH_PADDINGS,
+        PADDING,
+    },
 };
 
 pub(in crate::rendering) fn render<B: Backend>(
@@ -13,7 +16,8 @@ pub(in crate::rendering) fn render<B: Backend>(
 ) {
     context.render_rectangle([0.0, 0.0], [width, height], &component.background);
 
-    let icon_size = height - 2.0 * MARGIN;
+    let vertical_padding = vertical_padding(height);
+    let icon_size = height - 2.0 * vertical_padding;
 
     if let Some(url) = &component.icon_change {
         if let Some(old_icon) = detailed_timer_icon.take() {
@@ -23,10 +27,10 @@ pub(in crate::rendering) fn render<B: Backend>(
     }
 
     let left_side = if let Some(icon) = detailed_timer_icon {
-        context.render_icon([MARGIN, MARGIN], [icon_size, icon_size], icon);
-        2.0 * MARGIN + icon_size
+        context.render_icon([PADDING, vertical_padding], [icon_size, icon_size], icon);
+        BOTH_PADDINGS + icon_size
     } else {
-        MARGIN
+        PADDING
     };
 
     let top_height = 0.55 * height;
@@ -92,7 +96,7 @@ pub(in crate::rendering) fn render<B: Backend>(
             .max(time_width);
     }
 
-    let time_x = name_end + MARGIN + time_width;
+    let time_x = name_end + PADDING + time_width;
 
     if let Some(comparison) = &component.comparison2 {
         context.render_numbers(

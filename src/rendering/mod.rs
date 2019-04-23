@@ -5,6 +5,64 @@
 //! While it is slower than using a proper GPU backend, it might be sufficient
 //! for situations where you want to create a screenshot of the layout.
 
+// # Coordinate spaces used in this module
+//
+// ## Backend Coordinate Space
+//
+// The backend has its own coordinate space that ranges from 0 to 1 across both
+// dimensions. (0, 0) is the top left corner of the rendered layout and (1, 1)
+// is the bottom right corner. Since the coordinate space forms a square, the
+// aspect ratio of the layout is not respected.
+//
+// ## Renderer Coordinate Space
+//
+// The renderer internally uses the so called renderer coordinate space. It has
+// the dimensions [width, 1] with the width being chosen such that the renderer
+// coordinate space respects the aspect ratio of the render target. This
+// coordinate space is mostly an implementation detail.
+//
+// ## Component Coordinate Space
+//
+// The component coordinate space is a coordinate space local to a single
+// component. This means that (0, 0) is the top left corner and (width, height)
+// is the bottom right corner of the component. Width and Height are chosen
+// based on various properties. In vertical mode, the height is chosen to be the
+// component's actual height, while the width is dynamically adjusted based on
+// the other components in the layout and the dimensions of the render target.
+// In horizontal mode, the height is always the two row height, while the width
+// is dynamically adjusted based the component's width preference. The width
+// preference however only serves as a ratio of how much of the total width to
+// distribute to the individual components. So similar to vertical mode, the
+// width is fairly dynamic.
+//
+// ## Default Pixel Space
+//
+// The default pixel space describes a default scaling factor to apply to the
+// component coordinate space. Both the original LiveSplit as well as
+// livesplit-core internally use this coordinate space to store the component
+// settings that influence dimensions of elements drawn on the component, such
+// as font sizes and the dimensions of the component itself. It also serves as a
+// good default size when choosing the size of a window or an image when the
+// preferred size of the layout is unknown. The factor for converting component
+// space coordinates to the default pixel space coordinates is 24.
+//
+// ### Guidelines for Spacing and Sizes in the Component Coordinate Space
+//
+// The default height of a component in the component coordinate space is 1.
+// This is equal to the height of one split or one info text component. The
+// default text size is 0.8. There is a padding of 0.35 to the left and right
+// side of a component for the contents shown inside a component, such as images
+// and texts. The same padding of 0.35 is also used for the minimum spacing
+// between text and other content such as an icon or another text. A vertical
+// padding of 10% of the height of the available space is chosen unless that is
+// larger than the normal padding. If text doesn't fit, it is to be either
+// abbreviated or overflown via the use of ellipsis. Numbers and times are
+// supposed to be aligned to the right and should be using a monospace text
+// layout. Sometimes components are rendered in two row mode. The height of
+// these components is 1.75. All components also need to be able to render with
+// this height in horizontal mode. Separators have a thickness of 0.1, while
+// thin separators have half of this thickness.
+
 mod component;
 mod font;
 mod glyph_cache;
@@ -17,7 +75,7 @@ pub mod software;
 use {
     self::{glyph_cache::GlyphCache, icon::Icon},
     crate::{
-        layout::{ComponentState, LayoutState},
+        layout::{ComponentState, LayoutDirection, LayoutState},
         settings::{Color, Gradient},
     },
     euclid::Transform2D,
@@ -41,8 +99,22 @@ pub type Rgba = [f32; 4];
 /// scene.
 pub type Transform = Transform2D<f32>;
 
-const MARGIN: f32 = 0.35;
+const PADDING: f32 = 0.35;
+const BOTH_PADDINGS: f32 = 2.0 * PADDING;
+const DEFAULT_COMPONENT_HEIGHT: f32 = 1.0;
 const TWO_ROW_HEIGHT: f32 = 1.75;
+const DEFAULT_TEXT_SIZE: f32 = 0.8;
+const TEXT_ALIGN_TOP: f32 = 0.7;
+const TEXT_ALIGN_BOTTOM: f32 = -0.3;
+const TEXT_ALIGN_CENTER: f32 = 0.2;
+const SEPARATOR_THICKNESS: f32 = 0.1;
+const THIN_SEPARATOR_THICKNESS: f32 = SEPARATOR_THICKNESS / 2.0;
+const PSEUDO_PIXELS: f32 = 1.0 / 24.0;
+const DEFAULT_VERTICAL_WIDTH: f32 = 11.5;
+
+fn vertical_padding(height: f32) -> f32 {
+    (0.1 * height).min(PADDING)
+}
 
 /// The rendering backend for the Renderer is abstracted out into the Backend
 /// trait such that the rendering isn't tied to a specific rendering framework.
@@ -96,7 +168,12 @@ pub trait Backend {
     fn free_texture(&mut self, texture: Self::Texture);
 
     /// Instructs the backend to resize the size of the render target.
-    fn resize(&mut self, height: f32);
+    fn resize(&mut self, width: f32, height: f32);
+}
+
+enum CachedSize {
+    Vertical(f32),
+    Horizontal(f32),
 }
 
 /// A renderer can be used to render out layout states with the backend chosen.
@@ -106,10 +183,14 @@ pub struct Renderer<M, T> {
     timer_font: Font<'static>,
     timer_glyph_cache: GlyphCache<M>,
     rectangle: Option<M>,
+    cached_size: Option<CachedSize>,
+    icons: IconCache<T>,
+}
+
+struct IconCache<T> {
     game_icon: Option<Icon<T>>,
     split_icons: Vec<Option<Icon<T>>>,
     detailed_timer_icon: Option<Icon<T>>,
-    height: Option<f32>,
 }
 
 impl<M, T> Default for Renderer<M, T> {
@@ -127,10 +208,12 @@ impl<M, T> Renderer<M, T> {
             text_font: Font::from_bytes(TEXT_FONT).unwrap(),
             text_glyph_cache: GlyphCache::new(),
             rectangle: None,
-            game_icon: None,
-            split_icons: Vec::new(),
-            detailed_timer_icon: None,
-            height: None,
+            icons: IconCache {
+                game_icon: None,
+                split_icons: Vec::new(),
+                detailed_timer_icon: None,
+            },
+            cached_size: None,
         }
     }
 
@@ -143,16 +226,43 @@ impl<M, T> Renderer<M, T> {
         resolution: (f32, f32),
         state: &LayoutState,
     ) {
-        let total_height = state.components.iter().map(component_height).sum::<f32>();
-        {
-            let cached_total_height = self.height.get_or_insert(total_height);
+        match state.direction {
+            LayoutDirection::Vertical => self.render_vertical(backend, resolution, state),
+            LayoutDirection::Horizontal => self.render_horizontal(backend, resolution, state),
+        }
+    }
 
-            if *cached_total_height != total_height {
-                backend.resize(resolution.1 / *cached_total_height * total_height);
-                *cached_total_height = total_height;
+    fn render_vertical<B: Backend<Mesh = M, Texture = T>>(
+        &mut self,
+        backend: &mut B,
+        resolution: (f32, f32),
+        state: &LayoutState,
+    ) {
+        let total_height = state.components.iter().map(component_height).sum::<f32>();
+
+        let cached_total_size = self
+            .cached_size
+            .get_or_insert(CachedSize::Vertical(total_height));
+        match cached_total_size {
+            CachedSize::Vertical(cached_total_height) => {
+                if *cached_total_height != total_height {
+                    backend.resize(
+                        resolution.0,
+                        resolution.1 / *cached_total_height * total_height,
+                    );
+                    *cached_total_height = total_height;
+                }
+            }
+            CachedSize::Horizontal(_) => {
+                let to_pixels = resolution.1 / TWO_ROW_HEIGHT;
+                let new_height = total_height * to_pixels;
+                let new_width = DEFAULT_VERTICAL_WIDTH * to_pixels;
+                backend.resize(new_width, new_height);
+                *cached_total_size = CachedSize::Vertical(total_height);
             }
         }
-        let width = resolution.0 as f32 / resolution.1 as f32;
+
+        let aspect_ratio = resolution.0 as f32 / resolution.1 as f32;
 
         let mut context = RenderContext {
             backend,
@@ -162,78 +272,166 @@ impl<M, T> Renderer<M, T> {
             timer_glyph_cache: &mut self.timer_glyph_cache,
             text_font: &mut self.text_font,
             text_glyph_cache: &mut self.text_glyph_cache,
-            width,
         };
 
+        // Initially we are in Backend Coordinate Space.
+        // We can render the background here from (0, 0) to (1, 1) as we just
+        // want to fill all of the background. We don't need to know anything
+        // about the aspect ratio or specific sizes.
         context.render_background(&state.background);
 
-        context.scale_non_uniform_x(width.recip());
+        // Now we transform the coordinate space to Renderer Coordinate Space by
+        // non-uniformly adjusting for the aspect ratio.
+        context.scale_non_uniform_x(aspect_ratio.recip());
+
+        // We scale the coordinate space uniformly such that we have the same
+        // scaling as the Component Coordinate Space. This also already is the
+        // Component Coordinate Space for the component at (0, 0).
         context.scale(total_height.recip());
+
+        // Calculate the width of the components in component space. In vertical
+        // mode, all the components have the same width.
+        let width = aspect_ratio * total_height;
 
         for component in &state.components {
             let height = component_height(component);
-            let width = context.width;
             let dim = [width, height];
-            match component {
-                ComponentState::BlankSpace(state) => {
-                    component::blank_space::render(&mut context, dim, state)
-                }
-                ComponentState::Title(component) => component::title::render(
-                    &mut context,
-                    dim,
-                    component,
-                    state,
-                    &mut self.game_icon,
-                ),
-                ComponentState::Splits(component) => component::splits::render(
-                    &mut context,
-                    dim,
-                    component,
-                    state,
-                    &mut self.split_icons,
-                ),
-                ComponentState::Timer(component) => {
-                    component::timer::render(&mut context, dim, component);
-                }
-                ComponentState::DetailedTimer(component) => component::detailed_timer::render(
-                    &mut context,
-                    dim,
-                    component,
-                    state,
-                    &mut self.detailed_timer_icon,
-                ),
-                ComponentState::CurrentComparison(component) => {
-                    component::current_comparison::render(&mut context, dim, component, state)
-                }
-                ComponentState::CurrentPace(component) => {
-                    component::current_pace::render(&mut context, dim, component, state)
-                }
-                ComponentState::Delta(component) => {
-                    component::delta::render(&mut context, dim, component, state)
-                }
-                ComponentState::PossibleTimeSave(component) => {
-                    component::possible_time_save::render(&mut context, dim, component, state)
-                }
-                ComponentState::PreviousSegment(component) => {
-                    component::previous_segment::render(&mut context, dim, component, state)
-                }
-                ComponentState::Separator(component) => {
-                    component::separator::render(&mut context, dim, component, state)
-                }
-                ComponentState::SumOfBest(component) => {
-                    component::sum_of_best::render(&mut context, dim, component, state)
-                }
-                ComponentState::Text(component) => {
-                    component::text::render(&mut context, dim, component, state)
-                }
-                ComponentState::TotalPlaytime(component) => {
-                    component::total_playtime::render(&mut context, dim, component, state)
-                }
-                ComponentState::Graph(component) => {
-                    component::graph::render(&mut context, dim, component, state)
+            render_component(&mut context, &mut self.icons, component, state, dim);
+            // We translate the coordinate space to the Component Coordinate
+            // Space of the next component by shifting by the height of the
+            // current component in the Component Coordinate Space.
+            context.translate(0.0, height);
+        }
+    }
+
+    fn render_horizontal<B: Backend<Mesh = M, Texture = T>>(
+        &mut self,
+        backend: &mut B,
+        resolution: (f32, f32),
+        state: &LayoutState,
+    ) {
+        let total_width = state.components.iter().map(component_width).sum::<f32>();
+
+        let cached_total_size = self
+            .cached_size
+            .get_or_insert(CachedSize::Horizontal(total_width));
+        match cached_total_size {
+            CachedSize::Vertical(cached_total_height) => {
+                let new_height = resolution.1 * TWO_ROW_HEIGHT / *cached_total_height;
+                let new_width = total_width * new_height / TWO_ROW_HEIGHT;
+                backend.resize(new_width, new_height);
+                *cached_total_size = CachedSize::Horizontal(total_width);
+            }
+            CachedSize::Horizontal(cached_total_width) => {
+                if *cached_total_width != total_width {
+                    backend.resize(
+                        resolution.0 / *cached_total_width * total_width,
+                        resolution.1,
+                    );
+                    *cached_total_width = total_width;
                 }
             }
-            context.translate(0.0, height);
+        }
+
+        let aspect_ratio = resolution.0 as f32 / resolution.1 as f32;
+
+        let mut context = RenderContext {
+            backend,
+            transform: Transform::identity(),
+            rectangle: &mut self.rectangle,
+            timer_font: &mut self.timer_font,
+            timer_glyph_cache: &mut self.timer_glyph_cache,
+            text_font: &mut self.text_font,
+            text_glyph_cache: &mut self.text_glyph_cache,
+        };
+
+        // Initially we are in Backend Coordinate Space.
+        // We can render the background here from (0, 0) to (1, 1) as we just
+        // want to fill all of the background. We don't need to know anything
+        // about the aspect ratio or specific sizes.
+        context.render_background(&state.background);
+
+        // Now we transform the coordinate space to Renderer Coordinate Space by
+        // non-uniformly adjusting for the aspect ratio.
+        context.scale_non_uniform_x(aspect_ratio.recip());
+
+        // We scale the coordinate space uniformly such that we have the same
+        // scaling as the Component Coordinate Space. This also already is the
+        // Component Coordinate Space for the component at (0, 0). Since all the
+        // components use the two row height as their height, we scale by the
+        // reciprocal of that.
+        context.scale(TWO_ROW_HEIGHT.recip());
+
+        // We don't take the component width we calculate. Instead we use the
+        // component width as a ratio of how much of the total actual width to
+        // distribute to each of the components. This factor is this adjustment.
+        let width_scaling = TWO_ROW_HEIGHT * aspect_ratio / total_width;
+
+        for component in &state.components {
+            let width = component_width(component) * width_scaling;
+            let height = TWO_ROW_HEIGHT;
+            let dim = [width, height];
+            render_component(&mut context, &mut self.icons, component, state, dim);
+            // We translate the coordinate space to the Component Coordinate
+            // Space of the next component by shifting by the width of the
+            // current component in the Component Coordinate Space.
+            context.translate(width, 0.0);
+        }
+    }
+}
+
+fn render_component<B: Backend>(
+    context: &mut RenderContext<'_, B>,
+    icons: &mut IconCache<B::Texture>,
+    component: &ComponentState,
+    state: &LayoutState,
+    dim: [f32; 2],
+) {
+    match component {
+        ComponentState::BlankSpace(state) => component::blank_space::render(context, dim, state),
+        ComponentState::Title(component) => {
+            component::title::render(context, dim, component, state, &mut icons.game_icon)
+        }
+        ComponentState::Splits(component) => {
+            component::splits::render(context, dim, component, state, &mut icons.split_icons)
+        }
+        ComponentState::Timer(component) => {
+            component::timer::render(context, dim, component);
+        }
+        ComponentState::DetailedTimer(component) => component::detailed_timer::render(
+            context,
+            dim,
+            component,
+            state,
+            &mut icons.detailed_timer_icon,
+        ),
+        ComponentState::CurrentComparison(component) => {
+            component::current_comparison::render(context, dim, component, state)
+        }
+        ComponentState::CurrentPace(component) => {
+            component::current_pace::render(context, dim, component, state)
+        }
+        ComponentState::Delta(component) => {
+            component::delta::render(context, dim, component, state)
+        }
+        ComponentState::PossibleTimeSave(component) => {
+            component::possible_time_save::render(context, dim, component, state)
+        }
+        ComponentState::PreviousSegment(component) => {
+            component::previous_segment::render(context, dim, component, state)
+        }
+        ComponentState::Separator(component) => {
+            component::separator::render(context, dim, component, state)
+        }
+        ComponentState::SumOfBest(component) => {
+            component::sum_of_best::render(context, dim, component, state)
+        }
+        ComponentState::Text(component) => component::text::render(context, dim, component, state),
+        ComponentState::TotalPlaytime(component) => {
+            component::total_playtime::render(context, dim, component, state)
+        }
+        ComponentState::Graph(component) => {
+            component::graph::render(context, dim, component, state)
         }
     }
 }
@@ -246,7 +444,6 @@ struct RenderContext<'b, B: Backend> {
     timer_glyph_cache: &'b mut GlyphCache<B::Mesh>,
     text_font: &'b mut Font<'static>,
     text_glyph_cache: &'b mut GlyphCache<B::Mesh>,
-    width: f32,
 }
 
 impl<'b, B: Backend> RenderContext<'b, B> {
@@ -297,7 +494,6 @@ impl<'b, B: Backend> RenderContext<'b, B> {
 
     fn scale(&mut self, factor: f32) {
         self.transform = self.transform.pre_scale(factor, factor);
-        self.width /= factor;
     }
 
     fn scale_non_uniform_x(&mut self, x: f32) {
@@ -357,45 +553,15 @@ impl<'b, B: Backend> RenderContext<'b, B> {
         &mut self,
         texts: &[&str],
         value: &str,
+        [width, height]: [f32; 2],
         text_color: Color,
         value_color: Color,
         display_two_rows: bool,
     ) {
-        let width = self.width;
-        let height = if display_two_rows {
-            TWO_ROW_HEIGHT
-        } else {
-            1.0
-        };
-        let left_of_value_x =
-            self.render_numbers(value, [width - MARGIN, height - 0.3], 0.8, [value_color; 2]);
-        let end_x = if display_two_rows {
-            width
-        } else {
-            left_of_value_x
-        };
-        let text = self.choose_abbreviation(texts.iter().cloned(), 0.8, end_x - 2.0 * MARGIN);
-        self.render_text_ellipsis(text, [MARGIN, 0.7], 0.8, [text_color; 2], end_x - MARGIN);
-    }
-
-    fn render_info_text_component(
-        &mut self,
-        texts: &[&str],
-        value: &str,
-        text_color: Color,
-        value_color: Color,
-        display_two_rows: bool,
-    ) {
-        let width = self.width;
-        let height = if display_two_rows {
-            TWO_ROW_HEIGHT
-        } else {
-            1.0
-        };
-        let left_of_value_x = self.render_text_right_align(
+        let left_of_value_x = self.render_numbers(
             value,
-            [width - MARGIN, height - 0.3],
-            0.8,
+            [width - PADDING, height + TEXT_ALIGN_BOTTOM],
+            DEFAULT_TEXT_SIZE,
             [value_color; 2],
         );
         let end_x = if display_two_rows {
@@ -403,8 +569,52 @@ impl<'b, B: Backend> RenderContext<'b, B> {
         } else {
             left_of_value_x
         };
-        let text = self.choose_abbreviation(texts.iter().cloned(), 0.8, end_x - 2.0 * MARGIN);
-        self.render_text_ellipsis(text, [MARGIN, 0.7], 0.8, [text_color; 2], end_x - MARGIN);
+        let text = self.choose_abbreviation(
+            texts.iter().cloned(),
+            DEFAULT_TEXT_SIZE,
+            end_x - BOTH_PADDINGS,
+        );
+        self.render_text_ellipsis(
+            text,
+            [PADDING, TEXT_ALIGN_TOP],
+            DEFAULT_TEXT_SIZE,
+            [text_color; 2],
+            end_x - PADDING,
+        );
+    }
+
+    fn render_info_text_component(
+        &mut self,
+        texts: &[&str],
+        value: &str,
+        [width, height]: [f32; 2],
+        text_color: Color,
+        value_color: Color,
+        display_two_rows: bool,
+    ) {
+        let left_of_value_x = self.render_text_right_align(
+            value,
+            [width - PADDING, height + TEXT_ALIGN_BOTTOM],
+            DEFAULT_TEXT_SIZE,
+            [value_color; 2],
+        );
+        let end_x = if display_two_rows {
+            width
+        } else {
+            left_of_value_x
+        };
+        let text = self.choose_abbreviation(
+            texts.iter().cloned(),
+            DEFAULT_TEXT_SIZE,
+            end_x - BOTH_PADDINGS,
+        );
+        self.render_text_ellipsis(
+            text,
+            [PADDING, TEXT_ALIGN_TOP],
+            DEFAULT_TEXT_SIZE,
+            [text_color; 2],
+            end_x - PADDING,
+        );
     }
 
     fn render_text_ellipsis(
@@ -603,23 +813,45 @@ fn decode_color(color: &Color) -> [f32; 4] {
     [r, g, b, a]
 }
 
-fn component_height(component: &ComponentState) -> f32 {
-    const PSEUDO_PIXELS: f32 = 1.0 / 24.0;
-
+fn component_width(component: &ComponentState) -> f32 {
     match component {
-        ComponentState::BlankSpace(state) => state.height as f32 * PSEUDO_PIXELS,
+        ComponentState::BlankSpace(state) => state.size as f32 * PSEUDO_PIXELS,
+        ComponentState::CurrentComparison(_) => 6.0,
+        ComponentState::CurrentPace(_) => 6.0,
+        ComponentState::Delta(_) => 6.0,
+        ComponentState::PossibleTimeSave(_) => 6.0,
+        ComponentState::PreviousSegment(_) => 6.0,
+        ComponentState::SumOfBest(_) => 6.0,
+        ComponentState::Text(_) => 6.0,
+        ComponentState::TotalPlaytime(_) => 6.0,
+        ComponentState::Title(_) => 8.0,
+        ComponentState::Splits(state) => {
+            let column_count = 2.0; // FIXME: Not always 2.
+            let split_width = 2.0 + column_count * component::splits::COLUMN_WIDTH;
+            state.splits.len() as f32 * split_width
+        }
+        ComponentState::DetailedTimer(_) => 7.0,
+        ComponentState::Timer(_) => 8.25,
+        ComponentState::Graph(_) => 7.0,
+        ComponentState::Separator(_) => SEPARATOR_THICKNESS,
+    }
+}
+
+fn component_height(component: &ComponentState) -> f32 {
+    match component {
+        ComponentState::BlankSpace(state) => state.size as f32 * PSEUDO_PIXELS,
         ComponentState::CurrentComparison(state) => {
             if state.display_two_rows {
                 TWO_ROW_HEIGHT
             } else {
-                1.0
+                DEFAULT_COMPONENT_HEIGHT
             }
         }
         ComponentState::CurrentPace(state) => {
             if state.display_two_rows {
                 TWO_ROW_HEIGHT
             } else {
-                1.0
+                DEFAULT_COMPONENT_HEIGHT
             }
         }
         ComponentState::DetailedTimer(_) => 2.5,
@@ -627,23 +859,23 @@ fn component_height(component: &ComponentState) -> f32 {
             if state.display_two_rows {
                 TWO_ROW_HEIGHT
             } else {
-                1.0
+                DEFAULT_COMPONENT_HEIGHT
             }
         }
         ComponentState::Graph(state) => state.height as f32 * PSEUDO_PIXELS,
-        ComponentState::Separator(_) => 0.1,
+        ComponentState::Separator(_) => SEPARATOR_THICKNESS,
         ComponentState::PossibleTimeSave(state) => {
             if state.display_two_rows {
                 TWO_ROW_HEIGHT
             } else {
-                1.0
+                DEFAULT_COMPONENT_HEIGHT
             }
         }
         ComponentState::PreviousSegment(state) => {
             if state.display_two_rows {
                 TWO_ROW_HEIGHT
             } else {
-                1.0
+                DEFAULT_COMPONENT_HEIGHT
             }
         }
         ComponentState::Splits(state) => {
@@ -651,10 +883,10 @@ fn component_height(component: &ComponentState) -> f32 {
                 * if state.display_two_rows {
                     TWO_ROW_HEIGHT
                 } else {
-                    1.0
+                    DEFAULT_COMPONENT_HEIGHT
                 }
                 + if state.column_labels.is_some() {
-                    1.0
+                    DEFAULT_COMPONENT_HEIGHT
                 } else {
                     0.0
                 }
@@ -663,23 +895,23 @@ fn component_height(component: &ComponentState) -> f32 {
             if state.display_two_rows {
                 TWO_ROW_HEIGHT
             } else {
-                1.0
+                DEFAULT_COMPONENT_HEIGHT
             }
         }
         ComponentState::Text(state) => {
             if state.display_two_rows {
                 TWO_ROW_HEIGHT
             } else {
-                1.0
+                DEFAULT_COMPONENT_HEIGHT
             }
         }
         ComponentState::Timer(state) => state.height as f32 * PSEUDO_PIXELS,
-        ComponentState::Title(_) => 2.0,
+        ComponentState::Title(_) => TWO_ROW_HEIGHT,
         ComponentState::TotalPlaytime(state) => {
             if state.display_two_rows {
                 TWO_ROW_HEIGHT
             } else {
-                1.0
+                DEFAULT_COMPONENT_HEIGHT
             }
         }
     }

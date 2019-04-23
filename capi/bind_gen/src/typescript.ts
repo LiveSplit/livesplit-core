@@ -95,8 +95,8 @@ export enum TimerPhase {
 export interface BlankSpaceComponentStateJson {
     /** The background shown behind the component. */
     background: Gradient,
-    /** The height of the component. */
-    height: number,
+    /** The size of the component. */
+    size: number,
 }
 
 /** The state object describes the information to visualize for this component. */
@@ -665,7 +665,11 @@ export type SettingsDescriptionValueJson =
     { ColumnUpdateWith: ColumnUpdateWith } |
     { ColumnUpdateTrigger: ColumnUpdateTrigger } |
     { Hotkey: string } |
+    { LayoutDirection: LayoutDirection } |
     { CustomCombobox: CustomCombobox };
+
+/** Describes the direction the components of a layout are laid out in. */
+export type LayoutDirection = "Vertical" | "Horizontal";
 
 /**
  * A custom Combobox containing its current value and a list of possible

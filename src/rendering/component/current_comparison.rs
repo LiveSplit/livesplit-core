@@ -1,6 +1,6 @@
 use crate::{
     component::current_comparison::State,
-    layout::LayoutState,
+    layout::{LayoutDirection, LayoutState},
     rendering::{Backend, RenderContext},
 };
 
@@ -14,8 +14,9 @@ pub(in crate::rendering) fn render(
     context.render_info_text_component(
         &[&component.text, "Comparison"],
         &component.comparison,
+        dim,
         component.label_color.unwrap_or(layout_state.text_color),
         component.value_color.unwrap_or(layout_state.text_color),
-        component.display_two_rows,
+        component.display_two_rows || layout_state.direction == LayoutDirection::Horizontal,
     );
 }

@@ -23,15 +23,15 @@ pub struct Component {
 pub struct Settings {
     /// The background shown behind the component.
     pub background: Gradient,
-    /// The height of the component.
-    pub height: u32,
+    /// The size of the component.
+    pub size: u32,
 }
 
 impl Default for Settings {
     fn default() -> Self {
         Self {
             background: Gradient::Transparent,
-            height: 24,
+            size: 24,
         }
     }
 }
@@ -41,8 +41,8 @@ impl Default for Settings {
 pub struct State {
     /// The background shown behind the component.
     pub background: Gradient,
-    /// The height of the component.
-    pub height: u32,
+    /// The size of the component.
+    pub size: u32,
 }
 
 impl State {
@@ -85,7 +85,7 @@ impl Component {
     pub fn state(&self, _timer: &Timer) -> State {
         State {
             background: self.settings.background,
-            height: self.settings.height,
+            size: self.settings.size,
         }
     }
 
@@ -94,7 +94,7 @@ impl Component {
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new("Background".into(), self.settings.background.into()),
-            Field::new("Height".into(), u64::from(self.settings.height).into()),
+            Field::new("Size".into(), u64::from(self.settings.size).into()),
         ])
     }
 
@@ -108,7 +108,7 @@ impl Component {
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
             0 => self.settings.background = value.into(),
-            1 => self.settings.height = value.into_uint().unwrap() as _,
+            1 => self.settings.size = value.into_uint().unwrap() as _,
             _ => panic!("Unsupported Setting Index"),
         }
     }

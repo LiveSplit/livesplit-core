@@ -17,13 +17,13 @@ use {
 
 pub(in crate::rendering) fn render(
     context: &mut RenderContext<'_, impl Backend>,
-    [_, height]: [f32; 2],
+    [width, height]: [f32; 2],
     component: &State,
     _layout_state: &LayoutState,
 ) {
-    let (old_width, old_transform) = (context.width, context.transform);
+    let old_transform = context.transform;
     context.scale(height);
-    let width = context.width;
+    let width = width / height;
 
     const GRID_LINE_WIDTH: f32 = 0.015;
     const LINE_WIDTH: f32 = 0.025;
@@ -157,6 +157,5 @@ pub(in crate::rendering) fn render(
         }
     }
 
-    context.width = old_width;
     context.transform = old_transform;
 }

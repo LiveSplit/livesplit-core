@@ -1,8 +1,11 @@
-use super::{Alignment, Color, Gradient, ListGradient};
-use crate::component::splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith};
-use crate::hotkey::KeyCode;
-use crate::timing::formatter::{Accuracy, DigitsFormat};
-use crate::TimingMethod;
+use crate::{
+    component::splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith},
+    hotkey::KeyCode,
+    layout::LayoutDirection,
+    settings::{Alignment, Color, Gradient, ListGradient},
+    timing::formatter::{Accuracy, DigitsFormat},
+    TimingMethod,
+};
 use std::result::Result as StdResult;
 
 /// Describes a setting's value. Such a value can be of a variety of different
@@ -49,6 +52,8 @@ pub enum Value {
     ColumnUpdateTrigger(ColumnUpdateTrigger),
     /// A value describing what hotkey to press to trigger a certain action.
     Hotkey(Option<KeyCode>),
+    /// A value describing the direction of a layout.
+    LayoutDirection(LayoutDirection),
 }
 
 quick_error! {
@@ -216,6 +221,14 @@ impl Value {
             _ => Err(Error::WrongType),
         }
     }
+
+    /// Tries to convert the value into a layout direction.
+    pub fn into_layout_direction(self) -> Result<LayoutDirection> {
+        match self {
+            Value::LayoutDirection(v) => Ok(v),
+            _ => Err(Error::WrongType),
+        }
+    }
 }
 
 impl Into<bool> for Value {
@@ -323,5 +336,11 @@ impl Into<ColumnUpdateTrigger> for Value {
 impl Into<Option<KeyCode>> for Value {
     fn into(self) -> Option<KeyCode> {
         self.into_hotkey().unwrap()
+    }
+}
+
+impl Into<LayoutDirection> for Value {
+    fn into(self) -> LayoutDirection {
+        self.into_layout_direction().unwrap()
     }
 }
