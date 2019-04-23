@@ -5,10 +5,10 @@
 #[cfg(all(
     test,
 
-    // Without MMX the floating point precision is too inaccurate for the
-    // software renderer to produce the correct checksums.
-    // TODO: We use SSE as an approximation, because MMX isn't supported by Rust
-    // just yet.
+    // Without MMX the floating point calculations don't follow IEEE 754. So the
+    // tests fail to produce the correct checksums.
+    // TODO: We use SSE as an approximation for the cfg, because MMX isn't
+    // supported by Rust just yet.
     not(all(
         target_arch = "x86",
         not(target_feature = "sse"),
@@ -104,8 +104,8 @@ impl Target for NoDepth {
 
     unsafe fn set(&mut self, _pos: [usize; 2], _item: Self::Item) {}
 
-    unsafe fn get(&self, _pos: [usize; 2]) -> &Self::Item {
-        &1.0
+    unsafe fn get(&self, _pos: [usize; 2]) -> Self::Item {
+        1.0
     }
 
     fn clear(&mut self, _fill: Self::Item) {}
@@ -133,7 +133,7 @@ impl Target for AlphaBlended {
         );
     }
 
-    unsafe fn get(&self, pos: [usize; 2]) -> &Self::Item {
+    unsafe fn get(&self, pos: [usize; 2]) -> Self::Item {
         self.0.get(pos)
     }
 

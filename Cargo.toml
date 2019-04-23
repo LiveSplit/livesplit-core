@@ -57,7 +57,7 @@ lyon = { version = "0.13.0", default-features = false, optional = true }
 rusttype = { version = "0.7.3", default-features = false, optional = true }
 
 # Software Rendering
-euc = { version = "0.2.0", default-features = false, optional = true }
+euc = { version = "0.3.0", default-features = false, optional = true }
 vek = { version = "0.9.6", default-features = false, optional = true }
 smallvec = { version = "0.6.9", default-features = false, optional = true }
 
