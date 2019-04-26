@@ -28,7 +28,7 @@ lto = true
 panic = "abort"
 
 [workspace]
-members = ["capi", "capi/bind_gen", "capi/js", "capi/staticlib", "capi/cdylib", "crates/livesplit-hotkey", "crates/livesplit-title-abbreviations"]
+members = ["capi", "capi/bind_gen", "capi/js", "capi/staticlib", "capi/cdylib", "crates/*"]
 
 [dependencies]
 base64 = "0.10.0"
@@ -68,8 +68,9 @@ crc = "1.8.1"
 
 [features]
 default = ["image-shrinking"]
-image-shrinking = ["image/webp", "image/pnm", "image/ico", "image/jpeg", "image/gif_codec", "image/tiff", "image/tga", "image/bmp", "image/hdr"]
-rendering = ["euclid", "livesplit-title-abbreviations", "rusttype", "lyon", "smallvec"]
+more-image-formats = ["image/webp", "image/pnm", "image/ico", "image/jpeg", "image/gif_codec", "image/tiff", "image/tga", "image/bmp", "image/hdr"]
+image-shrinking = ["more-image-formats"]
+rendering = ["more-image-formats", "euclid", "livesplit-title-abbreviations", "rusttype", "lyon", "smallvec"]
 software-rendering = ["rendering", "euc", "vek"]
 
 [[bench]]
