@@ -416,7 +416,7 @@ impl Editor {
         self.run.import_best_segment(active_segment);
 
         let max_index = self.run.max_attempt_history_index().unwrap_or(0);
-        let min_index = self.run.min_segment_history_index();
+        let min_index = self.run.min_segment_history_index().unwrap();
         for x in min_index..=max_index {
             segment.segment_history_mut().insert(x, Default::default());
         }
@@ -441,7 +441,7 @@ impl Editor {
         }
 
         let max_index = self.run.max_attempt_history_index().unwrap_or(0);
-        let min_index = self.run.min_segment_history_index();
+        let min_index = self.run.min_segment_history_index().unwrap();
         for x in min_index..=max_index {
             segment.segment_history_mut().insert(x, Default::default());
         }
@@ -466,7 +466,7 @@ impl Editor {
         }
 
         let max_index = self.run.max_attempt_history_index().unwrap_or(0);
-        let min_index = self.run.min_segment_history_index();
+        let min_index = self.run.min_segment_history_index().unwrap();
         for run_index in min_index..=max_index {
             // If a history element isn't there in the segment that's deleted
             // remove it from the next segment's history as well
@@ -568,7 +568,7 @@ impl Editor {
 
     fn switch_segments(&mut self, index: usize) {
         let max_index = self.run.max_attempt_history_index().unwrap_or(0);
-        let min_index = self.run.min_segment_history_index();
+        let min_index = self.run.min_segment_history_index().unwrap();
 
         // Use split_at to prove that the 3 segments are distinct
         let (a, b) = self.run.segments_mut().split_at_mut(index);

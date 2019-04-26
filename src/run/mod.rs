@@ -579,10 +579,6 @@ impl Run {
     /// Applies some fixing algorithms on the Run. This includes fixing the
     /// comparison times and history, removing duplicates in the segment
     /// histories and removing empty times.
-    ///
-    /// # Panics
-    ///
-    /// This panics if the Run has no segments.
     pub fn fix_splits(&mut self) {
         for &method in &TimingMethod::all() {
             self.fix_comparison_times_and_history(method);
@@ -657,23 +653,24 @@ impl Run {
 
     fn remove_none_values(&mut self) {
         let mut cache = Vec::new();
-        let min_index = self.min_segment_history_index();
-        let max_index = self.max_attempt_history_index().unwrap_or(0) + 1;
-        for run_index in min_index..max_index {
-            for index in 0..self.len() {
-                if let Some(element) = self.segments[index].segment_history().get(run_index) {
-                    if element.real_time.is_none() && element.game_time.is_none() {
-                        cache.push(run_index);
+        if let Some(min_index) = self.min_segment_history_index() {
+            let max_index = self.max_attempt_history_index().unwrap_or(0) + 1;
+            for run_index in min_index..max_index {
+                for index in 0..self.len() {
+                    if let Some(element) = self.segments[index].segment_history().get(run_index) {
+                        if element.real_time.is_none() && element.game_time.is_none() {
+                            cache.push(run_index);
+                        } else {
+                            cache.clear();
+                        }
                     } else {
-                        cache.clear();
+                        // Remove None times in history that aren't followed by a non-None time
+                        self.remove_items_from_cache(index, &mut cache);
                     }
-                } else {
-                    // Remove None times in history that aren't followed by a non-None time
-                    self.remove_items_from_cache(index, &mut cache);
                 }
+                let len = self.len();
+                self.remove_items_from_cache(len, &mut cache);
             }
-            let len = self.len();
-            self.remove_items_from_cache(len, &mut cache);
         }
     }
 
@@ -724,40 +721,33 @@ impl Run {
         }
     }
 
-    /// Returns the minimum index in use by all the Segment Histories.
-    ///
-    /// # Panics
-    ///
-    /// This panics if the Run has no segments.
-    pub fn min_segment_history_index(&self) -> i32 {
+    /// Returns the minimum index in use by all the Segment Histories. `None` is
+    /// returned if the Run has no segments.
+    pub fn min_segment_history_index(&self) -> Option<i32> {
         self.segments
             .iter()
             .map(|s| s.segment_history().min_index())
             .min()
-            .expect("Can't calculate the minimum segment history index for an empty Run.")
     }
 
     /// Fixes the Segment History by calculating the segment times from the
     /// Personal Best times and adding those to the Segment History.
-    ///
-    /// # Panics
-    ///
-    /// This panics if the Run has no segments.
     pub fn import_pb_into_segment_history(&mut self) {
-        let mut index = self.min_segment_history_index();
-        for &timing_method in &TimingMethod::all() {
-            index -= 1;
-            let mut prev_time = TimeSpan::zero();
+        if let Some(mut index) = self.min_segment_history_index() {
+            for &timing_method in &TimingMethod::all() {
+                index -= 1;
+                let mut prev_time = TimeSpan::zero();
 
-            for segment in self.segments_mut() {
-                // Import the PB splits into the history
-                let pb_time = segment.personal_best_split_time()[timing_method];
-                let time =
-                    Time::new().with_timing_method(timing_method, pb_time.map(|p| p - prev_time));
-                segment.segment_history_mut().insert(index, time);
+                for segment in self.segments_mut() {
+                    // Import the PB splits into the history
+                    let pb_time = segment.personal_best_split_time()[timing_method];
+                    let time = Time::new()
+                        .with_timing_method(timing_method, pb_time.map(|p| p - prev_time));
+                    segment.segment_history_mut().insert(index, time);
 
-                if let Some(time) = pb_time {
-                    prev_time = time;
+                    if let Some(time) = pb_time {
+                        prev_time = time;
+                    }
                 }
             }
         }
@@ -772,7 +762,9 @@ impl Run {
     pub fn import_best_segment(&mut self, segment_index: usize) {
         let best_segment_time = self.segments[segment_index].best_segment_time();
         if best_segment_time.real_time.is_some() || best_segment_time.game_time.is_some() {
-            let index = self.min_segment_history_index() - 1;
+            // We can unwrap here because due to the fact that we can access the
+            // best_segment_time of some segment, at least one exists.
+            let index = self.min_segment_history_index().unwrap() - 1;
             self.segments[segment_index]
                 .segment_history_mut()
                 .insert(index, best_segment_time);
