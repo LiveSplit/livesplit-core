@@ -34,7 +34,7 @@ impl ComparisonGenerator for WorstSegments {
 
             let mut index = predictions
                 .iter()
-                .rposition(|p| p.is_some())
+                .rposition(Option::is_some)
                 .expect("There must always be a first sentinel prediction that is not None");
             while let Some(segment_index) = index.checked_sub(1) {
                 let prediction =

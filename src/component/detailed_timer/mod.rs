@@ -7,11 +7,13 @@
 use super::timer;
 use crate::comparison::{self, best_segments, none};
 use crate::settings::{Field, Gradient, SemanticColor, SettingsDescription, Value};
-use crate::timing::formatter::none_wrapper::DashWrapper;
 use crate::timing::formatter::{
-    timer as formatter, Accuracy, DigitsFormat, Short, TimeFormatter, DASH,
+    none_wrapper::DashWrapper, timer as formatter, Accuracy, DigitsFormat, Short, TimeFormatter,
+    DASH,
 };
-use crate::{CachedImageId, GeneralLayoutSettings, TimeSpan, Timer, TimerPhase, TimingMethod};
+use crate::{
+    CachedImageId, GeneralLayoutSettings, Segment, TimeSpan, Timer, TimerPhase, TimingMethod,
+};
 use serde_json::{to_writer, Result};
 use std::borrow::Cow;
 use std::io::Write;
@@ -278,7 +280,7 @@ impl Component {
                 timer
                     .current_split()
                     .filter(|_| display_icon)
-                    .map(|s| s.icon()),
+                    .map(Segment::icon),
             )
             .map(str::to_owned);
 

@@ -1,6 +1,6 @@
 //! Provides a software renderer that can be used without a GPU. The rendering
-//! much slower than with a normal GPU, but might be sufficient for situations
-//! where you want to create a screenshot of the layout.
+//! is much slower than with a normal GPU, but might be sufficient for
+//! situations where you want to create a screenshot of the layout.
 
 #[cfg(all(
     test,

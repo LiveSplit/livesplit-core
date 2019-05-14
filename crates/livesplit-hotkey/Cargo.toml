@@ -1,9 +1,9 @@
 [package]
 name = "livesplit-hotkey"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["Christopher Serr <christopher.serr@gmail.com>"]
 documentation = "https://docs.rs/livesplit-hotkey/"
-repository = "https://github.com/LiveSplit/livesplit-core/tree/master/hotkey"
+repository = "https://github.com/LiveSplit/livesplit-core/tree/master/crates/livesplit-hotkey"
 license = "Apache-2.0/MIT"
 description = "livesplit-hotkey provides cross-platform global hotkey hooks."
 keywords = ["speedrun", "timer", "livesplit", "hotkey", "keyboard"]

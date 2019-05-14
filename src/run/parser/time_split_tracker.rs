@@ -86,7 +86,7 @@ pub fn parse<R: BufRead>(source: R, path_for_loading_other_files: Option<PathBuf
     let mut splits = line.split('\t');
     run.set_category_name(splits.next().ok_or(Error::ExpectedCategoryName)?);
     splits.next(); // Skip one element
-    let mut comparisons = splits.map(|s| s.to_string()).collect::<Vec<_>>();
+    let mut comparisons = splits.map(ToOwned::to_owned).collect::<Vec<_>>();
 
     for comparison in &mut comparisons {
         let mut name = comparison.to_owned();

@@ -26,11 +26,11 @@ mod segment_history;
 #[cfg(test)]
 mod tests;
 
-pub use self::attempt::Attempt;
-pub use self::editor::{Editor, RenameError};
-pub use self::run_metadata::RunMetadata;
-pub use self::segment::Segment;
-pub use self::segment_history::SegmentHistory;
+pub use attempt::Attempt;
+pub use editor::{Editor, RenameError};
+pub use run_metadata::RunMetadata;
+pub use segment::Segment;
+pub use segment_history::SegmentHistory;
 
 use crate::comparison::{default_generators, personal_best, ComparisonGenerator};
 use crate::{AtomicDateTime, Image, Time, TimeSpan, TimingMethod};
@@ -573,7 +573,7 @@ impl Run {
     /// Returns the maximum index currently in use by the Attempt History. This
     /// mostly serves as a helper function for the Timer.
     pub fn max_attempt_history_index(&self) -> Option<i32> {
-        self.attempt_history().iter().map(|x| x.index()).max()
+        self.attempt_history().iter().map(Attempt::index).max()
     }
 
     /// Applies some fixing algorithms on the Run. This includes fixing the
