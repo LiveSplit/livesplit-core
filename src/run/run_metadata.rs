@@ -2,6 +2,31 @@ use crate::indexmap::map::{IndexMap, Iter};
 use crate::platform::prelude::*;
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CustomVariable {
+    pub value: String,
+    /// States whether the variable is permanent. Temporary variables don't get
+    /// stored in splits files. They also don't get shown in the run editor.
+    pub is_permanent: bool,
+}
+
+impl CustomVariable {
+    pub fn permanent(&mut self) -> &mut Self {
+        self.is_permanent = true;
+        self
+    }
+    pub fn set_value<S>(&mut self, value: S)
+    where
+        S: AsRef<str>,
+    {
+        self.value.clear();
+        self.value.push_str(value.as_ref());
+    }
+    pub fn clear_value(&mut self) {
+        self.value.clear();
+    }
+}
+
 /// The Run Metadata stores additional information about a run, like the
 /// platform and region of the game. All of this information is optional.
 #[derive(Default, Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -19,10 +44,11 @@ pub struct RunMetadata {
     /// The name of the region this game is from. This may be empty if it's not
     /// specified.
     pub region_name: String,
-    /// Stores all the variables. A variable is an arbitrary key value pair
-    /// storing additional information about the category. An example of this
-    /// may be whether Amiibos are used in this category.
-    pub variables: IndexMap<String, String>,
+    /// Stores all the speedrun.com variables. A variable is an arbitrary key
+    /// value pair storing additional information about the category. An example
+    /// of this may be whether Amiibos are used in this category.
+    pub speedrun_com_variables: IndexMap<String, String>,
+    pub custom_variables: IndexMap<String, CustomVariable>,
 }
 
 impl RunMetadata {
@@ -108,26 +134,59 @@ impl RunMetadata {
     /// about the category. An example of this may be whether Amiibos are used
     /// in this category. If the variable doesn't exist yet, it is being
     /// inserted.
-    pub fn set_variable<N, V>(&mut self, name: N, value: V)
+    pub fn set_speedrun_com_variable<N, V>(&mut self, name: N, value: V)
     where
         N: Into<String>,
         V: Into<String>,
     {
-        self.variables.insert(name.into(), value.into());
+        self.speedrun_com_variables
+            .insert(name.into(), value.into());
     }
 
     /// Removes the variable with the name specified.
-    pub fn remove_variable<S>(&mut self, name: S)
+    pub fn remove_speedrun_com_variable<S>(&mut self, name: S)
     where
         S: AsRef<str>,
     {
-        self.variables.shift_remove(name.as_ref());
+        self.speedrun_com_variables.shift_remove(name.as_ref());
     }
 
     /// Returns an iterator iterating over all the variables and their values
     /// that have been specified.
-    pub fn variables(&self) -> Iter<'_, String, String> {
-        self.variables.iter()
+    pub fn speedrun_com_variables(&self) -> Iter<'_, String, String> {
+        self.speedrun_com_variables.iter()
+    }
+
+    pub fn custom_variable<S>(&self, name: S) -> Option<&CustomVariable>
+    where
+        S: AsRef<str>,
+    {
+        self.custom_variables.get(name.as_ref())
+    }
+
+    pub fn custom_variable_value<S>(&self, name: S) -> Option<&str>
+    where
+        S: AsRef<str>,
+    {
+        Some(&self.custom_variable(name)?.value)
+    }
+
+    pub fn custom_variable_mut<S>(&mut self, name: S) -> &mut CustomVariable
+    where
+        S: Into<String>,
+    {
+        self.custom_variables.entry(name.into()).or_default()
+    }
+
+    pub fn remove_custom_variable<S>(&mut self, name: S)
+    where
+        S: AsRef<str>,
+    {
+        self.custom_variables.shift_remove(name.as_ref());
+    }
+
+    pub fn custom_variables(&self) -> Iter<'_, String, CustomVariable> {
+        self.custom_variables.iter()
     }
 
     /// Resets all the Metadata Information.
@@ -136,6 +195,7 @@ impl RunMetadata {
         self.platform_name.clear();
         self.region_name.clear();
         self.uses_emulator = false;
-        self.variables.clear();
+        self.speedrun_com_variables.clear();
+        self.custom_variables.clear();
     }
 }

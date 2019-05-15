@@ -5,7 +5,7 @@
 use super::{output_vec, str, Json};
 use crate::component::OwnedComponent;
 use crate::text_component_state::OwnedTextComponentState;
-use livesplit_core::component::text::Component as TextComponent;
+use livesplit_core::{component::text::Component as TextComponent, Timer};
 use std::os::raw::c_char;
 
 /// type
@@ -32,9 +32,9 @@ pub extern "C" fn TextComponent_into_generic(this: OwnedTextComponent) -> OwnedC
 
 /// Encodes the component's state information as JSON.
 #[no_mangle]
-pub extern "C" fn TextComponent_state_as_json(this: &TextComponent) -> Json {
+pub extern "C" fn TextComponent_state_as_json(this: &TextComponent, timer: &Timer) -> Json {
     output_vec(|o| {
-        this.state().write_json(o).unwrap();
+        this.state(timer).write_json(o).unwrap();
     })
 }
 
@@ -61,6 +61,9 @@ pub unsafe extern "C" fn TextComponent_set_right(this: &mut TextComponent, text:
 
 /// Calculates the component's state.
 #[no_mangle]
-pub extern "C" fn TextComponent_state(this: &TextComponent) -> OwnedTextComponentState {
-    Box::new(this.state())
+pub extern "C" fn TextComponent_state(
+    this: &TextComponent,
+    timer: &Timer,
+) -> OwnedTextComponentState {
+    Box::new(this.state(timer))
 }

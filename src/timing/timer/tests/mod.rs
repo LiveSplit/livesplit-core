@@ -3,6 +3,7 @@ use crate::tests_helper::{run_with_splits, run_with_splits_opt, start_run};
 use crate::{Run, Segment, TimeSpan, Timer, TimerPhase, TimingMethod};
 
 mod mark_as_modified;
+mod variables;
 
 fn run() -> Run {
     let mut run = Run::new();

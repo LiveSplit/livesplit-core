@@ -136,8 +136,10 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
         if run.category_name().is_empty() {
             run.set_category_name(goal);
         } else {
-            let category_name = format!("{} (Goal: {})", run.category_name(), goal);
-            run.set_category_name(category_name);
+            run.metadata_mut()
+                .custom_variable_mut("Goal")
+                .permanent()
+                .set_value(goal);
         }
     }
 
@@ -169,7 +171,8 @@ Jimmy,0,219.68,134.2
 "#;
 
         let run = parse(RUN, false).unwrap();
-        assert_eq!(run.category_name(), "WarioWare, Inc (Goal: sub 2h)");
+        assert_eq!(run.category_name(), "WarioWare, Inc");
+        assert_eq!(run.metadata().custom_variable_value("Goal"), Some("sub 2h"));
         assert_eq!(run.len(), 2);
     }
 

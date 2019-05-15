@@ -5,6 +5,10 @@ fn base() -> Editor {
     let mut run = Run::new();
     run.push_segment(Segment::new(""));
     run.push_segment(Segment::new(""));
+    run.metadata_mut()
+        .custom_variable_mut("Foo")
+        .permanent()
+        .set_value("Bar");
 
     let mut editor = Editor::new(run).unwrap();
 
@@ -23,7 +27,7 @@ fn base() -> Editor {
     editor.add_comparison("Other Comparison").unwrap();
     editor.active_segment().set_icon(&[2]);
     editor.set_game_icon(&[2]);
-    editor.set_variable("remove", "me");
+    editor.set_speedrun_com_variable("remove", "me");
 
     let mut run = editor.close();
     run.mark_as_unmodified();
@@ -190,16 +194,16 @@ fn when_setting_emulator_usage() {
 }
 
 #[test]
-fn when_setting_variable() {
+fn when_setting_speedrun_com_variable() {
     let mut editor = base();
-    editor.set_variable("some", "variable");
+    editor.set_speedrun_com_variable("some", "variable");
     assert!(editor.run().has_been_modified());
 }
 
 #[test]
-fn when_removing_variable() {
+fn when_removing_speedrun_com_variable() {
     let mut editor = base();
-    editor.remove_variable("remove");
+    editor.remove_speedrun_com_variable("remove");
     assert!(editor.run().has_been_modified());
 }
 
@@ -315,3 +319,24 @@ fn when_generating_goal_comparison() {
 }
 
 // FIXME: Cleaning Sum of Best
+
+#[test]
+fn when_creating_custom_variable() {
+    let mut editor = base();
+    editor.set_custom_variable("Hello", "World");
+    assert!(editor.run().has_been_modified());
+}
+
+#[test]
+fn when_setting_custom_variable() {
+    let mut editor = base();
+    editor.set_custom_variable("Foo", "Bar2");
+    assert!(editor.run().has_been_modified());
+}
+
+#[test]
+fn when_removing_custom_variable() {
+    let mut editor = base();
+    editor.remove_custom_variable("Foo");
+    assert!(editor.run().has_been_modified());
+}

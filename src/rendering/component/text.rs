@@ -1,5 +1,5 @@
 use crate::{
-    component::text::{State, Text},
+    component::text::{State, TextState},
     layout::{LayoutDirection, LayoutState},
     rendering::{Backend, RenderContext, DEFAULT_TEXT_SIZE, PADDING, TEXT_ALIGN_TOP},
 };
@@ -12,7 +12,7 @@ pub(in crate::rendering) fn render(
 ) {
     context.render_rectangle([0.0, 0.0], [width, height], &component.background);
     match &component.text {
-        Text::Center(text) => context.render_text_centered(
+        TextState::Center(text) => context.render_text_centered(
             text,
             PADDING,
             width - PADDING,
@@ -22,7 +22,7 @@ pub(in crate::rendering) fn render(
                 .left_center_color
                 .unwrap_or(layout_state.text_color),
         ),
-        Text::Split(left, right) => context.render_key_value_component(
+        TextState::Split(left, right) => context.render_key_value_component(
             &left,
             &[],
             &right,

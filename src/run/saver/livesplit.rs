@@ -250,7 +250,7 @@ pub fn save_run<W: Write>(run: &Run, writer: W) -> Result<()> {
 
     writer.write_event(Event::Decl(BytesDecl::new(b"1.0", Some(b"UTF-8"), None)))?;
     writer.write_event(Event::Start(BytesStart::borrowed(
-        br#"Run version="1.7.1""#,
+        br#"Run version="1.8.0""#,
         3,
     )))?;
 
@@ -279,14 +279,28 @@ pub fn save_run<W: Write>(run: &Run, writer: W) -> Result<()> {
 
     scoped_iter(
         writer,
-        new_tag(b"Variables"),
-        metadata.variables(),
+        new_tag(b"SpeedrunComVariables"),
+        metadata.speedrun_com_variables(),
         |writer, (name, value)| {
             let mut tag = new_tag(b"Variable");
             tag.push_attribute((&b"name"[..], name.as_bytes()));
             text(writer, tag, value)
         },
     )?;
+
+    scoped_iter(
+        writer,
+        new_tag(b"CustomVariables"),
+        metadata
+            .custom_variables()
+            .filter(|(_, var)| var.is_permanent),
+        |writer, (name, var)| {
+            let mut tag = new_tag(b"Variable");
+            tag.push_attribute((&b"name"[..], name.as_bytes()));
+            text(writer, tag, &var.value)
+        },
+    )?;
+
     write_end(writer, b"Metadata")?;
 
     time_span(writer, new_tag(b"Offset"), run.offset(), buf)?;

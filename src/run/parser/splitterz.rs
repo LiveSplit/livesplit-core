@@ -48,6 +48,11 @@ pub enum Error {
         /// The underlying error.
         source: io::Error,
     },
+    /// Failed to read a counter line.
+    CounterLine {
+        /// The underlying error.
+        source: io::Error,
+    },
 }
 
 /// The Result type for the SplitterZ parser.
@@ -74,7 +79,6 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
     let mut lines = source.lines();
     let line = lines.next().ok_or(Error::Empty)?.context(TitleLine)?;
     let mut splits = line.split(',');
-    // Title Stuff here, do later
     run.set_category_name(unescape(splits.next().ok_or(Error::ExpectedCategoryName)?));
     run.set_attempt_count(
         splits
@@ -84,7 +88,7 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
             .context(ParseAttemptCount)?,
     );
 
-    for line in lines {
+    for line in &mut lines {
         let line = line.context(Line)?;
         if !line.is_empty() {
             let mut splits = line.split(',');
@@ -128,6 +132,18 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
         }
     }
 
+    for line in lines {
+        if let Some(counter) = line.context(CounterLine)?.split(',').next() {
+            run.metadata_mut()
+                .custom_variable_mut(unescape(counter))
+                .permanent()
+                .set_value("0");
+        }
+        // The other two lines are not that useful. The number is how much to
+        // increment the counter each time and the other is a boolean that does
+        // not seem to be exposed to the UI.
+    }
+
     Ok(run)
 }
 
@@ -143,10 +159,12 @@ SegmentName,0:00:00.00,0.00
 SegmentName,0:00:00.00,0.00
 
 Counter,1,True
-Counter,1,True
+Counter2,1,True
 "#;
 
         let run = parse(RUN, false).unwrap();
         assert_eq!(run.len(), 3);
+        assert_eq!(run.metadata.custom_variable_value("Counter"), Some("0"));
+        assert_eq!(run.metadata.custom_variable_value("Counter2"), Some("0"));
     }
 }

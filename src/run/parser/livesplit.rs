@@ -61,6 +61,8 @@ pub enum Error {
     },
     /// Failed to parse a boolean.
     ParseBool,
+    /// Failed to parse the scope of a custom variable.
+    Scope,
 }
 
 /// The Result type for the LiveSplit Parser.
@@ -218,7 +220,7 @@ fn parse_metadata<R: BufRead>(
                 text(reader, tag.into_buf(), |t| metadata.set_platform_name(t))
             } else if tag.name() == b"Region" {
                 text(reader, tag.into_buf(), |t| metadata.set_region_name(t))
-            } else if tag.name() == b"Variables" {
+            } else if tag.name() == b"Variables" || tag.name() == b"SpeedrunComVariables" {
                 parse_children(reader, tag.into_buf(), |reader, tag| {
                     let mut name = String::new();
                     let mut value = String::new();
@@ -228,7 +230,19 @@ fn parse_metadata<R: BufRead>(
                     type_hint(text(reader, tag.into_buf(), |t| {
                         value = t.into_owned();
                     }))?;
-                    metadata.set_variable(name, value);
+                    metadata.set_speedrun_com_variable(name, value);
+                    Ok(())
+                })
+            } else if tag.name() == b"CustomVariables" {
+                parse_children(reader, tag.into_buf(), |reader, tag| {
+                    let mut name = String::new();
+                    type_hint(attribute(&tag, b"name", |t| {
+                        name = t.into_owned();
+                    }))?;
+                    let var = metadata.custom_variable_mut(name).permanent();
+                    type_hint(text(reader, tag.into_buf(), |t| {
+                        var.set_value(t);
+                    }))?;
                     Ok(())
                 })
             } else {

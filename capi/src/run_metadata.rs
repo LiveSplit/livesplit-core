@@ -2,7 +2,7 @@
 //! platform and region of the game. All of this information is optional.
 
 use super::output_str;
-use crate::run_metadata_variables_iter::OwnedRunMetadataVariablesIter;
+use crate::run_metadata_speedrun_com_variables_iter::OwnedRunMetadataSpeedrunComVariablesIter;
 use livesplit_core::RunMetadata;
 use std::os::raw::c_char;
 
@@ -42,8 +42,8 @@ pub extern "C" fn RunMetadata_region_name(this: &RunMetadata) -> *const c_char {
 /// Returns an iterator iterating over all the variables and their values
 /// that have been specified.
 #[no_mangle]
-pub extern "C" fn RunMetadata_variables(
+pub extern "C" fn RunMetadata_speedrun_com_variables(
     this: &'static RunMetadata,
-) -> OwnedRunMetadataVariablesIter {
-    Box::new(this.variables())
+) -> OwnedRunMetadataSpeedrunComVariablesIter {
+    Box::new(this.speedrun_com_variables())
 }

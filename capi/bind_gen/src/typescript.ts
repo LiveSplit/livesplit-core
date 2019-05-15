@@ -658,11 +658,22 @@ export interface RunMetadataJson {
      */
     region_name: string,
     /**
-     * Stores all the variables. A variable is an arbitrary key value pair
-     * storing additional information about the category. An example of this
-     * may be whether Amiibos are used in this category.
+     * Stores all the speedrun.com variables. A variable is an arbitrary key
+     * value pair storing additional information about the category. An example
+     * of this may be whether Amiibos are used in this category.
      */
-    variables: { [key: string]: string },
+    speedrun_com_variables: { [key: string]: string | undefined },
+    custom_variables: { [key: string]: CustomVariableJson | undefined },
+}
+
+export interface CustomVariableJson {
+    // TODO:
+    value: string,
+    /**
+     * States whether the variable is permanent. Temporary variables don't get
+     * stored in splits files. They also don't get shown in the run editor.
+     */
+    is_permanent: boolean,
 }
 
 /**

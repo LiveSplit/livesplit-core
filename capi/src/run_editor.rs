@@ -164,18 +164,43 @@ pub extern "C" fn RunEditor_set_emulator_usage(this: &mut RunEditor, uses_emulat
 /// in this category. If the variable doesn't exist yet, it is being
 /// inserted.
 #[no_mangle]
-pub unsafe extern "C" fn RunEditor_set_variable(
+pub unsafe extern "C" fn RunEditor_set_speedrun_com_variable(
     this: &mut RunEditor,
     name: *const c_char,
     value: *const c_char,
 ) {
-    this.set_variable(str(name), str(value));
+    this.set_speedrun_com_variable(str(name), str(value));
 }
 
 /// Removes the variable with the name specified.
 #[no_mangle]
-pub unsafe extern "C" fn RunEditor_remove_variable(this: &mut RunEditor, name: *const c_char) {
-    this.remove_variable(str(name));
+pub unsafe extern "C" fn RunEditor_remove_speedrun_com_variable(
+    this: &mut RunEditor,
+    name: *const c_char,
+) {
+    this.remove_speedrun_com_variable(str(name));
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn RunEditor_add_custom_variable(this: &mut RunEditor, name: *const c_char) {
+    this.add_custom_variable(str(name));
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn RunEditor_set_custom_variable(
+    this: &mut RunEditor,
+    name: *const c_char,
+    value: *const c_char,
+) {
+    this.set_custom_variable(str(name), str(value));
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn RunEditor_remove_custom_variable(
+    this: &mut RunEditor,
+    name: *const c_char,
+) {
+    this.remove_custom_variable(str(name));
 }
 
 /// Resets all the Metadata Information.

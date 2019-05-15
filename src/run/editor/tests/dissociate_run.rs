@@ -5,6 +5,10 @@ fn base() -> Editor {
     let mut run = Run::new();
     run.push_segment(Segment::new(""));
     run.push_segment(Segment::new(""));
+    run.metadata_mut()
+        .custom_variable_mut("Foo")
+        .permanent()
+        .set_value("Bar");
 
     let mut editor = Editor::new(run).unwrap();
 
@@ -157,16 +161,16 @@ fn when_setting_emulator_usage() {
 }
 
 #[test]
-fn when_setting_variable() {
+fn when_setting_speedrun_com_variable() {
     let mut editor = base();
-    editor.set_variable("ok", "ok");
+    editor.set_speedrun_com_variable("ok", "ok");
     assert_eq!(editor.run().metadata().run_id, "");
 }
 
 #[test]
-fn when_removing_variable() {
+fn when_removing_speedrun_com_variable() {
     let mut editor = base();
-    editor.remove_variable("ok");
+    editor.remove_speedrun_com_variable("ok");
     assert_eq!(editor.run().metadata().run_id, "");
 }
 
@@ -181,5 +185,26 @@ fn when_clearing_metadata() {
 fn not_when_generating_goal_comparison() {
     let mut editor = base();
     editor.generate_goal_comparison(TimeSpan::from_seconds(30.0));
+    assert_ne!(editor.run().metadata().run_id, "");
+}
+
+#[test]
+fn not_when_creating_custom_variable() {
+    let mut editor = base();
+    editor.set_custom_variable("Hello", "World");
+    assert_ne!(editor.run().metadata().run_id, "");
+}
+
+#[test]
+fn not_when_setting_custom_variable() {
+    let mut editor = base();
+    editor.set_custom_variable("Foo", "Bar2");
+    assert_ne!(editor.run().metadata().run_id, "");
+}
+
+#[test]
+fn not_when_removing_custom_variable() {
+    let mut editor = base();
+    editor.remove_custom_variable("Foo");
     assert_ne!(editor.run().metadata().run_id, "");
 }

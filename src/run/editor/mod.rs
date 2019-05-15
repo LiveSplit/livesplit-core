@@ -327,22 +327,65 @@ impl Editor {
     /// about the category. An example of this may be whether Amiibos are used
     /// in this category. If the variable doesn't exist yet, it is being
     /// inserted.
-    pub fn set_variable<N, V>(&mut self, name: N, value: V)
+    pub fn set_speedrun_com_variable<N, V>(&mut self, name: N, value: V)
     where
         N: Into<String>,
         V: Into<String>,
     {
-        self.run.metadata_mut().set_variable(name, value);
+        self.run
+            .metadata_mut()
+            .set_speedrun_com_variable(name, value);
         self.metadata_modified();
     }
 
     /// Removes the variable with the name specified.
-    pub fn remove_variable<S>(&mut self, name: S)
+    pub fn remove_speedrun_com_variable<S>(&mut self, name: S)
     where
         S: AsRef<str>,
     {
-        self.run.metadata_mut().remove_variable(name);
+        self.run.metadata_mut().remove_speedrun_com_variable(name);
         self.metadata_modified();
+    }
+
+    pub fn add_custom_variable<N>(&mut self, name: N)
+    where
+        N: Into<String>,
+    {
+        self.run
+            .metadata_mut()
+            .custom_variable_mut(name)
+            .permanent();
+        self.raise_run_edited();
+    }
+
+    pub fn set_custom_variable<N, V>(&mut self, name: N, value: V)
+    where
+        N: Into<String>,
+        V: AsRef<str>,
+    {
+        let name = name.into();
+        if self.run.metadata().custom_variable(&name).is_none() {
+            return;
+        }
+        let variable = self.run.metadata_mut().custom_variable_mut(name);
+        if variable.is_permanent {
+            variable.value.clear();
+            variable.value.push_str(value.as_ref());
+            self.raise_run_edited();
+        }
+    }
+
+    pub fn remove_custom_variable<N>(&mut self, name: N)
+    where
+        N: AsRef<str>,
+    {
+        let name = name.as_ref();
+        if let Some(variable) = self.run.metadata().custom_variable(name) {
+            if variable.is_permanent {
+                self.run.metadata_mut().remove_custom_variable(name);
+                self.raise_run_edited();
+            }
+        }
     }
 
     /// Resets all the Metadata Information.

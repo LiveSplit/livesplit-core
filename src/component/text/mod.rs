@@ -5,10 +5,17 @@
 
 use super::key_value;
 use crate::platform::prelude::*;
-use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
+use crate::{
+    settings::{Color, Field, Gradient, SettingsDescription, Value},
+    timing::formatter,
+    Timer,
+};
 use alloc::borrow::Cow;
 use core::mem::replace;
 use serde::{Deserialize, Serialize};
+
+#[cfg(test)]
+mod tests;
 
 /// The Text Component simply visualizes any given text. This can either be a
 /// single centered text, or split up into a left and right text, which is
@@ -47,14 +54,26 @@ pub enum Text {
     /// A text that is split up into a left and right part. This is suitable for
     /// a situation where you have a label and a value.
     Split(String, String),
+    Variable(String, bool),
+}
+
+/// The text that is supposed to be shown.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub enum TextState {
+    /// A single centered text.
+    Center(String),
+    /// A text that is split up into a left and right part. This is suitable for
+    /// a situation where you have a label and a value.
+    Split(String, String),
 }
 
 impl Text {
     /// Returns whether the text is split up into a left and right part.
     pub fn is_split(&self) -> bool {
-        match self {
+        match *self {
             Text::Split(_, _) => true,
             Text::Center(_) => false,
+            Text::Variable(_, is_split) => is_split,
         }
     }
 
@@ -109,7 +128,7 @@ pub struct State {
     /// from the layout.
     pub right_color: Option<Color>,
     /// The text to show for the component.
-    pub text: Text,
+    pub text: TextState,
 }
 
 impl Default for Settings {
@@ -169,6 +188,7 @@ impl Component {
                 name.push_str(right);
                 name.into()
             }
+            Text::Variable(var_name, _) => var_name.as_str().into(),
         };
 
         if name.trim().is_empty() {
@@ -179,43 +199,84 @@ impl Component {
     }
 
     /// Calculates the component's state.
-    pub fn state(&self) -> State {
+    pub fn state(&self, timer: &Timer) -> State {
         State {
             background: self.settings.background,
             display_two_rows: self.settings.text.is_split() && self.settings.display_two_rows,
             left_center_color: self.settings.left_center_color,
             right_color: self.settings.right_color,
-            text: self.settings.text.clone(),
+            text: match &self.settings.text {
+                Text::Center(center) => TextState::Center(center.clone()),
+                Text::Split(left, right) => TextState::Split(left.clone(), right.clone()),
+                Text::Variable(var_name, is_split) => {
+                    let value = timer
+                        .run()
+                        .metadata()
+                        .custom_variable(&var_name)
+                        .map(|var| var.value.as_str())
+                        .filter(|value| !value.trim_start().is_empty())
+                        .unwrap_or(formatter::DASH);
+
+                    if *is_split {
+                        TextState::Split(var_name.clone(), value.to_owned())
+                    } else {
+                        TextState::Center(value.to_owned())
+                    }
+                }
+            },
         }
     }
 
     /// Accesses a generic description of the settings available for this
     /// component and their current values.
     pub fn settings_description(&self) -> SettingsDescription {
-        let (first, second, color_name) = match &self.settings.text {
-            Text::Center(text) => (
-                Field::new("Text".into(), text.to_string().into()),
-                None,
-                "Text Color",
-            ),
-            Text::Split(left, right) => (
-                Field::new("Left".into(), left.to_string().into()),
-                Some(Field::new("Right".into(), right.to_string().into())),
-                "Left Color",
-            ),
-        };
+        let (first, second, is_variable, is_split, left_color, right_color) =
+            match &self.settings.text {
+                Text::Center(text) => (
+                    Field::new("Text".into(), text.to_string().into()),
+                    None,
+                    false,
+                    false,
+                    "Text Color",
+                    "",
+                ),
+                Text::Split(left, right) => (
+                    Field::new("Left".into(), left.to_string().into()),
+                    Some(Field::new("Right".into(), right.to_string().into())),
+                    false,
+                    true,
+                    "Left Color",
+                    "Right Color",
+                ),
+                Text::Variable(var_name, is_split) => (
+                    Field::new("Variable".into(), var_name.to_string().into()),
+                    None,
+                    true,
+                    *is_split,
+                    if *is_split {
+                        "Name Color"
+                    } else {
+                        "Value Color"
+                    },
+                    "Value Color",
+                ),
+            };
 
         let mut fields = vec![
             Field::new("Background".into(), self.settings.background.into()),
-            Field::new("Split".into(), second.is_some().into()),
+            Field::new("Use Variable".into(), is_variable.into()),
+            Field::new("Split".into(), is_split.into()),
             first,
-            Field::new(color_name.into(), self.settings.left_center_color.into()),
+            Field::new(left_color.into(), self.settings.left_center_color.into()),
         ];
 
         if let Some(second) = second {
             fields.push(second);
+        }
+
+        if is_split {
             fields.push(Field::new(
-                "Right Color".into(),
+                right_color.into(),
                 self.settings.right_color.into(),
             ));
             fields.push(Field::new(
@@ -234,10 +295,33 @@ impl Component {
     /// This panics if the type of the value to be set is not compatible with
     /// the type of the setting's value. A panic can also occur if the index of
     /// the setting provided is out of bounds.
-    pub fn set_value(&mut self, index: usize, value: Value) {
+    pub fn set_value(&mut self, mut index: usize, value: Value) {
+        if index >= 5 {
+            if let Text::Variable(_, _) = &self.settings.text {
+                index += 1;
+            }
+        }
+
         match index {
             0 => self.settings.background = value.into(),
             1 => {
+                self.settings.text = match (value.into_bool().unwrap(), &mut self.settings.text) {
+                    (false, Text::Variable(name, true)) => {
+                        Text::Split(replace(name, String::new()), String::new())
+                    }
+                    (false, Text::Variable(name, false)) => {
+                        Text::Center(replace(name, String::new()))
+                    }
+                    (true, Text::Center(center)) => {
+                        Text::Variable(replace(center, String::new()), false)
+                    }
+                    (true, Text::Split(left, _)) => {
+                        Text::Variable(replace(left, String::new()), true)
+                    }
+                    _ => return,
+                };
+            }
+            2 => {
                 self.settings.text = match (value.into_bool().unwrap(), &mut self.settings.text) {
                     (true, Text::Center(center)) => {
                         self.settings.right_color = self.settings.left_center_color;
@@ -255,20 +339,28 @@ impl Component {
 
                         Text::Center(value)
                     }
+                    (should_be_split, Text::Variable(_, is_split)) => {
+                        *is_split = should_be_split;
+                        return;
+                    }
                     _ => return,
                 };
             }
-            2 => match &mut self.settings.text {
+            3 => match &mut self.settings.text {
                 Text::Center(center) => *center = value.into(),
                 Text::Split(left, _) => *left = value.into(),
+                Text::Variable(var_name, _) => *var_name = value.into(),
             },
-            3 => self.settings.left_center_color = value.into(),
-            4 => match &mut self.settings.text {
-                Text::Center(_) => panic!("Set right text when there's only a center text"),
+            4 => self.settings.left_center_color = value.into(),
+            5 => match &mut self.settings.text {
+                Text::Center(_) => panic!("Can't set right text when there's only a center text"),
                 Text::Split(_, right) => *right = value.into(),
+                Text::Variable(_, _) => {
+                    unreachable!("Shouldn't be able to set value for a variable")
+                }
             },
-            5 => self.settings.right_color = value.into(),
-            6 => self.settings.display_two_rows = value.into(),
+            6 => self.settings.right_color = value.into(),
+            7 => self.settings.display_two_rows = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

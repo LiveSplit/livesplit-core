@@ -19,7 +19,7 @@ pub enum Error {
     },
 }
 
-/// The Result type for the Urn Parser.
+/// The Result type for the worstrun Parser.
 pub type Result<T> = StdResult<T, Error>;
 
 #[derive(Deserialize)]

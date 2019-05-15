@@ -528,7 +528,7 @@ impl Run {
             };
 
             if show_variables {
-                for (name, value) in self.metadata.variables() {
+                for (name, value) in self.metadata.speedrun_com_variables() {
                     let name = name.trim_end_matches('?');
 
                     if unicase::eq(value.as_str(), "yes") {
