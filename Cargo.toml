@@ -20,6 +20,9 @@ include = [
 ]
 edition = "2018"
 
+[package.metadata.docs.rs]
+all-features = true
+
 [badges]
 travis-ci = { repository = "LiveSplit/livesplit-core" }
 appveyor = { repository = "CryZe/livesplit-core" }
