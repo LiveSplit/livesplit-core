@@ -1,0 +1,117 @@
+{
+    "version": "0.1",
+    "splits": {
+        "segments": [
+            {
+                "id": "510f9a49-498a-49db-8c95-470bf6ff008b",
+                "name": "Segment 1",
+                "passed": false,
+                "skipped": false,
+                "personalBest": {
+                    "igt": {
+                        "pauseTime": 0,
+                        "rawTime": 1282
+                    },
+                    "rta": {
+                        "pauseTime": 0,
+                        "rawTime": 1282
+                    }
+                },
+                "overallBest": {
+                    "igt": {
+                        "pauseTime": 0,
+                        "rawTime": 321
+                    },
+                    "rta": {
+                        "pauseTime": 0,
+                        "rawTime": 321
+                    }
+                }
+            },
+            {
+                "id": "582f795d-3028-4d0a-8f58-6c7538152f88",
+                "name": "2nd Segment",
+                "passed": false,
+                "skipped": false,
+                "personalBest": {
+                    "igt": {
+                        "pauseTime": 0,
+                        "rawTime": 194
+                    },
+                    "rta": {
+                        "pauseTime": 0,
+                        "rawTime": 194
+                    }
+                },
+                "overallBest": {
+                    "igt": {
+                        "pauseTime": 0,
+                        "rawTime": 194
+                    },
+                    "rta": {
+                        "pauseTime": 0,
+                        "rawTime": 194
+                    }
+                }
+            },
+            {
+                "id": "b5ca99ce-45ef-4cab-b5d9-bb94cdc4b755",
+                "name": "3rd Segment",
+                "passed": false,
+                "skipped": false,
+                "personalBest": {
+                    "igt": {
+                        "pauseTime": 0,
+                        "rawTime": 204
+                    },
+                    "rta": {
+                        "pauseTime": 0,
+                        "rawTime": 204
+                    }
+                },
+                "overallBest": {
+                    "igt": {
+                        "pauseTime": 0,
+                        "rawTime": 204
+                    },
+                    "rta": {
+                        "pauseTime": 0,
+                        "rawTime": 204
+                    }
+                }
+            },
+            {
+                "id": "299c221b-6c4c-42a6-8d5e-ed9c9290949a",
+                "name": "",
+                "passed": false,
+                "skipped": false,
+                "personalBest": {
+                    "igt": {
+                        "pauseTime": 0,
+                        "rawTime": 209
+                    },
+                    "rta": {
+                        "pauseTime": 0,
+                        "rawTime": 209
+                    }
+                },
+                "overallBest": {
+                    "igt": {
+                        "pauseTime": 0,
+                        "rawTime": 209
+                    },
+                    "rta": {
+                        "pauseTime": 0,
+                        "rawTime": 209
+                    }
+                }
+            }
+        ],
+        "timing": "rta",
+        "game": {
+            "category": "Some Category Name",
+            "name": "Some Game Name",
+            "platform": "Wii U"
+        }
+    }
+}

@@ -32,8 +32,8 @@
 
 use super::{
     face_split, flitter, livesplit, llanfair, llanfair2, llanfair_gered, portal2_live_timer,
-    shit_split, source_live_timer, splits_io, splitterz, splitty, time_split_tracker, urn,
-    worstrun, wsplit, TimerKind,
+    shit_split, source_live_timer, splits_io, splitterino, splitterz, splitty, time_split_tracker,
+    urn, worstrun, wsplit, TimerKind,
 };
 use crate::Run;
 use core::result::Result as StdResult;
@@ -68,6 +68,23 @@ pub struct ParsedRun {
 
 fn parsed(run: Run, kind: TimerKind) -> ParsedRun {
     ParsedRun { run, kind }
+}
+
+/// Attempts to parse and fix a splits file by invoking the corresponding parser
+/// for the file format detected. A path to the splits file can be provided,
+/// which helps saving the splits file again later. Additionally you need to
+/// specify if additional files, like external images are allowed to be loaded.
+/// If you are using livesplit-core in a server-like environment, set this to
+/// `false`. Only client-side applications should set this to `true`. Unlike the
+/// normal parsing function, it also fixes problems in the Run, such as
+/// decreasing times and missing information.
+pub fn parse_and_fix<R>(source: R, path: Option<PathBuf>, load_files: bool) -> Result<ParsedRun>
+where
+    R: BufRead + Seek,
+{
+    let mut run = parse(source, path, load_files)?;
+    run.run.fix_splits();
+    Ok(run)
 }
 
 /// Attempts to parse a splits file by invoking the corresponding parser for the
@@ -146,8 +163,13 @@ where
         return Ok(parsed(run, TimerKind::Generic(timer)));
     }
 
-    // SourceLiveTimer and Flitter need to be before Urn because of a false
-    // positive due to the nature of parsing json files.
+    // Splitterino, SourceLiveTimer and Flitter need to be before Urn because of
+    // a false positive due to the nature of parsing json files.
+    source.seek(SeekFrom::Start(0)).context(SeekBack)?;
+    if let Ok(run) = splitterino::parse(&mut source) {
+        return Ok(parsed(run, TimerKind::Splitterino));
+    }
+
     source.seek(SeekFrom::Start(0)).context(SeekBack)?;
     if let Ok(run) = flitter::parse(&mut source) {
         return Ok(parsed(run, TimerKind::Flitter));

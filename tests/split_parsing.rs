@@ -1,8 +1,8 @@
 mod parse {
     use livesplit_core::run::parser::{
         composite, flitter, livesplit, llanfair, llanfair2, llanfair_gered, portal2_live_timer,
-        source_live_timer, splits_io, splitterz, time_split_tracker, urn, worstrun, wsplit,
-        TimerKind,
+        source_live_timer, splits_io, splitterino, splitterz, time_split_tracker, urn, worstrun,
+        wsplit, TimerKind,
     };
     use livesplit_core::{analysis::total_playtime, Run, TimeSpan};
     use std::fs::File;
@@ -145,6 +145,11 @@ mod parse {
     }
 
     #[test]
+    fn splitterino() {
+        splitterino::parse(file("tests/run_files/splitterino.splits")).unwrap();
+    }
+
+    #[test]
     fn urn() {
         urn::parse(file("tests/run_files/urn.json")).unwrap();
     }
@@ -211,6 +216,13 @@ mod parse {
     fn worstrun_prefers_parsing_as_itself() {
         let run = composite::parse(file("tests/run_files/worstrun.json"), None, false).unwrap();
         assert_eq!(run.kind, TimerKind::Worstrun);
+    }
+
+    #[test]
+    fn splitterino_prefers_parsing_as_itself() {
+        let run =
+            composite::parse(file("tests/run_files/splitterino.splits"), None, false).unwrap();
+        assert_eq!(run.kind, TimerKind::Splitterino);
     }
 
     #[test]
