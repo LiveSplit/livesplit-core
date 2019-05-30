@@ -59,7 +59,7 @@
 // abbreviated or overflown via the use of ellipsis. Numbers and times are
 // supposed to be aligned to the right and should be using a monospace text
 // layout. Sometimes components are rendered in two row mode. The height of
-// these components is 1.75. All components also need to be able to render with
+// these components is 1.8. All components also need to be able to render with
 // this height in horizontal mode. Separators have a thickness of 0.1, while
 // thin separators have half of this thickness.
 
@@ -101,19 +101,23 @@ pub type Transform = Transform2D<f32>;
 
 const PADDING: f32 = 0.35;
 const BOTH_PADDINGS: f32 = 2.0 * PADDING;
+const BOTH_VERTICAL_PADDINGS: f32 = DEFAULT_COMPONENT_HEIGHT - DEFAULT_TEXT_SIZE;
+const VERTICAL_PADDING: f32 = BOTH_VERTICAL_PADDINGS / 2.0;
 const DEFAULT_COMPONENT_HEIGHT: f32 = 1.0;
-const TWO_ROW_HEIGHT: f32 = 1.75;
+const TWO_ROW_HEIGHT: f32 = 2.0 * DEFAULT_TEXT_SIZE + BOTH_VERTICAL_PADDINGS;
 const DEFAULT_TEXT_SIZE: f32 = 0.8;
-const TEXT_ALIGN_TOP: f32 = 0.7;
-const TEXT_ALIGN_BOTTOM: f32 = -0.3;
-const TEXT_ALIGN_CENTER: f32 = 0.2;
+const DEFAULT_TEXT_ASCENT: f32 = 0.6;
+const DEFAULT_TEXT_DESCENT: f32 = DEFAULT_TEXT_SIZE - DEFAULT_TEXT_ASCENT;
+const TEXT_ALIGN_TOP: f32 = VERTICAL_PADDING + DEFAULT_TEXT_ASCENT;
+const TEXT_ALIGN_BOTTOM: f32 = -(VERTICAL_PADDING + DEFAULT_TEXT_DESCENT);
+const TEXT_ALIGN_CENTER: f32 = DEFAULT_TEXT_ASCENT - DEFAULT_TEXT_SIZE / 2.0;
 const SEPARATOR_THICKNESS: f32 = 0.1;
 const THIN_SEPARATOR_THICKNESS: f32 = SEPARATOR_THICKNESS / 2.0;
 const PSEUDO_PIXELS: f32 = 1.0 / 24.0;
 const DEFAULT_VERTICAL_WIDTH: f32 = 11.5;
 
 fn vertical_padding(height: f32) -> f32 {
-    (0.1 * height).min(PADDING)
+    (VERTICAL_PADDING * height).min(PADDING)
 }
 
 /// The rendering backend for the Renderer is abstracted out into the Backend
