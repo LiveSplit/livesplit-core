@@ -354,6 +354,24 @@ pub extern "C" fn RunEditor_move_comparison(
     this.move_comparison(src_index, dst_index).is_ok()
 }
 
+/// Parses a goal time and generates a custom goal comparison based on the
+/// parsed value. The comparison's times are automatically balanced based on the
+/// runner's history such that it roughly represents what split times for the
+/// goal time would roughly look like. Since it is populated by the runner's
+/// history, only goal times within the sum of the best segments and the sum of
+/// the worst segments are supported. Everything else is automatically capped by
+/// that range. The comparison is only populated for the selected timing method.
+/// The other timing method's comparison times are not modified by this, so you
+/// can call this again with the other timing method to generate the comparison
+/// times for both timing methods.
+#[no_mangle]
+pub unsafe extern "C" fn RunEditor_parse_and_generate_goal_comparison(
+    this: &mut RunEditor,
+    time: *const c_char,
+) -> bool {
+    this.parse_and_generate_goal_comparison(str(time)).is_ok()
+}
+
 /// Clears out the Attempt History and the Segment Histories of all the
 /// segments.
 #[no_mangle]

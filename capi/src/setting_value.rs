@@ -5,7 +5,7 @@ use crate::str;
 use livesplit_core::component::splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith};
 use livesplit_core::settings::{Alignment, Color, Gradient, ListGradient, Value as SettingValue};
 use livesplit_core::timing::formatter::{Accuracy, DigitsFormat};
-use livesplit_core::TimingMethod;
+use livesplit_core::{layout::LayoutDirection, TimingMethod};
 use std::os::raw::c_char;
 
 /// type
@@ -276,6 +276,21 @@ pub unsafe extern "C" fn SettingValue_from_column_update_trigger(
         "OnStartingSegment" => ColumnUpdateTrigger::OnStartingSegment,
         "Contextual" => ColumnUpdateTrigger::Contextual,
         "OnEndingSegment" => ColumnUpdateTrigger::OnEndingSegment,
+        _ => return None,
+    };
+    Some(Box::new(value.into()))
+}
+
+/// Creates a new setting value from the layout direction. If it doesn't
+/// match a known layout direction, <NULL> is returned.
+#[no_mangle]
+pub unsafe extern "C" fn SettingValue_from_layout_direction(
+    value: *const c_char,
+) -> NullableOwnedSettingValue {
+    let value = str(value);
+    let value = match value {
+        "Vertical" => LayoutDirection::Vertical,
+        "Horizontal" => LayoutDirection::Horizontal,
         _ => return None,
     };
     Some(Box::new(value.into()))
