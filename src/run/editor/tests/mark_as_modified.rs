@@ -1,5 +1,5 @@
 use super::super::Editor;
-use crate::{Run, Segment, TimingMethod};
+use crate::{Run, Segment, TimeSpan, TimingMethod};
 
 fn base() -> Editor {
     let mut run = Run::new();
@@ -305,6 +305,13 @@ fn not_when_cleaning_sum_of_best_without_applying_a_fix() {
     let mut editor = base();
     editor.clean_sum_of_best().next_potential_clean_up();
     assert!(!editor.run().has_been_modified());
+}
+
+#[test]
+fn when_generating_goal_comparison() {
+    let mut editor = base();
+    editor.generate_goal_comparison(TimeSpan::from_seconds(30.0));
+    assert!(editor.run().has_been_modified());
 }
 
 // FIXME: Cleaning Sum of Best

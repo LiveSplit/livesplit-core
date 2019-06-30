@@ -1,5 +1,5 @@
 use super::super::Editor;
-use crate::{Run, Segment};
+use crate::{Run, Segment, TimeSpan};
 
 fn base() -> Editor {
     let mut run = Run::new();
@@ -175,4 +175,11 @@ fn when_clearing_metadata() {
     let mut editor = base();
     editor.clear_metadata();
     assert_eq!(editor.run().metadata().run_id, "");
+}
+
+#[test]
+fn not_when_generating_goal_comparison() {
+    let mut editor = base();
+    editor.generate_goal_comparison(TimeSpan::from_seconds(30.0));
+    assert_ne!(editor.run().metadata().run_id, "");
 }

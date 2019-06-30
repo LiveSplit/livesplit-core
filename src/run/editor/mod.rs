@@ -33,6 +33,8 @@ quick_error! {
         }
         /// Negative times are not allowed here.
         NegativeTimeNotAllowed {}
+        /// Empty times are not allowed here.
+        EmptyTimeNotAllowed {}
     }
 }
 
@@ -792,6 +794,58 @@ impl Editor {
         Ok(())
     }
 
+    /// Generates a custom goal comparison based on the goal time provided. The
+    /// comparison's times are automatically balanced based on the runner's
+    /// history such that it roughly represents what split times for the goal
+    /// time would roughly look like. Since it is populated by the runner's
+    /// history, only goal times within the sum of the best segments and the sum
+    /// of the worst segments are supported. Everything else is automatically
+    /// capped by that range. The comparison is only populated for the selected
+    /// timing method. The other timing method's comparison times are not
+    /// modified by this, so you can call this again with the other timing
+    /// method to generate the comparison times for both timing methods.
+    pub fn generate_goal_comparison(&mut self, time: TimeSpan) {
+        if !self
+            .run
+            .custom_comparisons()
+            .iter()
+            .any(|c| c == comparison::goal::NAME)
+        {
+            self.run
+                .custom_comparisons_mut()
+                .push(String::from(comparison::goal::NAME));
+        }
+
+        comparison::goal::generate_for_timing_method(
+            &mut self.run.segments_mut(),
+            self.selected_method,
+            time,
+            comparison::goal::NAME,
+        );
+
+        self.raise_run_edited();
+    }
+
+    /// Parses a goal time and generates a custom goal comparison based on the
+    /// parsed value. The comparison's times are automatically balanced based on
+    /// the runner's history such that it roughly represents what split times
+    /// for the goal time would roughly look like. Since it is populated by the
+    /// runner's history, only goal times within the sum of the best segments
+    /// and the sum of the worst segments are supported. Everything else is
+    /// automatically capped by that range. The comparison is only populated for
+    /// the selected timing method. The other timing method's comparison times
+    /// are not modified by this, so you can call this again with the other
+    /// timing method to generate the comparison times for both timing methods.
+    pub fn parse_and_generate_goal_comparison<S>(&mut self, time: S) -> Result<(), ParseError>
+    where
+        S: AsRef<str>,
+    {
+        self.generate_goal_comparison(
+            parse_positive(time)?.ok_or(ParseError::EmptyTimeNotAllowed)?,
+        );
+        Ok(())
+    }
+
     /// Clears out the Attempt History and the Segment Histories of all the
     /// segments.
     pub fn clear_history(&mut self) {
@@ -816,5 +870,17 @@ impl Editor {
     /// allows you to delete them individually if any of them seem wrong.
     pub fn clean_sum_of_best(&mut self) -> SumOfBestCleaner<'_> {
         SumOfBestCleaner::new(&mut self.run)
+    }
+}
+
+fn parse_positive<S>(time: S) -> Result<Option<TimeSpan>, ParseError>
+where
+    S: AsRef<str>,
+{
+    let time = TimeSpan::parse_opt(time)?;
+    if time.map_or(false, |t| t < TimeSpan::zero()) {
+        Err(ParseError::NegativeTimeNotAllowed)
+    } else {
+        Ok(time)
     }
 }

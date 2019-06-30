@@ -1,4 +1,4 @@
-use super::{Editor, ParseError};
+use super::{parse_positive, Editor, ParseError};
 use crate::{Image, TimeSpan};
 
 /// A Segment Row describes the segment in the Run Editor actively selected for
@@ -154,17 +154,5 @@ impl<'a> SegmentRow<'a> {
     {
         self.set_comparison_time(comparison, parse_positive(time)?);
         Ok(())
-    }
-}
-
-fn parse_positive<S>(time: S) -> Result<Option<TimeSpan>, ParseError>
-where
-    S: AsRef<str>,
-{
-    let time = TimeSpan::parse_opt(time)?;
-    if time.map_or(false, |t| t < TimeSpan::zero()) {
-        Err(ParseError::NegativeTimeNotAllowed)
-    } else {
-        Ok(time)
     }
 }
