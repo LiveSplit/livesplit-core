@@ -39,7 +39,7 @@ base64 = "0.10.0"
 byteorder = "1.2.7"
 chrono = { version = "0.4.0", features = ["serde", "clock"], default-features = false }
 derive_more = "0.15.0"
-image = { version = "0.21.0", features = ["png_codec"], default-features = false }
+image = { version = "0.22.0", features = ["png_codec"], default-features = false }
 indexmap = { version = "1.0.1", default-features = false, features = ["serde-1"] }
 livesplit-hotkey = { path = "crates/livesplit-hotkey", version = "0.5.0" }
 odds = { version = "0.3.1", default-features = false }
