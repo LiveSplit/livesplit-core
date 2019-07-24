@@ -78,7 +78,7 @@ use {
         layout::{ComponentState, LayoutDirection, LayoutState},
         settings::{Color, Gradient},
     },
-    euclid::Transform2D,
+    euclid::{Transform2D, UnknownUnit},
     rusttype::Font,
 };
 
@@ -97,7 +97,7 @@ pub type Pos = [f32; 2];
 pub type Rgba = [f32; 4];
 /// A transformation matrix to apply to meshes in order to place them into the
 /// scene.
-pub type Transform = Transform2D<f32>;
+pub type Transform = Transform2D<f32, UnknownUnit, UnknownUnit>;
 
 const PADDING: f32 = 0.35;
 const BOTH_PADDINGS: f32 = 2.0 * PADDING;

@@ -7,6 +7,7 @@ use {
         tests_helper, Run, Timer,
     },
     crc::crc32::checksum_ieee,
+    image::Rgba,
     std::{
         fs::{self, File},
         io::BufReader,
@@ -39,7 +40,7 @@ fn default() {
 
     let state = layout.state(&timer);
 
-    check(&state, 0x7dc40022, "default");
+    check(&state, 0x8ef1abb5, "default");
 }
 
 #[test]
@@ -48,7 +49,7 @@ fn actual_split_file() {
     let timer = Timer::new(run).unwrap();
     let mut layout = Layout::default_layout();
 
-    check(&layout.state(&timer), 0x79d140f, "actual_split_file");
+    check(&layout.state(&timer), 0x256841ba, "actual_split_file");
 }
 
 #[test]
@@ -57,7 +58,7 @@ fn wsplit() {
     let timer = Timer::new(run).unwrap();
     let mut layout = lsl("tests/layout_files/WSplit.lsl");
 
-    check_dims(&layout.state(&timer), [250, 300], 0x4acd0f44, "wsplit");
+    check_dims(&layout.state(&timer), [250, 300], 0x3a65a2fd, "wsplit");
 }
 
 #[test]
@@ -73,9 +74,9 @@ fn all_components() {
 
     let state = layout.state(&timer);
 
-    check_dims(&state, [300, 800], 0x22180c1, "all_components");
+    check_dims(&state, [300, 800], 0xa634d175, "all_components");
 
-    check_dims(&state, [150, 800], 0xb2450d16, "all_components_thin");
+    check_dims(&state, [150, 800], 0xdc88ac65, "all_components_thin");
 }
 
 #[test]
@@ -95,7 +96,7 @@ fn score_split() {
     state.components.push(ComponentState::Timer(timer_state));
     state.components.push(prev_seg);
 
-    check_dims(&state, [300, 400], 0x9a328136, "score_split");
+    check_dims(&state, [300, 400], 0x2d9fac28, "score_split");
 }
 
 #[test]
@@ -104,7 +105,7 @@ fn dark_layout() {
     let timer = Timer::new(run).unwrap();
     let mut layout = lsl("tests/layout_files/dark.lsl");
 
-    check(&layout.state(&timer), 0xcab15adf, "dark_layout");
+    check(&layout.state(&timer), 0x8f774e74, "dark_layout");
 }
 
 #[test]
@@ -122,7 +123,7 @@ fn subsplits_layout() {
     check_dims(
         &layout.state(&timer),
         [300, 800],
-        0x9d1fe04,
+        0x71c18228,
         "subsplits_layout",
     );
 }
@@ -145,7 +146,7 @@ fn display_two_rows() {
     check_dims(
         &layout.state(&timer),
         [200, 100],
-        0xa33a003a,
+        0x5b0d2441,
         "display_two_rows",
     );
 }
@@ -168,7 +169,7 @@ fn single_line_title() {
     check_dims(
         &layout.state(&timer),
         [150, 30],
-        0xfa27a0b5,
+        0x55ce6498,
         "single_line_title",
     );
 }
@@ -199,7 +200,7 @@ fn horizontal() {
         &[Some(10.0), None, Some(20.0), Some(55.0)],
     );
 
-    check_dims(&layout.state(&timer), [1500, 40], 0xe1c1d024, "horizontal");
+    check_dims(&layout.state(&timer), [1500, 40], 0x32fb0bcf, "horizontal");
 }
 
 fn check(state: &LayoutState, expected_checksum: u32, name: &str) {
@@ -211,12 +212,32 @@ fn check_dims(state: &LayoutState, dims: [usize; 2], expected_checksum: u32, nam
     let calculated_checksum = checksum_ieee(&image);
 
     fs::create_dir_all("target/renders").ok();
+
     let path = format!("target/renders/{}_{:08x}.png", name, calculated_checksum);
     image.save(&path).ok();
 
-    assert_eq!(
-        calculated_checksum, expected_checksum,
-        "Render mismatch for {} before: {:#08x}, after: {:#08x}",
-        name, expected_checksum, calculated_checksum
-    );
+    if calculated_checksum != expected_checksum {
+        fs::create_dir_all("target/renders/diff").ok();
+
+        let expected_path = format!("target/renders/{}_{:08x}.png", name, expected_checksum);
+        if let Ok(expected_image) = image::open(expected_path) {
+            let mut expected_image = expected_image.to_rgba();
+            for (x, y, Rgba([r, g, b, a])) in expected_image.enumerate_pixels_mut() {
+                if x < image.width() && y < image.height() {
+                    let Rgba([r2, g2, b2, a2]) = image.get_pixel(x, y);
+                    *r = (*r as i16).wrapping_sub(*r2 as i16).abs() as u8;
+                    *g = (*g as i16).wrapping_sub(*g2 as i16).abs() as u8;
+                    *b = (*b as i16).wrapping_sub(*b2 as i16).abs() as u8;
+                    *a = (*a).max(*a2);
+                }
+            }
+            let diff_path = format!("target/renders/diff/{}.png", name);
+            expected_image.save(&diff_path).ok();
+        }
+
+        panic!(
+            "Render mismatch for {} before: {:#08x}, after: {:#08x}",
+            name, expected_checksum, calculated_checksum
+        );
+    }
 }
