@@ -1,5 +1,7 @@
 use crate::platform::Duration as StdDuration;
 use chrono::Duration;
+use derive_more::{Add, From, Neg, Sub};
+use snafu::ResultExt;
 use std::num::ParseFloatError;
 use std::ops::{AddAssign, SubAssign};
 use std::str::FromStr;
@@ -64,15 +66,14 @@ impl TimeSpan {
     }
 }
 
-quick_error! {
-    /// The Error type for Time Spans that couldn't be parsed.
-    #[derive(Debug)]
-    pub enum ParseError {
-        /// Couldn't parse as a floating point number.
-        Float(err: ParseFloatError) {
-            from()
-        }
-    }
+/// The Error type for Time Spans that couldn't be parsed.
+#[derive(Debug, snafu::Snafu)]
+pub enum ParseError {
+    /// Couldn't parse as a floating point number.
+    Float {
+        /// The underlying error.
+        source: ParseFloatError,
+    },
 }
 
 impl FromStr for TimeSpan {
@@ -91,7 +92,7 @@ impl FromStr for TimeSpan {
 
         let mut seconds = 0.0;
         for split in text.split(':') {
-            seconds = 60.0 * seconds + split.parse::<f64>()?;
+            seconds = 60.0 * seconds + split.parse::<f64>().context(Float)?;
         }
 
         Ok(TimeSpan::from_seconds(factor * seconds))

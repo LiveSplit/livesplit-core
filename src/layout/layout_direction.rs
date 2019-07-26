@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 /// Describes the direction the components of a layout are laid out in.
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum LayoutDirection {

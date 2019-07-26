@@ -4,6 +4,7 @@
 
 use crate::settings::{SettingsDescription, Value};
 use crate::Timer;
+use serde::{Deserialize, Serialize};
 use serde_json::{to_writer, Result};
 use std::borrow::Cow;
 use std::io::Write;

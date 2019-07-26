@@ -1,36 +1,53 @@
 //! Provides the parser for WSplit splits files.
 
 use crate::{Image, RealTime, Run, Segment, TimeSpan};
+use snafu::ResultExt;
 use std::io::{self, BufRead};
 use std::num::{ParseFloatError, ParseIntError};
 use std::result::Result as StdResult;
 
-quick_error! {
-    /// The Error type for splits files that couldn't be parsed by the WSplit
-    /// Parser.
-    #[derive(Debug)]
-    pub enum Error {
-        /// Expected the name of the segment, but didn't find it.
-        ExpectedSegmentName {}
-        /// Expected the old time, but didn't find it.
-        ExpectedOldTime {}
-        /// Expected the split time, but didn't find it.
-        ExpectedPbTime {}
-        /// Expected the best segment time, but didn't find it.
-        ExpectedBestTime {}
-        /// Failed to parse the amount of attempts.
-        Attempt(err: ParseIntError) {
-            from()
-        }
-        /// Failed to parse a time.
-        Time(err: ParseFloatError) {
-            from()
-        }
-        /// Failed to read from the source.
-        Io(err: io::Error) {
-            from()
-        }
-    }
+/// The Error type for splits files that couldn't be parsed by the WSplit
+/// Parser.
+#[derive(Debug, snafu::Snafu)]
+pub enum Error {
+    /// Expected the name of the segment, but didn't find it.
+    ExpectedSegmentName,
+    /// Expected the old time, but didn't find it.
+    ExpectedOldTime,
+    /// Expected the split time, but didn't find it.
+    ExpectedPbTime,
+    /// Expected the best segment time, but didn't find it.
+    ExpectedBestTime,
+    /// Failed to parse the amount of attempts.
+    Attempt {
+        /// The underlying error.
+        source: ParseIntError,
+    },
+    /// Failed to parse the time the timer starts at.
+    Offset {
+        /// The underlying error.
+        source: ParseFloatError,
+    },
+    /// Failed to parse the personal best split time of a segment.
+    PbTime {
+        /// The underlying error.
+        source: ParseFloatError,
+    },
+    /// Failed to parse the best segment time of a segment.
+    BestSegment {
+        /// The underlying error.
+        source: ParseFloatError,
+    },
+    /// Failed to parse the time the "Old Run" of a segment.
+    OldTime {
+        /// The underlying error.
+        source: ParseFloatError,
+    },
+    /// Failed to read the next line.
+    Line {
+        /// The underlying error.
+        source: io::Error,
+    },
 }
 
 /// The Result type for the WSplit Parser.
@@ -49,16 +66,18 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
     let mut goal = None;
 
     for line in source.lines() {
-        let line = line?;
+        let line = line.context(Line)?;
         if !line.is_empty() {
             if line.starts_with("Title=") {
                 run.set_category_name(&line["Title=".len()..]);
             } else if line.starts_with("Attempts=") {
-                run.set_attempt_count(line["Attempts=".len()..].parse()?);
+                run.set_attempt_count(line["Attempts=".len()..].parse().context(Attempt)?);
             } else if line.starts_with("Offset=") {
                 let offset = &line["Offset=".len()..];
                 if !offset.is_empty() {
-                    run.set_offset(TimeSpan::from_milliseconds(-offset.parse::<f64>()?));
+                    run.set_offset(TimeSpan::from_milliseconds(
+                        -offset.parse::<f64>().context(Offset)?,
+                    ));
                 }
             } else if line.starts_with("Size=") {
                 // Ignore
@@ -88,9 +107,9 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
                 let pb_time = split_info.next().ok_or(Error::ExpectedPbTime)?;
                 let best_time = split_info.next().ok_or(Error::ExpectedBestTime)?;
 
-                let pb_time = TimeSpan::from_seconds(pb_time.parse()?);
-                let best_time = TimeSpan::from_seconds(best_time.parse()?);
-                let old_time = TimeSpan::from_seconds(old_time.parse()?);
+                let pb_time = TimeSpan::from_seconds(pb_time.parse().context(PbTime)?);
+                let best_time = TimeSpan::from_seconds(best_time.parse().context(BestSegment)?);
+                let old_time = TimeSpan::from_seconds(old_time.parse().context(OldTime)?);
 
                 let mut segment = Segment::new(segment_name);
 

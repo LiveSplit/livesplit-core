@@ -9,6 +9,7 @@ use crate::analysis::possible_time_save;
 use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
 use crate::timing::formatter::{Accuracy, PossibleTimeSave, TimeFormatter};
 use crate::{comparison, Timer, TimerPhase};
+use serde::{Deserialize, Serialize};
 use serde_json::{to_writer, Result};
 use std::borrow::Cow;
 use std::fmt::Write as FmtWrite;

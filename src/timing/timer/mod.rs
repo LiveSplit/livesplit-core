@@ -63,13 +63,11 @@ pub struct Timer {
 /// multiple threads with multiple owners.
 pub type SharedTimer = Arc<RwLock<Timer>>;
 
-quick_error! {
-    /// The Error type for creating a new Timer from a Run.
-    #[derive(Debug)]
-    pub enum CreationError {
-        /// The Timer couldn't be created, because the Run has no segments.
-        EmptyRun {}
-    }
+/// The Error type for creating a new Timer from a Run.
+#[derive(Debug, snafu::Snafu)]
+pub enum CreationError {
+    /// The Timer couldn't be created, because the Run has no segments.
+    EmptyRun,
 }
 
 impl Timer {
@@ -145,7 +143,7 @@ impl Timer {
     /// is returned as the Err case of the Result. The Run object in use by the
     /// Timer is dropped by this method.
     pub fn set_run(&mut self, run: Run) -> Result<(), Run> {
-        self.replace_run(run, false).map(|_| ())
+        self.replace_run(run, false).map(drop)
     }
 
     /// Accesses the Run in use by the Timer.

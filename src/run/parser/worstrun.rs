@@ -1,21 +1,22 @@
 //! Provides the parser for worstrun splits files.
 
 use crate::{Run, Segment, Time, TimeSpan};
+use serde::Deserialize;
 use serde_json::de::from_reader;
 use serde_json::Error as JsonError;
+use snafu::ResultExt;
 use std::io::Read;
 use std::result::Result as StdResult;
 
-quick_error! {
-    /// The Error type for splits files that couldn't be parsed by the worstrun
-    /// Parser.
-    #[derive(Debug)]
-    pub enum Error {
-        /// Failed to parse JSON.
-        Json(err: JsonError) {
-            from()
-        }
-    }
+/// The Error type for splits files that couldn't be parsed by the worstrun
+/// Parser.
+#[derive(Debug, snafu::Snafu)]
+pub enum Error {
+    /// Failed to parse JSON.
+    Json {
+        /// The underlying error.
+        source: JsonError,
+    },
 }
 
 /// The Result type for the Urn Parser.
@@ -50,7 +51,7 @@ pub(super) fn poke<R: Read>(source: R) -> bool {
 
 /// Attempts to parse a worstrun splits file.
 pub fn parse<R: Read>(source: R) -> Result<Run> {
-    let splits: Splits = from_reader(source)?;
+    let splits: Splits = from_reader(source).context(Json)?;
 
     let mut run = Run::new();
 

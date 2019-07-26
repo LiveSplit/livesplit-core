@@ -1,21 +1,22 @@
 //! Provides the parser for Splitty splits files.
 
 use crate::{Run, Segment, Time, TimeSpan, TimingMethod};
+use serde::Deserialize;
 use serde_json::de::from_reader;
 use serde_json::Error as JsonError;
+use snafu::ResultExt;
 use std::io::Read;
 use std::result::Result as StdResult;
 
-quick_error! {
-    /// The Error type for splits files that couldn't be parsed by the Splitty
-    /// Parser.
-    #[derive(Debug)]
-    pub enum Error {
-        /// Failed to parse JSON.
-        Json(err: JsonError) {
-            from()
-        }
-    }
+/// The Error type for splits files that couldn't be parsed by the Splitty
+/// Parser.
+#[derive(Debug, snafu::Snafu)]
+pub enum Error {
+    /// Failed to parse JSON.
+    Json {
+        /// The underlying error.
+        source: JsonError,
+    },
 }
 
 /// The Result type for the Splitty Parser.
@@ -49,7 +50,7 @@ fn parse_time(milliseconds: Option<f64>, method: TimingMethod) -> Time {
 
 /// Attempts to parse a Splitty splits file.
 pub fn parse<R: Read>(source: R) -> Result<Run> {
-    let splits: Splits = from_reader(source)?;
+    let splits: Splits = from_reader(source).context(Json)?;
 
     let mut run = Run::new();
 

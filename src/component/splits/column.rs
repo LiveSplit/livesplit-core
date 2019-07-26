@@ -5,6 +5,7 @@ use crate::{
     timing::formatter::{Delta, PossibleTimeSave, Regular, TimeFormatter},
     GeneralLayoutSettings, Segment, TimeSpan, Timer, TimingMethod,
 };
+use serde::{Deserialize, Serialize};
 
 /// The settings of an individual column showing timing information on each
 /// split.

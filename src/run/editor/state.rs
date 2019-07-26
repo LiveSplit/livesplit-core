@@ -4,6 +4,7 @@ use crate::run::RunMetadata;
 use crate::timing::formatter::none_wrapper::EmptyWrapper;
 use crate::timing::formatter::{Accuracy, Short, TimeFormatter};
 use crate::CachedImageId;
+use serde::{Deserialize, Serialize};
 use serde_json::{to_writer, Result as JsonResult};
 use std::io::Write;
 

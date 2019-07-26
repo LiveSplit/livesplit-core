@@ -12,30 +12,32 @@ use std::io::BufRead;
 
 use crate::xml_util::Error as XmlError;
 
-quick_error! {
-    /// The Error type for splits files that couldn't be parsed by the Llanfair
-    /// Rewrite Parser.
-    #[derive(Debug)]
-    pub enum Error {
-        /// The underlying XML format couldn't be parsed.
-        Xml(err: XmlError) {
-            from()
-        }
-        /// Failed to decode a string slice as UTF-8.
-        Utf8Str(err: std::str::Utf8Error) {
-            from()
-        }
-        /// Failed to decode a string as UTF-8.
-        Utf8String(err: std::string::FromUtf8Error) {
-            from()
-        }
-        /// Failed to parse an integer.
-        Int(err: std::num::ParseIntError) {
-            from()
-        }
-        /// Failed to parse an image.
-        Image {}
-    }
+/// The Error type for splits files that couldn't be parsed by the Llanfair
+/// Rewrite Parser.
+#[derive(Debug, snafu::Snafu, derive_more::From)]
+pub enum Error {
+    /// The underlying XML format couldn't be parsed.
+    Xml {
+        /// The underlying error.
+        source: XmlError,
+    },
+    /// Failed to decode a string slice as UTF-8.
+    Utf8Str {
+        /// The underlying error.
+        source: std::str::Utf8Error,
+    },
+    /// Failed to decode a string as UTF-8.
+    Utf8String {
+        /// The underlying error.
+        source: std::string::FromUtf8Error,
+    },
+    /// Failed to parse an integer.
+    Int {
+        /// The underlying error.
+        source: std::num::ParseIntError,
+    },
+    /// Failed to parse an image.
+    Image,
 }
 
 /// The Result type for the Llanfair Rewrite Parser.

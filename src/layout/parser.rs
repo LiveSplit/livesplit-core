@@ -31,45 +31,47 @@ mod timer;
 mod title;
 mod total_playtime;
 
-quick_error! {
-    /// The Error type for parsing layout files of the original LiveSplit.
-    #[derive(Debug)]
-    pub enum Error {
-        /// The underlying XML format couldn't be parsed.
-        Xml(err: XmlError) {
-            from()
-        }
-        /// Failed to decode a string slice as UTF-8.
-        Utf8Str(err: std::str::Utf8Error) {
-            from()
-        }
-        /// Failed to decode a string as UTF-8.
-        Utf8String(err: std::string::FromUtf8Error) {
-            from()
-        }
-        /// Failed to parse an integer.
-        Int(err: std::num::ParseIntError) {
-            from()
-        }
-        /// Failed to parse a boolean.
-        Bool {}
-        /// Failed to parse the layout direction.
-        LayoutDirection {}
-        /// Failed to parse a gradient type.
-        GradientType {}
-        /// Failed to parse an accuracy.
-        Accuracy {}
-        /// Failed to parse a digits format.
-        DigitsFormat {}
-        /// Failed to parse a timing method.
-        TimingMethod {}
-        /// Failed to parse an alignment.
-        Alignment {}
-        /// Failed to parse a column type.
-        ColumnType {}
-        /// Parsed an empty layout, which is considered an invalid layout.
-        Empty {}
-    }
+/// The Error type for parsing layout files of the original LiveSplit.
+#[derive(Debug, snafu::Snafu, derive_more::From)]
+pub enum Error {
+    /// The underlying XML format couldn't be parsed.
+    Xml {
+        /// The underlying error.
+        source: XmlError,
+    },
+    /// Failed to decode a string slice as UTF-8.
+    Utf8Str {
+        /// The underlying error.
+        source: std::str::Utf8Error,
+    },
+    /// Failed to decode a string as UTF-8.
+    Utf8String {
+        /// The underlying error.
+        source: std::string::FromUtf8Error,
+    },
+    /// Failed to parse an integer.
+    ParseInt {
+        /// The underlying error.
+        source: std::num::ParseIntError,
+    },
+    /// Failed to parse a boolean.
+    ParseBool,
+    /// Failed to parse the layout direction.
+    ParseLayoutDirection,
+    /// Failed to parse a gradient type.
+    ParseGradientType,
+    /// Failed to parse an accuracy.
+    ParseAccuracy,
+    /// Failed to parse a digits format.
+    ParseDigitsFormat,
+    /// Failed to parse a timing method.
+    ParseTimingMethod,
+    /// Failed to parse an alignment.
+    ParseAlignment,
+    /// Failed to parse a column type.
+    ParseColumnType,
+    /// Parsed an empty layout, which is considered an invalid layout.
+    Empty,
 }
 
 /// The Result type for parsing layout files of the original LiveSplit.
@@ -104,7 +106,7 @@ impl GradientType for GradientKind {
             b"Plain" => GradientKind::Plain,
             b"Vertical" => GradientKind::Vertical,
             b"Horizontal" => GradientKind::Horizontal,
-            _ => return Err(Error::GradientType),
+            _ => return Err(Error::ParseGradientType),
         })
     }
     fn build(self, first: Color, second: Color) -> Self::Built {
@@ -256,7 +258,7 @@ where
             f(false);
             Ok(())
         }
-        _ => Err(Error::Bool),
+        _ => Err(Error::ParseBool),
     })
 }
 
@@ -284,7 +286,7 @@ where
             b"Current Timing Method" => None,
             b"Real Time" => Some(TimingMethod::RealTime),
             b"Game Time" => Some(TimingMethod::GameTime),
-            _ => return Err(Error::TimingMethod),
+            _ => return Err(Error::ParseTimingMethod),
         });
         Ok(())
     })
@@ -300,7 +302,7 @@ where
             b"Tenths" => Accuracy::Tenths,
             b"Seconds" => Accuracy::Seconds,
             b"Hundredths" => Accuracy::Hundredths,
-            _ => return Err(Error::Accuracy),
+            _ => return Err(Error::ParseAccuracy),
         });
         Ok(())
     })
@@ -318,13 +320,13 @@ where
             b"00:01" => DigitsFormat::DoubleDigitMinutes,
             b"0:00:01" => DigitsFormat::SingleDigitHours,
             b"00:00:01" => DigitsFormat::DoubleDigitHours,
-            _ => return Err(Error::DigitsFormat),
+            _ => return Err(Error::ParseDigitsFormat),
         };
         let accuracy = match splits.next().unwrap_or(b"") {
             b"23" => Accuracy::Hundredths,
             b"2" => Accuracy::Tenths,
             b"" => Accuracy::Seconds,
-            _ => return Err(Error::Accuracy),
+            _ => return Err(Error::ParseAccuracy),
         };
         f(digits_format, accuracy);
         Ok(())
@@ -485,7 +487,7 @@ fn parse_general_settings<R: BufRead>(
                         background_builder.second = Color::black();
                         GradientKind::Plain
                     }
-                    _ => return Err(Error::GradientType),
+                    _ => return Err(Error::ParseGradientType),
                 };
                 Ok(())
             })
@@ -518,7 +520,7 @@ pub fn parse<R: BufRead>(source: R) -> Result<Layout> {
                     layout.general_settings_mut().direction = match &*text {
                         "Vertical" => LayoutDirection::Vertical,
                         "Horizontal" => LayoutDirection::Horizontal,
-                        _ => return Err(Error::LayoutDirection),
+                        _ => return Err(Error::ParseLayoutDirection),
                     };
                     Ok(())
                 })

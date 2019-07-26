@@ -13,16 +13,14 @@ use x11_dl::xlib::{
     Display, GrabModeAsync, KeyPress, KeyPressMask, Mod2Mask, XErrorEvent, XKeyEvent, Xlib,
 };
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        NoXLib {}
-        OpenXServerConnection {}
-        EPoll {}
-        ThreadStopped {}
-        AlreadyRegistered {}
-        NotRegistered {}
-    }
+#[derive(Debug, snafu::Snafu)]
+pub enum Error {
+    NoXLib,
+    OpenXServerConnection,
+    EPoll,
+    ThreadStopped,
+    AlreadyRegistered,
+    NotRegistered,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

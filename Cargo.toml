@@ -46,11 +46,10 @@ odds = { version = "0.3.1", default-features = false }
 ordered-float = "1.0.0"
 palette = { version = "0.4.0", default-features = false }
 parking_lot = { version = "0.9.0", default-features = false }
-quick-error = "1.2.2"
 quick-xml = { version = "0.15.0", default-features = false }
-serde = "1.0.55"
-serde_derive = "1.0.55"
+serde = { version = "1.0.55", features = ["derive"] }
 serde_json = "1.0.8"
+snafu = { version = "0.4.3", default-features = false, features = ["rust_1_30"] }
 unicase = "2.2.0"
 utf-8 = "0.7.4"
 
@@ -63,7 +62,7 @@ smallvec = { version = "0.6.9", default-features = false, optional = true }
 
 # Software Rendering
 euc = { version = "0.3.0", default-features = false, optional = true }
-vek = { version = "0.9.6", default-features = false, optional = true }
+vek = { version = "0.9.8", default-features = false, optional = true }
 
 [dev-dependencies]
 memmem = "0.1.1"

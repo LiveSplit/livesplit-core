@@ -19,15 +19,13 @@ use winapi::um::winuser::{KBDLLHOOKSTRUCT, WH_KEYBOARD_LL, WM_KEYDOWN};
 
 const MSG_EXIT: UINT = 0x400;
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        AlreadyRegistered {}
-        NotRegistered {}
-        WindowsHook {}
-        ThreadStopped {}
-        MessageLoop {}
-    }
+#[derive(Debug, snafu::Snafu)]
+pub enum Error {
+    AlreadyRegistered,
+    NotRegistered,
+    WindowsHook,
+    ThreadStopped,
+    MessageLoop,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

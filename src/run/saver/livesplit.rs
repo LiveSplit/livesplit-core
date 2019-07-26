@@ -38,16 +38,16 @@ use std::result::Result as StdResult;
 
 static LSS_IMAGE_HEADER: &[u8; 156] = include_bytes!("lss_image_header.bin");
 
-quick_error! {
-    #[derive(Debug)]
-    /// The Error type for splits files that couldn't be saved by the LiveSplit
-    /// Saver.
-    pub enum Error {
-        /// Failed writing as XML.
-        Xml(err: XmlError) {
-            from()
-        }
-    }
+#[derive(Debug, snafu::Snafu, derive_more::From)]
+/// The Error type for splits files that couldn't be saved by the LiveSplit
+/// Saver.
+pub enum Error {
+    /// Failed writing the XML.
+    #[snafu(display("{}", error))]
+    Xml {
+        /// The underlying error.
+        error: XmlError,
+    },
 }
 
 /// The Result type for the LiveSplit Saver.

@@ -6,11 +6,12 @@ use crate::{
     timing::formatter::{Accuracy, DigitsFormat},
     TimingMethod,
 };
+use serde::{Deserialize, Serialize};
 use std::result::Result as StdResult;
 
 /// Describes a setting's value. Such a value can be of a variety of different
 /// types.
-#[derive(From, Serialize, Deserialize)]
+#[derive(derive_more::From, Serialize, Deserialize)]
 pub enum Value {
     /// A boolean value.
     Bool(bool),
@@ -56,13 +57,11 @@ pub enum Value {
     LayoutDirection(LayoutDirection),
 }
 
-quick_error! {
-    /// The Error type for values that couldn't be converted.
-    #[derive(Debug)]
-    pub enum Error {
-        /// The value couldn't be converted because it had an incompatible type.
-        WrongType {}
-    }
+/// The Error type for values that couldn't be converted.
+#[derive(Debug, snafu::Snafu)]
+pub enum Error {
+    /// The value couldn't be converted because it had an incompatible type.
+    WrongType,
 }
 
 /// The Result type for conversions from Values to other types.

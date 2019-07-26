@@ -1,12 +1,9 @@
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-    }
-}
+#[derive(Debug, snafu::Snafu)]
+pub enum Error {}
 
 pub type Result<T> = StdResult<T, Error>;
 
-#[derive(Debug, Eq, PartialEq, Hash, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Eq, PartialEq, Hash, Copy, Clone, serde::Serialize, serde::Deserialize)]
 pub struct KeyCode;
 
 pub struct Hook;

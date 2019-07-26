@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 #[repr(u32)]
-#[derive(Debug, Eq, PartialEq, Hash, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Eq, PartialEq, Hash, Copy, Clone, serde::Serialize, serde::Deserialize)]
 pub enum KeyCode {
     BackSpace = 0xFF08,
     Tab = 0xFF09,

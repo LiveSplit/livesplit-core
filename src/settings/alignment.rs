@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 /// Describes the Alignment of the Title in the Title Component.
 #[derive(Copy, Clone, Serialize, Deserialize)]
 pub enum Alignment {

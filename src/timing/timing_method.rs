@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 /// A Timing Method describes which form of timing is used. This can either be
 /// Real Time or Game Time.
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Deserialize, Serialize)]

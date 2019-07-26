@@ -2,6 +2,7 @@
 
 use crate::hotkey::KeyCode;
 use crate::settings::{Field, SettingsDescription, Value};
+use serde::{Deserialize, Serialize};
 use serde_json::{self, from_reader, to_writer};
 use std::io::{Read, Write};
 

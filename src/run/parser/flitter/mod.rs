@@ -1,6 +1,7 @@
 //! Provides the parser for Flitter splits files.
 
 use crate::{comparison::world_record, Run, Segment, Time, TimeSpan};
+use serde::Deserialize;
 use std::io::BufRead;
 use std::result::Result as StdResult;
 
