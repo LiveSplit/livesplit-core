@@ -22,14 +22,12 @@ pub struct Editor {
     selected_component: usize,
 }
 
-quick_error! {
-    /// Describes an Error that occurred while opening the Layout Editor.
-    #[derive(Debug)]
-    pub enum Error {
-        /// The Layout Editor couldn't be opened because an empty layout with no
-        /// components was provided.
-        EmptyLayout {}
-    }
+/// Describes an Error that occurred while opening the Layout Editor.
+#[derive(Debug, snafu::Snafu)]
+pub enum Error {
+    /// The Layout Editor couldn't be opened because an empty layout with no
+    /// components was provided.
+    EmptyLayout,
 }
 
 /// The Result type for the Layout Editor.

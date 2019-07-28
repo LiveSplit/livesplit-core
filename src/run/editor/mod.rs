@@ -8,6 +8,7 @@ use super::{ComparisonError, ComparisonResult};
 use crate::timing::ParseError as ParseTimeSpanError;
 use crate::{comparison, CachedImageId, Image, Run, Segment, Time, TimeSpan, TimingMethod};
 use odds::slice::rotate_left;
+use snafu::{OptionExt, ResultExt};
 use std::mem::swap;
 use std::num::ParseIntError;
 
@@ -23,42 +24,38 @@ pub use self::fuzzy_list::FuzzyList;
 pub use self::segment_row::SegmentRow;
 pub use self::state::{Buttons as ButtonsState, Segment as SegmentState, State};
 
-quick_error! {
-    /// Describes an Error that occurred while parsing a time.
-    #[derive(Debug)]
-    pub enum ParseError {
-        /// Couldn't parse the time.
-        TimeSpan(err: ParseTimeSpanError) {
-            from()
-        }
-        /// Negative times are not allowed here.
-        NegativeTimeNotAllowed {}
-        /// Empty times are not allowed here.
-        EmptyTimeNotAllowed {}
-    }
+/// Describes an Error that occurred while parsing a time.
+#[derive(Debug, snafu::Snafu, derive_more::From)]
+pub enum ParseError {
+    /// Couldn't parse the time.
+    ParseTime {
+        /// The underlying error.
+        source: ParseTimeSpanError,
+    },
+    /// Negative times are not allowed here.
+    NegativeTimeNotAllowed,
+    /// Empty times are not allowed here.
+    EmptyTimeNotAllowed,
 }
 
-quick_error! {
-    /// Describes an Error that occurred while opening the Run Editor.
-    #[derive(Debug)]
-    pub enum OpenError {
-        /// The Run Editor couldn't be opened because an empty run with no
-        /// segments was provided.
-        EmptyRun {}
-    }
+/// Describes an Error that occurred while opening the Run Editor.
+#[derive(Debug, snafu::Snafu)]
+pub enum OpenError {
+    /// The Run Editor couldn't be opened because an empty run with no
+    /// segments was provided.
+    EmptyRun,
 }
 
-quick_error! {
-    /// Error type for a failed Rename
-    #[derive(PartialEq, Debug)]
-    pub enum RenameError {
-        /// Old Comparison was not found during rename.
-        OldNameNotFound {}
-        /// Name was invalid.
-        InvalidName(err: ComparisonError) {
-            from()
-        }
-    }
+/// Error type for a failed Rename.
+#[derive(PartialEq, Debug, snafu::Snafu)]
+pub enum RenameError {
+    /// Old Comparison was not found during rename.
+    OldNameNotFound,
+    /// Name was invalid.
+    InvalidName {
+        /// The underlying error.
+        source: ComparisonError,
+    },
 }
 
 /// The Run Editor allows modifying Runs while ensuring that all the different
@@ -742,7 +739,9 @@ impl Editor {
             return Ok(());
         }
 
-        self.run.validate_comparison_name(new)?;
+        self.run
+            .validate_comparison_name(new)
+            .context(InvalidName)?;
 
         {
             let comparison_name = self
@@ -750,7 +749,7 @@ impl Editor {
                 .custom_comparisons_mut()
                 .iter_mut()
                 .find(|c| *c == old)
-                .ok_or(RenameError::OldNameNotFound)?;
+                .context(OldNameNotFound)?;
 
             comparison_name.clear();
             comparison_name.push_str(new);

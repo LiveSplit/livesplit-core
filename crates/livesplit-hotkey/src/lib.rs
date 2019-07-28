@@ -1,9 +1,5 @@
+// For js! macro.
 #![recursion_limit = "1024"]
-
-#[macro_use]
-extern crate quick_error;
-#[macro_use]
-extern crate serde_derive;
 
 #[cfg(windows)]
 pub mod windows;

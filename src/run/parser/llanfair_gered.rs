@@ -9,36 +9,39 @@ use base64::{self, STANDARD};
 use byteorder::{ReadBytesExt, BE};
 use image::{png, ColorType, ImageBuffer, Rgba};
 use quick_xml::Reader;
+use snafu::OptionExt;
 use std::io::{BufRead, Cursor, Seek, SeekFrom};
 
 use crate::xml_util::Error as XmlError;
 
-quick_error! {
-    /// The Error type for splits files that couldn't be parsed by the Llanfair (Gered)
-    /// Parser.
-    #[derive(Debug)]
-    pub enum Error {
-        /// The underlying XML format couldn't be parsed.
-        Xml(err: XmlError) {
-            from()
-        }
-        /// Failed to decode a string slice as UTF-8.
-        Utf8Str(err: std::str::Utf8Error) {
-            from()
-        }
-        /// Failed to decode a string as UTF-8.
-        Utf8String(err: std::string::FromUtf8Error) {
-            from()
-        }
-        /// Failed to parse an integer.
-        Int(err: std::num::ParseIntError) {
-            from()
-        }
-        /// The length of a buffer was too large.
-        LengthOutOfBounds {}
-        /// Failed to parse an image.
-        Image {}
-    }
+/// The Error type for splits files that couldn't be parsed by the Llanfair (Gered)
+/// Parser.
+#[derive(Debug, snafu::Snafu, derive_more::From)]
+pub enum Error {
+    /// The underlying XML format couldn't be parsed.
+    Xml {
+        /// The underlying error.
+        source: XmlError,
+    },
+    /// Failed to decode a string slice as UTF-8.
+    Utf8Str {
+        /// The underlying error.
+        source: std::str::Utf8Error,
+    },
+    /// Failed to decode a string as UTF-8.
+    Utf8String {
+        /// The underlying error.
+        source: std::string::FromUtf8Error,
+    },
+    /// Failed to parse an integer.
+    Int {
+        /// The underlying error.
+        source: std::num::ParseIntError,
+    },
+    /// The length of a buffer was too large.
+    LengthOutOfBounds,
+    /// Failed to parse an image.
+    Image,
 }
 
 /// The Result type for the Llanfair (Gered) Parser.
@@ -99,15 +102,14 @@ where
             let len = (width as usize)
                 .checked_mul(height as usize)
                 .and_then(|b| b.checked_mul(4))
-                .ok_or(Error::LengthOutOfBounds)?;
+                .context(LengthOutOfBounds)?;
 
             if buf.len() < 0xFE + len {
                 return Err(Error::Image);
             }
 
             let buf = &buf[0xFE..][..len];
-            let image =
-                ImageBuffer::<Rgba<u8>, _>::from_raw(width, height, buf).ok_or(Error::Image)?;
+            let image = ImageBuffer::<Rgba<u8>, _>::from_raw(width, height, buf).context(Image)?;
 
             Ok((width, height, image))
         })?;
@@ -174,10 +176,9 @@ where
             })?;
 
             if defer_setting_run_time {
-                *total_time += segment
-                    .best_segment_time()
-                    .real_time
-                    .ok_or(Error::Xml(XmlError::ElementNotFound))?;
+                *total_time += segment.best_segment_time().real_time.ok_or(Error::Xml {
+                    source: XmlError::ElementNotFound,
+                })?;
                 segment.set_personal_best_split_time(RealTime(Some(*total_time)).into());
             }
 

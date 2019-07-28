@@ -1,5 +1,6 @@
 use super::LayoutDirection;
 use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
+use serde::{Deserialize, Serialize};
 
 /// The general settings of the layout that apply to all components.
 #[derive(Clone, Serialize, Deserialize)]

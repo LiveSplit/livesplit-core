@@ -5,12 +5,10 @@ use std::collections::hash_map::{Entry, HashMap};
 use std::sync::{Arc, Mutex};
 use std::{slice, str};
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        AlreadyRegistered {}
-        NotRegistered {}
-    }
+#[derive(Debug, snafu::Snafu)]
+pub enum Error {
+    AlreadyRegistered,
+    NotRegistered,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

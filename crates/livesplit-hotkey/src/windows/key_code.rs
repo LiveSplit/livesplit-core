@@ -1,7 +1,7 @@
 use std::str::FromStr;
 
 #[repr(u8)]
-#[derive(Debug, Eq, PartialEq, Hash, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Eq, PartialEq, Hash, Copy, Clone, serde::Serialize, serde::Deserialize)]
 pub enum KeyCode {
     LButton = 0x01,
     RButton = 0x02,

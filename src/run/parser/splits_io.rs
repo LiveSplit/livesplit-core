@@ -1,21 +1,22 @@
 //! Provides the parser for generic Splits I/O splits files.
 
 use crate::{Run, Segment as LiveSplitSegment, Time, TimeSpan};
+use serde::{Deserialize, Serialize};
 use serde_json::de::from_reader;
 use serde_json::Error as JsonError;
+use snafu::ResultExt;
 use std::io::Read;
 use std::result::Result as StdResult;
 
-quick_error! {
-    /// The Error type for splits files that couldn't be parsed by the generic
-    /// Splits I/O Parser.
-    #[derive(Debug)]
-    pub enum Error {
-        /// Failed to parse JSON.
-        Json(err: JsonError) {
-            from()
-        }
-    }
+/// The Error type for splits files that couldn't be parsed by the generic
+/// Splits I/O Parser.
+#[derive(Debug, snafu::Snafu)]
+pub enum Error {
+    /// Failed to parse JSON.
+    Json {
+        /// The underlying error.
+        source: JsonError,
+    },
 }
 
 /// The Result type for the generic Splits I/O Parser.
@@ -275,7 +276,7 @@ impl From<RunTime> for Time {
 
 /// Attempts to parse a generic Splits I/O splits file.
 pub fn parse<R: Read>(source: R) -> Result<(Run, String)> {
-    let splits: Splits = from_reader(source)?;
+    let splits: Splits = from_reader(source).context(Json)?;
 
     let mut run = Run::new();
 

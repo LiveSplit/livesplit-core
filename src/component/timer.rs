@@ -9,6 +9,7 @@ use crate::timing::formatter::{timer as formatter, Accuracy, DigitsFormat, TimeF
 use crate::{GeneralLayoutSettings, TimeSpan, Timer, TimerPhase, TimingMethod};
 use palette::rgb::LinSrgb;
 use palette::Hsv;
+use serde::{Deserialize, Serialize};
 use serde_json::{to_writer, Result};
 use std::borrow::Cow;
 use std::io::Write;

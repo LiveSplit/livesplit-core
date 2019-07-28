@@ -27,6 +27,5 @@ stdweb = "0.3.0"
 parking_lot = "0.8.0"
 
 [dependencies]
-quick-error = "1.2.2"
-serde_derive = "1.0.55"
-serde = "1.0.55"
+snafu = { version = "0.4.3", default-features = false, features = ["rust_1_30"] }
+serde = { version = "1.0.55", features = ["derive"] }

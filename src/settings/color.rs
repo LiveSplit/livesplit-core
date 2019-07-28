@@ -5,7 +5,7 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 /// backgrounds, texts, lines and various other elements that are being shown.
 /// They are stored as RGBA colors with 32-bit float point numbers ranging from
 /// 0.0 to 1.0 per channel.
-#[derive(Debug, Copy, Clone, PartialEq, From)]
+#[derive(Debug, Copy, Clone, PartialEq, derive_more::From)]
 pub struct Color {
     /// The Red, Green, Blue, Alpha (RGBA) encoding of the color.
     pub rgba: LinSrgba,

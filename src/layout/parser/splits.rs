@@ -106,7 +106,7 @@ where
                                             ColumnUpdateWith::SegmentDeltaWithFallback,
                                             ColumnUpdateTrigger::Contextual,
                                         ),
-                                        _ => return Err(Error::ColumnType),
+                                        _ => return Err(Error::ParseColumnType),
                                     };
                                     column.start_with = start_with;
                                     column.update_with = update_with;

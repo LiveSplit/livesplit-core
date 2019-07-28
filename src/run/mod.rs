@@ -85,15 +85,13 @@ impl PartialEq for ComparisonGenerators {
     }
 }
 
-quick_error! {
-    /// Error type for an invalid comparison name
-    #[derive(PartialEq, Debug)]
-    pub enum ComparisonError {
-        /// Comparison name starts with "[Race]"
-        NameStartsWithRace {}
-        /// Comparison name is a duplicate
-        DuplicateName {}
-    }
+/// Error type for an invalid comparison name
+#[derive(PartialEq, Debug, snafu::Snafu)]
+pub enum ComparisonError {
+    /// Comparison name starts with "[Race]".
+    NameStartsWithRace,
+    /// Comparison name is a duplicate.
+    DuplicateName,
 }
 
 /// Result type for an invalid comparison name

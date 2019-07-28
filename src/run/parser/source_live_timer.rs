@@ -1,21 +1,22 @@
 //! Provides the parser for the SourceLiveTimer splits files.
 
 use crate::{GameTime, Run, Segment, TimeSpan};
+use serde::Deserialize;
 use serde_json::de::from_reader;
 use serde_json::Error as JsonError;
+use snafu::ResultExt;
 use std::io::Read;
 use std::result::Result as StdResult;
 
-quick_error! {
-    /// The Error type for splits files that couldn't be parsed by the
-    /// SourceLiveTimer Parser.
-    #[derive(Debug)]
-    pub enum Error {
-        /// Failed to parse JSON.
-        Json(err: JsonError) {
-            from()
-        }
-    }
+/// The Error type for splits files that couldn't be parsed by the
+/// SourceLiveTimer Parser.
+#[derive(Debug, snafu::Snafu)]
+pub enum Error {
+    /// Failed to parse JSON.
+    Json {
+        /// The underlying error.
+        source: JsonError,
+    },
 }
 
 /// The Result type for the SourceLiveTimer parser.
@@ -51,7 +52,7 @@ fn time_span_from_ticks(category_name: &str, ticks: u64) -> TimeSpan {
 
 /// Attempts to parse a SourceLiveTimer splits file.
 pub fn parse<R: Read>(source: R) -> Result<Run> {
-    let splits: Splits = from_reader(source)?;
+    let splits: Splits = from_reader(source).context(Json)?;
 
     let mut run = Run::new();
 

@@ -68,9 +68,9 @@ mod editor {
         let c = editor.rename_comparison("Custom", "[Race]Custom");
         assert_eq!(
             c,
-            Err(RenameError::InvalidName(
-                ComparisonError::NameStartsWithRace
-            ))
+            Err(RenameError::InvalidName {
+                source: ComparisonError::NameStartsWithRace
+            })
         );
     }
 
@@ -84,7 +84,9 @@ mod editor {
         let c = editor.rename_comparison("Custom2", "Custom");
         assert_eq!(
             c,
-            Err(RenameError::InvalidName(ComparisonError::DuplicateName))
+            Err(RenameError::InvalidName {
+                source: ComparisonError::DuplicateName
+            })
         );
     }
 }

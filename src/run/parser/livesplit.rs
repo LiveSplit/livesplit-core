@@ -15,46 +15,52 @@ use std::str;
 use crate::xml_util::Error as XmlError;
 use chrono::ParseError as ChronoError;
 
-quick_error! {
-    /// The Error type for splits files that couldn't be parsed by the LiveSplit
-    /// Parser.
-    #[derive(Debug)]
-    pub enum Error {
-        /// The underlying XML format couldn't be parsed.
-        Xml(err: XmlError) {
-            from()
-        }
-        /// Failed to decode a string slice as UTF-8.
-        Utf8Str(err: std::str::Utf8Error) {
-            from()
-        }
-        /// Failed to decode a string as UTF-8.
-        Utf8String(err: std::string::FromUtf8Error) {
-            from()
-        }
-        /// Failed to parse an integer.
-        Int(err: std::num::ParseIntError) {
-            from()
-        }
-        /// Failed to parse a floating point number.
-        Float(err: std::num::ParseFloatError) {
-            from()
-        }
-        /// Failed to parse a time.
-        Time(err: crate::timing::ParseError) {
-            from()
-        }
-        /// Failed to parse a date.
-        Date(err: ChronoError) {
-            from()
-        }
-        /// Parsed comparison has an invalid name.
-        InvalidComparisonName(err: ComparisonError) {
-            from()
-        }
-        /// Failed to parse a boolean.
-        Bool {}
-    }
+/// The Error type for splits files that couldn't be parsed by the LiveSplit
+/// Parser.
+#[derive(Debug, snafu::Snafu, derive_more::From)]
+pub enum Error {
+    /// The underlying XML format couldn't be parsed.
+    Xml {
+        /// The underlying error.
+        source: XmlError,
+    },
+    /// Failed to decode a string slice as UTF-8.
+    Utf8Str {
+        /// The underlying error.
+        source: std::str::Utf8Error,
+    },
+    /// Failed to decode a string as UTF-8.
+    Utf8String {
+        /// The underlying error.
+        source: std::string::FromUtf8Error,
+    },
+    /// Failed to parse an integer.
+    ParseInt {
+        /// The underlying error.
+        source: std::num::ParseIntError,
+    },
+    /// Failed to parse a floating point number.
+    ParseFloat {
+        /// The underlying error.
+        source: std::num::ParseFloatError,
+    },
+    /// Failed to parse a time.
+    ParseTime {
+        /// The underlying error.
+        source: crate::timing::ParseError,
+    },
+    /// Failed to parse a date.
+    ParseDate {
+        /// The underlying error.
+        source: ChronoError,
+    },
+    /// Parsed comparison has an invalid name.
+    InvalidComparisonName {
+        /// The underlying error.
+        source: ComparisonError,
+    },
+    /// Failed to parse a boolean.
+    ParseBool,
 }
 
 /// The Result type for the LiveSplit Parser.
@@ -189,7 +195,7 @@ fn parse_bool(value: &[u8]) -> Result<bool> {
     match value {
         b"True" => Ok(true),
         b"False" => Ok(false),
-        _ => Err(Error::Bool),
+        _ => Err(Error::ParseBool),
     }
 }
 
@@ -383,7 +389,9 @@ fn parse_attempt_history<R: BufRead>(
                 Ok(true)
             }))?;
 
-            let index = index.ok_or(Error::Xml(XmlError::AttributeNotFound))?;
+            let index = index.ok_or(Error::Xml {
+                source: XmlError::AttributeNotFound,
+            })?;
 
             parse_children(reader, tag.into_buf(), |reader, tag| {
                 if tag.name() == b"RealTime" {
@@ -487,7 +495,9 @@ pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
     })?;
 
     if required_flags != (1 << 6) - 1 {
-        return Err(Error::Xml(XmlError::ElementNotFound));
+        return Err(Error::Xml {
+            source: XmlError::ElementNotFound,
+        });
     }
 
     run.set_path(path);

@@ -1,34 +1,46 @@
 //! Provides the parser for Portal 2 Live Timer splits files.
 
 use crate::{GameTime, Run, Segment, TimeSpan};
+use snafu::{OptionExt, ResultExt};
 use std::io::{self, BufRead};
 use std::num::ParseFloatError;
 use std::result::Result as StdResult;
 
-quick_error! {
-    /// The Error types for splits files that couldn't be parsed by the Portal 2
-    /// Live Timer Parser.
-    #[derive(Debug)]
-    pub enum Error {
-        /// Expected another map, but didn't find it.
-        ExpectedMap {}
-        /// Expected the map's name, but didn't find it.
-        ExpectedMapName {}
-        /// Expected a different map.
-        ExpectedDifferentMapName {}
-        /// Expected the start ticks of the map, but didn't find it.
-        ExpectedStartTicks {}
-        /// Expected the end ticks of the map, but didn't find it.
-        ExpectedEndTicks {}
-        /// Couldn't parse the amount of ticks.
-        Ticks(err: ParseFloatError) {
-            from()
-        }
-        /// Failed to read from the source.
-        Io(err: io::Error) {
-            from()
-        }
-    }
+/// The Error types for splits files that couldn't be parsed by the Portal 2
+/// Live Timer Parser.
+#[derive(Debug, snafu::Snafu)]
+pub enum Error {
+    /// Expected another map, but didn't find it.
+    ExpectedMap,
+    /// Failed to read the next map.
+    ReadMap {
+        /// The underlying error.
+        source: io::Error,
+    },
+    /// Expected the name of a map, but didn't find it.
+    ExpectedMapName,
+    /// Expected a different map.
+    #[snafu(display("Expect the map '{}' but found '{}'.", expected, found))]
+    ExpectedDifferentMapName {
+        /// The name of the map that was expected.
+        expected: &'static str,
+        /// The name of the map found in the splits file.
+        found: Box<str>,
+    },
+    /// Expected the start ticks of a map, but didn't find it.
+    ExpectedStartTicks,
+    /// Failed to parse the start ticks of a map.
+    ParseStartTicks {
+        /// The underlying error.
+        source: ParseFloatError,
+    },
+    /// Expected the end ticks of a map, but didn't find it.
+    ExpectedEndTicks,
+    /// Failed to parse the end ticks of a map.
+    ParseEndTicks {
+        /// The underlying error.
+        source: ParseFloatError,
+    },
 }
 
 /// The Result type for the Portal 2 Live Timer Parser.
@@ -156,17 +168,28 @@ pub fn parse<R: BufRead>(source: R) -> Result<Run> {
 
     let mut aggregate_ticks = 0.0;
 
-    let mut line = lines.next().ok_or(Error::ExpectedMap)??;
+    let mut line = lines.next().context(ExpectedMap)?.context(ReadMap)?;
     for &(chapter_name, maps) in &CHAPTERS {
         for &map in maps {
             {
                 let mut splits = line.split(',');
-                let map_name = splits.next().ok_or(Error::ExpectedMapName)?;
+                let map_name = splits.next().context(ExpectedMapName)?;
                 if map_name != map {
-                    return Err(Error::ExpectedDifferentMapName);
+                    return Err(Error::ExpectedDifferentMapName {
+                        expected: map,
+                        found: map_name.into(),
+                    });
                 }
-                let start_ticks: f64 = splits.next().ok_or(Error::ExpectedStartTicks)?.parse()?;
-                let end_ticks: f64 = splits.next().ok_or(Error::ExpectedEndTicks)?.parse()?;
+                let start_ticks: f64 = splits
+                    .next()
+                    .context(ExpectedStartTicks)?
+                    .parse()
+                    .context(ParseStartTicks)?;
+                let end_ticks: f64 = splits
+                    .next()
+                    .context(ExpectedEndTicks)?
+                    .parse()
+                    .context(ParseEndTicks)?;
                 let map_ticks = end_ticks - start_ticks;
                 aggregate_ticks += map_ticks;
             }
@@ -175,9 +198,16 @@ pub fn parse<R: BufRead>(source: R) -> Result<Run> {
                 line = next_line;
                 let mut splits = line.split(',');
                 if splits.next() == Some(map) {
-                    let start_ticks: f64 =
-                        splits.next().ok_or(Error::ExpectedStartTicks)?.parse()?;
-                    let end_ticks: f64 = splits.next().ok_or(Error::ExpectedEndTicks)?.parse()?;
+                    let start_ticks: f64 = splits
+                        .next()
+                        .context(ExpectedStartTicks)?
+                        .parse()
+                        .context(ParseStartTicks)?;
+                    let end_ticks: f64 = splits
+                        .next()
+                        .context(ExpectedEndTicks)?
+                        .parse()
+                        .context(ParseEndTicks)?;
                     let map_ticks = end_ticks - start_ticks;
                     aggregate_ticks += map_ticks;
                 } else {

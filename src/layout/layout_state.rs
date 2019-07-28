@@ -1,5 +1,6 @@
 use super::{ComponentState, LayoutDirection};
 use crate::settings::{Color, Gradient};
+use serde::{Deserialize, Serialize};
 use serde_json::{to_writer, Result};
 use std::io::Write;
 

@@ -1,3 +1,5 @@
+use serde::{Deserialize, Serialize};
+
 /// A Digits Format describes how many digits of a time to always shown. The
 /// times are prefixed by zeros to fill up the remaining digits.
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Serialize, Deserialize)]

@@ -1,4 +1,5 @@
 use super::{ComponentSettings, GeneralSettings};
+use serde::{Deserialize, Serialize};
 use serde_json::{from_reader, to_writer, Result};
 use std::io::{Read, Write};
 

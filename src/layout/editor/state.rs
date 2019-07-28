@@ -1,5 +1,6 @@
 use super::Editor;
 use crate::settings::SettingsDescription;
+use serde::{Deserialize, Serialize};
 use serde_json::{to_writer, Result as JsonResult};
 use std::io::Write;
 

@@ -8,55 +8,38 @@ use std::num::{ParseFloatError, ParseIntError};
 use std::ops::Deref;
 use std::{str, string};
 
-quick_error! {
-    /// The Error type for XML-based splits files that couldn't be parsed.
-    #[derive(Debug)]
-    pub enum Error {
-        /// Failed to parse the XML.
-        Xml(err: XmlError) {
-            from()
-        }
-        /// Failed to read from the source.
-        Io(err: io::Error) {
-            from()
-        }
-        /// Failed to parse a boolean.
-        Bool {}
-        /// Didn't expect the end of the file.
-        UnexpectedEndOfFile {}
-        /// Didn't expect an inner element.
-        UnexpectedElement {}
-        /// A required attribute has not been found on an element.
-        AttributeNotFound {}
-        /// A required element has not been found.
-        ElementNotFound {}
-        /// The length of a buffer was too large.
-        LengthOutOfBounds {}
-        /// Failed to decode a string slice as UTF-8.
-        Utf8Str(err: str::Utf8Error) {
-            from()
-        }
-        /// Failed to decode a string as UTF-8.
-        Utf8String(err: string::FromUtf8Error) {
-            from()
-        }
-        /// Failed to parse an integer.
-        Int(err: ParseIntError) {
-            from()
-        }
-        /// Failed to parse a floating point number.
-        Float(err: ParseFloatError) {
-            from()
-        }
-        /// Failed to parse a time.
-        Time(err: timing::ParseError) {
-            from()
-        }
-        /// Failed to parse a date.
-        Date(err: ChronoError) {
-            from()
-        }
-    }
+/// The Error type for XML-based splits files that couldn't be parsed.
+#[derive(Debug, snafu::Snafu, derive_more::From)]
+pub enum Error {
+    /// Failed to parse the XML.
+    #[snafu(display("{}", error))]
+    Xml { error: XmlError },
+    /// Failed to read from the source.
+    Io { source: io::Error },
+    /// Failed to parse a boolean.
+    Bool,
+    /// Didn't expect the end of the file.
+    UnexpectedEndOfFile,
+    /// Didn't expect an inner element.
+    UnexpectedElement,
+    /// A required attribute has not been found on an element.
+    AttributeNotFound,
+    /// A required element has not been found.
+    ElementNotFound,
+    /// The length of a buffer was too large.
+    LengthOutOfBounds,
+    /// Failed to decode a string slice as UTF-8.
+    Utf8Str { source: str::Utf8Error },
+    /// Failed to decode a string as UTF-8.
+    Utf8String { source: string::FromUtf8Error },
+    /// Failed to parse an integer.
+    Int { source: ParseIntError },
+    /// Failed to parse a floating point number.
+    Float { source: ParseFloatError },
+    /// Failed to parse a time.
+    Time { source: timing::ParseError },
+    /// Failed to parse a date.
+    Date { source: ChronoError },
 }
 
 /// The Result type for Parsers that parse XML-based splits files.
@@ -89,7 +72,11 @@ impl<'a> AttributeValue<'a> {
     where
         E: From<Error> + From<string::FromUtf8Error> + From<str::Utf8Error>,
     {
-        decode_cow_text(self.0.unescaped_value().map_err(Error::Xml)?)
+        decode_cow_text(
+            self.0
+                .unescaped_value()
+                .map_err(|error| Error::Xml { error })?,
+        )
     }
 
     pub fn get_raw(&self) -> &'a [u8] {
@@ -153,7 +140,10 @@ where
 {
     loop {
         buf.clear();
-        match reader.read_event(buf).map_err(Error::Xml)? {
+        match reader
+            .read_event(buf)
+            .map_err(|error| Error::Xml { error })?
+        {
             Event::Start(_) => return Err(Error::UnexpectedElement).map_err(Into::into),
             Event::End(_) => {
                 return f(&[]);
@@ -181,7 +171,10 @@ where
 {
     loop {
         buf.clear();
-        match reader.read_event(buf).map_err(Error::Xml)? {
+        match reader
+            .read_event(buf)
+            .map_err(|error| Error::Xml { error })?
+        {
             Event::Start(_) => return Err(Error::UnexpectedElement).map_err(Into::into),
             Event::End(_) => {
                 return f(Cow::Borrowed(&[]));
@@ -205,7 +198,10 @@ where
 {
     loop {
         buf.clear();
-        match reader.read_event(buf).map_err(Error::Xml)? {
+        match reader
+            .read_event(buf)
+            .map_err(|error| Error::Xml { error })?
+        {
             Event::Start(_) => return Err(Error::UnexpectedElement).map_err(Into::into),
             Event::End(_) => return Ok(()),
             Event::Eof => return Err(Error::UnexpectedEndOfFile).map_err(Into::into),
@@ -266,7 +262,10 @@ where
     let mut depth = 0;
     loop {
         buf.clear();
-        match reader.read_event(buf).map_err(Error::Xml)? {
+        match reader
+            .read_event(buf)
+            .map_err(|error| Error::Xml { error })?
+        {
             Event::Start(_) => {
                 depth += 1;
             }
@@ -315,7 +314,10 @@ where
         let ptr_buf: *mut Vec<u8> = buf;
         loop {
             buf.clear();
-            match reader.read_event(buf).map_err(Error::Xml)? {
+            match reader
+                .read_event(buf)
+                .map_err(|error| Error::Xml { error })?
+            {
                 Event::Start(start) => {
                     let tag = Tag::new(start, ptr_buf);
                     f(reader, tag)?;
@@ -343,7 +345,10 @@ where
         let ptr_buf: *mut Vec<u8> = buf;
         loop {
             buf.clear();
-            match reader.read_event(buf).map_err(Error::Xml)? {
+            match reader
+                .read_event(buf)
+                .map_err(|error| Error::Xml { error })?
+            {
                 Event::Start(start) => {
                     if start.name() == tag {
                         let tag = Tag::new(start, ptr_buf);
@@ -365,7 +370,7 @@ where
     E: From<Error>,
 {
     for attribute in tag.attributes().with_checks(false) {
-        let attribute = attribute.map_err(Error::Xml)?;
+        let attribute = attribute.map_err(|error| Error::Xml { error })?;
         let key = attribute.key;
         if !f(key, AttributeValue(&attribute))? {
             return Ok(());

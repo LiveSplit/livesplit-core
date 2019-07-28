@@ -7,43 +7,45 @@ use std::io::{self, BufRead};
 use std::num::ParseIntError;
 use utf8::{BufReadDecoder, BufReadDecoderError};
 
-quick_error! {
-    /// The Error types for splits files that couldn't be parsed by the Flitter
-    /// Parser.
-    #[derive(Debug)]
-    pub enum Error {
-        /// Trailing Characters
-        TrailingCharacters {}
-        /// Unexpected end of input
-        Eof {}
-        /// Expected an opening parenthesis.
-        ExpectedOpeningParenthesis {}
-        /// Expected an closing parenthesis.
-        ExpectedClosingParenthesis {}
-        /// Expected a string.
-        ExpectedString {}
-        /// Failed to parse an integer.
-        ParseInt(err: ParseIntError) {
-            from()
-        }
-        /// Encountered invalid UTF-8 sequence.
-        InvalidUTF8 {}
-        /// Failed to read from the source.
-        Io(err: io::Error) {
-            from()
-        }
-        /// Custom error.
-        Custom(err: String) {
-            from()
-            display("{}", err)
-        }
-    }
+/// The Error types for splits files that couldn't be parsed by the Flitter
+/// Parser.
+#[derive(Debug, snafu::Snafu, derive_more::From)]
+pub enum Error {
+    /// Trailing Characters
+    TrailingCharacters,
+    /// Unexpected end of input
+    Eof,
+    /// Expected an opening parenthesis.
+    ExpectedOpeningParenthesis,
+    /// Expected an closing parenthesis.
+    ExpectedClosingParenthesis,
+    /// Expected a string.
+    ExpectedString,
+    /// Failed to parse an integer.
+    ParseInt {
+        /// The underlying error.
+        source: ParseIntError,
+    },
+    /// Encountered invalid UTF-8 sequence.
+    InvalidUTF8,
+    /// Failed to read from the source.
+    Io {
+        /// The underlying error.
+        source: io::Error,
+    },
+    /// Custom error.
+    #[snafu(display("{}", error))]
+    Custom {
+        /// The underlying error.
+        error: String,
+    },
 }
+
 impl<'a> From<BufReadDecoderError<'a>> for Error {
     fn from(error: BufReadDecoderError<'a>) -> Error {
         match error {
             BufReadDecoderError::InvalidByteSequence(_) => Error::InvalidUTF8,
-            BufReadDecoderError::Io(io) => Error::Io(io),
+            BufReadDecoderError::Io(source) => Error::Io { source },
         }
     }
 }
@@ -53,7 +55,9 @@ impl de::Error for Error {
     where
         T: Display,
     {
-        Error::Custom(msg.to_string())
+        Error::Custom {
+            error: msg.to_string(),
+        }
     }
 }
 

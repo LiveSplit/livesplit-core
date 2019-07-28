@@ -40,7 +40,7 @@ where
                         b"0" => Alignment::Auto,
                         b"1" => Alignment::Left,
                         b"2" => Alignment::Center,
-                        _ => return Err(Error::Alignment),
+                        _ => return Err(Error::ParseAlignment),
                     };
                     Ok(())
                 })

@@ -48,13 +48,6 @@
 //! assert_eq!(timer.current_phase(), TimerPhase::NotRunning);
 //! ```
 
-#[macro_use]
-extern crate derive_more;
-#[macro_use]
-extern crate quick_error;
-#[macro_use]
-extern crate serde_derive;
-
 mod platform;
 
 #[cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))]

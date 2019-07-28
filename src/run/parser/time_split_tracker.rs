@@ -3,54 +3,81 @@
 use super::super::ComparisonError;
 use crate::{timing, AtomicDateTime, Image, RealTime, Run, Segment, Time, TimeSpan};
 use chrono::{TimeZone, Utc};
+use snafu::{OptionExt, ResultExt};
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
 use std::num::ParseIntError;
 use std::path::PathBuf;
 use std::result::Result as StdResult;
 
-quick_error! {
-    /// The Error type for splits files that couldn't be parsed by the Time
-    /// Split Tracker Parser.
-    #[derive(Debug)]
-    pub enum Error {
-        /// An empty splits file was provided.
-        Empty {}
-        /// Expected the attempt count, but didn't find it.
-        ExpectedAttemptCount {}
-        /// Expected the start time offset, but didn't find it.
-        ExpectedOffset {}
-        /// Expected the line containing the title, but didn't find it.
-        ExpectedTitleLine {}
-        /// Expected the name of the category, but didn't find it.
-        ExpectedCategoryName {}
-        /// Expected the name of the segment, but didn't find it.
-        ExpectedSegmentName {}
-        /// Expected the best segment time, but didn't find it.
-        ExpectedBestSegment {}
-        /// Expected the time for a comparison, but didn't find it.
-        ExpectedComparisonTime {}
-        /// Expected the line containing the icon, but didn't find it.
-        ExpectedIconLine {}
-        /// Failed to parse an integer.
-        Int(err: ParseIntError) {
-            from()
-        }
-        /// Failed to parse a time.
-        Time(err: timing::ParseError) {
-            from()
-        }
-        /// Failed to read from the source.
-        Io(err: io::Error) {
-            from()
-        }
-    }
+/// The Error type for splits files that couldn't be parsed by the Time
+/// Split Tracker Parser.
+#[derive(Debug, snafu::Snafu)]
+pub enum Error {
+    /// An empty splits file was provided.
+    Empty,
+    /// Failed to read the initial information line.
+    ReadInitialLine {
+        /// The underlying error.
+        source: io::Error,
+    },
+    /// Expected the attempt count, but didn't find it.
+    ExpectedAttemptCount,
+    /// Failed to parse the attempt count.
+    ParseAttemptCount {
+        /// The underlying error.
+        source: ParseIntError,
+    },
+    /// Expected the start time offset, but didn't find it.
+    ExpectedOffset,
+    /// Failed to parse the start time offset.
+    ParseOffset {
+        /// The underlying error.
+        source: timing::ParseError,
+    },
+    /// Expected the line containing the title, but didn't find it.
+    ExpectedTitleLine,
+    /// Failed to read the line containing the title.
+    ReadTitleLine {
+        /// The underlying error.
+        source: io::Error,
+    },
+    /// Expected the name of the category, but didn't find it.
+    ExpectedCategoryName,
+    /// Failed to read a segment line.
+    ReadSegmentLine {
+        /// The underlying error.
+        source: io::Error,
+    },
+    /// Expected the name of a segment, but didn't find it.
+    ExpectedSegmentName,
+    /// Expected the best segment time of a segment, but didn't find it.
+    ExpectedBestSegment,
+    /// Failed to parse the best segment time of a segment.
+    ParseBestSegment {
+        /// The underlying error.
+        source: timing::ParseError,
+    },
+    /// Expected the time for a comparison of a segment, but didn't find it.
+    ExpectedComparisonTime,
+    /// Failed to parse the time for a comparison of a segment.
+    ParseComparisonTime {
+        /// The underlying error.
+        source: timing::ParseError,
+    },
+    /// Expected a line containing the icon of a segment, but didn't find it.
+    ExpectedIconLine,
+    /// Failed to read a line containing the icon of a segment.
+    ReadIconLine {
+        /// The underlying error.
+        source: io::Error,
+    },
 }
 
 /// The Result type for the Time Split Tracker parser.
 pub type Result<T> = StdResult<T, Error>;
 
-fn parse_time_optional(time: &str) -> Result<Option<TimeSpan>> {
+fn parse_time_optional(time: &str) -> StdResult<Option<TimeSpan>, timing::ParseError> {
     let time: TimeSpan = time.parse()?;
     if time == TimeSpan::zero() {
         Ok(None)
@@ -71,10 +98,22 @@ pub fn parse<R: BufRead>(source: R, path_for_loading_other_files: Option<PathBuf
 
     let mut lines = source.lines();
 
-    let line = lines.next().ok_or(Error::Empty)??;
+    let line = lines.next().context(Empty)?.context(ReadInitialLine)?;
     let mut splits = line.split('\t');
-    run.set_attempt_count(splits.next().ok_or(Error::ExpectedAttemptCount)?.parse()?);
-    run.set_offset(splits.next().ok_or(Error::ExpectedOffset)?.parse()?);
+    run.set_attempt_count(
+        splits
+            .next()
+            .context(ExpectedAttemptCount)?
+            .parse()
+            .context(ParseAttemptCount)?,
+    );
+    run.set_offset(
+        splits
+            .next()
+            .context(ExpectedOffset)?
+            .parse()
+            .context(ParseOffset)?,
+    );
 
     catch! {
         let path = path.as_ref()?.with_file_name(splits.next()?);
@@ -82,9 +121,12 @@ pub fn parse<R: BufRead>(source: R, path_for_loading_other_files: Option<PathBuf
         run.set_game_icon(image);
     };
 
-    let line = lines.next().ok_or(Error::ExpectedTitleLine)??;
+    let line = lines
+        .next()
+        .context(ExpectedTitleLine)?
+        .context(ReadTitleLine)?;
     let mut splits = line.split('\t');
-    run.set_category_name(splits.next().ok_or(Error::ExpectedCategoryName)?);
+    run.set_category_name(splits.next().context(ExpectedCategoryName)?);
     splits.next(); // Skip one element
     let mut comparisons = splits.map(ToOwned::to_owned).collect::<Vec<_>>();
 
@@ -109,26 +151,30 @@ pub fn parse<R: BufRead>(source: R, path_for_loading_other_files: Option<PathBuf
     }
 
     while let Some(line) = lines.next() {
-        let line = line?;
+        let line = line.context(ReadSegmentLine)?;
         if line.is_empty() {
             continue;
         }
 
         let mut splits = line.split('\t');
-        let mut segment = Segment::new(splits.next().ok_or(Error::ExpectedSegmentName)?);
-        let best_segment = parse_time_optional(splits.next().ok_or(Error::ExpectedBestSegment)?)?;
+        let mut segment = Segment::new(splits.next().context(ExpectedSegmentName)?);
+        let best_segment = parse_time_optional(splits.next().context(ExpectedBestSegment)?)
+            .context(ParseBestSegment)?;
         segment.set_best_segment_time(RealTime(best_segment).into());
 
         let mut pb_time = Time::new();
         for comparison in &comparisons {
             let time = segment.comparison_mut(comparison);
-            pb_time.real_time =
-                parse_time_optional(splits.next().ok_or(Error::ExpectedComparisonTime)?)?;
+            pb_time.real_time = parse_time_optional(splits.next().context(ExpectedComparisonTime)?)
+                .context(ParseComparisonTime)?;
             time.real_time = pb_time.real_time;
         }
         segment.set_personal_best_split_time(pb_time);
 
-        let line = lines.next().ok_or(Error::ExpectedIconLine)??;
+        let line = lines
+            .next()
+            .context(ExpectedIconLine)?
+            .context(ReadIconLine)?;
 
         catch! {
             let file = line.trim_end();
@@ -154,21 +200,21 @@ fn parse_history(run: &mut Run, path: Option<PathBuf>) -> StdResult<(), ()> {
         path.push("-RunLog.txt");
         let path = PathBuf::from(path);
 
-        let lines = BufReader::new(File::open(path).map_err(|_| ())?).lines();
+        let lines = BufReader::new(File::open(path).map_err(drop)?).lines();
         let mut attempt_id = 1;
 
         for line in lines.skip(1) {
-            let line = line.map_err(|_| ())?;
+            let line = line.map_err(drop)?;
             let mut splits = line.split('\t');
             let time_stamp = splits.next().ok_or(())?;
             let started = Utc
                 .datetime_from_str(time_stamp, "%Y/%m/%d %R")
-                .map_err(|_| ())?;
+                .map_err(drop)?;
             let completed = splits.next().ok_or(())? == "C";
             let split_times: Vec<_> = splits
                 .map(parse_time_optional)
-                .collect::<Result<_>>()
-                .map_err(|_| ())?;
+                .collect::<StdResult<_, _>>()
+                .map_err(drop)?;
             let mut final_time = Time::default();
             let mut ended = None;
             if completed {

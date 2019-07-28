@@ -1,45 +1,62 @@
 //! Provides the parser for FaceSplit splits files.
 
 use crate::{timing, Image, RealTime, Run, Segment, Time, TimeSpan};
+use snafu::{OptionExt, ResultExt};
 use std::borrow::Cow;
 use std::io::{self, BufRead};
 use std::num::ParseIntError;
 use std::result::Result as StdResult;
 
-quick_error! {
-    /// The Error type for splits files that couldn't be parsed by the FaceSplit
-    /// Parser.
-    #[derive(Debug)]
-    pub enum Error {
-        /// Expected the title, but didn't find it.
-        ExpectedTitle {}
-        /// Expected the attempt count, but didn't find it.
-        ExpectedAttemptCount {}
-        /// Expected the name of the segment, but didn't find it.
-        ExpectedSegmentName {}
-        /// Expected the split time, but didn't find it.
-        ExpectedSplitTime {}
-        /// Expected the best segment time, but didn't find it.
-        ExpectedBestSegmentTime {}
-        /// Failed to parse the amount of attempts.
-        Attempt(err: ParseIntError) {
-            from()
-        }
-        /// Failed to parse a time.
-        Time(err: timing::ParseError) {
-            from()
-        }
-        /// Failed to read from the source.
-        Io(err: io::Error) {
-            from()
-        }
-    }
+/// The Error type for splits files that couldn't be parsed by the FaceSplit
+/// Parser.
+#[derive(Debug, snafu::Snafu)]
+pub enum Error {
+    /// Expected the title, but didn't find it.
+    ExpectedTitle,
+    /// Failed to read the title.
+    ReadTitle {
+        /// The underlying error.
+        source: io::Error,
+    },
+    /// Expected the attempt count, but didn't find it.
+    ExpectedAttemptCount,
+    /// Failed to read the attempt count.
+    ReadAttemptCount {
+        /// The underlying error.
+        source: io::Error,
+    },
+    /// Failed to parse the attempt count.
+    ParseAttemptCount {
+        /// The underlying error.
+        source: ParseIntError,
+    },
+    /// Failed to read the next segment.
+    ReadSegment {
+        /// The underlying error.
+        source: io::Error,
+    },
+    /// Expected the name of a segment, but didn't find it.
+    ExpectedSegmentName,
+    /// Expected the split time of a segment, but didn't find it.
+    ExpectedSplitTime,
+    /// Failed to parse the split time of a segment.
+    ParseSplitTime {
+        /// The underlying error.
+        source: timing::ParseError,
+    },
+    /// Expected the best segment time of a segment, but didn't find it.
+    ExpectedBestSegmentTime,
+    /// Failed to parse the best segment time of a segment.
+    ParseBestSegmentTime {
+        /// The underlying error.
+        source: timing::ParseError,
+    },
 }
 
 /// The Result type for the FaceSplit Parser.
 pub type Result<T> = StdResult<T, Error>;
 
-fn parse_time(time: &str) -> Result<Time> {
+fn parse_time(time: &str) -> StdResult<Time, timing::ParseError> {
     // Replace "," by "." as "," wouldn't parse
     let time: TimeSpan = replace(time, ",", ".").parse()?;
     // Skipped is stored as a zero time in FaceSplit Splits
@@ -68,26 +85,31 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
     let mut icon_buf = Vec::new();
     let mut lines = source.lines();
 
-    run.set_category_name(lines.next().ok_or(Error::ExpectedTitle)??);
+    run.set_category_name(lines.next().context(ExpectedTitle)?.context(ReadTitle)?);
     lines.next(); // FIXME: Store Goal
-    run.set_attempt_count(lines.next().ok_or(Error::ExpectedAttemptCount)??.parse()?);
+    run.set_attempt_count(
+        lines
+            .next()
+            .context(ExpectedAttemptCount)?
+            .context(ReadAttemptCount)?
+            .parse()
+            .context(ParseAttemptCount)?,
+    );
     lines.next(); // FIXME: Store runs completed somehow
 
     for line in lines {
-        let line = line?;
+        let line = line.context(ReadSegment)?;
         let mut splits = line.splitn(5, '-');
 
-        let segment_name = replace(
-            splits.next().ok_or(Error::ExpectedSegmentName)?,
-            r#""?""#,
-            "-",
-        );
+        let segment_name = replace(splits.next().context(ExpectedSegmentName)?, r#""?""#, "-");
         let mut segment = Segment::new(segment_name);
 
-        let split_time = parse_time(splits.next().ok_or(Error::ExpectedSplitTime)?)?;
+        let split_time =
+            parse_time(splits.next().context(ExpectedSplitTime)?).context(ParseSplitTime)?;
         segment.set_personal_best_split_time(split_time);
 
-        let best_segment = parse_time(splits.next().ok_or(Error::ExpectedBestSegmentTime)?)?;
+        let best_segment = parse_time(splits.next().context(ExpectedBestSegmentTime)?)
+            .context(ParseBestSegmentTime)?;
         segment.set_best_segment_time(best_segment);
 
         splits.next(); // Skip Segment Time

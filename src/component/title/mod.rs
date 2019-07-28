@@ -5,6 +5,7 @@
 
 use crate::settings::{Alignment, Color, Field, Gradient, SettingsDescription, Value};
 use crate::{CachedImageId, Image, Timer, TimerPhase};
+use serde::{Deserialize, Serialize};
 use serde_json::{to_writer, Result};
 use std::borrow::Cow;
 use std::io::Write;

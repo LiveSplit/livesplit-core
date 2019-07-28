@@ -7,12 +7,10 @@ use std::sync::Arc;
 use stdweb::web::event::{IKeyboardEvent, KeypressEvent};
 use stdweb::web::{window, EventListenerHandle, IEventTarget};
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        AlreadyRegistered {}
-        NotRegistered {}
-    }
+#[derive(Debug, snafu::Snafu)]
+pub enum Error {
+    AlreadyRegistered,
+    NotRegistered,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
