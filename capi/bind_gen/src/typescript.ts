@@ -6,6 +6,7 @@ export type ComponentStateJson =
     { Delta: DeltaComponentStateJson } |
     { DetailedTimer: DetailedTimerComponentStateJson } |
     { Graph: GraphComponentStateJson } |
+    { PbChance: PbChanceComponentStateJson } |
     { PossibleTimeSave: PossibleTimeSaveComponentStateJson } |
     { PreviousSegment: PreviousSegmentComponentStateJson } |
     { Separator: null } |
@@ -305,6 +306,31 @@ export interface SumOfBestComponentStateJson {
     text: string,
     /** The sum of best segments. */
     time: string,
+    /**
+     * Specifies whether to display the name of the component and its value in
+     * two separate rows.
+     */
+    display_two_rows: boolean,
+}
+
+/** The state object describes the information to visualize for this component. */
+export interface PbChanceComponentStateJson {
+    /** The background shown behind the component. */
+    background: Gradient,
+    /**
+     * The color of the label. If `null` is specified, the color is taken from
+     * the layout.
+     */
+    label_color: Color | null,
+    /**
+     * The color of the value. If `null` is specified, the color is taken from
+     * the layout.
+     */
+    value_color: Color | null,
+    /** The label's text. */
+    text: string,
+    /** The current PB Chance. */
+    pb_chance: string,
     /**
      * Specifies whether to display the name of the component and its value in
      * two separate rows.

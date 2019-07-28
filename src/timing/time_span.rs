@@ -137,7 +137,7 @@ impl<'de> Deserialize<'de> for TimeSpan {
 
 struct TimeSpanVisitor;
 
-impl<'de> Visitor<'de> for TimeSpanVisitor {
+impl Visitor<'_> for TimeSpanVisitor {
     type Value = TimeSpan;
 
     fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {

@@ -47,7 +47,7 @@ impl Default for PossibleTimeSave {
     }
 }
 
-impl<'a> TimeFormatter<'a> for PossibleTimeSave {
+impl TimeFormatter<'_> for PossibleTimeSave {
     type Inner = Inner;
 
     fn format<T>(&self, time: T) -> Self::Inner

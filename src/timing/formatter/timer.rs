@@ -52,7 +52,7 @@ impl Default for Time {
     }
 }
 
-impl<'a> TimeFormatter<'a> for Time {
+impl TimeFormatter<'_> for Time {
     type Inner = TimeInner;
 
     fn format<T>(&self, time: T) -> Self::Inner
@@ -148,7 +148,7 @@ impl Default for Fraction {
     }
 }
 
-impl<'a> TimeFormatter<'a> for Fraction {
+impl TimeFormatter<'_> for Fraction {
     type Inner = FractionInner;
 
     fn format<T>(&self, time: T) -> Self::Inner

@@ -399,6 +399,7 @@ where
                     Component::TotalPlaytime(c) => {
                         total_playtime::settings(reader, tag.into_buf(), c)
                     }
+                    Component::PbChance(_) => unreachable!(),
                 }
             } else {
                 end_tag(reader, tag.into_buf())

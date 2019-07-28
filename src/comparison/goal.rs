@@ -11,7 +11,8 @@ use ordered_float::OrderedFloat;
 /// The default name of the goal comparison.
 pub const NAME: &str = "Goal";
 
-const WEIGHT: f64 = 0.9375;
+const WEIGHT: f64 = 0.75;
+const TRIES: usize = 50;
 
 fn interpolate(
     perc: f64,
@@ -25,14 +26,15 @@ fn interpolate(
     TimeSpan::from_milliseconds(perc_up + perc_down)
 }
 
-pub(super) fn generate_for_timing_method_with_buf(
-    segments: &mut [Segment],
+// TODO: Possibly move this.
+pub(crate) fn determine_percentile(
+    offset: TimeSpan,
+    segments: &[Segment],
     method: TimingMethod,
     goal_time: Option<TimeSpan>,
-    comparison: &str,
     time_span_buf: &mut Vec<TimeSpan>,
     all_weighted_segment_times: &mut [Vec<(f64, TimeSpan)>],
-) {
+) -> f64 {
     let mut len = segments.len();
 
     for ((i, segment), weighted_segment_times) in segments
@@ -117,9 +119,9 @@ pub(super) fn generate_for_timing_method_with_buf(
     let (mut perc_min, mut perc_max) = (0.0, 1.0);
 
     // Try to find the correct percentile
-    for _ in 0..50 {
+    for _ in 0..TRIES {
         let percentile = (perc_max + perc_min) / 2.0;
-        let mut sum = TimeSpan::zero();
+        let mut sum = offset;
 
         time_span_buf.clear();
         time_span_buf.extend(
@@ -157,13 +159,33 @@ pub(super) fn generate_for_timing_method_with_buf(
 
         // Binary search the correct percentile
         if sum == goal_time {
-            break;
+            return percentile;
         } else if sum < goal_time {
             perc_min = percentile;
         } else {
             perc_max = percentile;
         }
     }
+
+    (perc_max + perc_min) / 2.0
+}
+
+pub(super) fn generate_for_timing_method_with_buf(
+    segments: &mut [Segment],
+    method: TimingMethod,
+    goal_time: Option<TimeSpan>,
+    comparison: &str,
+    time_span_buf: &mut Vec<TimeSpan>,
+    all_weighted_segment_times: &mut [Vec<(f64, TimeSpan)>],
+) {
+    let _percentile = determine_percentile(
+        TimeSpan::zero(),
+        segments,
+        method,
+        goal_time,
+        time_span_buf,
+        all_weighted_segment_times,
+    );
 
     for (segment, &val) in segments.iter_mut().zip(time_span_buf.iter()) {
         segment.comparison_mut(comparison)[method] = Some(val);

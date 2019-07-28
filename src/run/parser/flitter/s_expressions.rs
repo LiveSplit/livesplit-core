@@ -41,8 +41,8 @@ pub enum Error {
     },
 }
 
-impl<'a> From<BufReadDecoderError<'a>> for Error {
-    fn from(error: BufReadDecoderError<'a>) -> Error {
+impl From<BufReadDecoderError<'_>> for Error {
+    fn from(error: BufReadDecoderError<'_>) -> Error {
         match error {
             BufReadDecoderError::InvalidByteSequence(_) => Error::InvalidUTF8,
             BufReadDecoderError::Io(source) => Error::Io { source },
@@ -206,7 +206,7 @@ where
     }
 }
 
-impl<'de, 'a, B: BufRead> de::Deserializer<'de> for &'a mut Deserializer<B> {
+impl<'de, B: BufRead> de::Deserializer<'de> for &mut Deserializer<B> {
     type Error = Error;
 
     fn deserialize_any<V>(self, _visitor: V) -> Result<V::Value>
@@ -421,7 +421,7 @@ impl<'de, 'a, B: BufRead> de::Deserializer<'de> for &'a mut Deserializer<B> {
     }
 }
 
-impl<'de, 'a, B: BufRead> SeqAccess<'de> for &'a mut Deserializer<B> {
+impl<'de, B: BufRead> SeqAccess<'de> for &mut Deserializer<B> {
     type Error = Error;
 
     fn next_element_seed<T>(&mut self, seed: T) -> Result<Option<T::Value>>
@@ -438,7 +438,7 @@ impl<'de, 'a, B: BufRead> SeqAccess<'de> for &'a mut Deserializer<B> {
     }
 }
 
-impl<'de, 'a, B: BufRead> MapAccess<'de> for &'a mut Deserializer<B> {
+impl<'de, B: BufRead> MapAccess<'de> for &mut Deserializer<B> {
     type Error = Error;
 
     fn next_key_seed<K>(&mut self, seed: K) -> Result<Option<K::Value>>

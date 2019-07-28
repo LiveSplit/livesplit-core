@@ -6,8 +6,6 @@
     clippy::complexity,
     rust_2018_idioms
 )]
-// Necessary for some larger quick-error based errors.
-#![recursion_limit = "128"]
 // Clippy false positives
 #![allow(
     clippy::block_in_if_condition_stmt,

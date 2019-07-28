@@ -418,6 +418,9 @@ fn render_component<B: Backend>(
         ComponentState::Delta(component) => {
             component::delta::render(context, dim, component, state)
         }
+        ComponentState::PbChance(component) => {
+            component::pb_chance::render(context, dim, component, state)
+        }
         ComponentState::PossibleTimeSave(component) => {
             component::possible_time_save::render(context, dim, component, state)
         }
@@ -450,7 +453,7 @@ struct RenderContext<'b, B: Backend> {
     text_glyph_cache: &'b mut GlyphCache<B::Mesh>,
 }
 
-impl<'b, B: Backend> RenderContext<'b, B> {
+impl<B: Backend> RenderContext<'_, B> {
     fn backend_render_rectangle(&mut self, [x1, y1]: Pos, [x2, y2]: Pos, colors: [Rgba; 4]) {
         let transform = self
             .transform
@@ -823,6 +826,7 @@ fn component_width(component: &ComponentState) -> f32 {
         ComponentState::CurrentComparison(_) => 6.0,
         ComponentState::CurrentPace(_) => 6.0,
         ComponentState::Delta(_) => 6.0,
+        ComponentState::PbChance(_) => 6.0,
         ComponentState::PossibleTimeSave(_) => 6.0,
         ComponentState::PreviousSegment(_) => 6.0,
         ComponentState::SumOfBest(_) => 6.0,
@@ -868,6 +872,13 @@ fn component_height(component: &ComponentState) -> f32 {
         }
         ComponentState::Graph(state) => state.height as f32 * PSEUDO_PIXELS,
         ComponentState::Separator(_) => SEPARATOR_THICKNESS,
+        ComponentState::PbChance(state) => {
+            if state.display_two_rows {
+                TWO_ROW_HEIGHT
+            } else {
+                DEFAULT_COMPONENT_HEIGHT
+            }
+        }
         ComponentState::PossibleTimeSave(state) => {
             if state.display_two_rows {
                 TWO_ROW_HEIGHT

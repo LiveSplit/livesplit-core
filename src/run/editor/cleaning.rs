@@ -64,7 +64,7 @@ pub struct CleanUp {
     run_index: i32,
 }
 
-impl<'r> fmt::Display for PotentialCleanUp<'r> {
+impl fmt::Display for PotentialCleanUp<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let short = Short::new();
 
@@ -111,7 +111,7 @@ impl<'r> fmt::Display for PotentialCleanUp<'r> {
     }
 }
 
-impl<'a> From<PotentialCleanUp<'a>> for CleanUp {
+impl From<PotentialCleanUp<'_>> for CleanUp {
     fn from(potential: PotentialCleanUp<'_>) -> Self {
         potential.clean_up
     }

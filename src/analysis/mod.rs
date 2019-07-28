@@ -3,6 +3,7 @@
 
 pub mod current_pace;
 pub mod delta;
+pub mod pb_chance;
 pub mod possible_time_save;
 pub mod state_helper;
 pub mod sum_of_segments;

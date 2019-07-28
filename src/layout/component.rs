@@ -1,6 +1,6 @@
 use super::{ComponentSettings, ComponentState, GeneralSettings};
 use crate::component::{
-    blank_space, current_comparison, current_pace, delta, detailed_timer, graph,
+    blank_space, current_comparison, current_pace, delta, detailed_timer, graph, pb_chance,
     possible_time_save, previous_segment, separator, splits, sum_of_best, text, timer, title,
     total_playtime,
 };
@@ -24,6 +24,8 @@ pub enum Component {
     DetailedTimer(Box<detailed_timer::Component>),
     /// The Graph Component.
     Graph(graph::Component),
+    /// The PB Chance Component.
+    PbChance(pb_chance::Component),
     /// The Possible Time Save Component.
     PossibleTimeSave(possible_time_save::Component),
     /// The Previous Segment Component.
@@ -67,6 +69,7 @@ impl Component {
             Component::Graph(component) => {
                 ComponentState::Graph(component.state(timer, layout_settings))
             }
+            Component::PbChance(component) => ComponentState::PbChance(component.state(timer)),
             Component::PossibleTimeSave(component) => {
                 ComponentState::PossibleTimeSave(component.state(timer))
             }
@@ -109,6 +112,9 @@ impl Component {
                 ComponentSettings::DetailedTimer(Box::new(component.settings().clone()))
             }
             Component::Graph(component) => ComponentSettings::Graph(component.settings().clone()),
+            Component::PbChance(component) => {
+                ComponentSettings::PbChance(component.settings().clone())
+            }
             Component::PossibleTimeSave(component) => {
                 ComponentSettings::PossibleTimeSave(component.settings().clone())
             }
@@ -138,6 +144,7 @@ impl Component {
             Component::Delta(component) => component.name(),
             Component::DetailedTimer(component) => component.name(),
             Component::Graph(component) => component.name(),
+            Component::PbChance(component) => component.name(),
             Component::PossibleTimeSave(component) => component.name(),
             Component::PreviousSegment(component) => component.name(),
             Component::Separator(component) => component.name(),
@@ -191,6 +198,7 @@ impl Component {
             Component::Delta(component) => component.settings_description(),
             Component::DetailedTimer(component) => component.settings_description(),
             Component::Graph(component) => component.settings_description(),
+            Component::PbChance(component) => component.settings_description(),
             Component::PossibleTimeSave(component) => component.settings_description(),
             Component::PreviousSegment(component) => component.settings_description(),
             Component::Separator(component) => component.settings_description(),
@@ -219,6 +227,7 @@ impl Component {
             Component::Delta(component) => component.set_value(index, value),
             Component::DetailedTimer(component) => component.set_value(index, value),
             Component::Graph(component) => component.set_value(index, value),
+            Component::PbChance(component) => component.set_value(index, value),
             Component::PossibleTimeSave(component) => component.set_value(index, value),
             Component::PreviousSegment(component) => component.set_value(index, value),
             Component::Separator(component) => component.set_value(index, value),
