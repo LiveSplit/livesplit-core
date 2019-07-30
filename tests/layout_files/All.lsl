@@ -355,5 +355,16 @@
         <CustomSettings />
       </Settings>
     </Component>
+    <Component>
+      <Path>PBChance.dll</Path>
+      <Settings>
+        <Version>0.1</Version>
+        <AttemptCount>50</AttemptCount>
+        <UsePercentOfAttempts>True</UsePercentOfAttempts>
+        <UseFixedAttempts>False</UseFixedAttempts>
+        <DisplayOdds>False</DisplayOdds>
+        <IgnoreRunCount>False</IgnoreRunCount>
+      </Settings>
+    </Component>
   </Components>
 </Layout>

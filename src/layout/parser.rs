@@ -22,6 +22,7 @@ mod current_pace;
 mod delta;
 mod detailed_timer;
 mod graph;
+mod pb_chance;
 mod possible_time_save;
 mod previous_segment;
 mod splits;
@@ -354,6 +355,7 @@ where
                         Box::new(detailed_timer::Component::new()).into()
                     }
                     "LiveSplit.Graph.dll" => graph::Component::new().into(),
+                    "PBChance.dll" => pb_chance::Component::new().into(),
                     "LiveSplit.PossibleTimeSave.dll" => possible_time_save::Component::new().into(),
                     "LiveSplit.PreviousSegment.dll" => previous_segment::Component::new().into(),
                     "" => separator::Component::new().into(),
@@ -384,6 +386,7 @@ where
                         detailed_timer::settings(reader, tag.into_buf(), c)
                     }
                     Component::Graph(c) => graph::settings(reader, tag.into_buf(), c),
+                    Component::PbChance(c) => pb_chance::settings(reader, tag.into_buf(), c),
                     Component::PossibleTimeSave(c) => {
                         possible_time_save::settings(reader, tag.into_buf(), c)
                     }
@@ -399,7 +402,6 @@ where
                     Component::TotalPlaytime(c) => {
                         total_playtime::settings(reader, tag.into_buf(), c)
                     }
-                    Component::PbChance(_) => unreachable!(),
                 }
             } else {
                 end_tag(reader, tag.into_buf())
