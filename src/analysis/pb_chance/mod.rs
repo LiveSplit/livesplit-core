@@ -34,7 +34,7 @@ pub fn for_timer(timer: &Timer) -> f64 {
     let method = timer.current_timing_method();
     let all_segments = timer.run().segments();
 
-    let live_delta = super::check_live_delta(timer, true, comparison::personal_best::NAME, method);
+    let live_delta = super::check_live_delta(timer, false, comparison::personal_best::NAME, method);
 
     let (segments, current_time) = if live_delta.is_some() {
         // If there is a live delta, act as if we did just split.
