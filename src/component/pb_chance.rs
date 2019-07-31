@@ -1,4 +1,10 @@
-use super::DEFAULT_INFO_TEXT_GRADIENT;
+//! Provides the PB Chance Component and relevant types for using it. The PB
+//! Chance Component is a component that shows how likely it is to beat the
+//! Personal Best. If there is no active attempt it shows the general chance of
+//! beating the Personal Best. During an attempt it actively changes based on
+//! how well the attempt is going.
+
+use super::DEFAULT_KEY_VALUE_GRADIENT;
 use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
 use crate::{analysis::pb_chance, Timer};
 use serde::{Deserialize, Serialize};
@@ -6,6 +12,10 @@ use serde_json::{to_writer, Result};
 use std::borrow::Cow;
 use std::io::Write;
 
+/// The PB Chance Component is a component that shows how likely it is to beat
+/// the Personal Best. If there is no active attempt it shows the general chance
+/// of beating the Personal Best. During an attempt it actively changes based on
+/// how well the attempt is going.
 #[derive(Default, Clone)]
 pub struct Component {
     settings: Settings,
@@ -31,7 +41,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            background: DEFAULT_INFO_TEXT_GRADIENT,
+            background: DEFAULT_KEY_VALUE_GRADIENT,
             display_two_rows: false,
             label_color: None,
             value_color: None,

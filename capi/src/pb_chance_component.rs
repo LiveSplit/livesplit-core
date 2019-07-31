@@ -1,4 +1,7 @@
-// TODO:
+//! The PB Chance Component is a component that shows how likely it is to beat
+//! the Personal Best. If there is no active attempt it shows the general chance
+//! of beating the Personal Best. During an attempt it actively changes based on
+//! how well the attempt is going.
 
 use super::{output_vec, Json};
 use crate::component::OwnedComponent;
@@ -9,7 +12,7 @@ use livesplit_core::Timer;
 /// type
 pub type OwnedPbChanceComponent = Box<PbChanceComponent>;
 
-/// Creates a new Possible Time Save Component.
+/// Creates a new PB Chance Component.
 #[no_mangle]
 pub extern "C" fn PbChanceComponent_new() -> OwnedPbChanceComponent {
     Box::new(PbChanceComponent::new())

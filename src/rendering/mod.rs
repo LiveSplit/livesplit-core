@@ -556,12 +556,12 @@ impl<B: Backend> RenderContext<'_, B> {
         self.render_rectangle([0.0, 0.0], [1.0, 1.0], background);
     }
 
-    fn render_info_time_component(
+    fn render_numerical_key_value_component(
         &mut self,
-        texts: &[&str],
+        keys: &[&str],
         value: &str,
         [width, height]: [f32; 2],
-        text_color: Color,
+        key_color: Color,
         value_color: Color,
         display_two_rows: bool,
     ) {
@@ -576,26 +576,26 @@ impl<B: Backend> RenderContext<'_, B> {
         } else {
             left_of_value_x
         };
-        let text = self.choose_abbreviation(
-            texts.iter().cloned(),
+        let key = self.choose_abbreviation(
+            keys.iter().cloned(),
             DEFAULT_TEXT_SIZE,
             end_x - BOTH_PADDINGS,
         );
         self.render_text_ellipsis(
-            text,
+            key,
             [PADDING, TEXT_ALIGN_TOP],
             DEFAULT_TEXT_SIZE,
-            [text_color; 2],
+            [key_color; 2],
             end_x - PADDING,
         );
     }
 
-    fn render_info_text_component(
+    fn render_textual_key_value_component(
         &mut self,
-        texts: &[&str],
+        keys: &[&str],
         value: &str,
         [width, height]: [f32; 2],
-        text_color: Color,
+        key_color: Color,
         value_color: Color,
         display_two_rows: bool,
     ) {
@@ -610,16 +610,16 @@ impl<B: Backend> RenderContext<'_, B> {
         } else {
             left_of_value_x
         };
-        let text = self.choose_abbreviation(
-            texts.iter().cloned(),
+        let key = self.choose_abbreviation(
+            keys.iter().cloned(),
             DEFAULT_TEXT_SIZE,
             end_x - BOTH_PADDINGS,
         );
         self.render_text_ellipsis(
-            text,
+            key,
             [PADDING, TEXT_ALIGN_TOP],
             DEFAULT_TEXT_SIZE,
-            [text_color; 2],
+            [key_color; 2],
             end_x - PADDING,
         );
     }

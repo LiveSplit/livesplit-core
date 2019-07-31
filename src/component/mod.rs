@@ -42,7 +42,7 @@ use palette::rgb::Rgb;
 use palette::Alpha;
 use std::marker::PhantomData;
 
-const DEFAULT_INFO_TEXT_GRADIENT: Gradient = Gradient::Vertical(
+const DEFAULT_KEY_VALUE_GRADIENT: Gradient = Gradient::Vertical(
     Color {
         rgba: Alpha {
             alpha: 0.06,

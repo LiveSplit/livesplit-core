@@ -3,7 +3,7 @@
 //! attempt's final time, if the current attempt's pace matches the chosen
 //! comparison for the remainder of the run.
 
-use super::DEFAULT_INFO_TEXT_GRADIENT;
+use super::DEFAULT_KEY_VALUE_GRADIENT;
 use crate::analysis::current_pace;
 use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
 use crate::timing::formatter::{Accuracy, Regular, TimeFormatter};
@@ -46,7 +46,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            background: DEFAULT_INFO_TEXT_GRADIENT,
+            background: DEFAULT_KEY_VALUE_GRADIENT,
             comparison_override: None,
             display_two_rows: false,
             label_color: None,

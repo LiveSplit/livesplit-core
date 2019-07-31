@@ -12,7 +12,7 @@ pub(in crate::rendering) fn render(
     layout_state: &LayoutState,
 ) {
     context.render_rectangle([0.0, 0.0], dim, &component.background);
-    context.render_info_time_component(
+    context.render_numerical_key_value_component(
         &[&component.text, comparison::shorten(&component.text)],
         &component.time,
         dim,

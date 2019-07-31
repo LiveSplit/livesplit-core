@@ -12,8 +12,7 @@ pub(in crate::rendering) fn render(
 ) {
     context.render_rectangle([0.0, 0.0], dim, &component.background);
     let abbreviations = [component.text.as_str()];
-    // TODO: It's not really a time though?!
-    context.render_info_time_component(
+    context.render_numerical_key_value_component(
         &abbreviations,
         &component.pb_chance,
         dim,

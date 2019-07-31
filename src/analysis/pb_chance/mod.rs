@@ -1,3 +1,13 @@
+//! Provides functionality to calculate the chance to beat the Personal Best for
+//! either a Run or a Timer. For a Run it calculates the general chance to beat
+//! the Personal Best. For a Timer the chance is calculated in terms of the
+//! current attempt. If there is no attempt in progress it yields the same
+//! result as the PB chance for the Run. The value is being reported as a
+//! floating point number in the range from 0 (0%) to 1 (100%).
+//!
+//! The PB chance is currently calculated through the Balanced PB algorithm. The
+//! PB chance is the percentile at which the Balanced PB algorithm finds the PB.
+
 use crate::{comparison, Run, Segment, TimeSpan, Timer, TimingMethod};
 
 #[cfg(test)]
@@ -26,10 +36,18 @@ fn calculate(segments: &[Segment], method: TimingMethod, offset: TimeSpan) -> f6
     )
 }
 
+/// Calculates the PB chance for a run. No information about an active attempt
+/// is used. Instead the general chance to beat the Personal Best is calculated.
+/// The value is being reported as a floating point number in the range from 0
+/// (0%) to 1 (100%).
 pub fn for_run(run: &Run, method: TimingMethod) -> f64 {
     calculate(run.segments(), method, TimeSpan::zero())
 }
 
+/// Calculates the PB chance for a timer. The chance is calculated in terms of
+/// the current attempt. If there is no attempt in progress it yields the same
+/// result as the PB chance for the run. The value is being reported as a
+/// floating point number in the range from 0 (0%) to 1 (100%).
 pub fn for_timer(timer: &Timer) -> f64 {
     let method = timer.current_timing_method();
     let all_segments = timer.run().segments();
