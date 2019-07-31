@@ -2,7 +2,7 @@
 //! Component is a component that shows the how far ahead or behind the current
 //! attempt is compared to the chosen comparison.
 
-use super::DEFAULT_INFO_TEXT_GRADIENT;
+use super::DEFAULT_KEY_VALUE_GRADIENT;
 use crate::analysis::{delta, state_helper};
 use crate::settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
 use crate::timing::formatter::{Accuracy, Delta, TimeFormatter};
@@ -47,7 +47,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            background: DEFAULT_INFO_TEXT_GRADIENT,
+            background: DEFAULT_KEY_VALUE_GRADIENT,
             comparison_override: None,
             display_two_rows: false,
             label_color: None,

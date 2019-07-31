@@ -5,7 +5,7 @@
 //! displayed. This component switches to a `Live Segment` view that shows
 //! active time loss whenever the runner is losing time on the current segment.
 
-use super::DEFAULT_INFO_TEXT_GRADIENT;
+use super::DEFAULT_KEY_VALUE_GRADIENT;
 use crate::settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
 use crate::timing::formatter::{Accuracy, Delta, PossibleTimeSave, TimeFormatter};
 use crate::{analysis, comparison, GeneralLayoutSettings, Timer, TimerPhase};
@@ -53,7 +53,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            background: DEFAULT_INFO_TEXT_GRADIENT,
+            background: DEFAULT_KEY_VALUE_GRADIENT,
             comparison_override: None,
             display_two_rows: false,
             label_color: None,

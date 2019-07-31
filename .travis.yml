@@ -21,10 +21,6 @@ matrix:
       rust: nightly
 
   include:
-    # weird error
-    # https://travis-ci.org/LiveSplit/livesplit-core/jobs/327011754
-    # - env: TARGET=sparcv9-sun-solaris
-
     # no-std
     # - env: TARGET=x86_64-unknown-dragonfly
     # - env: TARGET=thumbv6m-none-eabi
@@ -41,11 +37,37 @@ matrix:
       rust: nightly
 
     # Linux
+    - env: TARGET=i586-unknown-linux-gnu
+    - env: TARGET=i586-unknown-linux-musl NO_DYLIB=1 DISABLE_TESTS=1
     - env: TARGET=i686-unknown-linux-gnu
     - env: TARGET=i686-unknown-linux-musl NO_DYLIB=1
     - env: TARGET=x86_64-unknown-linux-gnu
     - env: TARGET=x86_64-unknown-linux-musl NO_DYLIB=1
-    - env: TARGET=i586-unknown-linux-gnu
+    - env: TARGET=x86_64-unknown-linux-gnux32 DISABLE_TESTS=1 NO_DYLIB=1
+    - env: TARGET=arm-unknown-linux-gnueabi DISABLE_TESTS=1
+    - env: TARGET=arm-unknown-linux-musleabi DISABLE_TESTS=1 NO_DYLIB=1
+    - env: TARGET=arm-unknown-linux-gnueabihf DISABLE_TESTS=1 NO_DYLIB=1
+    - env: TARGET=arm-unknown-linux-musleabihf DISABLE_TESTS=1 NO_DYLIB=1
+    - env: TARGET=armv5te-unknown-linux-gnueabi DISABLE_TESTS=1 NO_DYLIB=1
+    - env: TARGET=armv5te-unknown-linux-musleabi DISABLE_TESTS=1 NO_DYLIB=1
+    - env: TARGET=armv7-unknown-linux-gnueabihf
+    - env: TARGET=armv7-unknown-linux-musleabihf DISABLE_TESTS=1 NO_DYLIB=1
+    - env: TARGET=aarch64-unknown-linux-gnu
+    - env: TARGET=mips-unknown-linux-gnu
+    - env: TARGET=mips64-unknown-linux-gnuabi64
+    - env: TARGET=mips64el-unknown-linux-gnuabi64
+    - env: TARGET=mipsel-unknown-linux-gnu
+    - env: TARGET=mipsel-unknown-linux-musl DISABLE_TESTS=1 NO_DYLIB=1
+    # Unstable
+    # - env: TARGET=mipsisa32r6-unknown-linux-gnu
+    # - env: TARGET=mipsisa32r6el-unknown-linux-gnu
+    # - env: TARGET=mipsisa64r6-unknown-linux-gnuabi64
+    # - env: TARGET=mipsisa64r6el-unknown-linux-gnuabi64
+    - env: TARGET=powerpc-unknown-linux-gnu DISABLE_TESTS=1
+    - env: TARGET=powerpc64-unknown-linux-gnu
+    - env: TARGET=powerpc64le-unknown-linux-gnu
+    - env: TARGET=s390x-unknown-linux-gnu DISABLE_TESTS=1
+    - env: TARGET=sparc64-unknown-linux-gnu DISABLE_TESTS=1
 
     # iOS
     - env: TARGET=aarch64-apple-ios DISABLE_TESTS=1 NO_DYLIB=1
@@ -60,11 +82,11 @@ matrix:
       os: osx
 
     # Android
-    - env: TARGET=arm-linux-androideabi DISABLE_TESTS=1
-    - env: TARGET=aarch64-linux-android DISABLE_TESTS=1
-    - env: TARGET=armv7-linux-androideabi DISABLE_TESTS=1
     - env: TARGET=i686-linux-android DISABLE_TESTS=1
     - env: TARGET=x86_64-linux-android
+    - env: TARGET=arm-linux-androideabi DISABLE_TESTS=1
+    - env: TARGET=armv7-linux-androideabi DISABLE_TESTS=1
+    - env: TARGET=aarch64-linux-android DISABLE_TESTS=1
 
     # OSX
     - env: TARGET=i686-apple-darwin
@@ -72,34 +94,16 @@ matrix:
     - env: TARGET=x86_64-apple-darwin
       os: osx
 
-    # New Architectures
-    - env: TARGET=arm-unknown-linux-gnueabi DISABLE_TESTS=1
-    - env: TARGET=armv7-unknown-linux-gnueabihf
-    - env: TARGET=sparc64-unknown-linux-gnu DISABLE_TESTS=1
-
-    # Failing due to various linker errors:
-    # https://travis-ci.org/LiveSplit/livesplit-core/builds/517187311
-    # - env: TARGET=arm-unknown-linux-musleabi DISABLE_TESTS=1
-    # - env: TARGET=armv7-unknown-linux-musleabihf DISABLE_TESTS=1
-    # - env: TARGET=i586-unknown-linux-musl
-    # - env: TARGET=armv5te-unknown-linux-gnueabi
-    # - env: TARGET=x86_64-unknown-linux-gnux32
-
     # *BSD
     - env: TARGET=i686-unknown-freebsd DISABLE_TESTS=1
     - env: TARGET=x86_64-unknown-freebsd DISABLE_TESTS=1
     - env: TARGET=x86_64-unknown-netbsd DISABLE_TESTS=1
 
-    # Other architectures
-    - env: TARGET=aarch64-unknown-linux-gnu
-    - env: TARGET=mips-unknown-linux-gnu
-    - env: TARGET=mips64-unknown-linux-gnuabi64
-    - env: TARGET=mips64el-unknown-linux-gnuabi64
-    - env: TARGET=mipsel-unknown-linux-gnu
-    - env: TARGET=powerpc-unknown-linux-gnu DISABLE_TESTS=1
-    - env: TARGET=powerpc64-unknown-linux-gnu
-    - env: TARGET=s390x-unknown-linux-gnu DISABLE_TESTS=1
-    - env: TARGET=powerpc64le-unknown-linux-gnu
+    # Solaris
+    - env: TARGET=x86_64-sun-solaris DISABLE_TESTS=1 NO_DYLIB=1
+    # weird error
+    # https://travis-ci.org/LiveSplit/livesplit-core/jobs/327011754
+    # - env: TARGET=sparcv9-sun-solaris
 
     # Testing other channels
     - env: TARGET=x86_64-unknown-linux-gnu
@@ -145,11 +149,11 @@ before_cache:
   # Travis can't cache files that are not readable by "others"
   - chmod -R a+r $HOME/.cargo
 
-# branches:
-#   only:
-#     # release tags
-#     - /^v\d+\.\d+\.\d+.*$/
-#     - master
+branches:
+  only:
+    # release tags
+    - /^v\d+\.\d+\.\d+.*$/
+    - master
 
 notifications:
   email:

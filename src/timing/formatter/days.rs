@@ -29,7 +29,7 @@ impl Days {
     }
 }
 
-impl<'a> TimeFormatter<'a> for Days {
+impl TimeFormatter<'_> for Days {
     type Inner = Inner;
 
     fn format<T>(&self, time: T) -> Self::Inner

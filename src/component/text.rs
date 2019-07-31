@@ -3,7 +3,7 @@
 //! centered text, or split up into a left and right text, which is suitable for
 //! a situation where you have a label and a value.
 
-use super::DEFAULT_INFO_TEXT_GRADIENT;
+use super::DEFAULT_KEY_VALUE_GRADIENT;
 use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
 use serde::{Deserialize, Serialize};
 use serde_json::{to_writer, Result};
@@ -116,7 +116,7 @@ pub struct State {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            background: DEFAULT_INFO_TEXT_GRADIENT,
+            background: DEFAULT_KEY_VALUE_GRADIENT,
             display_two_rows: false,
             left_center_color: None,
             right_color: None,

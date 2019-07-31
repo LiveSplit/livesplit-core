@@ -30,7 +30,7 @@ pub(in crate::rendering) fn render(
             &a4[..]
         }
     };
-    context.render_info_time_component(
+    context.render_numerical_key_value_component(
         abbreviations,
         &component.time,
         dim,

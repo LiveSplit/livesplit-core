@@ -35,7 +35,31 @@ main() {
         i586-unknown-linux-musl)
             rustup target install $TARGET
             ;;
+        arm-unknown-linux-gnueabihf)
+            rustup target install $TARGET
+            ;;
+        arm-unknown-linux-musleabihf)
+            rustup target install $TARGET
+            ;;
         armv5te-unknown-linux-gnueabi)
+            rustup target install $TARGET
+            ;;
+        armv5te-unknown-linux-musleabi)
+            rustup target install $TARGET
+            ;;
+        mipsel-unknown-linux-musl)
+            rustup target install $TARGET
+            ;;
+        mipsisa32r6-unknown-linux-gnu)
+            rustup target install $TARGET
+            ;;
+        mipsisa32r6el-unknown-linux-gnu)
+            rustup target install $TARGET
+            ;;
+        mipsisa64r6-unknown-linux-gnuabi64)
+            rustup target install $TARGET
+            ;;
+        mipsisa64r6el-unknown-linux-gnuabi64)
             rustup target install $TARGET
             ;;
     esac

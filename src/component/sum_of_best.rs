@@ -7,7 +7,7 @@
 //! best segment times. The name is therefore a bit misleading, but sticks
 //! around for historical reasons.
 
-use super::DEFAULT_INFO_TEXT_GRADIENT;
+use super::DEFAULT_KEY_VALUE_GRADIENT;
 use crate::analysis::sum_of_segments::calculate_best;
 use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
 use crate::timing::formatter::{Accuracy, Regular, TimeFormatter};
@@ -51,7 +51,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            background: DEFAULT_INFO_TEXT_GRADIENT,
+            background: DEFAULT_KEY_VALUE_GRADIENT,
             display_two_rows: false,
             label_color: None,
             value_color: None,

@@ -870,4 +870,4 @@ impl<'a> Iterator for ComparisonsIter<'a> {
     }
 }
 
-impl<'a> ExactSizeIterator for ComparisonsIter<'a> {}
+impl ExactSizeIterator for ComparisonsIter<'_> {}

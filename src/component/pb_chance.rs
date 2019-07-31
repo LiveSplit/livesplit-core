@@ -1,21 +1,21 @@
-//! Provides the Current Pace Component and relevant types for using it. The
-//! Current Pace Component is a component that shows a prediction of the current
-//! attempt's final time, if the current attempt's pace matches the chosen
-//! comparison for the remainder of the run.
+//! Provides the PB Chance Component and relevant types for using it. The PB
+//! Chance Component is a component that shows how likely it is to beat the
+//! Personal Best. If there is no active attempt it shows the general chance of
+//! beating the Personal Best. During an attempt it actively changes based on
+//! how well the attempt is going.
 
 use super::DEFAULT_KEY_VALUE_GRADIENT;
-use crate::analysis::current_pace;
 use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
-use crate::timing::formatter::{Accuracy, Regular, TimeFormatter};
-use crate::{comparison, Timer, TimerPhase};
+use crate::{analysis::pb_chance, Timer};
 use serde::{Deserialize, Serialize};
 use serde_json::{to_writer, Result};
 use std::borrow::Cow;
 use std::io::Write;
 
-/// The Current Pace Component is a component that shows a prediction of the
-/// current attempt's final time, if the current attempt's pace matches the
-/// chosen comparison for the remainder of the run.
+/// The PB Chance Component is a component that shows how likely it is to beat
+/// the Personal Best. If there is no active attempt it shows the general chance
+/// of beating the Personal Best. During an attempt it actively changes based on
+/// how well the attempt is going.
 #[derive(Default, Clone)]
 pub struct Component {
     settings: Settings,
@@ -27,9 +27,6 @@ pub struct Component {
 pub struct Settings {
     /// The background shown behind the component.
     pub background: Gradient,
-    /// The comparison chosen. Uses the Timer's current comparison if set to
-    /// `None`.
-    pub comparison_override: Option<String>,
     /// Specifies whether to display the name of the component and its value in
     /// two separate rows.
     pub display_two_rows: bool,
@@ -39,19 +36,15 @@ pub struct Settings {
     /// The color of the value. If `None` is specified, the color is taken from
     /// the layout.
     pub value_color: Option<Color>,
-    /// The accuracy of the time shown.
-    pub accuracy: Accuracy,
 }
 
 impl Default for Settings {
     fn default() -> Self {
         Self {
             background: DEFAULT_KEY_VALUE_GRADIENT,
-            comparison_override: None,
             display_two_rows: false,
             label_color: None,
             value_color: None,
-            accuracy: Accuracy::Seconds,
         }
     }
 }
@@ -69,8 +62,8 @@ pub struct State {
     pub value_color: Option<Color>,
     /// The label's text.
     pub text: String,
-    /// The current pace.
-    pub time: String,
+    /// The current PB chance.
+    pub pb_chance: String,
     /// Specifies whether to display the name of the component and its value in
     /// two separate rows.
     pub display_two_rows: bool,
@@ -87,12 +80,12 @@ impl State {
 }
 
 impl Component {
-    /// Creates a new Current Pace Component.
+    /// Creates a new Possible Time Save Component.
     pub fn new() -> Self {
         Default::default()
     }
 
-    /// Creates a new Current Pace Component with the given settings.
+    /// Creates a new Possible Time Save Component with the given settings.
     pub fn with_settings(settings: Settings) -> Self {
         Self { settings }
     }
@@ -109,50 +102,19 @@ impl Component {
 
     /// Accesses the name of the component.
     pub fn name(&self) -> Cow<'_, str> {
-        self.text(
-            self.settings
-                .comparison_override
-                .as_ref()
-                .map(String::as_str),
-        )
-    }
-
-    fn text(&self, comparison: Option<&str>) -> Cow<'_, str> {
-        if let Some(comparison) = comparison {
-            match comparison {
-                comparison::personal_best::NAME => "Current Pace".into(),
-                comparison::best_segments::NAME => "Best Possible Time".into(),
-                comparison::worst_segments::NAME => "Worst Possible Time".into(),
-                comparison::average_segments::NAME => "Predicted Time".into(),
-                comparison => format!("Current Pace ({})", comparison::shorten(comparison)).into(),
-            }
-        } else {
-            "Current Pace".into()
-        }
+        "PB Chance".into()
     }
 
     /// Calculates the component's state based on the timer provided.
     pub fn state(&self, timer: &Timer) -> State {
-        let comparison = comparison::resolve(&self.settings.comparison_override, timer);
-        let comparison = comparison::or_current(comparison, timer);
-        let text = self.text(Some(comparison)).into_owned();
-
-        let current_pace = if timer.current_phase() == TimerPhase::NotRunning
-            && text.starts_with("Current Pace")
-        {
-            None
-        } else {
-            current_pace::calculate(timer, comparison)
-        };
+        let chance = pb_chance::for_timer(timer);
 
         State {
             background: self.settings.background,
             label_color: self.settings.label_color,
             value_color: self.settings.value_color,
-            text,
-            time: Regular::with_accuracy(self.settings.accuracy)
-                .format(current_pace)
-                .to_string(),
+            text: self.name().into_owned(),
+            pb_chance: format!("{:.1}%", 100.0 * chance),
             display_two_rows: self.settings.display_two_rows,
         }
     }
@@ -163,16 +125,11 @@ impl Component {
         SettingsDescription::with_fields(vec![
             Field::new("Background".into(), self.settings.background.into()),
             Field::new(
-                "Comparison".into(),
-                self.settings.comparison_override.clone().into(),
-            ),
-            Field::new(
                 "Display 2 Rows".into(),
                 self.settings.display_two_rows.into(),
             ),
             Field::new("Label Color".into(), self.settings.label_color.into()),
             Field::new("Value Color".into(), self.settings.value_color.into()),
-            Field::new("Accuracy".into(), self.settings.accuracy.into()),
         ])
     }
 
@@ -186,11 +143,9 @@ impl Component {
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
             0 => self.settings.background = value.into(),
-            1 => self.settings.comparison_override = value.into(),
-            2 => self.settings.display_two_rows = value.into(),
-            3 => self.settings.label_color = value.into(),
-            4 => self.settings.value_color = value.into(),
-            5 => self.settings.accuracy = value.into(),
+            1 => self.settings.display_two_rows = value.into(),
+            2 => self.settings.label_color = value.into(),
+            3 => self.settings.value_color = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

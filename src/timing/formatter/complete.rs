@@ -30,7 +30,7 @@ impl Complete {
     }
 }
 
-impl<'a> TimeFormatter<'a> for Complete {
+impl TimeFormatter<'_> for Complete {
     type Inner = Inner;
 
     fn format<T>(&self, time: T) -> Self::Inner

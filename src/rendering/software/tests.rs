@@ -74,9 +74,9 @@ fn all_components() {
 
     let state = layout.state(&timer);
 
-    check_dims(&state, [300, 800], 0xa634d175, "all_components");
+    check_dims(&state, [300, 800], 0xed488faa, "all_components");
 
-    check_dims(&state, [150, 800], 0xdc88ac65, "all_components_thin");
+    check_dims(&state, [150, 800], 0x5d3b1176, "all_components_thin");
 }
 
 #[test]

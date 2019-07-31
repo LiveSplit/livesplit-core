@@ -24,7 +24,7 @@ pub(in crate::rendering) fn render(
         b = [&component.text, "Live Segment", "Live Seg."];
         &b[..]
     };
-    context.render_info_time_component(
+    context.render_numerical_key_value_component(
         abbreviations,
         &component.time,
         dim,

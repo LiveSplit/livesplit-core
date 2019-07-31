@@ -46,7 +46,7 @@ impl Default for Short {
     }
 }
 
-impl<'a> TimeFormatter<'a> for Short {
+impl TimeFormatter<'_> for Short {
     type Inner = Inner;
 
     fn format<T>(&self, time: T) -> Self::Inner

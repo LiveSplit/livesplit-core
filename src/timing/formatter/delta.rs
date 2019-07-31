@@ -53,7 +53,7 @@ impl Default for Delta {
     }
 }
 
-impl<'a> TimeFormatter<'a> for Delta {
+impl TimeFormatter<'_> for Delta {
     type Inner = Inner;
 
     fn format<T>(&self, time: T) -> Self::Inner

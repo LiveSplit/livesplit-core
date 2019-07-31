@@ -1,6 +1,6 @@
 use super::Component;
 use crate::component::{
-    blank_space, current_comparison, current_pace, delta, detailed_timer, graph,
+    blank_space, current_comparison, current_pace, delta, detailed_timer, graph, pb_chance,
     possible_time_save, previous_segment, separator, splits, sum_of_best, text, timer, title,
     total_playtime,
 };
@@ -21,6 +21,8 @@ pub enum ComponentSettings {
     DetailedTimer(Box<detailed_timer::Settings>),
     /// The Settings for the Graph Component.
     Graph(graph::Settings),
+    /// The Settings for the PB Chance Component.
+    PbChance(pb_chance::Settings),
     /// The Settings for the Possible Time Save Component.
     PossibleTimeSave(possible_time_save::Settings),
     /// The Settings for the Previous Segment Component.
@@ -61,6 +63,9 @@ impl From<ComponentSettings> for Component {
             )),
             ComponentSettings::Graph(settings) => {
                 Component::Graph(graph::Component::with_settings(settings))
+            }
+            ComponentSettings::PbChance(settings) => {
+                Component::PbChance(pb_chance::Component::with_settings(settings))
             }
             ComponentSettings::PossibleTimeSave(settings) => {
                 Component::PossibleTimeSave(possible_time_save::Component::with_settings(settings))

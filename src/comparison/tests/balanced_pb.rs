@@ -44,13 +44,13 @@ fn test() {
             Short::new()
                 .format(run.segment(0).comparison(NAME).game_time)
                 .to_string(),
-            "0.49"
+            "0.46"
         );
         assert_eq!(
             Short::new()
                 .format(run.segment(1).comparison(NAME).game_time)
                 .to_string(),
-            "2.50"
+            "2.53"
         );
         assert_eq!(run.segment(2).comparison(NAME).game_time, Some(s(3.0)));
     }

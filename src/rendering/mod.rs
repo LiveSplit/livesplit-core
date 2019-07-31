@@ -418,6 +418,9 @@ fn render_component<B: Backend>(
         ComponentState::Delta(component) => {
             component::delta::render(context, dim, component, state)
         }
+        ComponentState::PbChance(component) => {
+            component::pb_chance::render(context, dim, component, state)
+        }
         ComponentState::PossibleTimeSave(component) => {
             component::possible_time_save::render(context, dim, component, state)
         }
@@ -450,7 +453,7 @@ struct RenderContext<'b, B: Backend> {
     text_glyph_cache: &'b mut GlyphCache<B::Mesh>,
 }
 
-impl<'b, B: Backend> RenderContext<'b, B> {
+impl<B: Backend> RenderContext<'_, B> {
     fn backend_render_rectangle(&mut self, [x1, y1]: Pos, [x2, y2]: Pos, colors: [Rgba; 4]) {
         let transform = self
             .transform
@@ -553,12 +556,12 @@ impl<'b, B: Backend> RenderContext<'b, B> {
         self.render_rectangle([0.0, 0.0], [1.0, 1.0], background);
     }
 
-    fn render_info_time_component(
+    fn render_numerical_key_value_component(
         &mut self,
-        texts: &[&str],
+        keys: &[&str],
         value: &str,
         [width, height]: [f32; 2],
-        text_color: Color,
+        key_color: Color,
         value_color: Color,
         display_two_rows: bool,
     ) {
@@ -573,26 +576,26 @@ impl<'b, B: Backend> RenderContext<'b, B> {
         } else {
             left_of_value_x
         };
-        let text = self.choose_abbreviation(
-            texts.iter().cloned(),
+        let key = self.choose_abbreviation(
+            keys.iter().cloned(),
             DEFAULT_TEXT_SIZE,
             end_x - BOTH_PADDINGS,
         );
         self.render_text_ellipsis(
-            text,
+            key,
             [PADDING, TEXT_ALIGN_TOP],
             DEFAULT_TEXT_SIZE,
-            [text_color; 2],
+            [key_color; 2],
             end_x - PADDING,
         );
     }
 
-    fn render_info_text_component(
+    fn render_textual_key_value_component(
         &mut self,
-        texts: &[&str],
+        keys: &[&str],
         value: &str,
         [width, height]: [f32; 2],
-        text_color: Color,
+        key_color: Color,
         value_color: Color,
         display_two_rows: bool,
     ) {
@@ -607,16 +610,16 @@ impl<'b, B: Backend> RenderContext<'b, B> {
         } else {
             left_of_value_x
         };
-        let text = self.choose_abbreviation(
-            texts.iter().cloned(),
+        let key = self.choose_abbreviation(
+            keys.iter().cloned(),
             DEFAULT_TEXT_SIZE,
             end_x - BOTH_PADDINGS,
         );
         self.render_text_ellipsis(
-            text,
+            key,
             [PADDING, TEXT_ALIGN_TOP],
             DEFAULT_TEXT_SIZE,
-            [text_color; 2],
+            [key_color; 2],
             end_x - PADDING,
         );
     }
@@ -823,6 +826,7 @@ fn component_width(component: &ComponentState) -> f32 {
         ComponentState::CurrentComparison(_) => 6.0,
         ComponentState::CurrentPace(_) => 6.0,
         ComponentState::Delta(_) => 6.0,
+        ComponentState::PbChance(_) => 6.0,
         ComponentState::PossibleTimeSave(_) => 6.0,
         ComponentState::PreviousSegment(_) => 6.0,
         ComponentState::SumOfBest(_) => 6.0,
@@ -868,6 +872,13 @@ fn component_height(component: &ComponentState) -> f32 {
         }
         ComponentState::Graph(state) => state.height as f32 * PSEUDO_PIXELS,
         ComponentState::Separator(_) => SEPARATOR_THICKNESS,
+        ComponentState::PbChance(state) => {
+            if state.display_two_rows {
+                TWO_ROW_HEIGHT
+            } else {
+                DEFAULT_COMPONENT_HEIGHT
+            }
+        }
         ComponentState::PossibleTimeSave(state) => {
             if state.display_two_rows {
                 TWO_ROW_HEIGHT

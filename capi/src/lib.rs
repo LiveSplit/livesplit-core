@@ -31,6 +31,8 @@ pub mod hotkey_system;
 pub mod layout;
 pub mod layout_editor;
 pub mod parse_run_result;
+pub mod pb_chance_component;
+pub mod pb_chance_component_state;
 pub mod possible_time_save_component;
 pub mod possible_time_save_component_state;
 pub mod potential_clean_up;

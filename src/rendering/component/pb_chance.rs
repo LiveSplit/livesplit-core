@@ -1,5 +1,5 @@
 use crate::{
-    component::sum_of_best::State,
+    component::pb_chance::State,
     layout::{LayoutDirection, LayoutState},
     rendering::{Backend, RenderContext},
 };
@@ -11,9 +11,10 @@ pub(in crate::rendering) fn render(
     layout_state: &LayoutState,
 ) {
     context.render_rectangle([0.0, 0.0], dim, &component.background);
+    let abbreviations = [component.text.as_str()];
     context.render_numerical_key_value_component(
-        &[&component.text, "Sum of Best", "SoB"],
-        &component.time,
+        &abbreviations,
+        &component.pb_chance,
         dim,
         component.label_color.unwrap_or(layout_state.text_color),
         component.value_color.unwrap_or(layout_state.text_color),

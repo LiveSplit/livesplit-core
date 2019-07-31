@@ -2,7 +2,7 @@
 //! The Current Comparison Component is a component that shows the name of the
 //! comparison that is currently selected to be compared against.
 
-use super::DEFAULT_INFO_TEXT_GRADIENT;
+use super::DEFAULT_KEY_VALUE_GRADIENT;
 use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
 use crate::Timer;
 use serde::{Deserialize, Serialize};
@@ -37,7 +37,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            background: DEFAULT_INFO_TEXT_GRADIENT,
+            background: DEFAULT_KEY_VALUE_GRADIENT,
             display_two_rows: false,
             label_color: None,
             value_color: None,

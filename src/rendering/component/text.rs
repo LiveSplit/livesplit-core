@@ -22,7 +22,7 @@ pub(in crate::rendering) fn render(
                 .left_center_color
                 .unwrap_or(layout_state.text_color),
         ),
-        Text::Split(left, right) => context.render_info_text_component(
+        Text::Split(left, right) => context.render_textual_key_value_component(
             &[&left],
             &right,
             [width, height],
