@@ -1,6 +1,6 @@
 //! Provides the parser for WSplit splits files.
 
-use crate::{Image, RealTime, Run, Segment, TimeSpan};
+use crate::{settings::Image, RealTime, Run, Segment, TimeSpan};
 use snafu::ResultExt;
 use std::io::{self, BufRead};
 use std::num::{ParseFloatError, ParseIntError};

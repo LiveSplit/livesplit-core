@@ -20,11 +20,11 @@ pub(in crate::rendering) fn render<B: Backend>(
     context.render_rectangle([0.0, 0.0], [width, height], &component.background);
     let text_color = component.text_color.unwrap_or(layout_state.text_color);
 
-    if let Some(url) = &component.icon_change {
+    if let Some(icon) = &component.icon_change {
         if let Some(old_icon) = game_icon.take() {
             context.backend.free_texture(old_icon.texture);
         }
-        *game_icon = context.create_icon(url);
+        *game_icon = context.create_icon(icon);
     }
 
     let left_bound = if let Some(icon) = game_icon {

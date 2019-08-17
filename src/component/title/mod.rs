@@ -4,7 +4,10 @@
 //! total number of finished runs can be shown.
 
 use crate::settings::{Alignment, Color, Field, Gradient, SettingsDescription, Value};
-use crate::{CachedImageId, Image, Timer, TimerPhase};
+use crate::{
+    settings::{CachedImageId, Image, ImageData},
+    Timer, TimerPhase,
+};
 use serde::{Deserialize, Serialize};
 use serde_json::{to_writer, Result};
 use std::borrow::Cow;
@@ -72,11 +75,11 @@ pub struct State {
     /// The color of the text. If `None` is specified, the color is taken from
     /// the layout.
     pub text_color: Option<Color>,
-    /// The game's icon encoded as a Data URL. This value is only specified
-    /// whenever the icon changes. If you explicitly want to query this value,
-    /// remount the component. The String itself may be empty. This indicates
-    /// that there is no icon.
-    pub icon_change: Option<String>,
+    /// The game's icon encoded as the raw file bytes. This value is only
+    /// specified whenever the icon changes. If you explicitly want to query
+    /// this value, remount the component. The buffer itself may be empty. This
+    /// indicates that there is no icon.
+    pub icon_change: Option<ImageData>,
     /// The first title line to show. This is either the game's name, or a
     /// combination of the game's name and the category.
     pub line1: String,
@@ -184,7 +187,7 @@ impl Component {
         };
 
         let game_icon = Some(run.game_icon()).filter(|_| self.settings.display_game_icon);
-        let icon_change = self.icon_id.update_with(game_icon).map(str::to_owned);
+        let icon_change = self.icon_id.update_with(game_icon).map(Into::into);
 
         let is_centered = match self.settings.text_alignment {
             Alignment::Center => true,

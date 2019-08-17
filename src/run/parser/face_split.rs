@@ -1,6 +1,6 @@
 //! Provides the parser for FaceSplit splits files.
 
-use crate::{timing, Image, RealTime, Run, Segment, Time, TimeSpan};
+use crate::{settings::Image, timing, RealTime, Run, Segment, Time, TimeSpan};
 use snafu::{OptionExt, ResultExt};
 use std::borrow::Cow;
 use std::io::{self, BufRead};

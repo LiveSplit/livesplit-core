@@ -45,15 +45,25 @@ pub extern "C" fn SplitsComponentState_icon_change_segment_index(
     this.icon_changes[icon_change_index].segment_index
 }
 
-/// The segment's icon encoded as a Data URL of the icon change with the
-/// specified index. The String itself may be empty. This indicates that there
-/// is no icon. You may not provide an out of bounds index.
+/// The icon data of the segment of the icon change with the specified index.
+/// The buffer may be empty. This indicates that there is no icon. You may not
+/// provide an out of bounds index.
 #[no_mangle]
-pub extern "C" fn SplitsComponentState_icon_change_icon(
+pub extern "C" fn SplitsComponentState_icon_change_icon_ptr(
     this: &SplitsComponentState,
     icon_change_index: usize,
-) -> *const c_char {
-    output_str(&this.icon_changes[icon_change_index].icon)
+) -> *const u8 {
+    this.icon_changes[icon_change_index].icon.as_ptr()
+}
+
+/// The length of the icon data of the segment of the icon change with the
+/// specified index.
+#[no_mangle]
+pub extern "C" fn SplitsComponentState_icon_change_icon_len(
+    this: &SplitsComponentState,
+    icon_change_index: usize,
+) -> usize {
+    this.icon_changes[icon_change_index].icon.len()
 }
 
 /// The name of the segment with the specified index. You may not provide an out

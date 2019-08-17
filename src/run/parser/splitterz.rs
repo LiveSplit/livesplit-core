@@ -1,6 +1,6 @@
 //! Provides the parser for SplitterZ splits files.
 
-use crate::{timing, Image, RealTime, Run, Segment, TimeSpan};
+use crate::{settings::Image, timing, RealTime, Run, Segment, TimeSpan};
 use snafu::ResultExt;
 use std::borrow::Cow;
 use std::io::{self, BufRead};

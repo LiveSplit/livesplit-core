@@ -19,11 +19,11 @@ pub(in crate::rendering) fn render<B: Backend>(
     let vertical_padding = vertical_padding(height);
     let icon_size = height - 2.0 * vertical_padding;
 
-    if let Some(url) = &component.icon_change {
+    if let Some(icon) = &component.icon_change {
         if let Some(old_icon) = detailed_timer_icon.take() {
             context.backend.free_texture(old_icon.texture);
         }
-        *detailed_timer_icon = context.create_icon(url);
+        *detailed_timer_icon = context.create_icon(&icon);
     }
 
     let left_side = if let Some(icon) = detailed_timer_icon {

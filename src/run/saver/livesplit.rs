@@ -25,7 +25,7 @@
 //! ```
 
 use crate::timing::formatter::{Complete, TimeFormatter};
-use crate::{Image, Run, Time, TimeSpan, Timer, TimerPhase};
+use crate::{settings::Image, Run, Time, TimeSpan, Timer, TimerPhase};
 use byteorder::{WriteBytesExt, LE};
 use chrono::{DateTime, Utc};
 use quick_xml::events::{BytesDecl, BytesEnd, BytesStart, BytesText, Event};
@@ -149,28 +149,24 @@ fn image<W: Write>(
     buf: &mut Vec<u8>,
     image_buf: &mut Cow<'_, [u8]>,
 ) -> Result<()> {
-    let url = image.url();
-    if url.starts_with("data:;base64,") {
-        let src = &url["data:;base64,".len()..];
+    let image_data = image.data();
+    if !image_data.is_empty() {
+        let len = image_data.len();
+        let image_buf = image_buf.to_mut();
+        image_buf.truncate(LSS_IMAGE_HEADER.len());
+        image_buf.reserve(len + 6);
+        image_buf.write_u32::<LE>(len as u32).unwrap();
+        image_buf.push(0x2);
+        image_buf.extend(image_data);
+        image_buf.push(0xB);
         buf.clear();
-        if base64::decode_config_buf(src, base64::STANDARD, buf).is_ok() {
-            let len = buf.len();
-            let image_buf = image_buf.to_mut();
-            image_buf.truncate(LSS_IMAGE_HEADER.len());
-            image_buf.reserve(len + 6);
-            image_buf.write_u32::<LE>(len as u32).unwrap();
-            image_buf.push(0x2);
-            image_buf.append(buf);
-            image_buf.push(0xB);
-            buf.clear();
-            vec_as_string(buf, |s| {
-                base64::encode_config_buf(image_buf, base64::STANDARD, s)
-            });
-            return scoped(writer, tag, buf.is_empty(), |writer| {
-                writer.write_event(Event::CData(BytesText::from_plain(buf)))?;
-                Ok(())
-            });
-        }
+        vec_as_string(buf, |s| {
+            base64::encode_config_buf(image_buf, base64::STANDARD, s)
+        });
+        return scoped(writer, tag, buf.is_empty(), |writer| {
+            writer.write_event(Event::CData(BytesText::from_plain(buf)))?;
+            Ok(())
+        });
     }
     writer.write_event(Event::Empty(tag))?;
     Ok(())

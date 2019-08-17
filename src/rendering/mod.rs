@@ -477,14 +477,12 @@ impl<B: Backend> RenderContext<'_, B> {
             .render_mesh(mesh, self.transform, [decode_color(&color); 4], None)
     }
 
-    fn create_icon(&mut self, image_url: &str) -> Option<Icon<B::Texture>> {
-        if !image_url.starts_with("data:;base64,") {
+    fn create_icon(&mut self, image_data: &[u8]) -> Option<Icon<B::Texture>> {
+        if image_data.is_empty() {
             return None;
         }
 
-        let url = &image_url["data:;base64,".len()..];
-        let image_data = base64::decode(url).ok()?;
-        let image = image::load_from_memory(&image_data).ok()?.to_rgba();
+        let image = image::load_from_memory(image_data).ok()?.to_rgba();
         let texture = self
             .backend
             .create_texture(image.width(), image.height(), &image);

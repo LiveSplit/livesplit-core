@@ -14,15 +14,21 @@ pub extern "C" fn TitleComponentState_drop(this: OwnedTitleComponentState) {
     drop(this);
 }
 
-/// The game's icon encoded as a Data URL. This value is only specified whenever
-/// the icon changes. If you explicitly want to query this value, remount the
-/// component. The String itself may be empty. This indicates that there is no
-/// icon. If no change occurred, <NULL> is returned instead.
+/// The data of the game's icon. This value is only specified whenever the icon
+/// changes. If you explicitly want to query this value, remount the component.
+/// The buffer may be empty. This indicates that there is no icon. If no change
+/// occurred, <NULL> is returned instead.
 #[no_mangle]
-pub extern "C" fn TitleComponentState_icon_change(
-    this: &TitleComponentState,
-) -> *const Nullablec_char {
-    this.icon_change.as_ref().map_or_else(ptr::null, output_str)
+pub extern "C" fn TitleComponentState_icon_change_ptr(this: &TitleComponentState) -> *const u8 {
+    this.icon_change
+        .as_ref()
+        .map_or_else(ptr::null, |i| i.as_ptr())
+}
+
+/// The length of the game's icon data.
+#[no_mangle]
+pub extern "C" fn TitleComponentState_icon_change_len(this: &TitleComponentState) -> usize {
+    this.icon_change.as_ref().map_or(0, |i| i.len())
 }
 
 /// The first title line to show. This is either the game's name, or a

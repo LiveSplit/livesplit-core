@@ -5,7 +5,7 @@ use rusttype::{point, Codepoint, Font, GlyphId, PositionedGlyph, Scale};
 use smallvec::SmallVec;
 
 #[derive(Copy, Clone)]
-pub struct ScaledFont<'f, 'fd: 'f> {
+pub struct ScaledFont<'f, 'fd> {
     font: &'f Font<'fd>,
     scale: Scale,
 }
