@@ -8,4 +8,4 @@ edition = "2018"
 heck = "0.3.0"
 structopt = "0.2.9"
 structopt-derive = "0.2.9"
-syn = { version = "0.15.1", default-features = false, features = ["parsing", "full", "printing"] }
+syn = { version = "1.0.2", default-features = false, features = ["parsing", "full", "printing"] }

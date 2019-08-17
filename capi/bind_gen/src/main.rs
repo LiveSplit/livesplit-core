@@ -19,7 +19,7 @@ use std::path::PathBuf;
 use std::rc::Rc;
 use structopt::StructOpt;
 use syn::{
-    parse_file, FnArg, Item, ItemFn, Lit, Meta, Pat, ReturnType, Type as SynType, Visibility,
+    parse_file, Signature, FnArg, Item, ItemFn, Lit, Meta, Pat, ReturnType, Type as SynType, Visibility,
 };
 
 #[derive(StructOpt)]
@@ -164,11 +164,11 @@ fn main() {
             let class_comments = Rc::new(
                 file.attrs
                     .iter()
-                    .filter_map(|a| match a.interpret_meta() {
-                        Some(Meta::NameValue(v)) => Some(v),
+                    .filter_map(|a| match a.parse_meta() {
+                        Ok(Meta::NameValue(v)) => Some(v),
                         _ => None,
                     })
-                    .filter(|m| m.ident.to_string() == "doc")
+                    .filter(|m| m.path.is_ident("doc"))
                     .filter_map(|m| match m.lit {
                         Lit::Str(s) => Some(s.value().trim().to_string()),
                         _ => None,
@@ -179,10 +179,14 @@ fn main() {
             for item in &file.items {
                 if let &Item::Fn(ItemFn {
                     vis: Visibility::Public(_),
-                    abi,
                     attrs,
-                    decl,
-                    ident,
+                    sig: Signature {
+                        abi,
+                        ident,
+                        inputs,
+                        output,
+                        ..
+                    },
                     ..
                 }) = &item
                 {
@@ -192,27 +196,26 @@ fn main() {
                         .map_or(false, |n| n.value() == "C")
                         && attrs
                             .iter()
-                            .filter_map(|a| a.interpret_meta())
-                            .filter_map(|m| match m {
-                                Meta::Word(w) => Some(w),
+                            .filter_map(|a| match a.parse_meta() {
+                                Ok(Meta::Path(w)) => Some(w),
                                 _ => None,
                             })
-                            .any(|w| w.to_string() == "no_mangle")
+                            .any(|w| w.is_ident("no_mangle"))
                     {
                         let comments = attrs
                             .iter()
-                            .filter_map(|a| match a.interpret_meta() {
-                                Some(Meta::NameValue(v)) => Some(v),
+                            .filter_map(|a| match a.parse_meta() {
+                                Ok(Meta::NameValue(v)) => Some(v),
                                 _ => None,
                             })
-                            .filter(|m| m.ident.to_string() == "doc")
+                            .filter(|m| m.path.is_ident("doc"))
                             .filter_map(|m| match m.lit {
                                 Lit::Str(s) => Some(s.value().trim().to_string()),
                                 _ => None,
                             })
                             .collect();
 
-                        let output = if let ReturnType::Type(_, ty) = &decl.output {
+                        let output = if let ReturnType::Type(_, ty) = output {
                             get_type(ty)
                         } else {
                             Type {
@@ -223,15 +226,14 @@ fn main() {
                             }
                         };
 
-                        let inputs = decl
-                            .inputs
+                        let inputs = inputs
                             .iter()
                             .map(|i| {
                                 let c = match i {
-                                    FnArg::Captured(c) => c,
+                                    FnArg::Typed(c) => c,
                                     _ => panic!("Found a weird fn argument"),
                                 };
-                                let name = if let Pat::Ident(ident) = &c.pat {
+                                let name = if let Pat::Ident(ident) = &*c.pat {
                                     ident.ident.to_string()
                                 } else {
                                     String::from("parameter")
