@@ -65,6 +65,8 @@ mod hotkey_config;
 #[cfg(feature = "std")]
 mod hotkey_system;
 pub mod layout;
+#[cfg(feature = "networking")]
+pub mod networking;
 #[cfg(feature = "rendering")]
 pub mod rendering;
 pub mod run;

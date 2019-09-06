@@ -73,10 +73,14 @@ vek = { version = "0.9.8", default-features = false, optional = true }
 # WebAssembly in the Web
 web-sys = { version = "0.3.28", default-features = false, features = ["Performance", "Window"], optional = true }
 
+# Networking
+splits-io-api = { git = "https://github.com/LiveSplit/splits-io-api", optional = true }
+
 [dev-dependencies]
 memmem = "0.1.1"
 criterion = "0.3.0"
 crc = "1.8.1"
+tokio = "0.2.0-alpha.4"
 
 [features]
 default = ["image-shrinking", "std"]
@@ -87,6 +91,7 @@ image-shrinking = ["more-image-formats"]
 rendering = ["std", "more-image-formats", "euclid", "livesplit-title-abbreviations", "lyon", "rusttype", "smallvec"]
 software-rendering = ["rendering", "euc", "vek", "derive_more/mul"]
 wasm-web = ["std", "web-sys", "chrono/wasmbind", "livesplit-hotkey/wasm-web"]
+networking = ["splits-io-api"]
 
 # FIXME: Some targets don't have atomics, but we can't test for this properly
 # yet. So there's a feature you explicitly have to opt into to deactivate the
