@@ -113,10 +113,10 @@ impl Hook {
                 Ok(())
             })?;
 
-            let mut msg = unsafe { mem::uninitialized() };
             loop {
-                let ret = unsafe { GetMessageW(&mut msg, ptr::null_mut(), 0, 0) };
-
+                let mut msg = mem::MaybeUninit::uninit();
+                let ret = unsafe { GetMessageW(msg.as_mut_ptr(), ptr::null_mut(), 0, 0) };
+                let msg = unsafe { msg.assume_init() };
                 if msg.message == MSG_EXIT {
                     break;
                 } else if ret < 0 {

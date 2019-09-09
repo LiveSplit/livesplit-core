@@ -110,7 +110,6 @@ impl Hook {
 
                 let mut result = Ok(());
                 let mut events = Events::with_capacity(1024);
-                let mut event = mem::uninitialized();
                 let mut hotkeys = HashMap::new();
 
                 'event_loop: loop {
@@ -172,7 +171,9 @@ impl Hook {
                             }
                         } else if mio_event.token() == X_TOKEN {
                             while (xlib.XPending)(display) != 0 {
-                                (xlib.XNextEvent)(display, &mut event);
+                                let mut event = mem::MaybeUninit::uninit();
+                                (xlib.XNextEvent)(display, event.as_mut_ptr());
+                                let event = event.assume_init();
                                 if event.get_type() == KeyPress {
                                     let event: &XKeyEvent = event.as_ref();
                                     if let Some(callback) = hotkeys.get_mut(&event.keycode) {
