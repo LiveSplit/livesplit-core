@@ -65,11 +65,15 @@ main() {
     esac
 
     # This fetches latest stable release
-    local tag=$(git ls-remote --tags --refs --exit-code https://github.com/japaric/cross \
-                       | cut -d/ -f3 \
-                       | grep -E '^v[0.1.0-9.]+$' \
-                       | $sort --version-sort \
-                       | tail -n1)
+    # local tag=$(git ls-remote --tags --refs --exit-code https://github.com/japaric/cross \
+    #                    | cut -d/ -f3 \
+    #                    | grep -E '^v[0.1.0-9.]+$' \
+    #                    | $sort --version-sort \
+    #                    | tail -n1)
+
+    # FIXME: We are staying on 0.1.14 until cross works again for the targets that we compile to.
+    # https://github.com/LiveSplit/livesplit-core/issues/237
+    local tag=v0.1.14
 
     curl -LSfs https://japaric.github.io/trust/install.sh | \
         sh -s -- \
