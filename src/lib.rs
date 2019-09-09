@@ -62,8 +62,6 @@ pub mod comparison;
 pub mod component;
 mod hotkey_config;
 mod hotkey_system;
-#[cfg(feature = "image-shrinking")]
-mod image_shrinking;
 pub mod layout;
 #[cfg(feature = "rendering")]
 pub mod rendering;

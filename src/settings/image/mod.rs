@@ -8,6 +8,9 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 #[cfg(test)]
 mod tests;
 
+#[cfg(feature = "image-shrinking")]
+mod shrinking;
+
 static LAST_IMAGE_ID: AtomicUsize = AtomicUsize::new(0);
 
 /// Images can be used to store segment and game icons. Each image object comes
@@ -152,10 +155,9 @@ impl Image {
     pub fn modify(&mut self, data: &[u8]) {
         #[cfg(feature = "image-shrinking")]
         let data = {
-            use crate::image_shrinking::shrink;
             const MAX_IMAGE_SIZE: u32 = 128;
 
-            shrink(data, MAX_IMAGE_SIZE)
+            shrinking::shrink(data, MAX_IMAGE_SIZE)
         };
         self.id = LAST_IMAGE_ID.fetch_add(1, Ordering::Relaxed);
         self.data.clear();
