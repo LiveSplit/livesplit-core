@@ -17,10 +17,6 @@ main() {
                        | $sort --version-sort \
                        | tail -n1)
 
-    # # FIXME: We are staying on 0.1.14 until cross works again for the targets that we compile to.
-    # # https://github.com/LiveSplit/livesplit-core/issues/237
-    # local tag=v0.1.14
-
     case $TARGET in
         aarch64-apple-ios)
             rustup target install $TARGET
@@ -40,9 +36,6 @@ main() {
         wasm32-unknown-unknown)
             rustup target install $TARGET
             ;;
-        x86_64-unknown-linux-gnux32)
-            rustup target install $TARGET
-            ;;
         i586-unknown-linux-musl)
             rustup target install $TARGET
             ;;
@@ -50,9 +43,6 @@ main() {
             rustup target install $TARGET
             ;;
         arm-unknown-linux-musleabihf)
-            rustup target install $TARGET
-            ;;
-        armv5te-unknown-linux-gnueabi)
             rustup target install $TARGET
             ;;
         armv5te-unknown-linux-musleabi)
@@ -73,12 +63,25 @@ main() {
         mipsisa64r6el-unknown-linux-gnuabi64)
             rustup target install $TARGET
             ;;
-        # wasm32-unknown-emscripten)
-        #     tag=v0.1.15
-        #     ;;
-        # asmjs-unknown-emscripten)
-        #     tag=v0.1.15
-        #     ;;
+        # FIXME: We are partially staying on 0.1.14 until cross works for these targets again.
+        # https://github.com/LiveSplit/livesplit-core/issues/237
+        x86_64-unknown-linux-gnux32)
+            rustup target install $TARGET
+            tag=v0.1.14
+            ;;
+        armv5te-unknown-linux-gnueabi)
+            rustup target install $TARGET
+            tag=v0.1.14
+            ;;
+        powerpc64le-unknown-linux-gnu)
+            tag=v0.1.14
+            ;;
+        i686-unknown-freebsd)
+            tag=v0.1.14
+            ;;
+        x86_64-unknown-freebsd)
+            tag=v0.1.14
+            ;;
     esac
 
     curl -LSfs https://japaric.github.io/trust/install.sh | \

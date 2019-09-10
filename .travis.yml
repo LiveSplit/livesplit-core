@@ -12,6 +12,12 @@ env:
     - RUST_BACKTRACE=1
 
 matrix:
+  allow_failures:
+    # Failing for now until this is fixed:
+    # https://github.com/LiveSplit/livesplit-core/issues/164
+    - env: TARGET=asmjs-unknown-emscripten
+      rust: nightly
+
   include:
     # no-std
     # - env: TARGET=x86_64-unknown-dragonfly
