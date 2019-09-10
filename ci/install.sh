@@ -1,6 +1,15 @@
 set -ex
 
 main() {
+    local target=
+    if [ $TRAVIS_OS_NAME = linux ]; then
+        target=x86_64-unknown-linux-musl
+        sort=sort
+    else
+        target=x86_64-apple-darwin
+        sort=gsort  # for `sort --sort-version`, from brew's coreutils.
+    fi
+
     # This fetches latest stable release
     local tag=$(git ls-remote --tags --refs --exit-code https://github.com/japaric/cross \
                        | cut -d/ -f3 \
@@ -11,15 +20,6 @@ main() {
     # # FIXME: We are staying on 0.1.14 until cross works again for the targets that we compile to.
     # # https://github.com/LiveSplit/livesplit-core/issues/237
     # local tag=v0.1.14
-
-    local target=
-    if [ $TRAVIS_OS_NAME = linux ]; then
-        target=x86_64-unknown-linux-musl
-        sort=sort
-    else
-        target=x86_64-apple-darwin
-        sort=gsort  # for `sort --sort-version`, from brew's coreutils.
-    fi
 
     case $TARGET in
         aarch64-apple-ios)
