@@ -120,7 +120,7 @@ impl RunMetadata {
     where
         S: AsRef<str>,
     {
-        self.variables.remove(name.as_ref());
+        self.variables.shift_remove(name.as_ref());
     }
 
     /// Returns an iterator iterating over all the variables and their values
