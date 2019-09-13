@@ -1,0 +1,481 @@
+name: Rust
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        label:
+          # Web
+          - wasm32 emscripten
+          - wasm32
+
+          # Windows
+          - 1 Windows aarch64
+          - 1 Windows i586
+          - 1 Windows i686
+          - 1 Windows x86_64
+          - 1 Windows i686 gnu
+          - 1 Windows x86_64 gnu
+
+          # Linux
+          - Linux i586
+          - Linux i586 musl
+          - Linux i686
+          - Linux i686 musl
+          - Linux x86_64
+          - Linux x86_64 musl
+          - Linux x86_64 gnux32
+          - Linux arm
+          - Linux arm musl
+          - Linux arm Hardware Float
+          - Linux arm musl Hardware Float
+          - Linux armv5te
+          - Linux armv5te musl
+          - Linux armv7 Hardware Float
+          - Linux armv7 musl Hardware Float
+          - Linux aarch64
+          - Linux mips
+          - Linux mips64
+          - Linux mips64el
+          - Linux mipsel
+          - Linux mipsel musl
+          # Unstable
+          # - env: TARGET=mipsisa32r6-unknown-linux-gnu
+          # - env: TARGET=mipsisa32r6el-unknown-linux-gnu
+          # - env: TARGET=mipsisa64r6-unknown-linux-gnuabi64
+          # - env: TARGET=mipsisa64r6el-unknown-linux-gnuabi64
+          - Linux powerpc
+          - Linux powerpc64
+          - Linux powerpc64le
+          - Linux s390x
+          - Linux sparc64
+
+          # macOS
+          # 32-bit macOS is deprecated and doesn't build:
+          # https://github.com/CryZe/livesplit-core/runs/220089673
+          # - macOS i686
+          - macOS x86_64
+
+          # iOS
+          - iOS aarch64
+          - iOS armv7
+          - iOS armv7s
+          - iOS i386
+          - iOS x86_64
+
+          # Android
+          - Android i686
+          - Android x86_64
+          - Android arm
+          - Android armv7
+          - Android aarch64
+
+          # *BSD
+          # - i686-unknown-freebsd DISABLE_TESTS=1
+          # - x86_64-unknown-freebsd DISABLE_TESTS=1
+          - NetBSD x86_64
+
+          # Solaris
+          - Solaris x86_64
+          # weird error
+          # https://travis-ci.org/LiveSplit/livesplit-core/jobs/327011754
+          # - env: TARGET=sparcv9-sun-solaris
+
+          # Testing other channels
+          - 1 Windows Beta
+          - 1 Windows Nightly
+          - 1 Windows Beta gnu
+          - 1 Windows Nightly gnu
+          - Linux Beta
+          - Linux Nightly
+          - macOS Beta
+          - macOS Nightly
+
+        include:
+          # Web
+          - label: wasm32 emscripten
+            target: wasm32-unknown-emscripten
+            os: ubuntu-latest
+            toolchain: nightly
+            tests: skip
+            dylib: skip
+            release_anyway: true
+
+          - label: wasm32
+            target: wasm32-unknown-unknown
+            os: ubuntu-latest
+            tests: skip
+            dylib: skip
+            install_target: true
+            release_anyway: true
+
+          # Windows
+          - label: 1 Windows aarch64
+            target: aarch64-pc-windows-msvc
+            os: windows-latest
+            cross: skip
+            tests: skip
+            install_target: true
+
+          - label: 1 Windows i586
+            target: i586-pc-windows-msvc
+            os: windows-latest
+            cross: skip
+            install_target: true
+
+          - label: 1 Windows i686
+            target: i686-pc-windows-msvc
+            os: windows-latest
+            cross: skip
+            install_target: true
+
+          - label: 1 Windows x86_64
+            target: x86_64-pc-windows-msvc
+            os: windows-latest
+            cross: skip
+
+          - label: 1 Windows i686 gnu
+            target: i686-pc-windows-gnu
+            toolchain: stable-i686-pc-windows-gnu
+            os: windows-latest
+            cross: skip
+            install_target: true
+
+          - label: 1 Windows x86_64 gnu
+            target: x86_64-pc-windows-gnu
+            toolchain: stable-x86_64-pc-windows-gnu
+            os: windows-latest
+            cross: skip
+            install_target: true
+
+          # Linux
+          - label: Linux i586
+            target: i586-unknown-linux-gnu
+            os: ubuntu-latest
+
+          - label: Linux i586 musl
+            target: i586-unknown-linux-musl
+            os: ubuntu-latest
+            tests: skip
+            dylib: skip
+
+          - label: Linux i686
+            target: i686-unknown-linux-gnu
+            os: ubuntu-latest
+
+          - label: Linux i686 musl
+            target: i686-unknown-linux-musl
+            os: ubuntu-latest
+            dylib: skip
+
+          - label: Linux x86_64
+            target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+
+          - label: Linux x86_64 musl
+            target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+            dylib: skip
+
+          - label: Linux x86_64 gnux32
+            target: x86_64-unknown-linux-gnux32
+            os: ubuntu-latest
+            tests: skip
+            dylib: skip
+
+          - label: Linux arm
+            target: arm-unknown-linux-gnueabi
+            os: ubuntu-latest
+            tests: skip
+
+          - label: Linux arm musl
+            target: arm-unknown-linux-musleabi
+            os: ubuntu-latest
+            tests: skip
+            dylib: skip
+
+          - label: Linux arm Hardware Float
+            target: arm-unknown-linux-gnueabihf
+            os: ubuntu-latest
+            tests: skip
+            dylib: skip
+
+          - label: Linux arm musl Hardware Float
+            target: arm-unknown-linux-musleabihf
+            os: ubuntu-latest
+            tests: skip
+            dylib: skip
+
+          - label: Linux armv5te
+            target: armv5te-unknown-linux-gnueabi
+            os: ubuntu-latest
+            tests: skip
+            dylib: skip
+
+          - label: Linux armv5te musl
+            target: armv5te-unknown-linux-musleabi
+            os: ubuntu-latest
+            tests: skip
+            dylib: skip
+
+          - label: Linux armv7 Hardware Float
+            target: armv7-unknown-linux-gnueabihf
+            os: ubuntu-latest
+
+          - label: Linux armv7 musl Hardware Float
+            target: armv7-unknown-linux-musleabihf
+            os: ubuntu-latest
+            tests: skip
+            dylib: skip
+
+          - label: Linux aarch64
+            target: aarch64-unknown-linux-gnu
+            os: ubuntu-latest
+
+          - label: Linux mips
+            target: mips-unknown-linux-gnu
+            os: ubuntu-latest
+
+          - label: Linux mips64
+            target: mips64-unknown-linux-gnuabi64
+            os: ubuntu-latest
+
+          - label: Linux mips64el
+            target: mips64el-unknown-linux-gnuabi64
+            os: ubuntu-latest
+
+          - label: Linux mipsel
+            target: mipsel-unknown-linux-gnu
+            os: ubuntu-latest
+
+          - label: Linux mipsel musl
+            target: mipsel-unknown-linux-musl
+            os: ubuntu-latest
+            tests: skip
+            dylib: skip
+
+          - label: Linux powerpc
+            target: powerpc-unknown-linux-gnu
+            os: ubuntu-latest
+            tests: skip
+
+          - label: Linux powerpc64
+            target: powerpc64-unknown-linux-gnu
+            os: ubuntu-latest
+
+          - label: Linux powerpc64le
+            target: powerpc64le-unknown-linux-gnu
+            os: ubuntu-latest
+            # FIXME: The tests should run, but cross v0.1.15 is broken
+            tests: skip
+
+          - label: Linux s390x
+            target: s390x-unknown-linux-gnu
+            os: ubuntu-latest
+            tests: skip
+
+          - label: Linux sparc64
+            target: sparc64-unknown-linux-gnu
+            os: ubuntu-latest
+            tests: skip
+
+          # macOS
+          # - label: macOS i686
+          #   target: i686-apple-darwin
+          #   toolchain: stable-i686-apple-darwin
+          #   os: macOS-latest
+          #   cross: skip
+
+          - label: macOS x86_64
+            target: x86_64-apple-darwin
+            os: macOS-latest
+            cross: skip
+
+          # iOS
+          - label: iOS aarch64
+            target: aarch64-apple-ios
+            os: macOS-latest
+            cross: skip
+            dylib: skip
+            tests: skip
+            install_target: true
+
+          - label: iOS armv7
+            target: armv7-apple-ios
+            os: macOS-latest
+            cross: skip
+            dylib: skip
+            tests: skip
+            install_target: true
+
+          - label: iOS armv7s
+            target: armv7s-apple-ios
+            os: macOS-latest
+            cross: skip
+            dylib: skip
+            tests: skip
+            install_target: true
+
+          - label: iOS i386
+            target: i386-apple-ios
+            os: macOS-latest
+            cross: skip
+            dylib: skip
+            tests: skip
+            install_target: true
+
+          - label: iOS x86_64
+            target: x86_64-apple-ios
+            os: macOS-latest
+            cross: skip
+            dylib: skip
+            tests: skip
+            install_target: true
+
+          # Android
+          - label: Android i686
+            target: i686-linux-android
+            os: ubuntu-latest
+            tests: skip
+
+          - label: Android x86_64
+            target: x86_64-linux-android
+            os: ubuntu-latest
+
+          - label: Android arm
+            target: arm-linux-androideabi
+            os: ubuntu-latest
+            tests: skip
+
+          - label: Android armv7
+            target: armv7-linux-androideabi
+            os: ubuntu-latest
+            tests: skip
+
+          - label: Android aarch64
+            target: aarch64-linux-android
+            os: ubuntu-latest
+            tests: skip
+
+          # *BSD
+          - label: NetBSD x86_64
+            target: x86_64-unknown-netbsd
+            os: ubuntu-latest
+            tests: skip
+
+          # Solaris
+          - label: Solaris x86_64
+            target: x86_64-sun-solaris
+            os: ubuntu-latest
+            tests: skip
+            dylib: skip
+
+          # Testing other channels
+          - label: 1 Windows Beta
+            target: x86_64-pc-windows-msvc
+            os: windows-latest
+            toolchain: beta
+            cross: skip
+
+          - label: 1 Windows Nightly
+            target: x86_64-pc-windows-msvc
+            os: windows-latest
+            toolchain: nightly
+            cross: skip
+
+          - label: 1 Windows Beta gnu
+            target: x86_64-pc-windows-gnu
+            toolchain: beta-x86_64-pc-windows-gnu
+            os: windows-latest
+            cross: skip
+            install_target: true
+
+          - label: 1 Windows Nightly gnu
+            target: x86_64-pc-windows-gnu
+            toolchain: nightly-x86_64-pc-windows-gnu
+            os: windows-latest
+            cross: skip
+            install_target: true
+
+          - label: Linux Beta
+            target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            toolchain: beta
+
+          - label: Linux Nightly
+            target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            toolchain: nightly
+
+          - label: macOS Beta
+            target: x86_64-apple-darwin
+            os: macOS-latest
+            toolchain: beta
+            cross: skip
+
+          - label: macOS Nightly
+            target: x86_64-apple-darwin
+            os: macOS-latest
+            toolchain: nightly
+            cross: skip
+
+    steps:
+      - name: Checkout Commit
+        uses: actions/checkout@v1
+
+      - name: Install Rust
+        uses: hecrj/setup-rust-action@v1
+        with:
+          rust-version: ${{ matrix.toolchain || 'stable' }}
+
+      - name: Install Target
+        if: matrix.install_target != ''
+        run: rustup target add ${{ matrix.target }}
+
+      - name: Install cross
+        if: matrix.cross == ''
+        run: sh .github/workflows/install.sh
+        env:
+          OS_NAME: ${{ matrix.os }}
+
+      - name: Build Static Library
+        run: sh .github/workflows/build_static.sh
+        env:
+          TARGET: ${{ matrix.target }}
+          SKIP_CROSS: ${{ matrix.cross }}
+          IS_DEPLOY: ${{ startsWith(github.ref, 'refs/tags/') && (matrix.release_anyway != '' || !(startsWith(matrix.toolchain, 'nightly') || startsWith(matrix.toolchain, 'beta'))) }}
+
+      - name: Build Shared Library
+        if: matrix.dylib == ''
+        run: sh .github/workflows/build_shared.sh
+        env:
+          TARGET: ${{ matrix.target }}
+          SKIP_CROSS: ${{ matrix.cross }}
+          IS_DEPLOY: ${{ startsWith(github.ref, 'refs/tags/') && (matrix.release_anyway != '' || !(startsWith(matrix.toolchain, 'nightly') || startsWith(matrix.toolchain, 'beta'))) }}
+
+      - name: Test
+        if: matrix.tests == ''
+        run: sh .github/workflows/test.sh
+        env:
+          TARGET: ${{ matrix.target }}
+          SKIP_CROSS: ${{ matrix.cross }}
+
+      - name: Prepare Release
+        if: startsWith(github.ref, 'refs/tags/') && (matrix.release_anyway != '' || !(startsWith(matrix.toolchain, 'nightly') || startsWith(matrix.toolchain, 'beta')))
+        shell: bash
+        run: .github/workflows/before_deploy.sh
+        env:
+          OS_NAME: ${{ matrix.os }}
+          TARGET: ${{ matrix.target }}
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/') && (matrix.release_anyway != '' || !(startsWith(matrix.toolchain, 'nightly') || startsWith(matrix.toolchain, 'beta')))
+        uses: softprops/action-gh-release@v1
+        with:
+          files: livesplit-core-*.*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

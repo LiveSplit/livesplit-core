@@ -24,8 +24,7 @@ edition = "2018"
 all-features = true
 
 [badges]
-travis-ci = { repository = "LiveSplit/livesplit-core" }
-appveyor = { repository = "CryZe/livesplit-core" }
+# FIXME: Add GitHub Actions badge
 
 [profile.release]
 lto = true
