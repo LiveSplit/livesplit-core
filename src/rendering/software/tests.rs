@@ -40,7 +40,7 @@ fn default() {
 
     let state = layout.state(&timer);
 
-    check(&state, 0x8ef1abb5, "default");
+    check(&state, 0x9df41392, "default");
 }
 
 #[test]
@@ -49,7 +49,7 @@ fn actual_split_file() {
     let timer = Timer::new(run).unwrap();
     let mut layout = Layout::default_layout();
 
-    check(&layout.state(&timer), 0x256841ba, "actual_split_file");
+    check(&layout.state(&timer), 0x81de1cc3, "actual_split_file");
 }
 
 #[test]
@@ -58,7 +58,7 @@ fn wsplit() {
     let timer = Timer::new(run).unwrap();
     let mut layout = lsl("tests/layout_files/WSplit.lsl");
 
-    check_dims(&layout.state(&timer), [250, 300], 0x3a65a2fd, "wsplit");
+    check_dims(&layout.state(&timer), [250, 300], 0x5ba3dbea, "wsplit");
 }
 
 #[test]
@@ -74,9 +74,9 @@ fn all_components() {
 
     let state = layout.state(&timer);
 
-    check_dims(&state, [300, 800], 0xed488faa, "all_components");
+    check_dims(&state, [300, 800], 0x1f1af5d2, "all_components");
 
-    check_dims(&state, [150, 800], 0x5d3b1176, "all_components_thin");
+    check_dims(&state, [150, 800], 0x8954836d, "all_components_thin");
 }
 
 #[test]
@@ -96,7 +96,7 @@ fn score_split() {
     state.components.push(ComponentState::Timer(timer_state));
     state.components.push(prev_seg);
 
-    check_dims(&state, [300, 400], 0x2d9fac28, "score_split");
+    check_dims(&state, [300, 400], 0xc91afba7, "score_split");
 }
 
 #[test]
@@ -105,7 +105,7 @@ fn dark_layout() {
     let timer = Timer::new(run).unwrap();
     let mut layout = lsl("tests/layout_files/dark.lsl");
 
-    check(&layout.state(&timer), 0x8f774e74, "dark_layout");
+    check(&layout.state(&timer), 0xad57b961, "dark_layout");
 }
 
 #[test]
@@ -123,7 +123,7 @@ fn subsplits_layout() {
     check_dims(
         &layout.state(&timer),
         [300, 800],
-        0x71c18228,
+        0x205cdb95,
         "subsplits_layout",
     );
 }
@@ -146,7 +146,7 @@ fn display_two_rows() {
     check_dims(
         &layout.state(&timer),
         [200, 100],
-        0x5b0d2441,
+        0xab2400af,
         "display_two_rows",
     );
 }
@@ -169,7 +169,7 @@ fn single_line_title() {
     check_dims(
         &layout.state(&timer),
         [150, 30],
-        0x55ce6498,
+        0x9f92f324,
         "single_line_title",
     );
 }
@@ -200,7 +200,7 @@ fn horizontal() {
         &[Some(10.0), None, Some(20.0), Some(55.0)],
     );
 
-    check_dims(&layout.state(&timer), [1500, 40], 0x32fb0bcf, "horizontal");
+    check_dims(&layout.state(&timer), [1500, 40], 0x50a38160, "horizontal");
 }
 
 fn check(state: &LayoutState, expected_checksum: u32, name: &str) {
