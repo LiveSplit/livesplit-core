@@ -28,6 +28,7 @@ jobs:
           - Linux i686 musl
           - Linux x86_64
           - Linux x86_64 musl
+          - Linux x86_64 gnux32
           - Linux arm
           - Linux arm musl
           - Linux arm Hardware Float
@@ -178,6 +179,12 @@ jobs:
           - label: Linux x86_64 musl
             target: x86_64-unknown-linux-musl
             os: ubuntu-latest
+            dylib: skip
+
+          - label: Linux x86_64 gnux32
+            target: x86_64-unknown-linux-gnux32
+            os: ubuntu-latest
+            tests: skip
             dylib: skip
 
           - label: Linux arm
