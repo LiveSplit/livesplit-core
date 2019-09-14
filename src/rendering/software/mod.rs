@@ -121,6 +121,11 @@ impl Target for AlphaBlended {
     }
 
     unsafe fn set(&mut self, pos: [usize; 2], src: Self::Item) {
+        debug_assert!(!src.r.is_nan());
+        debug_assert!(!src.g.is_nan());
+        debug_assert!(!src.b.is_nan());
+        debug_assert!(!src.a.is_nan());
+
         let dst = self.0.get(pos);
         self.0.set(
             pos,
@@ -185,7 +190,7 @@ impl Pipeline for MyPipeline<'_> {
     type VsOut = VsOut;
     type Pixel = Rgba<f32>;
 
-    fn vert(&self, vertex: &Self::Vertex) -> ([f32; 3], Self::VsOut) {
+    fn vert(&self, vertex: &Self::Vertex) -> ([f32; 4], Self::VsOut) {
         let left = self.color_tl * (1.0 - vertex.texcoord.y) + self.color_bl * vertex.texcoord.y;
         let right = self.color_tr * (1.0 - vertex.texcoord.y) + self.color_br * vertex.texcoord.y;
         let color = left * (1.0 - vertex.texcoord.x) + right * vertex.texcoord.x;
@@ -193,7 +198,7 @@ impl Pipeline for MyPipeline<'_> {
         let pos = Vec3::new(vertex.position.x, vertex.position.y, 1.0) * self.transform;
 
         (
-            [2.0 * pos.x - 1.0, -2.0 * pos.y + 1.0, 0.0],
+            [2.0 * pos.x - 1.0, -2.0 * pos.y + 1.0, 0.0, 1.0],
             VsOut {
                 color,
                 texcoord: vertex.texcoord,
