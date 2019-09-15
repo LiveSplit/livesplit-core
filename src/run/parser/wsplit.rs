@@ -97,7 +97,10 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
                     }
                 }
             } else if line.starts_with("Goal=") {
-                goal = Some(line["Goal=".len()..].to_owned());
+                let goal_value = line["Goal=".len()..].trim();
+                if !goal_value.is_empty() {
+                    goal = Some(goal_value.to_owned());
+                }
             } else {
                 // must be a split Kappa
                 let mut split_info = line.split(',');
@@ -167,6 +170,22 @@ Jimmy,0,219.68,134.2
 
         let run = parse(RUN, false).unwrap();
         assert_eq!(run.category_name(), "WarioWare, Inc (Goal: sub 2h)");
+        assert_eq!(run.len(), 2);
+    }
+
+    #[test]
+    fn skip_goal_if_its_empty() {
+        const RUN: &[u8] = br#"Title=WarioWare, Inc
+Attempts=1
+Offset=0
+Size=374,61
+Goal=
+Introduction,0,85.48,85.48
+Jimmy,0,219.68,134.2
+"#;
+
+        let run = parse(RUN, false).unwrap();
+        assert_eq!(run.category_name(), "WarioWare, Inc");
         assert_eq!(run.len(), 2);
     }
 }
