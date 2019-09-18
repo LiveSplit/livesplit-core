@@ -16,16 +16,17 @@ jobs:
       matrix:
         label:
           # Web
-          - wasm32 emscripten
-          - wasm32
+          - Web asmjs
+          - Web wasm32 emscripten
+          - Web wasm32
 
           # Windows
-          - 1 Windows aarch64
-          - 1 Windows i586
-          - 1 Windows i686
-          - 1 Windows x86_64
-          - 1 Windows i686 gnu
-          - 1 Windows x86_64 gnu
+          - Windows aarch64
+          - Windows i586
+          - Windows i686
+          - Windows x86_64
+          - Windows i686 gnu
+          - Windows x86_64 gnu
 
           # Linux
           - Linux i586
@@ -92,10 +93,10 @@ jobs:
           # - env: TARGET=sparcv9-sun-solaris
 
           # Testing other channels
-          - 1 Windows Beta
-          - 1 Windows Nightly
-          - 1 Windows Beta gnu
-          - 1 Windows Nightly gnu
+          - Windows Beta
+          - Windows Nightly
+          - Windows Beta gnu
+          - Windows Nightly gnu
           - Linux Beta
           - Linux Nightly
           - macOS Beta
@@ -103,7 +104,15 @@ jobs:
 
         include:
           # Web
-          - label: wasm32 emscripten
+          - label: Web asmjs
+            target: asmjs-unknown-emscripten
+            os: ubuntu-latest
+            toolchain: nightly
+            tests: skip
+            dylib: skip
+            release_anyway: true
+
+          - label: Web wasm32 emscripten
             target: wasm32-unknown-emscripten
             os: ubuntu-latest
             toolchain: nightly
@@ -111,7 +120,7 @@ jobs:
             dylib: skip
             release_anyway: true
 
-          - label: wasm32
+          - label: Web wasm32
             target: wasm32-unknown-unknown
             os: ubuntu-latest
             tests: skip
@@ -120,38 +129,38 @@ jobs:
             release_anyway: true
 
           # Windows
-          - label: 1 Windows aarch64
+          - label: Windows aarch64
             target: aarch64-pc-windows-msvc
             os: windows-latest
             cross: skip
             tests: skip
             install_target: true
 
-          - label: 1 Windows i586
+          - label: Windows i586
             target: i586-pc-windows-msvc
             os: windows-latest
             cross: skip
             install_target: true
 
-          - label: 1 Windows i686
+          - label: Windows i686
             target: i686-pc-windows-msvc
             os: windows-latest
             cross: skip
             install_target: true
 
-          - label: 1 Windows x86_64
+          - label: Windows x86_64
             target: x86_64-pc-windows-msvc
             os: windows-latest
             cross: skip
 
-          - label: 1 Windows i686 gnu
+          - label: Windows i686 gnu
             target: i686-pc-windows-gnu
             toolchain: stable-i686-pc-windows-gnu
             os: windows-latest
             cross: skip
             install_target: true
 
-          - label: 1 Windows x86_64 gnu
+          - label: Windows x86_64 gnu
             target: x86_64-pc-windows-gnu
             toolchain: stable-x86_64-pc-windows-gnu
             os: windows-latest
@@ -276,7 +285,6 @@ jobs:
           - label: Linux powerpc64le
             target: powerpc64le-unknown-linux-gnu
             os: ubuntu-latest
-            # FIXME: The tests should run, but cross v0.1.15 is broken
             tests: skip
 
           - label: Linux s390x
@@ -381,26 +389,26 @@ jobs:
             dylib: skip
 
           # Testing other channels
-          - label: 1 Windows Beta
+          - label: Windows Beta
             target: x86_64-pc-windows-msvc
             os: windows-latest
             toolchain: beta
             cross: skip
 
-          - label: 1 Windows Nightly
+          - label: Windows Nightly
             target: x86_64-pc-windows-msvc
             os: windows-latest
             toolchain: nightly
             cross: skip
 
-          - label: 1 Windows Beta gnu
+          - label: Windows Beta gnu
             target: x86_64-pc-windows-gnu
             toolchain: beta-x86_64-pc-windows-gnu
             os: windows-latest
             cross: skip
             install_target: true
 
-          - label: 1 Windows Nightly gnu
+          - label: Windows Nightly gnu
             target: x86_64-pc-windows-gnu
             toolchain: nightly-x86_64-pc-windows-gnu
             os: windows-latest
