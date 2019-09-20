@@ -1,6 +1,7 @@
 use super::Editor;
 use crate::{Run, Segment};
 
+mod comparison;
 mod dissociate_run;
 mod mark_as_modified;
 
@@ -84,42 +85,4 @@ fn select_additionally_oob() {
     let mut editor = Editor::new(run).unwrap();
 
     editor.select_additionally(1);
-}
-
-#[test]
-fn move_comparison() {
-    let mut run = Run::new();
-    let segment = Segment::new("");
-    run.push_segment(segment);
-    run.add_custom_comparison("A").unwrap();
-    run.add_custom_comparison("B").unwrap();
-    run.add_custom_comparison("C").unwrap();
-    run.add_custom_comparison("D").unwrap();
-    let mut editor = Editor::new(run).unwrap();
-
-    editor.move_comparison(3, 1).unwrap();
-    assert_eq!(
-        &editor.run().custom_comparisons()[1..],
-        ["A", "D", "B", "C"]
-    );
-    editor.move_comparison(0, 2).unwrap();
-    assert_eq!(
-        &editor.run().custom_comparisons()[1..],
-        ["D", "B", "A", "C"]
-    );
-    editor.move_comparison(1, 3).unwrap();
-    assert_eq!(
-        &editor.run().custom_comparisons()[1..],
-        ["D", "A", "C", "B"]
-    );
-    editor.move_comparison(3, 0).unwrap();
-    assert_eq!(
-        &editor.run().custom_comparisons()[1..],
-        ["B", "D", "A", "C"]
-    );
-    editor.move_comparison(0, 3).unwrap();
-    assert_eq!(
-        &editor.run().custom_comparisons()[1..],
-        ["D", "A", "C", "B"]
-    );
 }
