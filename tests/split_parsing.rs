@@ -130,6 +130,11 @@ mod parse {
     }
 
     #[test]
+    fn time_split_tracker_without_attempt_count() {
+        time_split_tracker::parse(file("tests/run_files/1734.timesplittracker"), None).unwrap();
+    }
+
+    #[test]
     fn splitterz() {
         splitterz::parse(file("tests/run_files/splitterz"), false).unwrap();
     }

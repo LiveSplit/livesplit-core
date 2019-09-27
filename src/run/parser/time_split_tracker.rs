@@ -100,13 +100,12 @@ pub fn parse<R: BufRead>(source: R, path_for_loading_other_files: Option<PathBuf
 
     let line = lines.next().context(Empty)?.context(ReadInitialLine)?;
     let mut splits = line.split('\t');
-    run.set_attempt_count(
-        splits
-            .next()
-            .context(ExpectedAttemptCount)?
-            .parse()
-            .context(ParseAttemptCount)?,
-    );
+
+    let attempt_count = splits.next().context(ExpectedAttemptCount)?;
+    if !attempt_count.is_empty() {
+        run.set_attempt_count(attempt_count.parse().context(ParseAttemptCount)?);
+    }
+
     run.set_offset(
         splits
             .next()
