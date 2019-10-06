@@ -18,8 +18,9 @@ impl SegmentHistory {
         Some(self.0.first()?.0)
     }
 
-    /// Returns the minimum index of all the segment times. If there's no
-    /// segment times or the minimum is less than 1, 1 is returned instead.
+    /// Returns the minimum index of all the segment times. If there are no
+    /// segment times or there are only indices above 1, then 1 is returned
+    /// instead.
     pub fn min_index(&self) -> i32 {
         self.try_get_min_index().map_or(1, |m| min(m, 1))
     }
@@ -65,10 +66,9 @@ impl SegmentHistory {
     /// Removes the segment time with the given index. If it doesn't exist,
     /// nothing is done.
     #[inline]
-    pub fn remove(&mut self, index: i32) {
-        if let Ok(pos) = self.get_pos(index) {
-            self.0.remove(pos);
-        }
+    pub fn remove(&mut self, index: i32) -> Option<Time> {
+        let pos = self.get_pos(index).ok()?;
+        Some(self.0.remove(pos).1)
     }
 
     /// Removes all the segment times from the Segment History.
