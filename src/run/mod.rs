@@ -583,6 +583,7 @@ impl Run {
         }
         self.remove_duplicates();
         self.remove_none_values();
+        self.reattach_unattached_segment_history_elements();
     }
 
     /// Clears out the Attempt History and the Segment Histories of all the segments.
@@ -807,6 +808,30 @@ impl Run {
             Err(ComparisonError::DuplicateName)
         } else {
             Ok(())
+        }
+    }
+
+    fn reattach_unattached_segment_history_elements(&mut self) {
+        let max_id = self.max_attempt_history_index().unwrap_or_default();
+        let mut min_id = self.min_segment_history_index().unwrap_or_default();
+
+        while let Some(unattached_id) = self
+            .segments
+            .iter()
+            .filter_map(|s| s.segment_history().try_get_max_index())
+            .filter(|&i| i > max_id)
+            .max()
+        {
+            let reassign_id = min_id - 1;
+
+            for segment in self.segments_mut() {
+                let history = segment.segment_history_mut();
+                if let Some(time) = history.remove(unattached_id) {
+                    history.insert(reassign_id, time);
+                }
+            }
+
+            min_id = reassign_id;
         }
     }
 }
