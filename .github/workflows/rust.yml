@@ -107,7 +107,7 @@ jobs:
           - label: Web asmjs
             target: asmjs-unknown-emscripten
             os: ubuntu-latest
-            toolchain: nightly
+            toolchain: stable
             tests: skip
             dylib: skip
             release_anyway: true
@@ -115,7 +115,7 @@ jobs:
           - label: Web wasm32 emscripten
             target: wasm32-unknown-emscripten
             os: ubuntu-latest
-            toolchain: nightly
+            toolchain: stable
             tests: skip
             dylib: skip
             release_anyway: true
