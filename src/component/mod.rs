@@ -20,6 +20,8 @@ pub mod timer;
 pub mod title;
 pub mod total_playtime;
 
+pub mod key_value;
+
 pub use blank_space::Component as BlankSpace;
 pub use current_comparison::Component as CurrentComparison;
 pub use current_pace::Component as CurrentPace;
@@ -36,33 +38,3 @@ pub use text::Component as Text;
 pub use timer::Component as Timer;
 pub use title::Component as Title;
 pub use total_playtime::Component as TotalPlaytime;
-
-use crate::settings::{Color, Gradient};
-use palette::rgb::Rgb;
-use palette::Alpha;
-use std::marker::PhantomData;
-
-const DEFAULT_KEY_VALUE_GRADIENT: Gradient = Gradient::Vertical(
-    Color {
-        rgba: Alpha {
-            alpha: 0.06,
-            color: Rgb {
-                red: 1.0,
-                green: 1.0,
-                blue: 1.0,
-                standard: PhantomData,
-            },
-        },
-    },
-    Color {
-        rgba: Alpha {
-            alpha: 0.005,
-            color: Rgb {
-                red: 1.0,
-                green: 1.0,
-                blue: 1.0,
-                standard: PhantomData,
-            },
-        },
-    },
-);

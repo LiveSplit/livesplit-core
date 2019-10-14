@@ -4,7 +4,7 @@
 
 use super::{output_vec, Json};
 use crate::component::OwnedComponent;
-use crate::current_pace_component_state::OwnedCurrentPaceComponentState;
+use crate::key_value_component_state::OwnedKeyValueComponentState;
 use livesplit_core::component::current_pace::Component as CurrentPaceComponent;
 use livesplit_core::Timer;
 
@@ -48,6 +48,6 @@ pub extern "C" fn CurrentPaceComponent_state_as_json(
 pub extern "C" fn CurrentPaceComponent_state(
     this: &mut CurrentPaceComponent,
     timer: &Timer,
-) -> OwnedCurrentPaceComponentState {
+) -> OwnedKeyValueComponentState {
     Box::new(this.state(timer))
 }

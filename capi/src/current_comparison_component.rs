@@ -3,7 +3,7 @@
 
 use super::{output_vec, Json};
 use crate::component::OwnedComponent;
-use crate::current_comparison_component_state::OwnedCurrentComparisonComponentState;
+use crate::key_value_component_state::OwnedKeyValueComponentState;
 use livesplit_core::component::current_comparison::Component as CurrentComparisonComponent;
 use livesplit_core::Timer;
 
@@ -47,6 +47,6 @@ pub extern "C" fn CurrentComparisonComponent_state_as_json(
 pub extern "C" fn CurrentComparisonComponent_state(
     this: &mut CurrentComparisonComponent,
     timer: &Timer,
-) -> OwnedCurrentComparisonComponentState {
+) -> OwnedKeyValueComponentState {
     Box::new(this.state(timer))
 }

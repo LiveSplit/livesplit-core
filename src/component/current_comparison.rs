@@ -2,13 +2,10 @@
 //! The Current Comparison Component is a component that shows the name of the
 //! comparison that is currently selected to be compared against.
 
-use super::DEFAULT_KEY_VALUE_GRADIENT;
+use super::key_value;
 use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
 use crate::Timer;
 use serde::{Deserialize, Serialize};
-use serde_json::{to_writer, Result};
-use std::borrow::Cow;
-use std::io::Write;
 
 /// The Current Comparison Component is a component that shows the name of the
 /// comparison that is currently selected to be compared against.
@@ -37,42 +34,11 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            background: DEFAULT_KEY_VALUE_GRADIENT,
+            background: key_value::DEFAULT_GRADIENT,
             display_two_rows: false,
             label_color: None,
             value_color: None,
         }
-    }
-}
-
-/// The state object describes the information to visualize for this component.
-#[derive(Serialize, Deserialize)]
-pub struct State {
-    /// The background shown behind the component.
-    pub background: Gradient,
-    /// The color of the label. If `None` is specified, the color is taken from
-    /// the layout.
-    pub label_color: Option<Color>,
-    /// The color of the value. If `None` is specified, the color is taken from
-    /// the layout.
-    pub value_color: Option<Color>,
-    /// The label's text.
-    pub text: String,
-    /// The name of the comparison that is currently selected to be compared
-    /// against.
-    pub comparison: String,
-    /// Specifies whether to display the name of the component and its value in
-    /// two separate rows.
-    pub display_two_rows: bool,
-}
-
-impl State {
-    /// Encodes the state object's information as JSON.
-    pub fn write_json<W>(&self, writer: W) -> Result<()>
-    where
-        W: Write,
-    {
-        to_writer(writer, self)
     }
 }
 
@@ -98,18 +64,20 @@ impl Component {
     }
 
     /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<'_, str> {
-        "Current Comparison".into()
+    pub fn name(&self) -> &'static str {
+        "Current Comparison"
     }
 
     /// Calculates the component's state based on the timer provided.
-    pub fn state(&self, timer: &Timer) -> State {
-        State {
+    pub fn state(&self, timer: &Timer) -> key_value::State {
+        key_value::State {
             background: self.settings.background,
-            label_color: self.settings.label_color,
+            key_color: self.settings.label_color,
             value_color: self.settings.value_color,
-            text: String::from("Comparing Against"),
-            comparison: timer.current_comparison().to_string(),
+            semantic_color: Default::default(),
+            key: "Comparing Against".into(),
+            value: timer.current_comparison().into(),
+            key_abbreviations: Box::new(["Comparison".into()]) as _,
             display_two_rows: self.settings.display_two_rows,
         }
     }

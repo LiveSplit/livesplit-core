@@ -5,7 +5,7 @@
 
 use super::{output_vec, Json};
 use crate::component::OwnedComponent;
-use crate::possible_time_save_component_state::OwnedPossibleTimeSaveComponentState;
+use crate::key_value_component_state::OwnedKeyValueComponentState;
 use livesplit_core::component::possible_time_save::Component as PossibleTimeSaveComponent;
 use livesplit_core::Timer;
 
@@ -49,6 +49,6 @@ pub extern "C" fn PossibleTimeSaveComponent_state_as_json(
 pub extern "C" fn PossibleTimeSaveComponent_state(
     this: &PossibleTimeSaveComponent,
     timer: &Timer,
-) -> OwnedPossibleTimeSaveComponentState {
+) -> OwnedKeyValueComponentState {
     Box::new(this.state(timer))
 }

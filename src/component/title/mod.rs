@@ -10,7 +10,6 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{to_writer, Result};
-use std::borrow::Cow;
 use std::io::Write;
 
 #[cfg(test)]
@@ -155,8 +154,8 @@ impl Component {
     }
 
     /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<'_, str> {
-        "Title".into()
+    pub fn name(&self) -> &'static str {
+        "Title"
     }
 
     /// Calculates the component's state based on the timer provided.

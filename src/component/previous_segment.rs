@@ -5,15 +5,13 @@
 //! displayed. This component switches to a `Live Segment` view that shows
 //! active time loss whenever the runner is losing time on the current segment.
 
-use super::DEFAULT_KEY_VALUE_GRADIENT;
+use super::key_value;
 use crate::settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
 use crate::timing::formatter::{Accuracy, Delta, PossibleTimeSave, TimeFormatter};
 use crate::{analysis, comparison, GeneralLayoutSettings, Timer, TimerPhase};
 use serde::{Deserialize, Serialize};
-use serde_json::{to_writer, Result};
 use std::borrow::Cow;
-use std::fmt::Write as FmtWrite;
-use std::io::Write;
+use std::fmt::Write;
 
 /// The Previous Segment Component is a component that shows how much time was
 /// saved or lost during the previous segment based on the chosen comparison.
@@ -53,7 +51,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            background: DEFAULT_KEY_VALUE_GRADIENT,
+            background: key_value::DEFAULT_GRADIENT,
             comparison_override: None,
             display_two_rows: false,
             label_color: None,
@@ -61,37 +59,6 @@ impl Default for Settings {
             accuracy: Accuracy::Tenths,
             show_possible_time_save: false,
         }
-    }
-}
-
-/// The state object describes the information to visualize for this component.
-#[derive(Serialize, Deserialize)]
-pub struct State {
-    /// The background shown behind the component.
-    pub background: Gradient,
-    /// The color of the label. If `None` is specified, the color is taken from
-    /// the layout.
-    pub label_color: Option<Color>,
-    /// The label's text.
-    pub text: String,
-    /// The delta (and possibly the possible time save).
-    pub time: String,
-    /// The semantic coloring information the delta time carries.
-    pub semantic_color: SemanticColor,
-    /// The visual color of the delta time.
-    pub visual_color: Color,
-    /// Specifies whether to display the name of the component and its value in
-    /// two separate rows.
-    pub display_two_rows: bool,
-}
-
-impl State {
-    /// Encodes the state object's information as JSON.
-    pub fn write_json<W>(&self, writer: W) -> Result<()>
-    where
-        W: Write,
-    {
-        to_writer(writer, self)
     }
 }
 
@@ -117,7 +84,7 @@ impl Component {
     }
 
     /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<'_, str> {
+    pub fn name(&self) -> Cow<'static, str> {
         self.text(
             false,
             self.settings
@@ -127,7 +94,7 @@ impl Component {
         )
     }
 
-    fn text(&self, live: bool, comparison: Option<&str>) -> Cow<'_, str> {
+    fn text(&self, live: bool, comparison: Option<&str>) -> Cow<'static, str> {
         let text = if live {
             "Live Segment"
         } else {
@@ -142,7 +109,11 @@ impl Component {
 
     /// Calculates the component's state based on the timer and the layout
     /// settings provided.
-    pub fn state(&self, timer: &Timer, layout_settings: &GeneralLayoutSettings) -> State {
+    pub fn state(
+        &self,
+        timer: &Timer,
+        layout_settings: &GeneralLayoutSettings,
+    ) -> key_value::State {
         let mut time_change = None;
         let mut previous_possible = None;
         let resolved_comparison = comparison::resolve(&self.settings.comparison_override, timer);
@@ -218,7 +189,7 @@ impl Component {
             SemanticColor::Default
         };
 
-        let visual_color = semantic_color.visualize(layout_settings);
+        let value_color = Some(semantic_color.visualize(layout_settings));
 
         let text = self.text(live_segment.is_some(), resolved_comparison);
         let mut time = Delta::custom(self.settings.drop_decimals, self.settings.accuracy)
@@ -234,13 +205,24 @@ impl Component {
             .unwrap();
         }
 
-        State {
+        let key_abbreviations = if live_segment.is_some() {
+            Box::new(["Live Segment".into(), "Live Seg.".into()]) as _
+        } else {
+            Box::new([
+                "Previous Segment".into(),
+                "Prev. Segment".into(),
+                "Prev. Seg.".into(),
+            ]) as _
+        };
+
+        key_value::State {
             background: self.settings.background,
-            label_color: self.settings.label_color,
-            text: text.into_owned(),
-            time,
+            key_color: self.settings.label_color,
+            value_color,
             semantic_color,
-            visual_color,
+            key: text.into_owned().into(),
+            value: time.into(),
+            key_abbreviations,
             display_two_rows: self.settings.display_two_rows,
         }
     }

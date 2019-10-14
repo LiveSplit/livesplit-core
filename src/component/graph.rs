@@ -178,7 +178,7 @@ impl Component {
     }
 
     /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<'_, str> {
+    pub fn name(&self) -> Cow<'static, str> {
         self.text(
             self.settings
                 .comparison_override
@@ -187,7 +187,7 @@ impl Component {
         )
     }
 
-    fn text(&self, comparison: Option<&str>) -> Cow<'_, str> {
+    fn text(&self, comparison: Option<&str>) -> Cow<'static, str> {
         if let Some(comparison) = comparison {
             format!("Graph ({})", comparison::shorten(comparison)).into()
         } else {

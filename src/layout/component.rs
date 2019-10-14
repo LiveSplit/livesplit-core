@@ -55,13 +55,11 @@ impl Component {
         match self {
             Component::BlankSpace(component) => ComponentState::BlankSpace(component.state(timer)),
             Component::CurrentComparison(component) => {
-                ComponentState::CurrentComparison(component.state(timer))
+                ComponentState::KeyValue(component.state(timer))
             }
-            Component::CurrentPace(component) => {
-                ComponentState::CurrentPace(component.state(timer))
-            }
+            Component::CurrentPace(component) => ComponentState::KeyValue(component.state(timer)),
             Component::Delta(component) => {
-                ComponentState::Delta(component.state(timer, layout_settings))
+                ComponentState::KeyValue(component.state(timer, layout_settings))
             }
             Component::DetailedTimer(component) => {
                 ComponentState::DetailedTimer(Box::new(component.state(timer, layout_settings)))
@@ -69,26 +67,24 @@ impl Component {
             Component::Graph(component) => {
                 ComponentState::Graph(component.state(timer, layout_settings))
             }
-            Component::PbChance(component) => ComponentState::PbChance(component.state(timer)),
+            Component::PbChance(component) => ComponentState::KeyValue(component.state(timer)),
             Component::PossibleTimeSave(component) => {
-                ComponentState::PossibleTimeSave(component.state(timer))
+                ComponentState::KeyValue(component.state(timer))
             }
             Component::PreviousSegment(component) => {
-                ComponentState::PreviousSegment(component.state(timer, layout_settings))
+                ComponentState::KeyValue(component.state(timer, layout_settings))
             }
             Component::Separator(component) => ComponentState::Separator(component.state(timer)),
             Component::Splits(component) => {
                 ComponentState::Splits(component.state(timer, layout_settings))
             }
-            Component::SumOfBest(component) => ComponentState::SumOfBest(component.state(timer)),
+            Component::SumOfBest(component) => ComponentState::KeyValue(component.state(timer)),
             Component::Text(component) => ComponentState::Text(component.state()),
             Component::Timer(component) => {
                 ComponentState::Timer(component.state(timer, layout_settings))
             }
             Component::Title(component) => ComponentState::Title(component.state(timer)),
-            Component::TotalPlaytime(component) => {
-                ComponentState::TotalPlaytime(component.state(timer))
-            }
+            Component::TotalPlaytime(component) => ComponentState::KeyValue(component.state(timer)),
         }
     }
 
@@ -138,22 +134,22 @@ impl Component {
     /// Accesses the name of the component.
     pub fn name(&self) -> Cow<'_, str> {
         match self {
-            Component::BlankSpace(component) => component.name(),
-            Component::CurrentComparison(component) => component.name(),
+            Component::BlankSpace(component) => component.name().into(),
+            Component::CurrentComparison(component) => component.name().into(),
             Component::CurrentPace(component) => component.name(),
             Component::Delta(component) => component.name(),
-            Component::DetailedTimer(component) => component.name(),
+            Component::DetailedTimer(component) => component.name().into(),
             Component::Graph(component) => component.name(),
-            Component::PbChance(component) => component.name(),
+            Component::PbChance(component) => component.name().into(),
             Component::PossibleTimeSave(component) => component.name(),
             Component::PreviousSegment(component) => component.name(),
-            Component::Separator(component) => component.name(),
-            Component::Splits(component) => component.name(),
-            Component::SumOfBest(component) => component.name(),
+            Component::Separator(component) => component.name().into(),
+            Component::Splits(component) => component.name().into(),
+            Component::SumOfBest(component) => component.name().into(),
             Component::Text(component) => component.name(),
-            Component::Timer(component) => component.name(),
-            Component::Title(component) => component.name(),
-            Component::TotalPlaytime(component) => component.name(),
+            Component::Timer(component) => component.name().into(),
+            Component::Title(component) => component.name().into(),
+            Component::TotalPlaytime(component) => component.name().into(),
         }
     }
 

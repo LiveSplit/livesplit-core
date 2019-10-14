@@ -11,7 +11,6 @@ use palette::rgb::LinSrgb;
 use palette::Hsv;
 use serde::{Deserialize, Serialize};
 use serde_json::{to_writer, Result};
-use std::borrow::Cow;
 use std::io::Write;
 
 /// The Timer Component is a component that shows the total time of the current
@@ -114,8 +113,8 @@ impl Component {
     }
 
     /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<'_, str> {
-        "Timer".into()
+    pub fn name(&self) -> &'static str {
+        "Timer"
     }
 
     /// Calculates the component's state based on the timer and the layout

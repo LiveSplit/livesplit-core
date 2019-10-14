@@ -1,21 +1,14 @@
 /** The state object for one of the components available. */
 export type ComponentStateJson =
     { BlankSpace: BlankSpaceComponentStateJson } |
-    { CurrentComparison: CurrentComparisonComponentStateJson } |
-    { CurrentPace: CurrentPaceComponentStateJson } |
-    { Delta: DeltaComponentStateJson } |
     { DetailedTimer: DetailedTimerComponentStateJson } |
     { Graph: GraphComponentStateJson } |
-    { PbChance: PbChanceComponentStateJson } |
-    { PossibleTimeSave: PossibleTimeSaveComponentStateJson } |
-    { PreviousSegment: PreviousSegmentComponentStateJson } |
+    { KeyValue: KeyValueComponentStateJson } |
     { Separator: null } |
     { Splits: SplitsComponentStateJson } |
-    { SumOfBest: SumOfBestComponentStateJson } |
     { Text: TextComponentStateJson } |
     { Timer: TimerComponentStateJson } |
-    { Title: TitleComponentStateJson } |
-    { TotalPlaytime: TotalPlaytimeComponentStateJson };
+    { Title: TitleComponentStateJson };
 
 /**
  * Colors can be used to describe what color to use for visualizing backgrounds,
@@ -264,98 +257,36 @@ export interface SplitColumnState {
     visual_color: Color,
 }
 
-/** The state object describes the information to visualize for this component. */
-export interface PreviousSegmentComponentStateJson {
+/**
+ * The state object describes the information to visualize for a key value based
+ * component.
+ */
+export interface KeyValueComponentStateJson {
     /** The background shown behind the component. */
     background: Gradient,
     /**
-     * The color of the label. If `null` is specified, the color is taken from
-     * the layout.
+     * The color of the key. If `null` is specified, the color is taken from the
+     * layout.
      */
-    label_color: Color | null,
-    /** The label's text. */
-    text: string,
-    /** The delta (and possibly the possible time save). */
-    time: string,
-    /** The semantic coloring information the delta time carries. */
+    key_color: Color | null,
+    /**
+     * The color of the key. If `null` is specified, the color is taken from the
+     * layout.
+     */
+    value_color: Color | null,
+    /** The semantic coloring information the value carries. */
     semantic_color: SemanticColor,
+    /** The key to visualize. */
+    key: string,
+    /** The value to visualize. */
+    value: string,
     /** The visual color of the delta time. */
     visual_color: Color,
     /**
-     * Specifies whether to display the name of the component and its value in
-     * two separate rows.
+     * Specifies additional abbreviations for the key that can be used instead
+     * of the key, if there is not enough space to show the whole key.
      */
-    display_two_rows: boolean,
-}
-
-/** The state object describes the information to visualize for this component. */
-export interface SumOfBestComponentStateJson {
-    /** The background shown behind the component. */
-    background: Gradient,
-    /**
-     * The color of the label. If `null` is specified, the color is taken from
-     * the layout.
-     */
-    label_color: Color | null,
-    /**
-     * The color of the value. If `null` is specified, the color is taken from
-     * the layout.
-     */
-    value_color: Color | null,
-    /** The label's text. */
-    text: string,
-    /** The sum of best segments. */
-    time: string,
-    /**
-     * Specifies whether to display the name of the component and its value in
-     * two separate rows.
-     */
-    display_two_rows: boolean,
-}
-
-/** The state object describes the information to visualize for this component. */
-export interface PbChanceComponentStateJson {
-    /** The background shown behind the component. */
-    background: Gradient,
-    /**
-     * The color of the label. If `null` is specified, the color is taken from
-     * the layout.
-     */
-    label_color: Color | null,
-    /**
-     * The color of the value. If `null` is specified, the color is taken from
-     * the layout.
-     */
-    value_color: Color | null,
-    /** The label's text. */
-    text: string,
-    /** The current PB Chance. */
-    pb_chance: string,
-    /**
-     * Specifies whether to display the name of the component and its value in
-     * two separate rows.
-     */
-    display_two_rows: boolean,
-}
-
-/** The state object describes the information to visualize for this component. */
-export interface PossibleTimeSaveComponentStateJson {
-    /** The background shown behind the component. */
-    background: Gradient,
-    /**
-     * The color of the label. If `null` is specified, the color is taken from
-     * the layout.
-     */
-    label_color: Color | null,
-    /**
-     * The color of the value. If `null` is specified, the color is taken from
-     * the layout.
-     */
-    value_color: Color | null,
-    /** The label's text. */
-    text: string,
-    /** The current possible time save. */
-    time: string,
+    key_abbreviations: string[],
     /**
      * Specifies whether to display the name of the component and its value in
      * two separate rows.
@@ -468,108 +399,6 @@ export interface TextComponentStateJson {
 export type TextComponentStateText =
     { Center: string } |
     { Split: string[] };
-
-/** The state object describes the information to visualize for this component. */
-export interface TotalPlaytimeComponentStateJson {
-    /** The background shown behind the component. */
-    background: Gradient,
-    /**
-     * The color of the label. If `null` is specified, the color is taken from
-     * the layout.
-     */
-    label_color: Color | null,
-    /**
-     * The color of the value. If `null` is specified, the color is taken from
-     * the layout.
-     */
-    value_color: Color | null,
-    /** The label's text. */
-    text: string,
-    /** The total playtime. */
-    time: string,
-    /**
-     * Specifies whether to display the name of the component and its value in
-     * two separate rows.
-     */
-    display_two_rows: boolean,
-}
-
-/** The state object describes the information to visualize for this component. */
-export interface CurrentPaceComponentStateJson {
-    /** The background shown behind the component. */
-    background: Gradient,
-    /**
-     * The color of the label. If `null` is specified, the color is taken from
-     * the layout.
-     */
-    label_color: Color | null,
-    /**
-     * The color of the value. If `null` is specified, the color is taken from
-     * the layout.
-     */
-    value_color: Color | null,
-    /** The label's text. */
-    text: string,
-    /** The current pace. */
-    time: string,
-    /**
-     * Specifies whether to display the name of the component and its value in
-     * two separate rows.
-     */
-    display_two_rows: boolean,
-}
-
-/** The state object describes the information to visualize for this component. */
-export interface DeltaComponentStateJson {
-    /** The background shown behind the component. */
-    background: Gradient,
-    /**
-     * The color of the label. If `null` is specified, the color is taken from
-     * the layout.
-     */
-    label_color: Color | null,
-    /** The label's text. */
-    text: string,
-    /** The delta. */
-    time: string,
-    /** The semantic coloring information the delta time carries. */
-    semantic_color: SemanticColor,
-    /** The visual color of the delta time. */
-    visual_color: Color,
-    /**
-     * Specifies whether to display the name of the component and its value in
-     * two separate rows.
-     */
-    display_two_rows: boolean,
-}
-
-/** The state object describes the information to visualize for this component. */
-export interface CurrentComparisonComponentStateJson {
-    /** The background shown behind the component. */
-    background: Gradient,
-    /**
-     * The color of the label. If `null` is specified, the color is taken from
-     * the layout.
-     */
-    label_color: Color | null,
-    /**
-     * The color of the value. If `null` is specified, the color is taken from
-     * the layout.
-     */
-    value_color: Color | null,
-    /** The label's text. */
-    text: string,
-    /**
-     * The name of the comparison that is currently selected to be compared
-     * against.
-     */
-    comparison: string,
-    /**
-     * Specifies whether to display the name of the component and its value in
-     * two separate rows.
-     */
-    display_two_rows: boolean,
-}
 
 /** The state object describes the information to visualize for this component. */
 export interface DetailedTimerComponentStateJson {

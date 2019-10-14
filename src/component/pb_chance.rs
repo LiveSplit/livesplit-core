@@ -4,13 +4,10 @@
 //! beating the Personal Best. During an attempt it actively changes based on
 //! how well the attempt is going.
 
-use super::DEFAULT_KEY_VALUE_GRADIENT;
+use super::key_value;
 use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
 use crate::{analysis::pb_chance, Timer};
 use serde::{Deserialize, Serialize};
-use serde_json::{to_writer, Result};
-use std::borrow::Cow;
-use std::io::Write;
 
 /// The PB Chance Component is a component that shows how likely it is to beat
 /// the Personal Best. If there is no active attempt it shows the general chance
@@ -41,41 +38,11 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            background: DEFAULT_KEY_VALUE_GRADIENT,
+            background: key_value::DEFAULT_GRADIENT,
             display_two_rows: false,
             label_color: None,
             value_color: None,
         }
-    }
-}
-
-/// The state object describes the information to visualize for this component.
-#[derive(Serialize, Deserialize)]
-pub struct State {
-    /// The background shown behind the component.
-    pub background: Gradient,
-    /// The color of the label. If `None` is specified, the color is taken from
-    /// the layout.
-    pub label_color: Option<Color>,
-    /// The color of the value. If `None` is specified, the color is taken from
-    /// the layout.
-    pub value_color: Option<Color>,
-    /// The label's text.
-    pub text: String,
-    /// The current PB chance.
-    pub pb_chance: String,
-    /// Specifies whether to display the name of the component and its value in
-    /// two separate rows.
-    pub display_two_rows: bool,
-}
-
-impl State {
-    /// Encodes the state object's information as JSON.
-    pub fn write_json<W>(&self, writer: W) -> Result<()>
-    where
-        W: Write,
-    {
-        to_writer(writer, self)
     }
 }
 
@@ -101,20 +68,22 @@ impl Component {
     }
 
     /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<'_, str> {
-        "PB Chance".into()
+    pub fn name(&self) -> &'static str {
+        "PB Chance"
     }
 
     /// Calculates the component's state based on the timer provided.
-    pub fn state(&self, timer: &Timer) -> State {
+    pub fn state(&self, timer: &Timer) -> key_value::State {
         let chance = pb_chance::for_timer(timer);
 
-        State {
+        key_value::State {
             background: self.settings.background,
-            label_color: self.settings.label_color,
+            key_color: self.settings.label_color,
             value_color: self.settings.value_color,
-            text: self.name().into_owned(),
-            pb_chance: format!("{:.1}%", 100.0 * chance),
+            semantic_color: Default::default(),
+            key: self.name().into(),
+            value: format!("{:.1}%", 100.0 * chance).into(),
+            key_abbreviations: Box::new([]) as _,
             display_two_rows: self.settings.display_two_rows,
         }
     }
