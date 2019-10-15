@@ -3,7 +3,7 @@
 
 use super::{output_vec, Json};
 use crate::component::OwnedComponent;
-use crate::delta_component_state::OwnedDeltaComponentState;
+use crate::key_value_component_state::OwnedKeyValueComponentState;
 use livesplit_core::component::delta::Component as DeltaComponent;
 use livesplit_core::{GeneralLayoutSettings, Timer};
 
@@ -48,6 +48,6 @@ pub extern "C" fn DeltaComponent_state(
     this: &mut DeltaComponent,
     timer: &Timer,
     layout_settings: &GeneralLayoutSettings,
-) -> OwnedDeltaComponentState {
+) -> OwnedKeyValueComponentState {
     Box::new(this.state(timer, layout_settings))
 }

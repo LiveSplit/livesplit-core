@@ -80,6 +80,7 @@ use {
     },
     euclid::{Transform2D, UnknownUnit},
     rusttype::Font,
+    std::iter,
 };
 
 pub use self::mesh::{Mesh, Vertex};
@@ -393,15 +394,6 @@ fn render_component<B: Backend>(
 ) {
     match component {
         ComponentState::BlankSpace(state) => component::blank_space::render(context, dim, state),
-        ComponentState::Title(component) => {
-            component::title::render(context, dim, component, state, &mut icons.game_icon)
-        }
-        ComponentState::Splits(component) => {
-            component::splits::render(context, dim, component, state, &mut icons.split_icons)
-        }
-        ComponentState::Timer(component) => {
-            component::timer::render(context, dim, component);
-        }
         ComponentState::DetailedTimer(component) => component::detailed_timer::render(
             context,
             dim,
@@ -409,36 +401,24 @@ fn render_component<B: Backend>(
             state,
             &mut icons.detailed_timer_icon,
         ),
-        ComponentState::CurrentComparison(component) => {
-            component::current_comparison::render(context, dim, component, state)
+        ComponentState::Graph(component) => {
+            component::graph::render(context, dim, component, state)
         }
-        ComponentState::CurrentPace(component) => {
-            component::current_pace::render(context, dim, component, state)
-        }
-        ComponentState::Delta(component) => {
-            component::delta::render(context, dim, component, state)
-        }
-        ComponentState::PbChance(component) => {
-            component::pb_chance::render(context, dim, component, state)
-        }
-        ComponentState::PossibleTimeSave(component) => {
-            component::possible_time_save::render(context, dim, component, state)
-        }
-        ComponentState::PreviousSegment(component) => {
-            component::previous_segment::render(context, dim, component, state)
+        ComponentState::KeyValue(component) => {
+            component::key_value::render(context, dim, component, state)
         }
         ComponentState::Separator(component) => {
             component::separator::render(context, dim, component, state)
         }
-        ComponentState::SumOfBest(component) => {
-            component::sum_of_best::render(context, dim, component, state)
+        ComponentState::Splits(component) => {
+            component::splits::render(context, dim, component, state, &mut icons.split_icons)
         }
         ComponentState::Text(component) => component::text::render(context, dim, component, state),
-        ComponentState::TotalPlaytime(component) => {
-            component::total_playtime::render(context, dim, component, state)
+        ComponentState::Timer(component) => {
+            component::timer::render(context, dim, component);
         }
-        ComponentState::Graph(component) => {
-            component::graph::render(context, dim, component, state)
+        ComponentState::Title(component) => {
+            component::title::render(context, dim, component, state, &mut icons.game_icon)
         }
     }
 }
@@ -554,9 +534,10 @@ impl<B: Backend> RenderContext<'_, B> {
         self.render_rectangle([0.0, 0.0], [1.0, 1.0], background);
     }
 
-    fn render_numerical_key_value_component(
+    fn render_key_value_component(
         &mut self,
-        keys: &[&str],
+        key: &str,
+        abbreviations: &[Box<str>],
         value: &str,
         [width, height]: [f32; 2],
         key_color: Color,
@@ -575,41 +556,7 @@ impl<B: Backend> RenderContext<'_, B> {
             left_of_value_x
         };
         let key = self.choose_abbreviation(
-            keys.iter().cloned(),
-            DEFAULT_TEXT_SIZE,
-            end_x - BOTH_PADDINGS,
-        );
-        self.render_text_ellipsis(
-            key,
-            [PADDING, TEXT_ALIGN_TOP],
-            DEFAULT_TEXT_SIZE,
-            [key_color; 2],
-            end_x - PADDING,
-        );
-    }
-
-    fn render_textual_key_value_component(
-        &mut self,
-        keys: &[&str],
-        value: &str,
-        [width, height]: [f32; 2],
-        key_color: Color,
-        value_color: Color,
-        display_two_rows: bool,
-    ) {
-        let left_of_value_x = self.render_text_right_align(
-            value,
-            [width - PADDING, height + TEXT_ALIGN_BOTTOM],
-            DEFAULT_TEXT_SIZE,
-            [value_color; 2],
-        );
-        let end_x = if display_two_rows {
-            width
-        } else {
-            left_of_value_x
-        };
-        let key = self.choose_abbreviation(
-            keys.iter().cloned(),
+            iter::once(key).chain(abbreviations.iter().map(|abrv| &**abrv)),
             DEFAULT_TEXT_SIZE,
             end_x - BOTH_PADDINGS,
         );
@@ -821,76 +768,34 @@ fn decode_color(color: &Color) -> [f32; 4] {
 fn component_width(component: &ComponentState) -> f32 {
     match component {
         ComponentState::BlankSpace(state) => state.size as f32 * PSEUDO_PIXELS,
-        ComponentState::CurrentComparison(_) => 6.0,
-        ComponentState::CurrentPace(_) => 6.0,
-        ComponentState::Delta(_) => 6.0,
-        ComponentState::PbChance(_) => 6.0,
-        ComponentState::PossibleTimeSave(_) => 6.0,
-        ComponentState::PreviousSegment(_) => 6.0,
-        ComponentState::SumOfBest(_) => 6.0,
-        ComponentState::Text(_) => 6.0,
-        ComponentState::TotalPlaytime(_) => 6.0,
-        ComponentState::Title(_) => 8.0,
+        ComponentState::DetailedTimer(_) => 7.0,
+        ComponentState::Graph(_) => 7.0,
+        ComponentState::KeyValue(_) => 6.0,
+        ComponentState::Separator(_) => SEPARATOR_THICKNESS,
         ComponentState::Splits(state) => {
             let column_count = 2.0; // FIXME: Not always 2.
             let split_width = 2.0 + column_count * component::splits::COLUMN_WIDTH;
             state.splits.len() as f32 * split_width
         }
-        ComponentState::DetailedTimer(_) => 7.0,
+        ComponentState::Text(_) => 6.0,
         ComponentState::Timer(_) => 8.25,
-        ComponentState::Graph(_) => 7.0,
-        ComponentState::Separator(_) => SEPARATOR_THICKNESS,
+        ComponentState::Title(_) => 8.0,
     }
 }
 
 fn component_height(component: &ComponentState) -> f32 {
     match component {
         ComponentState::BlankSpace(state) => state.size as f32 * PSEUDO_PIXELS,
-        ComponentState::CurrentComparison(state) => {
-            if state.display_two_rows {
-                TWO_ROW_HEIGHT
-            } else {
-                DEFAULT_COMPONENT_HEIGHT
-            }
-        }
-        ComponentState::CurrentPace(state) => {
-            if state.display_two_rows {
-                TWO_ROW_HEIGHT
-            } else {
-                DEFAULT_COMPONENT_HEIGHT
-            }
-        }
         ComponentState::DetailedTimer(_) => 2.5,
-        ComponentState::Delta(state) => {
-            if state.display_two_rows {
-                TWO_ROW_HEIGHT
-            } else {
-                DEFAULT_COMPONENT_HEIGHT
-            }
-        }
         ComponentState::Graph(state) => state.height as f32 * PSEUDO_PIXELS,
+        ComponentState::KeyValue(state) => {
+            if state.display_two_rows {
+                TWO_ROW_HEIGHT
+            } else {
+                DEFAULT_COMPONENT_HEIGHT
+            }
+        }
         ComponentState::Separator(_) => SEPARATOR_THICKNESS,
-        ComponentState::PbChance(state) => {
-            if state.display_two_rows {
-                TWO_ROW_HEIGHT
-            } else {
-                DEFAULT_COMPONENT_HEIGHT
-            }
-        }
-        ComponentState::PossibleTimeSave(state) => {
-            if state.display_two_rows {
-                TWO_ROW_HEIGHT
-            } else {
-                DEFAULT_COMPONENT_HEIGHT
-            }
-        }
-        ComponentState::PreviousSegment(state) => {
-            if state.display_two_rows {
-                TWO_ROW_HEIGHT
-            } else {
-                DEFAULT_COMPONENT_HEIGHT
-            }
-        }
         ComponentState::Splits(state) => {
             state.splits.len() as f32
                 * if state.display_two_rows {
@@ -904,13 +809,6 @@ fn component_height(component: &ComponentState) -> f32 {
                     0.0
                 }
         }
-        ComponentState::SumOfBest(state) => {
-            if state.display_two_rows {
-                TWO_ROW_HEIGHT
-            } else {
-                DEFAULT_COMPONENT_HEIGHT
-            }
-        }
         ComponentState::Text(state) => {
             if state.display_two_rows {
                 TWO_ROW_HEIGHT
@@ -920,12 +818,5 @@ fn component_height(component: &ComponentState) -> f32 {
         }
         ComponentState::Timer(state) => state.height as f32 * PSEUDO_PIXELS,
         ComponentState::Title(_) => TWO_ROW_HEIGHT,
-        ComponentState::TotalPlaytime(state) => {
-            if state.display_two_rows {
-                TWO_ROW_HEIGHT
-            } else {
-                DEFAULT_COMPONENT_HEIGHT
-            }
-        }
     }
 }

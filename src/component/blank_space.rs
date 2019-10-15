@@ -7,7 +7,6 @@ use crate::settings::{Field, Gradient, SettingsDescription, Value};
 use crate::Timer;
 use serde::{Deserialize, Serialize};
 use serde_json::{to_writer, Result};
-use std::borrow::Cow;
 use std::io::Write;
 
 /// The Blank Space Component is simply an empty component that doesn't show
@@ -78,8 +77,8 @@ impl Component {
     }
 
     /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<'_, str> {
-        "Blank Space".into()
+    pub fn name(&self) -> &'static str {
+        "Blank Space"
     }
 
     /// Calculates the component's state based on the timer provided.

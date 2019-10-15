@@ -16,7 +16,6 @@ use crate::timing::formatter::{
 use crate::{GeneralLayoutSettings, Segment, TimeSpan, Timer, TimerPhase, TimingMethod};
 use serde::{Deserialize, Serialize};
 use serde_json::{to_writer, Result};
-use std::borrow::Cow;
 use std::io::Write;
 
 #[cfg(test)]
@@ -149,8 +148,8 @@ impl Component {
     }
 
     /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<'_, str> {
-        "Detailed Timer".into()
+    pub fn name(&self) -> &'static str {
+        "Detailed Timer"
     }
 
     /// Calculates the component's state based on the timer and layout settings

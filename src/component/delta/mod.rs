@@ -2,15 +2,13 @@
 //! Component is a component that shows the how far ahead or behind the current
 //! attempt is compared to the chosen comparison.
 
-use super::DEFAULT_KEY_VALUE_GRADIENT;
+use super::key_value;
 use crate::analysis::{delta, state_helper};
 use crate::settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
 use crate::timing::formatter::{Accuracy, Delta, TimeFormatter};
 use crate::{comparison, GeneralLayoutSettings, Timer};
 use serde::{Deserialize, Serialize};
-use serde_json::{to_writer, Result};
 use std::borrow::Cow;
-use std::io::Write;
 
 #[cfg(test)]
 mod tests;
@@ -47,44 +45,13 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            background: DEFAULT_KEY_VALUE_GRADIENT,
+            background: key_value::DEFAULT_GRADIENT,
             comparison_override: None,
             display_two_rows: false,
             label_color: None,
             drop_decimals: true,
             accuracy: Accuracy::Tenths,
         }
-    }
-}
-
-/// The state object describes the information to visualize for this component.
-#[derive(Serialize, Deserialize)]
-pub struct State {
-    /// The background shown behind the component.
-    pub background: Gradient,
-    /// The color of the label. If `None` is specified, the color is taken from
-    /// the layout.
-    pub label_color: Option<Color>,
-    /// The label's text.
-    pub text: String,
-    /// The delta.
-    pub time: String,
-    /// The semantic coloring information the delta time carries.
-    pub semantic_color: SemanticColor,
-    /// The visual color of the delta time.
-    pub visual_color: Color,
-    /// Specifies whether to display the name of the component and its value in
-    /// two separate rows.
-    pub display_two_rows: bool,
-}
-
-impl State {
-    /// Encodes the state object's information as JSON.
-    pub fn write_json<W>(&self, writer: W) -> Result<()>
-    where
-        W: Write,
-    {
-        to_writer(writer, self)
     }
 }
 
@@ -110,7 +77,7 @@ impl Component {
     }
 
     /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<'_, str> {
+    pub fn name(&self) -> Cow<'static, str> {
         if let Some(comparison) = &self.settings.comparison_override {
             format!("Delta ({})", comparison).into()
         } else {
@@ -120,7 +87,11 @@ impl Component {
 
     /// Calculates the component's state based on the timer and the layout
     /// settings provided.
-    pub fn state(&self, timer: &Timer, layout_settings: &GeneralLayoutSettings) -> State {
+    pub fn state(
+        &self,
+        timer: &Timer,
+        layout_settings: &GeneralLayoutSettings,
+    ) -> key_value::State {
         let comparison = comparison::resolve(&self.settings.comparison_override, timer);
         let text = comparison.unwrap_or_else(|| timer.current_comparison());
         let comparison = comparison::or_current(comparison, timer);
@@ -146,17 +117,21 @@ impl Component {
             SemanticColor::Default
         };
 
-        let visual_color = semantic_color.visualize(layout_settings);
+        let value_color = Some(semantic_color.visualize(layout_settings));
 
-        State {
+        let abbreviation = comparison::shorten(text);
+
+        key_value::State {
             background: self.settings.background,
-            label_color: self.settings.label_color,
-            text: text.to_string(),
-            time: Delta::custom(self.settings.drop_decimals, self.settings.accuracy)
-                .format(delta)
-                .to_string(),
+            key_color: self.settings.label_color,
+            value_color,
             semantic_color,
-            visual_color,
+            key: text.to_string().into(),
+            value: Delta::custom(self.settings.drop_decimals, self.settings.accuracy)
+                .format(delta)
+                .to_string()
+                .into(),
+            key_abbreviations: Box::new([abbreviation.into()]) as _,
             display_two_rows: self.settings.display_two_rows,
         }
     }

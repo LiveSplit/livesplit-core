@@ -6,7 +6,7 @@
 
 use super::{output_vec, Json};
 use crate::component::OwnedComponent;
-use crate::previous_segment_component_state::OwnedPreviousSegmentComponentState;
+use crate::key_value_component_state::OwnedKeyValueComponentState;
 use livesplit_core::component::previous_segment::Component as PreviousSegmentComponent;
 use livesplit_core::{GeneralLayoutSettings, Timer};
 
@@ -53,6 +53,6 @@ pub extern "C" fn PreviousSegmentComponent_state(
     this: &PreviousSegmentComponent,
     timer: &Timer,
     layout_settings: &GeneralLayoutSettings,
-) -> OwnedPreviousSegmentComponentState {
+) -> OwnedKeyValueComponentState {
     Box::new(this.state(timer, layout_settings))
 }

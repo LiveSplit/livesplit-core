@@ -4,16 +4,14 @@
 //! Segments. This component also allows showing the Total Possible Time Save
 //! for the remainder of the current attempt.
 
-use super::DEFAULT_KEY_VALUE_GRADIENT;
+use super::key_value;
 use crate::analysis::possible_time_save;
 use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
 use crate::timing::formatter::{Accuracy, PossibleTimeSave, TimeFormatter};
 use crate::{comparison, Timer, TimerPhase};
 use serde::{Deserialize, Serialize};
-use serde_json::{to_writer, Result};
 use std::borrow::Cow;
 use std::fmt::Write as FmtWrite;
-use std::io::Write;
 
 /// The Possible Time Save Component is a component that shows how much time the
 /// chosen comparison could've saved for the current segment, based on the Best
@@ -53,7 +51,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            background: DEFAULT_KEY_VALUE_GRADIENT,
+            background: key_value::DEFAULT_GRADIENT,
             comparison_override: None,
             display_two_rows: false,
             total_possible_time_save: false,
@@ -61,36 +59,6 @@ impl Default for Settings {
             value_color: None,
             accuracy: Accuracy::Hundredths,
         }
-    }
-}
-
-/// The state object describes the information to visualize for this component.
-#[derive(Serialize, Deserialize)]
-pub struct State {
-    /// The background shown behind the component.
-    pub background: Gradient,
-    /// The color of the label. If `None` is specified, the color is taken from
-    /// the layout.
-    pub label_color: Option<Color>,
-    /// The color of the value. If `None` is specified, the color is taken from
-    /// the layout.
-    pub value_color: Option<Color>,
-    /// The label's text.
-    pub text: String,
-    /// The current possible time save.
-    pub time: String,
-    /// Specifies whether to display the name of the component and its value in
-    /// two separate rows.
-    pub display_two_rows: bool,
-}
-
-impl State {
-    /// Encodes the state object's information as JSON.
-    pub fn write_json<W>(&self, writer: W) -> Result<()>
-    where
-        W: Write,
-    {
-        to_writer(writer, self)
     }
 }
 
@@ -116,7 +84,7 @@ impl Component {
     }
 
     /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<'_, str> {
+    pub fn name(&self) -> Cow<'static, str> {
         self.text(
             self.settings
                 .comparison_override
@@ -125,7 +93,7 @@ impl Component {
         )
     }
 
-    fn text(&self, comparison: Option<&str>) -> Cow<'_, str> {
+    fn text(&self, comparison: Option<&str>) -> Cow<'static, str> {
         let text = if self.settings.total_possible_time_save {
             "Total Possible Time Save"
         } else {
@@ -139,7 +107,7 @@ impl Component {
     }
 
     /// Calculates the component's state based on the timer provided.
-    pub fn state(&self, timer: &Timer) -> State {
+    pub fn state(&self, timer: &Timer) -> key_value::State {
         let segment_index = timer.current_split_index();
         let current_phase = timer.current_phase();
         let comparison = comparison::resolve(&self.settings.comparison_override, timer);
@@ -158,14 +126,32 @@ impl Component {
             None
         };
 
-        State {
+        let key_abbreviations = if self.settings.total_possible_time_save {
+            Box::new([
+                "Total Possible Time Save".into(),
+                "Possible Time Save".into(),
+                "Poss. Time Save".into(),
+                "Time Save".into(),
+            ]) as _
+        } else {
+            Box::new([
+                "Possible Time Save".into(),
+                "Poss. Time Save".into(),
+                "Time Save".into(),
+            ]) as _
+        };
+
+        key_value::State {
             background: self.settings.background,
-            label_color: self.settings.label_color,
+            key_color: self.settings.label_color,
             value_color: self.settings.value_color,
-            text: text.into_owned(),
-            time: PossibleTimeSave::with_accuracy(self.settings.accuracy)
+            semantic_color: Default::default(),
+            key: text.into_owned().into(),
+            value: PossibleTimeSave::with_accuracy(self.settings.accuracy)
                 .format(time)
-                .to_string(),
+                .to_string()
+                .into(),
+            key_abbreviations,
             display_two_rows: self.settings.display_two_rows,
         }
     }

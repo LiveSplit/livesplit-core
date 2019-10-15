@@ -7,15 +7,12 @@
 //! best segment times. The name is therefore a bit misleading, but sticks
 //! around for historical reasons.
 
-use super::DEFAULT_KEY_VALUE_GRADIENT;
+use super::key_value;
 use crate::analysis::sum_of_segments::calculate_best;
 use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
 use crate::timing::formatter::{Accuracy, Regular, TimeFormatter};
 use crate::Timer;
 use serde::{Deserialize, Serialize};
-use serde_json::{to_writer, Result};
-use std::borrow::Cow;
-use std::io::Write;
 
 /// The Sum of Best Segments Component shows the fastest possible time to
 /// complete a run of this category, based on information collected from all the
@@ -51,42 +48,12 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            background: DEFAULT_KEY_VALUE_GRADIENT,
+            background: key_value::DEFAULT_GRADIENT,
             display_two_rows: false,
             label_color: None,
             value_color: None,
             accuracy: Accuracy::Seconds,
         }
-    }
-}
-
-/// The state object describes the information to visualize for this component.
-#[derive(Serialize, Deserialize)]
-pub struct State {
-    /// The background shown behind the component.
-    pub background: Gradient,
-    /// The color of the label. If `None` is specified, the color is taken from
-    /// the layout.
-    pub label_color: Option<Color>,
-    /// The color of the value. If `None` is specified, the color is taken from
-    /// the layout.
-    pub value_color: Option<Color>,
-    /// The label's text.
-    pub text: String,
-    /// The sum of best segments.
-    pub time: String,
-    /// Specifies whether to display the name of the component and its value in
-    /// two separate rows.
-    pub display_two_rows: bool,
-}
-
-impl State {
-    /// Encodes the state object's information as JSON.
-    pub fn write_json<W>(&self, writer: W) -> Result<()>
-    where
-        W: Write,
-    {
-        to_writer(writer, self)
     }
 }
 
@@ -112,12 +79,12 @@ impl Component {
     }
 
     /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<'_, str> {
-        "Sum of Best Segments".into()
+    pub fn name(&self) -> &'static str {
+        "Sum of Best Segments"
     }
 
     /// Calculates the component's state based on the timer provided.
-    pub fn state(&self, timer: &Timer) -> State {
+    pub fn state(&self, timer: &Timer) -> key_value::State {
         let time = calculate_best(
             timer.run().segments(),
             false,
@@ -125,14 +92,17 @@ impl Component {
             timer.current_timing_method(),
         );
 
-        State {
+        key_value::State {
             background: self.settings.background,
-            label_color: self.settings.label_color,
+            key_color: self.settings.label_color,
             value_color: self.settings.value_color,
-            text: String::from("Sum of Best Segments"),
-            time: Regular::with_accuracy(self.settings.accuracy)
+            semantic_color: Default::default(),
+            key: "Sum of Best Segments".into(),
+            value: Regular::with_accuracy(self.settings.accuracy)
                 .format(time)
-                .to_string(),
+                .to_string()
+                .into(),
+            key_abbreviations: Box::new(["Sum of Best".into(), "SoB".into()]) as _,
             display_two_rows: self.settings.display_two_rows,
         }
     }

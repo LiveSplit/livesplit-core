@@ -3,15 +3,13 @@
 //! attempt's final time, if the current attempt's pace matches the chosen
 //! comparison for the remainder of the run.
 
-use super::DEFAULT_KEY_VALUE_GRADIENT;
+use super::key_value;
 use crate::analysis::current_pace;
 use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
 use crate::timing::formatter::{Accuracy, Regular, TimeFormatter};
 use crate::{comparison, Timer, TimerPhase};
 use serde::{Deserialize, Serialize};
-use serde_json::{to_writer, Result};
 use std::borrow::Cow;
-use std::io::Write;
 
 /// The Current Pace Component is a component that shows a prediction of the
 /// current attempt's final time, if the current attempt's pace matches the
@@ -46,43 +44,13 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            background: DEFAULT_KEY_VALUE_GRADIENT,
+            background: key_value::DEFAULT_GRADIENT,
             comparison_override: None,
             display_two_rows: false,
             label_color: None,
             value_color: None,
             accuracy: Accuracy::Seconds,
         }
-    }
-}
-
-/// The state object describes the information to visualize for this component.
-#[derive(Serialize, Deserialize)]
-pub struct State {
-    /// The background shown behind the component.
-    pub background: Gradient,
-    /// The color of the label. If `None` is specified, the color is taken from
-    /// the layout.
-    pub label_color: Option<Color>,
-    /// The color of the value. If `None` is specified, the color is taken from
-    /// the layout.
-    pub value_color: Option<Color>,
-    /// The label's text.
-    pub text: String,
-    /// The current pace.
-    pub time: String,
-    /// Specifies whether to display the name of the component and its value in
-    /// two separate rows.
-    pub display_two_rows: bool,
-}
-
-impl State {
-    /// Encodes the state object's information as JSON.
-    pub fn write_json<W>(&self, writer: W) -> Result<()>
-    where
-        W: Write,
-    {
-        to_writer(writer, self)
     }
 }
 
@@ -108,7 +76,7 @@ impl Component {
     }
 
     /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<'_, str> {
+    pub fn name(&self) -> Cow<'static, str> {
         self.text(
             self.settings
                 .comparison_override
@@ -117,7 +85,7 @@ impl Component {
         )
     }
 
-    fn text(&self, comparison: Option<&str>) -> Cow<'_, str> {
+    fn text(&self, comparison: Option<&str>) -> Cow<'static, str> {
         if let Some(comparison) = comparison {
             match comparison {
                 comparison::personal_best::NAME => "Current Pace".into(),
@@ -132,27 +100,41 @@ impl Component {
     }
 
     /// Calculates the component's state based on the timer provided.
-    pub fn state(&self, timer: &Timer) -> State {
+    pub fn state(&self, timer: &Timer) -> key_value::State {
         let comparison = comparison::resolve(&self.settings.comparison_override, timer);
         let comparison = comparison::or_current(comparison, timer);
-        let text = self.text(Some(comparison)).into_owned();
+        let key = self.text(Some(comparison)).into_owned();
 
-        let current_pace = if timer.current_phase() == TimerPhase::NotRunning
-            && text.starts_with("Current Pace")
-        {
-            None
-        } else {
-            current_pace::calculate(timer, comparison)
+        let current_pace =
+            if timer.current_phase() == TimerPhase::NotRunning && key.starts_with("Current Pace") {
+                None
+            } else {
+                current_pace::calculate(timer, comparison)
+            };
+
+        let key_abbreviations = match &*key {
+            "Best Possible Time" => {
+                Box::new(["Best Poss. Time".into(), "Best Time".into(), "BPT".into()]) as _
+            }
+            "Worst Possible Time" => {
+                Box::new(["Worst Poss. Time".into(), "Worst Time".into()]) as _
+            }
+            "Predicted Time" => Box::new(["Pred. Time".into()]) as _,
+            "Current Pace" => Box::new(["Cur. Pace".into(), "Pace".into()]) as _,
+            _ => Box::new(["Current Pace".into(), "Cur. Pace".into(), "Pace".into()]) as _,
         };
 
-        State {
+        key_value::State {
             background: self.settings.background,
-            label_color: self.settings.label_color,
+            key_color: self.settings.label_color,
             value_color: self.settings.value_color,
-            text,
-            time: Regular::with_accuracy(self.settings.accuracy)
+            semantic_color: Default::default(),
+            key: key.into(),
+            value: Regular::with_accuracy(self.settings.accuracy)
                 .format(current_pace)
-                .to_string(),
+                .to_string()
+                .into(),
+            key_abbreviations,
             display_two_rows: self.settings.display_two_rows,
         }
     }

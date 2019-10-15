@@ -5,7 +5,7 @@
 
 use super::{output_vec, Json};
 use crate::component::OwnedComponent;
-use crate::pb_chance_component_state::OwnedPbChanceComponentState;
+use crate::key_value_component_state::OwnedKeyValueComponentState;
 use livesplit_core::component::pb_chance::Component as PbChanceComponent;
 use livesplit_core::Timer;
 
@@ -44,6 +44,6 @@ pub extern "C" fn PbChanceComponent_state_as_json(this: &PbChanceComponent, time
 pub extern "C" fn PbChanceComponent_state(
     this: &PbChanceComponent,
     timer: &Timer,
-) -> OwnedPbChanceComponentState {
+) -> OwnedKeyValueComponentState {
     Box::new(this.state(timer))
 }

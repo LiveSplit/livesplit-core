@@ -3,7 +3,7 @@
 
 use super::{output_vec, Json};
 use crate::component::OwnedComponent;
-use crate::total_playtime_component_state::OwnedTotalPlaytimeComponentState;
+use crate::key_value_component_state::OwnedKeyValueComponentState;
 use livesplit_core::component::total_playtime::Component as TotalPlaytimeComponent;
 use livesplit_core::Timer;
 
@@ -47,6 +47,6 @@ pub extern "C" fn TotalPlaytimeComponent_state_as_json(
 pub extern "C" fn TotalPlaytimeComponent_state(
     this: &mut TotalPlaytimeComponent,
     timer: &Timer,
-) -> OwnedTotalPlaytimeComponentState {
+) -> OwnedKeyValueComponentState {
     Box::new(this.state(timer))
 }

@@ -19,7 +19,8 @@ use std::path::PathBuf;
 use std::rc::Rc;
 use structopt::StructOpt;
 use syn::{
-    parse_file, Signature, FnArg, Item, ItemFn, Lit, Meta, Pat, ReturnType, Type as SynType, Visibility,
+    parse_file, FnArg, Item, ItemFn, Lit, Meta, Pat, ReturnType, Signature, Type as SynType,
+    Visibility,
 };
 
 #[derive(StructOpt)]
@@ -180,13 +181,14 @@ fn main() {
                 if let &Item::Fn(ItemFn {
                     vis: Visibility::Public(_),
                     attrs,
-                    sig: Signature {
-                        abi,
-                        ident,
-                        inputs,
-                        output,
-                        ..
-                    },
+                    sig:
+                        Signature {
+                            abi,
+                            ident,
+                            inputs,
+                            output,
+                            ..
+                        },
                     ..
                 }) = &item
                 {

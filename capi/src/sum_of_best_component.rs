@@ -8,7 +8,7 @@
 
 use super::{output_vec, Json};
 use crate::component::OwnedComponent;
-use crate::sum_of_best_component_state::OwnedSumOfBestComponentState;
+use crate::key_value_component_state::OwnedKeyValueComponentState;
 use livesplit_core::component::sum_of_best::Component as SumOfBestComponent;
 use livesplit_core::Timer;
 
@@ -50,6 +50,6 @@ pub extern "C" fn SumOfBestComponent_state_as_json(
 pub extern "C" fn SumOfBestComponent_state(
     this: &SumOfBestComponent,
     timer: &Timer,
-) -> OwnedSumOfBestComponentState {
+) -> OwnedKeyValueComponentState {
     Box::new(this.state(timer))
 }
