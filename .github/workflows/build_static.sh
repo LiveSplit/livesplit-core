@@ -25,7 +25,10 @@ main() {
             $cargo build -p livesplit --target $TARGET --release $FEATURES
             ;;
         wasm32-unknown-unknown)
-            $cargo build -p cdylib --target $TARGET --release $FEATURES
+            $cargo build -p cdylib --target $TARGET $release_flag $FEATURES
+            ;;
+        wasm32-wasi)
+            $cargo build -p cdylib --target $TARGET $release_flag $FEATURES
             ;;
         *)
             $cargo build -p staticlib --target $TARGET $release_flag $FEATURES

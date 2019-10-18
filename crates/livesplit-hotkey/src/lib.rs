@@ -18,8 +18,15 @@ cfg_if::cfg_if! {
         #[macro_use]
         extern crate stdweb;
     } else if #[cfg(all(target_arch = "wasm32", target_os = "unknown"))] {
-        pub mod wasm;
-        pub use crate::wasm::*;
+        cfg_if::cfg_if! {
+            if #[cfg(feature = "wasm-web")] {
+                mod wasm_web;
+                pub use self::wasm_web::*;
+            } else {
+                mod wasm_unknown;
+                pub use self::wasm_unknown::*;
+            }
+        }
     } else {
         pub mod other;
         pub use crate::other::*;

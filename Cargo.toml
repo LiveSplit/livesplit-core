@@ -70,6 +70,9 @@ smallvec = { version = "1.0.0", default-features = false, optional = true }
 euc = { version = "0.4.2", default-features = false, optional = true }
 vek = { version = "0.9.8", default-features = false, optional = true }
 
+# WebAssembly in the Web
+web-sys = { version = "0.3.28", default-features = false, features = ["Performance", "Window"], optional = true }
+
 [dev-dependencies]
 memmem = "0.1.1"
 criterion = "0.3.0"
@@ -83,6 +86,7 @@ more-image-formats = ["image/webp", "image/pnm", "image/ico", "image/jpeg", "ima
 image-shrinking = ["more-image-formats"]
 rendering = ["std", "more-image-formats", "euclid", "livesplit-title-abbreviations", "lyon", "rusttype", "smallvec"]
 software-rendering = ["rendering", "euc", "vek", "derive_more/mul"]
+wasm-web = ["std", "web-sys", "chrono/wasmbind", "livesplit-hotkey/wasm-web"]
 
 # FIXME: Some targets don't have atomics, but we can't test for this properly
 # yet. So there's a feature you explicitly have to opt into to deactivate the

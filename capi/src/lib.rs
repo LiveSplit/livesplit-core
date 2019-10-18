@@ -121,7 +121,7 @@ unsafe fn str(s: *const c_char) -> &'static str {
     }
 }
 
-//raw file descriptor handling
+// raw file descriptor handling
 #[cfg(unix)]
 unsafe fn get_file(fd: i64) -> File {
     use std::os::unix::io::FromRawFd;
@@ -153,3 +153,28 @@ unsafe fn release_file(file: File) {
 
 #[cfg(not(any(windows, unix)))]
 unsafe fn release_file(_: File) {}
+
+/// Allocate memory.
+#[cfg(all(
+    target_arch = "wasm32",
+    not(any(target_os = "emscripten", target_os = "wasi", feature = "wasm-web")),
+))]
+#[no_mangle]
+pub extern "C" fn alloc(size: usize) -> *mut u8 {
+    let mut buf = Vec::with_capacity(size);
+    let ptr = buf.as_mut_ptr();
+    core::mem::forget(buf);
+    ptr
+}
+
+/// Deallocate memory.
+#[cfg(all(
+    target_arch = "wasm32",
+    not(any(target_os = "emscripten", target_os = "wasi", feature = "wasm-web")),
+))]
+#[no_mangle]
+pub extern "C" fn dealloc(ptr: *mut u8, cap: usize) {
+    unsafe {
+        let _buf = Vec::from_raw_parts(ptr, 0, cap);
+    }
+}

@@ -26,11 +26,16 @@ promising-future = { version = "0.2.4", optional = true }
 stdweb = { version = "0.3.0", optional = true }
 parking_lot = { version = "0.9.0", optional = true }
 
+[target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
+wasm-bindgen = { version = "0.2.54", optional = true }
+web-sys = { version = "0.3.28", default-features = false, features = ["KeyboardEvent", "EventTarget", "Window"], optional = true }
+
 [dependencies]
 cfg-if = "0.1.10"
-snafu = { version = "0.6.0", default-features = false }
 serde = { version = "1.0.98", default-features = false, features = ["derive", "alloc"] }
+snafu = { version = "0.6.0", default-features = false }
 
 [features]
 default = ["std"]
 std = ["snafu/std", "serde/std", "stdweb", "parking_lot", "x11-dl", "mio", "promising-future", "winapi", "parking_lot"]
+wasm-web = ["wasm-bindgen", "web-sys"]
