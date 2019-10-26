@@ -162,10 +162,15 @@ impl Component {
             .timing_method
             .unwrap_or_else(|| timer.current_timing_method());
 
-        let last_split_index = if current_phase == TimerPhase::Ended {
-            timer.run().len() - 1
+        let run = timer.run();
+
+        let (current_split, last_split_index) = if current_phase == TimerPhase::Ended {
+            (run.segments().last(), run.len() - 1)
         } else {
-            timer.current_split_index().unwrap_or(0)
+            (
+                timer.current_split(),
+                timer.current_split_index().unwrap_or(0),
+            )
         };
 
         let (comparison1, comparison2) = if current_phase != TimerPhase::NotRunning {
@@ -186,17 +191,14 @@ impl Component {
             let mut hide_comparison = self.settings.hide_second_comparison;
 
             if hide_comparison
-                || !timer.run().comparisons().any(|c| c == comparison2)
+                || !run.comparisons().any(|c| c == comparison2)
                 || comparison2 == none::NAME
             {
                 hide_comparison = true;
-                if !timer.run().comparisons().any(|c| c == comparison1) || comparison1 == none::NAME
-                {
+                if !run.comparisons().any(|c| c == comparison1) || comparison1 == none::NAME {
                     comparison1 = timer.current_comparison();
                 }
-            } else if !timer.run().comparisons().any(|c| c == comparison1)
-                || comparison1 == none::NAME
-            {
+            } else if !run.comparisons().any(|c| c == comparison1) || comparison1 == none::NAME {
                 hide_comparison = true;
                 comparison1 = comparison2;
             } else if comparison1 == comparison2 {
@@ -276,16 +278,11 @@ impl Component {
         let display_icon = self.settings.display_icon;
         let icon_change = self
             .icon_id
-            .update_with(
-                timer
-                    .current_split()
-                    .filter(|_| display_icon)
-                    .map(Segment::icon),
-            )
+            .update_with(current_split.filter(|_| display_icon).map(Segment::icon))
             .map(Into::into);
 
         let segment_name = if self.settings.show_segment_name {
-            timer.current_split().map(|s| s.name().to_owned())
+            current_split.map(|s| s.name().to_owned())
         } else {
             None
         };
