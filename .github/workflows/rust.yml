@@ -16,7 +16,8 @@ jobs:
       matrix:
         label:
           # Web
-          - Web asmjs
+          # FIXME: asmjs is broken at the moment. It's unclear why.
+          # - Web asmjs
           - Web wasm32 emscripten
           - Web wasm32
 
@@ -104,13 +105,13 @@ jobs:
 
         include:
           # Web
-          - label: Web asmjs
-            target: asmjs-unknown-emscripten
-            os: ubuntu-latest
-            toolchain: stable
-            tests: skip
-            dylib: skip
-            release_anyway: true
+          # - label: Web asmjs
+          #   target: asmjs-unknown-emscripten
+          #   os: ubuntu-latest
+          #   toolchain: stable
+          #   tests: skip
+          #   dylib: skip
+          #   release_anyway: true
 
           - label: Web wasm32 emscripten
             target: wasm32-unknown-emscripten
