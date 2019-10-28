@@ -34,7 +34,7 @@ panic = "abort"
 members = ["capi", "capi/bind_gen", "capi/js", "capi/staticlib", "capi/cdylib", "crates/*"]
 
 [dependencies]
-base64 = "0.10.0"
+base64 = { version = "0.11.0", default-features = false, features = ["alloc"] }
 byteorder = "1.3.2"
 chrono = { version = "0.4.0", features = ["serde", "clock"], default-features = false }
 derive_more = "0.15.0"
