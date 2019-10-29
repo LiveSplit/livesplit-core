@@ -1,11 +1,11 @@
 //! A Layout allows you to combine multiple components together to visualize a
 //! variety of information the runner is interested in.
 
-use super::{output_vec, str, Json};
+use super::{output_vec, str, Json, get_file, release_file};
 use crate::component::OwnedComponent;
 use livesplit_core::layout::{parser, LayoutSettings};
 use livesplit_core::{Layout, Timer};
-use std::io::Cursor;
+use std::io::{BufReader, Cursor};
 use std::slice;
 
 /// type
@@ -50,6 +50,25 @@ pub unsafe extern "C" fn Layout_parse_json(settings: Json) -> NullableOwnedLayou
     } else {
         None
     }
+}
+
+/// Attempts to parse a layout from a given file. <NULL> is returned it couldn't
+/// be parsed. This will not close the file descriptor / handle.
+#[no_mangle]
+pub unsafe extern "C" fn Layout_parse_file_handle(handle: i64) -> NullableOwnedLayout {
+    let file = get_file(handle);
+
+    let reader = BufReader::new(&file);
+
+    let layout = if let Ok(settings) = LayoutSettings::from_json(reader) {
+        Some(Box::new(Layout::from_settings(settings)))
+    } else {
+        None
+    };
+
+    release_file(file);
+
+    layout
 }
 
 /// Parses a layout saved by the original LiveSplit. This is lossy, as not
