@@ -1,11 +1,10 @@
 //! A Run stores the split times for a specific game and category of a runner.
 
-use super::{output_str, output_time_span, output_vec, str};
+use super::{output_str, output_time_span, output_vec, str, get_file, release_file};
 use crate::parse_run_result::OwnedParseRunResult;
 use crate::segment::OwnedSegment;
 use livesplit_core::run::{parser, saver};
 use livesplit_core::{Attempt, Run, RunMetadata, Segment, TimeSpan};
-use std::fs::File;
 use std::io::{BufReader, Cursor};
 use std::os::raw::c_char;
 use std::path::PathBuf;
@@ -76,23 +75,6 @@ pub unsafe extern "C" fn Run_parse_file_handle(
         None
     };
 
-    #[cfg(unix)]
-    unsafe fn get_file(fd: i64) -> File {
-        use std::os::unix::io::FromRawFd;
-        File::from_raw_fd(fd as _)
-    }
-
-    #[cfg(windows)]
-    unsafe fn get_file(handle: i64) -> File {
-        use std::os::windows::io::FromRawHandle;
-        File::from_raw_handle(handle as *mut () as _)
-    }
-
-    #[cfg(not(any(windows, unix)))]
-    unsafe fn get_file(_: i64) -> File {
-        panic!("File Descriptor Parsing is not implemented for this platform");
-    }
-
     let file = get_file(handle);
 
     let run = Box::new(parser::composite::parse(
@@ -100,21 +82,6 @@ pub unsafe extern "C" fn Run_parse_file_handle(
         path,
         load_files,
     ));
-
-    #[cfg(unix)]
-    unsafe fn release_file(file: File) {
-        use std::os::unix::io::IntoRawFd;
-        file.into_raw_fd();
-    }
-
-    #[cfg(windows)]
-    unsafe fn release_file(file: File) {
-        use std::os::windows::io::IntoRawHandle;
-        file.into_raw_handle();
-    }
-
-    #[cfg(not(any(windows, unix)))]
-    unsafe fn release_file(_: File) {}
 
     release_file(file);
 

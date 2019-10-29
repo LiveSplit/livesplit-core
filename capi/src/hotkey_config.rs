@@ -1,11 +1,11 @@
 //! The configuration to use for a Hotkey System. It describes with keys to use
 //! as hotkeys for the different actions.
 
-use super::{output_vec, str, Json};
+use super::{output_vec, str, Json, get_file, release_file};
 use crate::setting_value::OwnedSettingValue;
 use livesplit_core::HotkeyConfig;
 use serde_json;
-use std::io::Cursor;
+use std::io::{BufReader, Cursor};
 
 /// type
 pub type OwnedHotkeyConfig = Box<HotkeyConfig>;
@@ -57,4 +57,20 @@ pub extern "C" fn HotkeyConfig_as_json(this: &HotkeyConfig) -> Json {
 pub unsafe extern "C" fn HotkeyConfig_parse_json(settings: Json) -> NullableOwnedHotkeyConfig {
     let settings = Cursor::new(str(settings).as_bytes());
     HotkeyConfig::from_json(settings).ok().map(Box::new)
+}
+
+/// Attempts to parse a hotkey configuration from a given file. <NULL> is 
+/// returned it couldn't be parsed. This will not close the file descriptor /
+/// handle.
+#[no_mangle]
+pub unsafe extern "C" fn HotkeyConfig_parse_file_handle(handle: i64) -> NullableOwnedHotkeyConfig {
+    let file = get_file(handle);
+
+    let reader = BufReader::new(&file);
+
+    let config = HotkeyConfig::from_json(reader).ok().map(Box::new);
+
+    release_file(file);
+
+    config
 }

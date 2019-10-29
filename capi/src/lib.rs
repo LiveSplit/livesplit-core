@@ -5,6 +5,7 @@
 
 use std::cell::{Cell, RefCell};
 use std::ffi::CStr;
+use std::fs::File;
 use std::os::raw::c_char;
 use std::ptr;
 
@@ -119,3 +120,36 @@ unsafe fn str(s: *const c_char) -> &'static str {
         CStr::from_ptr(s as _).to_str().unwrap()
     }
 }
+
+//raw file descriptor handling
+#[cfg(unix)]
+unsafe fn get_file(fd: i64) -> File {
+    use std::os::unix::io::FromRawFd;
+    File::from_raw_fd(fd as _)
+}
+
+#[cfg(windows)]
+unsafe fn get_file(handle: i64) -> File {
+    use std::os::windows::io::FromRawHandle;
+    File::from_raw_handle(handle as *mut () as _)
+}
+
+#[cfg(not(any(windows, unix)))]
+unsafe fn get_file(_: i64) -> File {
+    panic!("File Descriptor Parsing is not implemented for this platform");
+}
+
+#[cfg(unix)]
+unsafe fn release_file(file: File) {
+    use std::os::unix::io::IntoRawFd;
+    file.into_raw_fd();
+}
+
+#[cfg(windows)]
+unsafe fn release_file(file: File) {
+    use std::os::windows::io::IntoRawHandle;
+    file.into_raw_handle();
+}
+
+#[cfg(not(any(windows, unix)))]
+unsafe fn release_file(_: File) {}
