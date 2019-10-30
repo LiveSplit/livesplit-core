@@ -63,6 +63,11 @@ fn find_previous_non_empty_split_and_comparison_time(
 /// Calculates the comparison's segment time of the segment with the timing
 /// method specified. This is not calculating the current attempt's segment
 /// times.
+///
+/// # Panics
+///
+/// Panics if the provided `segment_index` is greater than or equal to
+/// `run.len()`.
 pub fn comparison_segment_time(
     run: &Run,
     segment_index: usize,

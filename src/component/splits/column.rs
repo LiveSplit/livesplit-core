@@ -3,7 +3,7 @@ use crate::{
     analysis::{self, possible_time_save, split_color},
     comparison,
     settings::{Color, SemanticColor},
-    timing::formatter::{Delta, PossibleTimeSave, Regular, TimeFormatter},
+    timing::formatter::{Delta, Regular, SegmentTime, TimeFormatter},
     GeneralLayoutSettings, Segment, TimeSpan, Timer, TimingMethod,
 };
 use serde::{Deserialize, Serialize};
@@ -183,7 +183,7 @@ pub fn state(
                 .format(column_value)
                 .to_string(),
             ColumnFormatter::PossibleTimeSave => {
-                PossibleTimeSave::new().format(column_value).to_string()
+                SegmentTime::new().format(column_value).to_string()
             }
         }
     };

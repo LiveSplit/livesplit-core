@@ -11,8 +11,7 @@ use crate::settings::{
     CachedImageId, Field, Gradient, ImageData, SemanticColor, SettingsDescription, Value,
 };
 use crate::timing::formatter::{
-    none_wrapper::DashWrapper, timer as formatter, Accuracy, DigitsFormat, Short, TimeFormatter,
-    DASH,
+    timer as formatter, Accuracy, DigitsFormat, SegmentTime, TimeFormatter, DASH,
 };
 use crate::{GeneralLayoutSettings, Segment, TimeSpan, Timer, TimerPhase, TimingMethod};
 use serde::{Deserialize, Serialize};
@@ -263,7 +262,7 @@ impl Component {
             },
         };
 
-        let formatter = DashWrapper::new(Short::new());
+        let formatter = SegmentTime::new();
 
         let comparison1 = comparison1.map(|(name, time)| ComparisonState {
             name: name.to_string(),

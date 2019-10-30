@@ -1,8 +1,8 @@
 use super::{ComponentSettings, ComponentState, GeneralSettings};
 use crate::component::{
     blank_space, current_comparison, current_pace, delta, detailed_timer, graph, pb_chance,
-    possible_time_save, previous_segment, separator, splits, sum_of_best, text, timer, title,
-    total_playtime,
+    possible_time_save, previous_segment, segment_time, separator, splits, sum_of_best, text,
+    timer, title, total_playtime,
 };
 use crate::platform::prelude::*;
 use crate::settings::{SettingsDescription, Value};
@@ -31,6 +31,8 @@ pub enum Component {
     PossibleTimeSave(possible_time_save::Component),
     /// The Previous Segment Component.
     PreviousSegment(previous_segment::Component),
+    /// The Segment Time Component.
+    SegmentTime(segment_time::Component),
     /// The Separator Component.
     Separator(separator::Component),
     /// The Splits Component.
@@ -75,6 +77,7 @@ impl Component {
             Component::PreviousSegment(component) => {
                 ComponentState::KeyValue(component.state(timer, layout_settings))
             }
+            Component::SegmentTime(component) => ComponentState::KeyValue(component.state(timer)),
             Component::Separator(component) => ComponentState::Separator(component.state(timer)),
             Component::Splits(component) => {
                 ComponentState::Splits(component.state(timer, layout_settings))
@@ -118,6 +121,9 @@ impl Component {
             Component::PreviousSegment(component) => {
                 ComponentSettings::PreviousSegment(component.settings().clone())
             }
+            Component::SegmentTime(component) => {
+                ComponentSettings::SegmentTime(component.settings().clone())
+            }
             Component::Separator(_) => ComponentSettings::Separator,
             Component::Splits(component) => ComponentSettings::Splits(component.settings().clone()),
             Component::SumOfBest(component) => {
@@ -144,6 +150,7 @@ impl Component {
             Component::PbChance(component) => component.name().into(),
             Component::PossibleTimeSave(component) => component.name(),
             Component::PreviousSegment(component) => component.name(),
+            Component::SegmentTime(component) => component.name(),
             Component::Separator(component) => component.name().into(),
             Component::Splits(component) => component.name().into(),
             Component::SumOfBest(component) => component.name().into(),
@@ -198,6 +205,7 @@ impl Component {
             Component::PbChance(component) => component.settings_description(),
             Component::PossibleTimeSave(component) => component.settings_description(),
             Component::PreviousSegment(component) => component.settings_description(),
+            Component::SegmentTime(component) => component.settings_description(),
             Component::Separator(component) => component.settings_description(),
             Component::Splits(component) => component.settings_description(),
             Component::SumOfBest(component) => component.settings_description(),
@@ -227,6 +235,7 @@ impl Component {
             Component::PbChance(component) => component.set_value(index, value),
             Component::PossibleTimeSave(component) => component.set_value(index, value),
             Component::PreviousSegment(component) => component.set_value(index, value),
+            Component::SegmentTime(component) => component.set_value(index, value),
             Component::Separator(component) => component.set_value(index, value),
             Component::Splits(component) => component.set_value(index, value),
             Component::SumOfBest(component) => component.set_value(index, value),

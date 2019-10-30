@@ -250,7 +250,10 @@ impl Timer {
     }
 
     /// Accesses the index of the split the attempt is currently on. If there's
-    /// no attempt in progress, `None` is returned instead.
+    /// no attempt in progress, `None` is returned instead. This returns an
+    /// index that is equal to the amount of segments when the attempt is
+    /// finished, but has not been reset. So you need to be careful when using
+    /// this value for indexing.
     #[inline]
     pub fn current_split_index(&self) -> Option<usize> {
         self.current_split_index
