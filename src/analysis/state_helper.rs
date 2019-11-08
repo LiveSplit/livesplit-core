@@ -74,6 +74,10 @@ pub fn comparison_segment_time(
     comparison: &str,
     method: TimingMethod,
 ) -> Option<TimeSpan> {
+    if comparison == best_segments::NAME {
+        return run.segment(segment_index).best_segment_time()[method];
+    }
+
     let current_comparison_time = run.segment(segment_index).comparison(comparison)[method]?;
 
     let previous_comparison_time = find_previous_non_empty_comparison_time(
