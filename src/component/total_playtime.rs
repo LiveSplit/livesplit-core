@@ -71,7 +71,7 @@ impl Component {
 
     /// Accesses the name of the component.
     pub fn name(&self) -> &'static str {
-        "Total Playtime".into()
+        "Total Playtime"
     }
 
     /// Calculates the component's state based on the timer provided.

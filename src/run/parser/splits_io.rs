@@ -290,7 +290,7 @@ pub fn parse<R: Read>(source: R) -> Result<(Run, String)> {
         if let Some(total) = attempts.total {
             run.set_attempt_count(total);
         }
-        for attempt in attempts.histories.into_iter().flat_map(|x| x) {
+        for attempt in attempts.histories.into_iter().flatten() {
             run.add_attempt_with_index(
                 attempt.duration.into(),
                 attempt.attempt_number as i32,
@@ -301,7 +301,7 @@ pub fn parse<R: Read>(source: R) -> Result<(Run, String)> {
         }
     }
 
-    for split in splits.segments.into_iter().flat_map(|x| x) {
+    for split in splits.segments.into_iter().flatten() {
         let mut segment = LiveSplitSegment::new(split.name.unwrap_or_default());
         segment.set_personal_best_split_time(split.ended_at.into());
         segment.set_best_segment_time(split.best_duration.into());
