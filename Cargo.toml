@@ -48,7 +48,7 @@ parking_lot = { version = "0.9.0", default-features = false }
 quick-xml = { version = "0.17.0", default-features = false }
 serde = { version = "1.0.55", features = ["derive"] }
 serde_json = "1.0.8"
-snafu = { version = "0.5.0", default-features = false, features = ["rust_1_30"] }
+snafu = { version = "0.6.0", default-features = false, features = ["rust_1_30"] }
 unicase = "2.2.0"
 utf-8 = "0.7.4"
 
