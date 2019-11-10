@@ -161,7 +161,12 @@ pub fn state(
                 ColumnFormatter::Time,
             ),
             ColumnStartWith::ComparisonSegmentTime => (
-                analysis::comparison_segment_time(timer.run(), segment_index, comparison, method),
+                analysis::comparison_combined_segment_time(
+                    timer.run(),
+                    segment_index,
+                    comparison,
+                    method,
+                ),
                 SemanticColor::Default,
                 ColumnFormatter::Time,
             ),

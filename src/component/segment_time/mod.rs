@@ -4,7 +4,7 @@
 //! comparison.
 
 use super::key_value;
-use crate::analysis::state_helper::comparison_segment_time;
+use crate::analysis::state_helper::comparison_single_segment_time;
 use crate::platform::prelude::*;
 use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
 use crate::timing::formatter::{Accuracy, SegmentTime, TimeFormatter};
@@ -106,9 +106,9 @@ impl Component {
 
     /// Calculates the component's state based on the timer provided.
     pub fn state(&self, timer: &Timer) -> key_value::State {
-        let comparison = comparison::resolve(&self.settings.comparison_override, timer);
-        let comparison = comparison::or_current(comparison, timer);
-        let key = self.text(Some(comparison)).into_owned();
+        let resolved_comparison = comparison::resolve(&self.settings.comparison_override, timer);
+        let comparison = comparison::or_current(resolved_comparison, timer);
+        let key = self.text(resolved_comparison).into_owned();
 
         let key_abbreviations = match &*key {
             "Best Segment Time" => Box::new(["Best Seg. Time".into(), "Best Segment".into()]) as _,
@@ -134,7 +134,7 @@ impl Component {
                 return None;
             }
 
-            comparison_segment_time(
+            comparison_single_segment_time(
                 timer.run(),
                 timer.current_split_index()?,
                 comparison,

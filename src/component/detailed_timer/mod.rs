@@ -5,7 +5,7 @@
 //! comparisons, the segment icon, and the segment's name, can also be shown.
 
 use super::timer;
-use crate::analysis::comparison_segment_time;
+use crate::analysis::comparison_single_segment_time;
 use crate::comparison::{self, best_segments, none};
 use crate::platform::prelude::*;
 use crate::settings::{
@@ -207,13 +207,18 @@ impl Component {
 
             let comparison1 = Some((
                 comparison::shorten(comparison1),
-                comparison_segment_time(run, last_split_index, comparison1, timing_method),
+                comparison_single_segment_time(run, last_split_index, comparison1, timing_method),
             ));
 
             let comparison2 = if !hide_comparison {
                 Some((
                     comparison::shorten(comparison2),
-                    comparison_segment_time(run, last_split_index, comparison2, timing_method),
+                    comparison_single_segment_time(
+                        run,
+                        last_split_index,
+                        comparison2,
+                        timing_method,
+                    ),
                 ))
             } else {
                 None
