@@ -38,7 +38,7 @@ members = ["capi", "capi/bind_gen", "capi/js", "capi/staticlib", "capi/cdylib", 
 base64 = { version = "0.11.0", default-features = false, features = ["alloc"] }
 cfg-if = "0.1.7"
 chrono = { version = "0.4.0", features = ["serde", "clock"], default-features = false }
-derive_more = "0.15.0"
+derive_more = "0.99.1"
 odds = { version = "0.3.1", default-features = false }
 ordered-float = { version = "1.0.2", default-features = false }
 palette = { version = "0.4.0", default-features = false }
