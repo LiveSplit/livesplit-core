@@ -74,9 +74,9 @@ fn all_components() {
 
     let state = layout.state(&timer);
 
-    check_dims(&state, [300, 800], 0x1f1af5d2, "all_components");
+    check_dims(&state, [300, 800], 0xd21110cb, "all_components");
 
-    check_dims(&state, [150, 800], 0x8954836d, "all_components_thin");
+    check_dims(&state, [150, 800], 0x84c64e2b, "all_components_thin");
 }
 
 #[test]
@@ -105,7 +105,7 @@ fn dark_layout() {
     let timer = Timer::new(run).unwrap();
     let mut layout = lsl("tests/layout_files/dark.lsl");
 
-    check(&layout.state(&timer), 0xad57b961, "dark_layout");
+    check(&layout.state(&timer), 0xb396e581, "dark_layout");
 }
 
 #[test]
@@ -123,7 +123,7 @@ fn subsplits_layout() {
     check_dims(
         &layout.state(&timer),
         [300, 800],
-        0x205cdb95,
+        0xd83838ca,
         "subsplits_layout",
     );
 }
