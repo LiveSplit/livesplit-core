@@ -12,6 +12,7 @@
     clippy::redundant_closure_call,
     clippy::new_ret_no_self
 )]
+#![cfg_attr(not(feature = "std"), no_std)]
 
 //! livesplit-core is a library that provides a lot of functionality for creating a speedrun timer.
 //!
@@ -46,6 +47,8 @@
 //! assert_eq!(timer.current_phase(), TimerPhase::NotRunning);
 //! ```
 
+extern crate alloc;
+
 mod platform;
 
 #[cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))]
@@ -60,7 +63,9 @@ macro_rules! catch {
 pub mod analysis;
 pub mod comparison;
 pub mod component;
+#[cfg(feature = "std")]
 mod hotkey_config;
+#[cfg(feature = "std")]
 mod hotkey_system;
 pub mod layout;
 #[cfg(feature = "rendering")]
@@ -70,21 +75,26 @@ pub mod settings;
 #[cfg(test)]
 pub mod tests_helper;
 pub mod timing;
+#[cfg(feature = "std")]
 mod xml_util;
 
-pub use {
-    crate::{
-        hotkey_config::HotkeyConfig,
-        hotkey_system::HotkeySystem,
-        layout::{
-            Component, Editor as LayoutEditor, GeneralSettings as GeneralLayoutSettings, Layout,
-        },
-        run::{Attempt, Editor as RunEditor, Run, RunMetadata, Segment, SegmentHistory},
-        timing::{
-            AtomicDateTime, GameTime, RealTime, SharedTimer, Time, TimeSpan, TimeStamp, Timer,
-            TimerPhase, TimingMethod,
-        },
+pub use crate::{
+    layout::{Component, Editor as LayoutEditor, GeneralSettings as GeneralLayoutSettings, Layout},
+    platform::{indexmap, DateTime, Utc},
+    run::{Attempt, Editor as RunEditor, Run, RunMetadata, Segment, SegmentHistory},
+    timing::{
+        AtomicDateTime, GameTime, RealTime, Time, TimeSpan, TimeStamp, Timer, TimerPhase,
+        TimingMethod,
     },
-    chrono::{DateTime, Utc},
-    indexmap, livesplit_hotkey as hotkey, palette, parking_lot,
 };
+pub use livesplit_hotkey as hotkey;
+pub use palette;
+
+#[cfg(not(feature = "std"))]
+pub use crate::platform::{register_clock, Clock, Duration};
+
+#[cfg(feature = "std")]
+pub use parking_lot;
+
+#[cfg(feature = "std")]
+pub use crate::{hotkey_config::HotkeyConfig, hotkey_system::HotkeySystem, timing::SharedTimer};

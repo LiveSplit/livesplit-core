@@ -43,17 +43,17 @@ pub enum Error {
     /// Failed to decode a string slice as UTF-8.
     Utf8Str {
         /// The underlying error.
-        source: std::str::Utf8Error,
+        source: core::str::Utf8Error,
     },
     /// Failed to decode a string as UTF-8.
     Utf8String {
         /// The underlying error.
-        source: std::string::FromUtf8Error,
+        source: alloc::string::FromUtf8Error,
     },
     /// Failed to parse an integer.
     ParseInt {
         /// The underlying error.
-        source: std::num::ParseIntError,
+        source: core::num::ParseIntError,
     },
     /// Failed to parse a boolean.
     ParseBool,
@@ -76,7 +76,7 @@ pub enum Error {
 }
 
 /// The Result type for parsing layout files of the original LiveSplit.
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = core::result::Result<T, Error>;
 
 enum GradientKind {
     Transparent,

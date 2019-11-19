@@ -13,6 +13,7 @@
 
 use super::{goal, ComparisonGenerator};
 use crate::{Attempt, Segment, TimingMethod};
+use crate::platform::prelude::*;
 
 /// The Comparison Generator for calculating a comparison which has the same
 /// final time as the runner's Personal Best. Unlike the Personal Best however,

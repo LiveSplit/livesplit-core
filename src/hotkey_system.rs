@@ -1,7 +1,7 @@
 use crate::hotkey::{Hook, KeyCode};
 use crate::{HotkeyConfig, SharedTimer};
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use alloc::sync::Arc;
+use core::sync::atomic::{AtomicBool, Ordering};
 
 pub use crate::hotkey::{Error, Result};
 

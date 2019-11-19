@@ -1,6 +1,7 @@
 use crate::Time;
-use std::cmp::min;
-use std::slice::{Iter, IterMut};
+use core::cmp::min;
+use core::slice::{Iter, IterMut};
+use crate::platform::prelude::*;
 
 /// Stores the segment times achieved for a certain segment. Each segment is
 /// tagged with an index. Only segment times with an index larger than 0 are

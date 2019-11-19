@@ -1,8 +1,7 @@
 use super::{ComponentState, LayoutDirection};
 use crate::settings::{Color, Gradient};
 use serde::{Deserialize, Serialize};
-use serde_json::{to_writer, Result};
-use std::io::Write;
+use crate::platform::prelude::*;
 
 /// The state object describes the information to visualize for the layout.
 #[derive(Serialize, Deserialize)]
@@ -21,12 +20,13 @@ pub struct LayoutState {
     pub text_color: Color,
 }
 
+#[cfg(feature = "std")]
 impl LayoutState {
     /// Encodes the state object's information as JSON.
-    pub fn write_json<W>(&self, writer: W) -> Result<()>
+    pub fn write_json<W>(&self, writer: W) -> serde_json::Result<()>
     where
-        W: Write,
+        W: std::io::Write,
     {
-        to_writer(writer, &self)
+        serde_json::to_writer(writer, self)
     }
 }

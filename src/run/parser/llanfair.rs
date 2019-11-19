@@ -5,8 +5,8 @@ use byteorder::{ReadBytesExt, BE};
 use image::{png, ColorType, ImageBuffer, Rgba};
 use snafu::{OptionExt, ResultExt};
 use std::io::{self, Read, Seek, SeekFrom};
-use std::result::Result as StdResult;
-use std::str::{from_utf8, Utf8Error};
+use core::result::Result as StdResult;
+use core::str::{from_utf8, Utf8Error};
 
 /// The Error type for splits files that couldn't be parsed by the Llanfair
 /// Parser.

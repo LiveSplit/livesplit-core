@@ -1,6 +1,7 @@
 use crate::comparison::personal_best;
 use crate::{settings::Image, SegmentHistory, Time, TimeSpan, TimingMethod};
-use std::collections::HashMap;
+use hashbrown::HashMap;
+use crate::platform::prelude::*;
 
 /// A Segment describes a point in a speedrun that is suitable for storing a
 /// split time. This stores the name of that segment, an icon, the split times

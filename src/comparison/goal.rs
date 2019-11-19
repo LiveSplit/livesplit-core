@@ -7,6 +7,7 @@
 
 use crate::{Segment, Time, TimeSpan, TimingMethod};
 use ordered_float::OrderedFloat;
+use crate::platform::prelude::*;
 
 /// The default name of the goal comparison.
 pub const NAME: &str = "Goal";

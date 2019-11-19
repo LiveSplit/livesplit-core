@@ -5,11 +5,12 @@
 
 use super::key_value;
 use crate::analysis::current_pace;
+use crate::platform::prelude::*;
 use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
 use crate::timing::formatter::{Accuracy, Regular, TimeFormatter};
 use crate::{comparison, Timer, TimerPhase};
+use alloc::borrow::Cow;
 use serde::{Deserialize, Serialize};
-use std::borrow::Cow;
 
 /// The Current Pace Component is a component that shows a prediction of the
 /// current attempt's final time, if the current attempt's pace matches the

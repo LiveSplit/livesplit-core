@@ -1,11 +1,11 @@
 //! Provides the parser for SplitterZ splits files.
 
 use crate::{settings::Image, timing, RealTime, Run, Segment, TimeSpan};
+use alloc::borrow::Cow;
+use core::num::ParseIntError;
+use core::result::Result as StdResult;
 use snafu::ResultExt;
-use std::borrow::Cow;
 use std::io::{self, BufRead};
-use std::num::ParseIntError;
-use std::result::Result as StdResult;
 
 /// The Error type for splits files that couldn't be parsed by the SplitterZ
 /// Parser.

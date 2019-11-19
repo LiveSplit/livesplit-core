@@ -9,9 +9,10 @@
 use crate::analysis::sum_of_segments::{best, track_branch, Prediction};
 use crate::timing::formatter::{Short, TimeFormatter};
 use crate::{Attempt, Run, Segment, TimeSpan, TimingMethod};
-use chrono::Local;
-use std::fmt;
-use std::mem::replace;
+use crate::platform::Local;
+use core::fmt;
+use core::mem::replace;
+use crate::platform::prelude::*;
 
 /// A Sum of Best Cleaner allows you to interactively remove potential issues in
 /// the Segment History that lead to an inaccurate Sum of Best. If you skip a

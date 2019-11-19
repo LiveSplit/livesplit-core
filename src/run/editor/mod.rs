@@ -5,16 +5,17 @@
 //! kind of User Interface.
 
 use super::{ComparisonError, ComparisonResult};
+use crate::platform::prelude::*;
 use crate::timing::ParseError as ParseTimeSpanError;
 use crate::{
     comparison,
     settings::{CachedImageId, Image},
     Run, Segment, Time, TimeSpan, TimingMethod,
 };
+use core::mem::swap;
+use core::num::ParseIntError;
 use odds::slice::rotate_left;
 use snafu::{OptionExt, ResultExt};
-use std::mem::swap;
-use std::num::ParseIntError;
 
 pub mod cleaning;
 mod fuzzy_list;
@@ -29,7 +30,7 @@ pub use self::segment_row::SegmentRow;
 pub use self::state::{Buttons as ButtonsState, Segment as SegmentState, State};
 
 /// Describes an Error that occurred while parsing a time.
-#[derive(Debug, snafu::Snafu, derive_more::From)]
+#[derive(Debug, snafu::Snafu)]
 pub enum ParseError {
     /// Couldn't parse the time.
     ParseTime {
@@ -233,7 +234,7 @@ impl Editor {
     where
         S: AsRef<str>,
     {
-        self.set_offset(offset.as_ref().parse()?);
+        self.set_offset(offset.as_ref().parse().context(ParseTime)?);
         Ok(())
     }
 
@@ -880,7 +881,7 @@ fn parse_positive<S>(time: S) -> Result<Option<TimeSpan>, ParseError>
 where
     S: AsRef<str>,
 {
-    let time = TimeSpan::parse_opt(time)?;
+    let time = TimeSpan::parse_opt(time).context(ParseTime)?;
     if time.map_or(false, |t| t < TimeSpan::zero()) {
         Err(ParseError::NegativeTimeNotAllowed)
     } else {

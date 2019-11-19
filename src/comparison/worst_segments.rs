@@ -3,6 +3,7 @@
 use super::ComparisonGenerator;
 use crate::analysis::sum_of_segments::worst::calculate;
 use crate::{Attempt, Segment, Time, TimingMethod};
+use crate::platform::prelude::*;
 
 /// The Comparison Generator for calculating the Worst Segments of a Run.
 #[derive(Copy, Clone, Debug)]

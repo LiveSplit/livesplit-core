@@ -9,6 +9,7 @@
 //! PB chance is the percentile at which the Balanced PB algorithm finds the PB.
 
 use crate::{comparison, Run, Segment, TimeSpan, Timer, TimingMethod};
+use crate::platform::prelude::*;
 
 #[cfg(test)]
 mod tests;

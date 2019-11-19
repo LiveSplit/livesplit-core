@@ -14,6 +14,7 @@ pub mod worst;
 mod tests;
 
 use crate::{Segment, Time, TimeSpan, TimingMethod};
+use crate::platform::prelude::*;
 
 /// Describes the shortest amount of time it takes to reach a certain segment.
 /// Since there is the possibility that the shortest path is actually skipping

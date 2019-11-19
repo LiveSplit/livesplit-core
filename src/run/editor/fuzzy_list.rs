@@ -1,5 +1,6 @@
-use std::collections::BinaryHeap;
-use std::usize;
+use alloc::collections::BinaryHeap;
+use core::usize;
+use crate::platform::prelude::*;
 
 /// With a Fuzzy List, you can implement a fuzzy searching algorithm. The list
 /// stores all the items that can be searched for. With the `search` method you

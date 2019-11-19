@@ -7,7 +7,7 @@
 use super::{Component, Layout, LayoutState};
 use crate::settings::Value;
 use crate::Timer;
-use std::result::Result as StdResult;
+use core::result::Result as StdResult;
 
 mod state;
 

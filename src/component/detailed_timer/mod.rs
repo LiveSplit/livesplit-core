@@ -15,8 +15,7 @@ use crate::timing::formatter::{
 };
 use crate::{GeneralLayoutSettings, Segment, TimeSpan, Timer, TimerPhase, TimingMethod};
 use serde::{Deserialize, Serialize};
-use serde_json::{to_writer, Result};
-use std::io::Write;
+use crate::platform::prelude::*;
 
 #[cfg(test)]
 mod tests;
@@ -110,13 +109,14 @@ impl Default for Settings {
     }
 }
 
+#[cfg(feature = "std")]
 impl State {
     /// Encodes the state object's information as JSON.
-    pub fn write_json<W>(&self, writer: W) -> Result<()>
+    pub fn write_json<W>(&self, writer: W) -> serde_json::Result<()>
     where
-        W: Write,
+        W: std::io::Write,
     {
-        to_writer(writer, self)
+        serde_json::to_writer(writer, self)
     }
 }
 

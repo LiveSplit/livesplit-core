@@ -1,4 +1,4 @@
-use std::fmt;
+use core::fmt;
 
 /// Describes the different Timers available that store splits files.
 #[derive(Clone, Eq, PartialEq, Hash, Debug)]

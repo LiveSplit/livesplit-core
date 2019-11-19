@@ -7,7 +7,7 @@
 
     // Without MMX the floating point calculations don't follow IEEE 754. So the
     // tests fail to produce the correct checksums.
-    // TODO: We use SSE as an approximation for the cfg, because MMX isn't
+    // FIXME: We use SSE as an approximation for the cfg, because MMX isn't
     // supported by Rust just yet.
     not(all(
         target_arch = "x86",

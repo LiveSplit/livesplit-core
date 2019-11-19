@@ -10,4 +10,4 @@ keywords = ["speedrun", "timer", "livesplit", "title", "abbreviation"]
 edition = "2018"
 
 [dependencies]
-unicase = "2.2.0"
+unicase = "2.6.0"

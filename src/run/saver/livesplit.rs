@@ -26,15 +26,15 @@
 
 use crate::timing::formatter::{Complete, TimeFormatter};
 use crate::{settings::Image, Run, Time, TimeSpan, Timer, TimerPhase};
+use alloc::borrow::Cow;
 use byteorder::{WriteBytesExt, LE};
 use chrono::{DateTime, Utc};
+use core::fmt::Display;
+use core::mem::replace;
+use core::result::Result as StdResult;
 use quick_xml::events::{BytesDecl, BytesEnd, BytesStart, BytesText, Event};
 use quick_xml::{Error as XmlError, Writer};
-use std::borrow::Cow;
-use std::fmt::Display;
 use std::io::Write;
-use std::mem::replace;
-use std::result::Result as StdResult;
 
 static LSS_IMAGE_HEADER: &[u8; 156] = include_bytes!("lss_image_header.bin");
 

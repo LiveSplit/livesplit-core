@@ -3,6 +3,7 @@
 //! comparison that is currently selected to be compared against.
 
 use super::key_value;
+use crate::platform::prelude::*;
 use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
 use crate::Timer;
 use serde::{Deserialize, Serialize};

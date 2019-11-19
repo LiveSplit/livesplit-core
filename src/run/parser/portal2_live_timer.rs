@@ -1,10 +1,10 @@
 //! Provides the parser for Portal 2 Live Timer splits files.
 
 use crate::{GameTime, Run, Segment, TimeSpan};
+use core::num::ParseFloatError;
+use core::result::Result as StdResult;
 use snafu::{OptionExt, ResultExt};
 use std::io::{self, BufRead};
-use std::num::ParseFloatError;
-use std::result::Result as StdResult;
 
 /// The Error types for splits files that couldn't be parsed by the Portal 2
 /// Live Timer Parser.

@@ -25,7 +25,7 @@ impl Hook {
     }
 }
 
-use std::{result::Result as StdResult, str::FromStr};
+use core::{result::Result as StdResult, str::FromStr};
 
 impl FromStr for KeyCode {
     type Err = ();

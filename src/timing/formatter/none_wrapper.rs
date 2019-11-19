@@ -4,7 +4,7 @@
 
 use super::{TimeFormatter, DASH};
 use crate::TimeSpan;
-use std::fmt::{Display, Formatter, Result};
+use core::fmt::{Display, Formatter, Result};
 
 /// A Time Span to be formatted by a None Wrapper.
 pub struct Inner<'a, F, S> {

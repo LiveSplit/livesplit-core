@@ -1,5 +1,8 @@
-extern crate unicase;
+#![no_std]
 
+extern crate alloc;
+
+use alloc::{format, string::String, vec, vec::Vec};
 use unicase::UniCase;
 
 fn ends_with_roman_numeral(name: &str) -> bool {

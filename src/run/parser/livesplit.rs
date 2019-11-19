@@ -7,10 +7,10 @@ use crate::xml_util::{
 };
 use crate::{AtomicDateTime, Run, RunMetadata, Segment, Time, TimeSpan};
 use chrono::{DateTime, TimeZone, Utc};
+use core::str;
 use quick_xml::Reader;
 use std::io::BufRead;
 use std::path::PathBuf;
-use std::str;
 
 use crate::xml_util::Error as XmlError;
 use chrono::ParseError as ChronoError;
@@ -27,22 +27,22 @@ pub enum Error {
     /// Failed to decode a string slice as UTF-8.
     Utf8Str {
         /// The underlying error.
-        source: std::str::Utf8Error,
+        source: core::str::Utf8Error,
     },
     /// Failed to decode a string as UTF-8.
     Utf8String {
         /// The underlying error.
-        source: std::string::FromUtf8Error,
+        source: alloc::string::FromUtf8Error,
     },
     /// Failed to parse an integer.
     ParseInt {
         /// The underlying error.
-        source: std::num::ParseIntError,
+        source: core::num::ParseIntError,
     },
     /// Failed to parse a floating point number.
     ParseFloat {
         /// The underlying error.
-        source: std::num::ParseFloatError,
+        source: core::num::ParseFloatError,
     },
     /// Failed to parse a time.
     ParseTime {
@@ -64,7 +64,7 @@ pub enum Error {
 }
 
 /// The Result type for the LiveSplit Parser.
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = core::result::Result<T, Error>;
 
 // FIXME: Generalized Type Ascription (GTA 6)
 #[inline]
