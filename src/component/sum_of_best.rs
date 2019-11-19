@@ -9,6 +9,7 @@
 
 use super::key_value;
 use crate::analysis::sum_of_segments::calculate_best;
+use crate::platform::prelude::*;
 use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
 use crate::timing::formatter::{Accuracy, Regular, TimeFormatter};
 use crate::Timer;

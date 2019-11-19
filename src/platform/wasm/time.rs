@@ -1,5 +1,5 @@
+use core::{ops::Sub, time::Duration};
 use ordered_float::OrderedFloat;
-use std::ops::Sub;
 
 extern "C" {
     fn Instant_now() -> f64;
@@ -24,5 +24,3 @@ impl Sub for Instant {
         Duration::new(secs, nanos)
     }
 }
-
-pub use std::time::Duration;

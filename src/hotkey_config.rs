@@ -1,10 +1,9 @@
 #![allow(clippy::trivially_copy_pass_by_ref)]
 
 use crate::hotkey::KeyCode;
+use crate::platform::prelude::*;
 use crate::settings::{Field, SettingsDescription, Value};
 use serde::{Deserialize, Serialize};
-use serde_json::{self, from_reader, to_writer};
-use std::io::{Read, Write};
 
 /// The configuration to use for a Hotkey System. It describes with keys to use
 /// as hotkeys for the different actions.
@@ -170,18 +169,20 @@ impl HotkeyConfig {
     }
 
     /// Decodes the hotkey configuration from JSON.
+    #[cfg(feature = "std")]
     pub fn from_json<R>(reader: R) -> serde_json::Result<Self>
     where
-        R: Read,
+        R: std::io::Read,
     {
-        from_reader(reader)
+        serde_json::from_reader(reader)
     }
 
     /// Encodes the hotkey configuration as JSON.
+    #[cfg(feature = "std")]
     pub fn write_json<W>(&self, writer: W) -> serde_json::Result<()>
     where
-        W: Write,
+        W: std::io::Write,
     {
-        to_writer(writer, self)
+        serde_json::to_writer(writer, self)
     }
 }

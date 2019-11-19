@@ -1,4 +1,4 @@
-use palette::{Hsla, LinSrgba, Pixel};
+use crate::palette::{Hsla, LinSrgba, Pixel};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 /// Colors can be used to describe what color to use for visualizing

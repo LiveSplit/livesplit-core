@@ -3,8 +3,10 @@
 mod time;
 
 pub use self::time::*;
+pub use chrono::{DateTime, Duration, Local, Utc};
+pub use indexmap;
 
-use std::mem;
+use core::mem;
 
 #[no_mangle]
 pub extern "C" fn alloc(size: usize) -> *mut u8 {
@@ -21,7 +23,7 @@ pub extern "C" fn dealloc(ptr: *mut u8, cap: usize) {
     }
 }
 
-use chrono::{DateTime, NaiveDateTime, Utc};
+use chrono::NaiveDateTime;
 use std::mem::MaybeUninit;
 
 #[repr(C)]

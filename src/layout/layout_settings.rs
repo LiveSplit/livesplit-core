@@ -1,7 +1,6 @@
 use super::{ComponentSettings, GeneralSettings};
 use serde::{Deserialize, Serialize};
-use serde_json::{from_reader, to_writer, Result};
-use std::io::{Read, Write};
+use crate::platform::prelude::*;
 
 /// Describes a whole layout by its settings in a way that can easily be
 /// serialized and deserialized.
@@ -13,20 +12,21 @@ pub struct LayoutSettings {
     pub general: GeneralSettings,
 }
 
+#[cfg(feature = "std")]
 impl LayoutSettings {
     /// Decodes the layout's settings from JSON.
-    pub fn from_json<R>(reader: R) -> Result<LayoutSettings>
+    pub fn from_json<R>(reader: R) -> serde_json::Result<LayoutSettings>
     where
-        R: Read,
+        R: std::io::Read,
     {
-        from_reader(reader)
+        serde_json::from_reader(reader)
     }
 
     /// Encodes the layout's settings as JSON.
-    pub fn write_json<W>(&self, writer: W) -> Result<()>
+    pub fn write_json<W>(&self, writer: W) -> serde_json::Result<()>
     where
-        W: Write,
+        W: std::io::Write,
     {
-        to_writer(writer, self)
+        serde_json::to_writer(writer, self)
     }
 }

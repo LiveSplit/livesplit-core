@@ -5,16 +5,15 @@
 //! list provides scrolling functionality, so not every segment needs to be
 //! shown all the time.
 
+use crate::platform::prelude::*;
 use crate::{
     settings::{
         CachedImageId, Color, Field, Gradient, ImageData, ListGradient, SettingsDescription, Value,
     },
     GeneralLayoutSettings, Timer,
 };
+use core::cmp::{max, min};
 use serde::{Deserialize, Serialize};
-use serde_json::{to_writer, Result};
-use std::cmp::{max, min};
-use std::io::Write;
 
 #[cfg(test)]
 mod tests;
@@ -200,13 +199,14 @@ impl Default for Settings {
     }
 }
 
+#[cfg(feature = "std")]
 impl State {
     /// Encodes the state object's information as JSON.
-    pub fn write_json<W>(&self, writer: W) -> Result<()>
+    pub fn write_json<W>(&self, writer: W) -> serde_json::Result<()>
     where
-        W: Write,
+        W: std::io::Write,
     {
-        to_writer(writer, self)
+        serde_json::to_writer(writer, self)
     }
 }
 

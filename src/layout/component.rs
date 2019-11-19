@@ -6,7 +6,8 @@ use crate::component::{
 };
 use crate::settings::{SettingsDescription, Value};
 use crate::Timer;
-use std::borrow::Cow;
+use alloc::borrow::Cow;
+use crate::platform::prelude::*;
 
 /// A Component provides information about a run in a way that is easy to
 /// visualize. This type can store any of the components provided by this crate.

@@ -5,8 +5,6 @@
 use crate::settings::{SettingsDescription, Value};
 use crate::Timer;
 use serde::{Deserialize, Serialize};
-use serde_json::{to_writer, Result};
-use std::io::Write;
 
 /// The Separator Component is a simple component that only serves to render
 /// separators between components.
@@ -17,13 +15,14 @@ pub struct Component;
 #[derive(Serialize, Deserialize)]
 pub struct State;
 
+#[cfg(feature = "std")]
 impl State {
     /// Encodes the state object's information as JSON.
-    pub fn write_json<W>(&self, writer: W) -> Result<()>
+    pub fn write_json<W>(&self, writer: W) -> serde_json::Result<()>
     where
-        W: Write,
+        W: std::io::Write,
     {
-        to_writer(writer, self)
+        serde_json::to_writer(writer, self)
     }
 }
 

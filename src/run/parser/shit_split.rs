@@ -1,10 +1,10 @@
 //! Provides the parser for ShitSplit splits files.
 
 use crate::{timing, GameTime, Run, Segment, TimeSpan};
+use core::num::ParseIntError;
+use core::result::Result as StdResult;
 use snafu::{OptionExt, ResultExt};
 use std::io::{self, BufRead};
-use std::num::ParseIntError;
-use std::result::Result as StdResult;
 
 /// The Error type for splits files that couldn't be parsed by the ShitSplit
 /// Parser.

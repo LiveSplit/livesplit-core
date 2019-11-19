@@ -28,7 +28,7 @@ impl Accuracy {
 }
 
 use super::{extract_hundredths, extract_milliseconds, extract_tenths};
-use std::fmt::{Display, Formatter, Result};
+use core::fmt::{Display, Formatter, Result};
 
 #[derive(Debug, PartialEq, Copy, Clone)]
 pub struct FormattedSeconds {

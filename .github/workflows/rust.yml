@@ -15,10 +15,25 @@ jobs:
       fail-fast: false
       matrix:
         label:
+          # Bare Metal
+          - Bare Metal Nvidia PTX 64
+          - Bare Metal ARM Cortex-M thumbv6m
+          - Bare Metal ARM Cortex-M thumbv7em
+          - Bare Metal ARM Cortex-M thumbv7em Hardware Float
+          - Bare Metal ARM Cortex-M thumbv7m
+          - Bare Metal ARM Cortex-M thumbv8m.base
+          - Bare Metal ARM Cortex-M thumbv8m.main
+          - Bare Metal ARM Cortex-M thumbv8m.main Hardware Float
+          - Bare Metal RISC-V 32 i
+          - Bare Metal RISC-V 32 imac
+          - Bare Metal RISC-V 32 imc
+          - Bare Metal RISC-V 64 gc
+          - Bare Metal RISC-V 64 imac
+
           # Web
-          # FIXME: asmjs is broken at the moment. It's unclear why.
+          # FIXME: emscripten is broken at the moment. cross' emscripten is too old.
           # - Web asmjs
-          - Web wasm32 emscripten
+          # - Web wasm32 emscripten
           - Web wasm32
 
           # Windows
@@ -104,6 +119,140 @@ jobs:
           - macOS Nightly
 
         include:
+          # Bare Metal
+          - label: Bare Metal Nvidia PTX 64
+            target: nvptx64-nvidia-cuda
+            os: ubuntu-latest
+            toolchain: stable
+            tests: skip
+            dylib: skip
+            release: skip
+            no_std: true
+            install_target: true
+
+          - label: Bare Metal ARM Cortex-M thumbv6m
+            target: thumbv6m-none-eabi
+            os: ubuntu-latest
+            toolchain: stable
+            tests: skip
+            dylib: skip
+            release: skip
+            no_std: true
+            install_target: true
+            features: "--features doesnt-have-atomics"
+
+          - label: Bare Metal ARM Cortex-M thumbv7em
+            target: thumbv7em-none-eabi
+            os: ubuntu-latest
+            toolchain: stable
+            tests: skip
+            dylib: skip
+            release: skip
+            no_std: true
+            install_target: true
+
+          - label: Bare Metal ARM Cortex-M thumbv7em Hardware Float
+            target: thumbv7em-none-eabihf
+            os: ubuntu-latest
+            toolchain: stable
+            tests: skip
+            dylib: skip
+            release: skip
+            no_std: true
+            install_target: true
+
+          - label: Bare Metal ARM Cortex-M thumbv7m
+            target: thumbv7m-none-eabi
+            os: ubuntu-latest
+            toolchain: stable
+            tests: skip
+            dylib: skip
+            release: skip
+            no_std: true
+            install_target: true
+
+          - label: Bare Metal ARM Cortex-M thumbv8m.base
+            target: thumbv8m.base-none-eabi
+            os: ubuntu-latest
+            toolchain: stable
+            tests: skip
+            dylib: skip
+            release: skip
+            no_std: true
+            install_target: true
+
+          - label: Bare Metal ARM Cortex-M thumbv8m.main
+            target: thumbv8m.main-none-eabi
+            os: ubuntu-latest
+            toolchain: stable
+            tests: skip
+            dylib: skip
+            release: skip
+            no_std: true
+            install_target: true
+
+          - label: Bare Metal ARM Cortex-M thumbv8m.main Hardware Float
+            target: thumbv8m.main-none-eabihf
+            os: ubuntu-latest
+            toolchain: stable
+            tests: skip
+            dylib: skip
+            release: skip
+            no_std: true
+            install_target: true
+
+          - label: Bare Metal RISC-V 32 i
+            target: riscv32i-unknown-none-elf
+            os: ubuntu-latest
+            toolchain: stable
+            tests: skip
+            dylib: skip
+            release: skip
+            no_std: true
+            install_target: true
+            features: "--features doesnt-have-atomics"
+
+          - label: Bare Metal RISC-V 32 imac
+            target: riscv32imac-unknown-none-elf
+            os: ubuntu-latest
+            toolchain: stable
+            tests: skip
+            dylib: skip
+            release: skip
+            no_std: true
+            install_target: true
+
+          - label: Bare Metal RISC-V 32 imc
+            target: riscv32imc-unknown-none-elf
+            os: ubuntu-latest
+            toolchain: stable
+            tests: skip
+            dylib: skip
+            release: skip
+            no_std: true
+            install_target: true
+            features: "--features doesnt-have-atomics"
+
+          - label: Bare Metal RISC-V 64 gc
+            target: riscv64gc-unknown-none-elf
+            os: ubuntu-latest
+            toolchain: stable
+            tests: skip
+            dylib: skip
+            release: skip
+            no_std: true
+            install_target: true
+
+          - label: Bare Metal RISC-V 64 imac
+            target: riscv64imac-unknown-none-elf
+            os: ubuntu-latest
+            toolchain: stable
+            tests: skip
+            dylib: skip
+            release: skip
+            no_std: true
+            install_target: true
+
           # Web
           # - label: Web asmjs
           #   target: asmjs-unknown-emscripten
@@ -113,13 +262,12 @@ jobs:
           #   dylib: skip
           #   release_anyway: true
 
-          - label: Web wasm32 emscripten
-            target: wasm32-unknown-emscripten
-            os: ubuntu-latest
-            toolchain: stable
-            tests: skip
-            dylib: skip
-            release_anyway: true
+          # - label: Web wasm32 emscripten
+          #   target: wasm32-unknown-emscripten
+          #   os: ubuntu-latest
+          #   toolchain: stable
+          #   tests: skip
+          #   dylib: skip
 
           - label: Web wasm32
             target: wasm32-unknown-unknown
@@ -127,7 +275,6 @@ jobs:
             tests: skip
             dylib: skip
             install_target: true
-            release_anyway: true
 
           # Windows
           - label: Windows aarch64
@@ -394,17 +541,20 @@ jobs:
             target: x86_64-pc-windows-msvc
             os: windows-latest
             toolchain: beta
+            release: skip
             cross: skip
 
           - label: Windows Nightly
             target: x86_64-pc-windows-msvc
             os: windows-latest
             toolchain: nightly
+            release: skip
             cross: skip
 
           - label: Windows Beta gnu
             target: x86_64-pc-windows-gnu
             toolchain: beta-x86_64-pc-windows-gnu
+            release: skip
             os: windows-latest
             cross: skip
             install_target: true
@@ -412,6 +562,7 @@ jobs:
           - label: Windows Nightly gnu
             target: x86_64-pc-windows-gnu
             toolchain: nightly-x86_64-pc-windows-gnu
+            release: skip
             os: windows-latest
             cross: skip
             install_target: true
@@ -420,22 +571,26 @@ jobs:
             target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
             toolchain: beta
+            release: skip
 
           - label: Linux Nightly
             target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
             toolchain: nightly
+            release: skip
 
           - label: macOS Beta
             target: x86_64-apple-darwin
             os: macOS-latest
             toolchain: beta
+            release: skip
             cross: skip
 
           - label: macOS Nightly
             target: x86_64-apple-darwin
             os: macOS-latest
             toolchain: nightly
+            release: skip
             cross: skip
 
     steps:
@@ -463,6 +618,8 @@ jobs:
           TARGET: ${{ matrix.target }}
           SKIP_CROSS: ${{ matrix.cross }}
           IS_DEPLOY: ${{ startsWith(github.ref, 'refs/tags/') && (matrix.release_anyway != '' || !(startsWith(matrix.toolchain, 'nightly') || startsWith(matrix.toolchain, 'beta'))) }}
+          FEATURES: ${{ matrix.features }}
+          NO_STD: ${{ matrix.no_std }}
 
       - name: Build Shared Library
         if: matrix.dylib == ''
@@ -471,6 +628,7 @@ jobs:
           TARGET: ${{ matrix.target }}
           SKIP_CROSS: ${{ matrix.cross }}
           IS_DEPLOY: ${{ startsWith(github.ref, 'refs/tags/') && (matrix.release_anyway != '' || !(startsWith(matrix.toolchain, 'nightly') || startsWith(matrix.toolchain, 'beta'))) }}
+          FEATURES: ${{ matrix.features }}
 
       - name: Test
         if: matrix.tests == ''
@@ -480,7 +638,7 @@ jobs:
           SKIP_CROSS: ${{ matrix.cross }}
 
       - name: Prepare Release
-        if: startsWith(github.ref, 'refs/tags/') && (matrix.release_anyway != '' || !(startsWith(matrix.toolchain, 'nightly') || startsWith(matrix.toolchain, 'beta')))
+        if: startsWith(github.ref, 'refs/tags/') && matrix.release == ''
         shell: bash
         run: .github/workflows/before_deploy.sh
         env:
@@ -488,7 +646,7 @@ jobs:
           TARGET: ${{ matrix.target }}
 
       - name: Release
-        if: startsWith(github.ref, 'refs/tags/') && (matrix.release_anyway != '' || !(startsWith(matrix.toolchain, 'nightly') || startsWith(matrix.toolchain, 'beta')))
+        if: startsWith(github.ref, 'refs/tags/') && matrix.release == ''
         uses: softprops/action-gh-release@v1
         with:
           files: livesplit-core-*.*

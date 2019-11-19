@@ -36,10 +36,10 @@ use super::{
     worstrun, wsplit, TimerKind,
 };
 use crate::Run;
+use core::result::Result as StdResult;
 use snafu::ResultExt;
 use std::io::{self, BufRead, Seek, SeekFrom};
 use std::path::PathBuf;
-use std::result::Result as StdResult;
 
 /// The Error type for splits files that couldn't be parsed by the Composite
 /// Parser.

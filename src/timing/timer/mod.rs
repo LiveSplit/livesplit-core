@@ -1,9 +1,8 @@
 use crate::comparison::personal_best;
+use crate::platform::prelude::*;
 use crate::TimerPhase::*;
 use crate::{AtomicDateTime, Run, Segment, Time, TimeSpan, TimeStamp, TimerPhase, TimingMethod};
-use parking_lot::RwLock;
-use std::mem;
-use std::sync::Arc;
+use core::mem;
 
 #[cfg(test)]
 mod tests;
@@ -61,7 +60,8 @@ pub struct Timer {
 
 /// A Shared Timer is a wrapper around the Timer that can be shared across
 /// multiple threads with multiple owners.
-pub type SharedTimer = Arc<RwLock<Timer>>;
+#[cfg(feature = "std")]
+pub type SharedTimer = alloc::sync::Arc<parking_lot::RwLock<Timer>>;
 
 /// The Error type for creating a new Timer from a Run.
 #[derive(Debug, snafu::Snafu)]
@@ -104,8 +104,9 @@ impl Timer {
 
     /// Consumes the Timer and creates a Shared Timer that can be shared across
     /// multiple threads with multiple owners.
+    #[cfg(feature = "std")]
     pub fn into_shared(self) -> SharedTimer {
-        Arc::new(RwLock::new(self))
+        alloc::sync::Arc::new(parking_lot::RwLock::new(self))
     }
 
     /// Takes out the Run from the Timer and resets the current attempt if there

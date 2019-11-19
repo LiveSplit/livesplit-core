@@ -2,7 +2,7 @@ use image::{
     bmp, gif, guess_format, hdr, ico, jpeg, load_from_memory_with_format, png, pnm, tiff, webp,
     DynamicImage, ImageDecoder, ImageError, ImageFormat,
 };
-use std::borrow::Cow;
+use alloc::borrow::Cow;
 use std::io::Cursor;
 
 fn shrink_inner(data: &[u8], max_dim: u32) -> Result<Cow<'_, [u8]>, ImageError> {

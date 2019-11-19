@@ -7,7 +7,7 @@ use crate::{RealTime, Run, Segment, Time, TimeSpan};
 use byteorder::{ByteOrder, BE};
 use image::{png, ColorType, ImageBuffer, Rgba};
 use quick_xml::Reader;
-use std::cmp::min;
+use core::cmp::min;
 use std::io::BufRead;
 
 use crate::xml_util::Error as XmlError;
@@ -24,24 +24,24 @@ pub enum Error {
     /// Failed to decode a string slice as UTF-8.
     Utf8Str {
         /// The underlying error.
-        source: std::str::Utf8Error,
+        source: core::str::Utf8Error,
     },
     /// Failed to decode a string as UTF-8.
     Utf8String {
         /// The underlying error.
-        source: std::string::FromUtf8Error,
+        source: alloc::string::FromUtf8Error,
     },
     /// Failed to parse an integer.
     Int {
         /// The underlying error.
-        source: std::num::ParseIntError,
+        source: core::num::ParseIntError,
     },
     /// Failed to parse an image.
     Image,
 }
 
 /// The Result type for the Llanfair Rewrite Parser.
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = core::result::Result<T, Error>;
 
 // FIXME: Generalized Type Ascription (GTA 6)
 #[inline]

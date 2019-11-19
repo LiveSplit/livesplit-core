@@ -1,6 +1,6 @@
 use super::{Accuracy, TimeFormatter, DASH, MINUS};
 use crate::TimeSpan;
-use std::fmt::{Display, Formatter, Result};
+use core::fmt::{Display, Formatter, Result};
 
 pub struct Inner {
     time: Option<TimeSpan>,

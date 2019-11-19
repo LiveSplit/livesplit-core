@@ -3,12 +3,12 @@
 use super::super::ComparisonError;
 use crate::{settings::Image, timing, AtomicDateTime, RealTime, Run, Segment, Time, TimeSpan};
 use chrono::{TimeZone, Utc};
+use core::num::ParseIntError;
+use core::result::Result as StdResult;
 use snafu::{OptionExt, ResultExt};
 use std::fs::File;
 use std::io::{self, BufRead, BufReader};
-use std::num::ParseIntError;
 use std::path::PathBuf;
-use std::result::Result as StdResult;
 
 /// The Error type for splits files that couldn't be parsed by the Time
 /// Split Tracker Parser.

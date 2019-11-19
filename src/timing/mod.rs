@@ -14,6 +14,8 @@ pub use self::atomic_date_time::AtomicDateTime;
 pub use self::time::{GameTime, RealTime, Time};
 pub use self::time_span::{ParseError, TimeSpan};
 pub use self::time_stamp::TimeStamp;
-pub use self::timer::{CreationError as TimerCreationError, SharedTimer, Timer};
+#[cfg(feature = "std")]
+pub use self::timer::SharedTimer;
+pub use self::timer::{CreationError as TimerCreationError, Timer};
 pub use self::timer_phase::TimerPhase;
 pub use self::timing_method::TimingMethod;

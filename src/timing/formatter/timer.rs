@@ -7,7 +7,7 @@ use super::{
     TimeFormatter, MINUS,
 };
 use crate::TimeSpan;
-use std::fmt::{Display, Formatter, Result};
+use core::fmt::{Display, Formatter, Result};
 
 /// A Time Span to be formatted as the main part of the Time Formatter Pair.
 pub struct TimeInner {

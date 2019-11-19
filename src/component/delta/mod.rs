@@ -4,11 +4,12 @@
 
 use super::key_value;
 use crate::analysis::{delta, state_helper};
+use crate::platform::prelude::*;
 use crate::settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
 use crate::timing::formatter::{Accuracy, Delta, TimeFormatter};
 use crate::{comparison, GeneralLayoutSettings, Timer};
+use alloc::borrow::Cow;
 use serde::{Deserialize, Serialize};
-use std::borrow::Cow;
 
 #[cfg(test)]
 mod tests;

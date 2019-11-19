@@ -10,6 +10,7 @@ mod general_settings;
 mod layout_direction;
 mod layout_settings;
 mod layout_state;
+#[cfg(feature = "std")]
 pub mod parser;
 
 pub use self::component::Component;
@@ -23,6 +24,7 @@ pub use self::layout_state::LayoutState;
 
 use crate::component::{previous_segment, splits, timer, title};
 use crate::timing::Timer;
+use crate::platform::prelude::*;
 
 /// A Layout allows you to combine multiple components together to visualize a
 /// variety of information the runner is interested in.

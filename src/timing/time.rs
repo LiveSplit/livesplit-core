@@ -1,5 +1,5 @@
 use crate::{TimeSpan, TimingMethod};
-use std::ops::{Add, AddAssign, Index, IndexMut, Sub, SubAssign};
+use core::ops::{Add, AddAssign, Index, IndexMut, Sub, SubAssign};
 
 /// A time that can store a Real Time and a Game Time. Both of them are
 /// optional.

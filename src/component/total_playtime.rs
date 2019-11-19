@@ -4,6 +4,7 @@
 
 use super::key_value;
 use crate::analysis::total_playtime;
+use crate::platform::prelude::*;
 use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
 use crate::timing::formatter::{Days, Regular, TimeFormatter};
 use crate::Timer;

@@ -5,6 +5,7 @@ use crate::component::{
     total_playtime,
 };
 use serde::{Deserialize, Serialize};
+use crate::platform::prelude::*;
 
 /// The settings for one of the components available.
 #[derive(Clone, Serialize, Deserialize)]

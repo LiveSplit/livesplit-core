@@ -26,17 +26,17 @@ pub enum Error {
     /// Failed to decode a string slice as UTF-8.
     Utf8Str {
         /// The underlying error.
-        source: std::str::Utf8Error,
+        source: core::str::Utf8Error,
     },
     /// Failed to decode a string as UTF-8.
     Utf8String {
         /// The underlying error.
-        source: std::string::FromUtf8Error,
+        source: alloc::string::FromUtf8Error,
     },
     /// Failed to parse an integer.
     Int {
         /// The underlying error.
-        source: std::num::ParseIntError,
+        source: core::num::ParseIntError,
     },
     /// The length of a buffer was too large.
     LengthOutOfBounds,
@@ -45,7 +45,7 @@ pub enum Error {
 }
 
 /// The Result type for the Llanfair (Gered) Parser.
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = core::result::Result<T, Error>;
 
 // FIXME: Generalized Type Ascription (GTA 6)
 #[inline]

@@ -1,12 +1,12 @@
 //! Provides the parser for generic Splits I/O splits files.
 
 use crate::{Run, Segment as LiveSplitSegment, Time, TimeSpan};
+use core::result::Result as StdResult;
 use serde::{Deserialize, Serialize};
 use serde_json::de::from_reader;
 use serde_json::Error as JsonError;
 use snafu::ResultExt;
 use std::io::Read;
-use std::result::Result as StdResult;
 
 /// The Error type for splits files that couldn't be parsed by the generic
 /// Splits I/O Parser.

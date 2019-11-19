@@ -5,11 +5,10 @@
 
 use super::key_value;
 use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
+use alloc::borrow::Cow;
+use core::mem::replace;
 use serde::{Deserialize, Serialize};
-use serde_json::{to_writer, Result};
-use std::borrow::Cow;
-use std::io::Write;
-use std::mem::replace;
+use crate::platform::prelude::*;
 
 /// The Text Component simply visualizes any given text. This can either be a
 /// single centered text, or split up into a left and right text, which is
@@ -125,13 +124,14 @@ impl Default for Settings {
     }
 }
 
+#[cfg(feature = "std")]
 impl State {
     /// Encodes the state object's information as JSON.
-    pub fn write_json<W>(&self, writer: W) -> Result<()>
+    pub fn write_json<W>(&self, writer: W) -> serde_json::Result<()>
     where
-        W: Write,
+        W: std::io::Write,
     {
-        to_writer(writer, self)
+        serde_json::to_writer(writer, self)
     }
 }
 

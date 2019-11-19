@@ -1,10 +1,10 @@
 //! Implements a serde deserializer for S-Expressions.
 //! http://people.csail.mit.edu/rivest/Sexp.txt
 
+use core::fmt::Display;
+use core::num::ParseIntError;
 use serde::de::{self, DeserializeOwned, DeserializeSeed, MapAccess, SeqAccess, Visitor};
-use std::fmt::Display;
 use std::io::{self, BufRead};
-use std::num::ParseIntError;
 use utf8::{BufReadDecoder, BufReadDecoderError};
 
 /// The Error types for splits files that couldn't be parsed by the Flitter
@@ -61,7 +61,7 @@ impl de::Error for Error {
     }
 }
 
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = core::result::Result<T, Error>;
 
 pub struct Deserializer<B: BufRead> {
     decoder: BufReadDecoder<B>,

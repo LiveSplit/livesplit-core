@@ -1,8 +1,7 @@
 use super::Editor;
 use crate::settings::SettingsDescription;
 use serde::{Deserialize, Serialize};
-use serde_json::{to_writer, Result as JsonResult};
-use std::io::Write;
+use crate::platform::prelude::*;
 
 /// Represents the current state of the Layout Editor in order to visualize it
 /// properly.
@@ -38,13 +37,14 @@ pub struct Buttons {
     pub can_move_down: bool,
 }
 
+#[cfg(feature = "std")]
 impl State {
     /// Encodes the state object's information as JSON.
-    pub fn write_json<W>(&self, writer: W) -> JsonResult<()>
+    pub fn write_json<W>(&self, writer: W) -> serde_json::Result<()>
     where
-        W: Write,
+        W: std::io::Write,
     {
-        to_writer(writer, self)
+        serde_json::to_writer(writer, self)
     }
 }
 
