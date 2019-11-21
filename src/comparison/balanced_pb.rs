@@ -12,8 +12,8 @@
 //! be smoothed out throughout the whole comparison.
 
 use super::{goal, ComparisonGenerator};
-use crate::{Attempt, Segment, TimingMethod};
 use crate::platform::prelude::*;
+use crate::{Attempt, Segment, TimingMethod};
 
 /// The Comparison Generator for calculating a comparison which has the same
 /// final time as the runner's Personal Best. Unlike the Personal Best however,

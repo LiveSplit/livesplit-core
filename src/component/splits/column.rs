@@ -1,3 +1,4 @@
+use crate::platform::prelude::*;
 use crate::{
     analysis::{self, possible_time_save, split_color},
     comparison,
@@ -6,7 +7,6 @@ use crate::{
     GeneralLayoutSettings, Segment, TimeSpan, Timer, TimingMethod,
 };
 use serde::{Deserialize, Serialize};
-use crate::platform::prelude::*;
 
 /// The settings of an individual column showing timing information on each
 /// split.

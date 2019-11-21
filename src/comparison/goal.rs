@@ -5,9 +5,9 @@
 //! Balanced PB comparison however is based on this, which uses the Personal
 //! Best as a goal time to balance the mistakes that happened in the Personal Best.
 
+use crate::platform::prelude::*;
 use crate::{Segment, Time, TimeSpan, TimingMethod};
 use ordered_float::OrderedFloat;
-use crate::platform::prelude::*;
 
 /// The default name of the goal comparison.
 pub const NAME: &str = "Goal";

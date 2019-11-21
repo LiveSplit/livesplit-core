@@ -1,11 +1,11 @@
 use super::{Editor, SegmentRow, TimingMethod};
 use crate::comparison::personal_best;
+use crate::platform::prelude::*;
 use crate::run::RunMetadata;
 use crate::settings::{CachedImageId, ImageData};
 use crate::timing::formatter::none_wrapper::EmptyWrapper;
 use crate::timing::formatter::{Accuracy, Short, TimeFormatter};
 use serde::{Deserialize, Serialize};
-use crate::platform::prelude::*;
 
 /// Represents the current state of the Run Editor in order to visualize it
 /// properly.

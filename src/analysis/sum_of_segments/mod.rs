@@ -13,8 +13,8 @@ pub mod worst;
 #[cfg(test)]
 mod tests;
 
-use crate::{Segment, Time, TimeSpan, TimingMethod};
 use crate::platform::prelude::*;
+use crate::{Segment, Time, TimeSpan, TimingMethod};
 
 /// Describes the shortest amount of time it takes to reach a certain segment.
 /// Since there is the possibility that the shortest path is actually skipping

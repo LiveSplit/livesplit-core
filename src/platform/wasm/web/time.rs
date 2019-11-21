@@ -1,7 +1,7 @@
 use ordered_float::OrderedFloat;
 use std::ops::Sub;
-use web_sys::window;
 use std::time::Duration;
+use web_sys::window;
 
 #[derive(Copy, Clone, PartialOrd, PartialEq, Ord, Eq, Debug)]
 pub struct Instant(OrderedFloat<f64>);
@@ -27,4 +27,3 @@ impl Sub for Instant {
         Duration::new(secs, nanos)
     }
 }
-

@@ -1,7 +1,7 @@
 use super::{ComponentState, LayoutDirection};
+use crate::platform::prelude::*;
 use crate::settings::{Color, Gradient};
 use serde::{Deserialize, Serialize};
-use crate::platform::prelude::*;
 
 /// The state object describes the information to visualize for the layout.
 #[derive(Serialize, Deserialize)]

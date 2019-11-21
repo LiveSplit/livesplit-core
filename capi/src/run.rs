@@ -1,6 +1,6 @@
 //! A Run stores the split times for a specific game and category of a runner.
 
-use super::{output_str, output_time_span, output_vec, str, get_file, release_file};
+use super::{get_file, output_str, output_time_span, output_vec, release_file, str};
 use crate::parse_run_result::OwnedParseRunResult;
 use crate::segment::OwnedSegment;
 use livesplit_core::run::{parser, saver};

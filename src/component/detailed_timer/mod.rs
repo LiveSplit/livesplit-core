@@ -6,6 +6,7 @@
 
 use super::timer;
 use crate::comparison::{self, best_segments, none};
+use crate::platform::prelude::*;
 use crate::settings::{
     CachedImageId, Field, Gradient, ImageData, SemanticColor, SettingsDescription, Value,
 };
@@ -15,7 +16,6 @@ use crate::timing::formatter::{
 };
 use crate::{GeneralLayoutSettings, Segment, TimeSpan, Timer, TimerPhase, TimingMethod};
 use serde::{Deserialize, Serialize};
-use crate::platform::prelude::*;
 
 #[cfg(test)]
 mod tests;

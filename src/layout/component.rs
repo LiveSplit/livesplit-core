@@ -4,10 +4,10 @@ use crate::component::{
     possible_time_save, previous_segment, separator, splits, sum_of_best, text, timer, title,
     total_playtime,
 };
+use crate::platform::prelude::*;
 use crate::settings::{SettingsDescription, Value};
 use crate::Timer;
 use alloc::borrow::Cow;
-use crate::platform::prelude::*;
 
 /// A Component provides information about a run in a way that is easy to
 /// visualize. This type can store any of the components provided by this crate.

@@ -1,8 +1,8 @@
 use crate::component::{
     blank_space, detailed_timer, graph, key_value, separator, splits, text, timer, title,
 };
-use serde::{Deserialize, Serialize};
 use crate::platform::prelude::*;
+use serde::{Deserialize, Serialize};
 
 /// The state object for one of the components available.
 #[derive(Serialize, Deserialize)]
