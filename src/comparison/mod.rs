@@ -25,9 +25,9 @@ pub use self::median_segments::MedianSegments;
 pub use self::none::None;
 pub use self::worst_segments::WorstSegments;
 
+use crate::platform::prelude::*;
 use crate::{Attempt, Segment, Timer};
 use core::fmt::Debug;
-use crate::platform::prelude::*;
 
 /// Defines the Personal Best comparison. This module mostly just serves for
 /// providing the names of the comparison, as the Personal Best is not a

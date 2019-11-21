@@ -1,3 +1,4 @@
+use crate::platform::prelude::*;
 use crate::{
     component::splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith},
     hotkey::KeyCode,
@@ -8,7 +9,6 @@ use crate::{
 };
 use core::result::Result as StdResult;
 use serde::{Deserialize, Serialize};
-use crate::platform::prelude::*;
 
 /// Describes a setting's value. Such a value can be of a variety of different
 /// types.

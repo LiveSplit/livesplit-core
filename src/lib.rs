@@ -1,9 +1,9 @@
 #![warn(
-    missing_docs,
+    clippy::complexity,
     clippy::correctness,
     clippy::perf,
     clippy::style,
-    clippy::complexity,
+    missing_docs,
     rust_2018_idioms
 )]
 // Clippy false positives
@@ -50,9 +50,6 @@
 extern crate alloc;
 
 mod platform;
-
-#[cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))]
-pub use crate::platform::*;
 
 macro_rules! catch {
     ($($code:tt)*) => {

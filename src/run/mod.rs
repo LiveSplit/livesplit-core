@@ -35,16 +35,16 @@ pub use segment::Segment;
 pub use segment_history::SegmentHistory;
 
 use crate::comparison::{default_generators, personal_best, ComparisonGenerator};
+use crate::platform::prelude::*;
 use crate::{settings::Image, AtomicDateTime, Time, TimeSpan, TimingMethod};
 use alloc::borrow::Cow;
-use core::cmp::max;
-use ordered_float::OrderedFloat;
-use hashbrown::HashSet;
-#[cfg(feature = "std")]
-use std::path::PathBuf;
 #[cfg(not(feature = "std"))]
 use alloc::string::String as PathBuf;
-use crate::platform::prelude::*;
+use core::cmp::max;
+use hashbrown::HashSet;
+use ordered_float::OrderedFloat;
+#[cfg(feature = "std")]
+use std::path::PathBuf;
 
 /// A Run stores the split times for a specific game and category of a runner.
 ///

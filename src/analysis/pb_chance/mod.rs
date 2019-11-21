@@ -8,8 +8,8 @@
 //! The PB chance is currently calculated through the Balanced PB algorithm. The
 //! PB chance is the percentile at which the Balanced PB algorithm finds the PB.
 
-use crate::{comparison, Run, Segment, TimeSpan, Timer, TimingMethod};
 use crate::platform::prelude::*;
+use crate::{comparison, Run, Segment, TimeSpan, Timer, TimingMethod};
 
 #[cfg(test)]
 mod tests;

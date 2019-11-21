@@ -1,7 +1,7 @@
 use super::Editor;
+use crate::platform::prelude::*;
 use crate::settings::SettingsDescription;
 use serde::{Deserialize, Serialize};
-use crate::platform::prelude::*;
 
 /// Represents the current state of the Layout Editor in order to visualize it
 /// properly.

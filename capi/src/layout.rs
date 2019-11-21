@@ -1,7 +1,7 @@
 //! A Layout allows you to combine multiple components together to visualize a
 //! variety of information the runner is interested in.
 
-use super::{output_vec, str, Json, get_file, release_file};
+use super::{get_file, output_vec, release_file, str, Json};
 use crate::component::OwnedComponent;
 use livesplit_core::layout::{parser, LayoutSettings};
 use livesplit_core::{Layout, Timer};

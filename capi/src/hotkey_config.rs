@@ -1,7 +1,7 @@
 //! The configuration to use for a Hotkey System. It describes with keys to use
 //! as hotkeys for the different actions.
 
-use super::{output_vec, str, Json, get_file, release_file};
+use super::{get_file, output_vec, release_file, str, Json};
 use crate::setting_value::OwnedSettingValue;
 use livesplit_core::HotkeyConfig;
 use serde_json;
@@ -59,7 +59,7 @@ pub unsafe extern "C" fn HotkeyConfig_parse_json(settings: Json) -> NullableOwne
     HotkeyConfig::from_json(settings).ok().map(Box::new)
 }
 
-/// Attempts to parse a hotkey configuration from a given file. <NULL> is 
+/// Attempts to parse a hotkey configuration from a given file. <NULL> is
 /// returned it couldn't be parsed. This will not close the file descriptor /
 /// handle.
 #[no_mangle]

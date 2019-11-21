@@ -5,9 +5,9 @@ use crate::xml_util::{
 };
 use crate::{RealTime, Run, Segment, Time, TimeSpan};
 use byteorder::{ByteOrder, BE};
+use core::cmp::min;
 use image::{png, ColorType, ImageBuffer, Rgba};
 use quick_xml::Reader;
-use core::cmp::min;
 use std::io::BufRead;
 
 use crate::xml_util::Error as XmlError;

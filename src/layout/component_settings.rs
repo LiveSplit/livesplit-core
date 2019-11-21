@@ -4,8 +4,8 @@ use crate::component::{
     possible_time_save, previous_segment, separator, splits, sum_of_best, text, timer, title,
     total_playtime,
 };
-use serde::{Deserialize, Serialize};
 use crate::platform::prelude::*;
+use serde::{Deserialize, Serialize};
 
 /// The settings for one of the components available.
 #[derive(Clone, Serialize, Deserialize)]

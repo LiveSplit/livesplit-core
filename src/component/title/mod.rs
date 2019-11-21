@@ -3,13 +3,13 @@
 //! that is being run. Additionally, the game icon, the attempt count, and the
 //! total number of finished runs can be shown.
 
+use crate::platform::prelude::*;
 use crate::settings::{Alignment, Color, Field, Gradient, SettingsDescription, Value};
 use crate::{
     settings::{CachedImageId, Image, ImageData},
     Timer, TimerPhase,
 };
 use serde::{Deserialize, Serialize};
-use crate::platform::prelude::*;
 
 #[cfg(test)]
 mod tests;
