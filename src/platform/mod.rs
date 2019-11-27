@@ -11,6 +11,8 @@ cfg_if::cfg_if! {
     }
 }
 
+pub mod math;
+
 pub(crate) mod prelude {
     pub use alloc::borrow::ToOwned;
     pub use alloc::boxed::Box;

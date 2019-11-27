@@ -41,7 +41,7 @@ cfg-if = "0.1.10"
 chrono = { version = "0.4.10", default-features = false, features = ["serde", "alloc"] }
 derive_more = { version = "0.99.1", default-features = false, features = ["not", "add", "from", "deref"] }
 hashbrown = "0.6.3"
-libm = "0.1.4"
+libm = "0.2.1"
 livesplit-hotkey = { path = "crates/livesplit-hotkey", version = "0.5.0", default-features = false }
 odds = { version = "0.3.1", default-features = false }
 ordered-float = { version = "1.0.2", default-features = false }

@@ -40,11 +40,10 @@ pub use self::possible_time_save::PossibleTimeSave;
 pub use self::regular::Regular;
 pub use self::short::Short;
 
+use crate::platform::math::f64::{abs, floor};
 use crate::TimeSpan;
 use core::cmp::min;
 use core::fmt::Display;
-#[cfg(not(feature = "std"))]
-use libm::F64Ext;
 
 /// Time Formatters can be used to format optional Time Spans in various ways.
 pub trait TimeFormatter<'a> {
@@ -70,16 +69,13 @@ pub const ASCII_MINUS: &str = "-";
 pub const PLUS: &str = "+";
 
 fn extract_tenths(seconds: f64) -> u8 {
-    min(9, ((seconds.abs() % 1.0) * 10.0 + EPSILON).floor() as u8)
+    min(9, floor((abs(seconds) % 1.0) * 10.0 + EPSILON) as u8)
 }
 
 fn extract_hundredths(seconds: f64) -> u8 {
-    min(99, ((seconds.abs() % 1.0) * 100.0 + EPSILON).floor() as u8)
+    min(99, floor((abs(seconds) % 1.0) * 100.0 + EPSILON) as u8)
 }
 
 fn extract_milliseconds(seconds: f64) -> u16 {
-    min(
-        999,
-        ((seconds.abs() % 1.0) * 1000.0 + EPSILON).floor() as u16,
-    )
+    min(999, floor((abs(seconds) % 1.0) * 1000.0 + EPSILON) as u16)
 }
