@@ -280,8 +280,6 @@ export interface KeyValueComponentStateJson {
     key: string,
     /** The value to visualize. */
     value: string,
-    /** The visual color of the delta time. */
-    visual_color: Color,
     /**
      * Specifies additional abbreviations for the key that can be used instead
      * of the key, if there is not enough space to show the whole key.

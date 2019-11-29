@@ -49,7 +49,7 @@
 // ### Guidelines for Spacing and Sizes in the Component Coordinate Space
 //
 // The default height of a component in the component coordinate space is 1.
-// This is equal to the height of one split or one info text component. The
+// This is equal to the height of one split or one key value component. The
 // default text size is 0.8. There is a padding of 0.35 to the left and right
 // side of a component for the contents shown inside a component, such as images
 // and texts. The same padding of 0.35 is also used for the minimum spacing
