@@ -43,6 +43,7 @@ pub mod segment;
 pub mod segment_history;
 pub mod segment_history_element;
 pub mod segment_history_iter;
+pub mod segment_time_component;
 pub mod separator_component;
 pub mod setting_value;
 pub mod shared_timer;

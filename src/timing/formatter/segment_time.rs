@@ -7,12 +7,12 @@ pub struct Inner {
     accuracy: Accuracy,
 }
 
-/// The Possible Time Save Time Formatter formats Time Spans for them to be
-/// shown as Time Saves. This specifically means that the fractional part of the
-/// time is always shown and the minutes and hours are only shown when
-/// necessary. The default accuracy is to show 2 digits of the fractional part,
-/// but this can be configured. Unlike the Short Time Formatter, the Possible
-/// Time Save Formatter shows a dash when there's an empty time.
+/// The Segment Time Formatter formats Time Spans for them to be shown as
+/// Segment Times. This specifically means that the fractional part of the time
+/// is always shown and the minutes and hours are only shown when necessary. The
+/// default accuracy is to show 2 digits of the fractional part, but this can be
+/// configured. Unlike the Short Time Formatter, the Segment Time Formatter
+/// shows a dash when there's an empty time.
 ///
 /// # Example Formatting
 ///
@@ -21,33 +21,33 @@ pub struct Inner {
 /// * Minutes `12:34.98`
 /// * Hours `12:34:56.12`
 /// * Negative Times `−23.12`
-pub struct PossibleTimeSave {
+pub struct SegmentTime {
     accuracy: Accuracy,
 }
 
-impl PossibleTimeSave {
-    /// Creates a new Possible Time Save Time Formatter that uses hundredths for
-    /// showing the fractional part.
+impl SegmentTime {
+    /// Creates a new Segment Time Formatter that uses hundredths for showing
+    /// the fractional part.
     pub fn new() -> Self {
         Default::default()
     }
 
-    /// Creates a new Possible Time Save Time Formatter that uses the accuracy
-    /// provided for showing the fractional part.
+    /// Creates a new Segment Time Formatter that uses the accuracy provided for
+    /// showing the fractional part.
     pub fn with_accuracy(accuracy: Accuracy) -> Self {
-        PossibleTimeSave { accuracy }
+        SegmentTime { accuracy }
     }
 }
 
-impl Default for PossibleTimeSave {
+impl Default for SegmentTime {
     fn default() -> Self {
-        PossibleTimeSave {
+        SegmentTime {
             accuracy: Accuracy::Hundredths,
         }
     }
 }
 
-impl TimeFormatter<'_> for PossibleTimeSave {
+impl TimeFormatter<'_> for SegmentTime {
     type Inner = Inner;
 
     fn format<T>(&self, time: T) -> Self::Inner

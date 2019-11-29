@@ -5,14 +5,14 @@
 //! comparisons, the segment icon, and the segment's name, can also be shown.
 
 use super::timer;
+use crate::analysis::comparison_single_segment_time;
 use crate::comparison::{self, best_segments, none};
 use crate::platform::prelude::*;
 use crate::settings::{
     CachedImageId, Field, Gradient, ImageData, SemanticColor, SettingsDescription, Value,
 };
 use crate::timing::formatter::{
-    none_wrapper::DashWrapper, timer as formatter, Accuracy, DigitsFormat, Short, TimeFormatter,
-    DASH,
+    timer as formatter, Accuracy, DigitsFormat, SegmentTime, TimeFormatter, DASH,
 };
 use crate::{GeneralLayoutSettings, Segment, TimeSpan, Timer, TimerPhase, TimingMethod};
 use serde::{Deserialize, Serialize};
@@ -207,13 +207,18 @@ impl Component {
 
             let comparison1 = Some((
                 comparison::shorten(comparison1),
-                calculate_comparison_time(timer, timing_method, comparison1, last_split_index),
+                comparison_single_segment_time(run, last_split_index, comparison1, timing_method),
             ));
 
             let comparison2 = if !hide_comparison {
                 Some((
                     comparison::shorten(comparison2),
-                    calculate_comparison_time(timer, timing_method, comparison2, last_split_index),
+                    comparison_single_segment_time(
+                        run,
+                        last_split_index,
+                        comparison2,
+                        timing_method,
+                    ),
                 ))
             } else {
                 None
@@ -225,10 +230,11 @@ impl Component {
         };
 
         let timer_state = self.timer.state(timer, layout_settings);
-        let mut segment_time = calculate_segment_time(timer, timing_method, last_split_index);
+        let mut segment_time = calculate_live_segment_time(timer, timing_method, last_split_index);
 
         if segment_time.is_none() && timing_method == TimingMethod::GameTime {
-            segment_time = calculate_segment_time(timer, TimingMethod::RealTime, last_split_index);
+            segment_time =
+                calculate_live_segment_time(timer, TimingMethod::RealTime, last_split_index);
         }
 
         let (top_color, bottom_color) =
@@ -263,7 +269,7 @@ impl Component {
             },
         };
 
-        let formatter = DashWrapper::new(Short::new());
+        let formatter = SegmentTime::new();
 
         let comparison1 = comparison1.map(|(name, time)| ComparisonState {
             name: name.to_string(),
@@ -396,36 +402,7 @@ impl Component {
     }
 }
 
-fn calculate_comparison_time(
-    timer: &Timer,
-    timing_method: TimingMethod,
-    comparison: &str,
-    last_split_index: usize,
-) -> Option<TimeSpan> {
-    if comparison == best_segments::NAME {
-        timer.run().segment(last_split_index).best_segment_time()[timing_method]
-    } else if last_split_index == 0 {
-        timer
-            .run()
-            .segment(0)
-            .comparison_timing_method(comparison, timing_method)
-    } else if timer.current_split_index() > Some(0) {
-        Some(
-            timer
-                .run()
-                .segment(last_split_index)
-                .comparison_timing_method(comparison, timing_method)?
-                - timer
-                    .run()
-                    .segment(last_split_index - 1)
-                    .comparison_timing_method(comparison, timing_method)?,
-        )
-    } else {
-        None
-    }
-}
-
-fn calculate_segment_time(
+fn calculate_live_segment_time(
     timer: &Timer,
     timing_method: TimingMethod,
     last_split_index: usize,

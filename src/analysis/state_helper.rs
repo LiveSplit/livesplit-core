@@ -61,14 +61,23 @@ fn find_previous_non_empty_split_and_comparison_time(
 }
 
 /// Calculates the comparison's segment time of the segment with the timing
-/// method specified. This is not calculating the current attempt's segment
-/// times.
-pub fn comparison_segment_time(
+/// method specified, combining segments if the segment before it is empty.
+/// This is not calculating the current attempt's segment times.
+///
+/// # Panics
+///
+/// Panics if the provided `segment_index` is greater than or equal to
+/// `run.len()`.
+pub fn comparison_combined_segment_time(
     run: &Run,
     segment_index: usize,
     comparison: &str,
     method: TimingMethod,
 ) -> Option<TimeSpan> {
+    if comparison == best_segments::NAME {
+        return run.segment(segment_index).best_segment_time()[method];
+    }
+
     let current_comparison_time = run.segment(segment_index).comparison(comparison)[method]?;
 
     let previous_comparison_time = find_previous_non_empty_comparison_time(
@@ -79,6 +88,36 @@ pub fn comparison_segment_time(
     .unwrap_or_default();
 
     Some(current_comparison_time - previous_comparison_time)
+}
+
+/// Calculates the comparison's segment time of the segment with the timing
+/// method specified. This is not calculating the current attempt's segment
+/// times.
+///
+/// # Panics
+///
+/// Panics if the provided `segment_index` is greater than or equal to
+/// `run.len()`.
+pub fn comparison_single_segment_time(
+    run: &Run,
+    segment_index: usize,
+    comparison: &str,
+    method: TimingMethod,
+) -> Option<TimeSpan> {
+    if comparison == best_segments::NAME {
+        return run.segment(segment_index).best_segment_time()[method];
+    }
+
+    if segment_index == 0 {
+        run.segment(segment_index).comparison(comparison)[method]
+    } else {
+        let current_comparison_time = run.segment(segment_index).comparison(comparison)[method]?;
+
+        let previous_comparison_time =
+            run.segment(segment_index - 1).comparison(comparison)[method]?;
+
+        Some(current_comparison_time - previous_comparison_time)
+    }
 }
 
 fn segment_delta(

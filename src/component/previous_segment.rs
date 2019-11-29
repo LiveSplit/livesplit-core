@@ -8,7 +8,7 @@
 use super::key_value;
 use crate::platform::prelude::*;
 use crate::settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
-use crate::timing::formatter::{Accuracy, Delta, PossibleTimeSave, TimeFormatter};
+use crate::timing::formatter::{Accuracy, Delta, SegmentTime, TimeFormatter};
 use crate::{analysis, comparison, GeneralLayoutSettings, Timer, TimerPhase};
 use alloc::borrow::Cow;
 use core::fmt::Write as FmtWrite;
@@ -201,7 +201,7 @@ impl Component {
             write!(
                 time,
                 " / {}",
-                PossibleTimeSave::with_accuracy(self.settings.accuracy).format(previous_possible)
+                SegmentTime::with_accuracy(self.settings.accuracy).format(previous_possible)
             )
             .unwrap();
         }

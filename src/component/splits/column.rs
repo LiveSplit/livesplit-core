@@ -3,7 +3,7 @@ use crate::{
     analysis::{self, possible_time_save, split_color},
     comparison,
     settings::{Color, SemanticColor},
-    timing::formatter::{Delta, PossibleTimeSave, Regular, TimeFormatter},
+    timing::formatter::{Delta, Regular, SegmentTime, TimeFormatter},
     GeneralLayoutSettings, Segment, TimeSpan, Timer, TimingMethod,
 };
 use serde::{Deserialize, Serialize};
@@ -161,7 +161,12 @@ pub fn state(
                 ColumnFormatter::Time,
             ),
             ColumnStartWith::ComparisonSegmentTime => (
-                analysis::comparison_segment_time(timer.run(), segment_index, comparison, method),
+                analysis::comparison_combined_segment_time(
+                    timer.run(),
+                    segment_index,
+                    comparison,
+                    method,
+                ),
                 SemanticColor::Default,
                 ColumnFormatter::Time,
             ),
@@ -183,7 +188,7 @@ pub fn state(
                 .format(column_value)
                 .to_string(),
             ColumnFormatter::PossibleTimeSave => {
-                PossibleTimeSave::new().format(column_value).to_string()
+                SegmentTime::new().format(column_value).to_string()
             }
         }
     };

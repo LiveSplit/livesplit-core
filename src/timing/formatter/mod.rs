@@ -26,8 +26,8 @@ mod days;
 mod delta;
 mod digits_format;
 pub mod none_wrapper;
-mod possible_time_save;
 mod regular;
+mod segment_time;
 mod short;
 pub mod timer;
 
@@ -36,8 +36,8 @@ pub use self::complete::Complete;
 pub use self::days::Days;
 pub use self::delta::Delta;
 pub use self::digits_format::DigitsFormat;
-pub use self::possible_time_save::PossibleTimeSave;
 pub use self::regular::Regular;
+pub use self::segment_time::SegmentTime;
 pub use self::short::Short;
 
 use crate::platform::math::f64::{abs, floor};

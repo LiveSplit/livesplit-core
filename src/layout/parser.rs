@@ -390,6 +390,7 @@ where
                     Component::PreviousSegment(c) => {
                         previous_segment::settings(reader, tag.into_buf(), c)
                     }
+                    Component::SegmentTime(_) => end_tag(reader, tag.into_buf()),
                     Component::Separator(_) => end_tag(reader, tag.into_buf()),
                     Component::Splits(c) => splits::settings(reader, tag.into_buf(), c),
                     Component::SumOfBest(c) => sum_of_best::settings(reader, tag.into_buf(), c),
