@@ -42,6 +42,7 @@ pub mod portal2_live_timer;
 pub mod shit_split;
 pub mod source_live_timer;
 pub mod splits_io;
+pub mod splitterino;
 pub mod splitterz;
 pub mod splitty;
 pub mod time_split_tracker;
@@ -52,3 +53,5 @@ pub mod wsplit;
 mod timer_kind;
 
 pub use self::timer_kind::TimerKind;
+
+pub use composite::{parse, parse_and_fix};
