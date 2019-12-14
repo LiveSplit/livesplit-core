@@ -2,14 +2,15 @@ asmjs:
 	@cargo rustc --release --target asmjs-unknown-emscripten -- -C opt-level=z
 	@cp ../../target/asmjs-unknown-emscripten/release/livesplit*.js* livesplit.js
 
-node: asmjs
-	(cd ../bind_gen && cargo run)
-	npm install
+node: asmjs docs
 	npx tsc
 	mv node/livesplit_core.d.ts node/index.d.ts
 	cp ../bindings/emscripten/livesplit_core.js node/index.js
 	cp livesplit.js node/livesplit_core.js
 	cp ../../README.md node/README.md
+
+docs: bindings
+	npm install
 	npx typedoc --mode file --out ../../docs
 
 wasm:
