@@ -11,6 +11,7 @@ capi/js/node/livesplit_core.js
 capi/js/node/README.md
 capi/target
 Cargo.lock
+docs
 emscripten/Cargo.lock
 emscripten/target
 target

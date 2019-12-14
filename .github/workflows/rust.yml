@@ -682,3 +682,29 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           args: --all-features
+
+  docs:
+    if: startsWith(github.ref, 'refs/tags/') 
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Use Node 10
+        uses: actions/setup-node@v1
+        with:
+          node-version: '10.x'
+      - name: Build TypeScript documentation
+        run: |
+          cd capi/js
+          make docs
+          cd ../..
+      - name: Upload documentation files
+        run: |
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+          git clone -q "https://github.com/LiveSplit/livesplit-core-docs"
+          cd livesplit-core-docs
+          rm -r *
+          mv ../docs/* .
+          git add .
+          git commit --amend -m "Update documentation"
+          git push --force https://action:${{ secrets.LIVESPLIT_CORE_DOCS_UPLOAD }}@github.com/LiveSplit/livesplit-core-docs.git

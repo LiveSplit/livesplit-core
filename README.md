@@ -23,7 +23,7 @@ available for the following programming languages:
 The documentation is available here:
 
 - [Rust Documentation](https://docs.rs/livesplit-core/)
-- [TypeScript Documentation](https://livesplit.github.io/livesplit-core/)
+- [TypeScript Documentation](https://livesplit.org/livesplit-core-docs/)
 
 ## Build Instructions
 
