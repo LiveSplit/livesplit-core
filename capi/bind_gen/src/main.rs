@@ -14,6 +14,7 @@ mod typescript;
 mod wasm;
 mod wasm_bindgen;
 
+use std::borrow::Borrow;
 use std::fs::{create_dir_all, remove_dir_all, File};
 use std::io::{BufWriter, Read, Result};
 use std::path::PathBuf;
@@ -59,6 +60,12 @@ pub struct Function {
     output: Type,
     comments: Vec<String>,
     class_comments: Rc<Vec<String>>,
+}
+
+#[derive(Debug)]
+pub struct Struct {
+    name: String,
+    fields: Vec<(String, Type)>,
 }
 
 impl Function {
@@ -153,6 +160,7 @@ fn main() {
     let file = parse_file(&contents).unwrap();
 
     let mut functions = Vec::new();
+    let mut structs = Vec::new();
 
     for item in &file.items {
         if let Item::Mod(module) = item {
@@ -179,6 +187,24 @@ fn main() {
             );
 
             for item in &file.items {
+                if let Item::Struct(x) = item {
+                    let fields: Vec<(String, Type)> = x
+                        .fields
+                        .borrow()
+                        .into_iter()
+                        .map(|x| {
+                            let name = x.ident.as_ref().unwrap().to_string();
+                            let ty = get_type(&x.ty);
+
+                            (name, ty)
+                        })
+                        .collect();
+
+                    structs.push(Struct {
+                        name: x.ident.to_string(),
+                        fields: fields,
+                    });
+                }
                 if let &Item::Fn(ItemFn {
                     vis: Visibility::Public(_),
                     attrs,
@@ -269,7 +295,7 @@ fn main() {
         }
     }
 
-    write_files(&fns_to_classes(functions), &opt).unwrap();
+    write_files(&fns_to_classes(functions), &opt, &structs).unwrap();
 }
 
 use std::collections::BTreeMap;
@@ -304,7 +330,7 @@ fn fns_to_classes(functions: Vec<Function>) -> BTreeMap<String, Class> {
     classes
 }
 
-fn write_files(classes: &BTreeMap<String, Class>, opt: &Opt) -> Result<()> {
+fn write_files(classes: &BTreeMap<String, Class>, opt: &Opt, structs: &Vec<Struct>) -> Result<()> {
     let mut path = PathBuf::from("..");
     path.push("bindings");
 
@@ -382,7 +408,7 @@ fn write_files(classes: &BTreeMap<String, Class>, opt: &Opt) -> Result<()> {
     path.pop();
 
     path.push("livesplit_core.h");
-    c::write(BufWriter::new(File::create(&path)?), classes)?;
+    c::write(BufWriter::new(File::create(&path)?), classes, structs)?;
     path.pop();
 
     path.push("livesplit_core.py");

@@ -1,4 +1,4 @@
-use crate::{Class, Type, TypeKind};
+use crate::{Class, Struct, Type, TypeKind};
 use std::borrow::Cow;
 use std::collections::BTreeMap;
 use std::io::{Result, Write};
@@ -35,7 +35,11 @@ fn get_type(ty: &Type) -> Cow<'_, str> {
     name
 }
 
-pub fn write<W: Write>(mut writer: W, classes: &BTreeMap<String, Class>) -> Result<()> {
+pub fn write<W: Write>(
+    mut writer: W,
+    classes: &BTreeMap<String, Class>,
+    structs: &Vec<Struct>,
+) -> Result<()> {
     write!(
         writer,
         "{}",
@@ -65,6 +69,14 @@ typedef struct {0}_s const* {0}Ref;
 "#,
             name
         )?;
+    }
+
+    for item in structs {
+        writeln!(writer, "struct {0}_s {{", item.name)?;
+        for field in item.fields.iter() {
+            writeln!(writer, "    {1} {0};", field.0, get_type(&field.1))?;
+        }
+        writeln!(writer, "}};")?;
     }
 
     for class in classes.values() {
