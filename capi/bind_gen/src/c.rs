@@ -72,6 +72,27 @@ typedef struct {0}_s const* {0}Ref;
     }
 
     for item in structs {
+        if !item.comments.is_empty() {
+            write!(writer, r#"/**"#)?;
+
+            for comment in &item.comments {
+                write!(
+                    writer,
+                    r#"
+{}"#,
+                    comment
+                        .replace("<NULL>", "NULL")
+                        .replace("<TRUE>", "true")
+                        .replace("<FALSE>", "false")
+                )?;
+            }
+
+            writeln!(
+                writer,
+                r#"
+*/"#
+            )?;
+        }
         writeln!(writer, "struct {0}_s {{", item.name)?;
         for field in item.fields.iter() {
             writeln!(writer, "    {1} {0};", field.0, get_type(&field.1))?;

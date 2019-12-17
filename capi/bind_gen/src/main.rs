@@ -21,8 +21,8 @@ use std::path::PathBuf;
 use std::rc::Rc;
 use structopt::StructOpt;
 use syn::{
-    parse_file, FnArg, Item, ItemFn, Lit, Meta, Pat, ReturnType, Signature, Type as SynType,
-    Visibility,
+    parse_file, Attribute, FnArg, Item, ItemFn, Lit, Meta, Pat, ReturnType, Signature,
+    Type as SynType, Visibility,
 };
 
 #[derive(StructOpt)]
@@ -66,6 +66,7 @@ pub struct Function {
 pub struct Struct {
     name: String,
     fields: Vec<(String, Type)>,
+    comments: Vec<String>,
 }
 
 impl Function {
@@ -89,6 +90,21 @@ pub struct Class {
     shared_fns: Vec<Function>,
     mut_fns: Vec<Function>,
     own_fns: Vec<Function>,
+}
+
+fn get_comments(attrs: &[Attribute]) -> Vec<String> {
+    attrs
+        .iter()
+        .filter_map(|a| match a.parse_meta() {
+            Ok(Meta::NameValue(v)) => Some(v),
+            _ => None,
+        })
+        .filter(|m| m.path.is_ident("doc"))
+        .filter_map(|m| match m.lit {
+            Lit::Str(s) => Some(s.value().trim().to_string()),
+            _ => None,
+        })
+        .collect()
 }
 
 fn get_type(ty: &SynType) -> Type {
@@ -171,24 +187,11 @@ fn main() {
                 .unwrap();
             let file = parse_file(&contents).unwrap();
 
-            let class_comments = Rc::new(
-                file.attrs
-                    .iter()
-                    .filter_map(|a| match a.parse_meta() {
-                        Ok(Meta::NameValue(v)) => Some(v),
-                        _ => None,
-                    })
-                    .filter(|m| m.path.is_ident("doc"))
-                    .filter_map(|m| match m.lit {
-                        Lit::Str(s) => Some(s.value().trim().to_string()),
-                        _ => None,
-                    })
-                    .collect::<Vec<_>>(),
-            );
+            let class_comments = Rc::new(get_comments(&file.attrs));
 
             for item in &file.items {
-                if let Item::Struct(x) = item {
-                    let fields: Vec<(String, Type)> = x
+                if let Item::Struct(s) = item {
+                    let fields: Vec<(String, Type)> = s
                         .fields
                         .borrow()
                         .into_iter()
@@ -201,8 +204,9 @@ fn main() {
                         .collect();
 
                     structs.push(Struct {
-                        name: x.ident.to_string(),
+                        name: s.ident.to_string(),
                         fields: fields,
+                        comments: get_comments(&s.attrs),
                     });
                 }
                 if let &Item::Fn(ItemFn {
@@ -231,18 +235,7 @@ fn main() {
                             })
                             .any(|w| w.is_ident("no_mangle"))
                     {
-                        let comments = attrs
-                            .iter()
-                            .filter_map(|a| match a.parse_meta() {
-                                Ok(Meta::NameValue(v)) => Some(v),
-                                _ => None,
-                            })
-                            .filter(|m| m.path.is_ident("doc"))
-                            .filter_map(|m| match m.lit {
-                                Lit::Str(s) => Some(s.value().trim().to_string()),
-                                _ => None,
-                            })
-                            .collect();
+                        let comments = get_comments(attrs);
 
                         let output = if let ReturnType::Type(_, ty) = output {
                             get_type(ty)
