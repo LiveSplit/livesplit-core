@@ -74,7 +74,7 @@ vek = { version = "0.9.8", default-features = false, optional = true }
 web-sys = { version = "0.3.28", default-features = false, features = ["Performance", "Window"], optional = true }
 
 # Networking
-splits-io-api = { git = "https://github.com/CryZe/splits-io-api", branch = "rustls", optional = true }
+splits-io-api = { version = "0.1.1", optional = true }
 
 [dev-dependencies]
 memmem = "0.1.1"
