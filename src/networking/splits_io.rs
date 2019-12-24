@@ -1,5 +1,5 @@
 //! The `splits_io` module provides communication with
-//! [splits.io](https://splits.io). The raw API is available via the `api`
+//! [Splits.io](https://Splits.io). The raw API is available via the `api`
 //! submodule. Additional helpers for directly uploading and downloading Run
 //! objects are available as well.
 
@@ -11,7 +11,7 @@ use std::io::Cursor;
 pub use api::{run::UploadedRun, Client, Error as UploadError};
 pub use splits_io_api as api;
 
-/// Describes an error that happened when downloading a run from splits.io. This
+/// Describes an error that happened when downloading a run from Splits.io. This
 /// may either be because the download itself had a problem or because the run
 /// itself couldn't be parsed.
 #[derive(Debug, snafu::Snafu)]
@@ -28,7 +28,7 @@ pub enum DownloadError {
     },
 }
 
-/// Asynchronously downloads a run from splits.io based on its splits.io ID. The
+/// Asynchronously downloads a run from Splits.io based on its Splits.io ID. The
 /// run automatically gets parsed into a Run object.
 pub async fn download_run(
     client: &Client,
@@ -39,14 +39,14 @@ pub async fn download_run(
     composite::parse(Cursor::new(bytes), None, false).context(Parse)
 }
 
-/// Asynchronously uploads a run to splits.io. An object representing the ID of
+/// Asynchronously uploads a run to Splits.io. An object representing the ID of
 /// the uploaded run and its claim token gets returned when the run was
 /// successfully uploaded.
 pub async fn upload_run(client: &Client, run: &Run) -> Result<UploadedRun, UploadError> {
     api::run::upload_lazy(client, |writer| saver::livesplit::save_run(run, writer)).await
 }
 
-/// Asynchronously uploads the run of the timer provided to splits.io. If there
+/// Asynchronously uploads the run of the timer provided to Splits.io. If there
 /// is an attempt in progress, a copy that has been reset will be uploaded. An
 /// object representing the ID of the uploaded run and its claim token gets
 /// returned when the run was successfully uploaded.
