@@ -79,6 +79,17 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
     let method = function.method.to_mixed_case();
     let is_json = has_return_type && function.output.name == "Json";
 
+    if function
+        .inputs
+        .iter()
+        .any(|(_, ty)| match (ty.kind, ty.is_custom, &ty.name) {
+            (TypeKind::Value, false, n) if n == "i64" || n == "u64" => true,
+            _ => false,
+        })
+    {
+        return Ok(());
+    }
+
     if !function.comments.is_empty() || !type_script {
         write!(
             writer,
@@ -216,7 +227,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
         }
     }
 
-    write!(writer, r#"instance().exports.{}("#, &function.name)?;
+    write!(writer, r#"wasm.{}("#, &function.name)?;
 
     for (i, (name, typ)) in function.inputs.iter().enumerate() {
         let type_name = get_hl_type_without_null(typ);
@@ -340,37 +351,7 @@ pub fn write<W: Write>(
             writer,
             "{}{}",
             r#"// tslint:disable
-let wasm: WebAssembly.ResultObject | null = null;
-
-declare namespace WebAssembly {
-    class Module {
-        constructor(bufferSource: ArrayBuffer | Uint8Array);
-
-        public static customSections(module: Module, sectionName: string): ArrayBuffer[];
-        public static exports(module: Module): Array<{
-            name: string;
-            kind: string;
-        }>;
-        public static imports(module: Module): Array<{
-            module: string;
-            name: string;
-            kind: string;
-        }>;
-    }
-
-    class Instance {
-        public readonly exports: any;
-        constructor(module: Module, importObject?: any);
-    }
-
-    interface ResultObject {
-        module: Module;
-        instance: Instance;
-    }
-
-    function instantiate(bufferSource: ArrayBuffer | Uint8Array, importObject?: any): Promise<ResultObject>;
-    function instantiateStreaming(source: Response | Promise<Response>, importObject?: any): Promise<ResultObject>;
-}
+import * as wasm from "./livesplit_core_bg";
 
 declare class TextEncoder {
     constructor(label?: string, options?: TextEncoding.TextEncoderOptions);
@@ -408,65 +389,6 @@ declare namespace TextEncoding {
         TextDecoder: typeof TextDecoder;
         TextEncoder: typeof TextEncoder;
     }
-}
-
-function instance(): WebAssembly.Instance {
-    if (wasm == null) {
-        throw "You need to await load()";
-    }
-    return wasm.instance;
-}
-
-const handleMap: Map<number, any> = new Map();
-
-export async function load(path?: string) {
-    const imports = {
-        env: {
-            Instant_now: function (): number {
-                return performance.now() / 1000;
-            },
-            Date_now: function (ptr: number) {
-                const date = new Date();
-                const milliseconds = date.valueOf();
-                const u32Max = 0x100000000;
-                const seconds = milliseconds / 1000;
-                const secondsHigh = (seconds / u32Max) | 0;
-                const secondsLow = (seconds % u32Max) | 0;
-                const nanos = ((milliseconds % 1000) * 1000000) | 0;
-                const u32Slice = new Uint32Array(instance().exports.memory.buffer, ptr);
-                u32Slice[0] = secondsLow;
-                u32Slice[1] = secondsHigh;
-                u32Slice[2] = nanos;
-            },
-            HotkeyHook_new: function (handle: number) {
-                const listener = (ev: KeyboardEvent) => {
-                    const { ptr, len } = allocString(ev.code);
-                    instance().exports.HotkeyHook_callback(ptr, len - 1, handle);
-                    dealloc({ ptr, len });
-                };
-                window.addEventListener("keypress", listener);
-                handleMap.set(handle, listener);
-            },
-            HotkeyHook_drop: function (handle: number) {
-                window.removeEventListener("keypress", handleMap.get(handle));
-                handleMap.delete(handle);
-            },
-        },
-    };
-
-    let request = fetch(path || 'livesplit_core.wasm');
-    if (typeof WebAssembly.instantiateStreaming === "function") {
-        try {
-            wasm = await WebAssembly.instantiateStreaming(request, imports);
-            return;
-        } catch { }
-        // We retry with the normal instantiate here because Chrome 60 seems to
-        // have instantiateStreaming, but it doesn't actually work.
-        request = fetch(path || 'livesplit_core.wasm');
-    }
-    const response = await request;
-    const bytes = await response.arrayBuffer();
-    wasm = await WebAssembly.instantiate(bytes, imports);
 }
 
 let encodeUtf8: (str: string) => Uint8Array;
@@ -540,8 +462,8 @@ interface Slice {
 
 function allocInt8Array(src: Int8Array): Slice {
     const len = src.length;
-    const ptr = instance().exports.alloc(len);
-    const slice = new Uint8Array(instance().exports.memory.buffer, ptr, len);
+    const ptr = wasm.alloc(len);
+    const slice = new Uint8Array(wasm.memory.buffer, ptr, len);
 
     slice.set(src);
 
@@ -551,8 +473,8 @@ function allocInt8Array(src: Int8Array): Slice {
 function allocString(str: string): Slice {
     const stringBuffer = encodeUtf8(str);
     const len = stringBuffer.length + 1;
-    const ptr = instance().exports.alloc(len);
-    const slice = new Uint8Array(instance().exports.memory.buffer, ptr, len);
+    const ptr = wasm.alloc(len);
+    const slice = new Uint8Array(wasm.memory.buffer, ptr, len);
 
     slice.set(stringBuffer);
     slice[len - 1] = 0;
@@ -561,7 +483,7 @@ function allocString(str: string): Slice {
 }
 
 function decodeString(ptr: number): string {
-    const memory = new Uint8Array(instance().exports.memory.buffer);
+    const memory = new Uint8Array(wasm.memory.buffer);
     let end = ptr;
     while (memory[end] !== 0) {
         end += 1;
@@ -571,7 +493,7 @@ function decodeString(ptr: number): string {
 }
 
 function dealloc(slice: Slice) {
-    instance().exports.dealloc(slice.ptr, slice.len);
+    wasm.dealloc(slice.ptr, slice.len);
 }
 
 "#,
@@ -581,66 +503,7 @@ function dealloc(slice: Slice) {
         writeln!(
             writer,
             "{}",
-            r#"let wasm = null;
-
-function instance() {
-    if (wasm == null) {
-        throw "You need to await load()";
-    }
-    return wasm.instance;
-}
-
-const handleMap = new Map();
-
-exports.load = async function (path) {
-    const imports = {
-        env: {
-            Instant_now: function () {
-                return performance.now() / 1000;
-            },
-            Date_now: function (ptr) {
-                const date = new Date();
-                const milliseconds = date.valueOf();
-                const u32Max = 0x100000000;
-                const seconds = milliseconds / 1000;
-                const secondsHigh = (seconds / u32Max) | 0;
-                const secondsLow = (seconds % u32Max) | 0;
-                const nanos = ((milliseconds % 1000) * 1000000) | 0;
-                const u32Slice = new Uint32Array(instance().exports.memory.buffer, ptr);
-                u32Slice[0] = secondsLow;
-                u32Slice[1] = secondsHigh;
-                u32Slice[2] = nanos;
-            },
-            HotkeyHook_new: function (handle) {
-                const listener = (ev) => {
-                    const { ptr, len } = allocString(ev.code);
-                    instance().exports.HotkeyHook_callback(ptr, len - 1, handle);
-                    dealloc({ ptr, len });
-                };
-                window.addEventListener("keypress", listener);
-                handleMap.set(handle, listener);
-            },
-            HotkeyHook_drop: function (handle) {
-                window.removeEventListener("keypress", handleMap.get(handle));
-                handleMap.delete(handle);
-            },
-        },
-    };
-
-    let request = fetch(path || 'livesplit_core.wasm');
-    if (typeof WebAssembly.instantiateStreaming === "function") {
-        try {
-            wasm = await WebAssembly.instantiateStreaming(request, imports);
-            return;
-        } catch { }
-        // We retry with the normal instantiate here because Chrome 60 seems to
-        // have instantiateStreaming, but it doesn't actually work.
-        request = fetch(path || 'livesplit_core.wasm');
-    }
-    const response = await request;
-    const bytes = await response.arrayBuffer();
-    wasm = await WebAssembly.instantiate(bytes, imports);
-}
+            r#"import * as wasm from "./livesplit_core_bg.wasm";
 
 let encodeUtf8;
 if (!global["TextEncoder"]) {
@@ -709,8 +572,8 @@ if (!global["TextDecoder"]) {
 
 function allocInt8Array(src) {
     const len = src.length;
-    const ptr = instance().exports.alloc(len);
-    const slice = new Uint8Array(instance().exports.memory.buffer, ptr, len);
+    const ptr = wasm.alloc(len);
+    const slice = new Uint8Array(wasm.memory.buffer, ptr, len);
 
     slice.set(src);
 
@@ -720,8 +583,8 @@ function allocInt8Array(src) {
 function allocString(str) {
     const stringBuffer = encodeUtf8(str);
     const len = stringBuffer.length + 1;
-    const ptr = instance().exports.alloc(len);
-    const slice = new Uint8Array(instance().exports.memory.buffer, ptr, len);
+    const ptr = wasm.alloc(len);
+    const slice = new Uint8Array(wasm.memory.buffer, ptr, len);
 
     slice.set(stringBuffer);
     slice[len - 1] = 0;
@@ -730,7 +593,7 @@ function allocString(str) {
 }
 
 function decodeString(ptr) {
-    const memory = new Uint8Array(instance().exports.memory.buffer);
+    const memory = new Uint8Array(wasm.memory.buffer);
     let end = ptr;
     while (memory[end] !== 0) {
         end += 1;
@@ -740,7 +603,7 @@ function decodeString(ptr) {
 }
 
 function dealloc(slice) {
-    instance().exports.dealloc(slice.ptr, slice.len);
+    wasm.dealloc(slice.ptr, slice.len);
 }"#,
         )?;
     }
@@ -754,9 +617,8 @@ function dealloc(slice) {
         write!(
             writer,
             r#"
-{export}class {class} {{"#,
+export class {class} {{"#,
             class = class_name_ref,
-            export = if type_script { "export " } else { "" }
         )?;
 
         if type_script {
@@ -843,24 +705,14 @@ function dealloc(slice) {
 "#
         )?;
 
-        if !type_script {
-            write!(
-                writer,
-                r#"exports.{base_class} = {base_class};
-"#,
-                base_class = class_name_ref
-            )?;
-        }
-
         write_class_comments(&mut writer, &class.comments)?;
 
         write!(
             writer,
             r#"
-{export}class {class} extends {base_class} {{"#,
+export class {class} extends {base_class} {{"#,
             class = class_name_ref_mut,
             base_class = class_name_ref,
-            export = if type_script { "export " } else { "" }
         )?;
 
         for function in &class.mut_fns {
@@ -916,24 +768,14 @@ function dealloc(slice) {
 "#
         )?;
 
-        if !type_script {
-            write!(
-                writer,
-                r#"exports.{base_class} = {base_class};
-"#,
-                base_class = class_name_ref_mut
-            )?;
-        }
-
         write_class_comments(&mut writer, &class.comments)?;
 
         write!(
             writer,
             r#"
-{export}class {class} extends {base_class} {{"#,
+export class {class} extends {base_class} {{"#,
             class = class_name,
             base_class = class_name_ref_mut,
-            export = if type_script { "export " } else { "" }
         )?;
 
         if type_script {
@@ -987,7 +829,7 @@ function dealloc(slice) {
             write!(
                 writer,
                 r#"
-            instance().exports.{}(this.ptr);"#,
+            wasm.{}(this.ptr);"#,
                 function.name
             )?;
         }
@@ -1107,16 +949,7 @@ function dealloc(slice) {
         writeln!(
             writer,
             r#"
-}}{export}"#,
-            export = if type_script {
-                "".to_string()
-            } else {
-                format!(
-                    r#"
-exports.{base_class} = {base_class};"#,
-                    base_class = class_name
-                )
-            }
+}}"#,
         )?;
     }
 

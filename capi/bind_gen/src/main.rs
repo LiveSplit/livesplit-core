@@ -12,6 +12,7 @@ mod ruby;
 mod swift;
 mod typescript;
 mod wasm;
+mod wasm_bindgen;
 
 use std::fs::{create_dir_all, remove_dir_all, File};
 use std::io::{BufWriter, Read, Result};
@@ -345,6 +346,19 @@ fn write_files(classes: &BTreeMap<String, Class>, opt: &Opt) -> Result<()> {
 
         path.push("livesplit_core.ts");
         wasm::write(BufWriter::new(File::create(&path)?), classes, true)?;
+        path.pop();
+    }
+    path.pop();
+
+    path.push("wasm_bindgen");
+    create_dir_all(&path)?;
+    {
+        path.push("index.js");
+        wasm_bindgen::write(BufWriter::new(File::create(&path)?), classes, false)?;
+        path.pop();
+
+        path.push("index.ts");
+        wasm_bindgen::write(BufWriter::new(File::create(&path)?), classes, true)?;
         path.pop();
     }
     path.pop();
