@@ -527,6 +527,9 @@ jobs:
           - label: Android x86_64
             target: x86_64-linux-android
             os: ubuntu-latest
+            tests: skip
+             # The tests fail with an illegal instruction since 1.40
+             # https://github.com/rust-lang/rust/issues/67582
 
           - label: Android arm
             target: arm-linux-androideabi
@@ -684,7 +687,7 @@ jobs:
           args: --all-features
 
   docs:
-    if: startsWith(github.ref, 'refs/tags/') 
+    if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
