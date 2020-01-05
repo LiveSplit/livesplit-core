@@ -1,6 +1,9 @@
 use lyon::tessellation::{
-    geometry_builder::{vertex_builder, VertexConstructor},
-    BuffersBuilder, FillVertex, StrokeVertex, VertexBuffers,
+    geometry_builder::{
+        vertex_builder, BasicGeometryBuilder, FillGeometryBuilder, StrokeGeometryBuilder,
+    },
+    math::Point,
+    FillAttributes, StrokeAttributes, VertexBuffers,
 };
 
 /// The vertex types describes a single point of a mesh used to form triangles.
@@ -53,23 +56,33 @@ impl Mesh {
     }
 }
 
-pub fn stroke_builder(
-    mesh: &mut Mesh,
-) -> BuffersBuilder<'_, Vertex, u16, StrokeVertex, impl VertexConstructor<StrokeVertex, Vertex>> {
-    vertex_builder(&mut mesh.buffers, |v: StrokeVertex| Vertex {
-        x: v.position.x,
-        y: v.position.y,
-        u: 0.0,
-        v: 0.0,
+pub fn stroke_builder(mesh: &mut Mesh) -> impl StrokeGeometryBuilder + '_ {
+    vertex_builder::<_, _, (), _>(
+        &mut mesh.buffers,
+        |p: Point, _: StrokeAttributes<'_, '_>| Vertex {
+            x: p.x,
+            y: p.y,
+            u: 0.0,
+            v: 0.0,
+        },
+    )
+}
+
+pub fn fill_builder(mesh: &mut Mesh) -> impl FillGeometryBuilder + '_ {
+    vertex_builder::<_, _, (), _>(&mut mesh.buffers, |p: Point, _: FillAttributes<'_>| {
+        Vertex {
+            x: p.x,
+            y: p.y,
+            u: 0.0,
+            v: 0.0,
+        }
     })
 }
 
-pub fn fill_builder(
-    mesh: &mut Mesh,
-) -> BuffersBuilder<'_, Vertex, u16, FillVertex, impl VertexConstructor<FillVertex, Vertex>> {
-    vertex_builder(&mut mesh.buffers, |v: FillVertex| Vertex {
-        x: v.position.x,
-        y: v.position.y,
+pub fn basic_builder(mesh: &mut Mesh) -> impl BasicGeometryBuilder + '_ {
+    vertex_builder::<_, _, (), _>(&mut mesh.buffers, |p: Point| Vertex {
+        x: p.x,
+        y: p.y,
         u: 0.0,
         v: 0.0,
     })

@@ -3,7 +3,7 @@ use {
         component::graph::State,
         layout::LayoutState,
         rendering::{
-            mesh::{fill_builder, stroke_builder},
+            mesh::{basic_builder, fill_builder, stroke_builder},
             Backend, Mesh, RenderContext,
         },
         settings::Gradient,
@@ -72,7 +72,7 @@ pub(in crate::rendering) fn render(
             .iter()
             .map(|&[x, y]| [width * x, y].into()),
             &mut FillTessellator::new(),
-            &FillOptions::tolerance(0.005).with_normals(false),
+            &FillOptions::tolerance(0.005),
             &mut fill_builder(&mut mesh),
         )
         .unwrap();
@@ -99,7 +99,7 @@ pub(in crate::rendering) fn render(
                 [width * component.points[len - 1].x, component.middle].into(),
             )),
         &mut FillTessellator::new(),
-        &FillOptions::tolerance(0.005).with_normals(false),
+        &FillOptions::tolerance(0.005),
         &mut fill_builder(&mut mesh),
     )
     .unwrap();
@@ -140,8 +140,8 @@ pub(in crate::rendering) fn render(
             fill_circle(
                 [width * point.x, point.y].into(),
                 CIRCLE_RADIUS,
-                &FillOptions::tolerance(0.005).with_normals(false),
-                &mut fill_builder(&mut mesh),
+                &FillOptions::tolerance(0.005),
+                &mut basic_builder(&mut mesh),
             )
             .unwrap();
 

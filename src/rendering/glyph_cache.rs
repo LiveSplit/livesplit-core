@@ -67,8 +67,8 @@ impl<M> GlyphCache<M> {
             let mut tessellator = FillTessellator::new();
             tessellator
                 .tessellate_path(
-                    path.iter(),
-                    &FillOptions::tolerance(0.005).with_normals(false),
+                    &path,
+                    &FillOptions::tolerance(0.005),
                     &mut fill_builder(&mut glyph_mesh),
                 )
                 .unwrap();
