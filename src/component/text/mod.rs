@@ -54,6 +54,9 @@ pub enum Text {
     /// A text that is split up into a left and right part. This is suitable for
     /// a situation where you have a label and a value.
     Split(String, String),
+    /// A custom variable with the name specified is supposed to be shown. The
+    /// boolean indicates whether the name should also be shown as a key value
+    /// pair.
     Variable(String, bool),
 }
 

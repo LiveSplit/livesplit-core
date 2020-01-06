@@ -37,6 +37,8 @@ pub mod previous_segment_component;
 pub mod run;
 pub mod run_editor;
 pub mod run_metadata;
+pub mod run_metadata_custom_variable;
+pub mod run_metadata_custom_variables_iter;
 pub mod run_metadata_speedrun_com_variable;
 pub mod run_metadata_speedrun_com_variables_iter;
 pub mod segment;
@@ -64,6 +66,7 @@ pub mod title_component;
 pub mod title_component_state;
 pub mod total_playtime_component;
 
+use crate::run_metadata_custom_variable::RunMetadataCustomVariable;
 use crate::run_metadata_speedrun_com_variable::RunMetadataSpeedrunComVariable;
 use crate::segment_history_element::SegmentHistoryElement;
 use livesplit_core::{Time, TimeSpan};
@@ -79,6 +82,7 @@ thread_local! {
     static TIME: Cell<Time> = Cell::default();
     static SEGMENT_HISTORY_ELEMENT: Cell<SegmentHistoryElement> = Cell::default();
     static RUN_METADATA_SPEEDRUN_COM_VARIABLE: Cell<RunMetadataSpeedrunComVariable> = Cell::new((ptr::null(), ptr::null()));
+    static RUN_METADATA_CUSTOM_VARIABLE: Cell<RunMetadataCustomVariable> = Cell::new((ptr::null(), ptr::null()));
 }
 
 fn output_time_span(time_span: TimeSpan) -> *const TimeSpan {

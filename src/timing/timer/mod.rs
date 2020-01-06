@@ -599,6 +599,9 @@ impl Timer {
         }
     }
 
+    /// Sets the value of a custom variable with the name specified. If the
+    /// variable does not exist, a temporary variable gets created that will not
+    /// be stored in the splits file.
     pub fn set_custom_variable<N, V>(&mut self, name: N, value: V)
     where
         N: Into<String>,

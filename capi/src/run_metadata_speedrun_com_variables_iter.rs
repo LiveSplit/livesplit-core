@@ -1,4 +1,4 @@
-//! An iterator iterating over all the Run Metadata variables and their values
+//! An iterator iterating over all the speedrun.com variables and their values
 //! that have been specified.
 
 use super::RUN_METADATA_SPEEDRUN_COM_VARIABLE;
@@ -21,7 +21,7 @@ pub extern "C" fn RunMetadataSpeedrunComVariablesIter_drop(
     drop(this);
 }
 
-/// Accesses the next Run Metadata variable. Returns <NULL> if there are no more
+/// Accesses the next speedrun.com variable. Returns <NULL> if there are no more
 /// variables.
 #[no_mangle]
 pub extern "C" fn RunMetadataSpeedrunComVariablesIter_next(

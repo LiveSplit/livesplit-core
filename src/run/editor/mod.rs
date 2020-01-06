@@ -322,11 +322,11 @@ impl Editor {
         self.metadata_modified();
     }
 
-    /// Sets the variable with the name specified to the value specified. A
-    /// variable is an arbitrary key value pair storing additional information
-    /// about the category. An example of this may be whether Amiibos are used
-    /// in this category. If the variable doesn't exist yet, it is being
-    /// inserted.
+    /// Sets the speedrun.com variable with the name specified to the value
+    /// specified. A variable is an arbitrary key value pair storing additional
+    /// information about the category. An example of this may be whether
+    /// Amiibos are used in this category. If the variable doesn't exist yet, it
+    /// is being inserted.
     pub fn set_speedrun_com_variable<N, V>(&mut self, name: N, value: V)
     where
         N: Into<String>,
@@ -338,7 +338,7 @@ impl Editor {
         self.metadata_modified();
     }
 
-    /// Removes the variable with the name specified.
+    /// Removes the speedrun.com variable with the name specified.
     pub fn remove_speedrun_com_variable<S>(&mut self, name: S)
     where
         S: AsRef<str>,
@@ -347,6 +347,10 @@ impl Editor {
         self.metadata_modified();
     }
 
+    /// Adds a new permanent custom variable. If there's a temporary variable
+    /// with the same name, it gets turned into a permanent variable and its
+    /// value stays. If a permanent variable with the name already exists,
+    /// nothing happens.
     pub fn add_custom_variable<N>(&mut self, name: N)
     where
         N: Into<String>,
@@ -358,6 +362,9 @@ impl Editor {
         self.raise_run_edited();
     }
 
+    /// Sets the value of a custom variable with the name specified. If the
+    /// custom variable does not exist, or is not a permanent variable, nothing
+    /// happens.
     pub fn set_custom_variable<N, V>(&mut self, name: N, value: V)
     where
         N: Into<String>,
@@ -375,6 +382,9 @@ impl Editor {
         }
     }
 
+    /// Removes the custom variable with the name specified. If the custom
+    /// variable does not exist, or is not a permanent variable, nothing
+    /// happens.
     pub fn remove_custom_variable<N>(&mut self, name: N)
     where
         N: AsRef<str>,

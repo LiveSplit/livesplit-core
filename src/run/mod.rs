@@ -30,7 +30,7 @@ mod tests;
 
 pub use attempt::Attempt;
 pub use editor::{Editor, RenameError};
-pub use run_metadata::RunMetadata;
+pub use run_metadata::{CustomVariable, RunMetadata};
 pub use segment::Segment;
 pub use segment_history::SegmentHistory;
 

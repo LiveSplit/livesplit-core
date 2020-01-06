@@ -1,4 +1,4 @@
-//! A Run Metadata variable is an arbitrary key value pair storing additional
+//! A speedrun.com variable is an arbitrary key value pair storing additional
 //! information about the category. An example of this may be whether Amiibos
 //! are used in the category.
 
@@ -18,7 +18,7 @@ pub extern "C" fn RunMetadataSpeedrunComVariable_drop(this: OwnedRunMetadataSpee
     drop(this);
 }
 
-/// Accesses the name of this Run Metadata variable.
+/// Accesses the name of this speedrun.com variable.
 #[no_mangle]
 pub unsafe extern "C" fn RunMetadataSpeedrunComVariable_name(
     this: &RunMetadataSpeedrunComVariable,
@@ -26,7 +26,7 @@ pub unsafe extern "C" fn RunMetadataSpeedrunComVariable_name(
     output_str(&*this.0)
 }
 
-/// Accesses the value of this Run Metadata variable.
+/// Accesses the value of this speedrun.com variable.
 #[no_mangle]
 pub unsafe extern "C" fn RunMetadataSpeedrunComVariable_value(
     this: &RunMetadataSpeedrunComVariable,

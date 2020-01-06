@@ -158,7 +158,7 @@ pub extern "C" fn RunEditor_set_emulator_usage(this: &mut RunEditor, uses_emulat
     this.set_emulator_usage(uses_emulator);
 }
 
-/// Sets the variable with the name specified to the value specified. A
+/// Sets the speedrun.com variable with the name specified to the value specified. A
 /// variable is an arbitrary key value pair storing additional information
 /// about the category. An example of this may be whether Amiibos are used
 /// in this category. If the variable doesn't exist yet, it is being
@@ -172,7 +172,7 @@ pub unsafe extern "C" fn RunEditor_set_speedrun_com_variable(
     this.set_speedrun_com_variable(str(name), str(value));
 }
 
-/// Removes the variable with the name specified.
+/// Removes the speedrun.com variable with the name specified.
 #[no_mangle]
 pub unsafe extern "C" fn RunEditor_remove_speedrun_com_variable(
     this: &mut RunEditor,
@@ -181,11 +181,16 @@ pub unsafe extern "C" fn RunEditor_remove_speedrun_com_variable(
     this.remove_speedrun_com_variable(str(name));
 }
 
+/// Adds a new permanent custom variable. If there's a temporary variable with
+/// the same name, it gets turned into a permanent variable and its value stays.
+/// If a permanent variable with the name already exists, nothing happens.
 #[no_mangle]
 pub unsafe extern "C" fn RunEditor_add_custom_variable(this: &mut RunEditor, name: *const c_char) {
     this.add_custom_variable(str(name));
 }
 
+/// Sets the value of a custom variable with the name specified. If the custom
+/// variable does not exist, or is not a permanent variable, nothing happens.
 #[no_mangle]
 pub unsafe extern "C" fn RunEditor_set_custom_variable(
     this: &mut RunEditor,
@@ -195,6 +200,8 @@ pub unsafe extern "C" fn RunEditor_set_custom_variable(
     this.set_custom_variable(str(name), str(value));
 }
 
+/// Removes the custom variable with the name specified. If the custom variable
+/// does not exist, or is not a permanent variable, nothing happens.
 #[no_mangle]
 pub unsafe extern "C" fn RunEditor_remove_custom_variable(
     this: &mut RunEditor,

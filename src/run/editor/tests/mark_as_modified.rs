@@ -323,7 +323,7 @@ fn when_generating_goal_comparison() {
 #[test]
 fn when_creating_custom_variable() {
     let mut editor = base();
-    editor.set_custom_variable("Hello", "World");
+    editor.add_custom_variable("Hello");
     assert!(editor.run().has_been_modified());
 }
 
