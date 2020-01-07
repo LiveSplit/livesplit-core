@@ -18,6 +18,13 @@ pub enum Error {
         /// The underlying error.
         source: io::Error,
     },
+    /// Expected the goal, but didn't find it.
+    ExpectedGoal,
+    /// Failed to read the goal.
+    ReadGoal {
+        /// The underlying error.
+        source: io::Error,
+    },
     /// Expected the attempt count, but didn't find it.
     ExpectedAttemptCount,
     /// Failed to read the attempt count.
@@ -86,7 +93,15 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
     let mut lines = source.lines();
 
     run.set_category_name(lines.next().context(ExpectedTitle)?.context(ReadTitle)?);
-    lines.next(); // FIXME: Store Goal
+
+    let goal = lines.next().context(ExpectedGoal)?.context(ReadGoal)?;
+    if !goal.trim_start().is_empty() {
+        run.metadata_mut()
+            .custom_variable_mut("Goal")
+            .permanent()
+            .set_value(goal);
+    }
+
     run.set_attempt_count(
         lines
             .next()

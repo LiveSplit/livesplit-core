@@ -658,11 +658,41 @@ export interface RunMetadataJson {
      */
     region_name: string,
     /**
-     * Stores all the variables. A variable is an arbitrary key value pair
-     * storing additional information about the category. An example of this
-     * may be whether Amiibos are used in this category.
+     * Stores all the speedrun.com variables. A variable is an arbitrary key
+     * value pair storing additional information about the category. An example
+     * of this may be whether Amiibos are used in this category.
      */
-    variables: { [key: string]: string },
+    speedrun_com_variables: { [key: string]: string | undefined },
+    /**
+     * Stores all the custom variables. A custom variable is a key value pair
+     * storing additional information about a run. Unlike the speedrun.com
+     * variables, these can be fully custom and don't need to correspond to
+     * anything on speedrun.com. Permanent custom variables can be specified by
+     * the runner. Additionally auto splitters or other sources may provide
+     * temporary custom variables that are not stored in the splits files.
+     */
+    custom_variables: { [key: string]: CustomVariableJson | undefined },
+}
+/**
+ * A custom variable is a key value pair storing additional information about a
+ * run. Unlike the speedrun.com variables, these can be fully custom and don't
+ * need to correspond to anything on speedrun.com. Permanent custom variables
+ * can be specified by the runner. Additionally auto splitters or other sources
+ * may provide temporary custom variables that are not stored in the splits
+ * files.
+ */
+export interface CustomVariableJson {
+    /**
+     * The current value of the custom variable. This may be provided by the
+     * runner in the run editor or it may be provided through other means such
+     * as an auto splitter.
+     */
+    value: string,
+    /**
+     * States whether the variable is permanent. Temporary variables don't get
+     * stored in splits files. They also don't get shown in the run editor.
+     */
+    is_permanent: boolean,
 }
 
 /**

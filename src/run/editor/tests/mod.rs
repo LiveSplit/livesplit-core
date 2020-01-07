@@ -2,6 +2,7 @@ use super::Editor;
 use crate::{Run, Segment};
 
 mod comparison;
+mod custom_variables;
 mod dissociate_run;
 mod mark_as_modified;
 

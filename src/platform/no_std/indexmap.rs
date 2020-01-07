@@ -29,6 +29,29 @@ pub mod map {
             }
         }
 
+        /// Return a reference to the value stored for key, if it is present, else None.
+        pub fn get<K2>(&self, key: &K2) -> Option<&V>
+        where
+            K: core::borrow::Borrow<K2>,
+            K2: ?Sized + PartialEq,
+        {
+            if let Some(index) = self.0.iter().position(|(k, _)| k.borrow() == key) {
+                Some(&self.0[index].1)
+            } else {
+                None
+            }
+        }
+
+        /// Get the given key’s corresponding entry in the map for insertion
+        /// and/or in-place manipulation.
+        pub fn entry(&mut self, key: K) -> Entry<'_, K, V> {
+            Entry {
+                index: self.0.iter().position(|(k, _)| *k == key),
+                map: self,
+                key,
+            }
+        }
+
         /// Remove the key-value pair equivalent to key.
         pub fn shift_remove<K2>(&mut self, key: &K2)
         where
@@ -48,6 +71,29 @@ pub mod map {
         /// Remove all key-value pairs in the map, while preserving its capacity.
         pub fn clear(&mut self) {
             self.0.clear();
+        }
+    }
+
+    pub struct Entry<'a, K, V> {
+        map: &'a mut IndexMap<K, V>,
+        index: Option<usize>,
+        key: K,
+    }
+
+    impl<'a, K, V> Entry<'a, K, V> {
+        /// Inserts a default-constructed value in the entry if it is vacant and
+        /// returns a mutable reference to it. Otherwise a mutable reference to
+        /// an already existent value is returned.
+        pub fn or_default(self) -> &'a mut V
+        where
+            V: Default,
+        {
+            if let Some(index) = self.index {
+                &mut self.map.0[index].1
+            } else {
+                self.map.0.push((self.key, Default::default()));
+                &mut self.map.0.last_mut().unwrap().1
+            }
         }
     }
 

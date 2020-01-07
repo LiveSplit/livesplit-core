@@ -83,7 +83,7 @@ impl Component {
                 ComponentState::Splits(component.state(timer, layout_settings))
             }
             Component::SumOfBest(component) => ComponentState::KeyValue(component.state(timer)),
-            Component::Text(component) => ComponentState::Text(component.state()),
+            Component::Text(component) => ComponentState::Text(component.state(timer)),
             Component::Timer(component) => {
                 ComponentState::Timer(component.state(timer, layout_settings))
             }

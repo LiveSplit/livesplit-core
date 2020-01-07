@@ -1,8 +1,12 @@
 use crate::{Run, Segment, TimeSpan, Timer, TimingMethod};
 
 fn timer() -> Timer {
-    use super::timer;
-    let timer = timer();
+    use super::run;
+    let mut run = run();
+    run.metadata_mut()
+        .custom_variable_mut("Permanent")
+        .permanent();
+    let timer = Timer::new(run).unwrap();
     assert!(!timer.run().has_been_modified());
     timer
 }
@@ -161,5 +165,21 @@ fn not_when_pausing_resuming_or_setting_game_time_without_an_attempt() {
     timer.set_game_time(TimeSpan::default());
     assert!(!timer.run().has_been_modified());
     timer.set_loading_times(TimeSpan::default());
+    assert!(!timer.run().has_been_modified());
+}
+
+#[test]
+fn when_setting_permanent_custom_variables() {
+    let mut timer = timer();
+    timer.set_custom_variable("Permanent", "okok");
+    assert!(timer.run().has_been_modified());
+}
+
+#[test]
+fn not_when_setting_temporary_custom_variables() {
+    let mut timer = timer();
+    timer.set_custom_variable("Foo", "Bar");
+    assert!(!timer.run().has_been_modified());
+    timer.set_custom_variable("Foo", "Bar2");
     assert!(!timer.run().has_been_modified());
 }

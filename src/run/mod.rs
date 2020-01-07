@@ -30,7 +30,7 @@ mod tests;
 
 pub use attempt::Attempt;
 pub use editor::{Editor, RenameError};
-pub use run_metadata::RunMetadata;
+pub use run_metadata::{CustomVariable, RunMetadata};
 pub use segment::Segment;
 pub use segment_history::SegmentHistory;
 
@@ -528,7 +528,7 @@ impl Run {
             };
 
             if show_variables {
-                for (name, value) in self.metadata.variables() {
+                for (name, value) in self.metadata.speedrun_com_variables() {
                     let name = name.trim_end_matches('?');
 
                     if unicase::eq(value.as_str(), "yes") {
