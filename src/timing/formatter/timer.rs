@@ -4,7 +4,7 @@
 
 use super::{
     extract_hundredths, extract_milliseconds, extract_tenths, Accuracy, DigitsFormat,
-    TimeFormatter, MINUS,
+    TimeFormatter, DASH, MINUS,
 };
 use crate::TimeSpan;
 use core::fmt::{Display, Formatter, Result};
@@ -21,7 +21,7 @@ pub struct TimeInner {
 ///
 /// # Example Formatting
 ///
-/// * Empty Time `0`
+/// * Empty Time `—`
 /// * Seconds `23`
 /// * Minutes `12:34`
 /// * Hours `12:34:56`
@@ -92,14 +92,7 @@ impl Display for TimeInner {
                 write!(f, "{}", seconds)
             }
         } else {
-            match self.digits_format {
-                DigitsFormat::SingleDigitSeconds => write!(f, "0"),
-                DigitsFormat::DoubleDigitSeconds => write!(f, "00"),
-                DigitsFormat::SingleDigitMinutes => write!(f, "0:00"),
-                DigitsFormat::DoubleDigitMinutes => write!(f, "00:00"),
-                DigitsFormat::SingleDigitHours => write!(f, "0:00:00"),
-                DigitsFormat::DoubleDigitHours => write!(f, "00:00:00"),
-            }
+            write!(f, "{}", DASH)
         }
     }
 }
@@ -118,7 +111,7 @@ pub struct FractionInner {
 ///
 /// # Example Formatting
 ///
-/// * Empty Time `.00`
+/// * Empty Time ``
 /// * No Fractional Part `​`
 /// * Tenths `.1`
 /// * Hundredths `.12`
@@ -176,12 +169,7 @@ impl Display for FractionInner {
                 }
             }
         } else {
-            match self.accuracy {
-                Accuracy::Seconds => Ok(()),
-                Accuracy::Tenths => write!(f, ".0"),
-                Accuracy::Hundredths => write!(f, ".00"),
-                Accuracy::Milliseconds => write!(f, ".000"),
-            }
+            Ok(())
         }
     }
 }

@@ -44,6 +44,10 @@ pub struct Settings {
     pub digits_format: DigitsFormat,
     /// The accuracy of the time shown.
     pub accuracy: Accuracy,
+    /// Specifies whether to show the how much time has passed since the start
+    /// current segment, rather than how much time has passed since the start of
+    /// the current attempt.
+    pub is_segment_timer: bool,
 }
 
 impl Default for Settings {
@@ -56,6 +60,7 @@ impl Default for Settings {
             show_gradient: true,
             digits_format: DigitsFormat::SingleDigitSeconds,
             accuracy: Accuracy::Hundredths,
+            is_segment_timer: false,
         }
     }
 }
@@ -113,7 +118,11 @@ impl Component {
 
     /// Accesses the name of the component.
     pub fn name(&self) -> &'static str {
-        "Timer"
+        if self.settings.is_segment_timer {
+            "Segment Timer"
+        } else {
+            "Timer"
+        }
     }
 
     /// Calculates the component's state based on the timer and the layout
@@ -123,48 +132,67 @@ impl Component {
             .settings
             .timing_method
             .unwrap_or_else(|| timer.current_timing_method());
-        let time = timer.current_time();
-        let time = time[method].or(time.real_time).unwrap_or_default();
-        let current_comparison = timer.current_comparison();
 
-        let semantic_color = match timer.current_phase() {
-            TimerPhase::Running if time >= TimeSpan::zero() => {
-                let pb_split_time = timer
-                    .current_split()
-                    .unwrap()
-                    .comparison(current_comparison)[method];
+        let (time, semantic_color) = if self.settings.is_segment_timer {
+            let last_split_index = if timer.current_phase() == TimerPhase::Ended {
+                timer.run().len() - 1
+            } else {
+                timer.current_split_index().unwrap_or_default()
+            };
+            let mut segment_time = calculate_live_segment_time(timer, method, last_split_index);
 
-                if let Some(pb_split_time) = pb_split_time {
-                    split_color(
-                        timer,
-                        Some(time - pb_split_time),
-                        timer.current_split_index().unwrap(),
-                        true,
-                        false,
-                        current_comparison,
-                        method,
-                    )
-                    .or(SemanticColor::AheadGainingTime)
-                } else {
-                    SemanticColor::AheadGainingTime
-                }
+            if segment_time.is_none() && method == TimingMethod::GameTime {
+                segment_time =
+                    calculate_live_segment_time(timer, TimingMethod::RealTime, last_split_index);
             }
-            TimerPhase::Paused => SemanticColor::Paused,
-            TimerPhase::Ended => {
-                let pb_time = timer
-                    .run()
-                    .segments()
-                    .last()
-                    .unwrap()
-                    .comparison(current_comparison)[method];
 
-                if pb_time.map_or(true, |t| time < t) {
-                    SemanticColor::PersonalBest
-                } else {
-                    SemanticColor::BehindLosingTime
+            (segment_time, SemanticColor::Default)
+        } else {
+            let time = timer.current_time();
+            let time = time[method].or(time.real_time).unwrap_or_default();
+            let current_comparison = timer.current_comparison();
+
+            let semantic_color = match timer.current_phase() {
+                TimerPhase::Running if time >= TimeSpan::zero() => {
+                    let pb_split_time = timer
+                        .current_split()
+                        .unwrap()
+                        .comparison(current_comparison)[method];
+
+                    if let Some(pb_split_time) = pb_split_time {
+                        split_color(
+                            timer,
+                            Some(time - pb_split_time),
+                            timer.current_split_index().unwrap(),
+                            true,
+                            false,
+                            current_comparison,
+                            method,
+                        )
+                        .or(SemanticColor::AheadGainingTime)
+                    } else {
+                        SemanticColor::AheadGainingTime
+                    }
                 }
-            }
-            _ => SemanticColor::NotRunning,
+                TimerPhase::Paused => SemanticColor::Paused,
+                TimerPhase::Ended => {
+                    let pb_time = timer
+                        .run()
+                        .segments()
+                        .last()
+                        .unwrap()
+                        .comparison(current_comparison)[method];
+
+                    if pb_time.map_or(true, |t| time < t) {
+                        SemanticColor::PersonalBest
+                    } else {
+                        SemanticColor::BehindLosingTime
+                    }
+                }
+                _ => SemanticColor::NotRunning,
+            };
+
+            (Some(time), semantic_color)
         };
 
         let visual_color = if let Some(color) = self.settings.color_override {
@@ -199,6 +227,10 @@ impl Component {
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new("Background".into(), self.settings.background.into()),
+            Field::new(
+                "Segment Timer".into(),
+                self.settings.is_segment_timer.into(),
+            ),
             Field::new("Timing Method".into(), self.settings.timing_method.into()),
             Field::new("Height".into(), u64::from(self.settings.height).into()),
             Field::new("Text Color".into(), self.settings.color_override.into()),
@@ -218,12 +250,13 @@ impl Component {
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
             0 => self.settings.background = value.into(),
-            1 => self.settings.timing_method = value.into(),
-            2 => self.settings.height = value.into_uint().unwrap() as _,
-            3 => self.settings.color_override = value.into(),
-            4 => self.settings.show_gradient = value.into(),
-            5 => self.settings.digits_format = value.into(),
-            6 => self.settings.accuracy = value.into(),
+            1 => self.settings.is_segment_timer = value.into(),
+            2 => self.settings.timing_method = value.into(),
+            3 => self.settings.height = value.into_uint().unwrap() as _,
+            4 => self.settings.color_override = value.into(),
+            5 => self.settings.show_gradient = value.into(),
+            6 => self.settings.digits_format = value.into(),
+            7 => self.settings.accuracy = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }
@@ -257,4 +290,22 @@ pub fn top_and_bottom_color(color: Color) -> (Color, Color) {
     ));
 
     (top_color, bottom_color)
+}
+
+fn calculate_live_segment_time(
+    timer: &Timer,
+    timing_method: TimingMethod,
+    last_split_index: usize,
+) -> Option<TimeSpan> {
+    let last_split = if last_split_index > 0 {
+        timer.run().segment(last_split_index - 1).split_time()[timing_method]
+    } else {
+        Some(TimeSpan::zero())
+    };
+
+    if timer.current_phase() == TimerPhase::NotRunning {
+        Some(timer.run().offset())
+    } else {
+        Some(timer.current_time()[timing_method]? - last_split?)
+    }
 }

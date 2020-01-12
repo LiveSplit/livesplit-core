@@ -8,13 +8,9 @@ use super::timer;
 use crate::analysis::comparison_single_segment_time;
 use crate::comparison::{self, best_segments, none};
 use crate::platform::prelude::*;
-use crate::settings::{
-    CachedImageId, Field, Gradient, ImageData, SemanticColor, SettingsDescription, Value,
-};
-use crate::timing::formatter::{
-    timer as formatter, Accuracy, DigitsFormat, SegmentTime, TimeFormatter, DASH,
-};
-use crate::{GeneralLayoutSettings, Segment, TimeSpan, Timer, TimerPhase, TimingMethod};
+use crate::settings::{CachedImageId, Field, Gradient, ImageData, SettingsDescription, Value};
+use crate::timing::formatter::{Accuracy, DigitsFormat, SegmentTime, TimeFormatter};
+use crate::{GeneralLayoutSettings, Segment, Timer, TimerPhase};
 use serde::{Deserialize, Serialize};
 
 #[cfg(test)]
@@ -28,6 +24,7 @@ mod tests;
 pub struct Component {
     icon_id: CachedImageId,
     timer: timer::Component,
+    segment_timer: timer::Component,
     settings: Settings,
 }
 
@@ -101,6 +98,8 @@ impl Default for Settings {
             },
             segment_timer: timer::Settings {
                 height: 25,
+                is_segment_timer: true,
+                color_override: Some((170.0 / 255.0, 170.0 / 255.0, 170.0 / 255.0, 1.0).into()),
                 ..Default::default()
             },
             display_icon: false,
@@ -129,8 +128,10 @@ impl Component {
     /// Creates a new Detailed Timer Component with the given settings.
     pub fn with_settings(settings: Settings) -> Self {
         let timer = timer::Component::with_settings(settings.timer.clone());
+        let segment_timer = timer::Component::with_settings(settings.segment_timer.clone());
         Self {
             timer,
+            segment_timer,
             settings,
             ..Default::default()
         }
@@ -145,6 +146,7 @@ impl Component {
     pub fn set_settings(&mut self, settings: Settings) {
         self.settings = settings;
         *self.timer.settings_mut() = self.settings.timer.clone();
+        *self.segment_timer.settings_mut() = self.settings.segment_timer.clone();
     }
 
     /// Accesses the name of the component.
@@ -230,44 +232,7 @@ impl Component {
         };
 
         let timer_state = self.timer.state(timer, layout_settings);
-        let mut segment_time = calculate_live_segment_time(timer, timing_method, last_split_index);
-
-        if segment_time.is_none() && timing_method == TimingMethod::GameTime {
-            segment_time =
-                calculate_live_segment_time(timer, TimingMethod::RealTime, last_split_index);
-        }
-
-        let (top_color, bottom_color) =
-            timer::top_and_bottom_color((170.0 / 255.0, 170.0 / 255.0, 170.0 / 255.0, 1.0).into());
-
-        let background = Gradient::Transparent;
-
-        let segment_time_state = match segment_time {
-            Some(t) => timer::State {
-                background,
-                time: formatter::Time::with_digits_format(
-                    self.settings.segment_timer.digits_format,
-                )
-                .format(t)
-                .to_string(),
-                fraction: formatter::Fraction::with_accuracy(self.settings.segment_timer.accuracy)
-                    .format(t)
-                    .to_string(),
-                semantic_color: SemanticColor::Default,
-                top_color,
-                bottom_color,
-                height: self.settings.segment_timer.height,
-            },
-            None => timer::State {
-                background,
-                time: DASH.into(),
-                fraction: String::new(),
-                semantic_color: SemanticColor::Default,
-                top_color,
-                bottom_color,
-                height: self.settings.segment_timer.height,
-            },
-        };
+        let segment_timer_state = self.segment_timer.state(timer, layout_settings);
 
         let formatter = SegmentTime::new();
 
@@ -296,7 +261,7 @@ impl Component {
         State {
             background: self.settings.background,
             timer: timer_state,
-            segment_timer: segment_time_state,
+            segment_timer: segment_timer_state,
             comparison1,
             comparison2,
             segment_name,
@@ -373,7 +338,11 @@ impl Component {
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
             0 => self.settings.background = value.into(),
-            1 => self.settings.timer.timing_method = value.into(),
+            1 => {
+                let value = value.into();
+                self.settings.timer.timing_method = value;
+                self.settings.segment_timer.timing_method = value;
+            }
             2 => self.settings.comparison1 = value.into(),
             3 => self.settings.comparison2 = value.into(),
             4 => self.settings.hide_second_comparison = value.into(),
@@ -382,7 +351,11 @@ impl Component {
                 self.settings.timer.height = value;
                 self.timer.settings_mut().height = value;
             }
-            6 => self.settings.segment_timer.height = value.into_uint().unwrap() as _,
+            6 => {
+                let value = value.into_uint().unwrap() as _;
+                self.settings.segment_timer.height = value;
+                self.segment_timer.settings_mut().height = value;
+            }
             7 => {
                 let value: DigitsFormat = value.into();
                 self.settings.timer.digits_format = value;
@@ -393,29 +366,19 @@ impl Component {
                 self.settings.timer.accuracy = value;
                 self.timer.settings_mut().accuracy = value;
             }
-            9 => self.settings.segment_timer.digits_format = value.into(),
-            10 => self.settings.segment_timer.accuracy = value.into(),
+            9 => {
+                let value: DigitsFormat = value.into();
+                self.settings.segment_timer.digits_format = value;
+                self.segment_timer.settings_mut().digits_format = value;
+            }
+            10 => {
+                let value: Accuracy = value.into();
+                self.settings.segment_timer.accuracy = value;
+                self.segment_timer.settings_mut().accuracy = value;
+            }
             11 => self.settings.show_segment_name = value.into(),
             12 => self.settings.display_icon = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
-    }
-}
-
-fn calculate_live_segment_time(
-    timer: &Timer,
-    timing_method: TimingMethod,
-    last_split_index: usize,
-) -> Option<TimeSpan> {
-    let last_split = if last_split_index > 0 {
-        timer.run().segment(last_split_index - 1).split_time()[timing_method]
-    } else {
-        Some(TimeSpan::zero())
-    };
-
-    if timer.current_phase() == TimerPhase::NotRunning {
-        Some(timer.run().offset())
-    } else {
-        Some(timer.current_time()[timing_method]? - last_split?)
     }
 }
