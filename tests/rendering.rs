@@ -143,7 +143,7 @@ fn subsplits_layout() {
     check_dims(
         &layout.state(&timer.snapshot()),
         [300, 800],
-        "8/Pz4/Pz/8c=",
+        "8/Pn9////8c=",
         "subsplits_layout",
     );
 }
@@ -223,7 +223,7 @@ fn horizontal() {
     check_dims(
         &layout.state(&timer.snapshot()),
         [1500, 40],
-        "YmJicmJSUmM=",
+        "cnJicnJSUmI=",
         "horizontal",
     );
 }

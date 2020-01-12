@@ -549,7 +549,7 @@ pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
         });
     }
 
-    if version < Version(1, 8, 0, 0) {
+    if version < Version(1, 8, 1, 0) {
         import_legacy_subsplits(&mut run);
     }
 
