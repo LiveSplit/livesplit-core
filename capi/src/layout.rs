@@ -3,6 +3,7 @@
 
 use super::{get_file, output_vec, release_file, str, Json};
 use crate::component::OwnedComponent;
+use crate::layout_state::OwnedLayoutState;
 use livesplit_core::layout::{parser, LayoutSettings};
 use livesplit_core::{Layout, Timer};
 use std::io::{BufReader, Cursor};
@@ -84,6 +85,12 @@ pub unsafe extern "C" fn Layout_parse_original_livesplit(
     } else {
         None
     }
+}
+
+/// Calculates and returns the layout's state based on the timer provided.
+#[no_mangle]
+pub extern "C" fn Layout_state(this: &mut Layout, timer: &Timer) -> OwnedLayoutState {
+    Box::new(this.state(timer))
 }
 
 /// Calculates the layout's state based on the timer provided and encodes it as

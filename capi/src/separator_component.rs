@@ -2,7 +2,9 @@
 //! separators between components.
 
 use crate::component::OwnedComponent;
+use crate::separator_component_state::OwnedSeparatorComponentState;
 use livesplit_core::component::separator::Component as SeparatorComponent;
+use livesplit_core::Timer;
 
 /// type
 pub type OwnedSeparatorComponent = Box<SeparatorComponent>;
@@ -24,4 +26,13 @@ pub extern "C" fn SeparatorComponent_drop(this: OwnedSeparatorComponent) {
 #[no_mangle]
 pub extern "C" fn SeparatorComponent_into_generic(this: OwnedSeparatorComponent) -> OwnedComponent {
     Box::new((*this).into())
+}
+
+/// Calculates the component's state based on the timer provided.
+#[no_mangle]
+pub extern "C" fn SeparatorComponent_state(
+    this: &mut SeparatorComponent,
+    timer: &Timer,
+) -> OwnedSeparatorComponentState {
+    Box::new(this.state(timer))
 }
