@@ -81,7 +81,7 @@ pub extern "C" fn SplitsComponentState_name(
 /// bounds index. The amount of columns to visualize may differ from segment to
 /// segment.
 #[no_mangle]
-pub extern "C" fn SplitComponentState_columns_len(
+pub extern "C" fn SplitsComponentState_columns_len(
     this: &SplitsComponentState,
     index: usize,
 ) -> usize {
