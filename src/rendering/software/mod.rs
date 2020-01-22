@@ -2,30 +2,7 @@
 //! is much slower than with a normal GPU, but might be sufficient for
 //! situations where you want to create a screenshot of the layout.
 
-#[cfg(all(
-    test,
-    not(any(
-        // Without MMX the floating point calculations don't follow IEEE 754. So the
-        // tests fail to produce the correct checksums.
-        // FIXME: We use SSE as an approximation for the cfg, because MMX isn't
-        // supported by Rust just yet.
-        all(
-            target_arch = "x86",
-            not(target_feature = "sse"),
-        ),
-        // Additionally the x86_64-unknown-linux-musl target seems to be failing
-        // with lyon 0.15. I'd assume it's because of musl's libm doing
-        // something different than the glibc one, but I'm honestly not sure.
-        // FIXME: We likely want a perceptual image hash instead, which would be
-        // much more robust.
-        // https://github.com/LiveSplit/livesplit-core/issues/287
-        all(
-            target_os = "linux",
-            target_arch = "x86_64",
-            target_env = "musl",
-        ),
-    )),
-))]
+#[cfg(test)]
 mod tests;
 
 use {

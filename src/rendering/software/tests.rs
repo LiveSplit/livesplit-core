@@ -6,8 +6,8 @@ use {
         run::parser::{livesplit, llanfair, wsplit},
         tests_helper, Run, Timer,
     },
-    crc::crc32::checksum_ieee,
     image::Rgba,
+    img_hash::{HasherConfig, ImageHash},
     std::{
         fs::{self, File},
         io::BufReader,
@@ -40,7 +40,7 @@ fn default() {
 
     let state = layout.state(&timer);
 
-    check(&state, 0x9df41392, "default");
+    check(&state, "luCCVRJIPLE=", "default");
 }
 
 #[test]
@@ -49,7 +49,7 @@ fn actual_split_file() {
     let timer = Timer::new(run).unwrap();
     let mut layout = Layout::default_layout();
 
-    check(&layout.state(&timer), 0xb4f73995, "actual_split_file");
+    check(&layout.state(&timer), "jMDEKxBAPLE=", "actual_split_file");
 }
 
 #[test]
@@ -58,7 +58,7 @@ fn wsplit() {
     let timer = Timer::new(run).unwrap();
     let mut layout = lsl("tests/layout_files/WSplit.lsl");
 
-    check_dims(&layout.state(&timer), [250, 300], 0x11c27904, "wsplit");
+    check_dims(&layout.state(&timer), [250, 300], "j/jc3dn8t/c=", "wsplit");
 }
 
 #[test]
@@ -74,9 +74,9 @@ fn all_components() {
 
     let state = layout.state(&timer);
 
-    check_dims(&state, [300, 800], 0x9dedc4e6, "all_components");
+    check_dims(&state, [300, 800], "4eH3scnJt7E=", "all_components");
 
-    check_dims(&state, [150, 800], 0x5bf536c8, "all_components_thin");
+    check_dims(&state, [150, 800], "SWPXSWFFa2s=", "all_components_thin");
 }
 
 #[test]
@@ -96,7 +96,7 @@ fn score_split() {
     state.components.push(ComponentState::Timer(timer_state));
     state.components.push(prev_seg);
 
-    check_dims(&state, [300, 400], 0xf110bfa0, "score_split");
+    check_dims(&state, [300, 400], "jODEIwLQJDc=", "score_split");
 }
 
 #[test]
@@ -105,7 +105,7 @@ fn dark_layout() {
     let timer = Timer::new(run).unwrap();
     let mut layout = lsl("tests/layout_files/dark.lsl");
 
-    check(&layout.state(&timer), 0x9b5eddab, "dark_layout");
+    check(&layout.state(&timer), "D8IAQiBYxgM=", "dark_layout");
 }
 
 #[test]
@@ -123,7 +123,7 @@ fn subsplits_layout() {
     check_dims(
         &layout.state(&timer),
         [300, 800],
-        0x7a696b4f,
+        "8/Pz4/Pz/8c=",
         "subsplits_layout",
     );
 }
@@ -146,7 +146,7 @@ fn display_two_rows() {
     check_dims(
         &layout.state(&timer),
         [200, 100],
-        0x88688e34,
+        "R00aWs1J9sE=",
         "display_two_rows",
     );
 }
@@ -169,7 +169,7 @@ fn single_line_title() {
     check_dims(
         &layout.state(&timer),
         [150, 30],
-        0x9f92f324,
+        "QCRZz09hahA=",
         "single_line_title",
     );
 }
@@ -200,26 +200,53 @@ fn horizontal() {
         &[Some(10.0), None, Some(20.0), Some(55.0)],
     );
 
-    check_dims(&layout.state(&timer), [1500, 40], 0x3a70ef32, "horizontal");
+    check_dims(&layout.state(&timer), [1500, 40], "YmJicmJSUmM=", "horizontal");
 }
 
-fn check(state: &LayoutState, expected_checksum: u32, name: &str) {
-    check_dims(state, [300, 500], expected_checksum, name);
+fn get_comparison_tolerance() -> u32 {
+    // Without MMX the floating point calculations don't follow IEEE 754, so the tests require a
+    // tolerance that is greater than 0.
+    // FIXME: We use SSE as an approximation for the cfg because MMX isn't supported by Rust yet.
+    if cfg!(all(
+        target_arch = "x86",	
+        not(target_feature = "sse"),	
+    )) {
+        4
+    } else {
+        0
+    }
 }
 
-fn check_dims(state: &LayoutState, dims: [usize; 2], expected_checksum: u32, name: &str) {
+fn check(state: &LayoutState, expected_hash_data: &str, name: &str) {
+    check_dims(state, [300, 500], expected_hash_data, name);
+}
+
+fn check_dims(state: &LayoutState, dims: [usize; 2], expected_hash_data: &str, name: &str) {
     let image = render(state, dims);
-    let calculated_checksum = checksum_ieee(&image);
+    let hasher = HasherConfig::with_bytes_type::<[u8; 8]>().to_hasher();
+
+    let calculated_hash = hasher.hash_image(&image);	
+    let calculated_hash_data = calculated_hash.to_base64();
+    let expected_hash = ImageHash::<[u8; 8]>::from_base64(expected_hash_data).unwrap();	
+    let distance = calculated_hash.dist(&expected_hash);
 
     fs::create_dir_all("target/renders").ok();
 
-    let path = format!("target/renders/{}_{:08x}.png", name, calculated_checksum);
+    let path = format!(
+        "target/renders/{}_{}.png",
+        name,
+        calculated_hash_data.replace("/", "$"),
+    );
     image.save(&path).ok();
 
-    if calculated_checksum != expected_checksum {
+    if distance > get_comparison_tolerance() {
         fs::create_dir_all("target/renders/diff").ok();
 
-        let expected_path = format!("target/renders/{}_{:08x}.png", name, expected_checksum);
+        let expected_path = format!(
+            "target/renders/{}_{}.png",
+            name,
+            expected_hash_data.replace("/", "$"),
+        );
         if let Ok(expected_image) = image::open(expected_path) {
             let mut expected_image = expected_image.to_rgba();
             for (x, y, Rgba([r, g, b, a])) in expected_image.enumerate_pixels_mut() {
@@ -236,8 +263,8 @@ fn check_dims(state: &LayoutState, dims: [usize; 2], expected_checksum: u32, nam
         }
 
         panic!(
-            "Render mismatch for {} before: {:#08x}, after: {:#08x}",
-            name, expected_checksum, calculated_checksum
+            "Render mismatch for {} expected: {}, actual: {}, distance: {}",
+            name, expected_hash_data, calculated_hash_data, distance
         );
     }
 }
