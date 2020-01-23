@@ -80,7 +80,8 @@ pub struct Editor {
 impl Editor {
     /// Creates a new Run Editor that modifies the Run provided. Creation of the
     /// Run Editor fails when a Run with no segments is provided.
-    pub fn new(run: Run) -> Result<Self, OpenError> {
+    pub fn new(mut run: Run) -> Result<Self, OpenError> {
+        run.fix_splits();
         let len = run.len();
         if len == 0 {
             return Err(OpenError::EmptyRun);

@@ -81,6 +81,7 @@ impl Timer {
             return Err(CreationError::EmptyRun);
         }
 
+        run.fix_splits();
         run.regenerate_comparisons();
         let now = TimeStamp::now();
 
@@ -134,6 +135,7 @@ impl Timer {
             self.current_comparison = personal_best::NAME.to_string();
         }
 
+        run.fix_splits();
         run.regenerate_comparisons();
 
         Ok(mem::replace(&mut self.run, run))
