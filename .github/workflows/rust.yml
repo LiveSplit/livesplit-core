@@ -679,12 +679,30 @@ jobs:
   clippy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - run: rustup component add clippy
-      - uses: actions-rs/clippy-check@v1
+      - name: Checkout Commit
+        uses: actions/checkout@v1
+
+      - name: Install Rust
+        uses: hecrj/setup-rust-action@v1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          args: --all-features
+          components: clippy
+
+      - name: Run Clippy
+        run: cargo clippy --all-features
+
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Commit
+        uses: actions/checkout@v1
+
+      - name: Install Rust
+        uses: hecrj/setup-rust-action@v1
+        with:
+          components: rustfmt
+
+      - name: Run cargo fmt
+        run: cargo fmt -- --check || true
 
   docs:
     if: startsWith(github.ref, 'refs/tags/')
