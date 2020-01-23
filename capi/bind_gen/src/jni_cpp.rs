@@ -169,9 +169,10 @@ extern "C" JNIEXPORT {} Java_livesplitcore_LiveSplitCoreNative_{}_1{}(JNIEnv* jn
 }
 
 pub fn write<W: Write>(mut writer: W, classes: &BTreeMap<String, Class>) -> Result<()> {
-    write!(writer,
-           "{}",
-           r#"#include <jni.h>
+    write!(
+        writer,
+        "{}",
+        r#"#include <jni.h>
 #include <string>
 #include "livesplit_core.h"
 
@@ -185,7 +186,8 @@ extern "C" JNIEXPORT jlong Java_livesplitcore_LiveSplitCoreNative_Run_1parseStri
     jni_env->ReleaseStringUTFChars(data, cstr_data);
     return result;
 }
-"#)?;
+"#
+    )?;
 
     for (class_name, class) in classes {
         for function in class

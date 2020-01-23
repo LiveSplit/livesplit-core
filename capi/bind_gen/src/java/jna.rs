@@ -431,14 +431,16 @@ public class {class} extends {base_class} implements AutoCloseable {{
 fn write_native_class<P: AsRef<Path>>(path: P, classes: &BTreeMap<String, Class>) -> Result<()> {
     let mut writer = BufWriter::new(File::create(path)?);
 
-    writeln!(writer,
-           "{}",
-           r#"package livesplitcore;
+    writeln!(
+        writer,
+        "{}",
+        r#"package livesplitcore;
 
 import com.sun.jna.*;
 
 public interface LiveSplitCoreNative extends Library {
-    LiveSplitCoreNative INSTANCE = (LiveSplitCoreNative) Native.loadLibrary("livesplit_core", LiveSplitCoreNative.class);"#)?;
+    LiveSplitCoreNative INSTANCE = (LiveSplitCoreNative) Native.loadLibrary("livesplit_core", LiveSplitCoreNative.class);"#
+    )?;
 
     for class in classes.values() {
         for function in class

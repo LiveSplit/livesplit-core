@@ -200,17 +200,19 @@ fn horizontal() {
         &[Some(10.0), None, Some(20.0), Some(55.0)],
     );
 
-    check_dims(&layout.state(&timer), [1500, 40], "YmJicmJSUmM=", "horizontal");
+    check_dims(
+        &layout.state(&timer),
+        [1500, 40],
+        "YmJicmJSUmM=",
+        "horizontal",
+    );
 }
 
 fn get_comparison_tolerance() -> u32 {
     // Without MMX the floating point calculations don't follow IEEE 754, so the tests require a
     // tolerance that is greater than 0.
     // FIXME: We use SSE as an approximation for the cfg because MMX isn't supported by Rust yet.
-    if cfg!(all(
-        target_arch = "x86",	
-        not(target_feature = "sse"),	
-    )) {
+    if cfg!(all(target_arch = "x86", not(target_feature = "sse"),)) {
         4
     } else {
         0
@@ -225,9 +227,9 @@ fn check_dims(state: &LayoutState, dims: [usize; 2], expected_hash_data: &str, n
     let image = render(state, dims);
     let hasher = HasherConfig::with_bytes_type::<[u8; 8]>().to_hasher();
 
-    let calculated_hash = hasher.hash_image(&image);	
+    let calculated_hash = hasher.hash_image(&image);
     let calculated_hash_data = calculated_hash.to_base64();
-    let expected_hash = ImageHash::<[u8; 8]>::from_base64(expected_hash_data).unwrap();	
+    let expected_hash = ImageHash::<[u8; 8]>::from_base64(expected_hash_data).unwrap();
     let distance = calculated_hash.dist(&expected_hash);
 
     fs::create_dir_all("target/renders").ok();

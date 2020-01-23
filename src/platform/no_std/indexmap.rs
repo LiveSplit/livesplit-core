@@ -74,6 +74,7 @@ pub mod map {
         }
     }
 
+    /// Entry for an existing key-value pair or a vacant location to insert one.
     pub struct Entry<'a, K, V> {
         map: &'a mut IndexMap<K, V>,
         index: Option<usize>,
