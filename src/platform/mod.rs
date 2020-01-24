@@ -2,7 +2,7 @@ cfg_if::cfg_if! {
     if #[cfg(not(feature = "std"))] {
         mod no_std;
         pub use self::no_std::*;
-    } else if #[cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))] {
+    } else if #[cfg(target_arch = "wasm32")] {
         mod wasm;
         pub use self::wasm::*;
     } else {

@@ -2,7 +2,6 @@ use structopt;
 
 mod c;
 mod csharp;
-mod emscripten;
 mod java;
 mod jni_cpp;
 mod kotlin;
@@ -310,19 +309,6 @@ fn write_files(classes: &BTreeMap<String, Class>, opt: &Opt) -> Result<()> {
 
     remove_dir_all(&path).ok();
     create_dir_all(&path)?;
-
-    path.push("emscripten");
-    create_dir_all(&path)?;
-    {
-        path.push("livesplit_core.js");
-        emscripten::write(BufWriter::new(File::create(&path)?), classes, false)?;
-        path.pop();
-
-        path.push("livesplit_core.ts");
-        emscripten::write(BufWriter::new(File::create(&path)?), classes, true)?;
-        path.pop();
-    }
-    path.pop();
 
     path.push("node");
     create_dir_all(&path)?;

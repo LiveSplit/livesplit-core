@@ -12,11 +12,6 @@ cfg_if::cfg_if! {
     } else if #[cfg(target_os = "linux")] {
         pub mod linux;
         pub use crate::linux::*;
-    } else if #[cfg(target_os = "emscripten")] {
-        pub mod emscripten;
-        pub use crate::emscripten::*;
-        #[macro_use]
-        extern crate stdweb;
     } else if #[cfg(all(target_arch = "wasm32", target_os = "unknown"))] {
         cfg_if::cfg_if! {
             if #[cfg(feature = "wasm-web")] {

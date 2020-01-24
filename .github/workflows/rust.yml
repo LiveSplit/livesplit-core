@@ -31,9 +31,6 @@ jobs:
           - Bare Metal RISC-V 64 imac
 
           # WebAssembly
-          # FIXME: emscripten is broken at the moment. cross' emscripten is too old.
-          # - Web asmjs
-          # - Web wasm32 emscripten
           - WebAssembly Unknown
           - WebAssembly Web
           - WebAssembly WASI
@@ -256,21 +253,6 @@ jobs:
             install_target: true
 
           # WebAssembly
-          # - label: Web asmjs
-          #   target: asmjs-unknown-emscripten
-          #   os: ubuntu-latest
-          #   toolchain: stable
-          #   tests: skip
-          #   dylib: skip
-          #   release_anyway: true
-
-          # - label: Web wasm32 emscripten
-          #   target: wasm32-unknown-emscripten
-          #   os: ubuntu-latest
-          #   toolchain: stable
-          #   tests: skip
-          #   dylib: skip
-
           - label: WebAssembly Unknown
             target: wasm32-unknown-unknown
             os: ubuntu-latest

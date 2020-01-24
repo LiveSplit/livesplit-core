@@ -7,9 +7,9 @@ repository = "https://github.com/LiveSplit/livesplit-core"
 license = "Apache-2.0/MIT"
 description = "livesplit-core is a library that provides a lot of functionality for creating a speedrun timer."
 readme = "README.md"
-keywords = ["speedrun", "timer", "livesplit"]
+keywords = ["speedrun", "timer", "livesplit", "gaming"]
+categories = ["no-std", "date-and-time"]
 include = [
-    "/benches/*",
     "/src/*",
     "/Cargo.toml",
     "/CHANGELOG.md",
@@ -31,7 +31,7 @@ lto = true
 panic = "abort"
 
 [workspace]
-members = ["capi", "capi/bind_gen", "capi/js", "capi/staticlib", "capi/cdylib", "crates/*"]
+members = ["capi", "capi/bind_gen", "capi/staticlib", "capi/cdylib", "crates/*"]
 exclude = ["crates/no-std-test"]
 
 [dependencies]
