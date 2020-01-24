@@ -7,7 +7,7 @@
 [![dependency status](https://deps.rs/repo/github/LiveSplit/livesplit-core/status.svg)](https://deps.rs/repo/github/LiveSplit/livesplit-core)
 
 livesplit-core is a library that provides a lot of functionality for creating a
-speedrun timer. It can be used directly from Rust. Additional Bindings are
+speedrun timer. It can be used directly from Rust. Additional bindings are
 available for the following programming languages:
 
 - C
@@ -27,7 +27,7 @@ The documentation is available here:
 
 ## Build Instructions
 
-You can install Rust with the Installer available on [rustup.rs](https://rustup.rs/).
+You can install Rust with the installer available on [rustup.rs](https://rustup.rs/).
 Clone the repository and build the library with the following command:
 
 ```bash
@@ -39,7 +39,7 @@ cargo build --release -p staticlib
 
 The library will then be available as a shared and static library in the `target` folder.
 
-If you want to build the Bindings for the library too, you need to go into the
+If you want to build the bindings for the library too, you need to go into the
 `capi/bind_gen` folder and run the following command:
 
 ```bash
@@ -50,7 +50,7 @@ The bindings will then be available in `capi/bindings`.
 
 ## Download
 
-Builds for a lot of common platforms are available over here: [Releases](https://github.com/LiveSplit/livesplit-core/releases)
+Builds for a lot of common platforms are available in the [Releases](https://github.com/LiveSplit/livesplit-core/releases).
 
 ## License
 
