@@ -2,16 +2,7 @@
 capi/bind_gen/target
 capi/bindings
 capi/Cargo.lock
-capi/js/livesplit_core.wasm
-capi/js/livesplit.js
-capi/js/node_modules
-capi/js/node/index.d.ts
-capi/js/node/index.js
-capi/js/node/livesplit_core.js
-capi/js/node/README.md
 capi/target
 Cargo.lock
 docs
-emscripten/Cargo.lock
-emscripten/target
 target

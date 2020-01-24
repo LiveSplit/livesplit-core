@@ -162,7 +162,7 @@ unsafe fn release_file(_: File) {}
 /// Allocate memory.
 #[cfg(all(
     target_arch = "wasm32",
-    not(any(target_os = "emscripten", target_os = "wasi", feature = "wasm-web")),
+    not(any(target_os = "wasi", feature = "wasm-web")),
 ))]
 #[no_mangle]
 pub extern "C" fn alloc(size: usize) -> *mut u8 {
@@ -175,7 +175,7 @@ pub extern "C" fn alloc(size: usize) -> *mut u8 {
 /// Deallocate memory.
 #[cfg(all(
     target_arch = "wasm32",
-    not(any(target_os = "emscripten", target_os = "wasi", feature = "wasm-web")),
+    not(any(target_os = "wasi", feature = "wasm-web")),
 ))]
 #[no_mangle]
 pub extern "C" fn dealloc(ptr: *mut u8, cap: usize) {

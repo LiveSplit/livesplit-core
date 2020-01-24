@@ -18,7 +18,7 @@ available for the following programming languages:
 - Swift
 - Ruby
 - Python
-- JavaScript + TypeScript for Node.js, asm.js and WebAssembly
+- JavaScript + TypeScript for Node.js and WebAssembly
 
 The documentation is available here:
 

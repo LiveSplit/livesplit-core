@@ -50,10 +50,7 @@ impl Default for HotkeyConfig {
     }
 }
 
-#[cfg(any(
-    target_os = "emscripten",
-    all(target_arch = "wasm32", target_os = "unknown")
-))]
+#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
 impl Default for HotkeyConfig {
     fn default() -> Self {
         use crate::hotkey::KeyCode::*;
@@ -74,8 +71,7 @@ impl Default for HotkeyConfig {
 #[cfg(not(any(
     windows,
     target_os = "linux",
-    target_os = "emscripten",
-    all(target_arch = "wasm32", target_os = "unknown")
+    all(target_arch = "wasm32", target_os = "unknown"),
 )))]
 impl Default for HotkeyConfig {
     fn default() -> Self {
