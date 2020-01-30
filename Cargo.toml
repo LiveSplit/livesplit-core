@@ -26,10 +26,6 @@ all-features = true
 [badges]
 # FIXME: Add GitHub Actions badge
 
-[profile.release]
-lto = true
-panic = "abort"
-
 [workspace]
 members = ["capi", "capi/bind_gen", "capi/staticlib", "capi/cdylib", "crates/*"]
 exclude = ["crates/no-std-test"]
@@ -115,3 +111,10 @@ harness = false
 [[bench]]
 name = "software_rendering"
 harness = false
+
+[profile.release]
+lto = true
+panic = "abort"
+
+[profile.release.build-override]
+opt-level = 0
