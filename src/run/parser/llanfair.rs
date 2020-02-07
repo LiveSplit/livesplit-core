@@ -247,7 +247,7 @@ pub fn parse<R: Read + Seek>(mut source: R) -> Result<Run> {
             {
                 buf2.clear();
                 if png::PNGEncoder::new(&mut buf2)
-                    .encode(image.as_ref(), width, height, ColorType::RGBA(8))
+                    .encode(image.as_ref(), width, height, ColorType::Rgba8)
                     .is_ok()
                 {
                     icon = Some(Image::new(&buf2));
