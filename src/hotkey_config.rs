@@ -134,9 +134,10 @@ impl HotkeyConfig {
                 self.undo,
                 self.skip,
                 self.pause,
+                self.undo_all_pauses,
                 self.previous_comparison,
                 self.next_comparison,
-                self.undo_all_pauses,
+                self.toggle_timing_method,
             ]
             .iter()
             .enumerate()
