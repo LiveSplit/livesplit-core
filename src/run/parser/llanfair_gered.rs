@@ -116,7 +116,7 @@ where
 
         tag_buf.clear();
         png::PNGEncoder::new(&mut *tag_buf)
-            .encode(image.as_ref(), width, height, ColorType::RGBA(8))
+            .encode(image.as_ref(), width, height, ColorType::Rgba8)
             .map_err(|_| Error::Image)?;
 
         f(tag_buf);

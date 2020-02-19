@@ -1,7 +1,7 @@
 use alloc::borrow::Cow;
 use image::{
     bmp, gif, guess_format, hdr, ico, jpeg, load_from_memory_with_format, png, pnm, tiff, webp,
-    DynamicImage, ImageDecoder, ImageError, ImageFormat,
+    DynamicImage, GenericImageView, ImageDecoder, ImageError, ImageFormat,
 };
 use std::io::Cursor;
 
@@ -10,34 +10,46 @@ fn shrink_inner(data: &[u8], max_dim: u32) -> Result<Cow<'_, [u8]>, ImageError> 
 
     let cursor = Cursor::new(data);
     let (width, height) = match format {
-        ImageFormat::PNG => png::PNGDecoder::new(cursor)?.dimensions(),
-        ImageFormat::JPEG => jpeg::JPEGDecoder::new(cursor)?.dimensions(),
-        ImageFormat::GIF => gif::Decoder::new(cursor)?.dimensions(),
-        ImageFormat::WEBP => webp::WebpDecoder::new(cursor)?.dimensions(),
-        ImageFormat::TIFF => tiff::TIFFDecoder::new(cursor)?.dimensions(),
-        ImageFormat::BMP => bmp::BMPDecoder::new(cursor)?.dimensions(),
-        ImageFormat::ICO => ico::ICODecoder::new(cursor)?.dimensions(),
-        ImageFormat::HDR => hdr::HDRAdapter::new(cursor)?.dimensions(),
-        ImageFormat::PNM => pnm::PNMDecoder::new(cursor)?.dimensions(),
-        ImageFormat::TGA => return Ok(data.into()), // TGA doesn't have a Header
+        ImageFormat::Png => png::PngDecoder::new(cursor)?.dimensions(),
+        ImageFormat::Jpeg => jpeg::JpegDecoder::new(cursor)?.dimensions(),
+        ImageFormat::Gif => gif::GifDecoder::new(cursor)?.dimensions(),
+        ImageFormat::WebP => webp::WebPDecoder::new(cursor)?.dimensions(),
+        ImageFormat::Tiff => tiff::TiffDecoder::new(cursor)?.dimensions(),
+        ImageFormat::Bmp => bmp::BmpDecoder::new(cursor)?.dimensions(),
+        ImageFormat::Ico => ico::IcoDecoder::new(cursor)?.dimensions(),
+        ImageFormat::Hdr => hdr::HDRAdapter::new(cursor)?.dimensions(),
+        ImageFormat::Pnm => pnm::PnmDecoder::new(cursor)?.dimensions(),
+        // TGA doesn't have a Header.
+        // DDS isn't a format we really care for.
+        // And the image format is non-exhaustive.
+        ImageFormat::Tga | ImageFormat::Dds | _ => return Ok(data.into()),
     };
 
-    let is_too_large = width > u64::from(max_dim) || height > u64::from(max_dim);
-    if is_too_large || format == ImageFormat::BMP {
+    let is_too_large = width > max_dim || height > max_dim;
+    if is_too_large || format == ImageFormat::Bmp {
         let mut image = load_from_memory_with_format(data, format)?;
         if is_too_large {
             image = image.thumbnail(max_dim, max_dim);
         }
-        let mut data = Vec::new();
-        let ((width, height), image_data) = match &image {
-            DynamicImage::ImageLuma8(x) => (x.dimensions(), x.as_ref()),
-            DynamicImage::ImageLumaA8(x) => (x.dimensions(), x.as_ref()),
-            DynamicImage::ImageRgb8(x) => (x.dimensions(), x.as_ref()),
-            DynamicImage::ImageRgba8(x) => (x.dimensions(), x.as_ref()),
-            DynamicImage::ImageBgr8(x) => (x.dimensions(), x.as_ref()),
-            DynamicImage::ImageBgra8(x) => (x.dimensions(), x.as_ref()),
+        let image_data = match &image {
+            DynamicImage::ImageLuma8(x) => x.as_ref(),
+            DynamicImage::ImageLumaA8(x) => x.as_ref(),
+            DynamicImage::ImageRgb8(x) => x.as_ref(),
+            DynamicImage::ImageRgba8(x) => x.as_ref(),
+            DynamicImage::ImageBgr8(x) => x.as_ref(),
+            DynamicImage::ImageBgra8(x) => x.as_ref(),
+            DynamicImage::ImageLuma16(x) => bytemuck::cast_slice(x.as_ref()),
+            DynamicImage::ImageLumaA16(x) => bytemuck::cast_slice(x.as_ref()),
+            DynamicImage::ImageRgb16(x) => bytemuck::cast_slice(x.as_ref()),
+            DynamicImage::ImageRgba16(x) => bytemuck::cast_slice(x.as_ref()),
         };
-        png::PNGEncoder::new(&mut data).encode(image_data, width, height, image.color())?;
+        let mut data = Vec::new();
+        png::PNGEncoder::new(&mut data).encode(
+            image_data,
+            image.width(),
+            image.height(),
+            image.color(),
+        )?;
         Ok(data.into())
     } else {
         Ok(data.into())
