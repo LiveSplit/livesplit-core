@@ -38,10 +38,10 @@ fn shrink_inner(data: &[u8], max_dim: u32) -> Result<Cow<'_, [u8]>, ImageError> 
             DynamicImage::ImageRgba8(x) => x.as_ref(),
             DynamicImage::ImageBgr8(x) => x.as_ref(),
             DynamicImage::ImageBgra8(x) => x.as_ref(),
-            DynamicImage::ImageLuma16(x) => unsafe { x.align_to::<u8>().1 },
-            DynamicImage::ImageLumaA16(x) => unsafe { x.align_to::<u8>().1 },
-            DynamicImage::ImageRgb16(x) => unsafe { x.align_to::<u8>().1 },
-            DynamicImage::ImageRgba16(x) => unsafe { x.align_to::<u8>().1 },
+            DynamicImage::ImageLuma16(x) => bytemuck::cast_slice(x.as_ref()),
+            DynamicImage::ImageLumaA16(x) => bytemuck::cast_slice(x.as_ref()),
+            DynamicImage::ImageRgb16(x) => bytemuck::cast_slice(x.as_ref()),
+            DynamicImage::ImageRgba16(x) => bytemuck::cast_slice(x.as_ref()),
         };
         let mut data = Vec::new();
         png::PNGEncoder::new(&mut data).encode(
