@@ -76,7 +76,7 @@ web-sys = { version = "0.3.28", default-features = false, features = ["Performan
 [dev-dependencies]
 memmem = "0.1.1"
 criterion = "0.3.0"
-img_hash = "3.0.0"
+img_hash = "3.1.0"
 tokio = { version = "0.2", features = ["macros"] }
 
 [features]
@@ -99,9 +99,6 @@ networking = ["std", "splits-io-api"]
 # when `--all-features` is passed, so we can ignore the `doesnt-have-atomics` in
 # that case. https://github.com/rust-lang/rust/issues/32976
 internal-use-all-features = []
-
-[patch.crates-io]
-img_hash = { git = "https://github.com/CryZe/img_hash", branch = "image-0.23" }
 
 [[bench]]
 name = "balanced_pb"
