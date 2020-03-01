@@ -35,7 +35,8 @@ pub extern "C" fn TitleComponentState_icon_change_len(this: &TitleComponentState
 /// combination of the game's name and the category.
 #[no_mangle]
 pub extern "C" fn TitleComponentState_line1(this: &TitleComponentState) -> *const c_char {
-    output_str(&this.line1)
+    // FIXME: Add API for querying the abbreviations.
+    output_str(&this.line1.last().unwrap())
 }
 
 /// By default the category name is shown on the second line. Based on the
@@ -43,7 +44,10 @@ pub extern "C" fn TitleComponentState_line1(this: &TitleComponentState) -> *cons
 /// the game name. In that case <NULL> is returned instead.
 #[no_mangle]
 pub extern "C" fn TitleComponentState_line2(this: &TitleComponentState) -> *const Nullablec_char {
-    this.line2.as_ref().map_or_else(ptr::null, output_str)
+    // FIXME: Add API for querying the abbreviations.
+    this.line2
+        .as_ref()
+        .map_or_else(ptr::null, |abbrevs| output_str(&abbrevs.last().unwrap()))
 }
 
 /// Specifies whether the title should centered or aligned to the left

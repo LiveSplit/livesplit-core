@@ -1,13 +1,10 @@
-use {
-    crate::{
-        component::title::State,
-        layout::LayoutState,
-        rendering::{
-            icon::Icon, vertical_padding, Backend, RenderContext, BOTH_PADDINGS, DEFAULT_TEXT_SIZE,
-            PADDING, TEXT_ALIGN_BOTTOM, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP,
-        },
+use crate::{
+    component::title::State,
+    layout::LayoutState,
+    rendering::{
+        icon::Icon, vertical_padding, Backend, RenderContext, BOTH_PADDINGS, DEFAULT_TEXT_SIZE,
+        PADDING, TEXT_ALIGN_BOTTOM, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP,
     },
-    livesplit_title_abbreviations::abbreviate,
 };
 
 pub(in crate::rendering) fn render<B: Backend>(
@@ -42,17 +39,6 @@ pub(in crate::rendering) fn render<B: Backend>(
         (left_bound, 0.0)
     };
 
-    // FIXME: For a single line the component provides both the game and category
-    // in a single string, which makes it hard for us to properly abbreviate it.
-    // We may want to rethink merging both values into a single string because
-    // of that. https://github.com/LiveSplit/livesplit-core/issues/170
-    let abbreviations = abbreviate(&component.line1);
-    let line1 = context.choose_abbreviation(
-        abbreviations.iter().map(String::as_str),
-        DEFAULT_TEXT_SIZE,
-        width - PADDING - left_bound,
-    );
-
     let attempts = match (component.finished_runs, component.attempts) {
         (Some(a), Some(b)) => format!("{}/{}", a, b),
         (Some(a), _) | (_, Some(a)) => a.to_string(),
@@ -66,6 +52,11 @@ pub(in crate::rendering) fn render<B: Backend>(
     );
 
     let (line1_y, line1_end_x) = if let Some(line2) = &component.line2 {
+        let line2 = context.choose_abbreviation(
+            line2.iter().map(|a| &**a),
+            DEFAULT_TEXT_SIZE,
+            line2_end_x - PADDING - left_bound,
+        );
         context.render_text_align(
             line2,
             left_bound,
@@ -79,6 +70,12 @@ pub(in crate::rendering) fn render<B: Backend>(
     } else {
         (height / 2.0 + TEXT_ALIGN_CENTER, line2_end_x - PADDING)
     };
+
+    let line1 = context.choose_abbreviation(
+        component.line1.iter().map(|a| &**a),
+        DEFAULT_TEXT_SIZE,
+        width - PADDING - left_bound,
+    );
 
     context.render_text_align(
         line1,

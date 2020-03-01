@@ -9,6 +9,7 @@ use crate::{
     settings::{CachedImageId, Image, ImageData},
     Timer, TimerPhase,
 };
+use alloc::borrow::Cow;
 use serde::{Deserialize, Serialize};
 
 #[cfg(test)]
@@ -79,12 +80,16 @@ pub struct State {
     /// indicates that there is no icon.
     pub icon_change: Option<ImageData>,
     /// The first title line to show. This is either the game's name, or a
-    /// combination of the game's name and the category.
-    pub line1: String,
+    /// combination of the game's name and the category. This is a list of all
+    /// the possible abbreviations. It contains at least one element and the
+    /// last element is the unabbreviated value.
+    pub line1: Box<[Box<str>]>,
     /// By default the category name is shown on the second line. Based on the
     /// settings, it can however instead be shown in a single line together with
-    /// the game name.
-    pub line2: Option<String>,
+    /// the game name. This is a list of all the possible abbreviations. It
+    /// contains at least one element and the last element is the unabbreviated
+    /// value.
+    pub line2: Option<Box<[Box<str>]>>,
     /// Specifies whether the title should centered or aligned to the left
     /// instead.
     pub is_centered: bool,
@@ -194,36 +199,75 @@ impl Component {
             Alignment::Auto => game_icon.map_or(true, Image::is_empty),
         };
 
-        let game_name = if self.settings.show_game_name {
-            run.game_name()
+        let game_abbrevs: Box<[Box<str>]> = if self.settings.show_game_name {
+            livesplit_title_abbreviations::abbreviate(run.game_name()).into()
         } else {
-            ""
+            Default::default()
         };
 
-        let category_name = if self.settings.show_category_name {
-            run.extended_category_name(
-                self.settings.show_region,
-                self.settings.show_platform,
-                self.settings.show_variables,
-            )
-        } else {
-            "".into()
-        };
+        let full_category_name = run.extended_category_name(
+            self.settings.show_region,
+            self.settings.show_platform,
+            self.settings.show_variables,
+        );
 
         let (line1, line2) = if self.settings.display_as_single_line {
-            let mut line1 = String::with_capacity(game_name.len() + category_name.len() + 3);
-            line1.push_str(game_name);
-            if !game_name.is_empty() && !category_name.is_empty() {
-                line1.push_str(" - ");
+            let mut abbrevs = Vec::new();
+            let mut abbrev = String::new();
+
+            if !full_category_name.is_empty() {
+                for game_abbrev in game_abbrevs.iter() {
+                    abbrev.clear();
+                    abbrev.push_str(game_abbrev);
+                    if !game_abbrev.is_empty() {
+                        abbrev.push_str(" - ");
+                    }
+                    abbrev.push_str(&full_category_name);
+                    abbrevs.push(abbrev.as_str().into());
+                }
             }
-            line1.push_str(&*category_name);
-            (line1, None)
+            // This assumes the last element is the unabbreviated value, which
+            // can only be the case if the `game_abbrevs` also has the
+            // unabbreviated game name as its last element.
+            let swap_index = abbrevs.len().checked_sub(1);
+
+            if let Some(shortest_game_name) = game_abbrevs.iter().min_by_key(|a| a.len()) {
+                abbrev.clear();
+                abbrev.push_str(shortest_game_name);
+                let game_len = abbrev.len();
+                for category_abbrev in abbreviate_category(full_category_name).iter() {
+                    if !shortest_game_name.is_empty() && !category_abbrev.is_empty() {
+                        abbrev.push_str(" - ");
+                    }
+                    abbrev.push_str(&*category_abbrev);
+                    abbrevs.push(abbrev.as_str().into());
+                    abbrev.drain(game_len..);
+                }
+            }
+
+            // We want to ensure the "unabbreviated value" is at the end. This
+            // is something we guarantee at least at the moment.
+            if let Some(swap_index) = swap_index {
+                let last_element_idx = abbrevs.len() - 1;
+                abbrevs.swap(swap_index, last_element_idx);
+            }
+
+            (abbrevs.into(), None)
         } else {
-            match (!game_name.is_empty(), !category_name.is_empty()) {
-                (true, true) => (game_name.to_owned(), Some(category_name.into_owned())),
-                (true, false) => (game_name.to_owned(), None),
-                (false, true) => (category_name.into_owned(), None),
-                (false, false) => (String::new(), None),
+            let category_abbrevs: Box<[_]> = if self.settings.show_category_name {
+                abbreviate_category(full_category_name).into()
+            } else {
+                Default::default()
+            };
+
+            match (
+                game_abbrevs.last().map_or(false, |g| !g.is_empty()),
+                category_abbrevs.last().map_or(false, |c| !c.is_empty()),
+            ) {
+                (true, true) => (game_abbrevs, Some(category_abbrevs)),
+                (true, false) => (game_abbrevs, None),
+                (false, true) => (category_abbrevs, None),
+                (false, false) => (vec!["Untitled".into()].into(), None),
             }
         };
 
@@ -306,4 +350,52 @@ impl Component {
             _ => panic!("Unsupported Setting Index"),
         }
     }
+}
+
+// FIXME: Turn this into a generator once that works on stable Rust.
+fn abbreviate_category(category: Cow<'_, str>) -> Vec<Box<str>> {
+    let mut abbrevs = Vec::new();
+
+    let mut splits = category.splitn(2, '(');
+    let before = splits.next().unwrap().trim();
+
+    if let Some(rest) = splits.next() {
+        splits = rest.splitn(2, ')');
+        let inside = splits.next().unwrap();
+        if let Some(after) = splits.next() {
+            let after = after.trim_end();
+
+            let mut buf = String::with_capacity(category.len());
+            buf.push_str(before);
+            buf.push_str(" (");
+
+            let mut splits = inside.split(',');
+            let mut variable = splits.next().unwrap();
+            for next_variable in splits {
+                buf.push_str(variable);
+                let old_len = buf.len();
+
+                buf.push_str(")");
+                buf.push_str(after);
+                abbrevs.push(buf.as_str().into());
+
+                buf.drain(old_len..);
+                buf.push_str(",");
+                variable = next_variable;
+            }
+
+            if after.trim().is_empty() {
+                buf.drain(before.len()..);
+            } else {
+                buf.drain(before.len() + 1..);
+                buf.push_str(after);
+            }
+
+            abbrevs.push(buf.into());
+        }
+    }
+
+    abbrevs.push(category.into_owned().into());
+
+    abbrevs
 }
