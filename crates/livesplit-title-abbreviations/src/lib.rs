@@ -2,8 +2,10 @@
 
 extern crate alloc;
 
-use alloc::{format, string::String, vec, vec::Vec};
+use alloc::{boxed::Box, format, string::String, vec, vec::Vec};
 use unicase::UniCase;
+
+// FIXME: Use generators once those work on stable Rust.
 
 fn ends_with_roman_numeral(name: &str) -> bool {
     name.split_whitespace().rev().next().map_or(false, |n| {
@@ -15,7 +17,7 @@ fn ends_with_numeric(name: &str) -> bool {
     name.chars().last().map_or(false, |c| c.is_numeric())
 }
 
-fn series_subtitle_handling(name: &str, split_token: &str, list: &mut Vec<String>) -> bool {
+fn series_subtitle_handling(name: &str, split_token: &str, list: &mut Vec<Box<str>>) -> bool {
     let mut iter = name.splitn(2, split_token);
     if let (Some(series), Some(subtitle)) = (iter.next(), iter.next()) {
         let series_abbreviations = abbreviate(series);
@@ -30,13 +32,16 @@ fn series_subtitle_handling(name: &str, split_token: &str, list: &mut Vec<String
         for subtitle_abbreviation in &subtitle_abbreviations {
             for series_abbreviation in &series_abbreviations {
                 if is_series_representative
-                    || series_abbreviation != series
+                    || &**series_abbreviation != series
                     || is_there_only_one_series_abbreviation
                 {
-                    list.push(format!(
-                        "{}{}{}",
-                        series_abbreviation, split_token, subtitle_abbreviation
-                    ));
+                    list.push(
+                        format!(
+                            "{}{}{}",
+                            series_abbreviation, split_token, subtitle_abbreviation
+                        )
+                        .into(),
+                    );
                 }
             }
         }
@@ -52,7 +57,7 @@ fn series_subtitle_handling(name: &str, split_token: &str, list: &mut Vec<String
     }
 }
 
-fn left_right_handling(name: &str, split_token: &str, list: &mut Vec<String>) -> bool {
+fn left_right_handling(name: &str, split_token: &str, list: &mut Vec<Box<str>>) -> bool {
     let mut iter = name.splitn(2, split_token);
     if let (Some(series), Some(subtitle)) = (iter.next(), iter.next()) {
         let series_abbreviations = abbreviate(series);
@@ -60,10 +65,13 @@ fn left_right_handling(name: &str, split_token: &str, list: &mut Vec<String>) ->
 
         for subtitle_abbreviation in &subtitle_abbreviations {
             for series_abbreviation in &series_abbreviations {
-                list.push(format!(
-                    "{}{}{}",
-                    series_abbreviation, split_token, subtitle_abbreviation
-                ));
+                list.push(
+                    format!(
+                        "{}{}{}",
+                        series_abbreviation, split_token, subtitle_abbreviation
+                    )
+                    .into(),
+                );
             }
         }
 
@@ -73,7 +81,7 @@ fn left_right_handling(name: &str, split_token: &str, list: &mut Vec<String>) ->
     }
 }
 
-fn and_handling(name: &str, list: &mut Vec<String>) -> bool {
+fn and_handling(name: &str, list: &mut Vec<Box<str>>) -> bool {
     let and = UniCase::new("and");
     for word in name.split_whitespace() {
         if UniCase::new(word) == and {
@@ -101,7 +109,7 @@ fn is_all_caps_or_digits(text: &str) -> bool {
     text.chars().all(|c| c.is_uppercase() || c.is_numeric())
 }
 
-pub fn abbreviate(name: &str) -> Vec<String> {
+pub fn abbreviate(name: &str) -> Vec<Box<str>> {
     let name = name.trim();
     let mut list = vec![name.into()];
     if name.is_empty() {
@@ -158,7 +166,7 @@ pub fn abbreviate(name: &str) -> Vec<String> {
                     }
                 }
             }
-            list.push(abbreviated);
+            list.push(abbreviated.into());
         }
     }
 
@@ -166,4 +174,51 @@ pub fn abbreviate(name: &str) -> Vec<String> {
     list.dedup();
 
     list
+}
+
+pub fn abbreviate_category(category: &str) -> Vec<Box<str>> {
+    let mut abbrevs = Vec::new();
+
+    let mut splits = category.splitn(2, '(');
+    let before = splits.next().unwrap().trim();
+
+    if let Some(rest) = splits.next() {
+        splits = rest.splitn(2, ')');
+        let inside = splits.next().unwrap();
+        if let Some(after) = splits.next() {
+            let after = after.trim_end();
+
+            let mut buf = String::with_capacity(category.len());
+            buf.push_str(before);
+            buf.push_str(" (");
+
+            let mut splits = inside.split(',');
+            let mut variable = splits.next().unwrap();
+            for next_variable in splits {
+                buf.push_str(variable);
+                let old_len = buf.len();
+
+                buf.push_str(")");
+                buf.push_str(after);
+                abbrevs.push(buf.as_str().into());
+
+                buf.drain(old_len..);
+                buf.push_str(",");
+                variable = next_variable;
+            }
+
+            if after.trim().is_empty() {
+                buf.drain(before.len()..);
+            } else {
+                buf.drain(before.len() + 1..);
+                buf.push_str(after);
+            }
+
+            abbrevs.push(buf.into());
+        }
+    }
+
+    abbrevs.push(category.into());
+
+    abbrevs
 }

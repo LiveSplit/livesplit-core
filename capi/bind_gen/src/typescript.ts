@@ -129,15 +129,19 @@ export interface TitleComponentStateJson {
     icon_change: string | null,
     /**
      * The first title line to show. This is either the game's name, or a
-     * combination of the game's name and the category.
+     * combination of the game's name and the category. This is a list of all
+     * the possible abbreviations. It contains at least one element and the last
+     * element is the unabbreviated value.
      */
-    line1: string,
+    line1: string[],
     /**
      * By default the category name is shown on the second line. Based on the
      * settings, it can however instead be shown in a single line together with
-     * the game name.
+     * the game name. This is a list of all the possible abbreviations. It
+     * contains at least one element and the last element is the unabbreviated
+     * value.
      */
-    line2: string | null,
+    line2: string[] | null,
     /**
      * Specifies whether the title should centered or aligned to the left
      * instead.
