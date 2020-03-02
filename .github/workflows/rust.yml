@@ -405,18 +405,30 @@ jobs:
           - label: Linux mips
             target: mips-unknown-linux-gnu
             os: ubuntu-latest
+            tests: skip
+            # FIXME: Networking Tests fail due to missing OpenSSL
+            # https://github.com/LiveSplit/livesplit-core/issues/308
 
           - label: Linux mips64
             target: mips64-unknown-linux-gnuabi64
             os: ubuntu-latest
+            tests: skip
+            # FIXME: Networking Tests fail due to missing OpenSSL
+            # https://github.com/LiveSplit/livesplit-core/issues/308
 
           - label: Linux mips64el
             target: mips64el-unknown-linux-gnuabi64
             os: ubuntu-latest
+            tests: skip
+            # FIXME: Networking Tests fail due to missing OpenSSL
+            # https://github.com/LiveSplit/livesplit-core/issues/308
 
           - label: Linux mipsel
             target: mipsel-unknown-linux-gnu
             os: ubuntu-latest
+            tests: skip
+            # FIXME: Networking Tests fail due to missing OpenSSL
+            # https://github.com/LiveSplit/livesplit-core/issues/308
 
           - label: Linux mipsel musl
             target: mipsel-unknown-linux-musl
@@ -432,6 +444,9 @@ jobs:
           - label: Linux powerpc64
             target: powerpc64-unknown-linux-gnu
             os: ubuntu-latest
+            tests: skip
+            # FIXME: Networking Tests fail due to missing OpenSSL
+            # https://github.com/LiveSplit/livesplit-core/issues/308
 
           - label: Linux powerpc64le
             target: powerpc64le-unknown-linux-gnu
