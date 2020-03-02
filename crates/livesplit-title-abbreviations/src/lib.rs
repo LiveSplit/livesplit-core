@@ -5,6 +5,8 @@ extern crate alloc;
 use alloc::{boxed::Box, format, string::String, vec, vec::Vec};
 use unicase::UniCase;
 
+// FIXME: Use generators once those work on stable Rust.
+
 fn ends_with_roman_numeral(name: &str) -> bool {
     name.split_whitespace().rev().next().map_or(false, |n| {
         n.chars().all(|c| c == 'I' || c == 'V' || c == 'X')
@@ -172,4 +174,51 @@ pub fn abbreviate(name: &str) -> Vec<Box<str>> {
     list.dedup();
 
     list
+}
+
+pub fn abbreviate_category(category: &str) -> Vec<Box<str>> {
+    let mut abbrevs = Vec::new();
+
+    let mut splits = category.splitn(2, '(');
+    let before = splits.next().unwrap().trim();
+
+    if let Some(rest) = splits.next() {
+        splits = rest.splitn(2, ')');
+        let inside = splits.next().unwrap();
+        if let Some(after) = splits.next() {
+            let after = after.trim_end();
+
+            let mut buf = String::with_capacity(category.len());
+            buf.push_str(before);
+            buf.push_str(" (");
+
+            let mut splits = inside.split(',');
+            let mut variable = splits.next().unwrap();
+            for next_variable in splits {
+                buf.push_str(variable);
+                let old_len = buf.len();
+
+                buf.push_str(")");
+                buf.push_str(after);
+                abbrevs.push(buf.as_str().into());
+
+                buf.drain(old_len..);
+                buf.push_str(",");
+                variable = next_variable;
+            }
+
+            if after.trim().is_empty() {
+                buf.drain(before.len()..);
+            } else {
+                buf.drain(before.len() + 1..);
+                buf.push_str(after);
+            }
+
+            abbrevs.push(buf.into());
+        }
+    }
+
+    abbrevs.push(category.into());
+
+    abbrevs
 }

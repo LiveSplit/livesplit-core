@@ -9,7 +9,7 @@ use crate::{
     settings::{CachedImageId, Image, ImageData},
     Timer, TimerPhase,
 };
-use alloc::borrow::Cow;
+use livesplit_title_abbreviations::{abbreviate as abbreviate_title, abbreviate_category};
 use serde::{Deserialize, Serialize};
 
 #[cfg(test)]
@@ -199,8 +199,8 @@ impl Component {
             Alignment::Auto => game_icon.map_or(true, Image::is_empty),
         };
 
-        let game_abbrevs: Box<[Box<str>]> = if self.settings.show_game_name {
-            livesplit_title_abbreviations::abbreviate(run.game_name()).into()
+        let game_abbrevs: Box<[_]> = if self.settings.show_game_name {
+            abbreviate_title(run.game_name()).into()
         } else {
             Default::default()
         };
@@ -235,7 +235,7 @@ impl Component {
                 abbrev.clear();
                 abbrev.push_str(shortest_game_name);
                 let game_len = abbrev.len();
-                for category_abbrev in abbreviate_category(full_category_name).iter() {
+                for category_abbrev in abbreviate_category(full_category_name.as_ref()).iter() {
                     if !shortest_game_name.is_empty() && !category_abbrev.is_empty() {
                         abbrev.push_str(" - ");
                     }
@@ -255,7 +255,7 @@ impl Component {
             (abbrevs.into(), None)
         } else {
             let category_abbrevs: Box<[_]> = if self.settings.show_category_name {
-                abbreviate_category(full_category_name).into()
+                abbreviate_category(full_category_name.as_ref()).into()
             } else {
                 Default::default()
             };
@@ -350,52 +350,4 @@ impl Component {
             _ => panic!("Unsupported Setting Index"),
         }
     }
-}
-
-// FIXME: Turn this into a generator once that works on stable Rust.
-fn abbreviate_category(category: Cow<'_, str>) -> Vec<Box<str>> {
-    let mut abbrevs = Vec::new();
-
-    let mut splits = category.splitn(2, '(');
-    let before = splits.next().unwrap().trim();
-
-    if let Some(rest) = splits.next() {
-        splits = rest.splitn(2, ')');
-        let inside = splits.next().unwrap();
-        if let Some(after) = splits.next() {
-            let after = after.trim_end();
-
-            let mut buf = String::with_capacity(category.len());
-            buf.push_str(before);
-            buf.push_str(" (");
-
-            let mut splits = inside.split(',');
-            let mut variable = splits.next().unwrap();
-            for next_variable in splits {
-                buf.push_str(variable);
-                let old_len = buf.len();
-
-                buf.push_str(")");
-                buf.push_str(after);
-                abbrevs.push(buf.as_str().into());
-
-                buf.drain(old_len..);
-                buf.push_str(",");
-                variable = next_variable;
-            }
-
-            if after.trim().is_empty() {
-                buf.drain(before.len()..);
-            } else {
-                buf.drain(before.len() + 1..);
-                buf.push_str(after);
-            }
-
-            abbrevs.push(buf.into());
-        }
-    }
-
-    abbrevs.push(category.into_owned().into());
-
-    abbrevs
 }
