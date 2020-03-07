@@ -24,7 +24,7 @@ promising-future = { version = "0.2.4", optional = true }
 
 [target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
 wasm-bindgen = { version = "0.2.54", optional = true }
-web-sys = { version = "0.3.28", default-features = false, features = ["KeyboardEvent", "EventTarget", "Window"], optional = true }
+web-sys = { version = "0.3.28", default-features = false, features = ["Gamepad", "GamepadButton", "EventTarget", "KeyboardEvent", "Navigator", "Window"], optional = true }
 
 [dependencies]
 cfg-if = "0.1.10"
