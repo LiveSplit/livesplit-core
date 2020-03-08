@@ -185,3 +185,10 @@ pub extern "C" fn dealloc(ptr: *mut u8, cap: usize) {
         let _buf = Vec::from_raw_parts(ptr, 0, cap);
     }
 }
+
+/// Returns the byte length of the last nul-terminated string returned on the
+/// current thread. The length excludes the nul-terminator.
+#[no_mangle]
+pub extern "C" fn get_buf_len() -> usize {
+    OUTPUT_VEC.with(|v| v.borrow().len() - 1)
+}

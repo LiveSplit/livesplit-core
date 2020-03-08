@@ -482,14 +482,14 @@ function allocString(str: string): Slice {
     return { ptr, len };
 }
 
-function decodeString(ptr: number): string {
+function decodeSlice(ptr: number): Uint8Array {
     const memory = new Uint8Array(wasm.memory.buffer);
-    let end = ptr;
-    while (memory[end] !== 0) {
-        end += 1;
-    }
-    const slice = memory.slice(ptr, end);
-    return decodeUtf8(slice);
+    const len = wasm.get_buf_len();
+    return memory.slice(ptr, ptr + len);
+}
+
+function decodeString(ptr: number): string {
+    return decodeUtf8(decodeSlice(ptr));
 }
 
 function dealloc(slice: Slice) {
@@ -592,14 +592,14 @@ function allocString(str) {
     return { ptr, len };
 }
 
-function decodeString(ptr) {
+function decodeSlice(ptr) {
     const memory = new Uint8Array(wasm.memory.buffer);
-    let end = ptr;
-    while (memory[end] !== 0) {
-        end += 1;
-    }
-    const slice = memory.slice(ptr, end);
-    return decodeUtf8(slice);
+    const len = wasm.get_buf_len();
+    return memory.slice(ptr, ptr + len);
+}
+
+function decodeString(ptr) {
+    return decodeUtf8(decodeSlice(ptr));
 }
 
 function dealloc(slice) {
@@ -670,6 +670,37 @@ export class {class} {{"#,
         return this.write().with(function (lock) {
             return action(lock.timer());
         });
+    }"#
+                )?;
+            }
+        } else if class_name == "Timer" {
+            if type_script {
+                write!(
+                    writer,
+                    "{}",
+                    r#"
+    saveAsLssBytes(): Uint8Array {
+        if (this.ptr == 0) {
+            throw "this is disposed";
+        }
+        const result = wasm.Timer_save_as_lss(this.ptr);
+        return decodeSlice(result);
+    }"#
+                )?;
+            } else {
+                write!(
+                    writer,
+                    "{}",
+                    r#"
+    /**
+     * @return {Uint8Array}
+     */
+    saveAsLssBytes() {
+        if (this.ptr == 0) {
+            throw "this is disposed";
+        }
+        const result = wasm.Timer_save_as_lss(this.ptr);
+        return decodeSlice(result);
     }"#
                 )?;
             }
