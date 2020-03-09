@@ -32,7 +32,7 @@ exclude = ["crates/no-std-test"]
 
 [dependencies]
 # core
-base64 = { version = "0.11.0", default-features = false, features = ["alloc"] }
+base64 = { version = "0.12.0", default-features = false, features = ["alloc"] }
 cfg-if = "0.1.10"
 chrono = { version = "0.4.10", default-features = false, features = ["serde", "alloc"] }
 derive_more = { version = "0.99.1", default-features = false, features = ["not", "add", "from", "deref"] }
