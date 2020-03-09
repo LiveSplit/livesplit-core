@@ -3,7 +3,7 @@ pub use self::key_code::KeyCode;
 
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
-use web_sys::{window, KeyboardEvent};
+use web_sys::{window, Gamepad, GamepadButton, KeyboardEvent};
 
 use std::collections::hash_map::{Entry, HashMap};
 use std::sync::{Arc, Mutex};
@@ -19,7 +19,9 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 pub struct Hook {
     hotkeys: Arc<Mutex<HashMap<KeyCode, Box<dyn FnMut() + Send + 'static>>>>,
-    callback: Closure<dyn FnMut(KeyboardEvent)>,
+    keyboard_callback: Closure<dyn FnMut(KeyboardEvent)>,
+    _gamepad_callback: Closure<dyn FnMut()>,
+    interval_id: i32,
 }
 
 impl Drop for Hook {
@@ -27,8 +29,9 @@ impl Drop for Hook {
         if let Some(window) = window() {
             let _ = window.remove_event_listener_with_callback(
                 "keypress",
-                self.callback.as_ref().unchecked_ref(),
+                self.keyboard_callback.as_ref().unchecked_ref(),
             );
+            window.clear_interval_with_handle(self.interval_id);
         }
     }
 }
@@ -43,7 +46,7 @@ impl Hook {
         let window = window().ok_or(Error::FailedToCreateHook)?;
 
         let hotkey_map = hotkeys.clone();
-        let callback = Closure::wrap(Box::new(move |event: KeyboardEvent| {
+        let keyboard_callback = Closure::wrap(Box::new(move |event: KeyboardEvent| {
             if let Ok(code) = event.code().parse() {
                 if let Some(callback) = hotkey_map.lock().unwrap().get_mut(&code) {
                     callback();
@@ -52,10 +55,84 @@ impl Hook {
         }) as Box<dyn FnMut(KeyboardEvent)>);
 
         window
-            .add_event_listener_with_callback("keypress", callback.as_ref().unchecked_ref())
+            .add_event_listener_with_callback(
+                "keypress",
+                keyboard_callback.as_ref().unchecked_ref(),
+            )
             .map_err(|_| Error::FailedToCreateHook)?;
 
-        Ok(Hook { hotkeys, callback })
+        let hotkey_map = hotkeys.clone();
+
+        const TOTAL_BUTTONS: usize = 20;
+        static GAMEPAD_BUTTONS: [KeyCode; TOTAL_BUTTONS] = [
+            KeyCode::Gamepad0,
+            KeyCode::Gamepad1,
+            KeyCode::Gamepad2,
+            KeyCode::Gamepad3,
+            KeyCode::Gamepad4,
+            KeyCode::Gamepad5,
+            KeyCode::Gamepad6,
+            KeyCode::Gamepad7,
+            KeyCode::Gamepad8,
+            KeyCode::Gamepad9,
+            KeyCode::Gamepad10,
+            KeyCode::Gamepad11,
+            KeyCode::Gamepad12,
+            KeyCode::Gamepad13,
+            KeyCode::Gamepad14,
+            KeyCode::Gamepad15,
+            KeyCode::Gamepad16,
+            KeyCode::Gamepad17,
+            KeyCode::Gamepad18,
+            KeyCode::Gamepad19,
+        ];
+        let mut states = Vec::new();
+        let navigator = window.navigator();
+
+        let gamepad_callback = Closure::wrap(Box::new(move || {
+            if let Ok(gamepads) = navigator.get_gamepads() {
+                let gamepads_len = gamepads.length() as usize;
+                if states.len() < gamepads_len {
+                    states.resize(gamepads_len, [false; TOTAL_BUTTONS]);
+                }
+                for (gamepad, states) in gamepads.iter().zip(&mut states) {
+                    if let Ok(gamepad) = gamepad.dyn_into::<Gamepad>() {
+                        for ((button, code), state) in gamepad
+                            .buttons()
+                            .iter()
+                            .zip(GAMEPAD_BUTTONS.iter().copied())
+                            .zip(states.iter_mut())
+                        {
+                            if let Ok(button) = button.dyn_into::<GamepadButton>() {
+                                let pressed = button.pressed();
+                                if pressed && !*state {
+                                    if let Some(callback) =
+                                        hotkey_map.lock().unwrap().get_mut(&code)
+                                    {
+                                        callback();
+                                    }
+                                }
+                                *state = pressed;
+                            }
+                        }
+                    }
+                }
+            }
+        }) as Box<dyn FnMut()>);
+
+        let interval_id = window
+            .set_interval_with_callback_and_timeout_and_arguments_0(
+                gamepad_callback.as_ref().unchecked_ref(),
+                1000 / 60,
+            )
+            .map_err(|_| Error::FailedToCreateHook)?;
+
+        Ok(Hook {
+            hotkeys,
+            keyboard_callback,
+            _gamepad_callback: gamepad_callback,
+            interval_id,
+        })
     }
 
     pub fn register<F>(&self, hotkey: KeyCode, callback: F) -> Result<()>
