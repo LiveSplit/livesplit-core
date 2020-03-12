@@ -85,9 +85,6 @@ jobs:
 
           # iOS
           - iOS aarch64
-          - iOS armv7
-          - iOS armv7s
-          - iOS i386
           - iOS x86_64
 
           # Android
@@ -478,30 +475,6 @@ jobs:
           # iOS
           - label: iOS aarch64
             target: aarch64-apple-ios
-            os: macOS-latest
-            cross: skip
-            dylib: skip
-            tests: skip
-            install_target: true
-
-          - label: iOS armv7
-            target: armv7-apple-ios
-            os: macOS-latest
-            cross: skip
-            dylib: skip
-            tests: skip
-            install_target: true
-
-          - label: iOS armv7s
-            target: armv7s-apple-ios
-            os: macOS-latest
-            cross: skip
-            dylib: skip
-            tests: skip
-            install_target: true
-
-          - label: iOS i386
-            target: i386-apple-ios
             os: macOS-latest
             cross: skip
             dylib: skip
