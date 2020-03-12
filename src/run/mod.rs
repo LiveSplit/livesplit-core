@@ -169,7 +169,7 @@ impl Run {
 
     /// Returns the path of the associated splits file in the file system.
     #[inline]
-    pub fn path(&mut self) -> &Option<PathBuf> {
+    pub fn path(&self) -> &Option<PathBuf> {
         &self.path
     }
 
