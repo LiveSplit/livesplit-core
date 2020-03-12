@@ -167,13 +167,13 @@ impl Run {
         self.category_name.push_str(name.as_ref());
     }
 
-    /// Gets the path of the associated splits file in the file system.
+    /// Returns the path of the associated splits file in the file system.
     #[inline]
-    pub fn get_path(&mut self) -> &Option<PathBuf> {
+    pub fn path(&mut self) -> &Option<PathBuf> {
         &self.path
     }
 
-	/// Sets the path of the associated splits file in the file system.
+    /// Sets the path of the associated splits file in the file system.
     #[inline]
     pub fn set_path(&mut self, path: Option<PathBuf>) {
         self.path = path;
