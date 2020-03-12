@@ -211,64 +211,66 @@ impl Component {
             self.settings.show_variables,
         );
 
-        let (line1, line2) = if self.settings.display_as_single_line {
-            let mut abbrevs = Vec::new();
-            let mut abbrev = String::new();
-
-            if !full_category_name.is_empty() {
-                for game_abbrev in game_abbrevs.iter() {
-                    abbrev.clear();
-                    abbrev.push_str(game_abbrev);
-                    if !game_abbrev.is_empty() {
-                        abbrev.push_str(" - ");
-                    }
-                    abbrev.push_str(&full_category_name);
-                    abbrevs.push(abbrev.as_str().into());
-                }
-            }
-            // This assumes the last element is the unabbreviated value, which
-            // can only be the case if the `game_abbrevs` also has the
-            // unabbreviated game name as its last element.
-            let swap_index = abbrevs.len().checked_sub(1);
-
-            if let Some(shortest_game_name) = game_abbrevs.iter().min_by_key(|a| a.len()) {
-                abbrev.clear();
-                abbrev.push_str(shortest_game_name);
-                let game_len = abbrev.len();
-                for category_abbrev in abbreviate_category(full_category_name.as_ref()).iter() {
-                    if !shortest_game_name.is_empty() && !category_abbrev.is_empty() {
-                        abbrev.push_str(" - ");
-                    }
-                    abbrev.push_str(&*category_abbrev);
-                    abbrevs.push(abbrev.as_str().into());
-                    abbrev.drain(game_len..);
-                }
-            }
-
-            // We want to ensure the "unabbreviated value" is at the end. This
-            // is something we guarantee at least at the moment.
-            if let Some(swap_index) = swap_index {
-                let last_element_idx = abbrevs.len() - 1;
-                abbrevs.swap(swap_index, last_element_idx);
-            }
-
-            (abbrevs.into(), None)
+        let category_abbrevs: Box<[_]> = if self.settings.show_category_name {
+            abbreviate_category(full_category_name.as_ref()).into()
         } else {
-            let category_abbrevs: Box<[_]> = if self.settings.show_category_name {
-                abbreviate_category(full_category_name.as_ref()).into()
-            } else {
-                Default::default()
-            };
+            Default::default()
+        };
 
-            match (
-                game_abbrevs.last().map_or(false, |g| !g.is_empty()),
-                category_abbrevs.last().map_or(false, |c| !c.is_empty()),
-            ) {
-                (true, true) => (game_abbrevs, Some(category_abbrevs)),
-                (true, false) => (game_abbrevs, None),
-                (false, true) => (category_abbrevs, None),
-                (false, false) => (vec!["Untitled".into()].into(), None),
+        let (line1, line2) = match (
+            game_abbrevs.last().map_or(false, |g| !g.is_empty()),
+            category_abbrevs.last().map_or(false, |c| !c.is_empty()),
+        ) {
+            (true, true) => {
+                if self.settings.display_as_single_line {
+                    let mut abbrevs = Vec::new();
+                    let mut abbrev = String::new();
+
+                    if !full_category_name.is_empty() {
+                        for game_abbrev in game_abbrevs.iter() {
+                            abbrev.clear();
+                            abbrev.push_str(game_abbrev);
+                            if !game_abbrev.is_empty() {
+                                abbrev.push_str(" - ");
+                            }
+                            abbrev.push_str(&full_category_name);
+                            abbrevs.push(abbrev.as_str().into());
+                        }
+                    }
+                    // This assumes the last element is the unabbreviated value, which
+                    // can only be the case if the `game_abbrevs` also has the
+                    // unabbreviated game name as its last element.
+                    let swap_index = abbrevs.len().checked_sub(1);
+
+                    if let Some(shortest_game_name) = game_abbrevs.iter().min_by_key(|a| a.len()) {
+                        abbrev.clear();
+                        abbrev.push_str(shortest_game_name);
+                        let game_len = abbrev.len();
+                        for category_abbrev in category_abbrevs.iter() {
+                            if !shortest_game_name.is_empty() && !category_abbrev.is_empty() {
+                                abbrev.push_str(" - ");
+                            }
+                            abbrev.push_str(&*category_abbrev);
+                            abbrevs.push(abbrev.as_str().into());
+                            abbrev.drain(game_len..);
+                        }
+                    }
+
+                    // We want to ensure the "unabbreviated value" is at the end. This
+                    // is something we guarantee at least at the moment.
+                    if let Some(swap_index) = swap_index {
+                        let last_element_idx = abbrevs.len() - 1;
+                        abbrevs.swap(swap_index, last_element_idx);
+                    }
+
+                    (abbrevs.into(), None)
+                } else {
+                    (game_abbrevs, Some(category_abbrevs))
+                }
             }
+            (true, false) => (game_abbrevs, None),
+            (false, true) => (category_abbrevs, None),
+            (false, false) => (vec!["Untitled".into()].into(), None),
         };
 
         State {
