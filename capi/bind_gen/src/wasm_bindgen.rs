@@ -460,7 +460,7 @@ interface Slice {
     len: number,
 }
 
-function allocInt8Array(src: Int8Array): Slice {
+function allocUint8Array(src: Uint8Array): Slice {
     const len = src.length;
     const ptr = wasm.alloc(len);
     const slice = new Uint8Array(wasm.memory.buffer, ptr, len);
@@ -570,7 +570,7 @@ if (!global["TextDecoder"]) {
     decodeUtf8 = (data) => decoder.decode(data);
 }
 
-function allocInt8Array(src) {
+function allocUint8Array(src) {
     const len = src.length;
     const ptr = wasm.alloc(len);
     const slice = new Uint8Array(wasm.memory.buffer, ptr, len);
@@ -756,13 +756,13 @@ export class {class} extends {base_class} {{"#,
                     writer,
                     "{}",
                     r#"
-    setGameIconFromArray(data: Int8Array) {
-        const slice = allocInt8Array(data);
+    setGameIconFromArray(data: Uint8Array) {
+        const slice = allocUint8Array(data);
         this.setGameIcon(slice.ptr, slice.len);
         dealloc(slice);
     }
-    activeSetIconFromArray(data: Int8Array) {
-        const slice = allocInt8Array(data);
+    activeSetIconFromArray(data: Uint8Array) {
+        const slice = allocUint8Array(data);
         this.activeSetIcon(slice.ptr, slice.len);
         dealloc(slice);
     }"#
@@ -773,18 +773,18 @@ export class {class} extends {base_class} {{"#,
                     "{}",
                     r#"
     /**
-     * @param {Int8Array} data
+     * @param {Uint8Array} data
      */
     setGameIconFromArray(data) {
-        const slice = allocInt8Array(data);
+        const slice = allocUint8Array(data);
         this.setGameIcon(slice.ptr, slice.len);
         dealloc(slice);
     }
     /**
-     * @param {Int8Array} data
+     * @param {Uint8Array} data
      */
     activeSetIconFromArray(data) {
-        const slice = allocInt8Array(data);
+        const slice = allocUint8Array(data);
         this.activeSetIcon(slice.ptr, slice.len);
         dealloc(slice);
     }"#
@@ -885,8 +885,8 @@ export class {class} extends {base_class} {{"#,
                     writer,
                     "{}",
                     r#"
-    static parseArray(data: Int8Array, path: string, loadFiles: boolean): ParseRunResult {
-        const slice = allocInt8Array(data);
+    static parseArray(data: Uint8Array, path: string, loadFiles: boolean): ParseRunResult {
+        const slice = allocUint8Array(data);
         const result = Run.parse(slice.ptr, slice.len, path, loadFiles);
         dealloc(slice);
         return result;
@@ -904,13 +904,13 @@ export class {class} extends {base_class} {{"#,
                     "{}",
                     r#"
     /**
-     * @param {Int8Array} data
+     * @param {Uint8Array} data
      * @param {string} path
      * @param {boolean} loadFiles
      * @return {ParseRunResult}
      */
     static parseArray(data, path, loadFiles) {
-        const slice = allocInt8Array(data);
+        const slice = allocUint8Array(data);
         const result = Run.parse(slice.ptr, slice.len, path, loadFiles);
         dealloc(slice);
         return result;
@@ -935,8 +935,8 @@ export class {class} extends {base_class} {{"#,
                     writer,
                     "{}",
                     r#"
-    static parseOriginalLivesplitArray(data: Int8Array): Layout | null {
-        const slice = allocInt8Array(data);
+    static parseOriginalLivesplitArray(data: Uint8Array): Layout | null {
+        const slice = allocUint8Array(data);
         const result = Layout.parseOriginalLivesplit(slice.ptr, slice.len);
         dealloc(slice);
         return result;
@@ -954,11 +954,11 @@ export class {class} extends {base_class} {{"#,
                     "{}",
                     r#"
     /**
-     * @param {Int8Array} data
+     * @param {Uint8Array} data
      * @return {Layout | null}
      */
     static parseOriginalLivesplitArray(data) {
-        const slice = allocInt8Array(data);
+        const slice = allocUint8Array(data);
         const result = Layout.parseOriginalLivesplit(slice.ptr, slice.len);
         dealloc(slice);
         return result;
