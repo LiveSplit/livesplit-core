@@ -460,7 +460,7 @@ interface Slice {
     len: number,
 }
 
-function allocInt8Array(src: Int8Array): Slice {
+function allocUint8Array(src: Uint8Array): Slice {
     const len = src.length;
     const ptr = wasm.alloc(len);
     const slice = new Uint8Array(wasm.memory.buffer, ptr, len);
@@ -482,14 +482,14 @@ function allocString(str: string): Slice {
     return { ptr, len };
 }
 
-function decodeString(ptr: number): string {
+function decodeSlice(ptr: number): Uint8Array {
     const memory = new Uint8Array(wasm.memory.buffer);
-    let end = ptr;
-    while (memory[end] !== 0) {
-        end += 1;
-    }
-    const slice = memory.slice(ptr, end);
-    return decodeUtf8(slice);
+    const len = wasm.get_buf_len();
+    return memory.slice(ptr, ptr + len);
+}
+
+function decodeString(ptr: number): string {
+    return decodeUtf8(decodeSlice(ptr));
 }
 
 function dealloc(slice: Slice) {
@@ -570,7 +570,7 @@ if (!global["TextDecoder"]) {
     decodeUtf8 = (data) => decoder.decode(data);
 }
 
-function allocInt8Array(src) {
+function allocUint8Array(src) {
     const len = src.length;
     const ptr = wasm.alloc(len);
     const slice = new Uint8Array(wasm.memory.buffer, ptr, len);
@@ -592,14 +592,14 @@ function allocString(str) {
     return { ptr, len };
 }
 
-function decodeString(ptr) {
+function decodeSlice(ptr) {
     const memory = new Uint8Array(wasm.memory.buffer);
-    let end = ptr;
-    while (memory[end] !== 0) {
-        end += 1;
-    }
-    const slice = memory.slice(ptr, end);
-    return decodeUtf8(slice);
+    const len = wasm.get_buf_len();
+    return memory.slice(ptr, ptr + len);
+}
+
+function decodeString(ptr) {
+    return decodeUtf8(decodeSlice(ptr));
 }
 
 function dealloc(slice) {
@@ -673,6 +673,37 @@ export class {class} {{"#,
     }"#
                 )?;
             }
+        } else if class_name == "Timer" {
+            if type_script {
+                write!(
+                    writer,
+                    "{}",
+                    r#"
+    saveAsLssBytes(): Uint8Array {
+        if (this.ptr == 0) {
+            throw "this is disposed";
+        }
+        const result = wasm.Timer_save_as_lss(this.ptr);
+        return decodeSlice(result);
+    }"#
+                )?;
+            } else {
+                write!(
+                    writer,
+                    "{}",
+                    r#"
+    /**
+     * @return {Uint8Array}
+     */
+    saveAsLssBytes() {
+        if (this.ptr == 0) {
+            throw "this is disposed";
+        }
+        const result = wasm.Timer_save_as_lss(this.ptr);
+        return decodeSlice(result);
+    }"#
+                )?;
+            }
         }
 
         if type_script {
@@ -725,13 +756,13 @@ export class {class} extends {base_class} {{"#,
                     writer,
                     "{}",
                     r#"
-    setGameIconFromArray(data: Int8Array) {
-        const slice = allocInt8Array(data);
+    setGameIconFromArray(data: Uint8Array) {
+        const slice = allocUint8Array(data);
         this.setGameIcon(slice.ptr, slice.len);
         dealloc(slice);
     }
-    activeSetIconFromArray(data: Int8Array) {
-        const slice = allocInt8Array(data);
+    activeSetIconFromArray(data: Uint8Array) {
+        const slice = allocUint8Array(data);
         this.activeSetIcon(slice.ptr, slice.len);
         dealloc(slice);
     }"#
@@ -742,18 +773,18 @@ export class {class} extends {base_class} {{"#,
                     "{}",
                     r#"
     /**
-     * @param {Int8Array} data
+     * @param {Uint8Array} data
      */
     setGameIconFromArray(data) {
-        const slice = allocInt8Array(data);
+        const slice = allocUint8Array(data);
         this.setGameIcon(slice.ptr, slice.len);
         dealloc(slice);
     }
     /**
-     * @param {Int8Array} data
+     * @param {Uint8Array} data
      */
     activeSetIconFromArray(data) {
-        const slice = allocInt8Array(data);
+        const slice = allocUint8Array(data);
         this.activeSetIcon(slice.ptr, slice.len);
         dealloc(slice);
     }"#
@@ -854,8 +885,8 @@ export class {class} extends {base_class} {{"#,
                     writer,
                     "{}",
                     r#"
-    static parseArray(data: Int8Array, path: string, loadFiles: boolean): ParseRunResult {
-        const slice = allocInt8Array(data);
+    static parseArray(data: Uint8Array, path: string, loadFiles: boolean): ParseRunResult {
+        const slice = allocUint8Array(data);
         const result = Run.parse(slice.ptr, slice.len, path, loadFiles);
         dealloc(slice);
         return result;
@@ -873,13 +904,13 @@ export class {class} extends {base_class} {{"#,
                     "{}",
                     r#"
     /**
-     * @param {Int8Array} data
+     * @param {Uint8Array} data
      * @param {string} path
      * @param {boolean} loadFiles
      * @return {ParseRunResult}
      */
     static parseArray(data, path, loadFiles) {
-        const slice = allocInt8Array(data);
+        const slice = allocUint8Array(data);
         const result = Run.parse(slice.ptr, slice.len, path, loadFiles);
         dealloc(slice);
         return result;
@@ -904,8 +935,8 @@ export class {class} extends {base_class} {{"#,
                     writer,
                     "{}",
                     r#"
-    static parseOriginalLivesplitArray(data: Int8Array): Layout | null {
-        const slice = allocInt8Array(data);
+    static parseOriginalLivesplitArray(data: Uint8Array): Layout | null {
+        const slice = allocUint8Array(data);
         const result = Layout.parseOriginalLivesplit(slice.ptr, slice.len);
         dealloc(slice);
         return result;
@@ -923,11 +954,11 @@ export class {class} extends {base_class} {{"#,
                     "{}",
                     r#"
     /**
-     * @param {Int8Array} data
+     * @param {Uint8Array} data
      * @return {Layout | null}
      */
     static parseOriginalLivesplitArray(data) {
-        const slice = allocInt8Array(data);
+        const slice = allocUint8Array(data);
         const result = Layout.parseOriginalLivesplit(slice.ptr, slice.len);
         dealloc(slice);
         return result;
