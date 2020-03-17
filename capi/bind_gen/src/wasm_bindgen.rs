@@ -704,6 +704,37 @@ export class {class} {{"#,
     }"#
                 )?;
             }
+        } else if class_name == "Run" {
+            if type_script {
+                write!(
+                    writer,
+                    "{}",
+                    r#"
+    saveAsLssBytes(): Uint8Array {
+        if (this.ptr == 0) {
+            throw "this is disposed";
+        }
+        const result = wasm.Run_save_as_lss(this.ptr);
+        return decodeSlice(result);
+    }"#
+                )?;
+            } else {
+                write!(
+                    writer,
+                    "{}",
+                    r#"
+    /**
+     * @return {Uint8Array}
+     */
+    saveAsLssBytes() {
+        if (this.ptr == 0) {
+            throw "this is disposed";
+        }
+        const result = wasm.Run_save_as_lss(this.ptr);
+        return decodeSlice(result);
+    }"#
+                )?;
+            }
         }
 
         if type_script {
