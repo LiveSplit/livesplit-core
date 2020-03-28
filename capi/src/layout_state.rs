@@ -45,7 +45,9 @@ pub extern "C" fn LayoutState_component_type(this: &LayoutState, index: usize) -
         ComponentState::Text(_) => "Text\0",
         ComponentState::Timer(_) => "Timer\0",
         ComponentState::Title(_) => "Title\0",
-    }).as_ptr().cast()
+    })
+    .as_ptr()
+    .cast()
 }
 
 /// Gets the Blank Space component state at the specified index.
