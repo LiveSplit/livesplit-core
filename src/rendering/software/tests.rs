@@ -212,10 +212,10 @@ fn get_comparison_tolerance() -> u32 {
     // Without MMX the floating point calculations don't follow IEEE 754, so the tests require a
     // tolerance that is greater than 0.
     // FIXME: We use SSE as an approximation for the cfg because MMX isn't supported by Rust yet.
-    if cfg!(all(target_arch = "x86", not(target_feature = "sse"),)) {
+    if cfg!(all(target_arch = "x86", not(target_feature = "sse"))) {
         4
     } else {
-        0
+        1
     }
 }
 
