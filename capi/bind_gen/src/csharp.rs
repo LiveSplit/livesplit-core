@@ -15,19 +15,18 @@ fn get_hl_type(ty: &Type) -> String {
     } else if ty.name == "usize" {
         "long".to_string()
     } else {
-        get_ll_type(ty, false).to_string()
+        let ret = get_ll_type(ty, false).to_string();
+        if ret == "LSCoreString" {
+            "string".to_string()
+        } else {
+            ret
+        }
     }
 }
 
 fn get_ll_type(ty: &Type, output: bool) -> &str {
     match (ty.kind, ty.name.as_str()) {
-        (TypeKind::Ref, "c_char") => {
-            if output {
-                "LSCoreString"
-            } else {
-                "string"
-            }
-        }
+        (TypeKind::Ref, "c_char") => "LSCoreString",
         (TypeKind::Ref, _) | (TypeKind::RefMut, _) => "IntPtr",
         (_, t) if !ty.is_custom => match t {
             "i8" => "sbyte",
@@ -50,13 +49,7 @@ fn get_ll_type(ty: &Type, output: bool) -> &str {
             }
             "()" => "void",
             "c_char" => "char",
-            "Json" => {
-                if output {
-                    "LSCoreString"
-                } else {
-                    "string"
-                }
-            }
+            "Json" => "LSCoreString",
             x => x,
         },
         _ => "IntPtr",
@@ -220,13 +213,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
     write!(
         writer,
         "){}",
-        if return_type == "string" {
-            ".AsString()"
-        } else if return_type == "bool" {
-            " != 0"
-        } else {
-            ""
-        }
+        if return_type == "bool" { " != 0" } else { "" }
     )?;
 
     if !is_constructor && has_return_type && function.output.is_custom {
@@ -491,10 +478,14 @@ namespace LiveSplitCore
         writer,
         "{}",
         r#"
+        [DllImport("livesplit_core", CallingConvention = CallingConvention.Cdecl)]
+        public static extern UIntPtr get_buf_len();
     }
 
     public class LSCoreString : SafeHandle
     {
+        private bool needToFree;
+
         public LSCoreString() : base(IntPtr.Zero, false) { }
 
         public override bool IsInvalid
@@ -502,20 +493,41 @@ namespace LiveSplitCore
             get { return false; }
         }
 
-        public string AsString()
+        public static implicit operator LSCoreString(string managedString)
         {
+            LSCoreString lsCoreString = new LSCoreString();
+
+            int len = Encoding.UTF8.GetByteCount(managedString);
+            byte[] buffer = new byte[len + 1];
+            Encoding.UTF8.GetBytes(managedString, 0, managedString.Length, buffer, 0);
+            IntPtr nativeUtf8 = Marshal.AllocHGlobal(buffer.Length);
+            Marshal.Copy(buffer, 0, nativeUtf8, buffer.Length);
+
+            lsCoreString.SetHandle(nativeUtf8);
+            lsCoreString.needToFree = true;
+            return lsCoreString;
+        }
+
+        /// Unsafely assumes that the length can be retrieved from
+        /// `get_buf_len`. This is only true for strings that have actually been
+        /// retrieved from livesplit-core.
+        public static implicit operator string(LSCoreString lSCoreString)
+        {
+            var handle = lSCoreString.handle;
             if (handle == IntPtr.Zero)
                 return null;
 
-            int len = 0;
-            while (Marshal.ReadByte(handle, len) != 0) { ++len; }
-            byte[] buffer = new byte[len];
+            byte[] buffer = new byte[(long)LiveSplitCoreNative.get_buf_len()];
             Marshal.Copy(handle, buffer, 0, buffer.Length);
             return Encoding.UTF8.GetString(buffer);
         }
 
         protected override bool ReleaseHandle()
         {
+            if (needToFree)
+            {
+                Marshal.FreeHGlobal(handle);
+            }
             return true;
         }
     }
