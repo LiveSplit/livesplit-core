@@ -1,7 +1,8 @@
 use alloc::borrow::Cow;
 use image::{
-    bmp, gif, guess_format, hdr, ico, jpeg, load_from_memory_with_format, png, pnm, tiff, webp,
-    DynamicImage, GenericImageView, ImageDecoder, ImageError, ImageFormat,
+    bmp, gif, guess_format, hdr, ico, imageops, jpeg, load_from_memory_with_format, png, pnm, tiff,
+    webp, AnimationDecoder, DynamicImage, Frame, GenericImageView, ImageDecoder, ImageError,
+    ImageFormat,
 };
 use std::io::Cursor;
 
@@ -12,7 +13,39 @@ fn shrink_inner(data: &[u8], max_dim: u32) -> Result<Cow<'_, [u8]>, ImageError> 
     let (width, height) = match format {
         ImageFormat::Png => png::PngDecoder::new(cursor)?.dimensions(),
         ImageFormat::Jpeg => jpeg::JpegDecoder::new(cursor)?.dimensions(),
-        ImageFormat::Gif => gif::GifDecoder::new(cursor)?.dimensions(),
+        ImageFormat::Gif => {
+            let decoder = gif::GifDecoder::new(cursor)?;
+            let (width, height) = decoder.dimensions();
+            return if width > max_dim || height > max_dim {
+                let mut data = Vec::new();
+                gif::Encoder::new(&mut data).try_encode_frames(decoder.into_frames().map(
+                    |image| {
+                        let image = image?;
+                        let buffer = image.buffer();
+                        let scaled_down = imageops::thumbnail(buffer, max_dim, max_dim);
+
+                        let scale_factor = if buffer.width() > buffer.height() {
+                            buffer.width() as f64 / scaled_down.width() as f64
+                        } else {
+                            buffer.height() as f64 / scaled_down.height() as f64
+                        };
+
+                        let left = scale_factor * image.left() as f64;
+                        let top = scale_factor * image.top() as f64;
+
+                        Ok(Frame::from_parts(
+                            scaled_down,
+                            left as _,
+                            top as _,
+                            image.delay(),
+                        ))
+                    },
+                ))?;
+                Ok(data.into())
+            } else {
+                Ok(data.into())
+            };
+        }
         ImageFormat::WebP => webp::WebPDecoder::new(cursor)?.dimensions(),
         ImageFormat::Tiff => tiff::TiffDecoder::new(cursor)?.dimensions(),
         ImageFormat::Bmp => bmp::BmpDecoder::new(cursor)?.dimensions(),
