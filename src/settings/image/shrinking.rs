@@ -1,6 +1,6 @@
 use alloc::borrow::Cow;
 use image::{
-    bmp, gif, guess_format, hdr, ico, jpeg, load_from_memory_with_format, png, pnm, tiff, webp,
+    bmp, guess_format, hdr, ico, jpeg, load_from_memory_with_format, png, pnm, tiff, webp,
     DynamicImage, GenericImageView, ImageDecoder, ImageError, ImageFormat,
 };
 use std::io::Cursor;
@@ -12,17 +12,21 @@ fn shrink_inner(data: &[u8], max_dim: u32) -> Result<Cow<'_, [u8]>, ImageError> 
     let (width, height) = match format {
         ImageFormat::Png => png::PngDecoder::new(cursor)?.dimensions(),
         ImageFormat::Jpeg => jpeg::JpegDecoder::new(cursor)?.dimensions(),
-        ImageFormat::Gif => gif::GifDecoder::new(cursor)?.dimensions(),
         ImageFormat::WebP => webp::WebPDecoder::new(cursor)?.dimensions(),
         ImageFormat::Tiff => tiff::TiffDecoder::new(cursor)?.dimensions(),
         ImageFormat::Bmp => bmp::BmpDecoder::new(cursor)?.dimensions(),
         ImageFormat::Ico => ico::IcoDecoder::new(cursor)?.dimensions(),
         ImageFormat::Hdr => hdr::HDRAdapter::new(cursor)?.dimensions(),
         ImageFormat::Pnm => pnm::PnmDecoder::new(cursor)?.dimensions(),
+        // FIXME: For GIF we would need to properly shrink the whole animation.
+        // The image crate can't properly handle this at this point in time.
+        // Some properties are not translated over properly it seems. We could
+        // shrink GIFs that are a single frame, but we also can't tell how many
+        // frames there are.
         // TGA doesn't have a Header.
         // DDS isn't a format we really care for.
         // And the image format is non-exhaustive.
-        ImageFormat::Tga | ImageFormat::Dds | _ => return Ok(data.into()),
+        ImageFormat::Gif | ImageFormat::Tga | ImageFormat::Dds | _ => return Ok(data.into()),
     };
 
     let is_too_large = width > max_dim || height > max_dim;
