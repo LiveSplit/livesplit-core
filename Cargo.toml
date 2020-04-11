@@ -84,7 +84,7 @@ tokio = { version = "0.2", features = ["macros"] }
 default = ["image-shrinking", "std"]
 doesnt-have-atomics = []
 std = ["byteorder", "chrono/std", "chrono/clock", "image", "indexmap", "livesplit-hotkey/std", "palette/std", "parking_lot", "quick-xml", "serde_json", "serde/std", "snafu/std", "utf-8"]
-more-image-formats = ["image/webp", "image/pnm", "image/ico", "image/jpeg", "image/gif", "image/tiff", "image/tga", "image/bmp", "image/hdr"]
+more-image-formats = ["image/webp", "image/pnm", "image/ico", "image/jpeg", "image/tiff", "image/tga", "image/bmp", "image/hdr"]
 image-shrinking = ["std", "bytemuck", "more-image-formats"]
 rendering = ["std", "more-image-formats", "euclid", "lyon", "rusttype", "smallvec"]
 software-rendering = ["rendering", "euc", "vek", "derive_more/mul"]
