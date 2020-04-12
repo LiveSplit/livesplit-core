@@ -22,7 +22,6 @@ use {
 pub use image::{self, RgbaImage};
 
 struct SoftwareBackend {
-    dims: [usize; 2],
     color: AlphaBlended,
 }
 
@@ -60,10 +59,10 @@ impl Backend for SoftwareBackend {
             color_br: Rgba::new(br[0], br[1], br[2], br[3]),
             texture,
         }
-        .draw::<rasterizer::Triangles<'_, _, BackfaceCullingDisabled>, _>(
+        .draw::<rasterizer::Triangles<'_, (f32,), BackfaceCullingDisabled>, _>(
             mesh,
             &mut self.color,
-            &mut NoDepth(self.dims),
+            None,
         );
     }
 
@@ -80,24 +79,6 @@ impl Backend for SoftwareBackend {
     fn free_texture(&mut self, _: Self::Texture) {}
 
     fn resize(&mut self, _: f32, _: f32) {}
-}
-
-struct NoDepth([usize; 2]);
-
-impl Target for NoDepth {
-    type Item = f32;
-
-    fn size(&self) -> [usize; 2] {
-        self.0
-    }
-
-    unsafe fn set(&mut self, _pos: [usize; 2], _item: Self::Item) {}
-
-    unsafe fn get(&self, _pos: [usize; 2]) -> Self::Item {
-        1.0
-    }
-
-    fn clear(&mut self, _fill: Self::Item) {}
 }
 
 struct AlphaBlended(Buffer2d<Rgba<f32>>);
@@ -232,7 +213,6 @@ pub fn render(state: &LayoutState, [width, height]: [usize; 2]) -> RgbaImage {
             [width, height],
             Rgba::new(0.0, 0.0, 0.0, 0.0),
         )),
-        dims: [width, height],
     };
 
     Renderer::new().render(&mut backend, (width as _, height as _), &state);
