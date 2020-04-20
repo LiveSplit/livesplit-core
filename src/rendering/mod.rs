@@ -208,9 +208,9 @@ impl<M, T> Renderer<M, T> {
     /// Creates a new renderer.
     pub fn new() -> Self {
         Self {
-            timer_font: Font::from_bytes(TIMER_FONT).unwrap(),
+            timer_font: Font::try_from_bytes(TIMER_FONT).unwrap(),
             timer_glyph_cache: GlyphCache::new(),
-            text_font: Font::from_bytes(TEXT_FONT).unwrap(),
+            text_font: Font::try_from_bytes(TEXT_FONT).unwrap(),
             text_glyph_cache: GlyphCache::new(),
             rectangle: None,
             icons: IconCache {

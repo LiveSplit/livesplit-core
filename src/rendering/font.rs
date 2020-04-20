@@ -1,7 +1,7 @@
 use super::glyph_cache::GlyphCache;
 use super::{decode_color, Backend, Pos, Transform};
 use crate::settings::Color;
-use rusttype::{point, Codepoint, Font, GlyphId, PositionedGlyph, Scale};
+use rusttype::{point, Font, GlyphId, PositionedGlyph, Scale};
 use smallvec::SmallVec;
 
 #[derive(Copy, Clone)]
@@ -86,7 +86,7 @@ pub fn layout_numbers<'i: 'fd, 'fd>(
     let mut digits = [GlyphId(0); 10];
     let mut digit_width = 0.0;
     for (digit, glyph) in digits.iter_mut().enumerate() {
-        let the_glyph = font.font.glyph(Codepoint(digit as u32 + u32::from(b'0')));
+        let the_glyph = font.font.glyph(char::from(digit as u8 + b'0'));
 
         *glyph = the_glyph.id();
 
@@ -124,7 +124,7 @@ pub fn ellipsis<'fd>(
     mut max_x: f32,
     font: ScaledFont<'_, 'fd>,
 ) -> impl Iterator<Item = PositionedGlyph<'fd>> {
-    let ellipsis = font.font.glyph(Codepoint('…' as u32)).scaled(font.scale);
+    let ellipsis = font.font.glyph('…').scaled(font.scale);
     let ellipsis_width = ellipsis.h_metrics().advance_width;
 
     let mut glyphs = layout.into_iter().collect::<SmallVec<[_; 32]>>();
