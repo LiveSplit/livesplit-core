@@ -60,7 +60,7 @@ utf-8 = { version = "0.7.4", optional = true }
 # Rendering
 euclid = { version = "0.20.0", default-features = false, optional = true }
 lyon = { version = "0.15.3", default-features = false, optional = true }
-rusttype = { version = "0.8.3", default-features = false, features = ["std"], optional = true }
+rusttype = { version = "0.9.0", default-features = false, features = ["std"], optional = true }
 smallvec = { version = "1.3.0", default-features = false, optional = true }
 
 # Software Rendering
