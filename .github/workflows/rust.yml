@@ -272,7 +272,6 @@ jobs:
             target: wasm32-wasi
             os: ubuntu-latest
             cross: skip
-            tests: skip
             dylib: skip
             install_target: true
 

@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::{Run, Segment, TimeSpan, Timer, TimingMethod};
 
 pub fn create_run(names: &[&str]) -> Run {
