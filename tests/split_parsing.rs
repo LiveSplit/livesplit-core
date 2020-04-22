@@ -1,81 +1,84 @@
+mod run_files;
+
 mod parse {
-    use livesplit_core::run::parser::{
-        composite, flitter, livesplit, llanfair, llanfair2, llanfair_gered, portal2_live_timer,
-        source_live_timer, splits_io, splitterino, splitterz, time_split_tracker, urn, worstrun,
-        wsplit, TimerKind,
+    use crate::run_files;
+    use livesplit_core::{
+        analysis::total_playtime,
+        run::parser::{
+            composite, flitter, livesplit, llanfair, llanfair2, llanfair_gered, portal2_live_timer,
+            source_live_timer, splits_io, splitterino, splitterz, time_split_tracker, urn,
+            worstrun, wsplit, TimerKind,
+        },
+        Run, TimeSpan,
     };
-    use livesplit_core::{analysis::total_playtime, Run, TimeSpan};
-    use std::fs::File;
-    use std::io::{BufReader, Cursor};
+    use std::io::Cursor;
 
-    fn file(path: &str) -> BufReader<File> {
-        BufReader::new(File::open(path).unwrap())
+    fn file(data: &[u8]) -> Cursor<&[u8]> {
+        Cursor::new(data)
     }
 
-    fn livesplit(path: &str) -> Run {
-        livesplit::parse(file(path), None).unwrap()
+    fn livesplit(data: &[u8]) -> Run {
+        livesplit::parse(file(data), None).unwrap()
     }
 
-    fn parse_llanfair_gered(path: &str) {
-        llanfair_gered::parse(file(path)).unwrap();
+    fn parse_llanfair_gered(data: &[u8]) {
+        llanfair_gered::parse(file(data)).unwrap();
     }
 
-    fn parse_llanfair2(path: &str) {
-        llanfair2::parse(file(path)).unwrap();
+    fn parse_llanfair2(data: &[u8]) {
+        llanfair2::parse(file(data)).unwrap();
     }
 
     #[test]
     fn livesplit_fuzz_crash() {
-        let path = "tests/run_files/livesplit_fuzz_crash.lss";
-        livesplit::parse(file(path), None).unwrap_err();
+        livesplit::parse(file(run_files::LIVESPLIT_FUZZ_CRASH), None).unwrap_err();
     }
 
     #[test]
     fn livesplit_fuzz_crash_utf8() {
-        let path = "tests/run_files/livesplit_fuzz_crash_utf8.lss";
-        livesplit::parse(file(path), None).unwrap_err();
+        livesplit::parse(file(run_files::LIVESPLIT_FUZZ_CRASH_UTF8), None).unwrap_err();
     }
 
     #[test]
     fn livesplit_1_0() {
-        livesplit("tests/run_files/livesplit1.0.lss");
+        livesplit(run_files::LIVESPLIT_1_0);
     }
 
     #[test]
     fn livesplit_1_4() {
-        livesplit("tests/run_files/livesplit1.4.lss");
+        livesplit(run_files::LIVESPLIT_1_4);
     }
 
     #[test]
     fn livesplit_1_5() {
-        livesplit("tests/run_files/livesplit1.5.lss");
+        livesplit(run_files::LIVESPLIT_1_5);
     }
 
     #[test]
     fn livesplit_1_6() {
-        livesplit("tests/run_files/livesplit1.6.lss");
+        livesplit(run_files::LIVESPLIT_1_6);
     }
 
     #[test]
     fn livesplit_1_6_gametime() {
-        livesplit("tests/run_files/livesplit1.6_gametime.lss");
+        livesplit(run_files::LIVESPLIT_1_6_GAMETIME);
     }
 
     #[test]
     fn livesplit_celeste() {
-        livesplit("tests/run_files/Celeste - Any% (1.2.1.5).lss");
+        livesplit(run_files::CELESTE);
     }
 
     #[test]
     fn livesplit_attempt_ended_bug() {
-        let run = livesplit("tests/run_files/livesplit_attempt_ended_bug.lss");
+        let run = livesplit(run_files::LIVESPLIT_ATTEMPT_ENDED_BUG);
         let playtime = total_playtime::calculate(run);
         assert!(playtime >= TimeSpan::zero());
     }
 
     #[test]
     fn llanfair() {
-        llanfair::parse(file("tests/run_files/llanfair")).unwrap();
+        llanfair::parse(file(run_files::LLANFAIR)).unwrap();
     }
 
     #[test]
@@ -85,38 +88,37 @@ mod parse {
 
     #[test]
     fn llanfair_gered_doesnt_parse_as_livesplit() {
-        livesplit::parse(file("tests/run_files/llanfair_gered.lfs"), None).unwrap_err();
+        livesplit::parse(file(run_files::LLANFAIR_GERED), None).unwrap_err();
     }
 
     #[test]
     fn llanfair_gered() {
-        parse_llanfair_gered("tests/run_files/llanfair_gered.lfs");
+        parse_llanfair_gered(run_files::LLANFAIR_GERED);
     }
 
     #[test]
     fn llanfair_gered_with_refs() {
-        parse_llanfair_gered("tests/run_files/llanfair_gered_with_refs.lfs");
+        parse_llanfair_gered(run_files::LLANFAIR_GERED_WITH_REFS);
     }
 
     #[test]
     fn llanfair_gered_icons() {
-        parse_llanfair_gered("tests/run_files/llanfair_gered_icons.lfs");
+        parse_llanfair_gered(run_files::LLANFAIR_GERED_ICONS);
     }
 
     #[test]
     fn llanfair2() {
-        parse_llanfair2("tests/run_files/llanfair2.xml")
+        parse_llanfair2(run_files::LLANFAIR2)
     }
 
     #[test]
     fn llanfair2_empty() {
-        parse_llanfair2("tests/run_files/llanfair2_empty.xml")
+        parse_llanfair2(run_files::LLANFAIR2_EMPTY)
     }
 
     #[test]
     fn time_split_tracker() {
-        let run =
-            time_split_tracker::parse(file("tests/run_files/timesplittracker.txt"), None).unwrap();
+        let run = time_split_tracker::parse(file(run_files::TIME_SPLIT_TRACKER), None).unwrap();
         assert_eq!(
             run.custom_comparisons(),
             [
@@ -131,73 +133,76 @@ mod parse {
 
     #[test]
     fn time_split_tracker_without_attempt_count() {
-        time_split_tracker::parse(file("tests/run_files/1734.timesplittracker"), None).unwrap();
+        time_split_tracker::parse(
+            file(run_files::TIME_SPLIT_TRACKER_WITHOUT_ATTEMPT_COUNT),
+            None,
+        )
+        .unwrap();
     }
 
     #[test]
     fn splitterz() {
-        splitterz::parse(file("tests/run_files/splitterz"), false).unwrap();
+        splitterz::parse(file(run_files::SPLITTERZ), false).unwrap();
     }
 
     #[test]
     fn wsplit() {
-        wsplit::parse(file("tests/run_files/wsplit"), false).unwrap();
+        wsplit::parse(file(run_files::WSPLIT), false).unwrap();
     }
 
     #[test]
     fn splitterino() {
-        splitterino::parse(file("tests/run_files/splitterino.splits")).unwrap();
+        splitterino::parse(file(run_files::SPLITTERINO)).unwrap();
     }
 
     #[test]
     fn urn() {
-        urn::parse(file("tests/run_files/urn.json")).unwrap();
+        urn::parse(file(run_files::URN)).unwrap();
     }
 
     #[test]
     fn flitter() {
-        flitter::parse(file("tests/run_files/flitter.scm")).unwrap();
+        flitter::parse(file(run_files::FLITTER)).unwrap();
     }
 
     #[test]
     fn flitter_small() {
-        flitter::parse(file("tests/run_files/flitter-small.scm")).unwrap();
+        flitter::parse(file(run_files::FLITTER_SMALL)).unwrap();
     }
 
     #[test]
     fn source_live_timer() {
-        source_live_timer::parse(file("tests/run_files/source_live_timer.json")).unwrap();
+        source_live_timer::parse(file(run_files::SOURCE_LIVE_TIMER)).unwrap();
     }
 
     #[test]
     fn source_live_timer2() {
-        source_live_timer::parse(file("tests/run_files/source_live_timer2.json")).unwrap();
+        source_live_timer::parse(file(run_files::SOURCE_LIVE_TIMER2)).unwrap();
     }
 
     #[test]
     fn portal2_live_timer() {
-        portal2_live_timer::parse(file("tests/run_files/portal2_live_timer1.csv")).unwrap();
+        portal2_live_timer::parse(file(run_files::PORTAL2_LIVE_TIMER1)).unwrap();
     }
 
     #[test]
     fn portal2_live_timer2() {
-        portal2_live_timer::parse(file("tests/run_files/portal2_live_timer2.csv")).unwrap();
+        portal2_live_timer::parse(file(run_files::PORTAL2_LIVE_TIMER2)).unwrap();
     }
 
     #[test]
     fn worstrun() {
-        worstrun::parse(file("tests/run_files/worstrun.json")).unwrap();
+        worstrun::parse(file(run_files::WORSTRUN)).unwrap();
     }
 
     #[test]
     fn splits_io() {
-        splits_io::parse(file("tests/run_files/generic_splits_io.json")).unwrap();
+        splits_io::parse(file(run_files::GENERIC_SPLITS_IO)).unwrap();
     }
 
     #[test]
     fn splits_io_prefers_parsing_as_itself() {
-        let run =
-            composite::parse(file("tests/run_files/generic_splits_io.json"), None, false).unwrap();
+        let run = composite::parse(file(run_files::GENERIC_SPLITS_IO), None, false).unwrap();
         assert!(if let TimerKind::Generic(_) = run.kind {
             true
         } else {
@@ -207,43 +212,40 @@ mod parse {
 
     #[test]
     fn portal2_live_timer_prefers_parsing_as_itself() {
-        let run =
-            composite::parse(file("tests/run_files/portal2_live_timer1.csv"), None, false).unwrap();
+        let run = composite::parse(file(run_files::PORTAL2_LIVE_TIMER1), None, false).unwrap();
         assert_eq!(run.kind, TimerKind::Portal2LiveTimer);
     }
 
     #[test]
     fn worstrun_prefers_parsing_as_itself() {
-        let run = composite::parse(file("tests/run_files/worstrun.json"), None, false).unwrap();
+        let run = composite::parse(file(run_files::WORSTRUN), None, false).unwrap();
         assert_eq!(run.kind, TimerKind::Worstrun);
     }
 
     #[test]
     fn splitterino_prefers_parsing_as_itself() {
-        let run =
-            composite::parse(file("tests/run_files/splitterino.splits"), None, false).unwrap();
+        let run = composite::parse(file(run_files::SPLITTERINO), None, false).unwrap();
         assert_eq!(run.kind, TimerKind::Splitterino);
     }
 
     #[test]
     fn urn_prefers_parsing_as_itself() {
-        let run = composite::parse(file("tests/run_files/urn.json"), None, false).unwrap();
+        let run = composite::parse(file(run_files::URN), None, false).unwrap();
         assert_eq!(run.kind, TimerKind::Urn);
     }
 
     #[test]
     fn source_live_time_prefers_parsing_as_itself() {
-        let run =
-            composite::parse(file("tests/run_files/source_live_timer.json"), None, false).unwrap();
+        let run = composite::parse(file(run_files::SOURCE_LIVE_TIMER), None, false).unwrap();
         assert_eq!(run.kind, TimerKind::SourceLiveTimer);
     }
 
     #[test]
     fn flitter_prefers_parsing_as_itself() {
-        let run = composite::parse(file("tests/run_files/flitter.scm"), None, false).unwrap();
+        let run = composite::parse(file(run_files::FLITTER), None, false).unwrap();
         assert_eq!(run.kind, TimerKind::Flitter);
 
-        let run = composite::parse(file("tests/run_files/flitter-small.scm"), None, false).unwrap();
+        let run = composite::parse(file(run_files::FLITTER_SMALL), None, false).unwrap();
         assert_eq!(run.kind, TimerKind::Flitter);
     }
 }

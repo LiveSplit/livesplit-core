@@ -1,33 +1,36 @@
-mod parse {
-    use livesplit_core::layout::{parser::parse, Layout};
-    use std::{fs::File, io::BufReader};
+mod layout_files;
 
-    fn file(path: &str) -> BufReader<File> {
-        BufReader::new(File::open(path).unwrap())
+mod parse {
+    use crate::layout_files;
+    use livesplit_core::layout::{parser::parse, Layout};
+    use std::io::Cursor;
+
+    fn file(data: &[u8]) -> Cursor<&[u8]> {
+        Cursor::new(data)
     }
 
-    fn livesplit(path: &str) -> Layout {
-        parse(file(path)).unwrap()
+    fn livesplit(data: &[u8]) -> Layout {
+        parse(file(data)).unwrap()
     }
 
     #[test]
     fn all() {
-        livesplit("tests/layout_files/All.lsl");
+        livesplit(layout_files::ALL);
     }
 
     #[test]
     fn dark() {
-        livesplit("tests/layout_files/dark.lsl");
+        livesplit(layout_files::DARK);
     }
 
     #[test]
     fn subsplits() {
-        livesplit("tests/layout_files/subsplits.lsl");
+        livesplit(layout_files::SUBSPLITS);
     }
 
     #[test]
     fn wsplit() {
-        livesplit("tests/layout_files/WSplit.lsl");
+        livesplit(layout_files::WSPLIT);
     }
 
     #[test]
