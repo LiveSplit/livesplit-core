@@ -174,8 +174,8 @@ fn single_line_title() {
 
     check_dims(
         &layout.state(&timer),
-        [150, 30],
-        "QCRZz09hahA=",
+        [300, 60],
+        "QCRbT0dxaAE=",
         "single_line_title",
     );
 }
