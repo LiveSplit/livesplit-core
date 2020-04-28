@@ -1,6 +1,9 @@
-use crate::{environment::Environment, pointer::PointerValue, process::Process};
-use std::{cell::RefCell, mem, rc::Rc, thread};
-use wasmtime::{Export, Instance, Linker, Module, Trap};
+use crate::{
+    environment::Environment, pointer::PointerValue, process::Process, std_stream::StdStream,
+};
+use std::{cell::RefCell, mem, rc::Rc, thread, time::Duration};
+use wasmtime::{Export, Linker, Module, Trap};
+use wasmtime_wasi::{Wasi, WasiCtxBuilder};
 
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -17,8 +20,11 @@ pub enum TimerAction {
     Reset,
 }
 
+// TODO: Check if there's any memory leaks due to reference cycles. The
+// exports keep the instance alive which keeps the imports alive, which all
+// keep the environment alive, which keeps the memory alive, which may keep the
+// instance alive -> reference cycle.
 pub struct Runtime {
-    _instance: Instance,
     env: Rc<RefCell<Environment>>,
     timer_state: TimerState,
     hooked: Option<Box<dyn Fn() -> Result<(), Trap>>>,
@@ -192,13 +198,24 @@ impl Runtime {
             }
         })?;
 
+        let wasi_ctx = WasiCtxBuilder::new()
+            .stdout_virt(Box::new(StdStream::stdout()))
+            .stderr_virt(Box::new(StdStream::stderr()))
+            .build()
+            .unwrap();
+
+        Wasi::new(module.store(), wasi_ctx)
+            .add_to_linker(&mut linker)
+            .unwrap();
+
         let instance = linker.instantiate(&module)?;
         env.borrow_mut().memory = instance.exports().find_map(Export::into_memory);
 
-        // TODO: WASI support
-        // if let Some(func) = instance.get_func("_start") {
-        //     func.get0()?()?;
-        // }
+        // TODO: _start is kind of correct, but not in the long term. They are
+        // intending for us to use a different function for libraries.
+        if let Some(func) = instance.get_func("_start") {
+            func.get0()?()?;
+        }
 
         // TODO: Do we error out if this doesn't exist?
         if let Some(func) = instance.get_func("configure") {
@@ -246,7 +263,6 @@ impl Runtime {
             .map(|f| Box::new(f) as _);
 
         Ok(Self {
-            _instance: instance,
             env,
             timer_state: TimerState::NotRunning,
             hooked,
@@ -263,13 +279,19 @@ impl Runtime {
     }
 
     pub fn sleep(&self) {
-        thread::sleep(self.env.borrow().tick_rate);
+        let env = self.env.borrow();
+        let duration = if env.process.is_some() {
+            env.tick_rate
+        } else {
+            Duration::from_secs(1)
+        };
+        thread::sleep(duration);
     }
 
     pub fn step(&mut self) -> anyhow::Result<Option<TimerAction>> {
-        let mut just_connected = false;
-
         {
+            let mut just_connected = false;
+
             let mut env = self.env.borrow_mut();
             if env.process.is_none() {
                 env.process = match Process::with_name(&env.process_name) {
@@ -277,20 +299,22 @@ impl Runtime {
                     Err(_) => return Ok(None),
                 };
                 log::info!(target: "Auto Splitter", "Hooked");
-                // TODO: Is this a good place to do this? What do we guarantee
-                // about the variables and co. here?
-                if let Some(hooked) = &self.hooked {
-                    hooked()?;
-                }
                 just_connected = true;
             }
             if env.update_values(just_connected).is_err() {
                 log::info!(target: "Auto Splitter", "Unhooked");
                 env.process = None;
-                if let Some(unhooked) = &self.unhooked {
-                    unhooked()?;
+                if !just_connected {
+                    if let Some(unhooked) = &self.unhooked {
+                        unhooked()?;
+                    }
                 }
                 return Ok(None);
+            }
+            if just_connected {
+                if let Some(hooked) = &self.hooked {
+                    hooked()?;
+                }
             }
         }
 

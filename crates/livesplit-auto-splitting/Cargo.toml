@@ -6,9 +6,12 @@ edition = "2018"
 
 [dependencies]
 anyhow = "1.0.28"
+bstr = "0.2.12"
 log = "0.4.8"
 num-traits = "0.2.11"
 num-derive = "0.3.0"
 snafu = "0.6.6"
-wasmtime = { git = "https://github.com/bytecodealliance/wasmtime", default-features = false }
+wasmtime = { git = "https://github.com/CryZe/wasmtime", branch = "stuff", default-features = false }
+wasmtime-wasi = { git = "https://github.com/CryZe/wasmtime", branch = "stuff", default-features = false }
+wasi-common = { git = "https://github.com/CryZe/wasmtime", branch = "stuff", default-features = false }
 winapi = { version = "0.3.5", features = ["handleapi", "memoryapi", "processthreadsapi", "psapi", "tlhelp32", "winnt", "wow64apiset"] }
