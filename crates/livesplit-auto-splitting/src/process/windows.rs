@@ -15,31 +15,17 @@ use winapi::um::{
 };
 
 use std::collections::HashMap;
-use std::ffi::OsString;
+use std::ffi::{OsString, OsStr};
 use std::os::windows::ffi::OsStringExt;
 use std::path::PathBuf;
 use std::{iter, mem, ptr, result, slice};
 
-type Address = u64;
-pub type Offset = i64;
-
-#[derive(Debug, snafu::Snafu)]
-pub enum Error {
-    // TODO: Doc Comments
-    ListProcesses,
-    ProcessDoesntExist,
-    ListModules,
-    ProcessOpening,
-    ModuleDoesntExist,
-    ReadMemory,
-}
-
-pub type Result<T> = result::Result<T, Error>;
+use super::{Error, Address, Offset, Result, Signature};
 
 #[derive(Debug)]
 pub struct Process {
     handle: HANDLE,
-    modules: HashMap<String, Address>,
+    modules: HashMap<OsString, Address>,
     is_64bit: bool,
 }
 
@@ -56,7 +42,7 @@ impl Process {
         self.is_64bit
     }
 
-    pub fn path(&self) -> Option<PathBuf> {
+    /*pub*/ fn path(&self) -> Option<PathBuf> {
         let mut path_buf = [0u16; 1024];
         if unsafe {
             GetModuleFileNameExW(
@@ -150,6 +136,7 @@ impl Process {
                     return Err(Error::ListModules);
                 }
 
+                // TODO: processes can dynamically load and unload processes...
                 let mut modules = HashMap::new();
                 let mut entry: MODULEENTRY32W = mem::uninitialized();
                 entry.dwSize = mem::size_of_val(&entry) as _;
@@ -161,7 +148,7 @@ impl Process {
                             let name = &entry.szModule;
                             let len = name.iter().take_while(|&&c| c != 0).count();
                             let name = &name[..len];
-                            let name = OsString::from_wide(name).to_string_lossy().into_owned();
+                            let name = OsString::from_wide(name);
                             modules.insert(name, base_address);
                         }
 
@@ -200,11 +187,16 @@ impl Process {
         }
     }
 
-    pub fn module_address(&self, module: &str) -> Result<Address> {
+    pub fn module_address<T: AsRef<OsStr>>(&self, module: T) -> Result<Address> {
         self.modules
-            .get(module)
+            .get(module.as_ref())
             .cloned()
             .ok_or(Error::ModuleDoesntExist)
+    }
+
+    pub fn modules(&self) -> Result<HashMap<OsString, Address>> {
+        // TODO: when do we want to refresh this?
+        Ok(self.modules.clone())
     }
 
     pub fn read_buf(&self, address: Address, buf: &mut [u8]) -> Result<()> {
@@ -298,78 +290,5 @@ impl Process {
             }
         }
         Ok(None)
-    }
-}
-
-struct Signature {
-    bytes: Vec<u8>,
-    mask: Vec<bool>,
-    skip_offsets: [usize; 256],
-}
-
-impl Signature {
-    fn new(signature: &str) -> Self {
-        let mut bytes_iter = signature.bytes().filter_map(|b| match b {
-            b'0'..=b'9' => Some(b - b'0'),
-            b'a'..=b'f' => Some(b - b'a' + 0xA),
-            b'A'..=b'F' => Some(b - b'A' + 0xA),
-            b'?' => Some(0x10),
-            _ => None,
-        });
-        let (mut bytes, mut mask) = (Vec::new(), Vec::new());
-
-        while let (Some(a), Some(b)) = (bytes_iter.next(), bytes_iter.next()) {
-            let sig_byte = (a << 4) | b;
-            let is_question_marks = a == 0x10 && b == 0x10;
-            bytes.push(sig_byte);
-            mask.push(is_question_marks);
-        }
-
-        let mut skip_offsets = [0; 256];
-
-        let mut unknown = 0;
-        let end = bytes.len() - 1;
-        for (i, (&byte, mask)) in bytes.iter().zip(&mask).enumerate().take(end) {
-            if !mask {
-                skip_offsets[byte as usize] = end - i;
-            } else {
-                unknown = end - i;
-            }
-        }
-
-        if unknown == 0 {
-            unknown = bytes.len();
-        }
-
-        for offset in &mut skip_offsets[..] {
-            if unknown < *offset || *offset == 0 {
-                *offset = unknown;
-            }
-        }
-
-        Self {
-            bytes,
-            mask,
-            skip_offsets,
-        }
-    }
-
-    fn scan(&self, buf: &[u8]) -> Option<usize> {
-        let mut current = 0;
-        let end = self.bytes.len() - 1;
-        while current <= buf.len() - self.bytes.len() {
-            let rem = &buf[current..];
-            if rem
-                .iter()
-                .zip(&self.bytes)
-                .zip(&self.mask)
-                .all(|((&buf, &search), &mask)| buf == search || mask)
-            {
-                return Some(current);
-            }
-            let offset = self.skip_offsets[rem[end] as usize];
-            current += offset;
-        }
-        None
     }
 }
