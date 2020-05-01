@@ -20,7 +20,7 @@ use std::os::windows::ffi::OsStringExt;
 use std::path::PathBuf;
 use std::{iter, mem, ptr, result, slice};
 
-use super::{Error, Address, Offset, Result, Signature};
+use super::{Error, Address, Offset, Result, Signature, ProcessImpl};
 
 #[derive(Debug)]
 pub struct Process {
@@ -37,28 +37,12 @@ impl Drop for Process {
     }
 }
 
-impl Process {
-    pub fn is_64bit(&self) -> bool {
+impl ProcessImpl for Process {
+    fn is_64bit(&self) -> bool {
         self.is_64bit
     }
 
-    /*pub*/ fn path(&self) -> Option<PathBuf> {
-        let mut path_buf = [0u16; 1024];
-        if unsafe {
-            GetModuleFileNameExW(
-                self.handle,
-                ptr::null_mut(),
-                path_buf.as_mut_ptr() as *mut _,
-                path_buf.len() as _,
-            )
-        } == 0
-        {
-            return None;
-        }
-        Some(PathBuf::from(OsString::from_wide(&path_buf)))
-    }
-
-    pub fn with_name(name: &str) -> Result<Self> {
+    fn with_name(name: &OsStr) -> Result<Self> {
         unsafe {
             let snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 
@@ -124,7 +108,71 @@ impl Process {
         }
     }
 
-    pub fn with_pid(pid: DWORD) -> Result<Self> {
+    fn module_address(&self, module: &OsStr) -> Result<Address> {
+        self.modules
+            .get(module)
+            .cloned()
+            .ok_or(Error::ModuleDoesntExist)
+    }
+
+    fn read_buf(&self, address: Address, buf: &mut [u8]) -> Result<()> {
+        unsafe {
+            let mut bytes_read = mem::uninitialized();
+
+            let successful = ReadProcessMemory(
+                self.handle,
+                address as _,
+                buf.as_mut_ptr() as _,
+                buf.len() as _,
+                &mut bytes_read,
+            ) != 0;
+
+            if successful && bytes_read as usize == buf.len() {
+                Ok(())
+            } else {
+                Err(Error::ReadMemory)
+            }
+        }
+    }
+
+    fn scan_signature(&self, signature: Signature) -> Result<Option<Address>> {
+        let mut page_buf = Vec::<u8>::new();
+
+        for page in self.memory_pages(false) {
+            let base = page.BaseAddress as Address;
+            let len = page.RegionSize as usize;
+            page_buf.clear();
+            page_buf.reserve(len);
+            unsafe {
+                page_buf.set_len(len);
+            }
+            self.read_buf(base, &mut page_buf)?;
+            if let Some(index) = signature.scan(&page_buf) {
+                return Ok(Some(base + index as Address));
+            }
+        }
+        Ok(None)
+    }
+}
+
+impl Process {
+    /*pub*/ fn path(&self) -> Option<PathBuf> {
+        let mut path_buf = [0u16; 1024];
+        if unsafe {
+            GetModuleFileNameExW(
+                self.handle,
+                ptr::null_mut(),
+                path_buf.as_mut_ptr() as *mut _,
+                path_buf.len() as _,
+            )
+        } == 0
+        {
+            return None;
+        }
+        Some(PathBuf::from(OsString::from_wide(&path_buf)))
+    }
+
+    /*pub*/ fn with_pid(pid: DWORD) -> Result<Self> {
         unsafe {
             let handle = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, false as _, pid);
 
@@ -187,45 +235,9 @@ impl Process {
         }
     }
 
-    pub fn module_address<T: AsRef<OsStr>>(&self, module: T) -> Result<Address> {
-        self.modules
-            .get(module.as_ref())
-            .cloned()
-            .ok_or(Error::ModuleDoesntExist)
-    }
-
-    pub fn modules(&self) -> Result<HashMap<OsString, Address>> {
+    /*pub*/ fn modules(&self) -> Result<&HashMap<OsString, Address>> {
         // TODO: when do we want to refresh this?
-        Ok(self.modules.clone())
-    }
-
-    pub fn read_buf(&self, address: Address, buf: &mut [u8]) -> Result<()> {
-        unsafe {
-            let mut bytes_read = mem::uninitialized();
-
-            let successful = ReadProcessMemory(
-                self.handle,
-                address as _,
-                buf.as_mut_ptr() as _,
-                buf.len() as _,
-                &mut bytes_read,
-            ) != 0;
-
-            if successful && bytes_read as usize == buf.len() {
-                Ok(())
-            } else {
-                Err(Error::ReadMemory)
-            }
-        }
-    }
-
-    pub fn read<T: Copy>(&self, address: Address) -> Result<T> {
-        // TODO Unsound af
-        unsafe {
-            let mut res = mem::uninitialized();
-            let buf = slice::from_raw_parts_mut(mem::transmute(&mut res), mem::size_of::<T>());
-            self.read_buf(address, buf).map(|_| res)
-        }
+        Ok(&self.modules)
     }
 
     fn memory_pages(&self, all: bool) -> impl Iterator<Item = MEMORY_BASIC_INFORMATION> + '_ {
@@ -269,26 +281,5 @@ impl Process {
             }
             None
         })
-    }
-
-    pub fn scan_signature(&self, signature: &str) -> Result<Option<Address>> {
-        let signature = Signature::new(signature);
-
-        let mut page_buf = Vec::<u8>::new();
-
-        for page in self.memory_pages(false) {
-            let base = page.BaseAddress as Address;
-            let len = page.RegionSize as usize;
-            page_buf.clear();
-            page_buf.reserve(len);
-            unsafe {
-                page_buf.set_len(len);
-            }
-            self.read_buf(base, &mut page_buf)?;
-            if let Some(index) = signature.scan(&page_buf) {
-                return Ok(Some(base + index as Address));
-            }
-        }
-        Ok(None)
     }
 }

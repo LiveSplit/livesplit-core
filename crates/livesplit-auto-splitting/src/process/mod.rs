@@ -1,8 +1,11 @@
-#[cfg_attr(linux, path = "linux.rs")]
+#[cfg_attr(target_os = "linux", path = "linux.rs")]
 #[cfg_attr(windows, path = "windows.rs")]
 mod os;
 
 pub use os::Process;
+
+use std::ffi::OsStr;
+use std::{io, slice, mem};
 
 #[derive(Debug, snafu::Snafu)]
 pub enum Error {
@@ -90,5 +93,48 @@ impl Signature {
             current += offset;
         }
         None
+    }
+}
+
+/// Private trait used for keeping API consistent between platforms
+trait ProcessImpl {
+    fn is_64bit(&self) -> bool;
+    fn with_name(name: &OsStr) -> Result<Self> where Self: Sized;
+    //fn with_pid(pid: pid_t) -> Result<Self>;
+    fn module_address(&self, module: &OsStr) -> Result<Address>;
+    fn read_buf(&self, address: Address, buf: &mut [u8]) -> Result<()>;
+    // TODO: factor out a shared implementation, most of this is not platform specific.
+    fn scan_signature(&self, signature: Signature) -> Result<Option<Address>>;
+}
+
+impl Process {
+    /// Returns whether this Process is 64 bit or not
+    #[inline]
+    pub fn is_64bit(&self) -> bool { ProcessImpl::is_64bit(self) }
+
+    /// Finds a process with a given name and returns it
+    #[inline]
+    pub fn with_name<T: AsRef<OsStr>>(name: T) -> Result<Self> { ProcessImpl::with_name(name.as_ref()) }
+
+    /// Returns the address of a module within this process, if present
+    #[inline]
+    pub fn module_address<T: AsRef<OsStr>>(&self, module: T) -> Result<Address> { ProcessImpl::module_address(self, module.as_ref()) }
+
+    /// Reads bef.len() bytes from address in this process into buf
+    #[inline]
+    pub fn read_buf<T: AsMut<[u8]>>(&self, address: Address, mut buf: T) -> Result<()> { ProcessImpl::read_buf(self, address, buf.as_mut()) }
+
+    /// Reads a T from address in this process
+    pub fn read<T: Copy>(&self, address: Address) -> Result<T> {
+        // TODO Unsound af
+        unsafe {
+            let mut res = mem::uninitialized();
+            let buf = slice::from_raw_parts_mut(mem::transmute(&mut res), mem::size_of::<T>());
+            self.read_buf(address, buf).map(|_| res)
+        }
+    }
+
+    pub fn scan_signature<T: AsRef<str>>(&self, signature: T) -> Result<Option<Address>> {
+        ProcessImpl::scan_signature(self, Signature::new(signature.as_ref()))
     }
 }

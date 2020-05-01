@@ -8,7 +8,7 @@ use std::{mem, slice, fs, io};
 use std::io::{Read, BufRead};
 use std::collections::HashMap;
 
-use super::{Error, Result, Address, Offset, Signature};
+use super::{Error, Result, Address, Offset, Signature, ProcessImpl};
 
 #[derive(Debug, Clone)]
 pub struct Process {
@@ -24,11 +24,71 @@ struct MapRange {
     perms: [u8; 4]
 }
 
-impl Process {
-    pub fn is_64bit(&self) -> bool {
+impl ProcessImpl for Process {
+    fn is_64bit(&self) -> bool {
         self.is_64bit
     }
 
+    fn with_name(name: &OsStr) -> Result<Self> {
+        Process::processes_with_name(name)?.get(0).cloned().ok_or(Error::ProcessDoesntExist)
+    }
+
+    fn module_address(&self, module: &OsStr) -> Result<Address> {
+        self.modules()?.get(module).cloned().ok_or(Error::ModuleDoesntExist)
+    }
+
+    fn read_buf(&self, address: Address, buf: &mut [u8]) -> Result<()> {
+        use libc::{pid_t, c_void, iovec, process_vm_readv};
+
+        // TODO: what if this is a 32 bit process and we're trying to read from a 64 bit process?
+        // Should we go through /proc/PID/mem instead? ptrace?
+        // TODO: What's required so we don't need to run as root?
+        let local_iov = iovec {
+            iov_base: buf.as_mut_ptr() as *mut c_void,
+            iov_len: buf.len()
+        };
+
+        let remote_iov = iovec {
+            iov_base: address as *mut c_void,
+            iov_len: buf.len()
+        };
+
+        let result = unsafe { process_vm_readv(self.pid, &local_iov, 1, &remote_iov, 1, 0) };
+        if result == -1 {
+            Err(Error::ReadMemory)
+        } else {
+            Ok(())
+        }
+    }
+
+    // TODO: move to shared helper
+    fn scan_signature(&self, signature: Signature) -> Result<Option<Address>> {
+        let mut page_buf = Vec::<u8>::new();
+
+        for page in self.memory_pages()?
+            .filter(|range| range.perms[0] == b'r' && !(range.path.is_some() && (
+                range.path.as_ref().unwrap().starts_with("/dev") ||
+                range.path.as_ref().unwrap().file_name().unwrap() == "[vvar]" ||
+                range.path.as_ref().unwrap().file_name().unwrap() == "[vdso]"
+            )))
+        {
+            let base = page.range_start;
+            let len = page.range_end - page.range_start;
+            page_buf.clear();
+            page_buf.reserve(len as usize);
+            unsafe {
+                page_buf.set_len(len as usize);
+                self.read_buf(base, &mut page_buf)?;
+            }
+            if let Some(index) = signature.scan(&page_buf) {
+                return Ok(Some(base + index as Address));
+            }
+        }
+        Ok(None)
+    }
+}
+
+impl Process {
     fn process_name(&self) -> Option<OsString> {
         let mut process_name = Vec::new();
         File::open(format!("/proc/{}/comm", self.pid)).ok()?.read_to_end(&mut process_name).ok()?;
@@ -65,11 +125,7 @@ impl Process {
         Ok(processes)
     }
 
-    pub fn with_name<T: AsRef<OsStr>>(name: T) -> Result<Self> {
-        Process::processes_with_name(name.as_ref())?.get(0).cloned().ok_or(Error::ProcessDoesntExist)
-    }
-
-    pub fn with_pid(pid: libc::pid_t) -> Result<Self> {
+    /*pub*/ fn with_pid(pid: libc::pid_t) -> Result<Self> {
         let mut proc = Process { pid, is_64bit: false };
         // TODO: do we want to cache the pages/modules at all?
         if let Ok(pages) = proc.memory_pages() {
@@ -81,51 +137,13 @@ impl Process {
         }
     }
 
-    pub fn module_address<T: AsRef<OsStr>>(&self, module: T) -> Result<Address> {
-        self.modules()?.get(module.as_ref()).cloned().ok_or(Error::ModuleDoesntExist)
-    }
-
-    pub fn modules(&self) -> Result<HashMap<OsString, Address>> {
+    /*pub*/ fn modules(&self) -> Result<HashMap<OsString, Address>> {
         // There are multiple ways of doing this. Could also traverse symlinks in /proc/PID/map_files, for instance
         Ok(self.memory_pages()?.filter_map(|MapRange { path, range_start, offset, .. }|
             path.map(|p|
                 (p.file_name().unwrap().to_os_string(), range_start - offset as Address)
             )
         ).collect())
-    }
-
-    pub fn read_buf(&self, address: Address, buf: &mut [u8]) -> Result<()> {
-        use libc::{pid_t, c_void, iovec, process_vm_readv};
-
-        // TODO: what if this is a 32 bit process and we're trying to read from a 64 bit process?
-        // Should we go through /proc/PID/mem instead? ptrace?
-        // TODO: What's required so we don't need to run as root?
-        let local_iov = iovec {
-            iov_base: buf.as_mut_ptr() as *mut c_void,
-            iov_len: buf.len()
-        };
-
-        let remote_iov = iovec {
-            iov_base: address as *mut c_void,
-            iov_len: buf.len()
-        };
-
-        let result = unsafe { process_vm_readv(self.pid, &local_iov, 1, &remote_iov, 1, 0) };
-        if result == -1 {
-            Err(Error::ReadMemory)
-        } else {
-            Ok(())
-        }
-    }
-
-    // TODO: move to shared helper
-    pub fn read<T: Copy>(&self, address: Address) -> Result<T> {
-        // TODO Unsound af
-        unsafe {
-            let mut res = mem::uninitialized();
-            let buf = slice::from_raw_parts_mut(mem::transmute(&mut res), mem::size_of::<T>());
-            self.read_buf(address, buf).map(|_| res)
-        }
     }
 
     // Parses /proc/PID/maps
@@ -160,33 +178,5 @@ impl Process {
                 path
             }
         }))
-    }
-
-    // TODO: move to shared helper
-    pub fn scan_signature(&self, signature: &str) -> Result<Option<Address>> {
-        let signature = Signature::new(signature);
-
-        let mut page_buf = Vec::<u8>::new();
-
-        for page in self.memory_pages()?
-            .filter(|range| range.perms[0] == b'r' && !(range.path.is_some() && (
-                range.path.as_ref().unwrap().starts_with("/dev") ||
-                range.path.as_ref().unwrap().file_name().unwrap() == "[vvar]" ||
-                range.path.as_ref().unwrap().file_name().unwrap() == "[vdso]"
-            )))
-        {
-            let base = page.range_start;
-            let len = page.range_end - page.range_start;
-            page_buf.clear();
-            page_buf.reserve(len as usize);
-            unsafe {
-                page_buf.set_len(len as usize);
-                self.read_buf(base, &mut page_buf)?;
-            }
-            if let Some(index) = signature.scan(&page_buf) {
-                return Ok(Some(base + index as Address));
-            }
-        }
-        Ok(None)
     }
 }
