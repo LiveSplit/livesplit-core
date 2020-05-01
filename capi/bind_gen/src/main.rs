@@ -116,9 +116,7 @@ fn get_type(ty: &SynType) -> Type {
                 if name.starts_with("Owned") {
                     name = name["Owned".len()..].to_string();
                 }
-                if name == "TimingMethod" {
-                    name = String::from("u8");
-                } else if name == "TimerPhase" {
+                if name == "TimingMethod" || name == "TimerPhase" {
                     name = String::from("u8");
                 }
                 let is_custom = match &name as &str {
@@ -178,7 +176,7 @@ fn main() {
             );
 
             for item in &file.items {
-                if let &Item::Fn(ItemFn {
+                if let Item::Fn(ItemFn {
                     vis: Visibility::Public(_),
                     attrs,
                     sig:
@@ -190,7 +188,7 @@ fn main() {
                             ..
                         },
                     ..
-                }) = &item
+                }) = item
                 {
                     if abi
                         .as_ref()

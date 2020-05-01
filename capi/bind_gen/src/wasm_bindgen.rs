@@ -351,7 +351,7 @@ pub fn write<W: Write>(
             writer,
             "{}{}",
             r#"// tslint:disable
-import * as wasm from "./livesplit_core_bg";
+import * as wasm from "./livesplit_core_bg.wasm";
 
 declare class TextEncoder {
     constructor(label?: string, options?: TextEncoding.TextEncoderOptions);
