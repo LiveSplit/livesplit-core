@@ -93,6 +93,13 @@ impl Process {
         let mut process_name = Vec::new();
         File::open(format!("/proc/{}/comm", self.pid)).ok()?.read_to_end(&mut process_name).ok()?;
 
+        if let Some(last) = process_name.last() {
+            if *last == b'\n' {
+                let _ = last;
+                let _ = process_name.pop();
+            }
+        }
+
         Some(OsString::from_vec(process_name))
     }
 
@@ -130,7 +137,7 @@ impl Process {
         // TODO: do we want to cache the pages/modules at all?
         if let Ok(pages) = proc.memory_pages() {
             // Inspired by https://unix.stackexchange.com/a/106235 "Parsing the maps file"
-            proc.is_64bit = pages.last().unwrap().range_end > 0xFFFFFFFF;
+            proc.is_64bit = pages.last().ok_or(Error::ProcessDoesntExist)?.range_end > 0xFFFFFFFF;
             Ok(proc)
         } else {
             Err(Error::ProcessDoesntExist)
