@@ -15,6 +15,7 @@ wasmtime = { git = "https://github.com/CryZe/wasmtime", branch = "wasi-virtual-s
 wasmtime-wasi = { git = "https://github.com/CryZe/wasmtime", branch = "wasi-virtual-stdstream", default-features = false }
 wasi-common = { git = "https://github.com/CryZe/wasmtime", branch = "wasi-virtual-stdstream", default-features = false }
 libc = "0.2.54"
+bytemuck = "1.2.0"
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3.5", features = ["handleapi", "memoryapi", "processthreadsapi", "psapi", "tlhelp32", "winnt", "wow64apiset"] }
