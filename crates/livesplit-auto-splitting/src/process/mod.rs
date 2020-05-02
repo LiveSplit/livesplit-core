@@ -6,6 +6,7 @@ pub use os::Process;
 
 use std::ffi::OsStr;
 use std::{io, slice, mem};
+use bytemuck::Pod;
 
 #[derive(Debug, snafu::Snafu)]
 pub enum Error {
@@ -125,13 +126,12 @@ impl Process {
     pub fn read_buf<T: AsMut<[u8]>>(&self, address: Address, mut buf: T) -> Result<()> { ProcessImpl::read_buf(self, address, buf.as_mut()) }
 
     /// Reads a T from address in this process
-    pub fn read<T: Copy>(&self, address: Address) -> Result<T> {
-        // TODO Unsound af
-        unsafe {
-            let mut res = mem::uninitialized();
-            let buf = slice::from_raw_parts_mut(mem::transmute(&mut res), mem::size_of::<T>());
-            self.read_buf(address, buf).map(|_| res)
-        }
+    pub fn read<T: Pod>(&self, address: Address) -> Result<T> {
+        // TODO: for some reason, we're unable to allocate this on the stack?
+        // "`std::marker::Sized` is not implemented for `T`" even if I add it as an explicit bound
+        let mut buf = vec![0; mem::size_of::<T>()];
+        self.read_buf(address, &mut buf)?;
+        Ok(*bytemuck::try_from_bytes_mut(&mut buf).or(Err(Error::ReadMemory))?)
     }
 
     pub fn scan_signature<T: AsRef<str>>(&self, signature: T) -> Result<Option<Address>> {
