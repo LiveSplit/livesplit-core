@@ -97,6 +97,11 @@ impl Signature {
     }
 }
 
+pub(crate) struct ScannableRange {
+    base: Address,
+    len: u64
+}
+
 /// Private trait used for keeping API consistent between platforms
 trait ProcessImpl {
     fn is_64bit(&self) -> bool;
@@ -104,8 +109,9 @@ trait ProcessImpl {
     //fn with_pid(pid: pid_t) -> Result<Self>;
     fn module_address(&self, module: &OsStr) -> Result<Address>;
     fn read_buf(&self, address: Address, buf: &mut [u8]) -> Result<()>;
-    // TODO: factor out a shared implementation, most of this is not platform specific.
-    fn scan_signature(&self, signature: Signature) -> Result<Option<Address>>;
+
+    type ScannableIter;
+    fn scannable_regions(&self) -> Result<Self::ScannableIter>;
 }
 
 impl Process {
@@ -134,7 +140,27 @@ impl Process {
         Ok(*bytemuck::try_from_bytes_mut(&mut buf).or(Err(Error::ReadMemory))?)
     }
 
+    fn scan_inner(&self, signature: Signature) -> Result<Option<Address>> {
+        let mut page_buf = Vec::<u8>::new();
+
+        for page in self.scannable_regions()? {
+            let base = page.base;
+            let len = page.len;
+            page_buf.clear();
+            page_buf.reserve(len as usize);
+            unsafe {
+                page_buf.set_len(len as usize);
+                self.read_buf(base, &mut page_buf)?;
+            }
+            if let Some(index) = signature.scan(&page_buf) {
+                return Ok(Some(base + index as Address));
+            }
+        }
+        Ok(None)
+    }
+
+    /// Returns the address of a matching signature, if present.
     pub fn scan_signature<T: AsRef<str>>(&self, signature: T) -> Result<Option<Address>> {
-        ProcessImpl::scan_signature(self, Signature::new(signature.as_ref()))
+        self.scan_inner(Signature::new(signature.as_ref()))
     }
 }

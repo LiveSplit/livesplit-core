@@ -10,7 +10,7 @@ use std::io::{Read, BufRead};
 use std::collections::HashMap;
 use std::cell::{RefCell, RefMut};
 
-use super::{Error, Result, Address, Offset, Signature, ProcessImpl};
+use super::{Error, Result, Address, Offset, Signature, ProcessImpl, ScannableRange};
 
 #[derive(Debug)]
 pub struct Process {
@@ -25,6 +25,74 @@ struct MapRange {
     offset: Offset,
     path: Option<PathBuf>,
     perms: [u8; 4]
+}
+
+struct MapRangeIter(std::io::Lines<std::io::BufReader<File>>);
+
+impl Iterator for MapRangeIter {
+    type Item = MapRange;
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            match self.0.next() {
+                Some(Ok(line)) => {
+                    let mut fields = line.split_whitespace();
+
+                    let mut range = fields.next().unwrap().split('-');
+                    let range_start = Address::from_str_radix(range.next().unwrap(), 16).unwrap();
+                    let range_end = Address::from_str_radix(range.next().unwrap(), 16).unwrap();
+
+                    let perms = fields.next().unwrap().as_bytes();
+                    let perms: [u8; 4] = [perms[0], perms[1], perms[2], perms[3]];
+
+                    let offset = Offset::from_str_radix(fields.next().unwrap(), 16).unwrap();
+
+                    let _ = fields.next(); // dev
+                    let _ = fields.next(); // inode
+
+                    let path: Option<PathBuf> = fields.next().map(|s| s.into());
+
+                    return Some(MapRange {
+                        range_start,
+                        range_end,
+                        offset,
+                        perms,
+                        path
+                    })
+                },
+                Some(Err(_)) => continue,
+                None => return None
+            }
+        }
+    }
+}
+
+pub(crate) struct ScannableIter(MapRangeIter);
+
+impl Iterator for ScannableIter {
+    type Item = ScannableRange;
+    fn next(&mut self) -> Option<Self::Item> {
+        loop {
+            if let Some(range) = self.0.next() {
+                if let Some(path) = range.path {
+                    if path.starts_with("/dev") ||
+                        path.file_name().unwrap() == "[vvar]" ||
+                        path.file_name().unwrap() == "[vdso]"
+                    {
+                        continue;
+                    }
+                }
+
+                if range.perms[0] == b'r' {
+                    return Some(ScannableRange {
+                        base: range.range_start,
+                        len: range.range_end - range.range_start
+                    });
+                }
+            } else {
+                return None;
+            }
+        }
+    }
 }
 
 impl ProcessImpl for Process {
@@ -55,30 +123,9 @@ impl ProcessImpl for Process {
         }
     }
 
-    // TODO: move to shared helper
-    fn scan_signature(&self, signature: Signature) -> Result<Option<Address>> {
-        let mut page_buf = Vec::<u8>::new();
-
-        for page in self.memory_pages()?
-            .filter(|range| range.perms[0] == b'r' && !(range.path.is_some() && (
-                range.path.as_ref().unwrap().starts_with("/dev") ||
-                range.path.as_ref().unwrap().file_name().unwrap() == "[vvar]" ||
-                range.path.as_ref().unwrap().file_name().unwrap() == "[vdso]"
-            )))
-        {
-            let base = page.range_start;
-            let len = page.range_end - page.range_start;
-            page_buf.clear();
-            page_buf.reserve(len as usize);
-            unsafe {
-                page_buf.set_len(len as usize);
-                self.read_buf(base, &mut page_buf)?;
-            }
-            if let Some(index) = signature.scan(&page_buf) {
-                return Ok(Some(base + index as Address));
-            }
-        }
-        Ok(None)
+    type ScannableIter = ScannableIter;
+    fn scannable_regions(&self) -> Result<Self::ScannableIter> {
+        Ok(ScannableIter(self.memory_pages()?))
     }
 }
 
@@ -167,36 +214,12 @@ impl Process {
     }
 
     // Parses /proc/PID/maps
-    fn memory_pages(&self) -> Result<impl Iterator<Item=MapRange>> {
+    fn memory_pages(&self) -> Result<MapRangeIter> {
         // License: MIT
         // Copyright (c) 2016 Julia Evans, Jorge Aparicio
         // Based on https://github.com/rbspy/proc-maps/blob/7168cd0a13d464ef00f20a81f064b7729ff58d2e/src/linux_maps.rs#L49
         let file = io::BufReader::new(File::open(format!("/proc/{}/maps", self.pid)).or(Err(Error::ProcessDoesntExist))?);
         // TODO: use OsString, use unwrap a bit less.
-        Ok(file.lines().filter_map(std::result::Result::ok).map(|line| {
-            let mut fields = line.split_whitespace();
-
-            let mut range = fields.next().unwrap().split('-');
-            let range_start = Address::from_str_radix(range.next().unwrap(), 16).unwrap();
-            let range_end = Address::from_str_radix(range.next().unwrap(), 16).unwrap();
-
-            let perms = fields.next().unwrap().as_bytes();
-            let perms: [u8; 4] = [perms[0], perms[1], perms[2], perms[3]];
-
-            let offset = Offset::from_str_radix(fields.next().unwrap(), 16).unwrap();
-
-            let _ = fields.next(); // dev
-            let _ = fields.next(); // inode
-
-            let path: Option<PathBuf> = fields.next().map(|s| s.into());
-
-            MapRange {
-                range_start,
-                range_end,
-                offset,
-                perms,
-                path
-            }
-        }))
+        Ok(MapRangeIter(file.lines()))
     }
 }
