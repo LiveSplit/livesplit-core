@@ -20,7 +20,7 @@ use std::os::windows::ffi::OsStringExt;
 use std::path::PathBuf;
 use std::{iter, mem, ptr, result, slice};
 
-use super::{Error, Address, Offset, Result, Signature, ProcessImpl};
+use super::{Error, Address, Offset, Result, Signature, ProcessImpl, ScannableRange};
 
 #[derive(Debug)]
 pub struct Process {
@@ -34,6 +34,50 @@ impl Drop for Process {
         unsafe {
             CloseHandle(self.handle);
         }
+    }
+}
+
+pub(crate) struct ScannableIter {
+    handle: HANDLE,
+    addr: u64,
+    max: u64,
+    all: bool
+}
+
+impl Iterator for ScannableIter {
+    type Item = ScannableRange;
+    fn next(&mut self) -> Option<Self::Item> {
+        const mbi_size: usize = mem::size_of::<MEMORY_BASIC_INFORMATION>();
+        while self.addr < self.max {
+            unsafe {
+                let mut mbi: MEMORY_BASIC_INFORMATION = mem::uninitialized();
+                if VirtualQueryEx(self.handle, self.addr as _, &mut mbi, mbi_size) == 0 {
+                    break;
+                }
+                self.addr += mbi.RegionSize as u64;
+
+                // We don't care about reserved / free pages
+                if mbi.State != MEM_COMMIT {
+                    continue;
+                }
+
+                // We can't read from guarded pages
+                if !self.all && (mbi.Protect & PAGE_GUARD) != 0 {
+                    continue;
+                }
+
+                // We can't read from no access pages
+                if !self.all && (mbi.Protect & PAGE_NOACCESS) != 0 {
+                    continue;
+                }
+
+                return Some(ScannableRange {
+                    base: mbi.BaseAddress as u64,
+                    len: mbi.RegionSize as u64
+                });
+            }
+        }
+        None
     }
 }
 
@@ -135,23 +179,9 @@ impl ProcessImpl for Process {
         }
     }
 
-    fn scan_signature(&self, signature: Signature) -> Result<Option<Address>> {
-        let mut page_buf = Vec::<u8>::new();
-
-        for page in self.memory_pages(false) {
-            let base = page.BaseAddress as Address;
-            let len = page.RegionSize as usize;
-            page_buf.clear();
-            page_buf.reserve(len);
-            unsafe {
-                page_buf.set_len(len);
-            }
-            self.read_buf(base, &mut page_buf)?;
-            if let Some(index) = signature.scan(&page_buf) {
-                return Ok(Some(base + index as Address));
-            }
-        }
-        Ok(None)
+    type ScannableIter = ScannableIter;
+    fn scannable_regions(&self) -> Result<ScannableIter> {
+        Ok(self.memory_pages(false))
     }
 }
 
@@ -240,7 +270,7 @@ impl Process {
         Ok(&self.modules)
     }
 
-    fn memory_pages(&self, all: bool) -> impl Iterator<Item = MEMORY_BASIC_INFORMATION> + '_ {
+    fn memory_pages(&self, all: bool) -> ScannableIter {
         // hardcoded values because GetSystemInfo / GetNativeSystemInfo can't
         // return info for remote process
         let min = 0x10000u64;
@@ -250,36 +280,13 @@ impl Process {
             0x7FFEFFFFu64
         };
 
-        let mbi_size = mem::size_of::<MEMORY_BASIC_INFORMATION>();
+
         let mut addr = min;
-        iter::from_fn(move || {
-            while addr < max {
-                unsafe {
-                    let mut mbi: MEMORY_BASIC_INFORMATION = mem::uninitialized();
-                    if VirtualQueryEx(self.handle, addr as _, &mut mbi, mbi_size) == 0 {
-                        break;
-                    }
-                    addr += mbi.RegionSize as u64;
-
-                    // We don't care about reserved / free pages
-                    if mbi.State != MEM_COMMIT {
-                        continue;
-                    }
-
-                    // We can't read from guarded pages
-                    if !all && (mbi.Protect & PAGE_GUARD) != 0 {
-                        continue;
-                    }
-
-                    // We can't read from no access pages
-                    if !all && (mbi.Protect & PAGE_NOACCESS) != 0 {
-                        continue;
-                    }
-
-                    return Some(mbi);
-                }
-            }
-            None
-        })
+        ScannableIter {
+            handle: self.handle,
+            addr: min,
+            max,
+            all
+        }
     }
 }
