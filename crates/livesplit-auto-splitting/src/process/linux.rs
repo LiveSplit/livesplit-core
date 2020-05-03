@@ -1,5 +1,6 @@
 use libc::pid_t;
 use std::os::unix::ffi::OsStringExt;
+use std::os::unix::fs::FileExt;
 use std::ffi::{OsStr, OsString};
 use std::fs::File;
 use std::path::PathBuf;
@@ -7,13 +8,15 @@ use std::str::FromStr;
 use std::{mem, slice, fs, io};
 use std::io::{Read, BufRead};
 use std::collections::HashMap;
+use std::cell::{RefCell, RefMut};
 
 use super::{Error, Result, Address, Offset, Signature, ProcessImpl};
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Process {
     pid: pid_t,
-    is_64bit: bool
+    is_64bit: bool,
+    memory: RefCell<Option<File>>
 }
 
 struct MapRange {
@@ -30,7 +33,12 @@ impl ProcessImpl for Process {
     }
 
     fn with_name(name: &OsStr) -> Result<Self> {
-        Process::processes_with_name(name)?.get(0).cloned().ok_or(Error::ProcessDoesntExist)
+        let mut processes = Process::processes_with_name(name)?;
+        if processes.len() >= 1 {
+            Ok(processes.swap_remove(0))
+        } else {
+            Err(Error::ProcessDoesntExist)
+        }
     }
 
     fn module_address(&self, module: &OsStr) -> Result<Address> {
@@ -40,24 +48,10 @@ impl ProcessImpl for Process {
     fn read_buf(&self, address: Address, buf: &mut [u8]) -> Result<()> {
         use libc::{pid_t, c_void, iovec, process_vm_readv};
 
-        // TODO: what if this is a 32 bit process and we're trying to read from a 64 bit process?
-        // Should we go through /proc/PID/mem instead? ptrace?
-        // TODO: What's required so we don't need to run as root?
-        let local_iov = iovec {
-            iov_base: buf.as_mut_ptr() as *mut c_void,
-            iov_len: buf.len()
-        };
-
-        let remote_iov = iovec {
-            iov_base: address as *mut c_void,
-            iov_len: buf.len()
-        };
-
-        let result = unsafe { process_vm_readv(self.pid, &local_iov, 1, &remote_iov, 1, 0) };
-        if result == -1 {
-            Err(Error::ReadMemory)
+        if let Some(file) = self.memory() {
+            file.read_exact_at(buf, address as u64).or(Err(Error::ReadMemory))
         } else {
-            Ok(())
+            Err(Error::ReadMemory)
         }
     }
 
@@ -133,7 +127,7 @@ impl Process {
     }
 
     /*pub*/ fn with_pid(pid: libc::pid_t) -> Result<Self> {
-        let mut proc = Process { pid, is_64bit: false };
+        let mut proc = Process { pid, is_64bit: false, memory: RefCell::new(None) };
         // TODO: do we want to cache the pages/modules at all?
         if let Ok(pages) = proc.memory_pages() {
             // Inspired by https://unix.stackexchange.com/a/106235 "Parsing the maps file"
@@ -151,6 +145,25 @@ impl Process {
                 (p.file_name().unwrap().to_os_string(), range_start - offset as Address)
             )
         ).collect())
+    }
+
+    fn memory(&self) -> Option<RefMut<File>> {
+        let mut mem = self.memory.borrow_mut();
+        if mem.is_none() {
+            // TODO: alternative methods of obtaining file handles
+            match File::open(format!("/proc/{}/mem", self.pid)) {
+                Ok(file) => {
+                    *mem = Some(file);
+                }
+                Err(_) => {} // do nothing
+            }
+        }
+
+        if mem.is_some() {
+            Some(RefMut::map(mem, |o| o.as_mut().unwrap()))
+        } else {
+            None
+        }
     }
 
     // Parses /proc/PID/maps
