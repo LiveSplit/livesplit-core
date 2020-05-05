@@ -5,7 +5,7 @@ mod os;
 pub use os::Process;
 
 use std::ffi::OsStr;
-use std::{io, slice, mem};
+use std::mem;
 use bytemuck::Pod;
 
 #[derive(Debug, snafu::Snafu)]

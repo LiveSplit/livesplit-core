@@ -5,7 +5,7 @@ use std::ffi::{OsStr, OsString};
 use std::fs::File;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
-use std::{mem, slice, fs, io};
+use std::{fs, io};
 use std::io::{Read, BufRead};
 use std::collections::HashMap;
 use std::cell::{RefCell, RefMut};
@@ -15,7 +15,7 @@ use nom::sequence::{tuple, separated_pair, terminated};
 use nom::combinator::{map, map_res, opt, verify};
 use nom::IResult;
 
-use super::{Error, Result, Address, Offset, Signature, ProcessImpl, ScannableRange};
+use super::{Error, Result, Address, ProcessImpl, ScannableRange};
 
 #[derive(Debug)]
 pub struct Process {
@@ -118,8 +118,6 @@ impl ProcessImpl for Process {
     }
 
     fn read_buf(&self, address: Address, buf: &mut [u8]) -> Result<()> {
-        use libc::{pid_t, c_void, iovec, process_vm_readv};
-
         if let Some(file) = self.memory() {
             file.read_exact_at(buf, address as u64).or(Err(Error::ReadMemory))
         } else {
