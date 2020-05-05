@@ -1,14 +1,19 @@
 use libc::pid_t;
-use std::os::unix::ffi::OsStringExt;
+use std::os::unix::ffi::{OsStrExt, OsStringExt};
 use std::os::unix::fs::FileExt;
 use std::ffi::{OsStr, OsString};
 use std::fs::File;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::{mem, slice, fs, io};
 use std::io::{Read, BufRead};
 use std::collections::HashMap;
 use std::cell::{RefCell, RefMut};
+
+use nom::character::complete::{digit1, hex_digit1, space1, newline, char, not_line_ending, one_of};
+use nom::sequence::{tuple, separated_pair, terminated};
+use nom::combinator::{map, map_res, opt, verify};
+use nom::IResult;
 
 use super::{Error, Result, Address, Offset, Signature, ProcessImpl, ScannableRange};
 
@@ -22,12 +27,31 @@ pub struct Process {
 struct MapRange {
     range_start: Address,
     range_end: Address,
-    offset: Offset,
+    offset: u64,
     path: Option<PathBuf>,
     perms: [u8; 4]
 }
 
-struct MapRangeIter(std::io::Lines<std::io::BufReader<File>>);
+
+fn parse_hex(input: &[u8]) -> IResult<&[u8], u64> {
+    map_res(hex_digit1, |input| u64::from_str_radix(std::str::from_utf8(input).unwrap(), 16))(input)
+}
+
+fn map_line(input: &[u8]) -> IResult<&[u8], MapRange> {
+    map(tuple((
+        terminated(separated_pair(parse_hex, char('-'), parse_hex), space1),
+        terminated(tuple((one_of("r-"), one_of("w-"), one_of("x-"), one_of("sp"))), space1),
+        terminated(parse_hex, space1),
+        terminated(separated_pair(parse_hex, char(':'), parse_hex), space1),
+        terminated(map_res(digit1, |input| u64::from_str_radix(std::str::from_utf8(input).unwrap(), 10)), space1),
+        opt(verify(map(not_line_ending, |input| PathBuf::from(OsStr::from_bytes(input).to_os_string())), |i: &Path| i.as_os_str().len() != 0)),
+        opt(newline)
+    )), |((range_start, range_end), perms, offset, _dev, _inode, path, _newline)| MapRange {
+        range_start, range_end, offset, path, perms: [perms.0 as u8, perms.1 as u8, perms.2 as u8, perms.3 as u8]
+    })(input)
+}
+
+struct MapRangeIter(std::io::Split<std::io::BufReader<File>>);
 
 impl Iterator for MapRangeIter {
     type Item = MapRange;
@@ -35,29 +59,9 @@ impl Iterator for MapRangeIter {
         loop {
             match self.0.next() {
                 Some(Ok(line)) => {
-                    let mut fields = line.split_whitespace();
-
-                    let mut range = fields.next().unwrap().split('-');
-                    let range_start = Address::from_str_radix(range.next().unwrap(), 16).unwrap();
-                    let range_end = Address::from_str_radix(range.next().unwrap(), 16).unwrap();
-
-                    let perms = fields.next().unwrap().as_bytes();
-                    let perms: [u8; 4] = [perms[0], perms[1], perms[2], perms[3]];
-
-                    let offset = Offset::from_str_radix(fields.next().unwrap(), 16).unwrap();
-
-                    let _ = fields.next(); // dev
-                    let _ = fields.next(); // inode
-
-                    let path: Option<PathBuf> = fields.next().map(|s| s.into());
-
-                    return Some(MapRange {
-                        range_start,
-                        range_end,
-                        offset,
-                        perms,
-                        path
-                    })
+                    if let Ok((_, range)) = map_line(&line) {
+                        return Some(range)
+                    }
                 },
                 Some(Err(_)) => continue,
                 None => return None
@@ -220,6 +224,6 @@ impl Process {
         // Based on https://github.com/rbspy/proc-maps/blob/7168cd0a13d464ef00f20a81f064b7729ff58d2e/src/linux_maps.rs#L49
         let file = io::BufReader::new(File::open(format!("/proc/{}/maps", self.pid)).or(Err(Error::ProcessDoesntExist))?);
         // TODO: use OsString, use unwrap a bit less.
-        Ok(MapRangeIter(file.lines()))
+        Ok(MapRangeIter(file.split(b'\n')))
     }
 }
