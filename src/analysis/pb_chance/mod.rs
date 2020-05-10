@@ -8,7 +8,7 @@
 //! The PB chance is currently calculated through the Balanced PB algorithm. The
 //! PB chance is the percentile at which the Balanced PB algorithm finds the PB.
 
-use crate::platform::prelude::*;
+use super::SkillCurve;
 use crate::{comparison, Run, Segment, TimeSpan, Timer, TimingMethod};
 
 #[cfg(test)]
@@ -24,17 +24,7 @@ fn calculate(segments: &[Segment], method: TimingMethod, offset: TimeSpan) -> f6
         return 1.0;
     }
 
-    let mut all_weighted_segment_times = vec![Vec::new(); segments.len()];
-    let mut time_span_buf = Vec::with_capacity(segments.len());
-
-    comparison::goal::determine_percentile(
-        offset,
-        segments,
-        method,
-        None,
-        &mut time_span_buf,
-        &mut all_weighted_segment_times,
-    )
+    comparison::goal::determine_percentile(offset, segments, method, None, &mut SkillCurve::new())
 }
 
 /// Calculates the PB chance for a run. No information about an active attempt
