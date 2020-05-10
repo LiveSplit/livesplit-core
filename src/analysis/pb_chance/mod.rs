@@ -5,8 +5,9 @@
 //! result as the PB chance for the Run. The value is being reported as a
 //! floating point number in the range from 0 (0%) to 1 (100%).
 //!
-//! The PB chance is currently calculated through the Balanced PB algorithm. The
-//! PB chance is the percentile at which the Balanced PB algorithm finds the PB.
+//! The PB chance is currently calculated with the skill curve. The PB chance is
+//! the percentile at which the PB is located on the skill curve. This is also
+//! where the Balanced PB would source its split times.
 
 use super::SkillCurve;
 use crate::{comparison, Run, Segment, TimeSpan, Timer, TimingMethod};

@@ -10,6 +10,9 @@
 //! perfect situation to compare against the Balanced Personal Best comparison
 //! instead, as all of the mistakes of the early game in such a situation would
 //! be smoothed out throughout the whole comparison.
+//!
+//! The algorithm is sampling the split times on the skill curve where the
+//! Personal Best is located.
 
 use super::{goal, ComparisonGenerator};
 use crate::{analysis::SkillCurve, Attempt, Segment, TimingMethod};
@@ -26,6 +29,9 @@ use crate::{analysis::SkillCurve, Attempt, Segment, TimingMethod};
 /// compare against the Balanced Personal Best comparison instead, as all of the
 /// mistakes of the early game in such a situation would be smoothed out
 /// throughout the whole comparison.
+///
+/// The algorithm is sampling the split times on the skill curve where the
+/// Personal Best is located.
 #[derive(Copy, Clone, Debug)]
 pub struct BalancedPB;
 
