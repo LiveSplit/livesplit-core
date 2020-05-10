@@ -187,26 +187,60 @@ impl SkillCurve {
     /// range 0..1. If the time specified can not be found, the percentile
     /// saturates at one of those boundaries.
     pub fn find_percentile_for_time(&self, offset: TimeSpan, time_to_find: TimeSpan) -> f64 {
-        let (mut perc_min, mut perc_max) = (0.0, 1.0);
+        let mut low = 0.0;
+        let mut low_value = self
+            .iter_segment_times_at_percentile(low)
+            .fold(offset, |sum, segment_time| sum + segment_time)
+            .total_milliseconds();
 
-        // Try to find the correct percentile
+        let mut high = 1.0;
+        let mut high_value = self
+            .iter_segment_times_at_percentile(high)
+            .fold(offset, |sum, segment_time| sum + segment_time)
+            .total_milliseconds();
+
+        let time_to_find = time_to_find.total_milliseconds();
+
+        if high_value == low_value {
+            return match high_value.partial_cmp(&time_to_find) {
+                Some(Ordering::Less) => 1.0,
+                Some(Ordering::Greater) => 0.0,
+                _ => 0.5,
+            };
+        }
+
+        let time_to_find = time_to_find.min(high_value).max(low_value);
+
+        // Try to find the correct percentile via interpolation search
         for _ in 0..TRIES {
-            let percentile = (perc_max + perc_min) / 2.0;
+            let mid = ((time_to_find - low_value) / (high_value - low_value)).powf(0.7)
+                * (high - low)
+                + low;
 
-            let sum = self
-                .iter_segment_times_at_percentile(percentile)
-                .fold(offset, |sum, segment_time| sum + segment_time);
+            let mid_value = self
+                .iter_segment_times_at_percentile(mid)
+                .fold(offset, |sum, segment_time| sum + segment_time)
+                .total_milliseconds();
 
-            // Binary search the correct percentile
-            match sum.partial_cmp(&time_to_find) {
-                Some(Ordering::Equal) => return percentile,
-                Some(Ordering::Less) => perc_min = percentile,
-                Some(Ordering::Greater) => perc_max = percentile,
+            match mid_value.partial_cmp(&time_to_find) {
+                Some(Ordering::Equal) => return mid,
+                Some(Ordering::Less) => {
+                    low = mid;
+                    low_value = mid_value;
+                }
+                Some(Ordering::Greater) => {
+                    high = mid;
+                    high_value = mid_value;
+                }
                 None => {}
+            }
+
+            if high_value == low_value {
+                return (low + high) / 2.0;
             }
         }
 
-        (perc_max + perc_min) / 2.0
+        ((time_to_find - low_value) / (high_value - low_value)).powf(0.7) * (high - low) + low
     }
 }
 
