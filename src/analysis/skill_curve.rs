@@ -7,7 +7,7 @@ const WEIGHT: f64 = 0.75;
 const TRIES: usize = 50;
 
 /// The skill curve analyzes the segment history across all segments. For each
-/// segment all the segment times are sorted by length and weighted by their
+/// segment, all the segment times are sorted by length and weighted by their
 /// recency. Plotting this on a graph with the y-axis representing the segment
 /// time and the x-axis representing the percentile, with the shortest time at 0
 /// and the longest time at 1, yields the so called "skill curve". If you sum
@@ -16,9 +16,9 @@ const TRIES: usize = 50;
 ///
 /// # Properties of the Skill Curve
 ///
-/// If you sample the curve at 0, you get the simple sum of best segments and if
-/// you sample the curve at 1, you get the simple sum of worst segments. At 0.5
-/// you get the median segments. If you sample the individual segments where you
+/// If you sample the curve at 0, you get the simple sum of best segments, and if
+/// you sample the curve at 1, you get the simple sum of worst segments. At 0.5,
+/// you get the median segments. If you sample the individual segments at the same percentile where you
 /// find the Personal Best on the overall run's curve, you get the Balanced PB.
 /// The position of the Balanced PB on the x-axis is the PB chance.
 #[derive(Default, Clone)]
@@ -33,7 +33,7 @@ impl SkillCurve {
         Default::default()
     }
 
-    /// Returns the amount of segments this skill curve is comprised of.
+    /// Returns the number of segments this skill curve is comprised of.
     pub fn len(&self) -> usize {
         self.all_weighted_segment_times.len()
     }
@@ -43,7 +43,7 @@ impl SkillCurve {
         self.all_weighted_segment_times.is_empty()
     }
 
-    /// Reduces the amount of segments that are being considered by this curve.
+    /// Reduces the number of segments that are being considered by this curve.
     pub fn truncate(&mut self, len: usize) {
         self.all_weighted_segment_times.truncate(len);
     }
@@ -120,7 +120,7 @@ impl SkillCurve {
             }
         }
 
-        // Limit the slice to only the segments that have segment times.
+        // Limit the slice to only the segments that have segment times
         self.truncate(len);
     }
 
@@ -147,7 +147,7 @@ impl SkillCurve {
                         // array. Both could go out of bounds.
                         let left_index = right_index.saturating_sub(1);
                         // This assumes len can never be 0. This only works out
-                        // for us, because we truncate all the empty segments away.
+                        // for us because we truncate all the empty segments away.
                         let right_index = right_index.min(weighted_segment_times.len() - 1);
 
                         if left_index == right_index {
@@ -184,7 +184,7 @@ impl SkillCurve {
 
     /// Searches the curve for the final run time specified and returns the
     /// percentile the time can be found at. The percentile is always within the
-    /// range 0..1. If the time specified can not be found, the percentile
+    /// range 0..1. If the time specified cannot be found, the percentile
     /// saturates at one of those boundaries.
     pub fn find_percentile_for_time(&self, offset: TimeSpan, time_to_find: TimeSpan) -> f64 {
         let (mut perc_min, mut perc_max) = (0.0, 1.0);
