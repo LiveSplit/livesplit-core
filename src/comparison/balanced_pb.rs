@@ -10,10 +10,12 @@
 //! perfect situation to compare against the Balanced Personal Best comparison
 //! instead, as all of the mistakes of the early game in such a situation would
 //! be smoothed out throughout the whole comparison.
+//!
+//! The algorithm is sampling the split times on the skill curve where the
+//! Personal Best is located.
 
 use super::{goal, ComparisonGenerator};
-use crate::platform::prelude::*;
-use crate::{Attempt, Segment, TimingMethod};
+use crate::{analysis::SkillCurve, Attempt, Segment, TimingMethod};
 
 /// The Comparison Generator for calculating a comparison which has the same
 /// final time as the runner's Personal Best. Unlike the Personal Best however,
@@ -27,6 +29,9 @@ use crate::{Attempt, Segment, TimingMethod};
 /// compare against the Balanced Personal Best comparison instead, as all of the
 /// mistakes of the early game in such a situation would be smoothed out
 /// throughout the whole comparison.
+///
+/// The algorithm is sampling the split times on the skill curve where the
+/// Personal Best is located.
 #[derive(Copy, Clone, Debug)]
 pub struct BalancedPB;
 
@@ -42,24 +47,21 @@ impl ComparisonGenerator for BalancedPB {
     }
 
     fn generate(&mut self, segments: &mut [Segment], _: &[Attempt]) {
-        let mut all_weighted_segment_times = vec![Vec::new(); segments.len()];
-        let mut time_span_buf = Vec::with_capacity(segments.len());
+        let mut skill_curve = SkillCurve::new();
 
         goal::generate_for_timing_method_with_buf(
             segments,
             TimingMethod::RealTime,
             None,
             NAME,
-            &mut time_span_buf,
-            &mut all_weighted_segment_times,
+            &mut skill_curve,
         );
         goal::generate_for_timing_method_with_buf(
             segments,
             TimingMethod::GameTime,
             None,
             NAME,
-            &mut time_span_buf,
-            &mut all_weighted_segment_times,
+            &mut skill_curve,
         );
     }
 }

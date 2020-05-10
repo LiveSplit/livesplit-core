@@ -78,12 +78,7 @@ impl Component {
 
     /// Accesses the name of the component.
     pub fn name(&self) -> Cow<'static, str> {
-        self.text(
-            self.settings
-                .comparison_override
-                .as_ref()
-                .map(String::as_str),
-        )
+        self.text(self.settings.comparison_override.as_deref())
     }
 
     fn text(&self, comparison: Option<&str>) -> Cow<'static, str> {

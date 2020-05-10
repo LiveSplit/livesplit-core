@@ -179,15 +179,13 @@ impl Component {
             let mut comparison1 = self
                 .settings
                 .comparison1
-                .as_ref()
-                .map(String::as_str)
+                .as_deref()
                 .unwrap_or_else(|| timer.current_comparison());
 
             let comparison2 = self
                 .settings
                 .comparison2
-                .as_ref()
-                .map(String::as_str)
+                .as_deref()
                 .unwrap_or_else(|| timer.current_comparison());
 
             let mut hide_comparison = self.settings.hide_second_comparison;

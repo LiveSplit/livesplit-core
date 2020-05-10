@@ -26,7 +26,7 @@ fn shrink_inner(data: &[u8], max_dim: u32) -> Result<Cow<'_, [u8]>, ImageError> 
         // TGA doesn't have a Header.
         // DDS isn't a format we really care for.
         // And the image format is non-exhaustive.
-        ImageFormat::Gif | ImageFormat::Tga | ImageFormat::Dds | _ => return Ok(data.into()),
+        _ => return Ok(data.into()),
     };
 
     let is_too_large = width > max_dim || height > max_dim;
