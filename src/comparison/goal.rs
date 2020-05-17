@@ -5,7 +5,7 @@
 //! Balanced PB comparison however is based on this, which uses the Personal
 //! Best as a goal time to balance the mistakes that happened in the Personal Best.
 
-use crate::{analysis::SkillCurve, Segment, Time, TimeSpan, TimingMethod};
+use crate::{analysis::SkillCurve, Run, Segment, Time, TimeSpan, TimingMethod};
 
 /// The default name of the goal comparison.
 pub const NAME: &str = "Goal";
@@ -121,4 +121,39 @@ pub fn generate(segments: &mut [Segment], goal_time: Time, comparison: &str) {
             segment.comparison_mut(comparison).game_time = None;
         }
     }
+}
+
+fn round_up(value: i64, factor: i64) -> i64 {
+    (value + factor - 1) / factor * factor
+}
+
+fn nice_goal_time(precise_goal_time: TimeSpan, pb: TimeSpan) -> TimeSpan {
+    let total_seconds = precise_goal_time.total_seconds() as i64;
+    let pb_seconds = pb.total_seconds() as i64;
+    for factor in [60 * 60, 60 * 15, 60 * 5, 60, 15, 5].iter().copied() {
+        let goal_seconds = round_up(total_seconds, factor);
+        if goal_seconds < pb_seconds {
+            return TimeSpan::from_seconds(goal_seconds as f64);
+        }
+    }
+    precise_goal_time
+}
+
+pub fn suggest_goal_time(run: &Run, method: TimingMethod) -> Option<TimeSpan> {
+    // let mut skill_curve = SkillCurve::new();
+
+    // let percentile = determine_percentile(
+    //     TimeSpan::zero(),
+    //     run.segments(),
+    //     method,
+    //     None,
+    //     &mut skill_curve,
+    // );
+
+    // let goal_time = skill_curve
+    //     .iter_split_times_at_percentile(0.85 * percentile, TimeSpan::zero())
+    //     .last()?;
+
+    // Some(nice_goal_time(goal_time, pb))
+    todo!()
 }
