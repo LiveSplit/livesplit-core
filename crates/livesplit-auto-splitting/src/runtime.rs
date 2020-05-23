@@ -1,8 +1,9 @@
 use crate::{
     environment::Environment, pointer::PointerValue, process::Process, std_stream::StdStream,
+    InterruptHandle,
 };
 use std::{cell::RefCell, mem, rc::Rc, thread, time::Duration};
-use wasmtime::{Export, Linker, Module, Trap};
+use wasmtime::{Config, Engine, Export, Instance, Linker, Module, Store, Trap};
 use wasmtime_wasi::{Wasi, WasiCtxBuilder};
 
 #[repr(u8)]
@@ -25,6 +26,8 @@ pub enum TimerAction {
 // keep the environment alive, which keeps the memory alive, which may keep the
 // instance alive -> reference cycle.
 pub struct Runtime {
+    instance: Instance,
+    is_configured: bool,
     env: Rc<RefCell<Environment>>,
     timer_state: TimerState,
     hooked: Option<Box<dyn Fn() -> Result<(), Trap>>>,
@@ -41,9 +44,11 @@ pub struct Runtime {
 
 impl Runtime {
     pub fn new(binary: &[u8]) -> anyhow::Result<Self> {
-        let module = Module::from_binary(&Default::default(), binary)?;
+        let engine = Engine::new(Config::new().interruptable(true));
+        let store = Store::new(&engine);
+        let module = Module::from_binary(&store, binary)?;
         let env = Rc::new(RefCell::new(Environment::default()));
-        let mut linker = Linker::new(module.store());
+        let mut linker = Linker::new(&store);
 
         linker.func("env", "set_process_name", {
             let env = env.clone();
@@ -204,23 +209,12 @@ impl Runtime {
             .build()
             .unwrap();
 
-        Wasi::new(module.store(), wasi_ctx)
+        Wasi::new(&store, wasi_ctx)
             .add_to_linker(&mut linker)
             .unwrap();
 
         let instance = linker.instantiate(&module)?;
         env.borrow_mut().memory = instance.exports().find_map(Export::into_memory);
-
-        // TODO: _start is kind of correct, but not in the long term. They are
-        // intending for us to use a different function for libraries.
-        if let Some(func) = instance.get_func("_start") {
-            func.get0()?()?;
-        }
-
-        // TODO: Do we error out if this doesn't exist?
-        if let Some(func) = instance.get_func("configure") {
-            func.get0()?()?;
-        }
 
         let hooked = instance
             .get_func("hooked")
@@ -263,6 +257,8 @@ impl Runtime {
             .map(|f| Box::new(f) as _);
 
         Ok(Self {
+            instance,
+            is_configured: false,
             env,
             timer_state: TimerState::NotRunning,
             hooked,
@@ -278,6 +274,13 @@ impl Runtime {
         })
     }
 
+    pub fn interrupt_handle(&self) -> InterruptHandle {
+        self.instance
+            .store()
+            .interrupt_handle()
+            .expect("We configured the runtime to produce an interrupt handle")
+    }
+
     pub fn sleep(&self) {
         let env = self.env.borrow();
         let duration = if env.process.is_some() {
@@ -289,6 +292,21 @@ impl Runtime {
     }
 
     pub fn step(&mut self) -> anyhow::Result<Option<TimerAction>> {
+        if !self.is_configured {
+            // TODO: _start is kind of correct, but not in the long term. They are
+            // intending for us to use a different function for libraries. Look into
+            // reactors.
+            if let Some(func) = self.instance.get_func("_start") {
+                func.get0()?()?;
+            }
+
+            // TODO: Do we error out if this doesn't exist?
+            if let Some(func) = self.instance.get_func("configure") {
+                func.get0()?()?;
+            }
+            self.is_configured = true;
+        }
+
         {
             let mut just_connected = false;
 

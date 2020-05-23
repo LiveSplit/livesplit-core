@@ -8,6 +8,8 @@ use std::{
     fs,
     path::PathBuf,
     process::{Command, Stdio},
+    thread,
+    time::Duration,
 };
 
 thread_local! {
@@ -71,19 +73,25 @@ fn compile(crate_name: &str) -> anyhow::Result<Runtime> {
     Runtime::new(&fs::read(wasm_path).unwrap())
 }
 
+fn run(crate_name: &str) -> anyhow::Result<()> {
+    let mut runtime = compile(crate_name)?;
+    runtime.step()?;
+    Ok(())
+}
+
 #[test]
 fn empty() {
-    compile("empty").unwrap();
+    run("empty").unwrap();
 }
 
 #[test]
 fn proc_exit() {
-    assert!(compile("proc-exit").is_err());
+    assert!(run("proc-exit").is_err());
 }
 
 #[test]
 fn create_file() {
-    compile("create-file").unwrap();
+    run("create-file").unwrap();
 }
 
 #[test]
@@ -91,7 +99,7 @@ fn stdout() {
     let _ = log::set_logger(&LOGGER);
     log::set_max_level(log::LevelFilter::Trace);
     BUF.with(|b| *b.borrow_mut() = Some(String::new()));
-    compile("stdout").unwrap();
+    run("stdout").unwrap();
     let output = BUF.with(|b| b.borrow_mut().take());
     assert_eq!(
         output.unwrap(),
@@ -101,36 +109,36 @@ fn stdout() {
 
 #[test]
 fn segfault() {
-    assert!(compile("segfault").is_err());
+    assert!(run("segfault").is_err());
 }
 
 #[test]
 fn env() {
-    compile("env").unwrap();
+    run("env").unwrap();
     assert!(std::env::var("AUTOSPLITTER_HOST_SHOULDNT_SEE_THIS").is_err());
 }
 
 #[test]
 fn threads() {
     // There's no threads in WASI / WASM yet, so this is expected to trap.
-    assert!(compile("threads").is_err());
+    assert!(run("threads").is_err());
 }
 
 #[test]
 fn sleep() {
     // TODO: Sleeping can basically deadlock the code. We should have a limit on
     // how long it can sleep.
-    compile("sleep").unwrap();
+    run("sleep").unwrap();
 }
 
 #[test]
 fn time() {
-    compile("time").unwrap();
+    run("time").unwrap();
 }
 
 #[test]
 fn random() {
-    compile("random").unwrap();
+    run("random").unwrap();
 }
 
 #[test]
@@ -138,5 +146,21 @@ fn poll() {
     // TODO: This is basically what happens at the lower levels of sleeping. You
     // can block on file descriptors and have a timeout with this. Both of which
     // could deadlock the script.
-    compile("poll").unwrap();
+    run("poll").unwrap();
 }
+
+#[test]
+fn infinite_loop() {
+    let mut runtime = compile("infinite-loop").unwrap();
+
+    let interrupt = runtime.interrupt_handle();
+
+    thread::spawn(move || {
+        thread::sleep(Duration::from_secs(5));
+        interrupt.interrupt();
+    });
+
+    assert!(runtime.step().is_err());
+}
+
+// TODO: Test heavy amounts of allocations

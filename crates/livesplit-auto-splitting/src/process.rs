@@ -182,7 +182,7 @@ impl Process {
                 }
                 #[cfg(not(target_pointer_width = "64"))]
                 {
-                    // TODO Actually idk if 32-bit apps can read from 64-bit
+                    // TODO: Actually idk if 32-bit apps can read from 64-bit
                     // apps. If they can, then this is wrong.
                     is_64bit = false;
                 }
