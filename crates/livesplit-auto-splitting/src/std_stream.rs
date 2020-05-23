@@ -1,7 +1,8 @@
 use bstr::ByteSlice;
 use log::Level;
 use std::io::{self, IoSlice, IoSliceMut, LineWriter, Write};
-use wasi_common::{wasi, FileContents, Filesize};
+use wasi::types::Filesize;
+use wasi_common::{wasi, FileContents};
 
 struct Log(Level);
 
