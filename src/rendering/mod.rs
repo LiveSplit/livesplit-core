@@ -72,16 +72,15 @@ mod mesh;
 #[cfg(feature = "software-rendering")]
 pub mod software;
 
-use {
-    self::{glyph_cache::GlyphCache, icon::Icon},
-    crate::{
-        layout::{ComponentState, LayoutDirection, LayoutState},
-        settings::{Color, Gradient},
-    },
-    euclid::{Transform2D, UnknownUnit},
-    rusttype::Font,
-    std::iter,
+use self::{glyph_cache::GlyphCache, icon::Icon};
+use crate::{
+    layout::{ComponentState, LayoutDirection, LayoutState},
+    settings::{Color, Gradient},
 };
+use alloc::borrow::Cow;
+use core::iter;
+use euclid::{Transform2D, UnknownUnit};
+use rusttype::Font;
 
 pub use self::mesh::{Mesh, Vertex};
 pub use euclid;
@@ -537,7 +536,7 @@ impl<B: Backend> RenderContext<'_, B> {
     fn render_key_value_component(
         &mut self,
         key: &str,
-        abbreviations: &[Box<str>],
+        abbreviations: &[Cow<'_, str>],
         value: &str,
         [width, height]: [f32; 2],
         key_color: Color,
@@ -556,7 +555,7 @@ impl<B: Backend> RenderContext<'_, B> {
             left_of_value_x
         };
         let key = self.choose_abbreviation(
-            iter::once(key).chain(abbreviations.iter().map(|abrv| &**abrv)),
+            iter::once(key).chain(abbreviations.iter().map(|x| &**x)),
             DEFAULT_TEXT_SIZE,
             end_x - BOTH_PADDINGS,
         );

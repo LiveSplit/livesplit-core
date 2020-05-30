@@ -10,6 +10,7 @@ use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
 use crate::timing::formatter::{Accuracy, SegmentTime, TimeFormatter};
 use crate::{comparison, Timer, TimerPhase};
 use alloc::borrow::Cow;
+use core::fmt::Write;
 use serde::{Deserialize, Serialize};
 
 #[cfg(test)]
@@ -99,29 +100,11 @@ impl Component {
         }
     }
 
-    /// Calculates the component's state based on the timer provided.
-    pub fn state(&self, timer: &Timer) -> key_value::State {
+    /// Updates the component's state based on the timer provided.
+    pub fn update_state(&self, state: &mut key_value::State, timer: &Timer) {
         let resolved_comparison = comparison::resolve(&self.settings.comparison_override, timer);
         let comparison = comparison::or_current(resolved_comparison, timer);
-        let key = self.text(resolved_comparison).into_owned();
-
-        let key_abbreviations = match &*key {
-            "Best Segment Time" => Box::new(["Best Seg. Time".into(), "Best Segment".into()]) as _,
-            "Worst Segment Time" => {
-                Box::new(["Worst Seg. Time".into(), "Worst Segment".into()]) as _
-            }
-            "Average Segment Time" => {
-                Box::new(["Average Seg. Time".into(), "Average Segment".into()]) as _
-            }
-            "Median Segment Time" => {
-                Box::new(["Median Seg. Time".into(), "Median Segment".into()]) as _
-            }
-            "Latest Segment Time" => {
-                Box::new(["Latest Seg. Time".into(), "Latest Segment".into()]) as _
-            }
-            "Segment Time" => Box::new(["Seg. Time".into()]) as _,
-            _ => Box::new(["Segment Time".into(), "Seg. Time".into()]) as _,
-        };
+        let key = self.text(resolved_comparison); // FIXME: Uncow
 
         let time = catch! {
             // FIXME: We shouldn't need to manually do this "bounds check".
@@ -137,19 +120,58 @@ impl Component {
             )?
         };
 
-        key_value::State {
-            background: self.settings.background,
-            key_color: self.settings.label_color,
-            value_color: self.settings.value_color,
-            semantic_color: Default::default(),
-            key: key.into(),
-            value: SegmentTime::with_accuracy(self.settings.accuracy)
-                .format(time)
-                .to_string()
-                .into(),
-            key_abbreviations,
-            display_two_rows: self.settings.display_two_rows,
-        }
+        state.background = self.settings.background;
+        state.key_color = self.settings.label_color;
+        state.value_color = self.settings.value_color;
+        state.semantic_color = Default::default();
+
+        state.key.clear();
+        state.key.push_str(&key);
+
+        state.value.clear();
+        let _ = write!(
+            state.value,
+            "{}",
+            SegmentTime::with_accuracy(self.settings.accuracy).format(time),
+        );
+
+        state.key_abbreviations.clear();
+        match &*key {
+            "Best Segment Time" => {
+                state.key_abbreviations.push("Best Seg. Time".into());
+                state.key_abbreviations.push("Best Segment".into());
+            }
+            "Worst Segment Time" => {
+                state.key_abbreviations.push("Worst Seg. Time".into());
+                state.key_abbreviations.push("Worst Segment".into());
+            }
+            "Average Segment Time" => {
+                state.key_abbreviations.push("Average Seg. Time".into());
+                state.key_abbreviations.push("Average Segment".into());
+            }
+            "Median Segment Time" => {
+                state.key_abbreviations.push("Median Seg. Time".into());
+                state.key_abbreviations.push("Median Segment".into());
+            }
+            "Latest Segment Time" => {
+                state.key_abbreviations.push("Latest Seg. Time".into());
+                state.key_abbreviations.push("Latest Segment".into());
+            }
+            "Segment Time" => state.key_abbreviations.push("Seg. Time".into()),
+            _ => {
+                state.key_abbreviations.push("Segment Time".into());
+                state.key_abbreviations.push("Seg. Time".into());
+            }
+        };
+
+        state.display_two_rows = self.settings.display_two_rows;
+    }
+
+    /// Calculates the component's state based on the timer provided.
+    pub fn state(&self, timer: &Timer) -> key_value::State {
+        let mut state = Default::default();
+        self.update_state(&mut state, timer);
+        state
     }
 
     /// Accesses a generic description of the settings available for this

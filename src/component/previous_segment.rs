@@ -108,13 +108,14 @@ impl Component {
         text
     }
 
-    /// Calculates the component's state based on the timer and the layout
-    /// settings provided.
-    pub fn state(
+    /// Updates the component's state based on the timer and layout settings
+    /// provided.
+    pub fn update_state(
         &self,
+        state: &mut key_value::State,
         timer: &Timer,
         layout_settings: &GeneralLayoutSettings,
-    ) -> key_value::State {
+    ) {
         let mut time_change = None;
         let mut previous_possible = None;
         let resolved_comparison = comparison::resolve(&self.settings.comparison_override, timer);
@@ -193,39 +194,53 @@ impl Component {
         let value_color = Some(semantic_color.visualize(layout_settings));
 
         let text = self.text(live_segment.is_some(), resolved_comparison);
-        let mut time = Delta::custom(self.settings.drop_decimals, self.settings.accuracy)
-            .format(time_change)
-            .to_string();
+
+        state.background = self.settings.background;
+        state.key_color = self.settings.label_color;
+        state.value_color = value_color;
+        state.semantic_color = semantic_color;
+
+        state.key.clear();
+        state.key.push_str(&text); // FIXME: Uncow
+
+        state.value.clear();
+        let _ = write!(
+            state.value,
+            "{}",
+            Delta::custom(self.settings.drop_decimals, self.settings.accuracy).format(time_change),
+        );
 
         if self.settings.show_possible_time_save {
-            write!(
-                time,
+            let _ = write!(
+                state.value,
                 " / {}",
-                SegmentTime::with_accuracy(self.settings.accuracy).format(previous_possible)
-            )
-            .unwrap();
+                SegmentTime::with_accuracy(self.settings.accuracy).format(previous_possible),
+            );
         }
 
-        let key_abbreviations = if live_segment.is_some() {
-            Box::new(["Live Segment".into(), "Live Seg.".into()]) as _
+        state.key_abbreviations.clear();
+        if live_segment.is_some() {
+            state.key_abbreviations.push("Live Segment".into());
+            state.key_abbreviations.push("Live Seg.".into());
         } else {
-            Box::new([
-                "Previous Segment".into(),
-                "Prev. Segment".into(),
-                "Prev. Seg.".into(),
-            ]) as _
-        };
-
-        key_value::State {
-            background: self.settings.background,
-            key_color: self.settings.label_color,
-            value_color,
-            semantic_color,
-            key: text.into_owned().into(),
-            value: time.into(),
-            key_abbreviations,
-            display_two_rows: self.settings.display_two_rows,
+            state.key_abbreviations.push("Previous Segment".into());
+            state.key_abbreviations.push("Prev. Segment".into());
+            state.key_abbreviations.push("Prev. Seg.".into());
         }
+
+        state.display_two_rows = self.settings.display_two_rows;
+    }
+
+    /// Calculates the component's state based on the timer and the layout
+    /// settings provided.
+    pub fn state(
+        &self,
+        timer: &Timer,
+        layout_settings: &GeneralLayoutSettings,
+    ) -> key_value::State {
+        let mut state = Default::default();
+        self.update_state(&mut state, timer, layout_settings);
+        state
     }
 
     /// Accesses a generic description of the settings available for this

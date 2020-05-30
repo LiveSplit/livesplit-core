@@ -3,7 +3,6 @@
 //! separators between components.
 
 use crate::settings::{SettingsDescription, Value};
-use crate::Timer;
 use serde::{Deserialize, Serialize};
 
 /// The Separator Component is a simple component that only serves to render
@@ -12,7 +11,7 @@ use serde::{Deserialize, Serialize};
 pub struct Component;
 
 /// The state object describes the information to visualize for this component.
-#[derive(Serialize, Deserialize)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct State;
 
 #[cfg(feature = "std")]
@@ -37,8 +36,11 @@ impl Component {
         "Separator"
     }
 
-    /// Calculates the component's state based on the timer provided.
-    pub fn state(&self, _timer: &Timer) -> State {
+    /// Updates the component's state.
+    pub fn update_state(&self, _state: &mut State) {}
+
+    /// Calculates the component's state.
+    pub fn state(&self) -> State {
         State
     }
 

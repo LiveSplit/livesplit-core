@@ -137,8 +137,7 @@ where
     let taken = replace(vec, Vec::new());
     let mut string = String::from_utf8(taken).unwrap();
     let result = f(&mut string);
-    let bytes = string.into_bytes();
-    replace(vec, bytes);
+    *vec = string.into_bytes();
     result
 }
 

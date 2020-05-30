@@ -8,3 +8,9 @@ pub enum LayoutDirection {
     /// The components are placed next to each other horizontally.
     Horizontal,
 }
+
+impl Default for LayoutDirection {
+    fn default() -> Self {
+        LayoutDirection::Vertical
+    }
+}

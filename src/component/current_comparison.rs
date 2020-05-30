@@ -69,18 +69,30 @@ impl Component {
         "Current Comparison"
     }
 
+    /// Updates the component's state based on the timer provided.
+    pub fn update_state(&self, state: &mut key_value::State, timer: &Timer) {
+        state.background = self.settings.background;
+        state.key_color = self.settings.label_color;
+        state.value_color = self.settings.value_color;
+        state.semantic_color = Default::default();
+
+        state.key.clear();
+        state.key.push_str("Comparing Against");
+
+        state.value.clear();
+        state.value.push_str(timer.current_comparison());
+
+        state.key_abbreviations.clear();
+        state.key_abbreviations.push("Comparison".into());
+
+        state.display_two_rows = self.settings.display_two_rows;
+    }
+
     /// Calculates the component's state based on the timer provided.
     pub fn state(&self, timer: &Timer) -> key_value::State {
-        key_value::State {
-            background: self.settings.background,
-            key_color: self.settings.label_color,
-            value_color: self.settings.value_color,
-            semantic_color: Default::default(),
-            key: "Comparing Against".into(),
-            value: timer.current_comparison().into(),
-            key_abbreviations: Box::new(["Comparison".into()]) as _,
-            display_two_rows: self.settings.display_two_rows,
-        }
+        let mut state = Default::default();
+        self.update_state(&mut state, timer);
+        state
     }
 
     /// Accesses a generic description of the settings available for this

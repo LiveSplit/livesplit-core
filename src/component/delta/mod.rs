@@ -9,6 +9,7 @@ use crate::settings::{Color, Field, Gradient, SemanticColor, SettingsDescription
 use crate::timing::formatter::{Accuracy, Delta, TimeFormatter};
 use crate::{comparison, GeneralLayoutSettings, Timer};
 use alloc::borrow::Cow;
+use core::fmt::Write;
 use serde::{Deserialize, Serialize};
 
 #[cfg(test)]
@@ -86,13 +87,14 @@ impl Component {
         }
     }
 
-    /// Calculates the component's state based on the timer and the layout
-    /// settings provided.
-    pub fn state(
+    /// Updates the component's state based on the timer and layout settings
+    /// provided.
+    pub fn update_state(
         &self,
+        state: &mut key_value::State,
         timer: &Timer,
         layout_settings: &GeneralLayoutSettings,
-    ) -> key_value::State {
+    ) {
         let comparison = comparison::resolve(&self.settings.comparison_override, timer);
         let text = comparison.unwrap_or_else(|| timer.current_comparison());
         let comparison = comparison::or_current(comparison, timer);
@@ -120,21 +122,38 @@ impl Component {
 
         let value_color = Some(semantic_color.visualize(layout_settings));
 
-        let abbreviation = comparison::shorten(text);
+        state.background = self.settings.background;
+        state.key_color = self.settings.label_color;
+        state.value_color = value_color;
 
-        key_value::State {
-            background: self.settings.background,
-            key_color: self.settings.label_color,
-            value_color,
-            semantic_color,
-            key: text.to_string().into(),
-            value: Delta::custom(self.settings.drop_decimals, self.settings.accuracy)
-                .format(delta)
-                .to_string()
-                .into(),
-            key_abbreviations: Box::new([abbreviation.into()]) as _,
-            display_two_rows: self.settings.display_two_rows,
+        state.key.clear();
+        state.key.push_str(text);
+
+        state.value.clear();
+        let _ = write!(
+            state.value,
+            "{}",
+            Delta::custom(self.settings.drop_decimals, self.settings.accuracy).format(delta),
+        );
+
+        state.key_abbreviations.clear();
+        if let Some(abbreviation) = comparison::try_shorten(text) {
+            state.key_abbreviations.push(abbreviation.into());
         }
+
+        state.display_two_rows = self.settings.display_two_rows;
+    }
+
+    /// Calculates the component's state based on the timer and the layout
+    /// settings provided.
+    pub fn state(
+        &self,
+        timer: &Timer,
+        layout_settings: &GeneralLayoutSettings,
+    ) -> key_value::State {
+        let mut state = Default::default();
+        self.update_state(&mut state, timer, layout_settings);
+        state
     }
 
     /// Accesses a generic description of the settings available for this

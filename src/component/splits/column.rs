@@ -1,11 +1,13 @@
 use crate::platform::prelude::*;
 use crate::{
     analysis::{self, possible_time_save, split_color},
+    clear_vec::Clear,
     comparison,
     settings::{Color, SemanticColor},
     timing::formatter::{Delta, Regular, SegmentTime, TimeFormatter},
     GeneralLayoutSettings, Segment, TimeSpan, Timer, TimingMethod,
 };
+use core::fmt::Write;
 use serde::{Deserialize, Serialize};
 
 /// The settings of an individual column showing timing information on each
@@ -121,13 +123,20 @@ pub struct ColumnState {
     pub visual_color: Color,
 }
 
+impl Clear for ColumnState {
+    fn clear(&mut self) {
+        self.value.clear();
+    }
+}
+
 enum ColumnFormatter {
     Time,
     Delta,
     PossibleTimeSave,
 }
 
-pub fn state(
+pub fn update_state(
+    state: &mut ColumnState,
     column: &ColumnSettings,
     timer: &Timer,
     layout_settings: &GeneralLayoutSettings,
@@ -135,7 +144,7 @@ pub fn state(
     segment_index: usize,
     current_split: Option<usize>,
     method: TimingMethod,
-) -> ColumnState {
+) {
     let method = column.timing_method.unwrap_or_else(|| method);
     let resolved_comparison = comparison::resolve(&column.comparison_override, timer);
     let comparison = comparison::or_current(resolved_comparison, timer);
@@ -179,25 +188,23 @@ pub fn state(
 
     let is_empty = column.start_with == ColumnStartWith::Empty && !updated;
 
-    let value = if is_empty {
-        String::new()
-    } else {
-        match formatter {
-            ColumnFormatter::Time => Regular::new().format(column_value).to_string(),
-            ColumnFormatter::Delta => Delta::with_decimal_dropping()
-                .format(column_value)
-                .to_string(),
+    state.value.clear();
+    if !is_empty {
+        let _ = match formatter {
+            ColumnFormatter::Time => write!(state.value, "{}", Regular::new().format(column_value)),
+            ColumnFormatter::Delta => write!(
+                state.value,
+                "{}",
+                Delta::with_decimal_dropping().format(column_value)
+            ),
             ColumnFormatter::PossibleTimeSave => {
-                SegmentTime::new().format(column_value).to_string()
+                write!(state.value, "{}", SegmentTime::new().format(column_value))
             }
-        }
-    };
-
-    ColumnState {
-        value,
-        semantic_color,
-        visual_color: semantic_color.visualize(layout_settings),
+        };
     }
+
+    state.semantic_color = semantic_color;
+    state.visual_color = semantic_color.visualize(layout_settings);
 }
 
 fn column_update_value(

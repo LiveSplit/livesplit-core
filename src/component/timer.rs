@@ -9,6 +9,7 @@ use crate::platform::prelude::*;
 use crate::settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
 use crate::timing::formatter::{timer as formatter, Accuracy, DigitsFormat, TimeFormatter};
 use crate::{GeneralLayoutSettings, TimeSpan, Timer, TimerPhase, TimingMethod};
+use core::fmt::Write;
 use serde::{Deserialize, Serialize};
 
 /// The Timer Component is a component that shows the total time of the current
@@ -66,7 +67,7 @@ impl Default for Settings {
 }
 
 /// The state object describes the information to visualize for this component.
-#[derive(Serialize, Deserialize)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct State {
     /// The background shown behind the component.
     pub background: Gradient,
@@ -125,9 +126,14 @@ impl Component {
         }
     }
 
-    /// Calculates the component's state based on the timer and the layout
-    /// settings provided.
-    pub fn state(&self, timer: &Timer, layout_settings: &GeneralLayoutSettings) -> State {
+    /// Updates the component's state based on the timer and layout settings
+    /// provided.
+    pub fn update_state(
+        &self,
+        state: &mut State,
+        timer: &Timer,
+        layout_settings: &GeneralLayoutSettings,
+    ) {
         let method = self
             .settings
             .timing_method
@@ -207,19 +213,34 @@ impl Component {
             (visual_color, visual_color)
         };
 
-        State {
-            background: self.settings.background,
-            time: formatter::Time::with_digits_format(self.settings.digits_format)
-                .format(time)
-                .to_string(),
-            fraction: formatter::Fraction::with_accuracy(self.settings.accuracy)
-                .format(time)
-                .to_string(),
-            semantic_color,
-            top_color,
-            bottom_color,
-            height: self.settings.height,
-        }
+        state.background = self.settings.background;
+
+        state.time.clear();
+        let _ = write!(
+            state.time,
+            "{}",
+            formatter::Time::with_digits_format(self.settings.digits_format).format(time),
+        );
+
+        state.fraction.clear();
+        let _ = write!(
+            state.fraction,
+            "{}",
+            formatter::Fraction::with_accuracy(self.settings.accuracy).format(time),
+        );
+
+        state.semantic_color = semantic_color;
+        state.top_color = top_color;
+        state.bottom_color = bottom_color;
+        state.height = self.settings.height;
+    }
+
+    /// Calculates the component's state based on the timer and the layout
+    /// settings provided.
+    pub fn state(&self, timer: &Timer, layout_settings: &GeneralLayoutSettings) -> State {
+        let mut state = Default::default();
+        self.update_state(&mut state, timer, layout_settings);
+        state
     }
 
     /// Accesses a generic description of the settings available for this

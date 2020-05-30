@@ -5,6 +5,7 @@
 
 use crate::platform::prelude::*;
 use crate::settings::{Color, Gradient, SemanticColor};
+use alloc::borrow::Cow;
 use core::marker::PhantomData;
 use palette::rgb::Rgb;
 use palette::Alpha;
@@ -12,7 +13,7 @@ use serde::{Deserialize, Serialize};
 
 /// The state object describes the information to visualize for a key value
 /// based component.
-#[derive(Serialize, Deserialize)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct State {
     /// The background shown behind the component.
     pub background: Gradient,
@@ -25,12 +26,12 @@ pub struct State {
     /// The semantic coloring information the value carries.
     pub semantic_color: SemanticColor,
     /// The key to visualize.
-    pub key: Box<str>,
+    pub key: String,
     /// The value to visualize.
-    pub value: Box<str>,
+    pub value: String,
     /// Specifies additional abbreviations for the key that can be used instead
     /// of the key, if there is not enough space to show the whole key.
-    pub key_abbreviations: Box<[Box<str>]>,
+    pub key_abbreviations: Vec<Cow<'static, str>>,
     /// Specifies whether to display the key and the value in two separate rows.
     pub display_two_rows: bool,
 }

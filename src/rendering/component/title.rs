@@ -51,9 +51,9 @@ pub(in crate::rendering) fn render<B: Backend>(
         [text_color; 2],
     );
 
-    let (line1_y, line1_end_x) = if let Some(line2) = &component.line2 {
+    let (line1_y, line1_end_x) = if !component.line2.is_empty() {
         let line2 = context.choose_abbreviation(
-            line2.iter().map(|a| &**a),
+            component.line2.iter().map(|a| &**a),
             DEFAULT_TEXT_SIZE,
             line2_end_x - PADDING - left_bound,
         );

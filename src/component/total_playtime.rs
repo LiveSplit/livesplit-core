@@ -8,6 +8,7 @@ use crate::platform::prelude::*;
 use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
 use crate::timing::formatter::{Days, Regular, TimeFormatter};
 use crate::Timer;
+use core::fmt::Write;
 use serde::{Deserialize, Serialize};
 
 /// The Total Playtime Component is a component that shows the total amount of
@@ -75,26 +76,36 @@ impl Component {
         "Total Playtime"
     }
 
-    /// Calculates the component's state based on the timer provided.
-    pub fn state(&self, timer: &Timer) -> key_value::State {
+    /// Updates the component's state based on the timer provided.
+    pub fn update_state(&self, state: &mut key_value::State, timer: &Timer) {
         let total_playtime = total_playtime::calculate(timer);
 
-        let time = if self.settings.show_days {
-            Days::new().format(total_playtime).to_string()
-        } else {
-            Regular::new().format(total_playtime).to_string()
-        };
+        state.background = self.settings.background;
+        state.key_color = self.settings.label_color;
+        state.value_color = self.settings.value_color;
+        state.semantic_color = Default::default();
 
-        key_value::State {
-            background: self.settings.background,
-            key_color: self.settings.label_color,
-            value_color: self.settings.value_color,
-            semantic_color: Default::default(),
-            key: "Total Playtime".into(),
-            value: time.into(),
-            key_abbreviations: Box::new(["Playtime".into()]) as _,
-            display_two_rows: self.settings.display_two_rows,
+        state.key.clear();
+        state.key.push_str("Total Playtime");
+
+        state.value.clear();
+        if self.settings.show_days {
+            let _ = write!(state.value, "{}", Days::new().format(total_playtime));
+        } else {
+            let _ = write!(state.value, "{}", Regular::new().format(total_playtime));
         }
+
+        state.key_abbreviations.clear();
+        state.key_abbreviations.push("Playtime".into());
+
+        state.display_two_rows = self.settings.display_two_rows;
+    }
+
+    /// Calculates the component's state based on the timer provided.
+    pub fn state(&self, timer: &Timer) -> key_value::State {
+        let mut state = Default::default();
+        self.update_state(&mut state, timer);
+        state
     }
 
     /// Accesses a generic description of the settings available for this

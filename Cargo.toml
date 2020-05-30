@@ -23,9 +23,6 @@ edition = "2018"
 [package.metadata.docs.rs]
 all-features = true
 
-[badges]
-# FIXME: Add GitHub Actions badge
-
 [workspace]
 members = ["capi", "capi/bind_gen", "capi/staticlib", "capi/cdylib", "crates/*"]
 exclude = ["crates/no-std-test"]
@@ -44,6 +41,8 @@ odds = { version = "0.4.0", default-features = false }
 ordered-float = { version = "1.0.2", default-features = false }
 palette = { version = "0.5.0", default-features = false, features = ["libm"] }
 serde = { version = "1.0.98", default-features = false, features = ["derive", "alloc"] }
+smallstr = { version = "0.2.0", default-features = false }
+smallvec = { version = "1.3.0", default-features = false }
 snafu = { version = "0.6.0", default-features = false }
 unicase = "2.6.0"
 
@@ -61,7 +60,6 @@ utf-8 = { version = "0.7.4", optional = true }
 euclid = { version = "0.20.0", default-features = false, optional = true }
 lyon = { version = "0.15.3", default-features = false, optional = true }
 rusttype = { version = "0.9.1", default-features = false, features = ["std"], optional = true }
-smallvec = { version = "1.3.0", default-features = false, optional = true }
 
 # Software Rendering
 euc = { version = "0.5.0", default-features = false, features = ["libm"], optional = true }
@@ -88,7 +86,7 @@ doesnt-have-atomics = []
 std = ["byteorder", "chrono/std", "chrono/clock", "euc/std", "image", "indexmap", "livesplit-hotkey/std", "palette/std", "parking_lot", "quick-xml", "serde_json", "serde/std", "snafu/std", "utf-8", "vek/std"]
 more-image-formats = ["image/webp", "image/pnm", "image/ico", "image/jpeg", "image/tiff", "image/tga", "image/bmp", "image/hdr"]
 image-shrinking = ["std", "bytemuck", "more-image-formats"]
-rendering = ["std", "more-image-formats", "euclid", "lyon", "rusttype", "smallvec"]
+rendering = ["std", "more-image-formats", "euclid", "lyon", "rusttype"]
 software-rendering = ["rendering", "euc", "vek", "derive_more/mul"]
 wasm-web = ["std", "web-sys", "chrono/wasmbind", "livesplit-hotkey/wasm-web"]
 networking = ["std", "splits-io-api"]
@@ -105,6 +103,10 @@ internal-use-all-features = []
 
 [[bench]]
 name = "balanced_pb"
+harness = false
+
+[[bench]]
+name = "layout_state"
 harness = false
 
 [[bench]]

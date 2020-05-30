@@ -137,11 +137,11 @@ export interface TitleComponentStateJson {
     /**
      * By default the category name is shown on the second line. Based on the
      * settings, it can however instead be shown in a single line together with
-     * the game name. This is a list of all the possible abbreviations. It
-     * contains at least one element and the last element is the unabbreviated
-     * value.
+     * the game name. This is a list of all the possible abbreviations. If this
+     * is empty, only a single line is supposed to be shown. If it contains at
+     * least one element, the last element is the unabbreviated value.
      */
-    line2: string[] | null,
+    line2: string[],
     /**
      * Specifies whether the title should centered or aligned to the left
      * instead.

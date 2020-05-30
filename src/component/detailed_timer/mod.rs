@@ -10,7 +10,8 @@ use crate::comparison::{self, best_segments, none};
 use crate::platform::prelude::*;
 use crate::settings::{CachedImageId, Field, Gradient, ImageData, SettingsDescription, Value};
 use crate::timing::formatter::{Accuracy, DigitsFormat, SegmentTime, TimeFormatter};
-use crate::{GeneralLayoutSettings, Segment, Timer, TimerPhase};
+use crate::{GeneralLayoutSettings, Segment, TimeSpan, Timer, TimerPhase};
+use core::fmt::Write;
 use serde::{Deserialize, Serialize};
 
 #[cfg(test)]
@@ -54,7 +55,7 @@ pub struct Settings {
 }
 
 /// The state object describes the information to visualize for this component.
-#[derive(Serialize, Deserialize)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct State {
     /// The background shown behind the component.
     pub background: Gradient,
@@ -83,6 +84,26 @@ pub struct ComparisonState {
     pub name: String,
     /// The time to show for the comparison.
     pub time: String,
+}
+
+fn update_comparison(
+    state: &mut Option<ComparisonState>,
+    new_state: Option<(&str, Option<TimeSpan>)>,
+) {
+    if let Some((name, time)) = new_state {
+        let state = state.get_or_insert_with(|| ComparisonState {
+            name: String::new(),
+            time: String::new(),
+        });
+
+        state.name.clear();
+        state.name.push_str(name);
+
+        state.time.clear();
+        let _ = write!(state.time, "{}", SegmentTime::new().format(time));
+    } else {
+        *state = None;
+    }
 }
 
 impl Default for Settings {
@@ -154,9 +175,14 @@ impl Component {
         "Detailed Timer"
     }
 
-    /// Calculates the component's state based on the timer and layout settings
+    /// Updates the component's state based on the timer and layout settings
     /// provided.
-    pub fn state(&mut self, timer: &Timer, layout_settings: &GeneralLayoutSettings) -> State {
+    pub fn update_state(
+        &mut self,
+        state: &mut State,
+        timer: &Timer,
+        layout_settings: &GeneralLayoutSettings,
+    ) {
         let current_phase = timer.current_phase();
         let timing_method = self
             .settings
@@ -229,42 +255,41 @@ impl Component {
             Default::default()
         };
 
-        let timer_state = self.timer.state(timer, layout_settings);
-        let segment_timer_state = self.segment_timer.state(timer, layout_settings);
-
-        let formatter = SegmentTime::new();
-
-        let comparison1 = comparison1.map(|(name, time)| ComparisonState {
-            name: name.to_string(),
-            time: formatter.format(time).to_string(),
-        });
-
-        let comparison2 = comparison2.map(|(name, time)| ComparisonState {
-            name: name.to_string(),
-            time: formatter.format(time).to_string(),
-        });
-
         let display_icon = self.settings.display_icon;
         let icon_change = self
             .icon_id
             .update_with(current_split.filter(|_| display_icon).map(Segment::icon))
             .map(Into::into);
 
-        let segment_name = if self.settings.show_segment_name {
-            current_split.map(|s| s.name().to_owned())
-        } else {
-            None
-        };
+        state.background = self.settings.background;
 
-        State {
-            background: self.settings.background,
-            timer: timer_state,
-            segment_timer: segment_timer_state,
-            comparison1,
-            comparison2,
-            segment_name,
-            icon_change,
+        self.timer
+            .update_state(&mut state.timer, timer, layout_settings);
+
+        self.segment_timer
+            .update_state(&mut state.segment_timer, timer, layout_settings);
+
+        update_comparison(&mut state.comparison1, comparison1);
+        update_comparison(&mut state.comparison2, comparison2);
+
+        match current_split.filter(|_| self.settings.show_segment_name) {
+            Some(segment) => {
+                let segment_name = state.segment_name.get_or_insert_with(String::new);
+                segment_name.clear();
+                segment_name.push_str(segment.name());
+            }
+            None => state.segment_name = None,
         }
+
+        state.icon_change = icon_change;
+    }
+
+    /// Calculates the component's state based on the timer and layout settings
+    /// provided.
+    pub fn state(&mut self, timer: &Timer, layout_settings: &GeneralLayoutSettings) -> State {
+        let mut state = Default::default();
+        self.update_state(&mut state, timer, layout_settings);
+        state
     }
 
     /// Remounts the component as if it was freshly initialized. The segment

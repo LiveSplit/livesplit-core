@@ -46,8 +46,8 @@ pub extern "C" fn TitleComponentState_line1(this: &TitleComponentState) -> *cons
 pub extern "C" fn TitleComponentState_line2(this: &TitleComponentState) -> *const Nullablec_char {
     // FIXME: Add API for querying the abbreviations.
     this.line2
-        .as_ref()
-        .map_or_else(ptr::null, |abbrevs| output_str(&abbrevs.last().unwrap()))
+        .last()
+        .map_or_else(ptr::null, |abbrev| output_str(&abbrev))
 }
 
 /// Specifies whether the title should centered or aligned to the left

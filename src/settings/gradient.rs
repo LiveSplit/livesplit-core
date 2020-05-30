@@ -15,6 +15,12 @@ pub enum Gradient {
     Horizontal(Color, Color),
 }
 
+impl Default for Gradient {
+    fn default() -> Self {
+        Gradient::Transparent
+    }
+}
+
 /// Describes an extended form of a gradient, specifically made for use with
 /// lists. It allows specifying different coloration for the rows in a list.
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
@@ -23,4 +29,10 @@ pub enum ListGradient {
     Same(Gradient),
     /// Alternate between two colors for each row (Even Index, Odd Index).
     Alternating(Color, Color),
+}
+
+impl Default for ListGradient {
+    fn default() -> Self {
+        ListGradient::Same(Gradient::Transparent)
+    }
 }

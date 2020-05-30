@@ -13,6 +13,7 @@ use crate::platform::prelude::*;
 use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
 use crate::timing::formatter::{Accuracy, Regular, TimeFormatter};
 use crate::Timer;
+use core::fmt::Write;
 use serde::{Deserialize, Serialize};
 
 /// The Sum of Best Segments Component shows the fastest possible time to
@@ -84,8 +85,8 @@ impl Component {
         "Sum of Best Segments"
     }
 
-    /// Calculates the component's state based on the timer provided.
-    pub fn state(&self, timer: &Timer) -> key_value::State {
+    /// Updates the component's state based on the timer provided.
+    pub fn update_state(&self, state: &mut key_value::State, timer: &Timer) {
         let time = calculate_best(
             timer.run().segments(),
             false,
@@ -93,19 +94,33 @@ impl Component {
             timer.current_timing_method(),
         );
 
-        key_value::State {
-            background: self.settings.background,
-            key_color: self.settings.label_color,
-            value_color: self.settings.value_color,
-            semantic_color: Default::default(),
-            key: "Sum of Best Segments".into(),
-            value: Regular::with_accuracy(self.settings.accuracy)
-                .format(time)
-                .to_string()
-                .into(),
-            key_abbreviations: Box::new(["Sum of Best".into(), "SoB".into()]) as _,
-            display_two_rows: self.settings.display_two_rows,
-        }
+        state.background = self.settings.background;
+        state.key_color = self.settings.label_color;
+        state.value_color = self.settings.value_color;
+        state.semantic_color = Default::default();
+
+        state.key.clear();
+        state.key.push_str("Sum of Best Segments");
+
+        state.value.clear();
+        let _ = write!(
+            state.value,
+            "{}",
+            Regular::with_accuracy(self.settings.accuracy).format(time),
+        );
+
+        state.key_abbreviations.clear();
+        state.key_abbreviations.push("Sum of Best".into());
+        state.key_abbreviations.push("SoB".into());
+
+        state.display_two_rows = self.settings.display_two_rows;
+    }
+
+    /// Calculates the component's state based on the timer provided.
+    pub fn state(&self, timer: &Timer) -> key_value::State {
+        let mut state = Default::default();
+        self.update_state(&mut state, timer);
+        state
     }
 
     /// Accesses a generic description of the settings available for this

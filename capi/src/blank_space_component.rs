@@ -6,7 +6,6 @@ use super::{output_vec, Json};
 use crate::blank_space_component_state::OwnedBlankSpaceComponentState;
 use crate::component::OwnedComponent;
 use livesplit_core::component::blank_space::Component as BlankSpaceComponent;
-use livesplit_core::Timer;
 
 /// type
 pub type OwnedBlankSpaceComponent = Box<BlankSpaceComponent>;
@@ -34,20 +33,16 @@ pub extern "C" fn BlankSpaceComponent_into_generic(
 
 /// Encodes the component's state information as JSON.
 #[no_mangle]
-pub extern "C" fn BlankSpaceComponent_state_as_json(
-    this: &mut BlankSpaceComponent,
-    timer: &Timer,
-) -> Json {
+pub extern "C" fn BlankSpaceComponent_state_as_json(this: &mut BlankSpaceComponent) -> Json {
     output_vec(|o| {
-        this.state(timer).write_json(o).unwrap();
+        this.state().write_json(o).unwrap();
     })
 }
 
-/// Calculates the component's state based on the timer provided.
+/// Calculates the component's state.
 #[no_mangle]
 pub extern "C" fn BlankSpaceComponent_state(
     this: &mut BlankSpaceComponent,
-    timer: &Timer,
 ) -> OwnedBlankSpaceComponentState {
-    Box::new(this.state(timer))
+    Box::new(this.state())
 }
