@@ -50,13 +50,79 @@ pub enum Component {
 }
 
 impl Component {
+    /// Updates the component's state based on the timer and settings provided.
+    /// The timer provides the information to visualize and the layout settings
+    /// provide general information about how to expose that information in the
+    /// state.
+    pub fn update_state(
+        &mut self,
+        state: &mut ComponentState,
+        timer: &Timer,
+        layout_settings: &GeneralSettings,
+    ) {
+        match (state, self) {
+            (ComponentState::BlankSpace(state), Component::BlankSpace(component)) => {
+                component.update_state(state)
+            }
+            (ComponentState::KeyValue(state), Component::CurrentComparison(component)) => {
+                component.update_state(state, timer)
+            }
+            (ComponentState::KeyValue(state), Component::CurrentPace(component)) => {
+                component.update_state(state, timer)
+            }
+            (ComponentState::KeyValue(state), Component::Delta(component)) => {
+                component.update_state(state, timer, layout_settings)
+            }
+            (ComponentState::DetailedTimer(state), Component::DetailedTimer(component)) => {
+                component.update_state(&mut *state, timer, layout_settings)
+            }
+            (ComponentState::Graph(state), Component::Graph(component)) => {
+                component.update_state(state, timer, layout_settings)
+            }
+            (ComponentState::KeyValue(state), Component::PbChance(component)) => {
+                component.update_state(state, timer)
+            }
+            (ComponentState::KeyValue(state), Component::PossibleTimeSave(component)) => {
+                component.update_state(state, timer)
+            }
+            (ComponentState::KeyValue(state), Component::PreviousSegment(component)) => {
+                component.update_state(state, timer, layout_settings)
+            }
+            (ComponentState::KeyValue(state), Component::SegmentTime(component)) => {
+                component.update_state(state, timer)
+            }
+            (ComponentState::Separator(state), Component::Separator(component)) => {
+                component.update_state(state)
+            }
+            (ComponentState::Splits(state), Component::Splits(component)) => {
+                component.update_state(state, timer, layout_settings)
+            }
+            (ComponentState::KeyValue(state), Component::SumOfBest(component)) => {
+                component.update_state(state, timer)
+            }
+            (ComponentState::Text(state), Component::Text(component)) => {
+                component.update_state(state, timer)
+            }
+            (ComponentState::Timer(state), Component::Timer(component)) => {
+                component.update_state(state, timer, layout_settings)
+            }
+            (ComponentState::Title(state), Component::Title(component)) => {
+                component.update_state(state, timer)
+            }
+            (ComponentState::KeyValue(state), Component::TotalPlaytime(component)) => {
+                component.update_state(state, timer)
+            }
+            (state, component) => *state = component.state(timer, layout_settings),
+        }
+    }
+
     /// Calculates the component's state based on the timer and settings
     /// provided. The timer provides the information to visualize and the layout
     /// settings provide general information about how to expose that
     /// information in the state.
     pub fn state(&mut self, timer: &Timer, layout_settings: &GeneralSettings) -> ComponentState {
         match self {
-            Component::BlankSpace(component) => ComponentState::BlankSpace(component.state(timer)),
+            Component::BlankSpace(component) => ComponentState::BlankSpace(component.state()),
             Component::CurrentComparison(component) => {
                 ComponentState::KeyValue(component.state(timer))
             }
@@ -78,7 +144,7 @@ impl Component {
                 ComponentState::KeyValue(component.state(timer, layout_settings))
             }
             Component::SegmentTime(component) => ComponentState::KeyValue(component.state(timer)),
-            Component::Separator(component) => ComponentState::Separator(component.state(timer)),
+            Component::Separator(component) => ComponentState::Separator(component.state()),
             Component::Splits(component) => {
                 ComponentState::Splits(component.state(timer, layout_settings))
             }

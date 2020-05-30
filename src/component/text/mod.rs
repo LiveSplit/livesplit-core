@@ -11,7 +11,7 @@ use crate::{
     Timer,
 };
 use alloc::borrow::Cow;
-use core::mem::replace;
+use core::mem::{self, replace};
 use serde::{Deserialize, Serialize};
 
 #[cfg(test)]
@@ -70,6 +70,12 @@ pub enum TextState {
     Split(String, String),
 }
 
+impl Default for TextState {
+    fn default() -> Self {
+        TextState::Center(String::new())
+    }
+}
+
 impl Text {
     /// Returns whether the text is split up into a left and right part.
     pub fn is_split(&self) -> bool {
@@ -115,7 +121,7 @@ impl Text {
 }
 
 /// The state object describes the information to visualize for this component.
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct State {
     /// The background shown behind the component.
     pub background: Gradient,
@@ -201,33 +207,66 @@ impl Component {
         }
     }
 
+    /// Updates the component's state based on the timer provided.
+    pub fn update_state(&self, state: &mut State, timer: &Timer) {
+        state.background = self.settings.background;
+        state.display_two_rows = self.settings.text.is_split() && self.settings.display_two_rows;
+        state.left_center_color = self.settings.left_center_color;
+        state.right_color = self.settings.right_color;
+
+        let (left_center, right) = match &self.settings.text {
+            Text::Center(center) => (center.as_str(), None),
+            Text::Split(left, right) => (left.as_str(), Some(right.as_str())),
+            Text::Variable(var_name, is_split) => {
+                let value = timer
+                    .run()
+                    .metadata()
+                    .custom_variable(&var_name)
+                    .map(|var| var.value.as_str())
+                    .filter(|value| !value.trim_start().is_empty())
+                    .unwrap_or(formatter::DASH);
+
+                if *is_split {
+                    (var_name.as_str(), Some(value))
+                } else {
+                    (value, None)
+                }
+            }
+        };
+
+        // FIXME: We may not want to keep using an enum for this. This is really
+        // painful to deal with, and we still don't reuse memory in every case.
+        match (&mut state.text, left_center, right) {
+            (TextState::Center(old), new, None) => {
+                old.clear();
+                old.push_str(new);
+            }
+            (TextState::Center(old), new_l, Some(new_r)) => {
+                let mut new_l_mem = mem::take(old);
+                new_l_mem.clear();
+                new_l_mem.push_str(new_l);
+                state.text = TextState::Split(new_l_mem, new_r.to_owned());
+            }
+            (TextState::Split(l, r), new_l, Some(new_r)) => {
+                l.clear();
+                l.push_str(new_l);
+                r.clear();
+                r.push_str(new_r);
+            }
+            (TextState::Split(l, _), new_center, None) => {
+                let mut new_center_mem = mem::take(l);
+                new_center_mem.clear();
+                new_center_mem.push_str(new_center);
+                state.text = TextState::Center(new_center_mem);
+            }
+        }
+    }
+
     /// Calculates the component's state.
     pub fn state(&self, timer: &Timer) -> State {
-        State {
-            background: self.settings.background,
-            display_two_rows: self.settings.text.is_split() && self.settings.display_two_rows,
-            left_center_color: self.settings.left_center_color,
-            right_color: self.settings.right_color,
-            text: match &self.settings.text {
-                Text::Center(center) => TextState::Center(center.clone()),
-                Text::Split(left, right) => TextState::Split(left.clone(), right.clone()),
-                Text::Variable(var_name, is_split) => {
-                    let value = timer
-                        .run()
-                        .metadata()
-                        .custom_variable(&var_name)
-                        .map(|var| var.value.as_str())
-                        .filter(|value| !value.trim_start().is_empty())
-                        .unwrap_or(formatter::DASH);
-
-                    if *is_split {
-                        TextState::Split(var_name.clone(), value.to_owned())
-                    } else {
-                        TextState::Center(value.to_owned())
-                    }
-                }
-            },
-        }
+        let mut state = Default::default();
+        self.update_state(&mut state, timer);
+        state
     }
 
     /// Accesses a generic description of the settings available for this

@@ -1,4 +1,9 @@
-#![allow(non_snake_case, non_camel_case_types)]
+#![allow(
+    clippy::boxed_local, // FIXME: False Positive https://github.com/rust-lang/rust-clippy/issues/5542
+    clippy::missing_safety_doc,
+    non_camel_case_types,
+    non_snake_case
+)]
 #![warn(missing_docs)]
 
 //! mod

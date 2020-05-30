@@ -58,6 +58,7 @@ macro_rules! catch {
 }
 
 pub mod analysis;
+pub mod clear_vec;
 pub mod comparison;
 pub mod component;
 #[cfg(feature = "std")]

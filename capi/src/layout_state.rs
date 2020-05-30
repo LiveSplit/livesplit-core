@@ -6,6 +6,7 @@
 //! - Using out of bounds indices.
 //! - Using the wrong getter function on the wrong type of component.
 
+use crate::{output_vec, Json};
 use livesplit_core::component::{
     blank_space::State as BlankSpaceComponentState,
     detailed_timer::State as DetailedTimerComponentState, graph::State as GraphComponentState,
@@ -19,10 +20,26 @@ use std::os::raw::c_char;
 /// type
 pub type OwnedLayoutState = Box<LayoutState>;
 
+/// Creates a new empty Layout State. This is useful for creating an empty
+/// layout state that gets updated over time.
+#[no_mangle]
+pub extern "C" fn LayoutState_new() -> OwnedLayoutState {
+    Box::new(LayoutState::default())
+}
+
 /// drop
 #[no_mangle]
 pub extern "C" fn LayoutState_drop(this: OwnedLayoutState) {
     drop(this);
+}
+
+/// Encodes the layout state as JSON. You can use this to visualize all of the
+/// components of a layout.
+#[no_mangle]
+pub extern "C" fn LayoutState_as_json(this: &LayoutState) -> Json {
+    output_vec(|o| {
+        this.write_json(o).unwrap();
+    })
 }
 
 /// Gets the number of Components in the Layout State.

@@ -86,22 +86,35 @@ impl Layout {
         self.components.push(component.into());
     }
 
+    /// Updates the layout's state based on the timer provided. You can use this
+    /// to visualize all of the components of a layout.
+    pub fn update_state(&mut self, state: &mut LayoutState, timer: &Timer) {
+        let settings = &self.settings;
+
+        state.components.truncate(self.components.len());
+        let mut components = self.components.iter_mut();
+        // First update all the states that we have.
+        for (state, component) in state.components.iter_mut().zip(components.by_ref()) {
+            component.update_state(state, timer, settings);
+        }
+        // Then add states for all the components that don't have states yet.
+        state
+            .components
+            .extend(components.map(|c| c.state(timer, settings)));
+
+        state.background = settings.background;
+        state.thin_separators_color = settings.thin_separators_color;
+        state.separators_color = settings.separators_color;
+        state.text_color = settings.text_color;
+        state.direction = settings.direction;
+    }
+
     /// Calculates the layout's state based on the timer provided. You can use
     /// this to visualize all of the components of a layout.
     pub fn state(&mut self, timer: &Timer) -> LayoutState {
-        let settings = &self.settings;
-        LayoutState {
-            components: self
-                .components
-                .iter_mut()
-                .map(|c| c.state(timer, settings))
-                .collect(),
-            background: settings.background,
-            thin_separators_color: settings.thin_separators_color,
-            separators_color: settings.separators_color,
-            text_color: settings.text_color,
-            direction: settings.direction,
-        }
+        let mut state = Default::default();
+        self.update_state(&mut state, timer);
+        state
     }
 
     /// Accesses the settings of the layout.

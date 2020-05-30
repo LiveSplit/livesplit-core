@@ -101,13 +101,11 @@ pub fn default_generators() -> Vec<Box<dyn ComparisonGenerator>> {
     ]
 }
 
-/// Shortens a comparison name. If the name of the comparison matches one of the
-/// comparison generators, the short name of that comparison generator is
-/// returned. Otherwise the comparison name is returned without being shortened.
-/// Additional shortening logic for other comparison names may happen in the
-/// future.
-pub fn shorten(comparison: &str) -> &str {
-    match comparison {
+/// Tries to shorten a comparison name. If the name of the comparison matches one
+/// of the comparison generators, the short name of that comparison generator is
+/// returned.
+pub fn try_shorten(comparison: &str) -> Option<&'static str> {
+    Some(match comparison {
         personal_best::NAME => personal_best::SHORT_NAME,
         world_record::NAME => world_record::SHORT_NAME,
         average_segments::NAME => average_segments::SHORT_NAME,
@@ -118,8 +116,17 @@ pub fn shorten(comparison: &str) -> &str {
         latest_run::NAME => latest_run::SHORT_NAME,
         none::NAME => none::SHORT_NAME,
         worst_segments::NAME => worst_segments::SHORT_NAME,
-        c => c,
-    }
+        _ => return Option::None,
+    })
+}
+
+/// Shortens a comparison name. If the name of the comparison matches one of the
+/// comparison generators, the short name of that comparison generator is
+/// returned. Otherwise the comparison name is returned without being shortened.
+/// Additional shortening logic for other comparison names may happen in the
+/// future.
+pub fn shorten(comparison: &str) -> &str {
+    try_shorten(comparison).unwrap_or(comparison)
 }
 
 /// Helper function for accessing either the given comparison or a Timer's

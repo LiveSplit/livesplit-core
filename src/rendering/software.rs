@@ -143,12 +143,12 @@ struct VsOut {
 
 impl Interpolate for VsOut {
     #[inline(always)]
-    fn lerp2(a: Self, b: Self, x: f32, y: f32) -> Self {
-        a * x + b * y
+    fn lerp2(fx: Self, fy: Self, x: f32, y: f32) -> Self {
+        fx * x + fy * y
     }
     #[inline(always)]
-    fn lerp3(a: Self, b: Self, c: Self, x: f32, y: f32, z: f32) -> Self {
-        a * x + b * y + c * z
+    fn lerp3(fx: Self, fy: Self, fz: Self, x: f32, y: f32, z: f32) -> Self {
+        fx * x + fy * y + fz * z
     }
 }
 
@@ -178,15 +178,11 @@ impl Pipeline for MyPipeline<'_> {
             let x = vsout.texcoord.x * texture.width;
             let y = vsout.texcoord.y * texture.height;
             let pixel = &texture.data[texture.stride * y as usize + x as usize * 4..];
-            let r = pixel[0];
-            let g = pixel[1];
-            let b = pixel[2];
-            let a = pixel[3];
             return Rgba::new(
-                f32::from(r) / 255.0,
-                f32::from(g) / 255.0,
-                f32::from(b) / 255.0,
-                f32::from(a) / 255.0,
+                f32::from(pixel[0]) / 255.0,
+                f32::from(pixel[1]) / 255.0,
+                f32::from(pixel[2]) / 255.0,
+                f32::from(pixel[3]) / 255.0,
             ) * vsout.color;
         }
         vsout.color

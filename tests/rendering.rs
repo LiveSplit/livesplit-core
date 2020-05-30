@@ -49,7 +49,7 @@ fn default() {
 
 #[test]
 fn actual_split_file() {
-    // TODO: What are we doing about this in regard to crater? These should
+    // FIXME: What are we doing about this in regard to crater? These should
     // likely be in the tests folder.
     let run = lss(run_files::LIVESPLIT_1_0);
     let timer = Timer::new(run).unwrap();

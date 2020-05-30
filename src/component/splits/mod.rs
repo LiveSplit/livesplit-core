@@ -7,6 +7,7 @@
 
 use crate::platform::prelude::*;
 use crate::{
+    clear_vec::{Clear, ClearVec},
     settings::{
         CachedImageId, Color, Field, Gradient, ImageData, ListGradient, SettingsDescription, Value,
     },
@@ -96,7 +97,7 @@ pub struct SplitState {
     pub name: String,
     /// The state of each column from right to left. The amount of columns is
     /// not guaranteed to be the same across different splits.
-    pub columns: Vec<ColumnState>,
+    pub columns: ClearVec<ColumnState>,
     /// Describes if this segment is the segment the active attempt is currently
     /// on.
     pub is_current_split: bool,
@@ -105,6 +106,13 @@ pub struct SplitState {
     /// there can be a scrolling window, showing only a subset of segments. Each
     /// index is guaranteed to be unique.
     pub index: usize,
+}
+
+impl Clear for SplitState {
+    fn clear(&mut self) {
+        self.name.clear();
+        self.columns.clear();
+    }
 }
 
 /// Describes the icon to be shown for a certain segment. This is provided
@@ -124,16 +132,16 @@ pub struct IconChange {
 }
 
 /// The state object describes the information to visualize for this component.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize, Deserialize)]
 pub struct State {
     /// The background shown behind the splits.
     pub background: ListGradient,
     /// The column labels to visualize about the list of splits. If this is
     /// `None`, no labels are supposed to be visualized. The list is specified
     /// from right to left.
-    pub column_labels: Option<Vec<String>>,
+    pub column_labels: Option<ClearVec<String>>,
     /// The list of all the segments to visualize.
-    pub splits: Vec<SplitState>,
+    pub splits: ClearVec<SplitState>,
     /// This list describes all the icon changes that happened. Each time a
     /// segment is first shown or its icon changes, the new icon is provided in
     /// this list. If necessary, you may remount this component to reset the
@@ -260,9 +268,14 @@ impl Component {
         "Splits"
     }
 
-    /// Calculates the component's state based on the timer and layout settings
+    /// Updates the component's state based on the timer and layout settings
     /// provided.
-    pub fn state(&mut self, timer: &Timer, layout_settings: &GeneralLayoutSettings) -> State {
+    pub fn update_state(
+        &mut self,
+        state: &mut State,
+        timer: &Timer,
+        layout_settings: &GeneralLayoutSettings,
+    ) {
         // Reset Scroll Offset when any movement of the split index is observed.
         if self.current_split_index != timer.current_split_index() {
             self.current_split_index = timer.current_split_index();
@@ -286,8 +299,8 @@ impl Component {
             1
         };
         let skip_count = min(
-            current_split.map_or(0, |c_s| {
-                c_s.saturating_sub(
+            current_split.map_or(0, |current_split| {
+                current_split.saturating_sub(
                     visual_split_count
                         .saturating_sub(2)
                         .saturating_sub(self.settings.split_preview_count)
@@ -316,9 +329,23 @@ impl Component {
             ..
         } = self.settings;
 
-        let mut icon_changes = Vec::new();
+        state.background = self.settings.background;
 
-        let mut splits: Vec<_> = run
+        if self.settings.show_column_labels {
+            let column_labels = state.column_labels.get_or_insert_with(Default::default);
+            column_labels.clear();
+            for c in &self.settings.columns {
+                column_labels.push().push_str(&c.name);
+            }
+        } else {
+            state.column_labels = None;
+        }
+
+        let icon_changes = &mut state.icon_changes;
+        icon_changes.clear();
+
+        state.splits.clear();
+        for ((i, segment), icon_id) in run
             .segments()
             .iter()
             .enumerate()
@@ -327,73 +354,71 @@ impl Component {
             .filter(|&((i, _), _)| {
                 i - skip_count < take_count || (always_show_last_split && i + 1 == run.len())
             })
-            .map(|((i, segment), icon_id)| {
-                let columns = columns
-                    .iter()
-                    .map(|column| {
-                        column::state(
-                            column,
-                            timer,
-                            layout_settings,
-                            segment,
-                            i,
-                            current_split,
-                            method,
-                        )
-                    })
-                    .collect();
+        {
+            let state = state.splits.push_with(|| SplitState {
+                name: String::new(),
+                columns: ClearVec::new(),
+                is_current_split: false,
+                index: 0,
+            });
 
-                if let Some(icon_change) = icon_id.update_with(Some(segment.icon())) {
-                    icon_changes.push(IconChange {
-                        segment_index: i,
-                        icon: icon_change.into(),
-                    });
-                }
-
-                SplitState {
-                    name: segment.name().to_string(),
-                    columns,
-                    is_current_split: Some(i) == current_split,
-                    index: i,
-                }
-            })
-            .collect();
-
-        if fill_with_blank_space && splits.len() < visual_split_count {
-            let blank_split_count = visual_split_count - splits.len();
-            for i in 0..blank_split_count {
-                splits.push(SplitState {
-                    name: String::new(),
-                    columns: Vec::new(),
-                    is_current_split: false,
-                    index: (usize::max_value() ^ 1) - 2 * i,
+            if let Some(icon_change) = icon_id.update_with(Some(segment.icon())) {
+                icon_changes.push(IconChange {
+                    segment_index: i,
+                    icon: icon_change.into(),
                 });
+            }
+
+            state.name.push_str(segment.name());
+
+            for column in columns {
+                column::update_state(
+                    state.columns.push_with(|| ColumnState {
+                        value: String::new(),
+                        semantic_color: Default::default(),
+                        visual_color: Color::transparent(),
+                    }),
+                    column,
+                    timer,
+                    layout_settings,
+                    segment,
+                    i,
+                    current_split,
+                    method,
+                );
+            }
+
+            state.is_current_split = Some(i) == current_split;
+            state.index = i;
+        }
+
+        if fill_with_blank_space && state.splits.len() < visual_split_count {
+            let blank_split_count = visual_split_count - state.splits.len();
+            for i in 0..blank_split_count {
+                let state = state.splits.push_with(|| SplitState {
+                    name: String::new(),
+                    columns: ClearVec::new(),
+                    is_current_split: false,
+                    index: 0,
+                });
+                state.is_current_split = false;
+                state.index = (usize::max_value() ^ 1) - 2 * i;
             }
         }
 
-        let column_labels = if self.settings.show_column_labels {
-            Some(
-                self.settings
-                    .columns
-                    .iter()
-                    .map(|c| c.name.clone())
-                    .collect(),
-            )
-        } else {
-            None
-        };
+        state.has_icons = run.segments().iter().any(|s| !s.icon().is_empty());
+        state.show_thin_separators = show_thin_separators;
+        state.show_final_separator = show_final_separator;
+        state.display_two_rows = display_two_rows;
+        state.current_split_gradient = self.settings.current_split_gradient;
+    }
 
-        State {
-            background: self.settings.background,
-            column_labels,
-            splits,
-            icon_changes,
-            has_icons: run.segments().iter().any(|s| !s.icon().is_empty()),
-            show_thin_separators,
-            show_final_separator,
-            display_two_rows,
-            current_split_gradient: self.settings.current_split_gradient,
-        }
+    /// Calculates the component's state based on the timer and layout settings
+    /// provided.
+    pub fn state(&mut self, timer: &Timer, layout_settings: &GeneralLayoutSettings) -> State {
+        let mut state = Default::default();
+        self.update_state(&mut state, timer, layout_settings);
+        state
     }
 
     /// Accesses a generic description of the settings available for this

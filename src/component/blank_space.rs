@@ -5,7 +5,6 @@
 
 use crate::platform::prelude::*;
 use crate::settings::{Field, Gradient, SettingsDescription, Value};
-use crate::Timer;
 use serde::{Deserialize, Serialize};
 
 /// The Blank Space Component is simply an empty component that doesn't show
@@ -36,7 +35,7 @@ impl Default for Settings {
 }
 
 /// The state object describes the information to visualize for this component.
-#[derive(Serialize, Deserialize)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct State {
     /// The background shown behind the component.
     pub background: Gradient,
@@ -81,8 +80,14 @@ impl Component {
         "Blank Space"
     }
 
-    /// Calculates the component's state based on the timer provided.
-    pub fn state(&self, _timer: &Timer) -> State {
+    /// Updates the component's state.
+    pub fn update_state(&self, state: &mut State) {
+        state.background = self.settings.background;
+        state.size = self.settings.size;
+    }
+
+    /// Calculates the component's state.
+    pub fn state(&self) -> State {
         State {
             background: self.settings.background,
             size: self.settings.size,

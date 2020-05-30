@@ -8,6 +8,7 @@ use super::key_value;
 use crate::platform::prelude::*;
 use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
 use crate::{analysis::pb_chance, Timer};
+use core::fmt::Write;
 use serde::{Deserialize, Serialize};
 
 /// The PB Chance Component is a component that shows how likely it is to beat
@@ -73,20 +74,30 @@ impl Component {
         "PB Chance"
     }
 
-    /// Calculates the component's state based on the timer provided.
-    pub fn state(&self, timer: &Timer) -> key_value::State {
+    /// Updates the component's state based on the timer provided.
+    pub fn update_state(&self, state: &mut key_value::State, timer: &Timer) {
         let chance = pb_chance::for_timer(timer);
 
-        key_value::State {
-            background: self.settings.background,
-            key_color: self.settings.label_color,
-            value_color: self.settings.value_color,
-            semantic_color: Default::default(),
-            key: self.name().into(),
-            value: format!("{:.1}%", 100.0 * chance).into(),
-            key_abbreviations: Box::new([]) as _,
-            display_two_rows: self.settings.display_two_rows,
-        }
+        state.background = self.settings.background;
+        state.key_color = self.settings.label_color;
+        state.value_color = self.settings.value_color;
+        state.semantic_color = Default::default();
+
+        state.key.clear();
+        state.key.push_str(self.name());
+
+        state.value.clear();
+        let _ = write!(state.value, "{:.1}%", 100.0 * chance);
+
+        state.key_abbreviations.clear();
+        state.display_two_rows = self.settings.display_two_rows;
+    }
+
+    /// Calculates the component's state based on the timer provided.
+    pub fn state(&self, timer: &Timer) -> key_value::State {
+        let mut state = Default::default();
+        self.update_state(&mut state, timer);
+        state
     }
 
     /// Accesses a generic description of the settings available for this

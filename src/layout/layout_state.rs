@@ -4,7 +4,7 @@ use crate::settings::{Color, Gradient};
 use serde::{Deserialize, Serialize};
 
 /// The state object describes the information to visualize for the layout.
-#[derive(Serialize, Deserialize)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct LayoutState {
     /// The state objects for all of the components in the layout.
     pub components: Vec<ComponentState>,

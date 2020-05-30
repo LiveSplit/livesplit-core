@@ -107,8 +107,8 @@ impl Component {
         text
     }
 
-    /// Calculates the component's state based on the timer provided.
-    pub fn state(&self, timer: &Timer) -> key_value::State {
+    /// Updates the component's state based on the timer provided.
+    pub fn update_state(&self, state: &mut key_value::State, timer: &Timer) {
         let segment_index = timer.current_split_index();
         let current_phase = timer.current_phase();
         let comparison = comparison::resolve(&self.settings.comparison_override, timer);
@@ -127,34 +127,43 @@ impl Component {
             None
         };
 
-        let key_abbreviations = if self.settings.total_possible_time_save {
-            Box::new([
-                "Total Possible Time Save".into(),
-                "Possible Time Save".into(),
-                "Poss. Time Save".into(),
-                "Time Save".into(),
-            ]) as _
-        } else {
-            Box::new([
-                "Possible Time Save".into(),
-                "Poss. Time Save".into(),
-                "Time Save".into(),
-            ]) as _
-        };
+        state.background = self.settings.background;
+        state.key_color = self.settings.label_color;
+        state.value_color = self.settings.value_color;
+        state.semantic_color = Default::default();
 
-        key_value::State {
-            background: self.settings.background,
-            key_color: self.settings.label_color,
-            value_color: self.settings.value_color,
-            semantic_color: Default::default(),
-            key: text.into_owned().into(),
-            value: SegmentTime::with_accuracy(self.settings.accuracy)
-                .format(time)
-                .to_string()
-                .into(),
-            key_abbreviations,
-            display_two_rows: self.settings.display_two_rows,
+        state.key.clear();
+        state.key.push_str(&text); // FIXME: Uncow
+
+        state.value.clear();
+        let _ = write!(
+            state.value,
+            "{}",
+            SegmentTime::with_accuracy(self.settings.accuracy).format(time)
+        );
+
+        state.key_abbreviations.clear();
+        if self.settings.total_possible_time_save {
+            state
+                .key_abbreviations
+                .push("Total Possible Time Save".into());
+            state.key_abbreviations.push("Possible Time Save".into());
+            state.key_abbreviations.push("Poss. Time Save".into());
+            state.key_abbreviations.push("Time Save".into());
+        } else {
+            state.key_abbreviations.push("Possible Time Save".into());
+            state.key_abbreviations.push("Poss. Time Save".into());
+            state.key_abbreviations.push("Time Save".into());
         }
+
+        state.display_two_rows = self.settings.display_two_rows;
+    }
+
+    /// Calculates the component's state based on the timer provided.
+    pub fn state(&self, timer: &Timer) -> key_value::State {
+        let mut state = Default::default();
+        self.update_state(&mut state, timer);
+        state
     }
 
     /// Accesses a generic description of the settings available for this

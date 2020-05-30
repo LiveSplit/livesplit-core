@@ -5,7 +5,7 @@ use crate::parse_run_result::OwnedParseRunResult;
 use crate::segment::OwnedSegment;
 use livesplit_core::run::{parser, saver};
 use livesplit_core::{Attempt, Run, RunMetadata, Segment, TimeSpan};
-use std::io::{BufReader, Cursor};
+use std::io::{BufReader, Cursor, Write};
 use std::os::raw::c_char;
 use std::path::PathBuf;
 use std::slice;
@@ -176,7 +176,13 @@ pub extern "C" fn Run_extended_category_name(
     show_platform: bool,
     show_variables: bool,
 ) -> *const c_char {
-    output_str(this.extended_category_name(show_region, show_platform, show_variables))
+    output_vec(|o| {
+        let _ = write!(
+            o,
+            "{}",
+            this.extended_category_name(show_region, show_platform, show_variables),
+        );
+    })
 }
 
 /// Returns the amount of runs that have been attempted with these splits.

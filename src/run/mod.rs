@@ -40,7 +40,7 @@ use crate::{settings::Image, AtomicDateTime, Time, TimeSpan, TimingMethod};
 use alloc::borrow::Cow;
 #[cfg(not(feature = "std"))]
 use alloc::string::String as PathBuf;
-use core::cmp::max;
+use core::{cmp::max, fmt};
 use hashbrown::HashSet;
 use ordered_float::OrderedFloat;
 #[cfg(feature = "std")]
@@ -468,9 +468,9 @@ impl Run {
         let mut name = Cow::Borrowed(self.game_name());
 
         let category_name = if use_extended_category_name {
-            self.extended_category_name(false, false, true)
+            Cow::Owned(self.extended_category_name(false, false, true).to_string())
         } else {
-            self.category_name().into()
+            Cow::Borrowed(self.category_name())
         };
 
         if !category_name.is_empty() {
@@ -487,8 +487,9 @@ impl Run {
     }
 
     /// Returns an extended category name that possibly includes the region,
-    /// platform and variables, depending on the arguments provided. An extended
-    /// category name may look like this:
+    /// platform and variables, depending on the arguments provided. The
+    /// returned object implements `Display` where it lazily formats the
+    /// extended category name. An extended category name may look like this:
     ///
     /// Any% (No Tuner, JPN, Wii Emulator)
     pub fn extended_category_name(
@@ -496,87 +497,13 @@ impl Run {
         show_region: bool,
         show_platform: bool,
         show_variables: bool,
-    ) -> Cow<'_, str> {
-        let mut category_name: Cow<'_, str> = Cow::Borrowed(&self.category_name);
-        let mut after_parenthesis = "";
-
-        if category_name.is_empty() {
-            return category_name;
+    ) -> ExtendedCategoryName<'_> {
+        ExtendedCategoryName {
+            run: self,
+            show_region,
+            show_platform,
+            show_variables,
         }
-
-        let mut is_empty = true;
-        let mut has_pushed = false;
-
-        if let Some((i, u)) = self
-            .category_name
-            .find('(')
-            .and_then(|i| self.category_name[i..].find(')').map(|u| (i, i + u)))
-        {
-            category_name = Cow::Borrowed(&self.category_name[..u]);
-            is_empty = u == i + 1;
-            after_parenthesis = &self.category_name[u..];
-        }
-
-        {
-            let mut push = |buf: &mut String, values: &[&str]| {
-                if is_empty {
-                    if !has_pushed {
-                        buf.push_str(" (");
-                    }
-                    is_empty = false;
-                } else {
-                    buf.push_str(", ");
-                }
-                for value in values {
-                    buf.push_str(value);
-                }
-                has_pushed = true;
-            };
-
-            if show_variables {
-                for (name, value) in self.metadata.speedrun_com_variables() {
-                    let name = name.trim_end_matches('?');
-
-                    if unicase::eq(value.as_str(), "yes") {
-                        push(category_name.to_mut(), &[name]);
-                    } else if unicase::eq(value.as_str(), "no") {
-                        push(category_name.to_mut(), &["No ", value]);
-                    } else {
-                        push(category_name.to_mut(), &[value]);
-                    }
-                }
-            }
-
-            if show_region {
-                let region = self.metadata.region_name();
-                if !region.is_empty() {
-                    push(category_name.to_mut(), &[region]);
-                }
-            }
-
-            if show_platform {
-                let platform = self.metadata.platform_name();
-                let uses_emulator = self.metadata.uses_emulator();
-
-                match (!platform.is_empty(), uses_emulator) {
-                    (true, true) => push(category_name.to_mut(), &[platform, " Emulator"]),
-                    (true, false) => push(category_name.to_mut(), &[platform]),
-                    (false, true) => push(category_name.to_mut(), &["Emulator"]),
-                    _ => (),
-                }
-            }
-        }
-
-        if !after_parenthesis.is_empty() {
-            if !has_pushed {
-                return Cow::Borrowed(&self.category_name);
-            }
-            category_name.to_mut().push_str(after_parenthesis);
-        } else if !is_empty {
-            category_name.to_mut().push_str(")");
-        }
-
-        category_name
     }
 
     /// Returns the maximum index currently in use by the Attempt History. This
@@ -907,3 +834,101 @@ impl<'a> Iterator for ComparisonsIter<'a> {
 }
 
 impl ExactSizeIterator for ComparisonsIter<'_> {}
+
+/// Lazily formats an extended category name via the `Display` trait. It's a
+/// category name that possibly includes the region, platform and variables,
+/// depending on the arguments provided. An extended category name may look like
+/// this:
+///
+/// Any% (No Tuner, JPN, Wii Emulator)
+pub struct ExtendedCategoryName<'run> {
+    run: &'run Run,
+    show_region: bool,
+    show_platform: bool,
+    show_variables: bool,
+}
+
+impl fmt::Display for ExtendedCategoryName<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let category_name = self.run.category_name.as_str();
+
+        if category_name.is_empty() {
+            return Ok(());
+        }
+
+        let mut is_empty = true;
+        let mut has_pushed = false;
+
+        let (before, after_parenthesis) = if let Some((i, u)) = self
+            .run
+            .category_name
+            .find('(')
+            .and_then(|i| category_name[i..].find(')').map(|u| (i, i + u)))
+        {
+            is_empty = u == i + 1;
+            category_name.split_at(u)
+        } else {
+            (category_name, "")
+        };
+        f.write_str(before)?;
+
+        let mut push = |values: &[&str]| {
+            if is_empty {
+                if !has_pushed {
+                    f.write_str(" (")?;
+                }
+                is_empty = false;
+            } else {
+                f.write_str(", ")?;
+            }
+            for value in values {
+                f.write_str(value)?;
+            }
+            has_pushed = true;
+            Ok(())
+        };
+
+        if self.show_variables {
+            for (name, value) in self.run.metadata.speedrun_com_variables() {
+                let name = name.trim_end_matches('?');
+
+                if unicase::eq(value.as_str(), "yes") {
+                    push(&[name])?;
+                } else if unicase::eq(value.as_str(), "no") {
+                    push(&["No ", value])?;
+                } else {
+                    push(&[value])?;
+                }
+            }
+        }
+
+        if self.show_region {
+            let region = self.run.metadata.region_name();
+            if !region.is_empty() {
+                push(&[region])?;
+            }
+        }
+
+        if self.show_platform {
+            let platform = self.run.metadata.platform_name();
+            let uses_emulator = self.run.metadata.uses_emulator();
+
+            match (!platform.is_empty(), uses_emulator) {
+                (true, true) => push(&[platform, " Emulator"])?,
+                (true, false) => push(&[platform])?,
+                (false, true) => push(&["Emulator"])?,
+                _ => (),
+            }
+        }
+
+        if !after_parenthesis.is_empty() {
+            if has_pushed {
+                f.write_str(after_parenthesis)?;
+            }
+        } else if !is_empty {
+            f.write_str(")")?;
+        }
+
+        Ok(())
+    }
+}
