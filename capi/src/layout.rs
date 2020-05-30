@@ -99,7 +99,8 @@ pub extern "C" fn Layout_update_state(this: &mut Layout, state: &mut LayoutState
     this.update_state(state, timer)
 }
 
-/// Updates the layout's state based on the timer provided.
+/// Updates the layout's state based on the timer provided and encodes it as
+/// JSON.
 #[no_mangle]
 pub extern "C" fn Layout_update_state_as_json(
     this: &mut Layout,

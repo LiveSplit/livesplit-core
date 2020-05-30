@@ -122,9 +122,9 @@ pub fn try_shorten(comparison: &str) -> Option<&'static str> {
 
 /// Shortens a comparison name. If the name of the comparison matches one of the
 /// comparison generators, the short name of that comparison generator is
-/// returned. Otherwise the comparison name is returned without being shortened.
-/// Additional shortening logic for other comparison names may happen in the
-/// future.
+/// returned. Otherwise, the comparison name is returned without being
+/// shortened. Additional shortening logic for other comparison names may happen
+/// in the future.
 pub fn shorten(comparison: &str) -> &str {
     try_shorten(comparison).unwrap_or(comparison)
 }

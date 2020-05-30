@@ -1,6 +1,6 @@
-//! A ClearVec is a special kind of Vec that when being cleared doesn't drop its
-//! elements. Instead the elements get cleared out. This allows reusing them
-//! later on again with all their capacity retained. The elements are only
+//! A ClearVec is a special kind of Vec that doesn't drop its elements when
+//! being cleared. Instead, the elements get cleared out. This allows reusing
+//! them later on again with all their capacity retained. The elements are only
 //! dropped once the ClearVec itself gets dropped.
 
 use crate::platform::prelude::*;
@@ -23,9 +23,9 @@ pub trait Clear {
     fn clear(&mut self);
 }
 
-/// A ClearVec is a special kind of Vec that when being cleared doesn't drop its
-/// elements. Instead the elements get cleared out. This allows reusing them
-/// later on again with all their capacity retained. The elements are only
+/// A ClearVec is a special kind of Vec that doesn't drop its elements when
+/// being cleared. Instead, the elements get cleared out. This allows reusing
+/// them later on again with all their capacity retained. The elements are only
 /// dropped once the ClearVec itself gets dropped.
 #[derive(Clone, Debug)]
 pub struct ClearVec<T: Clear> {
