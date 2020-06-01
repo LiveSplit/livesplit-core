@@ -6,13 +6,16 @@ use web_sys::window;
 #[derive(Copy, Clone, PartialOrd, PartialEq, Ord, Eq, Debug)]
 pub struct Instant(OrderedFloat<f64>);
 
+thread_local! {
+    static PERFORMANCE: web_sys::Performance = window()
+        .expect("No window object available")
+        .performance()
+        .expect("Can't measure time without a performance object");
+}
+
 impl Instant {
     pub fn now() -> Self {
-        let seconds = window()
-            .and_then(|w| w.performance())
-            .expect("Can't measure time without a performance object")
-            .now()
-            / 1000.0;
+        let seconds = PERFORMANCE.with(|p| p.now()) / 1000.0;
         Instant(OrderedFloat(seconds))
     }
 }
