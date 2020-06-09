@@ -1,11 +1,11 @@
 use super::mesh::{fill_builder, Mesh};
 use super::Backend;
+use hashbrown::HashMap;
 use lyon::{
     path::{self, math::point, Path},
     tessellation::{FillOptions, FillTessellator},
 };
 use rusttype::{Font, GlyphId, OutlineBuilder, Scale};
-use std::collections::HashMap;
 
 struct PathBuilder(path::Builder);
 

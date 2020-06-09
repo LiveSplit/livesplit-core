@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 /// Describes a Gradient for coloring a region with more than just a single
 /// color.
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq)]
 pub enum Gradient {
     /// Don't use any color, keep it transparent.
     Transparent,

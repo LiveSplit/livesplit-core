@@ -1,7 +1,7 @@
+use super::Comparisons;
 use crate::comparison::personal_best;
 use crate::platform::prelude::*;
 use crate::{settings::Image, SegmentHistory, Time, TimeSpan, TimingMethod};
-use hashbrown::HashMap;
 
 /// A Segment describes a point in a speedrun that is suitable for storing a
 /// split time. This stores the name of that segment, an icon, the split times
@@ -24,7 +24,7 @@ pub struct Segment {
     best_segment_time: Time,
     split_time: Time,
     segment_history: SegmentHistory,
-    comparisons: HashMap<String, Time>,
+    comparisons: Comparisons,
 }
 
 impl Segment {
@@ -70,7 +70,7 @@ impl Segment {
     /// Grants mutable access to the comparison times stored in the Segment.
     /// This includes both the custom comparisons and the generated ones.
     #[inline]
-    pub fn comparisons_mut(&mut self) -> &mut HashMap<String, Time> {
+    pub fn comparisons_mut(&mut self) -> &mut Comparisons {
         &mut self.comparisons
     }
 
@@ -78,9 +78,7 @@ impl Segment {
     /// none for this comparison, a new one is inserted with an empty time.
     #[inline]
     pub fn comparison_mut(&mut self, comparison: &str) -> &mut Time {
-        self.comparisons
-            .entry(comparison.into())
-            .or_insert_with(Time::default)
+        self.comparisons.get_or_insert_default(comparison)
     }
 
     /// Accesses the specified comparison's time. If there's none for this
@@ -88,10 +86,7 @@ impl Segment {
     /// segment).
     #[inline]
     pub fn comparison(&self, comparison: &str) -> Time {
-        self.comparisons
-            .get(comparison)
-            .cloned()
-            .unwrap_or_default()
+        self.comparisons.get(comparison).unwrap_or_default()
     }
 
     /// Accesses the given timing method of the specified comparison. If either
@@ -112,7 +107,6 @@ impl Segment {
     pub fn personal_best_split_time(&self) -> Time {
         self.comparisons
             .get(personal_best::NAME)
-            .cloned()
             .unwrap_or_else(Time::default)
     }
 
@@ -120,15 +114,13 @@ impl Segment {
     /// segment. If it doesn't exist an empty time is inserted.
     #[inline]
     pub fn personal_best_split_time_mut(&mut self) -> &mut Time {
-        self.comparisons
-            .entry(personal_best::NAME.to_string())
-            .or_insert_with(Time::default)
+        self.comparisons.get_or_insert_default(personal_best::NAME)
     }
 
     /// Sets the split time of the Personal Best to the time provided.
     #[inline]
     pub fn set_personal_best_split_time(&mut self, time: Time) {
-        self.comparisons.insert(personal_best::NAME.into(), time);
+        self.comparisons.set(personal_best::NAME, time);
     }
 
     /// Accesses the Best Segment Time.
