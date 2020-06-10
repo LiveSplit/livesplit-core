@@ -19,19 +19,19 @@ fn zero_visual_split_count_always_shows_all_splits() {
         ..Default::default()
     });
 
-    let mut state = component.state(&timer, &layout_settings);
+    let mut state = component.state(&timer.snapshot(), &layout_settings);
     assert_eq!(state.splits.len(), 32);
 
     component.scroll_down();
-    state = component.state(&timer, &layout_settings);
+    state = component.state(&timer.snapshot(), &layout_settings);
     assert_eq!(state.splits.len(), 32);
 
     component.scroll_down();
-    state = component.state(&timer, &layout_settings);
+    state = component.state(&timer.snapshot(), &layout_settings);
     assert_eq!(state.splits.len(), 32);
 
     component.scroll_up();
-    state = component.state(&timer, &layout_settings);
+    state = component.state(&timer.snapshot(), &layout_settings);
     assert_eq!(state.splits.len(), 32);
 }
 
@@ -59,7 +59,7 @@ fn negative_segment_times() {
     timer.pause_game_time();
     timer.set_game_time(TimeSpan::from_seconds(-1.0));
 
-    let state = component.state(&timer, &layout_settings);
+    let state = component.state(&timer.snapshot(), &layout_settings);
     assert_eq!(state.splits[0].columns[0].value, "−0:01");
 }
 
@@ -77,7 +77,7 @@ fn unique_split_indices() {
         ..Default::default()
     });
 
-    let state = component.state(&timer, &Default::default());
+    let state = component.state(&timer.snapshot(), &Default::default());
 
     let mut indices = state
         .splits

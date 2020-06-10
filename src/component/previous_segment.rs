@@ -8,8 +8,11 @@
 use super::key_value;
 use crate::platform::prelude::*;
 use crate::settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
-use crate::timing::formatter::{Accuracy, Delta, SegmentTime, TimeFormatter};
-use crate::{analysis, comparison, GeneralLayoutSettings, Timer, TimerPhase};
+use crate::timing::{
+    formatter::{Accuracy, Delta, SegmentTime, TimeFormatter},
+    Snapshot,
+};
+use crate::{analysis, comparison, GeneralLayoutSettings, TimerPhase};
 use alloc::borrow::Cow;
 use core::fmt::Write as FmtWrite;
 use serde::{Deserialize, Serialize};
@@ -113,7 +116,7 @@ impl Component {
     pub fn update_state(
         &self,
         state: &mut key_value::State,
-        timer: &Timer,
+        timer: &Snapshot<'_>,
         layout_settings: &GeneralLayoutSettings,
     ) {
         let mut time_change = None;
@@ -235,7 +238,7 @@ impl Component {
     /// settings provided.
     pub fn state(
         &self,
-        timer: &Timer,
+        timer: &Snapshot<'_>,
         layout_settings: &GeneralLayoutSettings,
     ) -> key_value::State {
         let mut state = Default::default();

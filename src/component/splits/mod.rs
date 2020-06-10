@@ -11,7 +11,8 @@ use crate::{
     settings::{
         CachedImageId, Color, Field, Gradient, ImageData, ListGradient, SettingsDescription, Value,
     },
-    GeneralLayoutSettings, Timer,
+    timing::Snapshot,
+    GeneralLayoutSettings,
 };
 use core::cmp::{max, min};
 use serde::{Deserialize, Serialize};
@@ -273,7 +274,7 @@ impl Component {
     pub fn update_state(
         &mut self,
         state: &mut State,
-        timer: &Timer,
+        timer: &Snapshot<'_>,
         layout_settings: &GeneralLayoutSettings,
     ) {
         // Reset Scroll Offset when any movement of the split index is observed.
@@ -415,7 +416,11 @@ impl Component {
 
     /// Calculates the component's state based on the timer and layout settings
     /// provided.
-    pub fn state(&mut self, timer: &Timer, layout_settings: &GeneralLayoutSettings) -> State {
+    pub fn state(
+        &mut self,
+        timer: &Snapshot<'_>,
+        layout_settings: &GeneralLayoutSettings,
+    ) -> State {
         let mut state = Default::default();
         self.update_state(&mut state, timer, layout_settings);
         state

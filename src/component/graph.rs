@@ -5,7 +5,9 @@
 
 use crate::platform::prelude::*;
 use crate::settings::{Color, Field, SettingsDescription, Value};
-use crate::{analysis, comparison, GeneralLayoutSettings, TimeSpan, Timer, TimerPhase};
+use crate::{
+    analysis, comparison, timing::Snapshot, GeneralLayoutSettings, TimeSpan, Timer, TimerPhase,
+};
 use alloc::borrow::Cow;
 use serde::{Deserialize, Serialize};
 
@@ -200,7 +202,7 @@ impl Component {
     pub fn update_state(
         &self,
         state: &mut State,
-        timer: &Timer,
+        timer: &Snapshot<'_>,
         layout_settings: &GeneralLayoutSettings,
     ) {
         let comparison = comparison::resolve(&self.settings.comparison_override, timer);
@@ -223,7 +225,7 @@ impl Component {
 
     /// Calculates the component's state based on the timer and layout settings
     /// provided.
-    pub fn state(&self, timer: &Timer, layout_settings: &GeneralLayoutSettings) -> State {
+    pub fn state(&self, timer: &Snapshot<'_>, layout_settings: &GeneralLayoutSettings) -> State {
         let mut state = Default::default();
         self.update_state(&mut state, timer, layout_settings);
         state
@@ -434,7 +436,7 @@ impl Component {
             && analysis::check_best_segment(timer, split_number, timer.current_timing_method())
     }
 
-    fn calculate_final_split(&self, timer: &Timer, draw_info: &mut DrawInfo) {
+    fn calculate_final_split(&self, timer: &Snapshot<'_>, draw_info: &mut DrawInfo) {
         if timer.current_phase() != TimerPhase::NotRunning {
             if self.settings.live_graph {
                 let current_time = timer.current_time();
@@ -457,7 +459,12 @@ impl Component {
         }
     }
 
-    fn check_live_segment_delta(&self, timer: &Timer, comparison: &str, draw_info: &mut DrawInfo) {
+    fn check_live_segment_delta(
+        &self,
+        timer: &Snapshot<'_>,
+        comparison: &str,
+        draw_info: &mut DrawInfo,
+    ) {
         if self.settings.live_graph {
             let current_phase = timer.current_phase();
             if current_phase == TimerPhase::Running || current_phase == TimerPhase::Paused {

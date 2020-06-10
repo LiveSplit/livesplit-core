@@ -4,8 +4,11 @@ use crate::{
     clear_vec::Clear,
     comparison,
     settings::{Color, SemanticColor},
-    timing::formatter::{Delta, Regular, SegmentTime, TimeFormatter},
-    GeneralLayoutSettings, Segment, TimeSpan, Timer, TimingMethod,
+    timing::{
+        formatter::{Delta, Regular, SegmentTime, TimeFormatter},
+        Snapshot,
+    },
+    GeneralLayoutSettings, Segment, TimeSpan, TimingMethod,
 };
 use core::fmt::Write;
 use serde::{Deserialize, Serialize};
@@ -138,7 +141,7 @@ enum ColumnFormatter {
 pub fn update_state(
     state: &mut ColumnState,
     column: &ColumnSettings,
-    timer: &Timer,
+    timer: &Snapshot<'_>,
     layout_settings: &GeneralLayoutSettings,
     segment: &Segment,
     segment_index: usize,
@@ -209,7 +212,7 @@ pub fn update_state(
 
 fn column_update_value(
     column: &ColumnSettings,
-    timer: &Timer,
+    timer: &Snapshot<'_>,
     segment: &Segment,
     segment_index: usize,
     current_split: Option<usize>,

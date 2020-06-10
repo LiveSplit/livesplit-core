@@ -7,8 +7,11 @@ use crate::analysis::split_color;
 use crate::palette::{rgb::LinSrgb, Hsv};
 use crate::platform::prelude::*;
 use crate::settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
-use crate::timing::formatter::{timer as formatter, Accuracy, DigitsFormat, TimeFormatter};
-use crate::{GeneralLayoutSettings, TimeSpan, Timer, TimerPhase, TimingMethod};
+use crate::timing::{
+    formatter::{timer as formatter, Accuracy, DigitsFormat, TimeFormatter},
+    Snapshot,
+};
+use crate::{GeneralLayoutSettings, TimeSpan, TimerPhase, TimingMethod};
 use core::fmt::Write;
 use serde::{Deserialize, Serialize};
 
@@ -131,7 +134,7 @@ impl Component {
     pub fn update_state(
         &self,
         state: &mut State,
-        timer: &Timer,
+        timer: &Snapshot<'_>,
         layout_settings: &GeneralLayoutSettings,
     ) {
         let method = self
@@ -237,7 +240,7 @@ impl Component {
 
     /// Calculates the component's state based on the timer and the layout
     /// settings provided.
-    pub fn state(&self, timer: &Timer, layout_settings: &GeneralLayoutSettings) -> State {
+    pub fn state(&self, timer: &Snapshot<'_>, layout_settings: &GeneralLayoutSettings) -> State {
         let mut state = Default::default();
         self.update_state(&mut state, timer, layout_settings);
         state
@@ -314,7 +317,7 @@ pub fn top_and_bottom_color(color: Color) -> (Color, Color) {
 }
 
 fn calculate_live_segment_time(
-    timer: &Timer,
+    timer: &Snapshot<'_>,
     timing_method: TimingMethod,
     last_split_index: usize,
 ) -> Option<TimeSpan> {

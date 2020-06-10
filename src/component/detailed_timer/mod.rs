@@ -9,8 +9,11 @@ use crate::analysis::comparison_single_segment_time;
 use crate::comparison::{self, best_segments, none};
 use crate::platform::prelude::*;
 use crate::settings::{CachedImageId, Field, Gradient, ImageData, SettingsDescription, Value};
-use crate::timing::formatter::{Accuracy, DigitsFormat, SegmentTime, TimeFormatter};
-use crate::{GeneralLayoutSettings, Segment, TimeSpan, Timer, TimerPhase};
+use crate::timing::{
+    formatter::{Accuracy, DigitsFormat, SegmentTime, TimeFormatter},
+    Snapshot,
+};
+use crate::{GeneralLayoutSettings, Segment, TimeSpan, TimerPhase};
 use core::fmt::Write;
 use serde::{Deserialize, Serialize};
 
@@ -180,7 +183,7 @@ impl Component {
     pub fn update_state(
         &mut self,
         state: &mut State,
-        timer: &Timer,
+        timer: &Snapshot<'_>,
         layout_settings: &GeneralLayoutSettings,
     ) {
         let current_phase = timer.current_phase();
@@ -286,7 +289,11 @@ impl Component {
 
     /// Calculates the component's state based on the timer and layout settings
     /// provided.
-    pub fn state(&mut self, timer: &Timer, layout_settings: &GeneralLayoutSettings) -> State {
+    pub fn state(
+        &mut self,
+        timer: &Snapshot<'_>,
+        layout_settings: &GeneralLayoutSettings,
+    ) -> State {
         let mut state = Default::default();
         self.update_state(&mut state, timer, layout_settings);
         state

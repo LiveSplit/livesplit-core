@@ -2,7 +2,7 @@ use crate::comparison::personal_best;
 use crate::platform::prelude::*;
 use crate::TimerPhase::*;
 use crate::{AtomicDateTime, Run, Segment, Time, TimeSpan, TimeStamp, TimerPhase, TimingMethod};
-use core::mem;
+use core::{mem, ops::Deref};
 
 #[cfg(test)]
 mod tests;
@@ -56,6 +56,29 @@ pub struct Timer {
     is_game_time_paused: bool,
     game_time_pause_time: Option<TimeSpan>,
     loading_times: Option<TimeSpan>,
+}
+
+/// A snapshot represents a specific point in time that the timer was observed
+/// at. The snapshot dereferences to the timer. Everything you perceive through
+/// the snapshot is entirely frozen in time.
+pub struct Snapshot<'timer> {
+    timer: &'timer Timer,
+    time: Time,
+}
+
+impl Snapshot<'_> {
+    /// Returns the time the timer was at when the snapshot was taken. The Game
+    /// Time is None if the Game Time has not been initialized.
+    pub fn current_time(&self) -> Time {
+        self.time
+    }
+}
+
+impl Deref for Snapshot<'_> {
+    type Target = Timer;
+    fn deref(&self) -> &Self::Target {
+        self.timer
+    }
 }
 
 /// A Shared Timer is a wrapper around the Timer that can be shared across
@@ -168,9 +191,7 @@ impl Timer {
         self.phase
     }
 
-    /// Returns the current time of the Timer. The Game Time is None if the
-    /// Game Time has not been initialized.
-    pub fn current_time(&self) -> Time {
+    fn current_time(&self) -> Time {
         let real_time = match self.phase {
             NotRunning => Some(self.run.offset()),
             Running => Some(TimeStamp::now() - self.adjusted_start_time),
@@ -195,6 +216,17 @@ impl Timer {
         Time::new()
             .with_real_time(real_time)
             .with_game_time(game_time)
+    }
+
+    /// Creates a new snapshot of the timer at the point of time of this call.
+    /// It represents a frozen state of the timer such that calculations can
+    /// work with an entirely consistent view of the timer without the current
+    /// time changing underneath.
+    pub fn snapshot(&self) -> Snapshot<'_> {
+        Snapshot {
+            timer: self,
+            time: self.current_time(),
+        }
     }
 
     /// Returns the currently selected Timing Method.

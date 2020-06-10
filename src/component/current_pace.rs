@@ -7,8 +7,11 @@ use super::key_value;
 use crate::analysis::current_pace;
 use crate::platform::prelude::*;
 use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
-use crate::timing::formatter::{Accuracy, Regular, TimeFormatter};
-use crate::{comparison, Timer, TimerPhase};
+use crate::timing::{
+    formatter::{Accuracy, Regular, TimeFormatter},
+    Snapshot,
+};
+use crate::{comparison, TimerPhase};
 use alloc::borrow::Cow;
 use core::fmt::Write;
 use serde::{Deserialize, Serialize};
@@ -97,7 +100,7 @@ impl Component {
     }
 
     /// Updates the component's state based on the timer provided.
-    pub fn update_state(&self, state: &mut key_value::State, timer: &Timer) {
+    pub fn update_state(&self, state: &mut key_value::State, timer: &Snapshot<'_>) {
         let comparison = comparison::resolve(&self.settings.comparison_override, timer);
         let comparison = comparison::or_current(comparison, timer);
         let key = self.text(Some(comparison));
@@ -154,7 +157,7 @@ impl Component {
     }
 
     /// Calculates the component's state based on the timer provided.
-    pub fn state(&self, timer: &Timer) -> key_value::State {
+    pub fn state(&self, timer: &Snapshot<'_>) -> key_value::State {
         let mut state = Default::default();
         self.update_state(&mut state, timer);
         state

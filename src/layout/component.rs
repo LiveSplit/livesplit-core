@@ -6,7 +6,7 @@ use crate::component::{
 };
 use crate::platform::prelude::*;
 use crate::settings::{SettingsDescription, Value};
-use crate::Timer;
+use crate::timing::Snapshot;
 use alloc::borrow::Cow;
 
 /// A Component provides information about a run in a way that is easy to
@@ -57,7 +57,7 @@ impl Component {
     pub fn update_state(
         &mut self,
         state: &mut ComponentState,
-        timer: &Timer,
+        timer: &Snapshot<'_>,
         layout_settings: &GeneralSettings,
     ) {
         match (state, self) {
@@ -120,7 +120,11 @@ impl Component {
     /// provided. The timer provides the information to visualize and the layout
     /// settings provide general information about how to expose that
     /// information in the state.
-    pub fn state(&mut self, timer: &Timer, layout_settings: &GeneralSettings) -> ComponentState {
+    pub fn state(
+        &mut self,
+        timer: &Snapshot<'_>,
+        layout_settings: &GeneralSettings,
+    ) -> ComponentState {
         match self {
             Component::BlankSpace(component) => ComponentState::BlankSpace(component.state()),
             Component::CurrentComparison(component) => {

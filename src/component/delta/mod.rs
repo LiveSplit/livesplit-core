@@ -6,8 +6,11 @@ use super::key_value;
 use crate::analysis::{delta, state_helper};
 use crate::platform::prelude::*;
 use crate::settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
-use crate::timing::formatter::{Accuracy, Delta, TimeFormatter};
-use crate::{comparison, GeneralLayoutSettings, Timer};
+use crate::timing::{
+    formatter::{Accuracy, Delta, TimeFormatter},
+    Snapshot,
+};
+use crate::{comparison, GeneralLayoutSettings};
 use alloc::borrow::Cow;
 use core::fmt::Write;
 use serde::{Deserialize, Serialize};
@@ -92,7 +95,7 @@ impl Component {
     pub fn update_state(
         &self,
         state: &mut key_value::State,
-        timer: &Timer,
+        timer: &Snapshot<'_>,
         layout_settings: &GeneralLayoutSettings,
     ) {
         let comparison = comparison::resolve(&self.settings.comparison_override, timer);
@@ -148,7 +151,7 @@ impl Component {
     /// settings provided.
     pub fn state(
         &self,
-        timer: &Timer,
+        timer: &Snapshot<'_>,
         layout_settings: &GeneralLayoutSettings,
     ) -> key_value::State {
         let mut state = Default::default();

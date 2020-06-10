@@ -10,7 +10,7 @@
 //! where the Balanced PB would source its split times.
 
 use super::SkillCurve;
-use crate::{comparison, Run, Segment, TimeSpan, Timer, TimingMethod};
+use crate::{comparison, timing::Snapshot, Run, Segment, TimeSpan, TimingMethod};
 
 #[cfg(test)]
 mod tests;
@@ -40,7 +40,7 @@ pub fn for_run(run: &Run, method: TimingMethod) -> f64 {
 /// the current attempt. If there is no attempt in progress it yields the same
 /// result as the PB chance for the run. The value is being reported as a
 /// floating point number in the range from 0 (0%) to 1 (100%).
-pub fn for_timer(timer: &Timer) -> f64 {
+pub fn for_timer(timer: &Snapshot<'_>) -> f64 {
     let method = timer.current_timing_method();
     let all_segments = timer.run().segments();
 
