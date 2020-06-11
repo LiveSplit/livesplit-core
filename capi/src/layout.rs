@@ -90,13 +90,13 @@ pub unsafe extern "C" fn Layout_parse_original_livesplit(
 /// Calculates and returns the layout's state based on the timer provided.
 #[no_mangle]
 pub extern "C" fn Layout_state(this: &mut Layout, timer: &Timer) -> OwnedLayoutState {
-    Box::new(this.state(timer))
+    Box::new(this.state(&timer.snapshot()))
 }
 
 /// Updates the layout's state based on the timer provided.
 #[no_mangle]
 pub extern "C" fn Layout_update_state(this: &mut Layout, state: &mut LayoutState, timer: &Timer) {
-    this.update_state(state, timer)
+    this.update_state(state, &timer.snapshot())
 }
 
 /// Updates the layout's state based on the timer provided and encodes it as
@@ -107,7 +107,7 @@ pub extern "C" fn Layout_update_state_as_json(
     state: &mut LayoutState,
     timer: &Timer,
 ) -> Json {
-    this.update_state(state, timer);
+    this.update_state(state, &timer.snapshot());
     output_vec(|o| {
         state.write_json(o).unwrap();
     })
@@ -118,7 +118,7 @@ pub extern "C" fn Layout_update_state_as_json(
 #[no_mangle]
 pub extern "C" fn Layout_state_as_json(this: &mut Layout, timer: &Timer) -> Json {
     output_vec(|o| {
-        this.state(timer).write_json(o).unwrap();
+        this.state(&timer.snapshot()).write_json(o).unwrap();
     })
 }
 

@@ -42,7 +42,7 @@ fn default() {
     tests_helper::start_run(&mut timer);
     tests_helper::make_progress_run_with_splits_opt(&mut timer, &[Some(5.0), None, Some(10.0)]);
 
-    let state = layout.state(&timer);
+    let state = layout.state(&timer.snapshot());
 
     check(&state, "luCCVRJIPLE=", "default");
 }
@@ -55,7 +55,11 @@ fn actual_split_file() {
     let timer = Timer::new(run).unwrap();
     let mut layout = Layout::default_layout();
 
-    check(&layout.state(&timer), "jMDEKxBAPLE=", "actual_split_file");
+    check(
+        &layout.state(&timer.snapshot()),
+        "jMDEKxBAPLE=",
+        "actual_split_file",
+    );
 }
 
 #[test]
@@ -64,7 +68,12 @@ fn wsplit() {
     let timer = Timer::new(run).unwrap();
     let mut layout = lsl(layout_files::WSPLIT);
 
-    check_dims(&layout.state(&timer), [250, 300], "j/jc3dn8t/c=", "wsplit");
+    check_dims(
+        &layout.state(&timer.snapshot()),
+        [250, 300],
+        "j/jc3dn8t/c=",
+        "wsplit",
+    );
 }
 
 #[test]
@@ -78,7 +87,7 @@ fn all_components() {
         &[Some(10.0), None, Some(20.0), Some(55.0)],
     );
 
-    let state = layout.state(&timer);
+    let state = layout.state(&timer.snapshot());
 
     check_dims(&state, [300, 800], "4eH3scnJt7E=", "all_components");
 
@@ -93,10 +102,11 @@ fn score_split() {
     let timer = Timer::new(run).unwrap();
     let mut layout = Layout::default_layout();
 
-    let mut state = layout.state(&timer);
+    let mut state = layout.state(&timer.snapshot());
     let prev_seg = state.components.pop().unwrap();
     state.components.pop();
-    let mut timer_state = timer::Component::new().state(&timer, layout.general_settings());
+    let mut timer_state =
+        timer::Component::new().state(&timer.snapshot(), layout.general_settings());
     timer_state.time = "50346".into();
     timer_state.fraction = "PTS".into();
     state.components.push(ComponentState::Timer(timer_state));
@@ -111,7 +121,11 @@ fn dark_layout() {
     let timer = Timer::new(run).unwrap();
     let mut layout = lsl(layout_files::DARK);
 
-    check(&layout.state(&timer), "D8IAQiBYxgM=", "dark_layout");
+    check(
+        &layout.state(&timer.snapshot()),
+        "D8IAQiBYxgM=",
+        "dark_layout",
+    );
 }
 
 #[test]
@@ -127,7 +141,7 @@ fn subsplits_layout() {
     );
 
     check_dims(
-        &layout.state(&timer),
+        &layout.state(&timer.snapshot()),
         [300, 800],
         "8/Pz4/Pz/8c=",
         "subsplits_layout",
@@ -150,7 +164,7 @@ fn display_two_rows() {
     layout.push(component);
 
     check_dims(
-        &layout.state(&timer),
+        &layout.state(&timer.snapshot()),
         [200, 100],
         "R00aWs1J9sE=",
         "display_two_rows",
@@ -173,7 +187,7 @@ fn single_line_title() {
     layout.push(component);
 
     check_dims(
-        &layout.state(&timer),
+        &layout.state(&timer.snapshot()),
         [300, 60],
         "QCRbT0dxaAE=",
         "single_line_title",
@@ -207,7 +221,7 @@ fn horizontal() {
     );
 
     check_dims(
-        &layout.state(&timer),
+        &layout.state(&timer.snapshot()),
         [1500, 40],
         "YmJicmJSUmM=",
         "horizontal",

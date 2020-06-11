@@ -24,7 +24,7 @@ pub use self::layout_state::LayoutState;
 
 use crate::component::{previous_segment, splits, timer, title};
 use crate::platform::prelude::*;
-use crate::timing::Timer;
+use crate::timing::Snapshot;
 
 /// A Layout allows you to combine multiple components together to visualize a
 /// variety of information the runner is interested in.
@@ -88,7 +88,7 @@ impl Layout {
 
     /// Updates the layout's state based on the timer provided. You can use this
     /// to visualize all of the components of a layout.
-    pub fn update_state(&mut self, state: &mut LayoutState, timer: &Timer) {
+    pub fn update_state(&mut self, state: &mut LayoutState, timer: &Snapshot<'_>) {
         let settings = &self.settings;
 
         state.components.truncate(self.components.len());
@@ -111,7 +111,7 @@ impl Layout {
 
     /// Calculates the layout's state based on the timer provided. You can use
     /// this to visualize all of the components of a layout.
-    pub fn state(&mut self, timer: &Timer) -> LayoutState {
+    pub fn state(&mut self, timer: &Snapshot<'_>) -> LayoutState {
         let mut state = Default::default();
         self.update_state(&mut state, timer);
         state

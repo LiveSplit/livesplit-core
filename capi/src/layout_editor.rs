@@ -47,7 +47,7 @@ pub extern "C" fn LayoutEditor_layout_state_as_json(
     timer: &Timer,
 ) -> Json {
     output_vec(|o| {
-        this.layout_state(timer).write_json(o).unwrap();
+        this.layout_state(&timer.snapshot()).write_json(o).unwrap();
     })
 }
 

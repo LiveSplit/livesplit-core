@@ -5,7 +5,7 @@ use crate::tests_helper::{
 use crate::{Timer, TimerPhase};
 
 fn chance(timer: &Timer) -> u32 {
-    (for_timer(timer) * 100.0).round() as _
+    (for_timer(&timer.snapshot()) * 100.0).round() as _
 }
 
 #[test]

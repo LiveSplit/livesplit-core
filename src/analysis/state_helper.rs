@@ -2,7 +2,7 @@
 
 use crate::comparison::best_segments;
 use crate::settings::SemanticColor;
-use crate::{Run, Segment, TimeSpan, Timer, TimerPhase, TimingMethod};
+use crate::{timing::Snapshot, Run, Segment, TimeSpan, Timer, TimerPhase, TimingMethod};
 
 /// Gets the last non-live delta in the run starting from `segment_index`.
 ///
@@ -187,7 +187,7 @@ pub fn previous_segment_time(
 /// Returns the length of the segment leading up to `segment_index`, returning
 /// the live segment time if the split is not completed yet.
 pub fn live_segment_time(
-    timer: &Timer,
+    timer: &Snapshot<'_>,
     segment_index: usize,
     method: TimingMethod,
 ) -> Option<TimeSpan> {
@@ -235,7 +235,7 @@ pub fn previous_segment_delta(
 /// Returns the segment delta for a certain split, returning the live segment
 /// delta if the split is not completed yet.
 pub fn live_segment_delta(
-    timer: &Timer,
+    timer: &Snapshot<'_>,
     segment_index: usize,
     comparison: &str,
     method: TimingMethod,
@@ -260,7 +260,7 @@ pub fn live_segment_delta(
 ///
 /// Returns the current live delta.
 pub fn check_live_delta(
-    timer: &Timer,
+    timer: &Snapshot<'_>,
     split_delta: bool,
     comparison: &str,
     method: TimingMethod,

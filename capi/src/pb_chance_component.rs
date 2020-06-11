@@ -35,7 +35,7 @@ pub extern "C" fn PbChanceComponent_into_generic(this: OwnedPbChanceComponent) -
 #[no_mangle]
 pub extern "C" fn PbChanceComponent_state_as_json(this: &PbChanceComponent, timer: &Timer) -> Json {
     output_vec(|o| {
-        this.state(timer).write_json(o).unwrap();
+        this.state(&timer.snapshot()).write_json(o).unwrap();
     })
 }
 
@@ -45,5 +45,5 @@ pub extern "C" fn PbChanceComponent_state(
     this: &PbChanceComponent,
     timer: &Timer,
 ) -> OwnedKeyValueComponentState {
-    Box::new(this.state(timer))
+    Box::new(this.state(&timer.snapshot()))
 }

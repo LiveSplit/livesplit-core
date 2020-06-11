@@ -40,7 +40,7 @@ pub extern "C" fn PossibleTimeSaveComponent_state_as_json(
     timer: &Timer,
 ) -> Json {
     output_vec(|o| {
-        this.state(timer).write_json(o).unwrap();
+        this.state(&timer.snapshot()).write_json(o).unwrap();
     })
 }
 
@@ -50,5 +50,5 @@ pub extern "C" fn PossibleTimeSaveComponent_state(
     this: &PossibleTimeSaveComponent,
     timer: &Timer,
 ) -> OwnedKeyValueComponentState {
-    Box::new(this.state(timer))
+    Box::new(this.state(&timer.snapshot()))
 }

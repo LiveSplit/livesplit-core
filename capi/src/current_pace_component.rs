@@ -39,7 +39,7 @@ pub extern "C" fn CurrentPaceComponent_state_as_json(
     timer: &Timer,
 ) -> Json {
     output_vec(|o| {
-        this.state(timer).write_json(o).unwrap();
+        this.state(&timer.snapshot()).write_json(o).unwrap();
     })
 }
 
@@ -49,5 +49,5 @@ pub extern "C" fn CurrentPaceComponent_state(
     this: &mut CurrentPaceComponent,
     timer: &Timer,
 ) -> OwnedKeyValueComponentState {
-    Box::new(this.state(timer))
+    Box::new(this.state(&timer.snapshot()))
 }

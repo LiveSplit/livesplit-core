@@ -37,7 +37,9 @@ pub extern "C" fn DeltaComponent_state_as_json(
     layout_settings: &GeneralLayoutSettings,
 ) -> Json {
     output_vec(|o| {
-        this.state(timer, layout_settings).write_json(o).unwrap();
+        this.state(&timer.snapshot(), layout_settings)
+            .write_json(o)
+            .unwrap();
     })
 }
 
@@ -49,5 +51,5 @@ pub extern "C" fn DeltaComponent_state(
     timer: &Timer,
     layout_settings: &GeneralLayoutSettings,
 ) -> OwnedKeyValueComponentState {
-    Box::new(this.state(timer, layout_settings))
+    Box::new(this.state(&timer.snapshot(), layout_settings))
 }

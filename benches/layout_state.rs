@@ -36,16 +36,18 @@ fn real() -> (Timer, Layout) {
 fn no_reuse_real(c: &mut Criterion) {
     let (timer, mut layout) = real();
 
-    c.bench_function("No Reuse (Real)", move |b| b.iter(|| layout.state(&timer)));
+    c.bench_function("No Reuse (Real)", move |b| {
+        b.iter(|| layout.state(&timer.snapshot()))
+    });
 }
 
 fn reuse_real(c: &mut Criterion) {
     let (timer, mut layout) = real();
 
-    let mut state = layout.state(&timer);
+    let mut state = layout.state(&timer.snapshot());
 
     c.bench_function("Reuse (Real)", move |b| {
-        b.iter(|| layout.update_state(&mut state, &timer))
+        b.iter(|| layout.update_state(&mut state, &timer.snapshot()))
     });
 }
 
@@ -53,16 +55,16 @@ fn no_reuse_artificial(c: &mut Criterion) {
     let (timer, mut layout) = artificial();
 
     c.bench_function("No Reuse (Artificial)", move |b| {
-        b.iter(|| layout.state(&timer))
+        b.iter(|| layout.state(&timer.snapshot()))
     });
 }
 
 fn reuse_artificial(c: &mut Criterion) {
     let (timer, mut layout) = artificial();
 
-    let mut state = layout.state(&timer);
+    let mut state = layout.state(&timer.snapshot());
 
     c.bench_function("Reuse (Artificial)", move |b| {
-        b.iter(|| layout.update_state(&mut state, &timer))
+        b.iter(|| layout.update_state(&mut state, &timer.snapshot()))
     });
 }

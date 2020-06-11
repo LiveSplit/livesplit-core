@@ -16,6 +16,6 @@ pub use self::time_span::{ParseError, TimeSpan};
 pub use self::time_stamp::TimeStamp;
 #[cfg(feature = "std")]
 pub use self::timer::SharedTimer;
-pub use self::timer::{CreationError as TimerCreationError, Timer};
+pub use self::timer::{CreationError as TimerCreationError, Snapshot, Timer};
 pub use self::timer_phase::TimerPhase;
 pub use self::timing_method::TimingMethod;

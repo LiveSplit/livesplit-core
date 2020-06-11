@@ -4,7 +4,7 @@
 //! theoretically perfect segment times, this information is only an
 //! approximation of how much time can actually be saved.
 
-use crate::{analysis, TimeSpan, Timer};
+use crate::{analysis, timing::Snapshot, TimeSpan};
 
 /// Calculates how much time could be saved on the given segment with the given
 /// comparison. This information is based on the best segments. Considering the
@@ -16,7 +16,7 @@ use crate::{analysis, TimeSpan, Timer};
 /// shrinks towards zero as time goes on. The time returned by this function can
 /// never be below zero.
 pub fn calculate(
-    timer: &Timer,
+    timer: &Snapshot<'_>,
     segment_index: usize,
     comparison: &str,
     live: bool,
@@ -73,7 +73,7 @@ pub fn calculate(
 /// actually be saved. This information is always live, so the total possible
 /// time save will shrink towards zero throughout the run and when time is lost
 /// on a segment. The time returned by this function can never be below zero.
-pub fn calculate_total(timer: &Timer, segment_index: usize, comparison: &str) -> TimeSpan {
+pub fn calculate_total(timer: &Snapshot<'_>, segment_index: usize, comparison: &str) -> TimeSpan {
     let mut total = TimeSpan::zero();
 
     for index in segment_index..timer.run().len() {

@@ -303,5 +303,5 @@ pub extern "C" fn Timer_print_debug(this: &Timer) {
 /// Time has not been initialized.
 #[no_mangle]
 pub extern "C" fn Timer_current_time(this: &Timer) -> *const Time {
-    output_time(this.current_time())
+    output_time(this.snapshot().current_time())
 }
