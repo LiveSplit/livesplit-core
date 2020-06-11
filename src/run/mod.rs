@@ -16,6 +16,7 @@
 //! ```
 
 mod attempt;
+mod comparisons;
 pub mod editor;
 #[cfg(feature = "std")]
 pub mod parser;
@@ -29,6 +30,7 @@ mod segment_history;
 mod tests;
 
 pub use attempt::Attempt;
+pub use comparisons::Comparisons;
 pub use editor::{Editor, RenameError};
 pub use run_metadata::{CustomVariable, RunMetadata};
 pub use segment::Segment;

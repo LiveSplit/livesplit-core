@@ -650,7 +650,7 @@ impl Editor {
             }
         }
 
-        for (comparison, first_time) in first.comparisons_mut() {
+        for (comparison, first_time) in first.comparisons_mut().iter_mut() {
             // Fix the comparison times based on the new positions of the two
             // segments
             let previous_time = previous
