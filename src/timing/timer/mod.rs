@@ -218,7 +218,7 @@ impl Timer {
             .with_game_time(game_time)
     }
 
-    /// Creates a new snapshot of the timer at the point of time of this call.
+    /// Creates a new snapshot of the timer at the point in time of this call.
     /// It represents a frozen state of the timer such that calculations can
     /// work with an entirely consistent view of the timer without the current
     /// time changing underneath.
