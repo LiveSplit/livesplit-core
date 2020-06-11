@@ -5,19 +5,19 @@ use crate::Time;
 // then comparing the comparison with the string at the index calculated from
 // the hash. This means at least two full iterations over the string are
 // necessary, with one of them being somewhat expensive due to the hashing. Most
-// of the time it is faster to just iterate the few comparisons we have and
-// compare them directly. Most will be rejected right away as the first byte
-// doesn't even match, so in the end you'll end up with less than two full
-// iterations over the string. In fact most of the time Personal Best will be
-// the first in the list and that's the one we most often want to look up
-// anyway.
+// of the time, it is faster to just iterate over the few comparisons we have and
+// compare them directly. Most will be rejected right away since the first byte
+// doesn't even match, so in the end, you'll end up with less than two full
+// iterations over the string. In addition, Personal Best will be the first
+// comparison in the list most of the time, and that's the one we want to look
+// up most often anyway.
 //
 // One additional reason for doing this is that the ahash that was calculated
-// for the HashMap uses 128-bit multiplications which regressed a lot in Rust
+// for the HashMap uses 128-bit multiplications, which regressed a lot in Rust
 // 1.44 for targets where the `compiler-builtins` helpers were used.
 // https://github.com/rust-lang/rust/issues/73135
 //
-// We could potentially look into interning our comparisons in the future which
+// We could potentially look into interning our comparisons in the future, which
 // could yield even better performance.
 
 /// A collection of a segment's comparison times.
