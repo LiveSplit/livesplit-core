@@ -195,8 +195,8 @@ impl Hook {
             });
 
             Ok(Hook {
-                sender: sender,
-                ping: ping,
+                sender,
+                ping,
                 _registration: registration,
                 join_handle: Some(join_handle),
             })

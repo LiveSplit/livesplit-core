@@ -5,8 +5,11 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::{window, Gamepad, GamepadButton, KeyboardEvent};
 
-use std::collections::hash_map::{Entry, HashMap};
-use std::sync::{Arc, Mutex};
+use std::{
+    cell::Cell,
+    collections::hash_map::{Entry, HashMap},
+    sync::{Arc, Mutex},
+};
 
 #[derive(Debug, snafu::Snafu)]
 pub enum Error {
@@ -20,8 +23,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 pub struct Hook {
     hotkeys: Arc<Mutex<HashMap<KeyCode, Box<dyn FnMut() + Send + 'static>>>>,
     keyboard_callback: Closure<dyn FnMut(KeyboardEvent)>,
-    _gamepad_callback: Closure<dyn FnMut()>,
-    interval_id: i32,
+    gamepad_callback: Closure<dyn FnMut()>,
+    interval_id: Cell<Option<i32>>,
 }
 
 impl Drop for Hook {
@@ -31,10 +34,36 @@ impl Drop for Hook {
                 "keypress",
                 self.keyboard_callback.as_ref().unchecked_ref(),
             );
-            window.clear_interval_with_handle(self.interval_id);
+            if let Some(interval_id) = self.interval_id.get() {
+                window.clear_interval_with_handle(interval_id);
+            }
         }
     }
 }
+
+const TOTAL_BUTTONS: usize = 20;
+static GAMEPAD_BUTTONS: [KeyCode; TOTAL_BUTTONS] = [
+    KeyCode::Gamepad0,
+    KeyCode::Gamepad1,
+    KeyCode::Gamepad2,
+    KeyCode::Gamepad3,
+    KeyCode::Gamepad4,
+    KeyCode::Gamepad5,
+    KeyCode::Gamepad6,
+    KeyCode::Gamepad7,
+    KeyCode::Gamepad8,
+    KeyCode::Gamepad9,
+    KeyCode::Gamepad10,
+    KeyCode::Gamepad11,
+    KeyCode::Gamepad12,
+    KeyCode::Gamepad13,
+    KeyCode::Gamepad14,
+    KeyCode::Gamepad15,
+    KeyCode::Gamepad16,
+    KeyCode::Gamepad17,
+    KeyCode::Gamepad18,
+    KeyCode::Gamepad19,
+];
 
 impl Hook {
     pub fn new() -> Result<Self> {
@@ -63,29 +92,6 @@ impl Hook {
 
         let hotkey_map = hotkeys.clone();
 
-        const TOTAL_BUTTONS: usize = 20;
-        static GAMEPAD_BUTTONS: [KeyCode; TOTAL_BUTTONS] = [
-            KeyCode::Gamepad0,
-            KeyCode::Gamepad1,
-            KeyCode::Gamepad2,
-            KeyCode::Gamepad3,
-            KeyCode::Gamepad4,
-            KeyCode::Gamepad5,
-            KeyCode::Gamepad6,
-            KeyCode::Gamepad7,
-            KeyCode::Gamepad8,
-            KeyCode::Gamepad9,
-            KeyCode::Gamepad10,
-            KeyCode::Gamepad11,
-            KeyCode::Gamepad12,
-            KeyCode::Gamepad13,
-            KeyCode::Gamepad14,
-            KeyCode::Gamepad15,
-            KeyCode::Gamepad16,
-            KeyCode::Gamepad17,
-            KeyCode::Gamepad18,
-            KeyCode::Gamepad19,
-        ];
         let mut states = Vec::new();
         let navigator = window.navigator();
 
@@ -120,18 +126,11 @@ impl Hook {
             }
         }) as Box<dyn FnMut()>);
 
-        let interval_id = window
-            .set_interval_with_callback_and_timeout_and_arguments_0(
-                gamepad_callback.as_ref().unchecked_ref(),
-                1000 / 60,
-            )
-            .map_err(|_| Error::FailedToCreateHook)?;
-
         Ok(Hook {
             hotkeys,
             keyboard_callback,
-            _gamepad_callback: gamepad_callback,
-            interval_id,
+            gamepad_callback,
+            interval_id: Cell::new(None),
         })
     }
 
@@ -140,6 +139,16 @@ impl Hook {
         F: FnMut() + Send + 'static,
     {
         if let Entry::Vacant(vacant) = self.hotkeys.lock().unwrap().entry(hotkey) {
+            if GAMEPAD_BUTTONS.contains(&hotkey) && self.interval_id.get().is_none() {
+                let interval_id = window()
+                    .ok_or(Error::FailedToCreateHook)?
+                    .set_interval_with_callback_and_timeout_and_arguments_0(
+                        self.gamepad_callback.as_ref().unchecked_ref(),
+                        1000 / 60,
+                    )
+                    .map_err(|_| Error::FailedToCreateHook)?;
+                self.interval_id.set(Some(interval_id));
+            }
             vacant.insert(Box::new(callback));
             Ok(())
         } else {
