@@ -80,15 +80,15 @@ impl FromStr for TimeSpan {
     type Err = ParseError;
 
     fn from_str(mut text: &str) -> Result<Self, ParseError> {
-        let factor = if text.starts_with('-') {
-            text = &text[1..];
-            -1.0
-        } else if text.starts_with('−') {
-            text = &text[3..];
-            -1.0
-        } else {
-            1.0
-        };
+        // It's faster to use `strip_prefix` with char literals if it's an ASCII
+        // char, otherwise prefer using string literals.
+        let factor =
+            if let Some(remainder) = text.strip_prefix('-').or_else(|| text.strip_prefix("−")) {
+                text = remainder;
+                -1.0
+            } else {
+                1.0
+            };
 
         let mut seconds = 0.0;
         for split in text.split(':') {

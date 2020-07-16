@@ -58,13 +58,14 @@ pub fn parse<R: BufRead>(source: R) -> Result<Run> {
 
     let mut splits = line.split('|');
     let category_name = splits.next().context(ExpectedCategoryName)?;
-    if !category_name.starts_with('#') {
-        return Err(Error::ExpectedCategoryName);
-    }
 
     let mut run = Run::new();
 
-    run.set_category_name(&category_name[1..]);
+    run.set_category_name(
+        category_name
+            .strip_prefix('#')
+            .ok_or(Error::ExpectedCategoryName)?,
+    );
     run.set_attempt_count(
         splits
             .next()
@@ -90,8 +91,8 @@ pub fn parse<R: BufRead>(source: R) -> Result<Run> {
         let mut has_acts = false;
         while let Some(line) = next_line {
             let line = line.context(ReadSegmentLine)?;
-            if line.starts_with('*') {
-                run.push_segment(Segment::new(&line[1..]));
+            if let Some(segment_name) = line.strip_prefix('*') {
+                run.push_segment(Segment::new(segment_name));
                 has_acts = true;
                 next_line = lines.next();
             } else {

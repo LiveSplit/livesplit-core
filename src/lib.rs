@@ -8,7 +8,7 @@
 )]
 // Clippy false positives
 #![allow(
-    clippy::block_in_if_condition_stmt,
+    clippy::blocks_in_if_conditions,
     clippy::redundant_closure_call,
     clippy::new_ret_no_self
 )]
