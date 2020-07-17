@@ -1,4 +1,4 @@
-use structopt;
+#![allow(clippy::write_literal)]
 
 mod c;
 mod csharp;
@@ -106,15 +106,15 @@ fn get_type(ty: &SynType) -> Type {
         SynType::Path(path) => {
             if let Some(segment) = path.path.segments.iter().last() {
                 let mut name = segment.ident.to_string();
-                let is_nullable = if name.starts_with("Nullable") {
-                    name = name["Nullable".len()..].to_string();
+                let is_nullable = if let Some(rest) = name.strip_prefix("Nullable") {
+                    name = rest.to_string();
                     true
                 } else {
                     false
                 };
 
-                if name.starts_with("Owned") {
-                    name = name["Owned".len()..].to_string();
+                if let Some(rest) = name.strip_prefix("Owned") {
+                    name = rest.to_string();
                 }
                 if name == "TimingMethod" || name == "TimerPhase" {
                     name = String::from("u8");

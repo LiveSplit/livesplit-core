@@ -66,9 +66,8 @@ impl<'de> Deserialize<'de> for ImageData {
             let data: &'de str = Deserialize::deserialize(deserializer)?;
             if data.is_empty() {
                 Ok(ImageData(Box::new([])))
-            } else if data.starts_with("data:;base64,") {
-                let image_data =
-                    base64::decode(&data["data:;base64,".len()..]).map_err(de::Error::custom)?;
+            } else if let Some(encoded_image_data) = data.strip_prefix("data:;base64,") {
+                let image_data = base64::decode(encoded_image_data).map_err(de::Error::custom)?;
                 Ok(ImageData(image_data.into_boxed_slice()))
             } else {
                 Err(de::Error::custom("Invalid Data URL for image"))

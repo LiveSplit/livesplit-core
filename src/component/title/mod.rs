@@ -230,16 +230,23 @@ impl Component {
                     let unchanged = catch! {
                         let mut rem = &**state.line1.last()?;
 
-                        // FIXME: strip_prefix
-                        if !rem.starts_with(game_name) { return None; }
-                        rem = &rem[game_name.len()..];
-
-                        if !game_name.is_empty() && !full_category_name.is_empty() {
-                            if !rem.starts_with(" - ") { return None; }
-                            rem = &rem[" - ".len()..];
+                        if let Some(rest) = rem.strip_prefix(game_name) {
+                            rem = rest;
+                        } else {
+                            return None;
                         }
 
-                        if rem != full_category_name { return None; }
+                        if !game_name.is_empty() && !full_category_name.is_empty() {
+                            if let Some(rest) = rem.strip_prefix(" - ") {
+                                rem = rest;
+                            } else {
+                                return None;
+                            }
+                        }
+
+                        if rem != full_category_name {
+                            return None;
+                        }
                     };
                     if unchanged.is_none() {
                         let abbrevs = &mut state.line1;

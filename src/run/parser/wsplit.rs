@@ -68,12 +68,11 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
     for line in source.lines() {
         let line = line.context(Line)?;
         if !line.is_empty() {
-            if line.starts_with("Title=") {
-                run.set_category_name(&line["Title=".len()..]);
-            } else if line.starts_with("Attempts=") {
-                run.set_attempt_count(line["Attempts=".len()..].parse().context(Attempt)?);
-            } else if line.starts_with("Offset=") {
-                let offset = &line["Offset=".len()..];
+            if let Some(title) = line.strip_prefix("Title=") {
+                run.set_category_name(title);
+            } else if let Some(attempts) = line.strip_prefix("Attempts=") {
+                run.set_attempt_count(attempts.parse().context(Attempt)?);
+            } else if let Some(offset) = line.strip_prefix("Offset=") {
                 if !offset.is_empty() {
                     run.set_offset(TimeSpan::from_milliseconds(
                         -offset.parse::<f64>().context(Offset)?,
@@ -81,9 +80,8 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
                 }
             } else if line.starts_with("Size=") {
                 // Ignore
-            } else if line.starts_with("Icons=") {
+            } else if let Some(icons) = line.strip_prefix("Icons=") {
                 if load_icons {
-                    let icons = &line["Icons=".len()..];
                     icons_list.clear();
                     for path in icons.split(',') {
                         if path.len() >= 2 {
@@ -96,8 +94,7 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
                         icons_list.push(Image::default());
                     }
                 }
-            } else if line.starts_with("Goal=") {
-                let goal_value = line["Goal=".len()..].trim();
+            } else if let Some(goal_value) = line.strip_prefix("Goal=") {
                 if !goal_value.is_empty() {
                     goal = Some(goal_value.to_owned());
                 }
