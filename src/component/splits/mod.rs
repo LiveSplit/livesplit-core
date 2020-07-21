@@ -294,19 +294,21 @@ impl Component {
         let current_split = timer.current_split_index();
         let method = timer.current_timing_method();
 
-        let always_show_last_split = if self.settings.always_show_last_split {
-            0
-        } else {
+        let locked_last_split = if self.settings.always_show_last_split {
             1
+        } else {
+            0
         };
         let skip_count = min(
             current_split.map_or(0, |current_split| {
-                current_split.saturating_sub(
-                    visual_split_count
-                        .saturating_sub(2)
-                        .saturating_sub(self.settings.split_preview_count)
-                        .saturating_add(always_show_last_split),
-                ) as isize
+                max(
+                    0,
+                    current_split as isize
+                        + self.settings.split_preview_count as isize
+                        + locked_last_split
+                        + 1
+                        - visual_split_count as isize
+                )
             }),
             run.len() as isize - visual_split_count as isize,
         );
@@ -315,7 +317,7 @@ impl Component {
             run.len() as isize - skip_count - visual_split_count as isize,
         );
         let skip_count = max(0, skip_count + self.scroll_offset) as usize;
-        let take_count = visual_split_count + always_show_last_split as usize - 1;
+        let take_count = visual_split_count - locked_last_split as usize;
         let always_show_last_split = self.settings.always_show_last_split;
 
         let show_final_separator = self.settings.separator_last_split
