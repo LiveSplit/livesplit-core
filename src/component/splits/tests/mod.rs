@@ -36,6 +36,48 @@ fn zero_visual_split_count_always_shows_all_splits() {
 }
 
 #[test]
+fn one_visual_split() {
+    let mut run = Run::new();
+    
+    run.push_segment(Segment::new("A"));
+    run.push_segment(Segment::new("B"));
+    run.push_segment(Segment::new("C"));
+
+    let mut timer = Timer::new(run).unwrap();
+    let layout_settings = Default::default();
+    let mut component = Component::with_settings(Settings {
+        always_show_last_split: false,
+        split_preview_count: 0,
+        visual_split_count: 1,
+        ..Default::default()
+    });
+
+    let mut state = component.state(&timer.snapshot(), &layout_settings);
+    assert_eq!(state.splits[0].name, "A");
+    assert_eq!(state.splits.len(), 1);
+
+    timer.start();
+    state = component.state(&timer.snapshot(), &layout_settings);
+    assert_eq!(state.splits[0].name, "A");
+    assert_eq!(state.splits.len(), 1);
+
+    timer.split();
+    state = component.state(&timer.snapshot(), &layout_settings);
+    assert_eq!(state.splits[0].name, "B");
+    assert_eq!(state.splits.len(), 1);
+
+    timer.split();
+    state = component.state(&timer.snapshot(), &layout_settings);
+    assert_eq!(state.splits[0].name, "C");
+    assert_eq!(state.splits.len(), 1);
+
+    timer.split();
+    state = component.state(&timer.snapshot(), &layout_settings);
+    assert_eq!(state.splits[0].name, "C");
+    assert_eq!(state.splits.len(), 1);
+}
+
+#[test]
 fn negative_segment_times() {
     let mut run = Run::new();
     run.push_segment(Segment::new(""));
