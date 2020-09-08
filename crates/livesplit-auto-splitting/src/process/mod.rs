@@ -4,9 +4,9 @@ mod os;
 
 pub use os::Process;
 
+use bytemuck::Pod;
 use std::ffi::OsStr;
 use std::mem;
-use bytemuck::Pod;
 
 #[derive(Debug, snafu::Snafu)]
 pub enum Error {
@@ -99,13 +99,15 @@ impl Signature {
 
 pub(crate) struct ScannableRange {
     base: Address,
-    len: u64
+    len: u64,
 }
 
 /// Private trait used for keeping API consistent between platforms
 trait ProcessImpl {
     fn is_64bit(&self) -> bool;
-    fn with_name(name: &OsStr) -> Result<Self> where Self: Sized;
+    fn with_name(name: &OsStr) -> Result<Self>
+    where
+        Self: Sized;
     //fn with_pid(pid: pid_t) -> Result<Self>;
     fn module_address(&self, module: &OsStr) -> Result<Address>;
     fn read_buf(&self, address: Address, buf: &mut [u8]) -> Result<()>;
@@ -117,19 +119,27 @@ trait ProcessImpl {
 impl Process {
     /// Returns whether this Process is 64 bit or not
     #[inline]
-    pub fn is_64bit(&self) -> bool { ProcessImpl::is_64bit(self) }
+    pub fn is_64bit(&self) -> bool {
+        ProcessImpl::is_64bit(self)
+    }
 
     /// Finds a process with a given name and returns it
     #[inline]
-    pub fn with_name<T: AsRef<OsStr>>(name: T) -> Result<Self> { ProcessImpl::with_name(name.as_ref()) }
+    pub fn with_name<T: AsRef<OsStr>>(name: T) -> Result<Self> {
+        ProcessImpl::with_name(name.as_ref())
+    }
 
     /// Returns the address of a module within this process, if present
     #[inline]
-    pub fn module_address<T: AsRef<OsStr>>(&self, module: T) -> Result<Address> { ProcessImpl::module_address(self, module.as_ref()) }
+    pub fn module_address<T: AsRef<OsStr>>(&self, module: T) -> Result<Address> {
+        ProcessImpl::module_address(self, module.as_ref())
+    }
 
     /// Reads bef.len() bytes from address in this process into buf
     #[inline]
-    pub fn read_buf<T: AsMut<[u8]>>(&self, address: Address, mut buf: T) -> Result<()> { ProcessImpl::read_buf(self, address, buf.as_mut()) }
+    pub fn read_buf<T: AsMut<[u8]>>(&self, address: Address, mut buf: T) -> Result<()> {
+        ProcessImpl::read_buf(self, address, buf.as_mut())
+    }
 
     /// Reads a T from address in this process
     pub fn read<T: Pod>(&self, address: Address) -> Result<T> {
@@ -160,7 +170,6 @@ impl Process {
                         }
                     }
                 };
-
             }
             if let Some(index) = signature.scan(&page_buf) {
                 return Ok(Some(base + index as Address));
