@@ -1,27 +1,29 @@
 use libc::pid_t;
-use std::os::unix::ffi::{OsStrExt, OsStringExt};
-use std::os::unix::fs::FileExt;
+use std::cell::{RefCell, RefMut};
+use std::collections::HashMap;
 use std::ffi::{OsStr, OsString};
 use std::fs::File;
+use std::io::{BufRead, Read};
+use std::os::unix::ffi::{OsStrExt, OsStringExt};
+use std::os::unix::fs::FileExt;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use std::{fs, io};
-use std::io::{Read, BufRead};
-use std::collections::HashMap;
-use std::cell::{RefCell, RefMut};
 
-use nom::character::complete::{digit1, hex_digit1, space1, newline, char, not_line_ending, one_of};
-use nom::sequence::{tuple, separated_pair, terminated};
+use nom::character::complete::{
+    char, digit1, hex_digit1, newline, not_line_ending, one_of, space1,
+};
 use nom::combinator::{map, map_res, opt, verify};
+use nom::sequence::{separated_pair, terminated, tuple};
 use nom::IResult;
 
-use super::{Error, Result, Address, ProcessImpl, ScannableRange};
+use super::{Address, Error, ProcessImpl, Result, ScannableRange};
 
 #[derive(Debug)]
 pub struct Process {
     pid: pid_t,
     is_64bit: bool,
-    memory: RefCell<Option<File>>
+    memory: RefCell<Option<File>>,
 }
 
 struct MapRange {
@@ -29,26 +31,47 @@ struct MapRange {
     range_end: Address,
     offset: u64,
     path: Option<PathBuf>,
-    perms: [u8; 4]
+    perms: [u8; 4],
 }
 
-
 fn parse_hex(input: &[u8]) -> IResult<&[u8], u64> {
-    map_res(hex_digit1, |input| u64::from_str_radix(std::str::from_utf8(input).unwrap(), 16))(input)
+    map_res(hex_digit1, |input| {
+        u64::from_str_radix(std::str::from_utf8(input).unwrap(), 16)
+    })(input)
 }
 
 fn map_line(input: &[u8]) -> IResult<&[u8], MapRange> {
-    map(tuple((
-        terminated(separated_pair(parse_hex, char('-'), parse_hex), space1),
-        terminated(tuple((one_of("r-"), one_of("w-"), one_of("x-"), one_of("sp"))), space1),
-        terminated(parse_hex, space1),
-        terminated(separated_pair(parse_hex, char(':'), parse_hex), space1),
-        terminated(map_res(digit1, |input| u64::from_str_radix(std::str::from_utf8(input).unwrap(), 10)), space1),
-        opt(verify(map(not_line_ending, |input| PathBuf::from(OsStr::from_bytes(input).to_os_string())), |i: &Path| i.as_os_str().len() != 0)),
-        opt(newline)
-    )), |((range_start, range_end), perms, offset, _dev, _inode, path, _newline)| MapRange {
-        range_start, range_end, offset, path, perms: [perms.0 as u8, perms.1 as u8, perms.2 as u8, perms.3 as u8]
-    })(input)
+    map(
+        tuple((
+            terminated(separated_pair(parse_hex, char('-'), parse_hex), space1),
+            terminated(
+                tuple((one_of("r-"), one_of("w-"), one_of("x-"), one_of("sp"))),
+                space1,
+            ),
+            terminated(parse_hex, space1),
+            terminated(separated_pair(parse_hex, char(':'), parse_hex), space1),
+            terminated(
+                map_res(digit1, |input| {
+                    u64::from_str_radix(std::str::from_utf8(input).unwrap(), 10)
+                }),
+                space1,
+            ),
+            opt(verify(
+                map(not_line_ending, |input| {
+                    PathBuf::from(OsStr::from_bytes(input).to_os_string())
+                }),
+                |i: &Path| !i.as_os_str().is_empty(),
+            )),
+            opt(newline),
+        )),
+        |((range_start, range_end), perms, offset, _dev, _inode, path, _newline)| MapRange {
+            range_start,
+            range_end,
+            offset,
+            path,
+            perms: [perms.0 as u8, perms.1 as u8, perms.2 as u8, perms.3 as u8],
+        },
+    )(input)
 }
 
 struct MapRangeIter(std::io::Split<std::io::BufReader<File>>);
@@ -60,11 +83,11 @@ impl Iterator for MapRangeIter {
             match self.0.next() {
                 Some(Ok(line)) => {
                     if let Ok((_, range)) = map_line(&line) {
-                        return Some(range)
+                        return Some(range);
                     }
-                },
+                }
                 Some(Err(_)) => continue,
-                None => return None
+                None => return None,
             }
         }
     }
@@ -78,9 +101,9 @@ impl Iterator for ScannableIter {
         loop {
             if let Some(range) = self.0.next() {
                 if let Some(path) = range.path {
-                    if path.starts_with("/dev") ||
-                        path.file_name().unwrap() == "[vvar]" ||
-                        path.file_name().unwrap() == "[vdso]"
+                    if path.starts_with("/dev")
+                        || path.file_name().unwrap() == "[vvar]"
+                        || path.file_name().unwrap() == "[vdso]"
                     {
                         continue;
                     }
@@ -89,7 +112,7 @@ impl Iterator for ScannableIter {
                 if range.perms[0] == b'r' {
                     return Some(ScannableRange {
                         base: range.range_start,
-                        len: range.range_end - range.range_start
+                        len: range.range_end - range.range_start,
                     });
                 }
             } else {
@@ -106,7 +129,7 @@ impl ProcessImpl for Process {
 
     fn with_name(name: &OsStr) -> Result<Self> {
         let mut processes = Process::processes_with_name(name)?;
-        if processes.len() >= 1 {
+        if !processes.is_empty() {
             Ok(processes.swap_remove(0))
         } else {
             Err(Error::ProcessDoesntExist)
@@ -114,12 +137,16 @@ impl ProcessImpl for Process {
     }
 
     fn module_address(&self, module: &OsStr) -> Result<Address> {
-        self.modules()?.get(module).cloned().ok_or(Error::ModuleDoesntExist)
+        self.modules()?
+            .get(module)
+            .cloned()
+            .ok_or(Error::ModuleDoesntExist)
     }
 
     fn read_buf(&self, address: Address, buf: &mut [u8]) -> Result<()> {
         if let Some(file) = self.memory() {
-            file.read_exact_at(buf, address as u64).or(Err(Error::ReadMemory))
+            file.read_exact_at(buf, address as u64)
+                .or(Err(Error::ReadMemory))
         } else {
             Err(Error::ReadMemory)
         }
@@ -134,7 +161,10 @@ impl ProcessImpl for Process {
 impl Process {
     fn process_name(&self) -> Option<OsString> {
         let mut process_name = Vec::new();
-        File::open(format!("/proc/{}/comm", self.pid)).ok()?.read_to_end(&mut process_name).ok()?;
+        File::open(format!("/proc/{}/comm", self.pid))
+            .ok()?
+            .read_to_end(&mut process_name)
+            .ok()?;
 
         if let Some(last) = process_name.last() {
             if *last == b'\n' {
@@ -156,9 +186,15 @@ impl Process {
         // Copyright (c) 2015 Guillaume Gomez
         // Based on https://github.com/GuillaumeGomez/sysinfo/blob/4edbf34ad5fcd03979498ec124e15a067c10d0b4/src/linux/system.rs#L512
         let dir = fs::read_dir("/proc").or(Err(Error::ListProcesses))?;
-        let processes = dir.filter_map(std::result::Result::ok)
+        let processes = dir
+            .filter_map(std::result::Result::ok)
             .filter(|e| e.path().is_dir())
-            .filter_map(|e| e.path().file_name().and_then(OsStr::to_str).map(pid_t::from_str))
+            .filter_map(|e| {
+                e.path()
+                    .file_name()
+                    .and_then(OsStr::to_str)
+                    .map(pid_t::from_str)
+            })
             .filter_map(std::result::Result::ok)
             .map(Process::with_pid)
             .filter_map(std::result::Result::ok)
@@ -175,8 +211,13 @@ impl Process {
         Ok(processes)
     }
 
-    /*pub*/ fn with_pid(pid: libc::pid_t) -> Result<Self> {
-        let mut proc = Process { pid, is_64bit: false, memory: RefCell::new(None) };
+    /*pub*/
+    fn with_pid(pid: libc::pid_t) -> Result<Self> {
+        let mut proc = Process {
+            pid,
+            is_64bit: false,
+            memory: RefCell::new(None),
+        };
         // TODO: do we want to cache the pages/modules at all?
         if let Ok(pages) = proc.memory_pages() {
             // Inspired by https://unix.stackexchange.com/a/106235 "Parsing the maps file"
@@ -187,24 +228,35 @@ impl Process {
         }
     }
 
-    /*pub*/ fn modules(&self) -> Result<HashMap<OsString, Address>> {
+    /*pub*/
+    fn modules(&self) -> Result<HashMap<OsString, Address>> {
         // There are multiple ways of doing this. Could also traverse symlinks in /proc/PID/map_files, for instance
-        Ok(self.memory_pages()?.filter_map(|MapRange { path, range_start, offset, .. }|
-            path.map(|p|
-                (p.file_name().unwrap().to_os_string(), range_start - offset as Address)
+        Ok(self
+            .memory_pages()?
+            .filter_map(
+                |MapRange {
+                     path,
+                     range_start,
+                     offset,
+                     ..
+                 }| {
+                    path.map(|p| {
+                        (
+                            p.file_name().unwrap().to_os_string(),
+                            range_start - offset as Address,
+                        )
+                    })
+                },
             )
-        ).collect())
+            .collect())
     }
 
     fn memory(&self) -> Option<RefMut<File>> {
         let mut mem = self.memory.borrow_mut();
         if mem.is_none() {
             // TODO: alternative methods of obtaining file handles
-            match File::open(format!("/proc/{}/mem", self.pid)) {
-                Ok(file) => {
-                    *mem = Some(file);
-                }
-                Err(_) => {} // do nothing
+            if let Ok(file) = File::open(format!("/proc/{}/mem", self.pid)) {
+                *mem = Some(file);
             }
         }
 
@@ -220,7 +272,9 @@ impl Process {
         // License: MIT
         // Copyright (c) 2016 Julia Evans, Jorge Aparicio
         // Based on https://github.com/rbspy/proc-maps/blob/7168cd0a13d464ef00f20a81f064b7729ff58d2e/src/linux_maps.rs#L49
-        let file = io::BufReader::new(File::open(format!("/proc/{}/maps", self.pid)).or(Err(Error::ProcessDoesntExist))?);
+        let file = io::BufReader::new(
+            File::open(format!("/proc/{}/maps", self.pid)).or(Err(Error::ProcessDoesntExist))?,
+        );
         // TODO: use OsString, use unwrap a bit less.
         Ok(MapRangeIter(file.split(b'\n')))
     }

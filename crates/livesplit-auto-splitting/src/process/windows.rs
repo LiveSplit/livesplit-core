@@ -15,12 +15,12 @@ use winapi::um::{
 };
 
 use std::collections::HashMap;
-use std::ffi::{OsString, OsStr};
+use std::ffi::{OsStr, OsString};
 use std::os::windows::ffi::OsStringExt;
 use std::path::PathBuf;
 use std::{iter, mem, ptr, result, slice};
 
-use super::{Error, Address, Offset, Result, Signature, ProcessImpl, ScannableRange};
+use super::{Address, Error, Offset, ProcessImpl, Result, ScannableRange, Signature};
 
 #[derive(Debug)]
 pub struct Process {
@@ -41,7 +41,7 @@ pub(crate) struct ScannableIter {
     handle: HANDLE,
     addr: u64,
     max: u64,
-    all: bool
+    all: bool,
 }
 
 impl Iterator for ScannableIter {
@@ -73,7 +73,7 @@ impl Iterator for ScannableIter {
 
                 return Some(ScannableRange {
                     base: mbi.BaseAddress as u64,
-                    len: mbi.RegionSize as u64
+                    len: mbi.RegionSize as u64,
                 });
             }
         }
@@ -186,7 +186,8 @@ impl ProcessImpl for Process {
 }
 
 impl Process {
-    /*pub*/ fn path(&self) -> Option<PathBuf> {
+    /*pub*/
+    fn path(&self) -> Option<PathBuf> {
         let mut path_buf = [0u16; 1024];
         if unsafe {
             GetModuleFileNameExW(
@@ -202,7 +203,8 @@ impl Process {
         Some(PathBuf::from(OsString::from_wide(&path_buf)))
     }
 
-    /*pub*/ fn with_pid(pid: DWORD) -> Result<Self> {
+    /*pub*/
+    fn with_pid(pid: DWORD) -> Result<Self> {
         unsafe {
             let handle = OpenProcess(PROCESS_VM_READ | PROCESS_QUERY_INFORMATION, false as _, pid);
 
@@ -265,7 +267,8 @@ impl Process {
         }
     }
 
-    /*pub*/ fn modules(&self) -> Result<&HashMap<OsString, Address>> {
+    /*pub*/
+    fn modules(&self) -> Result<&HashMap<OsString, Address>> {
         // TODO: when do we want to refresh this?
         Ok(&self.modules)
     }
@@ -280,13 +283,12 @@ impl Process {
             0x7FFEFFFFu64
         };
 
-
         let mut addr = min;
         ScannableIter {
             handle: self.handle,
             addr: min,
             max,
-            all
+            all,
         }
     }
 }
