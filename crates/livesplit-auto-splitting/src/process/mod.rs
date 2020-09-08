@@ -150,7 +150,17 @@ impl Process {
             page_buf.reserve(len as usize);
             unsafe {
                 page_buf.set_len(len as usize);
-                self.read_buf(base, &mut page_buf)?;
+                // TODO: Handle an error in reading memory more gracefully instead of silently
+                // returning an array of 0s.
+                match self.read_buf(base, &mut page_buf) {
+                    Ok(_) => (),
+                    Err(_) => {
+                        for el in &mut page_buf {
+                            *el = 0;
+                        }
+                    }
+                };
+
             }
             if let Some(index) = signature.scan(&page_buf) {
                 return Ok(Some(base + index as Address));
