@@ -5,10 +5,11 @@ authors = ["Christopher Serr <christopher.serr@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-livesplit-core = { path = "..", default-features = false, features = ["std"] }
+livesplit-core = { path = "..", default-features = false, features = ["std"]}
 serde_json = "1.0.8"
 
 [features]
 default = ["image-shrinking"]
 image-shrinking = ["livesplit-core/image-shrinking"]
 wasm-web = ["livesplit-core/wasm-web"]
+auto-splitting = ["livesplit-core/auto-splitting"]
