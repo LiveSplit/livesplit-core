@@ -1,0 +1,13 @@
+[package]
+name = "livesplit-exec"
+version = "0.1.0"
+authors = ["Dark <dark@volatile.bz>"]
+edition = "2018"
+
+[lib]
+name = "livesplit_exec"
+crate-type = ["cdylib"]
+path = "src/lib.rs"
+
+[dependencies]
+libc = "0.2.77"
