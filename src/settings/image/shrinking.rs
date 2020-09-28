@@ -16,7 +16,7 @@ fn shrink_inner(data: &[u8], max_dim: u32) -> Result<Cow<'_, [u8]>, ImageError> 
         ImageFormat::Tiff => tiff::TiffDecoder::new(cursor)?.dimensions(),
         ImageFormat::Bmp => bmp::BmpDecoder::new(cursor)?.dimensions(),
         ImageFormat::Ico => ico::IcoDecoder::new(cursor)?.dimensions(),
-        ImageFormat::Hdr => hdr::HDRAdapter::new(cursor)?.dimensions(),
+        ImageFormat::Hdr => hdr::HdrAdapter::new(cursor)?.dimensions(),
         ImageFormat::Pnm => pnm::PnmDecoder::new(cursor)?.dimensions(),
         // FIXME: For GIF we would need to properly shrink the whole animation.
         // The image crate can't properly handle this at this point in time.
@@ -48,7 +48,7 @@ fn shrink_inner(data: &[u8], max_dim: u32) -> Result<Cow<'_, [u8]>, ImageError> 
             DynamicImage::ImageRgba16(x) => bytemuck::cast_slice(x.as_ref()),
         };
         let mut data = Vec::new();
-        png::PNGEncoder::new(&mut data).encode(
+        png::PngEncoder::new(&mut data).encode(
             image_data,
             image.width(),
             image.height(),

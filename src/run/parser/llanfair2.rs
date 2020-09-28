@@ -130,7 +130,7 @@ where
         ImageBuffer::<Rgba<u8>, _>::from_raw(width, height, image_buf).ok_or(Error::Image)?;
 
     buf.clear();
-    png::PNGEncoder::new(&mut *buf)
+    png::PngEncoder::new(&mut *buf)
         .encode(image.as_ref(), width, height, ColorType::Rgba8)
         .map_err(|_| Error::Image)?;
 

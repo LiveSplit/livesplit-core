@@ -16,14 +16,16 @@ jobs:
     env:
       CRITERION_TOKEN: ${{ secrets.CRITERION_TOKEN }}
     steps:
-      - name: Checkout <your repo>
+      - name: Checkout
         uses: actions/checkout@v2
+
       - name: Run benchmarks
         run: |
           # run benchmarks and save baseline to "criterion.dev.temp"
           cargo bench --all-features -- --verbose --noplot --save-baseline criterion.dev.temp
           # set the path to the file to upload to criterion.dev
           echo "::set-env name=CRITERION_FILE_PATH::$(find $(find . -type d -name criterion.dev.temp) -name raw.csv)"
+
       - name: Upload benchmarks
         run: |
           # upload the file

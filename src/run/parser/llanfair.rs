@@ -246,7 +246,7 @@ pub fn parse<R: Read + Seek>(mut source: R) -> Result<Run> {
             if let Some(image) = ImageBuffer::<Rgba<u8>, _>::from_raw(width, height, buf.as_slice())
             {
                 buf2.clear();
-                if png::PNGEncoder::new(&mut buf2)
+                if png::PngEncoder::new(&mut buf2)
                     .encode(image.as_ref(), width, height, ColorType::Rgba8)
                     .is_ok()
                 {

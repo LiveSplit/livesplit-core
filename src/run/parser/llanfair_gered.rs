@@ -115,7 +115,7 @@ where
         })?;
 
         tag_buf.clear();
-        png::PNGEncoder::new(&mut *tag_buf)
+        png::PngEncoder::new(&mut *tag_buf)
             .encode(image.as_ref(), width, height, ColorType::Rgba8)
             .map_err(|_| Error::Image)?;
 
