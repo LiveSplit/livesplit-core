@@ -101,6 +101,9 @@ networking = ["std", "splits-io-api"]
 # that case. https://github.com/rust-lang/rust/issues/32976
 internal-use-all-features = []
 
+[lib]
+bench = false
+
 [[bench]]
 name = "balanced_pb"
 harness = false
