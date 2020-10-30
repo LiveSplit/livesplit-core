@@ -54,7 +54,7 @@ impl Hotkey {
             Hotkey::ToggleTimingMethod => config.toggle_timing_method,
         }
     }
-    fn callback(self, timer: SharedTimer) -> Box<dyn FnMut() + Send + 'static>{
+    fn callback(self, timer: SharedTimer) -> Box<dyn FnMut() + Send + 'static> {
         match self {
             Hotkey::Split => Box::new(move || timer.write().split_or_start()),
             Hotkey::Reset => Box::new(move || timer.write().reset(true)),
@@ -62,7 +62,9 @@ impl Hotkey {
             Hotkey::Skip => Box::new(move || timer.write().skip_split()),
             Hotkey::Pause => Box::new(move || timer.write().toggle_pause_or_start()),
             Hotkey::UndoAllPauses => Box::new(move || timer.write().undo_all_pauses()),
-            Hotkey::PreviousComparison => Box::new(move || timer.write().switch_to_previous_comparison()),
+            Hotkey::PreviousComparison => {
+                Box::new(move || timer.write().switch_to_previous_comparison())
+            }
             Hotkey::NextComparison => Box::new(move || timer.write().switch_to_next_comparison()),
             Hotkey::ToggleTimingMethod => Box::new(move || timer.write().toggle_timing_method()),
         }
@@ -91,10 +93,10 @@ impl HotkeySystem {
     /// the hotkeys.
     pub fn with_config(timer: SharedTimer, config: HotkeyConfig) -> Result<Self> {
         let mut hotkey_system = Self {
-            config : config,
-            hook : Hook::new()?,
-            timer : timer,
-            is_active : false,
+            config: config,
+            hook: Hook::new()?,
+            timer: timer,
+            is_active: false,
         };
         hotkey_system.activate()?;
         Ok(hotkey_system)
