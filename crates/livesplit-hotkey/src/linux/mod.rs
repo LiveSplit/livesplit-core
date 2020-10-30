@@ -5,15 +5,15 @@ use mio::unix::EventedFd;
 use mio::{Events, Poll, PollOpt, Ready, Registration, SetReadiness, Token};
 use promising_future::{future_promise, Promise};
 use std::collections::hash_map::{Entry, HashMap};
-use std::os::raw::{c_int, c_uint, c_ulong};
+use std::os::raw::{c_int, c_uint};
 use std::sync::mpsc::{channel, Sender};
 use std::thread::{self, JoinHandle};
 use std::{mem, ptr};
 use x11_dl::xlib::{
-    Display, GrabModeAsync, KeyPress, KeyPressMask, Mod2Mask, XErrorEvent, XKeyEvent, Xlib,
+    Display, GrabModeAsync, AnyKey, KeyPress, AnyModifier, XErrorEvent, XKeyEvent, Xlib,
 };
 
-#[derive(Debug, snafu::Snafu)]
+#[derive(Debug,Copy,Clone, snafu::Snafu)]
 pub enum Error {
     NoXLib,
     OpenXServerConnection,
@@ -35,6 +35,10 @@ enum Message {
     End,
 }
 
+const X_TOKEN: Token = Token(0);
+const PING_TOKEN: Token = Token(1);
+
+
 pub struct Hook {
     sender: Sender<Message>,
     ping: SetReadiness,
@@ -52,9 +56,27 @@ impl Drop for Hook {
     }
 }
 
-unsafe fn unregister(xlib: &Xlib, display: *mut Display, window: c_ulong, code: c_uint) {
-    (xlib.XUngrabKey)(display, code as _, 0, window);
-    (xlib.XUngrabKey)(display, code as _, Mod2Mask, window);
+unsafe fn ungrab_all(xlib: &Xlib, display: *mut Display) {
+    let screencount = (xlib.XScreenCount)(display);
+    for screen in 0..screencount {
+        let rootwindow = (xlib.XRootWindow)(display, screen);
+        for _i in 0..rootwindow {
+            // FIXME: This loop looks very stupid, but it somehow it prevents
+            // button presses getting lost.
+            (xlib.XUngrabKey)(display, AnyKey, AnyModifier, rootwindow);
+        }
+    }
+}
+
+unsafe fn grab_all(xlib: &Xlib, display: *mut Display, keylist: Vec<c_uint>) {
+    ungrab_all(xlib, display);
+    let screencount = (xlib.XScreenCount)(display);
+    for screen in 0..screencount {
+        let rootwindow = (xlib.XRootWindow)(display, screen);
+        for code in &keylist {
+            (xlib.XGrabKey)(display, *code as _, AnyModifier, rootwindow, false as _, GrabModeAsync, GrabModeAsync);
+        }
+    }
 }
 
 unsafe extern "C" fn handle_error(_: *mut Display, _: *mut XErrorEvent) -> c_int {
@@ -74,16 +96,10 @@ impl Hook {
                 return Err(Error::OpenXServerConnection);
             }
 
-            let window = (xlib.XDefaultRootWindow)(display);
-            (xlib.XSelectInput)(display, window, KeyPressMask);
-
             let fd = (xlib.XConnectionNumber)(display);
             let poll = Poll::new().map_err(|_| Error::EPoll)?;
 
             let (registration, ping) = Registration::new2();
-
-            const X_TOKEN: Token = Token(0);
-            const PING_TOKEN: Token = Token(1);
 
             poll.register(
                 &EventedFd(&fd),
@@ -101,12 +117,12 @@ impl Hook {
             )
             .map_err(|_| Error::EPoll)?;
 
-            struct XData(Xlib, *mut Display, c_ulong);
+            struct XData(Xlib, *mut Display);
             unsafe impl Send for XData {}
-            let xdata = XData(xlib, display, window);
+            let xdata = XData(xlib, display);
 
             let join_handle = thread::spawn(move || -> Result<()> {
-                let XData(xlib, display, window) = xdata;
+                let XData(xlib, display) = xdata;
 
                 let mut result = Ok(());
                 let mut events = Events::with_capacity(1024);
@@ -127,42 +143,24 @@ impl Hook {
                                             (xlib.XKeysymToKeycode)(display, key as _) as c_uint;
 
                                         if let Entry::Vacant(vacant) = hotkeys.entry(code) {
-                                            (xlib.XGrabKey)(
-                                                display,
-                                                code as _,
-                                                0,
-                                                window,
-                                                false as _,
-                                                GrabModeAsync,
-                                                GrabModeAsync,
-                                            );
-
-                                            (xlib.XGrabKey)(
-                                                display,
-                                                code as _,
-                                                Mod2Mask,
-                                                window,
-                                                false as _,
-                                                GrabModeAsync,
-                                                GrabModeAsync,
-                                            );
-
                                             vacant.insert(callback);
                                             promise.set(Ok(()));
                                         } else {
                                             promise.set(Err(Error::AlreadyRegistered));
                                         }
+                                        let keys = hotkeys.keys().map(|x| *x).collect();
+                                        grab_all(&xlib, display, keys);
                                     }
                                     Message::Unregister(key, promise) => {
-                                        let code =
-                                            (xlib.XKeysymToKeycode)(display, key as _) as c_uint;
+                                        let code = (xlib.XKeysymToKeycode)(display, key as _) as c_uint;
 
                                         if hotkeys.remove(&code).is_some() {
-                                            unregister(&xlib, display, window, code);
                                             promise.set(Ok(()));
                                         } else {
                                             promise.set(Err(Error::NotRegistered));
                                         }
+                                        let keys = hotkeys.keys().map(|x| *x).collect();
+                                        grab_all(&xlib, display, keys);
                                     }
                                     Message::End => {
                                         break 'event_loop;
@@ -179,15 +177,15 @@ impl Hook {
                                     if let Some(callback) = hotkeys.get_mut(&event.keycode) {
                                         callback();
                                     }
+                                    // FIXME: We should check else here: these amount to lost
+                                    // keypresses.
                                 }
                             }
                         }
                     }
                 }
 
-                for (code, _) in hotkeys {
-                    unregister(&xlib, display, window, code);
-                }
+                ungrab_all(&xlib, display);
 
                 (xlib.XCloseDisplay)(display);
 
