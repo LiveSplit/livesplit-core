@@ -155,7 +155,7 @@ impl Hook {
                                         } else {
                                             promise.set(Err(Error::AlreadyRegistered));
                                         }
-                                        let keys = hotkeys.keys().map(|x| *x).collect();
+                                        let keys = hotkeys.keys().copied().collect();
                                         grab_all(&xlib, display, keys);
                                     }
                                     Message::Unregister(key, promise) => {
@@ -167,7 +167,7 @@ impl Hook {
                                         } else {
                                             promise.set(Err(Error::NotRegistered));
                                         }
-                                        let keys = hotkeys.keys().map(|x| *x).collect();
+                                        let keys = hotkeys.keys().copied().collect();
                                         grab_all(&xlib, display, keys);
                                     }
                                     Message::End => {

@@ -93,9 +93,9 @@ impl HotkeySystem {
     /// the hotkeys.
     pub fn with_config(timer: SharedTimer, config: HotkeyConfig) -> Result<Self> {
         let mut hotkey_system = Self {
-            config: config,
+            config,
             hook: Hook::new()?,
-            timer: timer,
+            timer,
             is_active: false,
         };
         hotkey_system.activate()?;
