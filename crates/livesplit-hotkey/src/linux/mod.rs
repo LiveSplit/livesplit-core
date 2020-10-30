@@ -10,10 +10,10 @@ use std::sync::mpsc::{channel, Sender};
 use std::thread::{self, JoinHandle};
 use std::{mem, ptr};
 use x11_dl::xlib::{
-    Display, GrabModeAsync, AnyKey, KeyPress, AnyModifier, XErrorEvent, XKeyEvent, Xlib,
+    AnyKey, AnyModifier, Display, GrabModeAsync, KeyPress, XErrorEvent, XKeyEvent, Xlib,
 };
 
-#[derive(Debug,Copy,Clone, snafu::Snafu)]
+#[derive(Debug, Copy, Clone, snafu::Snafu)]
 pub enum Error {
     NoXLib,
     OpenXServerConnection,
@@ -37,7 +37,6 @@ enum Message {
 
 const X_TOKEN: Token = Token(0);
 const PING_TOKEN: Token = Token(1);
-
 
 pub struct Hook {
     sender: Sender<Message>,
@@ -74,7 +73,15 @@ unsafe fn grab_all(xlib: &Xlib, display: *mut Display, keylist: Vec<c_uint>) {
     for screen in 0..screencount {
         let rootwindow = (xlib.XRootWindow)(display, screen);
         for code in &keylist {
-            (xlib.XGrabKey)(display, *code as _, AnyModifier, rootwindow, false as _, GrabModeAsync, GrabModeAsync);
+            (xlib.XGrabKey)(
+                display,
+                *code as _,
+                AnyModifier,
+                rootwindow,
+                false as _,
+                GrabModeAsync,
+                GrabModeAsync,
+            );
         }
     }
 }
@@ -152,7 +159,8 @@ impl Hook {
                                         grab_all(&xlib, display, keys);
                                     }
                                     Message::Unregister(key, promise) => {
-                                        let code = (xlib.XKeysymToKeycode)(display, key as _) as c_uint;
+                                        let code =
+                                            (xlib.XKeysymToKeycode)(display, key as _) as c_uint;
 
                                         if hotkeys.remove(&code).is_some() {
                                             promise.set(Ok(()));
