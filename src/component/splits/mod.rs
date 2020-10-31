@@ -307,7 +307,7 @@ impl Component {
                         + self.settings.split_preview_count as isize
                         + locked_last_split
                         + 1
-                        - visual_split_count as isize
+                        - visual_split_count as isize,
                 )
             }),
             run.len() as isize - visual_split_count as isize,

@@ -5,18 +5,16 @@ mod run_files;
 #[path = "../src/tests_helper.rs"]
 mod tests_helper;
 
-use {
-    image::Rgba,
-    img_hash::{HasherConfig, ImageHash},
-    livesplit_core::{
-        component,
-        layout::{self, Component, Layout, LayoutDirection, LayoutState},
-        rendering::software::render,
-        run::parser::{livesplit, llanfair, wsplit},
-        Run, Segment, TimeSpan, Timer, TimingMethod,
-    },
-    std::{fs, io::Cursor},
+use image::Rgba;
+use img_hash::{HasherConfig, ImageHash};
+use livesplit_core::{
+    component,
+    layout::{self, Component, Layout, LayoutDirection, LayoutState},
+    rendering::software::render,
+    run::parser::{livesplit, llanfair, wsplit},
+    Run, Segment, TimeSpan, Timer, TimingMethod,
 };
+use std::{fs, io::Cursor};
 
 fn file(data: &[u8]) -> Cursor<&[u8]> {
     Cursor::new(data)
