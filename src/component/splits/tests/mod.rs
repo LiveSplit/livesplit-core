@@ -38,7 +38,7 @@ fn zero_visual_split_count_always_shows_all_splits() {
 #[test]
 fn one_visual_split() {
     let mut run = Run::new();
-    
+
     run.push_segment(Segment::new("A"));
     run.push_segment(Segment::new("B"));
     run.push_segment(Segment::new("C"));

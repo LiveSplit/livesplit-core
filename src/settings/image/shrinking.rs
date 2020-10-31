@@ -1,7 +1,9 @@
 use alloc::borrow::Cow;
 use image::{
-    bmp, guess_format, hdr, ico, jpeg, load_from_memory_with_format, png, pnm, tiff, webp,
-    DynamicImage, GenericImageView, ImageDecoder, ImageError, ImageFormat,
+    bmp,
+    codecs::{hdr, ico, jpeg, png, pnm, tiff, webp},
+    guess_format, load_from_memory_with_format, DynamicImage, GenericImageView, ImageDecoder,
+    ImageError, ImageFormat,
 };
 use std::io::Cursor;
 
