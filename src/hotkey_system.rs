@@ -106,7 +106,6 @@ impl HotkeySystem {
     unsafe fn register_raw(&mut self, hotkey: Hotkey) -> Result<()> {
         let inner = self.timer.clone();
         if let Some(keycode) = hotkey.get_keycode(&self.config) {
-            println!("Registering Keycode {:?} as {:?}", keycode, hotkey);
             self.hook.register(keycode, hotkey.callback(inner))?;
         }
         Ok(())
@@ -119,7 +118,6 @@ impl HotkeySystem {
     // leak a registered hotkey
     unsafe fn unregister_raw(&mut self, hotkey: Hotkey) -> Result<()> {
         if let Some(keycode) = hotkey.get_keycode(&self.config) {
-            println!("Unregistering Keycode {:?} as {:?}", keycode, hotkey);
             self.hook.unregister(keycode)?;
         }
         Ok(())
