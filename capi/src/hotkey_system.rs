@@ -40,15 +40,15 @@ pub extern "C" fn HotkeySystem_drop(this: OwnedHotkeySystem) {
 /// Deactivates the Hotkey System. No hotkeys will go through until it gets
 /// activated again. If it's already deactivated, nothing happens.
 #[no_mangle]
-pub extern "C" fn HotkeySystem_deactivate(this: &HotkeySystem) {
-    this.deactivate();
+pub extern "C" fn HotkeySystem_deactivate(this: &mut HotkeySystem) -> bool {
+    this.deactivate().is_ok()
 }
 
 /// Activates a previously deactivated Hotkey System. If it's already
 /// active, nothing happens.
 #[no_mangle]
-pub extern "C" fn HotkeySystem_activate(this: &HotkeySystem) {
-    this.activate();
+pub extern "C" fn HotkeySystem_activate(this: &mut HotkeySystem) -> bool {
+    this.activate().is_ok()
 }
 
 /// Returns the hotkey configuration currently in use by the Hotkey System.
