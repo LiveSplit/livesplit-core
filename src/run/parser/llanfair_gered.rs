@@ -1,13 +1,15 @@
 //! Provides the parser for splits files used by Gered's Llanfair fork.
 
-use crate::xml_util::{
-    end_tag, optional_attribute_err, parse_base, parse_children, single_child, text,
-    text_as_bytes_err, text_err, text_parsed,
+use crate::{
+    xml_util::{
+        end_tag, optional_attribute_err, parse_base, parse_children, single_child, text,
+        text_as_bytes_err, text_err, text_parsed,
+    },
+    RealTime, Run, Segment, Time, TimeSpan,
 };
-use crate::{RealTime, Run, Segment, Time, TimeSpan};
 use base64::{self, STANDARD};
 use byteorder::{ReadBytesExt, BE};
-use image::{png, ColorType, ImageBuffer, Rgba};
+use image::{codecs::png, ColorType, ImageBuffer, Rgba};
 use quick_xml::Reader;
 use snafu::OptionExt;
 use std::io::{BufRead, Cursor, Seek, SeekFrom};

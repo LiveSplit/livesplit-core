@@ -268,7 +268,7 @@ fn check_dims(state: &LayoutState, dims: [usize; 2], expected_hash_data: &str, n
             expected_hash_data.replace("/", "$"),
         );
         if let Ok(expected_image) = image::open(expected_path) {
-            let mut expected_image = expected_image.to_rgba();
+            let mut expected_image = expected_image.to_rgba8();
             for (x, y, Rgba([r, g, b, a])) in expected_image.enumerate_pixels_mut() {
                 if x < image.width() && y < image.height() {
                     let Rgba([r2, g2, b2, a2]) = image.get_pixel(x, y);

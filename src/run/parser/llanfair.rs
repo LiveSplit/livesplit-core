@@ -2,9 +2,11 @@
 
 use crate::{settings::Image, RealTime, Run, Segment, Time, TimeSpan};
 use byteorder::{ReadBytesExt, BE};
-use core::result::Result as StdResult;
-use core::str::{from_utf8, Utf8Error};
-use image::{png, ColorType, ImageBuffer, Rgba};
+use core::{
+    result::Result as StdResult,
+    str::{from_utf8, Utf8Error},
+};
+use image::{codecs::png, ColorType, ImageBuffer, Rgba};
 use snafu::{OptionExt, ResultExt};
 use std::io::{self, Read, Seek, SeekFrom};
 
