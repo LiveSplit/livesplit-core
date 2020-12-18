@@ -1,12 +1,12 @@
 //! Provides the parser for splits files used by the Llanfair Rewrite.
 
-use crate::xml_util::{
-    end_tag, parse_base, parse_children, single_child, text, text_err, text_parsed,
+use crate::{
+    xml_util::{end_tag, parse_base, parse_children, single_child, text, text_err, text_parsed},
+    RealTime, Run, Segment, Time, TimeSpan,
 };
-use crate::{RealTime, Run, Segment, Time, TimeSpan};
 use byteorder::{ByteOrder, BE};
 use core::cmp::min;
-use image::{png, ColorType, ImageBuffer, Rgba};
+use image::{codecs::png, ColorType, ImageBuffer, Rgba};
 use quick_xml::Reader;
 use std::io::BufRead;
 

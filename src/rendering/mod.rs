@@ -461,7 +461,7 @@ impl<B: Backend> RenderContext<'_, B> {
             return None;
         }
 
-        let image = image::load_from_memory(image_data).ok()?.to_rgba();
+        let image = image::load_from_memory(image_data).ok()?.to_rgba8();
         let texture = self
             .backend
             .create_texture(image.width(), image.height(), &image);

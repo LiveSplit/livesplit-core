@@ -1,7 +1,6 @@
 use alloc::borrow::Cow;
 use image::{
-    bmp,
-    codecs::{hdr, ico, jpeg, png, pnm, tiff, webp},
+    codecs::{bmp, hdr, ico, jpeg, png, pnm, tiff, webp},
     guess_format, load_from_memory_with_format, DynamicImage, GenericImageView, ImageDecoder,
     ImageError, ImageFormat,
 };
