@@ -38,7 +38,7 @@ libm = "0.2.1"
 livesplit-hotkey = { path = "crates/livesplit-hotkey", version = "0.5.0", default-features = false }
 livesplit-title-abbreviations = { path = "crates/livesplit-title-abbreviations", version = "0.1.0" }
 odds = { version = "0.4.0", default-features = false }
-ordered-float = { version = "2.0.0", default-features = false }
+ordered-float = { version = "2.0.1", default-features = false }
 palette = { version = "0.5.0", default-features = false, features = ["libm"] }
 serde = { version = "1.0.98", default-features = false, features = ["derive", "alloc"] }
 smallstr = { version = "0.2.0", default-features = false }
