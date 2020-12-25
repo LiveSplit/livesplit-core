@@ -72,7 +72,7 @@ mod mesh;
 #[cfg(feature = "software-rendering")]
 pub mod software;
 
-use self::{glyph_cache::GlyphCache, icon::Icon};
+use self::{font::Font, glyph_cache::GlyphCache, icon::Icon};
 use crate::{
     layout::{ComponentState, LayoutDirection, LayoutState},
     settings::{Color, Gradient},
@@ -80,7 +80,7 @@ use crate::{
 use alloc::borrow::Cow;
 use core::iter;
 use euclid::{Transform2D, UnknownUnit};
-use rusttype::Font;
+use rustybuzz::UnicodeBuffer;
 
 pub use self::mesh::{Mesh, Vertex};
 pub use euclid;
@@ -189,6 +189,7 @@ pub struct Renderer<M, T> {
     rectangle: Option<M>,
     cached_size: Option<CachedSize>,
     icons: IconCache<T>,
+    text_buffer: Option<UnicodeBuffer>,
 }
 
 struct IconCache<T> {
@@ -207,9 +208,9 @@ impl<M, T> Renderer<M, T> {
     /// Creates a new renderer.
     pub fn new() -> Self {
         Self {
-            timer_font: Font::try_from_bytes(TIMER_FONT).unwrap(),
+            timer_font: Font::from_slice(TIMER_FONT, 0).unwrap(),
             timer_glyph_cache: GlyphCache::new(),
-            text_font: Font::try_from_bytes(TEXT_FONT).unwrap(),
+            text_font: Font::from_slice(TEXT_FONT, 0).unwrap(),
             text_glyph_cache: GlyphCache::new(),
             rectangle: None,
             icons: IconCache {
@@ -218,6 +219,7 @@ impl<M, T> Renderer<M, T> {
                 detailed_timer_icon: None,
             },
             cached_size: None,
+            text_buffer: None,
         }
     }
 
@@ -272,10 +274,11 @@ impl<M, T> Renderer<M, T> {
             backend,
             transform: Transform::identity(),
             rectangle: &mut self.rectangle,
-            timer_font: &mut self.timer_font,
+            timer_font: &self.timer_font,
             timer_glyph_cache: &mut self.timer_glyph_cache,
-            text_font: &mut self.text_font,
+            text_font: &self.text_font,
             text_glyph_cache: &mut self.text_glyph_cache,
+            text_buffer: &mut self.text_buffer,
         };
 
         // Initially we are in Backend Coordinate Space.
@@ -347,6 +350,7 @@ impl<M, T> Renderer<M, T> {
             timer_glyph_cache: &mut self.timer_glyph_cache,
             text_font: &mut self.text_font,
             text_glyph_cache: &mut self.text_glyph_cache,
+            text_buffer: &mut self.text_buffer,
         };
 
         // Initially we are in Backend Coordinate Space.
@@ -426,10 +430,11 @@ struct RenderContext<'b, B: Backend> {
     transform: Transform,
     backend: &'b mut B,
     rectangle: &'b mut Option<B::Mesh>,
-    timer_font: &'b mut Font<'static>,
+    timer_font: &'b Font<'static>,
     timer_glyph_cache: &'b mut GlyphCache<B::Mesh>,
-    text_font: &'b mut Font<'static>,
+    text_font: &'b Font<'static>,
     text_glyph_cache: &'b mut GlyphCache<B::Mesh>,
+    text_buffer: &'b mut Option<UnicodeBuffer>,
 }
 
 impl<B: Backend> RenderContext<'_, B> {
@@ -576,18 +581,27 @@ impl<B: Backend> RenderContext<'_, B> {
         colors: [Color; 2],
         max_x: f32,
     ) -> f32 {
-        let font = font::scaled(&self.text_font, scale);
+        let mut cursor = font::Cursor::new(pos);
+
+        let mut buffer = self.text_buffer.take().unwrap_or_default();
+        buffer.push_str(text.trim());
+        buffer.guess_segment_properties();
+
+        let font = self.text_font.scale(scale);
+        let glyphs = font.shape(buffer);
+
         font::render(
-            font::ellipsis(font::default_layout(font, text, pos), max_x, font),
+            glyphs.left_aligned(&mut cursor, max_x),
             colors,
-            &self.text_font,
+            &font,
             self.text_glyph_cache,
             &self.transform,
             self.backend,
-        )
-        .map_or(pos[0], |g| {
-            g.position().x + g.unpositioned().h_metrics().advance_width
-        })
+        );
+
+        *self.text_buffer = Some(glyphs.into_buffer());
+
+        cursor.x
     }
 
     fn render_text_centered(
@@ -599,19 +613,25 @@ impl<B: Backend> RenderContext<'_, B> {
         scale: f32,
         color: Color,
     ) {
-        let font = font::scaled(&self.text_font, scale);
+        let mut cursor = font::Cursor::new(pos);
+
+        let mut buffer = self.text_buffer.take().unwrap_or_default();
+        buffer.push_str(text.trim());
+        buffer.guess_segment_properties();
+
+        let font = self.text_font.scale(scale);
+        let glyphs = font.shape(buffer);
+
         font::render(
-            font::ellipsis(
-                font::centered(font::default_layout(font, text.trim(), pos), min_x),
-                max_x,
-                font,
-            ),
+            glyphs.centered(&mut cursor, min_x, max_x),
             [color; 2],
-            &self.text_font,
+            &font,
             self.text_glyph_cache,
             &self.transform,
             self.backend,
         );
+
+        *self.text_buffer = Some(glyphs.into_buffer());
     }
 
     fn render_text_right_align(
@@ -621,25 +641,29 @@ impl<B: Backend> RenderContext<'_, B> {
         scale: f32,
         colors: [Color; 2],
     ) -> f32 {
-        let (layout, width) = font::align_right_and_measure(font::default_layout(
-            font::scaled(&self.text_font, scale),
-            text.trim(),
-            pos,
-        ));
+        let mut cursor = font::Cursor::new(pos);
+
+        let mut buffer = self.text_buffer.take().unwrap_or_default();
+        buffer.push_str(text.trim());
+        buffer.guess_segment_properties();
+
+        let font = self.text_font.scale(scale);
+        let glyphs = font.shape(buffer);
 
         font::render(
-            layout,
+            glyphs.right_aligned(&mut cursor),
             colors,
-            &self.text_font,
+            &font,
             self.text_glyph_cache,
             &self.transform,
             self.backend,
         );
 
-        pos[0] - width
+        *self.text_buffer = Some(glyphs.into_buffer());
+
+        cursor.x
     }
 
-    /// 0 = left, 0.5 = center, 1 = right
     fn render_text_align(
         &mut self,
         text: &str,
@@ -647,50 +671,66 @@ impl<B: Backend> RenderContext<'_, B> {
         max_x: f32,
         pos: Pos,
         scale: f32,
-        align: f32,
+        centered: bool,
         color: Color,
     ) {
-        let font = font::scaled(&self.text_font, scale);
+        if centered {
+            self.render_text_centered(text, min_x, max_x, pos, scale, color);
+        } else {
+            self.render_text_ellipsis(text, pos, scale, [color; 2], max_x);
+        }
+    }
+
+    fn render_numbers(&mut self, text: &str, pos: Pos, scale: f32, colors: [Color; 2]) -> f32 {
+        let mut cursor = font::Cursor::new(pos);
+
+        let mut buffer = self.text_buffer.take().unwrap_or_default();
+        buffer.push_str(text.trim());
+        buffer.guess_segment_properties();
+
+        let font = self.text_font.scale(scale);
+        let glyphs = font.shape_tabular_numbers(buffer);
+
         font::render(
-            font::ellipsis(
-                font::dynamic_align(font::default_layout(font, text.trim(), pos), align, min_x),
-                max_x,
-                font,
-            ),
-            [color; 2],
-            &self.text_font,
+            glyphs.tabular_numbers(&mut cursor),
+            colors,
+            &font,
             self.text_glyph_cache,
             &self.transform,
             self.backend,
         );
-    }
 
-    fn render_numbers(&mut self, text: &str, pos: Pos, scale: f32, colors: [Color; 2]) -> f32 {
-        font::render(
-            font::layout_numbers(font::scaled(&self.text_font, scale), text.trim(), pos),
-            colors,
-            &self.text_font,
-            self.text_glyph_cache,
-            &self.transform,
-            self.backend,
-        )
-        .map_or(pos[0], |g| g.position().x)
+        *self.text_buffer = Some(glyphs.into_buffer());
+
+        cursor.x
     }
 
     fn render_timer(&mut self, text: &str, pos: Pos, scale: f32, colors: [Color; 2]) -> f32 {
+        let mut cursor = font::Cursor::new(pos);
+
+        let mut buffer = self.text_buffer.take().unwrap_or_default();
+        buffer.push_str(text.trim());
+        buffer.guess_segment_properties();
+
+        let font = self.timer_font.scale(scale);
+        let glyphs = font.shape_tabular_numbers(buffer);
+
         font::render(
-            font::layout_numbers(font::scaled(&self.timer_font, scale), text.trim(), pos),
+            glyphs.tabular_numbers(&mut cursor),
             colors,
-            &self.timer_font,
+            &font,
             self.timer_glyph_cache,
             &self.transform,
             self.backend,
-        )
-        .map_or(pos[0], |g| g.position().x)
+        );
+
+        *self.text_buffer = Some(glyphs.into_buffer());
+
+        cursor.x
     }
 
     fn choose_abbreviation<'a>(
-        &self,
+        &mut self,
         abbreviations: impl IntoIterator<Item = &'a str>,
         font_size: f32,
         max_width: f32,
@@ -724,18 +764,37 @@ impl<B: Backend> RenderContext<'_, B> {
         }
     }
 
-    fn measure_text(&self, text: &str, scale: f32) -> f32 {
-        font::measure_default_layout(font::scaled(&self.text_font, scale), text)
+    fn measure_text(&mut self, text: &str, scale: f32) -> f32 {
+        let mut buffer = self.text_buffer.take().unwrap_or_default();
+        buffer.push_str(text.trim());
+        buffer.guess_segment_properties();
+
+        let glyphs = self.text_font.scale(scale).shape(buffer);
+        let width = glyphs.width();
+
+        *self.text_buffer = Some(glyphs.into_buffer());
+
+        width
     }
 
-    fn measure_numbers(&self, text: &str, scale: f32) -> f32 {
-        font::layout_numbers(
-            font::scaled(&self.text_font, scale),
-            text.trim(),
-            [0.0, 0.0],
-        )
-        .last()
-        .map_or(0.0, |g| -g.position().x)
+    fn measure_numbers(&mut self, text: &str, scale: f32) -> f32 {
+        let mut cursor = font::Cursor::new([0.0; 2]);
+
+        let mut buffer = self.text_buffer.take().unwrap_or_default();
+        buffer.push_str(text.trim());
+        buffer.guess_segment_properties();
+
+        let glyphs = self.text_font.scale(scale).shape_tabular_numbers(buffer);
+
+        // Iterate over all glyphs, to move the cursor forward.
+        glyphs.tabular_numbers(&mut cursor).for_each(drop);
+
+        // Wherever we end up is our width.
+        let width = -cursor.x;
+
+        *self.text_buffer = Some(glyphs.into_buffer());
+
+        width
     }
 }
 
