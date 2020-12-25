@@ -5,7 +5,10 @@ use crate::xml_util::{
     attribute, attribute_err, end_tag, optional_attribute_err, parse_attributes, parse_base,
     parse_children, reencode_children, text, text_as_bytes_err, text_err, text_parsed,
 };
-use crate::{AtomicDateTime, Run, RunMetadata, Segment, Time, TimeSpan};
+use crate::{
+    run::{SegmentGroup, SegmentGroups},
+    AtomicDateTime, Run, RunMetadata, Segment, Time, TimeSpan,
+};
 use chrono::{DateTime, TimeZone, Utc};
 use core::str;
 use quick_xml::Reader;
@@ -457,9 +460,9 @@ pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
     let mut run = Run::new();
 
     let mut required_flags = 0u8;
+    let mut version = Version(1, 0, 0, 0);
 
     parse_base(reader, &mut buf, b"Run", |reader, tag| {
-        let mut version = Version(1, 0, 0, 0);
         type_hint(optional_attribute_err(&tag, b"version", |t| {
             version = parse_version(t)?;
             Ok(())
@@ -499,6 +502,38 @@ pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
                         end_tag(reader, tag.into_buf())
                     }
                 })
+            } else if tag.name() == b"SegmentGroups" {
+                let mut unordered_groups = Vec::new();
+                type_hint(parse_children(reader, tag.into_buf(), |reader, tag| {
+                    if tag.name() == b"SegmentGroup" {
+                        let (mut start, mut end) = (0, 0);
+                        type_hint(attribute_err(&tag, b"start", |t| {
+                            start = t.parse()?;
+                            Ok(())
+                        }))?;
+                        type_hint(attribute_err(&tag, b"end", |t| {
+                            end = t.parse()?;
+                            Ok(())
+                        }))?;
+
+                        // TODO: An empty name is not equivalent to None outside
+                        // of parsing.
+                        let mut name = String::new();
+                        type_hint(text(reader, tag.into_buf(), |t| name = t.into_owned()))?;
+
+                        unordered_groups.push(SegmentGroup::new_lossy(
+                            start,
+                            end,
+                            if name.is_empty() { None } else { Some(name) },
+                        ));
+
+                        Ok(())
+                    } else {
+                        end_tag(reader, tag.into_buf())
+                    }
+                }))?;
+                *run.segment_groups_mut() = SegmentGroups::from_vec_lossy(unordered_groups);
+                Ok(())
             } else if tag.name() == b"AutoSplitterSettings" {
                 let settings = run.auto_splitter_settings_mut();
                 reencode_children(reader, tag.into_buf(), settings).map_err(Into::into)
@@ -514,7 +549,51 @@ pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
         });
     }
 
+    if version < Version(1, 8, 1, 0) {
+        import_legacy_subsplits(&mut run);
+    }
+
     run.set_path(path);
 
     Ok(run)
+}
+
+fn import_legacy_subsplits(run: &mut Run) {
+    let mut groups = SegmentGroups::new();
+    let mut current_group_start = None;
+
+    for (index, segment) in run.segments_mut().iter_mut().enumerate() {
+        let name = segment.name_mut();
+
+        if name.starts_with("-") {
+            if current_group_start.is_none() {
+                current_group_start = Some(index);
+            }
+            name.remove(0);
+        } else {
+            let mut group = current_group_start
+                .take()
+                .map(|range_start| SegmentGroup::new(range_start, index + 1, None).unwrap());
+
+            if name.starts_with("{") {
+                let mut iter = name[1..].splitn(2, '}');
+                if let (Some(group_name), Some(segment_name)) = (iter.next(), iter.next()) {
+                    let segment_name = segment_name.trim_start();
+
+                    if let Some(group) = &mut group {
+                        group.set_name(Some(group_name.to_owned()));
+                    }
+
+                    let remove_count = segment_name.as_ptr() as usize - name.as_ptr() as usize;
+                    name.replace_range(0..remove_count, "");
+                }
+            }
+
+            if let Some(group) = group {
+                groups.push_back(group).unwrap();
+            }
+        }
+    }
+
+    *run.segment_groups_mut() = groups;
 }

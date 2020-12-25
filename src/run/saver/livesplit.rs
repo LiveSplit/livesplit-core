@@ -249,7 +249,7 @@ pub fn save_run<W: Write>(run: &Run, writer: W) -> Result<()> {
 
     writer.write_event(Event::Decl(BytesDecl::new(b"1.0", Some(b"UTF-8"), None)))?;
     writer.write_event(Event::Start(BytesStart::borrowed(
-        br#"Run version="1.8.0""#,
+        br#"Run version="1.8.1""#,
         3,
     )))?;
 
@@ -382,6 +382,24 @@ pub fn save_run<W: Write>(run: &Run, writer: W) -> Result<()> {
             )?;
 
             write_end(writer, b"Segment")
+        },
+    )?;
+
+    scoped_iter(
+        writer,
+        new_tag(b"SegmentGroups"),
+        run.segment_groups().groups(),
+        |writer, group| {
+            let mut tag = new_tag(b"SegmentGroup");
+            tag.push_attribute((&b"start"[..], fmt_buf(group.start(), buf)));
+            tag.push_attribute((&b"end"[..], fmt_buf(group.end(), buf)));
+
+            if let Some(name) = group.name() {
+                text(writer, tag, name)
+            } else {
+                writer.write_event(Event::Empty(tag))?;
+                Ok(())
+            }
         },
     )?;
 

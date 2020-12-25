@@ -12,6 +12,7 @@ pub const LIVESPLIT_1_6: &[u8] = include_bytes!("livesplit1.6.lss");
 pub const LIVESPLIT_ATTEMPT_ENDED_BUG: &[u8] = include_bytes!("livesplit_attempt_ended_bug.lss");
 pub const LIVESPLIT_FUZZ_CRASH_UTF8: &[u8] = include_bytes!("livesplit_fuzz_crash_utf8.lss");
 pub const LIVESPLIT_FUZZ_CRASH: &[u8] = include_bytes!("livesplit_fuzz_crash.lss");
+pub const LIVESPLIT_SEGMENT_GROUPS: &[u8] = include_bytes!("segment_groups.lss");
 pub const LLANFAIR_GERED_ICONS: &[u8] = include_bytes!("llanfair_gered_icons.lfs");
 pub const LLANFAIR_GERED_WITH_REFS: &[u8] = include_bytes!("llanfair_gered_with_refs.lfs");
 pub const LLANFAIR_GERED: &[u8] = include_bytes!("llanfair_gered.lfs");
