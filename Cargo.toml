@@ -109,6 +109,10 @@ name = "balanced_pb"
 harness = false
 
 [[bench]]
+name = "dummy_rendering"
+harness = false
+
+[[bench]]
 name = "layout_state"
 harness = false
 
