@@ -42,7 +42,7 @@ fn default() {
 
     let state = layout.state(&timer.snapshot());
 
-    check(&state, "luCCVRJIPLE=", "default");
+    check(&state, "luCKVRJIOLM=", "default");
 }
 
 #[test]
@@ -55,7 +55,7 @@ fn actual_split_file() {
 
     check(
         &layout.state(&timer.snapshot()),
-        "jMDEKxBAPLE=",
+        "jsTEKxBAPLc=",
         "actual_split_file",
     );
 }
@@ -69,7 +69,7 @@ fn wsplit() {
     check_dims(
         &layout.state(&timer.snapshot()),
         [250, 300],
-        "j/jc3dn8t/c=",
+        "j/j93Nnct/c=",
         "wsplit",
     );
 }
@@ -87,7 +87,7 @@ fn all_components() {
 
     let state = layout.state(&timer.snapshot());
 
-    check_dims(&state, [300, 800], "4eH3scnJt7E=", "all_components");
+    check_dims(&state, [300, 800], "4eH3scnJtvE=", "all_components");
 
     check_dims(&state, [150, 800], "SWPXSWFFa2s=", "all_components_thin");
 }
@@ -121,7 +121,7 @@ fn dark_layout() {
 
     check(
         &layout.state(&timer.snapshot()),
-        "D8IAQiBYxgM=",
+        "D8IAQiBYxQc=",
         "dark_layout",
     );
 }
@@ -141,7 +141,7 @@ fn subsplits_layout() {
     check_dims(
         &layout.state(&timer.snapshot()),
         [300, 800],
-        "8/Pz4/Pz/8c=",
+        "4/P76/Pz/88=",
         "subsplits_layout",
     );
 }
@@ -164,7 +164,7 @@ fn display_two_rows() {
     check_dims(
         &layout.state(&timer.snapshot()),
         [200, 100],
-        "R00aWs1J9sE=",
+        "QU0aWM1L9ME=",
         "display_two_rows",
     );
 }
@@ -187,7 +187,7 @@ fn single_line_title() {
     check_dims(
         &layout.state(&timer.snapshot()),
         [300, 60],
-        "QCRbT0dxaAE=",
+        "QCRZR091aAE=",
         "single_line_title",
     );
 }
@@ -241,6 +241,7 @@ fn check(state: &LayoutState, expected_hash_data: &str, name: &str) {
     check_dims(state, [300, 500], expected_hash_data, name);
 }
 
+#[track_caller]
 fn check_dims(state: &LayoutState, dims: [usize; 2], expected_hash_data: &str, name: &str) {
     let image = render(state, dims);
     let hasher = HasherConfig::with_bytes_type::<[u8; 8]>().to_hasher();

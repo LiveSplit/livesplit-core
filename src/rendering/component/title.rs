@@ -33,10 +33,10 @@ pub(in crate::rendering) fn render<B: Backend>(
         PADDING
     };
 
-    let (line_x, align) = if component.is_centered {
-        (0.5 * width, 0.5)
+    let line_x = if component.is_centered {
+        0.5 * width
     } else {
-        (left_bound, 0.0)
+        left_bound
     };
 
     let attempts = match (component.finished_runs, component.attempts) {
@@ -63,7 +63,7 @@ pub(in crate::rendering) fn render<B: Backend>(
             line2_end_x - PADDING,
             [line_x, height + TEXT_ALIGN_BOTTOM],
             DEFAULT_TEXT_SIZE,
-            align,
+            component.is_centered,
             text_color,
         );
         (TEXT_ALIGN_TOP, width - PADDING)
@@ -83,7 +83,7 @@ pub(in crate::rendering) fn render<B: Backend>(
         line1_end_x,
         [line_x, line1_y],
         DEFAULT_TEXT_SIZE,
-        align,
+        component.is_centered,
         text_color,
     );
 }
