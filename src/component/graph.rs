@@ -3,10 +3,12 @@
 //! the chosen comparison throughout the whole attempt. All the individual
 //! deltas are shown as points in a graph.
 
-use crate::platform::prelude::*;
-use crate::settings::{Color, Field, SettingsDescription, Value};
 use crate::{
-    analysis, comparison, timing::Snapshot, GeneralLayoutSettings, TimeSpan, Timer, TimerPhase,
+    analysis, comparison,
+    platform::prelude::*,
+    settings::{Color, Field, SettingsDescription, Value},
+    timing::Snapshot,
+    GeneralLayoutSettings, TimeSpan, Timer, TimerPhase,
 };
 use alloc::borrow::Cow;
 use serde::{Deserialize, Serialize};
@@ -442,7 +444,7 @@ impl Component {
                 let current_time = timer.current_time();
                 let timing_method = timer.current_timing_method();
                 draw_info.final_split = current_time[timing_method]
-                    .or_else(|| current_time.real_time)
+                    .or(current_time.real_time)
                     .unwrap_or_else(TimeSpan::zero);
             } else {
                 let timing_method = timer.current_timing_method();

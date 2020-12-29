@@ -75,7 +75,7 @@ pub mod software;
 use self::{font::Font, glyph_cache::GlyphCache, icon::Icon};
 use crate::{
     layout::{ComponentState, LayoutDirection, LayoutState},
-    settings::{Color, Gradient},
+    settings::{Color, FontStretch, FontStyle, FontWeight, Gradient},
 };
 use alloc::borrow::Cow;
 use core::iter;
@@ -182,10 +182,18 @@ enum CachedSize {
 
 /// A renderer can be used to render out layout states with the backend chosen.
 pub struct Renderer<M, T> {
-    text_font: Font<'static>,
-    text_glyph_cache: GlyphCache<M>,
+    #[cfg(feature = "font-loading")]
+    timer_font_setting: Option<crate::settings::Font>,
     timer_font: Font<'static>,
     timer_glyph_cache: GlyphCache<M>,
+    #[cfg(feature = "font-loading")]
+    times_font_setting: Option<crate::settings::Font>,
+    times_font: Font<'static>,
+    times_glyph_cache: GlyphCache<M>,
+    #[cfg(feature = "font-loading")]
+    text_font_setting: Option<crate::settings::Font>,
+    text_font: Font<'static>,
+    text_glyph_cache: GlyphCache<M>,
     rectangle: Option<M>,
     cached_size: Option<CachedSize>,
     icons: IconCache<T>,
@@ -208,9 +216,38 @@ impl<M, T> Renderer<M, T> {
     /// Creates a new renderer.
     pub fn new() -> Self {
         Self {
-            timer_font: Font::from_slice(TIMER_FONT, 0).unwrap(),
+            #[cfg(feature = "font-loading")]
+            timer_font_setting: None,
+            timer_font: Font::from_slice(
+                TIMER_FONT,
+                0,
+                FontStyle::Normal,
+                FontWeight::Bold,
+                FontStretch::Normal,
+            )
+            .unwrap(),
             timer_glyph_cache: GlyphCache::new(),
-            text_font: Font::from_slice(TEXT_FONT, 0).unwrap(),
+            #[cfg(feature = "font-loading")]
+            times_font_setting: None,
+            times_font: Font::from_slice(
+                TEXT_FONT,
+                0,
+                FontStyle::Normal,
+                FontWeight::Bold,
+                FontStretch::Normal,
+            )
+            .unwrap(),
+            times_glyph_cache: GlyphCache::new(),
+            #[cfg(feature = "font-loading")]
+            text_font_setting: None,
+            text_font: Font::from_slice(
+                TEXT_FONT,
+                0,
+                FontStyle::Normal,
+                FontWeight::Normal,
+                FontStretch::Normal,
+            )
+            .unwrap(),
             text_glyph_cache: GlyphCache::new(),
             rectangle: None,
             icons: IconCache {
@@ -232,6 +269,66 @@ impl<M, T> Renderer<M, T> {
         resolution: (f32, f32),
         state: &LayoutState,
     ) {
+        #[cfg(feature = "font-loading")]
+        {
+            if self.timer_font_setting != state.timer_font {
+                self.timer_font = state
+                    .timer_font
+                    .as_ref()
+                    .and_then(Font::load)
+                    .unwrap_or_else(|| {
+                        Font::from_slice(
+                            TIMER_FONT,
+                            0,
+                            FontStyle::Normal,
+                            FontWeight::Bold,
+                            FontStretch::Normal,
+                        )
+                        .unwrap()
+                    });
+                self.timer_glyph_cache.clear(backend);
+                self.timer_font_setting.clone_from(&state.timer_font);
+            }
+
+            if self.times_font_setting != state.times_font {
+                self.times_font = state
+                    .times_font
+                    .as_ref()
+                    .and_then(Font::load)
+                    .unwrap_or_else(|| {
+                        Font::from_slice(
+                            TEXT_FONT,
+                            0,
+                            FontStyle::Normal,
+                            FontWeight::Bold,
+                            FontStretch::Normal,
+                        )
+                        .unwrap()
+                    });
+                self.times_glyph_cache.clear(backend);
+                self.times_font_setting.clone_from(&state.times_font);
+            }
+
+            if self.text_font_setting != state.text_font {
+                self.text_font = state
+                    .text_font
+                    .as_ref()
+                    .and_then(Font::load)
+                    .unwrap_or_else(|| {
+                        Font::from_slice(
+                            TEXT_FONT,
+                            0,
+                            FontStyle::Normal,
+                            FontWeight::Normal,
+                            FontStretch::Normal,
+                        )
+                        .unwrap()
+                    });
+                self.text_glyph_cache.clear(backend);
+                self.text_font_setting.clone_from(&state.text_font);
+            }
+        }
+
         match state.direction {
             LayoutDirection::Vertical => self.render_vertical(backend, resolution, state),
             LayoutDirection::Horizontal => self.render_horizontal(backend, resolution, state),
@@ -276,6 +373,8 @@ impl<M, T> Renderer<M, T> {
             rectangle: &mut self.rectangle,
             timer_font: &self.timer_font,
             timer_glyph_cache: &mut self.timer_glyph_cache,
+            times_font: &mut self.times_font,
+            times_glyph_cache: &mut self.times_glyph_cache,
             text_font: &self.text_font,
             text_glyph_cache: &mut self.text_glyph_cache,
             text_buffer: &mut self.text_buffer,
@@ -348,6 +447,8 @@ impl<M, T> Renderer<M, T> {
             rectangle: &mut self.rectangle,
             timer_font: &mut self.timer_font,
             timer_glyph_cache: &mut self.timer_glyph_cache,
+            times_font: &mut self.times_font,
+            times_glyph_cache: &mut self.times_glyph_cache,
             text_font: &mut self.text_font,
             text_glyph_cache: &mut self.text_glyph_cache,
             text_buffer: &mut self.text_buffer,
@@ -434,6 +535,8 @@ struct RenderContext<'b, B: Backend> {
     timer_glyph_cache: &'b mut GlyphCache<B::Mesh>,
     text_font: &'b Font<'static>,
     text_glyph_cache: &'b mut GlyphCache<B::Mesh>,
+    times_font: &'b Font<'static>,
+    times_glyph_cache: &'b mut GlyphCache<B::Mesh>,
     text_buffer: &'b mut Option<UnicodeBuffer>,
 }
 
@@ -688,14 +791,14 @@ impl<B: Backend> RenderContext<'_, B> {
         buffer.push_str(text.trim());
         buffer.guess_segment_properties();
 
-        let font = self.text_font.scale(scale);
+        let font = self.times_font.scale(scale);
         let glyphs = font.shape_tabular_numbers(buffer);
 
         font::render(
             glyphs.tabular_numbers(&mut cursor),
             colors,
             &font,
-            self.text_glyph_cache,
+            self.times_glyph_cache,
             &self.transform,
             self.backend,
         );
@@ -784,7 +887,7 @@ impl<B: Backend> RenderContext<'_, B> {
         buffer.push_str(text.trim());
         buffer.guess_segment_properties();
 
-        let glyphs = self.text_font.scale(scale).shape_tabular_numbers(buffer);
+        let glyphs = self.times_font.scale(scale).shape_tabular_numbers(buffer);
 
         // Iterate over all glyphs, to move the cursor forward.
         glyphs.tabular_numbers(&mut cursor).for_each(drop);

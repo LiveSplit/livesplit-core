@@ -49,9 +49,5 @@ pub extern "C" fn TextComponentState_center(this: &TextComponentState) -> *const
 /// Returns whether the text is split up into a left and right part.
 #[no_mangle]
 pub extern "C" fn TextComponentState_is_split(this: &TextComponentState) -> bool {
-    if let TextState::Split(_, _) = this.text {
-        true
-    } else {
-        false
-    }
+    matches!(this.text, TextState::Split(_, _))
 }

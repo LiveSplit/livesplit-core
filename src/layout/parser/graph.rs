@@ -1,4 +1,7 @@
-use super::{color, comparison_override, end_tag, parse_bool, parse_children, text_parsed, Result};
+use super::{
+    color, comparison_override, end_tag, parse_bool, parse_children, text_parsed, translate_size,
+    Result,
+};
 use quick_xml::Reader;
 use std::io::BufRead;
 
@@ -16,7 +19,9 @@ where
 
     parse_children(reader, buf, |reader, tag| {
         if tag.name() == b"Height" {
-            text_parsed(reader, tag.into_buf(), |v| settings.height = v)
+            text_parsed(reader, tag.into_buf(), |v| {
+                settings.height = translate_size(v)
+            })
         } else if tag.name() == b"BehindGraphColor" {
             color(reader, tag.into_buf(), |c| {
                 settings.behind_background_color = c

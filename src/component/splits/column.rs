@@ -1,8 +1,8 @@
-use crate::platform::prelude::*;
 use crate::{
     analysis::{self, possible_time_save, split_color},
     clear_vec::Clear,
     comparison,
+    platform::prelude::*,
     settings::{Color, SemanticColor},
     timing::{
         formatter::{Delta, Regular, SegmentTime, TimeFormatter},
@@ -148,7 +148,7 @@ pub fn update_state(
     current_split: Option<usize>,
     method: TimingMethod,
 ) {
-    let method = column.timing_method.unwrap_or_else(|| method);
+    let method = column.timing_method.unwrap_or(method);
     let resolved_comparison = comparison::resolve(&column.comparison_override, timer);
     let comparison = comparison::or_current(resolved_comparison, timer);
 
@@ -328,16 +328,10 @@ fn column_update_value(
 impl ColumnUpdateWith {
     fn is_segment_based(self) -> bool {
         use self::ColumnUpdateWith::*;
-        match self {
-            SegmentDelta | SegmentTime | SegmentDeltaWithFallback => true,
-            _ => false,
-        }
+        matches!(self, SegmentDelta | SegmentTime | SegmentDeltaWithFallback)
     }
     fn has_fallback(self) -> bool {
         use self::ColumnUpdateWith::*;
-        match self {
-            DeltaWithFallback | SegmentDeltaWithFallback => true,
-            _ => false,
-        }
+        matches!(self, DeltaWithFallback | SegmentDeltaWithFallback)
     }
 }

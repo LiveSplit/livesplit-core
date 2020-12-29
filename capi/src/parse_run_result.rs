@@ -7,8 +7,7 @@ use livesplit_core::run::parser::{
     composite::{ParsedRun, Result},
     TimerKind,
 };
-use std::io::Write;
-use std::os::raw::c_char;
+use std::{io::Write, os::raw::c_char};
 
 /// type
 pub type ParseRunResult = Result<ParsedRun>;
@@ -47,11 +46,11 @@ pub extern "C" fn ParseRunResult_timer_kind(this: &ParseRunResult) -> *const c_c
 /// timer format was parsed, instead of one of the more specific timer formats.
 #[no_mangle]
 pub extern "C" fn ParseRunResult_is_generic_timer(this: &ParseRunResult) -> bool {
-    match this {
+    matches!(
+        this,
         Ok(ParsedRun {
             kind: TimerKind::Generic(_),
             ..
-        }) => true,
-        _ => false,
-    }
+        })
+    )
 }

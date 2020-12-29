@@ -48,6 +48,13 @@ impl<M> GlyphCache<M> {
         Default::default()
     }
 
+    #[cfg(feature = "font-loading")]
+    pub fn clear(&mut self, backend: &mut impl Backend<Mesh = M>) {
+        for (_, mesh) in self.glyphs.drain() {
+            backend.free_mesh(mesh);
+        }
+    }
+
     pub fn lookup_or_insert(
         &mut self,
         font: &Font<'_>,

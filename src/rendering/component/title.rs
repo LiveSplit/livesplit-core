@@ -49,18 +49,18 @@ pub(in crate::rendering) fn render<B: Backend>(
         [width - PADDING, height + TEXT_ALIGN_BOTTOM],
         DEFAULT_TEXT_SIZE,
         [text_color; 2],
-    );
+    ) - PADDING;
 
     let (line1_y, line1_end_x) = if !component.line2.is_empty() {
         let line2 = context.choose_abbreviation(
             component.line2.iter().map(|a| &**a),
             DEFAULT_TEXT_SIZE,
-            line2_end_x - PADDING - left_bound,
+            line2_end_x - left_bound,
         );
         context.render_text_align(
             line2,
             left_bound,
-            line2_end_x - PADDING,
+            line2_end_x,
             [line_x, height + TEXT_ALIGN_BOTTOM],
             DEFAULT_TEXT_SIZE,
             component.is_centered,
@@ -68,13 +68,13 @@ pub(in crate::rendering) fn render<B: Backend>(
         );
         (TEXT_ALIGN_TOP, width - PADDING)
     } else {
-        (height / 2.0 + TEXT_ALIGN_CENTER, line2_end_x - PADDING)
+        (height / 2.0 + TEXT_ALIGN_CENTER, line2_end_x)
     };
 
     let line1 = context.choose_abbreviation(
         component.line1.iter().map(|a| &**a),
         DEFAULT_TEXT_SIZE,
-        width - PADDING - left_bound,
+        line1_end_x - left_bound,
     );
 
     context.render_text_align(

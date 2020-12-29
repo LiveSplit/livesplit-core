@@ -1,6 +1,8 @@
 use super::LayoutDirection;
-use crate::platform::prelude::*;
-use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
+use crate::{
+    platform::prelude::*,
+    settings::{Color, Field, Font, Gradient, SettingsDescription, Value},
+};
 use serde::{Deserialize, Serialize};
 
 /// The general settings of the layout that apply to all components.
@@ -9,6 +11,15 @@ use serde::{Deserialize, Serialize};
 pub struct GeneralSettings {
     /// The direction which the components are laid out in.
     pub direction: LayoutDirection,
+    /// The font to use for the timer text. `None` means a default font should
+    /// be used.
+    pub timer_font: Option<Font>,
+    /// The font to use for the times and other values. `None` means a default
+    /// font should be used.
+    pub times_font: Option<Font>,
+    /// The font to use for regular text. `None` means a default font should be
+    /// used.
+    pub text_font: Option<Font>,
     /// The background to show behind the layout.
     pub background: Gradient,
     /// The color to use for when the runner achieved a best segment.
@@ -43,6 +54,9 @@ impl Default for GeneralSettings {
     fn default() -> Self {
         Self {
             direction: LayoutDirection::Vertical,
+            timer_font: None,
+            times_font: None,
+            text_font: None,
             background: Gradient::Plain(Color::hsla(0.0, 0.0, 0.06, 1.0)),
             best_segment_color: Color::hsla(50.0, 1.0, 0.5, 1.0),
             ahead_gaining_time_color: Color::hsla(136.0, 1.0, 0.4, 1.0),
@@ -65,6 +79,9 @@ impl GeneralSettings {
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new("Layout Direction".into(), self.direction.into()),
+            Field::new("Custom Timer Font".into(), self.timer_font.clone().into()),
+            Field::new("Custom Times Font".into(), self.times_font.clone().into()),
+            Field::new("Custom Text Font".into(), self.text_font.clone().into()),
             Field::new("Background".into(), self.background.into()),
             Field::new("Best Segment".into(), self.best_segment_color.into()),
             Field::new(
@@ -102,18 +119,21 @@ impl GeneralSettings {
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
             0 => self.direction = value.into(),
-            1 => self.background = value.into(),
-            2 => self.best_segment_color = value.into(),
-            3 => self.ahead_gaining_time_color = value.into(),
-            4 => self.ahead_losing_time_color = value.into(),
-            5 => self.behind_gaining_time_color = value.into(),
-            6 => self.behind_losing_time_color = value.into(),
-            7 => self.not_running_color = value.into(),
-            8 => self.personal_best_color = value.into(),
-            9 => self.paused_color = value.into(),
-            10 => self.thin_separators_color = value.into(),
-            11 => self.separators_color = value.into(),
-            12 => self.text_color = value.into(),
+            1 => self.timer_font = value.into(),
+            2 => self.times_font = value.into(),
+            3 => self.text_font = value.into(),
+            4 => self.background = value.into(),
+            5 => self.best_segment_color = value.into(),
+            6 => self.ahead_gaining_time_color = value.into(),
+            7 => self.ahead_losing_time_color = value.into(),
+            8 => self.behind_gaining_time_color = value.into(),
+            9 => self.behind_losing_time_color = value.into(),
+            10 => self.not_running_color = value.into(),
+            11 => self.personal_best_color = value.into(),
+            12 => self.paused_color = value.into(),
+            13 => self.thin_separators_color = value.into(),
+            14 => self.separators_color = value.into(),
+            15 => self.text_color = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

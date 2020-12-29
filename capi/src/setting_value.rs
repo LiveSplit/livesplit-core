@@ -2,10 +2,16 @@
 //! types.
 
 use crate::str;
-use livesplit_core::component::splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith};
-use livesplit_core::settings::{Alignment, Color, Gradient, ListGradient, Value as SettingValue};
-use livesplit_core::timing::formatter::{Accuracy, DigitsFormat};
-use livesplit_core::{layout::LayoutDirection, TimingMethod};
+use livesplit_core::{
+    component::splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith},
+    layout::LayoutDirection,
+    settings::{
+        Alignment, Color, Font, FontStretch, FontStyle, FontWeight, Gradient, ListGradient,
+        Value as SettingValue,
+    },
+    timing::formatter::{Accuracy, DigitsFormat},
+    TimingMethod,
+};
 use std::os::raw::c_char;
 
 /// type
@@ -294,4 +300,57 @@ pub unsafe extern "C" fn SettingValue_from_layout_direction(
         _ => return None,
     };
     Some(Box::new(value.into()))
+}
+
+/// Creates a new setting value with the type `font`.
+#[no_mangle]
+pub unsafe extern "C" fn SettingValue_from_font(
+    family: *const c_char,
+    style: *const c_char,
+    weight: *const c_char,
+    stretch: *const c_char,
+) -> NullableOwnedSettingValue {
+    Some(Box::new(
+        Some(Font {
+            family: str(family).to_owned(),
+            style: match str(style) {
+                "normal" => FontStyle::Normal,
+                "italic" => FontStyle::Italic,
+                _ => return None,
+            },
+            weight: match str(weight) {
+                "thin" => FontWeight::Thin,
+                "extra-light" => FontWeight::ExtraLight,
+                "light" => FontWeight::Light,
+                "semi-light" => FontWeight::SemiLight,
+                "normal" => FontWeight::Normal,
+                "medium" => FontWeight::Medium,
+                "semi-bold" => FontWeight::SemiBold,
+                "bold" => FontWeight::Bold,
+                "extra-bold" => FontWeight::ExtraBold,
+                "black" => FontWeight::Black,
+                "extra-black" => FontWeight::ExtraBlack,
+                _ => return None,
+            },
+            stretch: match str(stretch) {
+                "ultra-condensed" => FontStretch::UltraCondensed,
+                "extra-condensed" => FontStretch::ExtraCondensed,
+                "condensed" => FontStretch::Condensed,
+                "semi-condensed" => FontStretch::SemiCondensed,
+                "normal" => FontStretch::Normal,
+                "semi-expanded" => FontStretch::SemiExpanded,
+                "expanded" => FontStretch::Expanded,
+                "extra-expanded" => FontStretch::ExtraExpanded,
+                "ultra-expanded" => FontStretch::UltraExpanded,
+                _ => return None,
+            },
+        })
+        .into(),
+    ))
+}
+
+/// Creates a new empty setting value with the type `font`.
+#[no_mangle]
+pub extern "C" fn SettingValue_from_empty_font() -> OwnedSettingValue {
+    Box::new(None::<Font>.into())
 }

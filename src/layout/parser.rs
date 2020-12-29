@@ -3,18 +3,20 @@
 use super::{Component, Layout, LayoutDirection};
 use crate::{
     component::separator,
-    settings::{Alignment, Color, Gradient, ListGradient},
+    settings::{
+        Alignment, Color, Font, FontStretch, FontStyle, FontWeight, Gradient, ListGradient,
+    },
     timing::{
         formatter::{Accuracy, DigitsFormat},
         TimingMethod,
     },
     xml_util::{
-        end_tag, parse_base, parse_children, text, text_as_escaped_bytes_err, text_err,
-        text_parsed, Error as XmlError, Tag,
+        end_tag, parse_base, parse_children, text, text_as_bytes_err, text_as_escaped_bytes_err,
+        text_err, text_parsed, Error as XmlError, Tag,
     },
 };
 use quick_xml::Reader;
-use std::io::BufRead;
+use std::{io::BufRead, str};
 
 mod blank_space;
 mod current_comparison;
@@ -31,6 +33,16 @@ mod text;
 mod timer;
 mod title;
 mod total_playtime;
+
+// One single row component is:
+// 1.0 units high in component space.
+// 24 pixels high in LiveSplit One's pixel coordinate space.
+// ~30.5 pixels high in the original LiveSplit's pixel coordinate space.
+const PIXEL_SPACE_RATIO: f32 = 24.0 / 30.5;
+
+fn translate_size(v: u32) -> u32 {
+    (v as f32 * PIXEL_SPACE_RATIO).round() as u32
+}
 
 /// The Error type for parsing layout files of the original LiveSplit.
 #[derive(Debug, snafu::Snafu, derive_more::From)]
@@ -71,6 +83,8 @@ pub enum Error {
     ParseAlignment,
     /// Failed to parse a column type.
     ParseColumnType,
+    /// Failed to parse a font.
+    ParseFont,
     /// Parsed an empty layout, which is considered an invalid layout.
     Empty,
 }
@@ -103,10 +117,13 @@ impl GradientType for GradientKind {
         GradientKind::Transparent
     }
     fn parse(kind: &[u8]) -> Result<Self> {
+        // FIXME: Implement delta color support properly:
+        // https://github.com/LiveSplit/livesplit-core/issues/380
+
         Ok(match kind {
-            b"Plain" => GradientKind::Plain,
-            b"Vertical" => GradientKind::Vertical,
-            b"Horizontal" => GradientKind::Horizontal,
+            b"Plain" | b"PlainWithDeltaColor" => GradientKind::Plain,
+            b"Vertical" | b"VerticalWithDeltaColor" => GradientKind::Vertical,
+            b"Horizontal" | b"HorizontalWithDeltaColor" => GradientKind::Horizontal,
             _ => return Err(Error::ParseGradientType),
         })
     }
@@ -238,6 +255,171 @@ where
             (1.0 - lightness) * (1.0 - (1.0 - a).powf(1.0 / 2.2)) + lightness * a.powf(1.0 / 1.75);
 
         func(color);
+        Ok(())
+    })
+}
+
+fn font<R, F>(
+    reader: &mut Reader<R>,
+    result: &mut Vec<u8>,
+    font_buf: &mut Vec<u8>,
+    f: F,
+) -> Result<()>
+where
+    R: BufRead,
+    F: FnOnce(Font),
+{
+    text_as_bytes_err(reader, result, |text| {
+        // The format for this is documented here:
+        // https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-nrbf/75b9fe09-be15-475f-85b8-ae7b7558cfe5
+        //
+        // The structure follows roughly:
+        //
+        // class System.Drawing.Font {
+        //     String Name;
+        //     float Size;
+        //     System.Drawing.FontStyle Style;
+        //     System.Drawing.GraphicsUnit Unit;
+        // }
+        //
+        // The full definition can be found here:
+        // https://referencesource.microsoft.com/#System.Drawing/commonui/System/Drawing/Advanced/Font.cs,130
+
+        let rem = text.get(304..).ok_or(Error::ParseFont)?;
+        font_buf.clear();
+        base64::decode_config_buf(rem, base64::STANDARD, font_buf).map_err(|_| Error::ParseFont)?;
+
+        let mut cursor = font_buf.get(1..).ok_or(Error::ParseFont)?.iter();
+
+        // Strings are encoded as varint for the length + the UTF-8 string data.
+        let mut len = 0;
+        for _ in 0..5 {
+            let byte = *cursor.next().ok_or(Error::ParseFont)?;
+            len = len << 7 | (byte & 0b0111_1111) as usize;
+            if byte <= 0b0111_1111 {
+                break;
+            }
+        }
+        let rem = cursor.as_slice();
+
+        let font_name = rem.get(..len).ok_or(Error::ParseFont)?;
+        let mut family = str::from_utf8(font_name)
+            .map_err(|_| Error::ParseFont)?
+            .trim();
+
+        let mut style = FontStyle::Normal;
+        let mut weight = FontWeight::Normal;
+        let mut stretch = FontStretch::Normal;
+
+        // The original LiveSplit is based on Windows Forms, which is just a
+        // .NET wrapper around GDI+. It's a pretty old API from before
+        // DirectWrite existed and fonts used to be very different back then.
+        // This is why GDI uses a very different identifier for fonts than
+        // modern APIs. Since all the modern APIs take a font family, we somehow
+        // need to convert the font identifier from the original LiveSplit into
+        // a font family. The problem is that we may not necessarily even have
+        // the font, nor be on a platform where we could even query for any
+        // fonts or get enough metadata about them, such as in the browser. So
+        // for those case we implement a very simple, though also really lossy
+        // algorithm that simply splits away common tokens at the end that refer
+        // to the subfamily / styling of the font. In most cases this should
+        // yield the font family that we are looking for and the additional
+        // styling information. Another problem with this approach is that GDI
+        // limits its font identifiers to 32 characters, so the tokens that we
+        // may want to split off, may themselves already be cut off, causing us
+        // to not recognize them. An example of this is "Bahnschrift SemiLight
+        // SemiConde" where the end should say "SemiCondensed" but doesn't due
+        // to the character limit.
+        //
+        // A more sophisticated approach where on Windows we may talk directly
+        // to GDI to resolve the name has not been implemented so far. The
+        // problem is that GDI does not give you access to either the path of
+        // the font or its data. You can receive the byte representation of
+        // individual tables you query for, but ttf-parser, the crate we use for
+        // parsing fonts, doesn't expose the ability to parse individual tables
+        // in its public API.
+
+        for token in family.split_whitespace().rev() {
+            if token.eq_ignore_ascii_case("italic") {
+                style = FontStyle::Italic;
+            } else if token.eq_ignore_ascii_case("thin") || token.eq_ignore_ascii_case("hairline") {
+                weight = FontWeight::Thin;
+            } else if token.eq_ignore_ascii_case("extralight")
+                || token.eq_ignore_ascii_case("ultralight")
+            {
+                weight = FontWeight::ExtraLight;
+            } else if token.eq_ignore_ascii_case("light") {
+                weight = FontWeight::Light;
+            } else if token.eq_ignore_ascii_case("semilight")
+                || token.eq_ignore_ascii_case("demilight")
+            {
+                weight = FontWeight::SemiLight;
+            } else if token.eq_ignore_ascii_case("normal") {
+                weight = FontWeight::Normal;
+            } else if token.eq_ignore_ascii_case("medium") {
+                weight = FontWeight::Medium;
+            } else if token.eq_ignore_ascii_case("semibold")
+                || token.eq_ignore_ascii_case("demibold")
+            {
+                weight = FontWeight::SemiBold;
+            } else if token.eq_ignore_ascii_case("bold") {
+                weight = FontWeight::Bold;
+            } else if token.eq_ignore_ascii_case("extrabold")
+                || token.eq_ignore_ascii_case("ultrabold")
+            {
+                weight = FontWeight::ExtraBold;
+            } else if token.eq_ignore_ascii_case("black") || token.eq_ignore_ascii_case("heavy") {
+                weight = FontWeight::Black;
+            } else if token.eq_ignore_ascii_case("extrablack")
+                || token.eq_ignore_ascii_case("ultrablack")
+            {
+                weight = FontWeight::ExtraBlack;
+            } else if token.eq_ignore_ascii_case("ultracondensed") {
+                stretch = FontStretch::UltraCondensed;
+            } else if token.eq_ignore_ascii_case("extracondensed") {
+                stretch = FontStretch::ExtraCondensed;
+            } else if token.eq_ignore_ascii_case("condensed") {
+                stretch = FontStretch::Condensed;
+            } else if token.eq_ignore_ascii_case("semicondensed") {
+                stretch = FontStretch::SemiCondensed;
+            } else if token.eq_ignore_ascii_case("normal") {
+                stretch = FontStretch::Normal;
+            } else if token.eq_ignore_ascii_case("semiexpanded") {
+                stretch = FontStretch::SemiExpanded;
+            } else if token.eq_ignore_ascii_case("expanded") {
+                stretch = FontStretch::Expanded;
+            } else if token.eq_ignore_ascii_case("extraexpanded") {
+                stretch = FontStretch::ExtraExpanded;
+            } else if token.eq_ignore_ascii_case("ultraexpanded") {
+                stretch = FontStretch::UltraExpanded;
+            } else if !token.eq_ignore_ascii_case("regular") {
+                family =
+                    &family[..token.as_ptr() as usize - family.as_ptr() as usize + token.len()];
+                break;
+            }
+        }
+
+        // Later on we find the style as bitflags of System.Drawing.FontStyle.
+        // 1 -> bold
+        // 2 -> italic
+        // 4 -> underline
+        // 8 -> strikeout
+        let flags = *rem.get(len + 52).ok_or(Error::ParseFont)?;
+
+        if flags & 1 != 0 {
+            weight = FontWeight::Bold;
+        }
+
+        if flags & 2 != 0 {
+            style = FontStyle::Italic;
+        }
+
+        f(Font {
+            family: family.to_owned(),
+            style,
+            weight,
+            stretch,
+        });
         Ok(())
     })
 }
@@ -424,6 +606,8 @@ fn parse_general_settings<R: BufRead>(
     let settings = layout.general_settings_mut();
     let mut background_builder = GradientBuilder::new();
 
+    let mut font_buf = Vec::new();
+
     parse_children(reader, buf, |reader, tag| {
         if tag.name() == b"TextColor" {
             color(reader, tag.into_buf(), |color| {
@@ -476,6 +660,24 @@ fn parse_general_settings<R: BufRead>(
         } else if tag.name() == b"PausedColor" {
             color(reader, tag.into_buf(), |color| {
                 settings.paused_color = color;
+            })
+        } else if tag.name() == b"TimerFont" {
+            font(reader, tag.into_buf(), &mut font_buf, |font| {
+                if font.family != "Calibri" && font.family != "Century Gothic" {
+                    settings.timer_font = Some(font);
+                }
+            })
+        } else if tag.name() == b"TimesFont" {
+            font(reader, tag.into_buf(), &mut font_buf, |font| {
+                if font.family != "Segoe UI" {
+                    settings.times_font = Some(font);
+                }
+            })
+        } else if tag.name() == b"TextFont" {
+            font(reader, tag.into_buf(), &mut font_buf, |font| {
+                if font.family != "Segoe UI" {
+                    settings.text_font = Some(font);
+                }
             })
         } else if tag.name() == b"BackgroundType" {
             text_err(reader, tag.into_buf(), |text| {

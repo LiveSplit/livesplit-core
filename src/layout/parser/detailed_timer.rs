@@ -1,6 +1,6 @@
 use super::{
     accuracy, color, comparison_override, end_tag, parse_bool, parse_children, text_parsed,
-    timer_format, timing_method_override, GradientBuilder, Result,
+    timer_format, timing_method_override, translate_size, GradientBuilder, Result,
 };
 use crate::timing::formatter::DigitsFormat;
 use quick_xml::Reader;
@@ -24,7 +24,7 @@ where
     parse_children(reader, buf, |reader, tag| {
         if let Some(tag) = background_builder.parse_background(reader, tag)? {
             if tag.name() == b"Height" {
-                text_parsed(reader, tag.into_buf(), |v| total_height = v)
+                text_parsed(reader, tag.into_buf(), |v| total_height = translate_size(v))
             } else if tag.name() == b"SegmentTimerSizeRatio" {
                 text_parsed(reader, tag.into_buf(), |v: u32| {
                     segment_timer_ratio = v as f32 / 100.0
