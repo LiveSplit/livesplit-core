@@ -19,7 +19,7 @@ parking_lot = { version = "0.11.0", optional = true }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 x11-dl = { version = "2.18.5", optional = true }
-mio = { version = "0.6.16", optional = true }
+mio = { version = "0.7.7", optional = true }
 promising-future = { version = "0.2.4", optional = true }
 
 [target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
