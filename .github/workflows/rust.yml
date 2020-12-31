@@ -83,6 +83,7 @@ jobs:
           # - Linux sparc64
 
           # macOS
+          - macOS aarch64
           - macOS x86_64
 
           # iOS
@@ -466,6 +467,11 @@ jobs:
           #   tests: skip
 
           # macOS
+          - label: macOS aarch64
+            toolchain: stable-aarch64-apple-darwin
+            os: macOS-latest
+            cross: skip
+
           - label: macOS x86_64
             target: x86_64-apple-darwin
             os: macOS-latest
