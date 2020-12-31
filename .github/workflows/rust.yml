@@ -468,7 +468,7 @@ jobs:
 
           # macOS
           - label: macOS aarch64
-            toolchain: stable-aarch64-apple-darwin
+            target: aarch64-apple-darwin
             os: macOS-latest
             cross: skip
 
