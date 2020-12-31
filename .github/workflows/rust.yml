@@ -469,10 +469,13 @@ jobs:
           # macOS
           - label: macOS aarch64
             target: aarch64-apple-darwin
-            os: macOS-latest
+            os: macOS-11.0
             cross: skip
             tests: skip
             install_target: true
+          # FIXME: Switch OS back to latest once that means 11.
+          # FIXME: Switch OS to ARM macOS once GitHub Actions provides that, 
+          # use the toolchain instead of the target and run the tests.
 
           - label: macOS x86_64
             target: x86_64-apple-darwin
