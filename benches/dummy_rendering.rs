@@ -1,37 +1,44 @@
 cfg_if::cfg_if! {
     if #[cfg(feature = "rendering")] {
-        use {
-            criterion::{criterion_group, criterion_main, Criterion},
-            livesplit_core::{
-                layout::{self, Layout},
-                run::parser::livesplit,
-                rendering::{Backend, Renderer, Rgba, Transform, Mesh},
-                Run, Segment, TimeSpan, Timer, TimingMethod,
-            },
-            std::{fs::File, io::BufReader},
+        use criterion::{criterion_group, criterion_main, Criterion};
+        use livesplit_core::{
+            layout::{self, Layout},
+            rendering::{Backend, FillShader, PathBuilder, Renderer, Rgba, Transform},
+            run::parser::livesplit,
+            Run, Segment, TimeSpan, Timer, TimingMethod,
         };
+        use std::{fs::File, io::BufReader};
 
         criterion_main!(benches);
         criterion_group!(benches, default, subsplits_layout);
 
         struct Dummy;
 
-        impl Backend for Dummy {
-            type Mesh = ();
-            type Texture = ();
+        impl PathBuilder<Dummy> for Dummy {
+            type Path = ();
 
-            fn create_mesh(&mut self, _: &Mesh) -> Self::Mesh {}
-            fn render_mesh(
-                &mut self,
-                _: &Self::Mesh,
-                _: Transform,
-                _: [Rgba; 4],
-                _: Option<&Self::Texture>,
-            ) {}
-            fn free_mesh(&mut self, _: Self::Mesh) {}
-            fn create_texture(&mut self, _: u32, _: u32, _: &[u8]) -> Self::Texture {}
-            fn free_texture(&mut self, _: Self::Texture) {}
-            fn resize(&mut self, _: f32, _: f32) {}
+            fn move_to(&mut self, _: f32, _: f32) {}
+            fn line_to(&mut self, _: f32, _: f32) {}
+            fn quad_to(&mut self, _: f32, _: f32, _: f32, _: f32) {}
+            fn curve_to(&mut self, _: f32, _: f32, _: f32, _: f32, _: f32, _: f32) {}
+            fn close(&mut self) {}
+            fn finish(self, _: &mut Dummy) -> Self::Path {}
+        }
+
+        impl Backend for Dummy {
+            type PathBuilder = Dummy;
+            type Path = ();
+            type Image = ();
+
+            fn path_builder(&mut self) -> Self::PathBuilder {
+                Dummy
+            }
+            fn render_fill_path(&mut self, _: &Self::Path, _: FillShader, _: Transform) {}
+            fn render_stroke_path(&mut self, _: &Self::Path, _: f32, _: Rgba, _: Transform) {}
+            fn render_image(&mut self, _: &Self::Image, _: &Self::Path, _: Transform) {}
+            fn free_path(&mut self, _: Self::Path) {}
+            fn create_image(&mut self, _: u32, _: u32, _: &[u8]) -> Self::Image {}
+            fn free_image(&mut self, _: Self::Image) {}
         }
 
         fn default(c: &mut Criterion) {

@@ -1,18 +1,15 @@
-#![allow(
-    clippy::boxed_local, // FIXME: False Positive https://github.com/rust-lang/rust-clippy/issues/5542
-    clippy::missing_safety_doc,
-    non_camel_case_types,
-    non_snake_case
-)]
+#![allow(clippy::missing_safety_doc, non_camel_case_types, non_snake_case)]
 #![warn(missing_docs)]
 
 //! mod
 
-use std::cell::{Cell, RefCell};
-use std::ffi::CStr;
-use std::fs::File;
-use std::os::raw::c_char;
-use std::ptr;
+use std::{
+    cell::{Cell, RefCell},
+    ffi::CStr,
+    fs::File,
+    os::raw::c_char,
+    ptr,
+};
 
 pub mod analysis;
 pub mod atomic_date_time;
@@ -57,6 +54,7 @@ pub mod separator_component;
 pub mod separator_component_state;
 pub mod setting_value;
 pub mod shared_timer;
+pub mod software_renderer;
 pub mod splits_component;
 pub mod splits_component_state;
 pub mod sum_of_best_cleaner;
@@ -74,9 +72,11 @@ pub mod title_component;
 pub mod title_component_state;
 pub mod total_playtime_component;
 
-use crate::run_metadata_custom_variable::RunMetadataCustomVariable;
-use crate::run_metadata_speedrun_com_variable::RunMetadataSpeedrunComVariable;
-use crate::segment_history_element::SegmentHistoryElement;
+use crate::{
+    run_metadata_custom_variable::RunMetadataCustomVariable,
+    run_metadata_speedrun_com_variable::RunMetadataSpeedrunComVariable,
+    segment_history_element::SegmentHistoryElement,
+};
 use livesplit_core::{Time, TimeSpan};
 
 /// type

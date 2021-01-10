@@ -2,22 +2,24 @@ use crate::{
     component::splits::State,
     layout::{LayoutDirection, LayoutState},
     rendering::{
-        icon::Icon, vertical_padding, Backend, RenderContext, BOTH_PADDINGS,
+        icon::Icon, solid, vertical_padding, Backend, RenderContext, BOTH_PADDINGS,
         DEFAULT_COMPONENT_HEIGHT, DEFAULT_TEXT_SIZE, PADDING, TEXT_ALIGN_BOTTOM, TEXT_ALIGN_TOP,
         THIN_SEPARATOR_THICKNESS, TWO_ROW_HEIGHT,
     },
     settings::{Gradient, ListGradient},
 };
 
-pub const COLUMN_WIDTH: f32 = 3.0;
+pub const COLUMN_WIDTH: f32 = 2.75;
 
 pub(in crate::rendering) fn render<B: Backend>(
     context: &mut RenderContext<'_, B>,
     [width, height]: [f32; 2],
     component: &State,
     layout_state: &LayoutState,
-    split_icons: &mut Vec<Option<Icon<B::Texture>>>,
+    split_icons: &mut Vec<Option<Icon<B::Image>>>,
 ) {
+    let text_color = solid(&layout_state.text_color);
+
     let split_background = match component.background {
         ListGradient::Same(gradient) => {
             context.render_rectangle([0.0, 0.0], [width, height], &gradient);
@@ -65,7 +67,7 @@ pub(in crate::rendering) fn render<B: Backend>(
         }
         let icon = &mut split_icons[icon_change.segment_index];
         if let Some(old_icon) = icon.take() {
-            context.backend.free_texture(old_icon.texture);
+            context.backend.free_image(old_icon.image);
         }
         *icon = context.create_icon(&icon_change.icon);
     }
@@ -79,7 +81,7 @@ pub(in crate::rendering) fn render<B: Backend>(
                     label,
                     [right_x, TEXT_ALIGN_TOP],
                     DEFAULT_TEXT_SIZE,
-                    [layout_state.text_color; 2],
+                    text_color,
                 );
                 right_x = left_x;
             }
@@ -133,7 +135,7 @@ pub(in crate::rendering) fn render<B: Backend>(
                         &column.value,
                         [right_x, split_height + TEXT_ALIGN_BOTTOM],
                         DEFAULT_TEXT_SIZE,
-                        [column.visual_color; 2],
+                        solid(&column.visual_color),
                     );
                 }
                 right_x -= COLUMN_WIDTH;
@@ -147,7 +149,7 @@ pub(in crate::rendering) fn render<B: Backend>(
                 &split.name,
                 [icon_right, TEXT_ALIGN_TOP],
                 DEFAULT_TEXT_SIZE,
-                [layout_state.text_color; 2],
+                text_color,
                 left_x - PADDING,
             );
         }

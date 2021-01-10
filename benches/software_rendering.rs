@@ -1,10 +1,10 @@
 cfg_if::cfg_if! {
     if #[cfg(feature = "software-rendering")] {
         use {
-            criterion::{criterion_group, criterion_main, Benchmark, Criterion},
+            criterion::{criterion_group, criterion_main, Criterion},
             livesplit_core::{
                 layout::{self, Layout},
-                rendering::software,
+                rendering::software::SoftwareRenderer,
                 run::parser::livesplit,
                 Run, Segment, TimeSpan, Timer, TimingMethod,
             },
@@ -25,10 +25,12 @@ cfg_if::cfg_if! {
             start_run(&mut timer);
             make_progress_run_with_splits_opt(&mut timer, &[Some(5.0), None, Some(10.0)]);
 
-            let state = layout.state(&timer.snapshot());
+            let snapshot = timer.snapshot();
+            let state = layout.state(&snapshot);
+            let mut renderer = SoftwareRenderer::new();
 
             c.bench_function("Software Rendering (Default)", move |b| {
-                b.iter(|| software::render(&state, [300, 500]))
+                b.iter(|| renderer.render(&state, [300, 500]))
             });
         }
 
@@ -42,27 +44,11 @@ cfg_if::cfg_if! {
 
             let snapshot = timer.snapshot();
             let state = layout.state(&snapshot);
+            let mut renderer = SoftwareRenderer::new();
 
             c.bench_function("Software Rendering (Subsplits Layout)", move |b| {
-                b.iter(|| software::render(&state, [300, 800]))
+                b.iter(|| renderer.render(&state, [300, 800]))
             });
-
-            let state = layout.state(&snapshot);
-
-            c.bench_function("Software Rendering (Subsplits Layout, 1x1)", move |b| {
-                b.iter(|| software::render(&state, [1, 1]))
-            });
-
-            let state = layout.state(&snapshot);
-
-            c.bench(
-                "Software Rendering (Subsplits Layout, Anti Aliased)",
-                Benchmark::new(
-                    "Software Rendering (Subsplits Layout, Anti Aliased)",
-                    move |b| b.iter(|| software::render_anti_aliased(&state, [300, 800], 4)),
-                )
-                .sample_size(20),
-            );
         }
 
         fn file(path: &str) -> BufReader<File> {

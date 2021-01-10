@@ -1,12 +1,15 @@
 use crate::timing;
-use alloc::borrow::Cow;
-use alloc::string;
+use alloc::{borrow::Cow, string};
 use chrono::ParseError as ChronoError;
-use core::num::{ParseFloatError, ParseIntError};
-use core::ops::Deref;
-use core::str;
-use quick_xml::events::{attributes, BytesStart, Event};
-use quick_xml::{Error as XmlError, Reader, Writer};
+use core::{
+    num::{ParseFloatError, ParseIntError},
+    ops::Deref,
+    str,
+};
+use quick_xml::{
+    events::{attributes, BytesStart, Event},
+    Error as XmlError, Reader, Writer,
+};
 use std::io::{self, BufRead};
 
 /// The Error type for XML-based splits files that couldn't be parsed.

@@ -11,4 +11,5 @@ serde_json = "1.0.8"
 [features]
 default = ["image-shrinking"]
 image-shrinking = ["livesplit-core/image-shrinking"]
+software-rendering = ["livesplit-core/software-rendering"]
 wasm-web = ["livesplit-core/wasm-web"]

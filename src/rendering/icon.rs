@@ -1,4 +1,4 @@
 pub struct Icon<T> {
-    pub texture: T,
+    pub image: T,
     pub aspect_ratio: f32,
 }

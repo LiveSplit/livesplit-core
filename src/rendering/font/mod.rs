@@ -1,21 +1,32 @@
-use super::{decode_color, glyph_cache::GlyphCache, Backend, Pos, Transform};
-use crate::settings::{Color, FontStretch, FontStyle, FontWeight};
-#[cfg(feature = "font-loading")]
-use font_kit::properties::{Stretch, Style, Weight};
+mod color_font;
+mod glyph_cache;
+
+use self::color_font::ColorTables;
+use super::{solid, Backend, FillShader, Pos, Transform};
+use crate::settings::{FontStretch, FontStyle, FontWeight};
 use rustybuzz::{Face, Feature, GlyphBuffer, Tag, UnicodeBuffer, Variation};
-use ttf_parser::{GlyphId, OutlineBuilder};
+use ttf_parser::{GlyphId, OutlineBuilder, Tag as ParserTag};
+
+pub use self::glyph_cache::GlyphCache;
 
 #[cfg(feature = "font-loading")]
 use {
     font_kit::{
-        family_name::FamilyName, handle::Handle, properties::Properties, source::SystemSource,
+        family_name::FamilyName,
+        handle::Handle,
+        properties::{Properties, Stretch, Style, Weight},
+        source::SystemSource,
     },
     std::{fs, sync::Arc},
 };
 
+pub const TEXT_FONT: &[u8] = include_bytes!("assets/FiraSans-Regular.ttf");
+pub const TIMER_FONT: &[u8] = include_bytes!("assets/Timer.ttf");
+
 pub struct Font<'fd> {
     rb: Face<'fd>,
     face: ttf_parser::Face<'fd>,
+    color_tables: Option<ColorTables<'fd>>,
     scale_factor: f32,
     #[cfg(feature = "font-loading")]
     /// Safety: This can never be mutated. This also needs to be dropped last.
@@ -67,16 +78,16 @@ impl<'fd> Font<'fd> {
         weight: FontWeight,
         stretch: FontStretch,
     ) -> Option<Self> {
-        let mut parser = ttf_parser::Face::from_slice(data, index).ok()?;
+        let mut face = ttf_parser::Face::from_slice(data, index).ok()?;
         let mut rb = Face::from_slice(data, index)?;
 
         let italic = style.value_for_italic();
         let weight = weight.value();
         let stretch = stretch.percentage();
 
-        parser.set_variation(Tag::from_bytes(b"ital"), italic);
-        parser.set_variation(Tag::from_bytes(b"wght"), weight);
-        parser.set_variation(Tag::from_bytes(b"wdth"), stretch);
+        face.set_variation(ParserTag::from_bytes(b"ital"), italic);
+        face.set_variation(ParserTag::from_bytes(b"wght"), weight);
+        face.set_variation(ParserTag::from_bytes(b"wdth"), stretch);
 
         rb.set_variations(&[
             Variation {
@@ -94,9 +105,10 @@ impl<'fd> Font<'fd> {
         ]);
 
         Some(Self {
-            scale_factor: 1.0 / parser.height() as f32,
+            scale_factor: 1.0 / face.height() as f32,
             rb,
-            face: parser,
+            color_tables: ColorTables::new(&face),
+            face,
             #[cfg(feature = "font-loading")]
             buf: None,
         })
@@ -109,18 +121,10 @@ impl<'fd> Font<'fd> {
         }
     }
 
-    pub fn outline_glyph(&self, glyph_id: u32, builder: &mut dyn OutlineBuilder) -> bool {
+    pub fn outline_glyph(&self, glyph_id: u16, builder: &mut dyn OutlineBuilder) -> bool {
         self.face
-            .outline_glyph(GlyphId(glyph_id as u16), builder)
+            .outline_glyph(GlyphId(glyph_id), builder)
             .is_some()
-    }
-
-    pub fn descender(&self) -> f32 {
-        self.face.descender() as f32
-    }
-
-    pub fn height(&self) -> f32 {
-        self.face.height() as f32
     }
 }
 
@@ -379,23 +383,21 @@ impl<'f> Glyphs<'f> {
 
 pub fn render<B: Backend>(
     layout: impl IntoIterator<Item = PositionedGlyph>,
-    [top, bottom]: [Color; 2],
+    shader: FillShader,
     font: &ScaledFont<'_>,
-    glyph_cache: &mut GlyphCache<B::Mesh>,
+    glyph_cache: &mut GlyphCache<B::Path>,
     transform: &Transform,
     backend: &mut B,
 ) {
-    let top = decode_color(&top);
-    let bottom = decode_color(&bottom);
-    let colors = [top, top, bottom, bottom];
-
     for glyph in layout {
-        let glyph_mesh = glyph_cache.lookup_or_insert(font.font, glyph.id, backend);
+        let layers = glyph_cache.lookup_or_insert(font.font, glyph.id, backend);
 
         let transform = transform
             .pre_translate([glyph.x, glyph.y].into())
             .pre_scale(font.scale, font.scale);
 
-        backend.render_mesh(glyph_mesh, transform, colors, None);
+        for (color, layer) in layers {
+            backend.render_fill_path(layer, color.as_ref().map_or(shader, solid), transform);
+        }
     }
 }
