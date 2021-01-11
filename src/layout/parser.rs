@@ -313,14 +313,14 @@ where
 
         // The original LiveSplit is based on Windows Forms, which is just a
         // .NET wrapper around GDI+. It's a pretty old API from before
-        // DirectWrite existed and fonts used to be very different back then.
+        // DirectWrite existed, and fonts used to be very different back then.
         // This is why GDI uses a very different identifier for fonts than
         // modern APIs. Since all the modern APIs take a font family, we somehow
         // need to convert the font identifier from the original LiveSplit into
         // a font family. The problem is that we may not necessarily even have
         // the font, nor be on a platform where we could even query for any
         // fonts or get enough metadata about them, such as in the browser. So
-        // for those case we implement a very simple, though also really lossy
+        // for those cases, we implement a very simple, though also really lossy
         // algorithm that simply splits away common tokens at the end that refer
         // to the subfamily / styling of the font. In most cases this should
         // yield the font family that we are looking for and the additional

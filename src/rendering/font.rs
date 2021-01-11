@@ -292,7 +292,7 @@ impl<'f> Glyphs<'f> {
         cursor.x -= width / 2.0;
         cursor.y -= adv_y as f32 * self.font.scale / 2.0;
 
-        // However we may overlap on the right, in that case, we want to align
+        // However, we may overlap on the right. In that case, we want to align
         // to the right instead.
         if cursor.x + width >= max_x {
             // Small epsilon, because we still call the left aligned function.

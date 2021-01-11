@@ -1,17 +1,17 @@
 use crate::platform::prelude::*;
 use serde::{Deserialize, Serialize};
 
-/// Describes a Font to visualize text with. Depending on the platform a font
+/// Describes a Font to visualize text with. Depending on the platform, a font
 /// that matches the settings most closely is chosen. The settings may be
-/// ignored entirely if the platform can't support different fonts such as in a
-/// terminal for example.
+/// ignored entirely if the platform can't support different fonts, such as in a
+/// terminal.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct Font {
     /// The family name of the font to use. This corresponds with the
     /// `Typographic Family Name` (Name ID 16) in the name table of the font. If
     /// no such entry exists, the `Font Family Name` (Name ID 1) is to be used
     /// instead. If there are multiple entries for the name, the english entry
-    /// is the one to choose. The subfamily is not specified at all and instead
+    /// is the one to choose. The subfamily is not specified at all, and instead
     /// a suitable subfamily is chosen based on the style, weight and stretch
     /// values.
     /// https://docs.microsoft.com/en-us/typography/opentype/spec/name
@@ -100,7 +100,7 @@ impl Weight {
     }
 }
 
-/// The stretch specifies how wide a font should be. For example it may make
+/// The stretch specifies how wide a font should be. For example, it may make
 /// sense to reduce the stretch of a font to ensure split names are not cut off.
 /// A font with a stretch value that is close is to be selected.
 /// https://developer.mozilla.org/en-US/docs/Web/CSS/font-stretch#Font_face_selection
