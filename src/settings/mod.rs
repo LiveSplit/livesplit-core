@@ -4,17 +4,21 @@
 mod alignment;
 mod color;
 mod field;
+mod font;
 mod gradient;
 mod image;
 mod semantic_color;
 mod settings_description;
 mod value;
 
-pub use self::alignment::Alignment;
-pub use self::color::Color;
-pub use self::field::Field;
-pub use self::gradient::{Gradient, ListGradient};
-pub use self::image::{CachedImageId, Image, ImageData};
-pub use self::semantic_color::SemanticColor;
-pub use self::settings_description::SettingsDescription;
-pub use self::value::{Error as ValueError, Result as ValueResult, Value};
+pub use self::{
+    alignment::Alignment,
+    color::Color,
+    field::Field,
+    font::{Font, Stretch as FontStretch, Style as FontStyle, Weight as FontWeight},
+    gradient::{Gradient, ListGradient},
+    image::{CachedImageId, Image, ImageData},
+    semantic_color::SemanticColor,
+    settings_description::SettingsDescription,
+    value::{Error as ValueError, Result as ValueResult, Value},
+};

@@ -2,8 +2,13 @@ set -ex
 
 main() {
     local cargo=cross
+
+    # all features except those that don't easily work with cross such as font-loading
+    local all_features="--features std,more-image-formats,image-shrinking,rendering,software-rendering,wasm-web,networking"
+
     if [ "$SKIP_CROSS" = "skip" ]; then
         cargo=cargo
+        all_features="--all-features"
     fi
 
     if [ "$TARGET" = "wasm32-wasi" ]; then
@@ -13,7 +18,7 @@ main() {
         return
     fi
 
-    $cargo test -p livesplit-core --all-features --target $TARGET
+    $cargo test -p livesplit-core $all_features --target $TARGET
     $cargo test -p livesplit-core --no-default-features --features std --target $TARGET
 }
 

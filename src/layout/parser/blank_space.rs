@@ -1,4 +1,4 @@
-use super::{Error, GradientBuilder, Result};
+use super::{translate_size, Error, GradientBuilder, Result};
 use crate::xml_util::{end_tag, parse_children, text_parsed};
 use quick_xml::Reader;
 use std::io::BufRead;
@@ -19,7 +19,9 @@ where
     parse_children::<_, _, Error>(reader, buf, |reader, tag| {
         if let Some(tag) = background_builder.parse_background(reader, tag)? {
             if tag.name() == b"SpaceHeight" {
-                text_parsed(reader, tag.into_buf(), |h| settings.size = h)
+                text_parsed(reader, tag.into_buf(), |h| {
+                    settings.size = translate_size(h)
+                })
             } else {
                 // FIXME:
                 // SpaceWidth

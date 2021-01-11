@@ -1,21 +1,104 @@
 use super::{decode_color, glyph_cache::GlyphCache, Backend, Pos, Transform};
-use crate::settings::Color;
-use rustybuzz::{Face, Feature, GlyphBuffer, Tag, UnicodeBuffer};
+use crate::settings::{Color, FontStretch, FontStyle, FontWeight};
+#[cfg(feature = "font-loading")]
+use font_kit::properties::{Stretch, Style, Weight};
+use rustybuzz::{Face, Feature, GlyphBuffer, Tag, UnicodeBuffer, Variation};
 use ttf_parser::{GlyphId, OutlineBuilder};
+
+#[cfg(feature = "font-loading")]
+use {
+    font_kit::{
+        family_name::FamilyName, handle::Handle, properties::Properties, source::SystemSource,
+    },
+    std::{fs, sync::Arc},
+};
 
 pub struct Font<'fd> {
     rb: Face<'fd>,
     face: ttf_parser::Face<'fd>,
     scale_factor: f32,
+    #[cfg(feature = "font-loading")]
+    /// Safety: This can never be mutated. This also needs to be dropped last.
+    buf: Option<Box<[u8]>>,
 }
 
 impl<'fd> Font<'fd> {
-    pub fn from_slice(data: &'fd [u8], index: u32) -> Option<Self> {
-        let parser = ttf_parser::Face::from_slice(data, index).ok()?;
+    #[cfg(feature = "font-loading")]
+    pub fn load(font: &crate::settings::Font) -> Option<Font<'static>> {
+        let handle = SystemSource::new()
+            .select_best_match(
+                &[FamilyName::Title(font.family.clone())],
+                &Properties {
+                    style: match font.style {
+                        FontStyle::Normal => Style::Normal,
+                        FontStyle::Italic => Style::Italic,
+                    },
+                    weight: Weight(font.weight.value()),
+                    stretch: Stretch(font.stretch.factor()),
+                },
+            )
+            .ok()?;
+
+        let (buf, font_index) = match handle {
+            Handle::Path { path, font_index } => (fs::read(path).ok()?, font_index),
+            Handle::Memory { bytes, font_index } => (
+                Arc::try_unwrap(bytes).unwrap_or_else(|bytes| (*bytes).clone()),
+                font_index,
+            ),
+        };
+        let buf = buf.into_boxed_slice();
+
+        // Safety: We store our own buffer. If we never modify it and drop it
+        // last, this is fine. It also needs to be heap allocated, so it's a
+        // stable pointer. This is guaranteed by the boxed slice.
+        unsafe {
+            let slice: *const [u8] = &*buf;
+            let mut font =
+                Font::from_slice(&*slice, font_index, font.style, font.weight, font.stretch)?;
+            font.buf = Some(buf);
+            Some(font)
+        }
+    }
+
+    pub fn from_slice(
+        data: &'fd [u8],
+        index: u32,
+        style: FontStyle,
+        weight: FontWeight,
+        stretch: FontStretch,
+    ) -> Option<Self> {
+        let mut parser = ttf_parser::Face::from_slice(data, index).ok()?;
+        let mut rb = Face::from_slice(data, index)?;
+
+        let italic = style.value_for_italic();
+        let weight = weight.value();
+        let stretch = stretch.percentage();
+
+        parser.set_variation(Tag::from_bytes(b"ital"), italic);
+        parser.set_variation(Tag::from_bytes(b"wght"), weight);
+        parser.set_variation(Tag::from_bytes(b"wdth"), stretch);
+
+        rb.set_variations(&[
+            Variation {
+                tag: Tag::from_bytes(b"ital"),
+                value: italic,
+            },
+            Variation {
+                tag: Tag::from_bytes(b"wght"),
+                value: weight,
+            },
+            Variation {
+                tag: Tag::from_bytes(b"wdth"),
+                value: stretch,
+            },
+        ]);
+
         Some(Self {
             scale_factor: 1.0 / parser.height() as f32,
-            rb: Face::from_slice(data, index)?,
+            rb,
             face: parser,
+            #[cfg(feature = "font-loading")]
+            buf: None,
         })
     }
 
@@ -202,9 +285,24 @@ impl<'f> Glyphs<'f> {
             adv_y += p.y_advance;
         }
 
-        cursor.x -= adv_x as f32 * self.font.scale / 2.0;
+        let width = adv_x as f32 * self.font.scale;
+
+        // Since we want to delegate to left aligned, we calculate the left
+        // coordinates.
+        cursor.x -= width / 2.0;
         cursor.y -= adv_y as f32 * self.font.scale / 2.0;
 
+        // However, we may overlap on the right. In that case, we want to align
+        // to the right instead.
+        if cursor.x + width >= max_x {
+            // Small epsilon, because we still call the left aligned function.
+            // Due to floating point precision issues this may be considered too
+            // far to the right and may cause the text to have ellipsis.
+            cursor.x -= cursor.x + width - max_x + (5.0 * std::f32::EPSILON);
+        }
+
+        // However if we are too far to the left, we align it to the minimum
+        // left position.
         if cursor.x < min_x {
             cursor.x = min_x;
         }

@@ -1,6 +1,8 @@
-use crate::run::Editor;
-use crate::tests_helper::{run_with_splits, run_with_splits_opt, start_run};
-use crate::{Run, Segment, TimeSpan, Timer, TimerPhase, TimingMethod};
+use crate::{
+    run::Editor,
+    tests_helper::{run_with_splits, run_with_splits_opt, start_run},
+    Run, Segment, TimeSpan, Timer, TimerPhase, TimingMethod,
+};
 
 mod mark_as_modified;
 mod variables;
@@ -179,7 +181,7 @@ fn modifying_best_segment_time_fixes_segment_history() {
             .segment_history()
             .iter()
             .next()
-            .and_then(|&(_, t)| t.game_time),
+            .and_then(|(_, t)| t.game_time),
         new_best
     );
     // The second segment's best segment time should have changed to 7.0.
@@ -206,7 +208,7 @@ fn modifying_best_segment_time_fixes_segment_history() {
             .segment_history()
             .iter()
             .next()
-            .and_then(|&(_, t)| t.game_time),
+            .and_then(|(_, t)| t.game_time),
         Some(second - first)
     );
     // The second segment's best segment time should also be unaffected. This is

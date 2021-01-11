@@ -1,6 +1,8 @@
 use super::{ComponentState, LayoutDirection};
-use crate::platform::prelude::*;
-use crate::settings::{Color, Gradient};
+use crate::{
+    platform::prelude::*,
+    settings::{Color, Font, Gradient},
+};
 use serde::{Deserialize, Serialize};
 
 /// The state object describes the information to visualize for the layout.
@@ -10,6 +12,15 @@ pub struct LayoutState {
     pub components: Vec<ComponentState>,
     /// The direction which the components are laid out in.
     pub direction: LayoutDirection,
+    /// The font to use for the timer text. `None` means a default font should
+    /// be used.
+    pub timer_font: Option<Font>,
+    /// The font to use for the times and other values. `None` means a default
+    /// font should be used.
+    pub times_font: Option<Font>,
+    /// The font to use for regular text. `None` means a default font should be
+    /// used.
+    pub text_font: Option<Font>,
     /// The background to show behind the layout.
     pub background: Gradient,
     /// The color of thin separators.

@@ -1,6 +1,6 @@
 use super::{
     accuracy, color, end_tag, parse_bool, parse_children, text_parsed, timer_format,
-    timing_method_override, GradientBuilder, Result,
+    timing_method_override, translate_size, GradientBuilder, Result,
 };
 use quick_xml::Reader;
 use std::io::BufRead;
@@ -22,7 +22,9 @@ where
     parse_children(reader, buf, |reader, tag| {
         if let Some(tag) = background_builder.parse_background(reader, tag)? {
             if tag.name() == b"TimerHeight" {
-                text_parsed(reader, tag.into_buf(), |v| settings.height = v)
+                text_parsed(reader, tag.into_buf(), |v| {
+                    settings.height = translate_size(v)
+                })
             } else if tag.name() == b"TimerFormat" {
                 // Version >= 1.5
                 timer_format(reader, tag.into_buf(), |d, a| {

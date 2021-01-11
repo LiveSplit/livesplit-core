@@ -198,12 +198,12 @@ pub fn abbreviate_category(category: &str) -> Vec<Box<str>> {
                 buf.push_str(variable);
                 let old_len = buf.len();
 
-                buf.push_str(")");
+                buf.push(')');
                 buf.push_str(after);
                 abbrevs.push(buf.as_str().into());
 
                 buf.drain(old_len..);
-                buf.push_str(",");
+                buf.push(',');
                 variable = next_variable;
             }
 

@@ -1,9 +1,9 @@
-use crate::platform::prelude::*;
 use crate::{
     component::splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith},
     hotkey::KeyCode,
     layout::LayoutDirection,
-    settings::{Alignment, Color, Gradient, ListGradient},
+    platform::prelude::*,
+    settings::{Alignment, Color, Font, Gradient, ListGradient},
     timing::formatter::{Accuracy, DigitsFormat},
     TimingMethod,
 };
@@ -56,6 +56,9 @@ pub enum Value {
     Hotkey(Option<KeyCode>),
     /// A value describing the direction of a layout.
     LayoutDirection(LayoutDirection),
+    /// A value describing a font to use. `None` if a default font should be
+    /// used.
+    Font(Option<Font>),
 }
 
 /// The Error type for values that couldn't be converted.
@@ -229,6 +232,14 @@ impl Value {
             _ => Err(Error::WrongType),
         }
     }
+
+    /// Tries to convert the value into a font.
+    pub fn into_font(self) -> Result<Option<Font>> {
+        match self {
+            Value::Font(v) => Ok(v),
+            _ => Err(Error::WrongType),
+        }
+    }
 }
 
 impl Into<bool> for Value {
@@ -342,5 +353,11 @@ impl Into<Option<KeyCode>> for Value {
 impl Into<LayoutDirection> for Value {
     fn into(self) -> LayoutDirection {
         self.into_layout_direction().unwrap()
+    }
+}
+
+impl Into<Option<Font>> for Value {
+    fn into(self) -> Option<Font> {
+        self.into_font().unwrap()
     }
 }

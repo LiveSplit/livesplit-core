@@ -13,18 +13,17 @@ mod layout_state;
 #[cfg(feature = "std")]
 pub mod parser;
 
-pub use self::component::Component;
-pub use self::component_settings::ComponentSettings;
-pub use self::component_state::ComponentState;
-pub use self::editor::Editor;
-pub use self::general_settings::GeneralSettings;
-pub use self::layout_direction::LayoutDirection;
-pub use self::layout_settings::LayoutSettings;
-pub use self::layout_state::LayoutState;
+pub use self::{
+    component::Component, component_settings::ComponentSettings, component_state::ComponentState,
+    editor::Editor, general_settings::GeneralSettings, layout_direction::LayoutDirection,
+    layout_settings::LayoutSettings, layout_state::LayoutState,
+};
 
-use crate::component::{previous_segment, splits, timer, title};
-use crate::platform::prelude::*;
-use crate::timing::Snapshot;
+use crate::{
+    component::{previous_segment, splits, timer, title},
+    platform::prelude::*,
+    timing::Snapshot,
+};
 
 /// A Layout allows you to combine multiple components together to visualize a
 /// variety of information the runner is interested in.
@@ -101,6 +100,10 @@ impl Layout {
         state
             .components
             .extend(components.map(|c| c.state(timer, settings)));
+
+        state.timer_font.clone_from(&settings.timer_font);
+        state.times_font.clone_from(&settings.times_font);
+        state.text_font.clone_from(&settings.text_font);
 
         state.background = settings.background;
         state.thin_separators_color = settings.thin_separators_color;

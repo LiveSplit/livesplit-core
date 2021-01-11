@@ -42,6 +42,23 @@ export type Alignment = "Auto" | "Left" | "Center";
 export interface LayoutStateJson {
     /** The state objects for all of the components in the layout. */
     components: ComponentStateJson[],
+    /** The direction which the components are laid out in. */
+    direction: LayoutDirection,
+    /**
+     * The font to use for the timer text. `null` means a default font should be
+     * used.
+     */
+    timer_font: Font | null,
+    /**
+     * The font to use for the times and other values. `null` means a default
+     * font should be used.
+     */
+    times_font: Font | null,
+    /**
+     * The font to use for regular text. `null` means a default font should be
+     * used.
+     */
+    text_font: Font | null,
     /** The background to show behind the layout. */
     background: Gradient,
     /** The color of thin separators. */
@@ -51,6 +68,78 @@ export interface LayoutStateJson {
     /** The text color to use for text that doesn't specify its own color. */
     text_color: Color,
 }
+
+/**
+ * Describes a Font to visualize text with. Depending on the platform a font
+ * that matches the settings most closely is chosen. The settings may be ignored
+ * entirely if the platform can't support different fonts such as in a terminal
+ * for example.
+ */
+export interface Font {
+    /**
+     * The family name of the font to use. This corresponds with the
+     * `Typographic Family Name` (Name ID 16) in the name table of the font. If
+     * no such entry exists, the `Font Family Name` (Name ID 1) is to be used
+     * instead. If there are multiple entries for the name, the english entry is
+     * the one to choose. The subfamily is not specified at all and instead a
+     * suitable subfamily is chosen based on the style, weight and stretch
+     * values. https://docs.microsoft.com/en-us/typography/opentype/spec/name
+     *
+     * This is to ensure the highest portability across various platforms.
+     * Platforms often select fonts very differently, so if necessary it is also
+     * fine to store a different font identifier here at the cost of sacrificing
+     * portability.
+     */
+    family: string,
+    /** The style of the font to prefer selecting. */
+    style: FontStyle,
+    /** The weight of the font to prefer selecting. */
+    weight: FontWeight,
+    /** The stretch of the font to prefer selecting. */
+    stretch: FontStretch,
+}
+
+/**
+ * The style specifies whether to use a normal or italic version of a font. The
+ * style may be emulated if no font dedicated to the style can be found.
+ */
+export type FontStyle = "normal" | "italic";
+
+/**
+ * The weight specifies the weight / boldness of a font. If there is no font
+ * with the exact weight value, a font with a similar weight is to be chosen
+ * based on an algorithm similar to this:
+ * https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight#Fallback_weights
+ */
+export type FontWeight =
+    "thin" |
+    "extra-light" |
+    "light" |
+    "semi-light" |
+    "normal" |
+    "medium" |
+    "semi-bold" |
+    "bold" |
+    "extra-bold" |
+    "black" |
+    "extra-black";
+
+/**
+ * The stretch specifies how wide a font should be. For example it may make
+ * sense to reduce the stretch of a font to ensure split names are not cut off.
+ * A font with a stretch value that is close is to be selected.
+ * https://developer.mozilla.org/en-US/docs/Web/CSS/font-stretch#Font_face_selection
+ */
+export type FontStretch =
+    "ultra-condensed" |
+    "extra-condensed" |
+    "condensed" |
+    "semi-condensed" |
+    "normal" |
+    "semi-expanded" |
+    "expanded" |
+    "extra-expanded" |
+    "ultra-expanded";
 
 /**
  * A Timing Method describes which form of timing is used. This can either be
@@ -523,6 +612,7 @@ export type SettingsDescriptionValueJson =
     { ColumnUpdateTrigger: ColumnUpdateTrigger } |
     { Hotkey: string } |
     { LayoutDirection: LayoutDirection } |
+    { Font: Font | null } |
     { CustomCombobox: CustomCombobox };
 
 /** Describes the direction the components of a layout are laid out in. */

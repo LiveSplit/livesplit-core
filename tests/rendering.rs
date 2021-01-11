@@ -69,7 +69,7 @@ fn wsplit() {
     check_dims(
         &layout.state(&timer.snapshot()),
         [250, 300],
-        "j/j93Nnct/c=",
+        "jvHd3fnZPuc=",
         "wsplit",
     );
 }
@@ -87,9 +87,9 @@ fn all_components() {
 
     let state = layout.state(&timer.snapshot());
 
-    check_dims(&state, [300, 800], "4eH3scnJtvE=", "all_components");
+    check_dims(&state, [300, 800], "4en3sdHBp/E=", "all_components");
 
-    check_dims(&state, [150, 800], "SWPXSWFFa2s=", "all_components_thin");
+    check_dims(&state, [150, 800], "TXfHZWVJRmc=", "all_components_thin");
 }
 
 #[test]
@@ -121,7 +121,7 @@ fn dark_layout() {
 
     check(
         &layout.state(&timer.snapshot()),
-        "D8IAQiBYxQc=",
+        "T8IAQiBYxYc=",
         "dark_layout",
     );
 }
@@ -187,7 +187,7 @@ fn single_line_title() {
     check_dims(
         &layout.state(&timer.snapshot()),
         [300, 60],
-        "QCRZR091aAE=",
+        "SDUKwUNqbQA=",
         "single_line_title",
     );
 }
@@ -237,6 +237,7 @@ fn get_comparison_tolerance() -> u32 {
     }
 }
 
+#[track_caller]
 fn check(state: &LayoutState, expected_hash_data: &str, name: &str) {
     check_dims(state, [300, 500], expected_hash_data, name);
 }

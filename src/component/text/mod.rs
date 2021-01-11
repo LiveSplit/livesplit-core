@@ -4,8 +4,8 @@
 //! a situation where you have a label and a value.
 
 use super::key_value;
-use crate::platform::prelude::*;
 use crate::{
+    platform::prelude::*,
     settings::{Color, Field, Gradient, SettingsDescription, Value},
     timing::formatter,
     Timer,
@@ -192,7 +192,7 @@ impl Component {
                 let mut name = String::with_capacity(left.len() + right.len() + 1);
                 name.push_str(left);
                 if !left.is_empty() && !right.is_empty() {
-                    name.push_str(" ");
+                    name.push(' ');
                 }
                 name.push_str(right);
                 name.into()

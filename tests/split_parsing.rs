@@ -203,11 +203,7 @@ mod parse {
     #[test]
     fn splits_io_prefers_parsing_as_itself() {
         let run = composite::parse(file(run_files::GENERIC_SPLITS_IO), None, false).unwrap();
-        assert!(if let TimerKind::Generic(_) = run.kind {
-            true
-        } else {
-            false
-        });
+        assert!(matches!(run.kind, TimerKind::Generic(_)));
     }
 
     #[test]
