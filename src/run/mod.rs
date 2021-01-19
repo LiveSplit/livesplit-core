@@ -924,9 +924,7 @@ impl fmt::Display for ExtendedCategoryName<'_> {
         }
 
         if !after_parenthesis.is_empty() {
-            if has_pushed {
-                f.write_str(after_parenthesis)?;
-            }
+            f.write_str(after_parenthesis)?;
         } else if !is_empty {
             f.write_str(")")?;
         }
