@@ -1,7 +1,7 @@
 //! Describes a setting's value. Such a value can be of a variety of different
 //! types.
 
-use crate::str;
+use crate::{output_vec, str, Json};
 use livesplit_core::{
     component::splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith},
     layout::LayoutDirection,
@@ -23,6 +23,14 @@ pub type NullableOwnedSettingValue = Option<OwnedSettingValue>;
 #[no_mangle]
 pub extern "C" fn SettingValue_drop(this: OwnedSettingValue) {
     drop(this);
+}
+
+/// Encodes this Setting Value's state as JSON.
+#[no_mangle]
+pub extern "C" fn SettingValue_as_json(this: &SettingValue) -> Json {
+    output_vec(|o| {
+        serde_json::to_writer(o, this).unwrap();
+    })
 }
 
 /// Creates a new setting value from a boolean value.
