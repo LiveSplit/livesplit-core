@@ -17,7 +17,6 @@ use std::ptr;
 pub mod analysis;
 pub mod atomic_date_time;
 pub mod attempt;
-#[cfg(feature = "auto-splitting")]
 pub mod auto_splitting_runtime;
 pub mod blank_space_component;
 pub mod blank_space_component_state;
