@@ -137,9 +137,8 @@ fn read_string<R: Read>(
     if str_length as u64 > max_length {
         return Err(StringError::LengthOutOfBounds);
     }
-    buf.clear();
-    buf.reserve(str_length);
-    unsafe { buf.set_len(str_length) };
+    // FIXME: Read into uninitialized buffer when we can express this safely.
+    buf.resize(str_length, 0);
     source.read_exact(buf).context(ReadData)?;
     from_utf8(buf).context(Validate)
 }
@@ -240,9 +239,8 @@ pub fn parse<R: Read + Seek>(mut source: R) -> Result<Run> {
                 return Err(Error::InvalidIconDimensions { width, height });
             }
 
-            buf.clear();
-            buf.reserve(len);
-            unsafe { buf.set_len(len) };
+            // FIXME: Read into uninitialized buffer when we can express this safely.
+            buf.resize(len, 0);
             source.read_exact(&mut buf).context(ReadImageData)?;
 
             if let Some(image) = ImageBuffer::<Rgba<u8>, _>::from_raw(width, height, buf.as_slice())
