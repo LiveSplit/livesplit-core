@@ -6,6 +6,7 @@
 use super::{output_vec, Json};
 use crate::component::OwnedComponent;
 use crate::layout::OwnedLayout;
+use crate::layout_editor_state::OwnedLayoutEditorState;
 use crate::setting_value::OwnedSettingValue;
 use livesplit_core::{LayoutEditor, Timer};
 
@@ -36,6 +37,12 @@ pub extern "C" fn LayoutEditor_state_as_json(this: &LayoutEditor) -> Json {
     output_vec(|o| {
         this.state().write_json(o).unwrap();
     })
+}
+
+/// Returns the state of the Layout Editor.
+#[no_mangle]
+pub extern "C" fn LayoutEditor_state(this: &LayoutEditor) -> OwnedLayoutEditorState {
+    Box::new(this.state())
 }
 
 /// Encodes the layout's state as JSON based on the timer provided. You can use

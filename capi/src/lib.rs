@@ -34,6 +34,7 @@ pub mod hotkey_system;
 pub mod key_value_component_state;
 pub mod layout;
 pub mod layout_editor;
+pub mod layout_editor_state;
 pub mod layout_state;
 pub mod parse_run_result;
 pub mod pb_chance_component;
