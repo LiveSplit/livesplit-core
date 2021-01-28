@@ -1,14 +1,16 @@
 mod key_code;
 pub use self::key_code::KeyCode;
 
-use mio::unix::EventedFd;
-use mio::{Events, Poll, PollOpt, Ready, Registration, SetReadiness, Token};
+use mio::{unix::SourceFd, Events, Interest, Poll, Token, Waker};
 use promising_future::{future_promise, Promise};
-use std::collections::hash_map::{Entry, HashMap};
-use std::os::raw::{c_int, c_uint};
-use std::sync::mpsc::{channel, Sender};
-use std::thread::{self, JoinHandle};
-use std::{mem, ptr};
+use std::{
+    collections::hash_map::{Entry, HashMap},
+    mem,
+    os::raw::{c_int, c_uint},
+    ptr,
+    sync::mpsc::{channel, Sender},
+    thread::{self, JoinHandle},
+};
 use x11_dl::xlib::{
     AnyKey, AnyModifier, Display, GrabModeAsync, KeyPress, XErrorEvent, XKeyEvent, Xlib,
 };
@@ -40,15 +42,14 @@ const PING_TOKEN: Token = Token(1);
 
 pub struct Hook {
     sender: Sender<Message>,
-    ping: SetReadiness,
-    _registration: Registration,
+    waker: Waker,
     join_handle: Option<JoinHandle<Result<()>>>,
 }
 
 impl Drop for Hook {
     fn drop(&mut self) {
         self.sender.send(Message::End).ok();
-        self.ping.set_readiness(Ready::readable()).ok();
+        self.waker.wake().ok();
         if let Some(handle) = self.join_handle.take() {
             handle.join().ok();
         }
@@ -103,26 +104,18 @@ impl Hook {
                 return Err(Error::OpenXServerConnection);
             }
 
-            let fd = (xlib.XConnectionNumber)(display);
-            let poll = Poll::new().map_err(|_| Error::EPoll)?;
+            let fd = (xlib.XConnectionNumber)(display) as std::os::unix::io::RawFd;
+            let mut poll = Poll::new().map_err(|_| Error::EPoll)?;
 
-            let (registration, ping) = Registration::new2();
+            let waker = Waker::new(poll.registry(), PING_TOKEN).map_err(|_| Error::EPoll)?;
 
-            poll.register(
-                &EventedFd(&fd),
-                X_TOKEN,
-                Ready::readable() | Ready::writable(),
-                PollOpt::edge(),
-            )
-            .map_err(|_| Error::EPoll)?;
-
-            poll.register(
-                &registration,
-                PING_TOKEN,
-                Ready::readable(),
-                PollOpt::edge(),
-            )
-            .map_err(|_| Error::EPoll)?;
+            poll.registry()
+                .register(
+                    &mut SourceFd(&fd),
+                    X_TOKEN,
+                    Interest::READABLE | Interest::WRITABLE,
+                )
+                .map_err(|_| Error::EPoll)?;
 
             struct XData(Xlib, *mut Display);
             unsafe impl Send for XData {}
@@ -202,8 +195,7 @@ impl Hook {
 
             Ok(Hook {
                 sender,
-                ping,
-                _registration: registration,
+                waker,
                 join_handle: Some(join_handle),
             })
         }
@@ -219,9 +211,7 @@ impl Hook {
             .send(Message::Register(hotkey, Box::new(callback), promise))
             .map_err(|_| Error::ThreadStopped)?;
 
-        self.ping
-            .set_readiness(Ready::readable())
-            .map_err(|_| Error::ThreadStopped)?;
+        self.waker.wake().map_err(|_| Error::ThreadStopped)?;
 
         future.value().ok_or(Error::ThreadStopped)?
     }
@@ -232,9 +222,8 @@ impl Hook {
         self.sender
             .send(Message::Unregister(hotkey, promise))
             .map_err(|_| Error::ThreadStopped)?;
-        self.ping
-            .set_readiness(Ready::readable())
-            .map_err(|_| Error::ThreadStopped)?;
+
+        self.waker.wake().map_err(|_| Error::ThreadStopped)?;
 
         future.value().ok_or(Error::ThreadStopped)?
     }
