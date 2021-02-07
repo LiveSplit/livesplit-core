@@ -1,7 +1,7 @@
 use crate::{
     component::text::{State, TextState},
     layout::{LayoutDirection, LayoutState},
-    rendering::{Backend, RenderContext, DEFAULT_TEXT_SIZE, PADDING, TEXT_ALIGN_TOP},
+    rendering::{solid, Backend, RenderContext, DEFAULT_TEXT_SIZE, PADDING, TEXT_ALIGN_TOP},
 };
 
 pub(in crate::rendering) fn render(
@@ -18,9 +18,11 @@ pub(in crate::rendering) fn render(
             width - PADDING,
             [0.5 * width, TEXT_ALIGN_TOP],
             DEFAULT_TEXT_SIZE,
-            component
-                .left_center_color
-                .unwrap_or(layout_state.text_color),
+            solid(
+                &component
+                    .left_center_color
+                    .unwrap_or(layout_state.text_color),
+            ),
         ),
         TextState::Split(left, right) => context.render_key_value_component(
             &left,

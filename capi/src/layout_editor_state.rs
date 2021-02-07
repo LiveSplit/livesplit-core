@@ -37,9 +37,9 @@ pub extern "C" fn LayoutEditorState_component_text(
 /// * `0x01` - Can move the current component down
 #[no_mangle]
 pub extern "C" fn LayoutEditorState_buttons(this: &LayoutEditorState) -> u8 {
-    this.buttons.can_remove as u8 * 0x4
-        | this.buttons.can_move_up as u8 * 0x2
-        | this.buttons.can_move_down as u8 * 0x1
+    (this.buttons.can_remove as u8) << 2
+        | (this.buttons.can_move_up as u8) << 1
+        | this.buttons.can_move_down as u8
 }
 
 /// Returns the index of the currently selected component.

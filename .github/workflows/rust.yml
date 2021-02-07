@@ -83,9 +83,6 @@ jobs:
           # - Linux sparc64
 
           # macOS
-          # 32-bit macOS is deprecated and doesn't build:
-          # https://github.com/CryZe/livesplit-core/runs/220089673
-          # - macOS i686
           - macOS x86_64
 
           # iOS
@@ -277,6 +274,9 @@ jobs:
             target: wasm32-wasi
             os: ubuntu-latest
             cross: skip
+            # FIXME: We are currently hitting limits in wasmtime. We need to fix
+            # wasmtime before we can reenable these tests.
+            tests: skip
             dylib: skip
             install_target: true
 
@@ -466,12 +466,6 @@ jobs:
           #   tests: skip
 
           # macOS
-          # - label: macOS i686
-          #   target: i686-apple-darwin
-          #   toolchain: stable-i686-apple-darwin
-          #   os: macOS-latest
-          #   cross: skip
-
           - label: macOS x86_64
             target: x86_64-apple-darwin
             os: macOS-latest

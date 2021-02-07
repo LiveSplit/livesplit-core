@@ -2,8 +2,8 @@ use crate::{
     component::title::State,
     layout::LayoutState,
     rendering::{
-        icon::Icon, vertical_padding, Backend, RenderContext, BOTH_PADDINGS, DEFAULT_TEXT_SIZE,
-        PADDING, TEXT_ALIGN_BOTTOM, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP,
+        icon::Icon, solid, vertical_padding, Backend, RenderContext, BOTH_PADDINGS,
+        DEFAULT_TEXT_SIZE, PADDING, TEXT_ALIGN_BOTTOM, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP,
     },
 };
 
@@ -12,14 +12,15 @@ pub(in crate::rendering) fn render<B: Backend>(
     [width, height]: [f32; 2],
     component: &State,
     layout_state: &LayoutState,
-    game_icon: &mut Option<Icon<B::Texture>>,
+    game_icon: &mut Option<Icon<B::Image>>,
 ) {
     context.render_rectangle([0.0, 0.0], [width, height], &component.background);
     let text_color = component.text_color.unwrap_or(layout_state.text_color);
+    let text_color = solid(&text_color);
 
     if let Some(icon) = &component.icon_change {
         if let Some(old_icon) = game_icon.take() {
-            context.backend.free_texture(old_icon.texture);
+            context.backend.free_image(old_icon.image);
         }
         *game_icon = context.create_icon(icon);
     }
@@ -48,7 +49,7 @@ pub(in crate::rendering) fn render<B: Backend>(
         &attempts,
         [width - PADDING, height + TEXT_ALIGN_BOTTOM],
         DEFAULT_TEXT_SIZE,
-        [text_color; 2],
+        text_color,
     ) - PADDING;
 
     let (line1_y, line1_end_x) = if !component.line2.is_empty() {
