@@ -227,7 +227,7 @@ fn get_comparison_tolerance() -> u32 {
     // tolerance that is greater than 0.
     // FIXME: We use SSE as an approximation for the cfg because MMX isn't supported by Rust yet.
     if cfg!(all(target_arch = "x86", not(target_feature = "sse"))) {
-        1
+        2
     } else {
         0
     }

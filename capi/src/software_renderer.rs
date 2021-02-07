@@ -7,6 +7,7 @@ use livesplit_core::layout::LayoutState;
 use livesplit_core::rendering::software::BorrowedSoftwareRenderer as SoftwareRenderer;
 
 #[cfg(not(feature = "software-rendering"))]
+/// dummy
 pub struct SoftwareRenderer;
 #[cfg(not(feature = "software-rendering"))]
 impl SoftwareRenderer {
