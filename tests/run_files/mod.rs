@@ -27,5 +27,4 @@ pub const SPLITTERZ: &[u8] = include_bytes!("splitterz");
 pub const TIME_SPLIT_TRACKER_WITHOUT_ATTEMPT_COUNT: &[u8] = include_bytes!("1734.timesplittracker");
 pub const TIME_SPLIT_TRACKER: &[u8] = include_bytes!("timesplittracker.txt");
 pub const URN: &[u8] = include_bytes!("urn.json");
-pub const WORSTRUN: &[u8] = include_bytes!("worstrun.json");
 pub const WSPLIT: &[u8] = include_bytes!("wsplit");

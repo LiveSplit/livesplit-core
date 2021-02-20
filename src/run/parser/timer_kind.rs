@@ -31,8 +31,6 @@ pub enum TimerKind {
     Urn,
     /// SourceLiveTimer
     SourceLiveTimer,
-    /// Worstrun
-    Worstrun,
     /// Splitterino
     Splitterino,
     /// A Generic Timer. The name of the timer is associated with the variant.
@@ -57,7 +55,6 @@ impl fmt::Display for TimerKind {
             TimerKind::Llanfair2 => write!(f, "Llanfair Rewrite"),
             TimerKind::Urn => write!(f, "Urn"),
             TimerKind::SourceLiveTimer => write!(f, "SourceLiveTimer"),
-            TimerKind::Worstrun => write!(f, "worstrun"),
             TimerKind::Splitterino => write!(f, "Splitterino"),
             TimerKind::Generic(name) => write!(f, "{}", name),
         }
