@@ -6,8 +6,8 @@ mod parse {
         analysis::total_playtime,
         run::parser::{
             composite, flitter, livesplit, llanfair, llanfair2, llanfair_gered, portal2_live_timer,
-            source_live_timer, splits_io, splitterino, splitterz, time_split_tracker, urn,
-            worstrun, wsplit, TimerKind,
+            source_live_timer, splits_io, splitterino, splitterz, time_split_tracker, urn, wsplit,
+            TimerKind,
         },
         Run, TimeSpan,
     };
@@ -191,11 +191,6 @@ mod parse {
     }
 
     #[test]
-    fn worstrun() {
-        worstrun::parse(file(run_files::WORSTRUN)).unwrap();
-    }
-
-    #[test]
     fn splits_io() {
         splits_io::parse(file(run_files::GENERIC_SPLITS_IO)).unwrap();
     }
@@ -210,12 +205,6 @@ mod parse {
     fn portal2_live_timer_prefers_parsing_as_itself() {
         let run = composite::parse(file(run_files::PORTAL2_LIVE_TIMER1), None, false).unwrap();
         assert_eq!(run.kind, TimerKind::Portal2LiveTimer);
-    }
-
-    #[test]
-    fn worstrun_prefers_parsing_as_itself() {
-        let run = composite::parse(file(run_files::WORSTRUN), None, false).unwrap();
-        assert_eq!(run.kind, TimerKind::Worstrun);
     }
 
     #[test]
