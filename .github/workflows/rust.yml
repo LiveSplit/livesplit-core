@@ -83,6 +83,7 @@ jobs:
           # - Linux sparc64
 
           # macOS
+          - macOS aarch64
           - macOS x86_64
 
           # iOS
@@ -466,6 +467,15 @@ jobs:
           #   tests: skip
 
           # macOS
+          - label: macOS aarch64
+            target: aarch64-apple-darwin
+            os: macOS-latest
+            cross: skip
+            tests: skip
+            install_target: true
+          # FIXME: Switch OS to ARM macOS once GitHub Actions provides that,
+          # use the toolchain instead of the target and run the tests.
+
           - label: macOS x86_64
             target: x86_64-apple-darwin
             os: macOS-latest
@@ -604,6 +614,13 @@ jobs:
         run: sh .github/workflows/install.sh
         env:
           OS_NAME: ${{ matrix.os }}
+          TARGET: ${{ matrix.target }}
+
+      - name: Select XCode to use
+        if: matrix.target == 'aarch64-apple-darwin'
+        run: |
+          sudo xcode-select -s "/Applications/Xcode_12.3.app"
+          sudo rm -Rf /Library/Developer/CommandLineTools/SDKs/*
 
       - name: Build Static Library
         run: sh .github/workflows/build_static.sh
