@@ -11,7 +11,7 @@ main() {
     fi
 
     if [ "$NO_STD" = "true" ]; then
-        (cd crates/no-std-test && cargo build --target $TARGET $FEATURES)
+        cargo build --target $TARGET --no-default-features $FEATURES
         return
     fi
 

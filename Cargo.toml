@@ -19,13 +19,13 @@ include = [
     "/README.md"
 ]
 edition = "2018"
+resolver = "2"
 
 [package.metadata.docs.rs]
 all-features = true
 
 [workspace]
 members = ["capi", "capi/bind_gen", "capi/staticlib", "capi/cdylib", "crates/*"]
-exclude = ["crates/no-std-test"]
 
 [dependencies]
 # core
