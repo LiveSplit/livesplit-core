@@ -1,6 +1,6 @@
 # <img src="https://raw.githubusercontent.com/LiveSplit/LiveSplit/master/LiveSplit/Resources/Icon.png" alt="LiveSplit" height="42" width="45" align="top"/> livesplit-core
 
-[![Build Status](https://github.com/LiveSplit/livesplit-core/workflows/Rust/badge.svg)](https://github.com/LiveSplit/livesplit-core/actions)
+[![Build Status](https://github.com/LiveSplit/livesplit-core/workflows/Build/badge.svg)](https://github.com/LiveSplit/livesplit-core/actions)
 [![crates.io](https://img.shields.io/crates/v/livesplit-core.svg)](https://crates.io/crates/livesplit-core)
 [![npm](https://img.shields.io/npm/v/livesplit-core.svg)](https://www.npmjs.com/package/livesplit-core)
 [![docs.rs](https://docs.rs/livesplit-core/badge.svg)](https://docs.rs/livesplit-core/)
