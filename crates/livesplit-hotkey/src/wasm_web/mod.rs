@@ -1,11 +1,11 @@
 mod key_code;
 pub use self::key_code::KeyCode;
 
-use wasm_bindgen::prelude::*;
-use wasm_bindgen::JsCast;
+use wasm_bindgen::{prelude::*, JsCast};
 use web_sys::{window, Gamepad, GamepadButton, KeyboardEvent};
 
 use std::{
+    array,
     cell::Cell,
     collections::hash_map::{Entry, HashMap},
     sync::{Arc, Mutex},
@@ -106,7 +106,7 @@ impl Hook {
                         for ((button, code), state) in gamepad
                             .buttons()
                             .iter()
-                            .zip(GAMEPAD_BUTTONS.iter().copied())
+                            .zip(array::IntoIter::new(GAMEPAD_BUTTONS))
                             .zip(states.iter_mut())
                         {
                             if let Ok(button) = button.dyn_into::<GamepadButton>() {

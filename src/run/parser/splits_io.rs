@@ -3,8 +3,7 @@
 use crate::{Run, Segment as LiveSplitSegment, Time, TimeSpan};
 use core::result::Result as StdResult;
 use serde::{Deserialize, Serialize};
-use serde_json::de::from_reader;
-use serde_json::Error as JsonError;
+use serde_json::{de::from_reader, Error as JsonError};
 use snafu::ResultExt;
 use std::io::Read;
 
@@ -23,8 +22,8 @@ pub enum Error {
 pub type Result<T> = StdResult<T, Error>;
 
 /// Duration holds a realtime duration and a gametime duration.
-#[serde(rename = "duration")]
 #[derive(Clone, PartialEq, Debug, Default, Deserialize, Serialize)]
+#[serde(rename = "duration")]
 struct Duration {
     /// Gametime (Milliseconds) is a duration of milliseconds in game-world time.
     #[serde(rename = "gametimeMS")]
@@ -35,8 +34,8 @@ struct Duration {
 }
 /// Run Time represents a moment inside a run, and indicates the duration of the run so far at that
 /// moment. It holds a realtime run duration so far and a gametime run duration so far.
-#[serde(rename = "runTime")]
 #[derive(Clone, PartialEq, Debug, Default, Deserialize, Serialize)]
+#[serde(rename = "runTime")]
 struct RunTime {
     /// Gametime (Milliseconds) is a duration a run so far in milliseconds.
     #[serde(rename = "gametimeMS")]

@@ -30,7 +30,7 @@ pub struct Font<'fd> {
     scale_factor: f32,
     #[cfg(feature = "font-loading")]
     /// Safety: This can never be mutated. This also needs to be dropped last.
-    buf: Option<Box<[u8]>>,
+    _buf: Option<Box<[u8]>>,
 }
 
 impl<'fd> Font<'fd> {
@@ -66,7 +66,7 @@ impl<'fd> Font<'fd> {
             let slice: *const [u8] = &*buf;
             let mut font =
                 Font::from_slice(&*slice, font_index, font.style, font.weight, font.stretch)?;
-            font.buf = Some(buf);
+            font._buf = Some(buf);
             Some(font)
         }
     }
@@ -110,7 +110,7 @@ impl<'fd> Font<'fd> {
             color_tables: ColorTables::new(&face),
             face,
             #[cfg(feature = "font-loading")]
-            buf: None,
+            _buf: None,
         })
     }
 

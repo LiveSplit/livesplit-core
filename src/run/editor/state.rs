@@ -1,10 +1,11 @@
 use super::{Editor, SegmentRow, TimingMethod};
-use crate::comparison::personal_best;
-use crate::platform::prelude::*;
-use crate::run::RunMetadata;
-use crate::settings::{CachedImageId, ImageData};
-use crate::timing::formatter::none_wrapper::EmptyWrapper;
-use crate::timing::formatter::{Accuracy, Short, TimeFormatter};
+use crate::{
+    comparison::personal_best,
+    platform::prelude::*,
+    run::RunMetadata,
+    settings::{CachedImageId, ImageData},
+    timing::formatter::{none_wrapper::EmptyWrapper, Accuracy, Short, TimeFormatter},
+};
 use serde::{Deserialize, Serialize};
 
 /// Represents the current state of the Run Editor in order to visualize it
@@ -120,8 +121,8 @@ impl Editor {
         let comparison_names = self
             .custom_comparisons()
             .iter()
+            .filter(|&n| n != personal_best::NAME)
             .cloned()
-            .filter(|n| n != personal_best::NAME)
             .collect::<Vec<_>>();
 
         let buttons = Buttons {
