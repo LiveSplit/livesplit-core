@@ -1,10 +1,14 @@
 use crate::{
-    environment::Environment, pointer::PointerValue, process::Process, std_stream::StdStream,
+    environment::Environment,
+    pointer::PointerValue,
+    process::Process,
+    std_stream::{stderr, stdout},
     InterruptHandle,
 };
 use std::{cell::RefCell, mem, rc::Rc, thread, time::Duration};
-use wasmtime::{Config, Engine, Export, Instance, Linker, Module, Store, Trap};
-use wasmtime_wasi::{Wasi, WasiCtxBuilder};
+use wasi_cap_std_sync::WasiCtxBuilder;
+use wasmtime::{Config, Engine, Export, Instance, Linker, Module, Store, TypedFunc};
+use wasmtime_wasi::Wasi;
 
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -30,23 +34,23 @@ pub struct Runtime {
     is_configured: bool,
     env: Rc<RefCell<Environment>>,
     timer_state: TimerState,
-    hooked: Option<Box<dyn Fn() -> Result<(), Trap>>>,
-    unhooked: Option<Box<dyn Fn() -> Result<(), Trap>>>,
-    should_start: Option<Box<dyn Fn() -> Result<i32, Trap>>>,
-    should_split: Option<Box<dyn Fn() -> Result<i32, Trap>>>,
-    should_reset: Option<Box<dyn Fn() -> Result<i32, Trap>>>,
-    is_loading: Option<Box<dyn Fn() -> Result<i32, Trap>>>,
-    game_time: Option<Box<dyn Fn() -> Result<f64, Trap>>>,
-    update: Option<Box<dyn Fn() -> Result<(), Trap>>>,
+    hooked: Option<TypedFunc<(), ()>>,
+    unhooked: Option<TypedFunc<(), ()>>,
+    should_start: Option<TypedFunc<(), i32>>,
+    should_split: Option<TypedFunc<(), i32>>,
+    should_reset: Option<TypedFunc<(), i32>>,
+    is_loading: Option<TypedFunc<(), i32>>,
+    game_time: Option<TypedFunc<(), f64>>,
+    update: Option<TypedFunc<(), ()>>,
     is_loading_val: Option<bool>,
     game_time_val: Option<f64>,
 }
 
 impl Runtime {
     pub fn new(binary: &[u8]) -> anyhow::Result<Self> {
-        let engine = Engine::new(Config::new().interruptable(true));
+        let engine = Engine::new(Config::new().interruptable(true))?;
         let store = Store::new(&engine);
-        let module = Module::from_binary(&store, binary)?;
+        let module = Module::from_binary( &engine, binary)?;
         let env = Rc::new(RefCell::new(Environment::default()));
         let mut linker = Linker::new(&store);
 
@@ -204,8 +208,8 @@ impl Runtime {
         })?;
 
         let wasi_ctx = WasiCtxBuilder::new()
-            .stdout_virt(Box::new(StdStream::stdout()))
-            .stderr_virt(Box::new(StdStream::stderr()))
+            .stdout(Box::new(stdout()))
+            .stderr(Box::new(stderr()))
             .build()
             .unwrap();
 
@@ -217,44 +221,28 @@ impl Runtime {
         env.borrow_mut().memory = instance.exports().find_map(Export::into_memory);
 
         let hooked = instance
-            .get_func("hooked")
-            .and_then(|f| f.get0().ok())
-            .map(|f| Box::new(f) as _);
+            .get_typed_func("hooked").ok();
 
         let unhooked = instance
-            .get_func("unhooked")
-            .and_then(|f| f.get0().ok())
-            .map(|f| Box::new(f) as _);
+            .get_typed_func("unhooked").ok();
 
         let should_start = instance
-            .get_func("should_start")
-            .and_then(|f| f.get0().ok())
-            .map(|f| Box::new(f) as _);
+            .get_typed_func("should_start").ok();
 
         let should_split = instance
-            .get_func("should_split")
-            .and_then(|f| f.get0().ok())
-            .map(|f| Box::new(f) as _);
+            .get_typed_func("should_split").ok();
 
         let should_reset = instance
-            .get_func("should_reset")
-            .and_then(|f| f.get0().ok())
-            .map(|f| Box::new(f) as _);
+            .get_typed_func("should_reset").ok();
 
         let is_loading = instance
-            .get_func("is_loading")
-            .and_then(|f| f.get0().ok())
-            .map(|f| Box::new(f) as _);
+            .get_typed_func("is_loading").ok();
 
         let game_time = instance
-            .get_func("game_time")
-            .and_then(|f| f.get0().ok())
-            .map(|f| Box::new(f) as _);
+            .get_typed_func("game_time").ok();
 
         let update = instance
-            .get_func("update")
-            .and_then(|f| f.get0().ok())
-            .map(|f| Box::new(f) as _);
+            .get_typed_func("update").ok();
 
         Ok(Self {
             instance,
@@ -296,13 +284,13 @@ impl Runtime {
             // TODO: _start is kind of correct, but not in the long term. They are
             // intending for us to use a different function for libraries. Look into
             // reactors.
-            if let Some(func) = self.instance.get_func("_start") {
-                func.get0()?()?;
+            if let Ok(func) = self.instance.get_typed_func("_start") {
+                func.call(())?;
             }
 
             // TODO: Do we error out if this doesn't exist?
-            if let Some(func) = self.instance.get_func("configure") {
-                func.get0()?()?;
+            if let Ok(func) = self.instance.get_typed_func("configure") {
+                func.call(())?;
             }
             self.is_configured = true;
         }
@@ -324,14 +312,14 @@ impl Runtime {
                 env.process = None;
                 if !just_connected {
                     if let Some(unhooked) = &self.unhooked {
-                        unhooked()?;
+                        unhooked.call(())?;
                     }
                 }
                 return Ok(None);
             }
             if just_connected {
                 if let Some(hooked) = &self.hooked {
-                    hooked()?;
+                    hooked.call(())?;
                 }
             }
         }
@@ -345,39 +333,39 @@ impl Runtime {
 
     fn run_script(&mut self) -> anyhow::Result<Option<TimerAction>> {
         if let Some(update) = &self.update {
-            update()?;
+            update.call(())?;
         }
 
         match self.timer_state {
             TimerState::NotRunning => {
                 if let Some(should_start) = &self.should_start {
-                    if should_start()? != 0 {
+                    if should_start.call(())? != 0 {
                         return Ok(Some(TimerAction::Start));
                     }
                 }
             }
             TimerState::Running => {
                 if let Some(is_loading) = &self.is_loading {
-                    self.is_loading_val = Some(is_loading()? != 0);
+                    self.is_loading_val = Some(is_loading.call(())? != 0);
                 }
                 if let Some(game_time) = &self.game_time {
-                    self.game_time_val = Some(game_time()?).filter(|v| !v.is_nan());
+                    self.game_time_val = Some(game_time.call(())?).filter(|v| !v.is_nan());
                 }
 
                 if let Some(should_split) = &self.should_split {
-                    if should_split()? != 0 {
+                    if should_split.call(())? != 0 {
                         return Ok(Some(TimerAction::Split));
                     }
                 }
                 if let Some(should_reset) = &self.should_reset {
-                    if should_reset()? != 0 {
+                    if should_reset.call(())? != 0 {
                         return Ok(Some(TimerAction::Reset));
                     }
                 }
             }
             TimerState::Finished => {
                 if let Some(should_reset) = &self.should_reset {
-                    if should_reset()? != 0 {
+                    if should_reset.call(())? != 0 {
                         return Ok(Some(TimerAction::Reset));
                     }
                 }
