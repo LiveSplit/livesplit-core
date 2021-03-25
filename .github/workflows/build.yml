@@ -1,4 +1,4 @@
-name: Rust
+name: Build
 
 on:
   pull_request:
@@ -664,6 +664,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   clippy:
+    name: Check clippy lints
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Commit
@@ -678,6 +679,7 @@ jobs:
         run: cargo clippy --all-features
 
   format:
+    name: Check formatting
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Commit
@@ -691,7 +693,34 @@ jobs:
       - name: Run cargo fmt
         run: cargo fmt -- --check || true
 
+  bench:
+    name: Run benchmarks
+    runs-on: ubuntu-latest
+    env:
+      CRITERION_TOKEN: ${{ secrets.CRITERION_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install Rust
+        uses: hecrj/setup-rust-action@v1
+
+      - name: Run benchmarks
+        run: |
+          # run benchmarks and save baseline to "criterion.dev.temp"
+          cargo bench --all-features -- --verbose --noplot --save-baseline criterion.dev.temp
+
+      # # set the path to the file to upload to criterion.dev
+      # echo "CRITERION_FILE_PATH=$(find ./target/criterion/ -name raw.csv)" >> $GITHUB_ENV
+
+      # - name: Upload benchmarks
+      #   run: |
+      #     # upload the file
+      #     curl -F 'raw.csv=@${{ env.CRITERION_FILE_PATH }}' \
+      #     'https://api.criterion.dev/v1/${{ github.repository }}/measurements?token=${{ secrets.CRITERION_TOKEN }}&commit=${{ github.sha }}'
+
   docs:
+    name: Generate documentation
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     steps:
