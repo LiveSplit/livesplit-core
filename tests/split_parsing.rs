@@ -5,7 +5,7 @@ mod parse {
     use livesplit_core::{
         analysis::total_playtime,
         run::parser::{
-            composite, flitter, livesplit, llanfair, llanfair2, llanfair_gered, portal2_live_timer,
+            composite, flitter, livesplit, llanfair, llanfair_gered, portal2_live_timer,
             source_live_timer, splits_io, splitterino, splitterz, time_split_tracker, urn, wsplit,
             TimerKind,
         },
@@ -23,10 +23,6 @@ mod parse {
 
     fn parse_llanfair_gered(data: &[u8]) {
         llanfair_gered::parse(file(data)).unwrap();
-    }
-
-    fn parse_llanfair2(data: &[u8]) {
-        llanfair2::parse(file(data)).unwrap();
     }
 
     #[test]
@@ -104,16 +100,6 @@ mod parse {
     #[test]
     fn llanfair_gered_icons() {
         parse_llanfair_gered(run_files::LLANFAIR_GERED_ICONS);
-    }
-
-    #[test]
-    fn llanfair2() {
-        parse_llanfair2(run_files::LLANFAIR2)
-    }
-
-    #[test]
-    fn llanfair2_empty() {
-        parse_llanfair2(run_files::LLANFAIR2_EMPTY)
     }
 
     #[test]
