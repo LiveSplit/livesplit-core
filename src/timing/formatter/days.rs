@@ -24,7 +24,7 @@ pub struct Days;
 
 impl Days {
     /// Creates a new Days Time Formatter.
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Days
     }
 }

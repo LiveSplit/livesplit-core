@@ -3,6 +3,7 @@
     clippy::correctness,
     clippy::perf,
     clippy::style,
+    clippy::missing_const_for_fn,
     missing_docs,
     rust_2018_idioms
 )]

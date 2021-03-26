@@ -32,23 +32,23 @@ pub struct Time {
 
 impl Time {
     /// Creates a new default Time Formatter that doesn't prefix any zeros.
-    pub fn new() -> Self {
-        Default::default()
+    pub const fn new() -> Self {
+        Time {
+            digits_format: DigitsFormat::SingleDigitSeconds,
+        }
     }
 
     /// Creates a new Time Formatter that uses the digits format specified to
     /// determine how many digits to always show. Zeros are prefixed to fill up
     /// the missing digits.
-    pub fn with_digits_format(digits_format: DigitsFormat) -> Self {
+    pub const fn with_digits_format(digits_format: DigitsFormat) -> Self {
         Time { digits_format }
     }
 }
 
 impl Default for Time {
     fn default() -> Self {
-        Time {
-            digits_format: DigitsFormat::SingleDigitSeconds,
-        }
+        Self::new()
     }
 }
 
@@ -122,22 +122,22 @@ pub struct Fraction {
 impl Fraction {
     /// Creates a new default Time Formatter that uses hundredths for showing
     /// the fractional part.
-    pub fn new() -> Self {
-        Default::default()
+    pub const fn new() -> Self {
+        Fraction {
+            accuracy: Accuracy::Hundredths,
+        }
     }
 
     /// Creates a new Time Formatter that uses the accuracy provided for showing
     /// the fractional part.
-    pub fn with_accuracy(accuracy: Accuracy) -> Self {
+    pub const fn with_accuracy(accuracy: Accuracy) -> Self {
         Fraction { accuracy }
     }
 }
 
 impl Default for Fraction {
     fn default() -> Self {
-        Fraction {
-            accuracy: Accuracy::Hundredths,
-        }
+        Self::new()
     }
 }
 

@@ -68,7 +68,7 @@ pub struct ParsedRun {
     pub kind: TimerKind,
 }
 
-fn parsed(run: Run, kind: TimerKind) -> ParsedRun {
+const fn parsed(run: Run, kind: TimerKind) -> ParsedRun {
     ParsedRun { run, kind }
 }
 

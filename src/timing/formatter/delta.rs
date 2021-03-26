@@ -29,27 +29,27 @@ pub struct Delta(bool, Accuracy);
 impl Delta {
     /// Creates a new default Delta Time Formatter that drops the fractional
     /// part and uses tenths when showing the fractional part.
-    pub fn new() -> Self {
-        Default::default()
+    pub const fn new() -> Self {
+        Delta(true, Accuracy::Tenths)
     }
 
     /// Creates a new custom Delta Time Formatter where you can specify whether
     /// the fractional part should be dropped for deltas that are larger than 1
     /// minute and how many digits to show for the fractional part.
-    pub fn custom(drop_decimals: bool, accuracy: Accuracy) -> Self {
+    pub const fn custom(drop_decimals: bool, accuracy: Accuracy) -> Self {
         Delta(drop_decimals, accuracy)
     }
 
     /// Creates a new Delta Time Formatter that drops the fractional part and
     /// uses tenths when showing the fractional part.
-    pub fn with_decimal_dropping() -> Self {
+    pub const fn with_decimal_dropping() -> Self {
         Delta(true, Accuracy::Tenths)
     }
 }
 
 impl Default for Delta {
     fn default() -> Self {
-        Delta(true, Accuracy::Tenths)
+        Self::new()
     }
 }
 

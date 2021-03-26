@@ -27,22 +27,22 @@ pub struct Short {
 impl Short {
     /// Creates a new Short Time Formatter that uses hundredths for showing the
     /// fractional part.
-    pub fn new() -> Self {
-        Default::default()
+    pub const fn new() -> Self {
+        Short {
+            accuracy: Accuracy::Hundredths,
+        }
     }
 
     /// Creates a new Short Time Formatter that uses the accuracy provided for
     /// showing the fractional part.
-    pub fn with_accuracy(accuracy: Accuracy) -> Self {
+    pub const fn with_accuracy(accuracy: Accuracy) -> Self {
         Short { accuracy }
     }
 }
 
 impl Default for Short {
     fn default() -> Self {
-        Short {
-            accuracy: Accuracy::Hundredths,
-        }
+        Self::new()
     }
 }
 

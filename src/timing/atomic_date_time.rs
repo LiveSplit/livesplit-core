@@ -1,6 +1,7 @@
-use crate::platform::utc_now;
-use crate::platform::{DateTime, Utc};
-use crate::TimeSpan;
+use crate::{
+    platform::{utc_now, DateTime, Utc},
+    TimeSpan,
+};
 use core::ops::Sub;
 
 /// An Atomic Date Time represents a UTC Date Time that tries to be as close to
@@ -19,7 +20,7 @@ impl AtomicDateTime {
     /// Creates a new Atomic Date Time from the UTC Date Time and the
     /// information of whether this Date Time is derived from an atomic clock or
     /// the local system that may be out of sync with the atomic clock.
-    pub fn new(time: DateTime<Utc>, synced_with_atomic_clock: bool) -> Self {
+    pub const fn new(time: DateTime<Utc>, synced_with_atomic_clock: bool) -> Self {
         Self {
             time,
             synced_with_atomic_clock,

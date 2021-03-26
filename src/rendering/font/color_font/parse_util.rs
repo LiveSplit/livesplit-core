@@ -12,11 +12,11 @@ impl fmt::Debug for U16 {
 }
 
 impl U16 {
-    pub fn get(self) -> u16 {
+    pub const fn get(self) -> u16 {
         u16::from_be_bytes(self.0)
     }
 
-    pub fn usize(self) -> usize {
+    pub const fn usize(self) -> usize {
         self.get() as usize
     }
 }
@@ -32,11 +32,11 @@ impl fmt::Debug for O32 {
 }
 
 impl O32 {
-    pub fn get(self) -> u32 {
+    pub const fn get(self) -> u32 {
         u32::from_be_bytes(self.0)
     }
 
-    pub fn usize(self) -> usize {
+    pub const fn usize(self) -> usize {
         self.get() as usize
     }
 }

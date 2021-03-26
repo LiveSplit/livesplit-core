@@ -74,7 +74,7 @@ fn split_tag<'a>(tag: &'a BytesStart<'a>) -> (BytesStart<'a>, BytesEnd<'a>) {
     )
 }
 
-fn bool(value: bool) -> &'static [u8] {
+const fn bool(value: bool) -> &'static [u8] {
     if value {
         b"True"
     } else {

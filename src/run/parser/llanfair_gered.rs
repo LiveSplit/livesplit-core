@@ -51,7 +51,7 @@ pub type Result<T> = core::result::Result<T, Error>;
 
 // FIXME: Generalized Type Ascription (GTA 6)
 #[inline]
-fn type_hint<T>(v: Result<T>) -> Result<T> {
+const fn type_hint<T>(v: Result<T>) -> Result<T> {
     v
 }
 

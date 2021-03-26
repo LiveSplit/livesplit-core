@@ -27,11 +27,11 @@ pub struct LayerRecord {
 }
 
 impl LayerRecord {
-    pub fn glyph_id(&self) -> u16 {
+    pub const fn glyph_id(&self) -> u16 {
         self.glyph_id.get()
     }
 
-    pub fn palette_entry_idx(&self) -> u16 {
+    pub const fn palette_entry_idx(&self) -> u16 {
         self.palette_entry_idx.get()
     }
 }

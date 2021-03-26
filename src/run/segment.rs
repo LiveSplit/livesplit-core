@@ -57,7 +57,7 @@ impl Segment {
 
     /// Accesses the icon of the segment.
     #[inline]
-    pub fn icon(&self) -> &Image {
+    pub const fn icon(&self) -> &Image {
         &self.icon
     }
 
@@ -125,7 +125,7 @@ impl Segment {
 
     /// Accesses the Best Segment Time.
     #[inline]
-    pub fn best_segment_time(&self) -> Time {
+    pub const fn best_segment_time(&self) -> Time {
         self.best_segment_time
     }
 
@@ -143,7 +143,7 @@ impl Segment {
 
     /// Accesses the split time of the current attempt.
     #[inline]
-    pub fn split_time(&self) -> Time {
+    pub const fn split_time(&self) -> Time {
         self.split_time
     }
 
@@ -167,7 +167,7 @@ impl Segment {
 
     /// Accesses the Segment History of this segment.
     #[inline]
-    pub fn segment_history(&self) -> &SegmentHistory {
+    pub const fn segment_history(&self) -> &SegmentHistory {
         &self.segment_history
     }
 

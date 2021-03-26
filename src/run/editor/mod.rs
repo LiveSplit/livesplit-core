@@ -106,19 +106,20 @@ impl Editor {
     /// Closes the Run Editor and gives back access to the modified Run object.
     /// In case you want to implement a Cancel Button, just drop the Run object
     /// you get here.
+    #[allow(clippy::missing_const_for_fn)] // FIXME: Drop is unsupported.
     pub fn close(self) -> Run {
         self.run
     }
 
     /// Accesses the Run being edited by the Run Editor.
     #[inline]
-    pub fn run(&self) -> &Run {
+    pub const fn run(&self) -> &Run {
         &self.run
     }
 
     /// Accesses the timing method that is currently selected for being
     /// modified.
-    pub fn selected_timing_method(&self) -> TimingMethod {
+    pub const fn selected_timing_method(&self) -> TimingMethod {
         self.selected_method
     }
 
@@ -216,7 +217,7 @@ impl Editor {
 
     /// Accesses the timer offset. The timer offset specifies the time, the
     /// timer starts at when starting a new attempt.
-    pub fn offset(&self) -> TimeSpan {
+    pub const fn offset(&self) -> TimeSpan {
         self.run.offset()
     }
 
@@ -239,7 +240,7 @@ impl Editor {
     }
 
     /// Accesses the attempt count.
-    pub fn attempt_count(&self) -> u32 {
+    pub const fn attempt_count(&self) -> u32 {
         self.run.attempt_count()
     }
 
@@ -263,7 +264,7 @@ impl Editor {
     }
 
     /// Accesses the game's icon.
-    pub fn game_icon(&self) -> &Image {
+    pub const fn game_icon(&self) -> &Image {
         self.run.game_icon()
     }
 

@@ -60,7 +60,7 @@ impl<'a> Deref for Tag<'a> {
 }
 
 impl<'a> Tag<'a> {
-    pub unsafe fn new(tag: BytesStart<'a>, buf: *mut Vec<u8>) -> Self {
+    pub const unsafe fn new(tag: BytesStart<'a>, buf: *mut Vec<u8>) -> Self {
         Tag(tag, buf)
     }
 

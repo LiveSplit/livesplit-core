@@ -25,7 +25,7 @@ pub struct Complete;
 
 impl Complete {
     /// Creates a new Complete Time Formatter.
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Complete
     }
 }
