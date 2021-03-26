@@ -147,7 +147,7 @@ pub extern "C" fn SettingValue_from_optional_empty_timing_method() -> OwnedSetti
 /// Creates a new setting value from the color provided as RGBA.
 #[no_mangle]
 pub extern "C" fn SettingValue_from_color(r: f32, g: f32, b: f32, a: f32) -> OwnedSettingValue {
-    Box::new(Color::from((r, g, b, a)).into())
+    Box::new(Color::rgba(r, g, b, a).into())
 }
 
 /// Creates a new setting value from the color provided as RGBA with the type
@@ -159,7 +159,7 @@ pub extern "C" fn SettingValue_from_optional_color(
     b: f32,
     a: f32,
 ) -> OwnedSettingValue {
-    Box::new(Some(Color::from((r, g, b, a))).into())
+    Box::new(Some(Color::rgba(r, g, b, a)).into())
 }
 
 /// Creates a new empty setting value with the type `optional color`.
@@ -186,9 +186,7 @@ pub extern "C" fn SettingValue_from_vertical_gradient(
     b2: f32,
     a2: f32,
 ) -> OwnedSettingValue {
-    Box::new(
-        Gradient::Vertical(Color::from((r1, g1, b1, a1)), Color::from((r2, g2, b2, a2))).into(),
-    )
+    Box::new(Gradient::Vertical(Color::rgba(r1, g1, b1, a1), Color::rgba(r2, g2, b2, a2)).into())
 }
 
 /// Creates a new setting value from the horizontal gradient provided as two RGBA colors.
@@ -203,9 +201,7 @@ pub extern "C" fn SettingValue_from_horizontal_gradient(
     b2: f32,
     a2: f32,
 ) -> OwnedSettingValue {
-    Box::new(
-        Gradient::Horizontal(Color::from((r1, g1, b1, a1)), Color::from((r2, g2, b2, a2))).into(),
-    )
+    Box::new(Gradient::Horizontal(Color::rgba(r1, g1, b1, a1), Color::rgba(r2, g2, b2, a2)).into())
 }
 
 /// Creates a new setting value from the alternating gradient provided as two RGBA colors.
@@ -221,8 +217,7 @@ pub extern "C" fn SettingValue_from_alternating_gradient(
     a2: f32,
 ) -> OwnedSettingValue {
     Box::new(
-        ListGradient::Alternating(Color::from((r1, g1, b1, a1)), Color::from((r2, g2, b2, a2)))
-            .into(),
+        ListGradient::Alternating(Color::rgba(r1, g1, b1, a1), Color::rgba(r2, g2, b2, a2)).into(),
     )
 }
 

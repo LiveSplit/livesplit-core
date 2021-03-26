@@ -5,15 +5,17 @@
 //! comparisons, the segment icon, and the segment's name, can also be shown.
 
 use super::timer;
-use crate::analysis::comparison_single_segment_time;
-use crate::comparison::{self, best_segments, none};
-use crate::platform::prelude::*;
-use crate::settings::{CachedImageId, Field, Gradient, ImageData, SettingsDescription, Value};
-use crate::timing::{
-    formatter::{Accuracy, DigitsFormat, SegmentTime, TimeFormatter},
-    Snapshot,
+use crate::{
+    analysis::comparison_single_segment_time,
+    comparison::{self, best_segments, none},
+    platform::prelude::*,
+    settings::{CachedImageId, Color, Field, Gradient, ImageData, SettingsDescription, Value},
+    timing::{
+        formatter::{Accuracy, DigitsFormat, SegmentTime, TimeFormatter},
+        Snapshot,
+    },
+    GeneralLayoutSettings, Segment, TimeSpan, TimerPhase,
 };
-use crate::{GeneralLayoutSettings, Segment, TimeSpan, TimerPhase};
 use core::fmt::Write;
 use serde::{Deserialize, Serialize};
 
@@ -123,7 +125,12 @@ impl Default for Settings {
             segment_timer: timer::Settings {
                 height: 25,
                 is_segment_timer: true,
-                color_override: Some((170.0 / 255.0, 170.0 / 255.0, 170.0 / 255.0, 1.0).into()),
+                color_override: Some(Color::rgba(
+                    170.0 / 255.0,
+                    170.0 / 255.0,
+                    170.0 / 255.0,
+                    1.0,
+                )),
                 ..Default::default()
             },
             display_icon: false,

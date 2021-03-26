@@ -14,7 +14,6 @@ use crate::{
 };
 use core::mem::swap;
 use core::num::ParseIntError;
-use odds::slice::rotate_left;
 use snafu::{OptionExt, ResultExt};
 
 pub mod cleaning;
@@ -840,12 +839,9 @@ impl Editor {
         }
 
         if src_index > dst_index {
-            rotate_left(
-                &mut comparisons[dst_index..=src_index],
-                src_index - dst_index,
-            );
+            comparisons[dst_index..=src_index].rotate_left(src_index - dst_index);
         } else {
-            rotate_left(&mut comparisons[src_index..=dst_index], 1);
+            comparisons[src_index..=dst_index].rotate_left(1);
         }
 
         self.raise_run_edited();

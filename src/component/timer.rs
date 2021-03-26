@@ -3,15 +3,16 @@
 //! a digital clock. The color of the time shown is based on a how well the
 //! current attempt is doing compared to the chosen comparison.
 
-use crate::analysis::split_color;
-use crate::palette::{rgb::LinSrgb, Hsv};
-use crate::platform::prelude::*;
-use crate::settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
-use crate::timing::{
-    formatter::{timer as formatter, Accuracy, DigitsFormat, TimeFormatter},
-    Snapshot,
+use crate::{
+    analysis::split_color,
+    platform::prelude::*,
+    settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value},
+    timing::{
+        formatter::{timer as formatter, Accuracy, DigitsFormat, TimeFormatter},
+        Snapshot,
+    },
+    GeneralLayoutSettings, TimeSpan, TimerPhase, TimingMethod,
 };
-use crate::{GeneralLayoutSettings, TimeSpan, TimerPhase, TimingMethod};
 use core::fmt::Write;
 use serde::{Deserialize, Serialize};
 
@@ -289,29 +290,10 @@ impl Component {
 /// Calculates the top and bottom color the Timer Component would use for the
 /// gradient of the times it is showing.
 pub fn top_and_bottom_color(color: Color) -> (Color, Color) {
-    let hsv: Hsv = color.rgba.into();
+    let [h, s, v, a] = color.to_hsva();
 
-    let h = f64::from(hsv.hue.to_degrees());
-    let s = f64::from(hsv.saturation);
-    let v = f64::from(hsv.value);
-    let a = color.rgba.alpha;
-
-    let top_color = LinSrgb::from(Hsv::new(h, 0.5 * s, (1.5 * v + 0.1).min(1.0)));
-    let bottom_color = LinSrgb::from(Hsv::new(h, s, 0.8 * v));
-
-    let top_color = Color::from((
-        top_color.red as f32,
-        top_color.green as f32,
-        top_color.blue as f32,
-        a,
-    ));
-
-    let bottom_color = Color::from((
-        bottom_color.red as f32,
-        bottom_color.green as f32,
-        bottom_color.blue as f32,
-        a,
-    ));
+    let top_color = Color::hsva(h, 0.5 * s, (1.5 * v + 0.1).min(1.0), a);
+    let bottom_color = Color::hsva(h, s, 0.8 * v, a);
 
     (top_color, bottom_color)
 }

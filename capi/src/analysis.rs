@@ -2,10 +2,10 @@
 //! information about runs.
 
 use super::time_span::{NullableOwnedTimeSpan, OwnedTimeSpan};
-use livesplit_core::analysis::sum_of_segments::calculate_best;
-use livesplit_core::analysis::total_playtime::calculate;
-use livesplit_core::TimingMethod;
-use livesplit_core::{Run, Timer};
+use livesplit_core::{
+    analysis::{sum_of_segments::calculate_best, total_playtime::calculate},
+    Run, Timer, TimingMethod,
+};
 
 /// Calculates the Sum of Best Segments for the timing method provided. This is
 /// the fastest time possible to complete a run of a category, based on
@@ -24,12 +24,7 @@ pub extern "C" fn Analysis_calculate_sum_of_best(
     use_current_run: bool,
     method: TimingMethod,
 ) -> NullableOwnedTimeSpan {
-    if let Some(span) = calculate_best(run.segments(), simple_calculation, use_current_run, method)
-    {
-        Some(Box::new(span))
-    } else {
-        None
-    }
+    calculate_best(run.segments(), simple_calculation, use_current_run, method).map(Box::new)
 }
 
 /// Calculates the total playtime of the passed Run.
