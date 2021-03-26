@@ -1,8 +1,9 @@
-use crate::platform::prelude::*;
-use crate::platform::Duration;
-use core::num::ParseFloatError;
-use core::ops::{AddAssign, SubAssign};
-use core::str::FromStr;
+use crate::platform::{prelude::*, Duration};
+use core::{
+    num::ParseFloatError,
+    ops::{AddAssign, SubAssign},
+    str::FromStr,
+};
 use derive_more::{Add, From, Neg, Sub};
 use snafu::ResultExt;
 
@@ -34,7 +35,7 @@ impl TimeSpan {
     }
 
     /// Converts the Time Span to a Duration from the `chrono` crate.
-    pub fn to_duration(&self) -> Duration {
+    pub const fn to_duration(&self) -> Duration {
         self.0
     }
 

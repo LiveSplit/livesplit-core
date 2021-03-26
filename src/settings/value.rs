@@ -71,6 +71,7 @@ pub enum Error {
 /// The Result type for conversions from Values to other types.
 pub type Result<T> = StdResult<T, Error>;
 
+#[allow(clippy::missing_const_for_fn)] // FIXME: Drop is unsupported.
 impl Value {
     /// Tries to convert the value into a boolean.
     pub fn into_bool(self) -> Result<bool> {
@@ -242,122 +243,122 @@ impl Value {
     }
 }
 
-impl Into<bool> for Value {
-    fn into(self) -> bool {
-        self.into_bool().unwrap()
+impl From<Value> for bool {
+    fn from(value: Value) -> Self {
+        value.into_bool().unwrap()
     }
 }
 
-impl Into<u64> for Value {
-    fn into(self) -> u64 {
-        self.into_uint().unwrap()
+impl From<Value> for u64 {
+    fn from(value: Value) -> Self {
+        value.into_uint().unwrap()
     }
 }
 
-impl Into<i64> for Value {
-    fn into(self) -> i64 {
-        self.into_int().unwrap()
+impl From<Value> for i64 {
+    fn from(value: Value) -> Self {
+        value.into_int().unwrap()
     }
 }
 
-impl Into<String> for Value {
-    fn into(self) -> String {
-        self.into_string().unwrap()
+impl From<Value> for String {
+    fn from(value: Value) -> Self {
+        value.into_string().unwrap()
     }
 }
 
-impl Into<Option<String>> for Value {
-    fn into(self) -> Option<String> {
-        self.into_optional_string().unwrap()
+impl From<Value> for Option<String> {
+    fn from(value: Value) -> Self {
+        value.into_optional_string().unwrap()
     }
 }
 
-impl Into<f64> for Value {
-    fn into(self) -> f64 {
-        self.into_float().unwrap()
+impl From<Value> for f64 {
+    fn from(value: Value) -> Self {
+        value.into_float().unwrap()
     }
 }
 
-impl Into<Accuracy> for Value {
-    fn into(self) -> Accuracy {
-        self.into_accuracy().unwrap()
+impl From<Value> for Accuracy {
+    fn from(value: Value) -> Self {
+        value.into_accuracy().unwrap()
     }
 }
 
-impl Into<DigitsFormat> for Value {
-    fn into(self) -> DigitsFormat {
-        self.into_digits_format().unwrap()
+impl From<Value> for DigitsFormat {
+    fn from(value: Value) -> Self {
+        value.into_digits_format().unwrap()
     }
 }
 
-impl Into<Option<TimingMethod>> for Value {
-    fn into(self) -> Option<TimingMethod> {
-        self.into_optional_timing_method().unwrap()
+impl From<Value> for Option<TimingMethod> {
+    fn from(value: Value) -> Self {
+        value.into_optional_timing_method().unwrap()
     }
 }
 
-impl Into<Color> for Value {
-    fn into(self) -> Color {
-        self.into_color().unwrap()
+impl From<Value> for Color {
+    fn from(value: Value) -> Self {
+        value.into_color().unwrap()
     }
 }
 
-impl Into<Option<Color>> for Value {
-    fn into(self) -> Option<Color> {
-        self.into_optional_color().unwrap()
+impl From<Value> for Option<Color> {
+    fn from(value: Value) -> Self {
+        value.into_optional_color().unwrap()
     }
 }
 
-impl Into<Gradient> for Value {
-    fn into(self) -> Gradient {
-        self.into_gradient().unwrap()
+impl From<Value> for Gradient {
+    fn from(value: Value) -> Self {
+        value.into_gradient().unwrap()
     }
 }
 
-impl Into<ListGradient> for Value {
-    fn into(self) -> ListGradient {
-        self.into_list_gradient().unwrap()
+impl From<Value> for ListGradient {
+    fn from(value: Value) -> Self {
+        value.into_list_gradient().unwrap()
     }
 }
 
-impl Into<Alignment> for Value {
-    fn into(self) -> Alignment {
-        self.into_alignment().unwrap()
+impl From<Value> for Alignment {
+    fn from(value: Value) -> Self {
+        value.into_alignment().unwrap()
     }
 }
 
-impl Into<ColumnStartWith> for Value {
-    fn into(self) -> ColumnStartWith {
-        self.into_column_start_with().unwrap()
+impl From<Value> for ColumnStartWith {
+    fn from(value: Value) -> Self {
+        value.into_column_start_with().unwrap()
     }
 }
 
-impl Into<ColumnUpdateWith> for Value {
-    fn into(self) -> ColumnUpdateWith {
-        self.into_column_update_with().unwrap()
+impl From<Value> for ColumnUpdateWith {
+    fn from(value: Value) -> Self {
+        value.into_column_update_with().unwrap()
     }
 }
 
-impl Into<ColumnUpdateTrigger> for Value {
-    fn into(self) -> ColumnUpdateTrigger {
-        self.into_column_update_trigger().unwrap()
+impl From<Value> for ColumnUpdateTrigger {
+    fn from(value: Value) -> Self {
+        value.into_column_update_trigger().unwrap()
     }
 }
 
-impl Into<Option<KeyCode>> for Value {
-    fn into(self) -> Option<KeyCode> {
-        self.into_hotkey().unwrap()
+impl From<Value> for Option<KeyCode> {
+    fn from(value: Value) -> Self {
+        value.into_hotkey().unwrap()
     }
 }
 
-impl Into<LayoutDirection> for Value {
-    fn into(self) -> LayoutDirection {
-        self.into_layout_direction().unwrap()
+impl From<Value> for LayoutDirection {
+    fn from(value: Value) -> Self {
+        value.into_layout_direction().unwrap()
     }
 }
 
-impl Into<Option<Font>> for Value {
-    fn into(self) -> Option<Font> {
-        self.into_font().unwrap()
+impl From<Value> for Option<Font> {
+    fn from(value: Value) -> Self {
+        value.into_font().unwrap()
     }
 }

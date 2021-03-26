@@ -13,7 +13,7 @@ pub struct Field {
 
 impl Field {
     /// Creates a new field.
-    pub fn new(text: String, value: Value) -> Self {
+    pub const fn new(text: String, value: Value) -> Self {
         Self { text, value }
     }
 }

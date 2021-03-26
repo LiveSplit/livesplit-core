@@ -48,7 +48,7 @@ impl SemanticColor {
     /// The General Settings store actual Color values for each of the different
     /// events. Using this method, you can use these to convert a Semantic Color
     /// to an actual Color.
-    pub fn visualize(self, settings: &layout::GeneralSettings) -> Color {
+    pub const fn visualize(self, settings: &layout::GeneralSettings) -> Color {
         match self {
             SemanticColor::Default => settings.text_color,
             SemanticColor::AheadGainingTime => settings.ahead_gaining_time_color,

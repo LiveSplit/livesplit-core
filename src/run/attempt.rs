@@ -22,7 +22,7 @@ impl Attempt {
     /// provided. Both of these should be provided for unfinished attempts as
     /// well, if possible. If it is known that the attempt was paused for a
     /// certain amount of time, this can be provided as well.
-    pub fn new(
+    pub const fn new(
         index: i32,
         time: Time,
         started: Option<AtomicDateTime>,
@@ -54,14 +54,14 @@ impl Attempt {
     /// Accesses the unique index of the attempt. This index is unique for the
     /// Run, not for all of them.
     #[inline]
-    pub fn index(&self) -> i32 {
+    pub const fn index(&self) -> i32 {
         self.index
     }
 
     /// Accesses the split time of the last segment. If the attempt got reset
     /// early and didn't finish, this may be empty.
     #[inline]
-    pub fn time(&self) -> Time {
+    pub const fn time(&self) -> Time {
         self.time
     }
 
@@ -70,21 +70,21 @@ impl Attempt {
     /// be possible to differentiate whether a Run has not been paused or it
     /// simply wasn't stored.
     #[inline]
-    pub fn pause_time(&self) -> Option<TimeSpan> {
+    pub const fn pause_time(&self) -> Option<TimeSpan> {
         self.pause_time
     }
 
     /// Accesses the point in time the attempt was started at. This returns
     /// `None` if this information is not known.
     #[inline]
-    pub fn started(&self) -> Option<AtomicDateTime> {
+    pub const fn started(&self) -> Option<AtomicDateTime> {
         self.started
     }
 
     /// Accesses the point in time the attempt was ended at. This returns `None`
     /// if this information is not known.
     #[inline]
-    pub fn ended(&self) -> Option<AtomicDateTime> {
+    pub const fn ended(&self) -> Option<AtomicDateTime> {
         self.ended
     }
 }

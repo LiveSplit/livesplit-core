@@ -28,22 +28,22 @@ pub struct SegmentTime {
 impl SegmentTime {
     /// Creates a new Segment Time Formatter that uses hundredths for showing
     /// the fractional part.
-    pub fn new() -> Self {
-        Default::default()
+    pub const fn new() -> Self {
+        SegmentTime {
+            accuracy: Accuracy::Hundredths,
+        }
     }
 
     /// Creates a new Segment Time Formatter that uses the accuracy provided for
     /// showing the fractional part.
-    pub fn with_accuracy(accuracy: Accuracy) -> Self {
+    pub const fn with_accuracy(accuracy: Accuracy) -> Self {
         SegmentTime { accuracy }
     }
 }
 
 impl Default for SegmentTime {
     fn default() -> Self {
-        SegmentTime {
-            accuracy: Accuracy::Hundredths,
-        }
+        Self::new()
     }
 }
 

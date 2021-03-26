@@ -326,12 +326,13 @@ fn column_update_value(
 }
 
 impl ColumnUpdateWith {
-    fn is_segment_based(self) -> bool {
-        use self::ColumnUpdateWith::*;
+    const fn is_segment_based(self) -> bool {
+        use ColumnUpdateWith::*;
         matches!(self, SegmentDelta | SegmentTime | SegmentDeltaWithFallback)
     }
-    fn has_fallback(self) -> bool {
-        use self::ColumnUpdateWith::*;
+
+    const fn has_fallback(self) -> bool {
+        use ColumnUpdateWith::*;
         matches!(self, DeltaWithFallback | SegmentDeltaWithFallback)
     }
 }

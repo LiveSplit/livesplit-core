@@ -29,22 +29,22 @@ pub struct Regular {
 impl Regular {
     /// Creates a new default Regular Time Formatter that doesn't show a
     /// fractional part.
-    pub fn new() -> Self {
-        Default::default()
+    pub const fn new() -> Self {
+        Regular {
+            accuracy: Accuracy::Seconds,
+        }
     }
 
     /// Creates a new custom Regular Time Formatter where you can specify how
     /// many digits to show for the fractional part.
-    pub fn with_accuracy(accuracy: Accuracy) -> Self {
+    pub const fn with_accuracy(accuracy: Accuracy) -> Self {
         Regular { accuracy }
     }
 }
 
 impl Default for Regular {
     fn default() -> Self {
-        Regular {
-            accuracy: Accuracy::Seconds,
-        }
+        Self::new()
     }
 }
 

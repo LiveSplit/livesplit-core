@@ -78,7 +78,7 @@ impl Default for TextState {
 
 impl Text {
     /// Returns whether the text is split up into a left and right part.
-    pub fn is_split(&self) -> bool {
+    pub const fn is_split(&self) -> bool {
         match *self {
             Text::Split(_, _) => true,
             Text::Center(_) => false,
@@ -170,12 +170,12 @@ impl Component {
     }
 
     /// Creates a new Text Component with the given settings.
-    pub fn with_settings(settings: Settings) -> Self {
+    pub const fn with_settings(settings: Settings) -> Self {
         Self { settings }
     }
 
     /// Accesses the settings of the component.
-    pub fn settings(&self) -> &Settings {
+    pub const fn settings(&self) -> &Settings {
         &self.settings
     }
 

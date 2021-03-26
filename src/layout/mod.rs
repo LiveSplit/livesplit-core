@@ -70,7 +70,7 @@ impl Layout {
 
     /// Accesses the general settings of the layout that apply to all
     /// components.
-    pub fn general_settings(&self) -> &GeneralSettings {
+    pub const fn general_settings(&self) -> &GeneralSettings {
         &self.settings
     }
 

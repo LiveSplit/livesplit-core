@@ -139,7 +139,7 @@ impl Image {
 
     /// Accesses the unique ID for this image.
     #[inline]
-    pub fn id(&self) -> usize {
+    pub const fn id(&self) -> usize {
         self.id
     }
 

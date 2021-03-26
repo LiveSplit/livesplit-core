@@ -187,7 +187,7 @@ pub struct Cursor {
 }
 
 impl Cursor {
-    pub fn new([x, y]: Pos) -> Self {
+    pub const fn new([x, y]: Pos) -> Self {
         Self { x, y }
     }
 }

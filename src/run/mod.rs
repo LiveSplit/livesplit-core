@@ -143,7 +143,7 @@ impl Run {
 
     /// Accesses the game's icon.
     #[inline]
-    pub fn game_icon(&self) -> &Image {
+    pub const fn game_icon(&self) -> &Image {
         &self.game_icon
     }
 
@@ -171,7 +171,7 @@ impl Run {
 
     /// Returns the path of the associated splits file in the file system.
     #[inline]
-    pub fn path(&self) -> &Option<PathBuf> {
+    pub const fn path(&self) -> &Option<PathBuf> {
         &self.path
     }
 
@@ -183,7 +183,7 @@ impl Run {
 
     /// Returns the amount of runs that have been attempted with these splits.
     #[inline]
-    pub fn attempt_count(&self) -> u32 {
+    pub const fn attempt_count(&self) -> u32 {
         self.attempt_count
     }
 
@@ -196,7 +196,7 @@ impl Run {
     /// Accesses additional metadata of this Run, like the platform and region
     /// of the game.
     #[inline]
-    pub fn metadata(&self) -> &RunMetadata {
+    pub const fn metadata(&self) -> &RunMetadata {
         &self.metadata
     }
 
@@ -215,7 +215,7 @@ impl Run {
 
     /// Accesses the time an attempt of this Run should start at.
     #[inline]
-    pub fn offset(&self) -> TimeSpan {
+    pub const fn offset(&self) -> TimeSpan {
         self.offset
     }
 
@@ -362,7 +362,7 @@ impl Run {
     /// Returns whether the Run has been modified and should be saved so that
     /// the changes don't get lost.
     #[inline]
-    pub fn has_been_modified(&self) -> bool {
+    pub const fn has_been_modified(&self) -> bool {
         self.has_been_modified
     }
 
@@ -494,7 +494,7 @@ impl Run {
     /// extended category name. An extended category name may look like this:
     ///
     /// Any% (No Tuner, JPN, Wii Emulator)
-    pub fn extended_category_name(
+    pub const fn extended_category_name(
         &self,
         show_region: bool,
         show_platform: bool,

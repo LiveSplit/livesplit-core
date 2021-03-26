@@ -124,7 +124,7 @@ impl RunMetadata {
     /// Returns `true` if this speedrun is done on an emulator. However `false`
     /// may also indicate that this information is simply not known.
     #[inline]
-    pub fn uses_emulator(&self) -> bool {
+    pub const fn uses_emulator(&self) -> bool {
         self.uses_emulator
     }
 

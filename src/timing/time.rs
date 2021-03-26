@@ -32,14 +32,14 @@ impl Time {
     /// Creates a new Time based on the current one where the Real Time is
     /// replaced by the given Time Span.
     #[inline]
-    pub fn with_real_time(self, real_time: Option<TimeSpan>) -> Self {
+    pub const fn with_real_time(self, real_time: Option<TimeSpan>) -> Self {
         Time { real_time, ..self }
     }
 
     /// Creates a new Time based on the current one where the Game Time is
     /// replaced by the given Time Span.
     #[inline]
-    pub fn with_game_time(self, game_time: Option<TimeSpan>) -> Self {
+    pub const fn with_game_time(self, game_time: Option<TimeSpan>) -> Self {
         Time { game_time, ..self }
     }
 

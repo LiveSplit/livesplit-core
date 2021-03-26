@@ -42,7 +42,7 @@ pub enum Style {
 
 impl Style {
     /// The value to assign to the `ital` variation axis.
-    pub fn value_for_italic(self) -> f32 {
+    pub const fn value_for_italic(self) -> f32 {
         match self {
             Style::Normal => 0.0,
             Style::Italic => 1.0,
@@ -83,7 +83,7 @@ pub enum Weight {
 
 impl Weight {
     /// The numeric value of the weight.
-    pub fn value(self) -> f32 {
+    pub const fn value(self) -> f32 {
         match self {
             Weight::Thin => 100.0,
             Weight::ExtraLight => 200.0,
@@ -129,7 +129,7 @@ pub enum Stretch {
 
 impl Stretch {
     /// The percentage the font is stretched by (50% to 200%).
-    pub fn percentage(self) -> f32 {
+    pub const fn percentage(self) -> f32 {
         match self {
             Stretch::UltraCondensed => 50.0,
             Stretch::ExtraCondensed => 62.5,
@@ -144,7 +144,7 @@ impl Stretch {
     }
 
     /// The factor the font is stretched by (0x to 2x).
-    pub fn factor(self) -> f32 {
+    pub const fn factor(self) -> f32 {
         match self {
             Stretch::UltraCondensed => 0.5,
             Stretch::ExtraCondensed => 0.625,

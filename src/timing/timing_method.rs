@@ -16,7 +16,7 @@ pub enum TimingMethod {
 
 impl TimingMethod {
     /// Returns an array of all the timing methods.
-    pub fn all() -> [TimingMethod; 2] {
+    pub const fn all() -> [TimingMethod; 2] {
         [TimingMethod::RealTime, TimingMethod::GameTime]
     }
 }

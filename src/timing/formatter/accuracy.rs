@@ -18,7 +18,7 @@ impl Accuracy {
     /// Formats the seconds provided with the chosen accuracy. If there should
     /// be a zero prefix, the seconds are prefixed with a 0, if they are less
     /// than 10s.
-    pub fn format_seconds(self, seconds: f64, zero_prefix: bool) -> FormattedSeconds {
+    pub const fn format_seconds(self, seconds: f64, zero_prefix: bool) -> FormattedSeconds {
         FormattedSeconds {
             accuracy: self,
             seconds,

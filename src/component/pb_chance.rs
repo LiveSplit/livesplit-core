@@ -55,12 +55,12 @@ impl Component {
     }
 
     /// Creates a new Possible Time Save Component with the given settings.
-    pub fn with_settings(settings: Settings) -> Self {
+    pub const fn with_settings(settings: Settings) -> Self {
         Self { settings }
     }
 
     /// Accesses the settings of the component.
-    pub fn settings(&self) -> &Settings {
+    pub const fn settings(&self) -> &Settings {
         &self.settings
     }
 
@@ -70,7 +70,7 @@ impl Component {
     }
 
     /// Accesses the name of the component.
-    pub fn name(&self) -> &'static str {
+    pub const fn name(&self) -> &'static str {
         "PB Chance"
     }
 

@@ -1,7 +1,7 @@
-use crate::comparison::personal_best;
-use crate::platform::prelude::*;
-use crate::TimerPhase::*;
-use crate::{AtomicDateTime, Run, Segment, Time, TimeSpan, TimeStamp, TimerPhase, TimingMethod};
+use crate::{
+    comparison::personal_best, platform::prelude::*, AtomicDateTime, Run, Segment, Time, TimeSpan,
+    TimeStamp, TimerPhase, TimerPhase::*, TimingMethod,
+};
 use core::{mem, ops::Deref};
 
 #[cfg(test)]
@@ -69,7 +69,7 @@ pub struct Snapshot<'timer> {
 impl Snapshot<'_> {
     /// Returns the time the timer was at when the snapshot was taken. The Game
     /// Time is None if the Game Time has not been initialized.
-    pub fn current_time(&self) -> Time {
+    pub const fn current_time(&self) -> Time {
         self.time
     }
 }
@@ -174,7 +174,7 @@ impl Timer {
 
     /// Accesses the Run in use by the Timer.
     #[inline]
-    pub fn run(&self) -> &Run {
+    pub const fn run(&self) -> &Run {
         &self.run
     }
 
@@ -187,7 +187,7 @@ impl Timer {
 
     /// Returns the current Timer Phase.
     #[inline]
-    pub fn current_phase(&self) -> TimerPhase {
+    pub const fn current_phase(&self) -> TimerPhase {
         self.phase
     }
 
@@ -231,7 +231,7 @@ impl Timer {
 
     /// Returns the currently selected Timing Method.
     #[inline]
-    pub fn current_timing_method(&self) -> TimingMethod {
+    pub const fn current_timing_method(&self) -> TimingMethod {
         self.current_timing_method
     }
 
@@ -289,7 +289,7 @@ impl Timer {
     /// finished, but has not been reset. So you need to be careful when using
     /// this value for indexing.
     #[inline]
-    pub fn current_split_index(&self) -> Option<usize> {
+    pub const fn current_split_index(&self) -> Option<usize> {
         self.current_split_index
     }
 
@@ -558,7 +558,7 @@ impl Timer {
     /// Returns whether Game Time is currently initialized. Game Time
     /// automatically gets uninitialized for each new attempt.
     #[inline]
-    pub fn is_game_time_initialized(&self) -> bool {
+    pub const fn is_game_time_initialized(&self) -> bool {
         self.loading_times.is_some()
     }
 
@@ -578,7 +578,7 @@ impl Timer {
     /// Returns whether the Game Timer is currently paused. If the Game Timer is
     /// not paused, it automatically increments similar to Real Time.
     #[inline]
-    pub fn is_game_time_paused(&self) -> bool {
+    pub const fn is_game_time_paused(&self) -> bool {
         self.is_game_time_paused
     }
 

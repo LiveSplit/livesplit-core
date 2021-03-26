@@ -1,5 +1,7 @@
-use crate::hotkey::{Hook, KeyCode};
-use crate::{HotkeyConfig, SharedTimer};
+use crate::{
+    hotkey::{Hook, KeyCode},
+    HotkeyConfig, SharedTimer,
+};
 
 pub use crate::hotkey::{Error, Result};
 
@@ -41,7 +43,8 @@ impl Hotkey {
             Hotkey::ToggleTimingMethod => config.toggle_timing_method = keycode,
         }
     }
-    fn get_keycode(self, config: &HotkeyConfig) -> Option<KeyCode> {
+
+    const fn get_keycode(self, config: &HotkeyConfig) -> Option<KeyCode> {
         match self {
             Hotkey::Split => config.split,
             Hotkey::Reset => config.reset,
@@ -54,6 +57,7 @@ impl Hotkey {
             Hotkey::ToggleTimingMethod => config.toggle_timing_method,
         }
     }
+
     fn callback(self, timer: SharedTimer) -> Box<dyn FnMut() + Send + 'static> {
         match self {
             Hotkey::Split => Box::new(move || timer.write().split_or_start()),
@@ -101,6 +105,7 @@ impl HotkeySystem {
         hotkey_system.activate()?;
         Ok(hotkey_system)
     }
+
     // This method should never be public, because it might mess up the internal state and we might
     // leak a registered hotkey
     unsafe fn register_raw(&mut self, hotkey: Hotkey) -> Result<()> {
@@ -110,10 +115,12 @@ impl HotkeySystem {
         }
         Ok(())
     }
+
     fn register(&mut self, hotkey: Hotkey, keycode: Option<KeyCode>) -> Result<()> {
         hotkey.set_keycode(&mut self.config, keycode);
         unsafe { self.register_raw(hotkey) }
     }
+
     // This method should never be public, because it might mess up the internal state and we might
     // leak a registered hotkey
     unsafe fn unregister_raw(&mut self, hotkey: Hotkey) -> Result<()> {
@@ -122,10 +129,12 @@ impl HotkeySystem {
         }
         Ok(())
     }
+
     fn unregister(&mut self, hotkey: Hotkey) -> Result<()> {
         hotkey.set_keycode(&mut self.config, None);
         unsafe { self.unregister_raw(hotkey) }
     }
+
     fn set_hotkey(&mut self, hotkey: Hotkey, keycode: Option<KeyCode>) -> Result<()> {
         // FixMe: We do not check whether the keycode is already in use
         if hotkey.get_keycode(&self.config) == keycode {
@@ -227,12 +236,12 @@ impl HotkeySystem {
     }
 
     /// Returns true if the Hotkey System is active, false otherwise.
-    pub fn is_active(&self) -> bool {
+    pub const fn is_active(&self) -> bool {
         self.is_active
     }
 
     /// Returns the hotkey configuration currently in use by the Hotkey System.
-    pub fn config(&self) -> HotkeyConfig {
+    pub const fn config(&self) -> HotkeyConfig {
         self.config
     }
 

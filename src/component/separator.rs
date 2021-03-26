@@ -32,7 +32,7 @@ impl Component {
     }
 
     /// Accesses the name of the component.
-    pub fn name(&self) -> &'static str {
+    pub const fn name(&self) -> &'static str {
         "Separator"
     }
 
@@ -40,7 +40,7 @@ impl Component {
     pub fn update_state(&self, _state: &mut State) {}
 
     /// Calculates the component's state.
-    pub fn state(&self) -> State {
+    pub const fn state(&self) -> State {
         State
     }
 
