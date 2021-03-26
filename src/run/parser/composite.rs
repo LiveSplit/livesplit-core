@@ -31,9 +31,9 @@
 //! ```
 
 use super::{
-    face_split, flitter, livesplit, llanfair, llanfair2, llanfair_gered, portal2_live_timer,
-    shit_split, source_live_timer, splits_io, splitterino, splitterz, splitty, time_split_tracker,
-    urn, wsplit, TimerKind,
+    face_split, flitter, livesplit, llanfair, llanfair_gered, portal2_live_timer, shit_split,
+    source_live_timer, splits_io, splitterino, splitterz, splitty, time_split_tracker, urn, wsplit,
+    TimerKind,
 };
 use crate::Run;
 use core::result::Result as StdResult;
@@ -151,13 +151,6 @@ where
     source.seek(SeekFrom::Start(0)).context(SeekBack)?;
     if let Ok(run) = llanfair_gered::parse(&mut source) {
         return Ok(parsed(run, TimerKind::LlanfairGered));
-    }
-
-    // Llanfair 2's format is almost entirely optional so it should be parsed
-    // after all other XML based formats.
-    source.seek(SeekFrom::Start(0)).context(SeekBack)?;
-    if let Ok(run) = llanfair2::parse(&mut source) {
-        return Ok(parsed(run, TimerKind::Llanfair2));
     }
 
     source.seek(SeekFrom::Start(0)).context(SeekBack)?;

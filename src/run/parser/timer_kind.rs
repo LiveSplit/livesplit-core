@@ -25,8 +25,6 @@ pub enum TimerKind {
     Llanfair,
     /// Gered's fork of Llanfair
     LlanfairGered,
-    /// The Rewrite of Llanfair
-    Llanfair2,
     /// Urn
     Urn,
     /// SourceLiveTimer
@@ -52,7 +50,6 @@ impl fmt::Display for TimerKind {
             TimerKind::Flitter => write!(f, "Flitter"),
             TimerKind::Llanfair => write!(f, "Llanfair"),
             TimerKind::LlanfairGered => write!(f, "Llanfair (Gered's fork)"),
-            TimerKind::Llanfair2 => write!(f, "Llanfair Rewrite"),
             TimerKind::Urn => write!(f, "Urn"),
             TimerKind::SourceLiveTimer => write!(f, "SourceLiveTimer"),
             TimerKind::Splitterino => write!(f, "Splitterino"),

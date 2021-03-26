@@ -1,8 +1,7 @@
 //! Implements a serde deserializer for S-Expressions.
 //! http://people.csail.mit.edu/rivest/Sexp.txt
 
-use core::fmt::Display;
-use core::num::ParseIntError;
+use core::{fmt::Display, num::ParseIntError};
 use serde::de::{self, DeserializeOwned, DeserializeSeed, MapAccess, SeqAccess, Visitor};
 use std::io::{self, BufRead};
 use utf8::{BufReadDecoder, BufReadDecoderError};
@@ -27,7 +26,7 @@ pub enum Error {
         source: ParseIntError,
     },
     /// Encountered invalid UTF-8 sequence.
-    InvalidUTF8,
+    InvalidUtf8,
     /// Failed to read from the source.
     Io {
         /// The underlying error.
@@ -44,7 +43,7 @@ pub enum Error {
 impl From<BufReadDecoderError<'_>> for Error {
     fn from(error: BufReadDecoderError<'_>) -> Error {
         match error {
-            BufReadDecoderError::InvalidByteSequence(_) => Error::InvalidUTF8,
+            BufReadDecoderError::InvalidByteSequence(_) => Error::InvalidUtf8,
             BufReadDecoderError::Io(source) => Error::Io { source },
         }
     }
@@ -213,49 +212,49 @@ impl<'de, B: BufRead> de::Deserializer<'de> for &mut Deserializer<B> {
     where
         V: Visitor<'de>,
     {
-        unimplemented!()
+        unreachable!()
     }
     fn deserialize_bool<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
-        unimplemented!()
+        unreachable!()
     }
     fn deserialize_i8<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
-        unimplemented!()
+        unreachable!()
     }
     fn deserialize_i16<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
-        unimplemented!()
+        unreachable!()
     }
     fn deserialize_i32<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
-        unimplemented!()
+        unreachable!()
     }
     fn deserialize_i64<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
-        unimplemented!()
+        unreachable!()
     }
     fn deserialize_u8<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
-        unimplemented!()
+        unreachable!()
     }
     fn deserialize_u16<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
-        unimplemented!()
+        unreachable!()
     }
     fn deserialize_u32<V>(self, visitor: V) -> Result<V::Value>
     where
@@ -267,25 +266,25 @@ impl<'de, B: BufRead> de::Deserializer<'de> for &mut Deserializer<B> {
     where
         V: Visitor<'de>,
     {
-        unimplemented!()
+        unreachable!()
     }
     fn deserialize_f32<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
-        unimplemented!()
+        unreachable!()
     }
     fn deserialize_f64<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
-        unimplemented!()
+        unreachable!()
     }
     fn deserialize_char<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
-        unimplemented!()
+        unreachable!()
     }
     fn deserialize_str<V>(self, visitor: V) -> Result<V::Value>
     where
@@ -303,13 +302,13 @@ impl<'de, B: BufRead> de::Deserializer<'de> for &mut Deserializer<B> {
     where
         V: Visitor<'de>,
     {
-        unimplemented!()
+        unreachable!()
     }
     fn deserialize_byte_buf<V>(self, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
-        unimplemented!()
+        unreachable!()
     }
     fn deserialize_option<V>(self, visitor: V) -> Result<V::Value>
     where
@@ -321,19 +320,19 @@ impl<'de, B: BufRead> de::Deserializer<'de> for &mut Deserializer<B> {
     where
         V: Visitor<'de>,
     {
-        unimplemented!()
+        unreachable!()
     }
     fn deserialize_unit_struct<V>(self, _name: &'static str, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
-        unimplemented!()
+        unreachable!()
     }
     fn deserialize_newtype_struct<V>(self, _name: &'static str, _visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
-        unimplemented!()
+        unreachable!()
     }
     fn deserialize_seq<V>(mut self, visitor: V) -> Result<V::Value>
     where
@@ -355,7 +354,7 @@ impl<'de, B: BufRead> de::Deserializer<'de> for &mut Deserializer<B> {
     where
         V: Visitor<'de>,
     {
-        unimplemented!()
+        unreachable!()
     }
     fn deserialize_tuple_struct<V>(
         self,
@@ -366,7 +365,7 @@ impl<'de, B: BufRead> de::Deserializer<'de> for &mut Deserializer<B> {
     where
         V: Visitor<'de>,
     {
-        unimplemented!()
+        unreachable!()
     }
     fn deserialize_map<V>(mut self, visitor: V) -> Result<V::Value>
     where
@@ -404,7 +403,7 @@ impl<'de, B: BufRead> de::Deserializer<'de> for &mut Deserializer<B> {
     where
         V: Visitor<'de>,
     {
-        unimplemented!()
+        unreachable!()
     }
     fn deserialize_identifier<V>(self, visitor: V) -> Result<V::Value>
     where
