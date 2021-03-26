@@ -131,7 +131,7 @@ impl GradientType for GradientKind {
         match self {
             GradientKind::Transparent => Gradient::Transparent,
             GradientKind::Plain => {
-                if first.rgba.alpha == 0.0 {
+                if first.alpha == 0.0 {
                     Gradient::Transparent
                 } else {
                     Gradient::Plain(first)
@@ -238,8 +238,8 @@ where
     text_err(reader, buf, |text| {
         let number = u32::from_str_radix(&text, 16)?;
         let [a, r, g, b] = number.to_be_bytes();
-        let mut color = Color::from([r, g, b, a]);
-        let (r, g, b, a) = color.rgba.into_components();
+        let mut color = Color::rgba8(r, g, b, a);
+        let [r, g, b, a] = color.to_array();
 
         // Adjust alpha based on the lightness of the color. The formula is
         // based on two sRGB curves measured for white on top of a black
@@ -251,7 +251,7 @@ where
         // black. Because of that, we use 1.75 as the exponent denominator for
         // the white on black case instead of the usual 2.2 for sRGB.
         let lightness = (r + g + b) / 3.0;
-        color.rgba.alpha =
+        color.alpha =
             (1.0 - lightness) * (1.0 - (1.0 - a).powf(1.0 / 2.2)) + lightness * a.powf(1.0 / 1.75);
 
         func(color);

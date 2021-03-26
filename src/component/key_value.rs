@@ -3,12 +3,11 @@
 //! components. They all share the same visual appearance and thus use the same
 //! state object representation.
 
-use crate::platform::prelude::*;
-use crate::settings::{Color, Gradient, SemanticColor};
+use crate::{
+    platform::prelude::*,
+    settings::{Color, Gradient, SemanticColor},
+};
 use alloc::borrow::Cow;
-use core::marker::PhantomData;
-use palette::rgb::Rgb;
-use palette::Alpha;
 use serde::{Deserialize, Serialize};
 
 /// The state object describes the information to visualize for a key value
@@ -49,25 +48,15 @@ impl State {
 
 pub(super) const DEFAULT_GRADIENT: Gradient = Gradient::Vertical(
     Color {
-        rgba: Alpha {
-            alpha: 0.06,
-            color: Rgb {
-                red: 1.0,
-                green: 1.0,
-                blue: 1.0,
-                standard: PhantomData,
-            },
-        },
+        red: 1.0,
+        green: 1.0,
+        blue: 1.0,
+        alpha: 0.06,
     },
     Color {
-        rgba: Alpha {
-            alpha: 0.005,
-            color: Rgb {
-                red: 1.0,
-                green: 1.0,
-                blue: 1.0,
-                standard: PhantomData,
-            },
-        },
+        red: 1.0,
+        green: 1.0,
+        blue: 1.0,
+        alpha: 0.005,
     },
 );

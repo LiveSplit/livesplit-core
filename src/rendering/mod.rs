@@ -639,7 +639,7 @@ impl<B: Backend> RenderContext<'_, B> {
 
     fn render_stroke_path(&mut self, path: &B::Path, color: Color, stroke_width: f32) {
         self.backend
-            .render_stroke_path(path, stroke_width, decode_color(&color), self.transform)
+            .render_stroke_path(path, stroke_width, color.to_array(), self.transform)
     }
 
     fn create_icon(&mut self, image_data: &[u8]) -> Option<Icon<B::Image>> {
@@ -987,33 +987,21 @@ impl<B: Backend> RenderContext<'_, B> {
     }
 }
 
-fn decode_gradient(gradient: &Gradient) -> Option<FillShader> {
+const fn decode_gradient(gradient: &Gradient) -> Option<FillShader> {
     Some(match gradient {
         Gradient::Transparent => return None,
         Gradient::Horizontal(left, right) => {
-            let left = decode_color(left);
-            let right = decode_color(right);
-            FillShader::HorizontalGradient(left, right)
+            FillShader::HorizontalGradient(left.to_array(), right.to_array())
         }
         Gradient::Vertical(top, bottom) => {
-            let top = decode_color(top);
-            let bottom = decode_color(bottom);
-            FillShader::VerticalGradient(top, bottom)
+            FillShader::VerticalGradient(top.to_array(), bottom.to_array())
         }
-        Gradient::Plain(plain) => {
-            let plain = decode_color(plain);
-            FillShader::SolidColor(plain)
-        }
+        Gradient::Plain(plain) => FillShader::SolidColor(plain.to_array()),
     })
 }
 
-fn decode_color(color: &Color) -> [f32; 4] {
-    let (r, g, b, a) = color.rgba.into();
-    [r, g, b, a]
-}
-
-fn solid(color: &Color) -> FillShader {
-    FillShader::SolidColor(decode_color(color))
+const fn solid(color: &Color) -> FillShader {
+    FillShader::SolidColor(color.to_array())
 }
 
 fn component_width(component: &ComponentState) -> f32 {

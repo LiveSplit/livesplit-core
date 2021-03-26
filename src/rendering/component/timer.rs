@@ -1,6 +1,6 @@
 use crate::{
     component::timer::State,
-    rendering::{decode_color, Backend, FillShader, RenderContext, PADDING},
+    rendering::{Backend, FillShader, RenderContext, PADDING},
 };
 
 pub(in crate::rendering) fn render(
@@ -10,8 +10,8 @@ pub(in crate::rendering) fn render(
 ) -> f32 {
     context.render_rectangle([0.0, 0.0], [width, height], &component.background);
     let shader = FillShader::VerticalGradient(
-        decode_color(&component.top_color),
-        decode_color(&component.bottom_color),
+        component.top_color.to_array(),
+        component.bottom_color.to_array(),
     );
     let x = context.render_timer(
         &component.fraction,

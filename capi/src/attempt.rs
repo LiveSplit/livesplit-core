@@ -3,8 +3,7 @@
 //! then reset, an Attempt describing general information about it is created.
 
 use super::{output_time, output_time_span};
-use crate::atomic_date_time::NullableOwnedAtomicDateTime;
-use crate::time_span::NullableTimeSpan;
+use crate::{atomic_date_time::NullableOwnedAtomicDateTime, time_span::NullableTimeSpan};
 use livesplit_core::{Attempt, Time};
 use std::ptr;
 
@@ -42,20 +41,12 @@ pub extern "C" fn Attempt_pause_time(this: &Attempt) -> *const NullableTimeSpan 
 /// if this information is not known.
 #[no_mangle]
 pub extern "C" fn Attempt_started(this: &Attempt) -> NullableOwnedAtomicDateTime {
-    if let Some(date_time) = this.started() {
-        Some(Box::new(date_time))
-    } else {
-        None
-    }
+    this.started().map(Box::new)
 }
 
 /// Accesses the point in time the attempt was ended at. This returns <NULL> if
 /// this information is not known.
 #[no_mangle]
 pub extern "C" fn Attempt_ended(this: &Attempt) -> NullableOwnedAtomicDateTime {
-    if let Some(date_time) = this.ended() {
-        Some(Box::new(date_time))
-    } else {
-        None
-    }
+    this.ended().map(Box::new)
 }

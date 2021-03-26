@@ -172,7 +172,7 @@ impl Default for Settings {
         Settings {
             background: ListGradient::Alternating(
                 Color::transparent(),
-                Color::from((1.0, 1.0, 1.0, 0.04)),
+                Color::rgba(1.0, 1.0, 1.0, 0.04),
             ),
             visual_split_count: 16,
             split_preview_count: 1,
@@ -182,8 +182,8 @@ impl Default for Settings {
             fill_with_blank_space: true,
             display_two_rows: false,
             current_split_gradient: Gradient::Vertical(
-                Color::from((51.0 / 255.0, 115.0 / 255.0, 244.0 / 255.0, 1.0)),
-                Color::from((21.0 / 255.0, 53.0 / 255.0, 116.0 / 255.0, 1.0)),
+                Color::rgba(51.0 / 255.0, 115.0 / 255.0, 244.0 / 255.0, 1.0),
+                Color::rgba(21.0 / 255.0, 53.0 / 255.0, 116.0 / 255.0, 1.0),
             ),
             show_column_labels: false,
             columns: vec![

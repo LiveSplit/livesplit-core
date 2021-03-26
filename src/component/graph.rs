@@ -129,12 +129,12 @@ impl Default for Settings {
             show_best_segments: false,
             live_graph: true,
             flip_graph: false,
-            behind_background_color: (115.0 / 255.0, 40.0 / 255.0, 40.0 / 255.0, 1.0).into(),
-            ahead_background_color: (40.0 / 255.0, 115.0 / 255.0, 52.0 / 255.0, 1.0).into(),
-            grid_lines_color: (0.0, 0.0, 0.0, 0.15).into(),
-            graph_lines_color: (1.0, 1.0, 1.0, 1.0).into(),
-            partial_fill_color: (1.0, 1.0, 1.0, 0.25).into(),
-            complete_fill_color: (1.0, 1.0, 1.0, 0.4).into(),
+            behind_background_color: Color::rgba(115.0 / 255.0, 40.0 / 255.0, 40.0 / 255.0, 1.0),
+            ahead_background_color: Color::rgba(40.0 / 255.0, 115.0 / 255.0, 52.0 / 255.0, 1.0),
+            grid_lines_color: Color::rgba(0.0, 0.0, 0.0, 0.15),
+            graph_lines_color: Color::rgba(1.0, 1.0, 1.0, 1.0),
+            partial_fill_color: Color::rgba(1.0, 1.0, 1.0, 0.25),
+            complete_fill_color: Color::rgba(1.0, 1.0, 1.0, 0.4),
             height: 80,
         }
     }

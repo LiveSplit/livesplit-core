@@ -29,7 +29,7 @@ impl<'f> ColorTables<'f> {
             let entry_idx = layer.palette_entry_idx();
             let color = if entry_idx != 0xFFFF {
                 cpal::look_up(self.cpal, palette, entry_idx)
-                    .map(|col| [col.red, col.green, col.blue, col.alpha].into())
+                    .map(|c| Color::rgba8(c.red, c.green, c.blue, c.alpha))
             } else {
                 None
             };

@@ -88,7 +88,6 @@ pub use crate::{
     },
 };
 pub use livesplit_hotkey as hotkey;
-pub use palette;
 
 #[cfg(not(feature = "std"))]
 pub use crate::platform::{register_clock, Clock, Duration};
