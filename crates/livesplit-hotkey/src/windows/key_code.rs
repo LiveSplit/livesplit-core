@@ -1,7 +1,10 @@
+use num_derive::FromPrimitive;
 use std::str::FromStr;
 
 #[repr(u8)]
-#[derive(Debug, Eq, PartialEq, Hash, Copy, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug, Eq, PartialEq, Hash, Copy, Clone, serde::Serialize, serde::Deserialize, FromPrimitive,
+)]
 pub enum KeyCode {
     LButton = 0x01,
     RButton = 0x02,
@@ -173,6 +176,8 @@ pub enum KeyCode {
     NoName = 0xFC,
     Pa1 = 0xFD,
     OemClear = 0xFE,
+    /// Keys with no keycode mapping can produce this
+    None = 0xFF,
 }
 
 impl FromStr for KeyCode {

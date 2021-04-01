@@ -10,6 +10,8 @@ keywords = ["speedrun", "timer", "livesplit", "hotkey", "keyboard"]
 edition = "2018"
 
 [target.'cfg(windows)'.dependencies]
+num-traits = "0.2"
+num-derive = "0.3"
 winapi = { version = "0.3.2", features = [
     "libloaderapi",
     "processthreadsapi",

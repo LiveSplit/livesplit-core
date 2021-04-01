@@ -1,6 +1,7 @@
 mod key_code;
 pub use self::key_code::KeyCode;
 
+use num_traits::FromPrimitive;
 use parking_lot::Mutex;
 use std::cell::RefCell;
 use std::collections::hash_map::{Entry, HashMap};
@@ -58,13 +59,15 @@ unsafe extern "system" fn callback_proc(code: c_int, wparam: WPARAM, lparam: LPA
         let state = state.as_mut().expect("State should be initialized by now");
 
         if code >= 0 {
-            let key_code = mem::transmute((*(lparam as *const KBDLLHOOKSTRUCT)).vkCode as u8);
-            let event = wparam as UINT;
-            if event == WM_KEYDOWN {
-                state
-                    .events
-                    .send(key_code)
-                    .expect("Callback Thread disconnected");
+            let hook_struct = *(lparam as *const KBDLLHOOKSTRUCT);
+            if let Some(key_code) = KeyCode::from_u8(hook_struct.vkCode as u8) {
+                let event = wparam as UINT;
+                if event == WM_KEYDOWN {
+                    state
+                        .events
+                        .send(key_code)
+                        .expect("Callback Thread disconnected");
+                }
             }
         }
 
