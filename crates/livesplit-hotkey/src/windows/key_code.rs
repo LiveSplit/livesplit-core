@@ -177,7 +177,7 @@ pub enum KeyCode {
     Pa1 = 0xFD,
     OemClear = 0xFE,
     /// Keys with no keycode mapping can produce this
-    None = 0xFF,
+    Unmapped = 0xFF,
 }
 
 impl FromStr for KeyCode {
