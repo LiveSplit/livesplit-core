@@ -58,13 +58,16 @@ unsafe extern "system" fn callback_proc(code: c_int, wparam: WPARAM, lparam: LPA
         let state = state.as_mut().expect("State should be initialized by now");
 
         if code >= 0 {
-            let key_code = mem::transmute((*(lparam as *const KBDLLHOOKSTRUCT)).vkCode as u8);
-            let event = wparam as UINT;
-            if event == WM_KEYDOWN {
-                state
-                    .events
-                    .send(key_code)
-                    .expect("Callback Thread disconnected");
+            let hook_struct = *(lparam as *const KBDLLHOOKSTRUCT);
+            if hook_struct.vkCode >= 1 && hook_struct.vkCode <= 0xFE {
+                let key_code = mem::transmute(hook_struct.vkCode as u8);
+                let event = wparam as UINT;
+                if event == WM_KEYDOWN {
+                    state
+                        .events
+                        .send(key_code)
+                        .expect("Callback Thread disconnected");
+                }
             }
         }
 
