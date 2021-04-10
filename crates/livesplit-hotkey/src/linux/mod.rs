@@ -232,16 +232,16 @@ impl Hook {
 #[test]
 fn test() {
     let hook = Hook::new().unwrap();
-    hook.register(KeyCode::NumPad1, || println!("A")).unwrap();
-    println!("Press NumPad1");
+    hook.register(KeyCode::Numpad1, || println!("A")).unwrap();
+    println!("Press Numpad1");
     thread::sleep(std::time::Duration::from_secs(5));
-    hook.unregister(KeyCode::NumPad1).unwrap();
-    hook.register(KeyCode::NumPad4, || println!("B")).unwrap();
-    println!("Press NumPad4");
+    hook.unregister(KeyCode::Numpad1).unwrap();
+    hook.register(KeyCode::Numpad4, || println!("B")).unwrap();
+    println!("Press Numpad4");
     thread::sleep(std::time::Duration::from_secs(5));
-    hook.unregister(KeyCode::NumPad4).unwrap();
-    hook.register(KeyCode::NumPad1, || println!("C")).unwrap();
-    println!("Press NumPad1");
+    hook.unregister(KeyCode::Numpad4).unwrap();
+    hook.register(KeyCode::Numpad1, || println!("C")).unwrap();
+    println!("Press Numpad1");
     thread::sleep(std::time::Duration::from_secs(5));
-    hook.unregister(KeyCode::NumPad1).unwrap();
+    hook.unregister(KeyCode::Numpad1).unwrap();
 }

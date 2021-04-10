@@ -4,14 +4,17 @@
 
 cfg_if::cfg_if! {
     if #[cfg(not(feature = "std"))] {
-        pub mod other;
-        pub use crate::other::*;
+        mod other;
+        pub use self::other::*;
     } else if #[cfg(windows)] {
-        pub mod windows;
-        pub use crate::windows::*;
+        mod windows;
+        pub use self::windows::*;
     } else if #[cfg(target_os = "linux")] {
-        pub mod linux;
-        pub use crate::linux::*;
+        mod linux;
+        pub use self::linux::*;
+    } else if #[cfg(target_os = "macos")] {
+        mod macos;
+        pub use self::macos::*;
     } else if #[cfg(all(target_arch = "wasm32", target_os = "unknown"))] {
         cfg_if::cfg_if! {
             if #[cfg(feature = "wasm-web")] {
@@ -23,7 +26,7 @@ cfg_if::cfg_if! {
             }
         }
     } else {
-        pub mod other;
-        pub use crate::other::*;
+        mod other;
+        pub use self::other::*;
     }
 }

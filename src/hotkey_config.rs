@@ -1,8 +1,10 @@
 #![allow(clippy::trivially_copy_pass_by_ref)]
 
-use crate::hotkey::KeyCode;
-use crate::platform::prelude::*;
-use crate::settings::{Field, SettingsDescription, Value};
+use crate::{
+    hotkey::KeyCode,
+    platform::prelude::*,
+    settings::{Field, SettingsDescription, Value},
+};
 use serde::{Deserialize, Serialize};
 
 /// The configuration to use for a Hotkey System. It describes with keys to use
@@ -32,25 +34,12 @@ pub struct HotkeyConfig {
     pub toggle_timing_method: Option<KeyCode>,
 }
 
-#[cfg(any(windows, target_os = "linux"))]
-impl Default for HotkeyConfig {
-    fn default() -> Self {
-        use crate::hotkey::KeyCode::*;
-        Self {
-            split: Some(NumPad1),
-            reset: Some(NumPad3),
-            undo: Some(NumPad8),
-            skip: Some(NumPad2),
-            pause: Some(NumPad5),
-            undo_all_pauses: None,
-            previous_comparison: Some(NumPad4),
-            next_comparison: Some(NumPad6),
-            toggle_timing_method: None,
-        }
-    }
-}
-
-#[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+#[cfg(any(
+    windows,
+    target_os = "linux",
+    target_os = "macos",
+    all(target_arch = "wasm32", target_os = "unknown")
+))]
 impl Default for HotkeyConfig {
     fn default() -> Self {
         use crate::hotkey::KeyCode::*;
@@ -71,6 +60,7 @@ impl Default for HotkeyConfig {
 #[cfg(not(any(
     windows,
     target_os = "linux",
+    target_os = "macos",
     all(target_arch = "wasm32", target_os = "unknown"),
 )))]
 impl Default for HotkeyConfig {
