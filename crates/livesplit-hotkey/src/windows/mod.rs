@@ -2,20 +2,31 @@ mod key_code;
 pub use self::key_code::KeyCode;
 
 use parking_lot::Mutex;
-use std::cell::RefCell;
-use std::collections::hash_map::{Entry, HashMap};
-use std::sync::mpsc::{channel, Sender};
-use std::sync::Arc;
-use std::{mem, ptr, thread};
-use winapi::ctypes::c_int;
-use winapi::shared::minwindef::{DWORD, LPARAM, LRESULT, UINT, WPARAM};
-use winapi::shared::windef::HHOOK;
-use winapi::um::libloaderapi::GetModuleHandleW;
-use winapi::um::processthreadsapi::GetCurrentThreadId;
-use winapi::um::winuser::{
-    CallNextHookEx, GetMessageW, PostThreadMessageW, SetWindowsHookExW, UnhookWindowsHookEx,
+use std::{
+    cell::RefCell,
+    collections::hash_map::{Entry, HashMap},
+    mem, ptr,
+    sync::{
+        mpsc::{channel, Sender},
+        Arc,
+    },
+    thread,
 };
-use winapi::um::winuser::{KBDLLHOOKSTRUCT, WH_KEYBOARD_LL, WM_KEYDOWN};
+use winapi::{
+    ctypes::c_int,
+    shared::{
+        minwindef::{DWORD, LPARAM, LRESULT, UINT, WPARAM},
+        windef::HHOOK,
+    },
+    um::{
+        libloaderapi::GetModuleHandleW,
+        processthreadsapi::GetCurrentThreadId,
+        winuser::{
+            CallNextHookEx, GetMessageW, PostThreadMessageW, SetWindowsHookExW,
+            UnhookWindowsHookEx, KBDLLHOOKSTRUCT, WH_KEYBOARD_LL, WM_KEYDOWN,
+        },
+    },
+};
 
 const MSG_EXIT: UINT = 0x400;
 
@@ -173,9 +184,9 @@ impl Hook {
 #[test]
 fn test() {
     let hook = Hook::new().unwrap();
-    hook.register(KeyCode::NumPad0, || println!("A")).unwrap();
+    hook.register(KeyCode::Numpad0, || println!("A")).unwrap();
     thread::sleep(std::time::Duration::from_secs(5));
-    hook.unregister(KeyCode::NumPad0).unwrap();
-    hook.register(KeyCode::NumPad1, || println!("B")).unwrap();
+    hook.unregister(KeyCode::Numpad0).unwrap();
+    hook.register(KeyCode::Numpad1, || println!("B")).unwrap();
     thread::sleep(std::time::Duration::from_secs(5));
 }
