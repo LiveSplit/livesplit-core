@@ -87,7 +87,7 @@ image-shrinking = ["std", "bytemuck", "more-image-formats"]
 rendering = ["std", "more-image-formats", "euclid", "ttf-parser", "rustybuzz", "bytemuck/derive"]
 font-loading = ["std", "rendering", "font-kit"]
 software-rendering = ["rendering", "tiny-skia"]
-wasm-web = ["std", "web-sys", "chrono/wasmbind", "livesplit-hotkey/wasm-web"]
+wasm-web = ["std", "web-sys", "chrono/wasmbind", "livesplit-hotkey/wasm-web", "parking_lot/wasm-bindgen"]
 networking = ["std", "splits-io-api"]
 
 # FIXME: Some targets don't have atomics, but we can't test for this properly

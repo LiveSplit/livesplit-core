@@ -38,4 +38,4 @@ snafu = { version = "0.6.0", default-features = false }
 [features]
 default = ["std"]
 std = ["snafu/std", "serde/std", "parking_lot", "x11-dl", "mio", "promising-future", "winapi", "bitflags"]
-wasm-web = ["wasm-bindgen", "web-sys"]
+wasm-web = ["wasm-bindgen", "web-sys", "parking_lot/wasm-bindgen"]
