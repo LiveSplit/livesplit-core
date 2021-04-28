@@ -168,10 +168,7 @@ unsafe fn release_file(file: File) {
 unsafe fn release_file(_: File) {}
 
 /// Allocate memory.
-#[cfg(all(
-    target_arch = "wasm32",
-    not(any(target_os = "wasi", feature = "wasm-web")),
-))]
+#[cfg(all(target_arch = "wasm32", not(target_os = "wasi")))]
 #[no_mangle]
 pub extern "C" fn alloc(size: usize) -> *mut u8 {
     let mut buf = Vec::with_capacity(size);
@@ -181,10 +178,7 @@ pub extern "C" fn alloc(size: usize) -> *mut u8 {
 }
 
 /// Deallocate memory.
-#[cfg(all(
-    target_arch = "wasm32",
-    not(any(target_os = "wasi", feature = "wasm-web")),
-))]
+#[cfg(all(target_arch = "wasm32", not(target_os = "wasi")))]
 #[no_mangle]
 pub extern "C" fn dealloc(ptr: *mut u8, cap: usize) {
     unsafe {
