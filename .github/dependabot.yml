@@ -8,17 +8,3 @@ updates:
   reviewers:
   - CryZe
   ignore:
-  - dependency-name: ttf-parser
-    versions:
-    - 0.10.1
-    - 0.11.0
-  - dependency-name: lyon
-    versions:
-    - 0.17.4
-    - 0.17.5
-  - dependency-name: vek
-    versions:
-    - 0.13.1
-  - dependency-name: euclid
-    versions:
-    - 0.22.1
