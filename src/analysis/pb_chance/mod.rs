@@ -39,14 +39,17 @@ pub fn for_run(run: &Run, method: TimingMethod) -> f64 {
 /// Calculates the PB chance for a timer. The chance is calculated in terms of
 /// the current attempt. If there is no attempt in progress it yields the same
 /// result as the PB chance for the run. The value is being reported as a
-/// floating point number in the range from 0 (0%) to 1 (100%).
-pub fn for_timer(timer: &Snapshot<'_>) -> f64 {
+/// floating point number in the range from 0 (0%) to 1 (100%). Additionally a
+/// boolean is returned that indicates if the value is currently actively
+/// changing as time is being lost.
+pub fn for_timer(timer: &Snapshot<'_>) -> (f64, bool) {
     let method = timer.current_timing_method();
     let all_segments = timer.run().segments();
 
-    let live_delta = super::check_live_delta(timer, false, comparison::personal_best::NAME, method);
+    let is_live =
+        super::check_live_delta(timer, false, comparison::personal_best::NAME, method).is_some();
 
-    let (segments, current_time) = if live_delta.is_some() {
+    let (segments, current_time) = if is_live {
         // If there is a live delta, act as if we did just split.
         (
             &all_segments[timer.current_split_index().unwrap() + 1..],
@@ -71,7 +74,7 @@ pub fn for_timer(timer: &Snapshot<'_>) -> f64 {
     // final split, then we want to simply compare the current time to the PB
     // time and then either return 100% or 0% based on whether our new time is a
     // PB or not.
-    if segments.is_empty() {
+    let chance = if segments.is_empty() {
         let beat_pb = all_segments
             .last()
             .and_then(|s| s.personal_best_split_time()[method])
@@ -83,5 +86,7 @@ pub fn for_timer(timer: &Snapshot<'_>) -> f64 {
         }
     } else {
         calculate(segments, method, current_time)
-    }
+    };
+
+    (chance, is_live)
 }

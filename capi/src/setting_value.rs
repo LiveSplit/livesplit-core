@@ -76,12 +76,6 @@ pub extern "C" fn SettingValue_from_optional_empty_string() -> OwnedSettingValue
     Box::new(None::<String>.into())
 }
 
-/// Creates a new setting value from a floating point number.
-#[no_mangle]
-pub extern "C" fn SettingValue_from_float(value: f64) -> OwnedSettingValue {
-    Box::new(value.into())
-}
-
 /// Creates a new setting value from an accuracy name. If it doesn't match a
 /// known accuracy, <NULL> is returned.
 #[no_mangle]

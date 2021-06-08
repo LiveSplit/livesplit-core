@@ -1,11 +1,13 @@
 use super::for_timer;
-use crate::tests_helper::{
-    create_timer, make_progress_run_with_splits_opt, run_with_splits, span, start_run,
+use crate::{
+    tests_helper::{
+        create_timer, make_progress_run_with_splits_opt, run_with_splits, span, start_run,
+    },
+    Timer, TimerPhase,
 };
-use crate::{Timer, TimerPhase};
 
 fn chance(timer: &Timer) -> u32 {
-    (for_timer(&timer.snapshot()) * 100.0).round() as _
+    (for_timer(&timer.snapshot()).0 * 100.0).round() as _
 }
 
 #[test]

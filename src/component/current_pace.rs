@@ -4,14 +4,17 @@
 //! comparison for the remainder of the run.
 
 use super::key_value;
-use crate::analysis::current_pace;
-use crate::platform::prelude::*;
-use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
-use crate::timing::{
-    formatter::{Accuracy, Regular, TimeFormatter},
-    Snapshot,
+use crate::{
+    analysis::current_pace,
+    comparison,
+    platform::prelude::*,
+    settings::{Color, Field, Gradient, SettingsDescription, Value},
+    timing::{
+        formatter::{Accuracy, Regular, TimeFormatter},
+        Snapshot,
+    },
+    TimerPhase,
 };
-use crate::{comparison, TimerPhase};
 use alloc::borrow::Cow;
 use core::fmt::Write;
 use serde::{Deserialize, Serialize};
@@ -105,9 +108,9 @@ impl Component {
         let comparison = comparison::or_current(comparison, timer);
         let key = self.text(Some(comparison));
 
-        let current_pace =
+        let (current_pace, updates_frequently) =
             if timer.current_phase() == TimerPhase::NotRunning && key.starts_with("Current Pace") {
-                None
+                (None, false)
             } else {
                 current_pace::calculate(timer, comparison)
             };
@@ -154,6 +157,7 @@ impl Component {
         }
 
         state.display_two_rows = self.settings.display_two_rows;
+        state.updates_frequently = updates_frequently;
     }
 
     /// Calculates the component's state based on the timer provided.

@@ -23,7 +23,7 @@ impl Default for Gradient {
 
 /// Describes an extended form of a gradient, specifically made for use with
 /// lists. It allows specifying different coloration for the rows in a list.
-#[derive(Debug, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ListGradient {
     /// Use the same gradient for every row in the list.
     Same(Gradient),

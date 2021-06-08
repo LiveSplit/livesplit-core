@@ -36,9 +36,12 @@ pub use run_metadata::{CustomVariable, RunMetadata};
 pub use segment::Segment;
 pub use segment_history::SegmentHistory;
 
-use crate::comparison::{default_generators, personal_best, ComparisonGenerator};
-use crate::platform::prelude::*;
-use crate::{settings::Image, AtomicDateTime, Time, TimeSpan, TimingMethod};
+use crate::{
+    comparison::{default_generators, personal_best, ComparisonGenerator},
+    platform::prelude::*,
+    settings::Image,
+    AtomicDateTime, Time, TimeSpan, TimingMethod,
+};
 use alloc::borrow::Cow;
 #[cfg(not(feature = "std"))]
 use alloc::string::String as PathBuf;
@@ -95,7 +98,7 @@ impl PartialEq for ComparisonGenerators {
 /// Error type for an invalid comparison name
 #[derive(PartialEq, Debug, snafu::Snafu)]
 pub enum ComparisonError {
-    /// Comparison name starts with "[Race]".
+    /// Comparison name starts with "\[Race\]".
     NameStartsWithRace,
     /// Comparison name is a duplicate.
     DuplicateName,

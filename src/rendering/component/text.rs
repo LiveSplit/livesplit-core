@@ -1,11 +1,15 @@
 use crate::{
     component::text::{State, TextState},
     layout::{LayoutDirection, LayoutState},
-    rendering::{solid, Backend, RenderContext, DEFAULT_TEXT_SIZE, PADDING, TEXT_ALIGN_TOP},
+    rendering::{
+        consts::{DEFAULT_TEXT_SIZE, PADDING, TEXT_ALIGN_TOP},
+        resource::ResourceAllocator,
+        solid, RenderContext,
+    },
 };
 
 pub(in crate::rendering) fn render(
-    context: &mut RenderContext<'_, impl Backend>,
+    context: &mut RenderContext<'_, impl ResourceAllocator>,
     [width, height]: [f32; 2],
     component: &State,
     layout_state: &LayoutState,
@@ -28,6 +32,7 @@ pub(in crate::rendering) fn render(
             &left,
             &[],
             &right,
+            false,
             [width, height],
             component
                 .left_center_color

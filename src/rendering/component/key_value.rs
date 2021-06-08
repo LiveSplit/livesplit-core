@@ -1,11 +1,11 @@
 use crate::{
     component::key_value::State,
     layout::{LayoutDirection, LayoutState},
-    rendering::{Backend, RenderContext},
+    rendering::{resource::ResourceAllocator, RenderContext},
 };
 
 pub(in crate::rendering) fn render(
-    context: &mut RenderContext<'_, impl Backend>,
+    context: &mut RenderContext<'_, impl ResourceAllocator>,
     dim: [f32; 2],
     component: &State,
     layout_state: &LayoutState,
@@ -15,6 +15,7 @@ pub(in crate::rendering) fn render(
         &component.key,
         &component.key_abbreviations,
         &component.value,
+        component.updates_frequently,
         dim,
         component.key_color.unwrap_or(layout_state.text_color),
         component.value_color.unwrap_or(layout_state.text_color),

@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 
 /// Describes a setting's value. Such a value can be of a variety of different
 /// types.
-#[derive(derive_more::From, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, derive_more::From, Serialize, Deserialize)]
 pub enum Value {
     /// A boolean value.
     Bool(bool),
@@ -24,8 +24,6 @@ pub enum Value {
     String(String),
     /// An optional string.
     OptionalString(Option<String>),
-    /// A floating point number.
-    Float(f64),
     /// An accuracy, describing how many digits to show for the fractional part
     /// of a time.
     Accuracy(Accuracy),
@@ -109,14 +107,6 @@ impl Value {
     pub fn into_optional_string(self) -> Result<Option<String>> {
         match self {
             Value::OptionalString(v) => Ok(v),
-            _ => Err(Error::WrongType),
-        }
-    }
-
-    /// Tries to convert the value into a floating point number.
-    pub fn into_float(self) -> Result<f64> {
-        match self {
-            Value::Float(v) => Ok(v),
             _ => Err(Error::WrongType),
         }
     }
@@ -270,12 +260,6 @@ impl From<Value> for String {
 impl From<Value> for Option<String> {
     fn from(value: Value) -> Self {
         value.into_optional_string().unwrap()
-    }
-}
-
-impl From<Value> for f64 {
-    fn from(value: Value) -> Self {
-        value.into_float().unwrap()
     }
 }
 

@@ -6,13 +6,16 @@
 //! active time loss whenever the runner is losing time on the current segment.
 
 use super::key_value;
-use crate::platform::prelude::*;
-use crate::settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
-use crate::timing::{
-    formatter::{Accuracy, Delta, SegmentTime, TimeFormatter},
-    Snapshot,
+use crate::{
+    analysis, comparison,
+    platform::prelude::*,
+    settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value},
+    timing::{
+        formatter::{Accuracy, Delta, SegmentTime, TimeFormatter},
+        Snapshot,
+    },
+    GeneralLayoutSettings, TimerPhase,
 };
-use crate::{analysis, comparison, GeneralLayoutSettings, TimerPhase};
 use alloc::borrow::Cow;
 use core::fmt::Write as FmtWrite;
 use serde::{Deserialize, Serialize};
@@ -232,6 +235,7 @@ impl Component {
         }
 
         state.display_two_rows = self.settings.display_two_rows;
+        state.updates_frequently = live_segment.is_some();
     }
 
     /// Calculates the component's state based on the timer and the layout

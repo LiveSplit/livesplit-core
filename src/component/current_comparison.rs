@@ -3,9 +3,11 @@
 //! comparison that is currently selected to be compared against.
 
 use super::key_value;
-use crate::platform::prelude::*;
-use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
-use crate::Timer;
+use crate::{
+    platform::prelude::*,
+    settings::{Color, Field, Gradient, SettingsDescription, Value},
+    Timer,
+};
 use serde::{Deserialize, Serialize};
 
 /// The Current Comparison Component is a component that shows the name of the
@@ -86,6 +88,7 @@ impl Component {
         state.key_abbreviations.push("Comparison".into());
 
         state.display_two_rows = self.settings.display_two_rows;
+        state.updates_frequently = false;
     }
 
     /// Calculates the component's state based on the timer provided.

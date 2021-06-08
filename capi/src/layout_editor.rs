@@ -4,11 +4,11 @@
 //! state objects that can be visualized by any kind of User Interface.
 
 use super::{output_vec, Json};
-use crate::component::OwnedComponent;
-use crate::layout::OwnedLayout;
-use crate::layout_editor_state::OwnedLayoutEditorState;
-use crate::setting_value::OwnedSettingValue;
-use livesplit_core::{LayoutEditor, Timer};
+use crate::{
+    component::OwnedComponent, layout::OwnedLayout, layout_editor_state::OwnedLayoutEditorState,
+    setting_value::OwnedSettingValue,
+};
+use livesplit_core::{layout::LayoutState, LayoutEditor, Timer};
 
 /// type
 pub type OwnedLayoutEditor = Box<LayoutEditor>;
@@ -55,6 +55,30 @@ pub extern "C" fn LayoutEditor_layout_state_as_json(
 ) -> Json {
     output_vec(|o| {
         this.layout_state(&timer.snapshot()).write_json(o).unwrap();
+    })
+}
+
+/// Updates the layout's state based on the timer provided.
+#[no_mangle]
+pub extern "C" fn LayoutEditor_update_layout_state(
+    this: &mut LayoutEditor,
+    state: &mut LayoutState,
+    timer: &Timer,
+) {
+    this.update_layout_state(state, &timer.snapshot())
+}
+
+/// Updates the layout's state based on the timer provided and encodes it as
+/// JSON.
+#[no_mangle]
+pub extern "C" fn LayoutEditor_update_layout_state_as_json(
+    this: &mut LayoutEditor,
+    state: &mut LayoutState,
+    timer: &Timer,
+) -> Json {
+    this.update_layout_state(state, &timer.snapshot());
+    output_vec(|o| {
+        state.write_json(o).unwrap();
     })
 }
 

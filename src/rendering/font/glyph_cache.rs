@@ -1,14 +1,17 @@
 use std::marker::PhantomData;
 
-use crate::settings::Color;
+use crate::{
+    rendering::resource::{Handle, Handles, PathBuilder, ResourceAllocator, SharedOwnership},
+    settings::Color,
+};
 
-use super::{color_font::iter_colored_glyphs, Backend, Font};
+use super::{color_font::iter_colored_glyphs, Font};
 use hashbrown::HashMap;
 use ttf_parser::OutlineBuilder;
 
-struct PathBuilder<B, PB>(PB, PhantomData<fn(&mut B)>);
+struct GlyphBuilder<B, PB>(PB, PhantomData<fn(&mut B)>);
 
-impl<B, PB: super::super::PathBuilder<B>> OutlineBuilder for PathBuilder<B, PB> {
+impl<B, PB: PathBuilder<B>> OutlineBuilder for GlyphBuilder<B, PB> {
     fn move_to(&mut self, x: f32, y: f32) {
         self.0.move_to(x, -y);
     }
@@ -27,7 +30,7 @@ impl<B, PB: super::super::PathBuilder<B>> OutlineBuilder for PathBuilder<B, PB> 
 }
 
 pub struct GlyphCache<P> {
-    glyphs: HashMap<u32, Vec<(Option<Color>, P)>>,
+    glyphs: HashMap<u32, Vec<(Option<Color>, Handle<P>)>>,
 }
 
 impl<P> Default for GlyphCache<P> {
@@ -38,32 +41,28 @@ impl<P> Default for GlyphCache<P> {
     }
 }
 
-impl<P> GlyphCache<P> {
+impl<P: SharedOwnership> GlyphCache<P> {
     pub fn new() -> Self {
         Default::default()
     }
 
     #[cfg(feature = "font-loading")]
-    pub fn clear(&mut self, backend: &mut impl Backend<Path = P>) {
-        for (_, glyph) in self.glyphs.drain() {
-            for (_, layer) in glyph {
-                backend.free_path(layer);
-            }
-        }
+    pub fn clear(&mut self) {
+        self.glyphs.clear();
     }
 
     pub fn lookup_or_insert(
         &mut self,
         font: &Font<'_>,
         glyph: u32,
-        backend: &mut impl Backend<Path = P>,
-    ) -> &[(Option<Color>, P)] {
+        handles: &mut Handles<impl ResourceAllocator<Path = P>>,
+    ) -> &[(Option<Color>, Handle<P>)] {
         self.glyphs.entry(glyph).or_insert_with(|| {
             let mut glyphs = Vec::new();
             iter_colored_glyphs(&font.color_tables, 0, glyph as _, |glyph, color| {
-                let mut builder = PathBuilder(backend.path_builder(), PhantomData);
+                let mut builder = GlyphBuilder(handles.path_builder(), PhantomData);
                 font.outline_glyph(glyph, &mut builder);
-                let path = super::super::PathBuilder::finish(builder.0, backend);
+                let path = builder.0.finish(handles);
                 glyphs.push((color, path));
             });
             glyphs

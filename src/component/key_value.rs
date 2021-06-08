@@ -33,6 +33,9 @@ pub struct State {
     pub key_abbreviations: Vec<Cow<'static, str>>,
     /// Specifies whether to display the key and the value in two separate rows.
     pub display_two_rows: bool,
+    /// This value indicates whether the value is currently frequently being
+    /// updated. This can be used for rendering optimizations.
+    pub updates_frequently: bool,
 }
 
 #[cfg(feature = "std")]

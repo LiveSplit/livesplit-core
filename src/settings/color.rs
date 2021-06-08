@@ -1,10 +1,10 @@
 use crate::platform::math::f32::abs;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-/// [`Color`]s can be used to describe what [`Color`] to use for visualizing
-/// backgrounds, texts, lines and various other elements that are being shown.
-/// They are stored as RGBA [`Color`]s with 32-bit float point numbers ranging from
-/// 0.0 to 1.0 per channel.
+/// [`Colors`](Color) can be used to describe what [`Color`] to use for
+/// visualizing backgrounds, texts, lines and various other elements that are
+/// being shown. They are stored as RGBA [`Colors`](Color) with 32-bit floating
+/// point numbers ranging from 0.0 to 1.0 per channel.
 #[derive(Debug, Copy, Clone, Default, PartialEq)]
 #[repr(C)]
 pub struct Color {
