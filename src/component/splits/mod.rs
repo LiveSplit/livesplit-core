@@ -5,9 +5,9 @@
 //! list provides scrolling functionality, so not every segment needs to be
 //! shown all the time.
 
-use crate::platform::prelude::*;
 use crate::{
     clear_vec::{Clear, ClearVec},
+    platform::prelude::*,
     settings::{
         CachedImageId, Color, Field, Gradient, ImageData, ListGradient, SettingsDescription, Value,
     },
@@ -380,6 +380,7 @@ impl Component {
                         value: String::new(),
                         semantic_color: Default::default(),
                         visual_color: Color::transparent(),
+                        updates_frequently: false,
                     }),
                     column,
                     timer,

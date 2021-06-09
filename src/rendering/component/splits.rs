@@ -2,16 +2,21 @@ use crate::{
     component::splits::State,
     layout::{LayoutDirection, LayoutState},
     rendering::{
-        icon::Icon, solid, vertical_padding, Backend, RenderContext, BOTH_PADDINGS,
-        DEFAULT_COMPONENT_HEIGHT, DEFAULT_TEXT_SIZE, PADDING, TEXT_ALIGN_BOTTOM, TEXT_ALIGN_TOP,
-        THIN_SEPARATOR_THICKNESS, TWO_ROW_HEIGHT,
+        consts::{
+            vertical_padding, BOTH_PADDINGS, DEFAULT_COMPONENT_HEIGHT, DEFAULT_TEXT_SIZE, PADDING,
+            TEXT_ALIGN_BOTTOM, TEXT_ALIGN_TOP, THIN_SEPARATOR_THICKNESS, TWO_ROW_HEIGHT,
+        },
+        icon::Icon,
+        resource::ResourceAllocator,
+        scene::Layer,
+        solid, RenderContext,
     },
     settings::{Gradient, ListGradient},
 };
 
 pub const COLUMN_WIDTH: f32 = 2.75;
 
-pub(in crate::rendering) fn render<B: Backend>(
+pub(in crate::rendering) fn render<B: ResourceAllocator>(
     context: &mut RenderContext<'_, B>,
     [width, height]: [f32; 2],
     component: &State,
@@ -65,11 +70,7 @@ pub(in crate::rendering) fn render<B: Backend>(
         if icon_change.segment_index >= split_icons.len() {
             split_icons.extend((0..=icon_change.segment_index - split_icons.len()).map(|_| None));
         }
-        let icon = &mut split_icons[icon_change.segment_index];
-        if let Some(old_icon) = icon.take() {
-            context.backend.free_image(old_icon.image);
-        }
-        *icon = context.create_icon(&icon_change.icon);
+        split_icons[icon_change.segment_index] = context.create_icon(&icon_change.icon);
     }
 
     if let Some(column_labels) = &component.column_labels {
@@ -79,6 +80,7 @@ pub(in crate::rendering) fn render<B: Backend>(
                 let left_x = right_x - COLUMN_WIDTH;
                 context.render_text_right_align(
                     label,
+                    Layer::Bottom,
                     [right_x, TEXT_ALIGN_TOP],
                     DEFAULT_TEXT_SIZE,
                     text_color,
@@ -133,6 +135,7 @@ pub(in crate::rendering) fn render<B: Backend>(
                 if !column.value.is_empty() {
                     left_x = context.render_numbers(
                         &column.value,
+                        Layer::from_updates_frequently(column.updates_frequently),
                         [right_x, split_height + TEXT_ALIGN_BOTTOM],
                         DEFAULT_TEXT_SIZE,
                         solid(&column.visual_color),

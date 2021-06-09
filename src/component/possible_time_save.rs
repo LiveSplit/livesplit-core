@@ -5,14 +5,17 @@
 //! for the remainder of the current attempt.
 
 use super::key_value;
-use crate::analysis::possible_time_save;
-use crate::platform::prelude::*;
-use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
-use crate::timing::{
-    formatter::{Accuracy, SegmentTime, TimeFormatter},
-    Snapshot,
+use crate::{
+    analysis::possible_time_save,
+    comparison,
+    platform::prelude::*,
+    settings::{Color, Field, Gradient, SettingsDescription, Value},
+    timing::{
+        formatter::{Accuracy, SegmentTime, TimeFormatter},
+        Snapshot,
+    },
+    TimerPhase,
 };
-use crate::{comparison, TimerPhase};
 use alloc::borrow::Cow;
 use core::fmt::Write as FmtWrite;
 use serde::{Deserialize, Serialize};
@@ -160,6 +163,7 @@ impl Component {
         }
 
         state.display_two_rows = self.settings.display_two_rows;
+        state.updates_frequently = false;
     }
 
     /// Calculates the component's state based on the timer provided.

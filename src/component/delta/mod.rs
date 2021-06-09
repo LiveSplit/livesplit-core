@@ -3,14 +3,17 @@
 //! attempt is compared to the chosen comparison.
 
 use super::key_value;
-use crate::analysis::{delta, state_helper};
-use crate::platform::prelude::*;
-use crate::settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value};
-use crate::timing::{
-    formatter::{Accuracy, Delta, TimeFormatter},
-    Snapshot,
+use crate::{
+    analysis::{delta, state_helper},
+    comparison,
+    platform::prelude::*,
+    settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value},
+    timing::{
+        formatter::{Accuracy, Delta, TimeFormatter},
+        Snapshot,
+    },
+    GeneralLayoutSettings,
 };
-use crate::{comparison, GeneralLayoutSettings};
 use alloc::borrow::Cow;
 use core::fmt::Write;
 use serde::{Deserialize, Serialize};
@@ -145,6 +148,7 @@ impl Component {
         }
 
         state.display_two_rows = self.settings.display_two_rows;
+        state.updates_frequently = use_live_delta;
     }
 
     /// Calculates the component's state based on the timer and the layout

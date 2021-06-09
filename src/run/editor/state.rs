@@ -93,6 +93,13 @@ pub enum SelectionState {
     Active,
 }
 
+impl SelectionState {
+    /// Returns `true` if the segment is selected.
+    pub const fn is_selected_or_active(&self) -> bool {
+        matches!(self, Self::Selected | Self::Active)
+    }
+}
+
 #[cfg(feature = "std")]
 impl State {
     /// Encodes the state object's information as JSON.

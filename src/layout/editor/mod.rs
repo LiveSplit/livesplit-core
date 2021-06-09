@@ -5,8 +5,7 @@
 //! Interface.
 
 use super::{Component, Layout, LayoutState};
-use crate::settings::Value;
-use crate::timing::Snapshot;
+use crate::{settings::Value, timing::Snapshot};
 use core::result::Result as StdResult;
 
 mod state;
@@ -62,6 +61,13 @@ impl Editor {
     /// being edited by the Layout Editor.
     pub fn layout_state(&mut self, timer: &Snapshot<'_>) -> LayoutState {
         self.layout.state(timer)
+    }
+
+    /// Updates the layout's state based on the timer provided. You can use this
+    /// to visualize all of the components of a layout, while it is still being
+    /// edited by the Layout Editor.
+    pub fn update_layout_state(&mut self, state: &mut LayoutState, timer: &Snapshot<'_>) {
+        self.layout.update_state(state, timer)
     }
 
     /// Selects the component with the given index in order to modify its

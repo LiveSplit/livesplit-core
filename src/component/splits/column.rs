@@ -124,6 +124,9 @@ pub struct ColumnState {
     pub semantic_color: SemanticColor,
     /// The visual color of the value.
     pub visual_color: Color,
+    /// This value indicates whether the column is currently frequently being
+    /// updated. This can be used for rendering optimizations.
+    pub updates_frequently: bool,
 }
 
 impl Clear for ColumnState {
@@ -164,32 +167,38 @@ pub fn update_state(
 
     let updated = update_value.is_some();
 
-    let (column_value, semantic_color, formatter) =
-        update_value.unwrap_or_else(|| match column.start_with {
-            ColumnStartWith::Empty => (None, SemanticColor::Default, ColumnFormatter::Time),
-            ColumnStartWith::ComparisonTime => (
-                segment.comparison(comparison)[method],
-                SemanticColor::Default,
-                ColumnFormatter::Time,
-            ),
-            ColumnStartWith::ComparisonSegmentTime => (
-                analysis::comparison_combined_segment_time(
-                    timer.run(),
-                    segment_index,
-                    comparison,
-                    method,
+    let ((column_value, semantic_color, formatter), is_live) = update_value.unwrap_or_else(|| {
+        (
+            match column.start_with {
+                ColumnStartWith::Empty => (None, SemanticColor::Default, ColumnFormatter::Time),
+                ColumnStartWith::ComparisonTime => (
+                    segment.comparison(comparison)[method],
+                    SemanticColor::Default,
+                    ColumnFormatter::Time,
                 ),
-                SemanticColor::Default,
-                ColumnFormatter::Time,
-            ),
-            ColumnStartWith::PossibleTimeSave => (
-                possible_time_save::calculate(timer, segment_index, comparison, false),
-                SemanticColor::Default,
-                ColumnFormatter::PossibleTimeSave,
-            ),
-        });
+                ColumnStartWith::ComparisonSegmentTime => (
+                    analysis::comparison_combined_segment_time(
+                        timer.run(),
+                        segment_index,
+                        comparison,
+                        method,
+                    ),
+                    SemanticColor::Default,
+                    ColumnFormatter::Time,
+                ),
+                ColumnStartWith::PossibleTimeSave => (
+                    possible_time_save::calculate(timer, segment_index, comparison, false),
+                    SemanticColor::Default,
+                    ColumnFormatter::PossibleTimeSave,
+                ),
+            },
+            false,
+        )
+    });
 
     let is_empty = column.start_with == ColumnStartWith::Empty && !updated;
+
+    state.updates_frequently = is_live && column_value.is_some();
 
     state.value.clear();
     if !is_empty {
@@ -218,7 +227,7 @@ fn column_update_value(
     current_split: Option<usize>,
     method: TimingMethod,
     comparison: &str,
-) -> Option<(Option<TimeSpan>, SemanticColor, ColumnFormatter)> {
+) -> Option<((Option<TimeSpan>, SemanticColor, ColumnFormatter), bool)> {
     use self::{ColumnUpdateTrigger::*, ColumnUpdateWith::*};
 
     if current_split < Some(segment_index) {
@@ -250,19 +259,19 @@ fn column_update_value(
 
     let is_live = is_current_split;
 
-    match (column.update_with, is_live) {
-        (DontUpdate, _) => None,
+    let value = match (column.update_with, is_live) {
+        (DontUpdate, _) => return None,
 
-        (SplitTime, false) => Some((
+        (SplitTime, false) => (
             segment.split_time()[method],
             SemanticColor::Default,
             ColumnFormatter::Time,
-        )),
-        (SplitTime, true) => Some((
+        ),
+        (SplitTime, true) => (
             timer.current_time()[method],
             SemanticColor::Default,
             ColumnFormatter::Time,
-        )),
+        ),
 
         (Delta, false) | (DeltaWithFallback, false) => {
             let split_time = segment.split_time()[method];
@@ -275,31 +284,31 @@ fn column_update_value(
             } else {
                 (delta, ColumnFormatter::Delta)
             };
-            Some((
+            (
                 value,
                 split_color(timer, delta, segment_index, true, true, comparison, method),
                 formatter,
-            ))
+            )
         }
-        (Delta, true) | (DeltaWithFallback, true) => Some((
+        (Delta, true) | (DeltaWithFallback, true) => (
             catch! {
                 timer.current_time()[method]? -
                 segment.comparison(comparison)[method]?
             },
             SemanticColor::Default,
             ColumnFormatter::Delta,
-        )),
+        ),
 
-        (SegmentTime, false) => Some((
+        (SegmentTime, false) => (
             analysis::previous_segment_time(timer, segment_index, method),
             SemanticColor::Default,
             ColumnFormatter::Time,
-        )),
-        (SegmentTime, true) => Some((
+        ),
+        (SegmentTime, true) => (
             analysis::live_segment_time(timer, segment_index, method),
             SemanticColor::Default,
             ColumnFormatter::Time,
-        )),
+        ),
 
         (SegmentDelta, false) | (SegmentDeltaWithFallback, false) => {
             let delta = analysis::previous_segment_delta(timer, segment_index, comparison, method);
@@ -311,18 +320,20 @@ fn column_update_value(
             } else {
                 (delta, ColumnFormatter::Delta)
             };
-            Some((
+            (
                 value,
                 split_color(timer, delta, segment_index, false, true, comparison, method),
                 formatter,
-            ))
+            )
         }
-        (SegmentDelta, true) | (SegmentDeltaWithFallback, true) => Some((
+        (SegmentDelta, true) | (SegmentDeltaWithFallback, true) => (
             analysis::live_segment_delta(timer, segment_index, comparison, method),
             SemanticColor::Default,
             ColumnFormatter::Delta,
-        )),
-    }
+        ),
+    };
+
+    Some((value, is_live))
 }
 
 impl ColumnUpdateWith {

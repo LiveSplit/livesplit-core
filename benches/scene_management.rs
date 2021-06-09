@@ -3,7 +3,7 @@ cfg_if::cfg_if! {
         use criterion::{criterion_group, criterion_main, Criterion};
         use livesplit_core::{
             layout::{self, Layout},
-            rendering::{Backend, FillShader, PathBuilder, Renderer, Rgba, Transform},
+            rendering::{PathBuilder, ResourceAllocator, SceneManager},
             run::parser::livesplit,
             Run, Segment, TimeSpan, Timer, TimingMethod,
         };
@@ -25,7 +25,7 @@ cfg_if::cfg_if! {
             fn finish(self, _: &mut Dummy) -> Self::Path {}
         }
 
-        impl Backend for Dummy {
+        impl ResourceAllocator for Dummy {
             type PathBuilder = Dummy;
             type Path = ();
             type Image = ();
@@ -33,12 +33,7 @@ cfg_if::cfg_if! {
             fn path_builder(&mut self) -> Self::PathBuilder {
                 Dummy
             }
-            fn render_fill_path(&mut self, _: &Self::Path, _: FillShader, _: Transform) {}
-            fn render_stroke_path(&mut self, _: &Self::Path, _: f32, _: Rgba, _: Transform) {}
-            fn render_image(&mut self, _: &Self::Image, _: &Self::Path, _: Transform) {}
-            fn free_path(&mut self, _: Self::Path) {}
             fn create_image(&mut self, _: u32, _: u32, _: &[u8]) -> Self::Image {}
-            fn free_image(&mut self, _: Self::Image) {}
         }
 
         fn default(c: &mut Criterion) {
@@ -54,10 +49,10 @@ cfg_if::cfg_if! {
 
             let state = layout.state(&timer.snapshot());
 
-            let mut renderer = Renderer::new();
+            let mut manager = SceneManager::new(Dummy);
 
-            c.bench_function("Dummy Rendering (Default)", move |b| {
-                b.iter(|| renderer.render(&mut Dummy, (300.0, 500.0), &state))
+            c.bench_function("Scene Management (Default)", move |b| {
+                b.iter(|| manager.update_scene(Dummy, (300.0, 500.0), &state))
             });
         }
 
@@ -67,16 +62,19 @@ cfg_if::cfg_if! {
             let mut layout = lsl("tests/layout_files/subsplits.lsl");
 
             start_run(&mut timer);
-            make_progress_run_with_splits_opt(&mut timer, &[Some(10.0), None, Some(20.0), Some(55.0)]);
+            make_progress_run_with_splits_opt(
+                &mut timer,
+                &[Some(10.0), None, Some(20.0), Some(55.0)],
+            );
 
             let snapshot = timer.snapshot();
             let mut state = layout.state(&snapshot);
             layout.update_state(&mut state, &snapshot);
 
-            let mut renderer = Renderer::new();
+            let mut manager = SceneManager::new(Dummy);
 
-            c.bench_function("Dummy Rendering (Subsplits Layout)", move |b| {
-                b.iter(|| renderer.render(&mut Dummy, (300.0, 800.0), &state))
+            c.bench_function("Scene Management (Subsplits Layout)", move |b| {
+                b.iter(|| manager.update_scene(Dummy, (300.0, 800.0), &state))
             });
         }
 

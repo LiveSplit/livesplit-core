@@ -103,7 +103,7 @@ jobs:
           - NetBSD x86_64
 
           # Solaris
-          - Solaris x86_64
+          # - Solaris x86_64
           # weird error
           # https://travis-ci.org/LiveSplit/livesplit-core/jobs/327011754
           # - env: TARGET=sparcv9-sun-solaris
@@ -533,11 +533,13 @@ jobs:
             tests: skip
 
           # Solaris
-          - label: Solaris x86_64
-            target: x86_64-sun-solaris
-            os: ubuntu-latest
-            tests: skip
-            dylib: skip
+          # - label: Solaris x86_64
+          #   target: x86_64-sun-solaris
+          #   os: ubuntu-latest
+          #   tests: skip
+          #   dylib: skip
+          # FIXME: Solaris stopped working. core isn't available:
+          # https://github.com/LiveSplit/livesplit-core/runs/2777745289?check_suite_focus=true
 
           # Testing other channels
           - label: Windows Beta

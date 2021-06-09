@@ -114,6 +114,7 @@ impl Component {
         state.key_abbreviations.push("SoB".into());
 
         state.display_two_rows = self.settings.display_two_rows;
+        state.updates_frequently = false;
     }
 
     /// Calculates the component's state based on the timer provided.

@@ -2,12 +2,16 @@ use crate::{
     component::detailed_timer::State,
     layout::LayoutState,
     rendering::{
-        component::timer, icon::Icon, solid, vertical_padding, Backend, RenderContext,
-        BOTH_PADDINGS, PADDING,
+        component::timer,
+        consts::{vertical_padding, BOTH_PADDINGS, PADDING},
+        icon::Icon,
+        resource::ResourceAllocator,
+        scene::Layer,
+        solid, RenderContext,
     },
 };
 
-pub(in crate::rendering) fn render<B: Backend>(
+pub(in crate::rendering) fn render<B: ResourceAllocator>(
     context: &mut RenderContext<'_, B>,
     [width, height]: [f32; 2],
     component: &State,
@@ -22,9 +26,6 @@ pub(in crate::rendering) fn render<B: Backend>(
     let icon_size = height - 2.0 * vertical_padding;
 
     if let Some(icon) = &component.icon_change {
-        if let Some(old_icon) = detailed_timer_icon.take() {
-            context.backend.free_image(old_icon.image);
-        }
         *detailed_timer_icon = context.create_icon(&icon);
     }
 
@@ -103,6 +104,7 @@ pub(in crate::rendering) fn render<B: Backend>(
     if let Some(comparison) = &component.comparison2 {
         context.render_numbers(
             &comparison.time,
+            Layer::Bottom,
             [time_x, comparison2_y],
             comparison_text_scale,
             text_color,
@@ -111,6 +113,7 @@ pub(in crate::rendering) fn render<B: Backend>(
     if let Some(comparison) = &component.comparison1 {
         context.render_numbers(
             &comparison.time,
+            Layer::Bottom,
             [time_x, comparison1_y],
             comparison_text_scale,
             text_color,

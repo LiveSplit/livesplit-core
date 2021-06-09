@@ -1,7 +1,12 @@
-//! The rendering module provides a renderer for layout states that is
-//! abstracted over different backends. It focuses on rendering paths, i.e.
-//! lines, quadratic and cubic bezier curves. A backend therefore needs to be
-//! able to render paths. An optional software renderer is available behind the
+//! The rendering module provides a [`SceneManager`] that, when provided with a
+//! [`LayoutState`], places [`Entities`](Entity) into a [`Scene`] and updates it
+//! accordingly as the [`LayoutState`] changes. It is up to a specific renderer
+//! to then take the [`Scene`] and render out the [`Entities`](Entity). There is
+//! a [`ResourceAllocator`] trait that defines the types of resources an
+//! [`Entity`] consists of. A specific renderer can then provide an
+//! implementation that provides the resources it can render out. Those
+//! resources are images and paths, i.e. lines, quadratic and cubic bezier
+//! curves. An optional software renderer is available behind the
 //! `software-rendering` feature that uses tiny-skia to efficiently render the
 //! paths on the CPU. It is surprisingly fast and can be considered the default
 //! renderer.
@@ -66,24 +71,38 @@
 // thin separators have half of this thickness.
 
 mod component;
+mod consts;
+mod entity;
 mod font;
 mod icon;
+mod resource;
+mod scene;
 
 #[cfg(feature = "software-rendering")]
 pub mod software;
 
 use self::{
-    font::{Font, GlyphCache, TEXT_FONT, TIMER_FONT},
+    consts::{
+        BOTH_PADDINGS, DEFAULT_TEXT_SIZE, DEFAULT_VERTICAL_WIDTH, PADDING, TEXT_ALIGN_BOTTOM,
+        TEXT_ALIGN_TOP, TWO_ROW_HEIGHT,
+    },
+    font::FontCache,
     icon::Icon,
+    resource::Handles,
 };
 use crate::{
-    layout::{ComponentState, LayoutDirection, LayoutState},
-    settings::{Color, FontStretch, FontStyle, FontWeight, Gradient},
+    layout::{LayoutDirection, LayoutState},
+    settings::{Color, Gradient},
 };
 use alloc::borrow::Cow;
 use core::iter;
 use euclid::{Transform2D, UnknownUnit};
-use rustybuzz::UnicodeBuffer;
+
+pub use self::{
+    entity::Entity,
+    resource::{Handle, PathBuilder, ResourceAllocator, SharedOwnership},
+    scene::{Layer, Scene},
+};
 
 pub use euclid;
 
@@ -96,63 +115,8 @@ pub type Rgba = [f32; 4];
 /// scene.
 pub type Transform = Transform2D<f32, UnknownUnit, UnknownUnit>;
 
-const PADDING: f32 = 0.35;
-const BOTH_PADDINGS: f32 = 2.0 * PADDING;
-const BOTH_VERTICAL_PADDINGS: f32 = DEFAULT_COMPONENT_HEIGHT - DEFAULT_TEXT_SIZE;
-const VERTICAL_PADDING: f32 = BOTH_VERTICAL_PADDINGS / 2.0;
-const ICON_MIN_VERTICAL_PADDING: f32 = 0.1;
-const DEFAULT_COMPONENT_HEIGHT: f32 = 1.0;
-const TWO_ROW_HEIGHT: f32 = 2.0 * DEFAULT_TEXT_SIZE + BOTH_VERTICAL_PADDINGS;
-const DEFAULT_TEXT_SIZE: f32 = 0.725;
-const DEFAULT_TEXT_ASCENT: f32 = 0.55;
-const DEFAULT_TEXT_DESCENT: f32 = DEFAULT_TEXT_SIZE - DEFAULT_TEXT_ASCENT;
-const TEXT_ALIGN_TOP: f32 = VERTICAL_PADDING + DEFAULT_TEXT_ASCENT;
-const TEXT_ALIGN_BOTTOM: f32 = -(VERTICAL_PADDING + DEFAULT_TEXT_DESCENT);
-const TEXT_ALIGN_CENTER: f32 = DEFAULT_TEXT_ASCENT - DEFAULT_TEXT_SIZE / 2.0;
-const SEPARATOR_THICKNESS: f32 = 0.1;
-const THIN_SEPARATOR_THICKNESS: f32 = SEPARATOR_THICKNESS / 2.0;
-const PSEUDO_PIXELS: f32 = 1.0 / 24.0;
-const DEFAULT_VERTICAL_WIDTH: f32 = 11.5;
-
-fn vertical_padding(height: f32) -> f32 {
-    (ICON_MIN_VERTICAL_PADDING * height).min(PADDING)
-}
-
-/// The backend provides a path builder that defines how to build paths that can
-/// be used for the backend.
-pub trait PathBuilder<B: ?Sized> {
-    /// The type of the path to build. This needs to be identical to the type of
-    /// the path used by the backend.
-    type Path;
-
-    /// Moves the cursor to a specific position and starts a new contour.
-    fn move_to(&mut self, x: f32, y: f32);
-
-    /// Adds a line from the previous position to the position specified, while
-    /// also moving the cursor along.
-    fn line_to(&mut self, x: f32, y: f32);
-
-    /// Adds a quadratic bézier curve from the previous position to the position
-    /// specified, while also moving the cursor along. (x1, y1) specifies the
-    /// control point.
-    fn quad_to(&mut self, x1: f32, y1: f32, x: f32, y: f32);
-
-    /// Adds a cubic bézier curve from the previous position to the position
-    /// specified, while also moving the cursor along. (x1, y1) and (x2, y2)
-    /// specify the two control points.
-    fn curve_to(&mut self, x1: f32, y1: f32, x2: f32, y2: f32, x: f32, y: f32);
-
-    /// Closes the current contour. The current position and the initial
-    /// position get connected by a line, forming a continuous loop. Nothing
-    /// if the path is empty or already closed.
-    fn close(&mut self);
-
-    /// Finishes building the path.
-    fn finish(self, backend: &mut B) -> Self::Path;
-}
-
 /// Specifies the colors to use when filling a path.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 pub enum FillShader {
     /// Use a single color for the whole path.
     SolidColor(Rgba),
@@ -162,103 +126,27 @@ pub enum FillShader {
     HorizontalGradient(Rgba, Rgba),
 }
 
-/// The rendering backend for the Renderer is abstracted out into the Backend
-/// trait such that the rendering isn't tied to a specific rendering framework.
-pub trait Backend {
-    /// The type the backend uses for building paths.
-    type PathBuilder: PathBuilder<Self, Path = Self::Path>;
-    /// The type the backend uses for paths.
-    type Path;
-    /// The type the backend uses for textures.
-    type Image;
-
-    /// Creates a new path builder to build a new path.
-    fn path_builder(&mut self) -> Self::PathBuilder;
-
-    /// Builds a new circle. A default implementation that approximates the
-    /// circle with 4 cubic bézier curves is provided. For more accuracy or
-    /// performance a backend can change the implementation.
-    fn build_circle(&mut self, x: f32, y: f32, r: f32) -> Self::Path {
-        // Based on https://spencermortensen.com/articles/bezier-circle/
-        const C: f64 = 0.551915024494;
-        let c = (C * r as f64) as f32;
-        let mut builder = self.path_builder();
-        builder.move_to(x, y - r);
-        builder.curve_to(x + c, y - r, x + r, y - c, x + r, y);
-        builder.curve_to(x + r, y + c, x + c, y + r, x, y + r);
-        builder.curve_to(x - c, y + r, x - r, y + c, x - r, y);
-        builder.curve_to(x - r, y - c, x - c, y - r, x, y - r);
-        builder.close();
-        builder.finish(self)
-    }
-
-    /// Instructs the backend to render a path with a fill shader. The rendered
-    /// elements are supposed to be drawn on top of each other in the order that
-    /// the backend is being instructed to render them. The colors are supposed
-    /// to be alpha blended and don't use sRGB. The transform represents a
-    /// transformation matrix to be applied to the path in order to place it in
-    /// the scene.
-    fn render_fill_path(&mut self, path: &Self::Path, shader: FillShader, transform: Transform);
-
-    /// Instructs the backend to render a path with a stroke shader. The
-    /// rendered elements are supposed to be drawn on top of each other in the
-    /// order that the backend is being instructed to render them. The colors
-    /// are supposed to be alpha blended and don't use sRGB. The transform
-    /// represents a transformation matrix to be applied to the path in order to
-    /// place it in the scene.
-    fn render_stroke_path(
-        &mut self,
-        path: &Self::Path,
-        stroke_width: f32,
-        color: Rgba,
-        transform: Transform,
-    );
-
-    /// Instructs the backend to render out an image. An optional rectangle path
-    /// is provided that the backend can use in case it needs a path to render
-    /// out images. The rendered elements are supposed to be drawn on top of
-    /// each other in the order that the backend is being instructed to render
-    /// them. The colors are supposed to be alpha blended and don't use sRGB.
-    /// The transform represents a transformation matrix to be applied to the
-    /// image in order to place it in the scene.
-    fn render_image(&mut self, image: &Self::Image, rectangle: &Self::Path, transform: Transform);
-
-    /// Instructs the backend to free a path as it is not needed anymore.
-    fn free_path(&mut self, path: Self::Path);
-
-    /// Instructs the backend to create an image out of the image data provided.
-    /// The image's resolution is provided as well. The data is an array of
-    /// RGBA8 encoded pixels (red, green, blue, alpha with each channel being an
-    /// u8).
-    fn create_image(&mut self, width: u32, height: u32, data: &[u8]) -> Self::Image;
-
-    /// Instructs the backend to free an image as it is not needed anymore.
-    fn free_image(&mut self, image: Self::Image);
-}
-
 enum CachedSize {
     Vertical(f32),
     Horizontal(f32),
 }
 
-/// A renderer can be used to render out layout states with the backend chosen.
-pub struct Renderer<P, I> {
-    #[cfg(feature = "font-loading")]
-    timer_font_setting: Option<crate::settings::Font>,
-    timer_font: Font<'static>,
-    timer_glyph_cache: GlyphCache<P>,
-    #[cfg(feature = "font-loading")]
-    times_font_setting: Option<crate::settings::Font>,
-    times_font: Font<'static>,
-    times_glyph_cache: GlyphCache<P>,
-    #[cfg(feature = "font-loading")]
-    text_font_setting: Option<crate::settings::Font>,
-    text_font: Font<'static>,
-    text_glyph_cache: GlyphCache<P>,
-    rectangle: Option<P>,
-    cached_size: Option<CachedSize>,
+/// The scene manager is the main entry point when it comes to writing a
+/// renderer for livesplit-core. When provided with a [`LayoutState`], it places
+/// [`Entities`](Entity) into a [`Scene`] and updates it accordingly as the
+/// [`LayoutState`] changes. It is up to a specific renderer to then take the
+/// [`Scene`] and render out the [`Entities`](Entity). There is a
+/// [`ResourceAllocator`] trait that defines the types of resources an
+/// [`Entity`] consists of. A specific renderer can then provide an
+/// implementation that provides the resources it can render out. Those
+/// resources are images and paths, i.e. lines, quadratic and cubic bezier
+/// curves.
+pub struct SceneManager<P, I> {
+    scene: Scene<P, I>,
+    fonts: FontCache<P>,
     icons: IconCache<I>,
-    text_buffer: Option<UnicodeBuffer>,
+    next_id: usize,
+    cached_size: Option<CachedSize>,
 }
 
 struct IconCache<I> {
@@ -267,142 +155,75 @@ struct IconCache<I> {
     detailed_timer_icon: Option<Icon<I>>,
 }
 
-impl<P, I> Default for Renderer<P, I> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+impl<P: SharedOwnership, I: SharedOwnership> SceneManager<P, I> {
+    /// Creates a new scene manager.
+    pub fn new(mut allocator: impl ResourceAllocator<Path = P, Image = I>) -> Self {
+        let mut builder = allocator.path_builder();
+        builder.move_to(0.0, 0.0);
+        builder.line_to(0.0, 1.0);
+        builder.line_to(1.0, 1.0);
+        builder.line_to(1.0, 0.0);
+        builder.close();
+        let rectangle = Handle::new(0, builder.finish(&mut allocator));
 
-impl<P, I> Renderer<P, I> {
-    /// Creates a new renderer.
-    pub fn new() -> Self {
         Self {
-            #[cfg(feature = "font-loading")]
-            timer_font_setting: None,
-            timer_font: Font::from_slice(
-                TIMER_FONT,
-                0,
-                FontStyle::Normal,
-                FontWeight::Bold,
-                FontStretch::Normal,
-            )
-            .unwrap(),
-            timer_glyph_cache: GlyphCache::new(),
-            #[cfg(feature = "font-loading")]
-            times_font_setting: None,
-            times_font: Font::from_slice(
-                TEXT_FONT,
-                0,
-                FontStyle::Normal,
-                FontWeight::Bold,
-                FontStretch::Normal,
-            )
-            .unwrap(),
-            times_glyph_cache: GlyphCache::new(),
-            #[cfg(feature = "font-loading")]
-            text_font_setting: None,
-            text_font: Font::from_slice(
-                TEXT_FONT,
-                0,
-                FontStyle::Normal,
-                FontWeight::Normal,
-                FontStretch::Normal,
-            )
-            .unwrap(),
-            text_glyph_cache: GlyphCache::new(),
-            rectangle: None,
+            fonts: FontCache::new().unwrap(),
             icons: IconCache {
                 game_icon: None,
                 split_icons: Vec::new(),
                 detailed_timer_icon: None,
             },
+            // We use 0 for the rectangle.
+            next_id: 1,
+            scene: Scene::new(rectangle),
             cached_size: None,
-            text_buffer: None,
         }
     }
 
-    /// Renders the layout state with the backend provided. A resolution needs
-    /// to be provided as well so that the contents are rendered according to
-    /// aspect ratio of the render target.
-    pub fn render<B: Backend<Path = P, Image = I>>(
+    /// Accesses the [`Scene`] in order to render the [`Entities`](Entity).
+    pub fn scene(&self) -> &Scene<P, I> {
+        &self.scene
+    }
+
+    /// Updates the [`Scene`] by updating the [`Entities`](Entity) according to
+    /// the [`LayoutState`] provided. The [`ResourceAllocator`] is used to
+    /// allocate the resources necessary that the [`Entities`](Entity) use. A
+    /// resolution needs to be provided as well so that the [`Entities`](Entity)
+    /// are positioned and sized correctly for a renderer to then consume. If a
+    /// change in the layout size is detected, a new more suitable resolution
+    /// for subsequent updates is being returned. This is however merely a hint
+    /// and can be completely ignored.
+    pub fn update_scene<A: ResourceAllocator<Path = P, Image = I>>(
         &mut self,
-        backend: &mut B,
+        allocator: A,
         resolution: (f32, f32),
         state: &LayoutState,
     ) -> Option<(f32, f32)> {
         #[cfg(feature = "font-loading")]
-        {
-            if self.timer_font_setting != state.timer_font {
-                self.timer_font = state
-                    .timer_font
-                    .as_ref()
-                    .and_then(Font::load)
-                    .unwrap_or_else(|| {
-                        Font::from_slice(
-                            TIMER_FONT,
-                            0,
-                            FontStyle::Normal,
-                            FontWeight::Bold,
-                            FontStretch::Normal,
-                        )
-                        .unwrap()
-                    });
-                self.timer_glyph_cache.clear(backend);
-                self.timer_font_setting.clone_from(&state.timer_font);
-            }
+        self.fonts.maybe_reload(state);
 
-            if self.times_font_setting != state.times_font {
-                self.times_font = state
-                    .times_font
-                    .as_ref()
-                    .and_then(Font::load)
-                    .unwrap_or_else(|| {
-                        Font::from_slice(
-                            TEXT_FONT,
-                            0,
-                            FontStyle::Normal,
-                            FontWeight::Bold,
-                            FontStretch::Normal,
-                        )
-                        .unwrap()
-                    });
-                self.times_glyph_cache.clear(backend);
-                self.times_font_setting.clone_from(&state.times_font);
-            }
+        self.scene.clear();
 
-            if self.text_font_setting != state.text_font {
-                self.text_font = state
-                    .text_font
-                    .as_ref()
-                    .and_then(Font::load)
-                    .unwrap_or_else(|| {
-                        Font::from_slice(
-                            TEXT_FONT,
-                            0,
-                            FontStyle::Normal,
-                            FontWeight::Normal,
-                            FontStretch::Normal,
-                        )
-                        .unwrap()
-                    });
-                self.text_glyph_cache.clear(backend);
-                self.text_font_setting.clone_from(&state.text_font);
-            }
-        }
+        self.scene
+            .set_background(decode_gradient(&state.background));
 
-        match state.direction {
-            LayoutDirection::Vertical => self.render_vertical(backend, resolution, state),
-            LayoutDirection::Horizontal => self.render_horizontal(backend, resolution, state),
-        }
+        let new_dimensions = match state.direction {
+            LayoutDirection::Vertical => self.render_vertical(allocator, resolution, state),
+            LayoutDirection::Horizontal => self.render_horizontal(allocator, resolution, state),
+        };
+
+        self.scene.recalculate_if_bottom_layer_changed();
+
+        new_dimensions
     }
 
-    fn render_vertical<B: Backend<Path = P, Image = I>>(
+    fn render_vertical(
         &mut self,
-        backend: &mut B,
+        allocator: impl ResourceAllocator<Path = P, Image = I>,
         resolution: (f32, f32),
         state: &LayoutState,
     ) -> Option<(f32, f32)> {
-        let total_height = state.components.iter().map(component_height).sum::<f32>();
+        let total_height = component::layout_height(state);
 
         let cached_total_size = self
             .cached_size
@@ -431,23 +252,11 @@ impl<P, I> Renderer<P, I> {
         let aspect_ratio = resolution.0 as f32 / resolution.1 as f32;
 
         let mut context = RenderContext {
-            backend,
+            handles: Handles::new(self.next_id, allocator),
             transform: Transform::scale(resolution.0 as f32, resolution.1 as f32),
-            rectangle: &mut self.rectangle,
-            timer_font: &self.timer_font,
-            timer_glyph_cache: &mut self.timer_glyph_cache,
-            times_font: &mut self.times_font,
-            times_glyph_cache: &mut self.times_glyph_cache,
-            text_font: &self.text_font,
-            text_glyph_cache: &mut self.text_glyph_cache,
-            text_buffer: &mut self.text_buffer,
+            scene: &mut self.scene,
+            fonts: &mut self.fonts,
         };
-
-        // Initially we are in Backend Coordinate Space.
-        // We can render the background here from (0, 0) to (1, 1) as we just
-        // want to fill all of the background. We don't need to know anything
-        // about the aspect ratio or specific sizes.
-        context.render_background(&state.background);
 
         // Now we transform the coordinate space to Renderer Coordinate Space by
         // non-uniformly adjusting for the aspect ratio.
@@ -463,25 +272,27 @@ impl<P, I> Renderer<P, I> {
         let width = aspect_ratio * total_height;
 
         for component in &state.components {
-            let height = component_height(component);
+            let height = component::height(component);
             let dim = [width, height];
-            render_component(&mut context, &mut self.icons, component, state, dim);
+            component::render(&mut context, &mut self.icons, component, state, dim);
             // We translate the coordinate space to the Component Coordinate
             // Space of the next component by shifting by the height of the
             // current component in the Component Coordinate Space.
             context.translate(0.0, height);
         }
 
+        self.next_id = context.handles.into_next_id();
+
         new_resolution
     }
 
-    fn render_horizontal<B: Backend<Path = P, Image = I>>(
+    fn render_horizontal(
         &mut self,
-        backend: &mut B,
+        allocator: impl ResourceAllocator<Path = P, Image = I>,
         resolution: (f32, f32),
         state: &LayoutState,
     ) -> Option<(f32, f32)> {
-        let total_width = state.components.iter().map(component_width).sum::<f32>();
+        let total_width = component::layout_width(state);
 
         let cached_total_size = self
             .cached_size
@@ -509,23 +320,11 @@ impl<P, I> Renderer<P, I> {
         let aspect_ratio = resolution.0 as f32 / resolution.1 as f32;
 
         let mut context = RenderContext {
-            backend,
+            handles: Handles::new(self.next_id, allocator),
             transform: Transform::scale(resolution.0 as f32, resolution.1 as f32),
-            rectangle: &mut self.rectangle,
-            timer_font: &mut self.timer_font,
-            timer_glyph_cache: &mut self.timer_glyph_cache,
-            times_font: &mut self.times_font,
-            times_glyph_cache: &mut self.times_glyph_cache,
-            text_font: &mut self.text_font,
-            text_glyph_cache: &mut self.text_glyph_cache,
-            text_buffer: &mut self.text_buffer,
+            scene: &mut self.scene,
+            fonts: &mut self.fonts,
         };
-
-        // Initially we are in Backend Coordinate Space.
-        // We can render the background here from (0, 0) to (1, 1) as we just
-        // want to fill all of the background. We don't need to know anything
-        // about the aspect ratio or specific sizes.
-        context.render_background(&state.background);
 
         // Now we transform the coordinate space to Renderer Coordinate Space by
         // non-uniformly adjusting for the aspect ratio.
@@ -544,122 +343,88 @@ impl<P, I> Renderer<P, I> {
         let width_scaling = TWO_ROW_HEIGHT * aspect_ratio / total_width;
 
         for component in &state.components {
-            let width = component_width(component) * width_scaling;
+            let width = component::width(component) * width_scaling;
             let height = TWO_ROW_HEIGHT;
             let dim = [width, height];
-            render_component(&mut context, &mut self.icons, component, state, dim);
+            component::render(&mut context, &mut self.icons, component, state, dim);
             // We translate the coordinate space to the Component Coordinate
             // Space of the next component by shifting by the width of the
             // current component in the Component Coordinate Space.
             context.translate(width, 0.0);
         }
 
+        self.next_id = context.handles.into_next_id();
+
         new_resolution
     }
 }
 
-fn render_component<B: Backend>(
-    context: &mut RenderContext<'_, B>,
-    icons: &mut IconCache<B::Image>,
-    component: &ComponentState,
-    state: &LayoutState,
-    dim: [f32; 2],
-) {
-    match component {
-        ComponentState::BlankSpace(state) => component::blank_space::render(context, dim, state),
-        ComponentState::DetailedTimer(component) => component::detailed_timer::render(
-            context,
-            dim,
-            component,
-            state,
-            &mut icons.detailed_timer_icon,
-        ),
-        ComponentState::Graph(component) => {
-            component::graph::render(context, dim, component, state)
-        }
-        ComponentState::KeyValue(component) => {
-            component::key_value::render(context, dim, component, state)
-        }
-        ComponentState::Separator(component) => {
-            component::separator::render(context, dim, component, state)
-        }
-        ComponentState::Splits(component) => {
-            component::splits::render(context, dim, component, state, &mut icons.split_icons)
-        }
-        ComponentState::Text(component) => component::text::render(context, dim, component, state),
-        ComponentState::Timer(component) => {
-            component::timer::render(context, dim, component);
-        }
-        ComponentState::Title(component) => {
-            component::title::render(context, dim, component, state, &mut icons.game_icon)
-        }
-    }
-}
-
-struct RenderContext<'b, B: Backend> {
+struct RenderContext<'b, A: ResourceAllocator> {
     transform: Transform,
-    backend: &'b mut B,
-    rectangle: &'b mut Option<B::Path>,
-    timer_font: &'b Font<'static>,
-    timer_glyph_cache: &'b mut GlyphCache<B::Path>,
-    text_font: &'b Font<'static>,
-    text_glyph_cache: &'b mut GlyphCache<B::Path>,
-    times_font: &'b Font<'static>,
-    times_glyph_cache: &'b mut GlyphCache<B::Path>,
-    text_buffer: &'b mut Option<UnicodeBuffer>,
+    handles: Handles<A>,
+    scene: &'b mut Scene<A::Path, A::Image>,
+    fonts: &'b mut FontCache<A::Path>,
 }
 
-impl<B: Backend> RenderContext<'_, B> {
+impl<A: ResourceAllocator> RenderContext<'_, A> {
+    fn rectangle(&self) -> Handle<A::Path> {
+        self.scene.rectangle()
+    }
+
     fn backend_render_rectangle(&mut self, [x1, y1]: Pos, [x2, y2]: Pos, shader: FillShader) {
         let transform = self
             .transform
             .pre_translate([x1, y1].into())
             .pre_scale(x2 - x1, y2 - y1);
 
-        let rectangle = self.rectangle.get_or_insert_with({
-            let backend = &mut *self.backend;
-            move || {
-                let mut builder = backend.path_builder();
-                builder.move_to(0.0, 0.0);
-                builder.line_to(0.0, 1.0);
-                builder.line_to(1.0, 1.0);
-                builder.line_to(1.0, 0.0);
-                builder.close();
-                builder.finish(backend)
-            }
-        });
+        let rectangle = self.rectangle();
 
-        self.backend.render_fill_path(rectangle, shader, transform);
+        self.scene
+            .bottom_layer_mut()
+            .push(Entity::FillPath(rectangle, shader, transform));
     }
 
-    fn render_path(&mut self, path: &B::Path, color: Color) {
-        self.backend
-            .render_fill_path(path, solid(&color), self.transform)
+    fn backend_render_top_rectangle(&mut self, [x1, y1]: Pos, [x2, y2]: Pos, shader: FillShader) {
+        let transform = self
+            .transform
+            .pre_translate([x1, y1].into())
+            .pre_scale(x2 - x1, y2 - y1);
+
+        let rectangle = self.rectangle();
+
+        self.scene
+            .top_layer_mut()
+            .push(Entity::FillPath(rectangle, shader, transform));
     }
 
-    fn render_stroke_path(&mut self, path: &B::Path, color: Color, stroke_width: f32) {
-        self.backend
-            .render_stroke_path(path, stroke_width, color.to_array(), self.transform)
+    fn top_layer_path(&mut self, path: Handle<A::Path>, color: Color) {
+        self.scene
+            .top_layer_mut()
+            .push(Entity::FillPath(path, solid(&color), self.transform));
     }
 
-    fn create_icon(&mut self, image_data: &[u8]) -> Option<Icon<B::Image>> {
+    fn top_layer_stroke_path(&mut self, path: Handle<A::Path>, color: Color, stroke_width: f32) {
+        self.scene.top_layer_mut().push(Entity::StrokePath(
+            path,
+            stroke_width,
+            color.to_array(),
+            self.transform,
+        ));
+    }
+
+    fn create_icon(&mut self, image_data: &[u8]) -> Option<Icon<A::Image>> {
         if image_data.is_empty() {
             return None;
         }
 
         let image = image::load_from_memory(image_data).ok()?.to_rgba8();
-        let backend_image = self
-            .backend
-            .create_image(image.width(), image.height(), &image);
 
         Some(Icon {
-            image: backend_image,
             aspect_ratio: image.width() as f32 / image.height() as f32,
+            image: self
+                .handles
+                .create_image(image.width(), image.height(), &image),
         })
-    }
-
-    fn free_path(&mut self, path: B::Path) {
-        self.backend.free_path(path)
     }
 
     fn scale(&mut self, factor: f32) {
@@ -680,11 +445,17 @@ impl<B: Backend> RenderContext<'_, B> {
         }
     }
 
+    fn render_top_rectangle(&mut self, top_left: Pos, bottom_right: Pos, gradient: &Gradient) {
+        if let Some(colors) = decode_gradient(gradient) {
+            self.backend_render_top_rectangle(top_left, bottom_right, colors);
+        }
+    }
+
     fn render_icon(
         &mut self,
         [mut x, mut y]: Pos,
         [mut width, mut height]: Pos,
-        icon: &Icon<B::Image>,
+        icon: &Icon<A::Image>,
     ) {
         let box_aspect_ratio = width / height;
         let aspect_ratio_diff = box_aspect_ratio / icon.aspect_ratio;
@@ -706,25 +477,9 @@ impl<B: Backend> RenderContext<'_, B> {
             .pre_translate([x, y].into())
             .pre_scale(width, height);
 
-        // FIXME: Deduplicate
-        let rectangle = self.rectangle.get_or_insert_with({
-            let backend = &mut *self.backend;
-            move || {
-                let mut builder = backend.path_builder();
-                builder.move_to(0.0, 0.0);
-                builder.line_to(0.0, 1.0);
-                builder.line_to(1.0, 1.0);
-                builder.line_to(1.0, 0.0);
-                builder.close();
-                builder.finish(backend)
-            }
-        });
-
-        self.backend.render_image(&icon.image, rectangle, transform);
-    }
-
-    fn render_background(&mut self, background: &Gradient) {
-        self.render_rectangle([0.0, 0.0], [1.0, 1.0], background);
+        self.scene
+            .bottom_layer_mut()
+            .push(Entity::Image(icon.image.share(), transform));
     }
 
     fn render_key_value_component(
@@ -732,6 +487,7 @@ impl<B: Backend> RenderContext<'_, B> {
         key: &str,
         abbreviations: &[Cow<'_, str>],
         value: &str,
+        updates_frequently: bool,
         [width, height]: [f32; 2],
         key_color: Color,
         value_color: Color,
@@ -739,6 +495,7 @@ impl<B: Backend> RenderContext<'_, B> {
     ) {
         let left_of_value_x = self.render_numbers(
             value,
+            Layer::from_updates_frequently(updates_frequently),
             [width - PADDING, height + TEXT_ALIGN_BOTTOM],
             DEFAULT_TEXT_SIZE,
             solid(&value_color),
@@ -772,23 +529,24 @@ impl<B: Backend> RenderContext<'_, B> {
     ) -> f32 {
         let mut cursor = font::Cursor::new(pos);
 
-        let mut buffer = self.text_buffer.take().unwrap_or_default();
+        let mut buffer = self.fonts.buffer.take().unwrap_or_default();
         buffer.push_str(text.trim());
         buffer.guess_segment_properties();
 
-        let font = self.text_font.scale(scale);
+        let font = self.fonts.text.font.scale(scale);
         let glyphs = font.shape(buffer);
 
         font::render(
             glyphs.left_aligned(&mut cursor, max_x),
             shader,
             &font,
-            self.text_glyph_cache,
+            &mut self.fonts.text.glyph_cache,
             &self.transform,
-            self.backend,
+            &mut self.handles,
+            self.scene.bottom_layer_mut(),
         );
 
-        *self.text_buffer = Some(glyphs.into_buffer());
+        self.fonts.buffer = Some(glyphs.into_buffer());
 
         cursor.x
     }
@@ -804,51 +562,54 @@ impl<B: Backend> RenderContext<'_, B> {
     ) {
         let mut cursor = font::Cursor::new(pos);
 
-        let mut buffer = self.text_buffer.take().unwrap_or_default();
+        let mut buffer = self.fonts.buffer.take().unwrap_or_default();
         buffer.push_str(text.trim());
         buffer.guess_segment_properties();
 
-        let font = self.text_font.scale(scale);
+        let font = self.fonts.text.font.scale(scale);
         let glyphs = font.shape(buffer);
 
         font::render(
             glyphs.centered(&mut cursor, min_x, max_x),
             shader,
             &font,
-            self.text_glyph_cache,
+            &mut self.fonts.text.glyph_cache,
             &self.transform,
-            self.backend,
+            &mut self.handles,
+            self.scene.bottom_layer_mut(),
         );
 
-        *self.text_buffer = Some(glyphs.into_buffer());
+        self.fonts.buffer = Some(glyphs.into_buffer());
     }
 
     fn render_text_right_align(
         &mut self,
         text: &str,
+        layer: Layer,
         pos: Pos,
         scale: f32,
         shader: FillShader,
     ) -> f32 {
         let mut cursor = font::Cursor::new(pos);
 
-        let mut buffer = self.text_buffer.take().unwrap_or_default();
+        let mut buffer = self.fonts.buffer.take().unwrap_or_default();
         buffer.push_str(text.trim());
         buffer.guess_segment_properties();
 
-        let font = self.text_font.scale(scale);
+        let font = self.fonts.text.font.scale(scale);
         let glyphs = font.shape(buffer);
 
         font::render(
             glyphs.right_aligned(&mut cursor),
             shader,
             &font,
-            self.text_glyph_cache,
+            &mut self.fonts.text.glyph_cache,
             &self.transform,
-            self.backend,
+            &mut self.handles,
+            self.scene.layer_mut(layer),
         );
 
-        *self.text_buffer = Some(glyphs.into_buffer());
+        self.fonts.buffer = Some(glyphs.into_buffer());
 
         cursor.x
     }
@@ -870,50 +631,66 @@ impl<B: Backend> RenderContext<'_, B> {
         }
     }
 
-    fn render_numbers(&mut self, text: &str, pos: Pos, scale: f32, shader: FillShader) -> f32 {
+    fn render_numbers(
+        &mut self,
+        text: &str,
+        layer: Layer,
+        pos: Pos,
+        scale: f32,
+        shader: FillShader,
+    ) -> f32 {
         let mut cursor = font::Cursor::new(pos);
 
-        let mut buffer = self.text_buffer.take().unwrap_or_default();
+        let mut buffer = self.fonts.buffer.take().unwrap_or_default();
         buffer.push_str(text.trim());
         buffer.guess_segment_properties();
 
-        let font = self.times_font.scale(scale);
+        let font = self.fonts.times.font.scale(scale);
         let glyphs = font.shape_tabular_numbers(buffer);
 
         font::render(
             glyphs.tabular_numbers(&mut cursor),
             shader,
             &font,
-            self.times_glyph_cache,
+            &mut self.fonts.times.glyph_cache,
             &self.transform,
-            self.backend,
+            &mut self.handles,
+            self.scene.layer_mut(layer),
         );
 
-        *self.text_buffer = Some(glyphs.into_buffer());
+        self.fonts.buffer = Some(glyphs.into_buffer());
 
         cursor.x
     }
 
-    fn render_timer(&mut self, text: &str, pos: Pos, scale: f32, shader: FillShader) -> f32 {
+    fn render_timer(
+        &mut self,
+        text: &str,
+        layer: Layer,
+        pos: Pos,
+        scale: f32,
+        shader: FillShader,
+    ) -> f32 {
         let mut cursor = font::Cursor::new(pos);
 
-        let mut buffer = self.text_buffer.take().unwrap_or_default();
+        let mut buffer = self.fonts.buffer.take().unwrap_or_default();
         buffer.push_str(text.trim());
         buffer.guess_segment_properties();
 
-        let font = self.timer_font.scale(scale);
+        let font = self.fonts.timer.font.scale(scale);
         let glyphs = font.shape_tabular_numbers(buffer);
 
         font::render(
             glyphs.tabular_numbers(&mut cursor),
             shader,
             &font,
-            self.timer_glyph_cache,
+            &mut self.fonts.timer.glyph_cache,
             &self.transform,
-            self.backend,
+            &mut self.handles,
+            self.scene.layer_mut(layer),
         );
 
-        *self.text_buffer = Some(glyphs.into_buffer());
+        self.fonts.buffer = Some(glyphs.into_buffer());
 
         cursor.x
     }
@@ -954,14 +731,14 @@ impl<B: Backend> RenderContext<'_, B> {
     }
 
     fn measure_text(&mut self, text: &str, scale: f32) -> f32 {
-        let mut buffer = self.text_buffer.take().unwrap_or_default();
+        let mut buffer = self.fonts.buffer.take().unwrap_or_default();
         buffer.push_str(text.trim());
         buffer.guess_segment_properties();
 
-        let glyphs = self.text_font.scale(scale).shape(buffer);
+        let glyphs = self.fonts.text.font.scale(scale).shape(buffer);
         let width = glyphs.width();
 
-        *self.text_buffer = Some(glyphs.into_buffer());
+        self.fonts.buffer = Some(glyphs.into_buffer());
 
         width
     }
@@ -969,11 +746,16 @@ impl<B: Backend> RenderContext<'_, B> {
     fn measure_numbers(&mut self, text: &str, scale: f32) -> f32 {
         let mut cursor = font::Cursor::new([0.0; 2]);
 
-        let mut buffer = self.text_buffer.take().unwrap_or_default();
+        let mut buffer = self.fonts.buffer.take().unwrap_or_default();
         buffer.push_str(text.trim());
         buffer.guess_segment_properties();
 
-        let glyphs = self.times_font.scale(scale).shape_tabular_numbers(buffer);
+        let glyphs = self
+            .fonts
+            .times
+            .font
+            .scale(scale)
+            .shape_tabular_numbers(buffer);
 
         // Iterate over all glyphs, to move the cursor forward.
         glyphs.tabular_numbers(&mut cursor).for_each(drop);
@@ -981,7 +763,7 @@ impl<B: Backend> RenderContext<'_, B> {
         // Wherever we end up is our width.
         let width = -cursor.x;
 
-        *self.text_buffer = Some(glyphs.into_buffer());
+        self.fonts.buffer = Some(glyphs.into_buffer());
 
         width
     }
@@ -1002,60 +784,4 @@ const fn decode_gradient(gradient: &Gradient) -> Option<FillShader> {
 
 const fn solid(color: &Color) -> FillShader {
     FillShader::SolidColor(color.to_array())
-}
-
-fn component_width(component: &ComponentState) -> f32 {
-    match component {
-        ComponentState::BlankSpace(state) => state.size as f32 * PSEUDO_PIXELS,
-        ComponentState::DetailedTimer(_) => 7.0,
-        ComponentState::Graph(_) => 7.0,
-        ComponentState::KeyValue(_) => 6.0,
-        ComponentState::Separator(_) => SEPARATOR_THICKNESS,
-        ComponentState::Splits(state) => {
-            let column_count = 2.0; // FIXME: Not always 2.
-            let split_width = 2.0 + column_count * component::splits::COLUMN_WIDTH;
-            state.splits.len() as f32 * split_width
-        }
-        ComponentState::Text(_) => 6.0,
-        ComponentState::Timer(_) => 8.25,
-        ComponentState::Title(_) => 8.0,
-    }
-}
-
-fn component_height(component: &ComponentState) -> f32 {
-    match component {
-        ComponentState::BlankSpace(state) => state.size as f32 * PSEUDO_PIXELS,
-        ComponentState::DetailedTimer(_) => 2.5,
-        ComponentState::Graph(state) => state.height as f32 * PSEUDO_PIXELS,
-        ComponentState::KeyValue(state) => {
-            if state.display_two_rows {
-                TWO_ROW_HEIGHT
-            } else {
-                DEFAULT_COMPONENT_HEIGHT
-            }
-        }
-        ComponentState::Separator(_) => SEPARATOR_THICKNESS,
-        ComponentState::Splits(state) => {
-            state.splits.len() as f32
-                * if state.display_two_rows {
-                    TWO_ROW_HEIGHT
-                } else {
-                    DEFAULT_COMPONENT_HEIGHT
-                }
-                + if state.column_labels.is_some() {
-                    DEFAULT_COMPONENT_HEIGHT
-                } else {
-                    0.0
-                }
-        }
-        ComponentState::Text(state) => {
-            if state.display_two_rows {
-                TWO_ROW_HEIGHT
-            } else {
-                DEFAULT_COMPONENT_HEIGHT
-            }
-        }
-        ComponentState::Timer(state) => state.height as f32 * PSEUDO_PIXELS,
-        ComponentState::Title(_) => TWO_ROW_HEIGHT,
-    }
 }

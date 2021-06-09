@@ -4,11 +4,14 @@
 //! comparison.
 
 use super::key_value;
-use crate::analysis::state_helper::comparison_single_segment_time;
-use crate::platform::prelude::*;
-use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
-use crate::timing::formatter::{Accuracy, SegmentTime, TimeFormatter};
-use crate::{comparison, Timer, TimerPhase};
+use crate::{
+    analysis::state_helper::comparison_single_segment_time,
+    comparison,
+    platform::prelude::*,
+    settings::{Color, Field, Gradient, SettingsDescription, Value},
+    timing::formatter::{Accuracy, SegmentTime, TimeFormatter},
+    Timer, TimerPhase,
+};
 use alloc::borrow::Cow;
 use core::fmt::Write;
 use serde::{Deserialize, Serialize};
@@ -165,6 +168,7 @@ impl Component {
         };
 
         state.display_two_rows = self.settings.display_two_rows;
+        state.updates_frequently = false;
     }
 
     /// Calculates the component's state based on the timer provided.

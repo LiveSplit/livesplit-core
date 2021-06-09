@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 /// Describes the Alignment of the Title in the Title Component.
-#[derive(Copy, Clone, Serialize, Deserialize)]
+#[derive(Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum Alignment {
     /// Automatically align the title based on whether a game icon is shown.
     Auto,

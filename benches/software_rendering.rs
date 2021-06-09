@@ -4,7 +4,7 @@ cfg_if::cfg_if! {
             criterion::{criterion_group, criterion_main, Criterion},
             livesplit_core::{
                 layout::{self, Layout},
-                rendering::software::SoftwareRenderer,
+                rendering::software::Renderer,
                 run::parser::livesplit,
                 Run, Segment, TimeSpan, Timer, TimingMethod,
             },
@@ -27,7 +27,7 @@ cfg_if::cfg_if! {
 
             let snapshot = timer.snapshot();
             let state = layout.state(&snapshot);
-            let mut renderer = SoftwareRenderer::new();
+            let mut renderer = Renderer::new();
 
             c.bench_function("Software Rendering (Default)", move |b| {
                 b.iter(|| renderer.render(&state, [300, 500]))
@@ -44,7 +44,7 @@ cfg_if::cfg_if! {
 
             let snapshot = timer.snapshot();
             let state = layout.state(&snapshot);
-            let mut renderer = SoftwareRenderer::new();
+            let mut renderer = Renderer::new();
 
             c.bench_function("Software Rendering (Subsplits Layout)", move |b| {
                 b.iter(|| renderer.render(&state, [300, 800]))

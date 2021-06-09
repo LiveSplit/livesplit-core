@@ -1,13 +1,18 @@
+mod cache;
 mod color_font;
 mod glyph_cache;
 
 use self::color_font::ColorTables;
-use super::{solid, Backend, FillShader, Pos, Transform};
+use super::{
+    entity::Entity,
+    resource::{Handles, ResourceAllocator, SharedOwnership},
+    solid, FillShader, Pos, Transform,
+};
 use crate::settings::{FontStretch, FontStyle, FontWeight};
 use rustybuzz::{Face, Feature, GlyphBuffer, Tag, UnicodeBuffer, Variation};
 use ttf_parser::{GlyphId, OutlineBuilder, Tag as ParserTag};
 
-pub use self::glyph_cache::GlyphCache;
+pub use self::{cache::FontCache, glyph_cache::GlyphCache};
 
 #[cfg(feature = "font-loading")]
 use {
@@ -381,23 +386,28 @@ impl<'f> Glyphs<'f> {
     }
 }
 
-pub fn render<B: Backend>(
+pub fn render<A: ResourceAllocator>(
     layout: impl IntoIterator<Item = PositionedGlyph>,
     shader: FillShader,
     font: &ScaledFont<'_>,
-    glyph_cache: &mut GlyphCache<B::Path>,
+    glyph_cache: &mut GlyphCache<A::Path>,
     transform: &Transform,
-    backend: &mut B,
+    handles: &mut Handles<A>,
+    entities: &mut Vec<Entity<A::Path, A::Image>>,
 ) {
     for glyph in layout {
-        let layers = glyph_cache.lookup_or_insert(font.font, glyph.id, backend);
+        let layers = glyph_cache.lookup_or_insert(font.font, glyph.id, handles);
 
         let transform = transform
             .pre_translate([glyph.x, glyph.y].into())
             .pre_scale(font.scale, font.scale);
 
         for (color, layer) in layers {
-            backend.render_fill_path(layer, color.as_ref().map_or(shader, solid), transform);
+            entities.push(Entity::FillPath(
+                layer.share(),
+                color.as_ref().map_or(shader, solid),
+                transform,
+            ));
         }
     }
 }

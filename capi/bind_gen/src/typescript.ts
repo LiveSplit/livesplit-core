@@ -13,7 +13,7 @@ export type ComponentStateJson =
 /**
  * Colors can be used to describe what color to use for visualizing backgrounds,
  * texts, lines and various other elements that are being shown. They are stored
- * as RGBA colors with float point numbers ranging from 0.0 to 1.0 per channel.
+ * as RGBA colors with floating point numbers ranging from 0.0 to 1.0 per channel.
  */
 export type Color = number[];
 
@@ -198,6 +198,11 @@ export interface TimerComponentStateJson {
     bottom_color: Color,
     /** The height of the timer. */
     height: number,
+    /**
+     * This value indicates whether the timer is currently frequently being
+     * updated. This can be used for rendering optimizations.
+     */
+    updates_frequently: boolean,
 }
 
 /** The state object describes the information to visualize for this component. */
@@ -348,6 +353,11 @@ export interface SplitColumnState {
     semantic_color: SemanticColor,
     /** The visual color of the value. */
     visual_color: Color,
+    /**
+     * This value indicates whether the column is currently frequently being
+     * updated. This can be used for rendering optimizations.
+     */
+    updates_frequently: boolean,
 }
 
 /**
@@ -383,6 +393,11 @@ export interface KeyValueComponentStateJson {
      * two separate rows.
      */
     display_two_rows: boolean,
+    /**
+     * This value indicates whether the value is currently frequently being
+     * updated. This can be used for rendering optimizations.
+     */
+    updates_frequently: boolean,
 }
 
 /**
@@ -598,7 +613,6 @@ export type SettingsDescriptionValueJson =
     { Int: number } |
     { String: string } |
     { OptionalString: string | null } |
-    { Float: number } |
     { Accuracy: AccuracyJson } |
     { DigitsFormat: DigitsFormatJson } |
     { OptionalTimingMethod: TimingMethodJson | null } |

@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 /// that matches the settings most closely is chosen. The settings may be
 /// ignored entirely if the platform can't support different fonts, such as in a
 /// terminal.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct Font {
     /// The family name of the font to use. This corresponds with the
     /// `Typographic Family Name` (Name ID 16) in the name table of the font. If
@@ -14,7 +14,9 @@ pub struct Font {
     /// is the one to choose. The subfamily is not specified at all, and instead
     /// a suitable subfamily is chosen based on the style, weight and stretch
     /// values.
-    /// https://docs.microsoft.com/en-us/typography/opentype/spec/name
+    ///
+    /// [`name — Naming Table` on Microsoft
+    /// Docs](https://docs.microsoft.com/en-us/typography/opentype/spec/name)
     ///
     /// This is to ensure the highest portability across various platforms.
     /// Platforms often select fonts very differently, so if necessary it is
@@ -40,6 +42,12 @@ pub enum Style {
     Italic,
 }
 
+impl Default for Style {
+    fn default() -> Self {
+        Self::Normal
+    }
+}
+
 impl Style {
     /// The value to assign to the `ital` variation axis.
     pub const fn value_for_italic(self) -> f32 {
@@ -53,7 +61,9 @@ impl Style {
 /// The weight specifies the weight / boldness of a font. If there is no font
 /// with the exact weight value, a font with a similar weight is to be chosen
 /// based on an algorithm similar to this:
-/// https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight#Fallback_weights
+///
+/// [`Fallback weights` on
+/// MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight#Fallback_weights)
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(rename_all = "kebab-case")]
 pub enum Weight {
@@ -81,6 +91,12 @@ pub enum Weight {
     ExtraBlack,
 }
 
+impl Default for Weight {
+    fn default() -> Self {
+        Self::Normal
+    }
+}
+
 impl Weight {
     /// The numeric value of the weight.
     pub const fn value(self) -> f32 {
@@ -103,7 +119,9 @@ impl Weight {
 /// The stretch specifies how wide a font should be. For example, it may make
 /// sense to reduce the stretch of a font to ensure split names are not cut off.
 /// A font with a stretch value that is close is to be selected.
-/// https://developer.mozilla.org/en-US/docs/Web/CSS/font-stretch#Font_face_selection
+///
+/// [`Font face selection` on
+/// MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/font-stretch#Font_face_selection)
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(rename_all = "kebab-case")]
 pub enum Stretch {
@@ -125,6 +143,12 @@ pub enum Stretch {
     ExtraExpanded,
     /// 200%
     UltraExpanded,
+}
+
+impl Default for Stretch {
+    fn default() -> Self {
+        Self::Normal
+    }
 }
 
 impl Stretch {

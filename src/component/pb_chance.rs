@@ -5,9 +5,12 @@
 //! how well the attempt is going.
 
 use super::key_value;
-use crate::platform::prelude::*;
-use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
-use crate::{analysis::pb_chance, timing::Snapshot};
+use crate::{
+    analysis::pb_chance,
+    platform::prelude::*,
+    settings::{Color, Field, Gradient, SettingsDescription, Value},
+    timing::Snapshot,
+};
 use core::fmt::Write;
 use serde::{Deserialize, Serialize};
 
@@ -76,7 +79,7 @@ impl Component {
 
     /// Updates the component's state based on the timer provided.
     pub fn update_state(&self, state: &mut key_value::State, timer: &Snapshot<'_>) {
-        let chance = pb_chance::for_timer(timer);
+        let (chance, is_live) = pb_chance::for_timer(timer);
 
         state.background = self.settings.background;
         state.key_color = self.settings.label_color;
@@ -91,6 +94,7 @@ impl Component {
 
         state.key_abbreviations.clear();
         state.display_two_rows = self.settings.display_two_rows;
+        state.updates_frequently = is_live;
     }
 
     /// Calculates the component's state based on the timer provided.

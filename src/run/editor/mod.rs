@@ -5,15 +5,14 @@
 //! kind of User Interface.
 
 use super::{ComparisonError, ComparisonResult};
-use crate::platform::prelude::*;
-use crate::timing::ParseError as ParseTimeSpanError;
 use crate::{
     comparison,
+    platform::prelude::*,
     settings::{CachedImageId, Image},
+    timing::ParseError as ParseTimeSpanError,
     Run, Segment, Time, TimeSpan, TimingMethod,
 };
-use core::mem::swap;
-use core::num::ParseIntError;
+use core::{mem::swap, num::ParseIntError};
 use snafu::{OptionExt, ResultExt};
 
 pub mod cleaning;
@@ -23,10 +22,12 @@ mod state;
 #[cfg(test)]
 mod tests;
 
-pub use self::cleaning::SumOfBestCleaner;
-pub use self::fuzzy_list::FuzzyList;
-pub use self::segment_row::SegmentRow;
-pub use self::state::{Buttons as ButtonsState, Segment as SegmentState, State};
+pub use self::{
+    cleaning::SumOfBestCleaner,
+    fuzzy_list::FuzzyList,
+    segment_row::SegmentRow,
+    state::{Buttons as ButtonsState, Segment as SegmentState, SelectionState, State},
+};
 
 /// Describes an Error that occurred while parsing a time.
 #[derive(Debug, snafu::Snafu)]
@@ -165,6 +166,28 @@ impl Editor {
         }
         self.selected_segments.retain(|&i| i != index);
         self.selected_segments.push(index);
+    }
+
+    /// Select all segments from the currently active segment to the segment at
+    /// the index provided. The segment at the index provided becomes the new
+    /// active segment.
+    ///
+    /// # Panics
+    ///
+    /// This panics if the index of the segment provided is out of bounds.
+    pub fn select_range(&mut self, index: usize) {
+        let active = self.active_segment_index();
+        let range = if index < active {
+            index + 1..active
+        } else {
+            active + 1..index
+        };
+        for i in range {
+            if !self.selected_segments.contains(&i) {
+                self.selected_segments.push(i);
+            }
+        }
+        self.select_additionally(index);
     }
 
     /// Selects the segment with the given index. All other segments are

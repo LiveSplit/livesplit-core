@@ -3,11 +3,13 @@
 //! current category has been played for.
 
 use super::key_value;
-use crate::analysis::total_playtime;
-use crate::platform::prelude::*;
-use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
-use crate::timing::formatter::{Days, Regular, TimeFormatter};
-use crate::Timer;
+use crate::{
+    analysis::total_playtime,
+    platform::prelude::*,
+    settings::{Color, Field, Gradient, SettingsDescription, Value},
+    timing::formatter::{Days, Regular, TimeFormatter},
+    Timer,
+};
 use core::fmt::Write;
 use serde::{Deserialize, Serialize};
 
@@ -99,6 +101,7 @@ impl Component {
         state.key_abbreviations.push("Playtime".into());
 
         state.display_two_rows = self.settings.display_two_rows;
+        state.updates_frequently = timer.current_phase().is_running();
     }
 
     /// Calculates the component's state based on the timer provided.

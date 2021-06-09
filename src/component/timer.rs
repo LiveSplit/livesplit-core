@@ -87,6 +87,9 @@ pub struct State {
     pub bottom_color: Color,
     /// The height of the timer.
     pub height: u32,
+    /// This value indicates whether the timer is currently frequently being
+    /// updated. This can be used for rendering optimizations.
+    pub updates_frequently: bool,
 }
 
 #[cfg(feature = "std")]
@@ -143,8 +146,10 @@ impl Component {
             .timing_method
             .unwrap_or_else(|| timer.current_timing_method());
 
+        let phase = timer.current_phase();
+
         let (time, semantic_color) = if self.settings.is_segment_timer {
-            let last_split_index = if timer.current_phase() == TimerPhase::Ended {
+            let last_split_index = if phase == TimerPhase::Ended {
                 timer.run().len() - 1
             } else {
                 timer.current_split_index().unwrap_or_default()
@@ -162,7 +167,7 @@ impl Component {
             let time = time[method].or(time.real_time).unwrap_or_default();
             let current_comparison = timer.current_comparison();
 
-            let semantic_color = match timer.current_phase() {
+            let semantic_color = match phase {
                 TimerPhase::Running if time >= TimeSpan::zero() => {
                     let pb_split_time = timer
                         .current_split()
@@ -233,6 +238,7 @@ impl Component {
             formatter::Fraction::with_accuracy(self.settings.accuracy).format(time),
         );
 
+        state.updates_frequently = phase.is_running() && time.is_some();
         state.semantic_color = semantic_color;
         state.top_color = top_color;
         state.bottom_color = bottom_color;
