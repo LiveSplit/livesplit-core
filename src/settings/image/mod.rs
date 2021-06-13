@@ -1,6 +1,6 @@
 use crate::platform::prelude::*;
 use base64::{display::Base64Display, STANDARD};
-use core::sync::atomic::{AtomicUsize, Ordering};
+use core::{ops::Deref, sync::atomic::{AtomicUsize, Ordering}};
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 
 #[cfg(test)]
@@ -25,7 +25,7 @@ pub struct Image {
 /// used in state objects. It can efficiently be serialized for various formats.
 /// For binary formats it gets serialized as its raw byte representation, while
 /// for textual formats it gets serialized as a Base64 Data URL instead.
-#[derive(Debug, Clone, derive_more::Deref)]
+#[derive(Debug, Clone)]
 pub struct ImageData(pub Box<[u8]>);
 
 impl<T> From<T> for ImageData
@@ -34,6 +34,13 @@ where
 {
     fn from(value: T) -> Self {
         ImageData(value.into())
+    }
+}
+
+impl Deref for ImageData {
+    type Target = Box<[u8]>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 

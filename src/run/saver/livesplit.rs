@@ -38,7 +38,7 @@ use std::io::Write;
 
 static LSS_IMAGE_HEADER: &[u8; 156] = include_bytes!("lss_image_header.bin");
 
-#[derive(Debug, snafu::Snafu, derive_more::From)]
+#[derive(Debug, snafu::Snafu)]
 /// The Error type for splits files that couldn't be saved by the LiveSplit
 /// Saver.
 pub enum Error {
@@ -48,6 +48,12 @@ pub enum Error {
         /// The underlying error.
         error: XmlError,
     },
+}
+
+impl From<XmlError> for Error {
+    fn from(error: XmlError) -> Self {
+        Error::Xml { error }
+    }
 }
 
 /// The Result type for the LiveSplit Saver.

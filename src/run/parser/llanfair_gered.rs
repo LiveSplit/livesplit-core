@@ -18,7 +18,7 @@ use crate::xml_util::Error as XmlError;
 
 /// The Error type for splits files that couldn't be parsed by the Llanfair (Gered)
 /// Parser.
-#[derive(Debug, snafu::Snafu, derive_more::From)]
+#[derive(Debug, snafu::Snafu)]
 pub enum Error {
     /// The underlying XML format couldn't be parsed.
     Xml {
@@ -44,6 +44,30 @@ pub enum Error {
     LengthOutOfBounds,
     /// Failed to parse an image.
     Image,
+}
+
+impl From<XmlError> for Error {
+    fn from(source: XmlError) -> Self {
+        Self::Xml { source }
+    }
+}
+
+impl From<core::str::Utf8Error> for Error {
+    fn from(source: core::str::Utf8Error) -> Self {
+        Self::Utf8Str { source }
+    }
+}
+
+impl From<alloc::string::FromUtf8Error> for Error {
+    fn from(source: alloc::string::FromUtf8Error) -> Self {
+        Self::Utf8String { source }
+    }
+}
+
+impl From<core::num::ParseIntError> for Error {
+    fn from(source: core::num::ParseIntError) -> Self {
+        Self::Int { source }
+    }
 }
 
 /// The Result type for the Llanfair (Gered) Parser.

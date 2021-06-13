@@ -11,7 +11,7 @@ use alloc::borrow::Cow;
 
 /// A Component provides information about a run in a way that is easy to
 /// visualize. This type can store any of the components provided by this crate.
-#[derive(derive_more::From, Clone)]
+#[derive(Clone)]
 pub enum Component {
     /// The Blank Space Component.
     BlankSpace(blank_space::Component),
@@ -47,6 +47,108 @@ pub enum Component {
     Title(title::Component),
     /// The Total Playtime Component.
     TotalPlaytime(total_playtime::Component),
+}
+
+impl From<blank_space::Component> for Component {
+    fn from(component: blank_space::Component) -> Self {
+        Self::BlankSpace(component)
+    }
+}
+
+impl From<current_comparison::Component> for Component {
+    fn from(component: current_comparison::Component) -> Self {
+        Self::CurrentComparison(component)
+    }
+}
+
+impl From<current_pace::Component> for Component {
+    fn from(component: current_pace::Component) -> Self {
+        Self::CurrentPace(component)
+    }
+}
+
+impl From<delta::Component> for Component {
+    fn from(component: delta::Component) -> Self {
+        Self::Delta(component)
+    }
+}
+
+impl From<Box<detailed_timer::Component>> for Component {
+    fn from(component: Box<detailed_timer::Component>) -> Self {
+        Self::DetailedTimer(component)
+    }
+}
+
+impl From<graph::Component> for Component {
+    fn from(component: graph::Component) -> Self {
+        Self::Graph(component)
+    }
+}
+
+impl From<pb_chance::Component> for Component {
+    fn from(component: pb_chance::Component) -> Self {
+        Self::PbChance(component)
+    }
+}
+
+impl From<possible_time_save::Component> for Component {
+    fn from(component: possible_time_save::Component) -> Self {
+        Self::PossibleTimeSave(component)
+    }
+}
+
+impl From<previous_segment::Component> for Component {
+    fn from(component: previous_segment::Component) -> Self {
+        Self::PreviousSegment(component)
+    }
+}
+
+impl From<segment_time::Component> for Component {
+    fn from(component: segment_time::Component) -> Self {
+        Self::SegmentTime(component)
+    }
+}
+
+impl From<separator::Component> for Component {
+    fn from(component: separator::Component) -> Self {
+        Self::Separator(component)
+    }
+}
+
+impl From<splits::Component> for Component {
+    fn from(component: splits::Component) -> Self {
+        Self::Splits(component)
+    }
+}
+
+impl From<sum_of_best::Component> for Component {
+    fn from(component: sum_of_best::Component) -> Self {
+        Self::SumOfBest(component)
+    }
+}
+
+impl From<text::Component> for Component {
+    fn from(component: text::Component) -> Self {
+        Self::Text(component)
+    }
+}
+
+impl From<timer::Component> for Component {
+    fn from(component: timer::Component) -> Self {
+        Self::Timer(component)
+    }
+}
+
+impl From<title::Component> for Component {
+    fn from(component: title::Component) -> Self {
+        Self::Title(component)
+    }
+}
+
+impl From<total_playtime::Component> for Component {
+    fn from(component: total_playtime::Component) -> Self {
+        Self::TotalPlaytime(component)
+    }
 }
 
 impl Component {
