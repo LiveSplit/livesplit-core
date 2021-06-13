@@ -45,7 +45,7 @@ fn translate_size(v: u32) -> u32 {
 }
 
 /// The Error type for parsing layout files of the original LiveSplit.
-#[derive(Debug, snafu::Snafu, derive_more::From)]
+#[derive(Debug, snafu::Snafu)]
 pub enum Error {
     /// The underlying XML format couldn't be parsed.
     Xml {
@@ -87,6 +87,30 @@ pub enum Error {
     ParseFont,
     /// Parsed an empty layout, which is considered an invalid layout.
     Empty,
+}
+
+impl From<XmlError> for Error {
+    fn from(source: XmlError) -> Self {
+        Self::Xml { source }
+    }
+}
+
+impl From<core::str::Utf8Error> for Error {
+    fn from(source: core::str::Utf8Error) -> Self {
+        Self::Utf8Str { source }
+    }
+}
+
+impl From<alloc::string::FromUtf8Error> for Error {
+    fn from(source: alloc::string::FromUtf8Error) -> Self {
+        Self::Utf8String { source }
+    }
+}
+
+impl From<core::num::ParseIntError> for Error {
+    fn from(source: core::num::ParseIntError) -> Self {
+        Self::ParseInt { source }
+    }
 }
 
 /// The Result type for parsing layout files of the original LiveSplit.

@@ -17,7 +17,7 @@ use chrono::ParseError as ChronoError;
 
 /// The Error type for splits files that couldn't be parsed by the LiveSplit
 /// Parser.
-#[derive(Debug, snafu::Snafu, derive_more::From)]
+#[derive(Debug, snafu::Snafu)]
 pub enum Error {
     /// The underlying XML format couldn't be parsed.
     Xml {
@@ -63,6 +63,54 @@ pub enum Error {
     ParseBool,
     /// Failed to parse the scope of a custom variable.
     Scope,
+}
+
+impl From<XmlError> for Error {
+    fn from(source: XmlError) -> Self {
+        Self::Xml { source }
+    }
+}
+
+impl From<core::str::Utf8Error> for Error {
+    fn from(source: core::str::Utf8Error) -> Self {
+        Self::Utf8Str { source }
+    }
+}
+
+impl From<alloc::string::FromUtf8Error> for Error {
+    fn from(source: alloc::string::FromUtf8Error) -> Self {
+        Self::Utf8String { source }
+    }
+}
+
+impl From<core::num::ParseIntError> for Error {
+    fn from(source: core::num::ParseIntError) -> Self {
+        Self::ParseInt { source }
+    }
+}
+
+impl From<core::num::ParseFloatError> for Error {
+    fn from(source: core::num::ParseFloatError) -> Self {
+        Self::ParseFloat { source }
+    }
+}
+
+impl From<crate::timing::ParseError> for Error {
+    fn from(source: crate::timing::ParseError) -> Self {
+        Self::ParseTime { source }
+    }
+}
+
+impl From<ChronoError> for Error {
+    fn from(source: ChronoError) -> Self {
+        Self::ParseDate { source }
+    }
+}
+
+impl From<ComparisonError> for Error {
+    fn from(source: ComparisonError) -> Self {
+        Self::InvalidComparisonName { source }
+    }
 }
 
 /// The Result type for the LiveSplit Parser.

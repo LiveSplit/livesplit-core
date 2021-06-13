@@ -13,7 +13,7 @@ use quick_xml::{
 use std::io::{self, BufRead};
 
 /// The Error type for XML-based splits files that couldn't be parsed.
-#[derive(Debug, snafu::Snafu, derive_more::From)]
+#[derive(Debug, snafu::Snafu)]
 pub enum Error {
     /// Failed to parse the XML.
     #[snafu(display("{}", error))]
@@ -44,6 +44,54 @@ pub enum Error {
     Time { source: timing::ParseError },
     /// Failed to parse a date.
     Date { source: ChronoError },
+}
+
+impl From<XmlError> for Error {
+    fn from(error: XmlError) -> Self {
+        Self::Xml { error }
+    }
+}
+
+impl From<io::Error> for Error {
+    fn from(source: io::Error) -> Self {
+        Self::Io { source }
+    }
+}
+
+impl From<str::Utf8Error> for Error {
+    fn from(source: str::Utf8Error) -> Self {
+        Self::Utf8Str { source }
+    }
+}
+
+impl From<string::FromUtf8Error> for Error {
+    fn from(source: string::FromUtf8Error) -> Self {
+        Self::Utf8String { source }
+    }
+}
+
+impl From<ParseIntError> for Error {
+    fn from(source: ParseIntError) -> Self {
+        Self::Int { source }
+    }
+}
+
+impl From<ParseFloatError> for Error {
+    fn from(source: ParseFloatError) -> Self {
+        Self::Float { source }
+    }
+}
+
+impl From<timing::ParseError> for Error {
+    fn from(source: timing::ParseError) -> Self {
+        Self::Time { source }
+    }
+}
+
+impl From<ChronoError> for Error {
+    fn from(source: ChronoError) -> Self {
+        Self::Date { source }
+    }
 }
 
 /// The Result type for Parsers that parse XML-based splits files.

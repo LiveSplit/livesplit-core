@@ -1,14 +1,13 @@
 use crate::platform::{prelude::*, Duration};
 use core::{
     num::ParseFloatError,
-    ops::{AddAssign, SubAssign},
+    ops::{Add, AddAssign, Neg, Sub, SubAssign},
     str::FromStr,
 };
-use derive_more::{Add, From, Neg, Sub};
 use snafu::ResultExt;
 
 /// A Time Span represents a certain span of time.
-#[derive(From, Add, Sub, Neg, Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct TimeSpan(Duration);
 
 impl TimeSpan {
@@ -106,21 +105,48 @@ impl Default for TimeSpan {
     }
 }
 
+impl From<Duration> for TimeSpan {
+    fn from(duration: Duration) -> Self {
+        TimeSpan(duration)
+    }
+}
+
 impl From<core::time::Duration> for TimeSpan {
     fn from(duration: core::time::Duration) -> Self {
         TimeSpan(Duration::from_std(duration).unwrap())
     }
 }
 
+impl Add for TimeSpan {
+    type Output = TimeSpan;
+    fn add(self, rhs: TimeSpan) -> TimeSpan {
+        TimeSpan(self.0 + rhs.0)
+    }
+}
+
+impl Sub for TimeSpan {
+    type Output = TimeSpan;
+    fn sub(self, rhs: TimeSpan) -> TimeSpan {
+        TimeSpan(self.0 - rhs.0)
+    }
+}
+
 impl AddAssign for TimeSpan {
     fn add_assign(&mut self, rhs: TimeSpan) {
-        self.0 = self.0 + rhs.0;
+        *self = *self + rhs;
     }
 }
 
 impl SubAssign for TimeSpan {
     fn sub_assign(&mut self, rhs: TimeSpan) {
-        self.0 = self.0 - rhs.0;
+        *self = *self - rhs;
+    }
+}
+
+impl Neg for TimeSpan {
+    type Output = TimeSpan;
+    fn neg(self) -> TimeSpan {
+        TimeSpan(-self.0)
     }
 }
 

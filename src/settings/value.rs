@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 
 /// Describes a setting's value. Such a value can be of a variety of different
 /// types.
-#[derive(Clone, PartialEq, derive_more::From, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
 pub enum Value {
     /// A boolean value.
     Bool(bool),
@@ -57,6 +57,120 @@ pub enum Value {
     /// A value describing a font to use. `None` if a default font should be
     /// used.
     Font(Option<Font>),
+}
+
+impl From<bool> for Value {
+    fn from(x: bool) -> Self {
+        Value::Bool(x)
+    }
+}
+
+impl From<u64> for Value {
+    fn from(x: u64) -> Self {
+        Value::UInt(x)
+    }
+}
+
+impl From<i64> for Value {
+    fn from(x: i64) -> Self {
+        Value::Int(x)
+    }
+}
+
+impl From<String> for Value {
+    fn from(x: String) -> Self {
+        Value::String(x)
+    }
+}
+
+impl From<Option<String>> for Value {
+    fn from(x: Option<String>) -> Self {
+        Value::OptionalString(x)
+    }
+}
+
+impl From<Accuracy> for Value {
+    fn from(x: Accuracy) -> Self {
+        Value::Accuracy(x)
+    }
+}
+
+impl From<DigitsFormat> for Value {
+    fn from(x: DigitsFormat) -> Self {
+        Value::DigitsFormat(x)
+    }
+}
+
+impl From<Option<TimingMethod>> for Value {
+    fn from(x: Option<TimingMethod>) -> Self {
+        Value::OptionalTimingMethod(x)
+    }
+}
+
+impl From<Color> for Value {
+    fn from(x: Color) -> Self {
+        Value::Color(x)
+    }
+}
+
+impl From<Option<Color>> for Value {
+    fn from(x: Option<Color>) -> Self {
+        Value::OptionalColor(x)
+    }
+}
+
+impl From<Gradient> for Value {
+    fn from(x: Gradient) -> Self {
+        Value::Gradient(x)
+    }
+}
+
+impl From<ListGradient> for Value {
+    fn from(x: ListGradient) -> Self {
+        Value::ListGradient(x)
+    }
+}
+
+impl From<Alignment> for Value {
+    fn from(x: Alignment) -> Self {
+        Value::Alignment(x)
+    }
+}
+
+impl From<ColumnStartWith> for Value {
+    fn from(x: ColumnStartWith) -> Self {
+        Value::ColumnStartWith(x)
+    }
+}
+
+impl From<ColumnUpdateWith> for Value {
+    fn from(x: ColumnUpdateWith) -> Self {
+        Value::ColumnUpdateWith(x)
+    }
+}
+
+impl From<ColumnUpdateTrigger> for Value {
+    fn from(x: ColumnUpdateTrigger) -> Self {
+        Value::ColumnUpdateTrigger(x)
+    }
+}
+
+impl From<Option<KeyCode>> for Value {
+    fn from(x: Option<KeyCode>) -> Self {
+        Value::Hotkey(x)
+    }
+}
+
+impl From<LayoutDirection> for Value {
+    fn from(x: LayoutDirection) -> Self {
+        Value::LayoutDirection(x)
+    }
+}
+
+impl From<Option<Font>> for Value {
+    fn from(x: Option<Font>) -> Self {
+        Value::Font(x)
+    }
 }
 
 /// The Error type for values that couldn't be converted.

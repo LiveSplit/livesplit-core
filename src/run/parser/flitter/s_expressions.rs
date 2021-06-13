@@ -8,7 +8,7 @@ use utf8::{BufReadDecoder, BufReadDecoderError};
 
 /// The Error types for splits files that couldn't be parsed by the Flitter
 /// Parser.
-#[derive(Debug, snafu::Snafu, derive_more::From)]
+#[derive(Debug, snafu::Snafu)]
 pub enum Error {
     /// Trailing Characters
     TrailingCharacters,
@@ -46,6 +46,18 @@ impl From<BufReadDecoderError<'_>> for Error {
             BufReadDecoderError::InvalidByteSequence(_) => Error::InvalidUtf8,
             BufReadDecoderError::Io(source) => Error::Io { source },
         }
+    }
+}
+
+impl From<ParseIntError> for Error {
+    fn from(source: ParseIntError) -> Self {
+        Self::ParseInt { source }
+    }
+}
+
+impl From<io::Error> for Error {
+    fn from(source: io::Error) -> Self {
+        Self::Io { source }
     }
 }
 
