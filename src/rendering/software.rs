@@ -461,16 +461,30 @@ fn calculate_bounds(layer: &[Entity<SkiaPath, SkiaImage>]) -> (f32, f32) {
     let (mut min_y, mut max_y) = (f32::INFINITY, f32::NEG_INFINITY);
     for entity in layer.iter() {
         match entity {
-            Entity::FillPath(path, _, transform) | Entity::StrokePath(path, _, _, transform) => {
+            Entity::FillPath(path, _, transform) => {
                 if let Some(path) = &**path {
                     let [_, ky, _, sy, _, ty] = transform.to_array();
                     let bounds = path.bounds();
                     let (l, r, t, b) =
                         (bounds.left(), bounds.right(), bounds.top(), bounds.bottom());
-                    for &(x, y) in &[(l, t), (r, t), (l, b), (r, b)] {
+                    for (x, y) in [(l, t), (r, t), (l, b), (r, b)] {
                         let transformed_y = ky * x + sy * y + ty;
                         min_y = min_y.min(transformed_y);
                         max_y = max_y.max(transformed_y);
+                    }
+                }
+            }
+            Entity::StrokePath(path, radius, _, transform) => {
+                if let Some(path) = &**path {
+                    let [_, ky, _, sy, _, ty] = transform.to_array();
+                    let radius = sy * radius;
+                    let bounds = path.bounds();
+                    let (l, r, t, b) =
+                        (bounds.left(), bounds.right(), bounds.top(), bounds.bottom());
+                    for (x, y) in [(l, t), (r, t), (l, b), (r, b)] {
+                        let transformed_y = ky * x + sy * y + ty;
+                        min_y = min_y.min(transformed_y - radius);
+                        max_y = max_y.max(transformed_y + radius);
                     }
                 }
             }
@@ -478,7 +492,7 @@ fn calculate_bounds(layer: &[Entity<SkiaPath, SkiaImage>]) -> (f32, f32) {
                 if image.is_some() {
                     let [_, ky, _, sy, _, ty] = transform.to_array();
                     let (l, r, t, b) = (0.0, 1.0, 0.0, 1.0);
-                    for &(x, y) in &[(l, t), (r, t), (l, b), (r, b)] {
+                    for (x, y) in [(l, t), (r, t), (l, b), (r, b)] {
                         let transformed_y = ky * x + sy * y + ty;
                         min_y = min_y.min(transformed_y);
                         max_y = max_y.max(transformed_y);

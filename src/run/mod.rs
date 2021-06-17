@@ -521,7 +521,7 @@ impl Run {
     /// comparison times and history, removing duplicates in the segment
     /// histories and removing empty times.
     pub fn fix_splits(&mut self) {
-        for &method in &TimingMethod::all() {
+        for method in TimingMethod::all() {
             self.fix_comparison_times_and_history(method);
         }
         self.remove_duplicates();
@@ -676,7 +676,7 @@ impl Run {
     /// Personal Best times and adding those to the Segment History.
     pub fn import_pb_into_segment_history(&mut self) {
         if let Some(mut index) = self.min_segment_history_index() {
-            for &timing_method in &TimingMethod::all() {
+            for timing_method in TimingMethod::all() {
                 index -= 1;
                 let mut prev_time = TimeSpan::zero();
 

@@ -1,9 +1,10 @@
 //! Defines the Comparison Generator for calculating the Best Segments of a Run.
 
 use super::ComparisonGenerator;
-use crate::analysis::sum_of_segments::best::calculate;
-use crate::platform::prelude::*;
-use crate::{Attempt, Segment, Time, TimingMethod};
+use crate::{
+    analysis::sum_of_segments::best::calculate, platform::prelude::*, Attempt, Segment, Time,
+    TimingMethod,
+};
 
 /// The Comparison Generator for calculating the Best Segments of a Run.
 #[derive(Copy, Clone, Debug)]
@@ -27,7 +28,7 @@ impl ComparisonGenerator for BestSegments {
             .iter_mut()
             .for_each(|s| *s.comparison_mut(NAME) = Time::new());
 
-        for &method in &TimingMethod::all() {
+        for method in TimingMethod::all() {
             predictions.clear();
             predictions.resize(segments.len() + 1, None);
 

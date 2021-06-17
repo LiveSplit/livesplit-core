@@ -1,5 +1,7 @@
 #![allow(clippy::trivially_copy_pass_by_ref)]
 
+use core::array;
+
 use crate::{
     hotkey::KeyCode,
     platform::prelude::*,
@@ -118,7 +120,7 @@ impl HotkeyConfig {
         let value: Option<KeyCode> = value.into();
 
         if value.is_some() {
-            let any = [
+            let any = array::IntoIter::new([
                 self.split,
                 self.reset,
                 self.undo,
@@ -128,11 +130,10 @@ impl HotkeyConfig {
                 self.previous_comparison,
                 self.next_comparison,
                 self.toggle_timing_method,
-            ]
-            .iter()
+            ])
             .enumerate()
             .filter(|&(i, _)| i != index)
-            .any(|(_, &v)| v == value);
+            .any(|(_, v)| v == value);
 
             if any {
                 return Err(());
