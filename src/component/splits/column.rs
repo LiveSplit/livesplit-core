@@ -273,7 +273,7 @@ fn column_update_value(
             ColumnFormatter::Time,
         ),
 
-        (Delta, false) | (DeltaWithFallback, false) => {
+        (Delta | DeltaWithFallback, false) => {
             let split_time = segment.split_time()[method];
             let delta = catch! {
                 split_time? -
@@ -290,7 +290,7 @@ fn column_update_value(
                 formatter,
             )
         }
-        (Delta, true) | (DeltaWithFallback, true) => (
+        (Delta | DeltaWithFallback, true) => (
             catch! {
                 timer.current_time()[method]? -
                 segment.comparison(comparison)[method]?
@@ -310,7 +310,7 @@ fn column_update_value(
             ColumnFormatter::Time,
         ),
 
-        (SegmentDelta, false) | (SegmentDeltaWithFallback, false) => {
+        (SegmentDelta | SegmentDeltaWithFallback, false) => {
             let delta = analysis::previous_segment_delta(timer, segment_index, comparison, method);
             let (value, formatter) = if delta.is_none() && column.update_with.has_fallback() {
                 (
@@ -326,7 +326,7 @@ fn column_update_value(
                 formatter,
             )
         }
-        (SegmentDelta, true) | (SegmentDeltaWithFallback, true) => (
+        (SegmentDelta | SegmentDeltaWithFallback, true) => (
             analysis::live_segment_delta(timer, segment_index, comparison, method),
             SemanticColor::Default,
             ColumnFormatter::Delta,
