@@ -704,6 +704,21 @@ impl Timer {
         }
     }
 
+    /// Notifies the `Timer` that the currently loaded [`Layout`](crate::Layout)
+    /// has changed. If the [`Run`] has a
+    /// [`LinkedLayout`](crate::run::LinkedLayout), it will be updated
+    /// accordingly. Specify [`None`] if the default [`Layout`](crate::Layout)
+    /// should be linked.
+    #[inline]
+    pub fn layout_path_changed<S>(&mut self, path: Option<S>)
+    where
+        S: PopulateString,
+    {
+        if self.run.layout_path_changed(path) {
+            self.run.mark_as_modified();
+        }
+    }
+
     fn update_attempt_history(&mut self) {
         let time = if self.phase == Ended {
             self.current_time()

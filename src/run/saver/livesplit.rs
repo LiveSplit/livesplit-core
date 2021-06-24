@@ -26,6 +26,7 @@
 
 use crate::{
     platform::prelude::*,
+    run::LinkedLayout,
     settings::Image,
     timing::formatter::{Complete, TimeFormatter},
     util::xml::{AttributeWriter, DisplayValue, Text, Writer, NO_ATTRIBUTES},
@@ -206,6 +207,16 @@ pub fn save_run<W: fmt::Write>(run: &Run, writer: W) -> fmt::Result {
                 },
             )
         })?;
+
+        writer.tag_with_text_content(
+            "LayoutPath",
+            NO_ATTRIBUTES,
+            match run.linked_layout() {
+                Some(LinkedLayout::Default) => "?default",
+                Some(LinkedLayout::Path(path)) => path,
+                None => "",
+            },
+        )?;
 
         writer.tag_with_text_content(
             "Offset",

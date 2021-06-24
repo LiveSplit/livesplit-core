@@ -6,6 +6,7 @@ use livesplit_core::{
     run::{
         parser,
         saver::{self, livesplit::IoWrite},
+        LinkedLayout,
     },
     Attempt, Run, RunMetadata, Segment, TimeSpan,
 };
@@ -275,4 +276,11 @@ pub extern "C" fn Run_custom_comparison(this: &Run, index: usize) -> *const c_ch
 #[no_mangle]
 pub extern "C" fn Run_auto_splitter_settings(this: &Run) -> *const c_char {
     output_str(this.auto_splitter_settings())
+}
+
+/// Accesses the linked layout of this Run. If a Layout is linked, it is
+/// supposed to be loaded to visualize the Run.
+#[no_mangle]
+pub extern "C" fn Run_linked_layout(this: &Run) -> Option<&LinkedLayout> {
+    this.linked_layout()
 }

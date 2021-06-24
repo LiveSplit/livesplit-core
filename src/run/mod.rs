@@ -17,6 +17,7 @@
 mod attempt;
 mod comparisons;
 pub mod editor;
+mod linked_layout;
 pub mod parser;
 mod run_metadata;
 pub mod saver;
@@ -29,6 +30,7 @@ mod tests;
 pub use attempt::Attempt;
 pub use comparisons::Comparisons;
 pub use editor::{Editor, RenameError};
+pub use linked_layout::LinkedLayout;
 pub use run_metadata::{CustomVariable, RunMetadata};
 pub use segment::Segment;
 pub use segment_history::SegmentHistory;
@@ -73,6 +75,7 @@ pub struct Run {
     custom_comparisons: Vec<String>,
     comparison_generators: ComparisonGenerators,
     auto_splitter_settings: String,
+    linked_layout: Option<LinkedLayout>,
 }
 
 #[derive(Clone, Debug)]
@@ -116,6 +119,7 @@ impl Run {
             custom_comparisons: vec![personal_best::NAME.to_string()],
             comparison_generators: ComparisonGenerators(default_generators()),
             auto_splitter_settings: String::new(),
+            linked_layout: None,
         }
     }
 
@@ -311,6 +315,51 @@ impl Run {
     #[inline]
     pub fn auto_splitter_settings_mut(&mut self) -> &mut String {
         &mut self.auto_splitter_settings
+    }
+
+    /// Accesses the [`LinkedLayout`] of this `Run`. If a
+    /// [`Layout`](crate::Layout) is linked, it is supposed to be loaded to
+    /// visualize the `Run`.
+    #[inline]
+    pub const fn linked_layout(&self) -> Option<&LinkedLayout> {
+        self.linked_layout.as_ref()
+    }
+
+    /// Notifies the `Run` that the currently loaded [`Layout`](crate::Layout)
+    /// has changed. If the `Run` has a [`LinkedLayout`], it will be updated
+    /// accordingly. Specify [`None`] if the default [`Layout`](crate::Layout)
+    /// should be linked. Returns [`true`] if the [`LinkedLayout`] has changed.
+    #[must_use]
+    #[inline]
+    pub fn layout_path_changed<S>(&mut self, path: Option<S>) -> bool
+    where
+        S: PopulateString,
+    {
+        if let Some(layout) = &mut self.linked_layout {
+            match (&mut *layout, path) {
+                (LinkedLayout::Default, Some(path)) => {
+                    *layout = LinkedLayout::Path(path.into_string())
+                }
+                (LinkedLayout::Path(_), None) => *layout = LinkedLayout::Default,
+                (LinkedLayout::Path(old_path), Some(new_path)) => {
+                    if old_path == new_path.as_str() {
+                        return false;
+                    }
+                    new_path.populate(old_path);
+                }
+                (LinkedLayout::Default, None) => return false,
+            }
+            return true;
+        }
+        false
+    }
+
+    /// Sets the [`LinkedLayout`] of this `Run`. If a [`Layout`](crate::Layout)
+    /// is linked, it is supposed to be loaded to visualize the `Run`.
+    #[inline]
+    pub fn set_linked_layout(&mut self, linked_layout: Option<LinkedLayout>) {
+        self.linked_layout = linked_layout;
+        self.mark_as_modified();
     }
 
     /// Returns the amount of segments stored in this Run.
