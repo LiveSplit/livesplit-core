@@ -153,14 +153,10 @@ impl Component {
             state
                 .key_abbreviations
                 .push("Total Possible Time Save".into());
-            state.key_abbreviations.push("Possible Time Save".into());
-            state.key_abbreviations.push("Poss. Time Save".into());
-            state.key_abbreviations.push("Time Save".into());
-        } else {
-            state.key_abbreviations.push("Possible Time Save".into());
-            state.key_abbreviations.push("Poss. Time Save".into());
-            state.key_abbreviations.push("Time Save".into());
         }
+        state.key_abbreviations.push("Possible Time Save".into());
+        state.key_abbreviations.push("Poss. Time Save".into());
+        state.key_abbreviations.push("Time Save".into());
 
         state.display_two_rows = self.settings.display_two_rows;
         state.updates_frequently = false;

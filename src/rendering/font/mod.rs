@@ -10,7 +10,7 @@ use super::{
 };
 use crate::settings::{FontStretch, FontStyle, FontWeight};
 use rustybuzz::{Face, Feature, GlyphBuffer, Tag, UnicodeBuffer, Variation};
-use ttf_parser::{GlyphId, OutlineBuilder, Tag as ParserTag};
+use ttf_parser::{GlyphId, OutlineBuilder};
 
 pub use self::{cache::FontCache, glyph_cache::GlyphCache};
 
@@ -29,8 +29,7 @@ pub const TEXT_FONT: &[u8] = include_bytes!("assets/FiraSans-Regular.ttf");
 pub const TIMER_FONT: &[u8] = include_bytes!("assets/Timer.ttf");
 
 pub struct Font<'fd> {
-    rb: Face<'fd>,
-    face: ttf_parser::Face<'fd>,
+    face: Face<'fd>,
     color_tables: Option<ColorTables<'fd>>,
     scale_factor: f32,
     #[cfg(feature = "font-loading")]
@@ -83,18 +82,13 @@ impl<'fd> Font<'fd> {
         weight: FontWeight,
         stretch: FontStretch,
     ) -> Option<Self> {
-        let mut face = ttf_parser::Face::from_slice(data, index).ok()?;
-        let mut rb = Face::from_slice(data, index)?;
+        let mut face = Face::from_slice(data, index)?;
 
         let italic = style.value_for_italic();
         let weight = weight.value();
         let stretch = stretch.percentage();
 
-        face.set_variation(ParserTag::from_bytes(b"ital"), italic);
-        face.set_variation(ParserTag::from_bytes(b"wght"), weight);
-        face.set_variation(ParserTag::from_bytes(b"wdth"), stretch);
-
-        rb.set_variations(&[
+        face.set_variations(&[
             Variation {
                 tag: Tag::from_bytes(b"ital"),
                 value: italic,
@@ -111,7 +105,6 @@ impl<'fd> Font<'fd> {
 
         Some(Self {
             scale_factor: 1.0 / face.height() as f32,
-            rb,
             color_tables: ColorTables::new(&face),
             face,
             #[cfg(feature = "font-loading")]
@@ -150,7 +143,7 @@ impl<'f> ScaledFont<'f> {
 
     pub fn shape(self, buffer: UnicodeBuffer) -> Glyphs<'f> {
         Glyphs {
-            buffer: rustybuzz::shape(&self.font.rb, &[], buffer),
+            buffer: rustybuzz::shape(&self.font.face, &[], buffer),
             font: self,
         }
     }
@@ -158,7 +151,7 @@ impl<'f> ScaledFont<'f> {
     pub fn shape_tabular_numbers(self, buffer: UnicodeBuffer) -> Glyphs<'f> {
         Glyphs {
             buffer: rustybuzz::shape(
-                &self.font.rb,
+                &self.font.face,
                 &[
                     // If the font has support for tabular numbers, we want to
                     // use it, so we don't have to fix up much. Though we still
@@ -248,7 +241,7 @@ impl<'f> Glyphs<'f> {
 
         iter.map(move |(i, p)| {
             let g = PositionedGlyph {
-                id: i.codepoint,
+                id: i.glyph_id,
                 x: cursor.x + p.x_offset as f32 * scale,
                 y: cursor.y + p.y_offset as f32 * scale,
             };
@@ -274,7 +267,7 @@ impl<'f> Glyphs<'f> {
             cursor.x -= p.x_advance as f32 * scale;
             cursor.y -= p.y_advance as f32 * scale;
             PositionedGlyph {
-                id: i.codepoint,
+                id: i.glyph_id,
                 x: cursor.x + p.x_offset as f32 * scale,
                 y: cursor.y + p.y_offset as f32 * scale,
             }
@@ -354,7 +347,7 @@ impl<'f> Glyphs<'f> {
         )
         .rev()
         .map(move |(i, p)| {
-            let x = if digits.contains(&i.codepoint) {
+            let x = if digits.contains(&i.glyph_id) {
                 cursor.x -= digit_width;
                 let wider_by = digit_width - (p.x_advance as f32 * scale);
                 cursor.x + p.x_offset as f32 * scale + 0.5 * wider_by
@@ -365,7 +358,7 @@ impl<'f> Glyphs<'f> {
 
             cursor.y -= p.y_advance as f32 * scale;
             PositionedGlyph {
-                id: i.codepoint,
+                id: i.glyph_id,
                 x,
                 y: cursor.y + p.y_offset as f32 * scale,
             }
