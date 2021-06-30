@@ -1,12 +1,12 @@
 //! A Timer provides all the capabilities necessary for doing speedrun attempts.
 
 use super::{output_str, output_time, output_time_span, output_vec};
-use crate::run::{NullableOwnedRun, OwnedRun};
-use crate::shared_timer::OwnedSharedTimer;
-use livesplit_core::run::saver;
-use livesplit_core::{Run, Time, TimeSpan, Timer, TimerPhase, TimingMethod};
-use std::os::raw::c_char;
-use std::ptr;
+use crate::{
+    run::{NullableOwnedRun, OwnedRun},
+    shared_timer::OwnedSharedTimer,
+};
+use livesplit_core::{run::saver, Run, Time, TimeSpan, Timer, TimerPhase, TimingMethod};
+use std::{os::raw::c_char, ptr};
 
 /// type
 pub type OwnedTimer = Box<Timer>;
@@ -75,6 +75,16 @@ pub unsafe extern "C" fn Timer_replace_run(
 #[no_mangle]
 pub extern "C" fn Timer_set_run(this: &mut Timer, run: OwnedRun) -> NullableOwnedRun {
     this.set_run(*run).err().map(Box::new)
+}
+
+/// Accesses the index of the split the attempt is currently on. If there's
+/// no attempt in progress, `-1` is returned instead. This returns an
+/// index that is equal to the amount of segments when the attempt is
+/// finished, but has not been reset. So you need to be careful when using
+/// this value for indexing.
+#[no_mangle]
+pub extern "C" fn Timer_current_split_index(this: &Timer) -> isize {
+    this.current_split_index().map_or(-1, |i| i as isize)
 }
 
 /// Starts the Timer if there is no attempt in progress. If that's not the
