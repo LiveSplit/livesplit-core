@@ -1,7 +1,9 @@
 use crate::{Class, Function, Type, TypeKind};
 use heck::MixedCase;
-use std::collections::BTreeMap;
-use std::io::{Result, Write};
+use std::{
+    collections::BTreeMap,
+    io::{Result, Write},
+};
 
 fn get_hl_type(ty: &Type) -> String {
     if ty.is_custom {
@@ -14,6 +16,8 @@ fn get_hl_type(ty: &Type) -> String {
         "Bool".to_string()
     } else if ty.name == "usize" {
         "size_t".to_string()
+    } else if ty.name == "isize" {
+        "ssize_t".to_string()
     } else {
         get_ll_type(ty).to_string()
     }
@@ -33,6 +37,7 @@ fn get_ll_type(ty: &Type) -> &str {
             "u32" => "UInt32",
             "u64" => "UInt64",
             "usize" => "size_t",
+            "isize" => "ssize_t",
             "f32" => "Float",
             "f64" => "Double",
             "bool" => "Bool",

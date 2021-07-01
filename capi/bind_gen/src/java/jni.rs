@@ -1,10 +1,12 @@
 use super::write_class_comments;
 use crate::{Class, Function, Type, TypeKind};
 use heck::MixedCase;
-use std::collections::BTreeMap;
-use std::fs::File;
-use std::io::{BufWriter, Result, Write};
-use std::path::Path;
+use std::{
+    collections::BTreeMap,
+    fs::File,
+    io::{BufWriter, Result, Write},
+    path::Path,
+};
 
 fn get_hl_type(ty: &Type) -> String {
     if ty.is_custom {
@@ -15,14 +17,14 @@ fn get_hl_type(ty: &Type) -> String {
         }
     } else if ty.name == "bool" {
         "boolean".to_string()
-    } else if ty.name == "usize" {
+    } else if ty.name == "usize" || ty.name == "isize" {
         "long".to_string()
     } else {
         get_ll_type(ty).to_string()
     }
 }
 
-fn get_ll_type<'a>(ty: &'a Type) -> &'a str {
+fn get_ll_type(ty: &Type) -> &str {
     match (ty.kind, ty.name.as_str()) {
         (TypeKind::Ref, "c_char") => "String",
         (TypeKind::Ref, _) | (TypeKind::RefMut, _) => "long",
@@ -36,6 +38,7 @@ fn get_ll_type<'a>(ty: &'a Type) -> &'a str {
             "u32" => "int",
             "u64" => "long",
             "usize" => "long",
+            "isize" => "long",
             "f32" => "float",
             "f64" => "double",
             "bool" => "boolean",

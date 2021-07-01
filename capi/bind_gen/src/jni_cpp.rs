@@ -1,8 +1,10 @@
 use crate::{Class, Function, Type, TypeKind};
 use heck::MixedCase;
-use std::borrow::Cow;
-use std::collections::BTreeMap;
-use std::io::{Result, Write};
+use std::{
+    borrow::Cow,
+    collections::BTreeMap,
+    io::{Result, Write},
+};
 
 fn get_c_type(ty: &Type) -> Cow<'_, str> {
     let mut name = Cow::Borrowed(match ty.name.as_str() {
@@ -15,6 +17,7 @@ fn get_c_type(ty: &Type) -> Cow<'_, str> {
         "u32" => "uint32_t",
         "u64" => "uint64_t",
         "usize" => "size_t",
+        "isize" => "ssize_t",
         "f32" => "float",
         "f64" => "double",
         "bool" => "bool",
@@ -50,6 +53,7 @@ fn get_jni_type(ty: &Type) -> &str {
             "u32" => "jint",
             "u64" => "jlong",
             "usize" => "jlong",
+            "isize" => "jlong",
             "f32" => "jfloat",
             "f64" => "jdouble",
             "bool" => "jboolean",
