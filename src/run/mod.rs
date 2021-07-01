@@ -344,7 +344,7 @@ impl Run {
         &self.layout_path
     }
 
-    /// Sets the layout, the run is using.
+    /// Sets the path to the layout associated with the run.
     #[inline]
     pub fn set_layout_path<S>(&mut self, name: S)
     where
