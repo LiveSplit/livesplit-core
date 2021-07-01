@@ -1,6 +1,8 @@
 use crate::{Class, Function, Opt, Type, TypeKind};
-use std::collections::BTreeMap;
-use std::io::{Result, Write};
+use std::{
+    collections::BTreeMap,
+    io::{Result, Write},
+};
 
 fn get_hl_type(ty: &Type) -> String {
     if ty.is_custom {
@@ -23,6 +25,7 @@ fn get_hl_type(ty: &Type) -> String {
                 "u32" => "Integer",
                 "u64" => "Integer",
                 "usize" => "Integer",
+                "isize" => "Integer",
                 "f32" => "Float",
                 "f64" => "Float",
                 "bool" => "Boolean",
@@ -51,6 +54,7 @@ fn get_ll_type(ty: &Type) -> &str {
             "u32" => "uint32",
             "u64" => "uint64",
             "usize" => "size_t",
+            "isize" => "ssize_t",
             "f32" => "float",
             "f64" => "double",
             "bool" => "bool",

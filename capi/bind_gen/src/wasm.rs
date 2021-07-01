@@ -1,7 +1,9 @@
 use crate::{typescript, Class, Function, Type, TypeKind};
 use heck::MixedCase;
-use std::collections::BTreeMap;
-use std::io::{Result, Write};
+use std::{
+    collections::BTreeMap,
+    io::{Result, Write},
+};
 
 fn get_hl_type_with_null(ty: &Type) -> String {
     let mut formatted = get_hl_type_without_null(ty);
@@ -31,6 +33,7 @@ fn get_hl_type_without_null(ty: &Type) -> String {
                 "u32" => "number",
                 "u64" => "number",
                 "usize" => "number",
+                "isize" => "number",
                 "f32" => "number",
                 "f64" => "number",
                 "bool" => "boolean",

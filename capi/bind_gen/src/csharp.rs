@@ -1,7 +1,9 @@
 use crate::{Class, Function, Type, TypeKind};
 use heck::{CamelCase, MixedCase};
-use std::collections::BTreeMap;
-use std::io::{Result, Write};
+use std::{
+    collections::BTreeMap,
+    io::{Result, Write},
+};
 
 fn get_hl_type(ty: &Type) -> String {
     if ty.is_custom {
@@ -13,6 +15,8 @@ fn get_hl_type(ty: &Type) -> String {
     } else if ty.name == "bool" {
         "bool".to_string()
     } else if ty.name == "usize" {
+        "ulong".to_string()
+    } else if ty.name == "isize" {
         "long".to_string()
     } else {
         let ret = get_ll_type(ty, false).to_string();
@@ -38,6 +42,7 @@ fn get_ll_type(ty: &Type, output: bool) -> &str {
             "u32" => "uint",
             "u64" => "ulong",
             "usize" => "UIntPtr",
+            "isize" => "IntPtr",
             "f32" => "float",
             "f64" => "double",
             "bool" => {
@@ -183,6 +188,8 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
         } else {
             write!(writer, "var result = ")?;
             if return_type_ll == "UIntPtr" {
+                write!(writer, "(ulong)")?;
+            } else if return_type_ll == "IntPtr" {
                 write!(writer, "(long)")?;
             }
         }
@@ -202,6 +209,8 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
                 "this.ptr".to_string()
             } else if ty_name == "UIntPtr" {
                 format!("(UIntPtr){}", name.to_mixed_case())
+            } else if ty_name == "IntPtr" {
+                format!("(IntPtr){}", name.to_mixed_case())
             } else if typ.is_custom {
                 format!("{}.ptr", name.to_mixed_case())
             } else {
