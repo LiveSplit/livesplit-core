@@ -338,7 +338,7 @@ impl Run {
         &mut self.auto_splitter_settings
     }
 
-    /// Layout, the run is using.
+    /// Path to the layout associated with the run.
     #[inline]
     pub fn layout_path(&self) -> &str {
         &self.layout_path
