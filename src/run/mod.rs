@@ -81,6 +81,7 @@ pub struct Run {
     custom_comparisons: Vec<String>,
     comparison_generators: ComparisonGenerators,
     auto_splitter_settings: Vec<u8>,
+    layout_path: String,
 }
 
 #[derive(Clone, Debug)]
@@ -125,6 +126,7 @@ impl Run {
             custom_comparisons: vec![personal_best::NAME.to_string()],
             comparison_generators: ComparisonGenerators(default_generators()),
             auto_splitter_settings: Vec::new(),
+            layout_path: String::new(),
         }
     }
 
@@ -334,6 +336,22 @@ impl Run {
     #[inline]
     pub fn auto_splitter_settings_mut(&mut self) -> &mut Vec<u8> {
         &mut self.auto_splitter_settings
+    }
+
+    /// Path to the layout associated with the run.
+    #[inline]
+    pub fn layout_path(&self) -> &str {
+        &self.layout_path
+    }
+
+    /// Sets the path to the layout associated with the run.
+    #[inline]
+    pub fn set_layout_path<S>(&mut self, name: S)
+    where
+        S: AsRef<str>,
+    {
+        self.layout_path.clear();
+        self.layout_path.push_str(name.as_ref());
     }
 
     /// Returns the amount of segments stored in this Run.

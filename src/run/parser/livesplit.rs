@@ -550,6 +550,8 @@ pub fn parse<R: BufRead>(source: R, path: Option<PathBuf>) -> Result<Run> {
             } else if tag.name() == b"AutoSplitterSettings" {
                 let settings = run.auto_splitter_settings_mut();
                 reencode_children(reader, tag.into_buf(), settings).map_err(Into::into)
+            } else if tag.name() == b"LayoutPath" {
+                text(reader, tag.into_buf(), |t| run.set_layout_path(t))
             } else {
                 end_tag(reader, tag.into_buf())
             }

@@ -112,6 +112,7 @@ pub unsafe extern "C" fn Run_set_game_name(this: &mut Run, game: *const c_char) 
     this.set_game_name(str(game));
 }
 
+
 /// Accesses the game icon's data. If there is no game icon, this returns an
 /// empty buffer.
 #[no_mangle]
@@ -274,4 +275,16 @@ pub extern "C" fn Run_custom_comparison(this: &Run, index: usize) -> *const c_ch
 #[no_mangle]
 pub extern "C" fn Run_auto_splitter_settings(this: &Run) -> *const c_char {
     output_vec(|o| o.extend_from_slice(this.auto_splitter_settings()))
+}
+
+/// Layout, the run is using.
+#[no_mangle]
+pub extern "C" fn Run_layout_path(this: &Run) -> *const c_char {
+    output_str(this.layout_path())
+}
+
+/// Sets the layout, the run is using.
+#[no_mangle]
+pub unsafe extern "C" fn Run_set_layout_path(this: &mut Run, layout_path: *const c_char) {
+    this.set_layout_path(str(layout_path));
 }
