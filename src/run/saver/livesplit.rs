@@ -401,6 +401,8 @@ pub fn save_run<W: Write>(run: &Run, writer: W) -> Result<()> {
         },
     )?;
 
+    text(writer, new_tag(b"LayoutPath"), run.layout_path())?;
+
     write_end(writer, b"Run")?;
     Ok(())
 }
