@@ -136,13 +136,15 @@ impl HotkeySystem {
     }
 
     fn set_hotkey(&mut self, hotkey: Hotkey, keycode: Option<KeyCode>) -> Result<()> {
-        // FixMe: We do not check whether the keycode is already in use
+        // FIXME: We do not check whether the keycode is already in use
         if hotkey.get_keycode(&self.config) == keycode {
             return Ok(());
         }
         if self.is_active {
             self.unregister(hotkey)?;
             self.register(hotkey, keycode)?;
+        } else {
+            hotkey.set_keycode(&mut self.config, keycode);
         }
         Ok(())
     }
