@@ -30,3 +30,30 @@ cfg_if::cfg_if! {
         pub use self::other::*;
     }
 }
+
+mod key_code;
+pub use self::key_code::*;
+
+#[cfg(test)]
+mod tests {
+    use std::{thread, time::Duration};
+
+    use super::*;
+
+    #[test]
+    fn test() {
+        let hook = Hook::new().unwrap();
+        hook.register(KeyCode::Numpad1, || println!("A")).unwrap();
+        println!("Press Numpad1");
+        thread::sleep(Duration::from_secs(5));
+        hook.unregister(KeyCode::Numpad1).unwrap();
+        hook.register(KeyCode::Numpad4, || println!("B")).unwrap();
+        println!("Press Numpad4");
+        thread::sleep(Duration::from_secs(5));
+        hook.unregister(KeyCode::Numpad4).unwrap();
+        hook.register(KeyCode::Numpad1, || println!("C")).unwrap();
+        println!("Press Numpad1");
+        thread::sleep(Duration::from_secs(5));
+        hook.unregister(KeyCode::Numpad1).unwrap();
+    }
+}

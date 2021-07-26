@@ -1,9 +1,9 @@
-mod key_code;
-pub use self::key_code::KeyCode;
-
-use std::collections::hash_map::{Entry, HashMap};
-use std::sync::{Arc, Mutex};
-use std::{slice, str};
+use crate::KeyCode;
+use std::{
+    collections::hash_map::{Entry, HashMap},
+    slice, str,
+    sync::{Arc, Mutex},
+};
 
 #[derive(Debug, snafu::Snafu)]
 pub enum Error {

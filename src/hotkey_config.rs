@@ -36,12 +36,6 @@ pub struct HotkeyConfig {
     pub toggle_timing_method: Option<KeyCode>,
 }
 
-#[cfg(any(
-    windows,
-    target_os = "linux",
-    target_os = "macos",
-    all(target_arch = "wasm32", target_os = "unknown")
-))]
 impl Default for HotkeyConfig {
     fn default() -> Self {
         use crate::hotkey::KeyCode::*;
@@ -54,28 +48,6 @@ impl Default for HotkeyConfig {
             undo_all_pauses: None,
             previous_comparison: Some(Numpad4),
             next_comparison: Some(Numpad6),
-            toggle_timing_method: None,
-        }
-    }
-}
-
-#[cfg(not(any(
-    windows,
-    target_os = "linux",
-    target_os = "macos",
-    all(target_arch = "wasm32", target_os = "unknown"),
-)))]
-impl Default for HotkeyConfig {
-    fn default() -> Self {
-        Self {
-            split: Some(KeyCode),
-            reset: Some(KeyCode),
-            undo: Some(KeyCode),
-            skip: Some(KeyCode),
-            pause: Some(KeyCode),
-            undo_all_pauses: None,
-            previous_comparison: Some(KeyCode),
-            next_comparison: Some(KeyCode),
             toggle_timing_method: None,
         }
     }
