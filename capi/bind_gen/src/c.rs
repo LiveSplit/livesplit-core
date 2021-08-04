@@ -45,8 +45,16 @@ pub fn write<W: Write>(mut writer: W, classes: &BTreeMap<String, Class>) -> Resu
         r#"#ifndef LIVESPLIT_CORE_H
 #define LIVESPLIT_CORE_H
 
-#ifdef __cplusplus
+/**
+Most C/C++ compilers support __restrict, and it's been standardized in C99 by
+adding the restrict keyword.
+If not compiled in C99 (or higher) modes, try to use __restrict instead.
+*/
+#if __STDC_VERSION__ < 199901L
 #define restrict __restrict
+#endif
+
+#ifdef __cplusplus
 namespace LiveSplit {
 extern "C" {
 #endif
