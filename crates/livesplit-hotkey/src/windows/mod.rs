@@ -21,7 +21,7 @@ use winapi::{
         processthreadsapi::GetCurrentThreadId,
         winuser::{
             CallNextHookEx, GetMessageW, PostThreadMessageW, SetWindowsHookExW,
-            UnhookWindowsHookEx, KBDLLHOOKSTRUCT, WH_KEYBOARD_LL, WM_KEYDOWN,
+            UnhookWindowsHookEx, KBDLLHOOKSTRUCT, LLKHF_EXTENDED, WH_KEYBOARD_LL, WM_KEYDOWN,
         },
     },
 };
@@ -233,7 +233,9 @@ unsafe extern "system" fn callback_proc(code: c_int, wparam: WPARAM, lparam: LPA
             let hook_struct = *(lparam as *const KBDLLHOOKSTRUCT);
             let event = wparam as UINT;
             if event == WM_KEYDOWN {
-                if let Some(key_code) = parse_scan_code(hook_struct.scanCode) {
+                let scan_code =
+                    hook_struct.scanCode + ((hook_struct.flags & LLKHF_EXTENDED) * 0xE000);
+                if let Some(key_code) = parse_scan_code(scan_code) {
                     state
                         .events
                         .send(key_code)
