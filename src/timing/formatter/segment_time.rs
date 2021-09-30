@@ -11,8 +11,7 @@ pub struct Inner {
 /// Segment Times. This specifically means that the fractional part of the time
 /// is always shown and the minutes and hours are only shown when necessary. The
 /// default accuracy is to show 2 digits of the fractional part, but this can be
-/// configured. Unlike the Short Time Formatter, the Segment Time Formatter
-/// shows a dash when there's an empty time.
+/// configured.
 ///
 /// # Example Formatting
 ///
@@ -95,4 +94,16 @@ impl Display for Inner {
             write!(f, "{}", DASH)
         }
     }
+}
+
+#[test]
+fn test() {
+    let time = "4:20.69".parse::<TimeSpan>().unwrap();
+    let formatted = SegmentTime::new().format(time).to_string();
+    assert!(
+        // Modern processors
+        formatted == "4:20.69" ||
+        // Old x86 processors are apparently less precise
+        formatted == "4:20.68"
+    );
 }

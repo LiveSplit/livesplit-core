@@ -1,7 +1,9 @@
-use crate::comparison::balanced_pb::{BalancedPB, NAME};
-use crate::tests_helper::{run_with_splits, run_with_splits_opt};
-use crate::timing::formatter::{Short, TimeFormatter};
-use crate::{Run, Segment, TimeSpan, Timer};
+use crate::{
+    comparison::balanced_pb::{BalancedPB, NAME},
+    tests_helper::{run_with_splits, run_with_splits_opt},
+    timing::formatter::{SegmentTime, TimeFormatter},
+    Run, Segment, TimeSpan, Timer,
+};
 
 #[test]
 fn test() {
@@ -41,13 +43,13 @@ fn test() {
     {
         let run = timer.run();
         assert_eq!(
-            Short::new()
+            SegmentTime::new()
                 .format(run.segment(0).comparison(NAME).game_time)
                 .to_string(),
             "0.46"
         );
         assert_eq!(
-            Short::new()
+            SegmentTime::new()
                 .format(run.segment(1).comparison(NAME).game_time)
                 .to_string(),
             "2.53"

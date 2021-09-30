@@ -2,8 +2,7 @@
 
 use crate::{settings::Image, timing, RealTime, Run, Segment, Time, TimeSpan};
 use alloc::borrow::Cow;
-use core::num::ParseIntError;
-use core::result::Result as StdResult;
+use core::{num::ParseIntError, result::Result as StdResult};
 use snafu::{OptionExt, ResultExt};
 use std::io::{self, BufRead};
 
@@ -74,7 +73,7 @@ fn parse_time(time: &str) -> StdResult<Time, timing::ParseError> {
     }
 }
 
-fn replace<'a>(text: &'a str, a: &'a str, b: &str) -> Cow<'a, str> {
+fn replace<'text>(text: &'text str, a: &str, b: &str) -> Cow<'text, str> {
     if text.contains(a) {
         text.replace(a, b).into()
     } else {

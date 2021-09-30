@@ -6,13 +6,13 @@
 //! occurrences of this and allows you to delete them individually if any of
 //! them seem wrong.
 
-use crate::analysis::sum_of_segments::{best, track_branch, Prediction};
-use crate::platform::prelude::*;
-use crate::platform::Local;
-use crate::timing::formatter::{Short, TimeFormatter};
-use crate::{Attempt, Run, Segment, TimeSpan, TimingMethod};
-use core::fmt;
-use core::mem::replace;
+use crate::{
+    analysis::sum_of_segments::{best, track_branch, Prediction},
+    platform::{prelude::*, Local},
+    timing::formatter::{SegmentTime, TimeFormatter},
+    Attempt, Run, Segment, TimeSpan, TimingMethod,
+};
+use core::{fmt, mem::replace};
 
 /// A Sum of Best Cleaner allows you to interactively remove potential issues in
 /// the Segment History that lead to an inaccurate Sum of Best. If you skip a
@@ -67,7 +67,7 @@ pub struct CleanUp {
 
 impl fmt::Display for PotentialCleanUp<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let short = Short::new();
+        let short = SegmentTime::new();
 
         let method = match self.method {
             TimingMethod::RealTime => "Real Time",

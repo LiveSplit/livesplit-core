@@ -4,7 +4,7 @@ use crate::{
     platform::prelude::*,
     run::RunMetadata,
     settings::{CachedImageId, ImageData},
-    timing::formatter::{none_wrapper::EmptyWrapper, Accuracy, Short, TimeFormatter},
+    timing::formatter::{none_wrapper::EmptyWrapper, Accuracy, SegmentTime, TimeFormatter},
 };
 use serde::{Deserialize, Serialize};
 
@@ -114,7 +114,7 @@ impl State {
 impl Editor {
     /// Calculates the Run Editor's state in order to visualize it.
     pub fn state(&mut self) -> State {
-        let formatter = EmptyWrapper::new(Short::with_accuracy(Accuracy::Hundredths));
+        let formatter = EmptyWrapper::new(SegmentTime::with_accuracy(Accuracy::Hundredths));
 
         let icon_change = self
             .game_icon_id
