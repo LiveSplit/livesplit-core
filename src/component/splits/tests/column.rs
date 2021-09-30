@@ -2,12 +2,14 @@ use super::{
     ColumnSettings, ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith, Component, Settings,
     State,
 };
-use crate::settings::SemanticColor::{
-    self, AheadGainingTime as AheadGaining, BehindLosingTime as BehindLosing, BestSegment as Best,
-    Default as Text,
+use crate::{
+    settings::SemanticColor::{
+        self, AheadGainingTime as AheadGaining, BehindLosingTime as BehindLosing,
+        BestSegment as Best, Default as Text,
+    },
+    tests_helper::{make_progress_run_with_splits_opt, run_with_splits_opt, start_run},
+    Run, Segment, TimeSpan, Timer,
 };
-use crate::tests_helper::{make_progress_run_with_splits_opt, run_with_splits_opt, start_run};
-use crate::{Run, Segment, TimeSpan, Timer};
 
 type Values = &'static [([&'static str; 6], [SemanticColor; 6])];
 
@@ -28,6 +30,7 @@ fn timer() -> Timer {
     Timer::new(run()).unwrap()
 }
 
+#[track_caller]
 fn check_column_state(state: &State, state_index: usize, expected_values: Values) {
     let actual_values = state
         .splits
@@ -182,27 +185,27 @@ fn column_empty_segment_time() {
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:08", "", "", "", "", ""],
+                ["8.50", "", "", "", "", ""],
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:08", "—", "", "", "", ""],
+                ["8.50", "—", "", "", "", ""],
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:08", "—", "0:01", "", "", ""],
+                ["8.50", "—", "1.50", "", "", ""],
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:08", "—", "0:01", "0:07", "", ""],
+                ["8.50", "—", "1.50", "7.50", "", ""],
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:08", "—", "0:01", "0:07", "—", ""],
+                ["8.50", "—", "1.50", "7.50", "—", ""],
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:08", "—", "0:01", "0:07", "—", "0:07"],
+                ["8.50", "—", "1.50", "7.50", "—", "7.50"],
                 [Text, Text, Text, Text, Text, Text],
             ),
         ],
@@ -254,31 +257,31 @@ fn column_comparison_segment_time_segment_time() {
         ColumnUpdateWith::SegmentTime,
         &[
             (
-                ["0:05", "—", "—", "0:10", "0:05", "1:05"],
+                ["5.00", "—", "—", "10.00", "5.00", "1:05.00"],
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:08", "—", "—", "0:10", "0:05", "1:05"],
+                ["8.50", "—", "—", "10.00", "5.00", "1:05.00"],
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:08", "—", "—", "0:10", "0:05", "1:05"],
+                ["8.50", "—", "—", "10.00", "5.00", "1:05.00"],
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:08", "—", "0:01", "0:10", "0:05", "1:05"],
+                ["8.50", "—", "1.50", "10.00", "5.00", "1:05.00"],
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:08", "—", "0:01", "0:07", "0:05", "1:05"],
+                ["8.50", "—", "1.50", "7.50", "5.00", "1:05.00"],
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:08", "—", "0:01", "0:07", "—", "1:05"],
+                ["8.50", "—", "1.50", "7.50", "—", "1:05.00"],
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:08", "—", "0:01", "0:07", "—", "0:07"],
+                ["8.50", "—", "1.50", "7.50", "—", "7.50"],
                 [Text, Text, Text, Text, Text, Text],
             ),
         ],
@@ -340,15 +343,15 @@ fn column_comparison_segment_time_segment_delta() {
         ColumnUpdateWith::SegmentDelta,
         &[
             (
-                ["0:05", "—", "—", "0:10", "0:05", "1:05"],
+                ["5.00", "—", "—", "10.00", "5.00", "1:05.00"],
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["+3.5", "—", "—", "0:10", "0:05", "1:05"],
+                ["+3.5", "—", "—", "10.00", "5.00", "1:05.00"],
                 [BehindLosing, Text, Text, Text, Text, Text],
             ),
             (
-                ["+3.5", "—", "—", "0:10", "0:05", "1:05"],
+                ["+3.5", "—", "—", "10.00", "5.00", "1:05.00"],
                 [BehindLosing, Text, Text, Text, Text, Text],
             ),
             (
@@ -356,7 +359,7 @@ fn column_comparison_segment_time_segment_delta() {
                 // this column type if the comparison segment time was missing.
                 // Instead, we show a dash for the third segment rather than
                 // showing the segment time.
-                ["+3.5", "—", "—", "0:10", "0:05", "1:05"],
+                ["+3.5", "—", "—", "10.00", "5.00", "1:05.00"],
                 [BehindLosing, Text, Best, Text, Text, Text],
             ),
             (
@@ -366,11 +369,11 @@ fn column_comparison_segment_time_segment_delta() {
                 // combined segment time of 10 seconds. The third segment is
                 // empty in the best segments comparison because it is not a
                 // part of the shortest path in the Sum of Best calculation.
-                ["+3.5", "—", "—", "−1.0", "0:05", "1:05"],
+                ["+3.5", "—", "—", "−1.0", "5.00", "1:05.00"],
                 [BehindLosing, Text, Best, Best, Text, Text],
             ),
             (
-                ["+3.5", "—", "—", "−1.0", "—", "1:05"],
+                ["+3.5", "—", "—", "−1.0", "—", "1:05.00"],
                 [BehindLosing, Text, Best, Best, Text, Text],
             ),
             (
@@ -449,12 +452,13 @@ fn column_comparison_segment_time_dont_update() {
         ColumnStartWith::ComparisonSegmentTime,
         ColumnUpdateWith::DontUpdate,
         &[(
-            ["0:05", "—", "—", "0:10", "0:05", "1:05"],
+            ["5.00", "—", "—", "10.00", "5.00", "1:05.00"],
             [Text, Text, Text, Text, Text, Text],
         ); 7],
     )
 }
 
+#[track_caller]
 fn check_columns(
     start_with: ColumnStartWith,
     update_with: ColumnUpdateWith,
@@ -495,41 +499,41 @@ fn check_columns(
     });
 
     let state = component.state(&timer.snapshot(), &layout_settings);
-    check_column_state(&state, 0, &expected_values);
+    check_column_state(&state, 0, expected_values);
 
     timer.set_game_time(TimeSpan::from_seconds(8.5));
     timer.split();
 
     let state = component.state(&timer.snapshot(), &layout_settings);
-    check_column_state(&state, 1, &expected_values);
+    check_column_state(&state, 1, expected_values);
 
     timer.skip_split();
 
     let state = component.state(&timer.snapshot(), &layout_settings);
-    check_column_state(&state, 2, &expected_values);
+    check_column_state(&state, 2, expected_values);
 
     timer.set_game_time(TimeSpan::from_seconds(10.0));
     timer.split();
 
     let state = component.state(&timer.snapshot(), &layout_settings);
-    check_column_state(&state, 3, &expected_values);
+    check_column_state(&state, 3, expected_values);
 
     timer.set_game_time(TimeSpan::from_seconds(17.5));
     timer.split();
 
     let state = component.state(&timer.snapshot(), &layout_settings);
-    check_column_state(&state, 4, &expected_values);
+    check_column_state(&state, 4, expected_values);
 
     timer.skip_split();
 
     let state = component.state(&timer.snapshot(), &layout_settings);
-    check_column_state(&state, 5, &expected_values);
+    check_column_state(&state, 5, expected_values);
 
     timer.set_game_time(TimeSpan::from_seconds(25.0));
     timer.split();
 
     let state = component.state(&timer.snapshot(), &layout_settings);
-    check_column_state(&state, 6, &expected_values);
+    check_column_state(&state, 6, expected_values);
 }
 
 #[test]
@@ -681,19 +685,19 @@ fn column_segment_time_update_on_ending_segment() {
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:05", "—", "", "", "", ""],
+                ["5.50", "—", "", "", "", ""],
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:05", "—", "", "", "", ""],
+                ["5.50", "—", "", "", "", ""],
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:05", "—", "0:12", "—", "", ""],
+                ["5.50", "—", "12.50", "—", "", ""],
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:05", "—", "0:12", "—", "", ""],
+                ["5.50", "—", "12.50", "—", "", ""],
                 [Text, Text, Text, Text, Text, Text],
             ),
         ],
@@ -841,27 +845,27 @@ fn column_segment_time_update_contextual() {
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:03", "", "", "", "", ""],
+                ["3.50", "", "", "", "", ""],
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:05", "", "", "", "", ""],
+                ["5.50", "", "", "", "", ""],
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:05", "—", "", "", "", ""],
+                ["5.50", "—", "", "", "", ""],
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:05", "—", "0:07", "", "", ""],
+                ["5.50", "—", "7.50", "", "", ""],
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:05", "—", "0:12", "—", "", ""],
+                ["5.50", "—", "12.50", "—", "", ""],
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:05", "—", "0:12", "—", "", ""],
+                ["5.50", "—", "12.50", "—", "", ""],
                 [Text, Text, Text, Text, Text, Text],
             ),
         ],
@@ -1001,41 +1005,42 @@ fn column_segment_time_update_on_starting_segment() {
         ColumnUpdateTrigger::OnStartingSegment,
         &[
             (
-                ["0:00", "", "", "", "", ""],
+                ["0.00", "", "", "", "", ""],
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:02", "", "", "", "", ""],
+                ["2.00", "", "", "", "", ""],
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:03", "", "", "", "", ""],
+                ["3.50", "", "", "", "", ""],
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:05", "", "", "", "", ""],
+                ["5.50", "", "", "", "", ""],
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:05", "—", "0:05", "", "", ""],
+                ["5.50", "—", "5.50", "", "", ""],
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:05", "—", "0:07", "", "", ""],
+                ["5.50", "—", "7.50", "", "", ""],
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:05", "—", "0:12", "—", "0:11", ""],
+                ["5.50", "—", "12.50", "—", "11.00", ""],
                 [Text, Text, Text, Text, Text, Text],
             ),
             (
-                ["0:05", "—", "0:12", "—", "0:13", ""],
+                ["5.50", "—", "12.50", "—", "13.00", ""],
                 [Text, Text, Text, Text, Text, Text],
             ),
         ],
     )
 }
 
+#[track_caller]
 fn check_columns_update_trigger(
     update_with: ColumnUpdateWith,
     update_trigger: ColumnUpdateTrigger,
@@ -1085,25 +1090,25 @@ fn check_columns_update_trigger(
 
     let state = component.state(&timer.snapshot(), &layout_settings);
     // Timer at 0, contextual shouldn't show live times yet
-    check_column_state(&state, 0, &expected_values);
+    check_column_state(&state, 0, expected_values);
 
     timer.set_game_time(TimeSpan::from_seconds(2.0));
 
     let state = component.state(&timer.snapshot(), &layout_settings);
     // Shorter than the best segment, contextual shouldn't show live times yet
-    check_column_state(&state, 1, &expected_values);
+    check_column_state(&state, 1, expected_values);
 
     timer.set_game_time(TimeSpan::from_seconds(3.5));
 
     let state = component.state(&timer.snapshot(), &layout_settings);
     // Longer than the best segment, contextual should show live times
-    check_column_state(&state, 2, &expected_values);
+    check_column_state(&state, 2, expected_values);
 
     timer.set_game_time(TimeSpan::from_seconds(5.5));
 
     let state = component.state(&timer.snapshot(), &layout_settings);
     // Behind the personal best, contextual should show live times
-    check_column_state(&state, 3, &expected_values);
+    check_column_state(&state, 3, expected_values);
 
     timer.split();
     timer.skip_split();
@@ -1112,13 +1117,13 @@ fn check_columns_update_trigger(
     let state = component.state(&timer.snapshot(), &layout_settings);
     // Shorter than the combined best segment, contextual shouldn't show live
     // times yet
-    check_column_state(&state, 4, &expected_values);
+    check_column_state(&state, 4, expected_values);
 
     timer.set_game_time(TimeSpan::from_seconds(13.0));
 
     let state = component.state(&timer.snapshot(), &layout_settings);
     // Longer than the combined best segment, contextual should show live times
-    check_column_state(&state, 5, &expected_values);
+    check_column_state(&state, 5, expected_values);
 
     timer.set_game_time(TimeSpan::from_seconds(18.0));
     timer.split();
@@ -1127,14 +1132,14 @@ fn check_columns_update_trigger(
 
     let state = component.state(&timer.snapshot(), &layout_settings);
     // Not behind the personal best, contextual should not show live times yet
-    check_column_state(&state, 6, &expected_values);
+    check_column_state(&state, 6, expected_values);
 
     timer.set_game_time(TimeSpan::from_seconds(31.0));
 
     let state = component.state(&timer.snapshot(), &layout_settings);
     // Behind the personal best, contextual should show live times only if a
     // split time or delta column
-    check_column_state(&state, 7, &expected_values);
+    check_column_state(&state, 7, expected_values);
 }
 
 #[test]
