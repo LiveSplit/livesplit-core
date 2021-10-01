@@ -203,14 +203,27 @@ pub fn update_state(
     state.value.clear();
     if !is_empty {
         let _ = match formatter {
-            ColumnFormatter::Time => write!(state.value, "{}", Regular::new().format(column_value)),
+            ColumnFormatter::Time => write!(
+                state.value,
+                "{}",
+                Regular::with_accuracy(layout_settings.split_time_accuracy).format(column_value)
+            ),
             ColumnFormatter::Delta => write!(
                 state.value,
                 "{}",
-                Delta::with_decimal_dropping().format(column_value)
+                Delta::custom(
+                    layout_settings.delta_drop_decimals,
+                    layout_settings.delta_time_accuracy,
+                )
+                .format(column_value)
             ),
             ColumnFormatter::SegmentTime => {
-                write!(state.value, "{}", SegmentTime::new().format(column_value))
+                write!(
+                    state.value,
+                    "{}",
+                    SegmentTime::with_accuracy(layout_settings.segment_time_accuracy)
+                        .format(column_value)
+                )
             }
         };
     }
