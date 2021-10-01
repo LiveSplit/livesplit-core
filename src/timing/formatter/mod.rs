@@ -3,16 +3,16 @@
 //!
 //! # Examples
 //!
-//! Using a Short Time Formatter to format a Time Span.
+//! Using a [`SegmentTime`] [`TimeFormatter`] to format a [`TimeSpan`].
 //!
 //! ```
-//! use livesplit_core::timing::formatter::{Short, TimeFormatter};
+//! use livesplit_core::timing::formatter::{SegmentTime, TimeFormatter};
 //! use livesplit_core::TimeSpan;
 //!
-//! // Create the Short Time Formatter.
-//! let formatter = Short::new();
+//! // Create the SegmentTime TimeFormatter.
+//! let formatter = SegmentTime::new();
 //!
-//! // Create a Time Span.
+//! // Create a TimeSpan.
 //! let time = TimeSpan::from_seconds(-(4.0 * 60.0 + 23.5));
 //!
 //! // Format it with the formatter.
@@ -28,22 +28,18 @@ mod digits_format;
 pub mod none_wrapper;
 mod regular;
 mod segment_time;
-mod short;
 pub mod timer;
 
-pub use self::accuracy::Accuracy;
-pub use self::complete::Complete;
-pub use self::days::Days;
-pub use self::delta::Delta;
-pub use self::digits_format::DigitsFormat;
-pub use self::regular::Regular;
-pub use self::segment_time::SegmentTime;
-pub use self::short::Short;
+pub use self::{
+    accuracy::Accuracy, complete::Complete, days::Days, delta::Delta, digits_format::DigitsFormat,
+    regular::Regular, segment_time::SegmentTime,
+};
 
-use crate::platform::math::f64::{abs, floor};
-use crate::TimeSpan;
-use core::cmp::min;
-use core::fmt::Display;
+use crate::{
+    platform::math::f64::{abs, floor},
+    TimeSpan,
+};
+use core::{cmp::min, fmt::Display};
 
 /// Time Formatters can be used to format optional Time Spans in various ways.
 pub trait TimeFormatter<'a> {
