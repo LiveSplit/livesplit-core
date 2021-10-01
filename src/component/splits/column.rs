@@ -138,7 +138,7 @@ impl Clear for ColumnState {
 enum ColumnFormatter {
     Time,
     Delta,
-    PossibleTimeSave,
+    SegmentTime,
 }
 
 pub fn update_state(
@@ -184,12 +184,12 @@ pub fn update_state(
                         method,
                     ),
                     SemanticColor::Default,
-                    ColumnFormatter::Time,
+                    ColumnFormatter::SegmentTime,
                 ),
                 ColumnStartWith::PossibleTimeSave => (
                     possible_time_save::calculate(timer, segment_index, comparison, false),
                     SemanticColor::Default,
-                    ColumnFormatter::PossibleTimeSave,
+                    ColumnFormatter::SegmentTime,
                 ),
             },
             false,
@@ -209,7 +209,7 @@ pub fn update_state(
                 "{}",
                 Delta::with_decimal_dropping().format(column_value)
             ),
-            ColumnFormatter::PossibleTimeSave => {
+            ColumnFormatter::SegmentTime => {
                 write!(state.value, "{}", SegmentTime::new().format(column_value))
             }
         };
@@ -302,12 +302,12 @@ fn column_update_value(
         (SegmentTime, false) => (
             analysis::previous_segment_time(timer, segment_index, method),
             SemanticColor::Default,
-            ColumnFormatter::Time,
+            ColumnFormatter::SegmentTime,
         ),
         (SegmentTime, true) => (
             analysis::live_segment_time(timer, segment_index, method),
             SemanticColor::Default,
-            ColumnFormatter::Time,
+            ColumnFormatter::SegmentTime,
         ),
 
         (SegmentDelta | SegmentDeltaWithFallback, false) => {
@@ -315,7 +315,7 @@ fn column_update_value(
             let (value, formatter) = if delta.is_none() && column.update_with.has_fallback() {
                 (
                     analysis::previous_segment_time(timer, segment_index, method),
-                    ColumnFormatter::Time,
+                    ColumnFormatter::SegmentTime,
                 )
             } else {
                 (delta, ColumnFormatter::Delta)

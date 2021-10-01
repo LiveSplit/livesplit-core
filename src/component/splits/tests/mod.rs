@@ -102,7 +102,7 @@ fn negative_segment_times() {
     timer.set_game_time(TimeSpan::from_seconds(-1.0));
 
     let state = component.state(&timer.snapshot(), &layout_settings);
-    assert_eq!(state.splits[0].columns[0].value, "−0:01");
+    assert_eq!(state.splits[0].columns[0].value, "−1.00");
 }
 
 #[test]
