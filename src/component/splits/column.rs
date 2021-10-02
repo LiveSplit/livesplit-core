@@ -2,13 +2,13 @@ use crate::{
     analysis::{self, possible_time_save, split_color},
     clear_vec::Clear,
     comparison,
+    component::splits::Settings as SplitsSettings,
     platform::prelude::*,
     settings::{Color, SemanticColor},
     timing::{
         formatter::{Delta, Regular, SegmentTime, TimeFormatter},
         Snapshot,
     },
-    component::splits::Settings as SplitsSettings,
     GeneralLayoutSettings, Segment, TimeSpan, TimingMethod,
 };
 use core::fmt::Write;
@@ -144,21 +144,21 @@ enum ColumnFormatter {
 
 pub fn update_state(
     state: &mut ColumnState,
-    column: &ColumnSettings,
+    column_settings: &ColumnSettings,
     timer: &Snapshot<'_>,
-    splits: &SplitsSettings,
+    splits_settings: &SplitsSettings,
     layout_settings: &GeneralLayoutSettings,
     segment: &Segment,
     segment_index: usize,
     current_split: Option<usize>,
     method: TimingMethod,
 ) {
-    let method = column.timing_method.unwrap_or(method);
-    let resolved_comparison = comparison::resolve(&column.comparison_override, timer);
+    let method = column_settings.timing_method.unwrap_or(method);
+    let resolved_comparison = comparison::resolve(&column_settings.comparison_override, timer);
     let comparison = comparison::or_current(resolved_comparison, timer);
 
     let update_value = column_update_value(
-        column,
+        column_settings,
         timer,
         segment,
         segment_index,
@@ -171,7 +171,7 @@ pub fn update_state(
 
     let ((column_value, semantic_color, formatter), is_live) = update_value.unwrap_or_else(|| {
         (
-            match column.start_with {
+            match column_settings.start_with {
                 ColumnStartWith::Empty => (None, SemanticColor::Default, ColumnFormatter::Time),
                 ColumnStartWith::ComparisonTime => (
                     segment.comparison(comparison)[method],
@@ -198,7 +198,7 @@ pub fn update_state(
         )
     });
 
-    let is_empty = column.start_with == ColumnStartWith::Empty && !updated;
+    let is_empty = column_settings.start_with == ColumnStartWith::Empty && !updated;
 
     state.updates_frequently = is_live && column_value.is_some();
 
@@ -208,14 +208,14 @@ pub fn update_state(
             ColumnFormatter::Time => write!(
                 state.value,
                 "{}",
-                Regular::with_accuracy(splits.split_time_accuracy).format(column_value)
+                Regular::with_accuracy(splits_settings.split_time_accuracy).format(column_value)
             ),
             ColumnFormatter::Delta => write!(
                 state.value,
                 "{}",
                 Delta::custom(
-                    splits.delta_drop_decimals,
-                    splits.delta_time_accuracy,
+                    splits_settings.delta_drop_decimals,
+                    splits_settings.delta_time_accuracy,
                 )
                 .format(column_value)
             ),
@@ -223,7 +223,7 @@ pub fn update_state(
                 write!(
                     state.value,
                     "{}",
-                    SegmentTime::with_accuracy(splits.segment_time_accuracy)
+                    SegmentTime::with_accuracy(splits_settings.segment_time_accuracy)
                         .format(column_value)
                 )
             }

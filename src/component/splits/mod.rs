@@ -493,7 +493,7 @@ impl Component {
                 self.settings.delta_time_accuracy.into(),
             ),
             Field::new(
-                "Drop Decimals When More Than 1 Minute".into(),
+                "Drop Delta Decimals When Showing Minutes".into(),
                 self.settings.delta_drop_decimals.into(),
             ),
             Field::new(
