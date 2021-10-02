@@ -8,6 +8,7 @@ use crate::{
         formatter::{Delta, Regular, SegmentTime, TimeFormatter},
         Snapshot,
     },
+    component::splits::Settings as SplitsSettings,
     GeneralLayoutSettings, Segment, TimeSpan, TimingMethod,
 };
 use core::fmt::Write;
@@ -145,6 +146,7 @@ pub fn update_state(
     state: &mut ColumnState,
     column: &ColumnSettings,
     timer: &Snapshot<'_>,
+    splits: &SplitsSettings,
     layout_settings: &GeneralLayoutSettings,
     segment: &Segment,
     segment_index: usize,
@@ -206,14 +208,14 @@ pub fn update_state(
             ColumnFormatter::Time => write!(
                 state.value,
                 "{}",
-                Regular::with_accuracy(layout_settings.split_time_accuracy).format(column_value)
+                Regular::with_accuracy(splits.split_time_accuracy).format(column_value)
             ),
             ColumnFormatter::Delta => write!(
                 state.value,
                 "{}",
                 Delta::custom(
-                    layout_settings.delta_drop_decimals,
-                    layout_settings.delta_time_accuracy,
+                    splits.delta_drop_decimals,
+                    splits.delta_time_accuracy,
                 )
                 .format(column_value)
             ),
@@ -221,7 +223,7 @@ pub fn update_state(
                 write!(
                     state.value,
                     "{}",
-                    SegmentTime::with_accuracy(layout_settings.segment_time_accuracy)
+                    SegmentTime::with_accuracy(splits.segment_time_accuracy)
                         .format(column_value)
                 )
             }

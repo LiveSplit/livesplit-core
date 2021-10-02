@@ -1,5 +1,5 @@
 use super::{
-    comparison_override, end_tag, parse_bool, parse_children, text, text_err, text_parsed,
+    accuracy, comparison_override, end_tag, parse_bool, parse_children, text, text_err, text_parsed,
     timing_method_override, Error, GradientBuilder, GradientKind, ListGradientKind, Result,
 };
 use quick_xml::Reader;
@@ -155,11 +155,16 @@ where
                             });
                         }
                     })
+                } else if tag.name() == b"SplitTimesAccuracy" {
+                    accuracy(reader, tag.into_buf(), |v| settings.split_time_accuracy = v)
+                } else if tag.name() == b"DeltasAccuracy" {
+                    accuracy(reader, tag.into_buf(), |v| settings.delta_time_accuracy = v)
+                } else if tag.name() == b"DropDecimals" {
+                    parse_bool(reader, tag.into_buf(), |v| settings.delta_drop_decimals = v)
                 } else {
                     // FIXME:
                     // DisplayIcons
                     // SplitWidth
-                    // SplitTimesAccuracy
                     // AutomaticAbbreviations
                     // BeforeNamesColor // Version >= 1.3
                     // CurrentNamesColor // Version >= 1.3
@@ -175,8 +180,6 @@ where
                     // IconSize
                     // IconShadows
                     // SplitHeight
-                    // DeltasAccuracy
-                    // DropDecimals
                     // OverrideDeltasColor
                     // DeltasColor
                     // LabelsColor

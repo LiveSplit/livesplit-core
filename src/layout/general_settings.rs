@@ -2,7 +2,6 @@ use super::LayoutDirection;
 use crate::{
     platform::prelude::*,
     settings::{Color, Field, Font, Gradient, SettingsDescription, Value},
-    timing::formatter::Accuracy,
 };
 use serde::{Deserialize, Serialize};
 
@@ -49,15 +48,6 @@ pub struct GeneralSettings {
     pub separators_color: Color,
     /// The text color to use for text that doesn't specify its own color.
     pub text_color: Color,
-    /// Specifies the display accuracy of split times.
-    pub split_time_accuracy: Accuracy,
-    /// Specifies the display accuracy of segment times.
-    pub segment_time_accuracy: Accuracy,
-    /// Specifies the display accuracy of delta times.
-    pub delta_time_accuracy: Accuracy,
-    /// Whether to drop the fractional part of a delta time once it goes past
-    /// one minute.
-    pub delta_drop_decimals: bool,
 }
 
 impl Default for GeneralSettings {
@@ -79,10 +69,6 @@ impl Default for GeneralSettings {
             thin_separators_color: Color::hsla(0.0, 0.0, 1.0, 0.09),
             separators_color: Color::hsla(0.0, 0.0, 1.0, 0.35),
             text_color: Color::hsla(0.0, 0.0, 1.0, 1.0),
-            split_time_accuracy: Accuracy::Seconds,
-            segment_time_accuracy: Accuracy::Hundredths,
-            delta_time_accuracy: Accuracy::Tenths,
-            delta_drop_decimals: true,
         }
     }
 }
