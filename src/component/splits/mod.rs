@@ -555,15 +555,15 @@ impl Component {
             6 => self.settings.fill_with_blank_space = value.into(),
             7 => self.settings.display_two_rows = value.into(),
             8 => self.settings.current_split_gradient = value.into(),
-            9 => self.settings.show_column_labels = value.into(),
-            10 => {
+            9 => self.settings.split_time_accuracy = value.into(),
+            10 => self.settings.segment_time_accuracy = value.into(),
+            11 => self.settings.delta_time_accuracy = value.into(),
+            12 => self.settings.delta_drop_decimals = value.into(),
+            13 => self.settings.show_column_labels = value.into(),
+            14 => {
                 let new_len = value.into_uint().unwrap() as usize;
                 self.settings.columns.resize(new_len, Default::default());
             }
-            11 => self.settings.split_time_accuracy = value.into(),
-            12 => self.settings.segment_time_accuracy = value.into(),
-            13 => self.settings.delta_time_accuracy = value.into(),
-            14 => self.settings.delta_drop_decimals = value.into(),
             index => {
                 let index = index - SETTINGS_BEFORE_COLUMNS;
                 let column_index = index / SETTINGS_PER_COLUMN;
