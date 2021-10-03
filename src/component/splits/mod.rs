@@ -11,7 +11,7 @@ use crate::{
     settings::{
         CachedImageId, Color, Field, Gradient, ImageData, ListGradient, SettingsDescription, Value,
     },
-    timing::Snapshot,
+    timing::{formatter::Accuracy, Snapshot},
     GeneralLayoutSettings,
 };
 use core::cmp::{max, min};
@@ -26,7 +26,7 @@ pub use column::{
     ColumnSettings, ColumnStartWith, ColumnState, ColumnUpdateTrigger, ColumnUpdateWith,
 };
 
-const SETTINGS_BEFORE_COLUMNS: usize = 11;
+const SETTINGS_BEFORE_COLUMNS: usize = 15;
 const SETTINGS_PER_COLUMN: usize = 6;
 
 /// The Splits Component is the main component for visualizing all the split
@@ -83,6 +83,15 @@ pub struct Settings {
     /// The gradient to show behind the current segment as an indicator of it
     /// being the current segment.
     pub current_split_gradient: Gradient,
+    /// Specifies the display accuracy of split times.
+    pub split_time_accuracy: Accuracy,
+    /// Specifies the display accuracy of segment times.
+    pub segment_time_accuracy: Accuracy,
+    /// Specifies the display accuracy of delta times.
+    pub delta_time_accuracy: Accuracy,
+    /// Whether to drop the fractional part of a delta time once it goes past
+    /// one minute.
+    pub delta_drop_decimals: bool,
     /// Specifies whether to show the names of the columns above the splits.
     pub show_column_labels: bool,
     /// The columns to show on the splits. These can be configured in various
@@ -185,6 +194,10 @@ impl Default for Settings {
                 Color::rgba(51.0 / 255.0, 115.0 / 255.0, 244.0 / 255.0, 1.0),
                 Color::rgba(21.0 / 255.0, 53.0 / 255.0, 116.0 / 255.0, 1.0),
             ),
+            split_time_accuracy: Accuracy::Seconds,
+            segment_time_accuracy: Accuracy::Hundredths,
+            delta_time_accuracy: Accuracy::Tenths,
+            delta_drop_decimals: true,
             show_column_labels: false,
             columns: vec![
                 ColumnSettings {
@@ -384,6 +397,7 @@ impl Component {
                     }),
                     column,
                     timer,
+                    &self.settings,
                     layout_settings,
                     segment,
                     i,
@@ -467,6 +481,22 @@ impl Component {
                 self.settings.current_split_gradient.into(),
             ),
             Field::new(
+                "Split Time Accuracy".into(),
+                self.settings.split_time_accuracy.into(),
+            ),
+            Field::new(
+                "Segment Time Accuracy".into(),
+                self.settings.segment_time_accuracy.into(),
+            ),
+            Field::new(
+                "Delta Time Accuracy".into(),
+                self.settings.delta_time_accuracy.into(),
+            ),
+            Field::new(
+                "Drop Delta Decimals When Showing Minutes".into(),
+                self.settings.delta_drop_decimals.into(),
+            ),
+            Field::new(
                 "Show Column Labels".into(),
                 self.settings.show_column_labels.into(),
             ),
@@ -530,6 +560,10 @@ impl Component {
                 let new_len = value.into_uint().unwrap() as usize;
                 self.settings.columns.resize(new_len, Default::default());
             }
+            11 => self.settings.split_time_accuracy = value.into(),
+            12 => self.settings.segment_time_accuracy = value.into(),
+            13 => self.settings.delta_time_accuracy = value.into(),
+            14 => self.settings.delta_drop_decimals = value.into(),
             index => {
                 let index = index - SETTINGS_BEFORE_COLUMNS;
                 let column_index = index / SETTINGS_PER_COLUMN;
