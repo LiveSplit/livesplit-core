@@ -131,8 +131,11 @@ impl HotkeySystem {
     }
 
     fn unregister(&mut self, hotkey: Hotkey) -> Result<()> {
+        unsafe {
+            self.unregister_raw(hotkey)?;
+        }
         hotkey.set_keycode(&mut self.config, None);
-        unsafe { self.unregister_raw(hotkey) }
+        Ok(())
     }
 
     fn set_hotkey(&mut self, hotkey: Hotkey, keycode: Option<KeyCode>) -> Result<()> {
