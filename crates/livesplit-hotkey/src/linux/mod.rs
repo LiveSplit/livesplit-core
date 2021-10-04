@@ -175,10 +175,13 @@ fn code_for(key: KeyCode) -> Option<c_uint> {
         Numpad3 => 0x0059,
         Numpad0 => 0x005A,
         NumpadDecimal => 0x005B,
+        Lang5 => 0x005D, // Not Firefox, Not Safari
         IntlBackslash => 0x005E,
         F11 => 0x005F,
         F12 => 0x0060,
         IntlRo => 0x0061,
+        Lang3 => 0x0062, // Not Firefox, Not Safari
+        Lang4 => 0x0063, // Not Firefox, Not Safari
         Convert => 0x0064,
         KanaMode => 0x0065,
         NonConvert => 0x0066,
@@ -200,10 +203,10 @@ fn code_for(key: KeyCode) -> Option<c_uint> {
         AudioVolumeMute => 0x0079,
         AudioVolumeDown => 0x007A,
         AudioVolumeUp => 0x007B,
-        Power => 0x007C,
+        Power => 0x007C, // Not Safari
         NumpadEqual => 0x007D,
-        NumpadChangeSign => 0x007E,
         Pause => 0x007F,
+        ShowAllWindows => 0x0080, // Chrome only
         NumpadComma => 0x0081,
         Lang1 => 0x0082,
         Lang2 => 0x0083,
@@ -213,7 +216,7 @@ fn code_for(key: KeyCode) -> Option<c_uint> {
         ContextMenu => 0x0087,
         BrowserStop => 0x0088,
         Again => 0x0089,
-        Props => 0x008A,
+        Props => 0x008A, // Not Chrome
         Undo => 0x008B,
         Select => 0x008C,
         Copy => 0x008D,
@@ -223,6 +226,7 @@ fn code_for(key: KeyCode) -> Option<c_uint> {
         Cut => 0x0091,
         Help => 0x0092,
         LaunchApp2 => 0x0094,
+        Sleep => 0x0096, // Not Firefox, Not Safari
         WakeUp => 0x0097,
         LaunchApp1 => 0x0098,
         LaunchMail => 0x00A3,
@@ -234,11 +238,13 @@ fn code_for(key: KeyCode) -> Option<c_uint> {
         MediaPlayPause => 0x00AC,
         MediaTrackPrevious => 0x00AD,
         MediaStop => 0x00AE,
-        LaunchMediaPlayer => 0x00B3,
+        MediaRecord => 0x00AF, // Chrome only
+        MediaRewind => 0x00B0, // Chrome only
+        MediaSelect => 0x00B3,
         BrowserHome => 0x00B4,
         BrowserRefresh => 0x00B5,
-        NumpadParenLeft => 0x00BB,
-        NumpadParenRight => 0x00BC,
+        NumpadParenLeft => 0x00BB,  // Not Safari
+        NumpadParenRight => 0x00BC, // Not Safari
         F13 => 0x00BF,
         F14 => 0x00C0,
         F15 => 0x00C1,
@@ -251,7 +257,23 @@ fn code_for(key: KeyCode) -> Option<c_uint> {
         F22 => 0x00C8,
         F23 => 0x00C9,
         F24 => 0x00CA,
+        MediaPause => 0x00D1,       // Chrome only
+        MediaPlay => 0x00D7,        // Chrome only
+        MediaFastForward => 0x00D8, // Chrome only
         BrowserSearch => 0x00E1,
+        BrightnessDown => 0x00E8,       // Chrome only
+        BrightnessUp => 0x00E9,         // Chrome only
+        DisplayToggleIntExt => 0x00EB,  // Chrome only
+        MailSend => 0x00EF,             // Chrome only
+        MailReply => 0x00F0,            // Chrome only
+        MailForward => 0x00F1,          // Chrome only
+        ZoomToggle => 0x017C,           // Chrome only
+        LaunchControlPanel => 0x024B,   // Chrome only
+        SelectTask => 0x024C,           // Chrome only
+        LaunchScreenSaver => 0x024D,    // Chrome only
+        LaunchAssistant => 0x024F,      // Chrome only
+        KeyboardLayoutSelect => 0x0250, // Chrome only
+        PrivacyScreenToggle => 0x0281,  // Chrome only
         _ => return None,
     })
 }
