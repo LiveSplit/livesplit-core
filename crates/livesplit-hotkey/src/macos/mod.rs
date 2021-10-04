@@ -211,7 +211,7 @@ unsafe extern "C" fn callback(
             0x31 => KeyCode::Space,
             0x32 => KeyCode::Backquote,
             0x33 => KeyCode::Backspace,
-            0x34 => KeyCode::NumpadEnter,
+            0x34 => KeyCode::NumpadEnter, // Not Chrome
             0x35 => KeyCode::Escape,
             0x36 => KeyCode::MetaRight,
             0x37 => KeyCode::MetaLeft,
@@ -222,7 +222,7 @@ unsafe extern "C" fn callback(
             0x3C => KeyCode::ShiftRight,
             0x3D => KeyCode::AltRight,
             0x3E => KeyCode::ControlRight,
-            0x3F => KeyCode::Fn,
+            0x3F => KeyCode::Fn, // Not Chrome
             0x40 => KeyCode::F17,
             0x41 => KeyCode::NumpadDecimal,
             0x43 => KeyCode::NumpadMultiply,
@@ -259,13 +259,15 @@ unsafe extern "C" fn callback(
             0x65 => KeyCode::F9,
             0x66 => KeyCode::Lang2,
             0x67 => KeyCode::F11,
-            0x68 => KeyCode::Lang1,
+            0x68 => KeyCode::Lang1, // KanaMode in Safari
             0x69 => KeyCode::F13,
             0x6A => KeyCode::F16,
             0x6B => KeyCode::F14,
             0x6D => KeyCode::F10,
+            0x6E => KeyCode::ContextMenu, // Missing on MDN
             0x6F => KeyCode::F12,
             0x71 => KeyCode::F15,
+            // `Help` sometimes replaces the `Insert` key on mac keyboards, Chrome prefers `Insert`.
             0x72 => KeyCode::Help,
             0x73 => KeyCode::Home,
             0x74 => KeyCode::PageUp,

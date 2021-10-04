@@ -2,8 +2,25 @@ use core::str::FromStr;
 
 // Based on
 // https://www.w3.org/TR/uievents-code/
-// with additional values and mappings from
+//
+// Also somewhat based on MDN, but it turns out to be wrong in many ways:
 // https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code/code_values
+//
+// Chromium's sources:
+// https://github.com/chromium/chromium/blob/5af3e41ce69e2e18b899589b46540e4360527733/ui/events/keycodes/dom/dom_code_data.inc
+//
+// Firefox's sources:
+// https://github.com/mozilla/gecko-dev/blob/25002b534963ad95ff0c1a3dd0f906ba023ddc8e/widget/NativeKeyToDOMCodeName.h
+//
+// Safari's sources:
+// Windows:
+// https://github.com/WebKit/WebKit/blob/8afe31a018b11741abdf9b4d5bb973d7c1d9ff05/Source/WebCore/platform/win/WindowsKeyNames.cpp
+// macOS:
+// https://github.com/WebKit/WebKit/blob/main/Source/WebCore/platform/mac/PlatformEventFactoryMac.mm
+// Linux GTK:
+// https://github.com/WebKit/WebKit/blob/8afe31a018b11741abdf9b4d5bb973d7c1d9ff05/Source/WebCore/platform/gtk/PlatformKeyboardEventGtk.cpp
+// WPE:
+// https://github.com/WebKit/WebKit/blob/8afe31a018b11741abdf9b4d5bb973d7c1d9ff05/Source/WebCore/platform/libwpe/PlatformKeyboardEventLibWPE.cpp
 
 #[derive(Debug, Eq, PartialEq, Hash, Copy, Clone, serde::Serialize, serde::Deserialize)]
 pub enum KeyCode {
@@ -68,8 +85,8 @@ pub enum KeyCode {
     ControlLeft,
     ControlRight,
     Enter,
-    MetaLeft,  // Known as OSLeft in Firefox and Chrome sometimes
-    MetaRight, // Known as OSRight in Firefox and Chrome sometimes
+    MetaLeft, // Known as OSLeft in all Firefox versions and Chrome <52, as well as all versions of Safari GTK and WPE.
+    MetaRight, // Known as OSRight in all Firefox versions and Chrome <52, as well as all versions of Safari GTK and WPE.
     ShiftLeft,
     ShiftRight,
     Space,
@@ -78,8 +95,8 @@ pub enum KeyCode {
     // Functional Keys found on Japanese and Korean keyboards
     Convert,
     KanaMode,
-    Lang1, // AKA HangulMode in Chrome
-    Lang2, // AKA Hanja in Chrome
+    Lang1,
+    Lang2,
     Lang3,
     Lang4,
     Lang5,
@@ -160,7 +177,7 @@ pub enum KeyCode {
     F23,
     F24,
     Fn,
-    FnLock, // No browser seems to use these?
+    FnLock, // No browser seems to use this?
     PrintScreen,
     ScrollLock,
     Pause,
@@ -172,13 +189,13 @@ pub enum KeyCode {
     BrowserHome,
     BrowserRefresh,
     BrowserSearch,
-    BrowserStop, // AKA Cancel in Chrome
+    BrowserStop,
     Eject,
     LaunchApp1,
     LaunchApp2,
     LaunchMail,
     MediaPlayPause,
-    MediaSelect, // Unused since Firefox 49
+    MediaSelect,
     MediaStop,
     MediaTrackNext,
     MediaTrackPrevious,
@@ -222,9 +239,26 @@ pub enum KeyCode {
     Gamepad18,
     Gamepad19,
 
-    // Browser specific Keys
-    LaunchMediaPlayer, // Firefox only
-    NumpadChangeSign,  // Chrome only
+    // Chrome only Keys
+    BrightnessDown,
+    BrightnessUp,
+    DisplayToggleIntExt,
+    KeyboardLayoutSelect,
+    LaunchAssistant,
+    LaunchControlPanel,
+    LaunchScreenSaver,
+    MailForward,
+    MailReply,
+    MailSend,
+    MediaFastForward,
+    MediaPause,
+    MediaPlay,
+    MediaRecord,
+    MediaRewind,
+    PrivacyScreenToggle,
+    SelectTask,
+    ShowAllWindows,
+    ZoomToggle,
 }
 
 impl KeyCode {
@@ -427,8 +461,25 @@ impl KeyCode {
             Gamepad17 => "Gamepad 17",
             Gamepad18 => "Gamepad 18",
             Gamepad19 => "Gamepad 19",
-            LaunchMediaPlayer => "Launch Media Player",
-            NumpadChangeSign => "Numpad Change Sign",
+            BrightnessDown => "Brightness Down",
+            BrightnessUp => "Brightness Up",
+            DisplayToggleIntExt => "Display Toggle Intern / Extern",
+            KeyboardLayoutSelect => "Keyboard Layout Select",
+            LaunchAssistant => "Launch Assistant",
+            LaunchControlPanel => "Launch Control Panel",
+            LaunchScreenSaver => "Launch Screen Saver",
+            MailForward => "Mail Forward",
+            MailReply => "Mail Reply",
+            MailSend => "Mail Send",
+            MediaFastForward => "⏩",
+            MediaPause => "⏸",
+            MediaPlay => "▶",
+            MediaRecord => "⏺",
+            MediaRewind => "⏪",
+            PrivacyScreenToggle => "Privacy Screen Toggle",
+            SelectTask => "Select Task",
+            ShowAllWindows => "Show All Windows",
+            ZoomToggle => "Zoom Toggle",
         }
     }
 }
@@ -499,6 +550,9 @@ impl FromStr for KeyCode {
             "ControlLeft" => ControlLeft,
             "ControlRight" => ControlRight,
             "Enter" => Enter,
+            // OS is used instead of Meta in all Firefox versions, Chrome <52
+            // and all Safari GTK and WPE versions.
+            // Firefox Tracking Issue: https://bugzilla.mozilla.org/show_bug.cgi?id=1595863
             "MetaLeft" | "OSLeft" => MetaLeft,
             "MetaRight" | "OSRight" => MetaRight,
             "ShiftLeft" => ShiftLeft,
@@ -509,8 +563,8 @@ impl FromStr for KeyCode {
             // Functional Keys found on Japanese and Korean keyboards
             "Convert" => Convert,
             "KanaMode" => KanaMode,
-            "Lang1" | "HangulMode" => Lang1,
-            "Lang2" | "Hanja" => Lang2,
+            "Lang1" => Lang1, // MDN claims Chrome uses `HangulMode` but it's not true
+            "Lang2" => Lang2, // MDN claims Chrome uses `Hanja` but it's not true
             "Lang3" => Lang3,
             "Lang4" => Lang4,
             "Lang5" => Lang5,
@@ -603,21 +657,24 @@ impl FromStr for KeyCode {
             "BrowserHome" => BrowserHome,
             "BrowserRefresh" => BrowserRefresh,
             "BrowserSearch" => BrowserSearch,
-            "BrowserStop" | "Cancel" => BrowserStop,
+            "BrowserStop" => BrowserStop, // MDN claims it is `Cancel` in Chrome, but it never even was.
             "Eject" => Eject,
             "LaunchApp1" => LaunchApp1,
             "LaunchApp2" => LaunchApp2,
             "LaunchMail" => LaunchMail,
             "MediaPlayPause" => MediaPlayPause,
-            "MediaSelect" => MediaSelect, // Unused since Firefox 49
+            // According to MDN some versions of Firefox use `LaunchMediaPlayer`
+            // here, but that's wrong. However Safari GTK and WPE use this value.
+            "MediaSelect" | "LaunchMediaPlayer" => MediaSelect,
             "MediaStop" => MediaStop,
             "MediaTrackNext" => MediaTrackNext,
             "MediaTrackPrevious" => MediaTrackPrevious,
             "Power" => Power,
             "Sleep" => Sleep,
-            "AudioVolumeDown" => AudioVolumeDown,
-            "AudioVolumeMute" => AudioVolumeMute,
-            "AudioVolumeUp" => AudioVolumeUp,
+            // Wrong Volume* names in Firefox are tracked here: https://bugzilla.mozilla.org/show_bug.cgi?id=1272579
+            "AudioVolumeDown" | "VolumeDown" => AudioVolumeDown, // VolumeDown in old browsers, sometimes even new ones
+            "AudioVolumeMute" | "VolumeMute" => AudioVolumeMute, // VolumeMute in old browsers, sometimes even new ones
+            "AudioVolumeUp" | "VolumeUp" => AudioVolumeUp, // VolumeUp in old browsers, sometimes even new ones
             "WakeUp" => WakeUp,
 
             // Legacy, Non-Standard and Special Keys
@@ -654,8 +711,25 @@ impl FromStr for KeyCode {
             "Gamepad19" => Gamepad19,
 
             // Browser specific Keys
-            "LaunchMediaPlayer" => LaunchMediaPlayer, // Firefox only
-            "NumpadChangeSign" => NumpadChangeSign,   // Chrome only
+            "BrightnessDown" => BrightnessDown,
+            "BrightnessUp" => BrightnessUp,
+            "DisplayToggleIntExt" => DisplayToggleIntExt,
+            "KeyboardLayoutSelect" => KeyboardLayoutSelect,
+            "LaunchAssistant" => LaunchAssistant,
+            "LaunchControlPanel" => LaunchControlPanel,
+            "LaunchScreenSaver" => LaunchScreenSaver,
+            "MailForward" => MailForward,
+            "MailReply" => MailReply,
+            "MailSend" => MailSend,
+            "MediaFastForward" => MediaFastForward,
+            "MediaPause" => MediaPause,
+            "MediaPlay" => MediaPlay,
+            "MediaRecord" => MediaRecord,
+            "MediaRewind" => MediaRewind,
+            "PrivacyScreenToggle" => PrivacyScreenToggle,
+            "SelectTask" => SelectTask,
+            "ShowAllWindows" => ShowAllWindows,
+            "ZoomToggle" => ZoomToggle,
             _ => return Err(()),
         })
     }
