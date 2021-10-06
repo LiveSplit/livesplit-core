@@ -203,7 +203,7 @@ fn code_for(key: KeyCode) -> Option<c_uint> {
         AudioVolumeMute => 0x0079,
         AudioVolumeDown => 0x007A,
         AudioVolumeUp => 0x007B,
-        Power => 0x007C, // Not Safari
+        Power => 0x007C, // Not Firefox, Not Safari
         NumpadEqual => 0x007D,
         Pause => 0x007F,
         ShowAllWindows => 0x0080, // Chrome only
@@ -243,8 +243,8 @@ fn code_for(key: KeyCode) -> Option<c_uint> {
         MediaSelect => 0x00B3,
         BrowserHome => 0x00B4,
         BrowserRefresh => 0x00B5,
-        NumpadParenLeft => 0x00BB,  // Not Safari
-        NumpadParenRight => 0x00BC, // Not Safari
+        NumpadParenLeft => 0x00BB,  // Not Firefox, Not Safari
+        NumpadParenRight => 0x00BC, // Not Firefox, Not Safari
         F13 => 0x00BF,
         F14 => 0x00C0,
         F15 => 0x00C1,

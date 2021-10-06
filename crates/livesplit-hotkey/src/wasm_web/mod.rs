@@ -29,7 +29,7 @@ impl Drop for Hook {
     fn drop(&mut self) {
         if let Some(window) = window() {
             let _ = window.remove_event_listener_with_callback(
-                "keypress",
+                "keydown",
                 self.keyboard_callback.as_ref().unchecked_ref(),
             );
             if let Some(interval_id) = self.interval_id.get() {
@@ -83,7 +83,7 @@ impl Hook {
 
         window
             .add_event_listener_with_callback(
-                "keypress",
+                "keydown",
                 keyboard_callback.as_ref().unchecked_ref(),
             )
             .map_err(|_| Error::FailedToCreateHook)?;
