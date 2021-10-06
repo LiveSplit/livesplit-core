@@ -147,7 +147,7 @@ fn parse_scan_code(value: DWORD) -> Option<KeyCode> {
         0x0051 => Numpad3,
         0x0052 => Numpad0,
         0x0053 => NumpadDecimal,
-        0x0054 => PrintScreen, // Not Chrome
+        0x0054 => PrintScreen, // Not Chrome, Not Safari
         0x0056 => IntlBackslash,
         0x0057 => F11,
         0x0058 => F12,
@@ -174,8 +174,8 @@ fn parse_scan_code(value: DWORD) -> Option<KeyCode> {
         0x007B => NonConvert,
         0x007D => IntlYen,
         0x007E => NumpadComma,
-        0xE008 => Undo,
-        0xE00A => Paste,
+        0xE008 => Undo,  // Not Firefox
+        0xE00A => Paste, // Not Firefox
         0xE010 => MediaTrackPrevious,
         0xE017 => Cut,
         0xE018 => Copy,
@@ -187,16 +187,16 @@ fn parse_scan_code(value: DWORD) -> Option<KeyCode> {
         0xE021 => LaunchApp2,
         0xE022 => MediaPlayPause,
         0xE024 => MediaStop,
-        0xE02C => Eject,
+        0xE02C => Eject, // Not Firefox
         0xE02E => AudioVolumeDown,
         0xE030 => AudioVolumeUp,
         0xE032 => BrowserHome,
         0xE035 => NumpadDivide,
         0xE037 => PrintScreen,
         0xE038 => AltRight,
-        0xE03B => Help,
+        0xE03B => Help, // Not Firefox
         0xE045 => NumLock,
-        0xE046 => Pause,
+        0xE046 => Pause, // Not Safari
         0xE047 => Home,
         0xE048 => ArrowUp,
         0xE049 => PageUp,
@@ -211,8 +211,8 @@ fn parse_scan_code(value: DWORD) -> Option<KeyCode> {
         0xE05C => MetaRight,
         0xE05D => ContextMenu,
         0xE05E => Power,
-        0xE05F => Sleep,
-        0xE063 => WakeUp,
+        0xE05F => Sleep,  // Not Firefox
+        0xE063 => WakeUp, // Not Firefox
         0xE065 => BrowserSearch,
         0xE066 => BrowserFavorites,
         0xE067 => BrowserRefresh,
@@ -222,8 +222,8 @@ fn parse_scan_code(value: DWORD) -> Option<KeyCode> {
         0xE06B => LaunchApp1,
         0xE06C => LaunchMail,
         0xE06D => MediaSelect,
-        0xE0F1 => Lang2, // Not Chrome
-        0xE0F2 => Lang1, // Not Chrome
+        0xE0F1 => Lang2, // Not Chrome, Not Safari
+        0xE0F2 => Lang1, // Not Chrome, Not Safari
         _ => return None,
     })
 }
