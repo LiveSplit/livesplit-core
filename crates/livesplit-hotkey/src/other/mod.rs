@@ -1,4 +1,5 @@
 use crate::KeyCode;
+use alloc::string::String;
 
 #[derive(Debug, snafu::Snafu)]
 pub enum Error {}
@@ -22,4 +23,8 @@ impl Hook {
     pub fn unregister(&self, _: KeyCode) -> Result<()> {
         Ok(())
     }
+}
+
+pub(crate) fn try_resolve(_key_code: KeyCode) -> Option<String> {
+    None
 }
