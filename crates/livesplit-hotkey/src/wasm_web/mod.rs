@@ -3,7 +3,6 @@ use wasm_bindgen::{prelude::*, JsCast};
 use web_sys::{window, Gamepad, GamepadButton, KeyboardEvent};
 
 use std::{
-    array,
     cell::Cell,
     collections::hash_map::{Entry, HashMap},
     sync::{Arc, Mutex},
@@ -82,10 +81,7 @@ impl Hook {
         }) as Box<dyn FnMut(KeyboardEvent)>);
 
         window
-            .add_event_listener_with_callback(
-                "keydown",
-                keyboard_callback.as_ref().unchecked_ref(),
-            )
+            .add_event_listener_with_callback("keydown", keyboard_callback.as_ref().unchecked_ref())
             .map_err(|_| Error::FailedToCreateHook)?;
 
         let hotkey_map = hotkeys.clone();
@@ -161,4 +157,8 @@ impl Hook {
             Err(Error::NotRegistered)
         }
     }
+}
+
+pub(crate) fn try_resolve(_key_code: KeyCode) -> Option<String> {
+    None
 }

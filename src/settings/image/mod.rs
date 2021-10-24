@@ -1,6 +1,9 @@
 use crate::platform::prelude::*;
 use base64::{display::Base64Display, STANDARD};
-use core::{ops::Deref, sync::atomic::{AtomicUsize, Ordering}};
+use core::{
+    ops::Deref,
+    sync::atomic::{AtomicUsize, Ordering},
+};
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 
 #[cfg(test)]

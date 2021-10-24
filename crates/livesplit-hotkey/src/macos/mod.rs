@@ -292,3 +292,7 @@ unsafe extern "C" fn callback(
     }
     event
 }
+
+pub(crate) fn try_resolve(_key_code: KeyCode) -> Option<String> {
+    None
+}

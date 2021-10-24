@@ -2,37 +2,39 @@
 #![recursion_limit = "1024"]
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate alloc;
+
 cfg_if::cfg_if! {
     if #[cfg(not(feature = "std"))] {
         mod other;
-        pub use self::other::*;
+        use self::other as platform;
     } else if #[cfg(windows)] {
         mod windows;
-        pub use self::windows::*;
+        use self::windows as platform;
     } else if #[cfg(target_os = "linux")] {
         mod linux;
-        pub use self::linux::*;
+        use self::linux as platform;
     } else if #[cfg(target_os = "macos")] {
         mod macos;
-        pub use self::macos::*;
+        use self::macos as platform;
     } else if #[cfg(all(target_arch = "wasm32", target_os = "unknown"))] {
         cfg_if::cfg_if! {
             if #[cfg(feature = "wasm-web")] {
                 mod wasm_web;
-                pub use self::wasm_web::*;
+                use self::wasm_web as platform;
             } else {
                 mod wasm_unknown;
-                pub use self::wasm_unknown::*;
+                use self::wasm_unknown as platform;
             }
         }
     } else {
         mod other;
-        pub use self::other::*;
+        use self::other as platform;
     }
 }
 
 mod key_code;
-pub use self::key_code::*;
+pub use self::{key_code::*, platform::*};
 
 #[cfg(test)]
 mod tests {
@@ -55,5 +57,22 @@ mod tests {
         println!("Press Numpad1");
         thread::sleep(Duration::from_secs(5));
         hook.unregister(KeyCode::Numpad1).unwrap();
+    }
+
+    #[test]
+    fn resolve() {
+        // Based on German keyboard layout.
+        println!("ß: {}", KeyCode::Minus.resolve());
+        println!("ü: {}", KeyCode::BracketLeft.resolve());
+        println!("#: {}", KeyCode::Backslash.resolve());
+        println!("+: {}", KeyCode::BracketRight.resolve());
+        println!("z: {}", KeyCode::KeyY.resolve());
+        println!("^: {}", KeyCode::Backquote.resolve());
+        println!("<: {}", KeyCode::IntlBackslash.resolve());
+        println!("Yen: {}", KeyCode::IntlYen.resolve());
+        println!("Enter: {}", KeyCode::Enter.resolve());
+        println!("Space: {}", KeyCode::Space.resolve());
+        println!("Tab: {}", KeyCode::Tab.resolve());
+        println!("Numpad0: {}", KeyCode::Numpad0.resolve());
     }
 }

@@ -1,3 +1,4 @@
+use alloc::borrow::Cow;
 use core::str::FromStr;
 
 // Based on
@@ -261,6 +262,20 @@ pub enum KeyCode {
     ZoomToggle,
 }
 
+#[derive(Debug, Eq, PartialEq, Hash, Copy, Clone, serde::Serialize, serde::Deserialize)]
+pub enum KeyCodeClass {
+    WritingSystem,
+    Functional,
+    ControlPad,
+    ArrowPad,
+    Numpad,
+    Function,
+    Media,
+    Legacy,
+    Gamepad,
+    NonStandard,
+}
+
 impl KeyCode {
     /// Resolve the KeyCode according to the standard US layout.
     pub fn as_str(self) -> &'static str {
@@ -481,6 +496,88 @@ impl KeyCode {
             ShowAllWindows => "Show All Windows",
             ZoomToggle => "Zoom Toggle",
         }
+    }
+
+    pub fn classify(self) -> KeyCodeClass {
+        use self::KeyCode::*;
+        match self {
+            // Writing System Keys
+            Backquote | Backslash | Backspace | BracketLeft | BracketRight | Comma | Digit0
+            | Digit1 | Digit2 | Digit3 | Digit4 | Digit5 | Digit6 | Digit7 | Digit8 | Digit9
+            | Equal | IntlBackslash | IntlRo | IntlYen | KeyA | KeyB | KeyC | KeyD | KeyE
+            | KeyF | KeyG | KeyH | KeyI | KeyJ | KeyK | KeyL | KeyM | KeyN | KeyO | KeyP | KeyQ
+            | KeyR | KeyS | KeyT | KeyU | KeyV | KeyW | KeyX | KeyY | KeyZ | Minus | Period
+            | Quote | Semicolon | Slash => KeyCodeClass::WritingSystem,
+
+            // Functional Keys
+            AltLeft | AltRight | CapsLock | ContextMenu | ControlLeft | ControlRight | Enter
+            | MetaLeft | MetaRight | ShiftLeft | ShiftRight | Space | Tab | Convert | KanaMode
+            | Lang1 | Lang2 | Lang3 | Lang4 | Lang5 | NonConvert => KeyCodeClass::Functional,
+
+            // Control Pad Section
+            Delete | End | Help | Home | Insert | PageDown | PageUp => KeyCodeClass::ControlPad,
+
+            // Arrow Pad Section
+            ArrowDown | ArrowLeft | ArrowRight | ArrowUp => KeyCodeClass::ArrowPad,
+
+            // Numpad Section
+            NumLock | Numpad0 | Numpad1 | Numpad2 | Numpad3 | Numpad4 | Numpad5 | Numpad6
+            | Numpad7 | Numpad8 | Numpad9 | NumpadAdd | NumpadBackspace | NumpadClear
+            | NumpadClearEntry | NumpadComma | NumpadDecimal | NumpadDivide | NumpadEnter
+            | NumpadEqual | NumpadHash | NumpadMemoryAdd | NumpadMemoryClear
+            | NumpadMemoryRecall | NumpadMemoryStore | NumpadMemorySubtract | NumpadMultiply
+            | NumpadParenLeft | NumpadParenRight | NumpadStar | NumpadSubtract => {
+                KeyCodeClass::Numpad
+            }
+
+            // Function Section
+            Escape | F1 | F2 | F3 | F4 | F5 | F6 | F7 | F8 | F9 | F10 | F11 | F12 | F13 | F14
+            | F15 | F16 | F17 | F18 | F19 | F20 | F21 | F22 | F23 | F24 | Fn | FnLock
+            | PrintScreen | ScrollLock | Pause => KeyCodeClass::Function,
+
+            // Media Keys
+            BrowserBack | BrowserFavorites | BrowserForward | BrowserHome | BrowserRefresh
+            | BrowserSearch | BrowserStop | Eject | LaunchApp1 | LaunchApp2 | LaunchMail
+            | MediaPlayPause | MediaSelect | MediaStop | MediaTrackNext | MediaTrackPrevious
+            | Power | Sleep | AudioVolumeDown | AudioVolumeMute | AudioVolumeUp | WakeUp => {
+                KeyCodeClass::Media
+            }
+
+            // Legacy, Non-Standard and Special Keys
+            Again | Copy | Cut | Find | Open | Paste | Props | Select | Undo => {
+                KeyCodeClass::Legacy
+            }
+
+            // Gamepad Keys
+            Gamepad0 | Gamepad1 | Gamepad2 | Gamepad3 | Gamepad4 | Gamepad5 | Gamepad6
+            | Gamepad7 | Gamepad8 | Gamepad9 | Gamepad10 | Gamepad11 | Gamepad12 | Gamepad13
+            | Gamepad14 | Gamepad15 | Gamepad16 | Gamepad17 | Gamepad18 | Gamepad19 => {
+                KeyCodeClass::Gamepad
+            }
+
+            // Browser specific Keys
+            BrightnessDown | BrightnessUp | DisplayToggleIntExt | KeyboardLayoutSelect
+            | LaunchAssistant | LaunchControlPanel | LaunchScreenSaver | MailForward
+            | MailReply | MailSend | MediaFastForward | MediaPause | MediaPlay | MediaRecord
+            | MediaRewind | PrivacyScreenToggle | SelectTask | ShowAllWindows | ZoomToggle => {
+                KeyCodeClass::NonStandard
+            }
+        }
+    }
+
+    pub fn resolve(self) -> Cow<'static, str> {
+        let class = self.classify();
+        if class == KeyCodeClass::WritingSystem {
+            if let Some(resolved) = crate::platform::try_resolve(self) {
+                let uppercase = if resolved != "ß" {
+                    resolved.to_uppercase()
+                } else {
+                    resolved
+                };
+                return uppercase.into();
+            }
+        }
+        self.as_str().into()
     }
 }
 

@@ -20,8 +20,9 @@ use winapi::{
         libloaderapi::GetModuleHandleW,
         processthreadsapi::GetCurrentThreadId,
         winuser::{
-            CallNextHookEx, GetMessageW, PostThreadMessageW, SetWindowsHookExW,
-            UnhookWindowsHookEx, KBDLLHOOKSTRUCT, LLKHF_EXTENDED, WH_KEYBOARD_LL, WM_KEYDOWN,
+            CallNextHookEx, GetMessageW, MapVirtualKeyW, PostThreadMessageW, SetWindowsHookExW,
+            UnhookWindowsHookEx, KBDLLHOOKSTRUCT, LLKHF_EXTENDED, MAPVK_VK_TO_CHAR,
+            MAPVK_VSC_TO_VK_EX, WH_KEYBOARD_LL, WM_KEYDOWN,
         },
     },
 };
@@ -345,4 +346,79 @@ impl Hook {
             Err(Error::NotRegistered)
         }
     }
+}
+
+pub(crate) fn try_resolve(key_code: KeyCode) -> Option<String> {
+    use self::KeyCode::*;
+    let scan_code = match key_code {
+        Backquote => 0x0029,
+        Backslash => 0x002B,
+        Backspace => 0x000E,
+        BracketLeft => 0x001A,
+        BracketRight => 0x001B,
+        Comma => 0x0033,
+        Digit1 => 0x0002,
+        Digit2 => 0x0003,
+        Digit3 => 0x0004,
+        Digit4 => 0x0005,
+        Digit5 => 0x0006,
+        Digit6 => 0x0007,
+        Digit7 => 0x0008,
+        Digit8 => 0x0009,
+        Digit9 => 0x000A,
+        Digit0 => 0x000B,
+        Equal => 0x000D,
+        IntlBackslash => 0x0056,
+        IntlRo => 0x0073,
+        IntlYen => 0x007D,
+        KeyA => 0x001E,
+        KeyB => 0x0030,
+        KeyC => 0x002E,
+        KeyD => 0x0020,
+        KeyE => 0x0012,
+        KeyF => 0x0021,
+        KeyG => 0x0022,
+        KeyH => 0x0023,
+        KeyI => 0x0017,
+        KeyJ => 0x0024,
+        KeyK => 0x0025,
+        KeyL => 0x0026,
+        KeyM => 0x0032,
+        KeyN => 0x0031,
+        KeyO => 0x0018,
+        KeyP => 0x0019,
+        KeyQ => 0x0010,
+        KeyR => 0x0013,
+        KeyS => 0x001F,
+        KeyT => 0x0014,
+        KeyU => 0x0016,
+        KeyV => 0x002F,
+        KeyW => 0x0011,
+        KeyX => 0x002D,
+        KeyY => 0x0015,
+        KeyZ => 0x002C,
+        Minus => 0x000C,
+        Period => 0x0034,
+        Quote => 0x0028,
+        Semicolon => 0x0027,
+        Slash => 0x0035,
+        _ => return None,
+    };
+
+    let virtual_key_code = unsafe { MapVirtualKeyW(scan_code, MAPVK_VSC_TO_VK_EX) };
+    if virtual_key_code == 0 {
+        return None;
+    }
+
+    let mapped_char = unsafe { MapVirtualKeyW(virtual_key_code, MAPVK_VK_TO_CHAR) };
+    if mapped_char == 0 {
+        return None;
+    }
+
+    // Dead keys (diacritics) are indicated by setting the top bit of the return
+    // value.
+    const TOP_BIT_MASK: u32 = u32::MAX >> 1;
+    let char = mapped_char & TOP_BIT_MASK;
+
+    Some(char::from_u32(char)?.to_string())
 }

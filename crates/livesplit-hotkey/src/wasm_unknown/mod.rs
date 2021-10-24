@@ -91,3 +91,7 @@ impl Hook {
         }
     }
 }
+
+pub(crate) fn try_resolve(_key_code: KeyCode) -> Option<String> {
+    None
+}
