@@ -6,6 +6,7 @@ mod opaque {
     pub enum RunLoop {}
     pub enum RunLoopSource {}
     pub enum String {}
+    pub enum Data {}
 }
 
 pub type AllocatorRef = *mut opaque::Allocator;
@@ -15,6 +16,7 @@ pub type RunLoopSourceRef = *mut opaque::RunLoopSource;
 
 pub type StringRef = *const opaque::String;
 pub type TypeRef = *const c_void;
+pub type DataRef = *const opaque::Data;
 
 pub type RunLoopMode = StringRef;
 
@@ -62,4 +64,5 @@ extern "C" {
 
     pub fn CFRelease(cf: TypeRef);
 
+    pub fn CFDataGetBytePtr(the_data: DataRef) -> *const u8;
 }
