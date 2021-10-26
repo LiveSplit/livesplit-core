@@ -1,7 +1,8 @@
 use super::Comparisons;
-use crate::comparison::personal_best;
-use crate::platform::prelude::*;
-use crate::{settings::Image, SegmentHistory, Time, TimeSpan, TimingMethod};
+use crate::{
+    comparison::personal_best, platform::prelude::*, settings::Image, SegmentHistory, Time,
+    TimeSpan, TimingMethod,
+};
 
 /// A Segment describes a point in a speedrun that is suitable for storing a
 /// split time. This stores the name of that segment, an icon, the split times
@@ -107,7 +108,7 @@ impl Segment {
     pub fn personal_best_split_time(&self) -> Time {
         self.comparisons
             .get(personal_best::NAME)
-            .unwrap_or_else(Time::default)
+            .unwrap_or_default()
     }
 
     /// Grants mutable access to the split time of the Personal Best for this

@@ -1,9 +1,10 @@
 //! An Atomic Date Time represents a UTC Date Time that tries to be as close to
 //! an atomic clock as possible.
 
-use crate::output_str;
+use crate::output_vec;
 use livesplit_core::AtomicDateTime;
 use std::os::raw::c_char;
+use time::{format_description::well_known::Rfc3339, macros::format_description};
 
 /// type
 pub type OwnedAtomicDateTime = Box<AtomicDateTime>;
@@ -27,11 +28,15 @@ pub extern "C" fn AtomicDateTime_is_synchronized(this: &AtomicDateTime) -> bool 
 /// Converts this atomic date time into a RFC 2822 formatted date time.
 #[no_mangle]
 pub extern "C" fn AtomicDateTime_to_rfc2822(this: &AtomicDateTime) -> *const c_char {
-    output_str(this.time.to_rfc2822())
+    output_vec(|o| {
+        let _ = this.time.format_into(o, &format_description!("[weekday repr:short], [day padding:none] [month repr:short] [year] [hour]:[minute]:[second] [offset_hour sign:mandatory][offset_minute]"));
+    })
 }
 
 /// Converts this atomic date time into a RFC 3339 formatted date time.
 #[no_mangle]
 pub extern "C" fn AtomicDateTime_to_rfc3339(this: &AtomicDateTime) -> *const c_char {
-    output_str(this.time.to_rfc3339())
+    output_vec(|o| {
+        let _ = this.time.format_into(o, &Rfc3339);
+    })
 }

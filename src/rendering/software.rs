@@ -117,8 +117,6 @@ impl<T: Send + Sync> SharedOwnership for UnsafeRc<T> {
     }
 }
 
-// TODO: Make sure this is actually true:
-
 // Safety: This is safe because the BorrowedSoftwareRenderer and the
 // SceneManager never share any of their resources with anyone. For the
 // BorrowedSoftwareRenderer this is trivially true as it doesn't share any its
@@ -180,7 +178,7 @@ impl BorrowedRenderer {
 
         let new_resolution =
             self.scene_manager
-                .update_scene(SkiaAllocator, (width as _, height as _), &state);
+                .update_scene(SkiaAllocator, (width as _, height as _), state);
 
         let scene = self.scene_manager.scene();
         let rectangle = scene.rectangle();

@@ -6,9 +6,11 @@
 //! occurrences of this and allows you to delete them individually if any of
 //! them seem wrong.
 
+use time::UtcOffset;
+
 use crate::{
     analysis::sum_of_segments::{best, track_branch, Prediction},
-    platform::{prelude::*, Local},
+    platform::{prelude::*, to_local},
     timing::formatter::{SegmentTime, TimeFormatter},
     Attempt, Run, Segment, TimeSpan, TimingMethod,
 };
@@ -92,16 +94,32 @@ impl fmt::Display for PotentialCleanUp<'_> {
         if let Some(combined) = self.combined_sum_of_best {
             write!(
                 f,
-                ", which is faster than the Combined Best Segments of {}",
+                ", which is faster than the combined best segments of {}",
                 short.format(combined)
             )?;
         }
 
-        if let Some(ended) = self.attempt.ended() {
+        if let Some(started) = self.attempt.started() {
+            let local = to_local(started.time);
+            // We want to show the time zone in case it can't be resolved and
+            // defaults to UTC.
+            let time_zone = if local.offset() == UtcOffset::UTC {
+                " UTC"
+            } else {
+                ""
+            };
+            let (year, month, day) = local.to_calendar_date();
+            let (hour, minute, _) = local.to_hms();
+            let (hour, am_pm) = if hour >= 12 {
+                (hour - 12, "pm")
+            } else {
+                (hour, "am")
+            };
+            let hour = if hour == 0 { 12 } else { hour };
             write!(
                 f,
-                " in a run on {}",
-                ended.time.with_timezone(&Local).format("%F")
+                " in a run on {} {}, {} that started at {}:{:02} {}{}",
+                month, day, year, hour, minute, am_pm, time_zone
             )?;
         }
 
@@ -148,7 +166,7 @@ impl<'r> SumOfBestCleaner<'r> {
                 State::Poisoned => unreachable!(),
                 State::Done => return None,
                 State::WithTimingMethod(method) => {
-                    next_timing_method(&self.run, &mut self.predictions, method);
+                    next_timing_method(self.run, &mut self.predictions, method);
                     self.state = State::IteratingRun(IteratingRunState {
                         method,
                         segment_index: 0,
@@ -188,7 +206,7 @@ impl<'r> SumOfBestCleaner<'r> {
                             );
                             if prediction_index > 0 {
                                 if let Some(question) = check_prediction(
-                                    &self.run,
+                                    self.run,
                                     &self.predictions,
                                     prediction_time[state.parent.method],
                                     state.parent.segment_index as isize - 1,

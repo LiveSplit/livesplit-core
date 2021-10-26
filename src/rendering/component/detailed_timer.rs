@@ -26,7 +26,7 @@ pub(in crate::rendering) fn render<B: ResourceAllocator>(
     let icon_size = height - 2.0 * vertical_padding;
 
     if let Some(icon) = &component.icon_change {
-        *detailed_timer_icon = context.create_icon(&icon);
+        *detailed_timer_icon = context.create_icon(icon);
     }
 
     let left_side = if let Some(icon) = detailed_timer_icon {
@@ -43,7 +43,7 @@ pub(in crate::rendering) fn render<B: ResourceAllocator>(
 
     if let Some(segment_name) = &component.segment_name {
         context.render_text_ellipsis(
-            &segment_name,
+            segment_name,
             [left_side, 0.6 * top_height],
             0.5 * top_height,
             text_color,

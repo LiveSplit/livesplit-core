@@ -81,7 +81,7 @@ mod xml_util;
 
 pub use crate::{
     layout::{Component, Editor as LayoutEditor, GeneralSettings as GeneralLayoutSettings, Layout},
-    platform::{indexmap, DateTime, Utc},
+    platform::{indexmap, DateTime},
     run::{Attempt, Editor as RunEditor, Run, RunMetadata, Segment, SegmentHistory},
     timing::{
         AtomicDateTime, GameTime, RealTime, Time, TimeSpan, TimeStamp, Timer, TimerPhase,

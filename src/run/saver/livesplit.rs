@@ -24,17 +24,20 @@
 //! livesplit::save_run(&run, writer).expect("Couldn't save the splits file");
 //! ```
 
-use crate::timing::formatter::{Complete, TimeFormatter};
-use crate::{settings::Image, Run, Time, TimeSpan, Timer, TimerPhase};
+use crate::{
+    settings::Image,
+    timing::formatter::{Complete, TimeFormatter},
+    DateTime, Run, Time, TimeSpan, Timer, TimerPhase,
+};
 use alloc::borrow::Cow;
 use byteorder::{WriteBytesExt, LE};
-use chrono::{DateTime, Utc};
-use core::fmt::Display;
-use core::mem::replace;
-use core::result::Result as StdResult;
-use quick_xml::events::{BytesDecl, BytesEnd, BytesStart, BytesText, Event};
-use quick_xml::{Error as XmlError, Writer};
+use core::{fmt::Display, mem, result::Result as StdResult};
+use quick_xml::{
+    events::{BytesDecl, BytesEnd, BytesStart, BytesText, Event},
+    Error as XmlError, Writer,
+};
 use std::io::Write;
+use time::{macros::format_description, UtcOffset};
 
 static LSS_IMAGE_HEADER: &[u8; 156] = include_bytes!("lss_image_header.bin");
 
@@ -75,7 +78,7 @@ fn write_end<W: Write>(writer: &mut Writer<W>, tag: &[u8]) -> Result<()> {
 
 fn split_tag<'a>(tag: &'a BytesStart<'a>) -> (BytesStart<'a>, BytesEnd<'a>) {
     (
-        BytesStart::borrowed(&tag, tag.name().len()),
+        BytesStart::borrowed(tag, tag.name().len()),
         BytesEnd::borrowed(tag.name()),
     )
 }
@@ -140,7 +143,7 @@ fn vec_as_string<F, R>(vec: &mut Vec<u8>, f: F) -> R
 where
     F: FnOnce(&mut String) -> R,
 {
-    let taken = replace(vec, Vec::new());
+    let taken = mem::take(vec);
     let mut string = String::from_utf8(taken).unwrap();
     let result = f(&mut string);
     *vec = string.into_bytes();
@@ -177,8 +180,15 @@ fn image<W: Write>(
     Ok(())
 }
 
-fn fmt_date(date: DateTime<Utc>, buf: &mut Vec<u8>) -> &[u8] {
-    fmt_buf(date.format("%m/%d/%Y %T"), buf)
+fn fmt_date(date: DateTime, buf: &mut Vec<u8>) -> &[u8] {
+    fmt_buf(
+        date.to_offset(UtcOffset::UTC)
+            .format(&format_description!(
+                "[month]/[day]/[year] [hour]:[minute]:[second]"
+            ))
+            .expect("Should be able to format a date time"),
+        buf,
+    )
 }
 
 fn fmt_buf<D: Display>(value: D, buf: &mut Vec<u8>) -> &[u8] {

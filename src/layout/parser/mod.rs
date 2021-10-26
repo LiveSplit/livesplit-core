@@ -240,7 +240,7 @@ impl<T: GradientType> GradientBuilder<T> {
             color(reader, tag.into_buf(), |c| self.second = c)?;
         } else if tag.name() == self.tag_kind {
             text_as_escaped_bytes_err::<_, _, _, Error>(reader, tag.into_buf(), |text| {
-                self.kind = T::parse(&text)?;
+                self.kind = T::parse(text)?;
                 Ok(())
             })?;
         } else {

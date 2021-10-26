@@ -29,9 +29,9 @@ pub(in crate::rendering) fn render(
             ),
         ),
         TextState::Split(left, right) => context.render_key_value_component(
-            &left,
+            left,
             &[],
-            &right,
+            right,
             false,
             [width, height],
             component
