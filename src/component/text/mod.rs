@@ -11,7 +11,7 @@ use crate::{
     Timer,
 };
 use alloc::borrow::Cow;
-use core::mem::{self, replace};
+use core::mem;
 use serde::{Deserialize, Serialize};
 
 #[cfg(test)]
@@ -349,17 +349,11 @@ impl Component {
             1 => {
                 self.settings.text = match (value.into_bool().unwrap(), &mut self.settings.text) {
                     (false, Text::Variable(name, true)) => {
-                        Text::Split(replace(name, String::new()), String::new())
+                        Text::Split(mem::take(name), String::new())
                     }
-                    (false, Text::Variable(name, false)) => {
-                        Text::Center(replace(name, String::new()))
-                    }
-                    (true, Text::Center(center)) => {
-                        Text::Variable(replace(center, String::new()), false)
-                    }
-                    (true, Text::Split(left, _)) => {
-                        Text::Variable(replace(left, String::new()), true)
-                    }
+                    (false, Text::Variable(name, false)) => Text::Center(mem::take(name)),
+                    (true, Text::Center(center)) => Text::Variable(mem::take(center), false),
+                    (true, Text::Split(left, _)) => Text::Variable(mem::take(left), true),
                     _ => return,
                 };
             }
@@ -369,11 +363,11 @@ impl Component {
                         self.settings.right_color = self.settings.left_center_color;
                         self.settings.display_two_rows = false;
 
-                        Text::Split(replace(center, String::new()), String::new())
+                        Text::Split(mem::take(center), String::new())
                     }
                     (false, Text::Split(left, right)) => {
-                        let mut value = replace(left, String::new());
-                        let right = replace(right, String::new());
+                        let mut value = mem::take(left);
+                        let right = mem::take(right);
                         if !value.is_empty() && !right.is_empty() {
                             value.push(' ');
                         }

@@ -2,13 +2,14 @@
 
 use super::super::ComparisonError;
 use crate::{settings::Image, timing, AtomicDateTime, RealTime, Run, Segment, Time, TimeSpan};
-use chrono::{TimeZone, Utc};
-use core::num::ParseIntError;
-use core::result::Result as StdResult;
+use core::{num::ParseIntError, result::Result as StdResult};
 use snafu::{OptionExt, ResultExt};
-use std::fs::File;
-use std::io::{self, BufRead, BufReader};
-use std::path::PathBuf;
+use std::{
+    fs::File,
+    io::{self, BufRead, BufReader},
+    path::PathBuf,
+};
+use time::{macros::format_description, PrimitiveDateTime};
 
 /// The Error type for splits files that couldn't be parsed by the Time
 /// Split Tracker Parser.
@@ -206,9 +207,12 @@ fn parse_history(run: &mut Run, path: Option<PathBuf>) -> StdResult<(), ()> {
             let line = line.map_err(drop)?;
             let mut splits = line.split('\t');
             let time_stamp = splits.next().ok_or(())?;
-            let started = Utc
-                .datetime_from_str(time_stamp, "%Y/%m/%d %R")
-                .map_err(drop)?;
+            let started = PrimitiveDateTime::parse(
+                time_stamp,
+                &format_description!("[year]/[month]/[day] [hour]:[minute]"),
+            )
+            .map_err(drop)?
+            .assume_utc();
             let completed = splits.next().ok_or(())? == "C";
             let split_times: Vec<_> = splits
                 .map(parse_time_optional)

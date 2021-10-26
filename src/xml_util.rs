@@ -1,6 +1,5 @@
 use crate::timing;
 use alloc::{borrow::Cow, string};
-use chrono::ParseError as ChronoError;
 use core::{
     num::{ParseFloatError, ParseIntError},
     ops::Deref,
@@ -43,7 +42,7 @@ pub enum Error {
     /// Failed to parse a time.
     Time { source: timing::ParseError },
     /// Failed to parse a date.
-    Date { source: ChronoError },
+    Date { source: time::error::Parse },
 }
 
 impl From<XmlError> for Error {
@@ -88,8 +87,8 @@ impl From<timing::ParseError> for Error {
     }
 }
 
-impl From<ChronoError> for Error {
-    fn from(source: ChronoError) -> Self {
+impl From<time::error::Parse> for Error {
+    fn from(source: time::error::Parse) -> Self {
         Self::Date { source }
     }
 }

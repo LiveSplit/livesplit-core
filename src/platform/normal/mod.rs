@@ -1,7 +1,8 @@
 #![allow(missing_docs)]
 
-pub use chrono::{DateTime, Duration, Local, Utc};
 pub use indexmap;
+use time::UtcOffset;
+pub use time::{Duration, OffsetDateTime as DateTime};
 
 cfg_if::cfg_if! {
     // We can't use std's Instant as it's insufficiently specified. It neither
@@ -107,43 +108,10 @@ cfg_if::cfg_if! {
         target_os = "macos",
         target_os = "ios",
     ))] {
-        use std::{cmp, fmt, ops::Sub};
+        use core::ops::Sub;
 
-        #[derive(Copy, Clone)]
-        pub struct Instant {
-            t: libc::timespec,
-        }
-
-        impl PartialEq for Instant {
-            fn eq(&self, other: &Instant) -> bool {
-                self.t.tv_sec == other.t.tv_sec && self.t.tv_nsec == other.t.tv_nsec
-            }
-        }
-
-        impl Eq for Instant {}
-
-        impl PartialOrd for Instant {
-            fn partial_cmp(&self, other: &Instant) -> Option<cmp::Ordering> {
-                Some(self.cmp(other))
-            }
-        }
-
-        impl Ord for Instant {
-            fn cmp(&self, other: &Instant) -> cmp::Ordering {
-                let me = (self.t.tv_sec, self.t.tv_nsec);
-                let other = (other.t.tv_sec, other.t.tv_nsec);
-                me.cmp(&other)
-            }
-        }
-
-        impl fmt::Debug for Instant {
-            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                f.debug_struct("Instant")
-                    .field("sec", &self.t.tv_sec)
-                    .field("nsec", &self.t.tv_nsec)
-                    .finish()
-            }
-        }
+        #[derive(Copy, Clone, PartialOrd, PartialEq, Ord, Eq, Debug)]
+        pub struct Instant(Duration);
 
         impl Instant {
             /// Accesses the current point in time.
@@ -162,7 +130,7 @@ cfg_if::cfg_if! {
                     // once Rust bumps the minimal Linux version we may also
                     // just cfg out `CLOCK_MONOTONIC` here.
                     if unsafe { libc::clock_gettime(libc::CLOCK_BOOTTIME, &mut t) } == 0 {
-                        return Self { t };
+                        return Self(Duration::new(t.tv_sec as _, t.tv_nsec as _));
                     }
                 }
 
@@ -170,7 +138,15 @@ cfg_if::cfg_if! {
                     panic!("clock_gettime doesn't work.");
                 }
 
-                Self { t }
+                Self(Duration::new(t.tv_sec as _, t.tv_nsec as _))
+            }
+        }
+
+        impl Sub<Duration> for Instant {
+            type Output = Instant;
+
+            fn sub(self, rhs: Duration) -> Instant {
+                Self(self.0 - rhs)
             }
         }
 
@@ -178,31 +154,18 @@ cfg_if::cfg_if! {
             type Output = Duration;
 
             fn sub(self, rhs: Instant) -> Duration {
-                const NSEC_PER_SEC: u64 = 1_000_000_000;
-
-                let s = (self.t.tv_sec, self.t.tv_nsec);
-                let r = (rhs.t.tv_sec, rhs.t.tv_nsec);
-                let ((max_sec, max_nano), (min_sec, min_nano)) = if s >= r {
-                    (s, r)
-                } else {
-                    (r, s)
-                };
-                let (secs, nsec) = if max_nano >= min_nano {
-                    ((max_sec - min_sec) as u64, (max_nano - min_nano) as u32)
-                } else {
-                    (
-                        (max_sec - min_sec - 1) as u64,
-                        max_nano as u32 + (NSEC_PER_SEC as u32) - min_nano as u32,
-                    )
-                };
-                Duration::from_std(std::time::Duration::new(secs, nsec)).unwrap()
+                self.0 - rhs.0
             }
         }
     } else {
-        pub use std::time::Instant;
+        pub use time::Instant;
     }
 }
 
-pub fn utc_now() -> DateTime<Utc> {
-    Utc::now()
+pub fn utc_now() -> DateTime {
+    DateTime::now_utc()
+}
+
+pub fn to_local(date_time: DateTime) -> DateTime {
+    date_time.to_offset(UtcOffset::local_offset_at(date_time).unwrap_or(UtcOffset::UTC))
 }

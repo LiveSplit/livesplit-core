@@ -1,5 +1,5 @@
 use crate::{
-    platform::{utc_now, DateTime, Utc},
+    platform::{utc_now, DateTime},
     TimeSpan,
 };
 use core::ops::Sub;
@@ -9,7 +9,7 @@ use core::ops::Sub;
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct AtomicDateTime {
     /// The UTC Date Time represented by this Atomic Date Time.
-    pub time: DateTime<Utc>,
+    pub time: DateTime,
     /// Represents whether the date time is actually properly derived from an
     /// atomic clock. If the synchronization with the atomic clock didn't happen
     /// yet or failed, this is set to `false`.
@@ -20,7 +20,7 @@ impl AtomicDateTime {
     /// Creates a new Atomic Date Time from the UTC Date Time and the
     /// information of whether this Date Time is derived from an atomic clock or
     /// the local system that may be out of sync with the atomic clock.
-    pub const fn new(time: DateTime<Utc>, synced_with_atomic_clock: bool) -> Self {
+    pub const fn new(time: DateTime, synced_with_atomic_clock: bool) -> Self {
         Self {
             time,
             synced_with_atomic_clock,
@@ -48,14 +48,14 @@ impl Sub for AtomicDateTime {
     type Output = TimeSpan;
 
     fn sub(self, rhs: AtomicDateTime) -> TimeSpan {
-        self.time.signed_duration_since(rhs.time).into()
+        (self.time - rhs.time).into()
     }
 }
 
-impl Sub<DateTime<Utc>> for AtomicDateTime {
+impl Sub<DateTime> for AtomicDateTime {
     type Output = TimeSpan;
 
-    fn sub(self, rhs: DateTime<Utc>) -> TimeSpan {
-        self.time.signed_duration_since(rhs).into()
+    fn sub(self, rhs: DateTime) -> TimeSpan {
+        (self.time - rhs).into()
     }
 }

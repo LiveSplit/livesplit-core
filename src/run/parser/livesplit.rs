@@ -1,19 +1,19 @@
 //! Provides the parser for LiveSplit splits files.
 
 use super::super::ComparisonError;
-use crate::xml_util::{
-    attribute, attribute_err, end_tag, optional_attribute_err, parse_attributes, parse_base,
-    parse_children, reencode_children, text, text_as_bytes_err, text_err, text_parsed,
+use crate::{
+    xml_util::{
+        attribute, attribute_err, end_tag, optional_attribute_err, parse_attributes, parse_base,
+        parse_children, reencode_children, text, text_as_bytes_err, text_err, text_parsed,
+    },
+    AtomicDateTime, DateTime, Run, RunMetadata, Segment, Time, TimeSpan,
 };
-use crate::{AtomicDateTime, Run, RunMetadata, Segment, Time, TimeSpan};
-use chrono::{DateTime, TimeZone, Utc};
 use core::str;
 use quick_xml::Reader;
-use std::io::BufRead;
-use std::path::PathBuf;
+use std::{io::BufRead, path::PathBuf};
+use time::{macros::format_description, PrimitiveDateTime};
 
 use crate::xml_util::Error as XmlError;
-use chrono::ParseError as ChronoError;
 
 /// The Error type for splits files that couldn't be parsed by the LiveSplit
 /// Parser.
@@ -52,7 +52,7 @@ pub enum Error {
     /// Failed to parse a date.
     ParseDate {
         /// The underlying error.
-        source: ChronoError,
+        source: time::error::Parse,
     },
     /// Parsed comparison has an invalid name.
     InvalidComparisonName {
@@ -101,8 +101,8 @@ impl From<crate::timing::ParseError> for Error {
     }
 }
 
-impl From<ChronoError> for Error {
-    fn from(source: ChronoError) -> Self {
+impl From<time::error::Parse> for Error {
+    fn from(source: time::error::Parse) -> Self {
         Self::ParseDate { source }
     }
 }
@@ -134,9 +134,12 @@ fn parse_version<S: AsRef<str>>(version: S) -> Result<Version> {
     Ok(Version(v[0], v[1], v[2], v[3]))
 }
 
-fn parse_date_time<S: AsRef<str>>(text: S) -> Result<DateTime<Utc>> {
-    Utc.datetime_from_str(text.as_ref(), "%m/%d/%Y %T")
-        .map_err(Into::into)
+fn parse_date_time<S: AsRef<str>>(text: S) -> Result<DateTime> {
+    Ok(PrimitiveDateTime::parse(
+        text.as_ref(),
+        &format_description!("[month]/[day]/[year] [hour]:[minute]:[second]"),
+    )?
+    .assume_utc())
 }
 
 fn image<R, F>(

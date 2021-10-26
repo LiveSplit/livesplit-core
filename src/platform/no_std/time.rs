@@ -1,8 +1,10 @@
 use crate::platform::prelude::*;
-use chrono::{DateTime, Utc};
-use core::ops::Sub;
-use core::sync::atomic::{self, AtomicPtr};
-use core::time::Duration;
+use core::{
+    ops::Sub,
+    sync::atomic::{self, AtomicPtr},
+};
+
+pub use time::{Duration, OffsetDateTime as DateTime};
 
 /// A clock is a global handler that can be registered for providing the high
 /// precision time stamps on a `no_std` target.
@@ -17,7 +19,7 @@ pub trait Clock: 'static {
     /// high precision time stamp and is allowed to suddenly change to due
     /// synchronization with a time server. If there's no notion of a calendar
     /// on the system, you may return a dummy value instead.
-    fn date_now(&self) -> DateTime<Utc>;
+    fn date_now(&self) -> DateTime;
 }
 
 static CLOCK: AtomicPtr<Box<dyn Clock>> = AtomicPtr::new(core::ptr::null_mut());
@@ -50,6 +52,14 @@ impl Instant {
     }
 }
 
+impl Sub<Duration> for Instant {
+    type Output = Instant;
+
+    fn sub(self, rhs: Duration) -> Instant {
+        Self(self.0 - rhs)
+    }
+}
+
 impl Sub for Instant {
     type Output = Duration;
 
@@ -58,11 +68,15 @@ impl Sub for Instant {
     }
 }
 
-pub fn utc_now() -> DateTime<Utc> {
+pub fn utc_now() -> DateTime {
     let clock = CLOCK.load(atomic::Ordering::SeqCst);
     if clock.is_null() {
         panic!("No clock registered");
     }
     let clock = unsafe { &*clock };
     clock.date_now()
+}
+
+pub fn to_local(date_time: DateTime) -> DateTime {
+    date_time
 }

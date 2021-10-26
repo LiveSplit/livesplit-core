@@ -3,10 +3,12 @@
 //! that is being run. Additionally, the game icon, the attempt count, and the
 //! total number of finished runs can be shown.
 
-use crate::platform::prelude::*;
-use crate::settings::{Alignment, Color, Field, Gradient, SettingsDescription, Value};
 use crate::{
-    settings::{CachedImageId, Image, ImageData},
+    platform::prelude::*,
+    settings::{
+        Alignment, CachedImageId, Color, Field, Gradient, Image, ImageData, SettingsDescription,
+        Value,
+    },
     Timer, TimerPhase,
 };
 use core::fmt::Write;
@@ -263,7 +265,7 @@ impl Component {
                                 if !game_abbrev.is_empty() {
                                     abbrev.push_str(" - ");
                                 }
-                                abbrev.push_str(&full_category_name);
+                                abbrev.push_str(full_category_name);
                                 abbrevs.push(abbrev.as_str().into());
                             }
                         }
