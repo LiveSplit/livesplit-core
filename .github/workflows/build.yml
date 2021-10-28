@@ -615,9 +615,9 @@ jobs:
         uses: actions/cache@v2
         with:
           path: target
-          key: target-${{ matrix.target }}-cache-${{ hashFiles('Cargo.lock') }}
+          key: target-${{ matrix.target }}-${{ matrix.toolchain }}-cache-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
-            target-${{ matrix.target }}-cache-
+            target-${{ matrix.target }}-${{ matrix.toolchain }}-cache-
 
       - name: Install Target
         if: matrix.install_target != ''
