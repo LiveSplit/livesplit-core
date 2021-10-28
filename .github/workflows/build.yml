@@ -2,6 +2,7 @@ name: Build
 
 on:
   pull_request:
+  workflow_dispatch:
   push:
     branches:
       - 'master'
@@ -607,6 +608,17 @@ jobs:
         with:
           rust-version: ${{ matrix.toolchain || 'stable' }}
 
+      - name: Manually generate Cargo lockfile
+        run: cargo generate-lockfile
+
+      - name: Cache Build/Deps
+        uses: actions/cache@v2
+        with:
+          path: target
+          key: target-${{ matrix.target }}-cache-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            target-${{ matrix.target }}-cache-
+
       - name: Install Target
         if: matrix.install_target != ''
         run: rustup target add ${{ matrix.target }}
@@ -677,6 +689,17 @@ jobs:
         with:
           components: clippy
 
+      - name: Manually generate Cargo lockfile
+        run: cargo generate-lockfile
+
+      - name: Cache Build/Deps
+        uses: actions/cache@v2
+        with:
+          path: target
+          key: target-lint-cache-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            target-lint-cache-
+
       - name: Run Clippy
         run: cargo clippy --all-features
 
@@ -706,6 +729,17 @@ jobs:
 
       - name: Install Rust
         uses: hecrj/setup-rust-action@v1
+
+      - name: Manually generate Cargo lockfile
+        run: cargo generate-lockfile
+
+      - name: Cache Build/Deps
+        uses: actions/cache@v2
+        with:
+          path: target
+          key: target-bench-cache-${{ hashFiles('Cargo.lock') }}
+          restore-keys: |
+            target-bench-cache-
 
       - name: Run benchmarks
         run: |
