@@ -33,14 +33,12 @@ pub fn calculate_hash<P, I>(background: &Option<FillShader>, entities: &[Entity<
     hasher.finish()
 }
 
-fn hash_float(x: f32, state: &mut impl Hasher) {
-    u32::from_ne_bytes(x.to_ne_bytes()).hash(state);
+fn hash_float(f: f32, state: &mut impl Hasher) {
+    u32::hash(&bytemuck::cast(f), state);
 }
 
 fn hash_floats(f: &[f32], state: &mut impl Hasher) {
-    for &f in f {
-        hash_float(f, state);
-    }
+    u32::hash_slice(bytemuck::cast_slice(f), state);
 }
 
 fn hash_shader(shader: &FillShader, state: &mut impl Hasher) {

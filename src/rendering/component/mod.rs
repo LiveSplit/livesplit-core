@@ -3,7 +3,7 @@ use crate::layout::{ComponentState, LayoutState};
 use super::{
     consts::{DEFAULT_COMPONENT_HEIGHT, PSEUDO_PIXELS, SEPARATOR_THICKNESS, TWO_ROW_HEIGHT},
     resource::ResourceAllocator,
-    IconCache, RenderContext,
+    RenderContext,
 };
 
 pub mod blank_space;
@@ -15,6 +15,50 @@ pub mod splits;
 pub mod text;
 pub mod timer;
 pub mod title;
+
+pub enum Cache<I> {
+    DetailedTimer(detailed_timer::Cache<I>),
+    Splits(splits::Cache<I>),
+    Title(title::Cache<I>),
+    Empty,
+}
+
+macro_rules! accessors {
+    ($($variant:ident $module:ident),*) => {
+        $(
+            fn $module(&mut self) -> &mut $module::Cache<I> {
+                match self {
+                    Self::$variant(c) => c,
+                    _ => {
+                        *self = Self::$variant($module::Cache::new());
+                        self.$module()
+                    }
+                }
+            }
+        )*
+    };
+}
+
+impl<I> Cache<I> {
+    pub const fn new(component: &ComponentState) -> Self {
+        match component {
+            ComponentState::DetailedTimer(_) => Self::DetailedTimer(detailed_timer::Cache::new()),
+            ComponentState::Splits(_) => Self::Splits(splits::Cache::new()),
+            ComponentState::Title(_) => Self::Title(title::Cache::new()),
+            _ => Self::Empty,
+        }
+    }
+
+    fn make_empty(&mut self) {
+        *self = Self::Empty;
+    }
+
+    accessors! {
+        DetailedTimer detailed_timer,
+        Splits splits,
+        Title title
+    }
+}
 
 pub fn layout_width(layout: &LayoutState) -> f32 {
     layout.components.iter().map(width).sum()
@@ -81,33 +125,45 @@ pub fn height(component: &ComponentState) -> f32 {
 }
 
 pub(super) fn render<A: ResourceAllocator>(
+    cache: &mut Cache<A::Image>,
     context: &mut RenderContext<'_, A>,
-    icons: &mut IconCache<A::Image>,
     component: &ComponentState,
     state: &LayoutState,
     dim: [f32; 2],
 ) {
     match component {
-        ComponentState::BlankSpace(state) => blank_space::render(context, dim, state),
-        ComponentState::DetailedTimer(component) => detailed_timer::render(
-            context,
-            dim,
-            component,
-            state,
-            &mut icons.detailed_timer_icon,
-        ),
-        ComponentState::Graph(component) => graph::render(context, dim, component, state),
-        ComponentState::KeyValue(component) => key_value::render(context, dim, component, state),
-        ComponentState::Separator(component) => separator::render(context, dim, component, state),
-        ComponentState::Splits(component) => {
-            splits::render(context, dim, component, state, &mut icons.split_icons)
+        ComponentState::BlankSpace(state) => {
+            cache.make_empty();
+            blank_space::render(context, dim, state)
         }
-        ComponentState::Text(component) => text::render(context, dim, component, state),
+        ComponentState::DetailedTimer(component) => {
+            detailed_timer::render(cache.detailed_timer(), context, dim, component, state)
+        }
+        ComponentState::Graph(component) => {
+            cache.make_empty();
+            graph::render(context, dim, component, state)
+        }
+        ComponentState::KeyValue(component) => {
+            cache.make_empty();
+            key_value::render(context, dim, component, state)
+        }
+        ComponentState::Separator(component) => {
+            cache.make_empty();
+            separator::render(context, dim, component, state)
+        }
+        ComponentState::Splits(component) => {
+            splits::render(cache.splits(), context, dim, component, state)
+        }
+        ComponentState::Text(component) => {
+            cache.make_empty();
+            text::render(context, dim, component, state)
+        }
         ComponentState::Timer(component) => {
+            cache.make_empty();
             timer::render(context, dim, component);
         }
         ComponentState::Title(component) => {
-            title::render(context, dim, component, state, &mut icons.game_icon)
+            title::render(cache.title(), context, dim, component, state)
         }
     }
 }

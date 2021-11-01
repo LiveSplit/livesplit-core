@@ -69,7 +69,7 @@ ttf-parser = { version = "0.12.0", optional = true }
 font-kit = { version = "0.10.0", optional = true }
 
 # Software Rendering
-tiny-skia = { version = "0.6.0", optional = true }
+tiny-skia = { version = "0.6.0", default-features = false, features = ["std", "simd"], optional = true }
 
 # Networking
 splits-io-api = { version = "0.2.0", optional = true }
