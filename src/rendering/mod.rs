@@ -144,15 +144,9 @@ enum CachedSize {
 pub struct SceneManager<P, I> {
     scene: Scene<P, I>,
     fonts: FontCache<P>,
-    icons: IconCache<I>,
+    components: Vec<component::Cache<I>>,
     next_id: usize,
     cached_size: Option<CachedSize>,
-}
-
-struct IconCache<I> {
-    game_icon: Option<Icon<I>>,
-    split_icons: Vec<Option<Icon<I>>>,
-    detailed_timer_icon: Option<Icon<I>>,
 }
 
 impl<P: SharedOwnership, I: SharedOwnership> SceneManager<P, I> {
@@ -168,11 +162,7 @@ impl<P: SharedOwnership, I: SharedOwnership> SceneManager<P, I> {
 
         Self {
             fonts: FontCache::new().unwrap(),
-            icons: IconCache {
-                game_icon: None,
-                split_icons: Vec::new(),
-                detailed_timer_icon: None,
-            },
+            components: Vec::new(),
             // We use 0 for the rectangle.
             next_id: 1,
             scene: Scene::new(rectangle),
@@ -206,6 +196,14 @@ impl<P: SharedOwnership, I: SharedOwnership> SceneManager<P, I> {
 
         self.scene
             .set_background(decode_gradient(&state.background));
+
+        // Ensure we have exactly as many cached components as the layout state.
+        if let Some(new_components) = state.components.get(self.components.len()..) {
+            self.components
+                .extend(new_components.iter().map(component::Cache::new));
+        } else {
+            self.components.truncate(state.components.len());
+        }
 
         let new_dimensions = match state.direction {
             LayoutDirection::Vertical => self.render_vertical(allocator, resolution, state),
@@ -271,10 +269,10 @@ impl<P: SharedOwnership, I: SharedOwnership> SceneManager<P, I> {
         // mode, all the components have the same width.
         let width = aspect_ratio * total_height;
 
-        for component in &state.components {
+        for (component, cache) in state.components.iter().zip(&mut self.components) {
             let height = component::height(component);
             let dim = [width, height];
-            component::render(&mut context, &mut self.icons, component, state, dim);
+            component::render(cache, &mut context, component, state, dim);
             // We translate the coordinate space to the Component Coordinate
             // Space of the next component by shifting by the height of the
             // current component in the Component Coordinate Space.
@@ -342,11 +340,11 @@ impl<P: SharedOwnership, I: SharedOwnership> SceneManager<P, I> {
         // distribute to each of the components. This factor is this adjustment.
         let width_scaling = TWO_ROW_HEIGHT * aspect_ratio / total_width;
 
-        for component in &state.components {
+        for (component, cache) in state.components.iter().zip(&mut self.components) {
             let width = component::width(component) * width_scaling;
             let height = TWO_ROW_HEIGHT;
             let dim = [width, height];
-            component::render(&mut context, &mut self.icons, component, state, dim);
+            component::render(cache, &mut context, component, state, dim);
             // We translate the coordinate space to the Component Coordinate
             // Space of the next component by shifting by the width of the
             // current component in the Component Coordinate Space.
@@ -531,7 +529,6 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
 
         let mut buffer = self.fonts.buffer.take().unwrap_or_default();
         buffer.push_str(text.trim());
-        buffer.guess_segment_properties();
 
         let font = self.fonts.text.font.scale(scale);
         let glyphs = font.shape(buffer);
@@ -564,7 +561,6 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
 
         let mut buffer = self.fonts.buffer.take().unwrap_or_default();
         buffer.push_str(text.trim());
-        buffer.guess_segment_properties();
 
         let font = self.fonts.text.font.scale(scale);
         let glyphs = font.shape(buffer);
@@ -594,7 +590,6 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
 
         let mut buffer = self.fonts.buffer.take().unwrap_or_default();
         buffer.push_str(text.trim());
-        buffer.guess_segment_properties();
 
         let font = self.fonts.text.font.scale(scale);
         let glyphs = font.shape(buffer);
@@ -643,7 +638,6 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
 
         let mut buffer = self.fonts.buffer.take().unwrap_or_default();
         buffer.push_str(text.trim());
-        buffer.guess_segment_properties();
 
         let font = self.fonts.times.font.scale(scale);
         let glyphs = font.shape_tabular_numbers(buffer);
@@ -675,7 +669,6 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
 
         let mut buffer = self.fonts.buffer.take().unwrap_or_default();
         buffer.push_str(text.trim());
-        buffer.guess_segment_properties();
 
         let font = self.fonts.timer.font.scale(scale);
         let glyphs = font.shape_tabular_numbers(buffer);
@@ -733,7 +726,6 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
     fn measure_text(&mut self, text: &str, scale: f32) -> f32 {
         let mut buffer = self.fonts.buffer.take().unwrap_or_default();
         buffer.push_str(text.trim());
-        buffer.guess_segment_properties();
 
         let glyphs = self.fonts.text.font.scale(scale).shape(buffer);
         let width = glyphs.width();
@@ -748,7 +740,6 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
 
         let mut buffer = self.fonts.buffer.take().unwrap_or_default();
         buffer.push_str(text.trim());
-        buffer.guess_segment_properties();
 
         let glyphs = self
             .fonts

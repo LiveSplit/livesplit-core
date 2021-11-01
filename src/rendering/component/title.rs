@@ -12,22 +12,32 @@ use crate::{
     },
 };
 
+pub struct Cache<I> {
+    game_icon: Option<Icon<I>>,
+}
+
+impl<I> Cache<I> {
+    pub const fn new() -> Self {
+        Self { game_icon: None }
+    }
+}
+
 pub(in crate::rendering) fn render<B: ResourceAllocator>(
+    cache: &mut Cache<B::Image>,
     context: &mut RenderContext<'_, B>,
     [width, height]: [f32; 2],
     component: &State,
     layout_state: &LayoutState,
-    game_icon: &mut Option<Icon<B::Image>>,
 ) {
     context.render_rectangle([0.0, 0.0], [width, height], &component.background);
     let text_color = component.text_color.unwrap_or(layout_state.text_color);
     let text_color = solid(&text_color);
 
     if let Some(icon) = &component.icon_change {
-        *game_icon = context.create_icon(icon);
+        cache.game_icon = context.create_icon(icon);
     }
 
-    let left_bound = if let Some(icon) = game_icon {
+    let left_bound = if let Some(icon) = &cache.game_icon {
         let vertical_padding = vertical_padding(height);
         let icon_size = height - 2.0 * vertical_padding;
         context.render_icon([PADDING, vertical_padding], [icon_size, icon_size], icon);

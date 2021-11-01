@@ -11,12 +11,22 @@ use crate::{
     },
 };
 
+pub struct Cache<I> {
+    icon: Option<Icon<I>>,
+}
+
+impl<I> Cache<I> {
+    pub const fn new() -> Self {
+        Self { icon: None }
+    }
+}
+
 pub(in crate::rendering) fn render<B: ResourceAllocator>(
+    cache: &mut Cache<B::Image>,
     context: &mut RenderContext<'_, B>,
     [width, height]: [f32; 2],
     component: &State,
     layout_state: &LayoutState,
-    detailed_timer_icon: &mut Option<Icon<B::Image>>,
 ) {
     context.render_rectangle([0.0, 0.0], [width, height], &component.background);
 
@@ -26,10 +36,10 @@ pub(in crate::rendering) fn render<B: ResourceAllocator>(
     let icon_size = height - 2.0 * vertical_padding;
 
     if let Some(icon) = &component.icon_change {
-        *detailed_timer_icon = context.create_icon(icon);
+        cache.icon = context.create_icon(icon);
     }
 
-    let left_side = if let Some(icon) = detailed_timer_icon {
+    let left_side = if let Some(icon) = &cache.icon {
         context.render_icon([PADDING, vertical_padding], [icon_size, icon_size], icon);
         BOTH_PADDINGS + icon_size
     } else {

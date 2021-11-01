@@ -16,12 +16,22 @@ use crate::{
 
 pub const COLUMN_WIDTH: f32 = 2.75;
 
+pub struct Cache<I> {
+    icons: Vec<Option<Icon<I>>>,
+}
+
+impl<I> Cache<I> {
+    pub const fn new() -> Self {
+        Self { icons: Vec::new() }
+    }
+}
+
 pub(in crate::rendering) fn render<B: ResourceAllocator>(
+    cache: &mut Cache<B::Image>,
     context: &mut RenderContext<'_, B>,
     [width, height]: [f32; 2],
     component: &State,
     layout_state: &LayoutState,
-    split_icons: &mut Vec<Option<Icon<B::Image>>>,
 ) {
     let text_color = solid(&layout_state.text_color);
 
@@ -67,10 +77,12 @@ pub(in crate::rendering) fn render<B: ResourceAllocator>(
     let transform = context.transform;
 
     for icon_change in &component.icon_changes {
-        if icon_change.segment_index >= split_icons.len() {
-            split_icons.extend((0..=icon_change.segment_index - split_icons.len()).map(|_| None));
+        if icon_change.segment_index >= cache.icons.len() {
+            cache
+                .icons
+                .resize_with(icon_change.segment_index + 1, || None);
         }
-        split_icons[icon_change.segment_index] = context.create_icon(&icon_change.icon);
+        cache.icons[icon_change.segment_index] = context.create_icon(&icon_change.icon);
     }
 
     if let Some(column_labels) = &component.column_labels {
@@ -125,7 +137,7 @@ pub(in crate::rendering) fn render<B: ResourceAllocator>(
         }
 
         {
-            if let Some(Some(icon)) = split_icons.get(split.index) {
+            if let Some(Some(icon)) = cache.icons.get(split.index) {
                 context.render_icon([PADDING, icon_y], [icon_size, icon_size], icon);
             }
 
