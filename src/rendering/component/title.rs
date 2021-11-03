@@ -1,3 +1,5 @@
+use core::fmt::Write;
+
 use crate::{
     component::title::State,
     layout::LayoutState,
@@ -6,6 +8,7 @@ use crate::{
             vertical_padding, BOTH_PADDINGS, DEFAULT_TEXT_SIZE, PADDING, TEXT_ALIGN_BOTTOM,
             TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP,
         },
+        font::{AbbreviatedLabel, Label},
         icon::Icon,
         resource::ResourceAllocator,
         solid, Layer, RenderContext,
@@ -13,12 +16,22 @@ use crate::{
 };
 
 pub struct Cache<I> {
+    line1: AbbreviatedLabel,
+    line2: AbbreviatedLabel,
     game_icon: Option<Icon<I>>,
+    attempts: Label,
+    attempts_buffer: String,
 }
 
 impl<I> Cache<I> {
     pub const fn new() -> Self {
-        Self { game_icon: None }
+        Self {
+            line1: AbbreviatedLabel::new(),
+            line2: AbbreviatedLabel::new(),
+            game_icon: None,
+            attempts: Label::new(),
+            attempts_buffer: String::new(),
+        }
     }
 }
 
@@ -53,12 +66,22 @@ pub(in crate::rendering) fn render<B: ResourceAllocator>(
     };
 
     let attempts = match (component.finished_runs, component.attempts) {
-        (Some(a), Some(b)) => format!("{}/{}", a, b),
-        (Some(a), _) | (_, Some(a)) => a.to_string(),
-        _ => String::new(),
+        (Some(a), Some(b)) => {
+            cache.attempts_buffer.clear();
+            let _ = write!(cache.attempts_buffer, "{}/{}", a, b);
+            cache.attempts_buffer.as_str()
+        }
+        (Some(a), _) | (_, Some(a)) => {
+            cache.attempts_buffer.clear();
+            let _ = write!(cache.attempts_buffer, "{}", a);
+            cache.attempts_buffer.as_str()
+        }
+        _ => "",
     };
+
     let line2_end_x = context.render_numbers(
-        &attempts,
+        attempts,
+        &mut cache.attempts,
         Layer::Bottom,
         [width - PADDING, height + TEXT_ALIGN_BOTTOM],
         DEFAULT_TEXT_SIZE,
@@ -66,13 +89,9 @@ pub(in crate::rendering) fn render<B: ResourceAllocator>(
     ) - PADDING;
 
     let (line1_y, line1_end_x) = if !component.line2.is_empty() {
-        let line2 = context.choose_abbreviation(
+        context.render_abbreviated_text_align(
             component.line2.iter().map(|a| &**a),
-            DEFAULT_TEXT_SIZE,
-            line2_end_x - left_bound,
-        );
-        context.render_text_align(
-            line2,
+            &mut cache.line2,
             left_bound,
             line2_end_x,
             [line_x, height + TEXT_ALIGN_BOTTOM],
@@ -85,14 +104,9 @@ pub(in crate::rendering) fn render<B: ResourceAllocator>(
         (height / 2.0 + TEXT_ALIGN_CENTER, line2_end_x)
     };
 
-    let line1 = context.choose_abbreviation(
+    context.render_abbreviated_text_align(
         component.line1.iter().map(|a| &**a),
-        DEFAULT_TEXT_SIZE,
-        line1_end_x - left_bound,
-    );
-
-    context.render_text_align(
-        line1,
+        &mut cache.line1,
         left_bound,
         line1_end_x,
         [line_x, line1_y],

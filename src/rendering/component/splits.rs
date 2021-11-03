@@ -6,6 +6,7 @@ use crate::{
             vertical_padding, BOTH_PADDINGS, DEFAULT_COMPONENT_HEIGHT, DEFAULT_TEXT_SIZE, PADDING,
             TEXT_ALIGN_BOTTOM, TEXT_ALIGN_TOP, THIN_SEPARATOR_THICKNESS, TWO_ROW_HEIGHT,
         },
+        font::Label,
         icon::Icon,
         resource::ResourceAllocator,
         scene::Layer,
@@ -18,11 +19,31 @@ pub const COLUMN_WIDTH: f32 = 2.75;
 
 pub struct Cache<I> {
     icons: Vec<Option<Icon<I>>>,
+    splits: Vec<SplitCache>,
+    column_labels: Vec<Label>,
+}
+
+struct SplitCache {
+    name: Label,
+    columns: Vec<Label>,
+}
+
+impl SplitCache {
+    const fn new() -> Self {
+        Self {
+            name: Label::new(),
+            columns: Vec::new(),
+        }
+    }
 }
 
 impl<I> Cache<I> {
     pub const fn new() -> Self {
-        Self { icons: Vec::new() }
+        Self {
+            icons: Vec::new(),
+            splits: Vec::new(),
+            column_labels: Vec::new(),
+        }
     }
 }
 
@@ -87,11 +108,16 @@ pub(in crate::rendering) fn render<B: ResourceAllocator>(
 
     if let Some(column_labels) = &component.column_labels {
         if layout_state.direction == LayoutDirection::Vertical {
+            cache
+                .column_labels
+                .resize_with(column_labels.len(), Label::new);
+
             let mut right_x = width - PADDING;
-            for label in column_labels {
+            for (label, cache) in column_labels.iter().zip(&mut cache.column_labels) {
                 let left_x = right_x - COLUMN_WIDTH;
                 context.render_text_right_align(
                     label,
+                    cache,
                     Layer::Bottom,
                     [right_x, TEXT_ALIGN_TOP],
                     DEFAULT_TEXT_SIZE,
@@ -116,7 +142,11 @@ pub(in crate::rendering) fn render<B: ResourceAllocator>(
         PADDING
     };
 
-    for (i, split) in component.splits.iter().enumerate() {
+    cache
+        .splits
+        .resize_with(component.splits.len(), SplitCache::new);
+
+    for (i, (split, split_cache)) in component.splits.iter().zip(&mut cache.splits).enumerate() {
         if component.show_thin_separators && i + 1 != component.splits.len() {
             context.render_rectangle(
                 separator_pos,
@@ -143,10 +173,16 @@ pub(in crate::rendering) fn render<B: ResourceAllocator>(
 
             let mut left_x = split_width - PADDING;
             let mut right_x = left_x;
-            for column in &split.columns {
+
+            split_cache
+                .columns
+                .resize_with(split.columns.len(), Label::new);
+
+            for (column, column_cache) in split.columns.iter().zip(&mut split_cache.columns) {
                 if !column.value.is_empty() {
                     left_x = context.render_numbers(
                         &column.value,
+                        column_cache,
                         Layer::from_updates_frequently(column.updates_frequently),
                         [right_x, split_height + TEXT_ALIGN_BOTTOM],
                         DEFAULT_TEXT_SIZE,
@@ -162,6 +198,7 @@ pub(in crate::rendering) fn render<B: ResourceAllocator>(
 
             context.render_text_ellipsis(
                 &split.name,
+                &mut split_cache.name,
                 [icon_right, TEXT_ALIGN_TOP],
                 DEFAULT_TEXT_SIZE,
                 text_color,

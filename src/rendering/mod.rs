@@ -83,10 +83,10 @@ pub mod software;
 
 use self::{
     consts::{
-        BOTH_PADDINGS, DEFAULT_TEXT_SIZE, DEFAULT_VERTICAL_WIDTH, PADDING, TEXT_ALIGN_BOTTOM,
-        TEXT_ALIGN_TOP, TWO_ROW_HEIGHT,
+        DEFAULT_TEXT_SIZE, DEFAULT_VERTICAL_WIDTH, PADDING, TEXT_ALIGN_BOTTOM, TEXT_ALIGN_TOP,
+        TWO_ROW_HEIGHT,
     },
-    font::FontCache,
+    font::{AbbreviatedLabel, FontCache, Label},
     icon::Icon,
     resource::Handles,
 };
@@ -230,7 +230,7 @@ impl<P: SharedOwnership, I: SharedOwnership> SceneManager<P, I> {
 
         match cached_total_size {
             CachedSize::Vertical(cached_total_height) => {
-                if cached_total_height.to_ne_bytes() != total_height.to_ne_bytes() {
+                if cached_total_height.to_bits() != total_height.to_bits() {
                     new_resolution = Some((
                         resolution.0,
                         resolution.1 / *cached_total_height * total_height,
@@ -305,7 +305,7 @@ impl<P: SharedOwnership, I: SharedOwnership> SceneManager<P, I> {
                 *cached_total_size = CachedSize::Horizontal(total_width);
             }
             CachedSize::Horizontal(cached_total_width) => {
-                if cached_total_width.to_ne_bytes() != total_width.to_ne_bytes() {
+                if cached_total_width.to_bits() != total_width.to_bits() {
                     new_resolution = Some((
                         resolution.0 / *cached_total_width * total_width,
                         resolution.1,
@@ -484,7 +484,9 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         &mut self,
         key: &str,
         abbreviations: &[Cow<'_, str>],
+        key_label: &mut AbbreviatedLabel,
         value: &str,
+        value_label: &mut Label,
         updates_frequently: bool,
         [width, height]: [f32; 2],
         key_color: Color,
@@ -493,6 +495,7 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
     ) {
         let left_of_value_x = self.render_numbers(
             value,
+            value_label,
             Layer::from_updates_frequently(updates_frequently),
             [width - PADDING, height + TEXT_ALIGN_BOTTOM],
             DEFAULT_TEXT_SIZE,
@@ -503,13 +506,10 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         } else {
             left_of_value_x
         };
-        let key = self.choose_abbreviation(
+
+        self.render_abbreviated_text_ellipsis(
             iter::once(key).chain(abbreviations.iter().map(|x| &**x)),
-            DEFAULT_TEXT_SIZE,
-            end_x - BOTH_PADDINGS,
-        );
-        self.render_text_ellipsis(
-            key,
+            key_label,
             [PADDING, TEXT_ALIGN_TOP],
             DEFAULT_TEXT_SIZE,
             solid(&key_color),
@@ -517,21 +517,20 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         );
     }
 
-    fn render_text_ellipsis(
+    fn render_abbreviated_text_ellipsis<'a>(
         &mut self,
-        text: &str,
-        pos: Pos,
+        abbreviations: impl IntoIterator<Item = &'a str> + Clone,
+        label: &mut AbbreviatedLabel,
+        pos @ [x, _]: Pos,
         scale: f32,
         shader: FillShader,
         max_x: f32,
     ) -> f32 {
         let mut cursor = font::Cursor::new(pos);
 
-        let mut buffer = self.fonts.buffer.take().unwrap_or_default();
-        buffer.push_str(text.trim());
-
         let font = self.fonts.text.font.scale(scale);
-        let glyphs = font.shape(buffer);
+        let max_width = max_x - x;
+        let glyphs = label.update(abbreviations, max_width, font);
 
         font::render(
             glyphs.left_aligned(&mut cursor, max_x),
@@ -543,7 +542,32 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
             self.scene.bottom_layer_mut(),
         );
 
-        self.fonts.buffer = Some(glyphs.into_buffer());
+        cursor.x
+    }
+
+    fn render_text_ellipsis(
+        &mut self,
+        text: &str,
+        label: &mut Label,
+        pos: Pos,
+        scale: f32,
+        shader: FillShader,
+        max_x: f32,
+    ) -> f32 {
+        let mut cursor = font::Cursor::new(pos);
+
+        let font = self.fonts.text.font.scale(scale);
+        let glyphs = label.update(text, font);
+
+        font::render(
+            glyphs.left_aligned(&mut cursor, max_x),
+            shader,
+            &font,
+            &mut self.fonts.text.glyph_cache,
+            &self.transform,
+            &mut self.handles,
+            self.scene.bottom_layer_mut(),
+        );
 
         cursor.x
     }
@@ -551,6 +575,7 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
     fn render_text_centered(
         &mut self,
         text: &str,
+        label: &mut Label,
         min_x: f32,
         max_x: f32,
         pos: Pos,
@@ -559,11 +584,8 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
     ) {
         let mut cursor = font::Cursor::new(pos);
 
-        let mut buffer = self.fonts.buffer.take().unwrap_or_default();
-        buffer.push_str(text.trim());
-
         let font = self.fonts.text.font.scale(scale);
-        let glyphs = font.shape(buffer);
+        let glyphs = label.update(text, font);
 
         font::render(
             glyphs.centered(&mut cursor, min_x, max_x),
@@ -574,13 +596,39 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
             &mut self.handles,
             self.scene.bottom_layer_mut(),
         );
+    }
 
-        self.fonts.buffer = Some(glyphs.into_buffer());
+    fn render_abbreviated_text_centered<'a>(
+        &mut self,
+        abbreviations: impl IntoIterator<Item = &'a str> + Clone,
+        label: &mut AbbreviatedLabel,
+        min_x: f32,
+        max_x: f32,
+        pos: Pos,
+        scale: f32,
+        shader: FillShader,
+    ) {
+        let mut cursor = font::Cursor::new(pos);
+
+        let font = self.fonts.text.font.scale(scale);
+        let max_width = max_x - min_x;
+        let glyphs = label.update(abbreviations, max_width, font);
+
+        font::render(
+            glyphs.centered(&mut cursor, min_x, max_x),
+            shader,
+            &font,
+            &mut self.fonts.text.glyph_cache,
+            &self.transform,
+            &mut self.handles,
+            self.scene.bottom_layer_mut(),
+        );
     }
 
     fn render_text_right_align(
         &mut self,
         text: &str,
+        label: &mut Label,
         layer: Layer,
         pos: Pos,
         scale: f32,
@@ -588,11 +636,8 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
     ) -> f32 {
         let mut cursor = font::Cursor::new(pos);
 
-        let mut buffer = self.fonts.buffer.take().unwrap_or_default();
-        buffer.push_str(text.trim());
-
         let font = self.fonts.text.font.scale(scale);
-        let glyphs = font.shape(buffer);
+        let glyphs = label.update(text, font);
 
         font::render(
             glyphs.right_aligned(&mut cursor),
@@ -604,14 +649,13 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
             self.scene.layer_mut(layer),
         );
 
-        self.fonts.buffer = Some(glyphs.into_buffer());
-
         cursor.x
     }
 
-    fn render_text_align(
+    fn render_abbreviated_text_align<'a>(
         &mut self,
-        text: &str,
+        abbreviations: impl IntoIterator<Item = &'a str> + Clone,
+        label: &mut AbbreviatedLabel,
         min_x: f32,
         max_x: f32,
         pos: Pos,
@@ -620,15 +664,24 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         shader: FillShader,
     ) {
         if centered {
-            self.render_text_centered(text, min_x, max_x, pos, scale, shader);
+            self.render_abbreviated_text_centered(
+                abbreviations,
+                label,
+                min_x,
+                max_x,
+                pos,
+                scale,
+                shader,
+            );
         } else {
-            self.render_text_ellipsis(text, pos, scale, shader, max_x);
+            self.render_abbreviated_text_ellipsis(abbreviations, label, pos, scale, shader, max_x);
         }
     }
 
     fn render_numbers(
         &mut self,
         text: &str,
+        label: &mut Label,
         layer: Layer,
         pos: Pos,
         scale: f32,
@@ -636,11 +689,8 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
     ) -> f32 {
         let mut cursor = font::Cursor::new(pos);
 
-        let mut buffer = self.fonts.buffer.take().unwrap_or_default();
-        buffer.push_str(text.trim());
-
         let font = self.fonts.times.font.scale(scale);
-        let glyphs = font.shape_tabular_numbers(buffer);
+        let glyphs = label.update_tabular_numbers(text, font);
 
         font::render(
             glyphs.tabular_numbers(&mut cursor),
@@ -652,14 +702,13 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
             self.scene.layer_mut(layer),
         );
 
-        self.fonts.buffer = Some(glyphs.into_buffer());
-
         cursor.x
     }
 
     fn render_timer(
         &mut self,
         text: &str,
+        label: &mut Label,
         layer: Layer,
         pos: Pos,
         scale: f32,
@@ -667,11 +716,8 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
     ) -> f32 {
         let mut cursor = font::Cursor::new(pos);
 
-        let mut buffer = self.fonts.buffer.take().unwrap_or_default();
-        buffer.push_str(text.trim());
-
         let font = self.fonts.timer.font.scale(scale);
-        let glyphs = font.shape_tabular_numbers(buffer);
+        let glyphs = label.update_tabular_numbers(text, font);
 
         font::render(
             glyphs.tabular_numbers(&mut cursor),
@@ -683,80 +729,19 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
             self.scene.layer_mut(layer),
         );
 
-        self.fonts.buffer = Some(glyphs.into_buffer());
-
         cursor.x
     }
 
-    fn choose_abbreviation<'a>(
-        &mut self,
-        abbreviations: impl IntoIterator<Item = &'a str>,
-        font_size: f32,
-        max_width: f32,
-    ) -> &'a str {
-        let mut abbreviations = abbreviations.into_iter();
-        let abbreviation = abbreviations.next().unwrap_or("");
-        let width = self.measure_text(abbreviation, font_size);
-        let (mut total_longest, mut total_longest_width) = (abbreviation, width);
-        let (mut within_longest, mut within_longest_width) = if width <= max_width {
-            (abbreviation, width)
-        } else {
-            ("", 0.0)
-        };
-
-        for abbreviation in abbreviations {
-            let width = self.measure_text(abbreviation, font_size);
-            if width <= max_width && width > within_longest_width {
-                within_longest_width = width;
-                within_longest = abbreviation;
-            }
-            if width > total_longest_width {
-                total_longest_width = width;
-                total_longest = abbreviation;
-            }
-        }
-
-        if within_longest.is_empty() {
-            total_longest
-        } else {
-            within_longest
-        }
-    }
-
-    fn measure_text(&mut self, text: &str, scale: f32) -> f32 {
-        let mut buffer = self.fonts.buffer.take().unwrap_or_default();
-        buffer.push_str(text.trim());
-
-        let glyphs = self.fonts.text.font.scale(scale).shape(buffer);
-        let width = glyphs.width();
-
-        self.fonts.buffer = Some(glyphs.into_buffer());
-
-        width
-    }
-
-    fn measure_numbers(&mut self, text: &str, scale: f32) -> f32 {
+    fn measure_numbers(&mut self, text: &str, label: &mut Label, scale: f32) -> f32 {
         let mut cursor = font::Cursor::new([0.0; 2]);
 
-        let mut buffer = self.fonts.buffer.take().unwrap_or_default();
-        buffer.push_str(text.trim());
-
-        let glyphs = self
-            .fonts
-            .times
-            .font
-            .scale(scale)
-            .shape_tabular_numbers(buffer);
+        let glyphs = label.update_tabular_numbers(text, self.fonts.times.font.scale(scale));
 
         // Iterate over all glyphs, to move the cursor forward.
         glyphs.tabular_numbers(&mut cursor).for_each(drop);
 
         // Wherever we end up is our width.
-        let width = -cursor.x;
-
-        self.fonts.buffer = Some(glyphs.into_buffer());
-
-        width
+        -cursor.x
     }
 }
 
