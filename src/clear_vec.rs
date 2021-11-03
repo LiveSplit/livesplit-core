@@ -28,28 +28,33 @@ pub trait Clear {
 /// them later on again with all their capacity retained. The elements are only
 /// dropped once the ClearVec itself gets dropped.
 #[derive(Clone, Debug)]
-pub struct ClearVec<T: Clear> {
+pub struct ClearVec<T> {
     vec: Vec<T>,
     len: usize,
 }
 
-impl<T: Clear> ClearVec<T> {
+impl<T> ClearVec<T> {
     /// Creates an empty ClearVec.
-    pub fn new() -> Self {
-        Default::default()
+    pub const fn new() -> Self {
+        Self {
+            vec: Vec::new(),
+            len: 0,
+        }
     }
 
     /// Returns the number of elements in the ClearVec, also referred to as its
     /// 'length'.
-    pub fn len(&self) -> usize {
+    pub const fn len(&self) -> usize {
         self.len
     }
 
     /// Returns `true` if the ClearVec contains no elements.
-    pub fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {
         self.len == 0
     }
+}
 
+impl<T: Clear> ClearVec<T> {
     /// Pushes an element into the ClearVec by either reusing an unused element
     /// or constructing a new one via the Default trait if there is no unused
     /// element available.
@@ -94,7 +99,7 @@ impl<T: Clear> ClearVec<T> {
 
 impl<T: Clear> Default for ClearVec<T> {
     fn default() -> Self {
-        Vec::default().into()
+        Vec::new().into()
     }
 }
 

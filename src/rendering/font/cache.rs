@@ -1,5 +1,3 @@
-use rustybuzz::UnicodeBuffer;
-
 use super::{Font, GlyphCache, SharedOwnership, TEXT_FONT, TIMER_FONT};
 use crate::settings::{FontStretch, FontStyle, FontWeight};
 
@@ -38,7 +36,6 @@ impl<P: SharedOwnership> CachedFont<P> {
 }
 
 pub struct FontCache<P> {
-    pub buffer: Option<UnicodeBuffer>,
     pub timer: CachedFont<P>,
     pub times: CachedFont<P>,
     pub text: CachedFont<P>,
@@ -47,7 +44,6 @@ pub struct FontCache<P> {
 impl<P: SharedOwnership> FontCache<P> {
     pub fn new() -> Option<Self> {
         Some(Self {
-            buffer: None,
             timer: CachedFont::new(Font::from_slice(
                 TIMER_FONT,
                 0,

@@ -17,10 +17,13 @@ pub mod timer;
 pub mod title;
 
 pub enum Cache<I> {
-    DetailedTimer(detailed_timer::Cache<I>),
-    Splits(splits::Cache<I>),
-    Title(title::Cache<I>),
     Empty,
+    DetailedTimer(detailed_timer::Cache<I>),
+    KeyValue(key_value::Cache<I>),
+    Splits(splits::Cache<I>),
+    Text(text::Cache<I>),
+    Timer(timer::Cache<I>),
+    Title(title::Cache<I>),
 }
 
 macro_rules! accessors {
@@ -43,7 +46,10 @@ impl<I> Cache<I> {
     pub const fn new(component: &ComponentState) -> Self {
         match component {
             ComponentState::DetailedTimer(_) => Self::DetailedTimer(detailed_timer::Cache::new()),
+            ComponentState::KeyValue(_) => Self::KeyValue(key_value::Cache::new()),
             ComponentState::Splits(_) => Self::Splits(splits::Cache::new()),
+            ComponentState::Text(_) => Self::Text(text::Cache::new()),
+            ComponentState::Timer(_) => Self::Timer(timer::Cache::new()),
             ComponentState::Title(_) => Self::Title(title::Cache::new()),
             _ => Self::Empty,
         }
@@ -55,7 +61,10 @@ impl<I> Cache<I> {
 
     accessors! {
         DetailedTimer detailed_timer,
+        KeyValue key_value,
         Splits splits,
+        Text text,
+        Timer timer,
         Title title
     }
 }
@@ -144,8 +153,7 @@ pub(super) fn render<A: ResourceAllocator>(
             graph::render(context, dim, component, state)
         }
         ComponentState::KeyValue(component) => {
-            cache.make_empty();
-            key_value::render(context, dim, component, state)
+            key_value::render(cache.key_value(), context, dim, component, state)
         }
         ComponentState::Separator(component) => {
             cache.make_empty();
@@ -155,12 +163,10 @@ pub(super) fn render<A: ResourceAllocator>(
             splits::render(cache.splits(), context, dim, component, state)
         }
         ComponentState::Text(component) => {
-            cache.make_empty();
-            text::render(context, dim, component, state)
+            text::render(cache.text(), context, dim, component, state)
         }
         ComponentState::Timer(component) => {
-            cache.make_empty();
-            timer::render(context, dim, component);
+            timer::render(cache.timer(), context, dim, component);
         }
         ComponentState::Title(component) => {
             title::render(cache.title(), context, dim, component, state)

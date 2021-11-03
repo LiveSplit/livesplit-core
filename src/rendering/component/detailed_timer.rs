@@ -4,6 +4,7 @@ use crate::{
     rendering::{
         component::timer,
         consts::{vertical_padding, BOTH_PADDINGS, PADDING},
+        font::Label,
         icon::Icon,
         resource::ResourceAllocator,
         scene::Layer,
@@ -13,11 +14,27 @@ use crate::{
 
 pub struct Cache<I> {
     icon: Option<Icon<I>>,
+    timer: timer::Cache<I>,
+    segment_timer: timer::Cache<I>,
+    segment_name: Label,
+    comparison1_name: Label,
+    comparison2_name: Label,
+    comparison1_time: Label,
+    comparison2_time: Label,
 }
 
 impl<I> Cache<I> {
     pub const fn new() -> Self {
-        Self { icon: None }
+        Self {
+            icon: None,
+            timer: timer::Cache::new(),
+            segment_timer: timer::Cache::new(),
+            segment_name: Label::new(),
+            comparison1_name: Label::new(),
+            comparison2_name: Label::new(),
+            comparison1_time: Label::new(),
+            comparison2_time: Label::new(),
+        }
     }
 }
 
@@ -49,11 +66,17 @@ pub(in crate::rendering) fn render<B: ResourceAllocator>(
     let top_height = 0.55 * height;
     let bottom_height = height - top_height;
 
-    let timer_end = timer::render(context, [width, top_height], &component.timer);
+    let timer_end = timer::render(
+        &mut cache.timer,
+        context,
+        [width, top_height],
+        &component.timer,
+    );
 
     if let Some(segment_name) = &component.segment_name {
         context.render_text_ellipsis(
             segment_name,
+            &mut cache.segment_name,
             [left_side, 0.6 * top_height],
             0.5 * top_height,
             text_color,
@@ -63,8 +86,12 @@ pub(in crate::rendering) fn render<B: ResourceAllocator>(
 
     context.translate(0.0, top_height);
 
-    let segment_timer_end =
-        timer::render(context, [width, bottom_height], &component.segment_timer);
+    let segment_timer_end = timer::render(
+        &mut cache.segment_timer,
+        context,
+        [width, bottom_height],
+        &component.segment_timer,
+    );
 
     context.translate(0.0, -top_height);
 
@@ -77,6 +104,7 @@ pub(in crate::rendering) fn render<B: ResourceAllocator>(
         name_end = context
             .render_text_ellipsis(
                 &comparison.name,
+                &mut cache.comparison2_name,
                 [left_side, comparison2_y],
                 comparison_text_scale,
                 text_color,
@@ -85,7 +113,11 @@ pub(in crate::rendering) fn render<B: ResourceAllocator>(
             .max(name_end);
 
         time_width = context
-            .measure_numbers(&comparison.time, comparison_text_scale)
+            .measure_numbers(
+                &comparison.time,
+                &mut cache.comparison2_time,
+                comparison_text_scale,
+            )
             .max(time_width);
 
         comparison2_y - comparison_text_scale
@@ -97,6 +129,7 @@ pub(in crate::rendering) fn render<B: ResourceAllocator>(
         name_end = context
             .render_text_ellipsis(
                 &comparison.name,
+                &mut cache.comparison1_name,
                 [left_side, comparison1_y],
                 comparison_text_scale,
                 text_color,
@@ -105,7 +138,11 @@ pub(in crate::rendering) fn render<B: ResourceAllocator>(
             .max(name_end);
 
         time_width = context
-            .measure_numbers(&comparison.time, comparison_text_scale)
+            .measure_numbers(
+                &comparison.time,
+                &mut cache.comparison1_time,
+                comparison_text_scale,
+            )
             .max(time_width);
     }
 
@@ -114,6 +151,7 @@ pub(in crate::rendering) fn render<B: ResourceAllocator>(
     if let Some(comparison) = &component.comparison2 {
         context.render_numbers(
             &comparison.time,
+            &mut cache.comparison2_time,
             Layer::Bottom,
             [time_x, comparison2_y],
             comparison_text_scale,
@@ -123,6 +161,7 @@ pub(in crate::rendering) fn render<B: ResourceAllocator>(
     if let Some(comparison) = &component.comparison1 {
         context.render_numbers(
             &comparison.time,
+            &mut cache.comparison1_time,
             Layer::Bottom,
             [time_x, comparison1_y],
             comparison_text_scale,

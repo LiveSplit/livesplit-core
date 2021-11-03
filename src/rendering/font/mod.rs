@@ -8,7 +8,10 @@ use super::{
     resource::{Handles, ResourceAllocator, SharedOwnership},
     solid, FillShader, Pos, Transform,
 };
-use crate::settings::{FontStretch, FontStyle, FontWeight};
+use crate::{
+    clear_vec::ClearVec,
+    settings::{FontStretch, FontStyle, FontWeight},
+};
 use rustybuzz::{Face, Feature, GlyphBuffer, Tag, UnicodeBuffer, Variation};
 use ttf_parser::{GlyphId, OutlineBuilder};
 
@@ -140,18 +143,142 @@ impl<'f> ScaledFont<'f> {
             .unwrap_or_default() as f32
             * self.scale
     }
+}
 
-    pub fn shape(self, buffer: UnicodeBuffer) -> Glyphs<'f> {
-        Glyphs {
-            buffer: rustybuzz::shape(&self.font.face, &[], buffer),
-            font: self,
+pub struct AbbreviatedLabel {
+    abbreviations: ClearVec<String>,
+    max_width: f32,
+    chosen: String,
+    label: Label,
+}
+
+impl AbbreviatedLabel {
+    pub const fn new() -> Self {
+        Self {
+            abbreviations: ClearVec::new(),
+            max_width: 0.0,
+            chosen: String::new(),
+            label: Label::new(),
         }
     }
 
-    pub fn shape_tabular_numbers(self, buffer: UnicodeBuffer) -> Glyphs<'f> {
-        Glyphs {
-            buffer: rustybuzz::shape(
-                &self.font.face,
+    pub fn update<'a, 'b>(
+        &'a mut self,
+        abbreviations: impl IntoIterator<Item = &'b str> + Clone,
+        max_width: f32,
+        font: ScaledFont<'a>,
+    ) -> Glyphs<'a> {
+        if self
+            .abbreviations
+            .iter()
+            .ne(abbreviations.clone().into_iter())
+            || self.max_width.to_bits() != max_width.to_bits()
+        {
+            self.max_width = max_width;
+
+            self.abbreviations.clear();
+            for abbreviation in abbreviations {
+                self.abbreviations.push().push_str(abbreviation);
+            }
+
+            let mut abbreviations = self.abbreviations.iter().map(|s| s.as_str());
+            let abbreviation = abbreviations.next().unwrap_or("");
+            let width = self.label.update(abbreviation, font).width();
+            let (mut total_longest, mut total_longest_width) = (abbreviation, width);
+            let (mut within_longest, mut within_longest_width) = if width <= max_width {
+                (abbreviation, width)
+            } else {
+                ("", 0.0)
+            };
+
+            for abbreviation in abbreviations {
+                let width = self.label.update(abbreviation, font).width();
+                if width <= max_width && width > within_longest_width {
+                    within_longest_width = width;
+                    within_longest = abbreviation;
+                }
+                if width > total_longest_width {
+                    total_longest_width = width;
+                    total_longest = abbreviation;
+                }
+            }
+
+            let chosen = if within_longest.is_empty() {
+                total_longest
+            } else {
+                within_longest
+            };
+
+            self.chosen.clear();
+            self.chosen.push_str(chosen);
+        }
+
+        self.label.update(&self.chosen, font)
+    }
+}
+
+pub struct Label {
+    value: String,
+    glyphs: Option<GlyphBuffer>,
+}
+
+impl Label {
+    pub const fn new() -> Self {
+        Self {
+            value: String::new(),
+            glyphs: None,
+        }
+    }
+
+    pub fn update<'a>(&'a mut self, value: &str, font: ScaledFont<'a>) -> Glyphs<'a> {
+        let is_dirty = if self.value != value {
+            self.value.clear();
+            self.value.push_str(value);
+            true
+        } else {
+            self.glyphs.is_none()
+        };
+
+        let buffer = if is_dirty {
+            let mut buffer = self
+                .glyphs
+                .take()
+                .map_or_else(UnicodeBuffer::new, GlyphBuffer::clear);
+
+            buffer.push_str(value.trim());
+
+            self.glyphs
+                .insert(rustybuzz::shape(&font.font.face, &[], buffer))
+        } else {
+            self.glyphs.as_ref().unwrap()
+        };
+
+        Glyphs { font, buffer }
+    }
+
+    pub fn update_tabular_numbers<'a>(
+        &'a mut self,
+        value: &str,
+        font: ScaledFont<'a>,
+    ) -> Glyphs<'a> {
+        let is_dirty = if self.value != value {
+            self.value.clear();
+            self.value.push_str(value);
+            true
+        } else {
+            self.glyphs.is_none()
+        };
+
+        let buffer = if is_dirty {
+            let mut buffer = self
+                .glyphs
+                .take()
+                .map_or_else(UnicodeBuffer::new, GlyphBuffer::clear);
+
+            buffer.push_str(value.trim());
+
+            self.glyphs.insert(rustybuzz::shape(
+                &font.font.face,
                 &[
                     // If the font has support for tabular numbers, we want to
                     // use it, so we don't have to fix up much. Though we still
@@ -166,9 +293,12 @@ impl<'f> ScaledFont<'f> {
                     // Feature::new(Tag::from_bytes(b"kern"), 0, ..),
                 ],
                 buffer,
-            ),
-            font: self,
-        }
+            ))
+        } else {
+            self.glyphs.as_ref().unwrap()
+        };
+
+        Glyphs { font, buffer }
     }
 }
 
@@ -190,12 +320,12 @@ impl Cursor {
     }
 }
 
-pub struct Glyphs<'f> {
-    font: ScaledFont<'f>,
-    buffer: GlyphBuffer,
+pub struct Glyphs<'fl> {
+    pub font: ScaledFont<'fl>,
+    buffer: &'fl GlyphBuffer,
 }
 
-impl<'f> Glyphs<'f> {
+impl<'fl> Glyphs<'fl> {
     pub fn left_aligned<'a>(
         &'a self,
         cursor: &'a mut Cursor,
@@ -218,7 +348,7 @@ impl<'f> Glyphs<'f> {
                 .glyph_hor_advance(ellipsis)
                 .unwrap_or_default() as i32;
 
-            let overshoot_width = ((ends_at_x - max_x) / self.font.scale) as i32;
+            let overshoot_width = ((ends_at_x - max_x) / scale) as i32;
 
             let width_to_cut_off = ellipsis_width + overshoot_width;
             let mut actually_cut_off = 0;
@@ -228,7 +358,7 @@ impl<'f> Glyphs<'f> {
                 actually_cut_off >= width_to_cut_off
             });
 
-            let x = ends_at_x - actually_cut_off as f32 * self.font.scale;
+            let x = ends_at_x - actually_cut_off as f32 * scale;
 
             Some(PositionedGlyph {
                 id: ellipsis.0 as _,
@@ -372,10 +502,6 @@ impl<'f> Glyphs<'f> {
             .map(|p| p.x_advance)
             .sum::<i32>() as f32
             * self.font.scale
-    }
-
-    pub fn into_buffer(self) -> UnicodeBuffer {
-        self.buffer.clear()
     }
 }
 
