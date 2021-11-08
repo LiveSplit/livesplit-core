@@ -18,9 +18,9 @@ winapi = { version = "0.3.2", features = [
 parking_lot = { version = "0.11.0", optional = true }
 
 [target.'cfg(target_os = "linux")'.dependencies]
-x11-dl = { version = "2.18.5", optional = true }
 mio = { version = "0.7.7", default-features = false, features = ["os-ext", "os-poll"], optional = true }
 promising-future = { version = "0.2.4", optional = true }
+evdev = "0.11.1"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 bitflags = { version = "1.2.1", optional = true }
@@ -37,5 +37,5 @@ snafu = { version = "0.6.0", default-features = false }
 
 [features]
 default = ["std"]
-std = ["snafu/std", "serde/std", "parking_lot", "x11-dl", "mio", "promising-future", "winapi", "bitflags"]
+std = ["snafu/std", "serde/std", "parking_lot", "mio", "promising-future", "winapi", "bitflags"]
 wasm-web = ["wasm-bindgen", "web-sys", "parking_lot/wasm-bindgen"]
