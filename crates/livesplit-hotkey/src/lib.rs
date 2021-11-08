@@ -53,10 +53,10 @@ mod tests {
         println!("Press KeyN");
         thread::sleep(Duration::from_secs(5));
         hook.unregister(KeyCode::KeyN).unwrap();
-        hook.register(KeyCode::Space, || println!("C")).unwrap();
-        println!("Press Space");
+        hook.register(KeyCode::Numpad1, || println!("C")).unwrap();
+        println!("Press Numpad1");
         thread::sleep(Duration::from_secs(5));
-        hook.unregister(KeyCode::Space).unwrap();
+        hook.unregister(KeyCode::Numpad1).unwrap();
     }
 
     #[test]
