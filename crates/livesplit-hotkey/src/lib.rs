@@ -49,10 +49,10 @@ mod tests {
         println!("Press Numpad1");
         thread::sleep(Duration::from_secs(5));
         hook.unregister(KeyCode::Numpad1).unwrap();
-        hook.register(KeyCode::Numpad4, || println!("B")).unwrap();
-        println!("Press Numpad4");
+        hook.register(KeyCode::KeyN, || println!("B")).unwrap();
+        println!("Press KeyN");
         thread::sleep(Duration::from_secs(5));
-        hook.unregister(KeyCode::Numpad4).unwrap();
+        hook.unregister(KeyCode::KeyN).unwrap();
         hook.register(KeyCode::Numpad1, || println!("C")).unwrap();
         println!("Press Numpad1");
         thread::sleep(Duration::from_secs(5));
