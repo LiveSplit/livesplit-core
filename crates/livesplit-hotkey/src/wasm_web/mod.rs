@@ -73,9 +73,11 @@ impl Hook {
 
         let hotkey_map = hotkeys.clone();
         let keyboard_callback = Closure::wrap(Box::new(move |event: KeyboardEvent| {
-            if let Ok(code) = event.code().parse() {
-                if let Some(callback) = hotkey_map.lock().unwrap().get_mut(&code) {
-                    callback();
+            if !event.repeat() {
+                if let Ok(code) = event.code().parse() {
+                    if let Some(callback) = hotkey_map.lock().unwrap().get_mut(&code) {
+                        callback();
+                    }
                 }
             }
         }) as Box<dyn FnMut(KeyboardEvent)>);

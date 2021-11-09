@@ -63,6 +63,8 @@ thread_local! {
 }
 
 fn parse_scan_code(value: DWORD) -> Option<KeyCode> {
+    // Windows uses PS/2 scan code set 1.
+    // https://www.avrfreaks.net/sites/default/files/PS2%20Keyboard.pdf Page 19
     use self::KeyCode::*;
     Some(match value {
         0x0001 => Escape,
