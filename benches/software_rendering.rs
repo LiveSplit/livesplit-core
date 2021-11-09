@@ -26,8 +26,13 @@ cfg_if::cfg_if! {
             make_progress_run_with_splits_opt(&mut timer, &[Some(5.0), None, Some(10.0)]);
 
             let snapshot = timer.snapshot();
-            let state = layout.state(&snapshot);
+            let mut state = layout.state(&snapshot);
             let mut renderer = Renderer::new();
+
+            // Do a single frame beforehand as otherwise the layout state will
+            // keep saying that the icons changed.
+            renderer.render(&state, [300, 500]);
+            layout.update_state(&mut state, &snapshot);
 
             c.bench_function("Software Rendering (Default)", move |b| {
                 b.iter(|| renderer.render(&state, [300, 500]))
@@ -43,8 +48,13 @@ cfg_if::cfg_if! {
             make_progress_run_with_splits_opt(&mut timer, &[Some(10.0), None, Some(20.0), Some(55.0)]);
 
             let snapshot = timer.snapshot();
-            let state = layout.state(&snapshot);
+            let mut state = layout.state(&snapshot);
             let mut renderer = Renderer::new();
+
+            // Do a single frame beforehand as otherwise the layout state will
+            // keep saying that the icons changed.
+            renderer.render(&state, [300, 800]);
+            layout.update_state(&mut state, &snapshot);
 
             c.bench_function("Software Rendering (Subsplits Layout)", move |b| {
                 b.iter(|| renderer.render(&state, [300, 800]))
