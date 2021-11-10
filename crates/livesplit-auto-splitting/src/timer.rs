@@ -10,7 +10,7 @@ pub enum TimerState {
 }
 
 pub trait Timer: 'static {
-    fn timer_state(&self) -> TimerState;
+    fn state(&self) -> TimerState;
     fn start(&mut self);
     fn split(&mut self);
     fn reset(&mut self);

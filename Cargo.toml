@@ -111,7 +111,7 @@ img_hash = "3.1.0"
 criterion = "0.3.0"
 
 [features]
-default = ["image-shrinking", "std"]
+default = ["image-shrinking", "std", "auto-splitting"]
 doesnt-have-atomics = []
 std = [
     "bytemuck/derive",

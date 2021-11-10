@@ -1,24 +1,29 @@
 //! livesplit-core supports autosplitters written in a variety of languages by
 //! interpreting WebAssembly modules with [wasmtime](https://github.com/bytecodealliance/wasmtime).
-//! A WASM blob which provides the right set of functions can be loaded into
+//! A WASM module which provides the right set of functions can be loaded into
 //! livesplit's runtime and directly control the timer.
 //!
 //! Here is the current interface that an autosplitter must expose:
 //! ```
+//! pub extern "C" fn register() {} // called on load
+//! pub extern "C" fn update() {}   // called periodically
+//! ```
+//!
+//! and here are the functions made available to it to control the timer:
+//! ```
 //! extern "C" {
-//!    pub fn attach(ptr: u32, len: u32) -> u64;
-//!    pub fn detach(handle: u64);
+//!    pub fn print_message(ptr: u32, len: u32);
 //!    pub fn start();
 //!    pub fn split();
 //!    pub fn reset();
-//!    pub fn set_tick_rate(rate: f64);
-//!    pub fn read_into_buf(address: u64, buf: u32, buf_len: u32) -> u32;
-//!    pub fn print_message(ptr: *const u8, len: usize);
-//!    pub fn set_variable(key: u32, key_len: u32, value: u32, value_len: u32);
+//!    pub fn set_game_time(time: f64);
 //!    pub fn pause_game_time();
 //!    pub fn resume_game_time();
-//!    pub fn set_game_time(time: f64);
+//!    pub fn set_tick_rate(ticks_per_sec: f64);
 //!    pub fn get_timer_state() -> u32;
+//!    pub fn attach(ptr: u32, len: u32) -> u64; // takes name of process to read from
+//!    pub fn detach(handle: u64);
+//!    pub fn read_into_buf(address: u64, buf: u32, buf_len: u32) -> u32;
 //! }
 //! ```
 // (TODO: link to an example autosplitter and/or a helper crate for writing
@@ -31,6 +36,7 @@ use {
         Runtime as ScriptRuntime, Timer as AutoSplitTimer, TimerState,
     },
     std::{
+        path::PathBuf,
         thread::{self, JoinHandle},
         time::Duration,
     },
@@ -130,10 +136,10 @@ impl Runtime {
         }
     }
 
-    /// Attempt to load a wasm blob containing an autosplitter module. This call
+    /// Attempt to load a wasm file containing an autosplitter module. This call
     /// will block until the autosplitter has either loaded successfully or
     /// failed.
-    pub fn load_script(&self, script: Vec<u8>) -> Result<()> {
+    pub fn load_script(&self, script: PathBuf) -> Result<()> {
         // TODO: replace with `futures::channel::oneshot`
         let (sender, receiver) = bounded(1);
         self.sender
@@ -159,7 +165,7 @@ impl Runtime {
 }
 
 enum Request {
-    LoadScript(Vec<u8>, Sender<Result<()>>),
+    LoadScript(PathBuf, Sender<Result<()>>),
     UnloadScript(Sender<()>),
     End,
 }
@@ -169,7 +175,7 @@ enum Request {
 struct AST(SharedTimer);
 
 impl AutoSplitTimer for AST {
-    fn timer_state(&self) -> TimerState {
+    fn state(&self) -> TimerState {
         // These are the same enum
         unsafe { std::mem::transmute(self.0.read().current_phase()) }
     }

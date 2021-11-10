@@ -2,6 +2,7 @@ use crate::KeyCode;
 use parking_lot::Mutex;
 use std::{
     cell::RefCell,
+    char,
     collections::hash_map::{Entry, HashMap},
     mem, ptr,
     sync::{
@@ -454,7 +455,5 @@ pub(crate) fn try_resolve(key_code: KeyCode) -> Option<String> {
     // Dead keys (diacritics) are indicated by setting the top bit of the return
     // value.
     const TOP_BIT_MASK: u32 = u32::MAX >> 1;
-    let char = mapped_char & TOP_BIT_MASK;
-
-    Some(char::from_u32(char)?.to_string())
+    Some(char::from_u32(mapped_char & TOP_BIT_MASK)?.to_string())
 }
