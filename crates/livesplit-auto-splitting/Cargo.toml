@@ -6,8 +6,9 @@ edition = "2021"
 
 [dependencies]
 time = "0.3.3"
-anyhow = "1.0.45"
 log = "0.4.14"
+snafu = "0.6.10"
+anyhow = "1.0.45"
 slotmap = "1.0.2"
 wasmtime = { version = "0.31.0", default-features = false, features = [
   "cranelift",

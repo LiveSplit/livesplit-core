@@ -5,7 +5,7 @@ pub enum TimerState {
     NotRunning = 0,
     Running = 1,
     Paused = 2,
-    Finished = 3,
+    Ended = 3,
 }
 
 /// This interface allows the autosplitter to live outside of livesplit-core and

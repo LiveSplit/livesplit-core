@@ -18,12 +18,12 @@
 //!    pub fn print_message(ptr: u32, len: u32);
 //!    pub fn set_variable(name_ptr: u32, name_len: u32, value_ptr: u32, value_len: u32);
 //!    // game time will increment on its own unless paused by the autosplitter
-//!    pub fn set_game_time(time: f64);
+//!    pub fn set_game_time(seconds: f64);
 //!    pub fn pause_game_time();
 //!    pub fn resume_game_time();
 //!    pub fn set_tick_rate(ticks_per_sec: f64);
 //!    // returns a value in [0,3] representing "not started", "running",
-//!    // "paused", and "finished" respectively
+//!    // "paused", and "ended" respectively
 //!    pub fn get_timer_state() -> u32;
 //!    // autosplitters can request to attach to a process by name. this returns
 //!    // an opaque handle (or zero on failure) which can be used to query for
@@ -31,7 +31,7 @@
 //!    pub fn attach(ptr: u32, len: u32) -> u64;
 //!    pub fn detach(handle: u64);
 //!    // returns the base address of a module or zero if the module isn't found
-//!    pub fn get_module(handle: ptr: u32, len: u32) -> u64;
+//!    pub fn get_module(handle: u64, ptr: u32, len: u32) -> u64;
 //!    // returns a boolean, 0=failure
 //!    pub fn read_mem(handle: u64, address: u64, buf: u32, buf_len: u32) -> u32;
 //! }
@@ -40,7 +40,7 @@
 // them)
 
 use {
-    crate::timing::SharedTimer,
+    crate::timing::{SharedTimer, TimerPhase},
     crossbeam_channel::{bounded, unbounded, Sender},
     livesplit_auto_splitting::{
         Runtime as ScriptRuntime, Timer as AutoSplitTimer, TimerState,
@@ -67,8 +67,8 @@ type Result<T> = std::result::Result<T, Error>;
 /// shared timer that can be updated by the wasm autosplitter.
 ///
 /// The only communication possible with the runtime is to load or unload an
-/// autosplitter. For passing arbitrary data such as configuration info from
-/// inside the autosplitter, use `set_variable()`.
+/// autosplitter. For passing arbitrary data such as death counts or collectables
+/// from inside the autosplitter, use `set_variable()`.
 pub struct Runtime {
     sender: Sender<Request>,
     join_handle: Option<JoinHandle<Result<()>>>,
@@ -180,14 +180,18 @@ enum Request {
     End,
 }
 
-// This newtype is required because SharedTimer is an Arc, so we can't impl
-// the autosplitter Timer trait directly on it
+// This newtype is required because SharedTimer is an Arc<RwLock<T>>, so we
+// can't impl the autosplitter Timer trait directly on it
 struct AST(SharedTimer);
 
 impl AutoSplitTimer for AST {
     fn state(&self) -> TimerState {
-        // Safety: these are the same enum
-        unsafe { std::mem::transmute(self.0.read().current_phase()) }
+        match self.0.read().current_phase() {
+            TimerPhase::NotRunning => TimerState::NotRunning,
+            TimerPhase::Running => TimerState::Running,
+            TimerPhase::Paused => TimerState::Paused,
+            TimerPhase::Ended => TimerState::Ended,
+        }
     }
 
     fn start(&mut self) {
