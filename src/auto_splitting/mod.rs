@@ -12,25 +12,35 @@
 //! and here are the functions made available to it to control the timer:
 //! ```
 //! extern "C" {
-//!    pub fn print_message(ptr: u32, len: u32);
 //!    pub fn start();
 //!    pub fn split();
 //!    pub fn reset();
+//!    pub fn print_message(ptr: u32, len: u32);
+//!    pub fn set_variable(name_ptr: u32, name_len: u32, value_ptr: u32, value_len: u32);
+//!    // game time will increment on its own unless paused by the autosplitter
 //!    pub fn set_game_time(time: f64);
 //!    pub fn pause_game_time();
 //!    pub fn resume_game_time();
 //!    pub fn set_tick_rate(ticks_per_sec: f64);
+//!    // returns a value in [0,3] representing "not started", "running",
+//!    // "paused", and "finished" respectively
 //!    pub fn get_timer_state() -> u32;
-//!    pub fn attach(ptr: u32, len: u32) -> u64; // takes name of process to read from
+//!    // autosplitters can request to attach to a process by name. this returns
+//!    // an opaque handle (or zero on failure) which can be used to query for
+//!    // modules/dlls by name and to read that processes memory.
+//!    pub fn attach(ptr: u32, len: u32) -> u64;
 //!    pub fn detach(handle: u64);
-//!    pub fn read_into_buf(address: u64, buf: u32, buf_len: u32) -> u32;
+//!    // returns the base address of a module or zero if the module isn't found
+//!    pub fn get_module(handle: ptr: u32, len: u32) -> u64;
+//!    // returns a boolean, 0=failure
+//!    pub fn read_mem(handle: u64, address: u64, buf: u32, buf_len: u32) -> u32;
 //! }
 //! ```
 // (TODO: link to an example autosplitter and/or a helper crate for writing
 // them)
 
 use {
-    crate::{timing::SharedTimer, TimeSpan},
+    crate::timing::SharedTimer,
     crossbeam_channel::{bounded, unbounded, Sender},
     livesplit_auto_splitting::{
         Runtime as ScriptRuntime, Timer as AutoSplitTimer, TimerState,
@@ -38,8 +48,8 @@ use {
     std::{
         path::PathBuf,
         thread::{self, JoinHandle},
-        time::Duration,
     },
+    time::Duration,
 };
 
 /// Ways in which the autosplitter runtime can fail
@@ -171,12 +181,12 @@ enum Request {
 }
 
 // This newtype is required because SharedTimer is an Arc, so we can't impl
-// the autosplit Timer trait directly on it
+// the autosplitter Timer trait directly on it
 struct AST(SharedTimer);
 
 impl AutoSplitTimer for AST {
     fn state(&self) -> TimerState {
-        // These are the same enum
+        // Safety: these are the same enum
         unsafe { std::mem::transmute(self.0.read().current_phase()) }
     }
 
@@ -193,12 +203,7 @@ impl AutoSplitTimer for AST {
     }
 
     fn set_game_time(&mut self, time: Duration) {
-        // TODO: use TimeSpan::from()
-        // Is this not working because it's abstracted over platform?
-        // self.0.write().set_game_time(time.into());
-        self.0
-            .write()
-            .set_game_time(TimeSpan::from_milliseconds(time.as_millis() as f64));
+        self.0.write().set_game_time(time.into());
     }
 
     fn pause_game_time(&mut self) {
@@ -209,7 +214,7 @@ impl AutoSplitTimer for AST {
         self.0.write().resume_game_time()
     }
 
-    fn set_variable(&mut self, key: &str, value: &str) {
-        self.0.write().set_custom_variable(key, value);
+    fn set_variable(&mut self, name: &str, value: &str) {
+        self.0.write().set_custom_variable(name, value)
     }
 }

@@ -1,11 +1,14 @@
+use crate::process::Process;
 use crate::{timer::Timer, InterruptHandle};
 
 use anyhow::anyhow;
-use log::info;
-use read_process_memory::{CopyAddress, ProcessHandle};
+use log::{info, warn};
 use slotmap::{Key, KeyData, SlotMap};
-use std::{convert::TryInto, path::Path, str, thread, time::Duration, time::Instant};
-use sysinfo::{self, AsU32, ProcessExt, System, SystemExt};
+use std::{
+    path::Path,
+    str, thread,
+    time::{Duration, Instant},
+};
 use wasmtime::{
     Caller, Config, Engine, Extern, Instance, Linker, Memory, Module, Store, Trap,
     TypedFunc,
@@ -17,9 +20,8 @@ slotmap::new_key_type! {
 
 pub struct Context<T: Timer> {
     tick_rate: Duration,
-    processes: SlotMap<ProcessKey, ProcessHandle>,
+    processes: SlotMap<ProcessKey, Process>,
     timer: T,
-    info: System,
     memory: Option<Memory>,
 }
 
@@ -40,7 +42,6 @@ impl<T: Timer> Runtime<T> {
                 processes: SlotMap::with_key(),
                 tick_rate: Duration::from_secs(1) / 60,
                 timer,
-                info: System::new(),
                 memory: None,
             },
         );
@@ -90,29 +91,27 @@ impl<T: Timer> Runtime<T> {
             }
         })?;
 
+        linker.func_wrap("env", "set_variable", {
+            |mut caller: Caller<'_, Context<T>>,
+             name_ptr: u32,
+             name_len: u32,
+             value_ptr: u32,
+             value_len: u32|
+             -> Result<(), Trap> {
+                let name = read_str(&mut caller, name_ptr, name_len)?;
+                let value = read_str(&mut caller, value_ptr, value_len)?;
+                Ok(caller.data_mut().timer.set_variable(&name, &value))
+            }
+        })?;
+
         linker.func_wrap("env", "attach", {
             |mut caller: Caller<'_, Context<T>>, ptr: u32, len: u32| {
                 let process_name = read_str(&mut caller, ptr, len)?;
-                caller.data_mut().info.refresh_processes();
-                let pid = {
-                    let processes = caller.data().info.process_by_name(&process_name);
-                    // TODO: handle receiving multiple processes
-                    processes.first().map(|&p| p.pid().as_u32())
-                };
-                Ok(if let Some(p) = pid {
+                Ok(if let Ok(p) = Process::with_name(&process_name) {
                     info!("Attached to a new process: {}", process_name);
-                    caller
-                        .data_mut()
-                        .processes
-                        .insert(
-                            cast_pid(p)
-                                .try_into()
-                                .map_err(|_| Trap::new(format!("invalid PID: {}", p)))?,
-                        )
-                        .data()
-                        .as_ffi()
+                    caller.data_mut().processes.insert(p).data().as_ffi()
                 } else {
-                    info!("Couldn't find process: {}", process_name);
+                    warn!("Couldn't find process: {}", &process_name);
                     0
                 })
             }
@@ -130,7 +129,24 @@ impl<T: Timer> Runtime<T> {
             },
         )?;
 
-        linker.func_wrap("env", "read_into_buf", {
+        linker.func_wrap(
+            "env",
+            "get_module",
+            |mut caller: Caller<'_, Context<T>>, process: u64, ptr: u32, len: u32| {
+                let module_name = read_str(&mut caller, ptr, len)?;
+                Ok(caller
+                    .data()
+                    .processes
+                    .get(ProcessKey::from(KeyData::from_ffi(process as u64)))
+                    .ok_or_else(|| {
+                        Trap::new(format!("Invalid process handle: {}", process))
+                    })?
+                    .module_address(&module_name)
+                    .unwrap_or_default())
+            },
+        )?;
+
+        linker.func_wrap("env", "read_mem", {
             |mut caller: Caller<'_, Context<T>>,
              process: u64,
              address: u64,
@@ -147,8 +163,8 @@ impl<T: Timer> Runtime<T> {
                     .ok_or_else(|| {
                         Trap::new(format!("Invalid process handle: {}", process))
                     })?
-                    .copy_address(
-                        address as usize,
+                    .read_mem(
+                        address,
                         slice
                             .get_mut(buf_ptr as usize..(buf_ptr + buf_len) as usize)
                             .ok_or_else(|| Trap::new("Out of bounds"))?,
@@ -162,12 +178,12 @@ impl<T: Timer> Runtime<T> {
             "set_game_time",
             |mut caller: Caller<'_, Context<T>>, secs, nanos| {
                 if nanos >= 1_000_000_000 {
-                    Err(Trap::new("more than a one second of nanoseconds"))
+                    Err(Trap::new("more than a seconds worth of nanoseconds"))
                 } else {
                     caller
                         .data_mut()
                         .timer
-                        .set_game_time(Duration::new(secs, nanos));
+                        .set_game_time(time::Duration::new(secs, nanos));
                     Ok(())
                 }
             },
@@ -200,7 +216,6 @@ impl<T: Timer> Runtime<T> {
 
     pub fn step(&mut self) -> anyhow::Result<()> {
         if !self.is_configured {
-            // TODO: Error out if this doesn't exist?
             if let Ok(func) = self.instance.get_typed_func(&mut self.store, "configure") {
                 func.call(&mut self.store, ())?;
             } else {
@@ -232,16 +247,7 @@ fn read_str<T: Timer>(
         .unwrap()
         .data(&caller)
         .get(ptr as usize..(ptr + len) as usize)
-        .ok_or(Trap::new("pointer out of bounds"))?;
+        .ok_or_else(|| Trap::new("pointer out of bounds"))?;
     let s = str::from_utf8(data).map_err(|_| Trap::new("invalid utf-8"))?;
     Ok(s.to_string())
-}
-
-#[cfg(target_os = "windows")]
-fn cast_pid(pid: u32) -> u32 {
-    pid as u32
-}
-#[cfg(not(target_os = "windows"))]
-fn cast_pid(pid: u32) -> i32 {
-    pid as i32
 }

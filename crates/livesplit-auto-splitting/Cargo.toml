@@ -2,14 +2,16 @@
 name = "livesplit-auto-splitting"
 version = "0.1.0"
 authors = ["Christopher Serr <christopher.serr@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 [dependencies]
+time = "0.3.3"
 anyhow = "1.0.45"
 log = "0.4.14"
 slotmap = "1.0.2"
-sysinfo = "0.20.5"
-read-process-memory = "0.1.3"
 wasmtime = { version = "0.31.0", default-features = false, features = [
   "cranelift",
 ] }
+sysinfo = "0.20.5"
+proc-maps = "0.1.9"
+read-process-memory = "0.1.3"
