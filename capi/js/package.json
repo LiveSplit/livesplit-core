@@ -1,39 +1,18 @@
 {
-  "author": {
-    "name": "Christopher Serr"
+  "name": "js",
+  "version": "1.0.0",
+  "description": "",
+  "main": "exports.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "bugs": {
-    "url": "https://github.com/LiveSplit/livesplit-core/issues"
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "typescript": "^4.4.4"
   },
-  "dependencies": {},
-  "description": "livesplit-core is a library that provides a lot of functionality for creating a speedrun timer.",
-  "devDependencies": {},
-  "files": [
-    "README.md",
-    "index.js",
-    "livesplit_core.js",
-    "index.d.ts"
-  ],
-  "homepage": "https://github.com/LiveSplit/livesplit-core#readme",
-  "keywords": [
-    "speedrun",
-    "timer",
-    "livesplit"
-  ],
-  "license": "MIT",
-  "main": "index.js",
-  "maintainers": [
-    {
-      "name": "cryze92",
-      "email": "christopher.serr@gmail.com"
-    }
-  ],
-  "name": "livesplit-core",
-  "optionalDependencies": {},
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/LiveSplit/livesplit-core.git"
-  },
-  "scripts": {},
-  "version": "0.10.2"
+  "devDependencies": {
+    "@types/node": "^16.11.7",
+    "typedoc": "^0.22.8"
+  }
 }

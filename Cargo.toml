@@ -1,6 +1,6 @@
 [package]
 name = "livesplit-core"
-version = "0.11.0"
+version = "0.12.0"
 authors = ["Christopher Serr <christopher.serr@gmail.com>"]
 documentation = "https://docs.rs/livesplit-core/"
 repository = "https://github.com/LiveSplit/livesplit-core"
@@ -10,6 +10,10 @@ readme = "README.md"
 keywords = ["speedrun", "timer", "livesplit", "gaming"]
 categories = ["no-std", "date-and-time"]
 include = [
+    # FIXME: We technically don't want to publish the benches, as they rely on
+    # the tests folder, but otherwise crater can't compile us, as these benches
+    # are referenced in the Cargo.toml.
+    "/benches/*",
     "/src/*",
     "/Cargo.toml",
     "/CHANGELOG.md",
@@ -34,8 +38,8 @@ cfg-if = "1.0.0"
 time = { version = "0.3.3", default-features = false }
 hashbrown = "0.11.0"
 libm = "0.2.1"
-livesplit-hotkey = { path = "crates/livesplit-hotkey", version = "0.5.0", default-features = false }
-livesplit-title-abbreviations = { path = "crates/livesplit-title-abbreviations", version = "0.1.0" }
+livesplit-hotkey = { path = "crates/livesplit-hotkey", version = "0.6.0", default-features = false }
+livesplit-title-abbreviations = { path = "crates/livesplit-title-abbreviations", version = "0.2.0" }
 ordered-float = { version = "2.0.1", default-features = false }
 serde = { version = "1.0.98", default-features = false, features = [
     "alloc",
