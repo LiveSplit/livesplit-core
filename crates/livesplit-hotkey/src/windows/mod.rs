@@ -29,17 +29,26 @@ use winapi::{
 
 const MSG_EXIT: UINT = 0x400;
 
+/// The error type for this crate.
 #[derive(Debug, snafu::Snafu)]
+#[non_exhaustive]
 pub enum Error {
+    /// The hotkey was already registered.
     AlreadyRegistered,
+    /// The hotkey to unregister was not registered.
     NotRegistered,
+    /// An error in the Windows API occurred.
     WindowsHook,
+    /// The background thread stopped unexpectedly.
     ThreadStopped,
+    /// An error occurred in the message loop.
     MessageLoop,
 }
 
+/// The result type for this crate.
 pub type Result<T> = std::result::Result<T, Error>;
 
+/// A hook allows you to listen to hotkeys.
 pub struct Hook {
     thread_id: DWORD,
     hotkeys: Arc<Mutex<HashMap<KeyCode, Box<dyn FnMut() + Send + 'static>>>>,
@@ -62,7 +71,7 @@ thread_local! {
     static STATE: RefCell<Option<State>> = RefCell::new(None);
 }
 
-fn parse_scan_code(value: DWORD) -> Option<KeyCode> {
+const fn parse_scan_code(value: DWORD) -> Option<KeyCode> {
     // Windows uses PS/2 scan code set 1.
     // https://www.avrfreaks.net/sites/default/files/PS2%20Keyboard.pdf Page 19
     use self::KeyCode::*;
@@ -256,6 +265,7 @@ unsafe extern "system" fn callback_proc(code: c_int, wparam: WPARAM, lparam: LPA
 }
 
 impl Hook {
+    /// Creates a new hook.
     pub fn new() -> Result<Self> {
         let hotkeys = Arc::new(Mutex::new(HashMap::<
             KeyCode,
@@ -329,6 +339,7 @@ impl Hook {
         Ok(Hook { thread_id, hotkeys })
     }
 
+    /// Registers a hotkey to listen to.
     pub fn register<F>(&self, hotkey: KeyCode, callback: F) -> Result<()>
     where
         F: FnMut() + Send + 'static,
@@ -341,6 +352,7 @@ impl Hook {
         }
     }
 
+    /// Unregisters a previously registered hotkey.
     pub fn unregister(&self, hotkey: KeyCode) -> Result<()> {
         if self.hotkeys.lock().remove(&hotkey).is_some() {
             Ok(())
@@ -355,7 +367,6 @@ pub(crate) fn try_resolve(key_code: KeyCode) -> Option<String> {
     let scan_code = match key_code {
         Backquote => 0x0029,
         Backslash => 0x002B,
-        Backspace => 0x000E,
         BracketLeft => 0x001A,
         BracketRight => 0x001B,
         Comma => 0x0033,

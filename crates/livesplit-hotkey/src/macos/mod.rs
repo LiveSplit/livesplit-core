@@ -28,16 +28,25 @@ use std::{
     thread,
 };
 
+/// The error type for this crate.
 #[derive(Debug, snafu::Snafu)]
+#[non_exhaustive]
 pub enum Error {
+    /// The hotkey was already registered.
     AlreadyRegistered,
+    /// The hotkey to unregister was not registered.
     NotRegistered,
+    /// Failed creating the event tap.
     CouldntCreateEventTap,
+    /// Failed creating the run loop source.
     CouldntCreateRunLoopSource,
+    /// Failed getting the current run loop.
     CouldntGetCurrentRunLoop,
+    /// The background thread stopped unexpectedly.
     ThreadStoppedUnexpectedly,
 }
 
+/// The result type for this crate.
 pub type Result<T> = std::result::Result<T, Error>;
 
 struct Owned<T>(*mut T);
@@ -57,6 +66,7 @@ unsafe impl Send for RunLoop {}
 
 type RegisteredKeys = Mutex<HashMap<KeyCode, Box<dyn FnMut() + Send + 'static>>>;
 
+/// A hook allows you to listen to hotkeys.
 pub struct Hook {
     event_loop: RunLoop,
     hotkeys: Arc<RegisteredKeys>,
@@ -75,6 +85,7 @@ impl Drop for Hook {
 }
 
 impl Hook {
+    /// Creates a new hook.
     pub fn new() -> Result<Self> {
         let hotkeys = Arc::new(Mutex::new(HashMap::new()));
         let thread_hotkeys = hotkeys.clone();
@@ -135,6 +146,7 @@ impl Hook {
         })
     }
 
+    /// Registers a hotkey to listen to.
     pub fn register<F>(&self, hotkey: KeyCode, callback: F) -> Result<()>
     where
         F: FnMut() + Send + 'static,
@@ -147,6 +159,7 @@ impl Hook {
         }
     }
 
+    /// Unregisters a previously registered hotkey.
     pub fn unregister(&self, hotkey: KeyCode) -> Result<()> {
         if self.hotkeys.lock().remove(&hotkey).is_some() {
             Ok(())
@@ -281,8 +294,9 @@ unsafe extern "C" fn callback(
         0x6E => KeyCode::ContextMenu, // Missing on MDN
         0x6F => KeyCode::F12,
         0x71 => KeyCode::F15,
-        // `Help` sometimes replaces the `Insert` key on mac keyboards, Chrome prefers `Insert`.
-        0x72 => KeyCode::Help,
+        // Apple hasn't been producing any keyboards with `Help` anymore since
+        // 2007. So this can be considered Insert instead.
+        0x72 => KeyCode::Insert,
         0x73 => KeyCode::Home,
         0x74 => KeyCode::PageUp,
         0x75 => KeyCode::Delete,
@@ -337,7 +351,6 @@ pub(crate) fn try_resolve(key_code: KeyCode) -> Option<String> {
         let key_code = match key_code {
             KeyCode::Backquote => 0x32,
             KeyCode::Backslash => 0x2A,
-            KeyCode::Backspace => 0x33,
             KeyCode::BracketLeft => 0x21,
             KeyCode::BracketRight => 0x1E,
             KeyCode::Comma => 0x2B,

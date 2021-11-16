@@ -5,16 +5,22 @@ use std::{
     sync::{Arc, Mutex},
 };
 
+/// The error type for this crate.
 #[derive(Debug, snafu::Snafu)]
+#[non_exhaustive]
 pub enum Error {
+    /// The hotkey was already registered.
     AlreadyRegistered,
+    /// The hotkey to unregister was not registered.
     NotRegistered,
 }
 
+/// The result type for this crate.
 pub type Result<T> = std::result::Result<T, Error>;
 
 pub type EventListenerHandle = Box<dyn Fn(&str)>;
 
+/// A hook allows you to listen to hotkeys.
 pub struct Hook {
     hotkeys: Arc<Mutex<HashMap<KeyCode, Box<dyn FnMut() + Send + 'static>>>>,
     event: Option<Box<EventListenerHandle>>,
@@ -46,6 +52,7 @@ pub unsafe extern "C" fn HotkeyHook_callback(
 }
 
 impl Hook {
+    /// Creates a new hook.
     pub fn new() -> Result<Self> {
         let hotkeys = Arc::new(Mutex::new(HashMap::<
             KeyCode,
@@ -71,6 +78,7 @@ impl Hook {
         })
     }
 
+    /// Registers a hotkey to listen to.
     pub fn register<F>(&self, hotkey: KeyCode, callback: F) -> Result<()>
     where
         F: FnMut() + Send + 'static,
@@ -83,6 +91,7 @@ impl Hook {
         }
     }
 
+    /// Unregisters a previously registered hotkey.
     pub fn unregister(&self, hotkey: KeyCode) -> Result<()> {
         if self.hotkeys.lock().unwrap().remove(&hotkey).is_some() {
             Ok(())
