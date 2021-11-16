@@ -1,6 +1,18 @@
-// For js! macro.
-#![recursion_limit = "1024"]
+#![warn(
+    clippy::complexity,
+    clippy::correctness,
+    clippy::perf,
+    clippy::style,
+    missing_docs,
+    rust_2018_idioms
+)]
 #![cfg_attr(not(feature = "std"), no_std)]
+
+//! `livesplit-hotkey` is a crate that allows listening to hotkeys even when the
+//! application is not in focus. The crate currently supports Windows, macOS,
+//! Linux and the web via wasm-bindgen. On unsupported platforms the crate still
+//! compiles but uses a stubbed out implementation instead that never receives
+//! any hotkeys.
 
 extern crate alloc;
 

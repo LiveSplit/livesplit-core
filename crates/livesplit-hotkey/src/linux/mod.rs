@@ -9,15 +9,23 @@ use std::{
     thread::{self, JoinHandle},
 };
 
+/// The error type for this crate.
 #[derive(Debug, Copy, Clone, snafu::Snafu)]
+#[non_exhaustive]
 pub enum Error {
-    EPoll,
-    ThreadStopped,
+    /// The hotkey was already registered.
     AlreadyRegistered,
+    /// The hotkey to unregister was not registered.
     NotRegistered,
+    /// Failed fetching events from evdev.
     EvDev,
+    /// Failed polling the event file descriptors.
+    EPoll,
+    /// The background thread stopped unexpectedly.
+    ThreadStopped,
 }
 
+/// The result type for this crate.
 pub type Result<T> = std::result::Result<T, Error>;
 
 enum Message {
@@ -33,6 +41,7 @@ enum Message {
 // Low numbered tokens are allocated to devices.
 const PING_TOKEN: Token = Token(usize::MAX);
 
+/// A hook allows you to listen to hotkeys.
 pub struct Hook {
     sender: Sender<Message>,
     waker: Waker,
@@ -49,7 +58,7 @@ impl Drop for Hook {
     }
 }
 
-fn code_for(key: KeyCode) -> Option<Key> {
+const fn code_for(key: KeyCode) -> Option<Key> {
     // This mapping is based on all the different browsers. They however all use
     // the X11 scan codes. Fortunately those have a trivial 1:1 mapping to evdev
     // scan codes.
@@ -57,6 +66,8 @@ fn code_for(key: KeyCode) -> Option<Key> {
     // You simply need to subtract 8 from the X11 scan code to get to the evdev
     // scan code. So we take the mapping from the browsers, subtract 8 from each
     // value and then use the named constant for that value.
+    // The USB HID to scan code translation in Linux is this table:
+    // https://github.com/torvalds/linux/blob/fe91c4725aeed35023ba4f7a1e1adfebb6878c23/drivers/hid/hid-input.c#L27-L44
     use self::KeyCode::*;
     Some(match key {
         Escape => Key::KEY_ESC,
@@ -234,6 +245,7 @@ fn code_for(key: KeyCode) -> Option<Key> {
         MailSend => Key::KEY_SEND,                 // Chrome only
         MailReply => Key::KEY_REPLY,               // Chrome only
         MailForward => Key::KEY_FORWARDMAIL,       // Chrome only
+        MicrophoneMuteToggle => Key::KEY_MICMUTE,  // Chrome only
         ZoomToggle => Key::KEY_ZOOM,               // Chrome only
         LaunchControlPanel => Key::KEY_CONTROLPANEL, // Chrome only
         SelectTask => Key::KEY_APPSELECT,          // Chrome only
@@ -272,6 +284,7 @@ fn code_for(key: KeyCode) -> Option<Key> {
 }
 
 impl Hook {
+    /// Creates a new hook.
     pub fn new() -> Result<Self> {
         let (sender, receiver) = channel();
         let mut poll = Poll::new().map_err(|_| Error::EPoll)?;
@@ -353,6 +366,7 @@ impl Hook {
         })
     }
 
+    /// Registers a hotkey to listen to.
     pub fn register<F>(&self, hotkey: KeyCode, callback: F) -> Result<()>
     where
         F: FnMut() + Send + 'static,
@@ -368,6 +382,7 @@ impl Hook {
         future.value().ok_or(Error::ThreadStopped)?
     }
 
+    /// Unregisters a previously registered hotkey.
     pub fn unregister(&self, hotkey: KeyCode) -> Result<()> {
         let (future, promise) = future_promise();
 
