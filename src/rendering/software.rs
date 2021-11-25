@@ -55,8 +55,14 @@ fn convert_color(&[r, g, b, a]: &[f32; 4]) -> Color {
 }
 
 fn convert_transform(transform: &Transform) -> tiny_skia::Transform {
-    let [sx, ky, kx, sy, tx, ty] = transform.to_array();
-    tiny_skia::Transform::from_row(sx, ky, kx, sy, tx, ty)
+    tiny_skia::Transform::from_row(
+        transform.scale_x,
+        0.0,
+        0.0,
+        transform.scale_y,
+        transform.x,
+        transform.y,
+    )
 }
 
 struct SkiaAllocator;
@@ -461,12 +467,9 @@ fn calculate_bounds(layer: &[Entity<SkiaPath, SkiaImage>]) -> (f32, f32) {
         match entity {
             Entity::FillPath(path, _, transform) => {
                 if let Some(path) = &**path {
-                    let [_, ky, _, sy, _, ty] = transform.to_array();
                     let bounds = path.bounds();
-                    let (l, r, t, b) =
-                        (bounds.left(), bounds.right(), bounds.top(), bounds.bottom());
-                    for (x, y) in [(l, t), (r, t), (l, b), (r, b)] {
-                        let transformed_y = ky * x + sy * y + ty;
+                    for y in [bounds.top(), bounds.bottom()] {
+                        let transformed_y = transform.transform_y(y);
                         min_y = min_y.min(transformed_y);
                         max_y = max_y.max(transformed_y);
                     }
@@ -474,13 +477,10 @@ fn calculate_bounds(layer: &[Entity<SkiaPath, SkiaImage>]) -> (f32, f32) {
             }
             Entity::StrokePath(path, radius, _, transform) => {
                 if let Some(path) = &**path {
-                    let [_, ky, _, sy, _, ty] = transform.to_array();
-                    let radius = sy * radius;
+                    let radius = transform.scale_y * radius;
                     let bounds = path.bounds();
-                    let (l, r, t, b) =
-                        (bounds.left(), bounds.right(), bounds.top(), bounds.bottom());
-                    for (x, y) in [(l, t), (r, t), (l, b), (r, b)] {
-                        let transformed_y = ky * x + sy * y + ty;
+                    for y in [bounds.top(), bounds.bottom()] {
+                        let transformed_y = transform.transform_y(y);
                         min_y = min_y.min(transformed_y - radius);
                         max_y = max_y.max(transformed_y + radius);
                     }
@@ -488,10 +488,8 @@ fn calculate_bounds(layer: &[Entity<SkiaPath, SkiaImage>]) -> (f32, f32) {
             }
             Entity::Image(image, transform) => {
                 if image.is_some() {
-                    let [_, ky, _, sy, _, ty] = transform.to_array();
-                    let (l, r, t, b) = (0.0, 1.0, 0.0, 1.0);
-                    for (x, y) in [(l, t), (r, t), (l, b), (r, b)] {
-                        let transformed_y = ky * x + sy * y + ty;
+                    for y in [0.0, 1.0] {
+                        let transformed_y = transform.transform_y(y);
                         min_y = min_y.min(transformed_y);
                         max_y = max_y.max(transformed_y);
                     }

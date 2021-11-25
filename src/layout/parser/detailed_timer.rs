@@ -27,7 +27,7 @@ where
                 text_parsed(reader, tag.into_buf(), |v| total_height = translate_size(v))
             } else if tag.name() == b"SegmentTimerSizeRatio" {
                 text_parsed(reader, tag.into_buf(), |v: u32| {
-                    segment_timer_ratio = v as f32 / 100.0
+                    segment_timer_ratio = 0.01 * v as f32
                 })
             } else if tag.name() == b"TimerShowGradient" {
                 parse_bool(reader, tag.into_buf(), |b| settings.timer.show_gradient = b)

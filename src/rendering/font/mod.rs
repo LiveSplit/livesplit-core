@@ -518,7 +518,7 @@ pub fn render<A: ResourceAllocator>(
         let layers = glyph_cache.lookup_or_insert(font.font, glyph.id, handles);
 
         let transform = transform
-            .pre_translate([glyph.x, glyph.y].into())
+            .pre_translate(glyph.x, glyph.y)
             .pre_scale(font.scale, font.scale);
 
         for (color, layer) in layers {

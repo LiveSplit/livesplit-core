@@ -1,7 +1,5 @@
-use crate::platform::prelude::*;
-use crate::{Segment, TimeSpan, TimingMethod};
+use crate::{platform::prelude::*, Segment, TimeSpan, TimingMethod};
 use core::cmp::Ordering;
-use ordered_float::OrderedFloat;
 
 const WEIGHT: f64 = 0.75;
 const TRIES: usize = 50;
@@ -90,8 +88,7 @@ impl SkillCurve {
             }
 
             // Sort everything by the times
-            weighted_segment_times
-                .sort_unstable_by_key(|&(_, time)| OrderedFloat(time.total_milliseconds()));
+            weighted_segment_times.sort_unstable_by_key(|&(_, time)| time);
 
             // Cumulative sum of the weights
             let mut sum = 0.0;
@@ -135,8 +132,15 @@ impl SkillCurve {
         self.all_weighted_segment_times
             .iter()
             .map(move |weighted_segment_times| {
-                let found_index = weighted_segment_times
-                    .binary_search_by(|&(w, _)| w.partial_cmp(&percentile).unwrap());
+                let found_index = weighted_segment_times.binary_search_by(|&(w, _)| {
+                    if w < percentile {
+                        Ordering::Less
+                    } else if w > percentile {
+                        Ordering::Greater
+                    } else {
+                        Ordering::Equal
+                    }
+                });
 
                 match found_index {
                     // The percentile perfectly matched a segment time
@@ -191,7 +195,7 @@ impl SkillCurve {
 
         // Try to find the correct percentile
         for _ in 0..TRIES {
-            let percentile = (perc_max + perc_min) / 2.0;
+            let percentile = 0.5 * (perc_max + perc_min);
 
             let sum = self
                 .iter_segment_times_at_percentile(percentile)
@@ -206,7 +210,7 @@ impl SkillCurve {
             }
         }
 
-        (perc_max + perc_min) / 2.0
+        0.5 * (perc_max + perc_min)
     }
 }
 
@@ -215,9 +219,8 @@ fn interpolate(
     (weight_left, time_left): (f64, TimeSpan),
     (weight_right, time_right): (f64, TimeSpan),
 ) -> TimeSpan {
-    let perc_down =
-        (weight_right - perc) * time_left.total_milliseconds() / (weight_right - weight_left);
-    let perc_up =
-        (perc - weight_left) * time_right.total_milliseconds() / (weight_right - weight_left);
+    let weight_diff_recip = (weight_right - weight_left).recip();
+    let perc_down = (weight_right - perc) * time_left.total_milliseconds() * weight_diff_recip;
+    let perc_up = (perc - weight_left) * time_right.total_milliseconds() * weight_diff_recip;
     TimeSpan::from_milliseconds(perc_up + perc_down)
 }

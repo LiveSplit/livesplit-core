@@ -42,7 +42,7 @@ pub(in crate::rendering) fn render<B: ResourceAllocator>(
     component: &State,
     layout_state: &LayoutState,
 ) {
-    context.render_rectangle([0.0, 0.0], [width, height], &component.background);
+    context.render_background([width, height], &component.background);
     let text_color = component.text_color.unwrap_or(layout_state.text_color);
     let text_color = solid(&text_color);
 

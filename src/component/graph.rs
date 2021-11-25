@@ -663,7 +663,7 @@ fn calculate_grid_lines(
     if current_phase != TimerPhase::NotRunning && total_delta < TimeSpan::zero() {
         grid_value_y = 1000.0;
         while (-total_delta.total_milliseconds() as f32) / grid_value_y
-            > (graph_height - graph_edge) * 2.0 / 20.0
+            > (graph_height - graph_edge) * (2.0 / 20.0)
         {
             grid_value_y *= 6.0;
         }

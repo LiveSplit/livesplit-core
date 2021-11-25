@@ -33,7 +33,7 @@ pub(in crate::rendering) fn render<B: ResourceAllocator>(
     component: &State,
     layout_state: &LayoutState,
 ) {
-    context.render_rectangle([0.0, 0.0], dim, &component.background);
+    context.render_background(dim, &component.background);
     context.render_key_value_component(
         &component.key,
         &component.key_abbreviations,

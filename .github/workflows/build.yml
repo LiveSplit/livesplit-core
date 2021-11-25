@@ -275,9 +275,6 @@ jobs:
             target: wasm32-wasi
             os: ubuntu-latest
             cross: skip
-            # FIXME: We are currently hitting limits in wasmtime. We need to fix
-            # wasmtime before we can reenable these tests.
-            tests: skip
             dylib: skip
             install_target: true
 

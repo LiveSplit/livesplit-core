@@ -96,7 +96,6 @@ use crate::{
 };
 use alloc::borrow::Cow;
 use core::iter;
-use euclid::{Transform2D, UnknownUnit};
 
 pub use self::{
     entity::Entity,
@@ -104,16 +103,25 @@ pub use self::{
     scene::{Layer, Scene},
 };
 
-pub use euclid;
-
 /// Describes a coordinate in 2D space.
 pub type Pos = [f32; 2];
 /// A color encoded as RGBA (red, green, blue, alpha) where each component is
 /// stored as a value between 0 and 1.
 pub type Rgba = [f32; 4];
-/// A transformation matrix to apply to meshes in order to place them into the
+
+/// A transformation to apply to the entities in order to place them into the
 /// scene.
-pub type Transform = Transform2D<f32, UnknownUnit, UnknownUnit>;
+#[derive(Copy, Clone)]
+pub struct Transform {
+    /// Scale the x coordinate by this value.
+    pub scale_x: f32,
+    /// Scale the y coordinate by this value.
+    pub scale_y: f32,
+    /// Add this value to the x coordinate after scaling it.
+    pub x: f32,
+    /// Add this value to the y coordinate after scaling it.
+    pub y: f32,
+}
 
 /// Specifies the colors to use when filling a path.
 #[derive(Copy, Clone, PartialEq)]
@@ -369,10 +377,21 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         self.scene.rectangle()
     }
 
+    fn render_background(&mut self, [w, h]: Pos, gradient: &Gradient) {
+        if let Some(shader) = decode_gradient(gradient) {
+            let rectangle = self.rectangle();
+            self.scene.bottom_layer_mut().push(Entity::FillPath(
+                rectangle,
+                shader,
+                self.transform.pre_scale(w, h),
+            ));
+        }
+    }
+
     fn backend_render_rectangle(&mut self, [x1, y1]: Pos, [x2, y2]: Pos, shader: FillShader) {
         let transform = self
             .transform
-            .pre_translate([x1, y1].into())
+            .pre_translate(x1, y1)
             .pre_scale(x2 - x1, y2 - y1);
 
         let rectangle = self.rectangle();
@@ -385,7 +404,7 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
     fn backend_render_top_rectangle(&mut self, [x1, y1]: Pos, [x2, y2]: Pos, shader: FillShader) {
         let transform = self
             .transform
-            .pre_translate([x1, y1].into())
+            .pre_translate(x1, y1)
             .pre_scale(x2 - x1, y2 - y1);
 
         let rectangle = self.rectangle();
@@ -434,7 +453,7 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
     }
 
     fn translate(&mut self, x: f32, y: f32) {
-        self.transform = self.transform.pre_translate([x, y].into());
+        self.transform = self.transform.pre_translate(x, y);
     }
 
     fn render_rectangle(&mut self, top_left: Pos, bottom_right: Pos, gradient: &Gradient) {
@@ -470,10 +489,7 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
             height = new_height;
         }
 
-        let transform = self
-            .transform
-            .pre_translate([x, y].into())
-            .pre_scale(width, height);
+        let transform = self.transform.pre_translate(x, y).pre_scale(width, height);
 
         self.scene
             .bottom_layer_mut()
@@ -760,4 +776,41 @@ const fn decode_gradient(gradient: &Gradient) -> Option<FillShader> {
 
 const fn solid(color: &Color) -> FillShader {
     FillShader::SolidColor(color.to_array())
+}
+
+impl Transform {
+    const fn scale(scale_x: f32, scale_y: f32) -> Transform {
+        Self {
+            x: 0.0,
+            y: 0.0,
+            scale_x,
+            scale_y,
+        }
+    }
+
+    fn pre_scale(&self, scale_x: f32, scale_y: f32) -> Transform {
+        Self {
+            scale_x: self.scale_x * scale_x,
+            scale_y: self.scale_y * scale_y,
+            x: self.x,
+            y: self.y,
+        }
+    }
+
+    fn pre_translate(&self, x: f32, y: f32) -> Transform {
+        Self {
+            scale_x: self.scale_x,
+            scale_y: self.scale_y,
+            x: self.x + self.scale_x * x,
+            y: self.y + self.scale_y * y,
+        }
+    }
+
+    const fn to_array(&self) -> [f32; 4] {
+        [self.x, self.y, self.scale_x, self.scale_y]
+    }
+
+    fn transform_y(&self, y: f32) -> f32 {
+        self.y + self.scale_y * y
+    }
 }

@@ -30,7 +30,7 @@ pub(in crate::rendering) fn render<B: ResourceAllocator>(
     [width, height]: [f32; 2],
     component: &State,
 ) -> f32 {
-    context.render_rectangle([0.0, 0.0], [width, height], &component.background);
+    context.render_background([width, height], &component.background);
     let shader = FillShader::VerticalGradient(
         component.top_color.to_array(),
         component.bottom_color.to_array(),
