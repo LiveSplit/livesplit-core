@@ -1,13 +1,13 @@
 use crate::platform::{prelude::*, Duration};
 use core::{
-    num::ParseFloatError,
+    num::{ParseFloatError, ParseIntError},
     ops::{Add, AddAssign, Neg, Sub, SubAssign},
     str::FromStr,
 };
-use snafu::ResultExt;
+use snafu::{ensure, OptionExt, ResultExt};
 
 /// A Time Span represents a certain span of time.
-#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct TimeSpan(Duration);
 
 impl TimeSpan {
@@ -67,10 +67,19 @@ impl TimeSpan {
 /// The Error type for Time Spans that couldn't be parsed.
 #[derive(Debug, snafu::Snafu)]
 pub enum ParseError {
-    /// Couldn't parse as a floating point number.
-    Float {
+    /// An empty string is not a valid Time Span.
+    Empty,
+    /// The seconds need to be a finite number.
+    Finite,
+    /// Couldn't parse the seconds.
+    Seconds {
         /// The underlying error.
         source: ParseFloatError,
+    },
+    /// Couldn't parse the minutes or hours.
+    MinutesOrHours {
+        /// The underlying error.
+        source: ParseIntError,
     },
 }
 
@@ -88,12 +97,19 @@ impl FromStr for TimeSpan {
                 1.0
             };
 
-        let mut seconds = 0.0;
-        for split in text.split(':') {
-            seconds = 60.0 * seconds + split.parse::<f64>().context(Float)?;
+        let mut pieces = text.split(':');
+
+        let last = pieces.next_back().context(Empty)?;
+        let seconds = last.parse::<f64>().context(Seconds)?;
+
+        ensure!(seconds.is_finite() && seconds >= 0.0, Finite);
+
+        let mut minutes = 0.0;
+        for split in pieces {
+            minutes = minutes * 60.0 + split.parse::<u32>().context(MinutesOrHours)? as f64;
         }
 
-        Ok(TimeSpan::from_seconds(factor * seconds))
+        Ok(TimeSpan::from_seconds(factor * (seconds + minutes * 60.0)))
     }
 }
 
@@ -175,5 +191,28 @@ impl Visitor<'_> for TimeSpanVisitor {
     {
         v.parse()
             .map_err(|_| E::custom(format!("Not a valid time string: {:?}", v)))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parsing() {
+        "-12:37:30.12".parse::<TimeSpan>().unwrap();
+        "-37:30.12".parse::<TimeSpan>().unwrap();
+        "-30.12".parse::<TimeSpan>().unwrap();
+        "-10:30".parse::<TimeSpan>().unwrap();
+        "-30".parse::<TimeSpan>().unwrap();
+        "-100".parse::<TimeSpan>().unwrap();
+        "--30".parse::<TimeSpan>().unwrap_err();
+        "-".parse::<TimeSpan>().unwrap_err();
+        "".parse::<TimeSpan>().unwrap_err();
+        "-10:-30".parse::<TimeSpan>().unwrap_err();
+        "10:-30".parse::<TimeSpan>().unwrap_err();
+        "10.5:30.5".parse::<TimeSpan>().unwrap_err();
+        "NaN".parse::<TimeSpan>().unwrap_err();
+        "Inf".parse::<TimeSpan>().unwrap_err();
     }
 }
