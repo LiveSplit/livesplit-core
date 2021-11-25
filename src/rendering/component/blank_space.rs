@@ -8,5 +8,5 @@ pub(in crate::rendering) fn render(
     dim: [f32; 2],
     component: &State,
 ) {
-    context.render_rectangle([0.0, 0.0], dim, &component.background);
+    context.render_background(dim, &component.background);
 }

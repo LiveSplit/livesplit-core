@@ -34,7 +34,7 @@ pub(in crate::rendering) fn render<B: ResourceAllocator>(
     component: &State,
     layout_state: &LayoutState,
 ) {
-    context.render_rectangle([0.0, 0.0], [width, height], &component.background);
+    context.render_background([width, height], &component.background);
     match &component.text {
         TextState::Center(text) => context.render_text_centered(
             text,

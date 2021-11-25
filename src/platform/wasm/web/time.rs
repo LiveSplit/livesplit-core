@@ -1,5 +1,4 @@
 use js_sys::{Date, Reflect};
-use ordered_float::OrderedFloat;
 use std::ops::Sub;
 use time::UtcOffset;
 use wasm_bindgen::{prelude::*, JsCast};
@@ -8,7 +7,7 @@ use web_sys::Performance;
 pub use time::{Duration, OffsetDateTime as DateTime};
 
 #[derive(Copy, Clone, PartialOrd, PartialEq, Ord, Eq, Debug)]
-pub struct Instant(OrderedFloat<f64>);
+pub struct Instant(Duration);
 
 thread_local! {
     static PERFORMANCE: Performance =
@@ -19,8 +18,10 @@ thread_local! {
 
 impl Instant {
     pub fn now() -> Self {
-        let seconds = PERFORMANCE.with(|p| p.now()) * 0.001;
-        Instant(OrderedFloat(seconds))
+        let secs = PERFORMANCE.with(|p| p.now()) * 0.001;
+        let nanos = (secs.fract() * 1_000_000_000.0) as _;
+        let secs = secs as _;
+        Instant(Duration::new(secs, nanos))
     }
 }
 
@@ -28,7 +29,7 @@ impl Sub<Duration> for Instant {
     type Output = Instant;
 
     fn sub(self, rhs: Duration) -> Instant {
-        Self(self.0 - rhs.as_seconds_f64())
+        Self(self.0 - rhs)
     }
 }
 
@@ -36,10 +37,7 @@ impl Sub for Instant {
     type Output = Duration;
 
     fn sub(self, rhs: Instant) -> Duration {
-        let secs = (self.0).0 - (rhs.0).0;
-        let nanos = (secs.fract() * 1_000_000_000.0) as _;
-        let secs = secs as _;
-        Duration::new(secs, nanos)
+        self.0 - rhs.0
     }
 }
 

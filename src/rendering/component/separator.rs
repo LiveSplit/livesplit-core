@@ -11,9 +11,5 @@ pub(in crate::rendering) fn render(
     _component: &State,
     layout_state: &LayoutState,
 ) {
-    context.render_rectangle(
-        [0.0, 0.0],
-        dim,
-        &Gradient::Plain(layout_state.separators_color),
-    );
+    context.render_background(dim, &Gradient::Plain(layout_state.separators_color));
 }

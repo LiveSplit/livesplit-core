@@ -274,7 +274,7 @@ where
         // heuristic. We often have white on dark grey, instead of white on
         // black. Because of that, we use 1.75 as the exponent denominator for
         // the white on black case instead of the usual 2.2 for sRGB.
-        let lightness = (r + g + b) / 3.0;
+        let lightness = (r + g + b) * (1.0 / 3.0);
         color.alpha =
             (1.0 - lightness) * (1.0 - (1.0 - a).powf(1.0 / 2.2)) + lightness * a.powf(1.0 / 1.75);
 

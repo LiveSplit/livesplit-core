@@ -47,7 +47,6 @@ use alloc::borrow::Cow;
 use alloc::string::String as PathBuf;
 use core::{cmp::max, fmt};
 use hashbrown::HashSet;
-use ordered_float::OrderedFloat;
 #[cfg(feature = "std")]
 use std::path::PathBuf;
 
@@ -617,8 +616,8 @@ impl Run {
     }
 
     fn remove_duplicates(&mut self) {
-        let mut rta_set = HashSet::<OrderedFloat<_>>::new();
-        let mut igt_set = HashSet::<OrderedFloat<_>>::new();
+        let mut rta_set = HashSet::new();
+        let mut igt_set = HashSet::new();
 
         for segment in self.segments_mut() {
             let history = segment.segment_history_mut();
@@ -628,10 +627,10 @@ impl Run {
 
             for &(_, time) in history.iter_actual_runs() {
                 if let Some(time) = time.real_time {
-                    rta_set.insert(time.total_milliseconds().into());
+                    rta_set.insert(time);
                 }
                 if let Some(time) = time.game_time {
-                    igt_set.insert(time.total_milliseconds().into());
+                    igt_set.insert(time);
                 }
             }
 
@@ -642,12 +641,12 @@ impl Run {
 
                 let (mut is_none, mut is_unique) = (true, false);
                 if let Some(time) = time.real_time {
-                    is_unique |= rta_set.insert(time.total_milliseconds().into());
+                    is_unique |= rta_set.insert(time);
                     is_none = false;
                 }
 
                 if let Some(time) = time.game_time {
-                    is_unique |= igt_set.insert(time.total_milliseconds().into());
+                    is_unique |= igt_set.insert(time);
                     is_none = false;
                 }
 

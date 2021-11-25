@@ -156,14 +156,13 @@ pub(in crate::rendering) fn render<B: ResourceAllocator>(
         }
 
         if split.is_current_split {
-            context.render_rectangle(
-                [0.0, 0.0],
+            context.render_background(
                 [split_width, split_height],
                 &component.current_split_gradient,
             );
         } else if let Some((even, odd)) = &split_background {
             let color = if split.index % 2 == 0 { even } else { odd };
-            context.render_rectangle([0.0, 0.0], split_background_bottom_right, color);
+            context.render_background(split_background_bottom_right, color);
         }
 
         {
