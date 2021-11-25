@@ -618,12 +618,6 @@ jobs:
           OS_NAME: ${{ matrix.os }}
           TARGET: ${{ matrix.target }}
 
-      - name: Select XCode to use
-        if: matrix.target == 'aarch64-apple-darwin'
-        run: |
-          sudo xcode-select -s "/Applications/Xcode_12.3.app"
-          sudo rm -Rf /Library/Developer/CommandLineTools/SDKs/*
-
       - name: Build Static Library
         run: sh .github/workflows/build_static.sh
         env:
