@@ -6,38 +6,39 @@ use crate::{
             vertical_padding, BOTH_PADDINGS, DEFAULT_COMPONENT_HEIGHT, DEFAULT_TEXT_SIZE, PADDING,
             TEXT_ALIGN_BOTTOM, TEXT_ALIGN_TOP, THIN_SEPARATOR_THICKNESS, TWO_ROW_HEIGHT,
         },
-        font::Label,
+        font::CachedLabel,
         icon::Icon,
         resource::ResourceAllocator,
         scene::Layer,
         solid, RenderContext,
     },
     settings::{Gradient, ListGradient},
+    platform::prelude::*,
 };
 
 pub const COLUMN_WIDTH: f32 = 2.75;
 
-pub struct Cache<I> {
+pub struct Cache<I, L> {
     icons: Vec<Option<Icon<I>>>,
-    splits: Vec<SplitCache>,
-    column_labels: Vec<Label>,
+    splits: Vec<SplitCache<L>>,
+    column_labels: Vec<CachedLabel<L>>,
 }
 
-struct SplitCache {
-    name: Label,
-    columns: Vec<Label>,
+struct SplitCache<L> {
+    name: CachedLabel<L>,
+    columns: Vec<CachedLabel<L>>,
 }
 
-impl SplitCache {
+impl<L> SplitCache<L> {
     const fn new() -> Self {
         Self {
-            name: Label::new(),
+            name: CachedLabel::new(),
             columns: Vec::new(),
         }
     }
 }
 
-impl<I> Cache<I> {
+impl<I, L> Cache<I, L> {
     pub const fn new() -> Self {
         Self {
             icons: Vec::new(),
@@ -47,9 +48,9 @@ impl<I> Cache<I> {
     }
 }
 
-pub(in crate::rendering) fn render<B: ResourceAllocator>(
-    cache: &mut Cache<B::Image>,
-    context: &mut RenderContext<'_, B>,
+pub(in crate::rendering) fn render<A: ResourceAllocator>(
+    cache: &mut Cache<A::Image, A::Label>,
+    context: &mut RenderContext<'_, A>,
     [width, height]: [f32; 2],
     component: &State,
     layout_state: &LayoutState,
@@ -110,7 +111,7 @@ pub(in crate::rendering) fn render<B: ResourceAllocator>(
         if layout_state.direction == LayoutDirection::Vertical {
             cache
                 .column_labels
-                .resize_with(column_labels.len(), Label::new);
+                .resize_with(column_labels.len(), CachedLabel::new);
 
             let mut right_x = width - PADDING;
             for (label, cache) in column_labels.iter().zip(&mut cache.column_labels) {
@@ -175,7 +176,7 @@ pub(in crate::rendering) fn render<B: ResourceAllocator>(
 
             split_cache
                 .columns
-                .resize_with(split.columns.len(), Label::new);
+                .resize_with(split.columns.len(), CachedLabel::new);
 
             for (column, column_cache) in split.columns.iter().zip(&mut split_cache.columns) {
                 if !column.value.is_empty() {

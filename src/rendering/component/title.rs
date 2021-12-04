@@ -3,41 +3,42 @@ use core::fmt::Write;
 use crate::{
     component::title::State,
     layout::LayoutState,
+    platform::prelude::*,
     rendering::{
         consts::{
             vertical_padding, BOTH_PADDINGS, DEFAULT_TEXT_SIZE, PADDING, TEXT_ALIGN_BOTTOM,
             TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP,
         },
-        font::{AbbreviatedLabel, Label},
+        font::{AbbreviatedLabel, CachedLabel},
         icon::Icon,
         resource::ResourceAllocator,
         solid, Layer, RenderContext,
     },
 };
 
-pub struct Cache<I> {
-    line1: AbbreviatedLabel,
-    line2: AbbreviatedLabel,
+pub struct Cache<I, L> {
+    line1: AbbreviatedLabel<L>,
+    line2: AbbreviatedLabel<L>,
     game_icon: Option<Icon<I>>,
-    attempts: Label,
+    attempts: CachedLabel<L>,
     attempts_buffer: String,
 }
 
-impl<I> Cache<I> {
+impl<I, L> Cache<I, L> {
     pub const fn new() -> Self {
         Self {
             line1: AbbreviatedLabel::new(),
             line2: AbbreviatedLabel::new(),
             game_icon: None,
-            attempts: Label::new(),
+            attempts: CachedLabel::new(),
             attempts_buffer: String::new(),
         }
     }
 }
 
-pub(in crate::rendering) fn render<B: ResourceAllocator>(
-    cache: &mut Cache<B::Image>,
-    context: &mut RenderContext<'_, B>,
+pub(in crate::rendering) fn render<A: ResourceAllocator>(
+    cache: &mut Cache<A::Image, A::Label>,
+    context: &mut RenderContext<'_, A>,
     [width, height]: [f32; 2],
     component: &State,
     layout_state: &LayoutState,

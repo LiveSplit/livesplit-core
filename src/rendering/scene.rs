@@ -3,6 +3,7 @@ use super::{
     resource::{Handle, SharedOwnership},
     FillShader,
 };
+use crate::platform::prelude::*;
 
 /// Describes a layer of a [`Scene`] to place an [`Entity`] on.
 #[derive(Copy, Clone, PartialEq, Eq)]
@@ -34,23 +35,23 @@ impl Layer {
 /// and both the bottom layer didn't change, then no new frame needs to be
 /// rendered. While the top [`Layer`] is inherently transparent, the bottom
 /// [`Layer`] has a background that needs to be considered.
-pub struct Scene<P, I> {
+pub struct Scene<P, I, L> {
     rectangle: Handle<P>,
     background: Option<FillShader>,
     bottom_hash: u64,
     bottom_layer_changed: bool,
-    bottom_layer: Vec<Entity<P, I>>,
-    top_layer: Vec<Entity<P, I>>,
+    bottom_layer: Vec<Entity<P, I, L>>,
+    top_layer: Vec<Entity<P, I, L>>,
 }
 
-impl<P: SharedOwnership, I: SharedOwnership> Scene<P, I> {
+impl<P: SharedOwnership, I: SharedOwnership, L: SharedOwnership> Scene<P, I, L> {
     /// Creates a new scene with the rectangle provided to use for placing
     /// rectangle entities.
     pub fn new(rectangle: Handle<P>) -> Self {
         Self {
             rectangle,
             background: None,
-            bottom_hash: calculate_hash::<P, I>(&None, &[]),
+            bottom_hash: calculate_hash::<P, I, L>(&None, &[]),
             bottom_layer_changed: false,
             bottom_layer: Vec::new(),
             top_layer: Vec::new(),
@@ -75,12 +76,12 @@ impl<P: SharedOwnership, I: SharedOwnership> Scene<P, I> {
     /// Get a reference to the scene's bottom [`Layer`]. This [`Layer`] is
     /// intended to infrequently change, so it doesn't need to be rerendered
     /// every frame.
-    pub fn bottom_layer(&self) -> &[Entity<P, I>] {
+    pub fn bottom_layer(&self) -> &[Entity<P, I, L>] {
         &self.bottom_layer
     }
 
     /// Get a reference to the scene's top [`Layer`].
-    pub fn top_layer(&self) -> &[Entity<P, I>] {
+    pub fn top_layer(&self) -> &[Entity<P, I, L>] {
         &self.top_layer
     }
 
@@ -95,12 +96,12 @@ impl<P: SharedOwnership, I: SharedOwnership> Scene<P, I> {
     }
 
     /// Get a mutable reference to the scene's bottom [`Layer`].
-    pub fn bottom_layer_mut(&mut self) -> &mut Vec<Entity<P, I>> {
+    pub fn bottom_layer_mut(&mut self) -> &mut Vec<Entity<P, I, L>> {
         &mut self.bottom_layer
     }
 
     /// Get a mutable reference to the scene's top [`Layer`].
-    pub fn top_layer_mut(&mut self) -> &mut Vec<Entity<P, I>> {
+    pub fn top_layer_mut(&mut self) -> &mut Vec<Entity<P, I, L>> {
         &mut self.top_layer
     }
 
@@ -121,7 +122,7 @@ impl<P: SharedOwnership, I: SharedOwnership> Scene<P, I> {
     }
 
     /// Accesses the [`Layer`] specified mutably.
-    pub fn layer_mut(&mut self, layer: Layer) -> &mut Vec<Entity<P, I>> {
+    pub fn layer_mut(&mut self, layer: Layer) -> &mut Vec<Entity<P, I, L>> {
         match layer {
             Layer::Bottom => &mut self.bottom_layer,
             Layer::Top => &mut self.top_layer,

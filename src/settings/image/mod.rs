@@ -41,7 +41,7 @@ where
 }
 
 impl Deref for ImageData {
-    type Target = Box<[u8]>;
+    type Target = [u8];
     fn deref(&self) -> &Self::Target {
         &self.0
     }

@@ -1,12 +1,12 @@
-//! The rendering module provides a [`SceneManager`] that, when provided with a
+//! The rendering module provides a [`SceneManager`], that when provided with a
 //! [`LayoutState`], places [`Entities`](Entity) into a [`Scene`] and updates it
 //! accordingly as the [`LayoutState`] changes. It is up to a specific renderer
 //! to then take the [`Scene`] and render out the [`Entities`](Entity). There is
 //! a [`ResourceAllocator`] trait that defines the types of resources an
 //! [`Entity`] consists of. A specific renderer can then provide an
 //! implementation that provides the resources it can render out. Those
-//! resources are images and paths, i.e. lines, quadratic and cubic bezier
-//! curves. An optional software renderer is available behind the
+//! resources are images, paths, i.e. lines, quadratic and cubic bezier curves,
+//! fonts and labels. An optional software renderer is available behind the
 //! `software-rendering` feature that uses tiny-skia to efficiently render the
 //! paths on the CPU. It is surprisingly fast and can be considered the default
 //! renderer.
@@ -78,6 +78,9 @@ mod icon;
 mod resource;
 mod scene;
 
+#[cfg(feature = "path-based-text-engine")]
+pub mod path_based_text_engine;
+
 #[cfg(feature = "software-rendering")]
 pub mod software;
 
@@ -86,20 +89,25 @@ use self::{
         DEFAULT_TEXT_SIZE, DEFAULT_VERTICAL_WIDTH, PADDING, TEXT_ALIGN_BOTTOM, TEXT_ALIGN_TOP,
         TWO_ROW_HEIGHT,
     },
-    font::{AbbreviatedLabel, FontCache, Label},
+    font::{AbbreviatedLabel, CachedLabel, FontCache},
     icon::Icon,
     resource::Handles,
 };
 use crate::{
     layout::{LayoutDirection, LayoutState},
+    platform::prelude::*,
     settings::{Color, Gradient},
 };
 use alloc::borrow::Cow;
+use bytemuck::{Pod, Zeroable};
 use core::iter;
 
 pub use self::{
     entity::Entity,
-    resource::{Handle, PathBuilder, ResourceAllocator, SharedOwnership},
+    font::{TEXT_FONT, TIMER_FONT},
+    resource::{
+        FontKind, Handle, Label, LabelHandle, PathBuilder, ResourceAllocator, SharedOwnership,
+    },
     scene::{Layer, Scene},
 };
 
@@ -111,7 +119,8 @@ pub type Rgba = [f32; 4];
 
 /// A transformation to apply to the entities in order to place them into the
 /// scene.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Pod, Zeroable)]
+#[repr(C)]
 pub struct Transform {
     /// Scale the x coordinate by this value.
     pub scale_x: f32,
@@ -147,39 +156,43 @@ enum CachedSize {
 /// [`ResourceAllocator`] trait that defines the types of resources an
 /// [`Entity`] consists of. A specific renderer can then provide an
 /// implementation that provides the resources it can render out. Those
-/// resources are images and paths, i.e. lines, quadratic and cubic bezier
-/// curves.
-pub struct SceneManager<P, I> {
-    scene: Scene<P, I>,
-    fonts: FontCache<P>,
-    components: Vec<component::Cache<I>>,
+/// resources are images, paths, i.e. lines, quadratic and cubic bezier
+/// curves, fonts and labels.
+pub struct SceneManager<P, I, F, L> {
+    scene: Scene<P, I, L>,
+    components: Vec<component::Cache<I, L>>,
     next_id: usize,
     cached_size: Option<CachedSize>,
+    fonts: FontCache<F>,
 }
 
-impl<P: SharedOwnership, I: SharedOwnership> SceneManager<P, I> {
+impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager<P, I, F, L> {
     /// Creates a new scene manager.
-    pub fn new(mut allocator: impl ResourceAllocator<Path = P, Image = I>) -> Self {
+    pub fn new(
+        mut allocator: impl ResourceAllocator<Path = P, Image = I, Font = F, Label = L>,
+    ) -> Self {
         let mut builder = allocator.path_builder();
         builder.move_to(0.0, 0.0);
         builder.line_to(0.0, 1.0);
         builder.line_to(1.0, 1.0);
         builder.line_to(1.0, 0.0);
         builder.close();
-        let rectangle = Handle::new(0, builder.finish(&mut allocator));
+        let rectangle = Handle::new(0, builder.finish());
+
+        let mut handles = Handles::new(1, allocator);
+        let fonts = FontCache::new(&mut handles);
 
         Self {
-            fonts: FontCache::new().unwrap(),
             components: Vec::new(),
-            // We use 0 for the rectangle.
-            next_id: 1,
+            next_id: handles.into_next_id(),
             scene: Scene::new(rectangle),
             cached_size: None,
+            fonts,
         }
     }
 
     /// Accesses the [`Scene`] in order to render the [`Entities`](Entity).
-    pub fn scene(&self) -> &Scene<P, I> {
+    pub fn scene(&self) -> &Scene<P, I, L> {
         &self.scene
     }
 
@@ -191,15 +204,12 @@ impl<P: SharedOwnership, I: SharedOwnership> SceneManager<P, I> {
     /// change in the layout size is detected, a new more suitable resolution
     /// for subsequent updates is being returned. This is however merely a hint
     /// and can be completely ignored.
-    pub fn update_scene<A: ResourceAllocator<Path = P, Image = I>>(
+    pub fn update_scene<A: ResourceAllocator<Path = P, Image = I, Font = F, Label = L>>(
         &mut self,
         allocator: A,
         resolution: (f32, f32),
         state: &LayoutState,
     ) -> Option<(f32, f32)> {
-        #[cfg(feature = "font-loading")]
-        self.fonts.maybe_reload(state);
-
         self.scene.clear();
 
         self.scene
@@ -225,7 +235,7 @@ impl<P: SharedOwnership, I: SharedOwnership> SceneManager<P, I> {
 
     fn render_vertical(
         &mut self,
-        allocator: impl ResourceAllocator<Path = P, Image = I>,
+        allocator: impl ResourceAllocator<Path = P, Image = I, Font = F, Label = L>,
         resolution: (f32, f32),
         state: &LayoutState,
     ) -> Option<(f32, f32)> {
@@ -264,6 +274,8 @@ impl<P: SharedOwnership, I: SharedOwnership> SceneManager<P, I> {
             fonts: &mut self.fonts,
         };
 
+        context.fonts.maybe_reload(&mut context.handles, state);
+
         // Now we transform the coordinate space to Renderer Coordinate Space by
         // non-uniformly adjusting for the aspect ratio.
         context.scale_non_uniform_x(aspect_ratio.recip());
@@ -294,7 +306,7 @@ impl<P: SharedOwnership, I: SharedOwnership> SceneManager<P, I> {
 
     fn render_horizontal(
         &mut self,
-        allocator: impl ResourceAllocator<Path = P, Image = I>,
+        allocator: impl ResourceAllocator<Path = P, Image = I, Font = F, Label = L>,
         resolution: (f32, f32),
         state: &LayoutState,
     ) -> Option<(f32, f32)> {
@@ -332,6 +344,8 @@ impl<P: SharedOwnership, I: SharedOwnership> SceneManager<P, I> {
             fonts: &mut self.fonts,
         };
 
+        context.fonts.maybe_reload(&mut context.handles, state);
+
         // Now we transform the coordinate space to Renderer Coordinate Space by
         // non-uniformly adjusting for the aspect ratio.
         context.scale_non_uniform_x(aspect_ratio.recip());
@@ -368,8 +382,8 @@ impl<P: SharedOwnership, I: SharedOwnership> SceneManager<P, I> {
 struct RenderContext<'b, A: ResourceAllocator> {
     transform: Transform,
     handles: Handles<A>,
-    scene: &'b mut Scene<A::Path, A::Image>,
-    fonts: &'b mut FontCache<A::Path>,
+    scene: &'b mut Scene<A::Path, A::Image, A::Label>,
+    fonts: &'b mut FontCache<A::Font>,
 }
 
 impl<A: ResourceAllocator> RenderContext<'_, A> {
@@ -500,9 +514,9 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         &mut self,
         key: &str,
         abbreviations: &[Cow<'_, str>],
-        key_label: &mut AbbreviatedLabel,
+        key_label: &mut AbbreviatedLabel<A::Label>,
         value: &str,
-        value_label: &mut Label,
+        value_label: &mut CachedLabel<A::Label>,
         updates_frequently: bool,
         [width, height]: [f32; 2],
         key_color: Color,
@@ -536,142 +550,140 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
     fn render_abbreviated_text_ellipsis<'a>(
         &mut self,
         abbreviations: impl IntoIterator<Item = &'a str> + Clone,
-        label: &mut AbbreviatedLabel,
+        label: &mut AbbreviatedLabel<A::Label>,
         pos @ [x, _]: Pos,
         scale: f32,
         shader: FillShader,
         max_x: f32,
     ) -> f32 {
-        let mut cursor = font::Cursor::new(pos);
-
-        let font = self.fonts.text.font.scale(scale);
-        let max_width = max_x - x;
-        let glyphs = label.update(abbreviations, max_width, font);
-
-        font::render(
-            glyphs.left_aligned(&mut cursor, max_x),
-            shader,
-            &font,
-            &mut self.fonts.text.glyph_cache,
-            &self.transform,
+        let label = label.update(
+            abbreviations,
             &mut self.handles,
-            self.scene.bottom_layer_mut(),
+            &mut self.fonts.text.font,
+            (max_x - x) / scale,
         );
 
-        cursor.x
+        self.scene.bottom_layer_mut().push(Entity::Label(
+            label.share(),
+            shader,
+            font::left_aligned(&self.transform, pos, scale),
+        ));
+
+        x + label.width(scale)
     }
 
     fn render_text_ellipsis(
         &mut self,
         text: &str,
-        label: &mut Label,
-        pos: Pos,
+        label: &mut CachedLabel<A::Label>,
+        pos @ [x, _]: Pos,
         scale: f32,
         shader: FillShader,
         max_x: f32,
     ) -> f32 {
-        let mut cursor = font::Cursor::new(pos);
-
-        let font = self.fonts.text.font.scale(scale);
-        let glyphs = label.update(text, font);
-
-        font::render(
-            glyphs.left_aligned(&mut cursor, max_x),
-            shader,
-            &font,
-            &mut self.fonts.text.glyph_cache,
-            &self.transform,
+        let label = label.update(
+            text,
             &mut self.handles,
-            self.scene.bottom_layer_mut(),
+            &mut self.fonts.text.font,
+            Some((max_x - x) / scale),
         );
 
-        cursor.x
+        self.scene.bottom_layer_mut().push(Entity::Label(
+            label.share(),
+            shader,
+            font::left_aligned(&self.transform, pos, scale),
+        ));
+
+        x + label.width(scale)
     }
 
     fn render_text_centered(
         &mut self,
         text: &str,
-        label: &mut Label,
+        label: &mut CachedLabel<A::Label>,
         min_x: f32,
         max_x: f32,
         pos: Pos,
         scale: f32,
         shader: FillShader,
     ) {
-        let mut cursor = font::Cursor::new(pos);
-
-        let font = self.fonts.text.font.scale(scale);
-        let glyphs = label.update(text, font);
-
-        font::render(
-            glyphs.centered(&mut cursor, min_x, max_x),
-            shader,
-            &font,
-            &mut self.fonts.text.glyph_cache,
-            &self.transform,
+        let label = label.update(
+            text,
             &mut self.handles,
-            self.scene.bottom_layer_mut(),
+            &mut self.fonts.text.font,
+            Some((max_x - min_x) / scale),
         );
+
+        self.scene.bottom_layer_mut().push(Entity::Label(
+            label.share(),
+            shader,
+            font::centered(
+                &self.transform,
+                pos,
+                scale,
+                label.width(scale),
+                min_x,
+                max_x,
+            ),
+        ));
     }
 
     fn render_abbreviated_text_centered<'a>(
         &mut self,
         abbreviations: impl IntoIterator<Item = &'a str> + Clone,
-        label: &mut AbbreviatedLabel,
+        label: &mut AbbreviatedLabel<A::Label>,
         min_x: f32,
         max_x: f32,
         pos: Pos,
         scale: f32,
         shader: FillShader,
     ) {
-        let mut cursor = font::Cursor::new(pos);
-
-        let font = self.fonts.text.font.scale(scale);
-        let max_width = max_x - min_x;
-        let glyphs = label.update(abbreviations, max_width, font);
-
-        font::render(
-            glyphs.centered(&mut cursor, min_x, max_x),
-            shader,
-            &font,
-            &mut self.fonts.text.glyph_cache,
-            &self.transform,
+        let label = label.update(
+            abbreviations,
             &mut self.handles,
-            self.scene.bottom_layer_mut(),
+            &mut self.fonts.text.font,
+            (max_x - min_x) / scale,
         );
+
+        self.scene.bottom_layer_mut().push(Entity::Label(
+            label.share(),
+            shader,
+            font::centered(
+                &self.transform,
+                pos,
+                scale,
+                label.width(scale),
+                min_x,
+                max_x,
+            ),
+        ));
     }
 
     fn render_text_right_align(
         &mut self,
         text: &str,
-        label: &mut Label,
+        label: &mut CachedLabel<A::Label>,
         layer: Layer,
-        pos: Pos,
+        pos @ [x, _]: Pos,
         scale: f32,
         shader: FillShader,
     ) -> f32 {
-        let mut cursor = font::Cursor::new(pos);
+        let label = label.update(text, &mut self.handles, &mut self.fonts.text.font, None);
+        let width = label.width(scale);
 
-        let font = self.fonts.text.font.scale(scale);
-        let glyphs = label.update(text, font);
-
-        font::render(
-            glyphs.right_aligned(&mut cursor),
+        self.scene.layer_mut(layer).push(Entity::Label(
+            label.share(),
             shader,
-            &font,
-            &mut self.fonts.text.glyph_cache,
-            &self.transform,
-            &mut self.handles,
-            self.scene.layer_mut(layer),
-        );
+            font::right_aligned(&self.transform, pos, scale, width),
+        ));
 
-        cursor.x
+        x - width
     }
 
     fn render_abbreviated_text_align<'a>(
         &mut self,
         abbreviations: impl IntoIterator<Item = &'a str> + Clone,
-        label: &mut AbbreviatedLabel,
+        label: &mut AbbreviatedLabel<A::Label>,
         min_x: f32,
         max_x: f32,
         pos: Pos,
@@ -697,67 +709,53 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
     fn render_numbers(
         &mut self,
         text: &str,
-        label: &mut Label,
+        label: &mut CachedLabel<A::Label>,
         layer: Layer,
-        pos: Pos,
+        pos @ [x, _]: Pos,
         scale: f32,
         shader: FillShader,
     ) -> f32 {
-        let mut cursor = font::Cursor::new(pos);
+        let label = label.update(text, &mut self.handles, &mut self.fonts.times.font, None);
+        let width = label.width(scale);
 
-        let font = self.fonts.times.font.scale(scale);
-        let glyphs = label.update_tabular_numbers(text, font);
-
-        font::render(
-            glyphs.tabular_numbers(&mut cursor),
+        self.scene.layer_mut(layer).push(Entity::Label(
+            label.share(),
             shader,
-            &font,
-            &mut self.fonts.times.glyph_cache,
-            &self.transform,
-            &mut self.handles,
-            self.scene.layer_mut(layer),
-        );
+            font::right_aligned(&self.transform, pos, scale, width),
+        ));
 
-        cursor.x
+        x - width
     }
 
     fn render_timer(
         &mut self,
         text: &str,
-        label: &mut Label,
+        label: &mut CachedLabel<A::Label>,
         layer: Layer,
-        pos: Pos,
+        pos @ [x, _]: Pos,
         scale: f32,
         shader: FillShader,
     ) -> f32 {
-        let mut cursor = font::Cursor::new(pos);
+        let label = label.update(text, &mut self.handles, &mut self.fonts.timer.font, None);
+        let width = label.width(scale);
 
-        let font = self.fonts.timer.font.scale(scale);
-        let glyphs = label.update_tabular_numbers(text, font);
-
-        font::render(
-            glyphs.tabular_numbers(&mut cursor),
+        self.scene.layer_mut(layer).push(Entity::Label(
+            label.share(),
             shader,
-            &font,
-            &mut self.fonts.timer.glyph_cache,
-            &self.transform,
-            &mut self.handles,
-            self.scene.layer_mut(layer),
-        );
+            font::right_aligned(&self.transform, pos, scale, width),
+        ));
 
-        cursor.x
+        x - width
     }
 
-    fn measure_numbers(&mut self, text: &str, label: &mut Label, scale: f32) -> f32 {
-        let mut cursor = font::Cursor::new([0.0; 2]);
-
-        let glyphs = label.update_tabular_numbers(text, self.fonts.times.font.scale(scale));
-
-        // Iterate over all glyphs, to move the cursor forward.
-        glyphs.tabular_numbers(&mut cursor).for_each(drop);
-
-        // Wherever we end up is our width.
-        -cursor.x
+    fn measure_numbers(
+        &mut self,
+        text: &str,
+        label: &mut CachedLabel<A::Label>,
+        scale: f32,
+    ) -> f32 {
+        let label = label.update(text, &mut self.handles, &mut self.fonts.times.font, None);
+        label.width(scale)
     }
 }
 
@@ -788,7 +786,8 @@ impl Transform {
         }
     }
 
-    fn pre_scale(&self, scale_x: f32, scale_y: f32) -> Transform {
+    /// Returns a new transform that first scales the coordinates.
+    pub fn pre_scale(&self, scale_x: f32, scale_y: f32) -> Transform {
         Self {
             scale_x: self.scale_x * scale_x,
             scale_y: self.scale_y * scale_y,
@@ -797,17 +796,14 @@ impl Transform {
         }
     }
 
-    fn pre_translate(&self, x: f32, y: f32) -> Transform {
+    /// Returns a new transform that first translates the coordinates.
+    pub fn pre_translate(&self, x: f32, y: f32) -> Transform {
         Self {
             scale_x: self.scale_x,
             scale_y: self.scale_y,
             x: self.x + self.scale_x * x,
             y: self.y + self.scale_y * y,
         }
-    }
-
-    const fn to_array(&self) -> [f32; 4] {
-        [self.x, self.y, self.scale_x, self.scale_y]
     }
 
     fn transform_y(&self, y: f32) -> f32 {

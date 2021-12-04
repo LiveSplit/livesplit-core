@@ -4,7 +4,7 @@ use crate::{
     rendering::{
         component::timer,
         consts::{vertical_padding, BOTH_PADDINGS, PADDING},
-        font::Label,
+        font::CachedLabel,
         icon::Icon,
         resource::ResourceAllocator,
         scene::Layer,
@@ -12,35 +12,35 @@ use crate::{
     },
 };
 
-pub struct Cache<I> {
+pub struct Cache<I, L> {
     icon: Option<Icon<I>>,
-    timer: timer::Cache<I>,
-    segment_timer: timer::Cache<I>,
-    segment_name: Label,
-    comparison1_name: Label,
-    comparison2_name: Label,
-    comparison1_time: Label,
-    comparison2_time: Label,
+    timer: timer::Cache<I, L>,
+    segment_timer: timer::Cache<I, L>,
+    segment_name: CachedLabel<L>,
+    comparison1_name: CachedLabel<L>,
+    comparison2_name: CachedLabel<L>,
+    comparison1_time: CachedLabel<L>,
+    comparison2_time: CachedLabel<L>,
 }
 
-impl<I> Cache<I> {
+impl<I, L> Cache<I, L> {
     pub const fn new() -> Self {
         Self {
             icon: None,
             timer: timer::Cache::new(),
             segment_timer: timer::Cache::new(),
-            segment_name: Label::new(),
-            comparison1_name: Label::new(),
-            comparison2_name: Label::new(),
-            comparison1_time: Label::new(),
-            comparison2_time: Label::new(),
+            segment_name: CachedLabel::new(),
+            comparison1_name: CachedLabel::new(),
+            comparison2_name: CachedLabel::new(),
+            comparison1_time: CachedLabel::new(),
+            comparison2_time: CachedLabel::new(),
         }
     }
 }
 
-pub(in crate::rendering) fn render<B: ResourceAllocator>(
-    cache: &mut Cache<B::Image>,
-    context: &mut RenderContext<'_, B>,
+pub(in crate::rendering) fn render<A: ResourceAllocator>(
+    cache: &mut Cache<A::Image, A::Label>,
+    context: &mut RenderContext<'_, A>,
     [width, height]: [f32; 2],
     component: &State,
     layout_state: &LayoutState,

@@ -1,106 +1,60 @@
-use super::{Font, GlyphCache, SharedOwnership, TEXT_FONT, TIMER_FONT};
-use crate::settings::{FontStretch, FontStyle, FontWeight};
+use super::{
+    super::{FontKind, Handle},
+    ResourceAllocator,
+};
+use crate::{layout::LayoutState, settings::Font};
 
-pub struct CachedFont<P> {
-    #[cfg(feature = "font-loading")]
-    setting: Option<crate::settings::Font>,
-    pub font: Font<'static>,
-    pub glyph_cache: GlyphCache<P>,
+pub struct CachedFont<F> {
+    setting: Option<Font>,
+    pub font: Handle<F>,
 }
 
-impl<P: SharedOwnership> CachedFont<P> {
-    fn new(font: Font<'static>) -> Self {
+impl<F> CachedFont<F> {
+    const fn new(font: Handle<F>) -> Self {
         Self {
-            #[cfg(feature = "font-loading")]
             setting: None,
             font,
-            glyph_cache: GlyphCache::new(),
         }
     }
 
-    #[cfg(feature = "font-loading")]
     fn maybe_reload(
         &mut self,
-        font_to_use: &Option<crate::settings::Font>,
-        default_font: impl FnOnce() -> Font<'static>,
+        allocator: &mut impl ResourceAllocator<Font = Handle<F>>,
+        font_to_use: &Option<Font>,
+        font_kind: FontKind,
     ) {
         if &self.setting != font_to_use {
-            self.font = font_to_use
-                .as_ref()
-                .and_then(Font::load)
-                .unwrap_or_else(default_font);
-            self.glyph_cache.clear();
+            self.font = allocator.create_font(font_to_use.as_ref(), font_kind);
             self.setting.clone_from(font_to_use);
         }
     }
 }
 
-pub struct FontCache<P> {
-    pub timer: CachedFont<P>,
-    pub times: CachedFont<P>,
-    pub text: CachedFont<P>,
+pub struct FontCache<F> {
+    pub timer: CachedFont<F>,
+    pub times: CachedFont<F>,
+    pub text: CachedFont<F>,
 }
 
-impl<P: SharedOwnership> FontCache<P> {
-    pub fn new() -> Option<Self> {
-        Some(Self {
-            timer: CachedFont::new(Font::from_slice(
-                TIMER_FONT,
-                0,
-                FontStyle::Normal,
-                FontWeight::Bold,
-                FontStretch::Normal,
-            )?),
-            times: CachedFont::new(Font::from_slice(
-                TEXT_FONT,
-                0,
-                FontStyle::Normal,
-                FontWeight::Bold,
-                FontStretch::Normal,
-            )?),
-            text: CachedFont::new(Font::from_slice(
-                TEXT_FONT,
-                0,
-                FontStyle::Normal,
-                FontWeight::Normal,
-                FontStretch::Normal,
-            )?),
-        })
+impl<F> FontCache<F> {
+    pub fn new(allocator: &mut impl ResourceAllocator<Font = Handle<F>>) -> Self {
+        Self {
+            timer: CachedFont::new(allocator.create_font(None, FontKind::Timer)),
+            times: CachedFont::new(allocator.create_font(None, FontKind::Times)),
+            text: CachedFont::new(allocator.create_font(None, FontKind::Text)),
+        }
     }
 
-    #[cfg(feature = "font-loading")]
-    pub fn maybe_reload(&mut self, state: &crate::layout::LayoutState) {
-        self.timer.maybe_reload(&state.timer_font, || {
-            Font::from_slice(
-                TIMER_FONT,
-                0,
-                FontStyle::Normal,
-                FontWeight::Bold,
-                FontStretch::Normal,
-            )
-            .unwrap()
-        });
-
-        self.times.maybe_reload(&state.times_font, || {
-            Font::from_slice(
-                TEXT_FONT,
-                0,
-                FontStyle::Normal,
-                FontWeight::Bold,
-                FontStretch::Normal,
-            )
-            .unwrap()
-        });
-
-        self.text.maybe_reload(&state.text_font, || {
-            Font::from_slice(
-                TEXT_FONT,
-                0,
-                FontStyle::Normal,
-                FontWeight::Normal,
-                FontStretch::Normal,
-            )
-            .unwrap()
-        });
+    pub fn maybe_reload(
+        &mut self,
+        allocator: &mut impl ResourceAllocator<Font = Handle<F>>,
+        state: &LayoutState,
+    ) {
+        self.timer
+            .maybe_reload(allocator, &state.timer_font, FontKind::Timer);
+        self.times
+            .maybe_reload(allocator, &state.times_font, FontKind::Times);
+        self.text
+            .maybe_reload(allocator, &state.text_font, FontKind::Text);
     }
 }

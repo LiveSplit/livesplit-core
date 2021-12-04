@@ -56,7 +56,7 @@ pub(in crate::rendering) fn render(
         builder.line_to(width * p2.x, p2.y);
         builder.line_to(width * p2.x, component.middle);
         builder.close();
-        let partial_fill_path = builder.finish(&mut context.handles);
+        let partial_fill_path = builder.finish();
         context.top_layer_path(partial_fill_path, component.partial_fill_color);
 
         component.points.len() - 1
@@ -71,7 +71,7 @@ pub(in crate::rendering) fn render(
     }
     builder.line_to(width * component.points[len - 1].x, component.middle);
     builder.close();
-    let fill_path = builder.finish(&mut context.handles);
+    let fill_path = builder.finish();
     context.top_layer_path(fill_path, component.complete_fill_color);
 
     for points in component.points.windows(2) {
@@ -85,7 +85,7 @@ pub(in crate::rendering) fn render(
             component.graph_lines_color
         };
 
-        let line_path = builder.finish(&mut context.handles);
+        let line_path = builder.finish();
         context.top_layer_stroke_path(line_path, color, LINE_WIDTH);
     }
 

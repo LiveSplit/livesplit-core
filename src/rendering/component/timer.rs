@@ -1,32 +1,32 @@
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 
 use crate::{
     component::timer::State,
     rendering::{
-        consts::PADDING, font::Label, resource::ResourceAllocator, scene::Layer, FillShader,
+        consts::PADDING, font::CachedLabel, resource::ResourceAllocator, scene::Layer, FillShader,
         RenderContext,
     },
 };
 
-pub struct Cache<I> {
-    time: Label,
-    fraction: Label,
+pub struct Cache<I, L> {
+    time: CachedLabel<L>,
+    fraction: CachedLabel<L>,
     _image: PhantomData<I>,
 }
 
-impl<I> Cache<I> {
+impl<I, L> Cache<I, L> {
     pub const fn new() -> Self {
         Self {
-            time: Label::new(),
-            fraction: Label::new(),
+            time: CachedLabel::new(),
+            fraction: CachedLabel::new(),
             _image: PhantomData,
         }
     }
 }
 
-pub(in crate::rendering) fn render<B: ResourceAllocator>(
-    cache: &mut Cache<B::Image>,
-    context: &mut RenderContext<'_, B>,
+pub(in crate::rendering) fn render<A: ResourceAllocator>(
+    cache: &mut Cache<A::Image, A::Label>,
+    context: &mut RenderContext<'_, A>,
     [width, height]: [f32; 2],
     component: &State,
 ) -> f32 {

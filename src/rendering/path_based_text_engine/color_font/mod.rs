@@ -1,4 +1,4 @@
-use ttf_parser::{Face, Tag};
+use ttf_parser::{Face, GlyphId, Tag};
 
 use crate::settings::Color;
 
@@ -41,15 +41,15 @@ impl<'f> ColorTables<'f> {
 pub fn iter_colored_glyphs(
     color_tables: &Option<ColorTables<'_>>,
     palette: usize,
-    glyph: u16,
-    mut f: impl FnMut(u16, Option<Color>),
+    glyph: GlyphId,
+    mut f: impl FnMut(GlyphId, Option<Color>),
 ) {
     if let Some(iter) = color_tables
         .as_ref()
-        .and_then(|c| c.look_up(palette, glyph))
+        .and_then(|c| c.look_up(palette, glyph.0))
     {
         for (glyph, color) in iter {
-            f(glyph, color);
+            f(GlyphId(glyph), color);
         }
     } else {
         f(glyph, None)
