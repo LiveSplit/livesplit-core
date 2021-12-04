@@ -1,8 +1,6 @@
 **.rs.bk
-capi/bind_gen/target
+.DS_Store
 capi/bindings
-capi/Cargo.lock
-capi/target
 Cargo.lock
 docs
 target
