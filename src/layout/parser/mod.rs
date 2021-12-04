@@ -364,6 +364,8 @@ where
         // in its public API.
 
         for token in family.split_whitespace().rev() {
+            // FontWeight and FontStretch both have the variant "normal"
+            // which is the default and can thus be ignored.
             if token.eq_ignore_ascii_case("italic") {
                 style = FontStyle::Italic;
             } else if token.eq_ignore_ascii_case("thin") || token.eq_ignore_ascii_case("hairline") {
@@ -378,8 +380,6 @@ where
                 || token.eq_ignore_ascii_case("demilight")
             {
                 weight = FontWeight::SemiLight;
-            } else if token.eq_ignore_ascii_case("normal") {
-                weight = FontWeight::Normal;
             } else if token.eq_ignore_ascii_case("medium") {
                 weight = FontWeight::Medium;
             } else if token.eq_ignore_ascii_case("semibold")
@@ -406,8 +406,6 @@ where
                 stretch = FontStretch::Condensed;
             } else if token.eq_ignore_ascii_case("semicondensed") {
                 stretch = FontStretch::SemiCondensed;
-            } else if token.eq_ignore_ascii_case("normal") {
-                stretch = FontStretch::Normal;
             } else if token.eq_ignore_ascii_case("semiexpanded") {
                 stretch = FontStretch::SemiExpanded;
             } else if token.eq_ignore_ascii_case("expanded") {
