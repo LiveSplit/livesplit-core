@@ -1,0 +1,8 @@
+module CLiveSplitCore [extern_c] {
+    header "livesplit_core.h"
+    link "livesplit_core"
+    link framework "Carbon"
+    link framework "CoreFoundation"
+    link framework "CoreGraphics"
+    export *
+}

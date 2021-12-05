@@ -1,9 +1,0 @@
-module LiveSplitCoreNative [extern_c] {
-    header "livesplit_core.h"
-    link "resolv"
-    link "c"
-    link "m"
-    link "System"
-    link "objc"
-    export *
-}
