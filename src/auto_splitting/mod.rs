@@ -30,6 +30,8 @@
 //!    // modules/dlls by name and to read that processes memory.
 //!    pub fn attach(ptr: u32, len: u32) -> u64;
 //!    pub fn detach(handle: u64);
+//!    // returns a boolean
+//!    pub fn process_is_open(handle: u64) -> u32;
 //!    // returns the base address of a module or zero if the module isn't found
 //!    pub fn get_module(handle: u64, ptr: u32, len: u32) -> u64;
 //!    // returns a boolean, 0=failure

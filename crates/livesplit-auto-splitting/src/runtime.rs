@@ -10,8 +10,7 @@ use std::{
 };
 use sysinfo::{RefreshKind, System, SystemExt};
 use wasmtime::{
-    Caller, Config, Engine, Extern, Instance, Linker, Memory, Module, Store, Trap,
-    TypedFunc,
+    Caller, Config, Engine, Extern, Instance, Linker, Memory, Module, Store, Trap, TypedFunc,
 };
 
 #[derive(Debug, snafu::Snafu)]
@@ -24,6 +23,12 @@ pub enum Error {
     WasmTimeTrap { trap: Trap },
     /// An error occured in the wasmtime engine
     WasmTimeEngine { err: anyhow::Error },
+}
+
+impl PartialEq for Error {
+    fn eq(&self, other: &Self) -> bool {
+        core::mem::discriminant(self) == core::mem::discriminant(other)
+    }
 }
 
 impl From<Trap> for Error {
@@ -139,9 +144,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<()> {
             |mut caller: Caller<'_, Context<T>>| caller.data_mut().timer.pause_game_time()
         })?
         .func_wrap("env", "resume_game_time", {
-            |mut caller: Caller<'_, Context<T>>| {
-                caller.data_mut().timer.resume_game_time()
-            }
+            |mut caller: Caller<'_, Context<T>>| caller.data_mut().timer.resume_game_time()
         })?
         .func_wrap("env", "set_game_time", {
             |mut caller: Caller<'_, Context<T>>, secs: f64| {
@@ -154,8 +157,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<()> {
         .func_wrap("env", "set_tick_rate", {
             |mut caller: Caller<'_, Context<T>>, ticks_per_sec: f64| {
                 info!("New Tick Rate: {}", ticks_per_sec);
-                caller.data_mut().tick_rate =
-                    Duration::from_secs_f64(ticks_per_sec.recip());
+                caller.data_mut().tick_rate = Duration::from_secs_f64(ticks_per_sec.recip());
             }
         })?
         .func_wrap("env", "get_timer_state", {
@@ -185,9 +187,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<()> {
             |mut caller: Caller<'_, Context<T>>, ptr: u32, len: u32| {
                 let process_name = read_str(&mut caller, ptr, len)?;
                 Ok(
-                    if let Ok(p) =
-                        Process::with_name(&process_name, &mut caller.data_mut().info)
-                    {
+                    if let Ok(p) = Process::with_name(&process_name, &mut caller.data_mut().info) {
                         info!("Attached to a new process: {}", process_name);
                         caller.data_mut().processes.insert(p).data().as_ffi()
                     } else {
@@ -199,11 +199,22 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<()> {
         })?
         .func_wrap("env", "detach", {
             |mut caller: Caller<'_, Context<T>>, process: u64| {
-                let key = ProcessKey::from(KeyData::from_ffi(process as u64));
-                caller.data_mut().processes.remove(key).ok_or_else(|| {
-                    Trap::new(format!("Invalid process handle {}", process))
-                })?;
+                caller
+                    .data_mut()
+                    .processes
+                    .remove(ProcessKey::from(KeyData::from_ffi(process as u64)))
+                    .ok_or_else(|| Trap::new(format!("Invalid process handle {}", process)))?;
                 Ok(())
+            }
+        })?
+        .func_wrap("env", "process_is_open", {
+            |mut caller: Caller<'_, Context<T>>, process: u64| {
+                let ctx = caller.data_mut();
+                let proc = ctx
+                    .processes
+                    .get(ProcessKey::from(KeyData::from_ffi(process as u64)))
+                    .ok_or_else(|| Trap::new(format!("Invalid process handle: {}", process)))?;
+                Ok(proc.is_open(&mut ctx.info) as u32)
             }
         })?
         .func_wrap("env", "get_module", {
@@ -213,9 +224,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<()> {
                     .data()
                     .processes
                     .get(ProcessKey::from(KeyData::from_ffi(process as u64)))
-                    .ok_or_else(|| {
-                        Trap::new(format!("Invalid process handle: {}", process))
-                    })?
+                    .ok_or_else(|| Trap::new(format!("Invalid process handle: {}", process)))?
                     .module_address(&module_name)
                     .unwrap_or_default())
             }
@@ -234,9 +243,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<()> {
                 Ok(context
                     .processes
                     .get(ProcessKey::from(KeyData::from_ffi(process as u64)))
-                    .ok_or_else(|| {
-                        Trap::new(format!("Invalid process handle: {}", process))
-                    })?
+                    .ok_or_else(|| Trap::new(format!("Invalid process handle: {}", process)))?
                     .read_mem(
                         address,
                         slice

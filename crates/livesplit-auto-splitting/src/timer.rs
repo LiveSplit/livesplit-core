@@ -8,6 +8,12 @@ pub enum TimerState {
     Ended = 3,
 }
 
+impl Default for TimerState {
+    fn default() -> Self {
+        Self::NotRunning
+    }
+}
+
 /// This interface allows the autosplitter to live outside of livesplit-core and
 /// enables testing with a dummy timer implementation
 pub trait Timer {

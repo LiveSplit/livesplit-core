@@ -20,6 +20,12 @@ pub struct Process {
     pid: Pid,
 }
 
+impl std::fmt::Debug for Process {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Process").field("pid", &self.pid).finish()
+    }
+}
+
 impl Process {
     pub fn with_name(name: &str, sysinfo: &mut System) -> Result<Self> {
         sysinfo.refresh_processes();
@@ -30,6 +36,11 @@ impl Process {
             .map(|&p| p.pid())? as Pid;
         let handle = pid.try_into().map_err(|_| Error::ProcessOpening)?;
         Ok(Process { handle, pid })
+    }
+
+    pub fn is_open(&self, sysinfo: &mut System) -> bool {
+        sysinfo.refresh_processes();
+        sysinfo.process(self.pid as sysinfo::Pid).is_some()
     }
 
     pub fn module_address(&self, module: &str) -> Result<Address> {
