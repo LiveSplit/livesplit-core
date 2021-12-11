@@ -35,6 +35,7 @@ pub struct Font<'fd> {
     face: Face<'fd>,
     color_tables: Option<ColorTables<'fd>>,
     scale_factor: f32,
+    tabular_digits: TabularDigits,
     #[cfg(feature = "font-loading")]
     /// Safety: This can never be mutated. This also needs to be dropped last.
     _buf: Option<Box<[u8]>>,
@@ -106,10 +107,33 @@ impl<'fd> Font<'fd> {
             },
         ]);
 
+        // Calculate the tabular digit width and store the glyph IDs for later.
+        let mut digits = [0; 10];
+        let mut digit_width = 0;
+        for (digit, glyph) in digits.iter_mut().enumerate() {
+            let GlyphId(the_glyph) = face
+                .glyph_index(char::from(digit as u8 + b'0'))
+                .unwrap_or_default();
+
+            *glyph = the_glyph as _;
+
+            let width = face
+                .glyph_hor_advance(GlyphId(the_glyph as _))
+                .unwrap_or_default();
+
+            if width > digit_width {
+                digit_width = width;
+            }
+        }
+
         Some(Self {
             scale_factor: 1.0 / face.height() as f32,
             color_tables: ColorTables::new(&face),
             face,
+            tabular_digits: TabularDigits {
+                width: digit_width as _,
+                digits,
+            },
             #[cfg(feature = "font-loading")]
             _buf: None,
         })
@@ -135,14 +159,9 @@ pub struct ScaledFont<'f> {
     scale: f32,
 }
 
-impl<'f> ScaledFont<'f> {
-    fn glyph_x_advance(&self, glyph_id: u32) -> f32 {
-        self.font
-            .face
-            .glyph_hor_advance(GlyphId(glyph_id as _))
-            .unwrap_or_default() as f32
-            * self.scale
-    }
+struct TabularDigits {
+    width: f32,
+    digits: [u16; 10],
 }
 
 pub struct AbbreviatedLabel {
@@ -447,37 +466,21 @@ impl<'fl> Glyphs<'fl> {
         &'a self,
         cursor: &'a mut Cursor,
     ) -> impl Iterator<Item = PositionedGlyph> + 'a {
-        let mut digits = [0; 10];
-        let mut digit_width = 0.0;
-        for (digit, glyph) in digits.iter_mut().enumerate() {
-            let GlyphId(the_glyph) = self
-                .font
-                .font
-                .face
-                .glyph_index(char::from(digit as u8 + b'0'))
-                .unwrap_or_default();
-
-            *glyph = the_glyph as _;
-
-            let width = self.font.glyph_x_advance(the_glyph as _);
-            if width > digit_width {
-                digit_width = width;
-            }
-        }
-
         // FIXME: There's kerning between e.g. ".1" now, which is maybe not quite
         // what we want. We may need to either stabilize `:` and `.` now or turn
         // off kerning for tabular numbers.
 
         let scale = self.font.scale;
 
+        let digits = &self.font.font.tabular_digits;
+        let digit_width = digits.width * self.font.scale;
         Iterator::zip(
             self.buffer.glyph_infos().iter(),
             self.buffer.glyph_positions().iter(),
         )
         .rev()
         .map(move |(i, p)| {
-            let x = if digits.contains(&i.glyph_id) {
+            let x = if digits.digits.contains(&(i.glyph_id as _)) {
                 cursor.x -= digit_width;
                 let wider_by = digit_width - (p.x_advance as f32 * scale);
                 cursor.x + p.x_offset as f32 * scale + 0.5 * wider_by

@@ -4,3 +4,4 @@ capi/bindings
 Cargo.lock
 docs
 target
+.vs*
