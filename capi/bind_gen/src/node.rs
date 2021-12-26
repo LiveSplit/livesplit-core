@@ -1,5 +1,5 @@
 use crate::{typescript, Class, Function, Type, TypeKind};
-use heck::MixedCase;
+use heck::ToLowerCamelCase;
 use std::{
     collections::BTreeMap,
     io::{Result, Write},
@@ -106,7 +106,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
     let has_return_type = function.has_return_type();
     let return_type_with_null = get_hl_type_with_null(&function.output);
     let return_type_without_null = get_hl_type_without_null(&function.output);
-    let method = function.method.to_mixed_case();
+    let method = function.method.to_lower_camel_case();
     let is_json = has_return_type && function.output.name == "Json";
 
     if !function.comments.is_empty() || !type_script {
@@ -144,7 +144,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
                 r#"
      * @param {{{}}} {}"#,
                 get_hl_type_with_null(ty),
-                name.to_mixed_case()
+                name.to_lower_camel_case()
             )?;
         }
 
@@ -181,7 +181,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
         if i != 0 {
             write!(writer, ", ")?;
         }
-        write!(writer, "{}", name.to_mixed_case())?;
+        write!(writer, "{}", name.to_lower_camel_case())?;
         if type_script {
             write!(writer, ": {}", get_hl_type_with_null(ty))?;
         }
@@ -210,7 +210,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
             throw "{name} is disposed";
         }}
         "#,
-                name = name.to_mixed_case()
+                name = name.to_lower_camel_case()
             )?;
         }
     }
@@ -239,11 +239,11 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
             if name == "this" {
                 "this.ptr".to_string()
             } else if typ.name == "Json" {
-                format!("JSON.stringify({})", name.to_mixed_case())
+                format!("JSON.stringify({})", name.to_lower_camel_case())
             } else if typ.is_custom {
-                format!("{}.ptr", name.to_mixed_case())
+                format!("{}.ptr", name.to_lower_camel_case())
             } else {
-                name.to_mixed_case()
+                name.to_lower_camel_case()
             }
         )?;
     }
@@ -262,7 +262,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
                 writer,
                 r#"
         {}.ptr = ref.NULL;"#,
-                name.to_mixed_case()
+                name.to_lower_camel_case()
             )?;
         }
     }

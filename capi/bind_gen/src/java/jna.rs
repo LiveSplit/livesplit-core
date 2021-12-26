@@ -1,6 +1,6 @@
 use super::write_class_comments;
 use crate::{Class, Function, Type, TypeKind};
-use heck::MixedCase;
+use heck::ToLowerCamelCase;
 use std::{
     collections::BTreeMap,
     fs::File,
@@ -59,7 +59,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
     let return_type = get_hl_type(&function.output);
     let return_type_ll = get_ll_type(&function.output);
     let is_constructor = function.method == "new" && !function.output.is_nullable;
-    let mut method = function.method.to_mixed_case();
+    let mut method = function.method.to_lower_camel_case();
     if method == "clone" {
         method = "copy".into();
     } else if method == "close" {
@@ -123,7 +123,12 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
         if i != 0 {
             write!(writer, ", ")?;
         }
-        write!(writer, "{} {}", get_hl_type(typ), name.to_mixed_case())?;
+        write!(
+            writer,
+            "{} {}",
+            get_hl_type(typ),
+            name.to_lower_camel_case()
+        )?;
     }
 
     if is_constructor {
@@ -149,7 +154,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
             throw new RuntimeException();
         }}
         "#,
-                name = name.to_mixed_case()
+                name = name.to_lower_camel_case()
             )?;
         }
     }
@@ -186,13 +191,13 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
             if name == "this" {
                 "this.ptr".to_string()
             } else if hl_ty_name == "boolean" {
-                format!("(byte)({} ? 1 : 0)", name.to_mixed_case())
+                format!("(byte)({} ? 1 : 0)", name.to_lower_camel_case())
             } else if ty_name == "NativeLong" {
-                format!("new NativeLong({})", name.to_mixed_case())
+                format!("new NativeLong({})", name.to_lower_camel_case())
             } else if typ.is_custom {
-                format!("{}.ptr", name.to_mixed_case())
+                format!("{}.ptr", name.to_lower_camel_case())
             } else {
-                name.to_mixed_case()
+                name.to_lower_camel_case()
             }
         )?;
     }
@@ -221,7 +226,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
                 writer,
                 r#"
         {}.ptr = Pointer.NULL;"#,
-                name.to_mixed_case()
+                name.to_lower_camel_case()
             )?;
         }
     }
@@ -472,7 +477,7 @@ public interface LiveSplitCoreNative extends Library {
                     if name == "this" {
                         String::from("self")
                     } else {
-                        name.to_mixed_case()
+                        name.to_lower_camel_case()
                     }
                 )?;
             }

@@ -1,5 +1,5 @@
 use crate::{Class, Function, Type, TypeKind};
-use heck::MixedCase;
+use heck::ToLowerCamelCase;
 use std::{
     collections::BTreeMap,
     fs::File,
@@ -81,7 +81,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
     let has_return_type = function.has_return_type();
     let return_type = get_hl_type(&function.output);
     let is_constructor = function.method == "new" && !function.output.is_nullable;
-    let mut method = function.method.to_mixed_case();
+    let mut method = function.method.to_lower_camel_case();
     if method == "clone" {
         method = "copy".into();
     } else if method == "close" {
@@ -142,7 +142,12 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         if i != 0 {
             write!(writer, ", ")?;
         }
-        write!(writer, "{}: {}", name.to_mixed_case(), get_hl_type(typ))?;
+        write!(
+            writer,
+            "{}: {}",
+            name.to_lower_camel_case(),
+            get_hl_type(typ)
+        )?;
     }
 
     if is_constructor {
@@ -177,7 +182,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
             throw RuntimeException()
         }}
         "#,
-                name = name.to_mixed_case()
+                name = name.to_lower_camel_case()
             )?;
         }
     }
@@ -200,7 +205,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         writer,
         r#"LiveSplitCoreNative.{}_{}("#,
         function.class,
-        function.method.to_mixed_case()
+        function.method.to_lower_camel_case()
     )?;
 
     for (i, (name, typ)) in function.inputs.iter().enumerate() {
@@ -213,9 +218,9 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
             if name == "this" {
                 "this.ptr".to_string()
             } else if typ.is_custom {
-                format!("{}.ptr", name.to_mixed_case())
+                format!("{}.ptr", name.to_lower_camel_case())
             } else {
-                name.to_mixed_case()
+                name.to_lower_camel_case()
             }
         )?;
     }
@@ -232,7 +237,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
                 writer,
                 r#"
         {}.ptr = 0L"#,
-                name.to_mixed_case()
+                name.to_lower_camel_case()
             )?;
         }
     }
@@ -472,7 +477,7 @@ object LiveSplitCoreNative {
                 r#"
     external fun {}_{}("#,
                 function.class,
-                function.method.to_mixed_case()
+                function.method.to_lower_camel_case()
             )?;
 
             for (i, (name, typ)) in function.inputs.iter().enumerate() {
@@ -485,7 +490,7 @@ object LiveSplitCoreNative {
                     if name == "this" {
                         String::from("self")
                     } else {
-                        name.to_mixed_case()
+                        name.to_lower_camel_case()
                     },
                     get_ll_type(typ)
                 )?;

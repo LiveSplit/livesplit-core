@@ -1,5 +1,5 @@
 use crate::{Class, Function, Type, TypeKind};
-use heck::MixedCase;
+use heck::ToLowerCamelCase;
 use std::{
     collections::BTreeMap,
     io::{Result, Write},
@@ -121,7 +121,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
             r#"
     public{} func {}("#,
             if is_static { " static" } else { "" },
-            function.method.to_mixed_case()
+            function.method.to_lower_camel_case()
         )?;
     }
 
@@ -134,7 +134,12 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         if i != 0 {
             write!(writer, ", ")?;
         }
-        write!(writer, "_ {}: {}", name.to_mixed_case(), get_hl_type(typ))?;
+        write!(
+            writer,
+            "_ {}: {}",
+            name.to_lower_camel_case(),
+            get_hl_type(typ)
+        )?;
     }
 
     if is_constructor {
@@ -173,7 +178,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
                 name = if name == "this" {
                     "self".to_string()
                 } else {
-                    name.to_mixed_case()
+                    name.to_lower_camel_case()
                 }
             )?;
         }
@@ -200,11 +205,11 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
             if name == "this" {
                 "self.ptr".to_string()
             } else if typ.is_custom {
-                format!("{}.ptr", name.to_mixed_case())
+                format!("{}.ptr", name.to_lower_camel_case())
             } else if ty_name == "Bool" {
-                format!("{} ? 1 : 0", name.to_mixed_case())
+                format!("{} ? 1 : 0", name.to_lower_camel_case())
             } else {
-                name.to_mixed_case()
+                name.to_lower_camel_case()
             }
         )?;
     }
@@ -228,7 +233,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
                 if name == "this" {
                     "self".to_string()
                 } else {
-                    name.to_mixed_case()
+                    name.to_lower_camel_case()
                 }
             )?;
         }
