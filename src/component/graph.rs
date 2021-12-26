@@ -504,6 +504,8 @@ fn calculate_live_delta_point(timer: &Snapshot<'_>, draw_info: &mut DrawInfo, co
 fn calculate_vertical_scaling(draw_info: &mut DrawInfo) {
     const MIN_PADDING: f32 = HEIGHT / 24.0;
     const MAX_CONTENT_HEIGHT: f32 = HEIGHT - MIN_PADDING * 2.0;
+    // The bigger this value, the longer it will take for padding_y to get close
+    // to MIN_PADDING.
     const SMOOTHNESS: f32 = 0.2;
 
     let total_delta = draw_info.max_delta - draw_info.min_delta;
