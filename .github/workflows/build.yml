@@ -656,6 +656,22 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  bind_gen:
+    name: Generate bindings
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Commit
+        uses: actions/checkout@v2
+
+      - name: Install Rust
+        uses: hecrj/setup-rust-action@v1
+
+      - name: Generate bindings
+        run: |
+          cd capi/bind_gen
+          cargo run
+          cd ../..
+
   clippy:
     name: Check clippy lints
     runs-on: ubuntu-latest
