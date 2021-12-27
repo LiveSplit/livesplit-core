@@ -1,5 +1,5 @@
 use crate::{Class, Function, Type, TypeKind};
-use heck::MixedCase;
+use heck::ToLowerCamelCase;
 use std::{
     borrow::Cow,
     collections::BTreeMap,
@@ -76,7 +76,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
 extern "C" JNIEXPORT {} Java_livesplitcore_LiveSplitCoreNative_{}_1{}(JNIEnv* jni_env, jobject"#,
         return_type,
         class_name,
-        function.method.to_mixed_case()
+        function.method.to_lower_camel_case()
     )?;
 
     for (name, typ) in &function.inputs {
