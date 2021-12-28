@@ -87,7 +87,7 @@ fn all_components() {
 
     check_dims(&state, [300, 800], "4en3ocnJJ/E=", "all_components");
 
-    check_dims(&state, [150, 800], "SXfPSWVpRlc=", "all_components_thin");
+    check_dims(&state, [150, 800], "SXfHSWVpRlc=", "all_components_thin");
 }
 
 #[test]

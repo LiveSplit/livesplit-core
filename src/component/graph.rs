@@ -1,7 +1,14 @@
 //! Provides the Graph Component and relevant types for using it. The Graph
 //! Component visualizes how far the current attempt has been ahead or behind
-//! the chosen comparison throughout the whole attempt. All the individual
-//! deltas are shown as points in a graph.
+//! the chosen comparison throughout the whole attempt. Every point of the graph
+//! represents a split. Its x-coordinate is proportional to the split time and
+//! its y-coordinate is proportional to the split delta. The entire diagram is
+//! refered to as the chart and it contains the graph. The x-axis is the
+//! horizontal line that separates positive deltas from negative ones.
+
+// The words "padding" and "content" are from the CSS box model. "Padding" is an
+// area at the top/bottom that stays empty so that the graph doesn't touch the
+// edge. "Content" is the rest (the area inside).
 
 use crate::{
     analysis, comparison,
@@ -13,11 +20,9 @@ use crate::{
 use alloc::borrow::Cow;
 use serde::{Deserialize, Serialize};
 
-const GRAPH_EDGE_VALUE: f32 = 200.0;
-const GRAPH_EDGE_MIN: f32 = 5.0;
-
-const WIDTH: f32 = 180.0;
-const HEIGHT: f32 = 120.0;
+const WIDTH: f32 = 1.0;
+const HEIGHT: f32 = 1.0;
+const DEFAULT_X_AXIS: f32 = HEIGHT / 2.0;
 
 /// The Graph Component visualizes how far the current attempt has been ahead or
 /// behind the chosen comparison throughout the whole attempt. All the
@@ -37,85 +42,92 @@ pub struct Settings {
     /// Specifies if the best segments should be colored with the layout's best
     /// segment color.
     pub show_best_segments: bool,
-    /// Specifies if the graph should automatically adjust to all the changes
-    /// automatically. If this is deactivated, the only changes to the graph
-    /// happen whenever the current segment changes.
+    /// Specifies if the graph should automatically adjust to all changes. If
+    /// this is deactivated, changes to the graph only happen whenever the
+    /// current segment changes.
     pub live_graph: bool,
-    /// Flips the graph. If set to `false`, the times ahead of the comparison
-    /// are at bottom and the times behind are at the top. This settings flips
-    /// it.
+    /// Flips the chart. If set to `false`, split times which are ahead of the
+    /// comparison are displayed below the x-axis and times which are behind are
+    /// above it. Enabling this settings flips it.
     pub flip_graph: bool,
-    /// The background color shown for the region behind the graph that shows
-    /// the times that are behind the comparison.
+    /// The background color for the chart region containing the times that are
+    /// behind the comparison.
     pub behind_background_color: Color,
-    /// The background color shown for the region behind the graph that shows
-    /// the times that are ahead of the comparison.
+    /// The background color for the chart region containing the times that are
+    /// ahead of the comparison.
     pub ahead_background_color: Color,
-    /// The color of the grid lines on the graph.
+    /// The color of the chart's grid lines.
     pub grid_lines_color: Color,
-    /// The color of the lines connecting all the graph's points.
+    /// The color of the lines connecting the graph's points.
     pub graph_lines_color: Color,
-    /// The color of the polygon connecting all the graph's points. The partial
-    /// fill color is only used for live changes.
+    /// The color of the region enclosed by the x-axis and the graph. The
+    /// partial fill color is only used for live changes. More specifically,
+    /// this color is used in the interval from the last split time to the
+    /// current time.
     pub partial_fill_color: Color,
-    /// The color of the polygon connecting all the graph's points.
+    /// The color of the region enclosed by the x-axis and the graph, excluding
+    /// the graph segment with live changes.
     pub complete_fill_color: Color,
-    /// The height of the graph.
+    /// The height of the chart.
     pub height: u32,
 }
 
 /// The state object describes the information to visualize for this component.
-/// All the coordinates are in the range 0..1.
+/// All coordinates are in the range `0..1`.
 #[derive(Default, Serialize, Deserialize)]
 pub struct State {
-    /// All of the graph's points. Connect all of them to visualize the graph.
+    /// All of the graph's points. Connect them to visualize the graph.
     /// If the live delta is active, the last point is to be interpreted as a
-    /// preview of the next split that is about to happen. Use the partial fill
-    /// color to visualize the region beneath that graph segment.
+    /// preview of the next split. Use the partial fill color to visualize the
+    /// region beneath that graph segment.
     pub points: Vec<Point>,
-    /// Contains the y coordinates of all the horizontal grid lines.
+    /// The y-coordinates of all the horizontal grid lines.
     pub horizontal_grid_lines: Vec<f32>,
-    /// Contains the x coordinates of all the vertical grid lines.
+    /// The x-coordinates of all the vertical grid lines.
     pub vertical_grid_lines: Vec<f32>,
-    /// The y coordinate that separates the region that shows the times that are
-    /// ahead of the comparison and those that are behind.
+    /// The y-coordinate of the x-axis.
     pub middle: f32,
     /// If the live delta is active, the last point is to be interpreted as a
-    /// preview of the next split that is about to happen. Use the partial fill
-    /// color to visualize the region beneath that graph segment.
+    /// preview of the next split. Use the partial fill color to visualize the
+    /// region beneath that graph segment.
     pub is_live_delta_active: bool,
-    /// Describes whether the graph is flipped vertically. For visualizing the
-    /// graph, this usually doesn't need to be interpreted, as this information
-    /// is entirely encoded into the other variables.
+    /// Describes whether the chart is flipped vertically. For visualization,
+    /// this can usually be ignored, as it is already regarded in the
+    /// other variables.
     pub is_flipped: bool,
-    /// The background color to use for the top region of the graph. The top
-    /// region ends at the y coordinate of the middle.
+    /// The background color of the region of the chart that is above the
+    /// x-axis.
     pub top_background_color: Color,
-    /// The background color to use for the bottom region of the graph. The top
-    /// region begins at the y coordinate of the middle.
+    /// The background color of the region of the chart that is below the
+    /// x-axis.
     pub bottom_background_color: Color,
-    /// The color of the grid lines on the graph.
+    /// The color of the chart's grid lines.
     pub grid_lines_color: Color,
-    /// The color of the lines connecting all the graph's points.
+    /// The color of the lines connecting the graph's points.
     pub graph_lines_color: Color,
-    /// The color of the polygon connecting all the graph's points. The partial
-    /// fill color is only used for live changes.
+    /// The color of the region enclosed by the x-axis and the graph. The
+    /// partial fill color is only used for live changes. More specifically,
+    /// this color is used in the interval from the last split time to the
+    /// current time.
     pub partial_fill_color: Color,
-    /// The color of the polygon connecting all the graph's points.
+    /// The color of the region enclosed by the x-axis and the graph, excluding
+    /// the graph segment with live changes.
     pub complete_fill_color: Color,
-    /// The best segment color to use for coloring graph segments that achieved
-    /// a new best segment time.
+    /// The color of the lines of graph segments that achieved a new best
+    /// segment time.
     pub best_segment_color: Color,
-    /// The height of the graph.
+    /// The height of the chart.
     pub height: u32,
 }
 
 /// Describes a point on the graph to visualize.
 #[derive(Serialize, Deserialize)]
 pub struct Point {
-    /// The x coordinate of the point.
+    /// The x-coordinate of the point.
     pub x: f32,
-    /// The y coordinate of the point.
+    /// The y-coordinate of the point.
+    // N.B. this is initially set to an intermediate value which needs to be
+    // transformed before being sent to the renderer, see transform_y_coordinates.
     pub y: f32,
     /// Describes whether the segment this point is visualizing achieved a new
     /// best segment time. Use the best segment color for it, in that case.
@@ -124,7 +136,7 @@ pub struct Point {
 
 impl Default for Settings {
     fn default() -> Self {
-        Settings {
+        Self {
             comparison_override: None,
             show_best_segments: false,
             live_graph: true,
@@ -151,19 +163,33 @@ impl State {
     }
 }
 
+/// Private struct to reduce the number of function arguments.
 #[derive(Default)]
 struct DrawInfo {
-    final_split: TimeSpan,
-    deltas: Vec<Option<TimeSpan>>,
-    max_delta: TimeSpan,
-    min_delta: TimeSpan,
+    points: Vec<Point>,
+    /// The lowest delta value in seconds.
+    min_delta: f32,
+    /// The highest delta value in seconds.
+    max_delta: f32,
+    scale_factor_x: Option<f32>,
+    scale_factor_y: Option<f32>,
+    padding_y: f32,
+    split_index: usize,
+    flip_graph: bool,
     is_live_delta_active: bool,
+}
+
+#[derive(Default)]
+struct GridLines {
+    /// The offset of the first grid line followed by the grid line distance.
+    horizontal: Option<(f32, f32)>,
+    vertical: Option<f32>,
 }
 
 impl Component {
     /// Creates a new Graph Component.
     pub fn new() -> Self {
-        Default::default()
+        Self::default()
     }
 
     /// Creates a new Graph Component with the given settings.
@@ -207,28 +233,36 @@ impl Component {
         timer: &Snapshot<'_>,
         layout_settings: &GeneralLayoutSettings,
     ) {
-        let comparison = comparison::resolve(&self.settings.comparison_override, timer);
-        let comparison = comparison::or_current(comparison, timer);
-
         let mut draw_info = DrawInfo {
-            deltas: Vec::with_capacity(timer.run().len() + 1),
-            ..Default::default()
+            flip_graph: self.settings.flip_graph,
+            ..DrawInfo::default()
         };
 
-        self.calculate_final_split(timer, &mut draw_info);
-        calculate_deltas(timer, comparison, &mut draw_info);
-        self.check_live_segment_delta(timer, comparison, &mut draw_info);
+        let x_axis = self
+            .calculate_graph(timer, &mut draw_info)
+            .unwrap_or(DEFAULT_X_AXIS);
 
-        self.calculate_points(state, timer, &draw_info, layout_settings);
+        if draw_info.points.is_empty() {
+            draw_info.points.push(Point {
+                x: 0.0,
+                y: DEFAULT_X_AXIS,
+                is_best_segment: false,
+            });
+        }
 
-        make_uniform(state);
-        self.flip(state);
+        let grid_lines = calculate_grid_lines(&draw_info, x_axis);
+        update_grid_line_vecs(state, grid_lines);
+        self.copy_settings_to_state(state);
+        state.best_segment_color = layout_settings.best_segment_color;
+        state.middle = x_axis;
+        state.is_live_delta_active = draw_info.is_live_delta_active;
+        state.points = draw_info.points;
     }
 
     /// Calculates the component's state based on the timer and layout settings
     /// provided.
     pub fn state(&self, timer: &Snapshot<'_>, layout_settings: &GeneralLayoutSettings) -> State {
-        let mut state = Default::default();
+        let mut state = State::default();
         self.update_state(&mut state, timer, layout_settings);
         state
     }
@@ -299,399 +333,283 @@ impl Component {
         }
     }
 
-    fn flip(&self, state: &mut State) {
-        if self.settings.flip_graph {
-            for y in &mut state.horizontal_grid_lines {
-                *y = 1.0 - *y;
-            }
+    fn calculate_graph(&self, timer: &Snapshot<'_>, draw_info: &mut DrawInfo) -> Option<f32> {
+        let settings = &self.settings;
+        draw_info.split_index = timer.current_split_index()?;
+        let comparison = comparison::resolve(&self.settings.comparison_override, timer);
+        let comparison = comparison::or_current(comparison, timer);
 
-            for point in &mut state.points {
-                point.y = 1.0 - point.y;
-            }
+        calculate_horizontal_scaling(timer, draw_info, settings.live_graph);
+        draw_info.scale_factor_x?;
 
-            state.middle = 1.0 - state.middle;
+        draw_info.points = Vec::with_capacity(draw_info.split_index + 1);
+        draw_info.points.push(Point {
+            x: 0.0,
+            y: 0.0, // Not the final value of y, this will end up on the x-axis.
+            is_best_segment: false,
+        });
+
+        calculate_split_points(timer, draw_info, comparison, settings.show_best_segments);
+        if settings.live_graph {
+            calculate_live_delta_point(timer, draw_info, comparison);
         }
+
+        calculate_vertical_scaling(draw_info);
+        let x_axis = calculate_x_axis(draw_info);
+
+        transform_y_coordinates(draw_info);
+
+        Some(x_axis)
     }
 
-    fn calculate_points(
-        &self,
-        state: &mut State,
-        timer: &Timer,
-        draw_info: &DrawInfo,
-        layout_settings: &GeneralLayoutSettings,
-    ) {
-        let total_delta = draw_info.min_delta - draw_info.max_delta;
-
-        let (graph_edge, graph_height, middle) =
-            calculate_middle_and_graph_edge(total_delta, draw_info);
-
-        let (grid_value_x, grid_value_y) =
-            calculate_grid_lines(timer, total_delta, graph_edge, graph_height, draw_info);
-
-        update_grid_lines(state, graph_height, middle, grid_value_x, grid_value_y);
-
-        self.update_points(
-            state,
-            draw_info,
-            timer,
-            total_delta,
-            graph_edge,
-            graph_height,
-        );
-
-        let (top_background_color, bottom_background_color) = if self.settings.flip_graph {
+    fn copy_settings_to_state(&self, state: &mut State) {
+        let settings = &self.settings;
+        let (top_background_color, bottom_background_color) = if settings.flip_graph {
             (
-                self.settings.ahead_background_color,
-                self.settings.behind_background_color,
+                settings.ahead_background_color,
+                settings.behind_background_color,
             )
         } else {
             (
-                self.settings.behind_background_color,
-                self.settings.ahead_background_color,
+                settings.behind_background_color,
+                settings.ahead_background_color,
             )
         };
 
-        state.middle = middle;
-        state.is_live_delta_active = draw_info.is_live_delta_active;
-        state.is_flipped = self.settings.flip_graph;
+        state.is_flipped = settings.flip_graph;
         state.top_background_color = top_background_color;
         state.bottom_background_color = bottom_background_color;
-        state.grid_lines_color = self.settings.grid_lines_color;
-        state.graph_lines_color = self.settings.graph_lines_color;
-        state.partial_fill_color = self.settings.partial_fill_color;
-        state.complete_fill_color = self.settings.complete_fill_color;
-        state.best_segment_color = layout_settings.best_segment_color;
-        state.height = self.settings.height;
-    }
-
-    fn update_points(
-        &self,
-        state: &mut State,
-        draw_info: &DrawInfo,
-        timer: &Timer,
-        total_delta: TimeSpan,
-        graph_edge: f32,
-        graph_height: f32,
-    ) {
-        let points = &mut state.points;
-        points.clear();
-
-        if !draw_info.deltas.is_empty() {
-            let mut height_one = if total_delta != TimeSpan::zero() {
-                (-draw_info.max_delta.total_milliseconds() / total_delta.total_milliseconds())
-                    as f32
-                    * (graph_height - graph_edge)
-                    * 2.0
-                    + graph_edge
-            } else {
-                graph_height
-            };
-            let (mut width_one, mut width_two, mut height_two) = (0.0, 0.0, 0.0);
-
-            points.push(Point {
-                x: width_one,
-                y: height_one,
-                is_best_segment: false,
-            });
-
-            for (y, &delta) in draw_info.deltas.iter().enumerate() {
-                if let Some(delta) = delta {
-                    calculate_right_side_coordinates(
-                        draw_info,
-                        timer,
-                        total_delta,
-                        graph_edge,
-                        graph_height,
-                        delta,
-                        &mut height_two,
-                        &mut width_two,
-                        y,
-                    );
-
-                    let is_best_segment = self.check_best_segment(timer, y);
-
-                    points.push(Point {
-                        x: width_two,
-                        y: height_two,
-                        is_best_segment,
-                    });
-
-                    calculate_left_side_coordinates(
-                        draw_info,
-                        timer,
-                        total_delta,
-                        graph_edge,
-                        graph_height,
-                        delta,
-                        &mut height_one,
-                        &mut width_one,
-                        y,
-                    );
-                }
-            }
-        }
-    }
-
-    fn check_best_segment(&self, timer: &Timer, split_number: usize) -> bool {
-        self.settings.show_best_segments
-            && split_number < timer.run().len()
-            && analysis::check_best_segment(timer, split_number, timer.current_timing_method())
-    }
-
-    fn calculate_final_split(&self, timer: &Snapshot<'_>, draw_info: &mut DrawInfo) {
-        if timer.current_phase() != TimerPhase::NotRunning {
-            if self.settings.live_graph {
-                let current_time = timer.current_time();
-                let timing_method = timer.current_timing_method();
-                draw_info.final_split = current_time[timing_method]
-                    .or(current_time.real_time)
-                    .unwrap_or_else(TimeSpan::zero);
-            } else {
-                let timing_method = timer.current_timing_method();
-                for segment in timer.run().segments()[..timer.current_split_index().unwrap()]
-                    .iter()
-                    .rev()
-                {
-                    if let Some(time) = segment.split_time()[timing_method] {
-                        draw_info.final_split = time;
-                        return;
-                    }
-                }
-            }
-        }
-    }
-
-    fn check_live_segment_delta(
-        &self,
-        timer: &Snapshot<'_>,
-        comparison: &str,
-        draw_info: &mut DrawInfo,
-    ) {
-        if self.settings.live_graph {
-            let current_phase = timer.current_phase();
-            if current_phase == TimerPhase::Running || current_phase == TimerPhase::Paused {
-                let timing_method = timer.current_timing_method();
-                let mut best_segment =
-                    analysis::check_live_delta(timer, true, comparison, timing_method);
-                // FIXME: Try if let instead of checking current phase up there,
-                // so we can skip this unwrap
-                let current_split =
-                    timer.current_split().unwrap().comparison(comparison)[timing_method];
-                let current_time = timer.current_time()[timing_method];
-                if let (Some(current_time), Some(current_split), None) =
-                    (current_time, current_split, best_segment)
-                {
-                    let diff = current_time - current_split;
-                    if diff > draw_info.min_delta {
-                        best_segment = Some(diff);
-                    }
-                }
-                if let Some(best_segment) = best_segment {
-                    if best_segment > draw_info.max_delta {
-                        draw_info.max_delta = best_segment;
-                    } else if best_segment < draw_info.min_delta {
-                        draw_info.min_delta = best_segment;
-                    }
-                    draw_info.deltas.push(Some(best_segment));
-                    draw_info.is_live_delta_active = true;
-                }
-            }
-        }
+        state.grid_lines_color = settings.grid_lines_color;
+        state.graph_lines_color = settings.graph_lines_color;
+        state.partial_fill_color = settings.partial_fill_color;
+        state.complete_fill_color = settings.complete_fill_color;
+        state.height = settings.height;
     }
 }
 
-fn calculate_deltas(timer: &Timer, comparison: &str, draw_info: &mut DrawInfo) {
+fn calculate_horizontal_scaling(timer: &Snapshot<'_>, draw_info: &mut DrawInfo, live_graph: bool) {
     let timing_method = timer.current_timing_method();
-    for segment in timer.run().segments() {
-        let time = catch! {
-            let time = segment.split_time()[timing_method]?
-                - segment.comparison(comparison)[timing_method]?;
 
-            if time > draw_info.max_delta {
-                draw_info.max_delta = time;
-            } else if time < draw_info.min_delta {
-                draw_info.min_delta = time;
+    // final_split is the split time of a theoretical point on the right edge of
+    // the chart.
+    let mut final_split = 0.0;
+    if live_graph {
+        let current_time = timer.current_time();
+        final_split = current_time[timing_method]
+            .or(current_time.real_time)
+            .unwrap_or_else(TimeSpan::zero)
+            .total_seconds() as f32;
+    } else {
+        // Find the last segment with a split time.
+        for segment in timer.run().segments()[..draw_info.split_index].iter().rev() {
+            if let Some(time) = segment.split_time()[timing_method] {
+                final_split = time.total_seconds() as f32;
+                break;
+            }
+        }
+    }
+
+    if final_split > 0.0 {
+        draw_info.scale_factor_x = Some(WIDTH / final_split);
+    }
+
+    // Else scaling doesn't matter and scale_factor_x stays None.
+}
+
+/// Calculates the points' x-coordinates and their deltas, which determine their
+/// y-coordinates. The deltas are stored as the points' y-coordinates and will
+/// have to be corrected before rendering.
+fn calculate_split_points(
+    timer: &Timer,
+    draw_info: &mut DrawInfo,
+    comparison: &str,
+    show_best_segments: bool,
+) {
+    let timing_method = timer.current_timing_method();
+
+    for (i, segment) in timer.run().segments()[..draw_info.split_index]
+        .iter()
+        .enumerate()
+    {
+        catch! {
+            let split_time = segment.split_time()[timing_method]?;
+            let comparison_time = segment.comparison(comparison)[timing_method]?;
+            let delta = (split_time - comparison_time).total_seconds() as f32;
+
+            if delta > draw_info.max_delta {
+                draw_info.max_delta = delta;
+            } else if delta < draw_info.min_delta {
+                draw_info.min_delta = delta;
             }
 
-            time
+            let x = split_time.total_seconds() as f32 * draw_info.scale_factor_x.unwrap_or(0.0);
+
+            let is_best_segment =
+                show_best_segments && analysis::check_best_segment(timer, i, timing_method);
+
+            draw_info.points.push(Point {
+                x,
+                y: delta, // Not the final value of y.
+                is_best_segment,
+            });
         };
-        draw_info.deltas.push(time);
     }
 }
 
-fn make_uniform(state: &mut State) {
-    for grid_line in &mut state.horizontal_grid_lines {
-        *grid_line /= HEIGHT;
+fn calculate_live_delta_point(timer: &Snapshot<'_>, draw_info: &mut DrawInfo, comparison: &str) {
+    if timer.current_phase() == TimerPhase::Ended {
+        return;
     }
 
-    for grid_line in &mut state.vertical_grid_lines {
-        *grid_line /= WIDTH;
-    }
+    let timing_method = timer.current_timing_method();
+    let mut live_delta = analysis::check_live_delta(timer, true, comparison, timing_method);
+    let current_time = timer.current_time()[timing_method];
+    let current_split_comparison = timer
+        .run()
+        .segment(draw_info.split_index)
+        .comparison(comparison)[timing_method];
 
-    state.middle /= HEIGHT;
-
-    for point in &mut state.points {
-        point.x /= WIDTH;
-        point.y /= HEIGHT;
-    }
-}
-
-fn calculate_left_side_coordinates(
-    draw_info: &DrawInfo,
-    timer: &Timer,
-    total_delta: TimeSpan,
-    graph_edge: f32,
-    graph_height: f32,
-    delta: TimeSpan,
-    height_one: &mut f32,
-    width_one: &mut f32,
-    y: usize,
-) {
-    if total_delta != TimeSpan::zero() {
-        *height_one = (delta.total_milliseconds() as f32
-            - draw_info.max_delta.total_milliseconds() as f32)
-            / total_delta.total_milliseconds() as f32
-            * (graph_height - graph_edge)
-            * 2.0
-            + graph_edge;
-    } else {
-        *height_one = graph_height;
-    }
-
-    if y + 1 != draw_info.deltas.len() {
-        if let Some(split_time) = timer.run().segment(y).split_time()[timer.current_timing_method()]
-        {
-            *width_one = (split_time.total_milliseconds() as f32
-                / draw_info.final_split.total_milliseconds() as f32)
-                * WIDTH;
-        }
-    }
-}
-
-fn calculate_right_side_coordinates(
-    draw_info: &DrawInfo,
-    timer: &Timer,
-    total_delta: TimeSpan,
-    graph_edge: f32,
-    graph_height: f32,
-    delta: TimeSpan,
-    height_two: &mut f32,
-    width_two: &mut f32,
-    y: usize,
-) {
-    if y + 1 == draw_info.deltas.len() && draw_info.is_live_delta_active {
-        *width_two = WIDTH;
-    } else if let Some(split_time) =
-        timer.run().segment(y).split_time()[timer.current_timing_method()]
+    if let (Some(current_time), Some(current_split_comparison), None) =
+        (current_time, current_split_comparison, live_delta)
     {
-        *width_two = (split_time.total_milliseconds() as f32
-            / draw_info.final_split.total_milliseconds() as f32)
-            * WIDTH;
+        // Live delta should be shown despite what analysis::check_live_delta says.
+        let delta = current_time - current_split_comparison;
+        if delta.total_seconds() as f32 > draw_info.min_delta {
+            live_delta = Some(delta);
+        }
     }
 
-    if total_delta != TimeSpan::zero() {
-        *height_two = (delta.total_milliseconds() as f32
-            - draw_info.max_delta.total_milliseconds() as f32)
-            / total_delta.total_milliseconds() as f32
-            * (graph_height - graph_edge)
-            * 2.0
-            + graph_edge;
-    } else {
-        *height_two = graph_height;
+    if let Some(live_delta) = live_delta {
+        let delta = live_delta.total_seconds() as f32;
+        if delta > draw_info.max_delta {
+            draw_info.max_delta = delta;
+        } else if delta < draw_info.min_delta {
+            draw_info.min_delta = delta;
+        }
+
+        draw_info.points.push(Point {
+            x: WIDTH,
+            y: delta, // Not the final value of y.
+            is_best_segment: false,
+        });
+        draw_info.is_live_delta_active = true;
     }
 }
 
-fn update_grid_lines(
-    state: &mut State,
-    graph_height: f32,
-    middle: f32,
-    grid_value_x: f32,
-    grid_value_y: f32,
-) {
-    let horizontal_grid_lines = &mut state.horizontal_grid_lines;
-    let vertical_grid_lines = &mut state.vertical_grid_lines;
+/// Calculates the size of the chart's padding and its vertical scale factor.
+/// The padding is an area at the top/bottom that stays empty so that the graph
+/// doesn't touch the edge of the chart. This value depends on
+/// `min_`/`max_delta` because otherwise the scale factor would be huge for
+/// small graphs (graphs with only small deltas).
+fn calculate_vertical_scaling(draw_info: &mut DrawInfo) {
+    const MIN_PADDING: f32 = HEIGHT / 24.0;
+    const MAX_CONTENT_HEIGHT: f32 = HEIGHT - MIN_PADDING * 2.0;
+    // The bigger this value, the longer it will take for padding_y to get close
+    // to MIN_PADDING.
+    const SMOOTHNESS: f32 = 0.2;
 
-    horizontal_grid_lines.clear();
-    vertical_grid_lines.clear();
+    let total_delta = draw_info.max_delta - draw_info.min_delta;
+    if total_delta > 0.0 {
+        // A hyperbola works well, this looks something like f(x) = 1/(x + 2)
+        draw_info.padding_y =
+            MAX_CONTENT_HEIGHT * SMOOTHNESS / (total_delta + SMOOTHNESS * 2.0) + MIN_PADDING;
 
-    if grid_value_x > 0.0 {
-        let mut x = grid_value_x;
+        let content_height = HEIGHT - draw_info.padding_y * 2.0;
+        draw_info.scale_factor_y = Some(content_height / total_delta);
+    }
+
+    // Else padding_y stays 0 and scale_factor_y stays None, because vertical
+    // scaling doesn't matter if all the points are at y=0.
+}
+
+fn calculate_x_axis(draw_info: &DrawInfo) -> f32 {
+    if let Some(scale_factor_y) = draw_info.scale_factor_y {
+        let x_axis = draw_info.max_delta * scale_factor_y + draw_info.padding_y;
+        if draw_info.flip_graph {
+            HEIGHT - x_axis
+        } else {
+            x_axis
+        }
+    } else {
+        DEFAULT_X_AXIS
+    }
+}
+
+fn calculate_grid_lines(draw_info: &DrawInfo, x_axis: f32) -> GridLines {
+    // Initially, the grid lines are all one second apart. Once a certain amount
+    // of lines is on screen, that number of seconds increases.
+
+    // When to reduce the amount of grid lines.
+    const REDUCE_LINES_THRESHOLD_HORIZONTAL: f32 = HEIGHT / 6.0;
+    const REDUCE_LINES_THRESHOLD_VERTICAL: f32 = HEIGHT / 9.0;
+    // How much bigger the distance between the lines should get.
+    const LINE_DISTANCE_FACTOR: f32 = 6.0;
+
+    let mut ret = GridLines::default();
+    if let Some(scale_factor_y) = draw_info.scale_factor_y {
+        let mut distance = scale_factor_y;
+        while distance < REDUCE_LINES_THRESHOLD_HORIZONTAL {
+            distance *= LINE_DISTANCE_FACTOR;
+        }
+
+        // The x-axis should always be on a grid line.
+        let offset = x_axis % distance;
+
+        ret.horizontal = Some((offset, distance));
+    } else {
+        // Show just one grid line, the x-axis.
+        ret.horizontal = Some((DEFAULT_X_AXIS, f32::INFINITY));
+    }
+
+    if let Some(scale_factor_x) = draw_info.scale_factor_x {
+        let mut distance = scale_factor_x;
+        while distance < REDUCE_LINES_THRESHOLD_VERTICAL {
+            distance *= LINE_DISTANCE_FACTOR;
+        }
+
+        ret.vertical = Some(distance);
+    }
+
+    ret
+}
+
+/// Copies the information from `grid_lines` into `Vec`s.
+fn update_grid_line_vecs(state: &mut State, grid_lines: GridLines) {
+    state.horizontal_grid_lines.clear();
+    if let Some((offset, distance)) = grid_lines.horizontal {
+        let mut y = offset;
+        while y < HEIGHT {
+            state.horizontal_grid_lines.push(y);
+            y += distance;
+        }
+    }
+
+    state.vertical_grid_lines.clear();
+    if let Some(distance) = grid_lines.vertical {
+        let mut x = distance;
         while x < WIDTH {
-            vertical_grid_lines.push(x);
-            x += grid_value_x;
+            state.vertical_grid_lines.push(x);
+            x += distance;
         }
-    }
-
-    let mut y = middle - 1.0;
-    while y > 0.0 {
-        horizontal_grid_lines.push(y);
-        if grid_value_y < 0.0 {
-            break;
-        }
-        y -= grid_value_y;
-    }
-
-    let mut y = middle;
-    while y < 2.0 * graph_height {
-        horizontal_grid_lines.push(y);
-        if grid_value_y < 0.0 {
-            break;
-        }
-        y += grid_value_y;
     }
 }
 
-fn calculate_grid_lines(
-    timer: &Timer,
-    total_delta: TimeSpan,
-    graph_edge: f32,
-    graph_height: f32,
-    draw_info: &DrawInfo,
-) -> (f32, f32) {
-    let (mut grid_value_x, mut grid_value_y);
-
-    let current_phase = timer.current_phase();
-    if current_phase != TimerPhase::NotRunning && draw_info.final_split > TimeSpan::zero() {
-        grid_value_x = 1000.0;
-        while draw_info.final_split.total_milliseconds() as f32 / grid_value_x > WIDTH / 20.0 {
-            grid_value_x *= 6.0;
+/// Before calling this function, the deltas are stored as the points'.
+/// y-coordinates. This will calculate the actual y-coordinates and replace the
+/// deltas. The reason why this can't be done in the first loop is that
+/// `min_`/`max_delta` is not known yet at that point in time.
+fn transform_y_coordinates(draw_info: &mut DrawInfo) {
+    if let Some(scale_factor_y) = draw_info.scale_factor_y {
+        for point in &mut draw_info.points {
+            let delta = point.y;
+            point.y = (draw_info.max_delta - delta) * scale_factor_y + draw_info.padding_y;
+            if draw_info.flip_graph {
+                point.y = HEIGHT - point.y;
+            }
         }
-        grid_value_x = (grid_value_x / draw_info.final_split.total_milliseconds() as f32) * WIDTH;
     } else {
-        grid_value_x = -1.0;
-    }
-    if current_phase != TimerPhase::NotRunning && total_delta < TimeSpan::zero() {
-        grid_value_y = 1000.0;
-        while (-total_delta.total_milliseconds() as f32) / grid_value_y
-            > (graph_height - graph_edge) * (2.0 / 20.0)
-        {
-            grid_value_y *= 6.0;
+        for point in &mut draw_info.points {
+            point.y = DEFAULT_X_AXIS;
         }
-        grid_value_y = (grid_value_y / (-total_delta.total_milliseconds() as f32))
-            * (graph_height - graph_edge)
-            * 2.0;
-    } else {
-        grid_value_y = -1.0;
     }
-
-    (grid_value_x, grid_value_y)
-}
-
-fn calculate_middle_and_graph_edge(total_delta: TimeSpan, draw_info: &DrawInfo) -> (f32, f32, f32) {
-    let mut graph_edge = 0.0;
-    const GRAPH_HEIGHT: f32 = HEIGHT / 2.0;
-    let middle = if total_delta != TimeSpan::zero() {
-        graph_edge = GRAPH_EDGE_VALUE
-            / (-total_delta.total_milliseconds() as f32 + 2.0 * GRAPH_EDGE_VALUE)
-            * (GRAPH_HEIGHT * 2.0 - GRAPH_EDGE_MIN * 2.0);
-        graph_edge += GRAPH_EDGE_MIN;
-        (-(draw_info.max_delta.total_milliseconds() as f32
-            / total_delta.total_milliseconds() as f32))
-            * (GRAPH_HEIGHT - graph_edge)
-            * 2.0
-            + graph_edge
-    } else {
-        GRAPH_HEIGHT
-    };
-    (graph_edge, GRAPH_HEIGHT, middle)
 }
