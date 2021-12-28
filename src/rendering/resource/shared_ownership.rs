@@ -1,4 +1,4 @@
-use std::{rc::Rc, sync::Arc};
+use alloc::{rc::Rc, sync::Arc};
 
 /// Describes that ownership of a value can be cheaply shared. This is similar
 /// to the [`Clone`] trait, but is expected to only be implemented if sharing is

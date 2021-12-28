@@ -5,10 +5,11 @@ use std::{mem, ops::Deref, rc::Rc};
 
 use super::{
     entity::Entity,
+    path_based_text_engine::{Font, Label, TextEngine},
     resource::{self, ResourceAllocator},
-    FillShader, Scene, SceneManager, SharedOwnership, Transform,
+    FillShader, FontKind, Scene, SceneManager, SharedOwnership, Transform,
 };
-use crate::layout::LayoutState;
+use crate::{layout::LayoutState, settings};
 use image::ImageBuffer;
 use tiny_skia::{
     BlendMode, Color, FillRule, FilterQuality, GradientStop, LinearGradient, Paint, Path,
@@ -21,8 +22,10 @@ struct SkiaBuilder(PathBuilder);
 
 type SkiaPath = Option<UnsafeRc<Path>>;
 type SkiaImage = Option<UnsafeRc<Pixmap>>;
+type SkiaFont = Font<SkiaPath>;
+type SkiaLabel = Label<SkiaPath>;
 
-impl resource::PathBuilder<SkiaAllocator> for SkiaBuilder {
+impl resource::PathBuilder for SkiaBuilder {
     type Path = SkiaPath;
 
     fn move_to(&mut self, x: f32, y: f32) {
@@ -45,7 +48,7 @@ impl resource::PathBuilder<SkiaAllocator> for SkiaBuilder {
         self.0.close()
     }
 
-    fn finish(self, _: &mut SkiaAllocator) -> Self::Path {
+    fn finish(self) -> Self::Path {
         self.0.finish().map(UnsafeRc::new)
     }
 }
@@ -65,15 +68,19 @@ fn convert_transform(transform: &Transform) -> tiny_skia::Transform {
     )
 }
 
-struct SkiaAllocator;
+struct SkiaAllocator {
+    text_engine: TextEngine,
+}
 
 impl ResourceAllocator for SkiaAllocator {
     type PathBuilder = SkiaBuilder;
     type Path = SkiaPath;
     type Image = SkiaImage;
+    type Font = SkiaFont;
+    type Label = SkiaLabel;
 
     fn path_builder(&mut self) -> Self::PathBuilder {
-        SkiaBuilder(PathBuilder::new())
+        path_builder()
     }
 
     fn create_image(&mut self, width: u32, height: u32, data: &[u8]) -> Self::Image {
@@ -87,6 +94,35 @@ impl ResourceAllocator for SkiaAllocator {
         }
         Some(UnsafeRc::new(image))
     }
+
+    fn create_font(&mut self, font: Option<&settings::Font>, kind: FontKind) -> Self::Font {
+        self.text_engine.create_font(font, kind)
+    }
+
+    fn create_label(
+        &mut self,
+        text: &str,
+        font: &mut Self::Font,
+        max_width: Option<f32>,
+    ) -> Self::Label {
+        self.text_engine
+            .create_label(path_builder, text, font, max_width)
+    }
+
+    fn update_label(
+        &mut self,
+        label: &mut Self::Label,
+        text: &str,
+        font: &mut Self::Font,
+        max_width: Option<f32>,
+    ) {
+        self.text_engine
+            .update_label(path_builder, label, text, font, max_width)
+    }
+}
+
+fn path_builder() -> SkiaBuilder {
+    SkiaBuilder(PathBuilder::new())
 }
 
 /// The software renderer allows rendering layouts entirely on the CPU. This is
@@ -95,7 +131,8 @@ impl ResourceAllocator for SkiaAllocator {
 /// does not own the image to render into. This allows the caller to manage
 /// their own image buffer.
 pub struct BorrowedRenderer {
-    scene_manager: SceneManager<SkiaPath, SkiaImage>,
+    allocator: SkiaAllocator,
+    scene_manager: SceneManager<SkiaPath, SkiaImage, SkiaFont, SkiaLabel>,
     background: Pixmap,
     min_y: f32,
     max_y: f32,
@@ -148,8 +185,13 @@ impl Default for BorrowedRenderer {
 impl BorrowedRenderer {
     /// Creates a new software renderer.
     pub fn new() -> Self {
+        let mut allocator = SkiaAllocator {
+            text_engine: TextEngine::new(),
+        };
+        let scene_manager = SceneManager::new(&mut allocator);
         Self {
-            scene_manager: SceneManager::new(SkiaAllocator),
+            allocator,
+            scene_manager,
             background: Pixmap::new(1, 1).unwrap(),
             min_y: f32::INFINITY,
             max_y: f32::NEG_INFINITY,
@@ -184,7 +226,7 @@ impl BorrowedRenderer {
 
         let new_resolution =
             self.scene_manager
-                .update_scene(SkiaAllocator, (width as _, height as _), state);
+                .update_scene(&mut self.allocator, (width as _, height as _), state);
 
         let scene = self.scene_manager.scene();
         let rectangle = scene.rectangle();
@@ -301,52 +343,29 @@ impl Renderer {
 
 fn render_layer(
     canvas: &mut PixmapMut<'_>,
-    layer: &[Entity<SkiaPath, SkiaImage>],
+    layer: &[Entity<SkiaPath, SkiaImage, SkiaLabel>],
     rectangle: &Path,
 ) {
     for entity in layer {
         match entity {
             Entity::FillPath(path, shader, transform) => {
                 if let Some(path) = path.as_deref() {
-                    let shader = match shader {
-                        FillShader::SolidColor(col) => Shader::SolidColor(convert_color(col)),
-                        FillShader::VerticalGradient(top, bottom) => {
+                    let paint = convert_shader(
+                        shader,
+                        path,
+                        |path| {
                             let bounds = path.bounds();
-                            LinearGradient::new(
-                                Point::from_xy(0.0, bounds.top()),
-                                Point::from_xy(0.0, bounds.bottom()),
-                                vec![
-                                    GradientStop::new(0.0, convert_color(top)),
-                                    GradientStop::new(1.0, convert_color(bottom)),
-                                ],
-                                SpreadMode::Pad,
-                                tiny_skia::Transform::identity(),
-                            )
-                            .unwrap()
-                        }
-                        FillShader::HorizontalGradient(left, right) => {
+                            (bounds.top(), bounds.bottom())
+                        },
+                        |path| {
                             let bounds = path.bounds();
-                            LinearGradient::new(
-                                Point::from_xy(bounds.left(), 0.0),
-                                Point::from_xy(bounds.right(), 0.0),
-                                vec![
-                                    GradientStop::new(0.0, convert_color(left)),
-                                    GradientStop::new(1.0, convert_color(right)),
-                                ],
-                                SpreadMode::Pad,
-                                tiny_skia::Transform::identity(),
-                            )
-                            .unwrap()
-                        }
-                    };
+                            (bounds.left(), bounds.right())
+                        },
+                    );
 
                     canvas.fill_path(
                         path,
-                        &Paint {
-                            shader,
-                            anti_alias: true,
-                            ..Default::default()
-                        },
+                        &paint,
                         FillRule::Winding,
                         convert_transform(transform),
                         None,
@@ -395,12 +414,123 @@ fn render_layer(
                     );
                 }
             }
+            Entity::Label(label, shader, transform) => {
+                let label = label.read();
+                let label = &*label;
+
+                let paint = convert_shader(
+                    shader,
+                    label,
+                    |label| {
+                        let (mut top, mut bottom) = (f32::INFINITY, f32::NEG_INFINITY);
+                        for glyph in label.glyphs() {
+                            if let Some(path) = &glyph.path {
+                                let bounds = path.bounds();
+                                top = top.min(bounds.top());
+                                bottom = bottom.max(bounds.bottom());
+                            }
+                        }
+                        if bottom < top {
+                            (0.0, 0.0)
+                        } else {
+                            (top, bottom)
+                        }
+                    },
+                    |label| {
+                        let (mut left, mut right) = (f32::INFINITY, f32::NEG_INFINITY);
+                        for glyph in label.glyphs() {
+                            if let Some(path) = &glyph.path {
+                                let bounds = path.bounds();
+                                left = left.min(bounds.left());
+                                right = right.max(bounds.right());
+                            }
+                        }
+                        if right < left {
+                            (0.0, 0.0)
+                        } else {
+                            (left, right)
+                        }
+                    },
+                );
+
+                let transform = transform.pre_scale(label.scale(), label.scale());
+
+                for glyph in label.glyphs() {
+                    if let Some(path) = &glyph.path {
+                        let transform = transform.pre_translate(glyph.x, glyph.y);
+
+                        let glyph_paint;
+                        let paint = if let Some(color) = &glyph.color {
+                            glyph_paint = Paint {
+                                shader: Shader::SolidColor(convert_color(color)),
+                                ..paint
+                            };
+                            &glyph_paint
+                        } else {
+                            &paint
+                        };
+
+                        canvas.fill_path(
+                            path,
+                            paint,
+                            FillRule::Winding,
+                            convert_transform(&transform),
+                            None,
+                        );
+                    }
+                }
+            }
         }
     }
 }
 
+fn convert_shader<T>(
+    shader: &FillShader,
+    has_bounds: &T,
+    calculate_top_bottom: impl FnOnce(&T) -> (f32, f32),
+    calculate_left_right: impl FnOnce(&T) -> (f32, f32),
+) -> Paint<'static> {
+    let shader = match shader {
+        FillShader::SolidColor(col) => Shader::SolidColor(convert_color(col)),
+        FillShader::VerticalGradient(top, bottom) => {
+            let (bound_top, bound_bottom) = calculate_top_bottom(has_bounds);
+            LinearGradient::new(
+                Point::from_xy(0.0, bound_top),
+                Point::from_xy(0.0, bound_bottom),
+                vec![
+                    GradientStop::new(0.0, convert_color(top)),
+                    GradientStop::new(1.0, convert_color(bottom)),
+                ],
+                SpreadMode::Pad,
+                tiny_skia::Transform::identity(),
+            )
+            .unwrap()
+        }
+        FillShader::HorizontalGradient(left, right) => {
+            let (bound_left, bound_right) = calculate_left_right(has_bounds);
+            LinearGradient::new(
+                Point::from_xy(bound_left, 0.0),
+                Point::from_xy(bound_right, 0.0),
+                vec![
+                    GradientStop::new(0.0, convert_color(left)),
+                    GradientStop::new(1.0, convert_color(right)),
+                ],
+                SpreadMode::Pad,
+                tiny_skia::Transform::identity(),
+            )
+            .unwrap()
+        }
+    };
+
+    Paint {
+        shader,
+        anti_alias: true,
+        ..Default::default()
+    }
+}
+
 fn fill_background(
-    scene: &Scene<SkiaPath, SkiaImage>,
+    scene: &Scene<SkiaPath, SkiaImage, SkiaLabel>,
     background: &mut PixmapMut<'_>,
     width: u32,
     height: u32,
@@ -461,7 +591,7 @@ fn fill_background(
     }
 }
 
-fn calculate_bounds(layer: &[Entity<SkiaPath, SkiaImage>]) -> (f32, f32) {
+fn calculate_bounds(layer: &[Entity<SkiaPath, SkiaImage, SkiaLabel>]) -> (f32, f32) {
     let (mut min_y, mut max_y) = (f32::INFINITY, f32::NEG_INFINITY);
     for entity in layer.iter() {
         match entity {
@@ -492,6 +622,19 @@ fn calculate_bounds(layer: &[Entity<SkiaPath, SkiaImage>]) -> (f32, f32) {
                         let transformed_y = transform.transform_y(y);
                         min_y = min_y.min(transformed_y);
                         max_y = max_y.max(transformed_y);
+                    }
+                }
+            }
+            Entity::Label(label, _, transform) => {
+                for glyph in label.read().glyphs() {
+                    if let Some(path) = &glyph.path {
+                        let transform = transform.pre_translate(glyph.x, glyph.y);
+                        let bounds = path.bounds();
+                        for y in [bounds.top(), bounds.bottom()] {
+                            let transformed_y = transform.transform_y(y);
+                            min_y = min_y.min(transformed_y);
+                            max_y = max_y.max(transformed_y);
+                        }
                     }
                 }
             }

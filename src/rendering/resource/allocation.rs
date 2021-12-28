@@ -1,4 +1,27 @@
+use crate::settings::Font;
+
 use super::SharedOwnership;
+
+/// The kind of text that the font is going to be used for.
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum FontKind {
+    /// The font is going to be used for the timer.
+    Timer,
+    /// The font is going to be used for times.
+    Times,
+    /// The font is going to be used for regular text.
+    Text,
+}
+
+impl FontKind {
+    /// Returns whether this kind of font is intended to be monospaced. This
+    /// usually means the `tabular-nums` variant of the font is supposed to be
+    /// activated. If that variant is not available, then it may be necessary to
+    /// emulate monospaced digits instead.
+    pub fn is_monospaced(self) -> bool {
+        self != FontKind::Text
+    }
+}
 
 /// A resource allocator provides all the paths and images necessary to place
 /// [`Entities`](super::super::Entity) in a [`Scene`](super::super::Scene). This
@@ -6,11 +29,15 @@ use super::SharedOwnership;
 /// types that the renderer can directly render out.
 pub trait ResourceAllocator {
     /// The type the renderer uses for building paths.
-    type PathBuilder: PathBuilder<Self, Path = Self::Path>;
+    type PathBuilder: PathBuilder<Path = Self::Path>;
     /// The type the renderer uses for paths.
     type Path: SharedOwnership;
-    /// The type the renderer uses for textures.
+    /// The type the renderer uses for images.
     type Image: SharedOwnership;
+    /// The type the renderer uses for fonts.
+    type Font;
+    /// The type the renderer uses for text labels.
+    type Label: Label;
 
     /// Creates a new [`PathBuilder`] to build a new path.
     fn path_builder(&mut self) -> Self::PathBuilder;
@@ -29,22 +56,73 @@ pub trait ResourceAllocator {
         builder.curve_to(x - c, y + r, x - r, y + c, x - r, y);
         builder.curve_to(x - r, y - c, x - c, y - r, x, y - r);
         builder.close();
-        builder.finish(self)
+        builder.finish()
     }
 
-    /// Instructs the backend to create an image out of the image data provided.
-    /// The image's resolution is provided as well. The data is an array of
-    /// RGBA8 encoded pixels (red, green, blue, alpha with each channel being an
-    /// u8).
+    /// Creates an image out of the image data provided. The image's resolution
+    /// is provided as well. The data is an array of RGBA8 encoded pixels (red,
+    /// green, blue, alpha with each channel being an u8).
     fn create_image(&mut self, width: u32, height: u32, data: &[u8]) -> Self::Image;
+
+    /// Creates a font from the font description provided. It is expected that
+    /// the the font description is used in a font matching algorithm to find
+    /// the most suitable font as described in [CSS Fonts Module Level
+    /// 3](https://drafts.csswg.org/css-fonts-3/#font-matching-algorithm). The
+    /// [`FontKind`] is used to provide additional information about the kind of
+    /// font we are looking for. If the font is [`None`] or the font can't be
+    /// found, then the default font to use is derived from the [`FontKind`].
+    /// Also the timer and times fonts are meant to be monospaced fonts, so
+    /// `tabular-nums` are supposed to be used if available and ideally some
+    /// sort of emulation should happen if that's not the case. The default text
+    /// and times font is provided as [`TEXT_FONT`](super::super::TEXT_FONT) and
+    /// the timer's default font is provided as
+    /// [`TIMER_FONT`](super::super::TIMER_FONT).
+    fn create_font(&mut self, font: Option<&Font>, kind: FontKind) -> Self::Font;
+
+    /// Creates a new text label with the text and font provided. An optional
+    /// maximum width is provided as well. If the width of the text measured at
+    /// a size of 1 (spanning from the descender to the ascender) is greater
+    /// than the maximum width, then it is expected to be truncated with an
+    /// ellipsis such that it fits within the maximum width.
+    fn create_label(
+        &mut self,
+        text: &str,
+        font: &mut Self::Font,
+        max_width: Option<f32>,
+    ) -> Self::Label;
+
+    /// Updates an existing text label with the new text and font provided. An
+    /// optional maximum width is provided as well. If the width of the text
+    /// measured at a size of 1 (spanning from the descender to the ascender) is
+    /// greater than the maximum width, then it is expected to be truncated with
+    /// an ellipsis such that it fits within the maximum width.
+    fn update_label(
+        &mut self,
+        label: &mut Self::Label,
+        text: &str,
+        font: &mut Self::Font,
+        max_width: Option<f32>,
+    );
+}
+
+/// A text label created by a [`ResourceAllocator`].
+pub trait Label: SharedOwnership {
+    /// The width of the current text scaled by the scale factor provided. The
+    /// scale is meant to be the distance from the descender to the ascender.
+    fn width(&self, scale: f32) -> f32;
+
+    /// The width of the current text scaled by the scale factor provided as if
+    /// it wasn't truncated by the maximum width that was provided. The scale is
+    /// meant to be the distance from the descender to the ascender.
+    fn width_without_max_width(&self, scale: f32) -> f32;
 }
 
 /// The [`ResourceAllocator`] provides a path builder that defines how to build
 /// paths that can be used with the renderer.
-pub trait PathBuilder<A: ?Sized> {
+pub trait PathBuilder {
     /// The type of the path to build. This needs to be identical to the type of
     /// the path used by the [`ResourceAllocator`].
-    type Path;
+    type Path: SharedOwnership;
 
     /// Moves the cursor to a specific position and starts a new contour.
     fn move_to(&mut self, x: f32, y: f32);
@@ -69,13 +147,13 @@ pub trait PathBuilder<A: ?Sized> {
     fn close(&mut self);
 
     /// Finishes building the path.
-    fn finish(self, allocator: &mut A) -> Self::Path;
+    fn finish(self) -> Self::Path;
 }
 
 pub struct MutPathBuilder<PB>(PB);
 
-impl<A: ResourceAllocator> PathBuilder<&mut A> for MutPathBuilder<A::PathBuilder> {
-    type Path = A::Path;
+impl<PB: PathBuilder> PathBuilder for MutPathBuilder<PB> {
+    type Path = PB::Path;
 
     fn move_to(&mut self, x: f32, y: f32) {
         self.0.move_to(x, y)
@@ -97,8 +175,8 @@ impl<A: ResourceAllocator> PathBuilder<&mut A> for MutPathBuilder<A::PathBuilder
         self.0.close()
     }
 
-    fn finish(self, allocator: &mut &mut A) -> Self::Path {
-        self.0.finish(*allocator)
+    fn finish(self) -> Self::Path {
+        self.0.finish()
     }
 }
 
@@ -106,6 +184,8 @@ impl<A: ResourceAllocator> ResourceAllocator for &mut A {
     type PathBuilder = MutPathBuilder<A::PathBuilder>;
     type Path = A::Path;
     type Image = A::Image;
+    type Font = A::Font;
+    type Label = A::Label;
 
     fn path_builder(&mut self) -> Self::PathBuilder {
         MutPathBuilder((*self).path_builder())
@@ -113,5 +193,28 @@ impl<A: ResourceAllocator> ResourceAllocator for &mut A {
 
     fn create_image(&mut self, width: u32, height: u32, data: &[u8]) -> Self::Image {
         (*self).create_image(width, height, data)
+    }
+
+    fn create_font(&mut self, font: Option<&Font>, kind: FontKind) -> Self::Font {
+        (*self).create_font(font, kind)
+    }
+
+    fn create_label(
+        &mut self,
+        text: &str,
+        font: &mut Self::Font,
+        max_width: Option<f32>,
+    ) -> Self::Label {
+        (*self).create_label(text, font, max_width)
+    }
+
+    fn update_label(
+        &mut self,
+        label: &mut Self::Label,
+        text: &str,
+        font: &mut Self::Font,
+        max_width: Option<f32>,
+    ) {
+        (*self).update_label(label, text, font, max_width)
     }
 }

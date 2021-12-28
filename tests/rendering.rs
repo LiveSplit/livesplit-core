@@ -53,7 +53,7 @@ fn actual_split_file() {
 
     check(
         &layout.state(&timer.snapshot()),
-        "jMTAARBAPDM=",
+        "jMTAARBAPLM=",
         "actual_split_file",
     );
 }

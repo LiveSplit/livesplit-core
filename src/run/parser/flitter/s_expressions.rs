@@ -1,5 +1,5 @@
 //! Implements a serde deserializer for S-Expressions.
-//! http://people.csail.mit.edu/rivest/Sexp.txt
+//! <http://people.csail.mit.edu/rivest/Sexp.txt>
 
 use core::{fmt::Display, num::ParseIntError};
 use serde::de::{self, DeserializeOwned, DeserializeSeed, MapAccess, SeqAccess, Visitor};

@@ -1,10 +1,13 @@
+use livesplit_core::rendering::SharedOwnership;
+
 cfg_if::cfg_if! {
     if #[cfg(feature = "rendering")] {
         use criterion::{criterion_group, criterion_main, Criterion};
         use livesplit_core::{
             layout::{self, Layout},
-            rendering::{PathBuilder, ResourceAllocator, SceneManager},
+            rendering::{PathBuilder, ResourceAllocator, SceneManager, Label, FontKind},
             run::parser::livesplit,
+            settings::Font,
             Run, Segment, TimeSpan, Timer, TimingMethod,
         };
         use std::{fs::File, io::BufReader};
@@ -14,7 +17,7 @@ cfg_if::cfg_if! {
 
         struct Dummy;
 
-        impl PathBuilder<Dummy> for Dummy {
+        impl PathBuilder for Dummy {
             type Path = ();
 
             fn move_to(&mut self, _: f32, _: f32) {}
@@ -22,18 +25,51 @@ cfg_if::cfg_if! {
             fn quad_to(&mut self, _: f32, _: f32, _: f32, _: f32) {}
             fn curve_to(&mut self, _: f32, _: f32, _: f32, _: f32, _: f32, _: f32) {}
             fn close(&mut self) {}
-            fn finish(self, _: &mut Dummy) -> Self::Path {}
+            fn finish(self) -> Self::Path {}
         }
 
         impl ResourceAllocator for Dummy {
             type PathBuilder = Dummy;
             type Path = ();
             type Image = ();
+            type Font = ();
+            type Label = Dummy;
 
             fn path_builder(&mut self) -> Self::PathBuilder {
                 Dummy
             }
             fn create_image(&mut self, _: u32, _: u32, _: &[u8]) -> Self::Image {}
+            fn create_font(&mut self, _: Option<&Font>, _: FontKind) -> Self::Font {}
+            fn create_label(
+                &mut self,
+                _: &str,
+                _: &mut Self::Font,
+                _: Option<f32>,
+            ) -> Self::Label {
+                Dummy
+            }
+            fn update_label(
+                &mut self,
+                _: &mut Self::Label,
+                _: &str,
+                _: &mut Self::Font,
+                _: Option<f32>,
+            ) {}
+        }
+
+        impl Label for Dummy {
+            fn width(&self, _: f32) -> f32 {
+                0.0
+            }
+            fn width_without_max_width(&self, _: f32) -> f32 {
+                0.0
+            }
+        }
+
+        impl SharedOwnership for Dummy {
+            fn share(&self) -> Self {
+                Dummy
+            }
         }
 
         fn default(c: &mut Criterion) {

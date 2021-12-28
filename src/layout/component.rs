@@ -1,12 +1,14 @@
 use super::{ComponentSettings, ComponentState, GeneralSettings};
-use crate::component::{
-    blank_space, current_comparison, current_pace, delta, detailed_timer, graph, pb_chance,
-    possible_time_save, previous_segment, segment_time, separator, splits, sum_of_best, text,
-    timer, title, total_playtime,
+use crate::{
+    component::{
+        blank_space, current_comparison, current_pace, delta, detailed_timer, graph, pb_chance,
+        possible_time_save, previous_segment, segment_time, separator, splits, sum_of_best, text,
+        timer, title, total_playtime,
+    },
+    platform::prelude::*,
+    settings::{SettingsDescription, Value},
+    timing::Snapshot,
 };
-use crate::platform::prelude::*;
-use crate::settings::{SettingsDescription, Value};
-use crate::timing::Snapshot;
 use alloc::borrow::Cow;
 
 /// A Component provides information about a run in a way that is easy to

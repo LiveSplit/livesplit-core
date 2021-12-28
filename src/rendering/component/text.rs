@@ -1,35 +1,35 @@
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 
 use crate::{
     component::text::{State, TextState},
     layout::{LayoutDirection, LayoutState},
     rendering::{
         consts::{DEFAULT_TEXT_SIZE, PADDING, TEXT_ALIGN_TOP},
-        font::{AbbreviatedLabel, Label},
+        font::{AbbreviatedLabel, CachedLabel},
         resource::ResourceAllocator,
         solid, RenderContext,
     },
 };
 
-pub struct Cache<I> {
-    label1: AbbreviatedLabel,
-    label2: Label,
+pub struct Cache<I, L> {
+    label1: AbbreviatedLabel<L>,
+    label2: CachedLabel<L>,
     _image: PhantomData<I>,
 }
 
-impl<I> Cache<I> {
+impl<I, L> Cache<I, L> {
     pub const fn new() -> Self {
         Self {
             label1: AbbreviatedLabel::new(),
-            label2: Label::new(),
+            label2: CachedLabel::new(),
             _image: PhantomData,
         }
     }
 }
 
-pub(in crate::rendering) fn render<B: ResourceAllocator>(
-    cache: &mut Cache<B::Image>,
-    context: &mut RenderContext<'_, B>,
+pub(in crate::rendering) fn render<A: ResourceAllocator>(
+    cache: &mut Cache<A::Image, A::Label>,
+    context: &mut RenderContext<'_, A>,
     [width, height]: [f32; 2],
     component: &State,
     layout_state: &LayoutState,
