@@ -148,16 +148,14 @@ impl TextEngine {
                     });
                     glyphs
                 });
-                let (x_advance, x_offset) =
-                    if monotonic.digit_glyphs.contains(&(info.glyph_id as u16)) {
-                        (
-                            monotonic.digit_width,
-                            0.5 * (monotonic.digit_width - pos.x_advance as f32)
-                                + pos.x_offset as f32,
-                        )
-                    } else {
-                        (pos.x_advance as f32, pos.x_offset as f32)
-                    };
+                let (x_advance, x_offset) = if monotonic.digit_glyphs.contains(&glyph) {
+                    (
+                        monotonic.digit_width,
+                        0.5 * (monotonic.digit_width - pos.x_advance as f32) + pos.x_offset as f32,
+                    )
+                } else {
+                    (pos.x_advance as f32, pos.x_offset as f32)
+                };
                 let (glyph_x, glyph_y) = (x + x_offset, y + pos.y_offset as f32);
                 x += x_advance;
                 y += pos.y_advance as f32;
@@ -202,9 +200,7 @@ impl TextEngine {
         if let Some(max_width) = max_width {
             let max_width = max_width / font.scale_factor;
             if x > max_width {
-                let ellipsis = font.face.glyph_index('…').unwrap_or_default();
-                let ellipsis_width =
-                    font.face.glyph_hor_advance(ellipsis).unwrap_or_default() as f32;
+                let (ellipsis, ellipsis_width) = font.ellipsis;
 
                 let x_to_look_for = max_width - ellipsis_width;
 
@@ -212,8 +208,7 @@ impl TextEngine {
                     .glyphs
                     .iter()
                     .enumerate()
-                    .rev()
-                    .find(|(_, g)| {
+                    .rfind(|(_, g)| {
                         x = g.x;
                         y = g.y;
                         g.x <= x_to_look_for
@@ -251,7 +246,7 @@ impl TextEngine {
 }
 
 struct MonotonicInfo {
-    digit_glyphs: [u16; 10],
+    digit_glyphs: [GlyphId; 10],
     digit_width: f32,
     features: [Feature; 1],
 }
@@ -262,6 +257,8 @@ pub struct Font<P> {
     color_tables: Option<ColorTables<'static>>,
     scale_factor: f32,
     monotonic: Option<MonotonicInfo>,
+    /// The `GlyphId` and width of `…`.
+    ellipsis: (GlyphId, f32),
     glyph_cache: HashMap<GlyphId, Vec<(Option<Rgba>, P)>>,
     #[cfg(feature = "font-loading")]
     _buf: Option<Box<[u8]>>,
@@ -345,15 +342,12 @@ impl<P> Font<P> {
         ]);
 
         let monotonic = kind.is_monospaced().then(|| {
-            let mut digit_glyphs = [0; 10];
+            let mut digit_glyphs = [GlyphId(0); 10];
             let mut digit_width = 0;
             for (digit, glyph) in digit_glyphs.iter_mut().enumerate() {
-                *glyph = face
-                    .glyph_index(char::from(digit as u8 + b'0'))
-                    .unwrap_or_default()
-                    .0;
-
-                let width = face.glyph_hor_advance(GlyphId(*glyph)).unwrap_or_default();
+                let (glyph_id, width) =
+                    glyph_width(&face, char::from(digit as u8 + b'0')).unwrap_or_default();
+                *glyph = glyph_id;
                 if width > digit_width {
                     digit_width = width;
                 }
@@ -377,6 +371,8 @@ impl<P> Font<P> {
             }
         });
 
+        let (ellipsis, ellipsis_width) = glyph_width(&face, '…').unwrap_or_default();
+
         Some(Self {
             scale_factor: 1.0 / face.height() as f32,
             color_tables: ColorTables::new(&face),
@@ -384,6 +380,7 @@ impl<P> Font<P> {
             #[cfg(feature = "font-loading")]
             _buf: None,
             monotonic,
+            ellipsis: (ellipsis, ellipsis_width as f32),
             glyph_cache: HashMap::new(),
         })
     }
@@ -455,4 +452,9 @@ pub struct Glyph<P> {
     pub y: f32,
     /// The path to render.
     pub path: P,
+}
+
+fn glyph_width(face: &Face<'_>, c: char) -> Option<(GlyphId, u16)> {
+    let glyph_id = face.glyph_index(c)?;
+    Some((glyph_id, face.glyph_hor_advance(glyph_id)?))
 }
