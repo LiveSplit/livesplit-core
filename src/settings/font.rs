@@ -64,7 +64,7 @@ impl Style {
 ///
 /// [`Fallback weights` on
 /// MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight#Fallback_weights)
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[serde(rename_all = "kebab-case")]
 pub enum Weight {
     /// 100 (also known as Hairline)

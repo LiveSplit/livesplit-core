@@ -34,6 +34,9 @@ mod timer;
 mod title;
 mod total_playtime;
 
+#[cfg(windows)]
+mod font_resolving;
+
 // One single row component is:
 // 1.0 units high in component space.
 // 24 pixels high in LiveSplit One's pixel coordinate space.
@@ -327,9 +330,10 @@ where
         let rem = cursor.as_slice();
 
         let font_name = rem.get(..len).ok_or(Error::ParseFont)?;
-        let mut family = str::from_utf8(font_name)
+        let original_family_name = str::from_utf8(font_name)
             .map_err(|_| Error::ParseFont)?
             .trim();
+        let mut family = original_family_name;
 
         let mut style = FontStyle::Normal;
         let mut weight = FontWeight::Normal;
@@ -354,14 +358,6 @@ where
         // to not recognize them. An example of this is "Bahnschrift SemiLight
         // SemiConde" where the end should say "SemiCondensed" but doesn't due
         // to the character limit.
-        //
-        // A more sophisticated approach where on Windows we may talk directly
-        // to GDI to resolve the name has not been implemented so far. The
-        // problem is that GDI does not give you access to either the path of
-        // the font or its data. You can receive the byte representation of
-        // individual tables you query for, but ttf-parser, the crate we use for
-        // parsing fonts, doesn't expose the ability to parse individual tables
-        // in its public API.
 
         for token in family.split_whitespace().rev() {
             // FontWeight and FontStretch both have the variant "normal"
@@ -421,23 +417,63 @@ where
             }
         }
 
-        // Later on we find the style as bitflags of System.Drawing.FontStyle.
+        // Later on we find the style and weight as bitflags of System.Drawing.FontStyle.
         // 1 -> bold
         // 2 -> italic
         // 4 -> underline
         // 8 -> strikeout
         let flags = *rem.get(len + 52).ok_or(Error::ParseFont)?;
+        let (bold_flag, italic_flag) = (flags & 1 != 0, flags & 2 != 0);
 
-        if flags & 1 != 0 {
+        // If we are on Windows, we can however directly use GDI to get the
+        // proper family name out of the font. The problem is that GDI does not
+        // give us access to either the path of the font or its data. However we can
+        // receive the byte representation of individual tables we query for, so
+        // we can get the family name from the `name` table.
+
+        #[cfg(windows)]
+        let family = if let Some(info) =
+            font_resolving::FontInfo::from_gdi(original_family_name, bold_flag, italic_flag)
+        {
+            weight = match info.weight {
+                i32::MIN..=149 => FontWeight::Thin,
+                150..=249 => FontWeight::ExtraLight,
+                250..=324 => FontWeight::Light,
+                325..=374 => FontWeight::SemiLight,
+                375..=449 => FontWeight::Normal,
+                450..=549 => FontWeight::Medium,
+                550..=649 => FontWeight::SemiBold,
+                650..=749 => FontWeight::Bold,
+                750..=849 => FontWeight::ExtraBold,
+                850..=924 => FontWeight::Black,
+                925.. => FontWeight::ExtraBlack,
+            };
+            style = if info.italic {
+                FontStyle::Italic
+            } else {
+                FontStyle::Normal
+            };
+            info.family
+        } else {
+            family.to_owned()
+        };
+
+        #[cfg(not(windows))]
+        let family = family.to_owned();
+
+        // The font might not exist on the user's system, so we still prefer to
+        // apply these flags.
+
+        if bold_flag && weight < FontWeight::Bold {
             weight = FontWeight::Bold;
         }
 
-        if flags & 2 != 0 {
+        if italic_flag {
             style = FontStyle::Italic;
         }
 
         f(Font {
-            family: family.to_owned(),
+            family,
             style,
             weight,
             stretch,

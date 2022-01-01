@@ -90,6 +90,10 @@ web-sys = { version = "0.3.28", default-features = false, features = [
     "Window",
 ], optional = true }
 
+[target.'cfg(windows)'.dependencies]
+# We need winapi to use GDI to resolve fonts on Windows.
+winapi = { version = "0.3.9", features = ["wingdi"], optional = true }
+
 [target.'cfg(any(target_os = "linux", target_os = "l4re", target_os = "android", target_os = "macos", target_os = "ios"))'.dependencies]
 # We need libc for our own implementation of Instant
 libc = { version = "0.2.101", optional = true }
@@ -105,6 +109,7 @@ criterion = "0.3.0"
 default = ["image-shrinking", "std"]
 doesnt-have-atomics = []
 std = [
+    "bytemuck/derive",
     "byteorder",
     "image",
     "indexmap",
@@ -120,6 +125,7 @@ std = [
     "time/macros",
     "time/parsing",
     "utf-8",
+    "winapi",
 ]
 more-image-formats = [
     "image/bmp",
