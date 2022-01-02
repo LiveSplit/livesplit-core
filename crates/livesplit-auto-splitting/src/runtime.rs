@@ -1,45 +1,33 @@
-use crate::process::Process;
-use crate::{timer::Timer, InterruptHandle};
+use crate::{process::Process, timer::Timer, InterruptHandle};
 
 use log::{info, warn};
 use slotmap::{Key, KeyData, SlotMap};
+use snafu::ResultExt;
 use std::{
     path::Path,
     result, str, thread,
     time::{Duration, Instant},
 };
-use sysinfo::{RefreshKind, System, SystemExt};
+use sysinfo::{ProcessRefreshKind, RefreshKind, System, SystemExt};
 use wasmtime::{
     Caller, Config, Engine, Extern, Instance, Linker, Memory, Module, Store, Trap, TypedFunc,
 };
 
 #[derive(Debug, snafu::Snafu)]
 pub enum Error {
-    /// The autosplitter didn't export the required functions
+    /// The autosplitter didn't export the required functions.
     InvalidInterface,
-    /// The autosplitter didn't expose any memory
+    /// The autosplitter didn't expose any memory.
     NoMemory,
-    /// An error occured with the wasm autosplitter
-    WasmTimeTrap { trap: Trap },
-    /// An error occured in the wasmtime engine
-    WasmTimeEngine { err: anyhow::Error },
-}
-
-impl PartialEq for Error {
-    fn eq(&self, other: &Self) -> bool {
-        core::mem::discriminant(self) == core::mem::discriminant(other)
-    }
-}
-
-impl From<Trap> for Error {
-    fn from(trap: Trap) -> Self {
-        Self::WasmTimeTrap { trap }
-    }
+    /// An error occurred with the wasm autosplitter.
+    WasmTrap { source: Trap },
+    /// An error occurred in the wasmtime engine.
+    WasmEngine { source: anyhow::Error },
 }
 
 impl From<anyhow::Error> for Error {
     fn from(err: anyhow::Error) -> Self {
-        Self::WasmTimeEngine { err }
+        Self::WasmEngine { source: err }
     }
 }
 
@@ -75,7 +63,9 @@ impl<T: Timer> Runtime<T> {
                 tick_rate: Duration::from_secs(1) / 60,
                 timer,
                 memory: None,
-                info: System::new_with_specifics(RefreshKind::new().with_processes()),
+                info: System::new_with_specifics(
+                    RefreshKind::new().with_processes(ProcessRefreshKind::new()),
+                ),
             },
         );
         let module = Module::from_file(&engine, path)?;
@@ -110,13 +100,13 @@ impl<T: Timer> Runtime<T> {
     pub fn step(&mut self) -> Result<()> {
         if !self.is_configured {
             if let Ok(func) = self.instance.get_typed_func(&mut self.store, "configure") {
-                func.call(&mut self.store, ())?;
+                func.call(&mut self.store, ()).context(WasmTrap)?;
             } else {
                 return Err(Error::InvalidInterface);
             }
             self.is_configured = true;
         }
-        Ok(self.update.call(&mut self.store, ())?)
+        self.update.call(&mut self.store, ()).context(WasmTrap)
     }
 
     pub fn sleep(&mut self) {

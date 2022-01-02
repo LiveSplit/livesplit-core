@@ -46,12 +46,7 @@ impl Process {
     pub fn module_address(&self, module: &str) -> Result<Address> {
         if let Ok(maps) = proc_maps::get_process_maps(self.pid) {
             maps.iter()
-                .find(|m| {
-                    m.filename()
-                        .as_ref()
-                        .map(|f| f.contains(module))
-                        .unwrap_or_default()
-                })
+                .find(|m| m.filename().map_or(false, |f| f.ends_with(module)))
                 .map(|m| m.start() as u64)
                 .ok_or(Error::ModuleDoesntExist)
         } else {
@@ -62,6 +57,6 @@ impl Process {
     pub fn read_mem(&self, address: Address, buf: &mut [u8]) -> Result<()> {
         self.handle
             .copy_address(address as usize, buf)
-            .or(Err(Error::ReadMemory))
+            .map_err(|_| Error::ReadMemory)
     }
 }
