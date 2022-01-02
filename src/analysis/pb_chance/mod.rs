@@ -88,5 +88,5 @@ pub fn for_timer(timer: &Snapshot<'_>) -> (f64, bool) {
         calculate(segments, method, current_time)
     };
 
-    (chance, is_live)
+    (chance, is_live && timer.current_phase().is_running())
 }

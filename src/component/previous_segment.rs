@@ -141,7 +141,8 @@ impl Component {
                         split_index,
                         comparison,
                         false,
-                    );
+                    )
+                    .0;
                 }
             } else if let Some(prev_split_index) = split_index.checked_sub(1) {
                 time_change =
@@ -152,7 +153,8 @@ impl Component {
                         prev_split_index,
                         comparison,
                         false,
-                    );
+                    )
+                    .0;
                 }
             };
 
@@ -235,7 +237,7 @@ impl Component {
         }
 
         state.display_two_rows = self.settings.display_two_rows;
-        state.updates_frequently = live_segment.is_some();
+        state.updates_frequently = live_segment.is_some() && phase.is_running();
     }
 
     /// Calculates the component's state based on the timer and the layout

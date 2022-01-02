@@ -189,7 +189,7 @@ pub fn update_state(
                     ColumnFormatter::SegmentTime,
                 ),
                 ColumnStartWith::PossibleTimeSave => (
-                    possible_time_save::calculate(timer, segment_index, comparison, false),
+                    possible_time_save::calculate(timer, segment_index, comparison, false).0,
                     SemanticColor::Default,
                     ColumnFormatter::SegmentTime,
                 ),

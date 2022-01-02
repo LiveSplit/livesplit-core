@@ -121,16 +121,14 @@ impl Component {
         let text = self.text(comparison);
         let comparison = comparison::or_current(comparison, timer);
 
-        let time = if self.settings.total_possible_time_save {
-            Some(possible_time_save::calculate_total(
-                timer,
-                segment_index.unwrap_or(0),
-                comparison,
-            ))
+        let (time, updates_frequently) = if self.settings.total_possible_time_save {
+            let (time, updates_frequently) =
+                possible_time_save::calculate_total(timer, segment_index.unwrap_or(0), comparison);
+            (Some(time), updates_frequently)
         } else if current_phase == TimerPhase::Running || current_phase == TimerPhase::Paused {
             possible_time_save::calculate(timer, segment_index.unwrap(), comparison, false)
         } else {
-            None
+            (None, false)
         };
 
         state.background = self.settings.background;
@@ -159,7 +157,7 @@ impl Component {
         state.key_abbreviations.push("Time Save".into());
 
         state.display_two_rows = self.settings.display_two_rows;
-        state.updates_frequently = false;
+        state.updates_frequently = updates_frequently;
     }
 
     /// Calculates the component's state based on the timer provided.
