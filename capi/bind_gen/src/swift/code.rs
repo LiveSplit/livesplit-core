@@ -37,7 +37,7 @@ fn get_ll_type(ty: &Type) -> &str {
             "u32" => "UInt32",
             "u64" => "UInt64",
             "usize" => "size_t",
-            "isize" => "ssize_t",
+            "isize" => "ptrdiff_t",
             "f32" => "Float",
             "f64" => "Double",
             "bool" => "Bool",
