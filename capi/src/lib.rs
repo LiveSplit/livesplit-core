@@ -12,6 +12,7 @@ use std::{
 };
 
 pub mod analysis;
+pub mod auto_splitting_runtime;
 pub mod atomic_date_time;
 pub mod attempt;
 pub mod blank_space_component;
