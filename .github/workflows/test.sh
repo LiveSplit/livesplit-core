@@ -3,12 +3,15 @@ set -ex
 main() {
     local cargo=cross
 
-    # all features except those that don't easily work with cross such as font-loading
+    # all features except those that don't easily work with cross such as
+    # font-loading or auto-splitting.
     local all_features="--features std,more-image-formats,image-shrinking,rendering,software-rendering,wasm-web,networking"
 
     if [ "$SKIP_CROSS" = "skip" ]; then
         cargo=cargo
-        all_features="--all-features"
+        if [ "$SKIP_AUTO_SPLITTING" -ne "skip" ]; then
+            all_features="--all-features"
+        fi
     fi
 
     if [ "$TARGET" = "wasm32-wasi" ]; then

@@ -5,14 +5,15 @@ authors = ["Christopher Serr <christopher.serr@gmail.com>"]
 edition = "2021"
 
 [dependencies]
-anyhow = "1.0.45"
-log = "0.4.14"
-proc-maps = "0.2.0"
-read-process-memory = "0.1.4"
-slotmap = "1.0.2"
-snafu = "0.6.10"
-sysinfo = "0.22.4"
-time = "0.3.3"
-wasmtime = { version = "0.32.0", default-features = false, features = [
+anyhow = { version = "1.0.45", default-features = false }
+log = { version = "0.4.14", default-features = false }
+proc-maps = { version = "0.2.0", default-features = false }
+read-process-memory = { version = "0.1.4", default-features = false }
+slotmap = { version = "1.0.2", default-features = false }
+snafu = { version = "0.6.10", default-features = false, features = ["std"] }
+sysinfo = { version = "0.22.4", default-features = false, features = ["multithread"] }
+time = { version = "0.3.3", default-features = false }
+wasmtime = { version = "0.33.0", default-features = false, features = [
   "cranelift",
+  "parallel-compilation",
 ] }

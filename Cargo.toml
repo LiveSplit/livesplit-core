@@ -84,7 +84,7 @@ splits-io-api = { version = "0.2.0", optional = true }
 # Auto Splitting
 livesplit-auto-splitting = { path = "crates/livesplit-auto-splitting", version = "0.1.0", optional = true }
 crossbeam-channel = { version = "0.5.1", default-features = false, optional = true }
-log = { version = "0.4.14", optional = true }
+log = { version = "0.4.14", default-features = false, optional = true }
 
 [target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
 # WebAssembly in the Web
