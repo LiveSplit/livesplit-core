@@ -290,12 +290,14 @@ jobs:
             target: i586-pc-windows-msvc
             os: windows-latest
             cross: skip
+            auto_splitting: skip
             install_target: true
 
           - label: Windows i686
             target: i686-pc-windows-msvc
             os: windows-latest
             cross: skip
+            auto_splitting: skip
             install_target: true
 
           - label: Windows x86_64
@@ -308,6 +310,7 @@ jobs:
             toolchain: stable-i686-pc-windows-gnu
             os: windows-latest
             cross: skip
+            auto_splitting: skip
             install_target: true
 
           - label: Windows x86_64 gnu
@@ -639,6 +642,7 @@ jobs:
         env:
           TARGET: ${{ matrix.target }}
           SKIP_CROSS: ${{ matrix.cross }}
+          SKIP_AUTO_SPLITTING: ${{ matrix.auto_splitting }}
 
       - name: Prepare Release
         if: startsWith(github.ref, 'refs/tags/') && matrix.release == ''
