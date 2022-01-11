@@ -33,7 +33,7 @@ web-sys = { version = "0.3.28", default-features = false, features = ["Gamepad",
 [dependencies]
 cfg-if = "1.0.0"
 serde = { version = "1.0.98", default-features = false, features = ["derive", "alloc"] }
-snafu = { version = "0.6.0", default-features = false }
+snafu = { version = "0.7.0", default-features = false }
 
 [features]
 default = ["std"]

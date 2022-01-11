@@ -14,6 +14,7 @@ use time::{macros::format_description, PrimitiveDateTime};
 /// The Error type for splits files that couldn't be parsed by the Time
 /// Split Tracker Parser.
 #[derive(Debug, snafu::Snafu)]
+#[snafu(context(suffix(false)))]
 pub enum Error {
     /// An empty splits file was provided.
     Empty,

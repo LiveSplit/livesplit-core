@@ -15,6 +15,7 @@ pub use splits_io_api as api;
 /// may either be because the download itself had a problem or because the run
 /// itself couldn't be parsed.
 #[derive(Debug, snafu::Snafu)]
+#[snafu(context(suffix(false)))]
 pub enum DownloadError {
     /// Failed to download the run.
     Download {

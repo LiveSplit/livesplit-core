@@ -9,6 +9,7 @@ use std::io::{self, BufRead};
 /// The Error type for splits files that couldn't be parsed by the ShitSplit
 /// Parser.
 #[derive(Debug, snafu::Snafu)]
+#[snafu(context(suffix(false)))]
 pub enum Error {
     /// An empty splits file was provided.
     Empty,

@@ -9,6 +9,7 @@ use std::io::{self, BufRead};
 /// The Error type for splits files that couldn't be parsed by the WSplit
 /// Parser.
 #[derive(Debug, snafu::Snafu)]
+#[snafu(context(suffix(false)))]
 pub enum Error {
     /// Expected the name of the segment, but didn't find it.
     ExpectedSegmentName,

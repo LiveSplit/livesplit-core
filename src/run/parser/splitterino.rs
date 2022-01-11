@@ -11,6 +11,7 @@ use std::result::Result as StdResult;
 /// The Error type for splits files that couldn't be parsed by the Splitterino
 /// Parser.
 #[derive(Debug, snafu::Snafu)]
+#[snafu(context(suffix(false)))]
 pub enum Error {
     /// Failed to parse JSON.
     Json {

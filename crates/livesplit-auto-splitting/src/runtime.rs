@@ -15,6 +15,7 @@ use wasmtime::{
 
 /// An error that is returned when the creation of a new runtime fails.
 #[derive(Debug, Snafu)]
+#[snafu(context(suffix(false)))]
 pub enum CreationError {
     /// Failed creating the WebAssembly engine.
     EngineCreation {
@@ -52,6 +53,7 @@ pub enum CreationError {
 
 /// An error that is returned when executing the WebAssembly module fails.
 #[derive(Debug, Snafu)]
+#[snafu(context(suffix(false)))]
 pub enum RunError {
     /// Failed running the `update` function.
     RunUpdate {

@@ -46,6 +46,7 @@ use std::{
 /// The Error type for splits files that couldn't be parsed by the Composite
 /// Parser.
 #[derive(Debug, snafu::Snafu)]
+#[snafu(context(suffix(false)))]
 pub enum Error {
     /// Failed to seek back when trying to parse with a different parser.
     SeekBack {

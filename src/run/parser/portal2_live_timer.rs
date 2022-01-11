@@ -9,6 +9,7 @@ use std::io::{self, BufRead};
 /// The Error types for splits files that couldn't be parsed by the Portal 2
 /// Live Timer Parser.
 #[derive(Debug, snafu::Snafu)]
+#[snafu(context(suffix(false)))]
 pub enum Error {
     /// Expected another map, but didn't find it.
     ExpectedMap,

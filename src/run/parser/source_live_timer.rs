@@ -11,6 +11,7 @@ use std::io::Read;
 /// The Error type for splits files that couldn't be parsed by the
 /// SourceLiveTimer Parser.
 #[derive(Debug, snafu::Snafu)]
+#[snafu(context(suffix(false)))]
 pub enum Error {
     /// Failed to parse JSON.
     Json {

@@ -19,6 +19,7 @@ use crate::xml_util::Error as XmlError;
 /// The Error type for splits files that couldn't be parsed by the Llanfair (Gered)
 /// Parser.
 #[derive(Debug, snafu::Snafu)]
+#[snafu(context(suffix(false)))]
 pub enum Error {
     /// The underlying XML format couldn't be parsed.
     Xml {
