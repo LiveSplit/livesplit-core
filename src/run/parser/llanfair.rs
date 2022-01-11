@@ -13,6 +13,7 @@ use std::io::{self, Read, Seek, SeekFrom};
 /// The Error type for splits files that couldn't be parsed by the Llanfair
 /// Parser.
 #[derive(Debug, snafu::Snafu)]
+#[snafu(context(suffix(false)))]
 pub enum Error {
     /// Failed to read the header.
     ReadHeader {
@@ -97,6 +98,7 @@ pub enum Error {
 
 /// An error type that indicates that a string failed to be parsed.
 #[derive(Debug, snafu::Snafu)]
+#[snafu(context(suffix(false)))]
 pub enum StringError {
     /// Failed to read the length of the string.
     ReadLength {

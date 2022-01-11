@@ -66,6 +66,7 @@ impl TimeSpan {
 
 /// The Error type for Time Spans that couldn't be parsed.
 #[derive(Debug, snafu::Snafu)]
+#[snafu(context(suffix(false)))]
 pub enum ParseError {
     /// An empty string is not a valid Time Span.
     Empty,

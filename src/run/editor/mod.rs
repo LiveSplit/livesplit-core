@@ -31,6 +31,7 @@ pub use self::{
 
 /// Describes an Error that occurred while parsing a time.
 #[derive(Debug, snafu::Snafu)]
+#[snafu(context(suffix(false)))]
 pub enum ParseError {
     /// Couldn't parse the time.
     ParseTime {
@@ -45,6 +46,7 @@ pub enum ParseError {
 
 /// Describes an Error that occurred while opening the Run Editor.
 #[derive(Debug, snafu::Snafu)]
+#[snafu(context(suffix(false)))]
 pub enum OpenError {
     /// The Run Editor couldn't be opened because an empty run with no
     /// segments was provided.
@@ -53,6 +55,7 @@ pub enum OpenError {
 
 /// Error type for a failed Rename.
 #[derive(PartialEq, Debug, snafu::Snafu)]
+#[snafu(context(suffix(false)))]
 pub enum RenameError {
     /// Old Comparison was not found during rename.
     OldNameNotFound,

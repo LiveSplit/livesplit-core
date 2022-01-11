@@ -11,12 +11,14 @@ use sysinfo::{self, ProcessExt};
 use crate::runtime::ProcessList;
 
 #[derive(Debug, Snafu)]
+#[snafu(context(suffix(false)))]
 pub enum OpenError {
     ProcessDoesntExist,
     InvalidHandle { source: io::Error },
 }
 
 #[derive(Debug, Snafu)]
+#[snafu(context(suffix(false)))]
 pub enum ModuleError {
     ModuleDoesntExist,
     ListModules { source: io::Error },
