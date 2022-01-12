@@ -9,7 +9,7 @@ main() {
 
     if [ "$SKIP_CROSS" = "skip" ]; then
         cargo=cargo
-        if [ "$SKIP_AUTO_SPLITTING" -ne "skip" ]; then
+        if [ "$SKIP_AUTO_SPLITTING" != "skip" ]; then
             all_features="--all-features"
         fi
     fi
