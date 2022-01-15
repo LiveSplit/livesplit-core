@@ -25,6 +25,8 @@
 //! `env`:
 //!
 //! ```rust
+//! # use core::num::NonZeroU64;
+//!
 //! #[repr(transparent)]
 //! pub struct Address(pub u64);
 //!
