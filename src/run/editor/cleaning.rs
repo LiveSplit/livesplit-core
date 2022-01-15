@@ -78,8 +78,7 @@ impl fmt::Display for PotentialCleanUp<'_> {
 
         write!(
             f,
-            "You had a {} segment time of {} between ",
-            method,
+            "You had a {method} segment time of {} between ",
             short.format(self.time_between)
         )?;
 
@@ -118,8 +117,7 @@ impl fmt::Display for PotentialCleanUp<'_> {
             let hour = if hour == 0 { 12 } else { hour };
             write!(
                 f,
-                " in a run on {} {}, {} that started at {}:{:02} {}{}",
-                month, day, year, hour, minute, am_pm, time_zone
+                " in a run on {month} {day}, {year} that started at {hour}:{minute:02} {am_pm}{time_zone}",
             )?;
         }
 

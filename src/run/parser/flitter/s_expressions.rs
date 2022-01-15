@@ -33,7 +33,7 @@ pub enum Error {
         source: io::Error,
     },
     /// Custom error.
-    #[snafu(display("{}", error))]
+    #[snafu(display("{error}"))]
     Custom {
         /// The underlying error.
         error: String,

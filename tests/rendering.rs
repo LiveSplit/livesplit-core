@@ -254,8 +254,7 @@ fn check_dims(state: &LayoutState, dims: [u32; 2], expected_hash_data: &str, nam
     fs::create_dir_all("target/renders").ok();
 
     let path = format!(
-        "target/renders/{}_{}.png",
-        name,
+        "target/renders/{name}_{}.png",
         calculated_hash_data.replace("/", "-"),
     );
     image.save(&path).ok();
@@ -264,8 +263,7 @@ fn check_dims(state: &LayoutState, dims: [u32; 2], expected_hash_data: &str, nam
         fs::create_dir_all("target/renders/diff").ok();
 
         let expected_path = format!(
-            "target/renders/{}_{}.png",
-            name,
+            "target/renders/{name}_{}.png",
             expected_hash_data.replace("/", "-"),
         );
         let diff_path = if let Ok(expected_image) = image::open(&expected_path) {
@@ -279,7 +277,7 @@ fn check_dims(state: &LayoutState, dims: [u32; 2], expected_hash_data: &str, nam
                     *a = (*a).max(*a2);
                 }
             }
-            let diff_path = format!("target/renders/diff/{}.png", name);
+            let diff_path = format!("target/renders/diff/{name}.png");
             expected_image.save(&diff_path).ok();
             diff_path
         } else {
@@ -287,18 +285,11 @@ fn check_dims(state: &LayoutState, dims: [u32; 2], expected_hash_data: &str, nam
         };
 
         panic!(
-            "Render mismatch for {}
-expected: {} {}
-actual: {} {}
-diff: {}
-distance: {}",
-            name,
-            expected_hash_data,
-            expected_path,
-            calculated_hash_data,
-            path,
-            diff_path,
-            distance
+            "Render mismatch for {name}
+expected: {expected_hash_data} {expected_path}
+actual: {calculated_hash_data} {path}
+diff: {diff_path}
+distance: {distance}",
         );
     }
 }

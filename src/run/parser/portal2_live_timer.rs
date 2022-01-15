@@ -1,8 +1,7 @@
 //! Provides the parser for Portal 2 Live Timer splits files.
 
 use crate::{GameTime, Run, Segment, TimeSpan};
-use core::num::ParseFloatError;
-use core::result::Result as StdResult;
+use core::{num::ParseFloatError, result::Result as StdResult};
 use snafu::{OptionExt, ResultExt};
 use std::io::{self, BufRead};
 
@@ -21,7 +20,7 @@ pub enum Error {
     /// Expected the name of a map, but didn't find it.
     ExpectedMapName,
     /// Expected a different map.
-    #[snafu(display("Expect the map '{}' but found '{}'.", expected, found))]
+    #[snafu(display("Expect the map `{expected}` but found `{found}`."))]
     ExpectedDifferentMapName {
         /// The name of the map that was expected.
         expected: &'static str,

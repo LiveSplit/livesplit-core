@@ -139,7 +139,7 @@ pub fn parse<R: BufRead>(source: R, path_for_loading_other_files: Option<PathBuf
             match run.add_custom_comparison(good_name.clone()) {
                 Ok(_) => break,
                 Err(ComparisonError::DuplicateName) => {
-                    good_name = format!("{}{}", name, number);
+                    good_name = format!("{name}{number}");
                     number += 1;
                 }
                 Err(ComparisonError::NameStartsWithRace) => {

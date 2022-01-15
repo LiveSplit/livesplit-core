@@ -41,9 +41,9 @@ impl Display for FormattedSeconds {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         let s = self.seconds as u8;
         if self.zero_prefix {
-            write!(f, "{:02}", s)?;
+            write!(f, "{s:02}")?;
         } else {
-            write!(f, "{}", s)?;
+            write!(f, "{s}")?;
         }
         match self.accuracy {
             Accuracy::Seconds => Ok(()),

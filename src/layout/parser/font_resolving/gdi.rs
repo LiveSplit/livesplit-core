@@ -48,7 +48,7 @@ impl DeviceContext {
                 return None;
             }
             let mut name_table = Vec::<u8>::with_capacity(len as usize);
-            GetFontData(self.0, name, 0, name_table.as_mut_ptr().cast(), len);
+            let len = GetFontData(self.0, name, 0, name_table.as_mut_ptr().cast(), len);
             if len == GDI_ERROR {
                 return None;
             }

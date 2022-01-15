@@ -49,7 +49,7 @@ impl Display for Inner {
                 total_seconds *= -1.0;
                 // Since, this Formatter is used for writing out split files, we
                 // have to use an ASCII Minus here.
-                write!(f, "{}", ASCII_MINUS)?;
+                write!(f, "{ASCII_MINUS}")?;
             }
             let seconds = total_seconds % 60.0;
             let total_minutes = (total_seconds / 60.0) as u64;
@@ -58,9 +58,9 @@ impl Display for Inner {
             let hours = total_hours % 24;
             let days = total_hours / 24;
             if days > 0 {
-                write!(f, "{}.", days)?;
+                write!(f, "{days}.")?;
             }
-            write!(f, "{:02}:{:02}:{:010.7}", hours, minutes, seconds)
+            write!(f, "{hours:02}:{minutes:02}:{seconds:010.7}")
         } else {
             write!(f, "00:00:00.0000000")
         }

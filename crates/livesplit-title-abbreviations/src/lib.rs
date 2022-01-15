@@ -36,11 +36,7 @@ fn series_subtitle_handling(name: &str, split_token: &str, list: &mut Vec<Box<st
                     || is_there_only_one_series_abbreviation
                 {
                     list.push(
-                        format!(
-                            "{}{}{}",
-                            series_abbreviation, split_token, subtitle_abbreviation
-                        )
-                        .into(),
+                        format!("{series_abbreviation}{split_token}{subtitle_abbreviation}").into(),
                     );
                 }
             }
@@ -66,11 +62,7 @@ fn left_right_handling(name: &str, split_token: &str, list: &mut Vec<Box<str>>) 
         for subtitle_abbreviation in &subtitle_abbreviations {
             for series_abbreviation in &series_abbreviations {
                 list.push(
-                    format!(
-                        "{}{}{}",
-                        series_abbreviation, split_token, subtitle_abbreviation
-                    )
-                    .into(),
+                    format!("{series_abbreviation}{split_token}{subtitle_abbreviation}").into(),
                 );
             }
         }
@@ -88,7 +80,7 @@ fn and_handling(name: &str, list: &mut Vec<Box<str>>) -> bool {
             let index = word.as_ptr() as usize - name.as_ptr() as usize;
             let (left, rest) = name.split_at(index);
             let right = &rest[word.len()..];
-            let name = format!("{}&{}", left, right);
+            let name = format!("{left}&{right}");
             list.extend(abbreviate(&name));
             return true;
         }

@@ -72,27 +72,27 @@ impl Display for TimeInner {
             let mut total_seconds = time.total_seconds();
             if total_seconds < 0.0 {
                 total_seconds *= -1.0;
-                write!(f, "{}", MINUS)?;
+                write!(f, "{MINUS}")?;
             }
             let seconds = (total_seconds % 60.0) as u8;
             let total_minutes = (total_seconds / 60.0) as u64;
             let minutes = total_minutes % 60;
             let hours = total_minutes / 60;
             if self.digits_format == DigitsFormat::DoubleDigitHours {
-                write!(f, "{:02}:{:02}:{:02}", hours, minutes, seconds)
+                write!(f, "{hours:02}:{minutes:02}:{seconds:02}")
             } else if hours > 0 || self.digits_format == DigitsFormat::SingleDigitHours {
-                write!(f, "{}:{:02}:{:02}", hours, minutes, seconds)
+                write!(f, "{hours}:{minutes:02}:{seconds:02}")
             } else if self.digits_format == DigitsFormat::DoubleDigitMinutes {
-                write!(f, "{:02}:{:02}", minutes, seconds)
+                write!(f, "{minutes:02}:{seconds:02}")
             } else if total_minutes > 0 || self.digits_format == DigitsFormat::SingleDigitMinutes {
-                write!(f, "{}:{:02}", minutes, seconds)
+                write!(f, "{minutes}:{seconds:02}")
             } else if self.digits_format == DigitsFormat::DoubleDigitSeconds {
-                write!(f, "{:02}", seconds)
+                write!(f, "{seconds:02}")
             } else {
-                write!(f, "{}", seconds)
+                write!(f, "{seconds}")
             }
         } else {
-            write!(f, "{}", DASH)
+            write!(f, "{DASH}")
         }
     }
 }

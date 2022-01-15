@@ -68,11 +68,7 @@ pub enum Error {
         source: io::Error,
     },
     /// The icon of a segment has invalid dimensions.
-    #[snafu(display(
-        "The dimensions {}x{} of a segment's icon are not valid.",
-        width,
-        height
-    ))]
+    #[snafu(display("The dimensions {width}x{height} of a segment's icon are not valid."))]
     InvalidIconDimensions {
         /// The width of the icon.
         width: u32,

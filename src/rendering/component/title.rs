@@ -69,12 +69,12 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     let attempts = match (component.finished_runs, component.attempts) {
         (Some(a), Some(b)) => {
             cache.attempts_buffer.clear();
-            let _ = write!(cache.attempts_buffer, "{}/{}", a, b);
+            let _ = write!(cache.attempts_buffer, "{a}/{b}");
             cache.attempts_buffer.as_str()
         }
         (Some(a), _) | (_, Some(a)) => {
             cache.attempts_buffer.clear();
-            let _ = write!(cache.attempts_buffer, "{}", a);
+            let _ = write!(cache.attempts_buffer, "{a}");
             cache.attempts_buffer.as_str()
         }
         _ => "",

@@ -28,7 +28,7 @@ pub enum CreationError {
         source: anyhow::Error,
     },
     /// Failed linking the WebAssembly module.
-    #[snafu(display("Failed linking the function `{}` to the WebAssembly module.", name))]
+    #[snafu(display("Failed linking the function `{name}` to the WebAssembly module."))]
     LinkFunction {
         /// The name of the function that failed to link.
         name: &'static str,
@@ -191,21 +191,48 @@ impl<T: Timer> Runtime<T> {
 
 fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationError> {
     linker
-        .func_wrap("env", "timer_start", |mut caller: Caller<'_, Context<T>>| {
-            caller.data_mut().timer.start();
-        }).context(LinkFunction { name: "timer_start" })?
-        .func_wrap("env", "timer_split", |mut caller: Caller<'_, Context<T>>| {
-            caller.data_mut().timer.split();
-        }).context(LinkFunction { name: "timer_split" })?
-        .func_wrap("env", "timer_reset", |mut caller: Caller<'_, Context<T>>| {
-            caller.data_mut().timer.reset();
-        }).context(LinkFunction { name: "timer_reset" })?
+        .func_wrap(
+            "env",
+            "timer_start",
+            |mut caller: Caller<'_, Context<T>>| {
+                caller.data_mut().timer.start();
+            },
+        )
+        .context(LinkFunction {
+            name: "timer_start",
+        })?
+        .func_wrap(
+            "env",
+            "timer_split",
+            |mut caller: Caller<'_, Context<T>>| {
+                caller.data_mut().timer.split();
+            },
+        )
+        .context(LinkFunction {
+            name: "timer_split",
+        })?
+        .func_wrap(
+            "env",
+            "timer_reset",
+            |mut caller: Caller<'_, Context<T>>| {
+                caller.data_mut().timer.reset();
+            },
+        )
+        .context(LinkFunction {
+            name: "timer_reset",
+        })?
         .func_wrap("env", "timer_pause_game_time", {
             |mut caller: Caller<'_, Context<T>>| caller.data_mut().timer.pause_game_time()
-        }).context(LinkFunction { name: "timer_pause_game_time" })?
+        })
+        .context(LinkFunction {
+            name: "timer_pause_game_time",
+        })?
         .func_wrap("env", "timer_resume_game_time", {
             |mut caller: Caller<'_, Context<T>>| caller.data_mut().timer.resume_game_time()
-        }).context(LinkFunction { name: "timer_resume_game_time" })?
+        })
+        .context(LinkFunction {
+            name: "timer_resume_game_time",
+        })?
         .func_wrap("env", "timer_set_game_time", {
             |mut caller: Caller<'_, Context<T>>, secs: i64, nanos: i32| {
                 caller
@@ -213,23 +240,35 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                     .timer
                     .set_game_time(time::Duration::new(secs, nanos));
             }
-        }).context(LinkFunction { name: "timer_set_game_time" })?
+        })
+        .context(LinkFunction {
+            name: "timer_set_game_time",
+        })?
         .func_wrap("env", "runtime_set_tick_rate", {
             |mut caller: Caller<'_, Context<T>>, ticks_per_sec: f64| {
-                info!(target: "Auto Splitter", "New Tick Rate: {}", ticks_per_sec);
+                info!(target: "Auto Splitter", "New Tick Rate: {ticks_per_sec}");
                 caller.data_mut().tick_rate = Duration::from_secs_f64(ticks_per_sec.recip());
             }
-        }).context(LinkFunction { name: "runtime_set_tick_rate" })?
+        })
+        .context(LinkFunction {
+            name: "runtime_set_tick_rate",
+        })?
         .func_wrap("env", "timer_get_state", {
             |caller: Caller<'_, Context<T>>| caller.data().timer.state() as u32
-        }).context(LinkFunction { name: "timer_get_state" })?
+        })
+        .context(LinkFunction {
+            name: "timer_get_state",
+        })?
         .func_wrap("env", "runtime_print_message", {
             |mut caller: Caller<'_, Context<T>>, ptr: u32, len: u32| {
                 let message = read_str(&mut caller, ptr, len)?;
-                info!(target: "Auto Splitter", "{}", message);
+                info!(target: "Auto Splitter", "{message}");
                 Ok(())
             }
-        }).context(LinkFunction { name: "runtime_print_message" })?
+        })
+        .context(LinkFunction {
+            name: "runtime_print_message",
+        })?
         .func_wrap("env", "timer_set_variable", {
             |mut caller: Caller<'_, Context<T>>,
              name_ptr: u32,
@@ -242,41 +281,55 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 caller.data_mut().timer.set_variable(&name, &value);
                 Ok(())
             }
-        }).context(LinkFunction { name: "timer_set_variable" })?
+        })
+        .context(LinkFunction {
+            name: "timer_set_variable",
+        })?
         .func_wrap("env", "process_attach", {
             |mut caller: Caller<'_, Context<T>>, ptr: u32, len: u32| {
                 let process_name = read_str(&mut caller, ptr, len)?;
                 Ok(
-                    if let Ok(p) = Process::with_name(&process_name, &mut caller.data_mut().process_list) {
-                        info!(target: "Auto Splitter", "Attached to a new process: {}", process_name);
+                    if let Ok(p) =
+                        Process::with_name(&process_name, &mut caller.data_mut().process_list)
+                    {
+                        info!(target: "Auto Splitter", "Attached to a new process: {process_name}");
                         caller.data_mut().processes.insert(p).data().as_ffi()
                     } else {
                         0
                     },
                 )
             }
-        }).context(LinkFunction { name: "process_attach" })?
+        })
+        .context(LinkFunction {
+            name: "process_attach",
+        })?
         .func_wrap("env", "process_detach", {
             |mut caller: Caller<'_, Context<T>>, process: u64| {
                 caller
                     .data_mut()
                     .processes
                     .remove(ProcessKey::from(KeyData::from_ffi(process as u64)))
-                    .ok_or_else(|| Trap::new(format!("Invalid process handle {}", process)))?;
+                    .ok_or_else(|| Trap::new(format!("Invalid process handle {process}")))?;
                 info!(target: "Auto Splitter", "Detached from a process.");
                 Ok(())
             }
-        }).context(LinkFunction { name: "process_detach" })?
+        })
+        .context(LinkFunction {
+            name: "process_detach",
+        })?
         .func_wrap("env", "process_is_open", {
             |mut caller: Caller<'_, Context<T>>, process: u64| {
                 let ctx = caller.data_mut();
                 let proc = ctx
                     .processes
                     .get(ProcessKey::from(KeyData::from_ffi(process as u64)))
-                    .ok_or_else(|| Trap::new(format!("Invalid process handle: {}", process)))?;
+                    .ok_or_else(|| Trap::new(format!("Invalid process handle: {process}")))?;
                 Ok(proc.is_open(&mut ctx.process_list) as u32)
             }
-        }).context(LinkFunction { name: "process_is_open" })?
+        })
+        .context(LinkFunction {
+            name: "process_is_open",
+        })?
         .func_wrap("env", "process_get_module_address", {
             |mut caller: Caller<'_, Context<T>>, process: u64, ptr: u32, len: u32| {
                 let module_name = read_str(&mut caller, ptr, len)?;
@@ -284,11 +337,14 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                     .data_mut()
                     .processes
                     .get_mut(ProcessKey::from(KeyData::from_ffi(process as u64)))
-                    .ok_or_else(|| Trap::new(format!("Invalid process handle: {}", process)))?
+                    .ok_or_else(|| Trap::new(format!("Invalid process handle: {process}")))?
                     .module_address(&module_name)
                     .unwrap_or_default())
             }
-        }).context(LinkFunction { name: "process_get_module_address" })?
+        })
+        .context(LinkFunction {
+            name: "process_get_module_address",
+        })?
         .func_wrap("env", "process_read", {
             |mut caller: Caller<'_, Context<T>>,
              process: u64,
@@ -303,7 +359,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 Ok(context
                     .processes
                     .get(ProcessKey::from(KeyData::from_ffi(process as u64)))
-                    .ok_or_else(|| Trap::new(format!("Invalid process handle: {}", process)))?
+                    .ok_or_else(|| Trap::new(format!("Invalid process handle: {process}")))?
                     .read_mem(
                         address,
                         slice
@@ -312,7 +368,10 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                     )
                     .is_ok() as u32)
             }
-        }).context(LinkFunction { name: "process_read" })?;
+        })
+        .context(LinkFunction {
+            name: "process_read",
+        })?;
     Ok(())
 }
 
