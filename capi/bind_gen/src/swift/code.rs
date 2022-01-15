@@ -1,32 +1,28 @@
 use crate::{Class, Function, Type, TypeKind};
 use heck::ToLowerCamelCase;
 use std::{
+    borrow::Cow,
     collections::BTreeMap,
+    fmt::Write as _,
     io::{Result, Write},
 };
 
-fn get_hl_type(ty: &Type) -> String {
+fn get_hl_type(ty: &Type) -> Cow<str> {
     if ty.is_custom {
         match ty.kind {
-            TypeKind::Ref => format!("{}Ref", ty.name),
-            TypeKind::RefMut => format!("{}RefMut", ty.name),
-            TypeKind::Value => ty.name.clone(),
+            TypeKind::Ref => Cow::Owned(format!("{}Ref", ty.name)),
+            TypeKind::RefMut => Cow::Owned(format!("{}RefMut", ty.name)),
+            TypeKind::Value => Cow::Borrowed(&ty.name),
         }
-    } else if ty.name == "bool" {
-        "Bool".to_string()
-    } else if ty.name == "usize" {
-        "size_t".to_string()
-    } else if ty.name == "isize" {
-        "ssize_t".to_string()
     } else {
-        get_ll_type(ty).to_string()
+        Cow::Borrowed(get_ll_type(ty))
     }
 }
 
 fn get_ll_type(ty: &Type) -> &str {
     match (ty.kind, ty.name.as_str()) {
         (TypeKind::Ref, "c_char") => "String",
-        (TypeKind::Ref, _) | (TypeKind::RefMut, _) => "UnsafeMutableRawPointer?",
+        (TypeKind::Ref | TypeKind::RefMut, _) => "UnsafeMutableRawPointer?",
         (_, t) if !ty.is_custom => match t {
             "i8" => "Int8",
             "i16" => "Int16",
@@ -50,30 +46,31 @@ fn get_ll_type(ty: &Type) -> &str {
     }
 }
 
-fn write_class_comments<W: Write>(mut writer: W, comments: &[String]) -> Result<()> {
-    write!(
-        writer,
-        r#"
-/**"#
-    )?;
+fn get_input_name(name: &str) -> Cow<str> {
+    if name == "this" {
+        Cow::Borrowed("self")
+    } else {
+        Cow::Owned(name.to_lower_camel_case())
+    }
+}
 
-    for comment in comments {
+fn write_class_comments<W: Write>(mut writer: W, comment: &[String]) -> Result<String> {
+    let mut result = String::with_capacity(comment.iter().map(String::len).sum());
+    for line in comment {
+        let start_index = result.len();
         write!(
-            writer,
-            r#"
-    {}"#,
-            comment
-                .replace("<NULL>", "nil")
+            result,
+            "
+/// {}",
+            line.replace("<NULL>", "nil")
                 .replace("<TRUE>", "true")
                 .replace("<FALSE>", "false")
-        )?;
+        )
+        .unwrap();
+        write!(writer, "{}", &result[start_index..])?;
     }
 
-    write!(
-        writer,
-        r#"
-*/"#
-    )
+    Ok(result)
 }
 
 fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
@@ -83,49 +80,44 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
     let is_constructor = function.method == "new";
 
     if !function.comments.is_empty() {
-        write!(
-            writer,
-            r#"
-    /**"#
-        )?;
-
         for comment in &function.comments {
             write!(
                 writer,
-                r#"
-        {}"#,
+                "
+    /// {}",
                 comment
                     .replace("<NULL>", "nil")
                     .replace("<TRUE>", "true")
                     .replace("<FALSE>", "false")
             )?;
         }
-
-        write!(
-            writer,
-            r#"
-    */"#
-        )?;
     }
 
+    let mut name = function.method.to_lower_camel_case();
+    if name == "default" {
+        name.clear();
+        name.push_str("`default`");
+    }
+
+    let return_suffix = if function.output.is_nullable { "?" } else { "" };
     if is_constructor {
         write!(
             writer,
-            r#"
-    public init{}("#,
-            if function.output.is_nullable { "?" } else { "" }
+            "
+    public init{}(",
+            return_suffix
         )?;
     } else {
         write!(
             writer,
-            r#"
-    public{} func {}("#,
+            "
+    public{} func {}(",
             if is_static { " static" } else { "" },
-            function.method.to_lower_camel_case()
+            name
         )?;
     }
 
-    for (i, (name, typ)) in function
+    for (i, (name, ty)) in function
         .inputs
         .iter()
         .skip(if is_static { 0 } else { 1 })
@@ -138,175 +130,154 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
             writer,
             "_ {}: {}",
             name.to_lower_camel_case(),
-            get_hl_type(typ)
+            get_hl_type(ty)
         )?;
     }
 
     if is_constructor {
         write!(
             writer,
-            r#") {{
-        super.init(ptr: Optional.none)
-        "#
+            ") {{
+        "
         )?;
     } else if has_return_type {
         write!(
             writer,
-            r#") -> {}{} {{
-        "#,
-            return_type,
-            if function.output.is_nullable && function.output.is_custom {
-                "?"
-            } else {
-                ""
-            }
+            ") -> {}{} {{
+        ",
+            return_type, return_suffix
         )?;
     } else {
         write!(
             writer,
-            r#") {{
-        "#
+            ") {{
+        "
         )?;
     }
 
-    for (name, typ) in function.inputs.iter() {
-        if typ.is_custom {
+    for (name, ty) in &function.inputs {
+        if ty.is_custom {
             write!(
                 writer,
-                r#"assert({name}.ptr != Optional.none)
-        "#,
-                name = if name == "this" {
-                    "self".to_string()
-                } else {
-                    name.to_lower_camel_case()
-                }
+                "assert({}.ptr != nil)
+        ",
+                get_input_name(name)
             )?;
         }
     }
 
     if has_return_type {
-        if !is_constructor && function.output.is_custom {
-            write!(writer, r#"let result = {}(ptr: "#, return_type)?;
-        } else {
-            write!(writer, "let result = ")?;
-        }
+        write!(writer, "let result = ")?;
     }
 
-    write!(writer, r#"LiveSplitCoreNative.{}("#, &function.name)?;
+    write!(writer, "CLiveSplitCore.{}(", &function.name)?;
 
-    for (i, (name, typ)) in function.inputs.iter().enumerate() {
+    for (i, (name, ty)) in function.inputs.iter().enumerate() {
         if i != 0 {
             write!(writer, ", ")?;
         }
-        let ty_name = get_ll_type(typ);
-        write!(
-            writer,
-            "{}",
-            if name == "this" {
-                "self.ptr".to_string()
-            } else if typ.is_custom {
-                format!("{}.ptr", name.to_lower_camel_case())
-            } else if ty_name == "Bool" {
-                format!("{} ? 1 : 0", name.to_lower_camel_case())
-            } else {
-                name.to_lower_camel_case()
+
+        if name == "this" {
+            write!(writer, "self.ptr")?;
+        } else {
+            write!(writer, "{}", name.to_lower_camel_case())?;
+            if ty.is_custom {
+                write!(writer, ".ptr")?;
             }
-        )?;
+        }
     }
 
-    write!(
-        writer,
-        "){}",
-        if return_type == "Bool" { " != 0" } else { "" }
-    )?;
+    write!(writer, ")")?;
 
-    if !is_constructor && has_return_type && function.output.is_custom {
-        write!(writer, r#")"#)?;
-    }
-
-    for (name, typ) in function.inputs.iter() {
-        if typ.is_custom && typ.kind == TypeKind::Value {
+    for (name, ty) in &function.inputs {
+        if ty.is_custom && ty.kind == TypeKind::Value {
             write!(
                 writer,
-                r#"
-        {}.ptr = Optional.none"#,
-                if name == "this" {
-                    "self".to_string()
-                } else {
-                    name.to_lower_camel_case()
-                }
+                "
+        {}.ptr = nil",
+                get_input_name(name)
             )?;
         }
     }
 
     if has_return_type {
-        if function.output.is_nullable && function.output.is_custom {
-            if is_constructor {
-                write!(
+        if function.output.is_nullable {
+            if return_type == "String" {
+                return write!(
                     writer,
-                    r#"
-        if result == Optional.none {{
-            return nil
-        }}"#
-                )?;
-            } else {
-                write!(
-                    writer,
-                    r#"
-        if result.ptr == Optional.none {{
-            return Optional.none
-        }}"#
-                )?;
+                    "
+        if let result = result {{
+            return String(cString: result)
+        }}
+        return nil
+    }}"
+                );
             }
+
+            write!(
+                writer,
+                "
+        if result == nil {{
+            return nil
+        }}"
+            )?;
         }
+
         if return_type == "String" {
             write!(
                 writer,
-                r#"
-        return String(cString: result!)"#
+                "
+        return String(cString: result!)"
             )?;
         } else if is_constructor {
             write!(
                 writer,
-                r#"
-        self.ptr = result"#
+                "
+        super.init(ptr: result)
+    }}
+    override init(ptr: UnsafeMutableRawPointer?) {{
+        super.init(ptr: ptr)"
+            )?;
+        } else if function.output.is_custom {
+            write!(
+                writer,
+                "
+        return {}(ptr: result)",
+                return_type,
             )?;
         } else {
             write!(
                 writer,
-                r#"
-        return result"#
+                "
+        return result"
             )?;
         }
     }
 
     write!(
         writer,
-        r#"
-    }}"#
-    )?;
-
-    Ok(())
+        "
+    }}"
+    )
 }
 
 pub fn write<W: Write>(mut writer: W, classes: &BTreeMap<String, Class>) -> Result<()> {
-    write!(
-        writer,
-        r#"import LiveSplitCoreNative
-"#
-    )?;
+    writeln!(writer, "import CLiveSplitCore")?;
 
     for (class_name, class) in classes {
         let class_name_ref = format!("{}Ref", class_name);
         let class_name_ref_mut = format!("{}RefMut", class_name);
 
-        write_class_comments(&mut writer, &class.comments)?;
+        let comment = write_class_comments(&mut writer, &class.comments)?;
 
         write!(
             writer,
-            r#"
+            "
 public class {class} {{
-    var ptr: UnsafeMutableRawPointer?"#,
+    var ptr: UnsafeMutableRawPointer?
+    init(ptr: UnsafeMutableRawPointer?) {{
+        self.ptr = ptr
+    }}",
             class = class_name_ref
         )?;
 
@@ -317,37 +288,27 @@ public class {class} {{
         if class_name == "SharedTimer" {
             write!(
                 writer,
-                "{}",
-                r#"
-    public func readWith(_ block: (TimerRef) -> ()) {
-        let lock = self.read()!
-        block(lock.timer()!)
+                "
+    public func readWith(_ block: (TimerRef) -> ()) {{
+        let lock = self.read()
+        block(lock.timer())
         lock.dispose()
-    }
-    public func writeWith(_ block: (TimerRefMut) -> ()) {
-        let lock = self.write()!
-        block(lock.timer()!)
+    }}
+    public func writeWith(_ block: (TimerRefMut) -> ()) {{
+        let lock = self.write()
+        block(lock.timer())
         lock.dispose()
-    }"#
+    }}"
             )?;
         }
 
         write!(
             writer,
-            r#"
-    init(ptr: UnsafeMutableRawPointer?) {{
-        self.ptr = ptr
-    }}
+            "
 }}
-"#
-        )?;
-
-        write_class_comments(&mut writer, &class.comments)?;
-
-        write!(
-            writer,
-            r#"
-public class {class}: {base_class} {{"#,
+{comment}
+public class {class}: {base_class} {{",
+            comment = comment,
             class = class_name_ref_mut,
             base_class = class_name_ref
         )?;
@@ -358,22 +319,13 @@ public class {class}: {base_class} {{"#,
 
         write!(
             writer,
-            r#"
-    override init(ptr: UnsafeMutableRawPointer?) {{
-        super.init(ptr: ptr)
-    }}
+            "
 }}
-"#
-        )?;
-
-        write_class_comments(&mut writer, &class.comments)?;
-
-        write!(
-            writer,
-            r#"
+{comment}
 public class {class} : {base_class} {{
     private func drop() {{
-        if self.ptr != Optional.none {{"#,
+        if self.ptr != nil {{",
+            comment = comment,
             class = class_name,
             base_class = class_name_ref_mut
         )?;
@@ -381,16 +333,16 @@ public class {class} : {base_class} {{
         if let Some(function) = class.own_fns.iter().find(|f| f.method == "drop") {
             write!(
                 writer,
-                r#"
-            LiveSplitCoreNative.{}(self.ptr)"#,
+                "
+            CLiveSplitCore.{}(self.ptr)",
                 function.name
             )?;
         }
 
         write!(
             writer,
-            r#"
-            self.ptr = Optional.none
+            "
+            self.ptr = nil
         }}
     }}
     deinit {{
@@ -398,7 +350,7 @@ public class {class} : {base_class} {{
     }}
     public func dispose() {{
         self.drop()
-    }}"#
+    }}"
         )?;
 
         for function in class.static_fns.iter().chain(class.own_fns.iter()) {
@@ -409,11 +361,8 @@ public class {class} : {base_class} {{
 
         writeln!(
             writer,
-            r#"
-    override init(ptr: UnsafeMutableRawPointer?) {{
-        super.init(ptr: ptr)
-    }}
-}}"#
+            "
+}}"
         )?;
     }
 

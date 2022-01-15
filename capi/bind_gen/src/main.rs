@@ -13,7 +13,8 @@ mod typescript;
 mod wasm;
 mod wasm_bindgen;
 
-use std::fs::{create_dir_all, remove_dir_all, File};
+use std::collections::BTreeMap;
+use std::fs::{self, create_dir_all, remove_dir_all, File};
 use std::io::{BufWriter, Read, Result};
 use std::path::PathBuf;
 use std::rc::Rc;
@@ -104,197 +105,168 @@ fn get_type(ty: &SynType) -> Type {
             ty
         }
         SynType::Path(path) => {
-            if let Some(segment) = path.path.segments.iter().last() {
-                let mut name = segment.ident.to_string();
-                let is_nullable = if let Some(rest) = name.strip_prefix("Nullable") {
-                    name = rest.to_string();
-                    true
-                } else {
-                    false
-                };
-
-                if let Some(rest) = name.strip_prefix("Owned") {
-                    name = rest.to_string();
-                }
-                if name == "TimingMethod" || name == "TimerPhase" {
-                    name = String::from("u8");
-                }
-                let is_custom = match &name as &str {
-                    "u8" | "u16" | "u32" | "u64" | "i8" | "i16" | "i32" | "i64" | "()" | "bool"
-                    | "c_char" | "usize" | "isize" | "f32" | "f64" | "Json" => false,
-                    _ => true,
-                };
-                Type {
-                    kind: TypeKind::Value,
-                    is_custom,
-                    is_nullable,
-                    name,
-                }
+            let segment = path.path.segments.iter().last().expect("Weird path");
+            let mut name = segment.ident.to_string();
+            let is_nullable = if let Some(rest) = name.strip_prefix("Nullable") {
+                name = rest.to_string();
+                true
             } else {
-                panic!("Weird path")
+                false
+            };
+
+            if let Some(rest) = name.strip_prefix("Owned") {
+                name = rest.to_string();
+            }
+            if name == "TimingMethod" || name == "TimerPhase" {
+                name.clear();
+                name += "u8";
+            }
+            let is_custom = match &name as &str {
+                "u8" | "u16" | "u32" | "u64" | "i8" | "i16" | "i32" | "i64" | "()" | "bool"
+                | "c_char" | "usize" | "isize" | "f32" | "f64" | "Json" => false,
+                _ => true,
+            };
+            Type {
+                kind: TypeKind::Value,
+                is_custom,
+                is_nullable,
+                name,
             }
         }
         _ => panic!("Weird type"),
     }
 }
 
+fn get_comment(attrs: &Vec<syn::Attribute>) -> Vec<String> {
+    attrs
+        .iter()
+        .filter_map(|a| match a.parse_meta() {
+            Ok(Meta::NameValue(v)) if v.path.is_ident("doc") => Some(v),
+            _ => None,
+        })
+        .filter_map(|m| match m.lit {
+            Lit::Str(s) => Some(s.value().trim().to_string()),
+            _ => None,
+        })
+        .collect()
+}
+
 fn main() {
     let opt = Opt::from_args();
 
-    let mut contents = String::new();
-    File::open("../src/lib.rs")
-        .unwrap()
-        .read_to_string(&mut contents)
-        .unwrap();
-
+    let mut contents = fs::read_to_string("../src/lib.rs").unwrap();
     let file = parse_file(&contents).unwrap();
 
     let mut functions = Vec::new();
 
     for item in &file.items {
-        if let Item::Mod(module) = item {
-            contents.clear();
-            File::open(format!("../src/{}.rs", module.ident))
-                .unwrap()
-                .read_to_string(&mut contents)
-                .unwrap();
-            let file = parse_file(&contents).unwrap();
+        let module = match item {
+            Item::Mod(m) => m,
+            _ => continue,
+        };
 
-            let class_comments = Rc::new(
-                file.attrs
-                    .iter()
-                    .filter_map(|a| match a.parse_meta() {
-                        Ok(Meta::NameValue(v)) => Some(v),
-                        _ => None,
-                    })
-                    .filter(|m| m.path.is_ident("doc"))
-                    .filter_map(|m| match m.lit {
-                        Lit::Str(s) => Some(s.value().trim().to_string()),
-                        _ => None,
-                    })
-                    .collect::<Vec<_>>(),
-            );
+        contents.clear();
+        File::open(format!("../src/{}.rs", module.ident))
+            .unwrap()
+            .read_to_string(&mut contents)
+            .unwrap();
+        let file = parse_file(&contents).unwrap();
 
-            for item in &file.items {
-                if let Item::Fn(ItemFn {
-                    vis: Visibility::Public(_),
-                    attrs,
-                    sig:
-                        Signature {
-                            abi,
-                            ident,
-                            inputs,
-                            output,
-                            ..
-                        },
-                    ..
-                }) = item
-                {
-                    if abi
-                        .as_ref()
-                        .and_then(|a| a.name.as_ref())
-                        .map_or(false, |n| n.value() == "C")
-                        && attrs
-                            .iter()
-                            .filter_map(|a| match a.parse_meta() {
-                                Ok(Meta::Path(w)) => Some(w),
-                                _ => None,
-                            })
-                            .any(|w| w.is_ident("no_mangle"))
-                    {
-                        let comments = attrs
-                            .iter()
-                            .filter_map(|a| match a.parse_meta() {
-                                Ok(Meta::NameValue(v)) => Some(v),
-                                _ => None,
-                            })
-                            .filter(|m| m.path.is_ident("doc"))
-                            .filter_map(|m| match m.lit {
-                                Lit::Str(s) => Some(s.value().trim().to_string()),
-                                _ => None,
-                            })
-                            .collect();
+        let class_comments = Rc::new(get_comment(&file.attrs));
 
-                        let output = if let ReturnType::Type(_, ty) = output {
-                            get_type(ty)
-                        } else {
-                            Type {
-                                kind: TypeKind::Value,
-                                is_custom: false,
-                                is_nullable: false,
-                                name: String::from("()"),
-                            }
-                        };
+        for item in &file.items {
+            let ItemFn {
+                attrs,
+                sig:
+                    Signature {
+                        abi,
+                        ident,
+                        inputs,
+                        output,
+                        ..
+                    },
+                ..
+            } = match item {
+                Item::Fn(i) if matches!(i.vis, Visibility::Public(_)) => i,
+                _ => continue,
+            };
 
-                        let inputs = inputs
-                            .iter()
-                            .map(|i| {
-                                let c = match i {
-                                    FnArg::Typed(c) => c,
-                                    _ => panic!("Found a weird fn argument"),
-                                };
-                                let name = if let Pat::Ident(ident) = &*c.pat {
-                                    ident.ident.to_string()
-                                } else {
-                                    String::from("parameter")
-                                };
-                                (name, get_type(&c.ty))
-                            })
-                            .collect();
-
-                        let name = ident.to_string();
-                        let class;
-                        let method;
-                        {
-                            let mut splits = name.splitn(2, '_');
-                            class = splits.next().unwrap().to_string();
-                            method = splits.next().unwrap().to_string();
-                        }
-
-                        functions.push(Function {
-                            name,
-                            class,
-                            method,
-                            output,
-                            inputs,
-                            comments,
-                            class_comments: class_comments.clone(),
-                        });
-                    }
-                }
+            if abi
+                .as_ref()
+                .and_then(|a| a.name.as_ref())
+                .map_or(true, |n| n.value() != "C")
+                || attrs.iter().all(|a| match a.parse_meta() {
+                    Ok(Meta::Path(w)) => !w.is_ident("no_mangle"),
+                    _ => true,
+                })
+            {
+                // Not `extern "C"` or not `#[no_mangle]`.
+                continue;
             }
+
+            let comments = get_comment(&attrs);
+
+            let output = if let ReturnType::Type(_, ty) = output {
+                get_type(ty)
+            } else {
+                Type {
+                    kind: TypeKind::Value,
+                    is_custom: false,
+                    is_nullable: false,
+                    name: String::from("()"),
+                }
+            };
+
+            let inputs = inputs
+                .iter()
+                .map(|i| match i {
+                    FnArg::Typed(c) => c,
+                    _ => panic!("Found a weird fn argument"),
+                })
+                .map(|c| {
+                    let name = match &*c.pat {
+                        Pat::Ident(ident) => ident.ident.to_string(),
+                        _ => String::from("parameter"),
+                    };
+                    (name, get_type(&c.ty))
+                })
+                .collect();
+
+            let name = ident.to_string();
+            let (class, method) = name.split_once('_').unwrap();
+            let class = class.to_string();
+            let method = method.to_string();
+
+            functions.push(Function {
+                name,
+                class,
+                method,
+                output,
+                inputs,
+                comments,
+                class_comments: class_comments.clone(),
+            });
         }
     }
 
     write_files(&fns_to_classes(functions), &opt).unwrap();
 }
 
-use std::collections::BTreeMap;
-
 fn fns_to_classes(functions: Vec<Function>) -> BTreeMap<String, Class> {
-    let mut classes = BTreeMap::new();
+    let mut classes: BTreeMap<String, Class> = BTreeMap::new();
 
     for function in functions {
-        let class = classes
-            .entry(function.class.clone())
-            .or_insert_with(Class::default);
+        let class = classes.entry(function.class.clone()).or_default();
 
         class.comments = function.class_comments.clone();
 
-        let kind = if let Some((name, ty)) = function.inputs.get(0) {
-            if name == "this" {
-                Some(ty.kind)
-            } else {
-                None
-            }
-        } else {
-            None
-        };
-        match kind {
-            Some(TypeKind::Value) => class.own_fns.push(function),
-            Some(TypeKind::Ref) => class.shared_fns.push(function),
-            Some(TypeKind::RefMut) => class.mut_fns.push(function),
-            None => class.static_fns.push(function),
+        match function.inputs.get(0) {
+            Some((name, ty)) if name == "this" => match ty.kind {
+                TypeKind::Value => class.own_fns.push(function),
+                TypeKind::Ref => class.shared_fns.push(function),
+                TypeKind::RefMut => class.mut_fns.push(function),
+            },
+            _ => class.static_fns.push(function),
         }
     }
 
@@ -305,7 +277,7 @@ fn write_files(classes: &BTreeMap<String, Class>, opt: &Opt) -> Result<()> {
     let mut path = PathBuf::from("..");
     path.push("bindings");
 
-    remove_dir_all(&path).ok();
+    drop(remove_dir_all(&path));
     create_dir_all(&path)?;
 
     path.push("node");

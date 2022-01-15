@@ -26,15 +26,8 @@ fn get_type(ty: &Type) -> Cow<'_, str> {
         x => x,
     });
     match (ty.is_custom, ty.kind) {
-        (false, TypeKind::RefMut) => name.to_mut().push_str("*"),
-        (false, TypeKind::Ref) => {
-            if name == "char" {
-                name.to_mut().push_str(" const*")
-            } else {
-                name.to_mut().push_str("*")
-            }
-        }
-        (true, TypeKind::Ref) => name = Cow::Borrowed("void*"),
+        (false, TypeKind::Ref) if name == "char" => name.to_mut().push_str(" const*"),
+        (false, TypeKind::Ref | TypeKind::RefMut) => name.to_mut().push('*'),
         (true, _) => name = Cow::Borrowed("void*"),
         _ => (),
     }
@@ -63,7 +56,7 @@ extern "C" {
     )?;
 
     for class in classes.values() {
-        writeln!(writer, "")?;
+        writeln!(writer)?;
 
         for function in class
             .static_fns
