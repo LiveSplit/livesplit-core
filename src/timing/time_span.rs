@@ -191,7 +191,7 @@ impl Visitor<'_> for TimeSpanVisitor {
         E: de::Error,
     {
         v.parse()
-            .map_err(|_| E::custom(format!("Not a valid time string: {:?}", v)))
+            .map_err(|_| E::custom(format!("Not a valid time string: {v:?}")))
     }
 }
 

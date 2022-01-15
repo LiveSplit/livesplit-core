@@ -15,7 +15,7 @@ use std::io::{self, BufRead};
 #[derive(Debug, snafu::Snafu)]
 pub enum Error {
     /// Failed to parse the XML.
-    #[snafu(display("{}", error))]
+    #[snafu(display("{error}"))]
     Xml { error: XmlError },
     /// Failed to read from the source.
     Io { source: io::Error },

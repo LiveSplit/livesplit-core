@@ -46,7 +46,7 @@ impl Display for Inner {
             let mut total_seconds = time.total_seconds();
             if total_seconds < 0.0 {
                 total_seconds *= -1.0;
-                write!(f, "{}", MINUS)?;
+                write!(f, "{MINUS}")?;
             }
             let total_seconds = total_seconds as u64;
             let seconds = total_seconds % 60;
@@ -57,13 +57,13 @@ impl Display for Inner {
             let days = total_hours / 24;
 
             if days > 0 {
-                write!(f, "{}d ", days)?;
+                write!(f, "{days}d ")?;
             }
 
             if total_hours > 0 {
-                write!(f, "{}:{:02}:{:02}", hours, minutes, seconds)
+                write!(f, "{hours}:{minutes:02}:{seconds:02}")
             } else {
-                write!(f, "{}:{:02}", minutes, seconds)
+                write!(f, "{minutes}:{seconds:02}")
             }
         } else {
             write!(f, "0:00")

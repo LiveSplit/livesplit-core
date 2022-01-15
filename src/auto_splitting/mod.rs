@@ -198,7 +198,7 @@ impl Runtime {
                         }
                     }
                     if let Err(e) = runtime.step() {
-                        log::error!(target: "Auto Splitter", "Unloaded due to failure: {}", e);
+                        log::error!(target: "Auto Splitter", "Unloaded due to failure: {e}");
                         continue 'back_to_not_having_a_runtime;
                     };
                     runtime.sleep();

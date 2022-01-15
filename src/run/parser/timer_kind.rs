@@ -53,7 +53,7 @@ impl fmt::Display for TimerKind {
             TimerKind::Urn => write!(f, "Urn"),
             TimerKind::SourceLiveTimer => write!(f, "SourceLiveTimer"),
             TimerKind::Splitterino => write!(f, "Splitterino"),
-            TimerKind::Generic(name) => write!(f, "{}", name),
+            TimerKind::Generic(name) => write!(f, "{name}"),
         }
     }
 }

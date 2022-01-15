@@ -74,9 +74,9 @@ impl Display for Inner {
             let mut total_seconds = time.total_seconds();
             if total_seconds < 0.0 {
                 total_seconds *= -1.0;
-                write!(f, "{}", MINUS)?;
+                write!(f, "{MINUS}")?;
             } else {
-                write!(f, "{}", PLUS)?;
+                write!(f, "{PLUS}")?;
             }
             let seconds = total_seconds % 60.0;
             let total_minutes = (total_seconds / 60.0) as u64;
@@ -84,24 +84,21 @@ impl Display for Inner {
             let hours = total_minutes / 60;
             if hours > 0 {
                 if self.drop_decimals {
-                    write!(f, "{}:{:02}:{:02}", hours, minutes, seconds as u8)
+                    write!(f, "{hours}:{minutes:02}:{:02}", seconds as u8)
                 } else {
                     write!(
                         f,
-                        "{}:{:02}:{}",
-                        hours,
-                        minutes,
+                        "{hours}:{minutes:02}:{}",
                         self.accuracy.format_seconds(seconds, true)
                     )
                 }
             } else if total_minutes > 0 {
                 if self.drop_decimals {
-                    write!(f, "{}:{:02}", minutes, seconds as u8)
+                    write!(f, "{minutes}:{:02}", seconds as u8)
                 } else {
                     write!(
                         f,
-                        "{}:{}",
-                        minutes,
+                        "{minutes}:{}",
                         self.accuracy.format_seconds(seconds, true)
                     )
                 }
@@ -109,7 +106,7 @@ impl Display for Inner {
                 write!(f, "{}", self.accuracy.format_seconds(seconds, false))
             }
         } else {
-            write!(f, "{}", DASH)
+            write!(f, "{DASH}")
         }
     }
 }

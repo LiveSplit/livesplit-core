@@ -42,8 +42,7 @@ fn assert(timer: &Timer, got: [Option<Prediction>; 4], [a, b, c]: [(f64, usize, 
             } else {
                 None
             },
-            "Segment {} was incorrect",
-            index,
+            "Segment {index} was incorrect",
         );
     }
 }

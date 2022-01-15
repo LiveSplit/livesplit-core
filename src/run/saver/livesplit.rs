@@ -46,7 +46,7 @@ static LSS_IMAGE_HEADER: &[u8; 156] = include_bytes!("lss_image_header.bin");
 /// Saver.
 pub enum Error {
     /// Failed writing the XML.
-    #[snafu(display("{}", error))]
+    #[snafu(display("{error}"))]
     Xml {
         /// The underlying error.
         error: XmlError,
@@ -193,7 +193,7 @@ fn fmt_date(date: DateTime, buf: &mut Vec<u8>) -> &[u8] {
 
 fn fmt_buf<D: Display>(value: D, buf: &mut Vec<u8>) -> &[u8] {
     buf.clear();
-    write!(buf, "{}", value).unwrap();
+    write!(buf, "{value}").unwrap();
     buf
 }
 

@@ -45,7 +45,7 @@ fn check_column_state(state: &State, state_index: usize, expected_values: Values
     let actual_state = (actual_values, actual_colors);
     let (expected_values, expected_colors) = &expected_values[state_index];
     let expected_state = (expected_values.to_vec(), expected_colors.to_vec());
-    assert_eq!(actual_state, expected_state, "State index: {}", state_index);
+    assert_eq!(actual_state, expected_state, "State index: {state_index}");
 }
 
 #[test]

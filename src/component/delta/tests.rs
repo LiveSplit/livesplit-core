@@ -21,25 +21,25 @@ fn comparison_text() {
     // Good Override
     let mut comp = "Personal Best";
     delta_comp.settings_mut().comparison_override = Some(comp.to_owned());
-    assert_eq!(delta_comp.name(), format!("Delta ({})", comp));
+    assert_eq!(delta_comp.name(), format!("Delta ({comp})"));
     assert_eq!(&*delta_comp.state(&timer.snapshot(), &settings).key, comp);
 
     // Good Override
     comp = "Best Segments";
     delta_comp.settings_mut().comparison_override = Some(comp.to_owned());
-    assert_eq!(delta_comp.name(), format!("Delta ({})", comp));
+    assert_eq!(delta_comp.name(), format!("Delta ({comp})"));
     assert_eq!(&*delta_comp.state(&timer.snapshot(), &settings).key, comp);
 
     // Good Override
     comp = "None";
     delta_comp.settings_mut().comparison_override = Some(comp.to_owned());
-    assert_eq!(delta_comp.name(), format!("Delta ({})", comp));
+    assert_eq!(delta_comp.name(), format!("Delta ({comp})"));
     assert_eq!(&*delta_comp.state(&timer.snapshot(), &settings).key, comp);
 
     // Bad Override
     comp = "Fake Comparison";
     delta_comp.settings_mut().comparison_override = Some(comp.to_owned());
-    assert_eq!(delta_comp.name(), format!("Delta ({})", comp));
+    assert_eq!(delta_comp.name(), format!("Delta ({comp})"));
     assert_eq!(
         &*delta_comp.state(&timer.snapshot(), &settings).key,
         timer.current_comparison()

@@ -87,7 +87,7 @@ impl Component {
     /// Accesses the name of the component.
     pub fn name(&self) -> Cow<'static, str> {
         if let Some(comparison) = &self.settings.comparison_override {
-            format!("Delta ({})", comparison).into()
+            format!("Delta ({comparison})").into()
         } else {
             "Delta".into()
         }
