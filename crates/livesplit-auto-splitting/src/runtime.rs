@@ -261,7 +261,8 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
         })?
         .func_wrap("env", "runtime_print_message", {
             |mut caller: Caller<'_, Context<T>>, ptr: u32, len: u32| {
-                let message = read_str(&mut caller, ptr, len)?;
+                let (memory, _) = memory_and_context(&mut caller);
+                let message = read_str(memory, ptr, len)?;
                 info!(target: "Auto Splitter", "{message}");
                 Ok(())
             }
@@ -276,9 +277,10 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
              value_ptr: u32,
              value_len: u32|
              -> result::Result<(), Trap> {
-                let name = read_str(&mut caller, name_ptr, name_len)?;
-                let value = read_str(&mut caller, value_ptr, value_len)?;
-                caller.data_mut().timer.set_variable(&name, &value);
+                let (memory, context) = memory_and_context(&mut caller);
+                let name = read_str(memory, name_ptr, name_len)?;
+                let value = read_str(memory, value_ptr, value_len)?;
+                context.timer.set_variable(name, value);
                 Ok(())
             }
         })
@@ -287,13 +289,12 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
         })?
         .func_wrap("env", "process_attach", {
             |mut caller: Caller<'_, Context<T>>, ptr: u32, len: u32| {
-                let process_name = read_str(&mut caller, ptr, len)?;
+                let (memory, context) = memory_and_context(&mut caller);
+                let process_name = read_str(memory, ptr, len)?;
                 Ok(
-                    if let Ok(p) =
-                        Process::with_name(&process_name, &mut caller.data_mut().process_list)
-                    {
+                    if let Ok(p) = Process::with_name(process_name, &mut context.process_list) {
                         info!(target: "Auto Splitter", "Attached to a new process: {process_name}");
-                        caller.data_mut().processes.insert(p).data().as_ffi()
+                        context.processes.insert(p).data().as_ffi()
                     } else {
                         0
                     },
@@ -332,13 +333,13 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
         })?
         .func_wrap("env", "process_get_module_address", {
             |mut caller: Caller<'_, Context<T>>, process: u64, ptr: u32, len: u32| {
-                let module_name = read_str(&mut caller, ptr, len)?;
-                Ok(caller
-                    .data_mut()
+                let (memory, context) = memory_and_context(&mut caller);
+                let module_name = read_str(memory, ptr, len)?;
+                Ok(context
                     .processes
                     .get_mut(ProcessKey::from(KeyData::from_ffi(process as u64)))
                     .ok_or_else(|| Trap::new(format!("Invalid process handle: {process}")))?
-                    .module_address(&module_name)
+                    .module_address(module_name)
                     .unwrap_or_default())
             }
         })
@@ -351,21 +352,12 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
              address: u64,
              buf_ptr: u32,
              buf_len: u32| {
-                let (slice, context) = caller
-                    .data()
-                    .memory
-                    .unwrap()
-                    .data_and_store_mut(&mut caller);
+                let (memory, context) = memory_and_context(&mut caller);
                 Ok(context
                     .processes
                     .get(ProcessKey::from(KeyData::from_ffi(process as u64)))
                     .ok_or_else(|| Trap::new(format!("Invalid process handle: {process}")))?
-                    .read_mem(
-                        address,
-                        slice
-                            .get_mut(buf_ptr as usize..(buf_ptr + buf_len) as usize)
-                            .ok_or_else(|| Trap::new("Out of bounds"))?,
-                    )
+                    .read_mem(address, read_slice_mut(memory, buf_ptr, buf_len)?)
                     .is_ok() as u32)
             }
         })
@@ -375,18 +367,25 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
     Ok(())
 }
 
-fn read_str<T: Timer>(
-    caller: &mut Caller<'_, Context<T>>,
-    ptr: u32,
-    len: u32,
-) -> result::Result<String, Trap> {
-    let data = caller
-        .data()
-        .memory
-        .unwrap()
-        .data(&caller)
+fn memory_and_context<'a, T: Timer>(
+    caller: &'a mut Caller<'_, Context<T>>,
+) -> (&'a mut [u8], &'a mut Context<T>) {
+    caller.data().memory.unwrap().data_and_store_mut(caller)
+}
+
+fn read_slice(memory: &[u8], ptr: u32, len: u32) -> Result<&[u8], Trap> {
+    memory
         .get(ptr as usize..(ptr + len) as usize)
-        .ok_or_else(|| Trap::new("Pointer out of bounds"))?;
-    let s = str::from_utf8(data).map_err(|_| Trap::new("Invalid utf-8"))?;
-    Ok(s.to_string())
+        .ok_or_else(|| Trap::new("Out of bounds pointer and length pair."))
+}
+
+fn read_slice_mut(memory: &mut [u8], ptr: u32, len: u32) -> Result<&mut [u8], Trap> {
+    memory
+        .get_mut(ptr as usize..(ptr + len) as usize)
+        .ok_or_else(|| Trap::new("Out of bounds pointer and length pair."))
+}
+
+fn read_str(memory: &[u8], ptr: u32, len: u32) -> Result<&str, Trap> {
+    let slice = read_slice(memory, ptr, len)?;
+    str::from_utf8(slice).map_err(|_| Trap::new("Invalid utf-8"))
 }
