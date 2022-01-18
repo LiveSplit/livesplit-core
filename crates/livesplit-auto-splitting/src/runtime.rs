@@ -98,8 +98,11 @@ impl ProcessList {
         }
     }
 
-    pub fn process_by_name(&self, name: &str) -> Vec<&sysinfo::Process> {
-        self.system.process_by_name(name)
+    pub fn processes_by_name<'a>(
+        &'a self,
+        name: &'a str,
+    ) -> Box<dyn Iterator<Item = &'a sysinfo::Process> + 'a> {
+        self.system.processes_by_name(name)
     }
 
     pub fn is_open(&self, pid: sysinfo::Pid) -> bool {
