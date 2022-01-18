@@ -6,7 +6,7 @@ use std::{
 use proc_maps::{MapRange, Pid};
 use read_process_memory::{CopyAddress, ProcessHandle};
 use snafu::{OptionExt, ResultExt, Snafu};
-use sysinfo::{self, ProcessExt};
+use sysinfo::{self, PidExt, ProcessExt};
 
 use crate::runtime::ProcessList;
 
@@ -42,9 +42,15 @@ impl std::fmt::Debug for Process {
 impl Process {
     pub fn with_name(name: &str, process_list: &mut ProcessList) -> Result<Self, OpenError> {
         process_list.refresh();
-        let processes = process_list.process_by_name(name);
+        let processes = process_list.processes_by_name(name);
 
-        let pid = processes.first().context(ProcessDoesntExist)?.pid() as Pid;
+        // Use the process that was started the most recently, it's more
+        // predictable for the user.
+        let pid = processes
+            .max_by_key(|p| p.start_time())
+            .context(ProcessDoesntExist)?
+            .pid()
+            .as_u32() as Pid;
 
         let handle = pid.try_into().context(InvalidHandle)?;
 
@@ -59,7 +65,7 @@ impl Process {
     pub fn is_open(&self, process_list: &mut ProcessList) -> bool {
         // FIXME: We can actually ask the list to only refresh the individual process.
         process_list.refresh();
-        process_list.is_open(self.pid as _)
+        process_list.is_open(sysinfo::Pid::from_u32(self.pid as u32))
     }
 
     pub fn module_address(&mut self, module: &str) -> Result<Address, ModuleError> {
