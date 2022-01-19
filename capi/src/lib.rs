@@ -196,6 +196,10 @@ pub extern "C" fn get_buf_len() -> usize {
     OUTPUT_VEC.with(|v| v.borrow().len() - 1)
 }
 
+
+/// sets the console error panic hook
+/// this means that when rust panics in wasm, the panic message will be sent to js console
+#[cfg(feature = "wasm-web")]
 #[no_mangle]
 pub extern "C" fn initialize_debugging() {
     console_error_panic_hook::set_once();
