@@ -11,6 +11,8 @@ use std::{
     ptr,
 };
 
+extern crate console_error_panic_hook;
+
 pub mod analysis;
 pub mod auto_splitting_runtime;
 pub mod atomic_date_time;
@@ -192,4 +194,9 @@ pub extern "C" fn dealloc(ptr: *mut u8, cap: usize) {
 #[no_mangle]
 pub extern "C" fn get_buf_len() -> usize {
     OUTPUT_VEC.with(|v| v.borrow().len() - 1)
+}
+
+#[no_mangle]
+pub extern "C" fn initialize_debugging() {
+    console_error_panic_hook::set_once();
 }
