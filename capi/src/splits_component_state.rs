@@ -128,3 +128,14 @@ pub extern "C" fn SplitsComponentState_is_current_split(
 ) -> bool {
     this.splits[index].is_current_split
 }
+
+/// Returns the label of a specific column
+#[no_mangle]
+pub extern "C" fn SplitsComponentState_column_label(this: &SplitsComponentState,index: usize,) -> *const c_char {
+    let labels = this.column_labels.clone();
+    if labels.is_none() {
+        return output_str(&"");
+    }
+    let hthing = &labels.unwrap()[index];
+    return output_str(hthing);
+}
