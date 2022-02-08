@@ -6,7 +6,7 @@ use core::{
     result::Result as StdResult,
     str::{from_utf8, Utf8Error},
 };
-use image::{codecs::png, ColorType, ImageBuffer, Rgba};
+use image::{codecs::png, ColorType, ImageBuffer, ImageEncoder, Rgba};
 use snafu::{OptionExt, ResultExt};
 use std::io::{self, Read, Seek, SeekFrom};
 
@@ -245,7 +245,7 @@ pub fn parse<R: Read + Seek>(mut source: R) -> Result<Run> {
             {
                 buf2.clear();
                 if png::PngEncoder::new(&mut buf2)
-                    .encode(image.as_ref(), width, height, ColorType::Rgba8)
+                    .write_image(image.as_ref(), width, height, ColorType::Rgba8)
                     .is_ok()
                 {
                     icon = Some(Image::new(&buf2));

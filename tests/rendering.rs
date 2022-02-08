@@ -239,10 +239,16 @@ fn check(state: &LayoutState, expected_hash_data: &str, name: &str) {
 }
 
 #[track_caller]
-fn check_dims(state: &LayoutState, dims: [u32; 2], expected_hash_data: &str, name: &str) {
+fn check_dims(
+    state: &LayoutState,
+    dims @ [width, height]: [u32; 2],
+    expected_hash_data: &str,
+    name: &str,
+) {
     let mut renderer = Renderer::new();
     renderer.render(state, dims);
-    let image = renderer.into_image();
+    let image =
+        img_hash::image::RgbaImage::from_raw(width, height, renderer.into_image_data()).unwrap();
 
     let hasher = HasherConfig::with_bytes_type::<[u8; 8]>().to_hasher();
 
@@ -270,7 +276,7 @@ fn check_dims(state: &LayoutState, dims: [u32; 2], expected_hash_data: &str, nam
             let mut expected_image = expected_image.to_rgba8();
             for (x, y, Rgba([r, g, b, a])) in expected_image.enumerate_pixels_mut() {
                 if x < image.width() && y < image.height() {
-                    let Rgba([r2, g2, b2, a2]) = image.get_pixel(x, y);
+                    let img_hash::image::Rgba([r2, g2, b2, a2]) = image.get_pixel(x, y);
                     *r = (*r as i16).wrapping_sub(*r2 as i16).abs() as u8;
                     *g = (*g as i16).wrapping_sub(*g2 as i16).abs() as u8;
                     *b = (*b as i16).wrapping_sub(*b2 as i16).abs() as u8;

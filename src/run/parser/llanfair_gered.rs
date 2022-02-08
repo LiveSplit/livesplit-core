@@ -9,7 +9,7 @@ use crate::{
 };
 use base64::{self, STANDARD};
 use byteorder::{ReadBytesExt, BE};
-use image::{codecs::png, ColorType, ImageBuffer, Rgba};
+use image::{codecs::png, ColorType, ImageBuffer, ImageEncoder, Rgba};
 use quick_xml::Reader;
 use snafu::OptionExt;
 use std::io::{BufRead, Cursor, Seek, SeekFrom};
@@ -143,7 +143,7 @@ where
 
         tag_buf.clear();
         png::PngEncoder::new(&mut *tag_buf)
-            .encode(image.as_ref(), width, height, ColorType::Rgba8)
+            .write_image(image.as_ref(), width, height, ColorType::Rgba8)
             .map_err(|_| Error::Image)?;
 
         f(tag_buf);
