@@ -41,7 +41,8 @@ jobs:
 
           # Windows
           - Windows aarch64
-          - Windows i586
+          # FIXME: The `windows` crate doesn't compile on this target.
+          # - Windows i586
           - Windows i686
           - Windows x86_64
           - Windows i686 gnu
@@ -286,12 +287,12 @@ jobs:
             tests: skip
             install_target: true
 
-          - label: Windows i586
-            target: i586-pc-windows-msvc
-            os: windows-latest
-            cross: skip
-            auto_splitting: skip
-            install_target: true
+          # - label: Windows i586
+          #   target: i586-pc-windows-msvc
+          #   os: windows-latest
+          #   cross: skip
+          #   auto_splitting: skip
+          #   install_target: true
 
           - label: Windows i686
             target: i686-pc-windows-msvc
