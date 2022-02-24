@@ -364,7 +364,7 @@ impl Component {
 
     fn copy_settings_to_state(&self, state: &mut State) {
         let settings = &self.settings;
-        let (top_background_color, bottom_background_color) = if settings.flip_graph {
+        (state.top_background_color, state.bottom_background_color) = if settings.flip_graph {
             (
                 settings.ahead_background_color,
                 settings.behind_background_color,
@@ -377,8 +377,6 @@ impl Component {
         };
 
         state.is_flipped = settings.flip_graph;
-        state.top_background_color = top_background_color;
-        state.bottom_background_color = bottom_background_color;
         state.grid_lines_color = settings.grid_lines_color;
         state.graph_lines_color = settings.graph_lines_color;
         state.partial_fill_color = settings.partial_fill_color;
