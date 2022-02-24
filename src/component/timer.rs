@@ -216,7 +216,7 @@ impl Component {
             semantic_color.visualize(layout_settings)
         };
 
-        let (top_color, bottom_color) = if self.settings.show_gradient {
+        (state.top_color, state.bottom_color) = if self.settings.show_gradient {
             top_and_bottom_color(visual_color)
         } else {
             (visual_color, visual_color)
@@ -240,8 +240,6 @@ impl Component {
 
         state.updates_frequently = phase.is_running() && time.is_some();
         state.semantic_color = semantic_color;
-        state.top_color = top_color;
-        state.bottom_color = bottom_color;
         state.height = self.settings.height;
     }
 

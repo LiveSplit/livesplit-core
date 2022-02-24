@@ -76,7 +76,12 @@ where
                                     use self::splits::{
                                         ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith,
                                     };
-                                    let (start_with, update_with, update_trigger) = match &*v {
+
+                                    (
+                                        column.start_with,
+                                        column.update_with,
+                                        column.update_trigger,
+                                    ) = match &*v {
                                         "Delta" => (
                                             ColumnStartWith::Empty,
                                             ColumnUpdateWith::Delta,
@@ -109,9 +114,7 @@ where
                                         ),
                                         _ => return Err(Error::ParseColumnType),
                                     };
-                                    column.start_with = start_with;
-                                    column.update_with = update_with;
-                                    column.update_trigger = update_trigger;
+
                                     Ok(())
                                 })
                             } else {
