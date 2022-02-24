@@ -21,6 +21,26 @@ use serde::{Deserialize, Serialize};
 pub struct ColumnSettings {
     /// The name of the column.
     pub name: String,
+    /// The kind of the column.
+    #[serde(flatten)]
+    pub kind: ColumnKind,
+}
+
+/// The kind of a column. It can either be a column that shows a variable or a
+/// time.
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ColumnKind {
+    /// A column that shows a variable.
+    Variable(VariableColumn),
+    /// A column that shows a time.
+    Time(TimeColumn),
+}
+
+/// A column that shows a time.
+#[derive(Clone, Serialize, Deserialize)]
+#[serde(default)]
+pub struct TimeColumn {
     /// Specifies the value a segment starts out with before it gets replaced
     /// with the current attempt's information when splitting.
     pub start_with: ColumnStartWith,
@@ -37,6 +57,13 @@ pub struct ColumnSettings {
     /// of the Timer is used for showing the time. Otherwise the Timing Method
     /// provided is used.
     pub timing_method: Option<TimingMethod>,
+}
+
+/// A column that shows a variable.
+#[derive(Default, Clone, Serialize, Deserialize)]
+pub struct VariableColumn {
+    /// The name of the variable to visualize.
+    pub variable_name: String,
 }
 
 /// Specifies the value a segment starts out with before it gets replaced
@@ -107,6 +134,14 @@ impl Default for ColumnSettings {
     fn default() -> Self {
         ColumnSettings {
             name: String::from("Column"),
+            kind: ColumnKind::Time(TimeColumn::default()),
+        }
+    }
+}
+
+impl Default for TimeColumn {
+    fn default() -> Self {
+        TimeColumn {
             start_with: ColumnStartWith::Empty,
             update_with: ColumnUpdateWith::DontUpdate,
             update_trigger: ColumnUpdateTrigger::Contextual,
@@ -153,11 +188,61 @@ pub fn update_state(
     current_split: Option<usize>,
     method: TimingMethod,
 ) {
+    match &column_settings.kind {
+        ColumnKind::Variable(column) => {
+            state.value.clear();
+            if let Some(value) = segment.variables().get(column.variable_name.as_str()) {
+                state.value.push_str(value);
+            } else if Some(segment_index) == current_split {
+                if let Some(value) = timer
+                    .run()
+                    .metadata()
+                    .custom_variable_value(column.variable_name.as_str())
+                {
+                    // FIXME: We show the live value of the variable, which means it
+                    // might update frequently. So we possibly should mark it as
+                    // such. However it's currently impossible to tell if it
+                    // actually does update frequently. On top of that, the text
+                    // component would need to support this as well, as it also
+                    // shows the live value of the variable.
+                    state.value.push_str(value);
+                }
+            }
+            state.semantic_color = SemanticColor::Default;
+            state.visual_color = layout_settings.text_color;
+            state.updates_frequently = false;
+        }
+        ColumnKind::Time(column) => {
+            update_time_column(
+                state,
+                column,
+                timer,
+                splits_settings,
+                layout_settings,
+                segment,
+                segment_index,
+                current_split,
+                method,
+            );
+        }
+    }
+}
+
+fn update_time_column(
+    state: &mut ColumnState,
+    column_settings: &TimeColumn,
+    timer: &Snapshot<'_>,
+    splits_settings: &SplitsSettings,
+    layout_settings: &GeneralLayoutSettings,
+    segment: &Segment,
+    segment_index: usize,
+    current_split: Option<usize>,
+    method: TimingMethod,
+) {
     let method = column_settings.timing_method.unwrap_or(method);
     let resolved_comparison = comparison::resolve(&column_settings.comparison_override, timer);
     let comparison = comparison::or_current(resolved_comparison, timer);
-
-    let update_value = column_update_value(
+    let update_value = time_column_update_value(
         column_settings,
         timer,
         segment,
@@ -166,9 +251,7 @@ pub fn update_state(
         method,
         comparison,
     );
-
     let updated = update_value.is_some();
-
     let ((column_value, semantic_color, formatter), is_live) = update_value.unwrap_or_else(|| {
         (
             match column_settings.start_with {
@@ -197,11 +280,8 @@ pub fn update_state(
             false,
         )
     });
-
     let is_empty = column_settings.start_with == ColumnStartWith::Empty && !updated;
-
     state.updates_frequently = is_live && column_value.is_some();
-
     state.value.clear();
     if !is_empty {
         let _ = match formatter {
@@ -229,13 +309,12 @@ pub fn update_state(
             }
         };
     }
-
     state.semantic_color = semantic_color;
     state.visual_color = semantic_color.visualize(layout_settings);
 }
 
-fn column_update_value(
-    column: &ColumnSettings,
+fn time_column_update_value(
+    column: &TimeColumn,
     timer: &Snapshot<'_>,
     segment: &Segment,
     segment_index: usize,

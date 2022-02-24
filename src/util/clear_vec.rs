@@ -174,7 +174,7 @@ impl<T: Clear + Serialize> Serialize for ClearVec<T> {
     where
         S: serde::Serializer,
     {
-        (&**self).serialize(serializer)
+        <[T]>::serialize(self, serializer)
     }
 }
 

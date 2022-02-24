@@ -319,9 +319,18 @@ impl Timer {
                 .real_time
                 .map_or(false, |t| t >= TimeSpan::zero())
         {
-            self.current_split_mut()
-                .unwrap()
-                .set_split_time(current_time);
+            // FIXME: We shouldn't need to collect here.
+            let variables = self
+                .run
+                .metadata()
+                .custom_variables()
+                .map(|(k, v)| (k.to_owned(), v.value.clone()))
+                .collect();
+            let segment = self.current_split_mut().unwrap();
+
+            segment.set_split_time(current_time);
+            *segment.variables_mut() = variables;
+
             *self.current_split_index.as_mut().unwrap() += 1;
             if Some(self.run.len()) == self.current_split_index {
                 self.phase = Ended;
@@ -349,7 +358,8 @@ impl Timer {
         if (self.phase == Running || self.phase == Paused)
             && self.current_split_index < self.run.len().checked_sub(1)
         {
-            self.current_split_mut().unwrap().clear_split_time();
+            self.current_split_mut().unwrap().clear_split_info();
+
             self.current_split_index = self.current_split_index.map(|i| i + 1);
             self.run.mark_as_modified();
 
@@ -366,7 +376,9 @@ impl Timer {
                 self.phase = Running;
             }
             self.current_split_index = self.current_split_index.map(|i| i - 1);
-            self.current_split_mut().unwrap().clear_split_time();
+
+            self.current_split_mut().unwrap().clear_split_info();
+
             self.run.mark_as_modified();
 
             // FIXME: OnUndoSplit
@@ -416,7 +428,7 @@ impl Timer {
 
         // Reset Splits
         for segment in self.run.segments_mut() {
-            segment.clear_split_time();
+            segment.clear_split_info();
         }
 
         // FIXME: OnReset

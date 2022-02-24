@@ -2,7 +2,10 @@ use super::{
     ColumnSettings, ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith, Component, Settings,
     State,
 };
-use crate::{Run, Segment, TimeSpan, Timer, TimingMethod};
+use crate::{
+    component::splits::{ColumnKind, TimeColumn},
+    Run, Segment, TimeSpan, Timer, TimingMethod,
+};
 
 pub mod column;
 
@@ -85,9 +88,12 @@ fn negative_segment_times() {
     let layout_settings = Default::default();
     let mut component = Component::with_settings(Settings {
         columns: vec![ColumnSettings {
-            start_with: ColumnStartWith::Empty,
-            update_with: ColumnUpdateWith::SegmentTime,
-            update_trigger: ColumnUpdateTrigger::OnStartingSegment,
+            kind: ColumnKind::Time(TimeColumn {
+                start_with: ColumnStartWith::Empty,
+                update_with: ColumnUpdateWith::SegmentTime,
+                update_trigger: ColumnUpdateTrigger::OnStartingSegment,
+                ..Default::default()
+            }),
             ..Default::default()
         }],
         ..Default::default()
