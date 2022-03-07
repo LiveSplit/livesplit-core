@@ -291,7 +291,8 @@ impl Hook {
         let waker = Waker::new(poll.registry(), PING_TOKEN).map_err(|_| Error::EPoll)?;
 
         let mut devices: Vec<Device> = evdev::enumerate()
-            .filter(|d| d.supported_events().contains(EventType::KEY))
+            .filter(|(_, d)| d.supported_events().contains(EventType::KEY))
+            .map(|(_, d)| d)
             .collect();
 
         for (i, fd) in devices.iter().enumerate() {
