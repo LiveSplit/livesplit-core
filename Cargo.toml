@@ -44,7 +44,7 @@ serde = { version = "1.0.98", default-features = false, features = [
     "alloc",
     "derive",
 ] }
-smallstr = { version = "0.2.0", default-features = false }
+smallstr = { version = "0.3.0", default-features = false }
 snafu = { version = "0.7.0", default-features = false }
 unicase = "2.6.0"
 
