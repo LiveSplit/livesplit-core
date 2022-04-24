@@ -3,8 +3,7 @@
 
 use super::str;
 use crate::shared_timer::OwnedSharedTimer;
-use std::os::raw::c_char;
-use std::path::PathBuf;
+use std::{os::raw::c_char, path::PathBuf};
 
 #[cfg(feature = "auto-splitting")]
 use livesplit_core::auto_splitting::Runtime as AutoSplittingRuntime;
@@ -23,11 +22,11 @@ impl AutoSplittingRuntime {
         Self
     }
 
-    pub fn unload_script(&self) -> Result<(), ()> {
+    pub fn unload_script_blocking(&self) -> Result<(), ()> {
         Err(())
     }
 
-    pub fn load_script(&self, _: PathBuf) -> Result<(), ()> {
+    pub fn load_script_blocking(&self, _: PathBuf) -> Result<(), ()> {
         Err(())
     }
 }
@@ -53,7 +52,7 @@ pub unsafe extern "C" fn AutoSplittingRuntime_load_script(
 ) -> bool {
     let path = str(path);
     if !path.is_empty() {
-        this.load_script(PathBuf::from(path)).is_ok()
+        this.load_script_blocking(PathBuf::from(path)).is_ok()
     } else {
         false
     }
@@ -62,7 +61,7 @@ pub unsafe extern "C" fn AutoSplittingRuntime_load_script(
 /// Attempts to unload the auto splitter. Returns true if successful.
 #[no_mangle]
 pub extern "C" fn AutoSplittingRuntime_unload_script(this: &AutoSplittingRuntime) -> bool {
-    this.unload_script().is_ok()
+    this.unload_script_blocking().is_ok()
 }
 
 /// drop

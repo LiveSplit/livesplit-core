@@ -83,7 +83,11 @@ splits-io-api = { version = "0.2.0", optional = true }
 
 # Auto Splitting
 livesplit-auto-splitting = { path = "crates/livesplit-auto-splitting", version = "0.1.0", optional = true }
-crossbeam-channel = { version = "0.5.1", default-features = false, features = ["std"], optional = true }
+tokio = { version = "1.17.0", default-features = false, features = [
+    "rt",
+    "sync",
+    "time",
+], optional = true }
 log = { version = "0.4.14", default-features = false, optional = true }
 
 [target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
@@ -156,7 +160,7 @@ wasm-web = [
     "web-sys",
 ]
 networking = ["std", "splits-io-api"]
-auto-splitting = ["std", "livesplit-auto-splitting", "crossbeam-channel", "log"]
+auto-splitting = ["std", "livesplit-auto-splitting", "tokio", "log"]
 
 # FIXME: Some targets don't have atomics, but we can't test for this properly
 # yet. So there's a feature you explicitly have to opt into to deactivate the
