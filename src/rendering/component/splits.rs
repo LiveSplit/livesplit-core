@@ -1,6 +1,7 @@
 use crate::{
     component::splits::State,
     layout::{LayoutDirection, LayoutState},
+    platform::prelude::*,
     rendering::{
         consts::{
             vertical_padding, BOTH_PADDINGS, DEFAULT_COMPONENT_HEIGHT, DEFAULT_TEXT_SIZE, PADDING,
@@ -13,7 +14,6 @@ use crate::{
         solid, RenderContext,
     },
     settings::{Gradient, ListGradient},
-    platform::prelude::*,
 };
 
 pub const COLUMN_WIDTH: f32 = 2.75;

@@ -1,11 +1,11 @@
-use crate::{process::Process, timer::Timer, InterruptHandle};
+use crate::{process::Process, timer::Timer};
 
 use log::info;
 use slotmap::{Key, KeyData, SlotMap};
 use snafu::{ResultExt, Snafu};
 use std::{
     path::Path,
-    result, str, thread,
+    result, str,
     time::{Duration, Instant},
 };
 use sysinfo::{ProcessRefreshKind, RefreshKind, System, SystemExt};
@@ -40,14 +40,14 @@ pub enum CreationError {
         /// The underlying error.
         source: anyhow::Error,
     },
-    /// The WebAssembly module has no exported function named `update`, which is
+    /// The WebAssembly module has no exported function called `update`, which is
     /// a required function.
     MissingUpdateFunction {
         /// The underlying error.
         source: anyhow::Error,
     },
-    /// The WebAssembly module has no exported function memory called `memory`,
-    /// which is a requirement.
+    /// The WebAssembly module has no exported memory called `memory`, which is
+    /// a requirement.
     MissingMemory,
 }
 
@@ -72,6 +72,16 @@ pub struct Context<T: Timer> {
     timer: T,
     memory: Option<Memory>,
     process_list: ProcessList,
+}
+
+/// A threadsafe handle used to interrupt the execution of the script.
+pub struct InterruptHandle(Engine);
+
+impl InterruptHandle {
+    /// Interrupts the execution.
+    pub fn interrupt(&self) {
+        self.0.increment_epoch();
+    }
 }
 
 pub struct ProcessList {
@@ -115,19 +125,21 @@ impl ProcessList {
 pub struct Runtime<T: Timer> {
     store: Store<Context<T>>,
     update: TypedFunc<(), ()>,
-    prev_time: Instant,
+    engine: Engine,
 }
 
 impl<T: Timer> Runtime<T> {
     /// Creates a new runtime with the given path to the WebAssembly module and
     /// the timer that the module then controls.
-    pub fn new<P: AsRef<Path>>(path: P, timer: T) -> Result<Self, CreationError> {
+    pub fn new(path: &Path, timer: T) -> Result<Self, CreationError> {
         let engine = Engine::new(
             Config::new()
                 .cranelift_opt_level(OptLevel::Speed)
-                .interruptable(true),
+                .epoch_interruption(true),
         )
         .context(EngineCreation)?;
+
+        let module = Module::from_file(&engine, path).context(ModuleLoading)?;
 
         let mut store = Store::new(
             &engine,
@@ -140,7 +152,8 @@ impl<T: Timer> Runtime<T> {
             },
         );
 
-        let module = Module::from_file(&engine, path).context(ModuleLoading)?;
+        store.set_epoch_deadline(1);
+
         let mut linker = Linker::new(&engine);
         bind_interface(&mut linker)?;
         let instance = linker
@@ -158,9 +171,9 @@ impl<T: Timer> Runtime<T> {
         }
 
         Ok(Self {
+            engine,
             store,
             update,
-            prev_time: Instant::now(),
         })
     }
 
@@ -168,27 +181,15 @@ impl<T: Timer> Runtime<T> {
     /// execution of the WebAssembly module. A WebAssembly module may
     /// accidentally or maliciously loop forever, which is why this is needed.
     pub fn interrupt_handle(&self) -> InterruptHandle {
-        self.store
-            .interrupt_handle()
-            .expect("We configured the runtime to produce an interrupt handle.")
+        InterruptHandle(self.engine.clone())
     }
 
     /// Runs the exported `update` function of the WebAssembly module a single
-    /// time. If the module has not been configured yet, this will also call the
-    /// optional `configure` function beforehand.
-    pub fn step(&mut self) -> Result<(), RunError> {
-        self.update.call(&mut self.store, ()).context(RunUpdate)
-    }
-
-    /// Sleeps until the next tick based on the current tick rate. The auto
+    /// time and returns the duration to wait until the next execution. The auto
     /// splitter can change this tick rate. It is 120Hz by default.
-    pub fn sleep(&mut self) {
-        let target = self.store.data().tick_rate;
-        let delta = self.prev_time.elapsed();
-        if delta < target {
-            thread::sleep(target - delta);
-        }
-        self.prev_time = Instant::now();
+    pub fn step(&mut self) -> Result<Duration, RunError> {
+        self.update.call(&mut self.store, ()).context(RunUpdate)?;
+        Ok(self.store.data().tick_rate)
     }
 }
 

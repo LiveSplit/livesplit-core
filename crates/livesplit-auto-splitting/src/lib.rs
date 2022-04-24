@@ -123,6 +123,5 @@ mod process;
 mod runtime;
 mod timer;
 
-pub use runtime::{CreationError, RunError, Runtime};
+pub use runtime::{CreationError, InterruptHandle, RunError, Runtime};
 pub use timer::{Timer, TimerState};
-pub use wasmtime::InterruptHandle;
