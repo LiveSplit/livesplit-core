@@ -361,7 +361,7 @@ where
     F: FnMut(&mut Reader<R>, Tag<'_>) -> Result<(), E>,
     E: From<Error>,
 {
-    unsafe {
+    
         let ptr_buf: *mut Vec<u8> = buf;
         loop {
             buf.clear();
@@ -370,7 +370,7 @@ where
                 .map_err(|error| Error::Xml { error })?
             {
                 Event::Start(start) => {
-                    let tag = Tag::new(start, ptr_buf);
+                    let tag = unsafe { Tag::new(start, ptr_buf) };
                     f(reader, tag)?;
                 }
                 Event::End(_) => return Ok(()),
@@ -378,7 +378,7 @@ where
                 _ => {}
             }
         }
-    }
+    
 }
 
 pub fn parse_base<R, F, E>(
@@ -392,7 +392,7 @@ where
     F: FnMut(&mut Reader<R>, Tag<'_>) -> Result<(), E>,
     E: From<Error>,
 {
-    unsafe {
+    
         let ptr_buf: *mut Vec<u8> = buf;
         loop {
             buf.clear();
@@ -402,7 +402,7 @@ where
             {
                 Event::Start(start) => {
                     if start.name() == tag {
-                        let tag = Tag::new(start, ptr_buf);
+                        let tag = unsafe { Tag::new(start, ptr_buf) };
                         return f(reader, tag);
                     } else {
                         return Err(Error::ElementNotFound).map_err(Into::into);
@@ -412,7 +412,7 @@ where
                 _ => {}
             }
         }
-    }
+    
 }
 
 pub fn parse_attributes<F, E>(tag: &BytesStart<'_>, mut f: F) -> Result<(), E>
