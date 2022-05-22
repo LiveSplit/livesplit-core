@@ -5,7 +5,7 @@
 //! Using the LiveSplit Saver to save a Run as a LiveSplit splits file.
 //!
 //! ```no_run
-//! use livesplit_core::run::saver::livesplit;
+//! use livesplit_core::run::saver::livesplit::{self, IoWrite};
 //! use livesplit_core::{Run, Segment};
 //! use std::fs::File;
 //! use std::io::BufWriter;
@@ -21,229 +21,133 @@
 //! let writer = BufWriter::new(file.expect("Failed creating the file"));
 //!
 //! // Save the splits file as a LiveSplit splits file.
-//! livesplit::save_run(&run, writer).expect("Couldn't save the splits file");
+//! livesplit::save_run(&run, IoWrite(writer)).expect("Couldn't save the splits file");
 //! ```
 
 use crate::{
+    platform::prelude::*,
     settings::Image,
     timing::formatter::{Complete, TimeFormatter},
-    DateTime, Run, Time, TimeSpan, Timer, TimerPhase,
+    xml::{AttributeWriter, DisplayValue, Text, Writer, NO_ATTRIBUTES},
+    DateTime, Run, Time, Timer, TimerPhase,
 };
 use alloc::borrow::Cow;
-use byteorder::{WriteBytesExt, LE};
-use core::{fmt::Display, mem, result::Result as StdResult};
-use quick_xml::{
-    events::{BytesDecl, BytesEnd, BytesStart, BytesText, Event},
-    Error as XmlError, Writer,
-};
-use std::io::Write;
-use time::{macros::format_description, UtcOffset};
+use core::fmt;
+use time::UtcOffset;
 
-static LSS_IMAGE_HEADER: &[u8; 156] = include_bytes!("lss_image_header.bin");
+const LSS_IMAGE_HEADER: &[u8; 156] = include_bytes!("lss_image_header.bin");
 
-#[derive(Debug, snafu::Snafu)]
-/// The Error type for splits files that couldn't be saved by the LiveSplit
-/// Saver.
-pub enum Error {
-    /// Failed writing the XML.
-    #[snafu(display("{error}"))]
-    Xml {
-        /// The underlying error.
-        error: XmlError,
-    },
+const fn bool(value: bool) -> Text<'static> {
+    Text::new_escaped(if value { "True" } else { "False" })
 }
 
-impl From<XmlError> for Error {
-    fn from(error: XmlError) -> Self {
-        Error::Xml { error }
-    }
-}
-
-/// The Result type for the LiveSplit Saver.
-pub type Result<T> = StdResult<T, Error>;
-
-fn new_tag(name: &[u8]) -> BytesStart<'_> {
-    BytesStart::borrowed(name, name.len())
-}
-
-fn write_start<W: Write>(writer: &mut Writer<W>, tag: BytesStart<'_>) -> Result<()> {
-    writer.write_event(Event::Start(tag))?;
-    Ok(())
-}
-
-fn write_end<W: Write>(writer: &mut Writer<W>, tag: &[u8]) -> Result<()> {
-    writer.write_event(Event::End(BytesEnd::borrowed(tag)))?;
-    Ok(())
-}
-
-fn split_tag<'a>(tag: &'a BytesStart<'a>) -> (BytesStart<'a>, BytesEnd<'a>) {
-    (
-        BytesStart::borrowed(tag, tag.name().len()),
-        BytesEnd::borrowed(tag.name()),
-    )
-}
-
-const fn bool(value: bool) -> &'static [u8] {
-    if value {
-        b"True"
-    } else {
-        b"False"
-    }
-}
-
-fn scoped<W, F>(writer: &mut Writer<W>, tag: BytesStart<'_>, is_empty: bool, scope: F) -> Result<()>
+fn scoped_iter<W, I, F>(writer: &mut Writer<W>, tag: &str, iter: I, mut scope: F) -> fmt::Result
 where
-    W: Write,
-    F: FnOnce(&mut Writer<W>) -> Result<()>,
-{
-    if is_empty {
-        writer.write_event(Event::Empty(tag))?;
-    } else {
-        let (start, end) = split_tag(&tag);
-        writer.write_event(Event::Start(start))?;
-        scope(writer)?;
-        writer.write_event(Event::End(end))?;
-    }
-    Ok(())
-}
-
-fn scoped_iter<W, F, I>(
-    writer: &mut Writer<W>,
-    tag: BytesStart<'_>,
-    iter: I,
-    mut scope: F,
-) -> Result<()>
-where
-    W: Write,
+    W: fmt::Write,
     I: IntoIterator,
-    F: FnMut(&mut Writer<W>, <I as IntoIterator>::Item) -> Result<()>,
+    F: FnMut(&mut Writer<W>, I::Item) -> fmt::Result,
 {
-    let mut iter = iter.into_iter().peekable();
-    scoped(writer, tag, iter.peek().is_none(), |writer| {
-        for item in iter {
-            scope(writer, item)?;
+    writer.tag(tag, |tag| {
+        let mut iter = iter.into_iter().peekable();
+        if iter.peek().is_some() {
+            tag.content(|writer| {
+                for item in iter {
+                    scope(writer, item)?;
+                }
+                Ok(())
+            })?;
         }
         Ok(())
     })
 }
 
-fn text<W: Write, T: AsRef<[u8]>>(
+fn image<W: fmt::Write>(
     writer: &mut Writer<W>,
-    tag: BytesStart<'_>,
-    text: T,
-) -> Result<()> {
-    let text = text.as_ref();
-    scoped(writer, tag, text.is_empty(), |writer| {
-        writer.write_event(Event::Text(BytesText::from_plain(text)))?;
+    tag: &str,
+    image: &Image,
+    base64_buf: &mut String,
+    image_buf: &mut Cow<'_, [u8]>,
+) -> fmt::Result {
+    writer.tag(tag, |tag| {
+        let image_data = image.data();
+        if !image_data.is_empty() {
+            let len = image_data.len();
+            let image_buf = image_buf.to_mut();
+            image_buf.truncate(LSS_IMAGE_HEADER.len());
+            image_buf.reserve(len + 6);
+            image_buf.extend(&(len as u32).to_le_bytes());
+            image_buf.push(0x2);
+            image_buf.extend(image_data);
+            image_buf.push(0xB);
+            base64_buf.clear();
+            base64::encode_config_buf(image_buf, base64::STANDARD, base64_buf);
+            if !base64_buf.is_empty() {
+                return tag.content(|writer| writer.cdata(Text::new_escaped(base64_buf)));
+            }
+        }
         Ok(())
     })
 }
 
-fn vec_as_string<F, R>(vec: &mut Vec<u8>, f: F) -> R
-where
-    F: FnOnce(&mut String) -> R,
-{
-    let taken = mem::take(vec);
-    let mut string = String::from_utf8(taken).unwrap();
-    let result = f(&mut string);
-    *vec = string.into_bytes();
-    result
-}
+fn date<W: fmt::Write>(
+    writer: &mut AttributeWriter<'_, W>,
+    key: &str,
+    date: DateTime,
+) -> fmt::Result {
+    let date = date.to_offset(UtcOffset::UTC);
+    let (year, month, day) = date.to_calendar_date();
+    let month = month as u8;
+    let (hour, minute, second) = date.to_hms();
 
-fn image<W: Write>(
-    writer: &mut Writer<W>,
-    tag: BytesStart<'_>,
-    image: &Image,
-    buf: &mut Vec<u8>,
-    image_buf: &mut Cow<'_, [u8]>,
-) -> Result<()> {
-    let image_data = image.data();
-    if !image_data.is_empty() {
-        let len = image_data.len();
-        let image_buf = image_buf.to_mut();
-        image_buf.truncate(LSS_IMAGE_HEADER.len());
-        image_buf.reserve(len + 6);
-        image_buf.write_u32::<LE>(len as u32).unwrap();
-        image_buf.push(0x2);
-        image_buf.extend(image_data);
-        image_buf.push(0xB);
-        buf.clear();
-        vec_as_string(buf, |s| {
-            base64::encode_config_buf(image_buf, base64::STANDARD, s)
-        });
-        return scoped(writer, tag, buf.is_empty(), |writer| {
-            writer.write_event(Event::CData(BytesText::from_plain(buf)))?;
-            Ok(())
-        });
-    }
-    writer.write_event(Event::Empty(tag))?;
-    Ok(())
-}
-
-fn fmt_date(date: DateTime, buf: &mut Vec<u8>) -> &[u8] {
-    fmt_buf(
-        date.to_offset(UtcOffset::UTC)
-            .format(&format_description!(
-                "[month]/[day]/[year] [hour]:[minute]:[second]"
-            ))
-            .expect("Should be able to format a date time"),
-        buf,
+    writer.attribute(
+        key,
+        format_args!("{month:02}/{day:02}/{year:04} {hour:02}:{minute:02}:{second:02}"),
     )
 }
 
-fn fmt_buf<D: Display>(value: D, buf: &mut Vec<u8>) -> &[u8] {
-    buf.clear();
-    write!(buf, "{value}").unwrap();
-    buf
-}
-
-fn write_display<W: Write, D: Display>(
-    writer: &mut Writer<W>,
-    tag: BytesStart<'_>,
-    value: D,
-    buf: &mut Vec<u8>,
-) -> Result<()> {
-    text(writer, tag, fmt_buf(value, buf))
-}
-
-fn time_span<W: Write>(
-    writer: &mut Writer<W>,
-    tag: BytesStart<'_>,
-    time: TimeSpan,
-    buf: &mut Vec<u8>,
-) -> Result<()> {
-    write_display(writer, tag, Complete.format(time), buf)
-}
-
-fn time_inner<W: Write>(writer: &mut Writer<W>, time: Time, buf: &mut Vec<u8>) -> Result<()> {
+fn time_inner<W: fmt::Write>(writer: &mut Writer<W>, time: Time) -> fmt::Result {
     if let Some(time) = time.real_time {
-        time_span(writer, new_tag(b"RealTime"), time, buf)?;
+        writer.tag_with_text_content(
+            "RealTime",
+            NO_ATTRIBUTES,
+            DisplayValue(Complete.format(time)),
+        )?;
     }
 
     if let Some(time) = time.game_time {
-        time_span(writer, new_tag(b"GameTime"), time, buf)?;
+        writer.tag_with_text_content(
+            "GameTime",
+            NO_ATTRIBUTES,
+            DisplayValue(Complete.format(time)),
+        )?;
     }
 
     Ok(())
 }
 
-fn time<W: Write>(
-    writer: &mut Writer<W>,
-    tag: BytesStart<'_>,
-    time: Time,
-    buf: &mut Vec<u8>,
-) -> Result<()> {
-    scoped(
-        writer,
-        tag,
-        time.real_time.is_none() && time.game_time.is_none(),
-        |writer| time_inner(writer, time, buf),
-    )
+fn time<W: fmt::Write>(writer: AttributeWriter<'_, W>, time: Time) -> fmt::Result {
+    if time.real_time.is_some() || time.game_time.is_some() {
+        writer.content(|writer| time_inner(writer, time))
+    } else {
+        Ok(())
+    }
+}
+
+/// Wraps a type implementing `io::Write` to be used as a type implementing
+/// `fmt::Write` in order to write to it.
+#[cfg(feature = "std")]
+pub struct IoWrite<W>(pub W);
+
+#[cfg(feature = "std")]
+impl<W: std::io::Write> fmt::Write for IoWrite<W> {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        std::io::Write::write_all(&mut self.0, s.as_bytes()).map_err(|_| fmt::Error)
+    }
 }
 
 /// Saves the Run in use by the Timer provided as a LiveSplit splits file
 /// (*.lss).
-pub fn save_timer<W: Write>(timer: &Timer, writer: W) -> Result<()> {
+pub fn save_timer<W: fmt::Write>(timer: &Timer, writer: W) -> fmt::Result {
     let run;
     let run = if timer.current_phase() == TimerPhase::NotRunning {
         timer.run()
@@ -257,160 +161,146 @@ pub fn save_timer<W: Write>(timer: &Timer, writer: W) -> Result<()> {
 /// Saves a Run as a LiveSplit splits file (*.lss). Use the `save_timer`
 /// function if the Run is in use by a timer in order to properly save the
 /// current attempt as well.
-pub fn save_run<W: Write>(run: &Run, writer: W) -> Result<()> {
-    let writer = &mut Writer::new(writer);
+pub fn save_run<W: fmt::Write>(run: &Run, writer: W) -> fmt::Result {
+    let writer = &mut Writer::new_with_default_header(writer)?;
 
-    let buf = &mut Vec::new();
+    let base64_buf = &mut String::new();
     let image_buf = &mut Cow::Borrowed(&LSS_IMAGE_HEADER[..]);
 
-    writer.write_event(Event::Decl(BytesDecl::new(b"1.0", Some(b"UTF-8"), None)))?;
-    writer.write_event(Event::Start(BytesStart::borrowed(
-        br#"Run version="1.8.0""#,
-        3,
-    )))?;
+    writer.tag_with_content("Run", [("version", Text::new_escaped("1.8.0"))], |writer| {
+        image(writer, "GameIcon", run.game_icon(), base64_buf, image_buf)?;
+        writer.tag_with_text_content("GameName", NO_ATTRIBUTES, run.game_name())?;
+        writer.tag_with_text_content("CategoryName", NO_ATTRIBUTES, run.category_name())?;
 
-    image(
-        writer,
-        new_tag(b"GameIcon"),
-        run.game_icon(),
-        buf,
-        image_buf,
-    )?;
-    text(writer, new_tag(b"GameName"), run.game_name())?;
-    text(writer, new_tag(b"CategoryName"), run.category_name())?;
+        writer.tag_with_content("Metadata", NO_ATTRIBUTES, |writer| {
+            let metadata = run.metadata();
+            writer.empty_tag("Run", [("id", metadata.run_id())])?;
+            writer.tag_with_text_content(
+                "Platform",
+                [("usesEmulator", bool(metadata.uses_emulator()))],
+                metadata.platform_name(),
+            )?;
+            writer.tag_with_text_content("Region", NO_ATTRIBUTES, metadata.region_name())?;
+            scoped_iter(
+                writer,
+                "SpeedrunComVariables",
+                metadata.speedrun_com_variables(),
+                |writer, (name, value)| {
+                    writer.tag_with_text_content(
+                        "Variable",
+                        [("name", name.as_str())],
+                        value.as_str(),
+                    )
+                },
+            )?;
+            scoped_iter(
+                writer,
+                "CustomVariables",
+                metadata
+                    .custom_variables()
+                    .filter(|(_, var)| var.is_permanent),
+                |writer, (name, var)| {
+                    writer.tag_with_text_content(
+                        "Variable",
+                        [("name", name.as_str())],
+                        var.value.as_str(),
+                    )
+                },
+            )
+        })?;
 
-    write_start(writer, new_tag(b"Metadata"))?;
-    let metadata = run.metadata();
+        writer.tag_with_text_content(
+            "Offset",
+            NO_ATTRIBUTES,
+            DisplayValue(Complete.format(run.offset())),
+        )?;
+        writer.tag_with_text_content(
+            "AttemptCount",
+            NO_ATTRIBUTES,
+            DisplayValue(run.attempt_count()),
+        )?;
 
-    let mut tag = new_tag(b"Run");
-    tag.push_attribute((&b"id"[..], metadata.run_id().as_bytes()));
-    writer.write_event(Event::Empty(tag))?;
+        scoped_iter(
+            writer,
+            "AttemptHistory",
+            run.attempt_history(),
+            |writer, attempt| {
+                writer.tag("Attempt", |mut tag| {
+                    tag.attribute("id", DisplayValue(attempt.index()))?;
 
-    tag = new_tag(b"Platform");
-    tag.push_attribute((&b"usesEmulator"[..], bool(metadata.uses_emulator())));
-    text(writer, tag, metadata.platform_name())?;
+                    if let Some(started) = attempt.started() {
+                        date(&mut tag, "started", started.time)?;
+                        tag.attribute("isStartedSynced", bool(started.synced_with_atomic_clock))?;
+                    }
+                    if let Some(ended) = attempt.ended() {
+                        date(&mut tag, "ended", ended.time)?;
+                        tag.attribute("isEndedSynced", bool(ended.synced_with_atomic_clock))?;
+                    }
 
-    text(writer, new_tag(b"Region"), metadata.region_name())?;
+                    let is_empty = attempt.time().real_time.is_none()
+                        && attempt.time().game_time.is_none()
+                        && attempt.pause_time().is_none();
 
-    scoped_iter(
-        writer,
-        new_tag(b"SpeedrunComVariables"),
-        metadata.speedrun_com_variables(),
-        |writer, (name, value)| {
-            let mut tag = new_tag(b"Variable");
-            tag.push_attribute((&b"name"[..], name.as_bytes()));
-            text(writer, tag, value)
-        },
-    )?;
+                    if !is_empty {
+                        tag.content(|writer| {
+                            time_inner(writer, attempt.time())?;
 
-    scoped_iter(
-        writer,
-        new_tag(b"CustomVariables"),
-        metadata
-            .custom_variables()
-            .filter(|(_, var)| var.is_permanent),
-        |writer, (name, var)| {
-            let mut tag = new_tag(b"Variable");
-            tag.push_attribute((&b"name"[..], name.as_bytes()));
-            text(writer, tag, &var.value)
-        },
-    )?;
+                            if let Some(pause_time) = attempt.pause_time() {
+                                writer.tag_with_text_content(
+                                    "PauseTime",
+                                    NO_ATTRIBUTES,
+                                    DisplayValue(Complete.format(pause_time)),
+                                )?;
+                            }
 
-    write_end(writer, b"Metadata")?;
+                            Ok(())
+                        })?;
+                    }
 
-    time_span(writer, new_tag(b"Offset"), run.offset(), buf)?;
-    write_display(writer, new_tag(b"AttemptCount"), run.attempt_count(), buf)?;
+                    Ok(())
+                })
+            },
+        )?;
 
-    scoped_iter(
-        writer,
-        new_tag(b"AttemptHistory"),
-        run.attempt_history(),
-        |writer, attempt| {
-            let mut tag = new_tag(b"Attempt");
-            tag.push_attribute((&b"id"[..], fmt_buf(attempt.index(), buf)));
+        scoped_iter(writer, "Segments", run.segments(), |writer, segment| {
+            writer.tag_with_content("Segment", NO_ATTRIBUTES, |writer| {
+                writer.tag_with_text_content("Name", NO_ATTRIBUTES, segment.name())?;
+                image(writer, "Icon", segment.icon(), base64_buf, image_buf)?;
 
-            if let Some(started) = attempt.started() {
-                tag.push_attribute((&b"started"[..], fmt_date(started.time, buf)));
-                tag.push_attribute((
-                    &b"isStartedSynced"[..],
-                    bool(started.synced_with_atomic_clock),
-                ));
-            }
+                scoped_iter(
+                    writer,
+                    "SplitTimes",
+                    run.custom_comparisons(),
+                    |writer, comparison| {
+                        writer.tag("SplitTime", |mut tag| {
+                            tag.attribute("name", comparison.as_str())?;
+                            time(tag, segment.comparison(comparison))
+                        })
+                    },
+                )?;
 
-            if let Some(ended) = attempt.ended() {
-                tag.push_attribute((&b"ended"[..], fmt_date(ended.time, buf)));
-                tag.push_attribute((&b"isEndedSynced"[..], bool(ended.synced_with_atomic_clock)));
-            }
+                writer.tag("BestSegmentTime", |tag| {
+                    time(tag, segment.best_segment_time())
+                })?;
 
-            let is_empty = attempt.time().real_time.is_none()
-                && attempt.time().game_time.is_none()
-                && attempt.pause_time().is_none();
-
-            scoped(writer, tag, is_empty, |writer| {
-                time_inner(writer, attempt.time(), buf)?;
-
-                if let Some(pause_time) = attempt.pause_time() {
-                    time_span(writer, new_tag(b"PauseTime"), pause_time, buf)?;
-                }
-
-                Ok(())
+                scoped_iter(
+                    writer,
+                    "SegmentHistory",
+                    segment.segment_history(),
+                    |writer, &(index, history_time)| {
+                        writer.tag("Time", |mut tag| {
+                            tag.attribute("id", DisplayValue(index))?;
+                            time(tag, history_time)
+                        })
+                    },
+                )
             })
-        },
-    )?;
+        })?;
 
-    scoped_iter(
-        writer,
-        new_tag(b"Segments"),
-        run.segments(),
-        |writer, segment| {
-            write_start(writer, new_tag(b"Segment"))?;
-
-            text(writer, new_tag(b"Name"), segment.name())?;
-            image(writer, new_tag(b"Icon"), segment.icon(), buf, image_buf)?;
-
-            scoped_iter(
-                writer,
-                new_tag(b"SplitTimes"),
-                run.custom_comparisons(),
-                |writer, comparison| {
-                    let mut tag = new_tag(b"SplitTime");
-                    tag.push_attribute((&b"name"[..], comparison.as_bytes()));
-                    time(writer, tag, segment.comparison(comparison), buf)
-                },
-            )?;
-
-            time(
-                writer,
-                new_tag(b"BestSegmentTime"),
-                segment.best_segment_time(),
-                buf,
-            )?;
-
-            scoped_iter(
-                writer,
-                new_tag(b"SegmentHistory"),
-                segment.segment_history(),
-                |writer, &(index, history_time)| {
-                    let mut tag = new_tag(b"Time");
-                    tag.push_attribute((&b"id"[..], fmt_buf(index, buf)));
-                    time(writer, tag, history_time, buf)
-                },
-            )?;
-
-            write_end(writer, b"Segment")
-        },
-    )?;
-
-    scoped(
-        writer,
-        new_tag(b"AutoSplitterSettings"),
-        run.auto_splitter_settings().is_empty(),
-        |writer| {
-            writer.write(run.auto_splitter_settings())?;
-            Ok(())
-        },
-    )?;
-
-    write_end(writer, b"Run")?;
-    Ok(())
+        writer.tag_with_text_content(
+            "AutoSplitterSettings",
+            NO_ATTRIBUTES,
+            Text::new_escaped(run.auto_splitter_settings()),
+        )
+    })
 }

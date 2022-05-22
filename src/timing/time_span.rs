@@ -90,6 +90,7 @@ impl FromStr for TimeSpan {
     fn from_str(mut text: &str) -> Result<Self, ParseError> {
         // It's faster to use `strip_prefix` with char literals if it's an ASCII
         // char, otherwise prefer using string literals.
+        #[allow(clippy::single_char_pattern)]
         let factor =
             if let Some(remainder) = text.strip_prefix('-').or_else(|| text.strip_prefix("−")) {
                 text = remainder;

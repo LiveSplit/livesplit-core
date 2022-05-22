@@ -3,14 +3,10 @@ mod layout_files;
 mod parse {
     use crate::layout_files;
     use livesplit_core::layout::{parser::parse, Layout};
-    use std::io::Cursor;
 
-    fn file(data: &[u8]) -> Cursor<&[u8]> {
-        Cursor::new(data)
-    }
-
-    fn livesplit(data: &[u8]) -> Layout {
-        parse(file(data)).unwrap()
+    #[track_caller]
+    fn livesplit(data: &str) -> Layout {
+        parse(data).unwrap()
     }
 
     #[test]

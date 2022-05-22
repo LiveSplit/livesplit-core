@@ -1,5 +1,5 @@
 use bytemuck::{Pod, Zeroable};
-use std::{fmt, mem};
+use core::{fmt, mem};
 
 #[derive(Copy, Clone, Pod, Zeroable)]
 #[repr(transparent)]

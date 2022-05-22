@@ -1,16 +1,16 @@
-use livesplit_core::rendering::SharedOwnership;
-
 cfg_if::cfg_if! {
     if #[cfg(feature = "rendering")] {
         use criterion::{criterion_group, criterion_main, Criterion};
         use livesplit_core::{
             layout::{self, Layout},
-            rendering::{PathBuilder, ResourceAllocator, SceneManager, Label, FontKind},
+            rendering::{
+                PathBuilder, ResourceAllocator, SceneManager, Label, FontKind, SharedOwnership,
+            },
             run::parser::livesplit,
             settings::Font,
             Run, Segment, TimeSpan, Timer, TimingMethod,
         };
-        use std::{fs::File, io::BufReader};
+        use std::fs;
 
         criterion_main!(benches);
         criterion_group!(benches, default, subsplits_layout);
@@ -114,16 +114,16 @@ cfg_if::cfg_if! {
             });
         }
 
-        fn file(path: &str) -> BufReader<File> {
-            BufReader::new(File::open(path).unwrap())
+        fn file(path: &str) -> String {
+            fs::read_to_string(path).unwrap()
         }
 
         fn lss(path: &str) -> Run {
-            livesplit::parse(file(path), None).unwrap()
+            livesplit::parse(&file(path), None).unwrap()
         }
 
         fn lsl(path: &str) -> Layout {
-            layout::parser::parse(file(path)).unwrap()
+            layout::parser::parse(&file(path)).unwrap()
         }
 
         fn create_run(names: &[&str]) -> Run {

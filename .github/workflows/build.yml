@@ -312,6 +312,8 @@ jobs:
             os: windows-latest
             cross: skip
             auto_splitting: skip
+            networking: skip
+            # Networking fails due to some linking error regarding -lntdll
             install_target: true
 
           - label: Windows x86_64 gnu
@@ -339,6 +341,7 @@ jobs:
           - label: Linux i686 musl
             target: i686-unknown-linux-musl
             os: ubuntu-latest
+            auto_splitting: skip
             dylib: skip
 
           - label: Linux x86_64
@@ -394,6 +397,7 @@ jobs:
           - label: Linux armv7 Hardware Float
             target: armv7-unknown-linux-gnueabihf
             os: ubuntu-latest
+            auto_splitting: skip
 
           - label: Linux armv7 musl Hardware Float
             target: armv7-unknown-linux-musleabihf
@@ -408,28 +412,40 @@ jobs:
           - label: Linux mips
             target: mips-unknown-linux-gnu
             os: ubuntu-latest
-            tests: skip
+            auto_splitting: skip
+            networking: skip
             # FIXME: Networking Tests fail due to missing OpenSSL
             # https://github.com/LiveSplit/livesplit-core/issues/308
+            software_rendering: skip
+            # TODO: The software rendering is apparently not working on big
+            # endian platforms. Almost definitely caused by tiny-skia. This may
+            # or may not be intentional.
 
           - label: Linux mips64
             target: mips64-unknown-linux-gnuabi64
             os: ubuntu-latest
-            tests: skip
+            auto_splitting: skip
+            networking: skip
             # FIXME: Networking Tests fail due to missing OpenSSL
             # https://github.com/LiveSplit/livesplit-core/issues/308
+            software_rendering: skip
+            # TODO: The software rendering is apparently not working on big
+            # endian platforms. Almost definitely caused by tiny-skia. This may
+            # or may not be intentional.
 
           - label: Linux mips64el
             target: mips64el-unknown-linux-gnuabi64
             os: ubuntu-latest
-            tests: skip
+            auto_splitting: skip
+            networking: skip
             # FIXME: Networking Tests fail due to missing OpenSSL
             # https://github.com/LiveSplit/livesplit-core/issues/308
 
           - label: Linux mipsel
             target: mipsel-unknown-linux-gnu
             os: ubuntu-latest
-            tests: skip
+            auto_splitting: skip
+            networking: skip
             # FIXME: Networking Tests fail due to missing OpenSSL
             # https://github.com/LiveSplit/livesplit-core/issues/308
 
@@ -644,6 +660,8 @@ jobs:
           TARGET: ${{ matrix.target }}
           SKIP_CROSS: ${{ matrix.cross }}
           SKIP_AUTO_SPLITTING: ${{ matrix.auto_splitting }}
+          SKIP_NETWORKING: ${{ matrix.networking }}
+          SKIP_SOFTWARE_RENDERING: ${{ matrix.software_rendering }}
 
       - name: Prepare Release
         if: startsWith(github.ref, 'refs/tags/') && matrix.release == ''

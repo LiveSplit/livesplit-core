@@ -29,21 +29,21 @@ impl<'a, F: 'a + TimeFormatter<'a>, S: AsRef<str>> NoneWrapper<F, S> {
     /// Creates a new None Wrapper that wraps around the Time Formatter provided
     /// and replaces its empty time formatting by the string provided to this
     /// Wrapper.
-    pub fn new(inner: F, none_text: S) -> Self {
+    pub const fn new(inner: F, none_text: S) -> Self {
         NoneWrapper(inner, none_text)
     }
 }
 
 impl DashWrapper {
     /// Creates a new Dash Wrapper.
-    pub fn new<'a, F: 'a + TimeFormatter<'a>>(inner: F) -> NoneWrapper<F, &'static str> {
+    pub const fn new<'a, F: 'a + TimeFormatter<'a>>(inner: F) -> NoneWrapper<F, &'static str> {
         NoneWrapper::new(inner, DASH)
     }
 }
 
 impl EmptyWrapper {
     /// Creates a new Empty Wrapper.
-    pub fn new<'a, F: 'a + TimeFormatter<'a>>(inner: F) -> NoneWrapper<F, &'static str> {
+    pub const fn new<'a, F: 'a + TimeFormatter<'a>>(inner: F) -> NoneWrapper<F, &'static str> {
         NoneWrapper::new(inner, "")
     }
 }

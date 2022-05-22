@@ -180,7 +180,7 @@ impl<T: SharedOwnership> SharedOwnership for Handle<T> {
 
 impl<T: SharedOwnership> Handle<T> {
     /// Creates a handle based on some resource that it wraps and a unique ID.
-    pub fn new(id: usize, resource: T) -> Self {
+    pub const fn new(id: usize, resource: T) -> Self {
         Self {
             id,
             inner: resource,

@@ -14,18 +14,14 @@ use livesplit_core::{
     run::parser::{livesplit, llanfair, wsplit},
     Run, Segment, TimeSpan, Timer, TimingMethod,
 };
-use std::{fs, io::Cursor};
+use std::fs;
 
-fn file(data: &[u8]) -> Cursor<&[u8]> {
-    Cursor::new(data)
+fn lss(data: &str) -> Run {
+    livesplit::parse(data, None).unwrap()
 }
 
-fn lss(data: &[u8]) -> Run {
-    livesplit::parse(file(data), None).unwrap()
-}
-
-fn lsl(data: &[u8]) -> Layout {
-    layout::parser::parse(file(data)).unwrap()
+fn lsl(data: &str) -> Layout {
+    layout::parser::parse(data).unwrap()
 }
 
 #[test]
@@ -60,7 +56,7 @@ fn actual_split_file() {
 
 #[test]
 fn wsplit() {
-    let run = wsplit::parse(file(run_files::WSPLIT), false).unwrap();
+    let run = wsplit::parse(run_files::WSPLIT, false).unwrap();
     let timer = Timer::new(run).unwrap();
     let mut layout = lsl(layout_files::WSPLIT);
 
@@ -111,7 +107,7 @@ fn score_split() {
 
 #[test]
 fn dark_layout() {
-    let run = llanfair::parse(file(run_files::LLANFAIR)).unwrap();
+    let run = llanfair::parse(run_files::LLANFAIR).unwrap();
     let timer = Timer::new(run).unwrap();
     let mut layout = lsl(layout_files::DARK);
 
@@ -247,12 +243,15 @@ fn check_dims(
 ) {
     let mut renderer = Renderer::new();
     renderer.render(state, dims);
-    let image =
+    let hash_image =
         img_hash::image::RgbaImage::from_raw(width, height, renderer.into_image_data()).unwrap();
+    let image =
+        image::ImageBuffer::<Rgba<u8>, _>::from_raw(width, height, hash_image.as_raw().as_slice())
+            .unwrap();
 
     let hasher = HasherConfig::with_bytes_type::<[u8; 8]>().to_hasher();
 
-    let calculated_hash = hasher.hash_image(&image);
+    let calculated_hash = hasher.hash_image(&hash_image);
     let calculated_hash_data = calculated_hash.to_base64();
     let expected_hash = ImageHash::<[u8; 8]>::from_base64(expected_hash_data).unwrap();
     let distance = calculated_hash.dist(&expected_hash);
@@ -261,7 +260,7 @@ fn check_dims(
 
     let path = format!(
         "target/renders/{name}_{}.png",
-        calculated_hash_data.replace("/", "-"),
+        calculated_hash_data.replace('/', "-"),
     );
     image.save(&path).ok();
 
@@ -270,13 +269,13 @@ fn check_dims(
 
         let expected_path = format!(
             "target/renders/{name}_{}.png",
-            expected_hash_data.replace("/", "-"),
+            expected_hash_data.replace('/', "-"),
         );
         let diff_path = if let Ok(expected_image) = image::open(&expected_path) {
             let mut expected_image = expected_image.to_rgba8();
             for (x, y, Rgba([r, g, b, a])) in expected_image.enumerate_pixels_mut() {
-                if x < image.width() && y < image.height() {
-                    let img_hash::image::Rgba([r2, g2, b2, a2]) = image.get_pixel(x, y);
+                if x < hash_image.width() && y < hash_image.height() {
+                    let img_hash::image::Rgba([r2, g2, b2, a2]) = hash_image.get_pixel(x, y);
                     *r = (*r as i16).wrapping_sub(*r2 as i16).abs() as u8;
                     *g = (*g as i16).wrapping_sub(*g2 as i16).abs() as u8;
                     *b = (*b as i16).wrapping_sub(*b2 as i16).abs() as u8;

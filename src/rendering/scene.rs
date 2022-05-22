@@ -61,7 +61,7 @@ impl<P: SharedOwnership, I: SharedOwnership, L: SharedOwnership> Scene<P, I, L> 
     /// Get a reference to the bottom [`Layer's`](Layer) background. While the
     /// top [`Layer`] is inherently transparent, the bottom [`Layer`] has a
     /// background that needs to be considered.
-    pub fn background(&self) -> &Option<FillShader> {
+    pub const fn background(&self) -> &Option<FillShader> {
         &self.background
     }
 
@@ -69,7 +69,7 @@ impl<P: SharedOwnership, I: SharedOwnership, L: SharedOwnership> Scene<P, I, L> 
     /// if the bottom [`Layer`] needs to be rerendered. If the background of the
     /// bottom [`Layer`] changes this also returns `true`, so the background
     /// doesn't need to manually be compared.
-    pub fn bottom_layer_changed(&self) -> bool {
+    pub const fn bottom_layer_changed(&self) -> bool {
         self.bottom_layer_changed
     }
 

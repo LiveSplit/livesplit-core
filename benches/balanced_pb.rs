@@ -1,10 +1,9 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 
-use livesplit_core::comparison::balanced_pb::BalancedPB;
-use livesplit_core::run::parser::livesplit;
-use livesplit_core::{Run, Segment, TimeSpan, Timer};
-use std::fs::File;
-use std::io::BufReader;
+use livesplit_core::{
+    comparison::balanced_pb::BalancedPB, run::parser::livesplit, Run, Segment, TimeSpan, Timer,
+};
+use std::fs;
 
 criterion_main!(benches);
 criterion_group!(benches, fake_splits, actual_splits);
@@ -46,8 +45,8 @@ fn fake_splits(c: &mut Criterion) {
 }
 
 fn actual_splits(c: &mut Criterion) {
-    let reader = BufReader::new(File::open("tests/run_files/livesplit1.6.lss").unwrap());
-    let mut run = livesplit::parse(reader, None).unwrap();
+    let buf = fs::read_to_string("tests/run_files/livesplit1.6.lss").unwrap();
+    let mut run = livesplit::parse(&buf, None).unwrap();
     run.comparison_generators_mut().clear();
     run.comparison_generators_mut().push(Box::new(BalancedPB));
 

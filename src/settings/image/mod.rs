@@ -128,21 +128,9 @@ impl Image {
         use std::io::Read;
 
         let mut file = std::fs::File::open(path)?;
-        let len = file.metadata()?.len() as usize;
 
         let buf = buf.as_mut();
-        buf.clear();
-        buf.reserve(len);
-        unsafe {
-            buf.set_len(len);
-        }
-
-        file.read_exact(buf).map_err(|e| {
-            // Avoid exposing the uninitialized bytes and potentially causing
-            // Undefined Behavior.
-            unsafe { buf.set_len(0) };
-            e
-        })?;
+        file.read_to_end(buf)?;
 
         Ok(Image::new(buf))
     }

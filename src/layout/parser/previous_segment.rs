@@ -2,45 +2,32 @@ use super::{
     accuracy, color, comparison_override, end_tag, parse_bool, parse_children, GradientBuilder,
     Result,
 };
-use quick_xml::Reader;
-use std::io::BufRead;
 
 pub use crate::component::previous_segment::Component;
+use crate::xml::Reader;
 
-pub fn settings<R>(
-    reader: &mut Reader<R>,
-    buf: &mut Vec<u8>,
-    component: &mut Component,
-) -> Result<()>
-where
-    R: BufRead,
-{
+pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()> {
     let settings = component.settings_mut();
     let mut background_builder = GradientBuilder::new();
     let mut override_label = false;
 
-    parse_children(reader, buf, |reader, tag| {
-        if let Some(tag) = background_builder.parse_background(reader, tag)? {
-            if tag.name() == b"TextColor" {
-                color(reader, tag.into_buf(), |c| settings.label_color = Some(c))
-            } else if tag.name() == b"OverrideTextColor" {
-                parse_bool(reader, tag.into_buf(), |b| override_label = b)
-            } else if tag.name() == b"DeltaAccuracy" {
-                accuracy(reader, tag.into_buf(), |v| settings.accuracy = v)
-            } else if tag.name() == b"DropDecimals" {
-                parse_bool(reader, tag.into_buf(), |b| settings.drop_decimals = b)
-            } else if tag.name() == b"Comparison" {
-                comparison_override(reader, tag.into_buf(), |v| settings.comparison_override = v)
-            } else if tag.name() == b"Display2Rows" {
-                parse_bool(reader, tag.into_buf(), |b| settings.display_two_rows = b)
-            } else if tag.name() == b"ShowPossibleTimeSave" {
-                parse_bool(reader, tag.into_buf(), |b| {
-                    settings.show_possible_time_save = b
-                })
-            } else {
-                // FIXME:
-                // TimeSaveAccuracy
-                end_tag(reader, tag.into_buf())
+    parse_children(reader, |reader, tag, _| {
+        if !background_builder.parse_background(reader, tag.name())? {
+            match tag.name() {
+                "TextColor" => color(reader, |c| settings.label_color = Some(c)),
+                "OverrideTextColor" => parse_bool(reader, |b| override_label = b),
+                "DeltaAccuracy" => accuracy(reader, |v| settings.accuracy = v),
+                "DropDecimals" => parse_bool(reader, |b| settings.drop_decimals = b),
+                "Comparison" => comparison_override(reader, |v| settings.comparison_override = v),
+                "Display2Rows" => parse_bool(reader, |b| settings.display_two_rows = b),
+                "ShowPossibleTimeSave" => {
+                    parse_bool(reader, |b| settings.show_possible_time_save = b)
+                }
+                _ => {
+                    // FIXME:
+                    // TimeSaveAccuracy
+                    end_tag(reader)
+                }
             }
         } else {
             Ok(())

@@ -7,6 +7,7 @@ use std::{
     cell::{Cell, RefCell},
     ffi::CStr,
     fs::File,
+    mem::ManuallyDrop,
     os::raw::c_char,
     ptr,
 };
@@ -137,36 +138,21 @@ unsafe fn str(s: *const c_char) -> &'static str {
 
 // raw file descriptor handling
 #[cfg(unix)]
-unsafe fn get_file(fd: i64) -> File {
+unsafe fn get_file(fd: i64) -> ManuallyDrop<File> {
     use std::os::unix::io::FromRawFd;
-    File::from_raw_fd(fd as _)
+    ManuallyDrop::new(File::from_raw_fd(fd as _))
 }
 
 #[cfg(windows)]
-unsafe fn get_file(handle: i64) -> File {
+unsafe fn get_file(handle: i64) -> ManuallyDrop<File> {
     use std::os::windows::io::FromRawHandle;
-    File::from_raw_handle(handle as *mut () as _)
+    ManuallyDrop::new(File::from_raw_handle(handle as *mut () as _))
 }
 
 #[cfg(not(any(windows, unix)))]
-unsafe fn get_file(_: i64) -> File {
+unsafe fn get_file(_: i64) -> ManuallyDrop<File> {
     panic!("File Descriptor Parsing is not implemented for this platform");
 }
-
-#[cfg(unix)]
-unsafe fn release_file(file: File) {
-    use std::os::unix::io::IntoRawFd;
-    file.into_raw_fd();
-}
-
-#[cfg(windows)]
-unsafe fn release_file(file: File) {
-    use std::os::windows::io::IntoRawHandle;
-    file.into_raw_handle();
-}
-
-#[cfg(not(any(windows, unix)))]
-unsafe fn release_file(_: File) {}
 
 /// Allocate memory.
 #[cfg(all(target_arch = "wasm32", not(target_os = "wasi")))]

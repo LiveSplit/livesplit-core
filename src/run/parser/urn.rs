@@ -1,12 +1,9 @@
 //! Provides the parser for Urn splits files.
 
-use crate::{Run, Segment, Time, TimeSpan};
+use crate::{platform::prelude::*, Run, Segment, Time, TimeSpan};
 use core::result::Result as StdResult;
 use serde::Deserialize;
-use serde_json::de::from_reader;
 use serde_json::Error as JsonError;
-use snafu::ResultExt;
-use std::io::Read;
 
 /// The Error type for splits files that couldn't be parsed by the Urn
 /// Parser.
@@ -16,6 +13,7 @@ pub enum Error {
     /// Failed to parse JSON.
     Json {
         /// The underlying error.
+        #[cfg_attr(not(feature = "std"), snafu(source(false)))]
         source: JsonError,
     },
 }
@@ -51,8 +49,8 @@ fn parse_time(real_time: TimeSpan) -> Time {
 }
 
 /// Attempts to parse an Urn splits file.
-pub fn parse<R: Read>(source: R) -> Result<Run> {
-    let splits: Splits = from_reader(source).context(Json)?;
+pub fn parse(source: &str) -> Result<Run> {
+    let splits: Splits = serde_json::from_str(source).map_err(|source| Error::Json { source })?;
 
     let mut run = Run::new();
 

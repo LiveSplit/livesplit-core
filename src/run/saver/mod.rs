@@ -6,7 +6,7 @@
 //! Using the LiveSplit Saver to save a Run as a LiveSplit splits file.
 //!
 //! ```no_run
-//! use livesplit_core::run::saver::livesplit;
+//! use livesplit_core::run::saver::livesplit::{self, IoWrite};
 //! use livesplit_core::{Run, Segment};
 //! use std::fs::File;
 //! use std::io::BufWriter;
@@ -22,7 +22,7 @@
 //! let writer = BufWriter::new(file.expect("Failed creating the file"));
 //!
 //! // Save the splits file as a LiveSplit splits file.
-//! livesplit::save_run(&run, writer).expect("Couldn't save the splits file");
+//! livesplit::save_run(&run, IoWrite(writer)).expect("Couldn't save the splits file");
 //! ```
 
 pub mod livesplit;

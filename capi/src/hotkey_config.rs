@@ -1,7 +1,7 @@
 //! The configuration to use for a Hotkey System. It describes with keys to use
 //! as hotkeys for the different actions.
 
-use super::{get_file, output_vec, release_file, str, Json};
+use super::{get_file, output_vec, str, Json};
 use crate::setting_value::OwnedSettingValue;
 use livesplit_core::HotkeyConfig;
 use std::io::{BufReader, Cursor};
@@ -71,11 +71,7 @@ pub unsafe extern "C" fn HotkeyConfig_parse_json(settings: Json) -> NullableOwne
 pub unsafe extern "C" fn HotkeyConfig_parse_file_handle(handle: i64) -> NullableOwnedHotkeyConfig {
     let file = get_file(handle);
 
-    let reader = BufReader::new(&file);
+    let reader = BufReader::new(&*file);
 
-    let config = HotkeyConfig::from_json(reader).ok().map(Box::new);
-
-    release_file(file);
-
-    config
+    HotkeyConfig::from_json(reader).ok().map(Box::new)
 }

@@ -8,20 +8,19 @@
 //!
 //! ```no_run
 //! use livesplit_core::run::parser::composite;
-//! use std::fs::File;
-//! use std::io::BufReader;
+//! use std::fs;
 //! use std::path::PathBuf;
 //!
 //! // Load the file.
 //! let path = PathBuf::from("path/to/splits_file");
-//! let file = BufReader::new(File::open(&path).expect("File not found"));
+//! let file = fs::read(&path).expect("Failed reading the file.");
 //!
 //! // We want to load additional files from the file system, like segment icons.
 //! let load_files = true;
 //!
 //! // Actually parse the file.
-//! let result = composite::parse(file, Some(path), load_files);
-//! let parsed = result.expect("Not a valid splits file");
+//! let result = composite::parse(&file, Some(path), load_files);
+//! let parsed = result.expect("Not a valid splits file.");
 //!
 //! // Print out the detected file format.
 //! println!("Splits File Format: {}", parsed.kind);
@@ -35,24 +34,14 @@ use super::{
     source_live_timer, splits_io, splitterino, splitterz, splitty, time_split_tracker, urn, wsplit,
     TimerKind,
 };
-use crate::Run;
-use core::result::Result as StdResult;
-use snafu::ResultExt;
-use std::{
-    io::{self, BufRead, Seek, SeekFrom},
-    path::PathBuf,
-};
+use crate::{platform::path::PathBuf, Run};
+use core::{result::Result as StdResult, str};
 
 /// The Error type for splits files that couldn't be parsed by the Composite
 /// Parser.
 #[derive(Debug, snafu::Snafu)]
 #[snafu(context(suffix(false)))]
 pub enum Error {
-    /// Failed to seek back when trying to parse with a different parser.
-    SeekBack {
-        /// The underlying error.
-        source: io::Error,
-    },
     /// No parser was able to parse the splits file.
     NoParserParsedIt,
 }
@@ -81,10 +70,11 @@ const fn parsed(run: Run, kind: TimerKind) -> ParsedRun {
 /// `false`. Only client-side applications should set this to `true`. Unlike the
 /// normal parsing function, it also fixes problems in the Run, such as
 /// decreasing times and missing information.
-pub fn parse_and_fix<R>(source: R, path: Option<PathBuf>, load_files: bool) -> Result<ParsedRun>
-where
-    R: BufRead + Seek,
-{
+pub fn parse_and_fix<R>(
+    source: &[u8],
+    path: Option<PathBuf>,
+    load_files: bool,
+) -> Result<ParsedRun> {
     let mut run = parse(source, path, load_files)?;
     run.run.fix_splits();
     Ok(run)
@@ -96,90 +86,74 @@ where
 /// additional files, like external images are allowed to be loaded. If you are
 /// using livesplit-core in a server-like environment, set this to `false`. Only
 /// client-side applications should set this to `true`.
-pub fn parse<R>(mut source: R, path: Option<PathBuf>, load_files: bool) -> Result<ParsedRun>
-where
-    R: BufRead + Seek,
-{
-    let files_path = if load_files { path.clone() } else { None };
+pub fn parse(source: &[u8], path: Option<PathBuf>, load_files: bool) -> Result<ParsedRun> {
+    if let Ok(source) = simdutf8::basic::from_utf8(source) {
+        let files_path = if load_files { path.clone() } else { None };
 
-    source.seek(SeekFrom::Start(0)).context(SeekBack)?;
-    if let Ok(run) = livesplit::parse(&mut source, path) {
-        return Ok(parsed(run, TimerKind::LiveSplit));
+        if let Ok(run) = livesplit::parse(source, path) {
+            return Ok(parsed(run, TimerKind::LiveSplit));
+        }
+
+        if let Ok(run) = wsplit::parse(source, load_files) {
+            return Ok(parsed(run, TimerKind::WSplit));
+        }
+
+        if let Ok(run) = splitterz::parse(source, load_files) {
+            return Ok(parsed(run, TimerKind::SplitterZ));
+        }
+
+        if let Ok(run) = shit_split::parse(source) {
+            return Ok(parsed(run, TimerKind::ShitSplit));
+        }
+
+        if let Ok(run) = splitty::parse(source) {
+            return Ok(parsed(run, TimerKind::Splitty));
+        }
+
+        if let Ok(run) = time_split_tracker::parse(source, files_path) {
+            return Ok(parsed(run, TimerKind::TimeSplitTracker));
+        }
+
+        if let Ok(run) = portal2_live_timer::parse(source) {
+            return Ok(parsed(run, TimerKind::Portal2LiveTimer));
+        }
+
+        if let Ok(run) = face_split::parse(source, load_files) {
+            return Ok(parsed(run, TimerKind::FaceSplit));
+        }
+
+        // Should be parsed after LiveSplit's parser, as it also parses all
+        // LiveSplit files with the current implementation.
+        if let Ok(run) = llanfair_gered::parse(source) {
+            return Ok(parsed(run, TimerKind::LlanfairGered));
+        }
+
+        if let Ok((run, timer)) = splits_io::parse(source) {
+            return Ok(parsed(run, TimerKind::Generic(timer)));
+        }
+
+        // Splitterino, SourceLiveTimer and Flitter need to be before Urn because of
+        // a false positive due to the nature of parsing json files.
+        if let Ok(run) = splitterino::parse(source) {
+            return Ok(parsed(run, TimerKind::Splitterino));
+        }
+
+        if let Ok(run) = flitter::parse(source) {
+            return Ok(parsed(run, TimerKind::Flitter));
+        }
+
+        if let Ok(run) = source_live_timer::parse(source) {
+            return Ok(parsed(run, TimerKind::SourceLiveTimer));
+        }
+
+        // Urn accepts entirely empty JSON files.
+        if let Ok(run) = urn::parse(source) {
+            return Ok(parsed(run, TimerKind::Urn));
+        }
     }
 
-    source.seek(SeekFrom::Start(0)).context(SeekBack)?;
-    if let Ok(run) = wsplit::parse(&mut source, load_files) {
-        return Ok(parsed(run, TimerKind::WSplit));
-    }
-
-    source.seek(SeekFrom::Start(0)).context(SeekBack)?;
-    if let Ok(run) = splitterz::parse(&mut source, load_files) {
-        return Ok(parsed(run, TimerKind::SplitterZ));
-    }
-
-    source.seek(SeekFrom::Start(0)).context(SeekBack)?;
-    if let Ok(run) = shit_split::parse(&mut source) {
-        return Ok(parsed(run, TimerKind::ShitSplit));
-    }
-
-    source.seek(SeekFrom::Start(0)).context(SeekBack)?;
-    if let Ok(run) = splitty::parse(&mut source) {
-        return Ok(parsed(run, TimerKind::Splitty));
-    }
-
-    source.seek(SeekFrom::Start(0)).context(SeekBack)?;
-    if let Ok(run) = time_split_tracker::parse(&mut source, files_path) {
-        return Ok(parsed(run, TimerKind::TimeSplitTracker));
-    }
-
-    source.seek(SeekFrom::Start(0)).context(SeekBack)?;
-    if let Ok(run) = portal2_live_timer::parse(&mut source) {
-        return Ok(parsed(run, TimerKind::Portal2LiveTimer));
-    }
-
-    source.seek(SeekFrom::Start(0)).context(SeekBack)?;
-    if let Ok(run) = face_split::parse(&mut source, load_files) {
-        return Ok(parsed(run, TimerKind::FaceSplit));
-    }
-
-    source.seek(SeekFrom::Start(0)).context(SeekBack)?;
-    if let Ok(run) = llanfair::parse(&mut source) {
+    if let Ok(run) = llanfair::parse(source) {
         return Ok(parsed(run, TimerKind::Llanfair));
-    }
-
-    // Should be parsed after LiveSplit's parser, as it also parses all
-    // LiveSplit files with the current implementation.
-    source.seek(SeekFrom::Start(0)).context(SeekBack)?;
-    if let Ok(run) = llanfair_gered::parse(&mut source) {
-        return Ok(parsed(run, TimerKind::LlanfairGered));
-    }
-
-    source.seek(SeekFrom::Start(0)).context(SeekBack)?;
-    if let Ok((run, timer)) = splits_io::parse(&mut source) {
-        return Ok(parsed(run, TimerKind::Generic(timer)));
-    }
-
-    // Splitterino, SourceLiveTimer and Flitter need to be before Urn because of
-    // a false positive due to the nature of parsing json files.
-    source.seek(SeekFrom::Start(0)).context(SeekBack)?;
-    if let Ok(run) = splitterino::parse(&mut source) {
-        return Ok(parsed(run, TimerKind::Splitterino));
-    }
-
-    source.seek(SeekFrom::Start(0)).context(SeekBack)?;
-    if let Ok(run) = flitter::parse(&mut source) {
-        return Ok(parsed(run, TimerKind::Flitter));
-    }
-
-    source.seek(SeekFrom::Start(0)).context(SeekBack)?;
-    if let Ok(run) = source_live_timer::parse(&mut source) {
-        return Ok(parsed(run, TimerKind::SourceLiveTimer));
-    }
-
-    // Urn accepts entirely empty JSON files.
-    source.seek(SeekFrom::Start(0)).context(SeekBack)?;
-    if let Ok(run) = urn::parse(&mut source) {
-        return Ok(parsed(run, TimerKind::Urn));
     }
 
     Err(Error::NoParserParsedIt)

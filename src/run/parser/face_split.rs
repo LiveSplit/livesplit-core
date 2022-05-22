@@ -1,10 +1,9 @@
 //! Provides the parser for FaceSplit splits files.
 
-use crate::{settings::Image, timing, RealTime, Run, Segment, Time, TimeSpan};
+use crate::{timing, RealTime, Run, Segment, Time, TimeSpan};
 use alloc::borrow::Cow;
 use core::{num::ParseIntError, result::Result as StdResult};
 use snafu::{OptionExt, ResultExt};
-use std::io::{self, BufRead};
 
 /// The Error type for splits files that couldn't be parsed by the FaceSplit
 /// Parser.
@@ -13,34 +12,14 @@ use std::io::{self, BufRead};
 pub enum Error {
     /// Expected the title, but didn't find it.
     ExpectedTitle,
-    /// Failed to read the title.
-    ReadTitle {
-        /// The underlying error.
-        source: io::Error,
-    },
     /// Expected the goal, but didn't find it.
     ExpectedGoal,
-    /// Failed to read the goal.
-    ReadGoal {
-        /// The underlying error.
-        source: io::Error,
-    },
     /// Expected the attempt count, but didn't find it.
     ExpectedAttemptCount,
-    /// Failed to read the attempt count.
-    ReadAttemptCount {
-        /// The underlying error.
-        source: io::Error,
-    },
     /// Failed to parse the attempt count.
     ParseAttemptCount {
         /// The underlying error.
         source: ParseIntError,
-    },
-    /// Failed to read the next segment.
-    ReadSegment {
-        /// The underlying error.
-        source: io::Error,
     },
     /// Expected the name of a segment, but didn't find it.
     ExpectedSegmentName,
@@ -87,14 +66,15 @@ fn replace<'text>(text: &'text str, a: &str, b: &str) -> Cow<'text, str> {
 /// loaded from the file system. If you are using livesplit-core in a
 /// server-like environment, set this to `false`. Only client-side applications
 /// should set this to `true`.
-pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
+pub fn parse(source: &str, #[allow(unused)] load_icons: bool) -> Result<Run> {
     let mut run = Run::new();
+    #[cfg(feature = "std")]
     let mut icon_buf = Vec::new();
     let mut lines = source.lines();
 
-    run.set_category_name(lines.next().context(ExpectedTitle)?.context(ReadTitle)?);
+    run.set_category_name(lines.next().context(ExpectedTitle)?);
 
-    let goal = lines.next().context(ExpectedGoal)?.context(ReadGoal)?;
+    let goal = lines.next().context(ExpectedGoal)?;
     if !goal.trim_start().is_empty() {
         run.metadata_mut()
             .custom_variable_mut("Goal")
@@ -106,14 +86,12 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
         lines
             .next()
             .context(ExpectedAttemptCount)?
-            .context(ReadAttemptCount)?
             .parse()
             .context(ParseAttemptCount)?,
     );
     lines.next(); // FIXME: Store runs completed somehow
 
     for line in lines {
-        let line = line.context(ReadSegment)?;
         let mut splits = line.splitn(5, '-');
 
         let segment_name = replace(splits.next().context(ExpectedSegmentName)?, r#""?""#, "-");
@@ -129,10 +107,11 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
 
         splits.next(); // Skip Segment Time
 
+        #[cfg(feature = "std")]
         if load_icons {
             if let Some(icon_path) = splits.next() {
                 if !icon_path.is_empty() {
-                    if let Ok(image) = Image::from_file(icon_path, &mut icon_buf) {
+                    if let Ok(image) = crate::settings::Image::from_file(icon_path, &mut icon_buf) {
                         segment.set_icon(image);
                     }
                 }

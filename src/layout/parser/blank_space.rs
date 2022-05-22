@@ -1,31 +1,23 @@
 use super::{translate_size, Error, GradientBuilder, Result};
-use crate::xml_util::{end_tag, parse_children, text_parsed};
-use quick_xml::Reader;
-use std::io::BufRead;
+use crate::{
+    xml::Reader,
+    xml_util::{end_tag, parse_children, text_parsed},
+};
 
 pub use crate::component::blank_space::Component;
 
-pub fn settings<R>(
-    reader: &mut Reader<R>,
-    buf: &mut Vec<u8>,
-    component: &mut Component,
-) -> Result<()>
-where
-    R: BufRead,
-{
+pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()> {
     let settings = component.settings_mut();
     let mut background_builder = GradientBuilder::new();
 
-    parse_children::<_, _, Error>(reader, buf, |reader, tag| {
-        if let Some(tag) = background_builder.parse_background(reader, tag)? {
-            if tag.name() == b"SpaceHeight" {
-                text_parsed(reader, tag.into_buf(), |h| {
-                    settings.size = translate_size(h)
-                })
+    parse_children::<_, Error>(reader, |reader, tag, _| {
+        if !background_builder.parse_background(reader, tag.name())? {
+            if tag.name() == "SpaceHeight" {
+                text_parsed(reader, |h| settings.size = translate_size(h))
             } else {
                 // FIXME:
                 // SpaceWidth
-                end_tag(reader, tag.into_buf())
+                end_tag(reader)
             }
         } else {
             Ok(())

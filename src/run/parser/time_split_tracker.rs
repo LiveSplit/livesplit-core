@@ -1,14 +1,17 @@
 //! Provides the parser for Time Split Tracker splits files.
 
 use super::super::ComparisonError;
-use crate::{settings::Image, timing, AtomicDateTime, RealTime, Run, Segment, Time, TimeSpan};
-use core::{num::ParseIntError, result::Result as StdResult};
-use snafu::{OptionExt, ResultExt};
-use std::{
-    fs::File,
-    io::{self, BufRead, BufReader},
-    path::PathBuf,
+use crate::{
+    comparison::RACE_COMPARISON_PREFIX,
+    platform::{path::PathBuf, prelude::*},
+    timing, RealTime, Run, Segment, Time, TimeSpan,
 };
+#[cfg(feature = "std")]
+use crate::{settings::Image, AtomicDateTime};
+use alloc::borrow::Cow;
+use core::{fmt::Write, num::ParseIntError, result::Result as StdResult};
+use snafu::{OptionExt, ResultExt};
+#[cfg(feature = "std")]
 use time::{macros::format_description, PrimitiveDateTime};
 
 /// The Error type for splits files that couldn't be parsed by the Time
@@ -18,11 +21,6 @@ use time::{macros::format_description, PrimitiveDateTime};
 pub enum Error {
     /// An empty splits file was provided.
     Empty,
-    /// Failed to read the initial information line.
-    ReadInitialLine {
-        /// The underlying error.
-        source: io::Error,
-    },
     /// Expected the attempt count, but didn't find it.
     ExpectedAttemptCount,
     /// Failed to parse the attempt count.
@@ -39,18 +37,8 @@ pub enum Error {
     },
     /// Expected the line containing the title, but didn't find it.
     ExpectedTitleLine,
-    /// Failed to read the line containing the title.
-    ReadTitleLine {
-        /// The underlying error.
-        source: io::Error,
-    },
     /// Expected the name of the category, but didn't find it.
     ExpectedCategoryName,
-    /// Failed to read a segment line.
-    ReadSegmentLine {
-        /// The underlying error.
-        source: io::Error,
-    },
     /// Expected the name of a segment, but didn't find it.
     ExpectedSegmentName,
     /// Expected the best segment time of a segment, but didn't find it.
@@ -69,11 +57,6 @@ pub enum Error {
     },
     /// Expected a line containing the icon of a segment, but didn't find it.
     ExpectedIconLine,
-    /// Failed to read a line containing the icon of a segment.
-    ReadIconLine {
-        /// The underlying error.
-        source: io::Error,
-    },
 }
 
 /// The Result type for the Time Split Tracker parser.
@@ -93,14 +76,19 @@ fn parse_time_optional(time: &str) -> StdResult<Option<TimeSpan>, timing::ParseE
 /// use to load the run log file from the file system. This is entirely
 /// optional. If you are using livesplit-core in a server-like environment, set
 /// this to `None`. Only client-side applications should provide the path here.
-pub fn parse<R: BufRead>(source: R, path_for_loading_other_files: Option<PathBuf>) -> Result<Run> {
+pub fn parse(
+    source: &str,
+    #[allow(unused)] path_for_loading_other_files: Option<PathBuf>,
+) -> Result<Run> {
     let mut run = Run::new();
+    #[cfg(feature = "std")]
     let mut buf = Vec::new();
-    let path = path_for_loading_other_files;
+    #[cfg(feature = "std")]
+    let mut path = path_for_loading_other_files;
 
     let mut lines = source.lines();
 
-    let line = lines.next().context(Empty)?.context(ReadInitialLine)?;
+    let line = lines.next().context(Empty)?;
     let mut splits = line.split('\t');
 
     let attempt_count = splits.next().context(ExpectedAttemptCount)?;
@@ -116,43 +104,48 @@ pub fn parse<R: BufRead>(source: R, path_for_loading_other_files: Option<PathBuf
             .context(ParseOffset)?,
     );
 
+    #[cfg(feature = "std")]
     catch! {
-        let path = path.as_ref()?.with_file_name(splits.next()?);
+        let path = path.as_mut()?;
+        path.set_file_name(splits.next()?);
         let image = Image::from_file(path, &mut buf).ok()?;
         run.set_game_icon(image);
     };
 
-    let line = lines
-        .next()
-        .context(ExpectedTitleLine)?
-        .context(ReadTitleLine)?;
+    let line = lines.next().context(ExpectedTitleLine)?;
     let mut splits = line.split('\t');
     run.set_category_name(splits.next().context(ExpectedCategoryName)?);
     splits.next(); // Skip one element
-    let mut comparisons = splits.map(ToOwned::to_owned).collect::<Vec<_>>();
+
+    let mut comparisons = splits.map(Cow::Borrowed).collect::<Vec<_>>();
 
     for comparison in &mut comparisons {
-        let mut name = comparison.to_owned();
-        let mut good_name = name.to_owned();
+        let orig_len = comparison.len();
         let mut number = 2;
         loop {
-            match run.add_custom_comparison(good_name.clone()) {
+            match run.add_custom_comparison(&**comparison) {
                 Ok(_) => break,
                 Err(ComparisonError::DuplicateName) => {
-                    good_name = format!("{name}{number}");
+                    let comparison = comparison.to_mut();
+                    comparison.drain(orig_len..);
+                    let _ = write!(comparison, " {number}");
                     number += 1;
                 }
                 Err(ComparisonError::NameStartsWithRace) => {
-                    name = name[6..].to_string();
-                    good_name = name.to_owned();
+                    let comparison = comparison.to_mut();
+                    // After removing the `[Race]`, there might be some
+                    // whitespace we want to trim too.
+                    let len_after_trimming = comparison[RACE_COMPARISON_PREFIX.len()..]
+                        .trim_start()
+                        .len();
+                    let shrunk_by = comparison.len() - len_after_trimming;
+                    comparison.drain(..shrunk_by);
                 }
             }
         }
-        *comparison = good_name;
     }
 
     while let Some(line) = lines.next() {
-        let line = line.context(ReadSegmentLine)?;
         if line.is_empty() {
             continue;
         }
@@ -172,15 +165,14 @@ pub fn parse<R: BufRead>(source: R, path_for_loading_other_files: Option<PathBuf
         }
         segment.set_personal_best_split_time(pb_time);
 
-        let line = lines
-            .next()
-            .context(ExpectedIconLine)?
-            .context(ReadIconLine)?;
+        let _line = lines.next().context(ExpectedIconLine)?;
 
+        #[cfg(feature = "std")]
         catch! {
-            let file = line.trim_end();
+            let file = _line.trim_end();
             if !file.is_empty() {
-                let path = path.as_ref()?.with_file_name(file);
+                let path = path.as_mut()?;
+                path.set_file_name(file);
                 let image = Image::from_file(path, &mut buf).ok()?;
                 segment.set_icon(image);
             }
@@ -189,11 +181,13 @@ pub fn parse<R: BufRead>(source: R, path_for_loading_other_files: Option<PathBuf
         run.push_segment(segment);
     }
 
+    #[cfg(feature = "std")]
     parse_history(&mut run, path).ok();
 
     Ok(run)
 }
 
+#[cfg(feature = "std")]
 fn parse_history(run: &mut Run, path: Option<PathBuf>) -> StdResult<(), ()> {
     if let Some(mut path) = path {
         path.set_extension("");
@@ -201,11 +195,13 @@ fn parse_history(run: &mut Run, path: Option<PathBuf>) -> StdResult<(), ()> {
         path.push("-RunLog.txt");
         let path = PathBuf::from(path);
 
-        let lines = BufReader::new(File::open(path).map_err(drop)?).lines();
+        let file = std::fs::read_to_string(path).map_err(drop)?;
+        let mut lines = file.lines();
         let mut attempt_id = 1;
 
-        for line in lines.skip(1) {
-            let line = line.map_err(drop)?;
+        lines.next(); // Skip the first line
+
+        for line in lines {
             let mut splits = line.split('\t');
             let time_stamp = splits.next().ok_or(())?;
             let started = PrimitiveDateTime::parse(

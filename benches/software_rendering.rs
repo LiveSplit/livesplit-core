@@ -8,7 +8,7 @@ cfg_if::cfg_if! {
                 run::parser::livesplit,
                 Run, Segment, TimeSpan, Timer, TimingMethod,
             },
-            std::{fs::File, io::BufReader},
+            std::fs,
         };
 
         criterion_main!(benches);
@@ -61,16 +61,16 @@ cfg_if::cfg_if! {
             });
         }
 
-        fn file(path: &str) -> BufReader<File> {
-            BufReader::new(File::open(path).unwrap())
+        fn file(path: &str) -> String {
+            fs::read_to_string(path).unwrap()
         }
 
         fn lss(path: &str) -> Run {
-            livesplit::parse(file(path), None).unwrap()
+            livesplit::parse(&file(path), None).unwrap()
         }
 
         fn lsl(path: &str) -> Layout {
-            layout::parser::parse(file(path)).unwrap()
+            layout::parser::parse(&file(path)).unwrap()
         }
 
         fn create_run(names: &[&str]) -> Run {

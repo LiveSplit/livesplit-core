@@ -4,6 +4,7 @@
     clippy::perf,
     clippy::style,
     clippy::missing_const_for_fn,
+    clippy::undocumented_unsafe_blocks,
     missing_docs,
     rust_2018_idioms
 )]
@@ -78,7 +79,7 @@ pub mod settings;
 #[cfg(test)]
 pub mod tests_helper;
 pub mod timing;
-#[cfg(feature = "std")]
+mod xml;
 mod xml_util;
 
 pub use crate::{
