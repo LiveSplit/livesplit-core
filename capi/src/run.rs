@@ -1,14 +1,20 @@
 //! A Run stores the split times for a specific game and category of a runner.
 
-use super::{get_file, output_str, output_time_span, output_vec, release_file, str};
-use crate::parse_run_result::OwnedParseRunResult;
-use crate::segment::OwnedSegment;
-use livesplit_core::run::{parser, saver};
-use livesplit_core::{Attempt, Run, RunMetadata, Segment, TimeSpan};
-use std::io::{BufReader, Cursor, Write};
-use std::os::raw::c_char;
-use std::path::PathBuf;
-use std::slice;
+use super::{get_file, output_str, output_time_span, output_vec, str};
+use crate::{parse_run_result::OwnedParseRunResult, segment::OwnedSegment};
+use livesplit_core::{
+    run::{
+        parser,
+        saver::{self, livesplit::IoWrite},
+    },
+    Attempt, Run, RunMetadata, Segment, TimeSpan,
+};
+use std::{
+    io::{Read, Write},
+    os::raw::c_char,
+    path::PathBuf,
+    slice,
+};
 
 /// type
 pub type OwnedRun = Box<Run>;
@@ -47,11 +53,7 @@ pub unsafe extern "C" fn Run_parse(
         None
     };
 
-    Box::new(parser::composite::parse(
-        Cursor::new(slice::from_raw_parts(data, length)),
-        path,
-        load_files,
-    ))
+    Box::new(parser::composite::parse(slice::from_raw_parts(data, length), path, load_files).ok())
 }
 
 /// Attempts to parse a splits file from a file by invoking the corresponding
@@ -75,17 +77,14 @@ pub unsafe extern "C" fn Run_parse_file_handle(
         None
     };
 
-    let file = get_file(handle);
+    let mut file = get_file(handle);
 
-    let run = Box::new(parser::composite::parse(
-        BufReader::new(&file),
-        path,
-        load_files,
-    ));
-
-    release_file(file);
-
-    run
+    let mut bytes = Vec::new();
+    Box::new(
+        file.read_to_end(&mut bytes)
+            .ok()
+            .and_then(|_| parser::composite::parse(&bytes, path, load_files).ok()),
+    )
 }
 
 /// Clones the Run object.
@@ -252,7 +251,7 @@ pub extern "C" fn Run_attempt_history_index(this: &Run, index: usize) -> &Attemp
 #[no_mangle]
 pub extern "C" fn Run_save_as_lss(this: &Run) -> *const c_char {
     output_vec(|o| {
-        saver::livesplit::save_run(this, o).unwrap();
+        saver::livesplit::save_run(this, IoWrite(o)).unwrap();
     })
 }
 
@@ -273,5 +272,5 @@ pub extern "C" fn Run_custom_comparison(this: &Run, index: usize) -> *const c_ch
 /// Accesses the Auto Splitter Settings that are encoded as XML.
 #[no_mangle]
 pub extern "C" fn Run_auto_splitter_settings(this: &Run) -> *const c_char {
-    output_vec(|o| o.extend_from_slice(this.auto_splitter_settings()))
+    output_str(this.auto_splitter_settings())
 }

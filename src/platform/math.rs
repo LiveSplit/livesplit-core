@@ -17,14 +17,19 @@ cfg_if::cfg_if! {
             pub fn abs(x: f32) -> f32 {
                 x.abs()
             }
+
+            #[inline(always)]
+            pub fn powf(x: f32, y: f32) -> f32 {
+                x.powf(y)
+            }
         }
     } else {
         pub mod f64 {
-            pub use libm::{fabs as abs, floor as floor};
+            pub use libm::{fabs as abs, floor};
         }
 
         pub mod f32 {
-            pub use libm::fabsf as abs;
+            pub use libm::{fabsf as abs, powf};
         }
     }
 }

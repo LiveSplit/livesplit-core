@@ -106,9 +106,9 @@ impl HotkeySystem {
         Ok(hotkey_system)
     }
 
-    // This method should never be public, because it might mess up the internal state and we might
-    // leak a registered hotkey
-    unsafe fn register_raw(&mut self, hotkey: Hotkey) -> Result<()> {
+    // This method should never be public, because it might mess up the internal
+    // state and we might leak a registered hotkey
+    fn register_inner(&mut self, hotkey: Hotkey) -> Result<()> {
         let inner = self.timer.clone();
         if let Some(keycode) = hotkey.get_keycode(&self.config) {
             self.hook.register(keycode, hotkey.callback(inner))?;
@@ -118,12 +118,12 @@ impl HotkeySystem {
 
     fn register(&mut self, hotkey: Hotkey, keycode: Option<KeyCode>) -> Result<()> {
         hotkey.set_keycode(&mut self.config, keycode);
-        unsafe { self.register_raw(hotkey) }
+        self.register_inner(hotkey)
     }
 
-    // This method should never be public, because it might mess up the internal state and we might
-    // leak a registered hotkey
-    unsafe fn unregister_raw(&mut self, hotkey: Hotkey) -> Result<()> {
+    // This method should never be public, because it might mess up the internal
+    // state and we might leak a registered hotkey
+    fn unregister_inner(&mut self, hotkey: Hotkey) -> Result<()> {
         if let Some(keycode) = hotkey.get_keycode(&self.config) {
             self.hook.unregister(keycode)?;
         }
@@ -131,9 +131,7 @@ impl HotkeySystem {
     }
 
     fn unregister(&mut self, hotkey: Hotkey) -> Result<()> {
-        unsafe {
-            self.unregister_raw(hotkey)?;
-        }
+        self.unregister_inner(hotkey)?;
         hotkey.set_keycode(&mut self.config, None);
         Ok(())
     }
@@ -204,17 +202,15 @@ impl HotkeySystem {
     /// activated again. If it's already deactivated, nothing happens.
     pub fn deactivate(&mut self) -> Result<()> {
         if self.is_active {
-            unsafe {
-                self.unregister_raw(Hotkey::Split)?;
-                self.unregister_raw(Hotkey::Reset)?;
-                self.unregister_raw(Hotkey::Undo)?;
-                self.unregister_raw(Hotkey::Skip)?;
-                self.unregister_raw(Hotkey::Pause)?;
-                self.unregister_raw(Hotkey::UndoAllPauses)?;
-                self.unregister_raw(Hotkey::PreviousComparison)?;
-                self.unregister_raw(Hotkey::NextComparison)?;
-                self.unregister_raw(Hotkey::ToggleTimingMethod)?;
-            }
+            self.unregister_inner(Hotkey::Split)?;
+            self.unregister_inner(Hotkey::Reset)?;
+            self.unregister_inner(Hotkey::Undo)?;
+            self.unregister_inner(Hotkey::Skip)?;
+            self.unregister_inner(Hotkey::Pause)?;
+            self.unregister_inner(Hotkey::UndoAllPauses)?;
+            self.unregister_inner(Hotkey::PreviousComparison)?;
+            self.unregister_inner(Hotkey::NextComparison)?;
+            self.unregister_inner(Hotkey::ToggleTimingMethod)?;
         }
         self.is_active = false;
         Ok(())
@@ -224,17 +220,15 @@ impl HotkeySystem {
     /// active, nothing happens.
     pub fn activate(&mut self) -> Result<()> {
         if !self.is_active {
-            unsafe {
-                self.register_raw(Hotkey::Split)?;
-                self.register_raw(Hotkey::Reset)?;
-                self.register_raw(Hotkey::Undo)?;
-                self.register_raw(Hotkey::Skip)?;
-                self.register_raw(Hotkey::Pause)?;
-                self.register_raw(Hotkey::UndoAllPauses)?;
-                self.register_raw(Hotkey::PreviousComparison)?;
-                self.register_raw(Hotkey::NextComparison)?;
-                self.register_raw(Hotkey::ToggleTimingMethod)?;
-            }
+            self.register_inner(Hotkey::Split)?;
+            self.register_inner(Hotkey::Reset)?;
+            self.register_inner(Hotkey::Undo)?;
+            self.register_inner(Hotkey::Skip)?;
+            self.register_inner(Hotkey::Pause)?;
+            self.register_inner(Hotkey::UndoAllPauses)?;
+            self.register_inner(Hotkey::PreviousComparison)?;
+            self.register_inner(Hotkey::NextComparison)?;
+            self.register_inner(Hotkey::ToggleTimingMethod)?;
         }
         self.is_active = true;
         Ok(())

@@ -1,6 +1,7 @@
-use std::mem;
+use core::mem;
 
 use super::parse_util::{pod, slice, U16};
+use crate::platform::prelude::*;
 use bytemuck::{Pod, Zeroable};
 
 #[derive(Debug, Copy, Clone, Pod, Zeroable)]

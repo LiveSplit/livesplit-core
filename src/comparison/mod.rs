@@ -16,18 +16,17 @@ pub mod median_segments;
 pub mod none;
 pub mod worst_segments;
 
-pub use self::average_segments::AverageSegments;
-pub use self::balanced_pb::BalancedPB;
-pub use self::best_segments::BestSegments;
-pub use self::best_split_times::BestSplitTimes;
-pub use self::latest_run::LatestRun;
-pub use self::median_segments::MedianSegments;
-pub use self::none::None;
-pub use self::worst_segments::WorstSegments;
+pub use self::{
+    average_segments::AverageSegments, balanced_pb::BalancedPB, best_segments::BestSegments,
+    best_split_times::BestSplitTimes, latest_run::LatestRun, median_segments::MedianSegments,
+    none::None, worst_segments::WorstSegments,
+};
 
-use crate::platform::prelude::*;
-use crate::{Attempt, Segment, Timer};
+use crate::{platform::prelude::*, Attempt, Segment, Timer};
 use core::fmt::Debug;
+
+/// Race comparisons are prefixed by `[Race]`.
+pub const RACE_COMPARISON_PREFIX: &str = "[Race]";
 
 /// Defines the Personal Best comparison. This module mostly just serves for
 /// providing the names of the comparison, as the Personal Best is not a

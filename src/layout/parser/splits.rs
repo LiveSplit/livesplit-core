@@ -1,78 +1,57 @@
 use super::{
-    accuracy, comparison_override, end_tag, parse_bool, parse_children, text, text_err,
-    text_parsed, timing_method_override, Error, GradientBuilder, GradientKind, ListGradientKind,
-    Result,
+    accuracy, comparison_override, end_tag, parse_bool, parse_children, text, text_parsed,
+    timing_method_override, Error, GradientBuilder, GradientKind, ListGradientKind, Result,
 };
-use quick_xml::Reader;
-use std::io::BufRead;
 
-use crate::component::splits;
 pub use crate::component::splits::Component;
+use crate::{
+    component::splits, platform::prelude::*, xml::Reader, xml_util::text_as_escaped_string_err,
+};
 
-pub fn settings<R>(
-    reader: &mut Reader<R>,
-    buf: &mut Vec<u8>,
-    component: &mut Component,
-) -> Result<()>
-where
-    R: BufRead,
-{
+pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()> {
     let settings = component.settings_mut();
     let mut split_gradient_builder = GradientBuilder::<GradientKind>::with_tags(
-        b"CurrentSplitTopColor",
-        b"CurrentSplitBottomColor",
-        b"CurrentSplitGradient",
+        "CurrentSplitTopColor",
+        "CurrentSplitBottomColor",
+        "CurrentSplitGradient",
     );
     let mut background_builder = GradientBuilder::<ListGradientKind>::new_gradient_type();
 
-    parse_children(reader, buf, |reader, tag| {
-        if let Some(tag) = background_builder.parse_background(reader, tag)? {
-            if let Some(tag) = split_gradient_builder.parse_background(reader, tag)? {
-                if tag.name() == b"VisualSplitCount" {
-                    text_parsed(reader, tag.into_buf(), |v| settings.visual_split_count = v)
-                } else if tag.name() == b"SplitPreviewCount" {
-                    text_parsed(reader, tag.into_buf(), |v| settings.split_preview_count = v)
-                } else if tag.name() == b"ShowThinSeparators" {
-                    parse_bool(reader, tag.into_buf(), |b| {
-                        settings.show_thin_separators = b
-                    })
-                } else if tag.name() == b"AlwaysShowLastSplit" {
-                    parse_bool(reader, tag.into_buf(), |b| {
-                        settings.always_show_last_split = b
-                    })
-                } else if tag.name() == b"SplitPreviewCount" {
-                    text_parsed(reader, tag.into_buf(), |v| settings.split_preview_count = v)
-                } else if tag.name() == b"ShowBlankSplits" {
-                    parse_bool(reader, tag.into_buf(), |b| {
-                        settings.fill_with_blank_space = b
-                    })
-                } else if tag.name() == b"SeparatorLastSplit" {
-                    parse_bool(reader, tag.into_buf(), |b| {
-                        settings.separator_last_split = b
-                    })
-                } else if tag.name() == b"Display2Rows" {
-                    parse_bool(reader, tag.into_buf(), |b| settings.display_two_rows = b)
-                } else if tag.name() == b"ShowColumnLabels" {
-                    parse_bool(reader, tag.into_buf(), |b| settings.show_column_labels = b)
-                } else if tag.name() == b"Columns" {
-                    // Version >= 1.5
-                    settings.columns.clear();
+    parse_children(reader, |reader, tag, _| {
+        if !background_builder.parse_background(reader, tag.name())? {
+            if !split_gradient_builder.parse_background(reader, tag.name())? {
+                match tag.name() {
+                    "VisualSplitCount" => text_parsed(reader, |v| settings.visual_split_count = v),
+                    "SplitPreviewCount" => {
+                        text_parsed(reader, |v| settings.split_preview_count = v)
+                    }
+                    "ShowThinSeparators" => {
+                        parse_bool(reader, |b| settings.show_thin_separators = b)
+                    }
+                    "AlwaysShowLastSplit" => {
+                        parse_bool(reader, |b| settings.always_show_last_split = b)
+                    }
+                    "ShowBlankSplits" => parse_bool(reader, |b| settings.fill_with_blank_space = b),
+                    "SeparatorLastSplit" => {
+                        parse_bool(reader, |b| settings.separator_last_split = b)
+                    }
+                    "Display2Rows" => parse_bool(reader, |b| settings.display_two_rows = b),
+                    "ShowColumnLabels" => parse_bool(reader, |b| settings.show_column_labels = b),
+                    "Columns" => {
+                        // Version >= 1.5
+                        settings.columns.clear();
 
-                    parse_children(reader, tag.into_buf(), |reader, tag| {
-                        let mut column = splits::ColumnSettings::default();
-                        parse_children(reader, tag.into_buf(), |reader, tag| {
-                            if tag.name() == b"Name" {
-                                text(reader, tag.into_buf(), |v| column.name = v.into_owned())
-                            } else if tag.name() == b"Comparison" {
-                                comparison_override(reader, tag.into_buf(), |v| {
-                                    column.comparison_override = v
-                                })
-                            } else if tag.name() == b"TimingMethod" {
-                                timing_method_override(reader, tag.into_buf(), |v| {
-                                    column.timing_method = v
-                                })
-                            } else if tag.name() == b"Type" {
-                                text_err(reader, tag.into_buf(), |v| {
+                        parse_children(reader, |reader, _, _| {
+                            let mut column = splits::ColumnSettings::default();
+                            parse_children(reader, |reader, tag, _| match tag.name() {
+                                "Name" => text(reader, |v| column.name = v.into_owned()),
+                                "Comparison" => {
+                                    comparison_override(reader, |v| column.comparison_override = v)
+                                }
+                                "TimingMethod" => {
+                                    timing_method_override(reader, |v| column.timing_method = v)
+                                }
+                                "Type" => text_as_escaped_string_err(reader, |v| {
                                     use self::splits::{
                                         ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith,
                                     };
@@ -81,7 +60,7 @@ where
                                         column.start_with,
                                         column.update_with,
                                         column.update_trigger,
-                                    ) = match &*v {
+                                    ) = match v {
                                         "Delta" => (
                                             ColumnStartWith::Empty,
                                             ColumnUpdateWith::Delta,
@@ -116,111 +95,110 @@ where
                                     };
 
                                     Ok(())
-                                })
-                            } else {
-                                end_tag(reader, tag.into_buf())
+                                }),
+                                _ => end_tag(reader),
+                            })?;
+                            settings.columns.insert(0, column);
+                            Ok(())
+                        })
+                    }
+                    "Comparison" => {
+                        // Version < 1.5
+                        comparison_override(reader, |v| {
+                            for column in &mut settings.columns {
+                                column.comparison_override = v.clone();
                             }
-                        })?;
-                        settings.columns.insert(0, column);
-                        Ok(())
-                    })
-                } else if tag.name() == b"Comparison" {
-                    // Version < 1.5
-                    comparison_override(reader, tag.into_buf(), |v| {
-                        for column in &mut settings.columns {
-                            column.comparison_override = v.clone();
-                        }
-                    })
-                } else if tag.name() == b"ShowSplitTimes" {
-                    // Version < 1.5
-                    use self::splits::{
-                        ColumnSettings, ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith,
-                    };
-                    parse_bool(reader, tag.into_buf(), |b| {
-                        if !b {
-                            let comparison_override =
-                                settings.columns.pop().and_then(|c| c.comparison_override);
-                            settings.columns.clear();
-                            settings.columns.push(ColumnSettings {
-                                name: String::from("Time"),
-                                start_with: ColumnStartWith::ComparisonTime,
-                                update_with: ColumnUpdateWith::SplitTime,
-                                update_trigger: ColumnUpdateTrigger::OnEndingSegment,
-                                comparison_override: comparison_override.clone(),
-                                timing_method: None,
-                            });
-                            settings.columns.push(ColumnSettings {
-                                name: String::from("+/−"),
-                                start_with: ColumnStartWith::Empty,
-                                update_with: ColumnUpdateWith::Delta,
-                                update_trigger: ColumnUpdateTrigger::Contextual,
-                                comparison_override,
-                                timing_method: None,
-                            });
-                        }
-                    })
-                } else if tag.name() == b"SplitTimesAccuracy" {
-                    accuracy(reader, tag.into_buf(), |v| {
+                        })
+                    }
+                    "ShowSplitTimes" => {
+                        // Version < 1.5
+                        use self::splits::{
+                            ColumnSettings, ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith,
+                        };
+                        parse_bool(reader, |b| {
+                            if !b {
+                                let comparison_override =
+                                    settings.columns.pop().and_then(|c| c.comparison_override);
+                                settings.columns.clear();
+                                settings.columns.push(ColumnSettings {
+                                    name: String::from("Time"),
+                                    start_with: ColumnStartWith::ComparisonTime,
+                                    update_with: ColumnUpdateWith::SplitTime,
+                                    update_trigger: ColumnUpdateTrigger::OnEndingSegment,
+                                    comparison_override: comparison_override.clone(),
+                                    timing_method: None,
+                                });
+                                settings.columns.push(ColumnSettings {
+                                    name: String::from("+/−"),
+                                    start_with: ColumnStartWith::Empty,
+                                    update_with: ColumnUpdateWith::Delta,
+                                    update_trigger: ColumnUpdateTrigger::Contextual,
+                                    comparison_override,
+                                    timing_method: None,
+                                });
+                            }
+                        })
+                    }
+                    "SplitTimesAccuracy" => accuracy(reader, |v| {
                         settings.split_time_accuracy = v;
                         settings.segment_time_accuracy = v;
-                    })
-                } else if tag.name() == b"DeltasAccuracy" {
-                    accuracy(reader, tag.into_buf(), |v| settings.delta_time_accuracy = v)
-                } else if tag.name() == b"DropDecimals" {
-                    parse_bool(reader, tag.into_buf(), |v| settings.delta_drop_decimals = v)
-                } else {
-                    // FIXME:
-                    // DisplayIcons
-                    // SplitWidth
-                    // AutomaticAbbreviations
-                    // BeforeNamesColor // Version >= 1.3
-                    // CurrentNamesColor // Version >= 1.3
-                    // AfterNamesColor // Version >= 1.3
-                    // OverrideTextColor // Version >= 1.3
-                    // SplitNamesColor // Version >= 1.2 && Version < 1.3
-                    // UseTextColor // Version < 1.3
-                    // BeforeTimesColor
-                    // CurrentTimesColor
-                    // AfterTimesColor
-                    // OverrideTimesColor
-                    // LockLastSplit
-                    // IconSize
-                    // IconShadows
-                    // SplitHeight
-                    // OverrideDeltasColor
-                    // DeltasColor
-                    // LabelsColor
+                    }),
+                    "DeltasAccuracy" => accuracy(reader, |v| settings.delta_time_accuracy = v),
+                    "DropDecimals" => parse_bool(reader, |v| settings.delta_drop_decimals = v),
+                    _ => {
+                        // FIXME:
+                        // DisplayIcons
+                        // SplitWidth
+                        // AutomaticAbbreviations
+                        // BeforeNamesColor // Version >= 1.3
+                        // CurrentNamesColor // Version >= 1.3
+                        // AfterNamesColor // Version >= 1.3
+                        // OverrideTextColor // Version >= 1.3
+                        // SplitNamesColor // Version >= 1.2 && Version < 1.3
+                        // UseTextColor // Version < 1.3
+                        // BeforeTimesColor
+                        // CurrentTimesColor
+                        // AfterTimesColor
+                        // OverrideTimesColor
+                        // LockLastSplit
+                        // IconSize
+                        // IconShadows
+                        // SplitHeight
+                        // OverrideDeltasColor
+                        // DeltasColor
+                        // LabelsColor
 
-                    // FIXME: Subsplits
-                    // MinimumMajorSplits
-                    // IndentBlankIcons
-                    // IndentSubsplits
-                    // HideSubsplits
-                    // ShowSubsplits
-                    // CurrentSectionOnly
-                    // OverrideSubsplitColor
-                    // SubsplitTopColor
-                    // SubsplitBottomColor
-                    // SubsplitGradient
-                    // ShowHeader
-                    // IndentSectionSplit
-                    // ShowIconSectionSplit
-                    // ShowSectionIcon
-                    // HeaderTopColor
-                    // HeaderBottomColor
-                    // HeaderGradient
-                    // OverrideHeaderColor
-                    // HeaderTextColor
-                    // HeaderText
-                    // HeaderTimesColor
-                    // HeaderTimes
-                    // HeaderAccuracy
-                    // SectionTimer
-                    // SectionTimerColor
-                    // SectionTimerGradient
-                    // SectionTimerAccuracy
+                        // FIXME: Subsplits
+                        // MinimumMajorSplits
+                        // IndentBlankIcons
+                        // IndentSubsplits
+                        // HideSubsplits
+                        // ShowSubsplits
+                        // CurrentSectionOnly
+                        // OverrideSubsplitColor
+                        // SubsplitTopColor
+                        // SubsplitBottomColor
+                        // SubsplitGradient
+                        // ShowHeader
+                        // IndentSectionSplit
+                        // ShowIconSectionSplit
+                        // ShowSectionIcon
+                        // HeaderTopColor
+                        // HeaderBottomColor
+                        // HeaderGradient
+                        // OverrideHeaderColor
+                        // HeaderTextColor
+                        // HeaderText
+                        // HeaderTimesColor
+                        // HeaderTimes
+                        // HeaderAccuracy
+                        // SectionTimer
+                        // SectionTimerColor
+                        // SectionTimerGradient
+                        // SectionTimerAccuracy
 
-                    end_tag(reader, tag.into_buf())
+                        end_tag(reader)
+                    }
                 }
             } else {
                 Ok(())

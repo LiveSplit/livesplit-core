@@ -192,7 +192,7 @@ impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager
     }
 
     /// Accesses the [`Scene`] in order to render the [`Entities`](Entity).
-    pub fn scene(&self) -> &Scene<P, I, L> {
+    pub const fn scene(&self) -> &Scene<P, I, L> {
         &self.scene
     }
 

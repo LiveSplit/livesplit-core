@@ -3,14 +3,11 @@
 
 use super::output_vec;
 use crate::run::OwnedRun;
-use livesplit_core::run::parser::{
-    composite::{ParsedRun, Result},
-    TimerKind,
-};
+use livesplit_core::run::parser::{composite::ParsedRun, TimerKind};
 use std::{io::Write, os::raw::c_char};
 
 /// type
-pub type ParseRunResult = Result<ParsedRun>;
+pub type ParseRunResult = Option<ParsedRun>;
 /// type
 pub type OwnedParseRunResult = Box<ParseRunResult>;
 
@@ -23,7 +20,7 @@ pub extern "C" fn ParseRunResult_drop(this: OwnedParseRunResult) {
 /// Returns <TRUE> if the Run got parsed successfully. <FALSE> is returned otherwise.
 #[no_mangle]
 pub extern "C" fn ParseRunResult_parsed_successfully(this: &ParseRunResult) -> bool {
-    this.is_ok()
+    this.is_some()
 }
 
 /// Moves the actual Run object out of the Result. You may not call this if the
@@ -48,7 +45,7 @@ pub extern "C" fn ParseRunResult_timer_kind(this: &ParseRunResult) -> *const c_c
 pub extern "C" fn ParseRunResult_is_generic_timer(this: &ParseRunResult) -> bool {
     matches!(
         this,
-        Ok(ParsedRun {
+        Some(ParsedRun {
             kind: TimerKind::Generic(_),
             ..
         })

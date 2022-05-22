@@ -128,10 +128,10 @@ pub fn abbreviate(name: &str) -> Vec<Box<str>> {
             after_parenthesis.trim_start()
         );
         list.extend(abbreviate(&name));
-    } else if series_subtitle_handling(&name, ": ", &mut list)
-        || series_subtitle_handling(&name, " - ", &mut list)
-        || left_right_handling(&name, " | ", &mut list)
-        || and_handling(&name, &mut list)
+    } else if series_subtitle_handling(name, ": ", &mut list)
+        || series_subtitle_handling(name, " - ", &mut list)
+        || left_right_handling(name, " | ", &mut list)
+        || and_handling(name, &mut list)
     {
     } else {
         if let Some(rest) =

@@ -1,9 +1,8 @@
 //! Provides the parser for Flitter splits files.
 
-use crate::{comparison::world_record, Run, Segment, Time, TimeSpan};
+use crate::{comparison::world_record, platform::prelude::*, Run, Segment, Time, TimeSpan};
 use core::result::Result as StdResult;
 use serde::Deserialize;
-use std::io::BufRead;
 
 mod s_expressions;
 
@@ -39,8 +38,8 @@ struct Split {
 }
 
 /// Attempts to parse a Flitter splits file.
-pub fn parse<R: BufRead>(source: R) -> Result<Run> {
-    let splits: Splits = self::s_expressions::from_reader(source)?;
+pub fn parse(source: &str) -> Result<Run> {
+    let splits: Splits = self::s_expressions::from_str(source)?;
 
     let mut run = Run::new();
 
