@@ -10,6 +10,7 @@ use crate::{
     platform::prelude::*,
     settings::{CachedImageId, Image},
     timing::ParseError as ParseTimeSpanError,
+    util::PopulateString,
     Run, Segment, Time, TimeSpan, TimingMethod,
 };
 use core::{mem::swap, num::ParseIntError};
@@ -219,7 +220,7 @@ impl Editor {
     /// Sets the name of the game.
     pub fn set_game_name<S>(&mut self, name: S)
     where
-        S: AsRef<str>,
+        S: PopulateString,
     {
         self.run.set_game_name(name);
         self.raise_run_edited();
@@ -234,7 +235,7 @@ impl Editor {
     /// Sets the name of the category.
     pub fn set_category_name<S>(&mut self, name: S)
     where
-        S: AsRef<str>,
+        S: PopulateString,
     {
         self.run.set_category_name(name);
         self.raise_run_edited();
@@ -257,11 +258,8 @@ impl Editor {
     /// Parses and sets the timer offset from the string provided. The timer
     /// offset specifies the time, the timer starts at when starting a new
     /// attempt.
-    pub fn parse_and_set_offset<S>(&mut self, offset: S) -> Result<(), ParseError>
-    where
-        S: AsRef<str>,
-    {
-        self.set_offset(offset.as_ref().parse().context(ParseTime)?);
+    pub fn parse_and_set_offset(&mut self, offset: &str) -> Result<(), ParseError> {
+        self.set_offset(offset.parse().context(ParseTime)?);
         Ok(())
     }
 
@@ -281,11 +279,8 @@ impl Editor {
     /// Parses and sets the attempt count from the string provided. Changing
     /// this has no affect on the attempt history or the segment history. This
     /// number is mostly just a visual number for the runner.
-    pub fn parse_and_set_attempt_count<S>(&mut self, attempts: S) -> Result<(), ParseIntError>
-    where
-        S: AsRef<str>,
-    {
-        self.set_attempt_count(attempts.as_ref().parse()?);
+    pub fn parse_and_set_attempt_count(&mut self, attempts: &str) -> Result<(), ParseIntError> {
+        self.set_attempt_count(attempts.parse()?);
         Ok(())
     }
 
@@ -316,7 +311,7 @@ impl Editor {
     /// This may be empty if there's no association.
     pub fn set_run_id<S>(&mut self, id: S)
     where
-        S: AsRef<str>,
+        S: PopulateString,
     {
         self.run.metadata_mut().set_run_id(id);
         self.raise_run_edited();
@@ -326,7 +321,7 @@ impl Editor {
     /// not specified.
     pub fn set_region_name<S>(&mut self, name: S)
     where
-        S: AsRef<str>,
+        S: PopulateString,
     {
         self.run.metadata_mut().set_region_name(name);
         self.metadata_modified();
@@ -336,7 +331,7 @@ impl Editor {
     /// it's not specified.
     pub fn set_platform_name<S>(&mut self, name: S)
     where
-        S: AsRef<str>,
+        S: PopulateString,
     {
         self.run.metadata_mut().set_platform_name(name);
         self.metadata_modified();
@@ -356,8 +351,8 @@ impl Editor {
     /// is being inserted.
     pub fn set_speedrun_com_variable<N, V>(&mut self, name: N, value: V)
     where
-        N: Into<String>,
-        V: Into<String>,
+        N: PopulateString,
+        V: PopulateString,
     {
         self.run
             .metadata_mut()
@@ -366,10 +361,7 @@ impl Editor {
     }
 
     /// Removes the speedrun.com variable with the name specified.
-    pub fn remove_speedrun_com_variable<S>(&mut self, name: S)
-    where
-        S: AsRef<str>,
-    {
+    pub fn remove_speedrun_com_variable(&mut self, name: &str) {
         self.run.metadata_mut().remove_speedrun_com_variable(name);
         self.metadata_modified();
     }
@@ -380,7 +372,7 @@ impl Editor {
     /// nothing happens.
     pub fn add_custom_variable<N>(&mut self, name: N)
     where
-        N: Into<String>,
+        N: PopulateString,
     {
         self.run
             .metadata_mut()
@@ -394,17 +386,15 @@ impl Editor {
     /// happens.
     pub fn set_custom_variable<N, V>(&mut self, name: N, value: V)
     where
-        N: Into<String>,
-        V: AsRef<str>,
+        N: PopulateString,
+        V: PopulateString,
     {
-        let name = name.into();
-        if self.run.metadata().custom_variable(&name).is_none() {
+        if self.run.metadata().custom_variable(name.as_str()).is_none() {
             return;
         }
         let variable = self.run.metadata_mut().custom_variable_mut(name);
         if variable.is_permanent {
-            variable.value.clear();
-            variable.value.push_str(value.as_ref());
+            value.populate(&mut variable.value);
             self.raise_run_edited();
         }
     }
@@ -412,11 +402,7 @@ impl Editor {
     /// Removes the custom variable with the name specified. If the custom
     /// variable does not exist, or is not a permanent variable, nothing
     /// happens.
-    pub fn remove_custom_variable<N>(&mut self, name: N)
-    where
-        N: AsRef<str>,
-    {
-        let name = name.as_ref();
+    pub fn remove_custom_variable(&mut self, name: &str) {
         if let Some(variable) = self.run.metadata().custom_variable(name) {
             if variable.is_permanent {
                 self.run.metadata_mut().remove_custom_variable(name);
@@ -754,8 +740,7 @@ impl Editor {
 
     /// Adds a new custom comparison. It can't be added if it starts with
     /// `[Race]` or already exists.
-    pub fn add_comparison<S: Into<String>>(&mut self, comparison: S) -> ComparisonResult<()> {
-        let comparison = comparison.into();
+    pub fn add_comparison<S: PopulateString>(&mut self, comparison: S) -> ComparisonResult<()> {
         self.run.add_custom_comparison(comparison)?;
         self.fix();
         Ok(())
@@ -764,13 +749,8 @@ impl Editor {
     /// Imports the Personal Best from the provided run as a comparison. The
     /// comparison can't be added if its name starts with `[Race]` or it already
     /// exists.
-    pub fn import_comparison<S: Into<String>>(
-        &mut self,
-        run: &Run,
-        comparison: S,
-    ) -> ComparisonResult<()> {
-        let comparison = comparison.into();
-        self.run.add_custom_comparison(comparison.as_str())?;
+    pub fn import_comparison(&mut self, run: &Run, comparison: &str) -> ComparisonResult<()> {
+        self.run.add_custom_comparison(comparison)?;
 
         let mut remaining_segments = self.run.segments_mut().as_mut_slice();
 
@@ -780,7 +760,7 @@ impl Editor {
                 .enumerate()
                 .find(|(_, s)| unicase::eq(segment.name(), s.name()))
             {
-                *my_segment.comparison_mut(&comparison) = segment.personal_best_split_time();
+                *my_segment.comparison_mut(comparison) = segment.personal_best_split_time();
                 remaining_segments = &mut remaining_segments[segment_index + 1..];
             }
         }
@@ -788,7 +768,7 @@ impl Editor {
         if let (Some(my_segment), Some(segment)) =
             (self.run.segments_mut().last_mut(), run.segments().last())
         {
-            *my_segment.comparison_mut(&comparison) = segment.personal_best_split_time();
+            *my_segment.comparison_mut(comparison) = segment.personal_best_split_time();
         }
 
         self.fix();
@@ -898,7 +878,7 @@ impl Editor {
         }
 
         comparison::goal::generate_for_timing_method(
-            &mut self.run.segments_mut(),
+            self.run.segments_mut(),
             self.selected_method,
             time,
             comparison::goal::NAME,
@@ -917,10 +897,7 @@ impl Editor {
     /// the selected timing method. The other timing method's comparison times
     /// are not modified by this, so you can call this again with the other
     /// timing method to generate the comparison times for both timing methods.
-    pub fn parse_and_generate_goal_comparison<S>(&mut self, time: S) -> Result<(), ParseError>
-    where
-        S: AsRef<str>,
-    {
+    pub fn parse_and_generate_goal_comparison(&mut self, time: &str) -> Result<(), ParseError> {
         self.generate_goal_comparison(
             parse_positive(time)?.ok_or(ParseError::EmptyTimeNotAllowed)?,
         );
@@ -954,10 +931,7 @@ impl Editor {
     }
 }
 
-fn parse_positive<S>(time: S) -> Result<Option<TimeSpan>, ParseError>
-where
-    S: AsRef<str>,
-{
+fn parse_positive(time: &str) -> Result<Option<TimeSpan>, ParseError> {
     let time = TimeSpan::parse_opt(time).context(ParseTime)?;
     if time.map_or(false, |t| t < TimeSpan::zero()) {
         Err(ParseError::NegativeTimeNotAllowed)

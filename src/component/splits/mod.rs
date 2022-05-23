@@ -6,12 +6,12 @@
 //! shown all the time.
 
 use crate::{
-    clear_vec::{Clear, ClearVec},
     platform::prelude::*,
     settings::{
         CachedImageId, Color, Field, Gradient, ImageData, ListGradient, SettingsDescription, Value,
     },
     timing::{formatter::Accuracy, Snapshot},
+    util::{Clear, ClearVec},
     GeneralLayoutSettings,
 };
 use core::cmp::{max, min};

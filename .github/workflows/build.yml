@@ -140,7 +140,6 @@ jobs:
             release: skip
             no_std: true
             install_target: true
-            features: "--features doesnt-have-atomics"
 
           - label: Bare Metal ARM Cortex-M thumbv7em
             target: thumbv7em-none-eabi
@@ -211,7 +210,6 @@ jobs:
           #   release: skip
           #   no_std: true
           #   install_target: true
-          #   features: "--features doesnt-have-atomics"
 
           # - label: Bare Metal RISC-V 32 imc
           #   target: riscv32imc-unknown-none-elf
@@ -222,7 +220,6 @@ jobs:
           #   release: skip
           #   no_std: true
           #   install_target: true
-          #   features: "--features doesnt-have-atomics"
 
           - label: Bare Metal RISC-V 32 imac
             target: riscv32imac-unknown-none-elf

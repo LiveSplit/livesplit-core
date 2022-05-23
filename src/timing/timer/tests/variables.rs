@@ -1,4 +1,4 @@
-use crate::tests_helper::create_timer;
+use crate::util::tests_helper::create_timer;
 
 #[test]
 fn can_set_variable() {

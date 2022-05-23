@@ -1,5 +1,5 @@
 use super::{parse_positive, Editor, ParseError};
-use crate::{settings::Image, TimeSpan};
+use crate::{settings::Image, util::PopulateString, TimeSpan};
 
 /// A Segment Row describes the segment in the Run Editor actively selected for
 /// editing.
@@ -38,7 +38,7 @@ impl<'a> SegmentRow<'a> {
     /// Sets the name of the segment.
     pub fn set_name<S>(&mut self, name: S)
     where
-        S: AsRef<str>,
+        S: PopulateString,
     {
         self.editor.run.segment_mut(self.index).set_name(name);
         self.editor.raise_run_edited();
@@ -66,10 +66,7 @@ impl<'a> SegmentRow<'a> {
 
     /// Parses a split time from a string and sets it for the active timing
     /// method.
-    pub fn parse_and_set_split_time<S>(&mut self, time: S) -> Result<(), ParseError>
-    where
-        S: AsRef<str>,
-    {
+    pub fn parse_and_set_split_time(&mut self, time: &str) -> Result<(), ParseError> {
         self.set_split_time(parse_positive(time)?);
         Ok(())
     }
@@ -89,10 +86,7 @@ impl<'a> SegmentRow<'a> {
 
     /// Parses a segment time from a string and sets it for the active timing
     /// method.
-    pub fn parse_and_set_segment_time<S>(&mut self, time: S) -> Result<(), ParseError>
-    where
-        S: AsRef<str>,
-    {
+    pub fn parse_and_set_segment_time(&mut self, time: &str) -> Result<(), ParseError> {
         self.set_segment_time(parse_positive(time)?);
         Ok(())
     }
@@ -116,10 +110,7 @@ impl<'a> SegmentRow<'a> {
 
     /// Parses a best segment time from a string and sets it for the active
     /// timing method.
-    pub fn parse_and_set_best_segment_time<S>(&mut self, time: S) -> Result<(), ParseError>
-    where
-        S: AsRef<str>,
-    {
+    pub fn parse_and_set_best_segment_time(&mut self, time: &str) -> Result<(), ParseError> {
         self.set_best_segment_time(parse_positive(time)?);
         Ok(())
     }
@@ -144,14 +135,11 @@ impl<'a> SegmentRow<'a> {
 
     /// Parses a comparison time for the provided comparison and sets it for the
     /// active timing method.
-    pub fn parse_and_set_comparison_time<S>(
+    pub fn parse_and_set_comparison_time(
         &mut self,
         comparison: &str,
-        time: S,
-    ) -> Result<(), ParseError>
-    where
-        S: AsRef<str>,
-    {
+        time: &str,
+    ) -> Result<(), ParseError> {
         self.set_comparison_time(comparison, parse_positive(time)?);
         Ok(())
     }

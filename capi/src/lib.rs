@@ -91,8 +91,8 @@ thread_local! {
     static TIME_SPAN: Cell<TimeSpan> = Cell::default();
     static TIME: Cell<Time> = Cell::default();
     static SEGMENT_HISTORY_ELEMENT: Cell<SegmentHistoryElement> = Cell::default();
-    static RUN_METADATA_SPEEDRUN_COM_VARIABLE: Cell<RunMetadataSpeedrunComVariable> = Cell::new((ptr::null(), ptr::null()));
-    static RUN_METADATA_CUSTOM_VARIABLE: Cell<RunMetadataCustomVariable> = Cell::new((ptr::null(), ptr::null()));
+    static RUN_METADATA_SPEEDRUN_COM_VARIABLE: Cell<RunMetadataSpeedrunComVariable> = Cell::new(("", ptr::null()));
+    static RUN_METADATA_CUSTOM_VARIABLE: Cell<RunMetadataCustomVariable> = Cell::new(("", ptr::null()));
 }
 
 fn output_time_span(time_span: TimeSpan) -> *const TimeSpan {
@@ -112,6 +112,17 @@ fn output_time(time: Time) -> *const Time {
 fn output_str<S: AsRef<str>>(s: S) -> *const c_char {
     output_vec(|o| {
         o.extend_from_slice(s.as_ref().as_bytes());
+    })
+}
+
+fn with_vec<F, R>(f: F) -> R
+where
+    F: FnOnce(&mut Vec<u8>) -> R,
+{
+    OUTPUT_VEC.with(|output| {
+        let mut output = output.borrow_mut();
+        output.clear();
+        f(&mut output)
     })
 }
 

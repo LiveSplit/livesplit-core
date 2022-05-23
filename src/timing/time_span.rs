@@ -51,11 +51,7 @@ impl TimeSpan {
     /// Parses an optional Time Span from a given textual representation of the
     /// Time Span. If the given text consists entirely of whitespace or is
     /// empty, `None` is returned.
-    pub fn parse_opt<S>(text: S) -> Result<Option<TimeSpan>, ParseError>
-    where
-        S: AsRef<str>,
-    {
-        let text = text.as_ref();
+    pub fn parse_opt(text: &str) -> Result<Option<TimeSpan>, ParseError> {
         if text.trim().is_empty() {
             Ok(None)
         } else {

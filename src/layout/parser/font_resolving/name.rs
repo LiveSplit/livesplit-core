@@ -1,7 +1,9 @@
 use core::mem;
 
-use super::parse_util::{pod, slice, U16};
-use crate::platform::prelude::*;
+use crate::{
+    platform::prelude::*,
+    util::byte_parsing::{big_endian::U16, pod, slice},
+};
 use bytemuck::{Pod, Zeroable};
 
 #[derive(Debug, Copy, Clone, Pod, Zeroable)]

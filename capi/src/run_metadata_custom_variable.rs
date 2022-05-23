@@ -10,7 +10,7 @@ use livesplit_core::run::CustomVariable;
 use std::os::raw::c_char;
 
 /// type
-pub type RunMetadataCustomVariable = (*const String, *const CustomVariable);
+pub type RunMetadataCustomVariable = (*const str, *const CustomVariable);
 /// type
 pub type NullableRunMetadataCustomVariable = RunMetadataCustomVariable;
 /// type

@@ -3,11 +3,13 @@
 use super::super::ComparisonError;
 use crate::{
     platform::{path::PathBuf, prelude::*},
-    xml::Reader,
-    xml_util::{
-        attribute, attribute_escaped_err, end_tag, optional_attribute_escaped_err,
-        parse_attributes, parse_base, parse_children, reencode_children, text,
-        text_as_escaped_string_err, text_parsed, Error as XmlError,
+    util::xml::{
+        helper::{
+            attribute, attribute_escaped_err, end_tag, optional_attribute_escaped_err,
+            parse_attributes, parse_base, parse_children, reencode_children, text,
+            text_as_escaped_string_err, text_parsed, Error as XmlError,
+        },
+        Reader,
     },
     AtomicDateTime, DateTime, Run, RunMetadata, Segment, Time, TimeSpan,
 };

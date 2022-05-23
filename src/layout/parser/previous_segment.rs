@@ -2,9 +2,9 @@ use super::{
     accuracy, color, comparison_override, end_tag, parse_bool, parse_children, GradientBuilder,
     Result,
 };
+use crate::util::xml::Reader;
 
 pub use crate::component::previous_segment::Component;
-use crate::xml::Reader;
 
 pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()> {
     let settings = component.settings_mut();

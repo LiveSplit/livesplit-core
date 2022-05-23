@@ -11,10 +11,12 @@ use crate::{
         formatter::{Accuracy, DigitsFormat},
         TimingMethod,
     },
-    xml::Reader,
-    xml_util::{
-        end_tag, parse_base, parse_children, text, text_as_escaped_string_err, text_parsed,
-        Error as XmlError,
+    util::xml::{
+        helper::{
+            end_tag, parse_base, parse_children, text, text_as_escaped_string_err, text_parsed,
+            Error as XmlError,
+        },
+        Reader,
     },
 };
 use core::str;

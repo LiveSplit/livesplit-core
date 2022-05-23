@@ -300,34 +300,37 @@ pub fn parse(source: &str) -> Result<(Run, String)> {
         }
     }
 
-    if let Some(runner) = splits.runners.as_ref().and_then(|runners| runners.first()) {
-        let name = runner.longname.as_ref().unwrap_or(&runner.shortname);
+    if let Some(runner) = splits
+        .runners
+        .and_then(|runners| runners.into_iter().next())
+    {
+        let name = runner.longname.unwrap_or(runner.shortname);
         if !name.trim_start().is_empty() {
             run.metadata_mut()
                 .custom_variable_mut("Runner")
                 .permanent()
                 .set_value(name);
         }
-        if let Some(links) = &runner.links {
-            if let Some(twitter_id) = &links.twitter_id {
+        if let Some(links) = runner.links {
+            if let Some(twitter_id) = links.twitter_id {
                 run.metadata_mut()
                     .custom_variable_mut("Twitter")
                     .permanent()
                     .set_value(twitter_id);
             }
-            if let Some(twitch_id) = &links.twitch_id {
+            if let Some(twitch_id) = links.twitch_id {
                 run.metadata_mut()
                     .custom_variable_mut("Twitch")
                     .permanent()
                     .set_value(twitch_id);
             }
-            if let Some(speedruncom_id) = &links.speedruncom_id {
+            if let Some(speedruncom_id) = links.speedruncom_id {
                 run.metadata_mut()
                     .custom_variable_mut("speedrun.com")
                     .permanent()
                     .set_value(speedruncom_id);
             }
-            if let Some(splitsio_id) = &links.splitsio_id {
+            if let Some(splitsio_id) = links.splitsio_id {
                 run.metadata_mut()
                     .custom_variable_mut("Splits I/O")
                     .permanent()

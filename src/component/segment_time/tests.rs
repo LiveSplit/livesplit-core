@@ -1,6 +1,6 @@
 use super::Component;
 use crate::{
-    tests_helper::{self, make_progress_run_with_splits_opt, run_with_splits, start_run},
+    util::tests_helper::{self, make_progress_run_with_splits_opt, run_with_splits, start_run},
     Timer,
 };
 

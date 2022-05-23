@@ -4,7 +4,7 @@ use super::{
 };
 
 pub use crate::component::graph::Component;
-use crate::xml::Reader;
+use crate::util::xml::Reader;
 
 pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()> {
     let settings = component.settings_mut();

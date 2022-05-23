@@ -1,7 +1,7 @@
 use super::{color, parse_bool, GradientBuilder, Result};
-use crate::{
-    xml::Reader,
-    xml_util::{end_tag, parse_children},
+use crate::util::xml::{
+    helper::{end_tag, parse_children},
+    Reader,
 };
 
 pub use crate::component::current_comparison::Component;

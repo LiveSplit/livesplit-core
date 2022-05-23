@@ -1,7 +1,10 @@
 //! Provides the parser for Llanfair splits files.
 
 use crate::{
-    run::parser::util::{strip_be_u16, strip_be_u32, strip_be_u64, strip_slice, strip_u8},
+    util::byte_parsing::{
+        big_endian::{strip_u16, strip_u32, strip_u64},
+        strip_slice, strip_u8,
+    },
     RealTime, Run, Segment, Time, TimeSpan,
 };
 use core::{result::Result as StdResult, str};
@@ -85,7 +88,7 @@ fn to_time(milliseconds: u64) -> Time {
 }
 
 fn read_string<'a>(cursor: &mut &'a [u8]) -> StdResult<&'a str, StringError> {
-    let str_length = strip_be_u16(cursor).context(ReadLength)? as usize;
+    let str_length = strip_u16(cursor).context(ReadLength)? as usize;
     let str_data = strip_slice(cursor, str_length).context(LengthOutOfBounds)?;
     simdutf8::basic::from_utf8(str_data).ok().context(Validate)
 }
@@ -120,7 +123,7 @@ pub fn parse(source: &[u8]) -> Result<Run> {
     run.set_game_name(read_string(&mut cursor).context(ReadTitle)?);
 
     cursor = cursor.get(0x6..).context(ReadSegmentCount)?;
-    let segment_count = strip_be_u32(&mut cursor).context(ReadSegmentCount)?;
+    let segment_count = strip_u32(&mut cursor).context(ReadSegmentCount)?;
 
     // The object header changes if there is no instance of one of the object
     // used by the Run class. The 2 objects that can be affected are the Time
@@ -148,7 +151,7 @@ pub fn parse(source: &[u8]) -> Result<Run> {
                 cursor = cursor.get(0x5..).context(ReadSegment)?;
             }
 
-            best_segment_ms = strip_be_u64(&mut cursor).context(ReadBestSegment)?;
+            best_segment_ms = strip_u64(&mut cursor).context(ReadBestSegment)?;
         }
 
         let id = strip_u8(&mut cursor).context(ReadIcon)?;
@@ -161,8 +164,8 @@ pub fn parse(source: &[u8]) -> Result<Run> {
                 cursor = cursor.get(0x5..).context(ReadIcon)?;
                 0x18
             };
-            let height = strip_be_u32(&mut cursor).context(ReadIcon)?;
-            let width = strip_be_u32(&mut cursor).context(ReadIcon)?;
+            let height = strip_u32(&mut cursor).context(ReadIcon)?;
+            let width = strip_u32(&mut cursor).context(ReadIcon)?;
 
             cursor = cursor.get(seek_offset_base..).context(ReadIcon)?;
 
@@ -212,7 +215,7 @@ pub fn parse(source: &[u8]) -> Result<Run> {
                 // time in Llanfair, I assume that there will never be another
                 // Time object declaration before this data.
                 cursor = cursor.get(0x5..).context(ReadSegmentTime)?;
-                strip_be_u64(&mut cursor).context(ReadSegmentTime)?
+                strip_u64(&mut cursor).context(ReadSegmentTime)?
             }
         };
 

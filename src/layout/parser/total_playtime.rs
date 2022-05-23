@@ -1,7 +1,7 @@
 use super::{color, end_tag, parse_bool, parse_children, GradientBuilder, Result};
 
 pub use crate::component::total_playtime::Component;
-use crate::xml::Reader;
+use crate::util::xml::Reader;
 
 pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()> {
     let settings = component.settings_mut();

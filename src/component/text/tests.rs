@@ -1,5 +1,5 @@
 use super::{Component, Text, TextState};
-use crate::{tests_helper::create_run, timing::formatter, Timer};
+use crate::{timing::formatter, util::tests_helper::create_run, Timer};
 
 #[test]
 fn resolves_variables() {

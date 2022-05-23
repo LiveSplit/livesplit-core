@@ -1,5 +1,5 @@
 use super::super::Editor;
-use crate::tests_helper::create_run;
+use crate::util::tests_helper::create_run;
 
 #[test]
 fn cant_edit_temporary_variable() {

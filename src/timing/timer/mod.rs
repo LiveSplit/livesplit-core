@@ -1,6 +1,6 @@
 use crate::{
-    comparison::personal_best, platform::prelude::*, AtomicDateTime, Run, Segment, Time, TimeSpan,
-    TimeStamp, TimerPhase, TimerPhase::*, TimingMethod,
+    comparison::personal_best, platform::prelude::*, util::PopulateString, AtomicDateTime, Run,
+    Segment, Time, TimeSpan, TimeStamp, TimerPhase, TimerPhase::*, TimingMethod,
 };
 use core::{mem, ops::Deref};
 
@@ -260,11 +260,10 @@ impl Timer {
     /// Tries to set the current comparison to the comparison specified. If the
     /// comparison doesn't exist `Err` is returned.
     #[inline]
-    pub fn set_current_comparison<S: AsRef<str>>(&mut self, comparison: S) -> Result<(), ()> {
-        let comparison = comparison.as_ref();
-        if self.run.comparisons().any(|c| c == comparison) {
-            self.current_comparison.clear();
-            self.current_comparison.push_str(comparison);
+    pub fn set_current_comparison<S: PopulateString>(&mut self, comparison: S) -> Result<(), ()> {
+        let as_str = comparison.as_str();
+        if self.run.comparisons().any(|c| c == as_str) {
+            comparison.populate(&mut self.current_comparison);
             Ok(())
         } else {
             Err(())
@@ -638,8 +637,8 @@ impl Timer {
     /// be stored in the splits file.
     pub fn set_custom_variable<N, V>(&mut self, name: N, value: V)
     where
-        N: Into<String>,
-        V: AsRef<str>,
+        N: PopulateString,
+        V: PopulateString,
     {
         let var = self.run.metadata_mut().custom_variable_mut(name);
         var.set_value(value);

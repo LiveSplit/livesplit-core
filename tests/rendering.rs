@@ -2,7 +2,7 @@
 
 mod layout_files;
 mod run_files;
-#[path = "../src/tests_helper.rs"]
+#[path = "../src/util/tests_helper.rs"]
 mod tests_helper;
 
 use image::Rgba;

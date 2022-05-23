@@ -1,7 +1,7 @@
 use super::{best, Prediction};
 use crate::{
     comparison::best_segments,
-    tests_helper::{create_timer, run_with_splits_opt, span},
+    util::tests_helper::{create_timer, run_with_splits_opt, span},
     Timer, TimingMethod,
 };
 

@@ -38,6 +38,7 @@ use crate::{
     comparison::{default_generators, personal_best, ComparisonGenerator, RACE_COMPARISON_PREFIX},
     platform::{path::PathBuf, prelude::*},
     settings::Image,
+    util::PopulateString,
     AtomicDateTime, Time, TimeSpan, TimingMethod,
 };
 use alloc::borrow::Cow;
@@ -131,10 +132,9 @@ impl Run {
     #[inline]
     pub fn set_game_name<S>(&mut self, name: S)
     where
-        S: AsRef<str>,
+        S: PopulateString,
     {
-        self.game_name.clear();
-        self.game_name.push_str(name.as_ref());
+        name.populate(&mut self.game_name);
     }
 
     /// Accesses the game's icon.
@@ -159,10 +159,9 @@ impl Run {
     #[inline]
     pub fn set_category_name<S>(&mut self, name: S)
     where
-        S: AsRef<str>,
+        S: PopulateString,
     {
-        self.category_name.clear();
-        self.category_name.push_str(name.as_ref());
+        name.populate(&mut self.category_name);
     }
 
     /// Returns the path of the associated splits file in the file system.
@@ -405,19 +404,18 @@ impl Run {
     /// Personal Best is achieved for example.
     #[inline]
     pub fn clear_run_id(&mut self) {
-        self.metadata.set_run_id(String::new());
+        self.metadata.set_run_id("");
     }
 
     /// Adds a new custom comparison. If a custom comparison with that name
     /// already exists, it is not added.
     #[inline]
-    pub fn add_custom_comparison<S: Into<String>>(
-        &mut self,
-        comparison: S,
-    ) -> ComparisonResult<()> {
-        let comparison = comparison.into();
-        self.validate_comparison_name(&comparison)?;
-        self.custom_comparisons.push(comparison);
+    pub fn add_custom_comparison<S>(&mut self, comparison: S) -> ComparisonResult<()>
+    where
+        S: PopulateString,
+    {
+        self.validate_comparison_name(comparison.as_str())?;
+        self.custom_comparisons.push(comparison.into_string());
         Ok(())
     }
 

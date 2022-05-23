@@ -1,7 +1,7 @@
 use crate::{
     comparison::balanced_pb::{BalancedPB, NAME},
-    tests_helper::{run_with_splits, run_with_splits_opt},
     timing::formatter::{SegmentTime, TimeFormatter},
+    util::tests_helper::{run_with_splits, run_with_splits_opt},
     Run, Segment, TimeSpan, Timer,
 };
 
