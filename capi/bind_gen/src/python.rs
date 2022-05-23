@@ -70,11 +70,7 @@ fn write_class_comments<W: Write>(mut writer: W, comments: &[String]) -> Result<
         )?;
     }
 
-    write!(
-        writer,
-        r#""""
-"#
-    )
+    writeln!(writer, r#"""""#)
 }
 
 fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
@@ -210,11 +206,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         )?;
     }
 
-    write!(
-        writer,
-        r#"
-"#
-    )?;
+    writeln!(writer)?;
 
     Ok(())
 }
