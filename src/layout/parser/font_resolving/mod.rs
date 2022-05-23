@@ -2,7 +2,6 @@ use crate::platform::prelude::*;
 
 mod gdi;
 mod name;
-mod parse_util;
 
 pub struct FontInfo {
     pub family: String,

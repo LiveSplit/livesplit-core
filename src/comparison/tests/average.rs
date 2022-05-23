@@ -1,5 +1,5 @@
 use crate::comparison::average_segments::{AverageSegments, NAME};
-use crate::tests_helper::run_with_splits;
+use crate::util::tests_helper::run_with_splits;
 use crate::{Run, Segment, TimeSpan, Timer};
 
 #[test]

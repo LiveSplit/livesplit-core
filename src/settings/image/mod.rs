@@ -120,16 +120,14 @@ impl Image {
     /// Loads an image from the file system. You need to provide a buffer used
     /// for temporarily storing the image's data.
     #[cfg(feature = "std")]
-    pub fn from_file<P, B>(path: P, mut buf: B) -> std::io::Result<Image>
+    pub fn from_file<P>(path: P, buf: &mut Vec<u8>) -> std::io::Result<Image>
     where
         P: AsRef<std::path::Path>,
-        B: AsMut<Vec<u8>>,
     {
         use std::io::Read;
 
         let mut file = std::fs::File::open(path)?;
-
-        let buf = buf.as_mut();
+        buf.clear();
         file.read_to_end(buf)?;
 
         Ok(Image::new(buf))
@@ -158,20 +156,7 @@ impl Image {
             shrinking::shrink(data, MAX_IMAGE_SIZE)
         };
         cfg_if::cfg_if! {
-            // FIXME: Some targets don't have atomics, but we can't test for
-            // this properly yet. So there's a feature you explicitly have to
-            // opt into to deactivate the usage of atomics. Vice versa would be
-            // too dangerous, as `default-features = false` would deactivate
-            // atomics then. However there's also `cargo test --all-features`,
-            // which is equally dangerous. To detect this, we have an additional
-            // `internal-use-all-features` feature that is only ever activated
-            // when `--all-features` is passed, so we can ignore the
-            // `doesnt-have-atomics` in that case.
-            // https://github.com/rust-lang/rust/issues/32976
-            if #[cfg(any(
-                not(feature = "doesnt-have-atomics"),
-                feature = "internal-use-all-features",
-            ))] {
+            if #[cfg(target_has_atomic = "ptr")] {
                 self.id = LAST_IMAGE_ID.fetch_add(1, Ordering::Relaxed);
             } else {
                 self.id = LAST_IMAGE_ID.load(Ordering::SeqCst) + 1;

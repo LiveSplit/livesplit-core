@@ -6,7 +6,7 @@ use super::output_str;
 use std::os::raw::c_char;
 
 /// type
-pub type RunMetadataSpeedrunComVariable = (*const String, *const String);
+pub type RunMetadataSpeedrunComVariable = (*const str, *const String);
 /// type
 pub type NullableRunMetadataSpeedrunComVariable = RunMetadataSpeedrunComVariable;
 /// type

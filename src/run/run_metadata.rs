@@ -1,5 +1,10 @@
-use crate::indexmap::map::{IndexMap, Iter};
-use crate::platform::prelude::*;
+use crate::{
+    platform::prelude::*,
+    util::{
+        ordered_map::{Iter, Map},
+        PopulateString,
+    },
+};
 use serde::{Deserialize, Serialize};
 
 /// A custom variable is a key value pair storing additional information about a
@@ -30,10 +35,9 @@ impl CustomVariable {
     /// Sets the value of the custom variable.
     pub fn set_value<S>(&mut self, value: S)
     where
-        S: AsRef<str>,
+        S: PopulateString,
     {
-        self.value.clear();
-        self.value.push_str(value.as_ref());
+        value.populate(&mut self.value);
     }
 
     /// Clears the value of the custom variable. This does not delete the custom
@@ -65,14 +69,14 @@ pub struct RunMetadata {
     /// of this may be whether Amiibos are used in this category. Use a custom
     /// variable for storing arbitrary key value pairs that are independent of
     /// speedrun.com.
-    pub speedrun_com_variables: IndexMap<String, String>,
+    pub speedrun_com_variables: Map<String>,
     /// Stores all the custom variables. A custom variable is a key value pair
     /// storing additional information about a run. Unlike the speedrun.com
     /// variables, these can be fully custom and don't need to correspond to
     /// anything on speedrun.com. Permanent custom variables can be specified by
     /// the runner. Additionally auto splitters or other sources may provide
     /// temporary custom variables that are not stored in the splits files.
-    pub custom_variables: IndexMap<String, CustomVariable>,
+    pub custom_variables: Map<CustomVariable>,
 }
 
 impl RunMetadata {
@@ -97,10 +101,9 @@ impl RunMetadata {
     #[inline]
     pub fn set_run_id<S>(&mut self, id: S)
     where
-        S: AsRef<str>,
+        S: PopulateString,
     {
-        self.run_id.clear();
-        self.run_id.push_str(id.as_ref());
+        id.populate(&mut self.run_id);
     }
 
     /// Accesses the name of the platform this game is run on. This may be empty
@@ -115,10 +118,9 @@ impl RunMetadata {
     #[inline]
     pub fn set_platform_name<S>(&mut self, name: S)
     where
-        S: AsRef<str>,
+        S: PopulateString,
     {
-        self.platform_name.clear();
-        self.platform_name.push_str(name.as_ref());
+        name.populate(&mut self.platform_name);
     }
 
     /// Returns `true` if this speedrun is done on an emulator. However `false`
@@ -147,10 +149,9 @@ impl RunMetadata {
     #[inline]
     pub fn set_region_name<S>(&mut self, region_name: S)
     where
-        S: AsRef<str>,
+        S: PopulateString,
     {
-        self.region_name.clear();
-        self.region_name.push_str(region_name.as_ref());
+        region_name.populate(&mut self.region_name);
     }
 
     /// Sets the speedrun.com variable with the name specified to the value
@@ -160,41 +161,32 @@ impl RunMetadata {
     /// doesn't exist yet, it is being inserted.
     pub fn set_speedrun_com_variable<N, V>(&mut self, name: N, value: V)
     where
-        N: Into<String>,
-        V: Into<String>,
+        N: PopulateString,
+        V: PopulateString,
     {
-        self.speedrun_com_variables
-            .insert(name.into(), value.into());
+        let entry = self.speedrun_com_variables.entry(name).or_default();
+        value.populate(entry);
     }
 
     /// Removes the speedrun.com variable with the name specified.
-    pub fn remove_speedrun_com_variable<S>(&mut self, name: S)
-    where
-        S: AsRef<str>,
-    {
-        self.speedrun_com_variables.shift_remove(name.as_ref());
+    pub fn remove_speedrun_com_variable(&mut self, name: &str) {
+        self.speedrun_com_variables.shift_remove(name);
     }
 
     /// Returns an iterator iterating over all the speedrun.com variables and
     /// their values that have been specified.
-    pub fn speedrun_com_variables(&self) -> Iter<'_, String, String> {
+    pub fn speedrun_com_variables(&self) -> Iter<'_, String> {
         self.speedrun_com_variables.iter()
     }
 
     /// Accesses the custom variable with the name specified if there is one.
-    pub fn custom_variable<S>(&self, name: S) -> Option<&CustomVariable>
-    where
-        S: AsRef<str>,
-    {
-        self.custom_variables.get(name.as_ref())
+    pub fn custom_variable(&self, name: &str) -> Option<&CustomVariable> {
+        self.custom_variables.get(name)
     }
 
     /// Accesses the value of the custom variable with the name specified if
     /// there is one.
-    pub fn custom_variable_value<S>(&self, name: S) -> Option<&str>
-    where
-        S: AsRef<str>,
-    {
+    pub fn custom_variable_value(&self, name: &str) -> Option<&str> {
         Some(&self.custom_variable(name)?.value)
     }
 
@@ -202,23 +194,20 @@ impl RunMetadata {
     /// variable does not exist, it gets created as a temporary variable.
     pub fn custom_variable_mut<S>(&mut self, name: S) -> &mut CustomVariable
     where
-        S: Into<String>,
+        S: PopulateString,
     {
-        self.custom_variables.entry(name.into()).or_default()
+        self.custom_variables.entry(name).or_default()
     }
 
     /// Removes the custom variable with the name specified. Nothing happens if
     /// the variable does not exist.
-    pub fn remove_custom_variable<S>(&mut self, name: S)
-    where
-        S: AsRef<str>,
-    {
-        self.custom_variables.shift_remove(name.as_ref());
+    pub fn remove_custom_variable(&mut self, name: &str) {
+        self.custom_variables.shift_remove(name);
     }
 
     /// Returns an iterator iterating over all the custom variables and their
     /// values. This includes both temporary and permanent variables.
-    pub fn custom_variables(&self) -> Iter<'_, String, CustomVariable> {
+    pub fn custom_variables(&self) -> Iter<'_, CustomVariable> {
         self.custom_variables.iter()
     }
 

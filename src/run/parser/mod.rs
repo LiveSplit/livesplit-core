@@ -48,7 +48,6 @@ pub mod urn;
 pub mod wsplit;
 
 mod timer_kind;
-mod util;
 
 pub use self::timer_kind::TimerKind;
 

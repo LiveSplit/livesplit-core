@@ -28,7 +28,7 @@ use crate::{
     platform::prelude::*,
     settings::Image,
     timing::formatter::{Complete, TimeFormatter},
-    xml::{AttributeWriter, DisplayValue, Text, Writer, NO_ATTRIBUTES},
+    util::xml::{AttributeWriter, DisplayValue, Text, Writer, NO_ATTRIBUTES},
     DateTime, Run, Time, Timer, TimerPhase,
 };
 use alloc::borrow::Cow;
@@ -186,11 +186,7 @@ pub fn save_run<W: fmt::Write>(run: &Run, writer: W) -> fmt::Result {
                 "SpeedrunComVariables",
                 metadata.speedrun_com_variables(),
                 |writer, (name, value)| {
-                    writer.tag_with_text_content(
-                        "Variable",
-                        [("name", name.as_str())],
-                        value.as_str(),
-                    )
+                    writer.tag_with_text_content("Variable", [("name", name)], value.as_str())
                 },
             )?;
             scoped_iter(
@@ -200,11 +196,7 @@ pub fn save_run<W: fmt::Write>(run: &Run, writer: W) -> fmt::Result {
                     .custom_variables()
                     .filter(|(_, var)| var.is_permanent),
                 |writer, (name, var)| {
-                    writer.tag_with_text_content(
-                        "Variable",
-                        [("name", name.as_str())],
-                        var.value.as_str(),
-                    )
+                    writer.tag_with_text_content("Variable", [("name", name)], var.value.as_str())
                 },
             )
         })?;

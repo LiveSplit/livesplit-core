@@ -56,9 +56,6 @@ unicase = "2.6.0"
 image = { version = "0.24.0", features = [
     "png",
 ], default-features = false, optional = true }
-indexmap = { version = "1.2.0", default-features = false, features = [
-    "serde-1",
-], optional = true }
 parking_lot = { version = "0.12.0", default-features = false, optional = true }
 
 # Rendering
@@ -114,10 +111,8 @@ criterion = "0.3.0"
 
 [features]
 default = ["image-shrinking", "std"]
-doesnt-have-atomics = []
 std = [
     "image",
-    "indexmap",
     "libc",
     "livesplit-hotkey/std",
     "memchr/std",
@@ -155,16 +150,6 @@ wasm-web = [
 ]
 networking = ["std", "splits-io-api"]
 auto-splitting = ["std", "livesplit-auto-splitting", "tokio", "log"]
-
-# FIXME: Some targets don't have atomics, but we can't test for this properly
-# yet. So there's a feature you explicitly have to opt into to deactivate the
-# usage of atomics. Vice versa would be too dangerous, as `default-features =
-# false` would deactivate atomics then. However there's also `cargo test
-# --all-features`, which is equally dangerous. To detect this, we have an
-# additional `internal-use-all-features` feature that is only ever activated
-# when `--all-features` is passed, so we can ignore the `doesnt-have-atomics` in
-# that case. https://github.com/rust-lang/rust/issues/32976
-internal-use-all-features = []
 
 [lib]
 bench = false

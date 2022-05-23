@@ -1,5 +1,5 @@
 use crate::comparison::median_segments::{MedianSegments, NAME};
-use crate::tests_helper::run_with_splits;
+use crate::util::tests_helper::run_with_splits;
 use crate::{Run, Segment, TimeSpan, Timer};
 
 #[test]

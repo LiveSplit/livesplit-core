@@ -1,6 +1,5 @@
 use crate::{
     analysis::{self, possible_time_save, split_color},
-    clear_vec::Clear,
     comparison,
     component::splits::Settings as SplitsSettings,
     platform::prelude::*,
@@ -9,6 +8,7 @@ use crate::{
         formatter::{Delta, Regular, SegmentTime, TimeFormatter},
         Snapshot,
     },
+    util::Clear,
     GeneralLayoutSettings, Segment, TimeSpan, TimingMethod,
 };
 use core::fmt::Write;

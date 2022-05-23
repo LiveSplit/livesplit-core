@@ -806,6 +806,7 @@ impl Transform {
         }
     }
 
+    #[cfg(feature = "software-rendering")]
     fn transform_y(&self, y: f32) -> f32 {
         self.y + self.scale_y * y
     }

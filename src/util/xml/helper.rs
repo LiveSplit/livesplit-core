@@ -1,14 +1,12 @@
-use crate::{
-    platform::prelude::*,
-    timing,
-    xml::{Attributes, Event, Reader, TagName, Text, Writer},
-};
+use crate::{platform::prelude::*, timing};
 use alloc::borrow::Cow;
 use core::{
     fmt,
     num::{ParseFloatError, ParseIntError},
     str,
 };
+
+use super::{Attributes, Event, Reader, TagName, Text, Writer};
 
 /// The Error type for XML-based splits files that couldn't be parsed.
 #[derive(Debug, snafu::Snafu)]

@@ -1,7 +1,7 @@
 //! A Run stores the split times for a specific game and category of a runner.
 
 use super::{get_file, output_str, output_time_span, output_vec, str};
-use crate::{parse_run_result::OwnedParseRunResult, segment::OwnedSegment};
+use crate::{parse_run_result::OwnedParseRunResult, segment::OwnedSegment, with_vec};
 use livesplit_core::{
     run::{
         parser,
@@ -79,12 +79,13 @@ pub unsafe extern "C" fn Run_parse_file_handle(
 
     let mut file = get_file(handle);
 
-    let mut bytes = Vec::new();
-    Box::new(
-        file.read_to_end(&mut bytes)
-            .ok()
-            .and_then(|_| parser::composite::parse(&bytes, path, load_files).ok()),
-    )
+    with_vec(|buf| {
+        Box::new(
+            file.read_to_end(buf)
+                .ok()
+                .and_then(|_| parser::composite::parse(buf, path, load_files).ok()),
+        )
+    })
 }
 
 /// Clones the Run object.

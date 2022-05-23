@@ -8,6 +8,7 @@ use crate::{
     platform::prelude::*,
     settings::{Color, Field, Gradient, SettingsDescription, Value},
     timing::formatter,
+    util::PopulateString,
     Timer,
 };
 use alloc::borrow::Cow;
@@ -88,34 +89,31 @@ impl Text {
 
     /// Sets the centered text. If the current mode is split, it is switched to
     /// centered mode.
-    pub fn set_center<S: Into<String>>(&mut self, text: S) {
-        let text = text.into();
+    pub fn set_center<S: PopulateString>(&mut self, text: S) {
         if let Text::Center(inner) = self {
-            *inner = text;
+            text.populate(inner);
         } else {
-            *self = Text::Center(text);
+            *self = Text::Center(text.into_string());
         }
     }
 
     /// Sets the left text. If the current mode is centered, it is switched to
     /// split mode, with the right text being empty.
-    pub fn set_left<S: Into<String>>(&mut self, text: S) {
-        let text = text.into();
+    pub fn set_left<S: PopulateString>(&mut self, text: S) {
         if let Text::Split(inner, _) = self {
-            *inner = text;
+            text.populate(inner);
         } else {
-            *self = Text::Split(text, String::from(""));
+            *self = Text::Split(text.into_string(), String::from(""));
         }
     }
 
     /// Sets the right text. If the current mode is centered, it is switched to
     /// split mode, with the left text being empty.
-    pub fn set_right<S: Into<String>>(&mut self, text: S) {
-        let text = text.into();
+    pub fn set_right<S: PopulateString>(&mut self, text: S) {
         if let Text::Split(_, inner) = self {
-            *inner = text;
+            text.populate(inner);
         } else {
-            *self = Text::Split(String::from(""), text);
+            *self = Text::Split(String::from(""), text.into_string());
         }
     }
 }
@@ -221,7 +219,7 @@ impl Component {
                 let value = timer
                     .run()
                     .metadata()
-                    .custom_variable(&var_name)
+                    .custom_variable(var_name)
                     .map(|var| var.value.as_str())
                     .filter(|value| !value.trim_start().is_empty())
                     .unwrap_or(formatter::DASH);

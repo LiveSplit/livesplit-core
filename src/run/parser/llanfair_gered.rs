@@ -1,15 +1,17 @@
 //! Provides the parser for splits files used by Gered's Llanfair fork.
 
 #[cfg(feature = "std")]
-use super::util::strip_be_u32;
+use crate::util::byte_parsing::big_endian::strip_u32;
 #[cfg(feature = "std")]
-use crate::xml_util::text_as_str_err;
+use crate::util::xml::helper::text_as_str_err;
 use crate::{
     platform::prelude::*,
-    xml::Reader,
-    xml_util::{
-        end_tag, optional_attribute_escaped_err, parse_base, parse_children, single_child, text,
-        text_err, text_parsed, Error as XmlError,
+    util::xml::{
+        helper::{
+            end_tag, optional_attribute_escaped_err, parse_base, parse_children, single_child,
+            text, text_err, text_parsed, Error as XmlError,
+        },
+        Reader,
     },
     RealTime, Run, Segment, Time, TimeSpan,
 };
@@ -95,8 +97,8 @@ where
 
             let (width, height);
             let mut cursor = raw_buf.get(0xD1..).ok_or(Error::Image)?;
-            height = strip_be_u32(&mut cursor).ok_or(Error::Image)?;
-            width = strip_be_u32(&mut cursor).ok_or(Error::Image)?;
+            height = strip_u32(&mut cursor).ok_or(Error::Image)?;
+            width = strip_u32(&mut cursor).ok_or(Error::Image)?;
 
             let len = (width as usize)
                 .checked_mul(height as usize)

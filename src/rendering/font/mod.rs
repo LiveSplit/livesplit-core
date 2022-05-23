@@ -4,7 +4,7 @@ use super::{
     resource::{LabelHandle, ResourceAllocator},
     Handle, Label, Pos, Transform,
 };
-use crate::{clear_vec::ClearVec, platform::prelude::*};
+use crate::{platform::prelude::*, util::ClearVec};
 
 pub use self::cache::FontCache;
 

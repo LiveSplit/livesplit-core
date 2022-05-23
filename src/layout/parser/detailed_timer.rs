@@ -2,7 +2,7 @@ use super::{
     accuracy, color, comparison_override, end_tag, parse_bool, parse_children, text_parsed,
     timer_format, timing_method_override, translate_size, GradientBuilder, Result,
 };
-use crate::{timing::formatter::DigitsFormat, xml::Reader};
+use crate::{timing::formatter::DigitsFormat, util::xml::Reader};
 
 pub use crate::component::detailed_timer::Component;
 

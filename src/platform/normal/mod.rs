@@ -1,6 +1,3 @@
-#![allow(missing_docs)]
-
-pub use indexmap;
 use time::UtcOffset;
 pub use time::{Duration, OffsetDateTime as DateTime};
 

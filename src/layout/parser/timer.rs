@@ -2,9 +2,9 @@ use super::{
     accuracy, color, end_tag, parse_bool, parse_children, text_parsed, timer_format,
     timing_method_override, translate_size, GradientBuilder, Result,
 };
+use crate::util::xml::Reader;
 
 pub use crate::component::timer::Component;
-use crate::xml::Reader;
 
 pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()> {
     let settings = component.settings_mut();

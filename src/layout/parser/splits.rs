@@ -2,11 +2,13 @@ use super::{
     accuracy, comparison_override, end_tag, parse_bool, parse_children, text, text_parsed,
     timing_method_override, Error, GradientBuilder, GradientKind, ListGradientKind, Result,
 };
+use crate::{
+    component::splits,
+    platform::prelude::*,
+    util::xml::{helper::text_as_escaped_string_err, Reader},
+};
 
 pub use crate::component::splits::Component;
-use crate::{
-    component::splits, platform::prelude::*, xml::Reader, xml_util::text_as_escaped_string_err,
-};
 
 pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()> {
     let settings = component.settings_mut();

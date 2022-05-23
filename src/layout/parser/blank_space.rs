@@ -1,7 +1,7 @@
 use super::{translate_size, Error, GradientBuilder, Result};
-use crate::{
-    xml::Reader,
-    xml_util::{end_tag, parse_children, text_parsed},
+use crate::util::xml::{
+    helper::{end_tag, parse_children, text_parsed},
+    Reader,
 };
 
 pub use crate::component::blank_space::Component;

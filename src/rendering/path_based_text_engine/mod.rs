@@ -54,7 +54,11 @@ impl TextEngine {
 
     /// Creates a new font. You can call this directly from a
     /// [`ResourceAllocator`](super::ResourceAllocator).
-    pub fn create_font<P>(&mut self, #[allow(unused)] font: Option<&settings::Font>, kind: FontKind) -> Font<P> {
+    pub fn create_font<P>(
+        &mut self,
+        #[allow(unused)] font: Option<&settings::Font>,
+        kind: FontKind,
+    ) -> Font<P> {
         #[cfg(feature = "font-loading")]
         if let Some(font) = font {
             if let Some(font) = Font::try_load_font(&mut self.source, font, kind) {

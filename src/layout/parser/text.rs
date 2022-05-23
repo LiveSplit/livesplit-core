@@ -1,7 +1,7 @@
 use super::{color, end_tag, parse_bool, parse_children, text, GradientBuilder, Result};
+use crate::{component::text::Text, platform::prelude::*, util::xml::Reader};
 
 pub use crate::component::text::Component;
-use crate::{component::text::Text, platform::prelude::*, xml::Reader};
 
 pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()> {
     let settings = component.settings_mut();
