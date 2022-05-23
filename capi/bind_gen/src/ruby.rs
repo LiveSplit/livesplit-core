@@ -76,11 +76,7 @@ fn ptr_of(var: &str) -> String {
 }
 
 fn write_class_comments<W: Write>(mut writer: W, comments: &[String]) -> Result<()> {
-    write!(
-        writer,
-        r#"
-"#
-    )?;
+    writeln!(writer)?;
 
     for comment in comments {
         write!(

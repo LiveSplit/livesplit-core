@@ -79,7 +79,7 @@ typedef struct {0}_s const* {0}Ref;
     }
 
     for class in classes.values() {
-        writeln!(writer, "")?;
+        writeln!(writer)?;
 
         for function in class
             .static_fns

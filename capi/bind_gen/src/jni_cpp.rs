@@ -202,7 +202,7 @@ extern "C" JNIEXPORT jlong Java_livesplitcore_LiveSplitCoreNative_Run_1parseStri
             .chain(class.mut_fns.iter())
         {
             write_fn(&mut writer, function, class_name)?;
-            writeln!(writer, "")?;
+            writeln!(writer)?;
         }
     }
 

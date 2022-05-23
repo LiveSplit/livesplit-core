@@ -847,10 +847,9 @@ function dealloc(slice) {
         )?;
 
         if !type_script {
-            write!(
+            writeln!(
                 writer,
-                r#"exports.{base_class} = {base_class};
-"#,
+                r#"exports.{base_class} = {base_class};"#,
                 base_class = class_name_ref
             )?;
         }
@@ -920,10 +919,9 @@ function dealloc(slice) {
         )?;
 
         if !type_script {
-            write!(
+            writeln!(
                 writer,
-                r#"exports.{base_class} = {base_class};
-"#,
+                r#"exports.{base_class} = {base_class};"#,
                 base_class = class_name_ref_mut
             )?;
         }

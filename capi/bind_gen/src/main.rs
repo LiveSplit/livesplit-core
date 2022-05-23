@@ -13,11 +13,13 @@ mod typescript;
 mod wasm;
 mod wasm_bindgen;
 
-use std::collections::BTreeMap;
-use std::fs::{self, create_dir_all, remove_dir_all, File};
-use std::io::{BufWriter, Read, Result};
-use std::path::PathBuf;
-use std::rc::Rc;
+use std::{
+    collections::BTreeMap,
+    fs::{self, create_dir_all, remove_dir_all, File},
+    io::{BufWriter, Read, Result},
+    path::PathBuf,
+    rc::Rc,
+};
 use structopt::StructOpt;
 use syn::{
     parse_file, FnArg, Item, ItemFn, Lit, Meta, Pat, ReturnType, Signature, Type as SynType,
@@ -121,11 +123,24 @@ fn get_type(ty: &SynType) -> Type {
                 name.clear();
                 name += "u8";
             }
-            let is_custom = match &name as &str {
-                "u8" | "u16" | "u32" | "u64" | "i8" | "i16" | "i32" | "i64" | "()" | "bool"
-                | "c_char" | "usize" | "isize" | "f32" | "f64" | "Json" => false,
-                _ => true,
-            };
+            let is_custom = !matches!(
+                &*name,
+                "u8" | "u16"
+                    | "u32"
+                    | "u64"
+                    | "i8"
+                    | "i16"
+                    | "i32"
+                    | "i64"
+                    | "()"
+                    | "bool"
+                    | "c_char"
+                    | "usize"
+                    | "isize"
+                    | "f32"
+                    | "f64"
+                    | "Json"
+            );
             Type {
                 kind: TypeKind::Value,
                 is_custom,
@@ -137,7 +152,7 @@ fn get_type(ty: &SynType) -> Type {
     }
 }
 
-fn get_comment(attrs: &Vec<syn::Attribute>) -> Vec<String> {
+fn get_comment(attrs: &[syn::Attribute]) -> Vec<String> {
     attrs
         .iter()
         .filter_map(|a| match a.parse_meta() {
@@ -204,7 +219,7 @@ fn main() {
                 continue;
             }
 
-            let comments = get_comment(&attrs);
+            let comments = get_comment(attrs);
 
             let output = if let ReturnType::Type(_, ty) = output {
                 get_type(ty)
