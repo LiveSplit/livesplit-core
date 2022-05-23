@@ -129,13 +129,23 @@ pub extern "C" fn SplitsComponentState_is_current_split(
     this.splits[index].is_current_split
 }
 
-/// Returns the label of a specific column
+/// Describes if the columns have labels that are meant to be shown. If this is
+/// `false`, no labels are supposed to be visualized.
 #[no_mangle]
-pub extern "C" fn SplitsComponentState_column_label(this: &SplitsComponentState,index: usize,) -> *const c_char {
-    let labels = this.column_labels.clone();
-    if labels.is_none() {
-        return output_str(&"");
-    }
-    let hthing = &labels.unwrap()[index];
-    return output_str(hthing);
+pub extern "C" fn SplitsComponentState_has_column_labels(this: &SplitsComponentState) -> bool {
+    this.column_labels.is_some()
+}
+
+/// Returns the label of the column specified. The list is specified from right
+/// to left. You may not provide an out of bounds index.
+#[no_mangle]
+pub extern "C" fn SplitsComponentState_column_label(
+    this: &SplitsComponentState,
+    index: usize,
+) -> *const c_char {
+    output_str(if let Some(labels) = &this.column_labels {
+        &labels[index]
+    } else {
+        ""
+    })
 }
