@@ -113,7 +113,7 @@ impl FromStr for TimeSpan {
 
 impl Default for TimeSpan {
     fn default() -> Self {
-        TimeSpan(Duration::nanoseconds(0))
+        TimeSpan(Duration::ZERO)
     }
 }
 

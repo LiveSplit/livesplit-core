@@ -3,7 +3,7 @@
 //! underlying renderer doesn't by itself need to be able to render text, as all
 //! the text gets turned into paths.
 
-use std::sync::Arc;
+use crate::platform::{prelude::*, Arc, RwLock};
 
 #[cfg(feature = "font-loading")]
 use font_kit::{
@@ -13,7 +13,6 @@ use font_kit::{
     source::SystemSource,
 };
 use hashbrown::HashMap;
-use parking_lot::{const_rwlock, RwLock};
 use rustybuzz::{Face, Feature, Tag, UnicodeBuffer, Variation};
 use ttf_parser::{GlyphId, OutlineBuilder};
 
@@ -65,6 +64,9 @@ impl TextEngine {
                 return font;
             }
         }
+        #[cfg(not(feature = "font-loading"))]
+        let _ = font;
+
         let (font_data, style, weight, stretch) = match kind {
             FontKind::Timer => (
                 TIMER_FONT,
@@ -97,7 +99,7 @@ impl TextEngine {
         font: &mut Font<PB::Path>,
         max_width: Option<f32>,
     ) -> Label<PB::Path> {
-        let mut label = Arc::new(const_rwlock(LockedLabel {
+        let mut label = Arc::new(RwLock::new(LockedLabel {
             width: 0.0,
             width_without_max_width: 0.0,
             scale: 0.0,

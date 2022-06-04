@@ -1,4 +1,4 @@
-use alloc::{rc::Rc, sync::Arc};
+use alloc::rc::Rc;
 
 /// Describes that ownership of a value can be cheaply shared. This is similar
 /// to the [`Clone`] trait, but is expected to only be implemented if sharing is
@@ -14,7 +14,8 @@ impl<T: ?Sized> SharedOwnership for Rc<T> {
     }
 }
 
-impl<T: ?Sized> SharedOwnership for Arc<T> {
+#[cfg(target_has_atomic = "ptr")]
+impl<T: ?Sized> SharedOwnership for alloc::sync::Arc<T> {
     fn share(&self) -> Self {
         self.clone()
     }
