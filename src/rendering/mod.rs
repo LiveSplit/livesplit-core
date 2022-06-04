@@ -444,18 +444,26 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
     }
 
     fn create_icon(&mut self, image_data: &[u8]) -> Option<Icon<A::Image>> {
-        if image_data.is_empty() {
-            return None;
+        #[cfg(feature = "image")]
+        {
+            if image_data.is_empty() {
+                return None;
+            }
+
+            let image = image::load_from_memory(image_data).ok()?.to_rgba8();
+
+            Some(Icon {
+                aspect_ratio: image.width() as f32 / image.height() as f32,
+                image: self
+                    .handles
+                    .create_image(image.width(), image.height(), &image),
+            })
         }
-
-        let image = image::load_from_memory(image_data).ok()?.to_rgba8();
-
-        Some(Icon {
-            aspect_ratio: image.width() as f32 / image.height() as f32,
-            image: self
-                .handles
-                .create_image(image.width(), image.height(), &image),
-        })
+        #[cfg(not(feature = "image"))]
+        {
+            let _ = image_data;
+            None
+        }
     }
 
     fn scale(&mut self, factor: f32) {

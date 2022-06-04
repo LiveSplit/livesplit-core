@@ -1,4 +1,4 @@
-use std::mem;
+use core::mem;
 
 use crate::util::byte_parsing::{
     big_endian::{U16, U32 as O32},

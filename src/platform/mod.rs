@@ -17,6 +17,11 @@ cfg_if::cfg_if! {
     }
 }
 
+#[cfg(not(target_has_atomic = "ptr"))]
+pub use alloc::rc::Rc as Arc;
+#[cfg(target_has_atomic = "ptr")]
+pub use alloc::sync::Arc;
+
 pub mod math;
 
 #[cfg(feature = "std")]
