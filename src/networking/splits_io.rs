@@ -3,10 +3,14 @@
 //! submodule. Additional helpers for directly uploading and downloading Run
 //! objects are available as well.
 
-use crate::run::{parser::composite, saver};
-use crate::{Run, Timer};
+use crate::{
+    run::{
+        parser::composite,
+        saver::{self, livesplit::IoWrite},
+    },
+    Run, Timer,
+};
 use snafu::ResultExt;
-use std::io::Cursor;
 
 pub use api::{run::UploadedRun, Client, Error as UploadError};
 pub use splits_io_api as api;
@@ -36,15 +40,17 @@ pub async fn download_run(
     id: &str,
 ) -> Result<composite::ParsedRun, DownloadError> {
     let bytes = api::run::download(client, id).await.context(Download)?;
-    let bytes: &[u8] = &*bytes;
-    composite::parse(Cursor::new(bytes), None, false).context(Parse)
+    composite::parse(&bytes, None, false).context(Parse)
 }
 
 /// Asynchronously uploads a run to Splits.io. An object representing the ID of
 /// the uploaded run and its claim token gets returned when the run was
 /// successfully uploaded.
 pub async fn upload_run(client: &Client, run: &Run) -> Result<UploadedRun, UploadError> {
-    api::run::upload_lazy(client, |writer| saver::livesplit::save_run(run, writer)).await
+    api::run::upload_lazy(client, |writer| {
+        saver::livesplit::save_run(run, IoWrite(writer))
+    })
+    .await
 }
 
 /// Asynchronously uploads the run of the timer provided to Splits.io. If there
@@ -52,5 +58,8 @@ pub async fn upload_run(client: &Client, run: &Run) -> Result<UploadedRun, Uploa
 /// object representing the ID of the uploaded run and its claim token gets
 /// returned when the run was successfully uploaded.
 pub async fn upload_timer(client: &Client, timer: &Timer) -> Result<UploadedRun, UploadError> {
-    api::run::upload_lazy(client, |writer| saver::livesplit::save_timer(timer, writer)).await
+    api::run::upload_lazy(client, |writer| {
+        saver::livesplit::save_timer(timer, IoWrite(writer))
+    })
+    .await
 }

@@ -5,7 +5,10 @@ use crate::{
     run::{NullableOwnedRun, OwnedRun},
     shared_timer::OwnedSharedTimer,
 };
-use livesplit_core::{run::saver, Run, Time, TimeSpan, Timer, TimerPhase, TimingMethod};
+use livesplit_core::{
+    run::saver::{self, livesplit::IoWrite},
+    Run, Time, TimeSpan, Timer, TimerPhase, TimingMethod,
+};
 use std::{os::raw::c_char, ptr};
 
 /// type
@@ -291,7 +294,7 @@ pub extern "C" fn Timer_get_run(this: &Timer) -> &Run {
 #[no_mangle]
 pub extern "C" fn Timer_save_as_lss(this: &Timer) -> *const c_char {
     output_vec(|o| {
-        saver::livesplit::save_timer(this, o).unwrap();
+        saver::livesplit::save_timer(this, IoWrite(o)).unwrap();
     })
 }
 

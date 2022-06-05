@@ -1,6 +1,8 @@
 use super::Editor;
-use crate::tests_helper::{create_timer, run_with_splits};
-use crate::{Run, Segment};
+use crate::{
+    util::tests_helper::{create_timer, run_with_splits},
+    Run, Segment,
+};
 
 mod comparison;
 mod custom_variables;

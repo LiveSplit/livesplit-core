@@ -1,5 +1,7 @@
-use crate::tests_helper::{create_timer, run_with_splits};
-use crate::Timer;
+use crate::{
+    util::tests_helper::{create_timer, run_with_splits},
+    Timer,
+};
 
 #[test]
 fn reattaches_unattached_segment_history_elements_by_using_negative_ids() {

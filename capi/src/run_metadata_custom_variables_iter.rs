@@ -5,11 +5,11 @@ use super::RUN_METADATA_CUSTOM_VARIABLE;
 use crate::run_metadata_custom_variable::{
     NullableRunMetadataCustomVariable, RunMetadataCustomVariable,
 };
-use livesplit_core::{indexmap, run::CustomVariable};
+use livesplit_core::{run::CustomVariable, util::ordered_map};
 use std::ptr;
 
 /// type
-pub type RunMetadataCustomVariablesIter = indexmap::map::Iter<'static, String, CustomVariable>;
+pub type RunMetadataCustomVariablesIter = ordered_map::Iter<'static, CustomVariable>;
 /// type
 pub type OwnedRunMetadataCustomVariablesIter = Box<RunMetadataCustomVariablesIter>;
 

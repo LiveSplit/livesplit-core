@@ -1,10 +1,11 @@
 //! Provides the parser for WSplit splits files.
 
-use crate::{settings::Image, RealTime, Run, Segment, TimeSpan};
-use core::num::{ParseFloatError, ParseIntError};
-use core::result::Result as StdResult;
+use crate::{RealTime, Run, Segment, TimeSpan};
+use core::{
+    num::{ParseFloatError, ParseIntError},
+    result::Result as StdResult,
+};
 use snafu::ResultExt;
-use std::io::{self, BufRead};
 
 /// The Error type for splits files that couldn't be parsed by the WSplit
 /// Parser.
@@ -39,15 +40,10 @@ pub enum Error {
         /// The underlying error.
         source: ParseFloatError,
     },
-    /// Failed to parse the time the "Old Run" of a segment.
+    /// Failed to parse the "Old Run" time of a segment.
     OldTime {
         /// The underlying error.
         source: ParseFloatError,
-    },
-    /// Failed to read the next line.
-    Line {
-        /// The underlying error.
-        source: io::Error,
     },
 }
 
@@ -59,15 +55,16 @@ pub type Result<T> = StdResult<T, Error>;
 /// the file system. If you are using livesplit-core in a server-like
 /// environment, set this to `false`. Only client-side applications should set
 /// this to `true`.
-pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
+pub fn parse(source: &str, #[allow(unused)] load_icons: bool) -> Result<Run> {
     let mut run = Run::new();
+    #[cfg(feature = "std")]
     let mut icon_buf = Vec::new();
+    #[cfg(feature = "std")]
     let mut icons_list = Vec::new();
     let mut old_run_exists = false;
     let mut goal = None;
 
     for line in source.lines() {
-        let line = line.context(Line)?;
         if !line.is_empty() {
             if let Some(title) = line.strip_prefix("Title=") {
                 run.set_category_name(title);
@@ -81,23 +78,26 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
                 }
             } else if line.starts_with("Size=") {
                 // Ignore
-            } else if let Some(icons) = line.strip_prefix("Icons=") {
+            } else if let Some(_icons) = line.strip_prefix("Icons=") {
+                #[cfg(feature = "std")]
                 if load_icons {
                     icons_list.clear();
-                    for path in icons.split(',') {
+                    for path in _icons.split(',') {
                         if path.len() >= 2 {
                             let path = &path[1..path.len() - 1];
-                            if let Ok(image) = Image::from_file(path, &mut icon_buf) {
+                            if let Ok(image) =
+                                crate::settings::Image::from_file(path, &mut icon_buf)
+                            {
                                 icons_list.push(image);
                                 continue;
                             }
                         }
-                        icons_list.push(Image::default());
+                        icons_list.push(Default::default());
                     }
                 }
             } else if let Some(goal_value) = line.strip_prefix("Goal=") {
                 if !goal_value.is_empty() {
-                    goal = Some(goal_value.to_owned());
+                    goal = Some(goal_value);
                 }
             } else {
                 // must be a split Kappa
@@ -142,10 +142,10 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
     }
 
     if old_run_exists {
-        run.add_custom_comparison("Old Run")
-            .expect("WSplit: Old Run");
+        run.add_custom_comparison("Old Run").unwrap();
     }
 
+    #[cfg(feature = "std")]
     for (icon, segment) in icons_list.into_iter().zip(run.segments_mut().iter_mut()) {
         segment.set_icon(icon);
     }
@@ -159,7 +159,7 @@ mod tests {
 
     #[test]
     fn goal_parsing() {
-        const RUN: &[u8] = br#"Title=WarioWare, Inc
+        const RUN: &str = r#"Title=WarioWare, Inc
 Attempts=1
 Offset=0
 Size=374,61
@@ -176,7 +176,7 @@ Jimmy,0,219.68,134.2
 
     #[test]
     fn skip_goal_if_its_empty() {
-        const RUN: &[u8] = br#"Title=WarioWare, Inc
+        const RUN: &str = r#"Title=WarioWare, Inc
 Attempts=1
 Offset=0
 Size=374,61

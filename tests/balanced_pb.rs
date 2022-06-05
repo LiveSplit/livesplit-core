@@ -1,7 +1,8 @@
-use livesplit_core::comparison::balanced_pb::{BalancedPB, NAME};
-use livesplit_core::run::parser::livesplit;
-use livesplit_core::{Time, TimeSpan};
-use std::io::Cursor;
+use livesplit_core::{
+    comparison::balanced_pb::{BalancedPB, NAME},
+    run::parser::livesplit,
+    Time, TimeSpan,
+};
 
 mod run_files;
 
@@ -25,8 +26,7 @@ fn t(r: &str, g: &str) -> Time {
 
 #[test]
 fn balanced_pb() {
-    let reader = Cursor::new(run_files::LIVESPLIT_1_6_GAMETIME);
-    let mut run = livesplit::parse(reader, None).unwrap();
+    let mut run = livesplit::parse(run_files::LIVESPLIT_1_6_GAMETIME, None).unwrap();
     run.comparison_generators_mut().clear();
     run.comparison_generators_mut().push(Box::new(BalancedPB));
     run.regenerate_comparisons();

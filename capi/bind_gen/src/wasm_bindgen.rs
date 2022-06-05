@@ -82,14 +82,12 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
     let method = function.method.to_lower_camel_case();
     let is_json = has_return_type && function.output.name == "Json";
 
-    if function
-        .inputs
-        .iter()
-        .any(|(_, ty)| match (ty.kind, ty.is_custom, &ty.name) {
-            (TypeKind::Value, false, n) if n == "i64" || n == "u64" => true,
-            _ => false,
-        })
-    {
+    if function.inputs.iter().any(|(_, ty)| {
+        matches!(
+            (ty.kind, ty.is_custom, &*ty.name),
+            (TypeKind::Value, false, "i64" | "u64")
+        )
+    }) {
         return Ok(());
     }
 

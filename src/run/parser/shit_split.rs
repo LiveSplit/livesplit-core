@@ -1,10 +1,8 @@
 //! Provides the parser for ShitSplit splits files.
 
 use crate::{timing, GameTime, Run, Segment, TimeSpan};
-use core::num::ParseIntError;
-use core::result::Result as StdResult;
+use core::{num::ParseIntError, result::Result as StdResult};
 use snafu::{OptionExt, ResultExt};
-use std::io::{self, BufRead};
 
 /// The Error type for splits files that couldn't be parsed by the ShitSplit
 /// Parser.
@@ -13,11 +11,6 @@ use std::io::{self, BufRead};
 pub enum Error {
     /// An empty splits file was provided.
     Empty,
-    /// Failed to read the title line.
-    ReadTitleLine {
-        /// The underlying error.
-        source: io::Error,
-    },
     /// Expected the name of the category, but didn't find it.
     ExpectedCategoryName,
     /// Expected the attempt count, but didn't find it.
@@ -26,11 +19,6 @@ pub enum Error {
     ParseAttemptCount {
         /// The underlying error.
         source: ParseIntError,
-    },
-    /// Failed to read the next world line.
-    ReadWorldLine {
-        /// The underlying error.
-        source: io::Error,
     },
     /// Expected the name of a world, but didn't find it.
     ExpectedWorldName,
@@ -41,21 +29,16 @@ pub enum Error {
         /// The underlying error.
         source: timing::ParseError,
     },
-    /// Failed to read the next segment line.
-    ReadSegmentLine {
-        /// The underlying error.
-        source: io::Error,
-    },
 }
 
 /// The Result type for the ShitSplit Parser.
 pub type Result<T> = StdResult<T, Error>;
 
 /// Attempts to parse a ShitSplit splits file.
-pub fn parse<R: BufRead>(source: R) -> Result<Run> {
+pub fn parse(source: &str) -> Result<Run> {
     let mut lines = source.lines();
 
-    let line = lines.next().context(Empty)?.context(ReadTitleLine)?;
+    let line = lines.next().context(Empty)?;
 
     let mut splits = line.split('|');
     let category_name = splits.next().context(ExpectedCategoryName)?;
@@ -77,7 +60,6 @@ pub fn parse<R: BufRead>(source: R) -> Result<Run> {
     let mut total_time = TimeSpan::zero();
     let mut next_line = lines.next();
     while let Some(line) = next_line {
-        let line = line.context(ReadWorldLine)?;
         if line.is_empty() {
             break;
         }
@@ -91,13 +73,12 @@ pub fn parse<R: BufRead>(source: R) -> Result<Run> {
         next_line = lines.next();
         let mut has_acts = false;
         while let Some(line) = next_line {
-            let line = line.context(ReadSegmentLine)?;
             if let Some(segment_name) = line.strip_prefix('*') {
                 run.push_segment(Segment::new(segment_name));
                 has_acts = true;
                 next_line = lines.next();
             } else {
-                next_line = Some(Ok(line));
+                next_line = Some(line);
                 break;
             }
         }

@@ -243,11 +243,7 @@ fn write_class_ref<P: AsRef<Path>>(path: P, class_name: &str, class: &Class) -> 
     let mut writer = BufWriter::new(File::create(path)?);
     let class_name_ref = format!("{}Ref", class_name);
 
-    write!(
-        writer,
-        r#"package livesplitcore;
-"#
-    )?;
+    writeln!(writer, r#"package livesplitcore;"#)?;
 
     write_class_comments(&mut writer, &class.comments)?;
 
@@ -297,11 +293,7 @@ fn write_class_ref_mut<P: AsRef<Path>>(path: P, class_name: &str, class: &Class)
     let class_name_ref = format!("{}Ref", class_name);
     let class_name_ref_mut = format!("{}RefMut", class_name);
 
-    write!(
-        writer,
-        r#"package livesplitcore;
-"#
-    )?;
+    writeln!(writer, r#"package livesplitcore;"#)?;
 
     write_class_comments(&mut writer, &class.comments)?;
 
@@ -314,7 +306,7 @@ public class {class} extends {base_class} {{"#,
     )?;
 
     for function in &class.mut_fns {
-        write_fn(&mut writer, function, &class_name)?;
+        write_fn(&mut writer, function, class_name)?;
     }
 
     write!(
@@ -332,11 +324,7 @@ fn write_class<P: AsRef<Path>>(path: P, class_name: &str, class: &Class) -> Resu
     let mut writer = BufWriter::new(File::create(path)?);
     let class_name_ref_mut = format!("{}RefMut", class_name);
 
-    write!(
-        writer,
-        r#"package livesplitcore;
-"#
-    )?;
+    writeln!(writer, r#"package livesplitcore;"#)?;
 
     write_class_comments(&mut writer, &class.comments)?;
 
@@ -376,7 +364,7 @@ public class {class} extends {base_class} implements AutoCloseable {{
 
     for function in class.static_fns.iter().chain(class.own_fns.iter()) {
         if function.method != "drop" {
-            write_fn(&mut writer, function, &class_name)?;
+            write_fn(&mut writer, function, class_name)?;
         }
     }
 

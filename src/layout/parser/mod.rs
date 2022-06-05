@@ -3,6 +3,7 @@
 use super::{Component, Layout, LayoutDirection};
 use crate::{
     component::separator,
+    platform::{math::f32::powf, prelude::*},
     settings::{
         Alignment, Color, Font, FontStretch, FontStyle, FontWeight, Gradient, ListGradient,
     },
@@ -10,13 +11,15 @@ use crate::{
         formatter::{Accuracy, DigitsFormat},
         TimingMethod,
     },
-    xml_util::{
-        end_tag, parse_base, parse_children, text, text_as_bytes_err, text_as_escaped_bytes_err,
-        text_err, text_parsed, Error as XmlError, Tag,
+    util::xml::{
+        helper::{
+            end_tag, parse_base, parse_children, text, text_as_escaped_string_err, text_parsed,
+            Error as XmlError,
+        },
+        Reader,
     },
 };
-use quick_xml::Reader;
-use std::{io::BufRead, str};
+use core::str;
 
 mod blank_space;
 mod current_comparison;
@@ -44,7 +47,7 @@ mod font_resolving;
 const PIXEL_SPACE_RATIO: f32 = 24.0 / 30.5;
 
 fn translate_size(v: u32) -> u32 {
-    (v as f32 * PIXEL_SPACE_RATIO).round() as u32
+    (v as f32 * PIXEL_SPACE_RATIO + 0.5) as u32
 }
 
 /// The Error type for parsing layout files of the original LiveSplit.
@@ -54,16 +57,6 @@ pub enum Error {
     Xml {
         /// The underlying error.
         source: XmlError,
-    },
-    /// Failed to decode a string slice as UTF-8.
-    Utf8Str {
-        /// The underlying error.
-        source: core::str::Utf8Error,
-    },
-    /// Failed to decode a string as UTF-8.
-    Utf8String {
-        /// The underlying error.
-        source: alloc::string::FromUtf8Error,
     },
     /// Failed to parse an integer.
     ParseInt {
@@ -98,18 +91,6 @@ impl From<XmlError> for Error {
     }
 }
 
-impl From<core::str::Utf8Error> for Error {
-    fn from(source: core::str::Utf8Error) -> Self {
-        Self::Utf8Str { source }
-    }
-}
-
-impl From<alloc::string::FromUtf8Error> for Error {
-    fn from(source: alloc::string::FromUtf8Error) -> Self {
-        Self::Utf8String { source }
-    }
-}
-
 impl From<core::num::ParseIntError> for Error {
     fn from(source: core::num::ParseIntError) -> Self {
         Self::ParseInt { source }
@@ -134,7 +115,7 @@ enum ListGradientKind {
 trait GradientType: Sized {
     type Built;
     fn default() -> Self;
-    fn parse(kind: &[u8]) -> Result<Self>;
+    fn parse(kind: &str) -> Result<Self>;
     fn build(self, first: Color, second: Color) -> Self::Built;
 }
 
@@ -143,14 +124,14 @@ impl GradientType for GradientKind {
     fn default() -> Self {
         GradientKind::Transparent
     }
-    fn parse(kind: &[u8]) -> Result<Self> {
+    fn parse(kind: &str) -> Result<Self> {
         // FIXME: Implement delta color support properly:
         // https://github.com/LiveSplit/livesplit-core/issues/380
 
         Ok(match kind {
-            b"Plain" | b"PlainWithDeltaColor" => GradientKind::Plain,
-            b"Vertical" | b"VerticalWithDeltaColor" => GradientKind::Vertical,
-            b"Horizontal" | b"HorizontalWithDeltaColor" => GradientKind::Horizontal,
+            "Plain" | "PlainWithDeltaColor" => GradientKind::Plain,
+            "Vertical" | "VerticalWithDeltaColor" => GradientKind::Vertical,
+            "Horizontal" | "HorizontalWithDeltaColor" => GradientKind::Horizontal,
             _ => return Err(Error::ParseGradientType),
         })
     }
@@ -175,8 +156,8 @@ impl GradientType for ListGradientKind {
     fn default() -> Self {
         ListGradientKind::Same(GradientKind::default())
     }
-    fn parse(kind: &[u8]) -> Result<Self> {
-        Ok(if kind == b"Alternating" {
+    fn parse(kind: &str) -> Result<Self> {
+        Ok(if kind == "Alternating" {
             ListGradientKind::Alternating
         } else {
             ListGradientKind::Same(GradientKind::parse(kind)?)
@@ -191,9 +172,9 @@ impl GradientType for ListGradientKind {
 }
 
 struct GradientBuilder<T: GradientType = GradientKind> {
-    tag_color1: &'static [u8],
-    tag_color2: &'static [u8],
-    tag_kind: &'static [u8],
+    tag_color1: &'static str,
+    tag_color2: &'static str,
+    tag_kind: &'static str,
     kind: T,
     first: Color,
     second: Color,
@@ -207,17 +188,13 @@ impl GradientBuilder<GradientKind> {
 
 impl<T: GradientType> GradientBuilder<T> {
     fn new_gradient_type() -> Self {
-        Self::with_tags(
-            b"BackgroundColor",
-            b"BackgroundColor2",
-            b"BackgroundGradient",
-        )
+        Self::with_tags("BackgroundColor", "BackgroundColor2", "BackgroundGradient")
     }
 
     fn with_tags(
-        tag_color1: &'static [u8],
-        tag_color2: &'static [u8],
-        tag_kind: &'static [u8],
+        tag_color1: &'static str,
+        tag_color2: &'static str,
+        tag_kind: &'static str,
     ) -> Self {
         Self {
             tag_color1,
@@ -229,27 +206,20 @@ impl<T: GradientType> GradientBuilder<T> {
         }
     }
 
-    fn parse_background<'a, R>(
-        &mut self,
-        reader: &mut Reader<R>,
-        tag: Tag<'a>,
-    ) -> Result<Option<Tag<'a>>>
-    where
-        R: BufRead,
-    {
-        if tag.name() == self.tag_color1 {
-            color(reader, tag.into_buf(), |c| self.first = c)?;
-        } else if tag.name() == self.tag_color2 {
-            color(reader, tag.into_buf(), |c| self.second = c)?;
-        } else if tag.name() == self.tag_kind {
-            text_as_escaped_bytes_err::<_, _, _, Error>(reader, tag.into_buf(), |text| {
+    fn parse_background(&mut self, reader: &mut Reader<'_>, tag_name: &str) -> Result<bool> {
+        if tag_name == self.tag_color1 {
+            color(reader, |c| self.first = c)?;
+        } else if tag_name == self.tag_color2 {
+            color(reader, |c| self.second = c)?;
+        } else if tag_name == self.tag_kind {
+            text_as_escaped_string_err::<_, _, Error>(reader, |text| {
                 self.kind = T::parse(text)?;
                 Ok(())
             })?;
         } else {
-            return Ok(Some(tag));
+            return Ok(false);
         }
-        Ok(None)
+        Ok(true)
     }
 
     fn build(self) -> T::Built {
@@ -257,13 +227,12 @@ impl<T: GradientType> GradientBuilder<T> {
     }
 }
 
-fn color<R, F>(reader: &mut Reader<R>, buf: &mut Vec<u8>, func: F) -> Result<()>
+fn color<F>(reader: &mut Reader<'_>, func: F) -> Result<()>
 where
-    R: BufRead,
     F: FnOnce(Color),
 {
-    text_err(reader, buf, |text| {
-        let number = u32::from_str_radix(&text, 16)?;
+    text_as_escaped_string_err(reader, |text| {
+        let number = u32::from_str_radix(text, 16)?;
         let [a, r, g, b] = number.to_be_bytes();
         let mut color = Color::rgba8(r, g, b, a);
         let [r, g, b, a] = color.to_array();
@@ -279,24 +248,18 @@ where
         // the white on black case instead of the usual 2.2 for sRGB.
         let lightness = (r + g + b) * (1.0 / 3.0);
         color.alpha =
-            (1.0 - lightness) * (1.0 - (1.0 - a).powf(1.0 / 2.2)) + lightness * a.powf(1.0 / 1.75);
+            (1.0 - lightness) * (1.0 - powf(1.0 - a, 1.0 / 2.2)) + lightness * powf(a, 1.0 / 1.75);
 
         func(color);
         Ok(())
     })
 }
 
-fn font<R, F>(
-    reader: &mut Reader<R>,
-    result: &mut Vec<u8>,
-    font_buf: &mut Vec<u8>,
-    f: F,
-) -> Result<()>
+fn font<F>(reader: &mut Reader<'_>, font_buf: &mut Vec<u8>, f: F) -> Result<()>
 where
-    R: BufRead,
     F: FnOnce(Font),
 {
-    text_as_bytes_err(reader, result, |text| {
+    text_as_escaped_string_err(reader, |text| {
         // The format for this is documented here:
         // https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-nrbf/75b9fe09-be15-475f-85b8-ae7b7558cfe5
         //
@@ -330,7 +293,7 @@ where
         let rem = cursor.as_slice();
 
         let font_name = rem.get(..len).ok_or(Error::ParseFont)?;
-        let original_family_name = str::from_utf8(font_name)
+        let original_family_name = simdutf8::basic::from_utf8(font_name)
             .map_err(|_| Error::ParseFont)?
             .trim();
         let mut family = original_family_name;
@@ -482,17 +445,16 @@ where
     })
 }
 
-fn parse_bool<R, F>(reader: &mut Reader<R>, buf: &mut Vec<u8>, f: F) -> Result<()>
+fn parse_bool<F>(reader: &mut Reader<'_>, f: F) -> Result<()>
 where
-    R: BufRead,
     F: FnOnce(bool),
 {
-    text_as_escaped_bytes_err(reader, buf, |t| match &*t {
-        b"True" => {
+    text_as_escaped_string_err(reader, |t| match t {
+        "True" => {
             f(true);
             Ok(())
         }
-        b"False" => {
+        "False" => {
             f(false);
             Ok(())
         }
@@ -500,12 +462,11 @@ where
     })
 }
 
-fn comparison_override<R, F>(reader: &mut Reader<R>, buf: &mut Vec<u8>, f: F) -> Result<()>
+fn comparison_override<F>(reader: &mut Reader<'_>, f: F) -> Result<()>
 where
-    R: BufRead,
     F: FnOnce(Option<String>),
 {
-    text(reader, buf, |t| {
+    text(reader, |t| {
         f(if t == "Current Comparison" {
             None
         } else {
@@ -514,56 +475,53 @@ where
     })
 }
 
-fn timing_method_override<R, F>(reader: &mut Reader<R>, buf: &mut Vec<u8>, f: F) -> Result<()>
+fn timing_method_override<F>(reader: &mut Reader<'_>, f: F) -> Result<()>
 where
-    R: BufRead,
     F: FnOnce(Option<TimingMethod>),
 {
-    text_as_escaped_bytes_err(reader, buf, |t| {
-        f(match &*t {
-            b"Current Timing Method" => None,
-            b"Real Time" => Some(TimingMethod::RealTime),
-            b"Game Time" => Some(TimingMethod::GameTime),
+    text_as_escaped_string_err(reader, |t| {
+        f(match t {
+            "Current Timing Method" => None,
+            "Real Time" => Some(TimingMethod::RealTime),
+            "Game Time" => Some(TimingMethod::GameTime),
             _ => return Err(Error::ParseTimingMethod),
         });
         Ok(())
     })
 }
 
-fn accuracy<R, F>(reader: &mut Reader<R>, buf: &mut Vec<u8>, f: F) -> Result<()>
+fn accuracy<F>(reader: &mut Reader<'_>, f: F) -> Result<()>
 where
-    R: BufRead,
     F: FnOnce(Accuracy),
 {
-    text_as_escaped_bytes_err(reader, buf, |t| {
-        f(match &*t {
-            b"Tenths" => Accuracy::Tenths,
-            b"Seconds" => Accuracy::Seconds,
-            b"Hundredths" => Accuracy::Hundredths,
+    text_as_escaped_string_err(reader, |t| {
+        f(match t {
+            "Tenths" => Accuracy::Tenths,
+            "Seconds" => Accuracy::Seconds,
+            "Hundredths" => Accuracy::Hundredths,
             _ => return Err(Error::ParseAccuracy),
         });
         Ok(())
     })
 }
 
-fn timer_format<R, F>(reader: &mut Reader<R>, buf: &mut Vec<u8>, f: F) -> Result<()>
+fn timer_format<F>(reader: &mut Reader<'_>, f: F) -> Result<()>
 where
-    R: BufRead,
     F: FnOnce(DigitsFormat, Accuracy),
 {
-    text_as_escaped_bytes_err(reader, buf, |t| {
-        let mut splits = t.splitn(2, |&b| b == b'.');
-        let digits_format = match splits.next().unwrap_or(b"") {
-            b"1" => DigitsFormat::SingleDigitSeconds,
-            b"00:01" => DigitsFormat::DoubleDigitMinutes,
-            b"0:00:01" => DigitsFormat::SingleDigitHours,
-            b"00:00:01" => DigitsFormat::DoubleDigitHours,
+    text_as_escaped_string_err(reader, |t| {
+        let (digits_format, accuracy) = t.split_once('.').unwrap_or((t, ""));
+        let digits_format = match digits_format {
+            "1" => DigitsFormat::SingleDigitSeconds,
+            "00:01" => DigitsFormat::DoubleDigitMinutes,
+            "0:00:01" => DigitsFormat::SingleDigitHours,
+            "00:00:01" => DigitsFormat::DoubleDigitHours,
             _ => return Err(Error::ParseDigitsFormat),
         };
-        let accuracy = match splits.next().unwrap_or(b"") {
-            b"23" => Accuracy::Hundredths,
-            b"2" => Accuracy::Tenths,
-            b"" => Accuracy::Seconds,
+        let accuracy = match accuracy {
+            "23" => Accuracy::Hundredths,
+            "2" => Accuracy::Tenths,
+            "" => Accuracy::Seconds,
             _ => return Err(Error::ParseAccuracy),
         };
         f(digits_format, accuracy);
@@ -571,17 +529,16 @@ where
     })
 }
 
-fn component<R, F>(reader: &mut Reader<R>, buf: &mut Vec<u8>, f: F) -> Result<()>
+fn component<F>(reader: &mut Reader<'_>, f: F) -> Result<()>
 where
-    R: BufRead,
     F: FnOnce(Component),
 {
     let mut component = None;
 
-    parse_children(reader, buf, |reader, tag| {
-        if tag.name() == b"Path" {
-            text_err(reader, tag.into_buf(), |text| {
-                component = Some(match &*text {
+    parse_children(reader, |reader, tag, _| {
+        match tag.name() {
+            "Path" => text_as_escaped_string_err(reader, |text| {
+                component = Some(match text {
                     "LiveSplit.BlankSpace.dll" => blank_space::Component::new().into(),
                     "LiveSplit.CurrentComparison.dll" => {
                         current_comparison::Component::new().into()
@@ -607,45 +564,35 @@ where
                     _ => return Ok(()),
                 });
                 Ok(())
-            })
-        } else if tag.name() == b"Settings" {
-            // Assumption: Settings always has to come after the Path.
-            // Otherwise we need to cache the settings and load them later.
-            if let Some(component) = &mut component {
-                match component {
-                    Component::BlankSpace(c) => blank_space::settings(reader, tag.into_buf(), c),
-                    Component::CurrentComparison(c) => {
-                        current_comparison::settings(reader, tag.into_buf(), c)
+            }),
+            "Settings" => {
+                // Assumption: Settings always has to come after the Path.
+                // Otherwise we need to cache the settings and load them later.
+                if let Some(component) = &mut component {
+                    match component {
+                        Component::BlankSpace(c) => blank_space::settings(reader, c),
+                        Component::CurrentComparison(c) => current_comparison::settings(reader, c),
+                        Component::CurrentPace(c) => current_pace::settings(reader, c),
+                        Component::Delta(c) => delta::settings(reader, c),
+                        Component::DetailedTimer(c) => detailed_timer::settings(reader, c),
+                        Component::Graph(c) => graph::settings(reader, c),
+                        Component::PbChance(c) => pb_chance::settings(reader, c),
+                        Component::PossibleTimeSave(c) => possible_time_save::settings(reader, c),
+                        Component::PreviousSegment(c) => previous_segment::settings(reader, c),
+                        Component::SegmentTime(_) => end_tag(reader),
+                        Component::Separator(_) => end_tag(reader),
+                        Component::Splits(c) => splits::settings(reader, c),
+                        Component::SumOfBest(c) => sum_of_best::settings(reader, c),
+                        Component::Text(c) => text::settings(reader, c),
+                        Component::Timer(c) => timer::settings(reader, c),
+                        Component::Title(c) => title::settings(reader, c),
+                        Component::TotalPlaytime(c) => total_playtime::settings(reader, c),
                     }
-                    Component::CurrentPace(c) => current_pace::settings(reader, tag.into_buf(), c),
-                    Component::Delta(c) => delta::settings(reader, tag.into_buf(), c),
-                    Component::DetailedTimer(c) => {
-                        detailed_timer::settings(reader, tag.into_buf(), c)
-                    }
-                    Component::Graph(c) => graph::settings(reader, tag.into_buf(), c),
-                    Component::PbChance(c) => pb_chance::settings(reader, tag.into_buf(), c),
-                    Component::PossibleTimeSave(c) => {
-                        possible_time_save::settings(reader, tag.into_buf(), c)
-                    }
-                    Component::PreviousSegment(c) => {
-                        previous_segment::settings(reader, tag.into_buf(), c)
-                    }
-                    Component::SegmentTime(_) => end_tag(reader, tag.into_buf()),
-                    Component::Separator(_) => end_tag(reader, tag.into_buf()),
-                    Component::Splits(c) => splits::settings(reader, tag.into_buf(), c),
-                    Component::SumOfBest(c) => sum_of_best::settings(reader, tag.into_buf(), c),
-                    Component::Text(c) => text::settings(reader, tag.into_buf(), c),
-                    Component::Timer(c) => timer::settings(reader, tag.into_buf(), c),
-                    Component::Title(c) => title::settings(reader, tag.into_buf(), c),
-                    Component::TotalPlaytime(c) => {
-                        total_playtime::settings(reader, tag.into_buf(), c)
-                    }
+                } else {
+                    end_tag(reader)
                 }
-            } else {
-                end_tag(reader, tag.into_buf())
             }
-        } else {
-            end_tag(reader, tag.into_buf())
+            _ => end_tag(reader),
         }
     })?;
 
@@ -656,110 +603,85 @@ where
     Ok(())
 }
 
-fn parse_general_settings<R: BufRead>(
-    layout: &mut Layout,
-    reader: &mut Reader<R>,
-    buf: &mut Vec<u8>,
-) -> Result<()> {
+fn parse_general_settings(layout: &mut Layout, reader: &mut Reader<'_>) -> Result<()> {
     let settings = layout.general_settings_mut();
     let mut background_builder = GradientBuilder::new();
 
     let mut font_buf = Vec::new();
 
-    parse_children(reader, buf, |reader, tag| {
-        if tag.name() == b"TextColor" {
-            color(reader, tag.into_buf(), |color| {
-                settings.text_color = color;
-            })
-        } else if tag.name() == b"BackgroundColor" {
-            color(reader, tag.into_buf(), |color| {
-                background_builder.first = color;
-            })
-        } else if tag.name() == b"BackgroundColor2" {
-            color(reader, tag.into_buf(), |color| {
-                background_builder.second = color;
-            })
-        } else if tag.name() == b"ThinSeparatorsColor" {
-            color(reader, tag.into_buf(), |color| {
-                settings.thin_separators_color = color;
-            })
-        } else if tag.name() == b"SeparatorsColor" {
-            color(reader, tag.into_buf(), |color| {
-                settings.separators_color = color;
-            })
-        } else if tag.name() == b"PersonalBestColor" {
-            color(reader, tag.into_buf(), |color| {
-                settings.personal_best_color = color;
-            })
-        } else if tag.name() == b"UseRainbowColor" {
-            parse_bool(reader, tag.into_buf(), |rainbow| {
-                settings.rainbow_for_best_segments = rainbow;
-            })
-        }
-        else if tag.name() == b"AheadGainingTimeColor" {
-            color(reader, tag.into_buf(), |color| {
-                settings.ahead_gaining_time_color = color;
-            })
-        } else if tag.name() == b"AheadLosingTimeColor" {
-            color(reader, tag.into_buf(), |color| {
-                settings.ahead_losing_time_color = color;
-            })
-        } else if tag.name() == b"BehindGainingTimeColor" {
-            color(reader, tag.into_buf(), |color| {
-                settings.behind_gaining_time_color = color;
-            })
-        } else if tag.name() == b"BehindLosingTimeColor" {
-            color(reader, tag.into_buf(), |color| {
-                settings.behind_losing_time_color = color;
-            })
-        } else if tag.name() == b"BestSegmentColor" {
-            color(reader, tag.into_buf(), |color| {
-                settings.best_segment_color = color;
-            })
-        } else if tag.name() == b"NotRunningColor" {
-            color(reader, tag.into_buf(), |color| {
-                settings.not_running_color = color;
-            })
-        } else if tag.name() == b"PausedColor" {
-            color(reader, tag.into_buf(), |color| {
-                settings.paused_color = color;
-            })
-        } else if tag.name() == b"TimerFont" {
-            font(reader, tag.into_buf(), &mut font_buf, |font| {
-                if font.family != "Calibri" && font.family != "Century Gothic" {
-                    settings.timer_font = Some(font);
+    parse_children(reader, |reader, tag, _| match tag.name() {
+        "TextColor" => color(reader, |color| {
+            settings.text_color = color;
+        }),
+        "BackgroundColor" => color(reader, |color| {
+            background_builder.first = color;
+        }),
+        "BackgroundColor2" => color(reader, |color| {
+            background_builder.second = color;
+        }),
+        "ThinSeparatorsColor" => color(reader, |color| {
+            settings.thin_separators_color = color;
+        }),
+        "SeparatorsColor" => color(reader, |color| {
+            settings.separators_color = color;
+        }),
+        "PersonalBestColor" => color(reader, |color| {
+            settings.personal_best_color = color;
+        }),
+        "UseRainbowColor" => parse_bool(reader, |color| {
+            settings.rainbow_for_best_segments = color;
+        }),
+        "AheadGainingTimeColor" => color(reader, |color| {
+            settings.ahead_gaining_time_color = color;
+        }),
+        "AheadLosingTimeColor" => color(reader, |color| {
+            settings.ahead_losing_time_color = color;
+        }),
+        "BehindGainingTimeColor" => color(reader, |color| {
+            settings.behind_gaining_time_color = color;
+        }),
+        "BehindLosingTimeColor" => color(reader, |color| {
+            settings.behind_losing_time_color = color;
+        }),
+        "BestSegmentColor" => color(reader, |color| {
+            settings.best_segment_color = color;
+        }),
+        "NotRunningColor" => color(reader, |color| {
+            settings.not_running_color = color;
+        }),
+        "PausedColor" => color(reader, |color| {
+            settings.paused_color = color;
+        }),
+        "TimerFont" => font(reader, &mut font_buf, |font| {
+            if font.family != "Calibri" && font.family != "Century Gothic" {
+                settings.timer_font = Some(font);
+            }
+        }),
+        "TimesFont" => font(reader, &mut font_buf, |font| {
+            if font.family != "Segoe UI" {
+                settings.times_font = Some(font);
+            }
+        }),
+        "TextFont" => font(reader, &mut font_buf, |font| {
+            if font.family != "Segoe UI" {
+                settings.text_font = Some(font);
+            }
+        }),
+        "BackgroundType" => text_as_escaped_string_err(reader, |text| {
+            background_builder.kind = match text {
+                "SolidColor" => GradientKind::Plain,
+                "VerticalGradient" => GradientKind::Vertical,
+                "HorizontalGradient" => GradientKind::Horizontal,
+                "Image" => {
+                    background_builder.first = Color::black();
+                    background_builder.second = Color::black();
+                    GradientKind::Plain
                 }
-            })
-        } else if tag.name() == b"TimesFont" {
-            font(reader, tag.into_buf(), &mut font_buf, |font| {
-                if font.family != "Segoe UI" {
-                    settings.times_font = Some(font);
-                }
-            })
-        } else if tag.name() == b"TextFont" {
-            font(reader, tag.into_buf(), &mut font_buf, |font| {
-                if font.family != "Segoe UI" {
-                    settings.text_font = Some(font);
-                }
-            })
-        } else if tag.name() == b"BackgroundType" {
-            text_err(reader, tag.into_buf(), |text| {
-                background_builder.kind = match &*text {
-                    "SolidColor" => GradientKind::Plain,
-                    "VerticalGradient" => GradientKind::Vertical,
-                    "HorizontalGradient" => GradientKind::Horizontal,
-                    "Image" => {
-                        background_builder.first = Color::black();
-                        background_builder.second = Color::black();
-                        GradientKind::Plain
-                    }
-                    _ => return Err(Error::ParseGradientType),
-                };
-                Ok(())
-            })
-        } else {
-            end_tag(reader, tag.into_buf())
-        }
+                _ => return Err(Error::ParseGradientType),
+            };
+            Ok(())
+        }),
+        _ => end_tag(reader),
     })?;
 
     settings.background = background_builder.build();
@@ -770,37 +692,28 @@ fn parse_general_settings<R: BufRead>(
 /// Attempts to parse a layout file of the original LiveSplit. They are only
 /// parsed on a best effort basis, so if something isn't supported by
 /// livesplit-core, then it will be parsed without that option.
-pub fn parse<R: BufRead>(source: R) -> Result<Layout> {
-    let reader = &mut Reader::from_reader(source);
-    reader.expand_empty_elements(true);
-    reader.trim_text(true);
-
-    let mut buf = Vec::with_capacity(4096);
+pub fn parse(source: &str) -> Result<Layout> {
+    let reader = &mut Reader::new(source);
 
     let mut layout = Layout::new();
 
-    parse_base(reader, &mut buf, b"Layout", |reader, tag| {
-        parse_children(reader, tag.into_buf(), |reader, tag| {
-            if tag.name() == b"Mode" {
-                text_err(reader, tag.into_buf(), |text| {
-                    layout.general_settings_mut().direction = match &*text {
-                        "Vertical" => LayoutDirection::Vertical,
-                        "Horizontal" => LayoutDirection::Horizontal,
-                        _ => return Err(Error::ParseLayoutDirection),
-                    };
-                    Ok(())
+    parse_base(reader, "Layout", |reader, _| {
+        parse_children(reader, |reader, tag, _| match tag.name() {
+            "Mode" => text_as_escaped_string_err(reader, |text| {
+                layout.general_settings_mut().direction = match text {
+                    "Vertical" => LayoutDirection::Vertical,
+                    "Horizontal" => LayoutDirection::Horizontal,
+                    _ => return Err(Error::ParseLayoutDirection),
+                };
+                Ok(())
+            }),
+            "Settings" => parse_general_settings(&mut layout, reader),
+            "Components" => parse_children(reader, |reader, _, _| {
+                component(reader, |c| {
+                    layout.push(c);
                 })
-            } else if tag.name() == b"Settings" {
-                parse_general_settings(&mut layout, reader, tag.into_buf())
-            } else if tag.name() == b"Components" {
-                parse_children(reader, tag.into_buf(), |reader, tag| {
-                    component(reader, tag.into_buf(), |c| {
-                        layout.push(c);
-                    })
-                })
-            } else {
-                end_tag(reader, tag.into_buf())
-            }
+            }),
+            _ => end_tag(reader),
         })
     })?;
 

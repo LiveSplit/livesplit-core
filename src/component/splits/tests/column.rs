@@ -7,7 +7,7 @@ use crate::{
         self, AheadGainingTime as AheadGaining, BehindLosingTime as BehindLosing,
         BestSegment as Best, Default as Text,
     },
-    tests_helper::{make_progress_run_with_splits_opt, run_with_splits_opt, start_run},
+    util::tests_helper::{make_progress_run_with_splits_opt, run_with_splits_opt, start_run},
     Run, Segment, TimeSpan, Timer,
 };
 

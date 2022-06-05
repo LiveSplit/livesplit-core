@@ -1,13 +1,16 @@
 //! A Layout allows you to combine multiple components together to visualize a
 //! variety of information the runner is interested in.
 
-use super::{get_file, output_vec, release_file, str, Json};
-use crate::component::OwnedComponent;
-use crate::layout_state::OwnedLayoutState;
-use livesplit_core::layout::{parser, LayoutSettings, LayoutState};
-use livesplit_core::{Layout, Timer};
-use std::io::{BufReader, Cursor};
-use std::slice;
+use super::{get_file, output_vec, str, Json};
+use crate::{component::OwnedComponent, layout_state::OwnedLayoutState};
+use livesplit_core::{
+    layout::{parser, LayoutSettings, LayoutState},
+    Layout, Timer,
+};
+use std::{
+    io::{BufReader, Cursor},
+    slice,
+};
 
 /// type
 pub type OwnedLayout = Box<Layout>;
@@ -59,17 +62,13 @@ pub unsafe extern "C" fn Layout_parse_json(settings: Json) -> NullableOwnedLayou
 pub unsafe extern "C" fn Layout_parse_file_handle(handle: i64) -> NullableOwnedLayout {
     let file = get_file(handle);
 
-    let reader = BufReader::new(&file);
+    let reader = BufReader::new(&*file);
 
-    let layout = if let Ok(settings) = LayoutSettings::from_json(reader) {
+    if let Ok(settings) = LayoutSettings::from_json(reader) {
         Some(Box::new(Layout::from_settings(settings)))
     } else {
         None
-    };
-
-    release_file(file);
-
-    layout
+    }
 }
 
 /// Parses a layout saved by the original LiveSplit. This is lossy, as not
@@ -80,11 +79,8 @@ pub unsafe extern "C" fn Layout_parse_original_livesplit(
     data: *const u8,
     length: usize,
 ) -> NullableOwnedLayout {
-    if let Ok(parsed) = parser::parse(Cursor::new(slice::from_raw_parts(data, length))) {
-        Some(Box::new(parsed))
-    } else {
-        None
-    }
+    let data = simdutf8::basic::from_utf8(slice::from_raw_parts(data, length)).ok()?;
+    Some(Box::new(parser::parse(data).ok()?))
 }
 
 /// Calculates and returns the layout's state based on the timer provided.

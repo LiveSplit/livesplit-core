@@ -271,7 +271,7 @@ unsafe extern "system" fn callback_proc(code: c_int, wparam: WPARAM, lparam: LPA
                 let scan_code = if hook_struct.scanCode != 0 {
                     hook_struct.scanCode + ((hook_struct.flags & LLKHF_EXTENDED) * 0xE000)
                 } else {
-                    unsafe { MapVirtualKeyW(hook_struct.vkCode, MAPVK_VK_TO_VSC_EX) }
+                    MapVirtualKeyW(hook_struct.vkCode, MAPVK_VK_TO_VSC_EX)
                 };
 
                 if let Some(key_code) = parse_scan_code(scan_code) {

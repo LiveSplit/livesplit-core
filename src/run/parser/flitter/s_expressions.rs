@@ -1,10 +1,9 @@
 //! Implements a serde deserializer for S-Expressions.
 //! <http://people.csail.mit.edu/rivest/Sexp.txt>
 
+use crate::platform::prelude::*;
 use core::{fmt::Display, num::ParseIntError};
 use serde::de::{self, DeserializeOwned, DeserializeSeed, MapAccess, SeqAccess, Visitor};
-use std::io::{self, BufRead};
-use utf8::{BufReadDecoder, BufReadDecoderError};
 
 /// The Error types for splits files that couldn't be parsed by the Flitter
 /// Parser.
@@ -27,11 +26,6 @@ pub enum Error {
     },
     /// Encountered invalid UTF-8 sequence.
     InvalidUtf8,
-    /// Failed to read from the source.
-    Io {
-        /// The underlying error.
-        source: io::Error,
-    },
     /// Custom error.
     #[snafu(display("{error}"))]
     Custom {
@@ -40,24 +34,9 @@ pub enum Error {
     },
 }
 
-impl From<BufReadDecoderError<'_>> for Error {
-    fn from(error: BufReadDecoderError<'_>) -> Error {
-        match error {
-            BufReadDecoderError::InvalidByteSequence(_) => Error::InvalidUtf8,
-            BufReadDecoderError::Io(source) => Error::Io { source },
-        }
-    }
-}
-
 impl From<ParseIntError> for Error {
     fn from(source: ParseIntError) -> Self {
         Self::ParseInt { source }
-    }
-}
-
-impl From<io::Error> for Error {
-    fn from(source: io::Error) -> Self {
-        Self::Io { source }
     }
 }
 
@@ -74,150 +53,105 @@ impl de::Error for Error {
 
 pub type Result<T> = core::result::Result<T, Error>;
 
-pub struct Deserializer<B: BufRead> {
-    decoder: BufReadDecoder<B>,
-    buf: String,
-    index: usize,
+pub struct Deserializer<'source> {
+    source: &'source str,
 }
 
-impl<B: BufRead> Deserializer<B> {
-    pub fn from_reader(reader: B) -> Self {
-        Deserializer {
-            decoder: BufReadDecoder::new(reader),
-            buf: String::new(),
-            index: 0,
-        }
+impl<'source> Deserializer<'source> {
+    pub const fn from_str(source: &'source str) -> Self {
+        Deserializer { source }
     }
 
-    fn maybe_fill_buf(&mut self, clear: bool) -> Result<()> {
-        if self.index == self.buf.len() {
-            self.actually_fill_buf(clear)?;
-        }
-        Ok(())
+    fn skip_whitespace(&mut self) {
+        self.source = self.source.trim_start();
     }
 
-    fn actually_fill_buf(&mut self, clear: bool) -> Result<()> {
-        if clear {
-            self.buf.clear();
-        }
-        self.index = self.buf.len();
-        if let Some(text) = self.decoder.next_strict() {
-            let text = text?;
-            self.buf.push_str(text);
-        }
-        Ok(())
+    fn starts_with(&mut self, c: char) -> bool {
+        self.source.starts_with(c)
     }
 
-    fn skip_whitespace(&mut self) -> Result<()> {
-        self.maybe_fill_buf(true)?;
-        while self.index != self.buf.len() {
-            if let Some((index, _)) = self.buf[self.index..]
-                .char_indices()
-                .find(|(_, c)| !c.is_whitespace())
-            {
-                self.index += index;
-                return Ok(());
-            } else {
-                self.actually_fill_buf(true)?;
+    fn strip_char(&mut self, c: char) -> bool {
+        match self.source.strip_prefix(c) {
+            Some(rem) => {
+                self.source = rem;
+                true
             }
+            None => false,
         }
-        Ok(())
     }
 
-    fn peek_char(&mut self) -> Result<char> {
-        self.maybe_fill_buf(true)?;
-        self.buf[self.index..].chars().next().ok_or(Error::Eof)
-    }
-
-    fn next_char(&mut self) -> Result<char> {
-        let ch = self.peek_char()?;
-        self.index += ch.len_utf8();
-        Ok(ch)
-    }
-
-    fn parse_ident(&mut self) -> Result<&str> {
-        self.maybe_fill_buf(true)?;
-        let begin = self.index;
-        while self.index != self.buf.len() {
-            if let Some(len) = self.buf[self.index..].find(|c: char| c.is_whitespace() || c == ')')
-            {
-                self.index += len;
-                return Ok(&self.buf[begin..self.index]);
-            } else {
-                self.actually_fill_buf(false)?;
-            }
+    fn parse_ident(&mut self) -> &str {
+        if let Some((pos, _)) = self
+            .source
+            .char_indices()
+            .find(|&(_, c)| c.is_whitespace() || c == ')')
+        {
+            let (before, after) = &self.source.split_at(pos);
+            self.source = after;
+            before
+        } else {
+            self.source
         }
-        Ok(&self.buf[begin..])
     }
 
     fn parse_string(&mut self) -> Result<&str> {
-        if self.peek_char()? == '"' {
-            self.next_char()?;
-            self.maybe_fill_buf(true)?;
-            let begin = self.index;
-            while self.index != self.buf.len() {
-                if let Some(len) = self.buf[self.index..].find('"') {
-                    self.index += len + 1;
-                    return Ok(&self.buf[begin..self.index - 1]);
-                } else {
-                    self.actually_fill_buf(false)?;
-                }
+        if let Some(rem) = self.source.strip_prefix('"') {
+            if let Some((in_str, after)) = rem.split_once('"') {
+                self.source = after;
+                Ok(in_str)
+            } else {
+                Err(Error::Eof)
             }
-            Err(Error::Eof)
         } else {
-            self.parse_ident()
+            Ok(self.parse_ident())
         }
     }
 
     fn skip_to_matching_closing(&mut self) -> Result<()> {
         let mut count = 0;
         let mut in_string = false;
-        self.maybe_fill_buf(true)?;
-        while self.index != self.buf.len() {
-            if let Some(len) = self.buf[self.index..].find(|c: char| {
-                if c == '(' {
-                    if !in_string {
-                        count += 1;
-                    }
-                } else if c == ')' {
-                    if !in_string {
-                        if count == 0 {
-                            return true;
-                        } else {
-                            count -= 1;
-                        }
-                    }
-                } else if c == '"' {
-                    in_string = !in_string;
+        if let Some((pos, _)) = self.source.char_indices().find(|&(_, c)| {
+            if c == '(' {
+                if !in_string {
+                    count += 1;
                 }
-                false
-            }) {
-                self.index += len;
-                return Ok(());
-            } else {
-                self.actually_fill_buf(false)?;
+            } else if c == ')' {
+                if !in_string {
+                    if count == 0 {
+                        return true;
+                    } else {
+                        count -= 1;
+                    }
+                }
+            } else if c == '"' {
+                in_string = !in_string;
             }
+            false
+        }) {
+            self.source = &self.source[pos..];
+            Ok(())
+        } else {
+            self.source = "";
+            Err(Error::Eof)
         }
-        Err(Error::Eof)
     }
 }
 
-pub fn from_reader<T, B>(reader: B) -> Result<T>
+pub fn from_str<T>(source: &str) -> Result<T>
 where
     T: DeserializeOwned,
-    B: BufRead,
 {
-    let mut deserializer = Deserializer::from_reader(reader);
+    let mut deserializer = Deserializer::from_str(source);
     let t = T::deserialize(&mut deserializer)?;
-    deserializer.skip_whitespace()?;
-    if deserializer.index == deserializer.buf.len() {
+    deserializer.skip_whitespace();
+    if deserializer.source.is_empty() {
         Ok(t)
     } else {
         Err(Error::TrailingCharacters)
     }
 }
 
-impl<'de, B: BufRead> de::Deserializer<'de> for &mut Deserializer<B> {
+impl<'de, 'source> de::Deserializer<'de> for &mut Deserializer<'source> {
     type Error = Error;
 
     fn deserialize_any<V>(self, _visitor: V) -> Result<V::Value>
@@ -272,7 +206,7 @@ impl<'de, B: BufRead> de::Deserializer<'de> for &mut Deserializer<B> {
     where
         V: Visitor<'de>,
     {
-        visitor.visit_u32(self.parse_ident()?.parse()?)
+        visitor.visit_u32(self.parse_ident().parse()?)
     }
     fn deserialize_u64<V>(self, _visitor: V) -> Result<V::Value>
     where
@@ -350,10 +284,10 @@ impl<'de, B: BufRead> de::Deserializer<'de> for &mut Deserializer<B> {
     where
         V: Visitor<'de>,
     {
-        self.skip_whitespace()?;
-        if self.next_char()? == '(' {
+        self.skip_whitespace();
+        if self.strip_char('(') {
             let value = visitor.visit_seq(&mut self)?;
-            if self.next_char()? == ')' {
+            if self.strip_char(')') {
                 Ok(value)
             } else {
                 Err(Error::ExpectedClosingParenthesis)
@@ -383,10 +317,10 @@ impl<'de, B: BufRead> de::Deserializer<'de> for &mut Deserializer<B> {
     where
         V: Visitor<'de>,
     {
-        self.skip_whitespace()?;
-        if self.next_char()? == '(' {
+        self.skip_whitespace();
+        if self.strip_char('(') {
             let value = visitor.visit_map(&mut self)?;
-            if self.next_char()? == ')' {
+            if self.strip_char(')') {
                 Ok(value)
             } else {
                 Err(Error::ExpectedClosingParenthesis)
@@ -421,7 +355,7 @@ impl<'de, B: BufRead> de::Deserializer<'de> for &mut Deserializer<B> {
     where
         V: Visitor<'de>,
     {
-        visitor.visit_str(self.parse_ident()?)
+        visitor.visit_str(self.parse_ident())
     }
     fn deserialize_ignored_any<V>(self, visitor: V) -> Result<V::Value>
     where
@@ -432,16 +366,15 @@ impl<'de, B: BufRead> de::Deserializer<'de> for &mut Deserializer<B> {
     }
 }
 
-impl<'de, B: BufRead> SeqAccess<'de> for &mut Deserializer<B> {
+impl<'de, 'source> SeqAccess<'de> for &mut Deserializer<'source> {
     type Error = Error;
 
     fn next_element_seed<T>(&mut self, seed: T) -> Result<Option<T::Value>>
     where
         T: DeserializeSeed<'de>,
     {
-        self.skip_whitespace()?;
-        let peeked = self.peek_char()?;
-        if peeked == ')' {
+        self.skip_whitespace();
+        if self.starts_with(')') {
             Ok(None)
         } else {
             seed.deserialize(&mut **self).map(Some)
@@ -449,20 +382,18 @@ impl<'de, B: BufRead> SeqAccess<'de> for &mut Deserializer<B> {
     }
 }
 
-impl<'de, B: BufRead> MapAccess<'de> for &mut Deserializer<B> {
+impl<'de, 'source> MapAccess<'de> for &mut Deserializer<'source> {
     type Error = Error;
 
     fn next_key_seed<K>(&mut self, seed: K) -> Result<Option<K::Value>>
     where
         K: DeserializeSeed<'de>,
     {
-        self.skip_whitespace()?;
-        let peeked = self.peek_char()?;
-        if peeked == ')' {
+        self.skip_whitespace();
+        if self.starts_with(')') {
             Ok(None)
-        } else if peeked == '(' {
-            self.next_char()?;
-            self.skip_whitespace()?;
+        } else if self.strip_char('(') {
+            self.skip_whitespace();
             seed.deserialize(&mut **self).map(Some)
         } else {
             Err(Error::ExpectedOpeningParenthesis)
@@ -473,10 +404,10 @@ impl<'de, B: BufRead> MapAccess<'de> for &mut Deserializer<B> {
     where
         V: DeserializeSeed<'de>,
     {
-        self.skip_whitespace()?;
+        self.skip_whitespace();
         let result = seed.deserialize(&mut **self)?;
-        self.skip_whitespace()?;
-        if self.next_char()? == ')' {
+        self.skip_whitespace();
+        if self.strip_char(')') {
             Ok(result)
         } else {
             Err(Error::ExpectedClosingParenthesis)

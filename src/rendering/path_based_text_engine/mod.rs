@@ -3,7 +3,7 @@
 //! underlying renderer doesn't by itself need to be able to render text, as all
 //! the text gets turned into paths.
 
-use std::{fs, sync::Arc};
+use crate::platform::{prelude::*, Arc, RwLock};
 
 #[cfg(feature = "font-loading")]
 use font_kit::{
@@ -13,7 +13,6 @@ use font_kit::{
     source::SystemSource,
 };
 use hashbrown::HashMap;
-use parking_lot::{const_rwlock, RwLock};
 use rustybuzz::{Face, Feature, Tag, UnicodeBuffer, Variation};
 use ttf_parser::{GlyphId, OutlineBuilder};
 
@@ -54,13 +53,20 @@ impl TextEngine {
 
     /// Creates a new font. You can call this directly from a
     /// [`ResourceAllocator`](super::ResourceAllocator).
-    pub fn create_font<P>(&mut self, font: Option<&settings::Font>, kind: FontKind) -> Font<P> {
+    pub fn create_font<P>(
+        &mut self,
+        #[allow(unused)] font: Option<&settings::Font>,
+        kind: FontKind,
+    ) -> Font<P> {
         #[cfg(feature = "font-loading")]
         if let Some(font) = font {
             if let Some(font) = Font::try_load_font(&mut self.source, font, kind) {
                 return font;
             }
         }
+        #[cfg(not(feature = "font-loading"))]
+        let _ = font;
+
         let (font_data, style, weight, stretch) = match kind {
             FontKind::Timer => (
                 TIMER_FONT,
@@ -93,7 +99,7 @@ impl TextEngine {
         font: &mut Font<PB::Path>,
         max_width: Option<f32>,
     ) -> Label<PB::Path> {
-        let mut label = Arc::new(const_rwlock(LockedLabel {
+        let mut label = Arc::new(RwLock::new(LockedLabel {
             width: 0.0,
             width_without_max_width: 0.0,
             scale: 0.0,
@@ -286,7 +292,7 @@ impl<P> Font<P> {
             .ok()?;
 
         let (buf, font_index) = match handle {
-            Handle::Path { path, font_index } => (fs::read(path).ok()?, font_index),
+            Handle::Path { path, font_index } => (std::fs::read(path).ok()?, font_index),
             Handle::Memory { bytes, font_index } => (
                 Arc::try_unwrap(bytes).unwrap_or_else(|bytes| (*bytes).clone()),
                 font_index,

@@ -5,11 +5,11 @@ use super::RUN_METADATA_SPEEDRUN_COM_VARIABLE;
 use crate::run_metadata_speedrun_com_variable::{
     NullableRunMetadataSpeedrunComVariable, RunMetadataSpeedrunComVariable,
 };
-use livesplit_core::indexmap;
+use livesplit_core::util::ordered_map;
 use std::ptr;
 
 /// type
-pub type RunMetadataSpeedrunComVariablesIter = indexmap::map::Iter<'static, String, String>;
+pub type RunMetadataSpeedrunComVariablesIter = ordered_map::Iter<'static, String>;
 /// type
 pub type OwnedRunMetadataSpeedrunComVariablesIter = Box<RunMetadataSpeedrunComVariablesIter>;
 

@@ -192,7 +192,7 @@ impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager
     }
 
     /// Accesses the [`Scene`] in order to render the [`Entities`](Entity).
-    pub fn scene(&self) -> &Scene<P, I, L> {
+    pub const fn scene(&self) -> &Scene<P, I, L> {
         &self.scene
     }
 
@@ -444,18 +444,26 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
     }
 
     fn create_icon(&mut self, image_data: &[u8]) -> Option<Icon<A::Image>> {
-        if image_data.is_empty() {
-            return None;
+        #[cfg(feature = "image")]
+        {
+            if image_data.is_empty() {
+                return None;
+            }
+
+            let image = image::load_from_memory(image_data).ok()?.to_rgba8();
+
+            Some(Icon {
+                aspect_ratio: image.width() as f32 / image.height() as f32,
+                image: self
+                    .handles
+                    .create_image(image.width(), image.height(), &image),
+            })
         }
-
-        let image = image::load_from_memory(image_data).ok()?.to_rgba8();
-
-        Some(Icon {
-            aspect_ratio: image.width() as f32 / image.height() as f32,
-            image: self
-                .handles
-                .create_image(image.width(), image.height(), &image),
-        })
+        #[cfg(not(feature = "image"))]
+        {
+            let _ = image_data;
+            None
+        }
     }
 
     fn scale(&mut self, factor: f32) {
@@ -806,6 +814,7 @@ impl Transform {
         }
     }
 
+    #[cfg(feature = "software-rendering")]
     fn transform_y(&self, y: f32) -> f32 {
         self.y + self.scale_y * y
     }

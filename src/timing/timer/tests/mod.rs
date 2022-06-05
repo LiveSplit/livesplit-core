@@ -1,6 +1,6 @@
 use crate::{
     run::Editor,
-    tests_helper::{run_with_splits, run_with_splits_opt, start_run},
+    util::tests_helper::{run_with_splits, run_with_splits_opt, start_run},
     Run, Segment, TimeSpan, Timer, TimerPhase, TimingMethod,
 };
 

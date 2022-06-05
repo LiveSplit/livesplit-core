@@ -1,9 +1,8 @@
 //! Provides the parser for Portal 2 Live Timer splits files.
 
-use crate::{GameTime, Run, Segment, TimeSpan};
+use crate::{platform::prelude::*, GameTime, Run, Segment, TimeSpan};
 use core::{num::ParseFloatError, result::Result as StdResult};
 use snafu::{OptionExt, ResultExt};
-use std::io::{self, BufRead};
 
 /// The Error types for splits files that couldn't be parsed by the Portal 2
 /// Live Timer Parser.
@@ -12,11 +11,6 @@ use std::io::{self, BufRead};
 pub enum Error {
     /// Expected another map, but didn't find it.
     ExpectedMap,
-    /// Failed to read the next map.
-    ReadMap {
-        /// The underlying error.
-        source: io::Error,
-    },
     /// Expected the name of a map, but didn't find it.
     ExpectedMapName,
     /// Expected a different map.
@@ -157,7 +151,7 @@ static CHAPTERS: [(&str, &[&str]); 9] = [
 ];
 
 /// Attempts to parse a Portal 2 Live Timer splits file.
-pub fn parse<R: BufRead>(source: R) -> Result<Run> {
+pub fn parse(source: &str) -> Result<Run> {
     let mut run = Run::new();
 
     run.set_game_name("Portal 2");
@@ -168,7 +162,7 @@ pub fn parse<R: BufRead>(source: R) -> Result<Run> {
 
     let mut aggregate_ticks = 0.0;
 
-    let mut line = lines.next().context(ExpectedMap)?.context(ReadMap)?;
+    let mut line = lines.next().context(ExpectedMap)?;
     for &(chapter_name, maps) in &CHAPTERS {
         for &map in maps {
             {
@@ -194,7 +188,7 @@ pub fn parse<R: BufRead>(source: R) -> Result<Run> {
                 aggregate_ticks += map_ticks;
             }
 
-            while let Some(Ok(next_line)) = lines.next() {
+            for next_line in lines.by_ref() {
                 line = next_line;
                 let mut splits = line.split(',');
                 if splits.next() == Some(map) {

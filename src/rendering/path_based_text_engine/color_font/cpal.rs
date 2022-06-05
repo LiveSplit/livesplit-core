@@ -1,6 +1,9 @@
-use std::mem;
+use core::mem;
 
-use super::parse_util::{pod, slice, O32, U16};
+use crate::util::byte_parsing::{
+    big_endian::{U16, U32 as O32},
+    pod, slice,
+};
 use bytemuck::{Pod, Zeroable};
 
 #[derive(Debug, Copy, Clone, Pod, Zeroable)]

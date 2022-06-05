@@ -1,11 +1,9 @@
 //! Provides the parser for generic Splits I/O splits files.
 
-use crate::{Run, Segment as LiveSplitSegment, Time, TimeSpan};
+use crate::{platform::prelude::*, Run, Segment as LiveSplitSegment, Time, TimeSpan};
 use core::result::Result as StdResult;
 use serde::{Deserialize, Serialize};
-use serde_json::{de::from_reader, Error as JsonError};
-use snafu::ResultExt;
-use std::io::Read;
+use serde_json::Error as JsonError;
 
 /// The Error type for splits files that couldn't be parsed by the generic
 /// Splits I/O Parser.
@@ -15,6 +13,7 @@ pub enum Error {
     /// Failed to parse JSON.
     Json {
         /// The underlying error.
+        #[cfg_attr(not(feature = "std"), snafu(source(false)))]
         source: JsonError,
     },
 }
@@ -275,8 +274,8 @@ impl From<RunTime> for Time {
 }
 
 /// Attempts to parse a generic Splits I/O splits file.
-pub fn parse<R: Read>(source: R) -> Result<(Run, String)> {
-    let splits: Splits = from_reader(source).context(Json)?;
+pub fn parse(source: &str) -> Result<(Run, String)> {
+    let splits: Splits = serde_json::from_str(source).map_err(|source| Error::Json { source })?;
 
     let mut run = Run::new();
 
@@ -301,34 +300,37 @@ pub fn parse<R: Read>(source: R) -> Result<(Run, String)> {
         }
     }
 
-    if let Some(runner) = splits.runners.as_ref().and_then(|runners| runners.first()) {
-        let name = runner.longname.as_ref().unwrap_or(&runner.shortname);
+    if let Some(runner) = splits
+        .runners
+        .and_then(|runners| runners.into_iter().next())
+    {
+        let name = runner.longname.unwrap_or(runner.shortname);
         if !name.trim_start().is_empty() {
             run.metadata_mut()
                 .custom_variable_mut("Runner")
                 .permanent()
                 .set_value(name);
         }
-        if let Some(links) = &runner.links {
-            if let Some(twitter_id) = &links.twitter_id {
+        if let Some(links) = runner.links {
+            if let Some(twitter_id) = links.twitter_id {
                 run.metadata_mut()
                     .custom_variable_mut("Twitter")
                     .permanent()
                     .set_value(twitter_id);
             }
-            if let Some(twitch_id) = &links.twitch_id {
+            if let Some(twitch_id) = links.twitch_id {
                 run.metadata_mut()
                     .custom_variable_mut("Twitch")
                     .permanent()
                     .set_value(twitch_id);
             }
-            if let Some(speedruncom_id) = &links.speedruncom_id {
+            if let Some(speedruncom_id) = links.speedruncom_id {
                 run.metadata_mut()
                     .custom_variable_mut("speedrun.com")
                     .permanent()
                     .set_value(speedruncom_id);
             }
-            if let Some(splitsio_id) = &links.splitsio_id {
+            if let Some(splitsio_id) = links.splitsio_id {
                 run.metadata_mut()
                     .custom_variable_mut("Splits I/O")
                     .permanent()

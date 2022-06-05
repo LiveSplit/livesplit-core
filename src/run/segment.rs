@@ -1,7 +1,7 @@
 use super::Comparisons;
 use crate::{
-    comparison::personal_best, platform::prelude::*, settings::Image, SegmentHistory, Time,
-    TimeSpan, TimingMethod,
+    comparison::personal_best, platform::prelude::*, settings::Image, util::PopulateString,
+    SegmentHistory, Time, TimeSpan, TimingMethod,
 };
 
 /// A Segment describes a point in a speedrun that is suitable for storing a
@@ -50,10 +50,9 @@ impl Segment {
     #[inline]
     pub fn set_name<S>(&mut self, name: S)
     where
-        S: AsRef<str>,
+        S: PopulateString,
     {
-        self.name.clear();
-        self.name.push_str(name.as_ref());
+        name.populate(&mut self.name);
     }
 
     /// Accesses the icon of the segment.

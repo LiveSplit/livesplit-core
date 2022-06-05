@@ -336,7 +336,7 @@ public class {class} extends {base_class} {{"#,
     )?;
 
     for function in &class.mut_fns {
-        write_fn(&mut writer, function, &class_name)?;
+        write_fn(&mut writer, function, class_name)?;
     }
 
     write!(
@@ -400,7 +400,7 @@ public class {class} extends {base_class} implements AutoCloseable {{
 
     for function in class.static_fns.iter().chain(class.own_fns.iter()) {
         if function.method != "drop" {
-            write_fn(&mut writer, function, &class_name)?;
+            write_fn(&mut writer, function, class_name)?;
         }
     }
 

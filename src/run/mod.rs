@@ -18,10 +18,8 @@
 mod attempt;
 mod comparisons;
 pub mod editor;
-#[cfg(feature = "std")]
 pub mod parser;
 mod run_metadata;
-#[cfg(feature = "std")]
 pub mod saver;
 mod segment;
 mod segment_history;
@@ -37,18 +35,15 @@ pub use segment::Segment;
 pub use segment_history::SegmentHistory;
 
 use crate::{
-    comparison::{default_generators, personal_best, ComparisonGenerator},
-    platform::prelude::*,
+    comparison::{default_generators, personal_best, ComparisonGenerator, RACE_COMPARISON_PREFIX},
+    platform::{path::PathBuf, prelude::*},
     settings::Image,
+    util::PopulateString,
     AtomicDateTime, Time, TimeSpan, TimingMethod,
 };
 use alloc::borrow::Cow;
-#[cfg(not(feature = "std"))]
-use alloc::string::String as PathBuf;
 use core::{cmp::max, fmt};
 use hashbrown::HashSet;
-#[cfg(feature = "std")]
-use std::path::PathBuf;
 
 /// A Run stores the split times for a specific game and category of a runner.
 ///
@@ -79,7 +74,7 @@ pub struct Run {
     segments: Vec<Segment>,
     custom_comparisons: Vec<String>,
     comparison_generators: ComparisonGenerators,
-    auto_splitter_settings: Vec<u8>,
+    auto_splitter_settings: String,
 }
 
 #[derive(Clone, Debug)]
@@ -123,7 +118,7 @@ impl Run {
             segments: Vec::new(),
             custom_comparisons: vec![personal_best::NAME.to_string()],
             comparison_generators: ComparisonGenerators(default_generators()),
-            auto_splitter_settings: Vec::new(),
+            auto_splitter_settings: String::new(),
         }
     }
 
@@ -137,10 +132,9 @@ impl Run {
     #[inline]
     pub fn set_game_name<S>(&mut self, name: S)
     where
-        S: AsRef<str>,
+        S: PopulateString,
     {
-        self.game_name.clear();
-        self.game_name.push_str(name.as_ref());
+        name.populate(&mut self.game_name);
     }
 
     /// Accesses the game's icon.
@@ -165,10 +159,9 @@ impl Run {
     #[inline]
     pub fn set_category_name<S>(&mut self, name: S)
     where
-        S: AsRef<str>,
+        S: PopulateString,
     {
-        self.category_name.clear();
-        self.category_name.push_str(name.as_ref());
+        name.populate(&mut self.category_name);
     }
 
     /// Returns the path of the associated splits file in the file system.
@@ -320,7 +313,7 @@ impl Run {
 
     /// Accesses the Auto Splitter Settings that are encoded as XML.
     #[inline]
-    pub fn auto_splitter_settings(&self) -> &[u8] {
+    pub fn auto_splitter_settings(&self) -> &str {
         &self.auto_splitter_settings
     }
 
@@ -331,7 +324,7 @@ impl Run {
     /// You need to ensure that the Auto Splitter Settings are encoded as data
     /// that would be valid as an interior of an XML element.
     #[inline]
-    pub fn auto_splitter_settings_mut(&mut self) -> &mut Vec<u8> {
+    pub fn auto_splitter_settings_mut(&mut self) -> &mut String {
         &mut self.auto_splitter_settings
     }
 
@@ -411,19 +404,18 @@ impl Run {
     /// Personal Best is achieved for example.
     #[inline]
     pub fn clear_run_id(&mut self) {
-        self.metadata.set_run_id(String::new());
+        self.metadata.set_run_id("");
     }
 
     /// Adds a new custom comparison. If a custom comparison with that name
     /// already exists, it is not added.
     #[inline]
-    pub fn add_custom_comparison<S: Into<String>>(
-        &mut self,
-        comparison: S,
-    ) -> ComparisonResult<()> {
-        let comparison = comparison.into();
-        self.validate_comparison_name(&comparison)?;
-        self.custom_comparisons.push(comparison);
+    pub fn add_custom_comparison<S>(&mut self, comparison: S) -> ComparisonResult<()>
+    where
+        S: PopulateString,
+    {
+        self.validate_comparison_name(comparison.as_str())?;
+        self.custom_comparisons.push(comparison.into_string());
         Ok(())
     }
 
@@ -444,22 +436,10 @@ impl Run {
     /// problems in file names are also omitted. If an extended category name is
     /// used, the variables of the category are appended in a parenthesis.
     pub fn extended_file_name(&self, use_extended_category_name: bool) -> String {
-        let extended_name = self.extended_name(use_extended_category_name);
-
+        let mut extended_name = self.extended_name(use_extended_category_name).into_owned();
         extended_name
-            .chars()
-            .filter(|&c| {
-                c != '\\'
-                    && c != '/'
-                    && c != ':'
-                    && c != '*'
-                    && c != '?'
-                    && c != '"'
-                    && c != '<'
-                    && c != '>'
-                    && c != '|'
-            })
-            .collect()
+            .retain(|c| !matches!(c, '\\' | '/' | ':' | '*' | '?' | '"' | '<' | '>' | '|'));
+        extended_name
     }
 
     /// Returns a name suitable for this Run that is built the following way:
@@ -744,7 +724,7 @@ impl Run {
     /// Checks a given name against the current comparisons in the Run to
     /// ensure that it is valid for use.
     pub fn validate_comparison_name(&self, new: &str) -> ComparisonResult<()> {
-        if new.starts_with("[Race]") {
+        if new.starts_with(RACE_COMPARISON_PREFIX) {
             Err(ComparisonError::NameStartsWithRace)
         } else if self.comparisons().any(|c| c == new) {
             Err(ComparisonError::DuplicateName)
@@ -818,14 +798,12 @@ impl<'a> Iterator for ComparisonsIter<'a> {
     type Item = &'a str;
 
     fn next(&mut self) -> Option<&'a str> {
-        if !self.custom.is_empty() {
-            let (a, b) = self.custom.split_at(1);
+        if let Some((a, b)) = self.custom.split_first() {
             self.custom = b;
-            Some(&a[0])
-        } else if !self.generators.is_empty() {
-            let (a, b) = self.generators.split_at(1);
+            Some(a)
+        } else if let Some((a, b)) = self.generators.split_first() {
             self.generators = b;
-            Some(a[0].name())
+            Some(a.name())
         } else {
             None
         }

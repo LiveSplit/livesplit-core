@@ -51,11 +51,7 @@ impl TimeSpan {
     /// Parses an optional Time Span from a given textual representation of the
     /// Time Span. If the given text consists entirely of whitespace or is
     /// empty, `None` is returned.
-    pub fn parse_opt<S>(text: S) -> Result<Option<TimeSpan>, ParseError>
-    where
-        S: AsRef<str>,
-    {
-        let text = text.as_ref();
+    pub fn parse_opt(text: &str) -> Result<Option<TimeSpan>, ParseError> {
         if text.trim().is_empty() {
             Ok(None)
         } else {
@@ -90,6 +86,7 @@ impl FromStr for TimeSpan {
     fn from_str(mut text: &str) -> Result<Self, ParseError> {
         // It's faster to use `strip_prefix` with char literals if it's an ASCII
         // char, otherwise prefer using string literals.
+        #[allow(clippy::single_char_pattern)]
         let factor =
             if let Some(remainder) = text.strip_prefix('-').or_else(|| text.strip_prefix("−")) {
                 text = remainder;
@@ -116,7 +113,7 @@ impl FromStr for TimeSpan {
 
 impl Default for TimeSpan {
     fn default() -> Self {
-        TimeSpan(Duration::nanoseconds(0))
+        TimeSpan(Duration::ZERO)
     }
 }
 

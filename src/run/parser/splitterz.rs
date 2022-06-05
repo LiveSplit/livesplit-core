@@ -1,11 +1,9 @@
 //! Provides the parser for SplitterZ splits files.
 
-use crate::{settings::Image, timing, RealTime, Run, Segment, TimeSpan};
+use crate::{timing, RealTime, Run, Segment, TimeSpan};
 use alloc::borrow::Cow;
-use core::num::ParseIntError;
-use core::result::Result as StdResult;
+use core::{num::ParseIntError, result::Result as StdResult};
 use snafu::ResultExt;
-use std::io::{self, BufRead};
 
 /// The Error type for splits files that couldn't be parsed by the SplitterZ
 /// Parser.
@@ -39,21 +37,6 @@ pub enum Error {
         /// The underlying error.
         source: timing::ParseError,
     },
-    /// Failed to read the title line.
-    TitleLine {
-        /// The underlying error.
-        source: io::Error,
-    },
-    /// Failed to read the next line.
-    Line {
-        /// The underlying error.
-        source: io::Error,
-    },
-    /// Failed to read a counter line.
-    CounterLine {
-        /// The underlying error.
-        source: io::Error,
-    },
 }
 
 /// The Result type for the SplitterZ parser.
@@ -72,13 +55,14 @@ fn unescape(text: &str) -> Cow<'_, str> {
 /// loaded from the file system. If you are using livesplit-core in a
 /// server-like environment, set this to `false`. Only client-side applications
 /// should set this to `true`.
-pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
+pub fn parse(source: &str, #[allow(unused)] load_icons: bool) -> Result<Run> {
     let mut run = Run::new();
 
+    #[cfg(feature = "std")]
     let mut icon_buf = Vec::new();
 
     let mut lines = source.lines();
-    let line = lines.next().ok_or(Error::Empty)?.context(TitleLine)?;
+    let line = lines.next().ok_or(Error::Empty)?;
     let mut splits = line.split(',');
     run.set_category_name(unescape(splits.next().ok_or(Error::ExpectedCategoryName)?));
     run.set_attempt_count(
@@ -90,7 +74,6 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
     );
 
     for line in &mut lines {
-        let line = line.context(Line)?;
         if !line.is_empty() {
             let mut splits = line.split(',');
 
@@ -115,12 +98,14 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
                 segment.set_best_segment_time(RealTime(Some(time)).into());
             }
 
+            #[cfg(feature = "std")]
             if load_icons {
                 if let Some(icon_path) = splits.next() {
                     if !icon_path.is_empty() {
-                        if let Ok(image) =
-                            Image::from_file(unescape(icon_path).as_ref(), &mut icon_buf)
-                        {
+                        if let Ok(image) = crate::settings::Image::from_file(
+                            unescape(icon_path).as_ref(),
+                            &mut icon_buf,
+                        ) {
                             segment.set_icon(image);
                         }
                     }
@@ -134,7 +119,7 @@ pub fn parse<R: BufRead>(source: R, load_icons: bool) -> Result<Run> {
     }
 
     for line in lines {
-        if let Some(counter) = line.context(CounterLine)?.split(',').next() {
+        if let Some(counter) = line.split(',').next() {
             run.metadata_mut()
                 .custom_variable_mut(unescape(counter))
                 .permanent()
@@ -154,7 +139,7 @@ mod tests {
 
     #[test]
     fn counters() {
-        const RUN: &[u8] = br#"Run Title:,1
+        const RUN: &str = r#"Run Title:,1
 SegmentName,0:00:00.00,0.00
 SegmentName,0:00:00.00,0.00
 SegmentName,0:00:00.00,0.00

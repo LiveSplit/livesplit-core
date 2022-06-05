@@ -1,7 +1,9 @@
 //! Provides a software renderer that can be used without a GPU. The renderer is
 //! surprisingly fast and can be considered the default rendering backend.
 
-use std::{mem, ops::Deref, rc::Rc};
+use crate::platform::prelude::*;
+use alloc::rc::Rc;
+use core::{mem, ops::Deref};
 
 use super::{
     entity::Entity,
@@ -10,12 +12,14 @@ use super::{
     FillShader, FontKind, Scene, SceneManager, SharedOwnership, Transform,
 };
 use crate::{layout::LayoutState, settings};
+#[cfg(feature = "image")]
 use image::ImageBuffer;
 use tiny_skia::{
     BlendMode, Color, FillRule, FilterQuality, GradientStop, LinearGradient, Paint, Path,
     PathBuilder, Pattern, Pixmap, PixmapMut, Point, Rect, Shader, SpreadMode, Stroke,
 };
 
+#[cfg(feature = "image")]
 pub use image::{self, RgbaImage};
 
 struct SkiaBuilder(PathBuilder);
@@ -321,6 +325,7 @@ impl Renderer {
     }
 
     /// Accesses the image.
+    #[cfg(feature = "image")]
     pub fn image(&self) -> ImageBuffer<image::Rgba<u8>, &[u8]> {
         ImageBuffer::from_raw(
             self.frame_buffer.width(),
@@ -331,6 +336,7 @@ impl Renderer {
     }
 
     /// Turns the whole renderer into the underlying image.
+    #[cfg(feature = "image")]
     pub fn into_image(self) -> RgbaImage {
         RgbaImage::from_raw(
             self.frame_buffer.width(),

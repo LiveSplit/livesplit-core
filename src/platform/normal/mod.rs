@@ -1,6 +1,4 @@
-#![allow(missing_docs)]
-
-pub use indexmap;
+pub use parking_lot::RwLock;
 use time::UtcOffset;
 pub use time::{Duration, OffsetDateTime as DateTime};
 

@@ -4,6 +4,7 @@
     clippy::perf,
     clippy::style,
     clippy::missing_const_for_fn,
+    clippy::undocumented_unsafe_blocks,
     missing_docs,
     rust_2018_idioms
 )]
@@ -61,7 +62,6 @@ macro_rules! catch {
 pub mod analysis;
 #[cfg(feature = "auto-splitting")]
 pub mod auto_splitting;
-pub mod clear_vec;
 pub mod comparison;
 pub mod component;
 #[cfg(feature = "std")]
@@ -75,15 +75,12 @@ pub mod networking;
 pub mod rendering;
 pub mod run;
 pub mod settings;
-#[cfg(test)]
-pub mod tests_helper;
 pub mod timing;
-#[cfg(feature = "std")]
-mod xml_util;
+pub mod util;
 
 pub use crate::{
     layout::{Component, Editor as LayoutEditor, GeneralSettings as GeneralLayoutSettings, Layout},
-    platform::{indexmap, DateTime},
+    platform::DateTime,
     run::{Attempt, Editor as RunEditor, Run, RunMetadata, Segment, SegmentHistory},
     timing::{
         AtomicDateTime, GameTime, RealTime, Time, TimeSpan, TimeStamp, Timer, TimerPhase,

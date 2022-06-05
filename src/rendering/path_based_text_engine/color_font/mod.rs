@@ -4,7 +4,6 @@ use crate::settings::Color;
 
 mod colr;
 mod cpal;
-mod parse_util;
 
 pub struct ColorTables<'f> {
     colr: &'f [u8],

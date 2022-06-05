@@ -1,6 +1,6 @@
 use criterion::{criterion_group, criterion_main, Criterion};
 use livesplit_core::{run::parser::livesplit, Layout, Run, Segment, Timer};
-use std::{fs, io::Cursor};
+use std::fs;
 
 criterion_main!(benches);
 criterion_group!(
@@ -24,8 +24,8 @@ fn artificial() -> (Timer, Layout) {
 }
 
 fn real() -> (Timer, Layout) {
-    let buf = fs::read("tests/run_files/Celeste - Any% (1.2.1.5).lss").unwrap();
-    let run = livesplit::parse(Cursor::new(&buf), None).unwrap();
+    let buf = fs::read_to_string("tests/run_files/Celeste - Any% (1.2.1.5).lss").unwrap();
+    let run = livesplit::parse(&buf, None).unwrap();
 
     let mut timer = Timer::new(run).unwrap();
     timer.start();

@@ -34,47 +34,45 @@ members = ["capi", "capi/bind_gen", "capi/staticlib", "capi/cdylib", "crates/*"]
 [dependencies]
 # core
 base64 = { version = "0.13.0", default-features = false, features = ["alloc"] }
+bytemuck = { version = "1.9.1", default-features = false, features = ["derive"] }
 cfg-if = "1.0.0"
-time = { version = "0.3.3", default-features = false }
+time = { version = "0.3.3", default-features = false, features = ["macros", "parsing"] }
 hashbrown = "0.12.0"
 libm = "0.2.1"
 livesplit-hotkey = { path = "crates/livesplit-hotkey", version = "0.6.0", default-features = false }
 livesplit-title-abbreviations = { path = "crates/livesplit-title-abbreviations", version = "0.2.0" }
+memchr = { version = "2.3.4", default-features = false }
+simdutf8 = { version = "0.1.4", default-features = false, features = ["aarch64_neon"] }
 serde = { version = "1.0.98", default-features = false, features = [
     "alloc",
     "derive",
 ] }
+serde_json = { version = "1.0.8", default-features = false, features = ["alloc"] }
 smallstr = { version = "0.3.0", default-features = false }
 snafu = { version = "0.7.0", default-features = false }
 unicase = "2.6.0"
 
 # std
-bytemuck = { version = "1.2.0", optional = true }
-byteorder = { version = "1.3.2", optional = true }
 image = { version = "0.24.0", features = [
     "png",
 ], default-features = false, optional = true }
-indexmap = { version = "1.2.0", default-features = false, features = [
-    "serde-1",
-], optional = true }
 parking_lot = { version = "0.12.0", default-features = false, optional = true }
-quick-xml = { version = "0.22.0", default-features = false, optional = true }
-serde_json = { version = "1.0.8", optional = true }
-utf-8 = { version = "0.7.4", optional = true }
 
 # Rendering
 # Currently doesn't require any additional dependencies.
 
 # Path-based Text Engine
-rustybuzz = { version = "0.5.0", optional = true }
-ttf-parser = { version = "0.15.0", optional = true }
+rustybuzz = { git = "https://github.com/RazrFalcon/rustybuzz", default-features = false, features = [
+    "libm",
+], optional = true }
+ttf-parser = { version = "0.15.0", default-features = false, optional = true }
 
 # Font Loading
 font-kit = { version = "0.11.0", optional = true }
 
 # Software Rendering
 tiny-skia = { version = "0.6.0", default-features = false, features = [
-    "std",
+    "libm",
     "simd",
 ], optional = true }
 
@@ -108,7 +106,6 @@ winapi = { version = "0.3.9", features = ["wingdi"], optional = true }
 libc = { version = "0.2.101", optional = true }
 
 [dev-dependencies]
-memmem = "0.1.1"
 img_hash = "3.1.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
@@ -116,61 +113,48 @@ criterion = "0.3.0"
 
 [features]
 default = ["image-shrinking", "std"]
-doesnt-have-atomics = []
 std = [
-    "bytemuck/derive",
-    "byteorder",
     "image",
-    "indexmap",
     "libc",
     "livesplit-hotkey/std",
+    "memchr/std",
     "parking_lot",
-    "quick-xml",
-    "serde_json",
+    "rustybuzz?/std",
     "serde/std",
+    "serde_json/std",
+    "simdutf8/std",
     "snafu/std",
     "time/formatting",
     "time/local-offset",
-    "time/macros",
-    "time/parsing",
-    "utf-8",
+    "tiny-skia?/std",
+    "ttf-parser?/std",
     "winapi",
 ]
 more-image-formats = [
-    "image/bmp",
-    "image/farbfeld",
-    "image/hdr",
-    "image/ico",
-    "image/jpeg",
-    "image/pnm",
-    "image/tga",
-    "image/tiff",
-    "image/webp",
+    "image?/bmp",
+    "image?/farbfeld",
+    "image?/hdr",
+    "image?/ico",
+    "image?/jpeg",
+    "image?/pnm",
+    "image?/tga",
+    "image?/tiff",
+    "image?/webp",
 ]
-image-shrinking = ["std", "bytemuck", "more-image-formats"]
-rendering = ["bytemuck/derive", "more-image-formats"]
-path-based-text-engine = ["std", "rendering", "rustybuzz", "ttf-parser"]
+image-shrinking = ["std", "more-image-formats"]
+rendering = ["more-image-formats"]
+path-based-text-engine = ["rendering", "rustybuzz", "ttf-parser"]
 font-loading = ["std", "path-based-text-engine", "font-kit"]
 software-rendering = ["path-based-text-engine", "tiny-skia"]
 wasm-web = [
+    "std",
     "js-sys",
     "livesplit-hotkey/wasm-web",
-    "std",
     "wasm-bindgen",
     "web-sys",
 ]
 networking = ["std", "splits-io-api"]
 auto-splitting = ["std", "livesplit-auto-splitting", "tokio", "log"]
-
-# FIXME: Some targets don't have atomics, but we can't test for this properly
-# yet. So there's a feature you explicitly have to opt into to deactivate the
-# usage of atomics. Vice versa would be too dangerous, as `default-features =
-# false` would deactivate atomics then. However there's also `cargo test
-# --all-features`, which is equally dangerous. To detect this, we have an
-# additional `internal-use-all-features` feature that is only ever activated
-# when `--all-features` is passed, so we can ignore the `doesnt-have-atomics` in
-# that case. https://github.com/rust-lang/rust/issues/32976
-internal-use-all-features = []
 
 [lib]
 bench = false
