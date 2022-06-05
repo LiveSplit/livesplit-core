@@ -691,7 +691,12 @@ fn parse_general_settings<R: BufRead>(
             color(reader, tag.into_buf(), |color| {
                 settings.personal_best_color = color;
             })
-        } else if tag.name() == b"AheadGainingTimeColor" {
+        } else if tag.name() == b"UseRainbowColor" {
+            parse_bool(reader, tag.into_buf(), |rainbow| {
+                settings.rainbow_for_best_segments = rainbow;
+            })
+        }
+        else if tag.name() == b"AheadGainingTimeColor" {
             color(reader, tag.into_buf(), |color| {
                 settings.ahead_gaining_time_color = color;
             })
