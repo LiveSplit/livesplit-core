@@ -27,8 +27,11 @@ pub use self::timing_method::TimingMethod;
 /// made about the initial value of this, so you'll almost definitely want to 
 /// modulo this. Currently this is used to animate the rainbows on gold segments.
 pub fn visual_cycle_timer() -> f64 {
-    use crate::platform::DateTime;
+    use lazy_static::lazy_static;
 
-    let since_epoch = DateTime::now_utc() - DateTime::UNIX_EPOCH;
-    since_epoch.as_seconds_f64() * 1000.
+    lazy_static! {
+        static ref TIME: TimeStamp = TimeStamp::now();
+    }
+
+    (TimeStamp::now() - *TIME).total_milliseconds()
 }
