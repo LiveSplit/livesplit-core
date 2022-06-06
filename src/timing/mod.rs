@@ -19,3 +19,16 @@ pub use self::timer::SharedTimer;
 pub use self::timer::{CreationError as TimerCreationError, Snapshot, Timer};
 pub use self::timer_phase::TimerPhase;
 pub use self::timing_method::TimingMethod;
+
+
+/// A function used for visual elements that change over time, without any
+/// specific connection to an actual timer. This function returns an f64
+/// which approximately changes by 1 every millisecond. No guarantees are 
+/// made about the initial value of this, so you'll almost definitely want to 
+/// modulo this. Currently this is used to animate the rainbows on gold segments.
+pub fn visual_cycle_timer() -> f64 {
+    use crate::platform::DateTime;
+
+    let since_epoch = DateTime::now_utc() - DateTime::UNIX_EPOCH;
+    since_epoch.as_seconds_f64() * 1000.
+}

@@ -1,9 +1,8 @@
-use std::time::SystemTime;
-
 use super::LayoutDirection;
 use crate::{
     platform::prelude::*,
     settings::{Color, Field, Font, Gradient, SettingsDescription, Value},
+    timing::visual_cycle_timer
 };
 use serde::{Deserialize, Serialize};
 
@@ -148,10 +147,8 @@ impl GeneralSettings {
     }
 
     fn _rainbow() -> Option<Color> {
-        let time = SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).ok()?.as_millis();
 
-
-        let hue = (time/100) % 36 * 10;
+        let hue = (visual_cycle_timer() / 100.) % 36. * 10.;
 
         Some(Color::hsva(hue as f32, 1., 0., 1.))
     }
