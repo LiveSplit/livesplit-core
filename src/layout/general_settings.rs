@@ -145,24 +145,16 @@ impl GeneralSettings {
             _ => panic!("Unsupported Setting Index"),
         }
     }
-
-    fn _rainbow() -> Option<Color> {
-
-        let hue = (visual_cycle_timer() / 100.) % 36. * 10.;
-
-        Some(Color::hsva(hue as f32, 1., 0., 1.))
-    }
-
     
     /// Gets the best segment color. If `rainbow_for_best_segments` is false, 
     /// this just returns the `best_segment_color` field. otherwise, it returns 
     /// a color that cycles based on the current system times
     pub fn get_best_segment_color(&self) -> Color {
         if self.rainbow_for_best_segments {
-            match Self::_rainbow() {
-                Some(c) => c,
-                None => self.best_segment_color
-            }
+            Color::hsva(
+                ((visual_cycle_timer() / 100.) % 36. * 10.) as f32, 
+                1.0, 1.0, 1.0
+            )
         }
         else {
             self.best_segment_color
