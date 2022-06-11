@@ -62,7 +62,7 @@ parking_lot = { version = "0.12.0", default-features = false, optional = true }
 # Currently doesn't require any additional dependencies.
 
 # Path-based Text Engine
-rustybuzz = { git = "https://github.com/RazrFalcon/rustybuzz", default-features = false, features = [
+rustybuzz = { version = "0.5.1", default-features = false, features = [
     "libm",
 ], optional = true }
 ttf-parser = { version = "0.15.0", default-features = false, optional = true }
