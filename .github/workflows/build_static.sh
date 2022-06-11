@@ -11,7 +11,7 @@ main() {
     fi
 
     if [ "$NO_STD" = "true" ]; then
-        cargo build --target $TARGET --no-default-features $FEATURES
+        cargo build --target $TARGET --no-default-features --features software-rendering $FEATURES
         return
     fi
 
