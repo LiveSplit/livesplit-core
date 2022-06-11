@@ -11,7 +11,7 @@ proc-maps = { version = "0.2.0", default-features = false }
 read-process-memory = { version = "0.1.4", default-features = false }
 slotmap = { version = "1.0.2", default-features = false }
 snafu = "0.7.0"
-sysinfo = { version = "0.23.0", default-features = false, features = ["multithread"] }
+sysinfo = { version = "0.24.2", default-features = false, features = ["multithread"] }
 time = { version = "0.3.3", default-features = false }
 wasmtime = { version = "0.37.0", default-features = false, features = [
   "cranelift",
