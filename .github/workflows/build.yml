@@ -353,6 +353,8 @@ jobs:
           - label: Linux x86_64 gnux32
             target: x86_64-unknown-linux-gnux32
             os: ubuntu-latest
+            cross: skip
+            install_target: true
             tests: skip
             dylib: skip
 
@@ -626,11 +628,8 @@ jobs:
         run: rustup target add ${{ matrix.target }}
 
       - name: Install cross
-        if: matrix.cross == ''
-        run: sh .github/workflows/install.sh
-        env:
-          OS_NAME: ${{ matrix.os }}
-          TARGET: ${{ matrix.target }}
+        if: matrix.cross == '' && matrix.no_std == ''
+        run: cargo install cross
 
       - name: Build Static Library
         run: sh .github/workflows/build_static.sh
