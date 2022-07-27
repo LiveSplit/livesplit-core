@@ -65,68 +65,68 @@ pub fn parse(source: &str, #[allow(unused)] load_icons: bool) -> Result<Run> {
     let mut goal = None;
 
     for line in source.lines() {
-        if !line.is_empty() {
-            if let Some(title) = line.strip_prefix("Title=") {
-                run.set_category_name(title);
-            } else if let Some(attempts) = line.strip_prefix("Attempts=") {
-                run.set_attempt_count(attempts.parse().context(Attempt)?);
-            } else if let Some(offset) = line.strip_prefix("Offset=") {
-                if !offset.is_empty() {
-                    run.set_offset(TimeSpan::from_milliseconds(
-                        -offset.parse::<f64>().context(Offset)?,
-                    ));
-                }
-            } else if line.starts_with("Size=") {
-                // Ignore
-            } else if let Some(_icons) = line.strip_prefix("Icons=") {
-                #[cfg(feature = "std")]
-                if load_icons {
-                    icons_list.clear();
-                    for path in _icons.split(',') {
-                        if path.len() >= 2 {
-                            let path = &path[1..path.len() - 1];
-                            if let Ok(image) =
-                                crate::settings::Image::from_file(path, &mut icon_buf)
-                            {
-                                icons_list.push(image);
-                                continue;
-                            }
-                        }
-                        icons_list.push(Default::default());
-                    }
-                }
-            } else if let Some(goal_value) = line.strip_prefix("Goal=") {
-                if !goal_value.is_empty() {
-                    goal = Some(goal_value);
-                }
-            } else {
-                // must be a split Kappa
-                let mut split_info = line.split(',');
+        if line.is_empty() {
+            continue;
+        }
 
-                let segment_name = split_info.next().ok_or(Error::ExpectedSegmentName)?;
-                let old_time = split_info.next().ok_or(Error::ExpectedOldTime)?;
-                let pb_time = split_info.next().ok_or(Error::ExpectedPbTime)?;
-                let best_time = split_info.next().ok_or(Error::ExpectedBestTime)?;
-
-                let pb_time = TimeSpan::from_seconds(pb_time.parse().context(PbTime)?);
-                let best_time = TimeSpan::from_seconds(best_time.parse().context(BestSegment)?);
-                let old_time = TimeSpan::from_seconds(old_time.parse().context(OldTime)?);
-
-                let mut segment = Segment::new(segment_name);
-
-                if pb_time != TimeSpan::zero() {
-                    segment.set_personal_best_split_time(RealTime(Some(pb_time)).into());
-                }
-                if best_time != TimeSpan::zero() {
-                    segment.set_best_segment_time(RealTime(Some(best_time)).into());
-                }
-                if old_time != TimeSpan::zero() {
-                    *segment.comparison_mut("Old Run") = RealTime(Some(old_time)).into();
-                    old_run_exists = true;
-                }
-
-                run.push_segment(segment);
+        if let Some(title) = line.strip_prefix("Title=") {
+            run.set_category_name(title);
+        } else if let Some(attempts) = line.strip_prefix("Attempts=") {
+            run.set_attempt_count(attempts.parse().context(Attempt)?);
+        } else if let Some(offset) = line.strip_prefix("Offset=") {
+            if !offset.is_empty() {
+                run.set_offset(TimeSpan::from_milliseconds(
+                    -offset.parse::<f64>().context(Offset)?,
+                ));
             }
+        } else if line.starts_with("Size=") {
+            // Ignore
+        } else if let Some(_icons) = line.strip_prefix("Icons=") {
+            #[cfg(feature = "std")]
+            if load_icons {
+                icons_list.clear();
+                for path in _icons.split(',') {
+                    if path.len() >= 2 {
+                        let path = &path[1..path.len() - 1];
+                        if let Ok(image) = crate::settings::Image::from_file(path, &mut icon_buf) {
+                            icons_list.push(image);
+                            continue;
+                        }
+                    }
+                    icons_list.push(Default::default());
+                }
+            }
+        } else if let Some(goal_value) = line.strip_prefix("Goal=") {
+            if !goal_value.is_empty() {
+                goal = Some(goal_value);
+            }
+        } else {
+            // must be a split Kappa
+            let mut split_info = line.split(',');
+
+            let segment_name = split_info.next().ok_or(Error::ExpectedSegmentName)?;
+            let old_time = split_info.next().ok_or(Error::ExpectedOldTime)?;
+            let pb_time = split_info.next().ok_or(Error::ExpectedPbTime)?;
+            let best_time = split_info.next().ok_or(Error::ExpectedBestTime)?;
+
+            let pb_time = TimeSpan::from_seconds(pb_time.parse().context(PbTime)?);
+            let best_time = TimeSpan::from_seconds(best_time.parse().context(BestSegment)?);
+            let old_time = TimeSpan::from_seconds(old_time.parse().context(OldTime)?);
+
+            let mut segment = Segment::new(segment_name);
+
+            if pb_time != TimeSpan::zero() {
+                segment.set_personal_best_split_time(RealTime(Some(pb_time)).into());
+            }
+            if best_time != TimeSpan::zero() {
+                segment.set_best_segment_time(RealTime(Some(best_time)).into());
+            }
+            if old_time != TimeSpan::zero() {
+                *segment.comparison_mut("Old Run") = RealTime(Some(old_time)).into();
+                old_run_exists = true;
+            }
+
+            run.push_segment(segment);
         }
     }
 

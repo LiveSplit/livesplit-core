@@ -12,11 +12,12 @@ pub use self::s_expressions::Error;
 pub type Result<T> = StdResult<T, Error>;
 
 #[derive(Deserialize)]
-struct Splits {
-    title: String,
-    category: String,
+struct Splits<'a> {
+    title: &'a str,
+    category: &'a str,
     attempts: u32,
-    split_names: Vec<String>,
+    #[serde(borrow)]
+    split_names: Vec<&'a str>,
     golds: Option<Vec<Gold>>,
     personal_best: Option<Comparison>,
     world_record: Option<Comparison>,
@@ -39,7 +40,7 @@ struct Split {
 
 /// Attempts to parse a Flitter splits file.
 pub fn parse(source: &str) -> Result<Run> {
-    let splits: Splits = self::s_expressions::from_str(source)?;
+    let splits: Splits<'_> = self::s_expressions::from_str(source)?;
 
     let mut run = Run::new();
 

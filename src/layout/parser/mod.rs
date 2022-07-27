@@ -37,7 +37,7 @@ mod timer;
 mod title;
 mod total_playtime;
 
-#[cfg(windows)]
+#[cfg(all(windows, feature = "std"))]
 mod font_resolving;
 
 // One single row component is:
@@ -394,7 +394,7 @@ where
         // receive the byte representation of individual tables we query for, so
         // we can get the family name from the `name` table.
 
-        #[cfg(windows)]
+        #[cfg(all(windows, feature = "std"))]
         let family = if let Some(info) =
             font_resolving::FontInfo::from_gdi(original_family_name, bold_flag, italic_flag)
         {
@@ -421,7 +421,7 @@ where
             family.to_owned()
         };
 
-        #[cfg(not(windows))]
+        #[cfg(not(all(windows, feature = "std")))]
         let family = family.to_owned();
 
         // The font might not exist on the user's system, so we still prefer to

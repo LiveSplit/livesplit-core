@@ -83,7 +83,8 @@ pub unsafe extern "C" fn Run_parse_file_handle(
         Box::new(
             file.read_to_end(buf)
                 .ok()
-                .and_then(|_| parser::composite::parse(buf, path, load_files).ok()),
+                .and_then(|_| parser::composite::parse(buf, path, load_files).ok())
+                .map(|p| p.into_owned()),
         )
     })
 }

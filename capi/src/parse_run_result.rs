@@ -7,7 +7,7 @@ use livesplit_core::run::parser::{composite::ParsedRun, TimerKind};
 use std::{io::Write, os::raw::c_char};
 
 /// type
-pub type ParseRunResult = Option<ParsedRun>;
+pub type ParseRunResult = Option<ParsedRun<'static>>;
 /// type
 pub type OwnedParseRunResult = Box<ParseRunResult>;
 
