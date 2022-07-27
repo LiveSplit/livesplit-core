@@ -1,6 +1,7 @@
 //! Provides the parser for Splitty splits files.
 
 use crate::{platform::prelude::*, Run, Segment, Time, TimeSpan, TimingMethod};
+use alloc::borrow::Cow;
 use core::result::Result as StdResult;
 use serde::Deserialize;
 use serde_json::Error as JsonError;
@@ -22,17 +23,19 @@ pub enum Error {
 pub type Result<T> = StdResult<T, Error>;
 
 #[derive(Deserialize)]
-struct Splits {
-    run_name: String,
+struct Splits<'a> {
+    #[serde(borrow)]
+    run_name: Cow<'a, str>,
     start_delay: f64,
     run_count: u32,
-    splits: Vec<Split>,
+    splits: Vec<Split<'a>>,
     timer_type: u8,
 }
 
 #[derive(Deserialize)]
-struct Split {
-    name: String,
+struct Split<'a> {
+    #[serde(borrow)]
+    name: Cow<'a, str>,
     pb_split: Option<f64>,
     split_best: Option<f64>,
 }
@@ -49,7 +52,8 @@ fn parse_time(milliseconds: Option<f64>, method: TimingMethod) -> Time {
 
 /// Attempts to parse a Splitty splits file.
 pub fn parse(source: &str) -> Result<Run> {
-    let splits: Splits = serde_json::from_str(source).map_err(|source| Error::Json { source })?;
+    let splits: Splits<'_> =
+        serde_json::from_str(source).map_err(|source| Error::Json { source })?;
 
     let mut run = Run::new();
 
@@ -63,13 +67,14 @@ pub fn parse(source: &str) -> Result<Run> {
         TimingMethod::GameTime
     };
 
-    for split in splits.splits {
-        let mut segment = Segment::new(split.name);
-        segment.set_personal_best_split_time(parse_time(split.pb_split, method));
-        segment.set_best_segment_time(parse_time(split.split_best, method));
+    run.segments_mut()
+        .extend(splits.splits.into_iter().map(|split| {
+            let mut segment = Segment::new(split.name);
+            segment.set_personal_best_split_time(parse_time(split.pb_split, method));
+            segment.set_best_segment_time(parse_time(split.split_best, method));
 
-        run.push_segment(segment);
-    }
+            segment
+        }));
 
     Ok(run)
 }

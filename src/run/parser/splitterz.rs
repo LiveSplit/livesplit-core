@@ -74,48 +74,47 @@ pub fn parse(source: &str, #[allow(unused)] load_icons: bool) -> Result<Run> {
     );
 
     for line in &mut lines {
-        if !line.is_empty() {
-            let mut splits = line.split(',');
+        if line.is_empty() {
+            break;
+        }
 
-            let mut segment =
-                Segment::new(unescape(splits.next().ok_or(Error::ExpectedSegmentName)?));
+        let mut splits = line.split(',');
 
-            let time: TimeSpan = splits
-                .next()
-                .ok_or(Error::ExpectedSplitTime)?
-                .parse()
-                .context(ParseSplitTime)?;
-            if time != TimeSpan::zero() {
-                segment.set_personal_best_split_time(RealTime(Some(time)).into());
-            }
+        let mut segment = Segment::new(unescape(splits.next().ok_or(Error::ExpectedSegmentName)?));
 
-            let time: TimeSpan = splits
-                .next()
-                .ok_or(Error::ExpectedBestSegment)?
-                .parse()
-                .context(ParseBestSegment)?;
-            if time != TimeSpan::zero() {
-                segment.set_best_segment_time(RealTime(Some(time)).into());
-            }
+        let time: TimeSpan = splits
+            .next()
+            .ok_or(Error::ExpectedSplitTime)?
+            .parse()
+            .context(ParseSplitTime)?;
+        if time != TimeSpan::zero() {
+            segment.set_personal_best_split_time(RealTime(Some(time)).into());
+        }
 
-            #[cfg(feature = "std")]
-            if load_icons {
-                if let Some(icon_path) = splits.next() {
-                    if !icon_path.is_empty() {
-                        if let Ok(image) = crate::settings::Image::from_file(
-                            unescape(icon_path).as_ref(),
-                            &mut icon_buf,
-                        ) {
-                            segment.set_icon(image);
-                        }
+        let time: TimeSpan = splits
+            .next()
+            .ok_or(Error::ExpectedBestSegment)?
+            .parse()
+            .context(ParseBestSegment)?;
+        if time != TimeSpan::zero() {
+            segment.set_best_segment_time(RealTime(Some(time)).into());
+        }
+
+        #[cfg(feature = "std")]
+        if load_icons {
+            if let Some(icon_path) = splits.next() {
+                if !icon_path.is_empty() {
+                    if let Ok(image) = crate::settings::Image::from_file(
+                        unescape(icon_path).as_ref(),
+                        &mut icon_buf,
+                    ) {
+                        segment.set_icon(image);
                     }
                 }
             }
-
-            run.push_segment(segment);
-        } else {
-            break;
         }
+
+        run.push_segment(segment);
     }
 
     for line in lines {

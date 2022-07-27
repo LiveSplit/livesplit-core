@@ -51,14 +51,24 @@ pub type Result<T> = StdResult<T, Error>;
 
 /// A run parsed by the Composite Parser. This contains the Run itself and
 /// information about which parser parsed it.
-pub struct ParsedRun {
+pub struct ParsedRun<'a> {
     /// The parsed run.
     pub run: Run,
     /// The parser that parsed it.
-    pub kind: TimerKind,
+    pub kind: TimerKind<'a>,
 }
 
-const fn parsed(run: Run, kind: TimerKind) -> ParsedRun {
+impl ParsedRun<'_> {
+    /// Returns an owned version of the parsed run.
+    pub fn into_owned(self) -> ParsedRun<'static> {
+        ParsedRun {
+            run: self.run,
+            kind: self.kind.into_owned(),
+        }
+    }
+}
+
+const fn parsed(run: Run, kind: TimerKind<'_>) -> ParsedRun<'_> {
     ParsedRun { run, kind }
 }
 
@@ -74,7 +84,7 @@ pub fn parse_and_fix<R>(
     source: &[u8],
     path: Option<PathBuf>,
     load_files: bool,
-) -> Result<ParsedRun> {
+) -> Result<ParsedRun<'_>> {
     let mut run = parse(source, path, load_files)?;
     run.run.fix_splits();
     Ok(run)
@@ -86,7 +96,7 @@ pub fn parse_and_fix<R>(
 /// additional files, like external images are allowed to be loaded. If you are
 /// using livesplit-core in a server-like environment, set this to `false`. Only
 /// client-side applications should set this to `true`.
-pub fn parse(source: &[u8], path: Option<PathBuf>, load_files: bool) -> Result<ParsedRun> {
+pub fn parse(source: &[u8], path: Option<PathBuf>, load_files: bool) -> Result<ParsedRun<'_>> {
     if let Ok(source) = simdutf8::basic::from_utf8(source) {
         let files_path = if load_files { path.clone() } else { None };
 

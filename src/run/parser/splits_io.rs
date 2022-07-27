@@ -1,6 +1,9 @@
 //! Provides the parser for generic Splits I/O splits files.
 
-use crate::{platform::prelude::*, Run, Segment as LiveSplitSegment, Time, TimeSpan};
+use crate::{
+    platform::prelude::*, util::PopulateString, Run, Segment as LiveSplitSegment, Time, TimeSpan,
+};
+use alloc::borrow::Cow;
 use core::result::Result as StdResult;
 use serde::{Deserialize, Serialize};
 use serde_json::Error as JsonError;
@@ -61,88 +64,106 @@ struct Attempts {
     total: Option<u32>,
 }
 #[derive(Clone, PartialEq, Debug, Default, Deserialize, Serialize)]
-struct CategoryLinks {
+struct CategoryLinks<'a> {
     /// Speedrun.com ID specifies the category's Speedrun.com ID.
     #[serde(rename = "speedruncomID")]
-    speedruncom_id: Option<String>,
+    #[serde(borrow)]
+    speedruncom_id: Option<Cow<'a, str>>,
     /// Splits I/O ID specifies the category's Splits I/O ID.
     #[serde(rename = "splitsioID")]
-    splitsio_id: Option<String>,
+    #[serde(borrow)]
+    splitsio_id: Option<Cow<'a, str>>,
 }
 #[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
-struct Category {
+struct Category<'a> {
     /// Links specifies the category's identity in other services.
-    links: Option<CategoryLinks>,
+    links: Option<CategoryLinks<'a>>,
     /// Longname is a human-readable category name, intended for display to users.
-    longname: String,
+    #[serde(borrow)]
+    longname: Cow<'a, str>,
     /// Shortname is a machine-readable category name, intended for use in APIs, databases, URLs,
     /// and filenames.
-    shortname: Option<String>,
+    #[serde(borrow)]
+    shortname: Option<Cow<'a, str>>,
 }
 #[derive(Clone, PartialEq, Debug, Default, Deserialize, Serialize)]
-struct GameLinks {
+struct GameLinks<'a> {
     /// Speedrun.com ID specifies the game's Speedrun.com ID.
     #[serde(rename = "speedruncomID")]
-    speedruncom_id: Option<String>,
+    #[serde(borrow)]
+    speedruncom_id: Option<Cow<'a, str>>,
     /// Splits I/O ID specifies the game's Splits I/O ID.
     #[serde(rename = "splitsioID")]
-    splitsio_id: Option<String>,
+    #[serde(borrow)]
+    splitsio_id: Option<Cow<'a, str>>,
 }
 #[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
-struct Game {
+struct Game<'a> {
     /// Links specifies the game's identity in other services.
-    links: Option<GameLinks>,
+    links: Option<GameLinks<'a>>,
     /// Longname is a human-readable game name, intended for display to users.
-    longname: String,
+    #[serde(borrow)]
+    longname: Cow<'a, str>,
     /// Shortname is a machine-readable game name, intended for use in APIs, databases, URLs, and
     /// filenames.
-    shortname: Option<String>,
+    #[serde(borrow)]
+    shortname: Option<Cow<'a, str>>,
 }
 #[derive(Clone, PartialEq, Debug, Default, Deserialize, Serialize)]
-struct RunLinks {
+struct RunLinks<'a> {
     /// Speedrun.com ID is the run's ID on Speedrun.com. This can be used to communicate with the
     /// Speedrun.com API.
     #[serde(rename = "speedruncomID")]
-    speedruncom_id: Option<String>,
+    #[serde(borrow)]
+    speedruncom_id: Option<Cow<'a, str>>,
     /// Splits I/O ID is the run's ID on Splits I/O. This can be used to communicate with the
     /// Splits I/O API.
     #[serde(rename = "splitsioID")]
-    splitsio_id: Option<String>,
+    #[serde(borrow)]
+    splitsio_id: Option<Cow<'a, str>>,
 }
 #[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
-struct Pause {
+struct Pause<'a> {
     /// Ended At is the date and time at which the pause was ended, specified in RFC 3339 format.
     #[serde(rename = "endedAt")]
-    ended_at: Option<String>,
+    #[serde(borrow)]
+    ended_at: Option<Cow<'a, str>>,
     /// Started At is the date and time at which the pause was started, specified in RFC 3339
     /// format.
     #[serde(rename = "startedAt")]
-    started_at: String,
+    #[serde(borrow)]
+    started_at: Cow<'a, str>,
 }
 #[derive(Clone, PartialEq, Debug, Default, Deserialize, Serialize)]
-struct RunnerLinks {
+struct RunnerLinks<'a> {
     /// Speedrun.com ID specifies the runner's Speedrun.com ID.
     #[serde(rename = "speedruncomID")]
-    speedruncom_id: Option<String>,
+    #[serde(borrow)]
+    speedruncom_id: Option<Cow<'a, str>>,
     /// Splits I/O ID specifies the runner's Splits I/O ID.
     #[serde(rename = "splitsioID")]
-    splitsio_id: Option<String>,
+    #[serde(borrow)]
+    splitsio_id: Option<Cow<'a, str>>,
     /// Twitch ID specifies the runner's Twitch ID.
     #[serde(rename = "twitchID")]
-    twitch_id: Option<String>,
+    #[serde(borrow)]
+    twitch_id: Option<Cow<'a, str>>,
     /// Twitter ID specifies the runner's Twitter ID.
     #[serde(rename = "twitterID")]
-    twitter_id: Option<String>,
+    #[serde(borrow)]
+    twitter_id: Option<Cow<'a, str>>,
 }
 #[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
-struct Runner {
+struct Runner<'a> {
     /// Links specifies the runner's identity in other services.
-    links: Option<RunnerLinks>,
+    links: Option<RunnerLinks<'a>>,
     /// Longname is a human-readable runner name, intended for display to users.
-    longname: Option<String>,
+    #[serde(borrow)]
+    longname: Option<Cow<'a, str>>,
     /// Shortname is a machine-readable runner name, intended for use in APIs, databases, URLs, and
     /// filenames.
-    shortname: String,
+    #[serde(borrow)]
+    shortname: Cow<'a, str>,
 }
 #[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
 struct SegmentHistoryElement {
@@ -164,7 +185,7 @@ struct SegmentHistoryElement {
     is_skipped: Option<bool>,
 }
 #[derive(Clone, PartialEq, Debug, Default, Deserialize, Serialize)]
-struct Segment {
+struct Segment<'a> {
     #[serde(rename = "bestDuration")]
     best_duration: Option<Duration>,
     #[serde(rename = "endedAt")]
@@ -180,59 +201,69 @@ struct Segment {
     #[serde(rename = "isSkipped")]
     is_skipped: Option<bool>,
     /// Name is the runner-provided name of this segment
-    name: Option<String>,
+    #[serde(borrow)]
+    name: Option<Cow<'a, str>>,
 }
 #[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
-struct Timer {
+struct Timer<'a> {
     /// Longname is a human-readable timer name, intended for display to users.
-    longname: String,
+    #[serde(borrow)]
+    longname: Cow<'a, str>,
     /// Shortname is a machine-readable timer name, intended for use in APIs, databases, URLs, and
     /// filenames.
-    shortname: String,
+    #[serde(borrow)]
+    shortname: Cow<'a, str>,
     /// Version is the version of the timer used to record this run. Semantic Versioning is
     /// strongly recommended but not enforced.
-    version: String,
+    #[serde(borrow)]
+    version: Cow<'a, str>,
     /// Website is the URL for the timer's website.
-    website: Option<String>,
+    #[serde(borrow)]
+    website: Option<Cow<'a, str>>,
 }
 #[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
-struct Splits {
+struct Splits<'a> {
     /// Schema Version specifies which version of the Splits I/O JSON Schema is being used. This
     /// schema specifies only v1.0.0.
     #[serde(rename = "_schemaVersion")]
-    _schemaversion: String,
+    #[serde(borrow)]
+    _schemaversion: Cow<'a, str>,
     /// Attempts contains historical information about previous runs by this runner in this
     /// category.
     attempts: Option<Attempts>,
     /// Category specifies information about the category being run.
-    category: Option<Category>,
+    category: Option<Category<'a>>,
     /// Ended At is the date and time at which the run was ended, specified in RFC 3339 format.
     #[serde(rename = "endedAt")]
-    ended_at: Option<String>,
+    #[serde(borrow)]
+    ended_at: Option<Cow<'a, str>>,
     /// Game specifies information about the game being run.
-    game: Option<Game>,
+    game: Option<Game<'a>>,
     /// Image URL is the location of an image associated with this run. Often this is a screenshot
     /// of the timer at run completion, but can be anything the runner wants displayed alongside
     /// the run.
     #[serde(rename = "imageURL")]
-    image_url: Option<String>,
+    #[serde(borrow)]
+    image_url: Option<Cow<'a, str>>,
     /// Links specifies the run's identity in other services.
-    links: Option<RunLinks>,
+    links: Option<RunLinks<'a>>,
     /// Pauses holds runner-caused pauses that took place during the run.
-    pauses: Option<Vec<Pause>>,
+    pauses: Option<Vec<Pause<'a>>>,
     /// Runners is an array of people who participated in this run. Some games and categories call
     /// for cooperative play, but otherwise this will usually be just one person.
-    runners: Option<Vec<Runner>>,
+    runners: Option<Vec<Runner<'a>>>,
     /// Segments is an array of all segments for this run.
-    segments: Option<Vec<Segment>>,
+    segments: Option<Vec<Segment<'a>>>,
     /// Started At is the date and time at which the run was started, specified in RFC 3339 format.
     #[serde(rename = "startedAt")]
-    started_at: Option<String>,
+    #[serde(borrow)]
+    started_at: Option<Cow<'a, str>>,
     /// Timer holds information about the timer used to record the run.
-    timer: Timer,
+    timer: Timer<'a>,
     /// Video URL is the location of a VOD of the run.
     #[serde(rename = "videoURL")]
-    video_url: Option<String>,
+    #[serde(borrow)]
+    video_url: Option<Cow<'a, str>>,
 }
 
 impl From<Option<Duration>> for Time {
@@ -274,8 +305,9 @@ impl From<RunTime> for Time {
 }
 
 /// Attempts to parse a generic Splits I/O splits file.
-pub fn parse(source: &str) -> Result<(Run, String)> {
-    let splits: Splits = serde_json::from_str(source).map_err(|source| Error::Json { source })?;
+pub fn parse(source: &str) -> Result<(Run, Cow<'_, str>)> {
+    let splits: Splits<'_> =
+        serde_json::from_str(source).map_err(|source| Error::Json { source })?;
 
     let mut run = Run::new();
 
@@ -339,28 +371,30 @@ pub fn parse(source: &str) -> Result<(Run, String)> {
         }
     }
 
-    for split in splits.segments.into_iter().flatten() {
-        let mut segment = LiveSplitSegment::new(split.name.unwrap_or_default());
-        segment.set_personal_best_split_time(split.ended_at.into());
-        segment.set_best_segment_time(split.best_duration.into());
-        if let Some(mut history) = split.histories {
-            let segment_history = segment.segment_history_mut();
-            history.sort_unstable_by_key(|x| x.attempt_number);
-            for element in history {
-                segment_history.insert(element.attempt_number as i32, element.ended_at.into());
+    if let Some(segments) = splits.segments {
+        run.segments_mut().extend(segments.into_iter().map(|split| {
+            let mut segment = LiveSplitSegment::new(split.name.unwrap_or_default());
+            segment.set_personal_best_split_time(split.ended_at.into());
+            segment.set_best_segment_time(split.best_duration.into());
+            if let Some(mut history) = split.histories {
+                let segment_history = segment.segment_history_mut();
+                history.sort_unstable_by_key(|x| x.attempt_number);
+                for element in history {
+                    segment_history.insert(element.attempt_number as i32, element.ended_at.into());
+                }
             }
-        }
-        run.push_segment(segment);
+            segment
+        }));
     }
 
     if let Some(links) = splits.links {
         if let Some(link) = links.speedruncom_id {
-            run.metadata_mut().run_id = link;
+            link.populate(&mut run.metadata_mut().run_id);
         }
     }
 
     let timer = if splits.timer.longname.is_empty() {
-        String::from("Generic Timer")
+        "Generic Timer".into()
     } else {
         splits.timer.longname
     };

@@ -38,9 +38,10 @@ pub enum DownloadError {
 pub async fn download_run(
     client: &Client,
     id: &str,
-) -> Result<composite::ParsedRun, DownloadError> {
+) -> Result<composite::ParsedRun<'static>, DownloadError> {
     let bytes = api::run::download(client, id).await.context(Download)?;
-    composite::parse(&bytes, None, false).context(Parse)
+    let run = composite::parse(&bytes, None, false).context(Parse)?;
+    Ok(run.into_owned())
 }
 
 /// Asynchronously uploads a run to Splits.io. An object representing the ID of

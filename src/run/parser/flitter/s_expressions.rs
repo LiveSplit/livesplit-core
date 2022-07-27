@@ -3,7 +3,10 @@
 
 use crate::platform::prelude::*;
 use core::{fmt::Display, num::ParseIntError};
-use serde::de::{self, DeserializeOwned, DeserializeSeed, MapAccess, SeqAccess, Visitor};
+use serde::{
+    de::{self, DeserializeSeed, MapAccess, SeqAccess, Visitor},
+    Deserialize,
+};
 
 /// The Error types for splits files that couldn't be parsed by the Flitter
 /// Parser.
@@ -80,7 +83,7 @@ impl<'source> Deserializer<'source> {
         }
     }
 
-    fn parse_ident(&mut self) -> &str {
+    fn parse_ident(&mut self) -> &'source str {
         if let Some((pos, _)) = self
             .source
             .char_indices()
@@ -94,7 +97,7 @@ impl<'source> Deserializer<'source> {
         }
     }
 
-    fn parse_string(&mut self) -> Result<&str> {
+    fn parse_string(&mut self) -> Result<&'source str> {
         if let Some(rem) = self.source.strip_prefix('"') {
             if let Some((in_str, after)) = rem.split_once('"') {
                 self.source = after;
@@ -137,9 +140,9 @@ impl<'source> Deserializer<'source> {
     }
 }
 
-pub fn from_str<T>(source: &str) -> Result<T>
+pub fn from_str<'de, T>(source: &'de str) -> Result<T>
 where
-    T: DeserializeOwned,
+    T: 'de + Deserialize<'de>,
 {
     let mut deserializer = Deserializer::from_str(source);
     let t = T::deserialize(&mut deserializer)?;
@@ -151,7 +154,7 @@ where
     }
 }
 
-impl<'de, 'source> de::Deserializer<'de> for &mut Deserializer<'source> {
+impl<'de> de::Deserializer<'de> for &mut Deserializer<'de> {
     type Error = Error;
 
     fn deserialize_any<V>(self, _visitor: V) -> Result<V::Value>
@@ -236,13 +239,13 @@ impl<'de, 'source> de::Deserializer<'de> for &mut Deserializer<'source> {
     where
         V: Visitor<'de>,
     {
-        visitor.visit_str(self.parse_string()?)
+        visitor.visit_borrowed_str(self.parse_string()?)
     }
     fn deserialize_string<V>(self, visitor: V) -> Result<V::Value>
     where
         V: Visitor<'de>,
     {
-        visitor.visit_str(self.parse_string()?)
+        visitor.visit_borrowed_str(self.parse_string()?)
     }
     fn deserialize_bytes<V>(self, _visitor: V) -> Result<V::Value>
     where
@@ -355,7 +358,7 @@ impl<'de, 'source> de::Deserializer<'de> for &mut Deserializer<'source> {
     where
         V: Visitor<'de>,
     {
-        visitor.visit_str(self.parse_ident())
+        visitor.visit_borrowed_str(self.parse_ident())
     }
     fn deserialize_ignored_any<V>(self, visitor: V) -> Result<V::Value>
     where
@@ -366,7 +369,7 @@ impl<'de, 'source> de::Deserializer<'de> for &mut Deserializer<'source> {
     }
 }
 
-impl<'de, 'source> SeqAccess<'de> for &mut Deserializer<'source> {
+impl<'de> SeqAccess<'de> for &mut Deserializer<'de> {
     type Error = Error;
 
     fn next_element_seed<T>(&mut self, seed: T) -> Result<Option<T::Value>>
@@ -382,7 +385,7 @@ impl<'de, 'source> SeqAccess<'de> for &mut Deserializer<'source> {
     }
 }
 
-impl<'de, 'source> MapAccess<'de> for &mut Deserializer<'source> {
+impl<'de> MapAccess<'de> for &mut Deserializer<'de> {
     type Error = Error;
 
     fn next_key_seed<K>(&mut self, seed: K) -> Result<Option<K::Value>>

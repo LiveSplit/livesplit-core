@@ -1,6 +1,7 @@
 //! Provides the parser for Urn splits files.
 
 use crate::{platform::prelude::*, Run, Segment, Time, TimeSpan};
+use alloc::borrow::Cow;
 use core::result::Result as StdResult;
 use serde::Deserialize;
 use serde_json::Error as JsonError;
@@ -22,16 +23,18 @@ pub enum Error {
 pub type Result<T> = StdResult<T, Error>;
 
 #[derive(Deserialize)]
-struct Splits {
-    title: Option<String>,
+struct Splits<'a> {
+    #[serde(borrow)]
+    title: Option<Cow<'a, str>>,
     attempt_count: Option<u32>,
     start_delay: Option<TimeSpan>,
-    splits: Option<Vec<Split>>,
+    splits: Option<Vec<Split<'a>>>,
 }
 
 #[derive(Deserialize)]
-struct Split {
-    title: Option<String>,
+struct Split<'a> {
+    #[serde(borrow)]
+    title: Option<Cow<'a, str>>,
     time: Option<TimeSpan>,
     best_time: Option<TimeSpan>,
     best_segment: Option<TimeSpan>,
@@ -50,7 +53,8 @@ fn parse_time(real_time: TimeSpan) -> Time {
 
 /// Attempts to parse an Urn splits file.
 pub fn parse(source: &str) -> Result<Run> {
-    let splits: Splits = serde_json::from_str(source).map_err(|source| Error::Json { source })?;
+    let splits: Splits<'_> =
+        serde_json::from_str(source).map_err(|source| Error::Json { source })?;
 
     let mut run = Run::new();
 

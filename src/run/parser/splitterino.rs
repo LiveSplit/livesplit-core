@@ -1,6 +1,7 @@
 //! Provides the parser for Splitterino splits files.
 
 use crate::{platform::prelude::*, Run, Segment, Time, TimeSpan};
+use alloc::borrow::Cow;
 use core::result::Result as StdResult;
 use serde::Deserialize;
 use serde_json::Error as JsonError;
@@ -22,21 +23,25 @@ pub enum Error {
 pub type Result<T> = StdResult<T, Error>;
 
 #[derive(Deserialize)]
-struct SplitsFormat {
-    // version: String,
-    splits: Splits,
+struct SplitsFormat<'a> {
+    // #[serde(borrow)]
+    // version: Cow<'a, str>,
+    #[serde(borrow)]
+    splits: Splits<'a>,
 }
 
 /// Format in which splits are getting saved to file or should be transmitted
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct Splits {
+struct Splits<'a> {
     /// The Game Information about this run
-    game: GameInfo,
+    #[serde(borrow)]
+    game: GameInfo<'a>,
     /// The delay of how much time the timer should wait when starting a new run in milliseconds
     start_delay: Option<i64>,
     /// An array of segments which are associated to these splits
-    segments: Vec<SplitterinoSegment>,
+    #[serde(borrow)]
+    segments: Vec<SplitterinoSegment<'a>>,
     // /// The timing-method which is used for the splits
     // timing: SplitterinoTimingMethod,
 }
@@ -52,25 +57,31 @@ enum SplitterinoTimingMethod {
 /// Detailed information about the game and run details
 #[derive(Deserialize, Default)]
 #[serde(default)]
-struct GameInfo {
+struct GameInfo<'a> {
     /// Name of the Game that is currently being run
-    name: String,
+    #[serde(borrow)]
+    name: Cow<'a, str>,
     /// Category that is currently being run
-    category: String,
+    #[serde(borrow)]
+    category: Cow<'a, str>,
     /// The Platform on which the Game is being run on
-    platform: String,
+    #[serde(borrow)]
+    platform: Cow<'a, str>,
     /// The Region format the game is run in
-    region: String,
+    #[serde(borrow)]
+    region: Cow<'a, str>,
 }
 
 /// Describes a single Segment
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct SplitterinoSegment {
+struct SplitterinoSegment<'a> {
     // /// The ID which identifies the Segment
-    // id: String,
+    // #[serde(borrow)]
+    // id: Cow<'a, str>,
     /// The name of the Segment
-    name: String,
+    #[serde(borrow)]
+    name: Cow<'a, str>,
     /// The time of the personal best in milliseconds
     personal_best: Option<SegmentTime>,
     /// The time of the overall best in milliseconds
@@ -149,7 +160,7 @@ fn parse_split_time(
 
 /// Attempts to parse a Splitterino splits file.
 pub fn parse(source: &str) -> Result<Run> {
-    let SplitsFormat { splits, .. } =
+    let SplitsFormat::<'_> { splits, .. } =
         serde_json::from_str(source).map_err(|source| Error::Json { source })?;
 
     let mut run = Run::new();
@@ -169,25 +180,26 @@ pub fn parse(source: &str) -> Result<Run> {
 
     let (mut total_rta, mut total_igt) = (TimeSpan::zero(), TimeSpan::zero());
 
-    for split in splits.segments {
-        let mut segment = Segment::new(split.name);
+    run.segments_mut()
+        .extend(splits.segments.into_iter().map(|split| {
+            let mut segment = Segment::new(split.name);
 
-        if !split.skipped {
-            if let Some(personal_best) = split.personal_best {
-                segment.set_personal_best_split_time(parse_split_time(
-                    &mut total_rta,
-                    &mut total_igt,
-                    personal_best,
-                ));
+            if !split.skipped {
+                if let Some(personal_best) = split.personal_best {
+                    segment.set_personal_best_split_time(parse_split_time(
+                        &mut total_rta,
+                        &mut total_igt,
+                        personal_best,
+                    ));
+                }
             }
-        }
 
-        if let Some(overall_best) = split.overall_best {
-            segment.set_best_segment_time(parse_best_segment_time(overall_best));
-        }
+            if let Some(overall_best) = split.overall_best {
+                segment.set_best_segment_time(parse_best_segment_time(overall_best));
+            }
 
-        run.push_segment(segment);
-    }
+            segment
+        }));
 
     Ok(run)
 }

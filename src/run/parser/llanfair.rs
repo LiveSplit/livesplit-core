@@ -135,6 +135,9 @@ pub fn parse(source: &[u8]) -> Result<Run> {
 
     // Seek to the first byte of the first segment
     cursor = cursor.get(0x8F..).context(ReadSegment)?;
+
+    run.segments_mut().reserve(segment_count as usize);
+
     for _ in 0..segment_count {
         #[cfg(feature = "std")]
         let mut icon = None;
