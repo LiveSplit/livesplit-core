@@ -108,6 +108,9 @@
 //!     pub fn runtime_print_message(text_ptr: *const u8, text_len: usize);
 //! }
 //! ```
+//!
+//! On top of the runtime's API, there's also unstable `WASI` support via the
+//! `unstable` feature.
 
 #![warn(
     clippy::complexity,

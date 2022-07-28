@@ -47,7 +47,7 @@ serde = { version = "1.0.98", default-features = false, features = [
     "alloc",
     "derive",
 ] }
-serde_json = { version = "1.0.8", default-features = false, features = ["alloc"] }
+serde_json = { version = "1.0.60", default-features = false, features = ["alloc"] }
 smallstr = { version = "0.3.0", default-features = false }
 snafu = { version = "0.7.0", default-features = false }
 unicase = "2.6.0"
@@ -155,6 +155,7 @@ wasm-web = [
 ]
 networking = ["std", "splits-io-api"]
 auto-splitting = ["std", "livesplit-auto-splitting", "tokio", "log"]
+unstable-auto-splitting = ["livesplit-auto-splitting?/unstable"]
 
 [lib]
 bench = false

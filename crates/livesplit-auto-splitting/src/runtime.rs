@@ -12,6 +12,8 @@ use sysinfo::{ProcessRefreshKind, RefreshKind, System, SystemExt};
 use wasmtime::{
     Caller, Config, Engine, Extern, Linker, Memory, Module, OptLevel, Store, Trap, TypedFunc,
 };
+#[cfg(feature = "unstable")]
+use wasmtime_wasi::{WasiCtx, WasiCtxBuilder};
 
 /// An error that is returned when the creation of a new runtime fails.
 #[derive(Debug, Snafu)]
@@ -49,6 +51,19 @@ pub enum CreationError {
     /// The WebAssembly module has no exported memory called `memory`, which is
     /// a requirement.
     MissingMemory,
+
+    #[cfg(feature = "unstable")]
+    /// Failed linking the WebAssembly System Interface (WASI).
+    Wasi {
+        /// The underlying error.
+        source: anyhow::Error,
+    },
+    #[cfg(feature = "unstable")]
+    /// Failed running the WebAssembly System Interface (WASI) `_start` function.
+    WasiStart {
+        /// The underlying error.
+        source: wasmtime::Trap,
+    },
 }
 
 /// An error that is returned when executing the WebAssembly module fails.
@@ -72,6 +87,8 @@ pub struct Context<T: Timer> {
     timer: T,
     memory: Option<Memory>,
     process_list: ProcessList,
+    #[cfg(feature = "unstable")]
+    wasi: WasiCtx,
 }
 
 /// A threadsafe handle used to interrupt the execution of the script.
@@ -149,6 +166,8 @@ impl<T: Timer> Runtime<T> {
                 timer,
                 memory: None,
                 process_list: ProcessList::new(),
+                #[cfg(feature = "unstable")]
+                wasi: WasiCtxBuilder::new().build(),
             },
         );
 
@@ -156,9 +175,21 @@ impl<T: Timer> Runtime<T> {
 
         let mut linker = Linker::new(&engine);
         bind_interface(&mut linker)?;
+
+        #[cfg(feature = "unstable")]
+        wasmtime_wasi::add_to_linker(&mut linker, |ctx| &mut ctx.wasi).context(Wasi)?;
+
         let instance = linker
             .instantiate(&mut store, &module)
             .context(ModuleInstantiation)?;
+
+        #[cfg(feature = "unstable")]
+        // TODO: _start is kind of correct, but not in the long term. They are
+        // intending for us to use a different function for libraries. Look into
+        // reactors.
+        if let Ok(func) = instance.get_typed_func(&mut store, "_start") {
+            func.call(&mut store, ()).context(WasiStart)?;
+        }
 
         let update = instance
             .get_typed_func(&mut store, "update")
