@@ -39,7 +39,7 @@ pub struct Component {
 #[serde(default)]
 pub struct Settings {
     /// The background shown behind the component.
-    pub background: Gradient,
+    pub background: timer::DeltaGradient,
     /// The first comparison to show the segment time of. If it's not specified,
     /// the current comparison is used.
     pub comparison1: Option<String>,
@@ -114,7 +114,7 @@ fn update_comparison(
 impl Default for Settings {
     fn default() -> Self {
         Settings {
-            background: Gradient::Transparent,
+            background: timer::DeltaGradient::from(Gradient::Transparent),
             comparison1: None,
             comparison2: Some(String::from(best_segments::NAME)),
             hide_second_comparison: false,
@@ -271,10 +271,10 @@ impl Component {
             .update_with(current_split.filter(|_| display_icon).map(Segment::icon))
             .map(Into::into);
 
-        state.background = self.settings.background;
-
         self.timer
             .update_state(&mut state.timer, timer, layout_settings);
+
+        state.background = state.timer.background;
 
         self.segment_timer
             .update_state(&mut state.segment_timer, timer, layout_settings);
@@ -374,7 +374,11 @@ impl Component {
     /// the setting provided is out of bounds.
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
-            0 => self.settings.background = value.into(),
+            0 => {
+                let value = value.into();
+                self.settings.background = value;
+                self.settings.timer.background = value;
+            }
             1 => {
                 let value = value.into();
                 self.settings.timer.timing_method = value;

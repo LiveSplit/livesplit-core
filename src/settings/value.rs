@@ -1,5 +1,8 @@
 use crate::{
-    component::splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith},
+    component::{
+        splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith},
+        timer::DeltaGradient,
+    },
     hotkey::KeyCode,
     layout::LayoutDirection,
     platform::prelude::*,
@@ -57,6 +60,9 @@ pub enum Value {
     /// A value describing a font to use. `None` if a default font should be
     /// used.
     Font(Option<Font>),
+    /// A gradient that may or may not take one of it's colors from the current
+    /// delta.
+    DeltaGradient(DeltaGradient),
 }
 
 impl From<bool> for Value {
@@ -170,6 +176,12 @@ impl From<LayoutDirection> for Value {
 impl From<Option<Font>> for Value {
     fn from(x: Option<Font>) -> Self {
         Value::Font(x)
+    }
+}
+
+impl From<DeltaGradient> for Value {
+    fn from(x: DeltaGradient) -> Self {
+        Value::DeltaGradient(x)
     }
 }
 
@@ -345,6 +357,14 @@ impl Value {
             _ => Err(Error::WrongType),
         }
     }
+
+    /// Tries to convert the value into a delta gradient.
+    pub fn into_delta_gradient(self) -> Result<DeltaGradient> {
+        match self {
+            Value::DeltaGradient(v) => Ok(v),
+            _ => Err(Error::WrongType),
+        }
+    }
 }
 
 impl From<Value> for bool {
@@ -458,5 +478,11 @@ impl From<Value> for LayoutDirection {
 impl From<Value> for Option<Font> {
     fn from(value: Value) -> Self {
         value.into_font().unwrap()
+    }
+}
+
+impl From<Value> for DeltaGradient {
+    fn from(value: Value) -> Self {
+        value.into_delta_gradient().unwrap()
     }
 }

@@ -1,6 +1,6 @@
 use super::{
     accuracy, color, end_tag, parse_bool, parse_children, text_parsed, timer_format,
-    timing_method_override, translate_size, GradientBuilder, Result,
+    timing_method_override, translate_size, DeltaGradientKind, GradientBuilder, Result,
 };
 use crate::util::xml::Reader;
 
@@ -8,7 +8,7 @@ pub use crate::component::timer::Component;
 
 pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()> {
     let settings = component.settings_mut();
-    let mut background_builder = GradientBuilder::new();
+    let mut background_builder = GradientBuilder::<DeltaGradientKind>::new_gradient_type();
     let mut override_color = false;
 
     parse_children(reader, |reader, tag, _| {

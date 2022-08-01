@@ -69,6 +69,31 @@ fn wsplit() {
 }
 
 #[test]
+fn timer_delta_background() {
+    let run = lss(run_files::LIVESPLIT_1_0);
+    let mut timer = Timer::new(run).unwrap();
+    let mut layout = lsl(layout_files::WITH_TIMER_DELTA_BACKGROUND);
+    tests_helper::start_run(&mut timer);
+    tests_helper::make_progress_run_with_splits_opt(&mut timer, &[Some(5.0), None, Some(10.0)]);
+
+    check_dims(
+        &layout.state(&timer.snapshot()),
+        [250, 300],
+        "a+nRyOCfXU0=",
+        "timer_delta_background_ahead",
+    );
+
+    timer.reset(true);
+
+    check_dims(
+        &layout.state(&timer.snapshot()),
+        [250, 300],
+        "a+nZyeGfW80=",
+        "timer_delta_background_stopped",
+    );
+}
+
+#[test]
 fn all_components() {
     let mut layout = lsl(layout_files::ALL);
     let run = lss(run_files::LIVESPLIT_1_6_GAMETIME);
@@ -223,7 +248,7 @@ fn get_comparison_tolerance() -> u32 {
     // tolerance that is greater than 0.
     // FIXME: We use SSE as an approximation for the cfg because MMX isn't supported by Rust yet.
     if cfg!(all(target_arch = "x86", not(target_feature = "sse"))) {
-        2
+        3
     } else {
         0
     }
@@ -276,9 +301,9 @@ fn check_dims(
             for (x, y, Rgba([r, g, b, a])) in expected_image.enumerate_pixels_mut() {
                 if x < hash_image.width() && y < hash_image.height() {
                     let img_hash::image::Rgba([r2, g2, b2, a2]) = hash_image.get_pixel(x, y);
-                    *r = (*r as i16).wrapping_sub(*r2 as i16).abs() as u8;
-                    *g = (*g as i16).wrapping_sub(*g2 as i16).abs() as u8;
-                    *b = (*b as i16).wrapping_sub(*b2 as i16).abs() as u8;
+                    *r = (*r as i16).wrapping_sub(*r2 as i16).unsigned_abs() as u8;
+                    *g = (*g as i16).wrapping_sub(*g2 as i16).unsigned_abs() as u8;
+                    *b = (*b as i16).wrapping_sub(*b2 as i16).unsigned_abs() as u8;
                     *a = (*a).max(*a2);
                 }
             }

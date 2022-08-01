@@ -31,9 +31,7 @@ mod parse {
 
     #[test]
     fn with_timer_delta_background() {
-        livesplit(layout_files::WITH_TIMER_GRADIENT_BACKGROUND);
-        // FIXME: Add a rendering test to render out the gradient once we have
-        // support for this.
+        livesplit(layout_files::WITH_TIMER_DELTA_BACKGROUND);
     }
 
     #[test]

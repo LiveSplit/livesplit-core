@@ -2,7 +2,7 @@
 
 use super::{Component, Layout, LayoutDirection};
 use crate::{
-    component::separator,
+    component::{separator, timer::DeltaGradient},
     platform::{math::f32::powf, prelude::*},
     settings::{
         Alignment, Color, Font, FontStretch, FontStyle, FontWeight, Gradient, ListGradient,
@@ -107,6 +107,16 @@ enum GradientKind {
     Horizontal,
 }
 
+enum DeltaGradientKind {
+    Transparent,
+    Plain,
+    Vertical,
+    Horizontal,
+    PlainWithDeltaColor,
+    VerticalWithDeltaColor,
+    HorizontalWithDeltaColor,
+}
+
 enum ListGradientKind {
     Same(GradientKind),
     Alternating,
@@ -117,6 +127,38 @@ trait GradientType: Sized {
     fn default() -> Self;
     fn parse(kind: &str) -> Result<Self>;
     fn build(self, first: Color, second: Color) -> Self::Built;
+}
+
+impl GradientType for DeltaGradientKind {
+    type Built = DeltaGradient;
+
+    fn default() -> Self {
+        DeltaGradientKind::Transparent
+    }
+
+    fn parse(kind: &str) -> Result<Self> {
+        match kind {
+            "Plain" => Ok(DeltaGradientKind::Plain),
+            "PlainWithDeltaColor" => Ok(DeltaGradientKind::PlainWithDeltaColor),
+            "Vertical" => Ok(DeltaGradientKind::Vertical),
+            "VerticalWithDeltaColor" => Ok(DeltaGradientKind::VerticalWithDeltaColor),
+            "Horizontal" => Ok(DeltaGradientKind::Horizontal),
+            "HorizontalWithDeltaColor" => Ok(DeltaGradientKind::HorizontalWithDeltaColor),
+            _ => Err(Error::ParseGradientType),
+        }
+    }
+
+    fn build(self, first: Color, second: Color) -> Self::Built {
+        match self {
+            DeltaGradientKind::Transparent => Gradient::Transparent.into(),
+            DeltaGradientKind::Plain => Gradient::Plain(first).into(),
+            DeltaGradientKind::Vertical => Gradient::Vertical(first, second).into(),
+            DeltaGradientKind::Horizontal => Gradient::Horizontal(first, second).into(),
+            DeltaGradientKind::PlainWithDeltaColor => DeltaGradient::DeltaPlain,
+            DeltaGradientKind::VerticalWithDeltaColor => DeltaGradient::DeltaVertical,
+            DeltaGradientKind::HorizontalWithDeltaColor => DeltaGradient::DeltaHorizontal,
+        }
+    }
 }
 
 impl GradientType for GradientKind {
