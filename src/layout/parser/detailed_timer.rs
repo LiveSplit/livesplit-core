@@ -1,6 +1,7 @@
 use super::{
     accuracy, color, comparison_override, end_tag, parse_bool, parse_children, text_parsed,
-    timer_format, timing_method_override, translate_size, GradientBuilder, Result,
+    timer_format, timing_method_override, translate_size, DeltaGradientKind, GradientBuilder,
+    Result,
 };
 use crate::{timing::formatter::DigitsFormat, util::xml::Reader};
 
@@ -8,7 +9,7 @@ pub use crate::component::detailed_timer::Component;
 
 pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()> {
     let mut settings = component.settings().clone();
-    let mut background_builder = GradientBuilder::new();
+    let mut background_builder = GradientBuilder::<DeltaGradientKind>::new_gradient_type();
     let mut timer_override_color = false;
     let (mut total_height, mut segment_timer_ratio) = (65u32, 0.4);
 
@@ -91,6 +92,7 @@ pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()
         settings.timer.color_override = None;
     }
     settings.background = background_builder.build();
+    settings.timer.background = settings.background;
 
     settings.segment_timer.height = (total_height as f32 * segment_timer_ratio) as u32;
     settings.timer.height = total_height - settings.segment_timer.height;

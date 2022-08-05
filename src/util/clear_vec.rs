@@ -109,14 +109,14 @@ impl<T: Clear> FromIterator<T> for ClearVec<T> {
     }
 }
 
-impl<'a, T: Clear> Index<usize> for ClearVec<T> {
+impl<T: Clear> Index<usize> for ClearVec<T> {
     type Output = T;
     fn index(&self, index: usize) -> &Self::Output {
         &self.vec[index]
     }
 }
 
-impl<'a, T: Clear> IndexMut<usize> for ClearVec<T> {
+impl<T: Clear> IndexMut<usize> for ClearVec<T> {
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
         &mut self.vec[index]
     }

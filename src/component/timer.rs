@@ -24,12 +24,67 @@ pub struct Component {
     settings: Settings,
 }
 
+/// Represents the possible backgrounds for a timer.
+/// Right now these are just gradients, and gradients with delta,
+/// however in the future timers may support other types of backgrounds.]
+#[derive(Copy, Clone, PartialEq, Serialize, Deserialize)]
+pub enum DeltaGradient {
+    /// A normal gradient of some kind
+    Gradient(Gradient),
+    /// Delta based plain color
+    DeltaPlain,
+    /// Delta based gradient, Vertical
+    DeltaVertical,
+    /// Delta based gradient, horizontal
+    DeltaHorizontal,
+}
+
+impl From<Gradient> for DeltaGradient {
+    fn from(g: Gradient) -> Self {
+        Self::Gradient(g)
+    }
+}
+
+impl Default for DeltaGradient {
+    fn default() -> Self {
+        Self::Gradient(Gradient::default())
+    }
+}
+
+impl DeltaGradient {
+    /// Converts the DeltaGradient to a normal gradient for purposes of rendering
+    ///
+    ///  # Arguments
+    /// * `delta` - the color used to represent the timer's current state
+    pub fn gradient(&self, delta: Color) -> Gradient {
+        let [h, s, v, a] = delta.to_hsva();
+
+        match self {
+            DeltaGradient::Gradient(g) => *g,
+            DeltaGradient::DeltaVertical => {
+                let color_a = Color::hsva(h, s * 0.5, v * 0.25, a * (1.0 / 6.0));
+                let color_b = Color::hsva(h, s * 0.5, v * 0.25, a);
+
+                Gradient::Vertical(color_a, color_b)
+            }
+            DeltaGradient::DeltaPlain => {
+                Gradient::Plain(Color::hsva(h, s * 0.5, v * 0.25, a * (7.0 / 12.0)))
+            }
+            DeltaGradient::DeltaHorizontal => {
+                let color_a = Color::hsva(h, s * 0.5, v * 0.25, a * (1.0 / 6.0));
+                let color_b = Color::hsva(h, s * 0.5, v * 0.25, a);
+
+                Gradient::Horizontal(color_a, color_b)
+            }
+        }
+    }
+}
 /// The Settings for this component.
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Settings {
     /// The background shown behind the component.
-    pub background: Gradient,
+    pub background: DeltaGradient,
     /// Specifies the Timing Method to use. If set to `None` the Timing Method
     /// of the Timer is used for showing the time. Otherwise the Timing Method
     /// provided is used.
@@ -58,7 +113,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
-            background: Gradient::Transparent,
+            background: DeltaGradient::default(),
             timing_method: None,
             height: 60,
             color_override: None,
@@ -222,7 +277,10 @@ impl Component {
             (visual_color, visual_color)
         };
 
-        state.background = self.settings.background;
+        state.background = self
+            .settings
+            .background
+            .gradient(semantic_color.visualize(layout_settings));
 
         state.time.clear();
         let _ = write!(
