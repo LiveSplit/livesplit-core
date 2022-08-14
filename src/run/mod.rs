@@ -90,7 +90,7 @@ impl PartialEq for ComparisonGenerators {
 }
 
 /// Error type for an invalid comparison name
-#[derive(PartialEq, Debug, snafu::Snafu)]
+#[derive(PartialEq, Eq, Debug, snafu::Snafu)]
 pub enum ComparisonError {
     /// Comparison name starts with "\[Race\]".
     NameStartsWithRace,

@@ -93,7 +93,4 @@ pub use livesplit_hotkey as hotkey;
 pub use crate::platform::{register_clock, Clock, Duration};
 
 #[cfg(feature = "std")]
-pub use parking_lot;
-
-#[cfg(feature = "std")]
 pub use crate::{hotkey_config::HotkeyConfig, hotkey_system::HotkeySystem, timing::SharedTimer};

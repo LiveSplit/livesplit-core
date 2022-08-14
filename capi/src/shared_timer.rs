@@ -27,7 +27,7 @@ pub extern "C" fn SharedTimer_drop(this: OwnedSharedTimer) {
 /// you are done using the timer.
 #[no_mangle]
 pub extern "C" fn SharedTimer_read(this: &'static SharedTimer) -> OwnedTimerReadLock {
-    Box::new(this.read())
+    Box::new(this.read().unwrap())
 }
 
 /// Requests write access to the timer that is being shared. This blocks the
@@ -35,7 +35,7 @@ pub extern "C" fn SharedTimer_read(this: &'static SharedTimer) -> OwnedTimerRead
 /// lock when you are done using the timer.
 #[no_mangle]
 pub extern "C" fn SharedTimer_write(this: &'static SharedTimer) -> OwnedTimerWriteLock {
-    Box::new(this.write())
+    Box::new(this.write().unwrap())
 }
 
 /// Replaces the timer that is being shared by the timer provided. This blocks
@@ -44,5 +44,5 @@ pub extern "C" fn SharedTimer_write(this: &'static SharedTimer) -> OwnedTimerWri
 /// completion.
 #[no_mangle]
 pub extern "C" fn SharedTimer_replace_inner(this: &SharedTimer, timer: OwnedTimer) {
-    *this.write() = *timer;
+    *this.write().unwrap() = *timer;
 }

@@ -284,7 +284,7 @@ impl Component {
                                 if !shortest_game_name.is_empty() && !category_abbrev.is_empty() {
                                     abbrev.push_str(" - ");
                                 }
-                                abbrev.push_str(&*category_abbrev);
+                                abbrev.push_str(category_abbrev);
                                 abbrevs.push(abbrev.as_str().into());
                                 abbrev.drain(game_len..);
                             }

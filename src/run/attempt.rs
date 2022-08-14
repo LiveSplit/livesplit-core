@@ -3,7 +3,7 @@ use crate::{AtomicDateTime, Time, TimeSpan};
 /// An Attempt describes information about an attempt to run a specific category
 /// by a specific runner in the past. Every time a new attempt is started and
 /// then reset, an Attempt describing general information about it is created.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Attempt {
     index: i32,
     time: Time,

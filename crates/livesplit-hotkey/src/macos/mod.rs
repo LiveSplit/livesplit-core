@@ -20,11 +20,10 @@ use self::{
 };
 use crate::KeyCode;
 use cg::EventField;
-use parking_lot::Mutex;
 use std::{
     collections::{hash_map::Entry, HashMap},
     ffi::c_void,
-    sync::{mpsc::channel, Arc},
+    sync::{mpsc::channel, Arc, Mutex},
     thread,
 };
 
@@ -151,7 +150,7 @@ impl Hook {
     where
         F: FnMut() + Send + 'static,
     {
-        if let Entry::Vacant(vacant) = self.hotkeys.lock().entry(hotkey) {
+        if let Entry::Vacant(vacant) = self.hotkeys.lock().unwrap().entry(hotkey) {
             vacant.insert(Box::new(callback));
             Ok(())
         } else {
@@ -161,7 +160,7 @@ impl Hook {
 
     /// Unregisters a previously registered hotkey.
     pub fn unregister(&self, hotkey: KeyCode) -> Result<()> {
-        if self.hotkeys.lock().remove(&hotkey).is_some() {
+        if self.hotkeys.lock().unwrap().remove(&hotkey).is_some() {
             Ok(())
         } else {
             Err(Error::NotRegistered)
@@ -314,7 +313,7 @@ unsafe extern "C" fn callback(
 
     let hotkeys = user_info as *const RegisteredKeys;
     let hotkeys = &*hotkeys;
-    if let Some(callback) = hotkeys.lock().get_mut(&key_code) {
+    if let Some(callback) = hotkeys.lock().unwrap().get_mut(&key_code) {
         callback();
     }
 

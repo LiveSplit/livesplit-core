@@ -247,7 +247,7 @@ struct Timer(SharedTimer);
 
 impl AutoSplitTimer for Timer {
     fn state(&self) -> TimerState {
-        match self.0.read().current_phase() {
+        match self.0.read().unwrap().current_phase() {
             TimerPhase::NotRunning => TimerState::NotRunning,
             TimerPhase::Running => TimerState::Running,
             TimerPhase::Paused => TimerState::Paused,
@@ -256,31 +256,31 @@ impl AutoSplitTimer for Timer {
     }
 
     fn start(&mut self) {
-        self.0.write().start()
+        self.0.write().unwrap().start()
     }
 
     fn split(&mut self) {
-        self.0.write().split()
+        self.0.write().unwrap().split()
     }
 
     fn reset(&mut self) {
-        self.0.write().reset(true)
+        self.0.write().unwrap().reset(true)
     }
 
     fn set_game_time(&mut self, time: time::Duration) {
-        self.0.write().set_game_time(time.into());
+        self.0.write().unwrap().set_game_time(time.into());
     }
 
     fn pause_game_time(&mut self) {
-        self.0.write().pause_game_time()
+        self.0.write().unwrap().pause_game_time()
     }
 
     fn resume_game_time(&mut self) {
-        self.0.write().resume_game_time()
+        self.0.write().unwrap().resume_game_time()
     }
 
     fn set_variable(&mut self, name: &str, value: &str) {
-        self.0.write().set_custom_variable(name, value)
+        self.0.write().unwrap().set_custom_variable(name, value)
     }
 }
 

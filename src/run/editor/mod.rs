@@ -55,7 +55,7 @@ pub enum OpenError {
 }
 
 /// Error type for a failed Rename.
-#[derive(PartialEq, Debug, snafu::Snafu)]
+#[derive(PartialEq, Eq, Debug, snafu::Snafu)]
 #[snafu(context(suffix(false)))]
 pub enum RenameError {
     /// Old Comparison was not found during rename.

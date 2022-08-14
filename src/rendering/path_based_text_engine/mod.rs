@@ -121,7 +121,7 @@ impl TextEngine {
         font: &mut Font<PB::Path>,
         max_width: Option<f32>,
     ) {
-        let mut label = label.write();
+        let mut label = label.write().unwrap();
         let label = &mut *label;
 
         let mut buffer = self.buffer.take().unwrap_or_else(UnicodeBuffer::new);
@@ -439,11 +439,11 @@ impl<P> LockedLabel<P> {
 
 impl<P> super::Label for Label<P> {
     fn width(&self, scale: f32) -> f32 {
-        self.read().width * scale
+        self.read().unwrap().width * scale
     }
 
     fn width_without_max_width(&self, scale: f32) -> f32 {
-        self.read().width_without_max_width * scale
+        self.read().unwrap().width_without_max_width * scale
     }
 }
 

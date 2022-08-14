@@ -1,13 +1,14 @@
-use crate::platform::prelude::*;
-use crate::Time;
-use core::cmp::min;
-use core::slice::{Iter, IterMut};
+use crate::{platform::prelude::*, Time};
+use core::{
+    cmp::min,
+    slice::{Iter, IterMut},
+};
 
 /// Stores the segment times achieved for a certain segment. Each segment is
 /// tagged with an index. Only segment times with an index larger than 0 are
 /// considered times actually achieved by the runner, while the others are
 /// artifacts of route changes and similar algorithmic changes.
-#[derive(Clone, Default, Debug, PartialEq)]
+#[derive(Clone, Default, Debug, PartialEq, Eq)]
 pub struct SegmentHistory(Vec<(i32, Time)>);
 
 impl SegmentHistory {

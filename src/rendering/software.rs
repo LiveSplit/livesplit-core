@@ -421,7 +421,7 @@ fn render_layer(
                 }
             }
             Entity::Label(label, shader, transform) => {
-                let label = label.read();
+                let label = label.read().unwrap();
                 let label = &*label;
 
                 let paint = convert_shader(
@@ -632,7 +632,7 @@ fn calculate_bounds(layer: &[Entity<SkiaPath, SkiaImage, SkiaLabel>]) -> (f32, f
                 }
             }
             Entity::Label(label, _, transform) => {
-                for glyph in label.read().glyphs() {
+                for glyph in label.read().unwrap().glyphs() {
                     if let Some(path) = &glyph.path {
                         let transform = transform.pre_translate(glyph.x, glyph.y);
                         let bounds = path.bounds();

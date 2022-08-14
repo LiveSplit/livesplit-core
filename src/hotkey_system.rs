@@ -60,17 +60,21 @@ impl Hotkey {
 
     fn callback(self, timer: SharedTimer) -> Box<dyn FnMut() + Send + 'static> {
         match self {
-            Hotkey::Split => Box::new(move || timer.write().split_or_start()),
-            Hotkey::Reset => Box::new(move || timer.write().reset(true)),
-            Hotkey::Undo => Box::new(move || timer.write().undo_split()),
-            Hotkey::Skip => Box::new(move || timer.write().skip_split()),
-            Hotkey::Pause => Box::new(move || timer.write().toggle_pause_or_start()),
-            Hotkey::UndoAllPauses => Box::new(move || timer.write().undo_all_pauses()),
+            Hotkey::Split => Box::new(move || timer.write().unwrap().split_or_start()),
+            Hotkey::Reset => Box::new(move || timer.write().unwrap().reset(true)),
+            Hotkey::Undo => Box::new(move || timer.write().unwrap().undo_split()),
+            Hotkey::Skip => Box::new(move || timer.write().unwrap().skip_split()),
+            Hotkey::Pause => Box::new(move || timer.write().unwrap().toggle_pause_or_start()),
+            Hotkey::UndoAllPauses => Box::new(move || timer.write().unwrap().undo_all_pauses()),
             Hotkey::PreviousComparison => {
-                Box::new(move || timer.write().switch_to_previous_comparison())
+                Box::new(move || timer.write().unwrap().switch_to_previous_comparison())
             }
-            Hotkey::NextComparison => Box::new(move || timer.write().switch_to_next_comparison()),
-            Hotkey::ToggleTimingMethod => Box::new(move || timer.write().toggle_timing_method()),
+            Hotkey::NextComparison => {
+                Box::new(move || timer.write().unwrap().switch_to_next_comparison())
+            }
+            Hotkey::ToggleTimingMethod => {
+                Box::new(move || timer.write().unwrap().toggle_timing_method())
+            }
         }
     }
 }

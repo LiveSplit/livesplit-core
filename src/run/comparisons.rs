@@ -20,7 +20,7 @@ use crate::{platform::prelude::*, Time};
 // could yield even better performance.
 
 /// A collection of a segment's comparison times.
-#[derive(Clone, Default, Debug, PartialEq)]
+#[derive(Clone, Default, Debug, PartialEq, Eq)]
 pub struct Comparisons(Vec<(Box<str>, Time)>);
 
 impl Comparisons {
