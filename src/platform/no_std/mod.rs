@@ -8,11 +8,11 @@ impl<T> RwLock<T> {
         Self(core::cell::RefCell::new(value))
     }
 
-    pub fn write(&self) -> core::cell::RefMut<'_, T> {
-        self.0.borrow_mut()
+    pub fn write(&self) -> Result<core::cell::RefMut<'_, T>, ()> {
+        Ok(self.0.borrow_mut())
     }
 
-    pub fn read(&self) -> core::cell::Ref<'_, T> {
-        self.0.borrow()
+    pub fn read(&self) -> Result<core::cell::Ref<'_, T>, ()> {
+        Ok(self.0.borrow())
     }
 }

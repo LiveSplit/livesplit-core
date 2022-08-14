@@ -1,7 +1,8 @@
 //! A Timer Write Lock allows temporary write access to a timer. Dispose this to
 //! release the write lock.
 
-use livesplit_core::parking_lot::RwLockWriteGuard;
+use std::sync::RwLockWriteGuard;
+
 use livesplit_core::Timer;
 
 /// type

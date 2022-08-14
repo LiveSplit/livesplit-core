@@ -49,7 +49,7 @@ impl CustomVariable {
 
 /// The Run Metadata stores additional information about a run, like the
 /// platform and region of the game. All of this information is optional.
-#[derive(Default, Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Default, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RunMetadata {
     /// The speedrun.com Run ID of the run. You need to ensure that the record
     /// on speedrun.com matches up with the Personal Best of this run. This may

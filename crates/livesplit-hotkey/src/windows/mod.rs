@@ -1,12 +1,11 @@
 use crate::KeyCode;
-use parking_lot::Mutex;
 use std::{
     cell::RefCell,
     collections::hash_map::{Entry, HashMap},
     mem, ptr,
     sync::{
         mpsc::{channel, Sender},
-        Arc,
+        Arc, Mutex,
     },
     thread,
 };
@@ -351,7 +350,7 @@ impl Hook {
 
         thread::spawn(move || {
             while let Ok(key) = events_rx.recv() {
-                if let Some(callback) = hotkey_map.lock().get_mut(&key) {
+                if let Some(callback) = hotkey_map.lock().unwrap().get_mut(&key) {
                     callback();
                 }
             }
@@ -367,7 +366,7 @@ impl Hook {
     where
         F: FnMut() + Send + 'static,
     {
-        if let Entry::Vacant(vacant) = self.hotkeys.lock().entry(hotkey) {
+        if let Entry::Vacant(vacant) = self.hotkeys.lock().unwrap().entry(hotkey) {
             vacant.insert(Box::new(callback));
             Ok(())
         } else {
@@ -377,7 +376,7 @@ impl Hook {
 
     /// Unregisters a previously registered hotkey.
     pub fn unregister(&self, hotkey: KeyCode) -> Result<()> {
-        if self.hotkeys.lock().remove(&hotkey).is_some() {
+        if self.hotkeys.lock().unwrap().remove(&hotkey).is_some() {
             Ok(())
         } else {
             Err(Error::NotRegistered)

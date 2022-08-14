@@ -176,7 +176,7 @@ impl Image {
 /// With a Cached Image ID you can track image changes. It starts with an
 /// uncached state and then gets updated with the images provided to it. It can
 /// be reset at any point in order to force a change to be detected.
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub enum CachedImageId {
     /// The initial uncached state.
     Uncached,

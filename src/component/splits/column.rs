@@ -41,7 +41,7 @@ pub struct ColumnSettings {
 
 /// Specifies the value a segment starts out with before it gets replaced
 /// with the current attempt's information when splitting.
-#[derive(Copy, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ColumnStartWith {
     /// The column starts out with an empty value.
     Empty,
@@ -59,7 +59,7 @@ pub enum ColumnStartWith {
 /// Once a certain condition is met, which is usually being on the split or
 /// already having completed the split, the time gets updated with the value
 /// specified here.
-#[derive(Copy, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ColumnUpdateWith {
     /// The value doesn't get updated and stays on the value it started out
     /// with.
@@ -89,7 +89,7 @@ pub enum ColumnUpdateWith {
 }
 
 /// Specifies when a column's value gets updated.
-#[derive(Copy, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ColumnUpdateTrigger {
     /// The value gets updated as soon as the segment is started. The value
     /// constantly updates until the segment ends.

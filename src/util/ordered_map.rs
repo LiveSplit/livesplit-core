@@ -11,7 +11,7 @@ use serde::{
 
 /// An ordered [`Map`] is a map where the iteration order of the key-value pairs is
 /// based on the order the pairs were inserted into the map.
-#[derive(Default, Clone, Debug, PartialEq)]
+#[derive(Default, Clone, Debug, PartialEq, Eq)]
 pub struct Map<V>(Vec<(Box<str>, V)>);
 
 /// An iterator over the entries of the [`Map`].

@@ -6,7 +6,7 @@ use core::ops::Sub;
 
 /// An Atomic Date Time represents a UTC Date Time that tries to be as close to
 /// an atomic clock as possible.
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct AtomicDateTime {
     /// The UTC Date Time represented by this Atomic Date Time.
     pub time: DateTime,
