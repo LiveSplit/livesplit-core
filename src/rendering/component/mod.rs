@@ -86,7 +86,8 @@ pub fn width(component: &ComponentState) -> f32 {
         ComponentState::Separator(_) => SEPARATOR_THICKNESS,
         ComponentState::Splits(state) => {
             let column_count = 2.0; // FIXME: Not always 2.
-            let split_width = 2.0 + column_count * splits::COLUMN_WIDTH;
+            let column_width = 2.75; // FIXME: Not always 2.75; difficult to calculate without a renderer.
+            let split_width = 2.0 + column_count * column_width;
             state.splits.len() as f32 * split_width
         }
         ComponentState::Text(_) => 6.0,

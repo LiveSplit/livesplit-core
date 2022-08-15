@@ -28,6 +28,7 @@ pub struct Component {
 /// Right now these are just gradients, and gradients with delta,
 /// however in the future timers may support other types of backgrounds.]
 #[derive(Copy, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(untagged)]
 pub enum DeltaGradient {
     /// A normal gradient of some kind
     Gradient(Gradient),
