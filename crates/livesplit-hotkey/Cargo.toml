@@ -17,7 +17,7 @@ winapi = { version = "0.3.2", features = [
 ], optional = true }
 
 [target.'cfg(target_os = "linux")'.dependencies]
-evdev = { version = "=0.11.4", optional = true }
+evdev = { version = "=0.12.0", optional = true }
 mio = { version = "0.8.0", default-features = false, features = ["os-ext", "os-poll"], optional = true }
 promising-future = { version = "0.2.4", optional = true }
 
