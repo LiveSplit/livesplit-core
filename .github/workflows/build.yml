@@ -324,6 +324,7 @@ jobs:
           - label: Linux i586
             target: i586-unknown-linux-gnu
             os: ubuntu-latest
+            auto_splitting: skip
 
           - label: Linux i586 musl
             target: i586-unknown-linux-musl
@@ -334,6 +335,7 @@ jobs:
           - label: Linux i686
             target: i686-unknown-linux-gnu
             os: ubuntu-latest
+            auto_splitting: skip
 
           - label: Linux i686 musl
             target: i686-unknown-linux-musl
