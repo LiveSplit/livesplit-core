@@ -300,11 +300,11 @@ fn check_dims(
             let mut expected_image = expected_image.to_rgba8();
             for (x, y, Rgba([r, g, b, a])) in expected_image.enumerate_pixels_mut() {
                 if x < hash_image.width() && y < hash_image.height() {
-                    let img_hash::image::Rgba([r2, g2, b2, a2]) = hash_image.get_pixel(x, y);
-                    *r = (*r as i16).wrapping_sub(*r2 as i16).unsigned_abs() as u8;
-                    *g = (*g as i16).wrapping_sub(*g2 as i16).unsigned_abs() as u8;
-                    *b = (*b as i16).wrapping_sub(*b2 as i16).unsigned_abs() as u8;
-                    *a = (*a).max(*a2);
+                    let img_hash::image::Rgba([r2, g2, b2, a2]) = *hash_image.get_pixel(x, y);
+                    *r = r.abs_diff(r2);
+                    *g = g.abs_diff(g2);
+                    *b = b.abs_diff(b2);
+                    *a = (*a).max(a2);
                 }
             }
             let diff_path = format!("target/renders/diff/{name}.png");

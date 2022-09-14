@@ -1,3 +1,5 @@
+use core::iter;
+
 use crate::{
     component::splits::State,
     layout::{LayoutDirection, LayoutState},
@@ -16,12 +18,12 @@ use crate::{
     settings::{Gradient, ListGradient},
 };
 
-pub const COLUMN_WIDTH: f32 = 2.75;
-
 pub struct Cache<I, L> {
     icons: Vec<Option<Icon<I>>>,
     splits: Vec<SplitCache<L>>,
     column_labels: Vec<CachedLabel<L>>,
+    column_width_label: CachedLabel<L>,
+    column_label_widths: Vec<f32>,
 }
 
 struct SplitCache<L> {
@@ -44,6 +46,8 @@ impl<I, L> Cache<I, L> {
             icons: Vec::new(),
             splits: Vec::new(),
             column_labels: Vec::new(),
+            column_width_label: CachedLabel::new(),
+            column_label_widths: Vec::new(),
         }
     }
 }
@@ -55,6 +59,10 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     component: &State,
     layout_state: &LayoutState,
 ) {
+    const COLUMN_PADDING: f32 = 0.2;
+    let max_column_width =
+        context.measure_numbers("88:88:88", &mut cache.column_width_label, DEFAULT_TEXT_SIZE);
+
     let text_color = solid(&layout_state.text_color);
 
     let split_background = match component.background {
@@ -107,6 +115,8 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         cache.icons[icon_change.segment_index] = context.create_icon(&icon_change.icon);
     }
 
+    cache.column_label_widths.clear();
+
     if let Some(column_labels) = &component.column_labels {
         if layout_state.direction == LayoutDirection::Vertical {
             cache
@@ -114,17 +124,19 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                 .resize_with(column_labels.len(), CachedLabel::new);
 
             let mut right_x = width - PADDING;
-            for (label, cache) in column_labels.iter().zip(&mut cache.column_labels) {
-                let left_x = right_x - COLUMN_WIDTH;
-                context.render_text_right_align(
+            for (label, column_cache) in column_labels.iter().zip(&mut cache.column_labels) {
+                // FIXME: The column width should depend on the column type too.
+                let left_x = context.render_text_right_align(
                     label,
-                    cache,
+                    column_cache,
                     Layer::Bottom,
                     [right_x, TEXT_ALIGN_TOP],
                     DEFAULT_TEXT_SIZE,
                     text_color,
                 );
-                right_x = left_x;
+                let label_width = right_x - left_x;
+                cache.column_label_widths.push(right_x - left_x);
+                right_x -= label_width.max(max_column_width) + COLUMN_PADDING;
             }
 
             context.translate(0.0, DEFAULT_COMPONENT_HEIGHT);
@@ -178,7 +190,15 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                 .columns
                 .resize_with(split.columns.len(), CachedLabel::new);
 
-            for (column, column_cache) in split.columns.iter().zip(&mut split_cache.columns) {
+            for ((column, column_cache), column_label_width) in
+                split.columns.iter().zip(&mut split_cache.columns).zip(
+                    cache
+                        .column_label_widths
+                        .iter()
+                        .cloned()
+                        .chain(iter::repeat(max_column_width)),
+                )
+            {
                 if !column.value.is_empty() {
                     left_x = context.render_numbers(
                         &column.value,
@@ -189,7 +209,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                         solid(&column.visual_color),
                     );
                 }
-                right_x -= COLUMN_WIDTH;
+                right_x -= max_column_width.max(column_label_width) + COLUMN_PADDING;
             }
 
             if display_two_rows {
