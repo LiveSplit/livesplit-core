@@ -25,13 +25,14 @@ The documentation is available here:
 - [Rust Documentation](https://docs.rs/livesplit-core/)
 - [TypeScript Documentation](https://livesplit.org/livesplit-core-docs/)
 
-## Applications using `livesplit-core`
+## Projects using `livesplit-core`
 
 - [LiveSplit One Web](https://github.com/LiveSplit/LiveSplitOne)
 - [LiveSplit One Desktop Prototype](https://github.com/CryZe/livesplit-one-desktop)
 - [LiveSplit One OBS Plugin](https://github.com/CryZe/obs-livesplit-one)
 - [chronos Terminal Timer](https://github.com/DarkRTA/chronos)
 - [annelid](https://github.com/dagit/annelid)
+- [splits.io (Parsing)](https://splits.io)
 
 ## Build Instructions
 
