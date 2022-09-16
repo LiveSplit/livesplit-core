@@ -13,6 +13,7 @@ mod typescript;
 mod wasm;
 mod wasm_bindgen;
 
+use clap::Parser;
 use std::{
     collections::BTreeMap,
     fs::{self, create_dir_all, remove_dir_all, File},
@@ -20,16 +21,15 @@ use std::{
     path::PathBuf,
     rc::Rc,
 };
-use structopt::StructOpt;
 use syn::{
     parse_file, FnArg, Item, ItemFn, Lit, Meta, Pat, ReturnType, Signature, Type as SynType,
     Visibility,
 };
 
-#[derive(StructOpt)]
-#[structopt(about = "Generates bindings for livesplit-core")]
+#[derive(clap::Parser)]
+#[clap(about = "Generates bindings for livesplit-core")]
 pub struct Opt {
-    #[structopt(
+    #[clap(
         long = "ruby-lib-path",
         help = "The path of the library for the Ruby bindings",
         default_value = "../liblivesplit_core.so"
@@ -167,7 +167,7 @@ fn get_comment(attrs: &[syn::Attribute]) -> Vec<String> {
 }
 
 fn main() {
-    let opt = Opt::from_args();
+    let opt = Opt::parse();
 
     let mut contents = fs::read_to_string("../src/lib.rs").unwrap();
     let file = parse_file(&contents).unwrap();
