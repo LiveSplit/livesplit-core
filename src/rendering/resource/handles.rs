@@ -78,9 +78,9 @@ impl<A: ResourceAllocator> ResourceAllocator for Handles<A> {
         self.next(circle)
     }
 
-    fn create_image(&mut self, width: u32, height: u32, data: &[u8]) -> Self::Image {
-        let image = self.allocator.create_image(width, height, data);
-        self.next(image)
+    fn create_image(&mut self, data: &[u8]) -> Option<(Self::Image, f32)> {
+        let (image, aspect_ratio) = self.allocator.create_image(data)?;
+        Some((self.next(image), aspect_ratio))
     }
 
     fn create_font(&mut self, font: Option<&Font>, kind: super::FontKind) -> Self::Font {
