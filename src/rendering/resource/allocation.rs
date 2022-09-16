@@ -59,10 +59,11 @@ pub trait ResourceAllocator {
         builder.finish()
     }
 
-    /// Creates an image out of the image data provided. The image's resolution
-    /// is provided as well. The data is an array of RGBA8 encoded pixels (red,
-    /// green, blue, alpha with each channel being an u8).
-    fn create_image(&mut self, width: u32, height: u32, data: &[u8]) -> Self::Image;
+    /// Creates an image out of the image data provided. The data represents the
+    /// image in its original file format. It needs to be parsed in order to be
+    /// visualized. The parsed image as well as the aspect ratio (width /
+    /// height) are returned in case the image was parsed successfully.
+    fn create_image(&mut self, data: &[u8]) -> Option<(Self::Image, f32)>;
 
     /// Creates a font from the font description provided. It is expected that
     /// the the font description is used in a font matching algorithm to find
@@ -191,8 +192,8 @@ impl<A: ResourceAllocator> ResourceAllocator for &mut A {
         MutPathBuilder((*self).path_builder())
     }
 
-    fn create_image(&mut self, width: u32, height: u32, data: &[u8]) -> Self::Image {
-        (*self).create_image(width, height, data)
+    fn create_image(&mut self, data: &[u8]) -> Option<(Self::Image, f32)> {
+        (*self).create_image(data)
     }
 
     fn create_font(&mut self, font: Option<&Font>, kind: FontKind) -> Self::Font {

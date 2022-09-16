@@ -38,7 +38,9 @@ cfg_if::cfg_if! {
             fn path_builder(&mut self) -> Self::PathBuilder {
                 Dummy
             }
-            fn create_image(&mut self, _: u32, _: u32, _: &[u8]) -> Self::Image {}
+            fn create_image(&mut self, _: &[u8]) -> Option<(Self::Image, f32)> {
+                Some(((), 1.0))
+            }
             fn create_font(&mut self, _: Option<&Font>, _: FontKind) -> Self::Font {}
             fn create_label(
                 &mut self,

@@ -25,7 +25,7 @@ pub use image::{self, RgbaImage};
 struct SkiaBuilder(PathBuilder);
 
 type SkiaPath = Option<UnsafeRc<Path>>;
-type SkiaImage = Option<UnsafeRc<Pixmap>>;
+type SkiaImage = UnsafeRc<Pixmap>;
 type SkiaFont = Font<SkiaPath>;
 type SkiaLabel = Label<SkiaPath>;
 
@@ -87,16 +87,27 @@ impl ResourceAllocator for SkiaAllocator {
         path_builder()
     }
 
-    fn create_image(&mut self, width: u32, height: u32, data: &[u8]) -> Self::Image {
-        let mut image = Pixmap::new(width, height)?;
-        for (d, &[r, g, b, a]) in image
-            .pixels_mut()
-            .iter_mut()
-            .zip(bytemuck::cast_slice::<_, [u8; 4]>(data))
+    fn create_image(&mut self, data: &[u8]) -> Option<(Self::Image, f32)> {
+        #[cfg(feature = "image")]
         {
-            *d = tiny_skia::ColorU8::from_rgba(r, g, b, a).premultiply();
+            let src = image::load_from_memory(data).ok()?.to_rgba8();
+            let (width, height) = (src.width(), src.height());
+            // FIXME: Turn the image into a Pixmap directly. We should not need
+            // to allocate a new Pixmap here.
+            let mut dst = Pixmap::new(width, height)?;
+            for (d, &[r, g, b, a]) in dst
+                .pixels_mut()
+                .iter_mut()
+                .zip(bytemuck::cast_slice::<u8, [u8; 4]>(&src))
+            {
+                *d = tiny_skia::ColorU8::from_rgba(r, g, b, a).premultiply();
+            }
+            Some((UnsafeRc::new(dst), width as f32 / height as f32))
         }
-        Some(UnsafeRc::new(image))
+        #[cfg(not(feature = "image"))]
+        {
+            None
+        }
     }
 
     fn create_font(&mut self, font: Option<&settings::Font>, kind: FontKind) -> Self::Font {
@@ -397,28 +408,26 @@ fn render_layer(
                 }
             }
             Entity::Image(image, transform) => {
-                if let Some(image) = image.as_deref() {
-                    canvas.fill_path(
-                        rectangle,
-                        &Paint {
-                            shader: Pattern::new(
-                                image.as_ref(),
-                                SpreadMode::Pad,
-                                FilterQuality::Bilinear,
-                                1.0,
-                                tiny_skia::Transform::from_scale(
-                                    1.0 / image.width() as f32,
-                                    1.0 / image.height() as f32,
-                                ),
+                canvas.fill_path(
+                    rectangle,
+                    &Paint {
+                        shader: Pattern::new(
+                            image.as_ref(),
+                            SpreadMode::Pad,
+                            FilterQuality::Bilinear,
+                            1.0,
+                            tiny_skia::Transform::from_scale(
+                                1.0 / image.width() as f32,
+                                1.0 / image.height() as f32,
                             ),
-                            anti_alias: true,
-                            ..Default::default()
-                        },
-                        FillRule::Winding,
-                        convert_transform(transform),
-                        None,
-                    );
-                }
+                        ),
+                        anti_alias: true,
+                        ..Default::default()
+                    },
+                    FillRule::Winding,
+                    convert_transform(transform),
+                    None,
+                );
             }
             Entity::Label(label, shader, transform) => {
                 let label = label.read().unwrap();
@@ -622,13 +631,11 @@ fn calculate_bounds(layer: &[Entity<SkiaPath, SkiaImage, SkiaLabel>]) -> (f32, f
                     }
                 }
             }
-            Entity::Image(image, transform) => {
-                if image.is_some() {
-                    for y in [0.0, 1.0] {
-                        let transformed_y = transform.transform_y(y);
-                        min_y = min_y.min(transformed_y);
-                        max_y = max_y.max(transformed_y);
-                    }
+            Entity::Image(_, transform) => {
+                for y in [0.0, 1.0] {
+                    let transformed_y = transform.transform_y(y);
+                    min_y = min_y.min(transformed_y);
+                    max_y = max_y.max(transformed_y);
                 }
             }
             Entity::Label(label, _, transform) => {
