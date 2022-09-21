@@ -17,7 +17,7 @@ wasmtime = { version = "0.40.0", default-features = false, features = [
   "cranelift",
   "parallel-compilation",
 ] }
-wasmtime-wasi = { version = "0.40.0", optional = true }
+wasmtime-wasi = { version = "1.0.0", optional = true }
 
 [features]
 unstable = ["wasmtime-wasi"]
