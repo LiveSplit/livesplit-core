@@ -40,13 +40,19 @@ You can install Rust with the installer available on [rustup.rs](https://rustup.
 Clone the repository and build the library with the following command:
 
 ```bash
-# Dynamic Library
-cargo build --release -p cdylib
-# Static Library
-cargo build --release -p staticlib
+cargo build --release -p livesplit-core-capi
 ```
 
-The library will then be available as a shared and static library in the `target` folder.
+The library will then be available as a shared and static library in the
+`target` folder. If you only want to build the library as a shared or static
+library, not both, you can run either one of the following commands:
+
+```bash
+# Shared Library
+cargo rustc --release -p livesplit-core-capi --crate-type cdylib
+# Static Library
+cargo rustc --release -p capi --crate-type staticlib
+```
 
 If you want to build the bindings for the library too, you need to go into the
 `capi/bind_gen` folder and run the following command:
@@ -64,10 +70,11 @@ Builds for a lot of common platforms are available in the [Releases](https://git
 ## License
 
 Licensed under either of
-  * Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or
-    http://www.apache.org/licenses/LICENSE-2.0)
-  * MIT license ([LICENSE-MIT](LICENSE-MIT) or
-    http://opensource.org/licenses/MIT) at your option.
+
+- Apache License, Version 2.0 ([LICENSE-APACHE](LICENSE-APACHE) or
+  http://www.apache.org/licenses/LICENSE-2.0)
+- MIT license ([LICENSE-MIT](LICENSE-MIT) or http://opensource.org/licenses/MIT)
+  at your option.
 
 ### Contribution
 

@@ -30,7 +30,7 @@ rust-version = "1.63"
 all-features = true
 
 [workspace]
-members = ["capi", "capi/bind_gen", "capi/staticlib", "capi/cdylib", "crates/*"]
+members = ["capi", "capi/bind_gen", "crates/*"]
 
 [dependencies]
 # core
