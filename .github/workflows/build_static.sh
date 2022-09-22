@@ -17,13 +17,13 @@ main() {
 
     case $TARGET in
         wasm32-unknown-unknown)
-            $cargo build -p cdylib --target $TARGET $release_flag $FEATURES
+            $cargo rustc -p livesplit-core-capi --crate-type cdylib --target $TARGET $release_flag $FEATURES
             ;;
         wasm32-wasi)
-            $cargo build -p cdylib --target $TARGET $release_flag $FEATURES
+            $cargo rustc -p livesplit-core-capi --crate-type cdylib --target $TARGET $release_flag $FEATURES
             ;;
         *)
-            $cargo build -p staticlib --target $TARGET $release_flag $FEATURES
+            $cargo rustc -p livesplit-core-capi --crate-type staticlib --target $TARGET $release_flag $FEATURES
             ;;
     esac
 }

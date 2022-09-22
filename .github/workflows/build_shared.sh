@@ -10,7 +10,7 @@ main() {
         release_flag="--release"
     fi
 
-    $cargo build -p cdylib --target $TARGET $release_flag $FEATURES
+    $cargo rustc -p livesplit-core-capi --crate-type cdylib --target $TARGET $release_flag $FEATURES
 }
 
 main
