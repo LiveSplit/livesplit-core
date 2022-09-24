@@ -3,7 +3,10 @@ use super::{
     timing_method_override, Error, GradientBuilder, GradientKind, ListGradientKind, Result,
 };
 use crate::{
-    component::splits,
+    component::splits::{
+        self, ColumnKind, ColumnSettings, ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith,
+        TimeColumn,
+    },
     platform::prelude::*,
     util::xml::{helper::text_as_escaped_string_err, Reader},
 };
@@ -44,9 +47,10 @@ pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()
                         settings.columns.clear();
 
                         parse_children(reader, |reader, _, _| {
-                            let mut column = splits::ColumnSettings::default();
+                            let mut column_name = String::new();
+                            let mut column = TimeColumn::default();
                             parse_children(reader, |reader, tag, _| match tag.name() {
-                                "Name" => text(reader, |v| column.name = v.into_owned()),
+                                "Name" => text(reader, |v| column_name = v.into_owned()),
                                 "Comparison" => {
                                     comparison_override(reader, |v| column.comparison_override = v)
                                 }
@@ -54,10 +58,6 @@ pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()
                                     timing_method_override(reader, |v| column.timing_method = v)
                                 }
                                 "Type" => text_as_escaped_string_err(reader, |v| {
-                                    use self::splits::{
-                                        ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith,
-                                    };
-
                                     (
                                         column.start_with,
                                         column.update_with,
@@ -100,7 +100,13 @@ pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()
                                 }),
                                 _ => end_tag(reader),
                             })?;
-                            settings.columns.insert(0, column);
+                            settings.columns.insert(
+                                0,
+                                splits::ColumnSettings {
+                                    name: column_name,
+                                    kind: ColumnKind::Time(column),
+                                },
+                            );
                             Ok(())
                         })
                     }
@@ -108,35 +114,42 @@ pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()
                         // Version < 1.5
                         comparison_override(reader, |v| {
                             for column in &mut settings.columns {
-                                column.comparison_override = v.clone();
+                                if let ColumnKind::Time(column) = &mut column.kind {
+                                    column.comparison_override = v.clone();
+                                }
                             }
                         })
                     }
                     "ShowSplitTimes" => {
                         // Version < 1.5
-                        use self::splits::{
-                            ColumnSettings, ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith,
-                        };
                         parse_bool(reader, |b| {
                             if !b {
                                 let comparison_override =
-                                    settings.columns.pop().and_then(|c| c.comparison_override);
+                                    settings.columns.pop().and_then(|c| match c.kind {
+                                        ColumnKind::Variable(_) => None,
+                                        ColumnKind::Time(c) => c.comparison_override,
+                                    });
+
                                 settings.columns.clear();
                                 settings.columns.push(ColumnSettings {
                                     name: String::from("Time"),
-                                    start_with: ColumnStartWith::ComparisonTime,
-                                    update_with: ColumnUpdateWith::SplitTime,
-                                    update_trigger: ColumnUpdateTrigger::OnEndingSegment,
-                                    comparison_override: comparison_override.clone(),
-                                    timing_method: None,
+                                    kind: ColumnKind::Time(TimeColumn {
+                                        start_with: ColumnStartWith::ComparisonTime,
+                                        update_with: ColumnUpdateWith::SplitTime,
+                                        update_trigger: ColumnUpdateTrigger::OnEndingSegment,
+                                        comparison_override: comparison_override.clone(),
+                                        timing_method: None,
+                                    }),
                                 });
                                 settings.columns.push(ColumnSettings {
                                     name: String::from("+/−"),
-                                    start_with: ColumnStartWith::Empty,
-                                    update_with: ColumnUpdateWith::Delta,
-                                    update_trigger: ColumnUpdateTrigger::Contextual,
-                                    comparison_override,
-                                    timing_method: None,
+                                    kind: ColumnKind::Time(TimeColumn {
+                                        start_with: ColumnStartWith::Empty,
+                                        update_with: ColumnUpdateWith::Delta,
+                                        update_trigger: ColumnUpdateTrigger::Contextual,
+                                        comparison_override,
+                                        timing_method: None,
+                                    }),
                                 });
                             }
                         })

@@ -13,6 +13,15 @@ use crate::{
 use core::result::Result as StdResult;
 use serde::{Deserialize, Serialize};
 
+/// Describes the kind of a column.
+#[derive(Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ColumnKind {
+    /// The column shows a time.
+    Time,
+    /// The column shows a variable.
+    Variable,
+}
+
 /// Describes a setting's value. Such a value can be of a variety of different
 /// types.
 #[derive(Clone, PartialEq, Serialize, Deserialize)]
@@ -45,6 +54,8 @@ pub enum Value {
     ListGradient(ListGradient),
     /// An alignment for the Title Component's title.
     Alignment(Alignment),
+    /// A column kind.
+    ColumnKind(ColumnKind),
     /// A value describing what a column of the Splits Component starts out
     /// with.
     ColumnStartWith(ColumnStartWith),
@@ -182,6 +193,12 @@ impl From<Option<Font>> for Value {
 impl From<DeltaGradient> for Value {
     fn from(x: DeltaGradient) -> Self {
         Value::DeltaGradient(x)
+    }
+}
+
+impl From<ColumnKind> for Value {
+    fn from(x: ColumnKind) -> Self {
+        Value::ColumnKind(x)
     }
 }
 
@@ -365,6 +382,14 @@ impl Value {
             _ => Err(Error::WrongType),
         }
     }
+
+    /// Tries to convert the value into a column kind.
+    pub fn into_column_kind(self) -> Result<ColumnKind> {
+        match self {
+            Value::ColumnKind(v) => Ok(v),
+            _ => Err(Error::WrongType),
+        }
+    }
 }
 
 impl From<Value> for bool {
@@ -484,5 +509,11 @@ impl From<Value> for Option<Font> {
 impl From<Value> for DeltaGradient {
     fn from(value: Value) -> Self {
         value.into_delta_gradient().unwrap()
+    }
+}
+
+impl From<Value> for ColumnKind {
+    fn from(value: Value) -> Self {
+        value.into_column_kind().unwrap()
     }
 }

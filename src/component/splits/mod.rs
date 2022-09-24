@@ -8,7 +8,8 @@
 use crate::{
     platform::prelude::*,
     settings::{
-        CachedImageId, Color, Field, Gradient, ImageData, ListGradient, SettingsDescription, Value,
+        self, CachedImageId, Color, Field, Gradient, ImageData, ListGradient, SettingsDescription,
+        Value,
     },
     timing::{formatter::Accuracy, Snapshot},
     util::{Clear, ClearVec},
@@ -23,11 +24,13 @@ mod tests;
 mod column;
 
 pub use column::{
-    ColumnSettings, ColumnStartWith, ColumnState, ColumnUpdateTrigger, ColumnUpdateWith,
+    ColumnKind, ColumnSettings, ColumnStartWith, ColumnState, ColumnUpdateTrigger,
+    ColumnUpdateWith, TimeColumn, VariableColumn,
 };
 
 const SETTINGS_BEFORE_COLUMNS: usize = 15;
-const SETTINGS_PER_COLUMN: usize = 6;
+const SETTINGS_PER_TIME_COLUMN: usize = 6;
+const SETTINGS_PER_VARIABLE_COLUMN: usize = 2;
 
 /// The Splits Component is the main component for visualizing all the split
 /// times. Each segment is shown in a tabular fashion showing the segment icon,
@@ -202,19 +205,23 @@ impl Default for Settings {
             columns: vec![
                 ColumnSettings {
                     name: String::from("Time"),
-                    start_with: ColumnStartWith::ComparisonTime,
-                    update_with: ColumnUpdateWith::SplitTime,
-                    update_trigger: ColumnUpdateTrigger::OnEndingSegment,
-                    comparison_override: None,
-                    timing_method: None,
+                    kind: ColumnKind::Time(TimeColumn {
+                        start_with: ColumnStartWith::ComparisonTime,
+                        update_with: ColumnUpdateWith::SplitTime,
+                        update_trigger: ColumnUpdateTrigger::OnEndingSegment,
+                        comparison_override: None,
+                        timing_method: None,
+                    }),
                 },
                 ColumnSettings {
                     name: String::from("+/−"),
-                    start_with: ColumnStartWith::Empty,
-                    update_with: ColumnUpdateWith::Delta,
-                    update_trigger: ColumnUpdateTrigger::Contextual,
-                    comparison_override: None,
-                    timing_method: None,
+                    kind: ColumnKind::Time(TimeColumn {
+                        start_with: ColumnStartWith::Empty,
+                        update_with: ColumnUpdateWith::Delta,
+                        update_trigger: ColumnUpdateTrigger::Contextual,
+                        comparison_override: None,
+                        timing_method: None,
+                    }),
                 },
             ],
         }
@@ -506,32 +513,58 @@ impl Component {
             ),
         ]);
 
-        settings
-            .fields
-            .reserve_exact(SETTINGS_PER_COLUMN * self.settings.columns.len());
+        settings.fields.reserve_exact(
+            self.settings
+                .columns
+                .iter()
+                .map(|column| match column.kind {
+                    ColumnKind::Variable(_) => SETTINGS_PER_VARIABLE_COLUMN,
+                    ColumnKind::Time(_) => SETTINGS_PER_TIME_COLUMN,
+                })
+                .sum(),
+        );
 
         for column in &self.settings.columns {
             settings
                 .fields
                 .push(Field::new("Column Name".into(), column.name.clone().into()));
-            settings
-                .fields
-                .push(Field::new("Start With".into(), column.start_with.into()));
-            settings
-                .fields
-                .push(Field::new("Update With".into(), column.update_with.into()));
-            settings.fields.push(Field::new(
-                "Update Trigger".into(),
-                column.update_trigger.into(),
-            ));
-            settings.fields.push(Field::new(
-                "Comparison".into(),
-                column.comparison_override.clone().into(),
-            ));
-            settings.fields.push(Field::new(
-                "Timing Method".into(),
-                column.timing_method.into(),
-            ));
+
+            match &column.kind {
+                ColumnKind::Variable(column) => {
+                    settings.fields.push(Field::new(
+                        "Column Type".into(),
+                        settings::ColumnKind::Variable.into(),
+                    ));
+                    settings.fields.push(Field::new(
+                        "Variable Name".into(),
+                        column.variable_name.clone().into(),
+                    ));
+                }
+                ColumnKind::Time(column) => {
+                    settings.fields.push(Field::new(
+                        "Column Type".into(),
+                        settings::ColumnKind::Time.into(),
+                    ));
+                    settings
+                        .fields
+                        .push(Field::new("Start With".into(), column.start_with.into()));
+                    settings
+                        .fields
+                        .push(Field::new("Update With".into(), column.update_with.into()));
+                    settings.fields.push(Field::new(
+                        "Update Trigger".into(),
+                        column.update_trigger.into(),
+                    ));
+                    settings.fields.push(Field::new(
+                        "Comparison".into(),
+                        column.comparison_override.clone().into(),
+                    ));
+                    settings.fields.push(Field::new(
+                        "Timing Method".into(),
+                        column.timing_method.into(),
+                    ));
+                }
+            }
         }
 
         settings
@@ -565,22 +598,49 @@ impl Component {
                 self.settings.columns.resize(new_len, Default::default());
             }
             index => {
-                let index = index - SETTINGS_BEFORE_COLUMNS;
-                let column_index = index / SETTINGS_PER_COLUMN;
-                let setting_index = index % SETTINGS_PER_COLUMN;
-                if let Some(column) = self.settings.columns.get_mut(column_index) {
-                    match setting_index {
-                        0 => column.name = value.into(),
-                        1 => column.start_with = value.into(),
-                        2 => column.update_with = value.into(),
-                        3 => column.update_trigger = value.into(),
-                        4 => column.comparison_override = value.into(),
-                        5 => column.timing_method = value.into(),
-                        _ => unreachable!(),
+                let mut index = index - SETTINGS_BEFORE_COLUMNS;
+                for column in &mut self.settings.columns {
+                    if index < 2 {
+                        match index {
+                            0 => column.name = value.into(),
+                            _ => {
+                                column.kind = match settings::ColumnKind::from(value) {
+                                    settings::ColumnKind::Time => {
+                                        ColumnKind::Time(Default::default())
+                                    }
+                                    settings::ColumnKind::Variable => {
+                                        ColumnKind::Variable(Default::default())
+                                    }
+                                }
+                            }
+                        }
+                        return;
                     }
-                } else {
-                    panic!("Unsupported Setting Index")
+                    index -= 2;
+                    match &mut column.kind {
+                        ColumnKind::Variable(column) => {
+                            if index < 1 {
+                                column.variable_name = value.into();
+                                return;
+                            }
+                            index -= 1;
+                        }
+                        ColumnKind::Time(column) => {
+                            if index < 5 {
+                                match index {
+                                    0 => column.start_with = value.into(),
+                                    1 => column.update_with = value.into(),
+                                    2 => column.update_trigger = value.into(),
+                                    3 => column.comparison_override = value.into(),
+                                    _ => column.timing_method = value.into(),
+                                }
+                                return;
+                            }
+                            index -= 5;
+                        }
+                    }
                 }
+                panic!("Unsupported Setting Index")
             }
         }
     }

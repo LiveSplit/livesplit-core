@@ -3,6 +3,7 @@ use super::{
     State,
 };
 use crate::{
+    component::splits::{ColumnKind, TimeColumn},
     settings::SemanticColor::{
         self, AheadGainingTime as AheadGaining, BehindLosingTime as BehindLosing,
         BestSegment as Best, Default as Text,
@@ -490,8 +491,11 @@ fn check_columns(
     let layout_settings = Default::default();
     let mut component = Component::with_settings(Settings {
         columns: vec![ColumnSettings {
-            start_with,
-            update_with,
+            kind: ColumnKind::Time(TimeColumn {
+                start_with,
+                update_with,
+                ..Default::default()
+            }),
             ..Default::default()
         }],
         fill_with_blank_space: false,
@@ -1079,9 +1083,12 @@ fn check_columns_update_trigger(
     let layout_settings = Default::default();
     let mut component = Component::with_settings(Settings {
         columns: vec![ColumnSettings {
-            start_with: ColumnStartWith::Empty,
-            update_with,
-            update_trigger,
+            kind: ColumnKind::Time(TimeColumn {
+                start_with: ColumnStartWith::Empty,
+                update_with,
+                update_trigger,
+                ..Default::default()
+            }),
             ..Default::default()
         }],
         fill_with_blank_space: false,
@@ -1157,8 +1164,11 @@ fn column_delta_best_segment_colors() {
     let layout_settings = Default::default();
     let mut component = Component::with_settings(Settings {
         columns: vec![ColumnSettings {
-            start_with: ColumnStartWith::Empty,
-            update_with: ColumnUpdateWith::Delta,
+            kind: ColumnKind::Time(TimeColumn {
+                start_with: ColumnStartWith::Empty,
+                update_with: ColumnUpdateWith::Delta,
+                ..Default::default()
+            }),
             ..Default::default()
         }],
         fill_with_blank_space: false,
@@ -1249,8 +1259,11 @@ fn delta_or_split_time() {
     let layout_settings = Default::default();
     let mut component = Component::with_settings(Settings {
         columns: vec![ColumnSettings {
-            start_with: ColumnStartWith::ComparisonTime,
-            update_with: ColumnUpdateWith::DeltaWithFallback,
+            kind: ColumnKind::Time(TimeColumn {
+                start_with: ColumnStartWith::ComparisonTime,
+                update_with: ColumnUpdateWith::DeltaWithFallback,
+                ..Default::default()
+            }),
             ..Default::default()
         }],
         fill_with_blank_space: false,

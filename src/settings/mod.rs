@@ -20,5 +20,5 @@ pub use self::{
     image::{CachedImageId, Image, ImageData},
     semantic_color::SemanticColor,
     settings_description::SettingsDescription,
-    value::{Error as ValueError, Result as ValueResult, Value},
+    value::{Error as ValueError, Result as ValueResult, Value, ColumnKind},
 };

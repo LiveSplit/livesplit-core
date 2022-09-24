@@ -1,3 +1,5 @@
+use hashbrown::HashMap;
+
 use super::Comparisons;
 use crate::{
     comparison::personal_best, platform::prelude::*, settings::Image, util::PopulateString,
@@ -26,6 +28,7 @@ pub struct Segment {
     split_time: Time,
     segment_history: SegmentHistory,
     comparisons: Comparisons,
+    variables: HashMap<String, String>,
 }
 
 impl Segment {
@@ -175,5 +178,28 @@ impl Segment {
     #[inline]
     pub fn segment_history_mut(&mut self) -> &mut SegmentHistory {
         &mut self.segment_history
+    }
+
+    /// Accesses the segment's variables for the current attempt.
+    pub const fn variables(&self) -> &HashMap<String, String> {
+        &self.variables
+    }
+
+    /// Grants mutable access to the segment's variables for the current
+    /// attempt.
+    pub fn variables_mut(&mut self) -> &mut HashMap<String, String> {
+        &mut self.variables
+    }
+
+    /// Clears the variables of the current attempt.
+    pub fn clear_variables(&mut self) {
+        self.variables.clear();
+    }
+
+    /// Clears all the information the segment stores when it has been splitted,
+    /// such as the split's time and variables.
+    pub fn clear_split_info(&mut self) {
+        self.clear_variables();
+        self.clear_split_time();
     }
 }
