@@ -202,11 +202,10 @@ impl SkillCurve {
                 .fold(offset, |sum, segment_time| sum + segment_time);
 
             // Binary search the correct percentile
-            match sum.partial_cmp(&time_to_find) {
-                Some(Ordering::Equal) => return percentile,
-                Some(Ordering::Less) => perc_min = percentile,
-                Some(Ordering::Greater) => perc_max = percentile,
-                None => {}
+            match sum.cmp(&time_to_find) {
+                Ordering::Equal => return percentile,
+                Ordering::Less => perc_min = percentile,
+                Ordering::Greater => perc_max = percentile,
             }
         }
 

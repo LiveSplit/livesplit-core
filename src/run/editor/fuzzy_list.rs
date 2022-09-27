@@ -1,6 +1,5 @@
-use crate::platform::prelude::*;
+use crate::{platform::prelude::*, util::not_nan::NotNaN};
 use alloc::collections::BinaryHeap;
-use core::usize;
 
 /// With a Fuzzy List, you can implement a fuzzy searching algorithm. The list
 /// stores all the items that can be searched for. With the `search` method you
@@ -44,7 +43,7 @@ impl FuzzyList {
                 if heap.len() >= max {
                     heap.pop();
                 }
-                heap.push((usize::MAX - score, element));
+                heap.push((NotNaN(-score), element));
             }
         }
         heap.into_sorted_vec()
@@ -54,24 +53,24 @@ impl FuzzyList {
     }
 }
 
-fn match_against(pattern: &str, text: &str) -> Option<usize> {
-    let (mut current_score, mut total_score) = (0, 0);
+fn match_against(pattern: &str, text: &str) -> Option<f64> {
+    let (mut current_score, mut total_score) = (0.0, 0.0);
     let mut pattern_chars = pattern.chars();
     let mut pattern_char = pattern_chars.next();
 
     for c in text.chars() {
         if pattern_char == Some(c) {
             pattern_char = pattern_chars.next();
-            current_score = 1 + 2 * current_score;
+            current_score = 1.0 + 2.0 * current_score;
         } else {
-            current_score = 0;
+            current_score = 0.0;
         }
         total_score += current_score;
     }
 
     if pattern_char.is_none() {
         if pattern == text {
-            Some(usize::MAX)
+            Some(f64::INFINITY)
         } else {
             Some(total_score)
         }
