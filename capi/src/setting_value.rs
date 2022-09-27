@@ -3,11 +3,14 @@
 
 use crate::{output_vec, str, Json};
 use livesplit_core::{
-    component::splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith},
+    component::{
+        splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith},
+        timer::DeltaGradient,
+    },
     layout::LayoutDirection,
     settings::{
-        Alignment, Color, Font, FontStretch, FontStyle, FontWeight, Gradient, ListGradient,
-        Value as SettingValue,
+        Alignment, Color, ColumnKind, Font, FontStretch, FontStyle, FontWeight, Gradient,
+        ListGradient, Value as SettingValue,
     },
     timing::formatter::{Accuracy, DigitsFormat},
     TimingMethod,
@@ -231,8 +234,23 @@ pub unsafe extern "C" fn SettingValue_from_alignment(
     Some(Box::new(value.into()))
 }
 
-/// Creates a new setting value from the column start with name provided. If it
-/// doesn't match a known column start with, <NULL> is returned.
+/// Creates a new setting value from the column kind with the name provided. If
+/// it doesn't match a known column kind, <NULL> is returned.
+#[no_mangle]
+pub unsafe extern "C" fn SettingValue_from_column_kind(
+    value: *const c_char,
+) -> NullableOwnedSettingValue {
+    let value = str(value);
+    let value = match value {
+        "Time" => ColumnKind::Time,
+        "Variable" => ColumnKind::Variable,
+        _ => return None,
+    };
+    Some(Box::new(value.into()))
+}
+
+/// Creates a new setting value from the column start with the name provided. If
+/// it doesn't match a known column start with, <NULL> is returned.
 #[no_mangle]
 pub unsafe extern "C" fn SettingValue_from_column_start_with(
     value: *const c_char,
@@ -248,8 +266,8 @@ pub unsafe extern "C" fn SettingValue_from_column_start_with(
     Some(Box::new(value.into()))
 }
 
-/// Creates a new setting value from the column update with name provided. If it
-/// doesn't match a known column update with, <NULL> is returned.
+/// Creates a new setting value from the column update with the name provided.
+/// If it doesn't match a known column update with, <NULL> is returned.
 #[no_mangle]
 pub unsafe extern "C" fn SettingValue_from_column_update_with(
     value: *const c_char,
@@ -350,4 +368,20 @@ pub unsafe extern "C" fn SettingValue_from_font(
 #[no_mangle]
 pub extern "C" fn SettingValue_from_empty_font() -> OwnedSettingValue {
     Box::new(None::<Font>.into())
+}
+
+/// Creates a new setting value from the delta gradient with the name provided.
+/// If it doesn't match a known delta gradient, <NULL> is returned.
+#[no_mangle]
+pub unsafe extern "C" fn SettingValue_from_delta_gradient(
+    value: *const c_char,
+) -> NullableOwnedSettingValue {
+    let value = str(value);
+    let value = match value {
+        "DeltaPlain" => DeltaGradient::DeltaPlain,
+        "DeltaVertical" => DeltaGradient::DeltaVertical,
+        "DeltaHorizontal" => DeltaGradient::DeltaHorizontal,
+        _ => return None,
+    };
+    Some(Box::new(value.into()))
 }

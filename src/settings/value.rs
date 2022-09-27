@@ -378,6 +378,8 @@ impl Value {
     /// Tries to convert the value into a delta gradient.
     pub fn into_delta_gradient(self) -> Result<DeltaGradient> {
         match self {
+            Value::Color(v) => Ok(Gradient::Plain(v).into()),
+            Value::Gradient(v) => Ok(v.into()),
             Value::DeltaGradient(v) => Ok(v),
             _ => Err(Error::WrongType),
         }

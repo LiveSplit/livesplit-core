@@ -621,13 +621,21 @@ export type SettingsDescriptionValueJson =
     { Gradient: Gradient } |
     { ListGradient: ListGradient } |
     { Alignment: Alignment } |
+    { ColumnKind: ColumnKind } |
     { ColumnStartWith: ColumnStartWith } |
     { ColumnUpdateWith: ColumnUpdateWith } |
     { ColumnUpdateTrigger: ColumnUpdateTrigger } |
     { Hotkey: string } |
     { LayoutDirection: LayoutDirection } |
     { Font: Font | null } |
+    { DeltaGradient: DeltaGradient } |
     { CustomCombobox: CustomCombobox };
+
+/** Describes the kind of a column. */
+export type ColumnKind = "Time" | "Variable";
+
+/** Represents the possible backgrounds for a timer. */
+export type DeltaGradient = Gradient | "DeltaPlain" | "DeltaVertical" | "DeltaHorizontal";
 
 /** Describes the direction the components of a layout are laid out in. */
 export type LayoutDirection = "Vertical" | "Horizontal";
