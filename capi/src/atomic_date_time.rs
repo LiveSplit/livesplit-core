@@ -4,7 +4,7 @@
 use crate::output_vec;
 use livesplit_core::AtomicDateTime;
 use std::os::raw::c_char;
-use time::{format_description::well_known::Rfc3339, macros::format_description};
+use time::format_description::well_known::Rfc3339;
 
 /// type
 pub type OwnedAtomicDateTime = Box<AtomicDateTime>;
@@ -23,14 +23,6 @@ pub extern "C" fn AtomicDateTime_drop(this: OwnedAtomicDateTime) {
 #[no_mangle]
 pub extern "C" fn AtomicDateTime_is_synchronized(this: &AtomicDateTime) -> bool {
     this.synced_with_atomic_clock
-}
-
-/// Converts this atomic date time into a RFC 2822 formatted date time.
-#[no_mangle]
-pub extern "C" fn AtomicDateTime_to_rfc2822(this: &AtomicDateTime) -> *const c_char {
-    output_vec(|o| {
-        let _ = this.time.format_into(o, &format_description!("[weekday repr:short], [day padding:none] [month repr:short] [year] [hour]:[minute]:[second] [offset_hour sign:mandatory][offset_minute]"));
-    })
 }
 
 /// Converts this atomic date time into a RFC 3339 formatted date time.
