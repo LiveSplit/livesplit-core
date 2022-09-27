@@ -2,6 +2,7 @@
 
 pub(crate) mod byte_parsing;
 mod clear_vec;
+pub(crate) mod not_nan;
 pub mod ordered_map;
 mod populate_string;
 #[cfg(test)]
