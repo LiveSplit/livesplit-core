@@ -1,6 +1,6 @@
 use crate::KeyCode;
 use wasm_bindgen::{prelude::*, JsCast};
-use web_sys::{window, Gamepad, GamepadButton, KeyboardEvent};
+use web_sys::{window, Event, Gamepad, GamepadButton, KeyboardEvent};
 
 use std::{
     cell::Cell,
@@ -26,7 +26,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// A hook allows you to listen to hotkeys.
 pub struct Hook {
     hotkeys: Arc<Mutex<HashMap<KeyCode, Box<dyn FnMut() + Send + 'static>>>>,
-    keyboard_callback: Closure<dyn FnMut(KeyboardEvent)>,
+    keyboard_callback: Closure<dyn FnMut(Event)>,
     gamepad_callback: Closure<dyn FnMut()>,
     interval_id: Cell<Option<i32>>,
 }
@@ -80,15 +80,21 @@ impl Hook {
         let window = window().ok_or(Error::FailedToCreateHook)?;
 
         let hotkey_map = hotkeys.clone();
-        let keyboard_callback = Closure::wrap(Box::new(move |event: KeyboardEvent| {
-            if !event.repeat() {
-                if let Ok(code) = event.code().parse() {
-                    if let Some(callback) = hotkey_map.lock().unwrap().get_mut(&code) {
-                        callback();
+        let keyboard_callback = Closure::wrap(Box::new(move |event: Event| {
+            // Despite all sorts of documentation claiming that `keydown` events
+            // pass you a `KeyboardEvent`, this is not actually always the case
+            // in browsers. At least in Chrome selecting an element of an
+            // `input` sends a `keydown` event that is not a `KeyboardEvent`.
+            if let Ok(event) = event.dyn_into::<KeyboardEvent>() {
+                if !event.repeat() {
+                    if let Ok(code) = event.code().parse() {
+                        if let Some(callback) = hotkey_map.lock().unwrap().get_mut(&code) {
+                            callback();
+                        }
                     }
                 }
             }
-        }) as Box<dyn FnMut(KeyboardEvent)>);
+        }) as Box<dyn FnMut(Event)>);
 
         window
             .add_event_listener_with_callback("keydown", keyboard_callback.as_ref().unchecked_ref())
