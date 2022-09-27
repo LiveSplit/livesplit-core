@@ -25,10 +25,8 @@ pub struct Component {
 }
 
 /// Represents the possible backgrounds for a timer.
-/// Right now these are just gradients, and gradients with delta,
-/// however in the future timers may support other types of backgrounds.]
 #[derive(Copy, Clone, PartialEq, Serialize, Deserialize)]
-#[serde(untagged)]
+#[serde(from = "serialize::DeltaGradient", into = "serialize::DeltaGradient")]
 pub enum DeltaGradient {
     /// A normal gradient of some kind
     Gradient(Gradient),
@@ -376,5 +374,49 @@ fn calculate_live_segment_time(
         Some(timer.run().offset())
     } else {
         Some(timer.current_time()[timing_method]? - last_split?)
+    }
+}
+
+// FIXME: Workaround for #[serde(flatten)] not being a thing on enums.
+mod serialize {
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[serde(untagged)]
+    pub enum DeltaGradient {
+        Gradient(super::Gradient),
+        Delta(Delta),
+    }
+
+    #[derive(serde::Serialize, serde::Deserialize)]
+    #[allow(clippy::enum_variant_names)]
+    pub enum Delta {
+        DeltaPlain,
+        DeltaVertical,
+        DeltaHorizontal,
+    }
+
+    impl From<DeltaGradient> for super::DeltaGradient {
+        fn from(v: DeltaGradient) -> Self {
+            match v {
+                DeltaGradient::Gradient(g) => super::DeltaGradient::Gradient(g),
+                DeltaGradient::Delta(d) => match d {
+                    Delta::DeltaPlain => super::DeltaGradient::DeltaPlain,
+                    Delta::DeltaVertical => super::DeltaGradient::DeltaVertical,
+                    Delta::DeltaHorizontal => super::DeltaGradient::DeltaHorizontal,
+                },
+            }
+        }
+    }
+
+    impl From<super::DeltaGradient> for DeltaGradient {
+        fn from(v: super::DeltaGradient) -> Self {
+            match v {
+                super::DeltaGradient::Gradient(g) => DeltaGradient::Gradient(g),
+                super::DeltaGradient::DeltaPlain => DeltaGradient::Delta(Delta::DeltaPlain),
+                super::DeltaGradient::DeltaVertical => DeltaGradient::Delta(Delta::DeltaVertical),
+                super::DeltaGradient::DeltaHorizontal => {
+                    DeltaGradient::Delta(Delta::DeltaHorizontal)
+                }
+            }
+        }
     }
 }
