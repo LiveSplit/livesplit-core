@@ -11,8 +11,6 @@ use crate::{settings::Image, AtomicDateTime};
 use alloc::borrow::Cow;
 use core::{fmt::Write, num::ParseIntError, result::Result as StdResult};
 use snafu::{OptionExt, ResultExt};
-#[cfg(feature = "std")]
-use time::{macros::format_description, PrimitiveDateTime};
 
 /// The Error type for splits files that couldn't be parsed by the Time
 /// Split Tracker Parser.
@@ -204,12 +202,7 @@ fn parse_history(run: &mut Run, path: Option<PathBuf>) -> StdResult<(), ()> {
         for line in lines {
             let mut splits = line.split('\t');
             let time_stamp = splits.next().ok_or(())?;
-            let started = PrimitiveDateTime::parse(
-                time_stamp,
-                &format_description!("[year]/[month]/[day] [hour]:[minute]"),
-            )
-            .map_err(drop)?
-            .assume_utc();
+            let started = parse_date(time_stamp).ok_or(())?;
             let completed = splits.next().ok_or(())? == "C";
             let split_times: Vec<_> = splits
                 .map(parse_time_optional)
@@ -262,4 +255,24 @@ fn parse_history(run: &mut Run, path: Option<PathBuf>) -> StdResult<(), ()> {
         }
     }
     Ok(())
+}
+
+#[cfg(feature = "std")]
+fn parse_date(text: &str) -> Option<crate::DateTime> {
+    let (year, rem) = text.split_once('/')?;
+    let (month, rem) = rem.split_once('/')?;
+    let (day, rem) = rem.split_once(' ')?;
+    let (hour, minute) = rem.split_once(':')?;
+    Some(
+        time::PrimitiveDateTime::new(
+            time::Date::from_calendar_date(
+                year.parse().ok()?,
+                month.parse::<u8>().ok()?.try_into().ok()?,
+                day.parse().ok()?,
+            )
+            .ok()?,
+            time::Time::from_hms(hour.parse().ok()?, minute.parse().ok()?, 0).ok()?,
+        )
+        .assume_utc(),
+    )
 }

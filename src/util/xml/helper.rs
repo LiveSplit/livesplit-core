@@ -1,10 +1,6 @@
-use crate::{platform::prelude::*, timing};
+use crate::platform::prelude::*;
 use alloc::borrow::Cow;
-use core::{
-    fmt,
-    num::{ParseFloatError, ParseIntError},
-    str,
-};
+use core::{fmt, str};
 
 use super::{Attributes, Event, Reader, TagName, Text, Writer};
 
@@ -23,43 +19,6 @@ pub enum Error {
     AttributeNotFound,
     /// A required element has not been found.
     ElementNotFound,
-    /// The length of a buffer was too large.
-    LengthOutOfBounds,
-    /// Failed to parse an integer.
-    Int { source: ParseIntError },
-    /// Failed to parse a floating point number.
-    Float { source: ParseFloatError },
-    /// Failed to parse a time.
-    Time { source: timing::ParseError },
-    /// Failed to parse a date.
-    Date {
-        #[cfg_attr(not(feature = "std"), snafu(source(false)))]
-        source: time::error::Parse,
-    },
-}
-
-impl From<ParseIntError> for Error {
-    fn from(source: ParseIntError) -> Self {
-        Self::Int { source }
-    }
-}
-
-impl From<ParseFloatError> for Error {
-    fn from(source: ParseFloatError) -> Self {
-        Self::Float { source }
-    }
-}
-
-impl From<timing::ParseError> for Error {
-    fn from(source: timing::ParseError) -> Self {
-        Self::Time { source }
-    }
-}
-
-impl From<time::error::Parse> for Error {
-    fn from(source: time::error::Parse) -> Self {
-        Self::Date { source }
-    }
 }
 
 pub fn text_parsed<F, T, E>(reader: &mut Reader<'_>, f: F) -> Result<(), E>

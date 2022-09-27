@@ -15,7 +15,7 @@ use crate::{
 };
 use alloc::borrow::Cow;
 use core::str;
-use time::{macros::format_description, PrimitiveDateTime};
+use time::{Date, PrimitiveDateTime};
 
 /// The Error type for splits files that couldn't be parsed by the LiveSplit
 /// Parser.
@@ -42,11 +42,7 @@ pub enum Error {
         source: crate::timing::ParseError,
     },
     /// Failed to parse a date.
-    ParseDate {
-        /// The underlying error.
-        #[cfg_attr(not(feature = "std"), snafu(source(false)))]
-        source: time::error::Parse,
-    },
+    ParseDate,
     /// Parsed comparison has an invalid name.
     InvalidComparisonName {
         /// The underlying error.
@@ -80,12 +76,6 @@ impl From<crate::timing::ParseError> for Error {
     }
 }
 
-impl From<time::error::Parse> for Error {
-    fn from(source: time::error::Parse) -> Self {
-        Self::ParseDate { source }
-    }
-}
-
 impl From<ComparisonError> for Error {
     fn from(source: ComparisonError) -> Self {
         Self::InvalidComparisonName { source }
@@ -114,11 +104,33 @@ fn parse_version(version: &str) -> Result<Version> {
 }
 
 fn parse_date_time(text: &str) -> Result<DateTime> {
-    Ok(PrimitiveDateTime::parse(
-        text,
-        &format_description!("[month]/[day]/[year] [hour]:[minute]:[second]"),
-    )?
-    .assume_utc())
+    catch! {
+        let (month, rem) = text.split_once('/')?;
+        let (day, rem) = rem.split_once('/')?;
+        let (year, rem) = rem.split_once(' ')?;
+        let (hour, rem) = rem.split_once(':')?;
+        let (minute, second) = rem.split_once(':')?;
+        PrimitiveDateTime::new(
+            Date::from_calendar_date(
+                year.parse().ok()?,
+                month
+                    .parse::<u8>()
+                    .ok()?
+                    .try_into()
+                    .ok()?,
+                day.parse().ok()?,
+            )
+            .ok()?,
+            time::Time::from_hms(
+                hour.parse().ok()?,
+                minute.parse().ok()?,
+                second.parse().ok()?,
+            )
+            .ok()?,
+        )
+        .assume_utc()
+    }
+    .ok_or(Error::ParseDate)
 }
 
 fn image<F>(reader: &mut Reader<'_>, image_buf: &mut Vec<u8>, f: F) -> Result<()>
