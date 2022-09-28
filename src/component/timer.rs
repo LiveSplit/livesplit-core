@@ -264,10 +264,11 @@ impl Component {
             (Some(time), semantic_color)
         };
 
+        let not_overwritten_visual_color = semantic_color.visualize(layout_settings);
         let visual_color = if let Some(color) = self.settings.color_override {
             color
         } else {
-            semantic_color.visualize(layout_settings)
+            not_overwritten_visual_color
         };
 
         (state.top_color, state.bottom_color) = if self.settings.show_gradient {
@@ -279,7 +280,7 @@ impl Component {
         state.background = self
             .settings
             .background
-            .gradient(semantic_color.visualize(layout_settings));
+            .gradient(not_overwritten_visual_color);
 
         state.time.clear();
         let _ = write!(
