@@ -92,7 +92,6 @@ pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()
         settings.timer.color_override = None;
     }
     settings.background = background_builder.build();
-    settings.timer.background = settings.background;
 
     settings.segment_timer.height = (total_height as f32 * segment_timer_ratio) as u32;
     settings.timer.height = total_height - settings.segment_timer.height;

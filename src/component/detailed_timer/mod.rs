@@ -274,10 +274,13 @@ impl Component {
         self.timer
             .update_state(&mut state.timer, timer, layout_settings);
 
-        state.background = state.timer.background;
-
         self.segment_timer
             .update_state(&mut state.segment_timer, timer, layout_settings);
+
+        state.background = self
+            .settings
+            .background
+            .gradient(state.timer.semantic_color.visualize(layout_settings));
 
         update_comparison(&mut state.comparison1, comparison1);
         update_comparison(&mut state.comparison2, comparison2);
@@ -374,11 +377,7 @@ impl Component {
     /// the setting provided is out of bounds.
     pub fn set_value(&mut self, index: usize, value: Value) {
         match index {
-            0 => {
-                let value = value.into();
-                self.settings.background = value;
-                self.settings.timer.background = value;
-            }
+            0 => self.settings.background = value.into(),
             1 => {
                 let value = value.into();
                 self.settings.timer.timing_method = value;
