@@ -15,41 +15,30 @@ pub enum Accuracy {
 }
 
 impl Accuracy {
-    /// Formats the seconds provided with the chosen accuracy. If there should
-    /// be a zero prefix, the seconds are prefixed with a 0, if they are less
-    /// than 10s.
-    pub const fn format_seconds(self, seconds: f64, zero_prefix: bool) -> FormattedSeconds {
+    /// Formats the nanoseconds provided with the chosen accuracy.
+    pub const fn format_nanoseconds(self, nanoseconds: u32) -> FormattedSeconds {
         FormattedSeconds {
             accuracy: self,
-            seconds,
-            zero_prefix,
+            nanoseconds,
         }
     }
 }
 
-use super::{extract_hundredths, extract_milliseconds, extract_tenths};
 use core::fmt::{Display, Formatter, Result};
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub struct FormattedSeconds {
     accuracy: Accuracy,
-    seconds: f64,
-    zero_prefix: bool,
+    nanoseconds: u32,
 }
 
 impl Display for FormattedSeconds {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        let s = self.seconds as u8;
-        if self.zero_prefix {
-            write!(f, "{s:02}")?;
-        } else {
-            write!(f, "{s}")?;
-        }
         match self.accuracy {
             Accuracy::Seconds => Ok(()),
-            Accuracy::Tenths => write!(f, ".{}", extract_tenths(self.seconds)),
-            Accuracy::Hundredths => write!(f, ".{:02}", extract_hundredths(self.seconds)),
-            Accuracy::Milliseconds => write!(f, ".{:03}", extract_milliseconds(self.seconds)),
+            Accuracy::Tenths => write!(f, ".{}", self.nanoseconds / 100_000_000),
+            Accuracy::Hundredths => write!(f, ".{:02}", self.nanoseconds / 10_000_000),
+            Accuracy::Milliseconds => write!(f, ".{:03}", self.nanoseconds / 1_000_000),
         }
     }
 }

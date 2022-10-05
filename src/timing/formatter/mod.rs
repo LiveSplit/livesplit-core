@@ -35,11 +35,8 @@ pub use self::{
     regular::Regular, segment_time::SegmentTime,
 };
 
-use crate::{
-    platform::math::f64::{abs, floor},
-    TimeSpan,
-};
-use core::{cmp::min, fmt::Display};
+use crate::TimeSpan;
+use core::fmt::Display;
 
 /// Time Formatters can be used to format optional Time Spans in various ways.
 pub trait TimeFormatter<'a> {
@@ -53,7 +50,6 @@ pub trait TimeFormatter<'a> {
         T: Into<Option<TimeSpan>>;
 }
 
-const EPSILON: f64 = 0.000_000_1;
 /// The dash symbol to use for generic dashes in text.
 pub const DASH: &str = "—";
 /// The minus symbol to use for negative numbers.
@@ -64,14 +60,6 @@ pub const ASCII_MINUS: &str = "-";
 /// The plus symbol to use for positive numbers.
 pub const PLUS: &str = "+";
 
-fn extract_tenths(seconds: f64) -> u8 {
-    min(9, floor((abs(seconds) % 1.0) * 10.0 + EPSILON) as u8)
-}
-
-fn extract_hundredths(seconds: f64) -> u8 {
-    min(99, floor((abs(seconds) % 1.0) * 100.0 + EPSILON) as u8)
-}
-
-fn extract_milliseconds(seconds: f64) -> u16 {
-    min(999, floor((abs(seconds) % 1.0) * 1000.0 + EPSILON) as u16)
-}
+const SECONDS_PER_MINUTE: u64 = 60;
+const SECONDS_PER_HOUR: u64 = 60 * SECONDS_PER_MINUTE;
+const SECONDS_PER_DAY: u64 = 24 * SECONDS_PER_HOUR;

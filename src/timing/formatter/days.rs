@@ -1,4 +1,4 @@
-use super::{TimeFormatter, MINUS};
+use super::{TimeFormatter, MINUS, SECONDS_PER_DAY, SECONDS_PER_HOUR, SECONDS_PER_MINUTE};
 use crate::TimeSpan;
 use core::fmt::{Display, Formatter, Result};
 
@@ -43,30 +43,33 @@ impl TimeFormatter<'_> for Days {
 impl Display for Inner {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         if let Some(time) = self.time {
-            let mut total_seconds = time.total_seconds();
-            if total_seconds < 0.0 {
-                total_seconds *= -1.0;
-                write!(f, "{MINUS}")?;
-            }
-            let total_seconds = total_seconds as u64;
-            let seconds = total_seconds % 60;
-            let total_minutes = total_seconds / 60;
-            let minutes = total_minutes % 60;
-            let total_hours = total_minutes / 60;
-            let hours = total_hours % 24;
-            let days = total_hours / 24;
+            let total_seconds = time.to_duration().whole_seconds();
+            let total_seconds = if total_seconds < 0 {
+                f.write_str(MINUS)?;
+                (-total_seconds) as u64
+            } else {
+                total_seconds as u64
+            };
+            // These are intentionally not data dependent, such that the CPU can
+            // calculate all of them in parallel. On top of that they are
+            // integer divisions of known constants, which get turned into
+            // multiplies and shifts, which is very fast.
+            let seconds = total_seconds % SECONDS_PER_MINUTE;
+            let minutes = (total_seconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE;
+            let hours = (total_seconds % SECONDS_PER_DAY) / SECONDS_PER_HOUR;
+            let days = total_seconds / SECONDS_PER_DAY;
 
             if days > 0 {
                 write!(f, "{days}d ")?;
             }
 
-            if total_hours > 0 {
+            if days > 0 || hours > 0 {
                 write!(f, "{hours}:{minutes:02}:{seconds:02}")
             } else {
                 write!(f, "{minutes}:{seconds:02}")
             }
         } else {
-            write!(f, "0:00")
+            f.write_str("0:00")
         }
     }
 }

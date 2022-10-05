@@ -1,4 +1,4 @@
-use super::{TimeFormatter, ASCII_MINUS};
+use super::{TimeFormatter, ASCII_MINUS, SECONDS_PER_DAY, SECONDS_PER_HOUR, SECONDS_PER_MINUTE};
 use crate::TimeSpan;
 use core::fmt::{Display, Formatter, Result};
 
@@ -6,20 +6,20 @@ pub struct Inner(Option<TimeSpan>);
 
 /// The Complete Time Formatter formats Time Spans in a way that preserves as
 /// much information as possible. The hours and minutes are always shown and a
-/// fractional part of 7 digits is used. If there's >24h, then a day prefix is
-/// attached (with the hours wrapping around to 0): `dd.hh:mm:ss.fffffff`
+/// fractional part of 9 digits is used. If there's >24h, then a day prefix is
+/// attached (with the hours wrapping around to 0): `dd.hh:mm:ss.fffffffff`
 ///
 /// This formatter uses an ASCII minus for negative times and shows a zero time
 /// for empty times.
 ///
 /// # Example Formatting
 ///
-/// * Empty Time `00:00:00.0000000`
-/// * Seconds `00:00:23.1234000`
-/// * Minutes `00:12:34.9876543`
-/// * Hours `12:34:56.1234567`
-/// * Negative Times `-12:34:56.1234567`
-/// * Days `89.12:34:56.1234567`
+/// * Empty Time `00:00:00.000000000`
+/// * Seconds `00:00:23.123400000`
+/// * Minutes `00:12:34.987654321`
+/// * Hours `12:34:56.123456789`
+/// * Negative Times `-12:34:56.123456789`
+/// * Days `89.12:34:56.123456789`
 #[derive(Default)]
 pub struct Complete;
 
@@ -44,25 +44,29 @@ impl TimeFormatter<'_> for Complete {
 impl Display for Inner {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         if let Some(time) = self.0 {
-            let mut total_seconds = time.total_seconds();
-            if total_seconds < 0.0 {
-                total_seconds *= -1.0;
+            let (total_seconds, nanoseconds) = time.to_seconds_and_subsec_nanoseconds();
+            let (total_seconds, nanoseconds) = if total_seconds < 0 {
                 // Since, this Formatter is used for writing out split files, we
                 // have to use an ASCII Minus here.
-                write!(f, "{ASCII_MINUS}")?;
-            }
-            let seconds = total_seconds % 60.0;
-            let total_minutes = (total_seconds / 60.0) as u64;
-            let minutes = total_minutes % 60;
-            let total_hours = total_minutes / 60;
-            let hours = total_hours % 24;
-            let days = total_hours / 24;
+                f.write_str(ASCII_MINUS)?;
+                ((-total_seconds) as u64, (-nanoseconds) as u32)
+            } else {
+                (total_seconds as u64, nanoseconds as u32)
+            };
+            // These are intentionally not data dependent, such that the CPU can
+            // calculate all of them in parallel. On top of that they are
+            // integer divisions of known constants, which get turned into
+            // multiplies and shifts, which is very fast.
+            let seconds = total_seconds % SECONDS_PER_MINUTE;
+            let minutes = (total_seconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE;
+            let hours = (total_seconds % SECONDS_PER_DAY) / SECONDS_PER_HOUR;
+            let days = total_seconds / SECONDS_PER_DAY;
             if days > 0 {
                 write!(f, "{days}.")?;
             }
-            write!(f, "{hours:02}:{minutes:02}:{seconds:010.7}")
+            write!(f, "{hours:02}:{minutes:02}:{seconds:02}.{nanoseconds:09}")
         } else {
-            write!(f, "00:00:00.0000000")
+            f.write_str("00:00:00.000000000")
         }
     }
 }
