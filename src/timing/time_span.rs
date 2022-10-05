@@ -16,14 +16,14 @@ impl TimeSpan {
         Default::default()
     }
 
-    /// Creates a new Time Span from a given amount of milliseconds.
-    pub fn from_milliseconds(milliseconds: f64) -> Self {
-        TimeSpan(Duration::seconds_f64(0.001 * milliseconds))
-    }
-
     /// Creates a new Time Span from a given amount of seconds.
     pub fn from_seconds(seconds: f64) -> Self {
         TimeSpan(Duration::seconds_f64(seconds))
+    }
+
+    /// Creates a new Time Span from a given amount of milliseconds.
+    pub fn from_milliseconds(milliseconds: f64) -> Self {
+        TimeSpan(Duration::seconds_f64(0.001 * milliseconds))
     }
 
     /// Creates a new Time Span from a given amount of days.
@@ -34,6 +34,13 @@ impl TimeSpan {
     /// Converts the Time Span to a Duration from the `time` crate.
     pub const fn to_duration(&self) -> Duration {
         self.0
+    }
+
+    /// Returns the underlying raw seconds and the nanoseconds past the last
+    /// full second that make up the Time Span. This is the most lossless
+    /// representation of a Time Span.
+    pub const fn to_seconds_and_subsec_nanoseconds(&self) -> (i64, i32) {
+        (self.0.whole_seconds(), self.0.subsec_nanoseconds())
     }
 
     /// Returns the total amount of seconds (including decimals) this Time Span

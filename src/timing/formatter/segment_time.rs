@@ -1,4 +1,4 @@
-use super::{Accuracy, TimeFormatter, DASH, MINUS};
+use super::{Accuracy, TimeFormatter, DASH, MINUS, SECONDS_PER_HOUR, SECONDS_PER_MINUTE};
 use crate::TimeSpan;
 use core::fmt::{Display, Formatter, Result};
 
@@ -63,32 +63,41 @@ impl TimeFormatter<'_> for SegmentTime {
 impl Display for Inner {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         if let Some(time) = self.time {
-            let mut total_seconds = time.total_seconds();
-            if total_seconds < 0.0 {
-                total_seconds *= -1.0;
-                write!(f, "{MINUS}")?;
-            }
-            let seconds = total_seconds % 60.0;
-            let total_minutes = (total_seconds / 60.0) as u64;
-            let minutes = total_minutes % 60;
-            let hours = total_minutes / 60;
+            let (total_seconds, nanoseconds) = time.to_seconds_and_subsec_nanoseconds();
+            let (total_seconds, nanoseconds) = if total_seconds < 0 {
+                f.write_str(MINUS)?;
+                ((-total_seconds) as u64, (-nanoseconds) as u32)
+            } else {
+                (total_seconds as u64, nanoseconds as u32)
+            };
+            // These are intentionally not data dependent, such that the CPU can
+            // calculate all of them in parallel. On top of that they are
+            // integer divisions of known constants, which get turned into
+            // multiplies and shifts, which is very fast.
+            let seconds = total_seconds % SECONDS_PER_MINUTE;
+            let minutes = (total_seconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE;
+            let hours = total_seconds / SECONDS_PER_HOUR;
             if hours > 0 {
                 write!(
                     f,
-                    "{hours}:{minutes:02}:{}",
-                    self.accuracy.format_seconds(seconds, true)
+                    "{hours}:{minutes:02}:{seconds:02}{}",
+                    self.accuracy.format_nanoseconds(nanoseconds)
                 )
-            } else if total_minutes > 0 {
+            } else if minutes > 0 {
                 write!(
                     f,
-                    "{minutes}:{}",
-                    self.accuracy.format_seconds(seconds, true)
+                    "{minutes}:{seconds:02}{}",
+                    self.accuracy.format_nanoseconds(nanoseconds)
                 )
             } else {
-                write!(f, "{}", self.accuracy.format_seconds(seconds, false))
+                write!(
+                    f,
+                    "{seconds}{}",
+                    self.accuracy.format_nanoseconds(nanoseconds)
+                )
             }
         } else {
-            write!(f, "{DASH}")
+            f.write_str(DASH)
         }
     }
 }

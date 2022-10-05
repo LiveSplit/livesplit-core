@@ -219,7 +219,7 @@ fn interpolate(
     (weight_right, time_right): (f64, TimeSpan),
 ) -> TimeSpan {
     let weight_diff_recip = (weight_right - weight_left).recip();
-    let perc_down = (weight_right - perc) * time_left.total_milliseconds() * weight_diff_recip;
-    let perc_up = (perc - weight_left) * time_right.total_milliseconds() * weight_diff_recip;
-    TimeSpan::from_milliseconds(perc_up + perc_down)
+    let perc_down = (weight_right - perc) * time_left.total_seconds() * weight_diff_recip;
+    let perc_up = (perc - weight_left) * time_right.total_seconds() * weight_diff_recip;
+    TimeSpan::from_seconds(perc_up + perc_down)
 }

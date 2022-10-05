@@ -3,8 +3,7 @@
 //! is the Time Formatter pair used by the Timer Component.
 
 use super::{
-    extract_hundredths, extract_milliseconds, extract_tenths, Accuracy, DigitsFormat,
-    TimeFormatter, DASH, MINUS,
+    Accuracy, DigitsFormat, TimeFormatter, DASH, MINUS, SECONDS_PER_HOUR, SECONDS_PER_MINUTE,
 };
 use crate::TimeSpan;
 use core::fmt::{Display, Formatter, Result};
@@ -69,22 +68,23 @@ impl TimeFormatter<'_> for Time {
 impl Display for TimeInner {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         if let Some(time) = self.time {
-            let mut total_seconds = time.total_seconds();
-            if total_seconds < 0.0 {
-                total_seconds *= -1.0;
-                write!(f, "{MINUS}")?;
-            }
-            let seconds = (total_seconds % 60.0) as u8;
-            let total_minutes = (total_seconds / 60.0) as u64;
-            let minutes = total_minutes % 60;
-            let hours = total_minutes / 60;
+            let total_seconds = time.to_duration().whole_seconds();
+            let total_seconds = if total_seconds < 0 {
+                f.write_str(MINUS)?;
+                (-total_seconds) as u64
+            } else {
+                total_seconds as u64
+            };
+            let seconds = total_seconds % SECONDS_PER_MINUTE;
+            let minutes = (total_seconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE;
+            let hours = total_seconds / SECONDS_PER_HOUR;
             if self.digits_format == DigitsFormat::DoubleDigitHours {
                 write!(f, "{hours:02}:{minutes:02}:{seconds:02}")
             } else if hours > 0 || self.digits_format == DigitsFormat::SingleDigitHours {
                 write!(f, "{hours}:{minutes:02}:{seconds:02}")
             } else if self.digits_format == DigitsFormat::DoubleDigitMinutes {
                 write!(f, "{minutes:02}:{seconds:02}")
-            } else if total_minutes > 0 || self.digits_format == DigitsFormat::SingleDigitMinutes {
+            } else if minutes > 0 || self.digits_format == DigitsFormat::SingleDigitMinutes {
                 write!(f, "{minutes}:{seconds:02}")
             } else if self.digits_format == DigitsFormat::DoubleDigitSeconds {
                 write!(f, "{seconds:02}")
@@ -92,7 +92,7 @@ impl Display for TimeInner {
                 write!(f, "{seconds}")
             }
         } else {
-            write!(f, "{DASH}")
+            f.write_str(DASH)
         }
     }
 }
@@ -158,16 +158,8 @@ impl TimeFormatter<'_> for Fraction {
 impl Display for FractionInner {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         if let Some(time) = self.time {
-            match self.accuracy {
-                Accuracy::Seconds => Ok(()),
-                Accuracy::Tenths => write!(f, ".{}", extract_tenths(time.total_seconds())),
-                Accuracy::Hundredths => {
-                    write!(f, ".{:02}", extract_hundredths(time.total_seconds()))
-                }
-                Accuracy::Milliseconds => {
-                    write!(f, ".{:03}", extract_milliseconds(time.total_seconds()))
-                }
-            }
+            let nanoseconds = time.to_duration().subsec_nanoseconds().unsigned_abs();
+            write!(f, "{}", self.accuracy.format_nanoseconds(nanoseconds))
         } else {
             Ok(())
         }

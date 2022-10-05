@@ -127,4 +127,5 @@ mod runtime;
 mod timer;
 
 pub use runtime::{CreationError, InterruptHandle, RunError, Runtime};
+pub use time;
 pub use timer::{Timer, TimerState};
