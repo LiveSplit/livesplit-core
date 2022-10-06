@@ -65,9 +65,9 @@ impl<'a, F: 'a + TimeFormatter<'a>, S: 'a + AsRef<str>> TimeFormatter<'a> for No
 impl<'a, F: TimeFormatter<'a>, S: 'a + AsRef<str>> Display for Inner<'a, F, S> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         if self.time.is_none() {
-            write!(f, "{}", self.wrapper.1.as_ref())
+            self.wrapper.1.as_ref().fmt(f)
         } else {
-            write!(f, "{}", self.wrapper.0.format(self.time))
+            self.wrapper.0.format(self.time).fmt(f)
         }
     }
 }

@@ -1,4 +1,6 @@
-use super::{TimeFormatter, MINUS, SECONDS_PER_DAY, SECONDS_PER_HOUR, SECONDS_PER_MINUTE};
+use super::{
+    format_padded, TimeFormatter, MINUS, SECONDS_PER_DAY, SECONDS_PER_HOUR, SECONDS_PER_MINUTE,
+};
 use crate::TimeSpan;
 use core::fmt::{Display, Formatter, Result};
 
@@ -54,20 +56,27 @@ impl Display for Inner {
             // calculate all of them in parallel. On top of that they are
             // integer divisions of known constants, which get turned into
             // multiplies and shifts, which is very fast.
-            let seconds = total_seconds % SECONDS_PER_MINUTE;
-            let minutes = (total_seconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE;
-            let hours = (total_seconds % SECONDS_PER_DAY) / SECONDS_PER_HOUR;
+            let seconds = (total_seconds % SECONDS_PER_MINUTE) as u8;
+            let minutes = ((total_seconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE) as u8;
+            let hours = ((total_seconds % SECONDS_PER_DAY) / SECONDS_PER_HOUR) as u8;
             let days = total_seconds / SECONDS_PER_DAY;
 
+            let mut buffer = itoa::Buffer::new();
+
             if days > 0 {
-                write!(f, "{days}d ")?;
+                f.write_str(buffer.format(days))?;
+                f.write_str("d ")?;
             }
 
             if days > 0 || hours > 0 {
-                write!(f, "{hours}:{minutes:02}:{seconds:02}")
+                f.write_str(buffer.format(hours))?;
+                f.write_str(":")?;
+                f.write_str(format_padded(minutes))?;
             } else {
-                write!(f, "{minutes}:{seconds:02}")
+                f.write_str(buffer.format(minutes))?;
             }
+            f.write_str(":")?;
+            f.write_str(format_padded(seconds))
         } else {
             f.write_str("0:00")
         }

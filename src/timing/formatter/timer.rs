@@ -3,7 +3,8 @@
 //! is the Time Formatter pair used by the Timer Component.
 
 use super::{
-    Accuracy, DigitsFormat, TimeFormatter, DASH, MINUS, SECONDS_PER_HOUR, SECONDS_PER_MINUTE,
+    format_padded, format_unpadded, Accuracy, DigitsFormat, TimeFormatter, DASH, MINUS,
+    SECONDS_PER_HOUR, SECONDS_PER_MINUTE,
 };
 use crate::TimeSpan;
 use core::fmt::{Display, Formatter, Result};
@@ -75,21 +76,43 @@ impl Display for TimeInner {
             } else {
                 total_seconds as u64
             };
-            let seconds = total_seconds % SECONDS_PER_MINUTE;
-            let minutes = (total_seconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE;
+            // These are intentionally not data dependent, such that the CPU can
+            // calculate all of them in parallel. On top of that they are
+            // integer divisions of known constants, which get turned into
+            // multiplies and shifts, which is very fast.
+            let seconds = (total_seconds % SECONDS_PER_MINUTE) as u8;
+            let minutes = ((total_seconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE) as u8;
             let hours = total_seconds / SECONDS_PER_HOUR;
+
             if self.digits_format == DigitsFormat::DoubleDigitHours {
-                write!(f, "{hours:02}:{minutes:02}:{seconds:02}")
+                let mut buffer = itoa::Buffer::new();
+                let hours = buffer.format(hours);
+                if hours.len() < 2 {
+                    f.write_str("0")?;
+                }
+                f.write_str(hours)?;
+                f.write_str(":")?;
+                f.write_str(format_padded(minutes))?;
+                f.write_str(":")?;
+                f.write_str(format_padded(seconds))
             } else if hours > 0 || self.digits_format == DigitsFormat::SingleDigitHours {
-                write!(f, "{hours}:{minutes:02}:{seconds:02}")
+                f.write_str(itoa::Buffer::new().format(hours))?;
+                f.write_str(":")?;
+                f.write_str(format_padded(minutes))?;
+                f.write_str(":")?;
+                f.write_str(format_padded(seconds))
             } else if self.digits_format == DigitsFormat::DoubleDigitMinutes {
-                write!(f, "{minutes:02}:{seconds:02}")
+                f.write_str(format_padded(minutes))?;
+                f.write_str(":")?;
+                f.write_str(format_padded(seconds))
             } else if minutes > 0 || self.digits_format == DigitsFormat::SingleDigitMinutes {
-                write!(f, "{minutes}:{seconds:02}")
+                f.write_str(format_unpadded(minutes))?;
+                f.write_str(":")?;
+                f.write_str(format_padded(seconds))
             } else if self.digits_format == DigitsFormat::DoubleDigitSeconds {
-                write!(f, "{seconds:02}")
+                f.write_str(format_padded(seconds))
             } else {
-                write!(f, "{seconds}")
+                f.write_str(format_unpadded(seconds))
             }
         } else {
             f.write_str(DASH)
@@ -159,7 +182,7 @@ impl Display for FractionInner {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         if let Some(time) = self.time {
             let nanoseconds = time.to_duration().subsec_nanoseconds().unsigned_abs();
-            write!(f, "{}", self.accuracy.format_nanoseconds(nanoseconds))
+            self.accuracy.format_nanoseconds(nanoseconds).fmt(f)
         } else {
             Ok(())
         }
