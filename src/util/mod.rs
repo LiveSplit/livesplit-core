@@ -1,5 +1,7 @@
 //! Various utilities used in this crate.
 
+pub(crate) mod ascii_char;
+pub(crate) mod ascii_set;
 pub(crate) mod byte_parsing;
 mod clear_vec;
 pub(crate) mod not_nan;

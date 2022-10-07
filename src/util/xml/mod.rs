@@ -5,10 +5,6 @@ use core::{
     iter, str,
 };
 
-use self::ascii_char::AsciiChar;
-
-mod ascii_char;
-mod ascii_set;
 pub mod helper;
 mod reader;
 mod writer;
@@ -17,6 +13,8 @@ pub use self::{
     reader::{Event, Reader},
     writer::{AttributeWriter, DisplayValue, Value, Writer, NO_ATTRIBUTES},
 };
+
+use super::{ascii_char::AsciiChar, ascii_set::AsciiSet};
 
 #[derive(Copy, Clone)]
 pub struct Tag<'a>(&'a str);
@@ -64,7 +62,7 @@ impl<'a> Attributes<'a> {
         iter::from_fn(move || {
             rem = trim_start(rem);
             let (key, space_maybe, after) =
-                ascii_set::AsciiSet::EQUALITY_OR_WHITE_SPACE.split_three_way(rem)?;
+                AsciiSet::EQUALITY_OR_WHITE_SPACE.split_three_way(rem)?;
             rem = after;
             if space_maybe.get() != b'=' {
                 rem = trim_start(rem);
@@ -191,19 +189,15 @@ impl<'a> Text<'a> {
 }
 
 fn split_whitespace(rem: &str) -> Option<(&str, &str)> {
-    ascii_set::AsciiSet::WHITE_SPACE.split(rem)
+    AsciiSet::WHITE_SPACE.split(rem)
 }
 
 fn trim(rem: &str) -> &str {
-    ascii_set::AsciiSet::WHITE_SPACE.trim(rem)
+    AsciiSet::WHITE_SPACE.trim(rem)
 }
 
 fn trim_start(rem: &str) -> &str {
-    ascii_set::AsciiSet::WHITE_SPACE.trim_start(rem)
-}
-
-fn trim_end(rem: &str) -> &str {
-    ascii_set::AsciiSet::WHITE_SPACE.trim_end(rem)
+    AsciiSet::WHITE_SPACE.trim_start(rem)
 }
 
 fn parse_hexadecimal(bytes: &str) -> char {

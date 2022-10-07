@@ -1,6 +1,8 @@
 use core::fmt::{self, Write};
 
-use super::{ascii_char::AsciiChar, ascii_set, Text};
+use crate::util::{ascii_char::AsciiChar, ascii_set::AsciiSet};
+
+use super::Text;
 
 pub struct Writer<T> {
     sink: T,
@@ -173,9 +175,7 @@ pub trait Value {
 
 impl Value for &str {
     fn write_escaped<T: fmt::Write>(mut self, sink: &mut T) -> fmt::Result {
-        while let Some((before, char, rem)) =
-            ascii_set::AsciiSet::CHARACTERS_TO_ESCAPE.split_three_way(self)
-        {
+        while let Some((before, char, rem)) = AsciiSet::CHARACTERS_TO_ESCAPE.split_three_way(self) {
             self = rem;
             sink.write_str(before)?;
             sink.write_str(match char {

@@ -1,6 +1,9 @@
-use crate::platform::{prelude::*, Duration};
+use crate::{
+    platform::{prelude::*, Duration},
+    util::ascii_char::AsciiChar,
+};
 use core::{
-    num::{ParseFloatError, ParseIntError},
+    num::ParseIntError,
     ops::{Add, AddAssign, Neg, Sub, SubAssign},
     str::FromStr,
 };
@@ -73,15 +76,17 @@ impl TimeSpan {
 pub enum ParseError {
     /// An empty string is not a valid Time Span.
     Empty,
-    /// The seconds need to be a finite number.
-    Finite,
-    /// Couldn't parse the seconds.
-    Seconds {
+    /// The time is too large to be represented.
+    Overflow,
+    /// The fractional part contains characters that are not digits.
+    FractionDigits,
+    /// Couldn't parse the fractional part.
+    Fraction {
         /// The underlying error.
-        source: ParseFloatError,
+        source: ParseIntError,
     },
-    /// Couldn't parse the minutes or hours.
-    MinutesOrHours {
+    /// Couldn't parse the seconds, minutes, or hours.
+    Time {
         /// The underlying error.
         source: ParseIntError,
     },
@@ -94,27 +99,50 @@ impl FromStr for TimeSpan {
         // It's faster to use `strip_prefix` with char literals if it's an ASCII
         // char, otherwise prefer using string literals.
         #[allow(clippy::single_char_pattern)]
-        let factor =
+        let negate =
             if let Some(remainder) = text.strip_prefix('-').or_else(|| text.strip_prefix("−")) {
                 text = remainder;
-                -1.0
+                true
             } else {
-                1.0
+                false
             };
 
-        let mut pieces = text.split(':');
+        let (seconds_text, nanos) =
+            if let Some((seconds, mut nanos)) = AsciiChar::DOT.split_once(text) {
+                if nanos.len() > 9 {
+                    nanos = nanos.get(..9).context(FractionDigits)?;
+                }
+                (
+                    seconds,
+                    nanos.parse::<u32>().context(Fraction)? * 10_u32.pow(9 - nanos.len() as u32),
+                )
+            } else {
+                (text, 0u32)
+            };
 
-        let last = pieces.next_back().context(Empty)?;
-        let seconds = last.parse::<f64>().context(Seconds)?;
+        ensure!(!seconds_text.is_empty(), Empty);
 
-        ensure!(seconds.is_finite() && seconds >= 0.0, Finite);
+        let mut seconds = 0u64;
 
-        let mut minutes = 0.0;
-        for split in pieces {
-            minutes = minutes * 60.0 + split.parse::<u32>().context(MinutesOrHours)? as f64;
+        for split in AsciiChar::COLON.split_iter(seconds_text) {
+            seconds = seconds
+                .checked_mul(60)
+                .context(Overflow)?
+                .checked_add(split.parse::<u64>().context(Time)?)
+                .context(Overflow)?;
         }
 
-        Ok(TimeSpan::from_seconds(factor * (seconds + minutes * 60.0)))
+        let (mut seconds, mut nanos) = (
+            i64::try_from(seconds).ok().context(Overflow)?,
+            i32::try_from(nanos).ok().context(Overflow)?,
+        );
+
+        if negate {
+            seconds = -seconds;
+            nanos = -nanos;
+        }
+
+        Ok(Duration::new(seconds, nanos).into())
     }
 }
 
@@ -205,19 +233,35 @@ mod tests {
 
     #[test]
     fn parsing() {
-        "-12:37:30.12".parse::<TimeSpan>().unwrap();
-        "-37:30.12".parse::<TimeSpan>().unwrap();
-        "-30.12".parse::<TimeSpan>().unwrap();
-        "-10:30".parse::<TimeSpan>().unwrap();
-        "-30".parse::<TimeSpan>().unwrap();
-        "-100".parse::<TimeSpan>().unwrap();
-        "--30".parse::<TimeSpan>().unwrap_err();
-        "-".parse::<TimeSpan>().unwrap_err();
-        "".parse::<TimeSpan>().unwrap_err();
-        "-10:-30".parse::<TimeSpan>().unwrap_err();
-        "10:-30".parse::<TimeSpan>().unwrap_err();
-        "10.5:30.5".parse::<TimeSpan>().unwrap_err();
-        "NaN".parse::<TimeSpan>().unwrap_err();
-        "Inf".parse::<TimeSpan>().unwrap_err();
+        TimeSpan::from_str("-12:37:30.12").unwrap();
+        TimeSpan::from_str("-37:30.12").unwrap();
+        TimeSpan::from_str("-30.12").unwrap();
+        TimeSpan::from_str("-10:30").unwrap();
+        TimeSpan::from_str("-30").unwrap();
+        TimeSpan::from_str("-100").unwrap();
+        TimeSpan::from_str("--30").unwrap_err();
+        TimeSpan::from_str("-").unwrap_err();
+        TimeSpan::from_str("").unwrap_err();
+        TimeSpan::from_str("-10:-30").unwrap_err();
+        TimeSpan::from_str("10:-30").unwrap_err();
+        TimeSpan::from_str("10.5:30.5").unwrap_err();
+        TimeSpan::from_str("NaN").unwrap_err();
+        TimeSpan::from_str("Inf").unwrap_err();
+        assert!(matches!(
+            TimeSpan::from_str("1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1"),
+            Err(ParseError::Overflow),
+        ));
+        assert_eq!(
+            TimeSpan::from_str("10.123456789")
+                .unwrap()
+                .to_seconds_and_subsec_nanoseconds(),
+            (10, 123456789)
+        );
+        assert_eq!(
+            TimeSpan::from_str("10.0987654321987654321")
+                .unwrap()
+                .to_seconds_and_subsec_nanoseconds(),
+            (10, 98765432)
+        );
     }
 }
