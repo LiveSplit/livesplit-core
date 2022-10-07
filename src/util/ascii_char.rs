@@ -1,3 +1,5 @@
+use core::iter;
+
 #[derive(Copy, Clone, PartialEq, Eq)]
 #[repr(transparent)]
 pub struct AsciiChar(u8);
@@ -14,6 +16,8 @@ impl AsciiChar {
     pub const SINGLE_QUOTE: Self = Self::new(b'\'');
     pub const DOUBLE_QUOTE: Self = Self::new(b'"');
     pub const EQUALITY_SIGN: Self = Self::new(b'=');
+    pub const COLON: Self = Self::new(b':');
+    pub const DOT: Self = Self::new(b'.');
 
     pub const fn new(c: u8) -> Self {
         if c > 127 {
@@ -40,5 +44,22 @@ impl AsciiChar {
         // are looking for ASCII bytes, splitting at the position is guaranteed
         // to be valid UTF-8.
         unsafe { Some((text.get_unchecked(..pos), text.get_unchecked(pos + 1..))) }
+    }
+
+    pub fn split_iter(self, text: &str) -> impl Iterator<Item = &str> {
+        let mut slot = Some(text);
+        iter::from_fn(move || {
+            let rem = slot?;
+            Some(match self.split_once(rem) {
+                Some((before, after)) => {
+                    slot = Some(after);
+                    before
+                }
+                None => {
+                    slot = None;
+                    rem
+                }
+            })
+        })
     }
 }

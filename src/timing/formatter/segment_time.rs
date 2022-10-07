@@ -106,12 +106,5 @@ impl Display for Inner {
 fn test() {
     let time = "4:20.69".parse::<TimeSpan>().unwrap();
     let formatted = SegmentTime::new().format(time).to_string();
-    // FIXME: The parser should use integer parsing as well, and then this
-    // doesn't need to specialize bad floating point behavior anymore.
-    assert!(
-        // Modern processors
-        formatted == "4:20.69" ||
-        // Old x86 processors are apparently less precise
-        formatted == "4:20.68"
-    );
+    assert_eq!(formatted, "4:20.69");
 }

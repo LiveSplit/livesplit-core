@@ -1,4 +1,4 @@
-use super::{ascii_char::AsciiChar, trim_end};
+use super::ascii_char::AsciiChar;
 
 #[repr(transparent)]
 pub struct AsciiSet([bool; 256]);
@@ -78,7 +78,7 @@ impl AsciiSet {
             // position is found by the find_not method. Also since we only
             // skipped ASCII characters, splitting the string at the position
             // will not result in a string that is not valid UTF-8.
-            trim_end(unsafe { text.get_unchecked(pos..) })
+            self.trim_end(unsafe { text.get_unchecked(pos..) })
         } else {
             ""
         }
