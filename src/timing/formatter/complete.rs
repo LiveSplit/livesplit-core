@@ -48,7 +48,7 @@ impl Display for Inner {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         if let Some(time) = self.0 {
             let (total_seconds, nanoseconds) = time.to_seconds_and_subsec_nanoseconds();
-            let (total_seconds, nanoseconds) = if total_seconds < 0 {
+            let (total_seconds, nanoseconds) = if (total_seconds | nanoseconds as i64) < 0 {
                 // Since, this Formatter is used for writing out split files, we
                 // have to use an ASCII Minus here.
                 f.write_str(ASCII_MINUS)?;

@@ -69,8 +69,8 @@ impl TimeFormatter<'_> for Time {
 impl Display for TimeInner {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         if let Some(time) = self.time {
-            let total_seconds = time.to_duration().whole_seconds();
-            let total_seconds = if total_seconds < 0 {
+            let (total_seconds, nanoseconds) = time.to_seconds_and_subsec_nanoseconds();
+            let total_seconds = if (total_seconds | nanoseconds as i64) < 0 {
                 f.write_str(MINUS)?;
                 (-total_seconds) as u64
             } else {

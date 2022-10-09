@@ -74,7 +74,7 @@ impl Display for Inner {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         if let Some(time) = self.time {
             let (total_seconds, nanoseconds) = time.to_seconds_and_subsec_nanoseconds();
-            let (total_seconds, nanoseconds) = if total_seconds < 0 {
+            let (total_seconds, nanoseconds) = if (total_seconds | nanoseconds as i64) < 0 {
                 f.write_str(MINUS)?;
                 ((-total_seconds) as u64, (-nanoseconds) as u32)
             } else {
