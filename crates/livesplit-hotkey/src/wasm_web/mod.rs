@@ -1,4 +1,4 @@
-use crate::KeyCode;
+use crate::{Hotkey, KeyCode, Modifiers};
 use wasm_bindgen::{prelude::*, JsCast};
 use web_sys::{window, Event, Gamepad, GamepadButton, KeyboardEvent};
 
@@ -25,7 +25,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 /// A hook allows you to listen to hotkeys.
 pub struct Hook {
-    hotkeys: Arc<Mutex<HashMap<KeyCode, Box<dyn FnMut() + Send + 'static>>>>,
+    hotkeys: Arc<Mutex<HashMap<Hotkey, Box<dyn FnMut() + Send + 'static>>>>,
     keyboard_callback: Closure<dyn FnMut(Event)>,
     gamepad_callback: Closure<dyn FnMut()>,
     interval_id: Cell<Option<i32>>,
@@ -73,7 +73,7 @@ impl Hook {
     /// Creates a new hook.
     pub fn new() -> Result<Self> {
         let hotkeys = Arc::new(Mutex::new(HashMap::<
-            KeyCode,
+            Hotkey,
             Box<dyn FnMut() + Send + 'static>,
         >::new()));
 
@@ -87,8 +87,33 @@ impl Hook {
             // `input` sends a `keydown` event that is not a `KeyboardEvent`.
             if let Ok(event) = event.dyn_into::<KeyboardEvent>() {
                 if !event.repeat() {
-                    if let Ok(code) = event.code().parse() {
-                        if let Some(callback) = hotkey_map.lock().unwrap().get_mut(&code) {
+                    if let Ok(code) = event.code().parse::<KeyCode>() {
+                        let mut modifiers = Modifiers::empty();
+                        if event.shift_key()
+                            && !matches!(code, KeyCode::ShiftLeft | KeyCode::ShiftRight)
+                        {
+                            modifiers.insert(Modifiers::SHIFT);
+                        }
+                        if event.ctrl_key()
+                            && !matches!(code, KeyCode::ControlLeft | KeyCode::ControlRight)
+                        {
+                            modifiers.insert(Modifiers::CONTROL);
+                        }
+                        if event.alt_key() && !matches!(code, KeyCode::AltLeft | KeyCode::AltRight)
+                        {
+                            modifiers.insert(Modifiers::ALT);
+                        }
+                        if event.meta_key()
+                            && !matches!(code, KeyCode::MetaLeft | KeyCode::MetaRight)
+                        {
+                            modifiers.insert(Modifiers::META);
+                        }
+
+                        if let Some(callback) = hotkey_map
+                            .lock()
+                            .unwrap()
+                            .get_mut(&code.with_modifiers(modifiers))
+                        {
                             callback();
                         }
                     }
@@ -123,7 +148,7 @@ impl Hook {
                                 let pressed = button.pressed();
                                 if pressed && !*state {
                                     if let Some(callback) =
-                                        hotkey_map.lock().unwrap().get_mut(&code)
+                                        hotkey_map.lock().unwrap().get_mut(&code.into())
                                     {
                                         callback();
                                     }
@@ -145,12 +170,12 @@ impl Hook {
     }
 
     /// Registers a hotkey to listen to.
-    pub fn register<F>(&self, hotkey: KeyCode, callback: F) -> Result<()>
+    pub fn register<F>(&self, hotkey: Hotkey, callback: F) -> Result<()>
     where
         F: FnMut() + Send + 'static,
     {
         if let Entry::Vacant(vacant) = self.hotkeys.lock().unwrap().entry(hotkey) {
-            if GAMEPAD_BUTTONS.contains(&hotkey) && self.interval_id.get().is_none() {
+            if GAMEPAD_BUTTONS.contains(&hotkey.key_code) && self.interval_id.get().is_none() {
                 let interval_id = window()
                     .ok_or(Error::FailedToCreateHook)?
                     .set_interval_with_callback_and_timeout_and_arguments_0(
@@ -168,7 +193,7 @@ impl Hook {
     }
 
     /// Unregisters a previously registered hotkey.
-    pub fn unregister(&self, hotkey: KeyCode) -> Result<()> {
+    pub fn unregister(&self, hotkey: Hotkey) -> Result<()> {
         if self.hotkeys.lock().unwrap().remove(&hotkey).is_some() {
             Ok(())
         } else {

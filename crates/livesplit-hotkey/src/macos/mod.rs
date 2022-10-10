@@ -18,8 +18,9 @@ use self::{
         EventTapPlacement, EventTapProxy, EventType,
     },
 };
-use crate::KeyCode;
+use crate::{Hotkey, KeyCode, Modifiers};
 use cg::EventField;
+use objc::runtime;
 use std::{
     collections::{hash_map::Entry, HashMap},
     ffi::c_void,
@@ -63,12 +64,15 @@ struct RunLoop(cf::RunLoopRef);
 
 unsafe impl Send for RunLoop {}
 
-type RegisteredKeys = Mutex<HashMap<KeyCode, Box<dyn FnMut() + Send + 'static>>>;
+struct State {
+    hotkeys: Mutex<HashMap<Hotkey, Box<dyn FnMut() + Send + 'static>>>,
+    ns_event_class: &'static runtime::Class,
+}
 
 /// A hook allows you to listen to hotkeys.
 pub struct Hook {
     event_loop: RunLoop,
-    hotkeys: Arc<RegisteredKeys>,
+    state: Arc<State>,
 }
 
 impl Drop for Hook {
@@ -86,8 +90,16 @@ impl Drop for Hook {
 impl Hook {
     /// Creates a new hook.
     pub fn new() -> Result<Self> {
-        let hotkeys = Arc::new(Mutex::new(HashMap::new()));
-        let thread_hotkeys = hotkeys.clone();
+        #[link(name = "AppKit", kind = "framework")]
+        extern "C" {
+            // NSEvent is in the AppKit framework.
+        }
+
+        let state = Arc::new(State {
+            hotkeys: Mutex::new(HashMap::new()),
+            ns_event_class: class!(NSEvent),
+        });
+        let thread_state = state.clone();
 
         let (sender, receiver) = channel();
 
@@ -95,15 +107,15 @@ impl Hook {
         // https://github.com/kwhat/libuiohook/blob/f4bb19be8aee7d7ee5ead89b5a89dbf440e2a71a/src/darwin/input_hook.c#L1086
 
         thread::spawn(move || unsafe {
-            let hotkeys_ptr: *const Mutex<_> = &*thread_hotkeys;
+            let state_ptr: *const State = &*thread_state;
 
             let port = CGEventTapCreate(
                 EventTapLocation::Session,
                 EventTapPlacement::HeadInsertEventTap,
                 EventTapOptions::DefaultTap,
-                EventMask::KEY_DOWN,
+                EventMask::KEY_DOWN | EventMask::FLAGS_CHANGED,
                 Some(callback),
-                hotkeys_ptr as *mut c_void,
+                state_ptr as *mut c_void,
             );
             if port.is_null() {
                 let _ = sender.send(Err(Error::CouldntCreateEventTap));
@@ -139,18 +151,15 @@ impl Hook {
             .recv()
             .map_err(|_| Error::ThreadStoppedUnexpectedly)??;
 
-        Ok(Hook {
-            event_loop,
-            hotkeys,
-        })
+        Ok(Hook { event_loop, state })
     }
 
     /// Registers a hotkey to listen to.
-    pub fn register<F>(&self, hotkey: KeyCode, callback: F) -> Result<()>
+    pub fn register<F>(&self, hotkey: Hotkey, callback: F) -> Result<()>
     where
         F: FnMut() + Send + 'static,
     {
-        if let Entry::Vacant(vacant) = self.hotkeys.lock().unwrap().entry(hotkey) {
+        if let Entry::Vacant(vacant) = self.state.hotkeys.lock().unwrap().entry(hotkey) {
             vacant.insert(Box::new(callback));
             Ok(())
         } else {
@@ -159,12 +168,15 @@ impl Hook {
     }
 
     /// Unregisters a previously registered hotkey.
-    pub fn unregister(&self, hotkey: KeyCode) -> Result<()> {
-        if self.hotkeys.lock().unwrap().remove(&hotkey).is_some() {
-            Ok(())
-        } else {
-            Err(Error::NotRegistered)
-        }
+    pub fn unregister(&self, hotkey: Hotkey) -> Result<()> {
+        let _ = self
+            .state
+            .hotkeys
+            .lock()
+            .unwrap()
+            .remove(&hotkey)
+            .ok_or(Error::NotRegistered)?;
+        Ok(())
     }
 }
 
@@ -174,9 +186,12 @@ unsafe extern "C" fn callback(
     event: EventRef,
     user_info: *mut c_void,
 ) -> EventRef {
-    if !matches!(ty, EventType::KeyDown) {
-        return event;
-    }
+    // If the tap ever gets disabled by a timeout, we may need the following code:
+    // // Handle the timeout case by re-enabling the tap.
+    // if (type == kCGEventTapDisabledByTimeout) {
+    //   CGEventTapEnable(shortcut_listener->event_tap_, TRUE);
+    //   return event;
+    // }
 
     let is_repeating = cg::CGEventGetIntegerValueField(event, EventField::KeyboardEventAutorepeat);
     if is_repeating != 0 {
@@ -311,9 +326,67 @@ unsafe extern "C" fn callback(
         _ => return event,
     };
 
-    let hotkeys = user_info as *const RegisteredKeys;
-    let hotkeys = &*hotkeys;
-    if let Some(callback) = hotkeys.lock().unwrap().get_mut(&key_code) {
+    let state = user_info as *const State;
+    let state = &*state;
+
+    let ns_event: *mut runtime::Object = msg_send![state.ns_event_class, eventWithCGEvent: event];
+    if ns_event.is_null() {
+        return event;
+    }
+    let modifier_flags: ModifierFlags = msg_send![ns_event, modifierFlags];
+
+    bitflags::bitflags! {
+        struct ModifierFlags: u64 {
+            const CAPS_LOCK = 1 << 16;
+            const SHIFT = 1 << 17;
+            const CONTROL = 1 << 18;
+            const OPTION = 1 << 19;
+            const COMMAND = 1 << 20;
+            const NUMERIC_PAD = 1 << 21;
+            const HELP = 1 << 22;
+            const FUNCTION = 1 << 23;
+        }
+    }
+
+    let mut modifiers = Modifiers::empty();
+    if modifier_flags.contains(ModifierFlags::SHIFT) {
+        modifiers.insert(Modifiers::SHIFT);
+    }
+    if modifier_flags.contains(ModifierFlags::CONTROL) {
+        modifiers.insert(Modifiers::CONTROL);
+    }
+    if modifier_flags.contains(ModifierFlags::OPTION) {
+        modifiers.insert(Modifiers::ALT);
+    }
+    if modifier_flags.contains(ModifierFlags::COMMAND) {
+        modifiers.insert(Modifiers::META);
+    }
+
+    // The modifier keys don't come in through the key down event, so we use the
+    // flags changed event. However in order to tell that they have been freshly
+    // pressed instead of released we need to check if they are part of the
+    // modifiers and only if they are not do we proceed with the event. The key
+    // also needs to be removed from the modifiers then to not appear twice.
+    if ty == EventType::FlagsChanged {
+        let modifier = match key_code {
+            KeyCode::AltLeft | KeyCode::AltRight => Modifiers::ALT,
+            KeyCode::ControlLeft | KeyCode::ControlRight => Modifiers::CONTROL,
+            KeyCode::MetaLeft | KeyCode::MetaRight => Modifiers::META,
+            KeyCode::ShiftLeft | KeyCode::ShiftRight => Modifiers::SHIFT,
+            _ => Modifiers::empty(),
+        };
+        if !modifiers.contains(modifier) {
+            return event;
+        }
+        modifiers.remove(modifier);
+    }
+
+    if let Some(callback) = state
+        .hotkeys
+        .lock()
+        .unwrap()
+        .get_mut(&key_code.with_modifiers(modifiers))
+    {
         callback();
     }
 

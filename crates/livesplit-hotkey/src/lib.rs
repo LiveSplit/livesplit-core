@@ -27,26 +27,23 @@ cfg_if::cfg_if! {
         mod linux;
         use self::linux as platform;
     } else if #[cfg(target_os = "macos")] {
+        #[macro_use]
+        extern crate objc;
         mod macos;
         use self::macos as platform;
-    } else if #[cfg(all(target_arch = "wasm32", target_os = "unknown"))] {
-        cfg_if::cfg_if! {
-            if #[cfg(feature = "wasm-web")] {
-                mod wasm_web;
-                use self::wasm_web as platform;
-            } else {
-                mod wasm_unknown;
-                use self::wasm_unknown as platform;
-            }
-        }
+    } else if #[cfg(all(target_arch = "wasm32", target_os = "unknown", feature = "wasm-web"))] {
+        mod wasm_web;
+        use self::wasm_web as platform;
     } else {
         mod other;
         use self::other as platform;
     }
 }
 
+mod hotkey;
 mod key_code;
-pub use self::{key_code::*, platform::*};
+mod modifiers;
+pub use self::{hotkey::*, key_code::*, modifiers::*, platform::*};
 
 #[cfg(test)]
 mod tests {
@@ -57,18 +54,27 @@ mod tests {
     #[test]
     fn test() {
         let hook = Hook::new().unwrap();
-        hook.register(KeyCode::Numpad1, || println!("A")).unwrap();
-        println!("Press Numpad1");
+
+        hook.register(KeyCode::Numpad1.with_modifiers(Modifiers::SHIFT), || {
+            println!("A")
+        })
+        .unwrap();
+        println!("Press Shift + Numpad1");
         thread::sleep(Duration::from_secs(5));
-        hook.unregister(KeyCode::Numpad1).unwrap();
-        hook.register(KeyCode::KeyN, || println!("B")).unwrap();
+        hook.unregister(KeyCode::Numpad1.with_modifiers(Modifiers::SHIFT))
+            .unwrap();
+
+        hook.register(KeyCode::KeyN.into(), || println!("B"))
+            .unwrap();
         println!("Press KeyN");
         thread::sleep(Duration::from_secs(5));
-        hook.unregister(KeyCode::KeyN).unwrap();
-        hook.register(KeyCode::Numpad1, || println!("C")).unwrap();
+        hook.unregister(KeyCode::KeyN.into()).unwrap();
+
+        hook.register(KeyCode::Numpad1.into(), || println!("C"))
+            .unwrap();
         println!("Press Numpad1");
         thread::sleep(Duration::from_secs(5));
-        hook.unregister(KeyCode::Numpad1).unwrap();
+        hook.unregister(KeyCode::Numpad1.into()).unwrap();
     }
 
     #[test]

@@ -631,7 +631,7 @@ jobs:
 
       - name: Install cross
         if: matrix.cross == '' && matrix.no_std == ''
-        run: cargo install cross
+        run: cargo install cross --debug
 
       - name: Build Static Library
         run: sh .github/workflows/build_static.sh

@@ -1,5 +1,5 @@
 use crate::{
-    hotkey::{Hook, KeyCode},
+    hotkey::{Hook, Hotkey},
     HotkeyConfig, SharedTimer,
 };
 
@@ -7,7 +7,7 @@ pub use crate::hotkey::{Error, Result};
 
 // This enum might be better situated in hotkey_config, but the last method should stay in this file
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
-enum Hotkey {
+enum Action {
     Split,
     /// The key to use for resetting the current attempt.
     Reset,
@@ -29,50 +29,50 @@ enum Hotkey {
     ToggleTimingMethod,
 }
 
-impl Hotkey {
-    fn set_keycode(self, config: &mut HotkeyConfig, keycode: Option<KeyCode>) {
+impl Action {
+    fn set_hotkey(self, config: &mut HotkeyConfig, hotkey: Option<Hotkey>) {
         match self {
-            Hotkey::Split => config.split = keycode,
-            Hotkey::Reset => config.reset = keycode,
-            Hotkey::Undo => config.undo = keycode,
-            Hotkey::Skip => config.skip = keycode,
-            Hotkey::Pause => config.pause = keycode,
-            Hotkey::UndoAllPauses => config.undo_all_pauses = keycode,
-            Hotkey::PreviousComparison => config.previous_comparison = keycode,
-            Hotkey::NextComparison => config.next_comparison = keycode,
-            Hotkey::ToggleTimingMethod => config.toggle_timing_method = keycode,
+            Action::Split => config.split = hotkey,
+            Action::Reset => config.reset = hotkey,
+            Action::Undo => config.undo = hotkey,
+            Action::Skip => config.skip = hotkey,
+            Action::Pause => config.pause = hotkey,
+            Action::UndoAllPauses => config.undo_all_pauses = hotkey,
+            Action::PreviousComparison => config.previous_comparison = hotkey,
+            Action::NextComparison => config.next_comparison = hotkey,
+            Action::ToggleTimingMethod => config.toggle_timing_method = hotkey,
         }
     }
 
-    const fn get_keycode(self, config: &HotkeyConfig) -> Option<KeyCode> {
+    const fn get_hotkey(self, config: &HotkeyConfig) -> Option<Hotkey> {
         match self {
-            Hotkey::Split => config.split,
-            Hotkey::Reset => config.reset,
-            Hotkey::Undo => config.undo,
-            Hotkey::Skip => config.skip,
-            Hotkey::Pause => config.pause,
-            Hotkey::UndoAllPauses => config.undo_all_pauses,
-            Hotkey::PreviousComparison => config.previous_comparison,
-            Hotkey::NextComparison => config.next_comparison,
-            Hotkey::ToggleTimingMethod => config.toggle_timing_method,
+            Action::Split => config.split,
+            Action::Reset => config.reset,
+            Action::Undo => config.undo,
+            Action::Skip => config.skip,
+            Action::Pause => config.pause,
+            Action::UndoAllPauses => config.undo_all_pauses,
+            Action::PreviousComparison => config.previous_comparison,
+            Action::NextComparison => config.next_comparison,
+            Action::ToggleTimingMethod => config.toggle_timing_method,
         }
     }
 
     fn callback(self, timer: SharedTimer) -> Box<dyn FnMut() + Send + 'static> {
         match self {
-            Hotkey::Split => Box::new(move || timer.write().unwrap().split_or_start()),
-            Hotkey::Reset => Box::new(move || timer.write().unwrap().reset(true)),
-            Hotkey::Undo => Box::new(move || timer.write().unwrap().undo_split()),
-            Hotkey::Skip => Box::new(move || timer.write().unwrap().skip_split()),
-            Hotkey::Pause => Box::new(move || timer.write().unwrap().toggle_pause_or_start()),
-            Hotkey::UndoAllPauses => Box::new(move || timer.write().unwrap().undo_all_pauses()),
-            Hotkey::PreviousComparison => {
+            Action::Split => Box::new(move || timer.write().unwrap().split_or_start()),
+            Action::Reset => Box::new(move || timer.write().unwrap().reset(true)),
+            Action::Undo => Box::new(move || timer.write().unwrap().undo_split()),
+            Action::Skip => Box::new(move || timer.write().unwrap().skip_split()),
+            Action::Pause => Box::new(move || timer.write().unwrap().toggle_pause_or_start()),
+            Action::UndoAllPauses => Box::new(move || timer.write().unwrap().undo_all_pauses()),
+            Action::PreviousComparison => {
                 Box::new(move || timer.write().unwrap().switch_to_previous_comparison())
             }
-            Hotkey::NextComparison => {
+            Action::NextComparison => {
                 Box::new(move || timer.write().unwrap().switch_to_next_comparison())
             }
-            Hotkey::ToggleTimingMethod => {
+            Action::ToggleTimingMethod => {
                 Box::new(move || timer.write().unwrap().toggle_timing_method())
             }
         }
@@ -112,109 +112,109 @@ impl HotkeySystem {
 
     // This method should never be public, because it might mess up the internal
     // state and we might leak a registered hotkey
-    fn register_inner(&mut self, hotkey: Hotkey) -> Result<()> {
+    fn register_inner(&mut self, action: Action) -> Result<()> {
         let inner = self.timer.clone();
-        if let Some(keycode) = hotkey.get_keycode(&self.config) {
-            self.hook.register(keycode, hotkey.callback(inner))?;
+        if let Some(hotkey) = action.get_hotkey(&self.config) {
+            self.hook.register(hotkey, action.callback(inner))?;
         }
         Ok(())
     }
 
-    fn register(&mut self, hotkey: Hotkey, keycode: Option<KeyCode>) -> Result<()> {
-        hotkey.set_keycode(&mut self.config, keycode);
-        self.register_inner(hotkey)
+    fn register(&mut self, action: Action, hotkey: Option<Hotkey>) -> Result<()> {
+        action.set_hotkey(&mut self.config, hotkey);
+        self.register_inner(action)
     }
 
     // This method should never be public, because it might mess up the internal
     // state and we might leak a registered hotkey
-    fn unregister_inner(&mut self, hotkey: Hotkey) -> Result<()> {
-        if let Some(keycode) = hotkey.get_keycode(&self.config) {
-            self.hook.unregister(keycode)?;
+    fn unregister_inner(&mut self, action: Action) -> Result<()> {
+        if let Some(hotkey) = action.get_hotkey(&self.config) {
+            self.hook.unregister(hotkey)?;
         }
         Ok(())
     }
 
-    fn unregister(&mut self, hotkey: Hotkey) -> Result<()> {
-        self.unregister_inner(hotkey)?;
-        hotkey.set_keycode(&mut self.config, None);
+    fn unregister(&mut self, action: Action) -> Result<()> {
+        self.unregister_inner(action)?;
+        action.set_hotkey(&mut self.config, None);
         Ok(())
     }
 
-    fn set_hotkey(&mut self, hotkey: Hotkey, keycode: Option<KeyCode>) -> Result<()> {
-        // FIXME: We do not check whether the keycode is already in use
-        if hotkey.get_keycode(&self.config) == keycode {
+    fn set_hotkey(&mut self, action: Action, hotkey: Option<Hotkey>) -> Result<()> {
+        // FIXME: We do not check whether the hotkey is already in use
+        if action.get_hotkey(&self.config) == hotkey {
             return Ok(());
         }
         if self.is_active {
-            self.unregister(hotkey)?;
-            self.register(hotkey, keycode)?;
+            self.unregister(action)?;
+            self.register(action, hotkey)?;
         } else {
-            hotkey.set_keycode(&mut self.config, keycode);
+            action.set_hotkey(&mut self.config, hotkey);
         }
         Ok(())
     }
 
     /// Sets the key to use for splitting and starting a new attempt.
-    pub fn set_split(&mut self, hotkey: Option<KeyCode>) -> Result<()> {
-        self.set_hotkey(Hotkey::Split, hotkey)
+    pub fn set_split(&mut self, hotkey: Option<Hotkey>) -> Result<()> {
+        self.set_hotkey(Action::Split, hotkey)
     }
 
     /// Sets the key to use for resetting the current attempt.
-    pub fn set_reset(&mut self, hotkey: Option<KeyCode>) -> Result<()> {
-        self.set_hotkey(Hotkey::Reset, hotkey)
+    pub fn set_reset(&mut self, hotkey: Option<Hotkey>) -> Result<()> {
+        self.set_hotkey(Action::Reset, hotkey)
     }
 
     /// Sets the key to use for pausing the current attempt and starting a new
     /// attempt.
-    pub fn set_pause(&mut self, hotkey: Option<KeyCode>) -> Result<()> {
-        self.set_hotkey(Hotkey::Pause, hotkey)
+    pub fn set_pause(&mut self, hotkey: Option<Hotkey>) -> Result<()> {
+        self.set_hotkey(Action::Pause, hotkey)
     }
 
     /// Sets the key to use for skipping the current split.
-    pub fn set_skip(&mut self, hotkey: Option<KeyCode>) -> Result<()> {
-        self.set_hotkey(Hotkey::Skip, hotkey)
+    pub fn set_skip(&mut self, hotkey: Option<Hotkey>) -> Result<()> {
+        self.set_hotkey(Action::Skip, hotkey)
     }
 
     /// Sets the key to use for undoing the last split.
-    pub fn set_undo(&mut self, hotkey: Option<KeyCode>) -> Result<()> {
-        self.set_hotkey(Hotkey::Undo, hotkey)
+    pub fn set_undo(&mut self, hotkey: Option<Hotkey>) -> Result<()> {
+        self.set_hotkey(Action::Undo, hotkey)
     }
 
     /// Sets the key to use for switching to the previous comparison.
-    pub fn set_previous_comparison(&mut self, hotkey: Option<KeyCode>) -> Result<()> {
-        self.set_hotkey(Hotkey::PreviousComparison, hotkey)
+    pub fn set_previous_comparison(&mut self, hotkey: Option<Hotkey>) -> Result<()> {
+        self.set_hotkey(Action::PreviousComparison, hotkey)
     }
 
     /// Sets the key to use for switching to the next comparison.
-    pub fn set_next_comparison(&mut self, hotkey: Option<KeyCode>) -> Result<()> {
-        self.set_hotkey(Hotkey::NextComparison, hotkey)
+    pub fn set_next_comparison(&mut self, hotkey: Option<Hotkey>) -> Result<()> {
+        self.set_hotkey(Action::NextComparison, hotkey)
     }
 
     /// Sets the key to use for removing all the pause times from the current
     /// time.
-    pub fn set_undo_all_pauses(&mut self, hotkey: Option<KeyCode>) -> Result<()> {
-        self.set_hotkey(Hotkey::UndoAllPauses, hotkey)
+    pub fn set_undo_all_pauses(&mut self, hotkey: Option<Hotkey>) -> Result<()> {
+        self.set_hotkey(Action::UndoAllPauses, hotkey)
     }
 
     /// Sets the key to use for toggling between the `Real Time` and `Game Time`
     /// timing methods.
-    pub fn set_toggle_timing_method(&mut self, hotkey: Option<KeyCode>) -> Result<()> {
-        self.set_hotkey(Hotkey::ToggleTimingMethod, hotkey)
+    pub fn set_toggle_timing_method(&mut self, hotkey: Option<Hotkey>) -> Result<()> {
+        self.set_hotkey(Action::ToggleTimingMethod, hotkey)
     }
 
     /// Deactivates the Hotkey System. No hotkeys will go through until it gets
     /// activated again. If it's already deactivated, nothing happens.
     pub fn deactivate(&mut self) -> Result<()> {
         if self.is_active {
-            self.unregister_inner(Hotkey::Split)?;
-            self.unregister_inner(Hotkey::Reset)?;
-            self.unregister_inner(Hotkey::Undo)?;
-            self.unregister_inner(Hotkey::Skip)?;
-            self.unregister_inner(Hotkey::Pause)?;
-            self.unregister_inner(Hotkey::UndoAllPauses)?;
-            self.unregister_inner(Hotkey::PreviousComparison)?;
-            self.unregister_inner(Hotkey::NextComparison)?;
-            self.unregister_inner(Hotkey::ToggleTimingMethod)?;
+            self.unregister_inner(Action::Split)?;
+            self.unregister_inner(Action::Reset)?;
+            self.unregister_inner(Action::Undo)?;
+            self.unregister_inner(Action::Skip)?;
+            self.unregister_inner(Action::Pause)?;
+            self.unregister_inner(Action::UndoAllPauses)?;
+            self.unregister_inner(Action::PreviousComparison)?;
+            self.unregister_inner(Action::NextComparison)?;
+            self.unregister_inner(Action::ToggleTimingMethod)?;
         }
         self.is_active = false;
         Ok(())
@@ -224,15 +224,15 @@ impl HotkeySystem {
     /// active, nothing happens.
     pub fn activate(&mut self) -> Result<()> {
         if !self.is_active {
-            self.register_inner(Hotkey::Split)?;
-            self.register_inner(Hotkey::Reset)?;
-            self.register_inner(Hotkey::Undo)?;
-            self.register_inner(Hotkey::Skip)?;
-            self.register_inner(Hotkey::Pause)?;
-            self.register_inner(Hotkey::UndoAllPauses)?;
-            self.register_inner(Hotkey::PreviousComparison)?;
-            self.register_inner(Hotkey::NextComparison)?;
-            self.register_inner(Hotkey::ToggleTimingMethod)?;
+            self.register_inner(Action::Split)?;
+            self.register_inner(Action::Reset)?;
+            self.register_inner(Action::Undo)?;
+            self.register_inner(Action::Skip)?;
+            self.register_inner(Action::Pause)?;
+            self.register_inner(Action::UndoAllPauses)?;
+            self.register_inner(Action::PreviousComparison)?;
+            self.register_inner(Action::NextComparison)?;
+            self.register_inner(Action::ToggleTimingMethod)?;
         }
         self.is_active = true;
         Ok(())

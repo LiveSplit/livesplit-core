@@ -72,7 +72,7 @@ bitflags::bitflags! {
 }
 
 #[repr(u32)]
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum EventType {
     Null = 0,

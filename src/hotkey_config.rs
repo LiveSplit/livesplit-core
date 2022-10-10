@@ -1,7 +1,7 @@
 #![allow(clippy::trivially_copy_pass_by_ref)]
 
 use crate::{
-    hotkey::KeyCode,
+    hotkey::{Hotkey, KeyCode},
     platform::prelude::*,
     settings::{Field, SettingsDescription, Value},
 };
@@ -13,39 +13,38 @@ use serde::{Deserialize, Serialize};
 #[serde(default)]
 pub struct HotkeyConfig {
     /// The key to use for splitting and starting a new attempt.
-    pub split: Option<KeyCode>,
+    pub split: Option<Hotkey>,
     /// The key to use for resetting the current attempt.
-    pub reset: Option<KeyCode>,
+    pub reset: Option<Hotkey>,
     /// The key to use for undoing the last split.
-    pub undo: Option<KeyCode>,
+    pub undo: Option<Hotkey>,
     /// The key to use for skipping the current split.
-    pub skip: Option<KeyCode>,
+    pub skip: Option<Hotkey>,
     /// The key to use for pausing the current attempt and starting a new
     /// attempt.
-    pub pause: Option<KeyCode>,
+    pub pause: Option<Hotkey>,
     /// The key to use for removing all the pause times from the current time.
-    pub undo_all_pauses: Option<KeyCode>,
+    pub undo_all_pauses: Option<Hotkey>,
     /// The key to use for switching to the previous comparison.
-    pub previous_comparison: Option<KeyCode>,
+    pub previous_comparison: Option<Hotkey>,
     /// The key to use for switching to the next comparison.
-    pub next_comparison: Option<KeyCode>,
+    pub next_comparison: Option<Hotkey>,
     /// The key to use for toggling between the `Real Time` and `Game Time`
     /// timing methods.
-    pub toggle_timing_method: Option<KeyCode>,
+    pub toggle_timing_method: Option<Hotkey>,
 }
 
 impl Default for HotkeyConfig {
     fn default() -> Self {
-        use crate::hotkey::KeyCode::*;
         Self {
-            split: Some(Numpad1),
-            reset: Some(Numpad3),
-            undo: Some(Numpad8),
-            skip: Some(Numpad2),
-            pause: Some(Numpad5),
+            split: Some(KeyCode::Numpad1.into()),
+            reset: Some(KeyCode::Numpad3.into()),
+            undo: Some(KeyCode::Numpad8.into()),
+            skip: Some(KeyCode::Numpad2.into()),
+            pause: None,
             undo_all_pauses: None,
-            previous_comparison: Some(Numpad4),
-            next_comparison: Some(Numpad6),
+            previous_comparison: None,
+            next_comparison: None,
             toggle_timing_method: None,
         }
     }
@@ -87,7 +86,7 @@ impl HotkeyConfig {
     /// the type of the setting's value. A panic can also occur if the index of
     /// the setting provided is out of bounds.
     pub fn set_value(&mut self, index: usize, value: Value) -> Result<(), ()> {
-        let value: Option<KeyCode> = value.into();
+        let value: Option<Hotkey> = value.into();
 
         if value.is_some() {
             let any = [

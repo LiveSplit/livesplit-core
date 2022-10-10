@@ -7,7 +7,7 @@ repository = "https://github.com/LiveSplit/livesplit-core/tree/master/crates/liv
 license = "Apache-2.0/MIT"
 description = "livesplit-hotkey provides cross-platform global hotkey hooks."
 keywords = ["speedrun", "timer", "livesplit", "hotkey", "keyboard"]
-edition = "2018"
+edition = "2021"
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3.2", features = [
@@ -16,13 +16,13 @@ winapi = { version = "0.3.2", features = [
     "winuser"
 ], optional = true }
 
+[target.'cfg(target_os = "macos")'.dependencies]
+objc = "0.2.7"
+
 [target.'cfg(target_os = "linux")'.dependencies]
 evdev = { version = "=0.11.4", optional = true }
 mio = { version = "0.8.0", default-features = false, features = ["os-ext", "os-poll"], optional = true }
 promising-future = { version = "0.2.4", optional = true }
-
-[target.'cfg(target_os = "macos")'.dependencies]
-bitflags = { version = "1.2.1", optional = true }
 
 [target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
 wasm-bindgen = { version = "0.2.54", optional = true }
@@ -32,8 +32,9 @@ web-sys = { version = "0.3.28", default-features = false, features = ["Gamepad",
 cfg-if = "1.0.0"
 serde = { version = "1.0.98", default-features = false, features = ["derive", "alloc"] }
 snafu = { version = "0.7.0", default-features = false }
+bitflags = { version = "1.2.1" }
 
 [features]
 default = ["std"]
-std = ["snafu/std", "serde/std", "evdev", "mio", "promising-future", "winapi", "bitflags"]
+std = ["snafu/std", "serde/std", "evdev", "mio", "promising-future", "winapi"]
 wasm-web = ["wasm-bindgen", "web-sys"]

@@ -1,5 +1,7 @@
+use crate::{Hotkey, Modifiers};
 use alloc::borrow::Cow;
-use core::str::FromStr;
+use core::{fmt, str::FromStr};
+use serde::{Deserialize, Serialize};
 
 // This is based on the web KeyboardEvent code Values specification and the
 // individual mappings are based on the following sources:
@@ -13,7 +15,8 @@ use core::str::FromStr;
 // Firefox's sources:
 // https://github.com/mozilla/gecko-dev/blob/25002b534963ad95ff0c1a3dd0f906ba023ddc8e/widget/NativeKeyToDOMCodeName.h
 //
-// Safari's sources: Windows:
+// Safari's sources:
+// Windows:
 // https://github.com/WebKit/WebKit/blob/8afe31a018b11741abdf9b4d5bb973d7c1d9ff05/Source/WebCore/platform/win/WindowsKeyNames.cpp
 // macOS:
 // https://github.com/WebKit/WebKit/blob/main/Source/WebCore/platform/mac/PlatformEventFactoryMac.mm
@@ -26,7 +29,7 @@ use core::str::FromStr;
 /// keyboard layout. The values are based on the [`UI Events KeyboardEvent code
 /// Values`](https://www.w3.org/TR/uievents-code/) specification. There are some
 /// additional values for Gamepad support and some browser specific values.
-#[derive(Debug, Eq, PartialEq, Hash, Copy, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Eq, PartialEq, Hash, Copy, Clone)]
 #[non_exhaustive]
 pub enum KeyCode {
     /// `Backtick` and `~` on a US keyboard. This is the `半角/全角/漢字`
@@ -1153,8 +1156,49 @@ pub enum KeyCode {
     ZoomToggle,
 }
 
+impl fmt::Debug for KeyCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl Serialize for KeyCode {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.name())
+    }
+}
+
+impl<'de> Deserialize<'de> for KeyCode {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_str(KeyCodeVisitor)
+    }
+}
+
+struct KeyCodeVisitor;
+
+impl<'de> serde::de::Visitor<'de> for KeyCodeVisitor {
+    type Value = KeyCode;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str("a valid key code")
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        KeyCode::from_str(v).map_err(|()| serde::de::Error::custom("invalid key code"))
+    }
+}
+
 /// Every [`KeyCode`] is grouped into one of these classes.
-#[derive(Debug, Eq, PartialEq, Hash, Copy, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Eq, PartialEq, Hash, Copy, Clone, Serialize, Deserialize)]
 pub enum KeyCodeClass {
     /// The *writing system keys* are those that change meaning (i.e., they
     /// produce different key values) based on the current locale and keyboard
@@ -1202,8 +1246,237 @@ pub enum KeyCodeClass {
 }
 
 impl KeyCode {
+    /// Combines the key code with the modifiers to form a [`Hotkey`].
+    pub fn with_modifiers(self, modifiers: Modifiers) -> Hotkey {
+        Hotkey {
+            key_code: self,
+            modifiers,
+        }
+    }
+
+    /// Returns the name of the key code.
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::Backquote => "Backquote",
+            Self::Backslash => "Backslash",
+            Self::BracketLeft => "BracketLeft",
+            Self::BracketRight => "BracketRight",
+            Self::Comma => "Comma",
+            Self::Digit0 => "Digit0",
+            Self::Digit1 => "Digit1",
+            Self::Digit2 => "Digit2",
+            Self::Digit3 => "Digit3",
+            Self::Digit4 => "Digit4",
+            Self::Digit5 => "Digit5",
+            Self::Digit6 => "Digit6",
+            Self::Digit7 => "Digit7",
+            Self::Digit8 => "Digit8",
+            Self::Digit9 => "Digit9",
+            Self::Equal => "Equal",
+            Self::IntlBackslash => "IntlBackslash",
+            Self::IntlRo => "IntlRo",
+            Self::IntlYen => "IntlYen",
+            Self::KeyA => "KeyA",
+            Self::KeyB => "KeyB",
+            Self::KeyC => "KeyC",
+            Self::KeyD => "KeyD",
+            Self::KeyE => "KeyE",
+            Self::KeyF => "KeyF",
+            Self::KeyG => "KeyG",
+            Self::KeyH => "KeyH",
+            Self::KeyI => "KeyI",
+            Self::KeyJ => "KeyJ",
+            Self::KeyK => "KeyK",
+            Self::KeyL => "KeyL",
+            Self::KeyM => "KeyM",
+            Self::KeyN => "KeyN",
+            Self::KeyO => "KeyO",
+            Self::KeyP => "KeyP",
+            Self::KeyQ => "KeyQ",
+            Self::KeyR => "KeyR",
+            Self::KeyS => "KeyS",
+            Self::KeyT => "KeyT",
+            Self::KeyU => "KeyU",
+            Self::KeyV => "KeyV",
+            Self::KeyW => "KeyW",
+            Self::KeyX => "KeyX",
+            Self::KeyY => "KeyY",
+            Self::KeyZ => "KeyZ",
+            Self::Minus => "Minus",
+            Self::Period => "Period",
+            Self::Quote => "Quote",
+            Self::Semicolon => "Semicolon",
+            Self::Slash => "Slash",
+            Self::AltLeft => "AltLeft",
+            Self::AltRight => "AltRight",
+            Self::Backspace => "Backspace",
+            Self::CapsLock => "CapsLock",
+            Self::ContextMenu => "ContextMenu",
+            Self::ControlLeft => "ControlLeft",
+            Self::ControlRight => "ControlRight",
+            Self::Enter => "Enter",
+            Self::MetaLeft => "MetaLeft",
+            Self::MetaRight => "MetaRight",
+            Self::ShiftLeft => "ShiftLeft",
+            Self::ShiftRight => "ShiftRight",
+            Self::Space => "Space",
+            Self::Tab => "Tab",
+            Self::Convert => "Convert",
+            Self::KanaMode => "KanaMode",
+            Self::Lang1 => "Lang1",
+            Self::Lang2 => "Lang2",
+            Self::Lang3 => "Lang3",
+            Self::Lang4 => "Lang4",
+            Self::Lang5 => "Lang5",
+            Self::NonConvert => "NonConvert",
+            Self::Delete => "Delete",
+            Self::End => "End",
+            Self::Help => "Help",
+            Self::Home => "Home",
+            Self::Insert => "Insert",
+            Self::PageDown => "PageDown",
+            Self::PageUp => "PageUp",
+            Self::ArrowDown => "ArrowDown",
+            Self::ArrowLeft => "ArrowLeft",
+            Self::ArrowRight => "ArrowRight",
+            Self::ArrowUp => "ArrowUp",
+            Self::NumLock => "NumLock",
+            Self::Numpad0 => "Numpad0",
+            Self::Numpad1 => "Numpad1",
+            Self::Numpad2 => "Numpad2",
+            Self::Numpad3 => "Numpad3",
+            Self::Numpad4 => "Numpad4",
+            Self::Numpad5 => "Numpad5",
+            Self::Numpad6 => "Numpad6",
+            Self::Numpad7 => "Numpad7",
+            Self::Numpad8 => "Numpad8",
+            Self::Numpad9 => "Numpad9",
+            Self::NumpadAdd => "NumpadAdd",
+            Self::NumpadBackspace => "NumpadBackspace",
+            Self::NumpadClear => "NumpadClear",
+            Self::NumpadClearEntry => "NumpadClearEntry",
+            Self::NumpadComma => "NumpadComma",
+            Self::NumpadDecimal => "NumpadDecimal",
+            Self::NumpadDivide => "NumpadDivide",
+            Self::NumpadEnter => "NumpadEnter",
+            Self::NumpadEqual => "NumpadEqual",
+            Self::NumpadHash => "NumpadHash",
+            Self::NumpadMemoryAdd => "NumpadMemoryAdd",
+            Self::NumpadMemoryClear => "NumpadMemoryClear",
+            Self::NumpadMemoryRecall => "NumpadMemoryRecall",
+            Self::NumpadMemoryStore => "NumpadMemoryStore",
+            Self::NumpadMemorySubtract => "NumpadMemorySubtract",
+            Self::NumpadMultiply => "NumpadMultiply",
+            Self::NumpadParenLeft => "NumpadParenLeft",
+            Self::NumpadParenRight => "NumpadParenRight",
+            Self::NumpadStar => "NumpadStar",
+            Self::NumpadSubtract => "NumpadSubtract",
+            Self::Escape => "Escape",
+            Self::F1 => "F1",
+            Self::F2 => "F2",
+            Self::F3 => "F3",
+            Self::F4 => "F4",
+            Self::F5 => "F5",
+            Self::F6 => "F6",
+            Self::F7 => "F7",
+            Self::F8 => "F8",
+            Self::F9 => "F9",
+            Self::F10 => "F10",
+            Self::F11 => "F11",
+            Self::F12 => "F12",
+            Self::F13 => "F13",
+            Self::F14 => "F14",
+            Self::F15 => "F15",
+            Self::F16 => "F16",
+            Self::F17 => "F17",
+            Self::F18 => "F18",
+            Self::F19 => "F19",
+            Self::F20 => "F20",
+            Self::F21 => "F21",
+            Self::F22 => "F22",
+            Self::F23 => "F23",
+            Self::F24 => "F24",
+            Self::Fn => "Fn",
+            Self::FnLock => "FnLock",
+            Self::PrintScreen => "PrintScreen",
+            Self::ScrollLock => "ScrollLock",
+            Self::Pause => "Pause",
+            Self::BrowserBack => "BrowserBack",
+            Self::BrowserFavorites => "BrowserFavorites",
+            Self::BrowserForward => "BrowserForward",
+            Self::BrowserHome => "BrowserHome",
+            Self::BrowserRefresh => "BrowserRefresh",
+            Self::BrowserSearch => "BrowserSearch",
+            Self::BrowserStop => "BrowserStop",
+            Self::Eject => "Eject",
+            Self::LaunchApp1 => "LaunchApp1",
+            Self::LaunchApp2 => "LaunchApp2",
+            Self::LaunchMail => "LaunchMail",
+            Self::MediaPlayPause => "MediaPlayPause",
+            Self::MediaSelect => "MediaSelect",
+            Self::MediaStop => "MediaStop",
+            Self::MediaTrackNext => "MediaTrackNext",
+            Self::MediaTrackPrevious => "MediaTrackPrevious",
+            Self::Power => "Power",
+            Self::Sleep => "Sleep",
+            Self::AudioVolumeDown => "AudioVolumeDown",
+            Self::AudioVolumeMute => "AudioVolumeMute",
+            Self::AudioVolumeUp => "AudioVolumeUp",
+            Self::WakeUp => "WakeUp",
+            Self::Again => "Again",
+            Self::Copy => "Copy",
+            Self::Cut => "Cut",
+            Self::Find => "Find",
+            Self::Open => "Open",
+            Self::Paste => "Paste",
+            Self::Props => "Props",
+            Self::Select => "Select",
+            Self::Undo => "Undo",
+            Self::Gamepad0 => "Gamepad0",
+            Self::Gamepad1 => "Gamepad1",
+            Self::Gamepad2 => "Gamepad2",
+            Self::Gamepad3 => "Gamepad3",
+            Self::Gamepad4 => "Gamepad4",
+            Self::Gamepad5 => "Gamepad5",
+            Self::Gamepad6 => "Gamepad6",
+            Self::Gamepad7 => "Gamepad7",
+            Self::Gamepad8 => "Gamepad8",
+            Self::Gamepad9 => "Gamepad9",
+            Self::Gamepad10 => "Gamepad10",
+            Self::Gamepad11 => "Gamepad11",
+            Self::Gamepad12 => "Gamepad12",
+            Self::Gamepad13 => "Gamepad13",
+            Self::Gamepad14 => "Gamepad14",
+            Self::Gamepad15 => "Gamepad15",
+            Self::Gamepad16 => "Gamepad16",
+            Self::Gamepad17 => "Gamepad17",
+            Self::Gamepad18 => "Gamepad18",
+            Self::Gamepad19 => "Gamepad19",
+            Self::BrightnessDown => "BrightnessDown",
+            Self::BrightnessUp => "BrightnessUp",
+            Self::DisplayToggleIntExt => "DisplayToggleIntExt",
+            Self::KeyboardLayoutSelect => "KeyboardLayoutSelect",
+            Self::LaunchAssistant => "LaunchAssistant",
+            Self::LaunchControlPanel => "LaunchControlPanel",
+            Self::LaunchScreenSaver => "LaunchScreenSaver",
+            Self::MailForward => "MailForward",
+            Self::MailReply => "MailReply",
+            Self::MailSend => "MailSend",
+            Self::MediaFastForward => "MediaFastForward",
+            Self::MediaPlay => "MediaPlay",
+            Self::MediaPause => "MediaPause",
+            Self::MediaRecord => "MediaRecord",
+            Self::MediaRewind => "MediaRewind",
+            Self::MicrophoneMuteToggle => "MicrophoneMuteToggle",
+            Self::PrivacyScreenToggle => "PrivacyScreenToggle",
+            Self::SelectTask => "SelectTask",
+            Self::ShowAllWindows => "ShowAllWindows",
+            Self::ZoomToggle => "ZoomToggle",
+        }
+    }
+
     /// Resolve the KeyCode according to the standard US layout.
-    pub const fn as_str(self) -> &'static str {
+    pub const fn resolve_en_us(self) -> &'static str {
         use self::KeyCode::*;
         match self {
             Backquote => "`",
@@ -1506,7 +1779,7 @@ impl KeyCode {
                 return uppercase.into();
             }
         }
-        self.as_str().into()
+        self.resolve_en_us().into()
     }
 }
 
