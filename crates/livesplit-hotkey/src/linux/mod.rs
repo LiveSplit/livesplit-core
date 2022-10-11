@@ -1,4 +1,4 @@
-use crate::KeyCode;
+use crate::{Hotkey, KeyCode, Modifiers};
 use evdev::{self, Device, EventType, InputEventKind, Key};
 use mio::{unix::SourceFd, Events, Interest, Poll, Token, Waker};
 use promising_future::{future_promise, Promise};
@@ -30,11 +30,11 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 enum Message {
     Register(
-        KeyCode,
+        Hotkey,
         Box<dyn FnMut() + Send + 'static>,
         Promise<Result<()>>,
     ),
-    Unregister(KeyCode, Promise<Result<()>>),
+    Unregister(Hotkey, Promise<Result<()>>),
     End,
 }
 
@@ -303,7 +303,8 @@ impl Hook {
         let join_handle = thread::spawn(move || -> Result<()> {
             let mut result = Ok(());
             let mut events = Events::with_capacity(1024);
-            let mut hotkeys: HashMap<Key, Box<dyn FnMut() + Send>> = HashMap::new();
+            let mut hotkeys: HashMap<(Key, Modifiers), Box<dyn FnMut() + Send>> = HashMap::new();
+            let mut modifiers = Modifiers::empty();
 
             'event_loop: loop {
                 if poll.poll(&mut events, None).is_err() {
@@ -316,15 +317,45 @@ impl Hook {
                         let idx = mio_event.token().0;
                         for ev in devices[idx].fetch_events().map_err(|_| Error::EvDev)? {
                             if let InputEventKind::Key(k) = ev.kind() {
-                                // The values are:
-                                // - 0: Released
-                                // - 1: Pressed
-                                // - 2: Repeating
-                                // We don't want it to repeat so we only care about 1.
-                                if ev.value() == 1 {
-                                    if let Some(callback) = hotkeys.get_mut(&k) {
-                                        callback();
+                                const RELEASED: i32 = 0;
+                                const PRESSED: i32 = 1;
+                                match ev.value() {
+                                    PRESSED => {
+                                        if let Some(callback) = hotkeys.get_mut(&(k, modifiers)) {
+                                            callback();
+                                        }
+                                        match k {
+                                            Key::KEY_LEFTALT | Key::KEY_RIGHTALT => {
+                                                modifiers.insert(Modifiers::ALT);
+                                            }
+                                            Key::KEY_LEFTCTRL | Key::KEY_RIGHTCTRL => {
+                                                modifiers.insert(Modifiers::CONTROL);
+                                            }
+                                            Key::KEY_LEFTMETA | Key::KEY_RIGHTMETA => {
+                                                modifiers.insert(Modifiers::META);
+                                            }
+                                            Key::KEY_LEFTSHIFT | Key::KEY_RIGHTSHIFT => {
+                                                modifiers.insert(Modifiers::SHIFT);
+                                            }
+                                            _ => {}
+                                        }
                                     }
+                                    RELEASED => match k {
+                                        Key::KEY_LEFTALT | Key::KEY_RIGHTALT => {
+                                            modifiers.remove(Modifiers::ALT);
+                                        }
+                                        Key::KEY_LEFTCTRL | Key::KEY_RIGHTCTRL => {
+                                            modifiers.remove(Modifiers::CONTROL);
+                                        }
+                                        Key::KEY_LEFTMETA | Key::KEY_RIGHTMETA => {
+                                            modifiers.remove(Modifiers::META);
+                                        }
+                                        Key::KEY_LEFTSHIFT | Key::KEY_RIGHTSHIFT => {
+                                            modifiers.remove(Modifiers::SHIFT);
+                                        }
+                                        _ => {}
+                                    },
+                                    _ => {} // Ignore repeating
                                 }
                             }
                         }
@@ -333,8 +364,10 @@ impl Hook {
                             match message {
                                 Message::Register(key, callback, promise) => {
                                     promise.set(
-                                        if code_for(key)
-                                            .and_then(|k| hotkeys.insert(k, callback))
+                                        if code_for(key.key_code)
+                                            .and_then(|k| {
+                                                hotkeys.insert((k, key.modifiers), callback)
+                                            })
                                             .is_some()
                                         {
                                             Err(Error::AlreadyRegistered)
@@ -344,8 +377,8 @@ impl Hook {
                                     );
                                 }
                                 Message::Unregister(key, promise) => promise.set(
-                                    code_for(key)
-                                        .and_then(|k| hotkeys.remove(&k).map(drop))
+                                    code_for(key.key_code)
+                                        .and_then(|k| hotkeys.remove(&(k, key.modifiers)).map(drop))
                                         .ok_or(Error::NotRegistered),
                                 ),
                                 Message::End => {
@@ -367,7 +400,7 @@ impl Hook {
     }
 
     /// Registers a hotkey to listen to.
-    pub fn register<F>(&self, hotkey: KeyCode, callback: F) -> Result<()>
+    pub fn register<F>(&self, hotkey: Hotkey, callback: F) -> Result<()>
     where
         F: FnMut() + Send + 'static,
     {
@@ -383,7 +416,7 @@ impl Hook {
     }
 
     /// Unregisters a previously registered hotkey.
-    pub fn unregister(&self, hotkey: KeyCode) -> Result<()> {
+    pub fn unregister(&self, hotkey: Hotkey) -> Result<()> {
         let (future, promise) = future_promise();
 
         self.sender

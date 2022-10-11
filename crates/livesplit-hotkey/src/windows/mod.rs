@@ -1,4 +1,4 @@
-use crate::KeyCode;
+use crate::{Hotkey, KeyCode, Modifiers};
 use std::{
     cell::RefCell,
     collections::hash_map::{Entry, HashMap},
@@ -21,7 +21,8 @@ use winapi::{
         winuser::{
             CallNextHookEx, GetMessageW, MapVirtualKeyW, PostThreadMessageW, SetWindowsHookExW,
             UnhookWindowsHookEx, KBDLLHOOKSTRUCT, LLKHF_EXTENDED, MAPVK_VK_TO_CHAR,
-            MAPVK_VK_TO_VSC_EX, MAPVK_VSC_TO_VK_EX, WH_KEYBOARD_LL, WM_KEYDOWN, WM_SYSKEYDOWN,
+            MAPVK_VK_TO_VSC_EX, MAPVK_VSC_TO_VK_EX, WH_KEYBOARD_LL, WM_KEYDOWN, WM_KEYUP,
+            WM_SYSKEYDOWN, WM_SYSKEYUP,
         },
     },
 };
@@ -50,7 +51,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// A hook allows you to listen to hotkeys.
 pub struct Hook {
     thread_id: DWORD,
-    hotkeys: Arc<Mutex<HashMap<KeyCode, Box<dyn FnMut() + Send + 'static>>>>,
+    hotkeys: Arc<Mutex<HashMap<Hotkey, Box<dyn FnMut() + Send + 'static>>>>,
 }
 
 impl Drop for Hook {
@@ -63,7 +64,8 @@ impl Drop for Hook {
 
 struct State {
     hook: HHOOK,
-    events: Sender<KeyCode>,
+    events: Sender<Hotkey>,
+    modifiers: Modifiers,
 }
 
 thread_local! {
@@ -276,8 +278,69 @@ unsafe extern "system" fn callback_proc(code: c_int, wparam: WPARAM, lparam: LPA
                 if let Some(key_code) = parse_scan_code(scan_code) {
                     state
                         .events
-                        .send(key_code)
+                        .send(Hotkey {
+                            key_code,
+                            modifiers: state.modifiers,
+                        })
                         .expect("Callback Thread disconnected");
+
+                    match key_code {
+                        KeyCode::AltLeft | KeyCode::AltRight => {
+                            state.modifiers.insert(Modifiers::ALT);
+                        }
+                        KeyCode::ControlLeft | KeyCode::ControlRight => {
+                            state.modifiers.insert(Modifiers::CONTROL);
+                        }
+                        KeyCode::MetaLeft | KeyCode::MetaRight => {
+                            state.modifiers.insert(Modifiers::META);
+                        }
+                        KeyCode::ShiftLeft | KeyCode::ShiftRight => {
+                            state.modifiers.insert(Modifiers::SHIFT);
+                        }
+                        _ => {}
+                    }
+                }
+            } else if event == WM_KEYUP || event == WM_SYSKEYUP {
+                // Windows in addition to the scan code has a notion of a
+                // virtual key code. This however is already dependent on the
+                // keyboard layout. So we should prefer the scan code over the
+                // virtual key code. It's hard to come by what these scan codes
+                // actually mean, but there's a document released by Microsoft
+                // that contains most (not all sadly) mappings from USB HID to
+                // the scan code (which matches the PS/2 scan code set 1 make
+                // column).
+                // http://download.microsoft.com/download/1/6/1/161ba512-40e2-4cc9-843a-923143f3456c/translate.pdf
+                // Scan codes can come in an extended form `e0/e1 xx`, so you
+                // need to check for the extended field in the flags, as the
+                // scan code provided by itself is not extended. Also not every
+                // key press somehow even has a scan code. It seems like these
+                // might be caused by a special keyboard driver that directly
+                // emits the virtual key codes for those keys rather than any
+                // physical scan codes ever coming in. Windows has a way to
+                // translate those back into scan codes though, so this is what
+                // we do in that case.
+                let scan_code = if hook_struct.scanCode != 0 {
+                    hook_struct.scanCode + ((hook_struct.flags & LLKHF_EXTENDED) * 0xE000)
+                } else {
+                    MapVirtualKeyW(hook_struct.vkCode, MAPVK_VK_TO_VSC_EX)
+                };
+
+                if let Some(key_code) = parse_scan_code(scan_code) {
+                    match key_code {
+                        KeyCode::AltLeft | KeyCode::AltRight => {
+                            state.modifiers.remove(Modifiers::ALT);
+                        }
+                        KeyCode::ControlLeft | KeyCode::ControlRight => {
+                            state.modifiers.remove(Modifiers::CONTROL);
+                        }
+                        KeyCode::MetaLeft | KeyCode::MetaRight => {
+                            state.modifiers.remove(Modifiers::META);
+                        }
+                        KeyCode::ShiftLeft | KeyCode::ShiftRight => {
+                            state.modifiers.remove(Modifiers::SHIFT);
+                        }
+                        _ => {}
+                    }
                 }
             }
         }
@@ -290,7 +353,7 @@ impl Hook {
     /// Creates a new hook.
     pub fn new() -> Result<Self> {
         let hotkeys = Arc::new(Mutex::new(HashMap::<
-            KeyCode,
+            Hotkey,
             Box<dyn FnMut() + Send + 'static>,
         >::new()));
 
@@ -323,6 +386,7 @@ impl Hook {
                 *state.borrow_mut() = Some(State {
                     hook,
                     events: events_tx,
+                    modifiers: Modifiers::empty(),
                 });
 
                 Ok(())
@@ -362,7 +426,7 @@ impl Hook {
     }
 
     /// Registers a hotkey to listen to.
-    pub fn register<F>(&self, hotkey: KeyCode, callback: F) -> Result<()>
+    pub fn register<F>(&self, hotkey: Hotkey, callback: F) -> Result<()>
     where
         F: FnMut() + Send + 'static,
     {
@@ -375,7 +439,7 @@ impl Hook {
     }
 
     /// Unregisters a previously registered hotkey.
-    pub fn unregister(&self, hotkey: KeyCode) -> Result<()> {
+    pub fn unregister(&self, hotkey: Hotkey) -> Result<()> {
         if self.hotkeys.lock().unwrap().remove(&hotkey).is_some() {
             Ok(())
         } else {

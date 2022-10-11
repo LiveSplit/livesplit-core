@@ -3,7 +3,7 @@ use crate::{
         splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith},
         timer::DeltaGradient,
     },
-    hotkey::KeyCode,
+    hotkey::Hotkey,
     layout::LayoutDirection,
     platform::prelude::*,
     settings::{Alignment, Color, Font, Gradient, ListGradient},
@@ -65,7 +65,7 @@ pub enum Value {
     /// A value describing when to update a column of the Splits Component.
     ColumnUpdateTrigger(ColumnUpdateTrigger),
     /// A value describing what hotkey to press to trigger a certain action.
-    Hotkey(Option<KeyCode>),
+    Hotkey(Option<Hotkey>),
     /// A value describing the direction of a layout.
     LayoutDirection(LayoutDirection),
     /// A value describing a font to use. `None` if a default font should be
@@ -172,8 +172,8 @@ impl From<ColumnUpdateTrigger> for Value {
     }
 }
 
-impl From<Option<KeyCode>> for Value {
-    fn from(x: Option<KeyCode>) -> Self {
+impl From<Option<Hotkey>> for Value {
+    fn from(x: Option<Hotkey>) -> Self {
         Value::Hotkey(x)
     }
 }
@@ -348,7 +348,7 @@ impl Value {
     }
 
     /// Tries to convert the value into a hotkey.
-    pub fn into_hotkey(self) -> Result<Option<KeyCode>> {
+    pub fn into_hotkey(self) -> Result<Option<Hotkey>> {
         match self {
             Value::Hotkey(v) => Ok(v),
             Value::String(v) | Value::OptionalString(Some(v)) => {
@@ -490,7 +490,7 @@ impl From<Value> for ColumnUpdateTrigger {
     }
 }
 
-impl From<Value> for Option<KeyCode> {
+impl From<Value> for Option<Hotkey> {
     fn from(value: Value) -> Self {
         value.into_hotkey().unwrap()
     }

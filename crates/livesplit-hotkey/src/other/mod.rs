@@ -1,4 +1,4 @@
-use crate::KeyCode;
+use crate::{Hotkey, KeyCode};
 use alloc::string::String;
 
 /// The error type for this crate.
@@ -19,7 +19,7 @@ impl Hook {
     }
 
     /// Registers a hotkey to listen to.
-    pub fn register<F>(&self, _: KeyCode, _: F) -> Result<()>
+    pub fn register<F>(&self, _: Hotkey, _: F) -> Result<()>
     where
         F: FnMut() + Send + 'static,
     {
@@ -27,7 +27,7 @@ impl Hook {
     }
 
     /// Unregisters a previously registered hotkey.
-    pub fn unregister(&self, _: KeyCode) -> Result<()> {
+    pub fn unregister(&self, _: Hotkey) -> Result<()> {
         Ok(())
     }
 }
