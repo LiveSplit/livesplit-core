@@ -32,7 +32,8 @@ use crate::{
     DateTime, Run, Time, Timer, TimerPhase,
 };
 use alloc::borrow::Cow;
-use core::fmt;
+use base64_simd::Base64;
+use core::{fmt, mem::MaybeUninit};
 use time::UtcOffset;
 
 const LSS_IMAGE_HEADER: &[u8; 156] = include_bytes!("lss_image_header.bin");
@@ -65,27 +66,34 @@ fn image<W: fmt::Write>(
     writer: &mut Writer<W>,
     tag: &str,
     image: &Image,
-    base64_buf: &mut String,
+    base64_buf: &mut Vec<MaybeUninit<u8>>,
     image_buf: &mut Cow<'_, [u8]>,
 ) -> fmt::Result {
     writer.tag(tag, |tag| {
         let image_data = image.data();
-        if !image_data.is_empty() {
-            let len = image_data.len();
-            let image_buf = image_buf.to_mut();
-            image_buf.truncate(LSS_IMAGE_HEADER.len());
-            image_buf.reserve(len + 6);
-            image_buf.extend(&(len as u32).to_le_bytes());
-            image_buf.push(0x2);
-            image_buf.extend(image_data);
-            image_buf.push(0xB);
-            base64_buf.clear();
-            base64::encode_config_buf(image_buf, base64::STANDARD, base64_buf);
-            if !base64_buf.is_empty() {
-                return tag.content(|writer| writer.cdata(Text::new_escaped(base64_buf)));
-            }
+        if image_data.is_empty() {
+            return Ok(());
         }
-        Ok(())
+
+        let len = image_data.len();
+        let image_buf = image_buf.to_mut();
+        image_buf.truncate(LSS_IMAGE_HEADER.len());
+        image_buf.reserve(len + 6);
+        image_buf.extend(&(len as u32).to_le_bytes());
+        image_buf.push(0x2);
+        image_buf.extend(image_data);
+        image_buf.push(0xB);
+
+        base64_buf.resize(
+            Base64::STANDARD.encoded_length(image_buf.len()),
+            MaybeUninit::uninit(),
+        );
+
+        let encoded = Base64::STANDARD
+            .encode_as_str(image_buf, base64_simd::OutBuf::uninit(base64_buf))
+            .unwrap();
+
+        tag.content(|writer| writer.cdata(Text::new_escaped(encoded)))
     })
 }
 
@@ -164,7 +172,7 @@ pub fn save_timer<W: fmt::Write>(timer: &Timer, writer: W) -> fmt::Result {
 pub fn save_run<W: fmt::Write>(run: &Run, writer: W) -> fmt::Result {
     let writer = &mut Writer::new_with_default_header(writer)?;
 
-    let base64_buf = &mut String::new();
+    let base64_buf = &mut Vec::new();
     let image_buf = &mut Cow::Borrowed(&LSS_IMAGE_HEADER[..]);
 
     writer.tag_with_content("Run", [("version", Text::new_escaped("1.8.0"))], |writer| {

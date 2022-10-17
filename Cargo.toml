@@ -34,7 +34,7 @@ members = ["capi", "capi/bind_gen", "crates/*"]
 
 [dependencies]
 # core
-base64 = { version = "0.13.0", default-features = false, features = ["alloc"] }
+base64-simd = { version = "0.7.0", default-features = false, features = ["alloc"] }
 bytemuck = { version = "1.9.1", default-features = false, features = ["derive"] }
 cfg-if = "1.0.0"
 itoa = { version = "1.0.3", default-features = false }
@@ -115,13 +115,15 @@ criterion = "0.4.0"
 [features]
 default = ["image-shrinking", "std"]
 std = [
+    "base64-simd/detect",
+    "base64-simd/std",
     "image",
     "libc",
     "livesplit-hotkey/std",
     "memchr/std",
     "rustybuzz?/std",
-    "serde/std",
     "serde_json/std",
+    "serde/std",
     "simdutf8/std",
     "snafu/std",
     "time/formatting",

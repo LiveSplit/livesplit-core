@@ -1,5 +1,7 @@
 //! Provides the parser for layout files of the original LiveSplit.
 
+use base64_simd::Base64;
+
 use super::{Component, Layout, LayoutDirection};
 use crate::{
     component::{separator, timer::DeltaGradient},
@@ -19,7 +21,7 @@ use crate::{
         Reader,
     },
 };
-use core::str;
+use core::{mem::MaybeUninit, num::ParseIntError, str};
 
 mod blank_space;
 mod current_comparison;
@@ -61,7 +63,7 @@ pub enum Error {
     /// Failed to parse an integer.
     ParseInt {
         /// The underlying error.
-        source: core::num::ParseIntError,
+        source: ParseIntError,
     },
     /// Failed to parse a boolean.
     ParseBool,
@@ -91,8 +93,8 @@ impl From<XmlError> for Error {
     }
 }
 
-impl From<core::num::ParseIntError> for Error {
-    fn from(source: core::num::ParseIntError) -> Self {
+impl From<ParseIntError> for Error {
+    fn from(source: ParseIntError) -> Self {
         Self::ParseInt { source }
     }
 }
@@ -151,7 +153,12 @@ impl GradientType for DeltaGradientKind {
     fn build(self, first: Color, second: Color) -> Self::Built {
         match self {
             DeltaGradientKind::Transparent => Gradient::Transparent.into(),
-            DeltaGradientKind::Plain => Gradient::Plain(first).into(),
+            DeltaGradientKind::Plain => if first.alpha == 0.0 {
+                Gradient::Transparent
+            } else {
+                Gradient::Plain(first)
+            }
+            .into(),
             DeltaGradientKind::Vertical => Gradient::Vertical(first, second).into(),
             DeltaGradientKind::Horizontal => Gradient::Horizontal(first, second).into(),
             DeltaGradientKind::PlainWithDeltaColor => DeltaGradient::DeltaPlain,
@@ -167,13 +174,10 @@ impl GradientType for GradientKind {
         GradientKind::Transparent
     }
     fn parse(kind: &str) -> Result<Self> {
-        // FIXME: Implement delta color support properly:
-        // https://github.com/LiveSplit/livesplit-core/issues/380
-
         Ok(match kind {
-            "Plain" | "PlainWithDeltaColor" => GradientKind::Plain,
-            "Vertical" | "VerticalWithDeltaColor" => GradientKind::Vertical,
-            "Horizontal" | "HorizontalWithDeltaColor" => GradientKind::Horizontal,
+            "Plain" => GradientKind::Plain,
+            "Vertical" => GradientKind::Vertical,
+            "Horizontal" => GradientKind::Horizontal,
             _ => return Err(Error::ParseGradientType),
         })
     }
@@ -297,7 +301,7 @@ where
     })
 }
 
-fn font<F>(reader: &mut Reader<'_>, font_buf: &mut Vec<u8>, f: F) -> Result<()>
+fn font<F>(reader: &mut Reader<'_>, font_buf: &mut Vec<MaybeUninit<u8>>, f: F) -> Result<()>
 where
     F: FnOnce(Font),
 {
@@ -317,11 +321,18 @@ where
         // The full definition can be found here:
         // https://referencesource.microsoft.com/#System.Drawing/commonui/System/Drawing/Advanced/Font.cs,130
 
-        let rem = text.get(304..).ok_or(Error::ParseFont)?;
-        font_buf.clear();
-        base64::decode_config_buf(rem, base64::STANDARD, font_buf).map_err(|_| Error::ParseFont)?;
+        let rem = text.as_bytes().get(304..).ok_or(Error::ParseFont)?;
 
-        let mut cursor = font_buf.get(1..).ok_or(Error::ParseFont)?.iter();
+        font_buf.resize(
+            Base64::STANDARD.estimated_decoded_length(rem.len()),
+            MaybeUninit::uninit(),
+        );
+
+        let decoded = Base64::STANDARD
+            .decode(rem, base64_simd::OutBuf::uninit(font_buf))
+            .map_err(|_| Error::ParseFont)?;
+
+        let mut cursor = decoded.get(1..).ok_or(Error::ParseFont)?.iter();
 
         // Strings are encoded as varint for the length + the UTF-8 string data.
         let mut len = 0;
