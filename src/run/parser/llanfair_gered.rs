@@ -1,5 +1,7 @@
 //! Provides the parser for splits files used by Gered's Llanfair fork.
 
+use core::mem::MaybeUninit;
+
 #[cfg(feature = "std")]
 use crate::util::byte_parsing::big_endian::strip_u32;
 #[cfg(feature = "std")]
@@ -83,20 +85,30 @@ where
 #[cfg(feature = "std")]
 fn image<F>(
     reader: &mut Reader<'_>,
-    raw_buf: &mut Vec<u8>,
+    raw_buf: &mut Vec<MaybeUninit<u8>>,
     png_buf: &mut Vec<u8>,
     mut f: F,
 ) -> Result<()>
 where
     F: FnMut(&[u8]),
 {
+    use base64_simd::Base64;
+
     single_child(reader, "ImageIcon", |reader, _| {
         let (width, height, image) = text_as_str_err::<_, _, Error>(reader, |t| {
-            raw_buf.clear();
-            base64::decode_config_buf(&*t, base64::STANDARD, raw_buf).map_err(|_| Error::Image)?;
+            let src = t.as_bytes();
+
+            raw_buf.resize(
+                Base64::STANDARD.estimated_decoded_length(src.len()),
+                MaybeUninit::uninit(),
+            );
+
+            let decoded = Base64::STANDARD
+                .decode(src, base64_simd::OutBuf::uninit(raw_buf))
+                .map_err(|_| Error::Image)?;
 
             let (width, height);
-            let mut cursor = raw_buf.get(0xD1..).ok_or(Error::Image)?;
+            let mut cursor = decoded.get(0xD1..).ok_or(Error::Image)?;
             height = strip_u32(&mut cursor).ok_or(Error::Image)?;
             width = strip_u32(&mut cursor).ok_or(Error::Image)?;
 
@@ -108,7 +120,7 @@ where
             Ok((
                 width,
                 height,
-                raw_buf.get(0xFE..0xFE + len).ok_or(Error::Image)?,
+                decoded.get(0xFE..0xFE + len).ok_or(Error::Image)?,
             ))
         })?;
 
@@ -126,7 +138,7 @@ where
 fn parse_segment(
     total_time: &mut TimeSpan,
     reader: &mut Reader<'_>,
-    _raw_buf: &mut Vec<u8>,
+    _raw_buf: &mut Vec<MaybeUninit<u8>>,
     _png_buf: &mut Vec<u8>,
 ) -> Result<Segment> {
     single_child(reader, "Segment", |reader, _| {

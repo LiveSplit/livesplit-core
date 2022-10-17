@@ -1,5 +1,5 @@
 use crate::platform::prelude::*;
-use base64::{display::Base64Display, STANDARD};
+use base64_simd::Base64;
 use core::{
     ops::Deref,
     sync::atomic::{AtomicUsize, Ordering},
@@ -54,10 +54,26 @@ impl Serialize for ImageData {
     {
         if serializer.is_human_readable() {
             if !self.0.is_empty() {
-                serializer.collect_str(&format_args!(
-                    "data:;base64,{}",
-                    Base64Display::with_config(&self.0, STANDARD)
-                ))
+                let mut buf = String::from("data:;base64,");
+
+                // SAFETY: We encode Base64 to the end of the string, which is
+                // always valid UTF-8. Once we've written it, we simply increase
+                // the length of the buffer by the amount of bytes written.
+                unsafe {
+                    let buf = buf.as_mut_vec();
+                    let encoded_len = Base64::STANDARD.encoded_length(self.0.len());
+                    buf.reserve_exact(encoded_len);
+                    let additional_len = Base64::STANDARD
+                        .encode(
+                            &self.0,
+                            base64_simd::OutBuf::uninit(buf.spare_capacity_mut()),
+                        )
+                        .unwrap()
+                        .len();
+                    buf.set_len(buf.len() + additional_len);
+                }
+
+                serializer.serialize_str(&buf)
             } else {
                 serializer.serialize_str("")
             }
@@ -77,8 +93,11 @@ impl<'de> Deserialize<'de> for ImageData {
             if data.is_empty() {
                 Ok(ImageData(Box::new([])))
             } else if let Some(encoded_image_data) = data.strip_prefix("data:;base64,") {
-                let image_data = base64::decode(encoded_image_data).map_err(de::Error::custom)?;
-                Ok(ImageData(image_data.into_boxed_slice()))
+                let image_data = Base64::STANDARD
+                    .decode_to_boxed_bytes(encoded_image_data.as_bytes())
+                    .map_err(de::Error::custom)?;
+
+                Ok(ImageData(image_data))
             } else {
                 Err(de::Error::custom("Invalid Data URL for image"))
             }

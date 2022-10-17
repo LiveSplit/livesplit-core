@@ -14,7 +14,8 @@ use crate::{
     AtomicDateTime, DateTime, Run, RunMetadata, Segment, Time, TimeSpan,
 };
 use alloc::borrow::Cow;
-use core::str;
+use base64_simd::Base64;
+use core::{mem::MaybeUninit, str};
 use time::{Date, PrimitiveDateTime};
 
 /// The Error type for splits files that couldn't be parsed by the LiveSplit
@@ -133,17 +134,23 @@ fn parse_date_time(text: &str) -> Result<DateTime> {
     .ok_or(Error::ParseDate)
 }
 
-fn image<F>(reader: &mut Reader<'_>, image_buf: &mut Vec<u8>, f: F) -> Result<()>
+fn image<F>(reader: &mut Reader<'_>, image_buf: &mut Vec<MaybeUninit<u8>>, f: F) -> Result<()>
 where
     F: FnOnce(&[u8]),
 {
     text_as_escaped_string_err(reader, |text| {
         if text.len() >= 216 {
-            image_buf.clear();
-            if base64::decode_config_buf(&text.as_bytes()[212..], base64::STANDARD, image_buf)
-                .is_ok()
+            let src = &text.as_bytes()[212..];
+
+            image_buf.resize(
+                Base64::STANDARD.estimated_decoded_length(src.len()),
+                MaybeUninit::uninit(),
+            );
+
+            if let Ok(decoded) =
+                Base64::STANDARD.decode(src, base64_simd::OutBuf::uninit(image_buf))
             {
-                f(&image_buf[2..image_buf.len() - 1]);
+                f(&decoded[2..decoded.len() - 1]);
                 return Ok(());
             }
         }
@@ -277,7 +284,7 @@ fn parse_metadata(
 fn parse_segment(
     version: Version,
     reader: &mut Reader<'_>,
-    image_buf: &mut Vec<u8>,
+    image_buf: &mut Vec<MaybeUninit<u8>>,
     run: &mut Run,
 ) -> Result<Segment> {
     let mut segment = Segment::new("");
