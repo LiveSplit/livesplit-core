@@ -66,7 +66,13 @@ struct State {
     hook: HHOOK,
     events: Sender<Hotkey>,
     modifiers: Modifiers,
+    // FIXME: Use variant count when it's stable.
+    // https://github.com/rust-lang/rust/issues/73662
+    key_state: [u8; 256 / 8],
 }
+
+// This static assert ensures we have enough states to represent all key codes.
+const _: () = assert!(mem::size_of::<KeyCode>() == 1);
 
 thread_local! {
     static STATE: RefCell<Option<State>> = RefCell::new(None);
@@ -276,28 +282,33 @@ unsafe extern "system" fn callback_proc(code: c_int, wparam: WPARAM, lparam: LPA
                 };
 
                 if let Some(key_code) = parse_scan_code(scan_code) {
-                    state
-                        .events
-                        .send(Hotkey {
-                            key_code,
-                            modifiers: state.modifiers,
-                        })
-                        .expect("Callback Thread disconnected");
+                    let (idx, bit) = key_idx(key_code);
+                    if state.key_state[idx as usize] & bit == 0 {
+                        state.key_state[idx as usize] |= bit;
 
-                    match key_code {
-                        KeyCode::AltLeft | KeyCode::AltRight => {
-                            state.modifiers.insert(Modifiers::ALT);
+                        state
+                            .events
+                            .send(Hotkey {
+                                key_code,
+                                modifiers: state.modifiers,
+                            })
+                            .expect("Callback Thread disconnected");
+
+                        match key_code {
+                            KeyCode::AltLeft | KeyCode::AltRight => {
+                                state.modifiers.insert(Modifiers::ALT);
+                            }
+                            KeyCode::ControlLeft | KeyCode::ControlRight => {
+                                state.modifiers.insert(Modifiers::CONTROL);
+                            }
+                            KeyCode::MetaLeft | KeyCode::MetaRight => {
+                                state.modifiers.insert(Modifiers::META);
+                            }
+                            KeyCode::ShiftLeft | KeyCode::ShiftRight => {
+                                state.modifiers.insert(Modifiers::SHIFT);
+                            }
+                            _ => {}
                         }
-                        KeyCode::ControlLeft | KeyCode::ControlRight => {
-                            state.modifiers.insert(Modifiers::CONTROL);
-                        }
-                        KeyCode::MetaLeft | KeyCode::MetaRight => {
-                            state.modifiers.insert(Modifiers::META);
-                        }
-                        KeyCode::ShiftLeft | KeyCode::ShiftRight => {
-                            state.modifiers.insert(Modifiers::SHIFT);
-                        }
-                        _ => {}
                     }
                 }
             } else if event == WM_KEYUP || event == WM_SYSKEYUP {
@@ -326,6 +337,9 @@ unsafe extern "system" fn callback_proc(code: c_int, wparam: WPARAM, lparam: LPA
                 };
 
                 if let Some(key_code) = parse_scan_code(scan_code) {
+                    let (idx, bit) = key_idx(key_code);
+                    state.key_state[idx as usize] &= !bit;
+
                     match key_code {
                         KeyCode::AltLeft | KeyCode::AltRight => {
                             state.modifiers.remove(Modifiers::ALT);
@@ -347,6 +361,12 @@ unsafe extern "system" fn callback_proc(code: c_int, wparam: WPARAM, lparam: LPA
 
         CallNextHookEx(state.hook, code, wparam, lparam)
     })
+}
+
+#[inline]
+fn key_idx(key_code: KeyCode) -> (u8, u8) {
+    let value = key_code as u8;
+    (value / 8, 1 << (value % 8))
 }
 
 impl Hook {
@@ -387,6 +407,7 @@ impl Hook {
                     hook,
                     events: events_tx,
                     modifiers: Modifiers::empty(),
+                    key_state: Default::default(),
                 });
 
                 Ok(())
