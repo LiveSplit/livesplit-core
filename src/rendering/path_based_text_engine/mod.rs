@@ -13,8 +13,10 @@ use font_kit::{
     source::SystemSource,
 };
 use hashbrown::HashMap;
-use rustybuzz::{Face, Feature, Tag, UnicodeBuffer, Variation};
-use ttf_parser::{GlyphId, OutlineBuilder};
+use rustybuzz::{
+    ttf_parser::{GlyphId, OutlineBuilder},
+    Face, Feature, Tag, UnicodeBuffer, Variation,
+};
 
 use super::{
     font::{TEXT_FONT, TIMER_FONT},
