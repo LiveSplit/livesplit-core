@@ -87,22 +87,35 @@ impl ResourceAllocator for SkiaAllocator {
         path_builder()
     }
 
-    fn create_image(&mut self, data: &[u8]) -> Option<(Self::Image, f32)> {
+    fn create_image(&mut self, _data: &[u8]) -> Option<(Self::Image, f32)> {
         #[cfg(feature = "image")]
         {
-            let src = image::load_from_memory(data).ok()?.to_rgba8();
-            let (width, height) = (src.width(), src.height());
-            // FIXME: Turn the image into a Pixmap directly. We should not need
-            // to allocate a new Pixmap here.
-            let mut dst = Pixmap::new(width, height)?;
-            for (d, &[r, g, b, a]) in dst
-                .pixels_mut()
-                .iter_mut()
-                .zip(bytemuck::cast_slice::<u8, [u8; 4]>(&src))
-            {
-                *d = tiny_skia::ColorU8::from_rgba(r, g, b, a).premultiply();
+            let mut buf = image::load_from_memory(_data).ok()?.to_rgba8();
+
+            // Premultiplication
+            for [r, g, b, a] in bytemuck::cast_slice_mut::<u8, [u8; 4]>(&mut buf) {
+                // If it's opaque we can skip the entire pixel. However this
+                // hurts vectorization, so we want to avoid it if the compiler
+                // can vectorize the loop. WASM, PowerPC, and MIPS are
+                // unaffected at the moment.
+                #[cfg(not(any(target_feature = "avx2", target_feature = "neon")))]
+                if *a == 0xFF {
+                    continue;
+                }
+                let a = *a as u16;
+                *r = ((*r as u16 * a) / 255) as u8;
+                *g = ((*g as u16 * a) / 255) as u8;
+                *b = ((*b as u16 * a) / 255) as u8;
             }
-            Some((UnsafeRc::new(dst), width as f32 / height as f32))
+
+            let (width, height) = (buf.width(), buf.height());
+
+            let pixmap = Pixmap::from_vec(
+                buf.into_raw(),
+                tiny_skia_path::IntSize::from_wh(width, height)?,
+            )?;
+
+            Some((UnsafeRc::new(pixmap), width as f32 / height as f32))
         }
         #[cfg(not(feature = "image"))]
         {

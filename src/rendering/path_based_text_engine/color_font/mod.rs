@@ -1,9 +1,12 @@
-use ttf_parser::{Face, GlyphId, Tag};
+use rustybuzz::ttf_parser::{Face, GlyphId, Tag};
 
 use crate::settings::Color;
 
 mod colr;
 mod cpal;
+
+const COLR: Tag = Tag::from_bytes(b"COLR");
+const CPAL: Tag = Tag::from_bytes(b"CPAL");
 
 pub struct ColorTables<'f> {
     colr: &'f [u8],
@@ -12,9 +15,10 @@ pub struct ColorTables<'f> {
 
 impl<'f> ColorTables<'f> {
     pub fn new(face: &Face<'f>) -> Option<Self> {
+        let raw_face = face.raw_face();
         Some(Self {
-            colr: face.table_data(Tag::from_bytes(b"COLR"))?,
-            cpal: face.table_data(Tag::from_bytes(b"CPAL"))?,
+            colr: raw_face.table(COLR)?,
+            cpal: raw_face.table(CPAL)?,
         })
     }
 
