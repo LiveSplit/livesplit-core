@@ -44,9 +44,17 @@ impl Process {
         process_list.refresh();
         let processes = process_list.processes_by_name(name);
 
-        // Use the process that was started the most recently, it's more
+        // Sorts the processes (asc) by numeric pid, to allow max_by_key to
+        // select the higher pid in case all records are equally maximum; otherwise
+        // use the process that was started the most recently, it's more
         // predictable for the user.
-        let pid = processes
+
+        let mut procs: Vec<&sysinfo::Process> = processes.map(|p| p).collect();
+
+        procs.sort_unstable_by_key(|p| p.pid().as_u32());
+
+        let pid = procs
+            .iter()
             .max_by_key(|p| p.start_time())
             .context(ProcessDoesntExist)?
             .pid()
