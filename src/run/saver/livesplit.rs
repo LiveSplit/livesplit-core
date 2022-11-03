@@ -79,7 +79,7 @@ fn image<W: fmt::Write>(
         let image_buf = image_buf.to_mut();
         image_buf.truncate(LSS_IMAGE_HEADER.len());
         image_buf.reserve(len + 6);
-        image_buf.extend(&(len as u32).to_le_bytes());
+        image_buf.extend((len as u32).to_le_bytes());
         image_buf.push(0x2);
         image_buf.extend(image_data);
         image_buf.push(0xB);

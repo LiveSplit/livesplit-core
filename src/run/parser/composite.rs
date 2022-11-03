@@ -31,8 +31,8 @@
 
 use super::{
     face_split, flitter, livesplit, llanfair, llanfair_gered, portal2_live_timer, shit_split,
-    source_live_timer, splits_io, splitterino, splitterz, splitty, time_split_tracker, urn, wsplit,
-    TimerKind,
+    source_live_timer, speedrun_igt, splits_io, splitterino, splitterz, splitty,
+    time_split_tracker, urn, wsplit, TimerKind,
 };
 use crate::{platform::path::PathBuf, Run};
 use core::{result::Result as StdResult, str};
@@ -142,8 +142,9 @@ pub fn parse(source: &[u8], path: Option<PathBuf>, load_files: bool) -> Result<P
             return Ok(parsed(run, TimerKind::Generic(timer)));
         }
 
-        // Splitterino, SourceLiveTimer and Flitter need to be before Urn because of
-        // a false positive due to the nature of parsing json files.
+        // Splitterino, SourceLiveTimer, Flitter, and SpeedRunIGT need to be
+        // before Urn because of a false positive due to the nature of parsing
+        // JSON files.
         if let Ok(run) = splitterino::parse(source) {
             return Ok(parsed(run, TimerKind::Splitterino));
         }
@@ -154,6 +155,10 @@ pub fn parse(source: &[u8], path: Option<PathBuf>, load_files: bool) -> Result<P
 
         if let Ok(run) = source_live_timer::parse(source) {
             return Ok(parsed(run, TimerKind::SourceLiveTimer));
+        }
+
+        if let Ok(run) = speedrun_igt::parse(source) {
+            return Ok(parsed(run, TimerKind::SpeedRunIGT));
         }
 
         // Urn accepts entirely empty JSON files.

@@ -126,7 +126,6 @@ std = [
     "serde/std",
     "simdutf8/std",
     "snafu/std",
-    "time/formatting",
     "time/local-offset",
     "tiny-skia?/std",
     "winapi",

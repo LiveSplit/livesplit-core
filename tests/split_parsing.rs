@@ -6,8 +6,8 @@ mod parse {
         analysis::total_playtime,
         run::parser::{
             composite, flitter, livesplit, llanfair, llanfair_gered, portal2_live_timer,
-            source_live_timer, splits_io, splitterino, splitterz, time_split_tracker, urn, wsplit,
-            TimerKind,
+            source_live_timer, speedrun_igt, splits_io, splitterino, splitterz, time_split_tracker,
+            urn, wsplit, TimerKind,
         },
         Run, TimeSpan,
     };
@@ -173,6 +173,17 @@ mod parse {
     #[test]
     fn splits_io() {
         splits_io::parse(run_files::GENERIC_SPLITS_IO).unwrap();
+    }
+
+    #[test]
+    fn speedrun_igt() {
+        speedrun_igt::parse(run_files::SPEEDRUN_IGT).unwrap();
+    }
+
+    #[test]
+    fn speedrun_igt_prefers_parsing_as_itself() {
+        let run = composite::parse(run_files::SPEEDRUN_IGT.as_bytes(), None, false).unwrap();
+        assert!(matches!(run.kind, TimerKind::SpeedRunIGT));
     }
 
     #[test]
