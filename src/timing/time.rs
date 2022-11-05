@@ -14,15 +14,18 @@ pub struct Time {
 impl Time {
     /// Creates a new Time with empty Real Time and Game Time.
     #[inline]
-    pub fn new() -> Self {
-        Time::default()
+    pub const fn new() -> Self {
+        Time {
+            real_time: None,
+            game_time: None,
+        }
     }
 
     /// Creates a new Time where Real Time and Game Time are zero. Keep in mind
     /// that a zero Time Span is not the same as a `None` Time Span as created
     /// by `Time::new()`.
     #[inline]
-    pub fn zero() -> Self {
+    pub const fn zero() -> Self {
         Time {
             real_time: Some(TimeSpan::zero()),
             game_time: Some(TimeSpan::zero()),

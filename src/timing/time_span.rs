@@ -15,23 +15,23 @@ pub struct TimeSpan(Duration);
 
 impl TimeSpan {
     /// Creates a new Time Span of zero length.
-    pub fn zero() -> Self {
-        Default::default()
+    pub const fn zero() -> Self {
+        Self(Duration::ZERO)
     }
 
     /// Creates a new Time Span from a given amount of seconds.
     pub fn from_seconds(seconds: f64) -> Self {
-        TimeSpan(Duration::seconds_f64(seconds))
+        Self(Duration::seconds_f64(seconds))
     }
 
     /// Creates a new Time Span from a given amount of milliseconds.
     pub fn from_milliseconds(milliseconds: f64) -> Self {
-        TimeSpan(Duration::seconds_f64(0.001 * milliseconds))
+        Self(Duration::seconds_f64(0.001 * milliseconds))
     }
 
     /// Creates a new Time Span from a given amount of days.
     pub fn from_days(days: f64) -> Self {
-        TimeSpan(Duration::seconds_f64(days * (24.0 * 60.0 * 60.0)))
+        Self(Duration::seconds_f64(days * (24.0 * 60.0 * 60.0)))
     }
 
     /// Converts the Time Span to a Duration from the `time` crate.

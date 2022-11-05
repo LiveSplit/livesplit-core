@@ -33,6 +33,8 @@ pub enum TimerKind<'a> {
     SourceLiveTimer,
     /// Splitterino
     Splitterino,
+    /// SpeedRunIGT
+    SpeedRunIGT,
     /// A Generic Timer. The name of the timer is associated with the variant.
     /// "Generic Timer" is used if there is no known name.
     Generic(Cow<'a, str>),
@@ -56,6 +58,7 @@ impl TimerKind<'_> {
             TimerKind::Urn => TimerKind::Urn,
             TimerKind::SourceLiveTimer => TimerKind::SourceLiveTimer,
             TimerKind::Splitterino => TimerKind::Splitterino,
+            TimerKind::SpeedRunIGT => TimerKind::SpeedRunIGT,
             TimerKind::Generic(v) => TimerKind::Generic(v.into_owned().into()),
         }
     }
@@ -63,22 +66,23 @@ impl TimerKind<'_> {
 
 impl fmt::Display for TimerKind<'_> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            TimerKind::LiveSplit => write!(f, "LiveSplit"),
-            TimerKind::WSplit => write!(f, "WSplit"),
-            TimerKind::SplitterZ => write!(f, "SplitterZ"),
-            TimerKind::ShitSplit => write!(f, "ShitSplit"),
-            TimerKind::Splitty => write!(f, "Splitty"),
-            TimerKind::TimeSplitTracker => write!(f, "Time Split Tracker"),
-            TimerKind::Portal2LiveTimer => write!(f, "Portal 2 Live Timer"),
-            TimerKind::FaceSplit => write!(f, "FaceSplit"),
-            TimerKind::Flitter => write!(f, "Flitter"),
-            TimerKind::Llanfair => write!(f, "Llanfair"),
-            TimerKind::LlanfairGered => write!(f, "Llanfair (Gered's fork)"),
-            TimerKind::Urn => write!(f, "Urn"),
-            TimerKind::SourceLiveTimer => write!(f, "SourceLiveTimer"),
-            TimerKind::Splitterino => write!(f, "Splitterino"),
-            TimerKind::Generic(name) => write!(f, "{name}"),
-        }
+        f.write_str(match self {
+            TimerKind::LiveSplit => "LiveSplit",
+            TimerKind::WSplit => "WSplit",
+            TimerKind::SplitterZ => "SplitterZ",
+            TimerKind::ShitSplit => "ShitSplit",
+            TimerKind::Splitty => "Splitty",
+            TimerKind::TimeSplitTracker => "Time Split Tracker",
+            TimerKind::Portal2LiveTimer => "Portal 2 Live Timer",
+            TimerKind::FaceSplit => "FaceSplit",
+            TimerKind::Flitter => "Flitter",
+            TimerKind::Llanfair => "Llanfair",
+            TimerKind::LlanfairGered => "Llanfair (Gered's fork)",
+            TimerKind::Urn => "Urn",
+            TimerKind::SourceLiveTimer => "SourceLiveTimer",
+            TimerKind::Splitterino => "Splitterino",
+            TimerKind::SpeedRunIGT => "SpeedRunIGT",
+            TimerKind::Generic(name) => name,
+        })
     }
 }

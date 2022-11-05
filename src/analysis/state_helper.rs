@@ -1,8 +1,9 @@
 //! Provides different helper functions.
 
-use crate::comparison::best_segments;
-use crate::settings::SemanticColor;
-use crate::{timing::Snapshot, Run, Segment, TimeSpan, Timer, TimerPhase, TimingMethod};
+use crate::{
+    comparison::best_segments, settings::SemanticColor, timing::Snapshot, Run, Segment, TimeSpan,
+    Timer, TimerPhase, TimingMethod,
+};
 
 /// Gets the last non-live delta in the run starting from `segment_index`.
 ///
@@ -283,11 +284,11 @@ pub fn check_live_delta(
                 && best_segment_delta.map_or(false, |d| d > TimeSpan::zero())
             || comparison_delta.map_or(false, |d| d > TimeSpan::zero())
         {
-            if split_delta {
-                return catch! { current_time? - current_split? };
+            return if split_delta {
+                catch! { current_time? - current_split? }
             } else {
-                return comparison_delta;
-            }
+                comparison_delta
+            };
         }
     }
     None

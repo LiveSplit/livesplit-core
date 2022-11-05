@@ -232,11 +232,11 @@ where
         match reader.read_event().ok_or(Error::Xml)? {
             Event::Start(start) => {
                 let (name, attributes) = start.name_and_attributes();
-                if name.name() == tag {
-                    return f(reader, attributes);
+                return if name.name() == tag {
+                    f(reader, attributes)
                 } else {
-                    return Err(Error::ElementNotFound).map_err(Into::into);
-                }
+                    Err(Error::ElementNotFound).map_err(Into::into)
+                };
             }
             Event::Ended => return Err(Error::UnexpectedEndOfFile).map_err(Into::into),
             _ => {}

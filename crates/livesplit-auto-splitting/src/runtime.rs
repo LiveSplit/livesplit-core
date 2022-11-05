@@ -195,11 +195,10 @@ impl<T: Timer> Runtime<T> {
             .get_typed_func(&mut store, "update")
             .context(MissingUpdateFunction)?;
 
-        if let Some(Extern::Memory(mem)) = instance.get_export(&mut store, "memory") {
-            store.data_mut().memory = Some(mem);
-        } else {
+        let Some(Extern::Memory(mem)) = instance.get_export(&mut store, "memory") else {
             return Err(CreationError::MissingMemory);
-        }
+        };
+        store.data_mut().memory = Some(mem);
 
         Ok(Self {
             engine,

@@ -20,6 +20,7 @@ pub const PORTAL2_LIVE_TIMER1: &str = include_str!("portal2_live_timer1.csv");
 pub const PORTAL2_LIVE_TIMER2: &str = include_str!("portal2_live_timer2.csv");
 pub const SOURCE_LIVE_TIMER: &str = include_str!("source_live_timer.json");
 pub const SOURCE_LIVE_TIMER2: &str = include_str!("source_live_timer2.json");
+pub const SPEEDRUN_IGT: &str = include_str!("speedrun_igt.json");
 pub const SPLITTERINO: &str = include_str!("splitterino.splits");
 pub const SPLITTERZ: &str = include_str!("splitterz");
 pub const TIME_SPLIT_TRACKER_WITHOUT_ATTEMPT_COUNT: &str = include_str!("1734.timesplittracker");

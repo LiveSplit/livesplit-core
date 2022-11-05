@@ -623,8 +623,7 @@ impl Timer {
         if self.is_game_time_paused() {
             self.game_time_pause_time = Some(game_time);
         }
-        let loading_times = self.current_time().real_time.unwrap() - game_time;
-        self.loading_times = Some(loading_times);
+        self.loading_times = Some(self.current_time().real_time.unwrap() - game_time);
     }
 
     /// Accesses the loading times. Loading times are defined as Game Time - Real Time.
