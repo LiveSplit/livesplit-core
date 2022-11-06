@@ -1,5 +1,6 @@
-//! Defines the Comparison Generator for calculating the Latest Run. Using the
-//! Segment History, this comparison reconstructs the splits of the furthest,
+//! Defines the Comparison Generator for calculating the Latest
+//! [`Run`](crate::Run). Using the [`SegmentHistory`](crate::run::SegmentHistory),
+//! this comparison reconstructs the splits of the furthest,
 //! most recent attempt. If at least one attempt has been finished, this
 //! comparison will show the most recent finished attempt. If no attempts have
 //! been finished yet, this comparison will show the attempt that got the
@@ -8,8 +9,9 @@
 use super::ComparisonGenerator;
 use crate::{Attempt, Segment, TimeSpan, TimingMethod};
 
-/// The Comparison Generator for calculating the Latest Run. Using the
-/// Segment History, this comparison reconstructs the splits of the furthest,
+/// Defines the Comparison Generator for calculating the Latest
+/// [`Run`](crate::Run). Using the [`SegmentHistory`](crate::run::SegmentHistory),
+/// this comparison reconstructs the splits of the furthest,
 /// most recent attempt. If at least one attempt has been finished, this
 /// comparison will show the most recent finished attempt. If no attempts have
 /// been finished yet, this comparison will show the attempt that got the

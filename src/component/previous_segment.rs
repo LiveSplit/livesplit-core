@@ -1,9 +1,10 @@
 //! Provides the Previous Segment Component and relevant types for using it. The
 //! Previous Segment Component is a component that shows how much time was saved
-//! or lost during the previous segment based on the chosen comparison.
-//! Additionally, the potential time save for the previous segment can be
-//! displayed. This component switches to a `Live Segment` view that shows
-//! active time loss whenever the runner is losing time on the current segment.
+//! or lost during the previous [`Segment`](crate::run::Segment) based on the
+//! chosen comparison. Additionally, the potential time save for the previous
+//! [`Segment`](crate::run::Segment) can be displayed. This component switches
+//! to a `Live Segment` view that shows active time loss whenever the runner is
+//! losing time on the current [`Segment`](crate::run::Segment).
 
 use super::key_value;
 use crate::{
@@ -21,10 +22,11 @@ use core::fmt::Write as FmtWrite;
 use serde::{Deserialize, Serialize};
 
 /// The Previous Segment Component is a component that shows how much time was
-/// saved or lost during the previous segment based on the chosen comparison.
-/// Additionally, the potential time save for the previous segment can be
-/// displayed. This component switches to a `Live Segment` view that shows
-/// active time loss whenever the runner is losing time on the current segment.
+/// saved or lost during the previous [`Segment`](crate::run::Segment) based on
+/// the chosen comparison. Additionally, the potential time save for the previous
+/// [`Segment`](crate::run::Segment) can be displayed. This component switches
+/// to a `Live Segment` view that shows active time loss whenever the runner is
+/// losing time on the current [`Segment`](crate::run::Segment).
 #[derive(Default, Clone)]
 pub struct Component {
     settings: Settings,

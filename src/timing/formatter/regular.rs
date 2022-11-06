@@ -9,7 +9,7 @@ pub struct Inner {
     accuracy: Accuracy,
 }
 
-/// The Regular Time Formatter formats Time Spans to always show the minutes and
+/// The Regular Time Formatter formats a [`TimeSpan`] to always show the minutes and
 /// is configurable by how many digits of the fractional part are shown. By
 /// default no fractional part is shown. This Time Formatter is most suitable
 /// for visualizing split times.

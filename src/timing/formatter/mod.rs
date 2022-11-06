@@ -1,5 +1,5 @@
 //! The formatter module provides different Time Formatters that can be used to
-//! format optional Time Spans in various ways.
+//! format a [`TimeSpan`] Option in various ways.
 //!
 //! # Examples
 //!

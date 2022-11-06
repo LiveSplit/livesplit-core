@@ -1,13 +1,15 @@
 //! Provides functionality to calculate the chance to beat the Personal Best for
-//! either a Run or a Timer. For a Run it calculates the general chance to beat
-//! the Personal Best. For a Timer the chance is calculated in terms of the
+//! either a [`Run`](crate::Run) or a [`Timer`](crate::timing::Timer). For a
+//! [`Run`](crate::Run) it calculates the general chance to beat the Personal Best.
+//! For a [`Timer`](crate::timing::Timer) the chance is calculated in terms of the
 //! current attempt. If there is no attempt in progress it yields the same
-//! result as the PB chance for the Run. The value is being reported as a
+//! result as the PB chance for the run. The value is being reported as a
 //! floating point number in the range from 0 (0%) to 1 (100%).
 //!
 //! The PB chance is currently calculated with the skill curve. The PB chance is
 //! the percentile at which the PB is located on the skill curve. This is also
-//! where the Balanced PB would source its split times.
+//! where the [`BalancedPB`](crate::comparison::balanced_pb::BalancedPB) would
+//! source its split times.
 
 use super::SkillCurve;
 use crate::{comparison, timing::Snapshot, Run, Segment, TimeSpan, TimingMethod};
@@ -28,20 +30,20 @@ fn calculate(segments: &[Segment], method: TimingMethod, offset: TimeSpan) -> f6
     comparison::goal::determine_percentile(offset, segments, method, None, &mut SkillCurve::new())
 }
 
-/// Calculates the PB chance for a run. No information about an active attempt
-/// is used. Instead the general chance to beat the Personal Best is calculated.
-/// The value is being reported as a floating point number in the range from 0
-/// (0%) to 1 (100%).
+/// Calculates the PB chance for a [`Run`](crate::Run). No information about
+/// an active attempt is used. Instead the general chance to beat the Personal
+/// Best is calculated. The value is being reported as a floating point number
+/// in the range from 0 (0%) to 1 (100%).
 pub fn for_run(run: &Run, method: TimingMethod) -> f64 {
     calculate(run.segments(), method, TimeSpan::zero())
 }
 
-/// Calculates the PB chance for a timer. The chance is calculated in terms of
-/// the current attempt. If there is no attempt in progress it yields the same
-/// result as the PB chance for the run. The value is being reported as a
-/// floating point number in the range from 0 (0%) to 1 (100%). Additionally a
-/// boolean is returned that indicates if the value is currently actively
-/// changing as time is being lost.
+/// Calculates the PB chance for a [`Timer`](crate::timing::Timer). The chance
+/// is calculated in terms of the current attempt. If there is no attempt in
+/// progress it yields the same result as the PB chance for the run.
+/// The value is being reported as a floating point number in the range
+/// from 0 (0%) to 1 (100%). Additionally a boolean is returned that
+/// indicates if the value is currently actively changing as time is being lost.
 pub fn for_timer(timer: &Snapshot<'_>) -> (f64, bool) {
     let method = timer.current_timing_method();
     let all_segments = timer.run().segments();

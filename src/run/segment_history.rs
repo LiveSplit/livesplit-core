@@ -4,10 +4,11 @@ use core::{
     slice::{Iter, IterMut},
 };
 
-/// Stores the segment times achieved for a certain segment. Each segment is
-/// tagged with an index. Only segment times with an index larger than 0 are
-/// considered times actually achieved by the runner, while the others are
-/// artifacts of route changes and similar algorithmic changes.
+/// Stores the [`Segment`](crate::Segment) times achieved for a certain segment.
+/// Each [`Segment`](crate::Segment) is tagged with an index. Only segment times
+/// with an index larger than 0 are considered times actually achieved by the
+/// runner, while the others are artifacts of route changes and similar
+/// algorithmic changes.
 #[derive(Clone, Default, Debug, PartialEq, Eq)]
 pub struct SegmentHistory(Vec<(i32, Time)>);
 

@@ -1,15 +1,15 @@
 //! Defines the Comparison Generator for calculating the Median Segments of a
-//! Run. The Median Segments are calculated through a weighted median that gives
-//! more recent segments a larger weight so that the Median Segments are more
-//! suited to represent the current performance of a runner.
+//! [`Run`](crate::Run). The Median Segments are calculated through a weighted
+//! median that gives more recent segments a larger weight so that the
+//! Median Segments are more suited to represent the current performance of a runner.
 
 use super::ComparisonGenerator;
 use crate::{platform::prelude::*, Attempt, Segment, TimeSpan, TimingMethod};
 
-/// The Comparison Generator for calculating the Median Segments of a Run. The
-/// Median Segments are calculated through a weighted median that gives more
-/// recent segments a larger weight so that the Median Segments are more suited
-/// to represent the current performance of a runner.
+/// Defines the Comparison Generator for calculating the Median Segments of a
+/// [`Run`](crate::Run). The Median Segments are calculated through a weighted
+/// median that gives more recent segments a larger weight so that the
+/// Median Segments are more suited to represent the current performance of a runner.
 #[derive(Copy, Clone, Debug)]
 pub struct MedianSegments;
 

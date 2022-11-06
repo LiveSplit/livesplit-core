@@ -5,7 +5,7 @@ use core::{
 };
 use serde::{Deserialize, Serialize};
 
-/// The Accuracy describes how many digits to show for the fractional part of a
+/// The `Accuracy` describes how many digits to show for the fractional part of a
 /// time.
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Serialize, Deserialize)]
 pub enum Accuracy {

@@ -4,7 +4,7 @@ use crate::{
 };
 use core::ops::Sub;
 
-/// An Atomic Date Time represents a UTC Date Time that tries to be as close to
+/// An Atomic Date Time represents a UTC [`DateTime`] that tries to be as close to
 /// an atomic clock as possible.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct AtomicDateTime {

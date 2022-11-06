@@ -7,8 +7,7 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 
-/// The configuration to use for a Hotkey System. It describes with keys to use
-/// as hotkeys for the different actions.
+/// The configuration to use for a [`HotkeySystem`](crate::HotkeySystem). It describes which [`Hotkey`](livesplit_hotkey::Hotkey) to use as hotkeys for the different actions.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
 #[serde(default)]
 pub struct HotkeyConfig {

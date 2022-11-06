@@ -7,7 +7,7 @@ use core::fmt::{Display, Formatter, Result};
 
 pub struct Inner(Option<TimeSpan>);
 
-/// The Complete Time Formatter formats Time Spans in a way that preserves as
+/// The Complete Time Formatter formats a [`TimeSpan`] in a way that preserves as
 /// much information as possible. The hours and minutes are always shown and a
 /// fractional part of 9 digits is used. If there's >24h, then a day prefix is
 /// attached (with the hours wrapping around to 0): `dd.hh:mm:ss.fffffffff`

@@ -4,13 +4,13 @@ use crate::{
 };
 use core::ops::Sub;
 
-/// A Time Stamp stores a point in time, that can be used to calculate Time
-/// Spans.
+/// A `TimeStamp` stores a point in time that can be used to calculate a
+/// [`TimeSpan`].
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct TimeStamp(Instant);
 
 impl TimeStamp {
-    /// Creates a new Time Stamp, representing the current point in time.
+    /// Creates a new `TimeStamp`, representing the current point in time.
     pub fn now() -> Self {
         TimeStamp(Instant::now())
     }

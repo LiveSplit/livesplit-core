@@ -47,8 +47,8 @@ impl CustomVariable {
     }
 }
 
-/// The Run Metadata stores additional information about a run, like the
-/// platform and region of the game. All of this information is optional.
+/// The `RunMetadata` struct stores optional information about a run, like the
+/// platform and region of the game.
 #[derive(Default, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RunMetadata {
     /// The speedrun.com Run ID of the run. You need to ensure that the record

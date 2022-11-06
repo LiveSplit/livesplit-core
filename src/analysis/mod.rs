@@ -1,5 +1,5 @@
 //! The analysis module provides a variety of functions for calculating
-//! information about runs.
+//! information about a [`Run`](crate::run::Run).
 
 pub mod current_pace;
 pub mod delta;

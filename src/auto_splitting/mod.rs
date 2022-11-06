@@ -1,5 +1,5 @@
 //! The auto splitting module provides a runtime for running auto splitters that
-//! can control the timer. These auto splitters are provided as WebAssembly
+//! can control the [`Timer`](crate::timing::Timer). These auto splitters are provided as WebAssembly
 //! modules.
 //!
 //! # Requirements for the Auto Splitters
@@ -241,8 +241,8 @@ enum Request {
     UnloadScript(oneshot::Sender<()>),
 }
 
-// This newtype is required because SharedTimer is an Arc<RwLock<T>>, so we
-// can't implement the trait directly on it.
+// This newtype is required because [`SharedTimer`](crate::timing::SharedTimer)
+// is an Arc<RwLock<T>>, so we can't implement the trait directly on it.
 struct Timer(SharedTimer);
 
 impl AutoSplitTimer for Timer {

@@ -4,10 +4,12 @@ use core::cmp::Ordering;
 const WEIGHT: f64 = 0.75;
 const TRIES: usize = 50;
 
-/// The skill curve analyzes the segment history across all segments. For each
-/// segment, all the segment times are sorted by length and weighted by their
-/// recency. Plotting this on a graph with the y-axis representing the segment
-/// time and the x-axis representing the percentile, with the shortest time at 0
+/// The skill curve analyzes the [`SegmentHistory`](crate::run::SegmentHistory)
+/// segment history across all segments. For each [`Segment`](crate::run::Segment),
+/// the segment times are sorted by length and weighted by their recency.
+///
+/// Plotting this on a graph with the y-axis representing the segment time and
+/// the x-axis representing the percentile, with the shortest time at 0
 /// and the longest time at 1, yields the so called "skill curve". If you sum
 /// all the different curves together for all the segments, you get the overall
 /// curve for the whole run.
@@ -16,9 +18,10 @@ const TRIES: usize = 50;
 ///
 /// If you sample the curve at 0, you get the simple sum of best segments, and if
 /// you sample the curve at 1, you get the simple sum of worst segments. At 0.5,
-/// you get the median segments. If you sample the individual segments at the same percentile where you
-/// find the Personal Best on the overall run's curve, you get the Balanced PB.
-/// The position of the Balanced PB on the x-axis is the PB chance.
+/// you get the median segments. If you sample the individual segments at the
+/// same percentile where you find the Personal Best on the overall run's curve,
+/// you get the Balanced PB. The position of the Balanced PB on the x-axis is the
+/// PB chance.
 #[derive(Default, Clone)]
 pub struct SkillCurve {
     all_weighted_segment_times: Vec<Vec<(f64, TimeSpan)>>,

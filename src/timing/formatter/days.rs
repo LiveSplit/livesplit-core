@@ -8,7 +8,7 @@ pub struct Inner {
     time: Option<TimeSpan>,
 }
 
-/// The Days Time Formatter formats Time Spans so that times >24h are prefixed
+/// The Days Time Formatter formats a [`TimeSpan`] so that times >24h are prefixed
 /// with the amount of days, wrapping the hours around to 0. There's no
 /// fractional part for times. The minutes are always shown.
 ///

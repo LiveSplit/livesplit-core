@@ -7,7 +7,7 @@ use core::{mem, ops::Deref};
 #[cfg(test)]
 mod tests;
 
-/// A Timer provides all the capabilities necessary for doing speedrun attempts.
+/// A `Timer` provides all the capabilities necessary for doing speedrun attempts.
 ///
 /// # Examples
 ///
@@ -81,8 +81,7 @@ impl Deref for Snapshot<'_> {
     }
 }
 
-/// A Shared Timer is a wrapper around the Timer that can be shared across
-/// multiple threads with multiple owners.
+/// A `SharedTimer` is a wrapper around the [`Timer`](crate::timing::Timer) that can be shared across multiple threads with multiple owners.
 #[cfg(feature = "std")]
 pub type SharedTimer = alloc::sync::Arc<std::sync::RwLock<Timer>>;
 

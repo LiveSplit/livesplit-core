@@ -1,4 +1,4 @@
-//! Defines the Comparison Generator for the None comparison. The None
+//! Defines the Comparison Generator for the `None` comparison. The `None`
 //! Comparison intentionally leaves all split times empty.
 
 use super::ComparisonGenerator;

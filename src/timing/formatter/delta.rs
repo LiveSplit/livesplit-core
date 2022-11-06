@@ -10,7 +10,7 @@ pub struct Inner {
     accuracy: Accuracy,
 }
 
-/// The Delta Time Formatter formats Time Spans as a comparison of two
+/// The Delta Time Formatter formats a [`TimeSpan`] as a comparison of two
 /// durations, so that it visualizes the difference between both of them.
 /// Therefore it always shows whether it is a positive or negative difference,
 /// by prepending a plus or minus sign. You can choose how many digits of the

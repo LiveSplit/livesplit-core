@@ -1,5 +1,4 @@
-//! The run module provides everything necessary for working with Runs, like
-//! parsing and saving or editing them.
+//! The run module provides everything necessary for working with a `Run`, like parsing and saving or editing them.
 //!
 //! # Examples
 //!

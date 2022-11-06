@@ -1,8 +1,8 @@
 use crate::{AtomicDateTime, Time, TimeSpan};
 
-/// An Attempt describes information about an attempt to run a specific category
+/// An `Attempt` describes information about an attempt to run a specific category
 /// by a specific runner in the past. Every time a new attempt is started and
-/// then reset, an Attempt describing general information about it is created.
+/// then reset, an `Attempt` describing general information about it is created.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Attempt {
     index: i32,
@@ -13,7 +13,7 @@ pub struct Attempt {
 }
 
 impl Attempt {
-    /// Creates a new Attempt, logging an attempt to speedrun a category. You
+    /// Creates a new `Attempt`, logging an attempt to speedrun a category. You
     /// need the provide a unique index for the attempt (The index needs to be
     /// unique for the Run, not across all the Run objects). Additionally you
     /// provide the split time of the last segment. If it is empty, the attempt

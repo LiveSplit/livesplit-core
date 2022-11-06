@@ -1,6 +1,6 @@
 //! Provides functionality for calculating the Sum of Best Segments for whole
-//! runs or specific parts. The Sum of Best Segments is the fastest time
-//! possible to complete a run of a category, based on information collected
+//! [`Run`](crate::Run) or specific parts. The Sum of Best Segments is the fastest
+//! time possible to complete a run of a category, based on information collected
 //! from all the previous attempts. This often matches up with the sum of the
 //! best segment times of all the segments, but that may not always be the case,
 //! as skipped segments may introduce combined segments that may be faster than
@@ -81,24 +81,27 @@ fn populate_predictions(
 }
 
 /// Calculates the Sum of Best Segments for the timing method provided. This is
-/// the fastest time possible to complete a run of a category, based on
-/// information collected from all the previous attempts. This often matches up
-/// with the sum of the best segment times of all the segments, but that may not
-/// always be the case, as skipped segments may introduce combined segments that
-/// may be faster than the actual sum of their best segment times. The name is
-/// therefore a bit misleading, but sticks around for historical reasons. You
-/// can choose to do a simple calculation instead, which excludes the Segment
-/// History from the calculation process. If there's an active attempt, you can
-/// choose to take it into account as well. This lower level function requires
-/// you to provide a buffer to fill up with the shortest paths to reach each of
-/// the segments. This means that the first segment will always be reached at a
-/// time of 0:00. However, if you are interested in the total Sum of Best
-/// Segments, then you can't look at the predictions value with the index of the
-/// last segment, as that only tells you what the best time to reach that
-/// segment is, not the best time to complete it. This means that the
-/// predictions buffer needs to have one more element than the list of segments
-/// provided, so that you can properly query the total Sum of Best Segments.
-/// This value is also the value that is being returned.
+/// the fastest time possible to complete a [`Run`](crate::Run) of a category,
+/// based on information collected from all the previous attempts.
+///
+/// This often matches up with the sum of the best segment times of all the
+/// segments, but that may not always be the case, as skipped segments may
+/// introduce combined segments that may be faster than the actual sum of their
+/// best segment times.
+///
+/// The name is therefore a bit misleading, but sticks around for historical
+/// reasons. You can choose to do a simple calculation instead, which excludes
+/// the Segment History from the calculation process. If there's an active
+/// attempt, you can choose to take it into account as well. This lower level
+/// function requires you to provide a buffer to fill up with the shortest
+/// paths to reach each of the segments. This means that the first segment
+/// will always be reached at a time of 0:00. However, if you are interested
+/// in the total Sum of Best Segments, then you can't look at the predictions
+/// value with the index of the last segment, as that only tells you what the
+/// best time to reach that segment is, not the best time to complete it. This
+/// means that the predictions buffer needs to have one more element than the
+/// list of segments provided, so that you can properly query the total Sum of
+/// Best Segments. This value is also the value that is being returned.
 #[allow(clippy::needless_range_loop)]
 pub fn calculate(
     segments: &[Segment],

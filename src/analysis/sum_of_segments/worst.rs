@@ -1,7 +1,7 @@
 //! Provides functionality for calculating the Sum of Worst Segments for whole
-//! runs or specific parts. The Sum of Worst Segments is the slowest time
-//! possible to complete a run of a category, based on information collected
-//! from all the previous attempts. This obviously isn't really the worst
+//! [`Run`](crate::Run) or specific parts. The Sum of Worst Segments is the
+//! slowest time possible to complete a run of a category, based on information
+//! collected from all the previous attempts. This obviously isn't really the worst
 //! possible time, but may be useful information regardless.
 
 use super::{track_branch, track_current_run, track_personal_best_run, Prediction};
