@@ -49,13 +49,8 @@ impl Process {
         // use the process that was started the most recently, it's more
         // predictable for the user.
 
-        let mut procs: Vec<&sysinfo::Process> = processes.map(|p| p).collect();
-
-        procs.sort_unstable_by_key(|p| p.pid().as_u32());
-
-        let pid = procs
-            .iter()
-            .max_by_key(|p| p.start_time())
+        let pid = processes
+            .max_by_key(|p| (p.start_time(), p.pid().as_u32()))
             .context(ProcessDoesntExist)?
             .pid()
             .as_u32() as Pid;
