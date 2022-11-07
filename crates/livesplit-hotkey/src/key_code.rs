@@ -1,4 +1,4 @@
-use crate::{Hotkey, Modifiers};
+use crate::{Hook, Hotkey, Modifiers};
 use alloc::borrow::Cow;
 use core::{fmt, str::FromStr};
 use serde::{Deserialize, Serialize};
@@ -1767,10 +1767,10 @@ impl KeyCode {
     }
 
     /// Resolves the key according to the current keyboard layout.
-    pub fn resolve(self) -> Cow<'static, str> {
+    pub fn resolve(self, hook: &Hook) -> Cow<'static, str> {
         let class = self.classify();
         if class == KeyCodeClass::WritingSystem {
-            if let Some(resolved) = crate::platform::try_resolve(self) {
+            if let Some(resolved) = hook.try_resolve(self) {
                 let uppercase = if resolved != "ß" {
                     resolved.to_uppercase()
                 } else {

@@ -1,11 +1,12 @@
 use std::{
-    collections::hash_map::HashMap, os::unix::prelude::AsRawFd, sync::mpsc::channel, thread,
+    collections::hash_map::HashMap, os::unix::prelude::AsRawFd, ptr, sync::mpsc::channel, thread,
 };
 
 use evdev::{Device, EventType, InputEventKind, Key};
 use mio::{unix::SourceFd, Events, Interest, Poll, Token, Waker};
+use x11_dl::xlib::{Xlib, _XDisplay};
 
-use super::Message;
+use super::{x11_impl, Message};
 use crate::{Error, Hook, KeyCode, Modifiers, Result};
 
 // Low numbered tokens are allocated to devices.
@@ -257,6 +258,8 @@ pub fn new() -> Result<Hook> {
         let mut hotkeys: HashMap<(Key, Modifiers), Box<dyn FnMut() + Send>> = HashMap::new();
         let mut modifiers = Modifiers::empty();
 
+        let (mut xlib, mut display) = (None, None);
+
         'event_loop: loop {
             if poll.poll(&mut events, None).is_err() {
                 result = Err(Error::EPoll);
@@ -330,6 +333,9 @@ pub fn new() -> Result<Hook> {
                                     .and_then(|k| hotkeys.remove(&(k, key.modifiers)).map(drop))
                                     .ok_or(Error::NotRegistered),
                             ),
+                            Message::Resolve(key_code, promise) => {
+                                promise.set(resolve(&mut xlib, &mut display, key_code))
+                            }
                             Message::End => {
                                 break 'event_loop;
                             }
@@ -338,6 +344,11 @@ pub fn new() -> Result<Hook> {
                 }
             }
         }
+
+        if let (Some(xlib), Some(display)) = (xlib, display) {
+            unsafe { (xlib.XCloseDisplay)(display) };
+        }
+
         result
     });
 
@@ -346,4 +357,25 @@ pub fn new() -> Result<Hook> {
         waker,
         join_handle: Some(join_handle),
     })
+}
+
+fn resolve(
+    xlib: &mut Option<Xlib>,
+    display: &mut Option<*mut _XDisplay>,
+    key_code: KeyCode,
+) -> Option<char> {
+    if xlib.is_none() {
+        *xlib = Xlib::open().ok();
+    }
+    let xlib = xlib.as_ref()?;
+    if display.is_none() {
+        unsafe {
+            let result = (xlib.XOpenDisplay)(ptr::null());
+            if !result.is_null() {
+                *display = Some(result);
+            }
+        }
+    }
+    let xdisplay = (*display)?;
+    x11_impl::resolve(xlib, xdisplay, key_code)
 }

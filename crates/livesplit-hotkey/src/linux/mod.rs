@@ -38,6 +38,7 @@ enum Message {
         Promise<Result<()>>,
     ),
     Unregister(Hotkey, Promise<Result<()>>),
+    Resolve(KeyCode, Promise<Option<char>>),
     End,
 }
 
@@ -102,8 +103,14 @@ impl Hook {
 
         future.value().ok_or(Error::ThreadStopped)?
     }
-}
 
-pub(crate) fn try_resolve(_key_code: KeyCode) -> Option<String> {
-    None
+    pub(crate) fn try_resolve(&self, key_code: KeyCode) -> Option<String> {
+        let (future, promise) = future_promise();
+
+        self.sender.send(Message::Resolve(key_code, promise)).ok()?;
+
+        self.waker.wake().ok()?;
+
+        Some(char::to_string(&future.value()??))
+    }
 }

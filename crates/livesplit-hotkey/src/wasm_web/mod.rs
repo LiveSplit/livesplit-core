@@ -200,8 +200,8 @@ impl Hook {
             Err(Error::NotRegistered)
         }
     }
-}
 
-pub(crate) fn try_resolve(_key_code: KeyCode) -> Option<String> {
-    None
+    pub(crate) fn try_resolve(&self, _key_code: KeyCode) -> Option<String> {
+        None
+    }
 }
