@@ -79,18 +79,20 @@ mod tests {
 
     #[test]
     fn resolve() {
+        let hook = Hook::new().unwrap();
+
         // Based on German keyboard layout.
-        println!("ß: {}", KeyCode::Minus.resolve());
-        println!("ü: {}", KeyCode::BracketLeft.resolve());
-        println!("#: {}", KeyCode::Backslash.resolve());
-        println!("+: {}", KeyCode::BracketRight.resolve());
-        println!("z: {}", KeyCode::KeyY.resolve());
-        println!("^: {}", KeyCode::Backquote.resolve());
-        println!("<: {}", KeyCode::IntlBackslash.resolve());
-        println!("Yen: {}", KeyCode::IntlYen.resolve());
-        println!("Enter: {}", KeyCode::Enter.resolve());
-        println!("Space: {}", KeyCode::Space.resolve());
-        println!("Tab: {}", KeyCode::Tab.resolve());
-        println!("Numpad0: {}", KeyCode::Numpad0.resolve());
+        println!("ß: {}", KeyCode::Minus.resolve(&hook));
+        println!("ü: {}", KeyCode::BracketLeft.resolve(&hook));
+        println!("#: {}", KeyCode::Backslash.resolve(&hook));
+        println!("+: {}", KeyCode::BracketRight.resolve(&hook));
+        println!("z: {}", KeyCode::KeyY.resolve(&hook));
+        println!("^: {}", KeyCode::Backquote.resolve(&hook));
+        println!("<: {}", KeyCode::IntlBackslash.resolve(&hook));
+        println!("Yen: {}", KeyCode::IntlYen.resolve(&hook));
+        println!("Enter: {}", KeyCode::Enter.resolve(&hook));
+        println!("Space: {}", KeyCode::Space.resolve(&hook));
+        println!("Tab: {}", KeyCode::Tab.resolve(&hook));
+        println!("Numpad0: {}", KeyCode::Numpad0.resolve(&hook));
     }
 }

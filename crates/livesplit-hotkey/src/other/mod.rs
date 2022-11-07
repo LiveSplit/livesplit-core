@@ -30,8 +30,8 @@ impl Hook {
     pub fn unregister(&self, _: Hotkey) -> Result<()> {
         Ok(())
     }
-}
 
-pub(crate) fn try_resolve(_key_code: KeyCode) -> Option<String> {
-    None
+    pub(crate) fn try_resolve(&self, _key_code: KeyCode) -> Option<String> {
+        None
+    }
 }

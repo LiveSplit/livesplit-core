@@ -178,6 +178,111 @@ impl Hook {
             .ok_or(Error::NotRegistered)?;
         Ok(())
     }
+
+    pub(crate) fn try_resolve(&self, key_code: KeyCode) -> Option<String> {
+        unsafe {
+            let current_keyboard_raw = TISCopyCurrentKeyboardInputSource();
+            if current_keyboard_raw.is_null() {
+                return None;
+            }
+            let mut current_keyboard = Owned(current_keyboard_raw);
+
+            let mut layout_data =
+                TISGetInputSourceProperty(current_keyboard.0, kTISPropertyUnicodeKeyLayoutData);
+
+            if layout_data.is_null() {
+                let current_keyboard_raw = TISCopyCurrentKeyboardLayoutInputSource();
+                if current_keyboard_raw.is_null() {
+                    return None;
+                }
+                current_keyboard = Owned(current_keyboard_raw);
+
+                layout_data =
+                    TISGetInputSourceProperty(current_keyboard.0, kTISPropertyUnicodeKeyLayoutData);
+                if layout_data.is_null() {
+                    return None;
+                }
+            }
+
+            let keyboard_layout = CFDataGetBytePtr(layout_data.cast());
+
+            let key_code = match key_code {
+                KeyCode::Backquote => 0x32,
+                KeyCode::Backslash => 0x2A,
+                KeyCode::BracketLeft => 0x21,
+                KeyCode::BracketRight => 0x1E,
+                KeyCode::Comma => 0x2B,
+                KeyCode::Digit0 => 0x1D,
+                KeyCode::Digit1 => 0x12,
+                KeyCode::Digit2 => 0x13,
+                KeyCode::Digit3 => 0x14,
+                KeyCode::Digit4 => 0x15,
+                KeyCode::Digit5 => 0x17,
+                KeyCode::Digit6 => 0x16,
+                KeyCode::Digit7 => 0x1A,
+                KeyCode::Digit8 => 0x1C,
+                KeyCode::Digit9 => 0x19,
+                KeyCode::Equal => 0x18,
+                KeyCode::IntlBackslash => 0x0A,
+                KeyCode::IntlRo => 0x5E,
+                KeyCode::IntlYen => 0x5D,
+                KeyCode::KeyA => 0x00,
+                KeyCode::KeyB => 0x0B,
+                KeyCode::KeyC => 0x08,
+                KeyCode::KeyD => 0x02,
+                KeyCode::KeyE => 0x0E,
+                KeyCode::KeyF => 0x03,
+                KeyCode::KeyG => 0x05,
+                KeyCode::KeyH => 0x04,
+                KeyCode::KeyI => 0x22,
+                KeyCode::KeyJ => 0x26,
+                KeyCode::KeyK => 0x28,
+                KeyCode::KeyL => 0x25,
+                KeyCode::KeyM => 0x2E,
+                KeyCode::KeyN => 0x2D,
+                KeyCode::KeyO => 0x1F,
+                KeyCode::KeyP => 0x23,
+                KeyCode::KeyQ => 0x0C,
+                KeyCode::KeyR => 0x0F,
+                KeyCode::KeyS => 0x01,
+                KeyCode::KeyT => 0x11,
+                KeyCode::KeyU => 0x20,
+                KeyCode::KeyV => 0x09,
+                KeyCode::KeyW => 0x0D,
+                KeyCode::KeyX => 0x07,
+                KeyCode::KeyY => 0x10,
+                KeyCode::KeyZ => 0x06,
+                KeyCode::Minus => 0x1B,
+                KeyCode::Period => 0x2F,
+                KeyCode::Quote => 0x27,
+                KeyCode::Semicolon => 0x29,
+                KeyCode::Slash => 0x2C,
+                _ => return None,
+            };
+
+            let mut chars = [0; 4];
+            let mut len = 0;
+
+            UCKeyTranslate(
+                keyboard_layout.cast(),
+                key_code,
+                UCKeyAction::Display as _,
+                0,
+                LMGetKbdType() as _,
+                UCKeyTranslateBits::NO_DEAD_KEYS_BIT.bits(),
+                &mut 0,
+                4,
+                &mut len,
+                chars.as_mut_ptr(),
+            );
+
+            if len == 0 {
+                return None;
+            }
+
+            String::from_utf16(&chars[..len as usize]).ok()
+        }
+    }
 }
 
 unsafe extern "C" fn callback(
@@ -391,109 +496,4 @@ unsafe extern "C" fn callback(
     }
 
     event
-}
-
-pub(crate) fn try_resolve(key_code: KeyCode) -> Option<String> {
-    unsafe {
-        let current_keyboard_raw = TISCopyCurrentKeyboardInputSource();
-        if current_keyboard_raw.is_null() {
-            return None;
-        }
-        let mut current_keyboard = Owned(current_keyboard_raw);
-
-        let mut layout_data =
-            TISGetInputSourceProperty(current_keyboard.0, kTISPropertyUnicodeKeyLayoutData);
-
-        if layout_data.is_null() {
-            let current_keyboard_raw = TISCopyCurrentKeyboardLayoutInputSource();
-            if current_keyboard_raw.is_null() {
-                return None;
-            }
-            current_keyboard = Owned(current_keyboard_raw);
-
-            layout_data =
-                TISGetInputSourceProperty(current_keyboard.0, kTISPropertyUnicodeKeyLayoutData);
-            if layout_data.is_null() {
-                return None;
-            }
-        }
-
-        let keyboard_layout = CFDataGetBytePtr(layout_data.cast());
-
-        let key_code = match key_code {
-            KeyCode::Backquote => 0x32,
-            KeyCode::Backslash => 0x2A,
-            KeyCode::BracketLeft => 0x21,
-            KeyCode::BracketRight => 0x1E,
-            KeyCode::Comma => 0x2B,
-            KeyCode::Digit0 => 0x1D,
-            KeyCode::Digit1 => 0x12,
-            KeyCode::Digit2 => 0x13,
-            KeyCode::Digit3 => 0x14,
-            KeyCode::Digit4 => 0x15,
-            KeyCode::Digit5 => 0x17,
-            KeyCode::Digit6 => 0x16,
-            KeyCode::Digit7 => 0x1A,
-            KeyCode::Digit8 => 0x1C,
-            KeyCode::Digit9 => 0x19,
-            KeyCode::Equal => 0x18,
-            KeyCode::IntlBackslash => 0x0A,
-            KeyCode::IntlRo => 0x5E,
-            KeyCode::IntlYen => 0x5D,
-            KeyCode::KeyA => 0x00,
-            KeyCode::KeyB => 0x0B,
-            KeyCode::KeyC => 0x08,
-            KeyCode::KeyD => 0x02,
-            KeyCode::KeyE => 0x0E,
-            KeyCode::KeyF => 0x03,
-            KeyCode::KeyG => 0x05,
-            KeyCode::KeyH => 0x04,
-            KeyCode::KeyI => 0x22,
-            KeyCode::KeyJ => 0x26,
-            KeyCode::KeyK => 0x28,
-            KeyCode::KeyL => 0x25,
-            KeyCode::KeyM => 0x2E,
-            KeyCode::KeyN => 0x2D,
-            KeyCode::KeyO => 0x1F,
-            KeyCode::KeyP => 0x23,
-            KeyCode::KeyQ => 0x0C,
-            KeyCode::KeyR => 0x0F,
-            KeyCode::KeyS => 0x01,
-            KeyCode::KeyT => 0x11,
-            KeyCode::KeyU => 0x20,
-            KeyCode::KeyV => 0x09,
-            KeyCode::KeyW => 0x0D,
-            KeyCode::KeyX => 0x07,
-            KeyCode::KeyY => 0x10,
-            KeyCode::KeyZ => 0x06,
-            KeyCode::Minus => 0x1B,
-            KeyCode::Period => 0x2F,
-            KeyCode::Quote => 0x27,
-            KeyCode::Semicolon => 0x29,
-            KeyCode::Slash => 0x2C,
-            _ => return None,
-        };
-
-        let mut chars = [0; 4];
-        let mut len = 0;
-
-        UCKeyTranslate(
-            keyboard_layout.cast(),
-            key_code,
-            UCKeyAction::Display as _,
-            0,
-            LMGetKbdType() as _,
-            UCKeyTranslateBits::NO_DEAD_KEYS_BIT.bits(),
-            &mut 0,
-            4,
-            &mut len,
-            chars.as_mut_ptr(),
-        );
-
-        if len == 0 {
-            return None;
-        }
-
-        String::from_utf16(&chars[..len as usize]).ok()
-    }
 }
