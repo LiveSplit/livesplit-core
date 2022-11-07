@@ -1,7 +1,7 @@
 #![allow(clippy::trivially_copy_pass_by_ref)]
 
 use crate::{
-    hotkey::{Hotkey, KeyCode},
+    hotkey::Hotkey,
     platform::prelude::*,
     settings::{Field, SettingsDescription, Value},
 };

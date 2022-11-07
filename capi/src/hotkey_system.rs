@@ -4,9 +4,10 @@
 //! out on platforms that don't support hotkeys. You can turn off a Hotkey
 //! System temporarily. By default the Hotkey System is activated.
 
-use crate::hotkey_config::OwnedHotkeyConfig;
-use crate::shared_timer::OwnedSharedTimer;
-use livesplit_core::HotkeySystem;
+use std::{os::raw::c_char, str::FromStr};
+
+use crate::{hotkey_config::OwnedHotkeyConfig, output_str, shared_timer::OwnedSharedTimer, str};
+use livesplit_core::{hotkey::KeyCode, HotkeySystem};
 
 /// type
 pub type OwnedHotkeySystem = Box<HotkeySystem>;
@@ -67,4 +68,17 @@ pub extern "C" fn HotkeySystem_set_config(
     config: OwnedHotkeyConfig,
 ) -> bool {
     this.set_config(*config).is_ok()
+}
+
+/// Resolves the key according to the current keyboard layout.
+#[no_mangle]
+pub unsafe extern "C" fn HotkeySystem_resolve(
+    this: &HotkeySystem,
+    key_code: *const c_char,
+) -> *const c_char {
+    let name = str(key_code);
+    match KeyCode::from_str(name) {
+        Ok(key_code) => output_str(this.resolve(key_code)),
+        _ => output_str(name),
+    }
 }

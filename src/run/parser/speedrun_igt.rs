@@ -2,7 +2,6 @@
 
 use alloc::borrow::Cow;
 use serde::Deserialize;
-use snafu::ResultExt;
 use time::Duration;
 
 use crate::{

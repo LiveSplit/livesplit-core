@@ -1,3 +1,6 @@
+use alloc::borrow::Cow;
+use livesplit_hotkey::KeyCode;
+
 use crate::{
     hotkey::{Hook, Hotkey},
     HotkeyConfig, SharedTimer,
@@ -264,5 +267,10 @@ impl HotkeySystem {
         self.set_toggle_timing_method(config.toggle_timing_method)?;
 
         Ok(())
+    }
+
+    /// Resolves the key according to the current keyboard layout.
+    pub fn resolve(&self, key_code: KeyCode) -> Cow<'static, str> {
+        key_code.resolve(&self.hook)
     }
 }
