@@ -2,8 +2,7 @@
 
 use super::{output_str, Nullablec_char};
 use livesplit_core::component::title::State as TitleComponentState;
-use std::os::raw::c_char;
-use std::ptr;
+use std::{os::raw::c_char, ptr};
 
 /// type
 pub type OwnedTitleComponentState = Box<TitleComponentState>;
@@ -36,7 +35,7 @@ pub extern "C" fn TitleComponentState_icon_change_len(this: &TitleComponentState
 #[no_mangle]
 pub extern "C" fn TitleComponentState_line1(this: &TitleComponentState) -> *const c_char {
     // FIXME: Add API for querying the abbreviations.
-    output_str(&this.line1.last().unwrap())
+    output_str(this.line1.last().unwrap())
 }
 
 /// By default the category name is shown on the second line. Based on the
@@ -45,9 +44,7 @@ pub extern "C" fn TitleComponentState_line1(this: &TitleComponentState) -> *cons
 #[no_mangle]
 pub extern "C" fn TitleComponentState_line2(this: &TitleComponentState) -> *const Nullablec_char {
     // FIXME: Add API for querying the abbreviations.
-    this.line2
-        .last()
-        .map_or_else(ptr::null, |abbrev| output_str(&abbrev))
+    this.line2.last().map_or_else(ptr::null, output_str)
 }
 
 /// Specifies whether the title should centered or aligned to the left

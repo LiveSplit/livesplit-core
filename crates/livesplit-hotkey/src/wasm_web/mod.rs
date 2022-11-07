@@ -1,10 +1,12 @@
 use crate::{Hotkey, KeyCode, Modifiers};
+use js_sys::{Function, Promise, Reflect};
 use wasm_bindgen::{prelude::*, JsCast};
 use web_sys::{window, Event, Gamepad, GamepadButton, KeyboardEvent};
 
 use std::{
-    cell::Cell,
+    cell::{Cell, RefCell},
     collections::hash_map::{Entry, HashMap},
+    rc::Rc,
     sync::{Arc, Mutex},
 };
 
@@ -29,6 +31,8 @@ pub struct Hook {
     keyboard_callback: Closure<dyn FnMut(Event)>,
     gamepad_callback: Closure<dyn FnMut()>,
     interval_id: Cell<Option<i32>>,
+    keyboard_layout_resolver: Rc<RefCell<Option<(JsValue, Function)>>>,
+    _keyboard_layout_closure: Option<Closure<dyn FnMut(JsValue)>>,
 }
 
 impl Drop for Hook {
@@ -130,6 +134,36 @@ impl Hook {
         let mut states = Vec::new();
         let navigator = window.navigator();
 
+        let keyboard_layout_resolver = Rc::new(RefCell::new(None));
+        let _keyboard_layout_closure = (|| {
+            let keyboard = Reflect::get(navigator.as_ref(), &JsValue::from_str("keyboard")).ok()?;
+            if keyboard.is_undefined() {
+                return None;
+            }
+
+            let get_layout_map =
+                Reflect::get(&keyboard, &JsValue::from_str("getLayoutMap")).ok()?;
+
+            let layout_map_promise = get_layout_map
+                .dyn_ref::<Function>()?
+                .call0(&keyboard)
+                .ok()?;
+
+            let keyboard_layout_resolver = keyboard_layout_resolver.clone();
+
+            let closure = Closure::wrap(Box::new(move |layout_map| {
+                if let Ok(get_fn) = Reflect::get(&layout_map, &JsValue::from_str("get")) {
+                    if let Ok(get_fn) = get_fn.dyn_into::<Function>() {
+                        *keyboard_layout_resolver.borrow_mut() = Some((layout_map, get_fn));
+                    }
+                }
+            }) as Box<dyn FnMut(JsValue)>);
+
+            let _ = layout_map_promise.dyn_ref::<Promise>()?.then(&closure);
+
+            Some(closure)
+        })();
+
         let gamepad_callback = Closure::wrap(Box::new(move || {
             if let Ok(gamepads) = navigator.get_gamepads() {
                 let gamepads_len = gamepads.length() as usize;
@@ -166,6 +200,8 @@ impl Hook {
             keyboard_callback,
             gamepad_callback,
             interval_id: Cell::new(None),
+            keyboard_layout_resolver,
+            _keyboard_layout_closure,
         })
     }
 
@@ -201,7 +237,13 @@ impl Hook {
         }
     }
 
-    pub(crate) fn try_resolve(&self, _key_code: KeyCode) -> Option<String> {
-        None
+    pub(crate) fn try_resolve(&self, key_code: KeyCode) -> Option<String> {
+        let keyboard_layout_resolver = self.keyboard_layout_resolver.borrow();
+        let (layout, resolve_fn) = keyboard_layout_resolver.as_ref()?;
+
+        resolve_fn
+            .call1(layout, &JsValue::from_str(key_code.name()))
+            .ok()?
+            .as_string()
     }
 }
