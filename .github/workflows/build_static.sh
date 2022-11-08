@@ -7,7 +7,7 @@ main() {
     fi
     local release_flag=""
     if [ "$IS_DEPLOY" = "true" ]; then
-        release_flag="--release"
+        release_flag="--profile max-opt"
     fi
 
     if [ "$NO_STD" = "true" ]; then

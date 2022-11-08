@@ -7,7 +7,7 @@ main() {
     fi
     local release_flag=""
     if [ "$IS_DEPLOY" = "true" ]; then
-        release_flag="--release"
+        release_flag="--profile max-opt"
     fi
 
     $cargo rustc -p livesplit-core-capi --crate-type cdylib --target $TARGET $release_flag $FEATURES
