@@ -143,7 +143,25 @@ unsafe fn str(s: *const c_char) -> &'static str {
     if s.is_null() {
         ""
     } else {
-        CStr::from_ptr(s as _).to_str().unwrap()
+        let bytes = CStr::from_ptr(s as _).to_bytes();
+
+        // Depending on where the C API is used, you may be able to fully trust
+        // that the caller always passes valid UTF-8. On the web we use the
+        // `TextEncoder` which always produces valid UTF-8.
+        #[cfg(any(
+            feature = "assume-str-parameters-are-utf8",
+            all(target_family = "wasm", feature = "wasm-web"),
+        ))]
+        {
+            std::str::from_utf8_unchecked(bytes)
+        }
+        #[cfg(not(any(
+            feature = "assume-str-parameters-are-utf8",
+            all(target_family = "wasm", feature = "wasm-web"),
+        )))]
+        {
+            simdutf8::basic::from_utf8(bytes).unwrap()
+        }
     }
 }
 
@@ -166,7 +184,7 @@ unsafe fn get_file(_: i64) -> ManuallyDrop<File> {
 }
 
 /// Allocate memory.
-#[cfg(all(target_arch = "wasm32", not(target_os = "wasi")))]
+#[cfg(all(target_family = "wasm", not(target_os = "wasi")))]
 #[no_mangle]
 pub extern "C" fn alloc(size: usize) -> *mut u8 {
     let mut buf = Vec::with_capacity(size);
@@ -176,7 +194,7 @@ pub extern "C" fn alloc(size: usize) -> *mut u8 {
 }
 
 /// Deallocate memory.
-#[cfg(all(target_arch = "wasm32", not(target_os = "wasi")))]
+#[cfg(all(target_family = "wasm", not(target_os = "wasi")))]
 #[no_mangle]
 pub extern "C" fn dealloc(ptr: *mut u8, cap: usize) {
     unsafe {
