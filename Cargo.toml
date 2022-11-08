@@ -180,9 +180,11 @@ harness = false
 name = "software_rendering"
 harness = false
 
-[profile.release]
+[profile.max-opt]
+inherits = "release"
 lto = true
 panic = "abort"
+codegen-units = 1
 
-[profile.release.build-override]
+[profile.max-opt.build-override]
 opt-level = 0
