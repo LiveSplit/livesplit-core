@@ -433,7 +433,7 @@ fn parse_attempt_history(version: Version, reader: &mut Reader<'_>, run: &mut Ru
 pub fn parse(source: &str, path: Option<PathBuf>) -> Result<Run> {
     let reader = &mut Reader::new(source);
 
-    let mut image_buf = Vec::with_capacity(4096);
+    let mut image_buf = Vec::new();
 
     let mut run = Run::new();
 
