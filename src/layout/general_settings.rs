@@ -2,8 +2,11 @@ use super::LayoutDirection;
 use crate::{
     platform::prelude::*,
     settings::{Color, Field, Font, Gradient, SettingsDescription, Value},
+    timing::visual_cycle_timer
 };
 use serde::{Deserialize, Serialize};
+
+
 
 /// The general settings of the layout that apply to all components.
 #[derive(Clone, Serialize, Deserialize)]
@@ -24,6 +27,8 @@ pub struct GeneralSettings {
     pub background: Gradient,
     /// The color to use for when the runner achieved a best segment.
     pub best_segment_color: Color,
+    /// Should we render best segment splits as a rainbow?
+    pub rainbow_for_best_segments: bool,
     /// The color to use for when the runner is ahead of the comparison and is
     /// gaining even more time.
     pub ahead_gaining_time_color: Color,
@@ -59,6 +64,7 @@ impl Default for GeneralSettings {
             text_font: None,
             background: Gradient::Plain(Color::hsla(0.0, 0.0, 0.06, 1.0)),
             best_segment_color: Color::hsla(50.0, 1.0, 0.5, 1.0),
+            rainbow_for_best_segments: false,
             ahead_gaining_time_color: Color::hsla(136.0, 1.0, 0.4, 1.0),
             ahead_losing_time_color: Color::hsla(136.0, 0.55, 0.6, 1.0),
             behind_gaining_time_color: Color::hsla(0.0, 0.55, 0.6, 1.0),
@@ -84,6 +90,7 @@ impl GeneralSettings {
             Field::new("Custom Text Font".into(), self.text_font.clone().into()),
             Field::new("Background".into(), self.background.into()),
             Field::new("Best Segment".into(), self.best_segment_color.into()),
+            Field::new("Use Rainbow Best Segment Color".into(), self.rainbow_for_best_segments.into()),
             Field::new(
                 "Ahead (Gaining Time)".into(),
                 self.ahead_gaining_time_color.into(),
@@ -124,17 +131,33 @@ impl GeneralSettings {
             3 => self.text_font = value.into(),
             4 => self.background = value.into(),
             5 => self.best_segment_color = value.into(),
-            6 => self.ahead_gaining_time_color = value.into(),
-            7 => self.ahead_losing_time_color = value.into(),
-            8 => self.behind_gaining_time_color = value.into(),
-            9 => self.behind_losing_time_color = value.into(),
-            10 => self.not_running_color = value.into(),
-            11 => self.personal_best_color = value.into(),
-            12 => self.paused_color = value.into(),
-            13 => self.thin_separators_color = value.into(),
-            14 => self.separators_color = value.into(),
-            15 => self.text_color = value.into(),
+            6 => self.rainbow_for_best_segments = value.into(),
+            7 => self.ahead_gaining_time_color = value.into(),
+            8 => self.ahead_losing_time_color = value.into(),
+            9 => self.behind_gaining_time_color = value.into(),
+            10 => self.behind_losing_time_color = value.into(),
+            11 => self.not_running_color = value.into(),
+            12 => self.personal_best_color = value.into(),
+            13 => self.paused_color = value.into(),
+            14 => self.thin_separators_color = value.into(),
+            15 => self.separators_color = value.into(),
+            16 => self.text_color = value.into(),
             _ => panic!("Unsupported Setting Index"),
+        }
+    }
+    
+    /// Gets the best segment color. If `rainbow_for_best_segments` is false, 
+    /// this just returns the `best_segment_color` field. otherwise, it returns 
+    /// a color that cycles based on the current system times
+    pub fn get_best_segment_color(&self) -> Color {
+        if self.rainbow_for_best_segments {
+            Color::hsva(
+                ((visual_cycle_timer() / 100.) % 36. * 10.) as f32, 
+                1.0, 1.0, 1.0
+            )
+        }
+        else {
+            self.best_segment_color
         }
     }
 }

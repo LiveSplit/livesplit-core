@@ -681,6 +681,9 @@ fn parse_general_settings(layout: &mut Layout, reader: &mut Reader<'_>) -> Resul
         "PersonalBestColor" => color(reader, |color| {
             settings.personal_best_color = color;
         }),
+        "UseRainbowColor" => parse_bool(reader, |color| {
+            settings.rainbow_for_best_segments = color;
+        }),
         "AheadGainingTimeColor" => color(reader, |color| {
             settings.ahead_gaining_time_color = color;
         }),
