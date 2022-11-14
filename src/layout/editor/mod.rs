@@ -1,5 +1,5 @@
-//! The editor module provides an editor for Layouts. The editor ensures that
-//! all the different invariants of the Layout objects are upheld no matter what
+//! The editor module provides an editor for a [`Layout`]. The editor ensures that
+//! all the different invariants of the [`Layout`] objects are upheld no matter what
 //! kind of operations are being applied. It provides the current state of the
 //! editor as state objects that can be visualized by any kind of User
 //! Interface.
@@ -12,8 +12,8 @@ mod state;
 
 pub use self::state::{Buttons as ButtonsState, State};
 
-/// The Layout Editor allows modifying Layouts while ensuring all the different
-/// invariants of the Layout objects are upheld no matter what kind of
+/// The Layout Editor allows modifying a [`Layout`] while ensuring all the different
+/// invariants of the [`Layout`] objects are upheld no matter what kind of
 /// operations are being applied. It provides the current state of the editor as
 /// state objects that can be visualized by any kind of User Interface.
 pub struct Editor {

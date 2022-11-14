@@ -1,4 +1,5 @@
-//! Defines the Comparison Generator for calculating the Best Segments of a Run.
+//! Defines the Comparison Generator for calculating the Best Segments of a
+//! [`Run`](crate::Run).
 
 use super::ComparisonGenerator;
 use crate::{
@@ -6,7 +7,8 @@ use crate::{
     TimingMethod,
 };
 
-/// The Comparison Generator for calculating the Best Segments of a Run.
+/// Defines the Comparison Generator for calculating the Best Segments of a
+/// [`Run`](crate::Run).
 #[derive(Copy, Clone, Debug)]
 pub struct BestSegments;
 

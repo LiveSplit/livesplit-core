@@ -82,11 +82,11 @@ impl Action {
     }
 }
 
-/// With a Hotkey System the runner can use hotkeys on their keyboard to control
+/// With a `HotkeySystem` the runner can use hotkeys on their keyboard to control
 /// the Timer. The hotkeys are global, so the application doesn't need to be in
 /// focus. The behavior of the hotkeys depends on the platform and is stubbed
-/// out on platforms that don't support hotkeys. You can turn off a Hotkey
-/// System temporarily. By default the Hotkey System is activated.
+/// out on platforms that don't support hotkeys. You can turn off a `HotkeySystem`
+/// temporarily. By default the `HotkeySystem` is activated.
 pub struct HotkeySystem {
     config: HotkeyConfig,
     hook: Hook,

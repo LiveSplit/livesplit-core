@@ -1,5 +1,5 @@
-//! The component module provides all the different components available. A
-//! Component allows querying different kinds of information from a Timer. This
+//! The component module provides all available components.
+//! A [`Component`](crate::layout::Component) allows querying different kinds of information from a [`Timer`](crate::Timer). This
 //! information is provided as state objects in a way that can easily be
 //! visualized by any kind of User Interface.
 

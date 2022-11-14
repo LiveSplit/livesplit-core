@@ -1,5 +1,5 @@
-//! The settings module provides the ability to customize components and various
-//! other settings.
+//! The `Settings` module provides the ability to customize a
+//! [`Component`](crate::layout::Component) and various other settings.
 
 mod alignment;
 mod color;

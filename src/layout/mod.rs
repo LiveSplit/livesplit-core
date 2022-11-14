@@ -1,5 +1,6 @@
-//! The layout module provides everything necessary for working with Layouts. A
-//! Layout allows you to combine multiple components together to visualize a
+//! The layout module provides everything necessary for working with a
+//! [`Layout`](crate::layout::Layout). A [`Layout`](crate::layout::Layout)
+//! allows you to combine multiple components together to visualize a
 //! variety of information the runner is interested in.
 
 mod component;

@@ -1,9 +1,9 @@
 //! Provides the Splits Component and relevant types for using it. The Splits
 //! Component is the main component for visualizing all the split times. Each
-//! segment is shown in a tabular fashion showing the segment icon, segment
-//! name, the delta compared to the chosen comparison, and the split time. The
-//! list provides scrolling functionality, so not every segment needs to be
-//! shown all the time.
+//! Each [`Segment`](crate::run::Segment) is shown in a tabular fashion showing
+//! the segment icon, segment name, the delta compared to the chosen comparison,
+//! and the split time. The list provides scrolling functionality, so not every
+//! [`Segment`](crate::run::Segment) needs to be shown all the time.
 
 use crate::{
     platform::prelude::*,
@@ -33,9 +33,10 @@ const SETTINGS_PER_TIME_COLUMN: usize = 6;
 const SETTINGS_PER_VARIABLE_COLUMN: usize = 2;
 
 /// The Splits Component is the main component for visualizing all the split
-/// times. Each segment is shown in a tabular fashion showing the segment icon,
-/// segment name, the delta compared to the chosen comparison, and the split
-/// time. The list provides scrolling functionality, so not every segment needs
+/// times. Each [`Segment`](crate::run::Segment) is shown in a tabular fashion
+/// showing the segment icon, segment name, the delta compared to the chosen
+/// comparison, and the split time.
+/// The list provides scrolling functionality, so not every segment needs
 /// to be shown all the time.
 #[derive(Default, Clone)]
 pub struct Component {

@@ -1,16 +1,17 @@
 //! Defines the Comparison Generator for calculating the Average Segments of a
-//! Run. The Average Segments are calculated through a weighted arithmetic mean
-//! that gives more recent segments a larger weight so that the Average
-//! Segments are more suited to represent the current performance of a
-//! runner.
+//! [`Run`](crate::Run). The Average Segments are calculated through a
+//! weighted arithmetic mean that gives more recent segments a larger
+//! weight so that the Average Segments are more suited to represent
+//! the current performance of a runner.
 
 use super::ComparisonGenerator;
 use crate::{Attempt, Segment, TimeSpan, TimingMethod};
 
-/// The Comparison Generator for calculating the Average Segments of a Run. The
-/// Average Segments are calculated through a weighted arithmetic mean that
-/// gives more recent segments a larger weight so that the Average Segments are
-/// more suited to represent the current performance of a runner.
+/// The Comparison Generator for calculating the Average Segments of a
+/// [`Run`](crate::Run). The Average Segments are calculated through a weighted
+/// arithmetic mean that gives more recent segments a larger weight so that
+/// the Average Segments are more suited to represent the current performance
+/// of a runner.
 #[derive(Copy, Clone, Debug)]
 pub struct AverageSegments;
 

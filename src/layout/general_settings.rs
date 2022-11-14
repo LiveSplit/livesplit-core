@@ -5,7 +5,7 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 
-/// The general settings of the layout that apply to all components.
+/// The general settings of a [`Layout`](crate::layout::Layout) that apply to all components.
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct GeneralSettings {

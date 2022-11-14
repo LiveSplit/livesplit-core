@@ -9,7 +9,7 @@ pub struct Inner {
     accuracy: Accuracy,
 }
 
-/// The Segment Time Formatter formats Time Spans for them to be shown as
+/// The Segment Time Formatter formats a [`TimeSpan`] for them to be shown as
 /// Segment Times. This specifically means that the fractional part of the time
 /// is always shown and the minutes and hours are only shown when necessary. The
 /// default accuracy is to show 2 digits of the fractional part, but this can be

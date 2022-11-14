@@ -71,7 +71,7 @@ impl Time {
     }
 }
 
-/// Represents a Time Span intended to be used as a Real Time.
+/// Represents a [`TimeSpan`](crate::TimeSpan) intended to be used for describing real time.
 pub struct RealTime(pub Option<TimeSpan>);
 
 impl From<RealTime> for Time {
@@ -80,7 +80,7 @@ impl From<RealTime> for Time {
     }
 }
 
-/// Represents a Time Span intended to be used as a Game Time.
+/// Represents a [`TimeSpan`](crate::TimeSpan) intended to be used for describing game time.
 pub struct GameTime(pub Option<TimeSpan>);
 
 impl From<GameTime> for Time {

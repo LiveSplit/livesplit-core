@@ -1,4 +1,4 @@
-//! Provides the Timer Component and relevant types for using it. The Timer
+//! Provides the `Timer` Component and relevant types for using it. The `Timer`
 //! Component is a component that shows the total time of the current attempt as
 //! a digital clock. The color of the time shown is based on a how well the
 //! current attempt is doing compared to the chosen comparison.
@@ -16,7 +16,7 @@ use crate::{
 use core::fmt::Write;
 use serde::{Deserialize, Serialize};
 
-/// The Timer Component is a component that shows the total time of the current
+/// The `Timer` Component is a component that shows the total time of the current
 /// attempt as a digital clock. The color of the time shown is based on a how
 /// well the current attempt is doing compared to the chosen comparison.
 #[derive(Default, Clone)]

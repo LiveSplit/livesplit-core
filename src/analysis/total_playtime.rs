@@ -1,9 +1,9 @@
-//! Provides functionality to calculate the total playtime for either a Run or a
-//! Timer. For a Run, all the durations stored in the Attempt History are summed
-//! together. For a Timer, the current attempt's duration is also factored in.
+//! Provides functionality to calculate the total playtime for either a
+//! [`Run`] or a [`Timer`]. For a [`Run`], all the durations stored in the attempt
+//! history are summed together. For a [`Timer`], the current attempt's duration
+//! is also factored in.
 
 use crate::{Run, TimeSpan, Timer, TimingMethod};
-
 /// Allows calculating the total playtime.
 pub trait TotalPlaytime {
     /// Calculates the total playtime.
@@ -56,8 +56,8 @@ impl<'a, T: 'a + TotalPlaytime> TotalPlaytime for &'a T {
     }
 }
 
-/// Calculates the total playtime. The source can be a `Run`, `Timer` or any
-/// other type that implements the `TotalPlaytime` trait.
+/// Calculates the total playtime. The source can be a [`Run`], [`Timer`] or any
+/// other type that implements the [`TotalPlaytime`] trait.
 pub fn calculate<T: TotalPlaytime>(source: T) -> TimeSpan {
     source.total_playtime()
 }

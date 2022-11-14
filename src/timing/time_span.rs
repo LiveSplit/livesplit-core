@@ -9,57 +9,57 @@ use core::{
 };
 use snafu::{ensure, OptionExt, ResultExt};
 
-/// A Time Span represents a certain span of time.
+/// A `TimeSpan` represents a certain span of time.
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 pub struct TimeSpan(Duration);
 
 impl TimeSpan {
-    /// Creates a new Time Span of zero length.
+    /// Creates a new `TimeSpan` of zero length.
     pub const fn zero() -> Self {
         Self(Duration::ZERO)
     }
 
-    /// Creates a new Time Span from a given amount of seconds.
+    /// Creates a new `TimeSpan` from a given amount of seconds.
     pub fn from_seconds(seconds: f64) -> Self {
         Self(Duration::seconds_f64(seconds))
     }
 
-    /// Creates a new Time Span from a given amount of milliseconds.
+    /// Creates a new `TimeSpan` from a given amount of milliseconds.
     pub fn from_milliseconds(milliseconds: f64) -> Self {
         Self(Duration::seconds_f64(0.001 * milliseconds))
     }
 
-    /// Creates a new Time Span from a given amount of days.
+    /// Creates a new `TimeSpan` from a given amount of days.
     pub fn from_days(days: f64) -> Self {
         Self(Duration::seconds_f64(days * (24.0 * 60.0 * 60.0)))
     }
 
-    /// Converts the Time Span to a Duration from the `time` crate.
+    /// Converts the `TimeSpan` to a `Duration` from the `time` crate.
     pub const fn to_duration(&self) -> Duration {
         self.0
     }
 
     /// Returns the underlying raw seconds and the nanoseconds past the last
-    /// full second that make up the Time Span. This is the most lossless
-    /// representation of a Time Span.
+    /// full second that make up the `TimeSpan`. This is the most lossless
+    /// representation of a `TimeSpan`.
     pub const fn to_seconds_and_subsec_nanoseconds(&self) -> (i64, i32) {
         (self.0.whole_seconds(), self.0.subsec_nanoseconds())
     }
 
-    /// Returns the total amount of seconds (including decimals) this Time Span
+    /// Returns the total amount of seconds (including decimals) this `TimeSpan`
     /// represents.
     pub fn total_seconds(&self) -> f64 {
         self.0.as_seconds_f64()
     }
 
-    /// Returns the total amount of milliseconds (including decimals) this Time
-    /// Span represents.
+    /// Returns the total amount of milliseconds (including decimals) this
+    /// `TimeSpan` represents.
     pub fn total_milliseconds(&self) -> f64 {
         1_000.0 * self.total_seconds()
     }
 
-    /// Parses an optional Time Span from a given textual representation of the
-    /// Time Span. If the given text consists entirely of whitespace or is
+    /// Parses an optional `TimeSpan` from a given textual representation of the
+    /// `TimeSpan`. If the given text consists entirely of whitespace or is
     /// empty, `None` is returned.
     pub fn parse_opt(text: &str) -> Result<Option<TimeSpan>, ParseError> {
         if text.trim().is_empty() {
@@ -70,11 +70,11 @@ impl TimeSpan {
     }
 }
 
-/// The Error type for Time Spans that couldn't be parsed.
+/// The Error type for a `TimeSpan` that couldn't be parsed.
 #[derive(Debug, snafu::Snafu)]
 #[snafu(context(suffix(false)))]
 pub enum ParseError {
-    /// An empty string is not a valid Time Span.
+    /// An empty string is not a valid `TimeSpan`.
     Empty,
     /// The time is too large to be represented.
     Overflow,

@@ -2,7 +2,7 @@ use super::Color;
 use crate::layout;
 use serde::{Deserialize, Serialize};
 
-/// A Semantic Color describes a color by some meaningful event that is
+/// A `SemanticColor` describes a color by some meaningful event that is
 /// happening. This information can be visualized as a color, but can also be
 /// interpreted in other ways by the consumer of this API.
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
