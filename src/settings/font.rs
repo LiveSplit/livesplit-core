@@ -33,19 +33,14 @@ pub struct Font {
 
 /// The style specifies whether to use a normal or italic version of a font. The
 /// style may be emulated if no font dedicated to the style can be found.
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, Default, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(rename_all = "lowercase")]
 pub enum Style {
     /// Select a regular, non-italic version of the font.
+    #[default]
     Normal,
     /// Select an italic version of the font.
     Italic,
-}
-
-impl Default for Style {
-    fn default() -> Self {
-        Self::Normal
-    }
 }
 
 impl Style {
@@ -64,7 +59,9 @@ impl Style {
 ///
 /// [`Fallback weights` on
 /// MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/font-weight#Fallback_weights)
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(
+    Debug, Copy, Clone, Default, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord, Hash,
+)]
 #[serde(rename_all = "kebab-case")]
 pub enum Weight {
     /// 100 (also known as Hairline)
@@ -76,6 +73,7 @@ pub enum Weight {
     /// 350 (also known as Demi Light)
     SemiLight,
     /// 400 (also known as Regular)
+    #[default]
     Normal,
     /// 500
     Medium,
@@ -89,12 +87,6 @@ pub enum Weight {
     Black,
     /// 950 (also known as Ultra Black)
     ExtraBlack,
-}
-
-impl Default for Weight {
-    fn default() -> Self {
-        Self::Normal
-    }
 }
 
 impl Weight {
@@ -122,7 +114,7 @@ impl Weight {
 ///
 /// [`Font face selection` on
 /// MDN](https://developer.mozilla.org/en-US/docs/Web/CSS/font-stretch#Font_face_selection)
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, Default, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[serde(rename_all = "kebab-case")]
 pub enum Stretch {
     /// 50%
@@ -134,6 +126,7 @@ pub enum Stretch {
     /// 87.5%
     SemiCondensed,
     /// 100%
+    #[default]
     Normal,
     /// 112.5%
     SemiExpanded,
@@ -143,12 +136,6 @@ pub enum Stretch {
     ExtraExpanded,
     /// 200%
     UltraExpanded,
-}
-
-impl Default for Stretch {
-    fn default() -> Self {
-        Self::Normal
-    }
 }
 
 impl Stretch {

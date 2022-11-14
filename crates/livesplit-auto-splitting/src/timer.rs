@@ -1,8 +1,9 @@
 /// Represents the state that a timer is in.
 #[repr(u8)]
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, Default, PartialEq, Eq, Hash)]
 pub enum TimerState {
     /// The timer is not running.
+    #[default]
     NotRunning = 0,
     /// The timer is running.
     Running = 1,
@@ -11,12 +12,6 @@ pub enum TimerState {
     Paused = 2,
     /// The timer has ended, but didn't get reset yet.
     Ended = 3,
-}
-
-impl Default for TimerState {
-    fn default() -> Self {
-        Self::NotRunning
-    }
 }
 
 /// A timer that can be controlled by an auto splitter.
