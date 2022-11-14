@@ -3,9 +3,10 @@ use serde::{Deserialize, Serialize};
 
 /// Describes a Gradient for coloring a region with more than just a single
 /// color.
-#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Copy, Clone, Default, Serialize, Deserialize, PartialEq)]
 pub enum Gradient {
     /// Don't use any color, keep it transparent.
+    #[default]
     Transparent,
     /// Use a single color instead of a full gradient.
     Plain(Color),
@@ -13,12 +14,6 @@ pub enum Gradient {
     Vertical(Color, Color),
     /// Use a horizontal gradient (Left, Right).
     Horizontal(Color, Color),
-}
-
-impl Default for Gradient {
-    fn default() -> Self {
-        Gradient::Transparent
-    }
 }
 
 /// Describes an extended form of a gradient, specifically made for use with
