@@ -100,6 +100,12 @@
 //!         name_ptr: *const u8,
 //!         name_len: usize,
 //!     ) -> Option<NonZeroAddress>;
+//!     /// Gets the size of a module in a process.
+//!     pub fn process_get_module_size(
+//!         process: ProcessId,
+//!         name_ptr: *const u8,
+//!         name_len: usize,
+//!     ) -> Option<NonZeroU64>;
 //!
 //!     /// Sets the tick rate of the runtime. This influences the amount of
 //!     /// times the `update` function is called per second.

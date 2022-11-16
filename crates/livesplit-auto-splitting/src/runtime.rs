@@ -380,6 +380,21 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
         .context(LinkFunction {
             name: "process_get_module_address",
         })?
+        .func_wrap("env", "process_get_module_size", {
+            |mut caller: Caller<'_, Context<T>>, process: u64, ptr: u32, len: u32| {
+                let (memory, context) = memory_and_context(&mut caller);
+                let module_name = read_str(memory, ptr, len)?;
+                Ok(context
+                    .processes
+                    .get_mut(ProcessKey::from(KeyData::from_ffi(process as u64)))
+                    .ok_or_else(|| Trap::new(format!("Invalid process handle: {process}")))?
+                    .module_size(module_name)
+                    .unwrap_or_default())
+            }
+        })
+        .context(LinkFunction {
+            name: "process_get_module_size",
+        })?
         .func_wrap("env", "process_read", {
             |mut caller: Caller<'_, Context<T>>,
              process: u64,

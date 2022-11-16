@@ -90,6 +90,26 @@ impl Process {
             .map(|m| m.start() as u64)
     }
 
+    pub fn module_size(&mut self, module: &str) -> Result<u64, ModuleError> {
+        let now = Instant::now();
+        if now - self.last_check >= Duration::from_secs(1) {
+            self.modules = match proc_maps::get_process_maps(self.pid) {
+                Ok(m) => m,
+                Err(source) => {
+                    self.modules.clear();
+                    return Err(ModuleError::ListModules { source });
+                }
+            };
+            self.last_check = now;
+        }
+        Ok(self
+            .modules
+            .iter()
+            .filter(|m| m.filename().map_or(false, |f| f.ends_with(module)))
+            .map(|m| m.size() as u64)
+            .sum())
+    }
+
     pub fn read_mem(&self, address: Address, buf: &mut [u8]) -> io::Result<()> {
         self.handle.copy_address(address as usize, buf)
     }
