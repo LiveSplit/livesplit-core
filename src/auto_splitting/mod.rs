@@ -288,6 +288,10 @@ impl AutoSplitTimer for Timer {
     fn set_variable(&mut self, name: &str, value: &str) {
         self.0.write().unwrap().set_custom_variable(name, value)
     }
+
+    fn log(&mut self, message: fmt::Arguments<'_>) {
+        log::info!(target: "Auto Splitter", "{message}");
+    }
 }
 
 async fn run(

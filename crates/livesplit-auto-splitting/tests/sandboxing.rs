@@ -1,40 +1,14 @@
 #![cfg(feature = "unstable")]
 
 use livesplit_auto_splitting::{Runtime, Timer, TimerState};
-use log::Log;
 use std::{
-    cell::RefCell,
     ffi::OsStr,
-    fmt::Write,
-    fs,
+    fmt, fs,
     path::PathBuf,
     process::{Command, Stdio},
     thread,
     time::Duration,
 };
-
-thread_local! {
-    static BUF: RefCell<Option<String>> = RefCell::new(None);
-}
-struct Logger;
-static LOGGER: Logger = Logger;
-
-impl Log for Logger {
-    fn enabled(&self, _: &log::Metadata) -> bool {
-        true
-    }
-    fn log(&self, record: &log::Record) {
-        if record.target() != "Auto Splitter" {
-            return;
-        }
-        BUF.with(|b| {
-            if let Some(b) = &mut *b.borrow_mut() {
-                let _ = writeln!(b, "{}", record.args());
-            }
-        });
-    }
-    fn flush(&self) {}
-}
 
 struct DummyTimer;
 
@@ -45,10 +19,11 @@ impl Timer for DummyTimer {
     fn start(&mut self) {}
     fn split(&mut self) {}
     fn reset(&mut self) {}
-    fn set_game_time(&mut self, time: time::Duration) {}
+    fn set_game_time(&mut self, _time: time::Duration) {}
     fn pause_game_time(&mut self) {}
     fn resume_game_time(&mut self) {}
-    fn set_variable(&mut self, key: &str, value: &str) {}
+    fn set_variable(&mut self, _key: &str, _value: &str) {}
+    fn log(&mut self, _message: fmt::Arguments<'_>) {}
 }
 
 fn compile(crate_name: &str) -> anyhow::Result<Runtime<DummyTimer>> {
@@ -112,13 +87,8 @@ fn create_file() {
 
 #[test]
 fn stdout() {
-    let _ = log::set_logger(&LOGGER);
-    log::set_max_level(log::LevelFilter::Trace);
-    BUF.with(|b| *b.borrow_mut() = Some(String::new()));
     run("stdout").unwrap();
-    let output = BUF.with(|b| b.borrow_mut().take());
-    // FIXME: For now we don't actually hook up stdout or stderr.
-    assert_eq!(output.unwrap(), "");
+    // FIXME: For now we don't actually hook up stdout or stderr yet.
 }
 
 #[test]

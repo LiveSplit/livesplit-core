@@ -1,3 +1,5 @@
+use std::fmt;
+
 /// Represents the state that a timer is in.
 #[repr(u8)]
 #[derive(Debug, Copy, Clone, Default, PartialEq, Eq, Hash)]
@@ -35,4 +37,7 @@ pub trait Timer {
     /// Sets a custom key value pair. This may be arbitrary information that the
     /// auto splitter wants to provide for visualization.
     fn set_variable(&mut self, key: &str, value: &str);
+    /// Logs a message either from the auto splitter directly or from the
+    /// runtime.
+    fn log(&mut self, message: fmt::Arguments<'_>);
 }
