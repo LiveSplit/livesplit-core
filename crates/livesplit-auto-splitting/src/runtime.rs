@@ -1,6 +1,5 @@
 use crate::{process::Process, timer::Timer};
 
-use log::info;
 use slotmap::{Key, KeyData, SlotMap};
 use snafu::{ResultExt, Snafu};
 use std::{
@@ -280,7 +279,10 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
         })?
         .func_wrap("env", "runtime_set_tick_rate", {
             |mut caller: Caller<'_, Context<T>>, ticks_per_sec: f64| {
-                info!(target: "Auto Splitter", "New Tick Rate: {ticks_per_sec}");
+                caller
+                    .data_mut()
+                    .timer
+                    .log(format_args!("New Tick Rate: {ticks_per_sec}"));
                 caller.data_mut().tick_rate = Duration::from_secs_f64(ticks_per_sec.recip());
             }
         })
@@ -295,9 +297,9 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
         })?
         .func_wrap("env", "runtime_print_message", {
             |mut caller: Caller<'_, Context<T>>, ptr: u32, len: u32| {
-                let (memory, _) = memory_and_context(&mut caller);
+                let (memory, context) = memory_and_context(&mut caller);
                 let message = read_str(memory, ptr, len)?;
-                info!(target: "Auto Splitter", "{message}");
+                context.timer.log(format_args!("{message}"));
                 Ok(())
             }
         })
@@ -327,7 +329,9 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 let process_name = read_str(memory, ptr, len)?;
                 Ok(
                     if let Ok(p) = Process::with_name(process_name, &mut context.process_list) {
-                        info!(target: "Auto Splitter", "Attached to a new process: {process_name}");
+                        context
+                            .timer
+                            .log(format_args!("Attached to a new process: {process_name}"));
                         context.processes.insert(p).data().as_ffi()
                     } else {
                         0
@@ -345,7 +349,10 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                     .processes
                     .remove(ProcessKey::from(KeyData::from_ffi(process as u64)))
                     .ok_or_else(|| Trap::new(format!("Invalid process handle {process}")))?;
-                info!(target: "Auto Splitter", "Detached from a process.");
+                caller
+                    .data_mut()
+                    .timer
+                    .log(format_args!("Detached from a process."));
                 Ok(())
             }
         })
