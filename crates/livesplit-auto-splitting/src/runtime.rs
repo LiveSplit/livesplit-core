@@ -1,9 +1,8 @@
-use crate::{process::Process, timer::Timer};
+use crate::{process::Process, settings::UserSetting, timer::Timer, SettingValue, SettingsStore};
 
 use slotmap::{Key, KeyData, SlotMap};
 use snafu::{ResultExt, Snafu};
 use std::{
-    path::Path,
     result, str,
     time::{Duration, Instant},
 };
@@ -83,6 +82,8 @@ slotmap::new_key_type! {
 pub struct Context<T: Timer> {
     tick_rate: Duration,
     processes: SlotMap<ProcessKey, Process>,
+    user_settings: Vec<UserSetting>,
+    settings_store: SettingsStore,
     timer: T,
     memory: Option<Memory>,
     process_list: ProcessList,
@@ -147,21 +148,28 @@ pub struct Runtime<T: Timer> {
 impl<T: Timer> Runtime<T> {
     /// Creates a new runtime with the given path to the WebAssembly module and
     /// the timer that the module then controls.
-    pub fn new(path: &Path, timer: T) -> Result<Self, CreationError> {
+    pub fn new(
+        module: &[u8],
+        timer: T,
+        settings_store: SettingsStore,
+    ) -> Result<Self, CreationError> {
         let engine = Engine::new(
             Config::new()
                 .cranelift_opt_level(OptLevel::Speed)
-                .epoch_interruption(true),
+                .epoch_interruption(true)
+                .debug_info(true),
         )
         .context(EngineCreation)?;
 
-        let module = Module::from_file(&engine, path).context(ModuleLoading)?;
+        let module = Module::from_binary(&engine, module).context(ModuleLoading)?;
 
         let mut store = Store::new(
             &engine,
             Context {
                 processes: SlotMap::with_key(),
-                tick_rate: Duration::from_secs(1) / 120,
+                user_settings: Vec::new(),
+                settings_store,
+                tick_rate: Duration::new(0, 1_000_000_000 / 120),
                 timer,
                 memory: None,
                 process_list: ProcessList::new(),
@@ -216,9 +224,20 @@ impl<T: Timer> Runtime<T> {
     /// Runs the exported `update` function of the WebAssembly module a single
     /// time and returns the duration to wait until the next execution. The auto
     /// splitter can change this tick rate. It is 120Hz by default.
-    pub fn step(&mut self) -> Result<Duration, RunError> {
+    pub fn update(&mut self) -> Result<Duration, RunError> {
         self.update.call(&mut self.store, ()).context(RunUpdate)?;
         Ok(self.store.data().tick_rate)
+    }
+
+    /// Accesses the currently stored settings.
+    pub fn settings_store(&self) -> &SettingsStore {
+        &self.store.data().settings_store
+    }
+
+    /// Accesses all the settings that are meant to be shown to and modified by
+    /// the user.
+    pub fn user_settings(&self) -> &[UserSetting] {
+        &self.store.data().user_settings
     }
 }
 
@@ -419,6 +438,38 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
         })
         .context(LinkFunction {
             name: "process_read",
+        })?
+        .func_wrap("env", "user_settings_add_bool", {
+            |mut caller: Caller<'_, Context<T>>,
+             key_ptr: u32,
+             key_len: u32,
+             description_ptr: u32,
+             description_len: u32,
+             default_value: u32| {
+                let (memory, context) = memory_and_context(&mut caller);
+                let key = Box::<str>::from(read_str(memory, key_ptr, key_len)?);
+                let description = read_str(memory, description_ptr, description_len)?.into();
+                let default_value = default_value != 0;
+                let value_in_store = match context.settings_store.get(&key) {
+                    Some(SettingValue::Bool(v)) => *v,
+                    None => {
+                        // TODO: Should this auto insert into the store?
+                        context
+                            .settings_store
+                            .set(key.clone(), SettingValue::Bool(default_value));
+                        default_value
+                    }
+                };
+                context.user_settings.push(UserSetting {
+                    key,
+                    description,
+                    default_value: SettingValue::Bool(default_value),
+                });
+                Ok(value_in_store as u32)
+            }
+        })
+        .context(LinkFunction {
+            name: "user_settings_add_bool",
         })?;
     Ok(())
 }

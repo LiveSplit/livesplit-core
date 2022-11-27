@@ -1,6 +1,6 @@
 #![cfg(feature = "unstable")]
 
-use livesplit_auto_splitting::{Runtime, Timer, TimerState};
+use livesplit_auto_splitting::{Runtime, SettingsStore, Timer, TimerState};
 use std::{
     ffi::OsStr,
     fmt, fs,
@@ -61,12 +61,16 @@ fn compile(crate_name: &str) -> anyhow::Result<Runtime<DummyTimer>> {
         })
         .unwrap();
 
-    Ok(Runtime::new(&wasm_path, DummyTimer)?)
+    Ok(Runtime::new(
+        &std::fs::read(wasm_path).unwrap(),
+        DummyTimer,
+        SettingsStore::new(),
+    )?)
 }
 
 fn run(crate_name: &str) -> anyhow::Result<()> {
     let mut runtime = compile(crate_name)?;
-    runtime.step()?;
+    runtime.update()?;
     Ok(())
 }
 
@@ -144,7 +148,7 @@ fn infinite_loop() {
         interrupt.interrupt();
     });
 
-    assert!(runtime.step().is_err());
+    assert!(runtime.update().is_err());
 }
 
 // FIXME: Test Network
