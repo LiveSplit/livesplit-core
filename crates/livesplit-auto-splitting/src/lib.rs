@@ -112,6 +112,16 @@
 //!     pub fn runtime_set_tick_rate(ticks_per_second: f64);
 //!     /// Prints a log message for debugging purposes.
 //!     pub fn runtime_print_message(text_ptr: *const u8, text_len: usize);
+//!
+//!     /// Adds a new setting that the user can modify. This will return either
+//!     /// the specified default value or the value that the user has set.
+//!     pub fn user_settings_add_bool(
+//!         key_ptr: *const u8,
+//!         key_len: usize,
+//!         description_ptr: *const u8,
+//!         description_len: usize,
+//!         default_value: bool,
+//!     ) -> bool;
 //! }
 //! ```
 //!
@@ -130,8 +140,10 @@
 
 mod process;
 mod runtime;
+mod settings;
 mod timer;
 
 pub use runtime::{CreationError, InterruptHandle, RunError, Runtime};
+pub use settings::{SettingValue, SettingsStore, UserSetting};
 pub use time;
 pub use timer::{Timer, TimerState};

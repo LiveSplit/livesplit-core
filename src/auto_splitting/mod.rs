@@ -1,6 +1,6 @@
 //! The auto splitting module provides a runtime for running auto splitters that
-//! can control the [`Timer`](crate::timing::Timer). These auto splitters are provided as WebAssembly
-//! modules.
+//! can control the [`Timer`](crate::timing::Timer). These auto splitters are
+//! provided as WebAssembly modules.
 //!
 //! # Requirements for the Auto Splitters
 //!
@@ -112,15 +112,26 @@
 //!     pub fn runtime_set_tick_rate(ticks_per_second: f64);
 //!     /// Prints a log message for debugging purposes.
 //!     pub fn runtime_print_message(text_ptr: *const u8, text_len: usize);
+//!
+//!     /// Adds a new setting that the user can modify. This will return either
+//!     /// the specified default value or the value that the user has set.
+//!     pub fn user_settings_add_bool(
+//!         key_ptr: *const u8,
+//!         key_len: usize,
+//!         description_ptr: *const u8,
+//!         description_len: usize,
+//!         default_value: bool,
+//!     ) -> bool;
 //! }
 //! ```
 
 use crate::timing::{SharedTimer, TimerPhase};
 use livesplit_auto_splitting::{
-    CreationError, InterruptHandle, Runtime as ScriptRuntime, Timer as AutoSplitTimer, TimerState,
+    CreationError, InterruptHandle, Runtime as ScriptRuntime, SettingsStore,
+    Timer as AutoSplitTimer, TimerState,
 };
 use snafu::{ErrorCompat, Snafu};
-use std::{fmt, path::PathBuf, thread, time::Duration};
+use std::{fmt, fs, io, path::PathBuf, thread, time::Duration};
 use tokio::{
     runtime,
     sync::{mpsc, oneshot, watch},
@@ -136,6 +147,11 @@ pub enum Error {
     LoadFailed {
         /// The underlying error.
         source: CreationError,
+    },
+    /// Failed reading the auto splitter file.
+    ReadFileFailed {
+        /// The underlying error.
+        source: io::Error,
     },
 }
 
@@ -198,6 +214,7 @@ impl Runtime {
     /// or failed.
     pub async fn load_script(&self, script: PathBuf) -> Result<(), Error> {
         let (sender, receiver) = oneshot::channel();
+        let script = fs::read(script).map_err(|e| Error::ReadFileFailed { source: e })?;
         self.sender
             .send(Request::LoadScript(script, sender))
             .map_err(|_| Error::ThreadStopped)?;
@@ -243,7 +260,7 @@ impl Runtime {
 }
 
 enum Request {
-    LoadScript(PathBuf, oneshot::Sender<Result<(), Error>>),
+    LoadScript(Vec<u8>, oneshot::Sender<Result<(), Error>>),
     UnloadScript(oneshot::Sender<()>),
 }
 
@@ -307,7 +324,7 @@ async fn run(
         let mut runtime = loop {
             match receiver.recv().await {
                 Some(Request::LoadScript(script, ret)) => {
-                    match ScriptRuntime::new(&script, Timer(timer.clone())) {
+                    match ScriptRuntime::new(&script, Timer(timer.clone()), SettingsStore::new()) {
                         Ok(r) => {
                             ret.send(Ok(())).ok();
                             break r;
@@ -336,7 +353,11 @@ async fn run(
             match timeout_at(next_step, receiver.recv()).await {
                 Ok(Some(request)) => match request {
                     Request::LoadScript(script, ret) => {
-                        match ScriptRuntime::new(&script, Timer(timer.clone())) {
+                        match ScriptRuntime::new(
+                            &script,
+                            Timer(timer.clone()),
+                            SettingsStore::new(),
+                        ) {
                             Ok(r) => {
                                 ret.send(Ok(())).ok();
                                 runtime = r;
@@ -355,7 +376,7 @@ async fn run(
                     }
                 },
                 Ok(None) => return,
-                Err(_) => match runtime.step() {
+                Err(_) => match runtime.update() {
                     Ok(tick_rate) => {
                         next_step += tick_rate;
                         timeout_sender.send(Some(next_step)).ok();

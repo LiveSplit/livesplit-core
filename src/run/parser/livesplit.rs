@@ -431,7 +431,7 @@ fn parse_attempt_history(version: Version, reader: &mut Reader<'_>, run: &mut Ru
 /// parse, you can provide a path to the splits file, which helps saving the
 /// splits file again later.
 pub fn parse(source: &str, path: Option<PathBuf>) -> Result<Run> {
-    let reader = &mut Reader::new(source);
+    let mut reader = Reader::new(source);
 
     let mut image_buf = Vec::new();
 
@@ -439,7 +439,7 @@ pub fn parse(source: &str, path: Option<PathBuf>) -> Result<Run> {
 
     let mut required_flags = 0u8;
 
-    parse_base(reader, "Run", |reader, attributes| {
+    parse_base(&mut reader, "Run", |reader, attributes| {
         let mut version = Version(1, 0, 0, 0);
         type_hint(optional_attribute_escaped_err(attributes, "version", |t| {
             version = parse_version(t)?;
