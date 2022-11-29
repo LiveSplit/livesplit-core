@@ -6,7 +6,7 @@ use std::{
     result, str,
     time::{Duration, Instant},
 };
-use sysinfo::{ProcessRefreshKind, RefreshKind, System, SystemExt};
+use sysinfo::{ProcessExt, ProcessRefreshKind, RefreshKind, System, SystemExt};
 use wasmtime::{
     Caller, Config, Engine, Extern, Linker, Memory, Module, OptLevel, Store, Trap, TypedFunc,
 };
@@ -133,7 +133,7 @@ impl ProcessList {
     }
 
     pub fn is_open(&self, pid: sysinfo::Pid) -> bool {
-        self.system.process(pid).is_some()
+        matches!(self.system.process(pid), Some(proc) if proc.status() != sysinfo::ProcessStatus::Zombie)
     }
 }
 
