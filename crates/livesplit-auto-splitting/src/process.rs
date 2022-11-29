@@ -66,8 +66,6 @@ impl Process {
     }
 
     pub fn is_open(&self, process_list: &mut ProcessList) -> bool {
-        // FIXME: We can actually ask the list to only refresh the individual process.
-        process_list.refresh();
         process_list.is_open(sysinfo::Pid::from_u32(self.pid as u32))
     }
 

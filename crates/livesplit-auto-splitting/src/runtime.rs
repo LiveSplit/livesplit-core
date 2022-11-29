@@ -132,7 +132,14 @@ impl ProcessList {
         self.system.processes_by_name(name)
     }
 
-    pub fn is_open(&self, pid: sysinfo::Pid) -> bool {
+    pub fn is_open(&mut self, pid: sysinfo::Pid) -> bool {
+        if !self
+            .system
+            .refresh_process_specifics(pid, ProcessRefreshKind::new())
+        {
+            return false;
+        }
+
         matches!(self.system.process(pid), Some(proc) if proc.status() != sysinfo::ProcessStatus::Zombie)
     }
 }
