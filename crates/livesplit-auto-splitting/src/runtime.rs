@@ -1,14 +1,15 @@
 use crate::{process::Process, settings::UserSetting, timer::Timer, SettingValue, SettingsStore};
 
+use anyhow::{Error, Result};
 use slotmap::{Key, KeyData, SlotMap};
 use snafu::{ResultExt, Snafu};
 use std::{
-    result, str,
+    str,
     time::{Duration, Instant},
 };
 use sysinfo::{ProcessRefreshKind, RefreshKind, System, SystemExt};
 use wasmtime::{
-    Caller, Config, Engine, Extern, Linker, Memory, Module, OptLevel, Store, Trap, TypedFunc,
+    Caller, Config, Engine, Extern, Linker, Memory, Module, OptLevel, Store, TypedFunc,
 };
 #[cfg(feature = "unstable")]
 use wasmtime_wasi::{WasiCtx, WasiCtxBuilder};
@@ -71,7 +72,7 @@ pub enum RunError {
     /// Failed running the `update` function.
     RunUpdate {
         /// The underlying error.
-        source: Trap,
+        source: Error,
     },
 }
 
@@ -331,7 +332,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
              name_len: u32,
              value_ptr: u32,
              value_len: u32|
-             -> result::Result<(), Trap> {
+             -> Result<()> {
                 let (memory, context) = memory_and_context(&mut caller);
                 let name = read_str(memory, name_ptr, name_len)?;
                 let value = read_str(memory, value_ptr, value_len)?;
@@ -367,7 +368,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                     .data_mut()
                     .processes
                     .remove(ProcessKey::from(KeyData::from_ffi(process as u64)))
-                    .ok_or_else(|| Trap::new(format!("Invalid process handle {process}")))?;
+                    .ok_or_else(|| Error::msg(format!("Invalid process handle {process}")))?;
                 caller
                     .data_mut()
                     .timer
@@ -384,7 +385,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 let proc = ctx
                     .processes
                     .get(ProcessKey::from(KeyData::from_ffi(process as u64)))
-                    .ok_or_else(|| Trap::new(format!("Invalid process handle: {process}")))?;
+                    .ok_or_else(|| Error::msg(format!("Invalid process handle: {process}")))?;
                 Ok(proc.is_open(&mut ctx.process_list) as u32)
             }
         })
@@ -398,7 +399,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 Ok(context
                     .processes
                     .get_mut(ProcessKey::from(KeyData::from_ffi(process as u64)))
-                    .ok_or_else(|| Trap::new(format!("Invalid process handle: {process}")))?
+                    .ok_or_else(|| Error::msg(format!("Invalid process handle: {process}")))?
                     .module_address(module_name)
                     .unwrap_or_default())
             }
@@ -413,7 +414,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 Ok(context
                     .processes
                     .get_mut(ProcessKey::from(KeyData::from_ffi(process as u64)))
-                    .ok_or_else(|| Trap::new(format!("Invalid process handle: {process}")))?
+                    .ok_or_else(|| Error::msg(format!("Invalid process handle: {process}")))?
                     .module_size(module_name)
                     .unwrap_or_default())
             }
@@ -431,7 +432,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 Ok(context
                     .processes
                     .get(ProcessKey::from(KeyData::from_ffi(process as u64)))
-                    .ok_or_else(|| Trap::new(format!("Invalid process handle: {process}")))?
+                    .ok_or_else(|| Error::msg(format!("Invalid process handle: {process}")))?
                     .read_mem(address, read_slice_mut(memory, buf_ptr, buf_len)?)
                     .is_ok() as u32)
             }
@@ -480,19 +481,19 @@ fn memory_and_context<'a, T: Timer>(
     caller.data().memory.unwrap().data_and_store_mut(caller)
 }
 
-fn read_slice(memory: &[u8], ptr: u32, len: u32) -> Result<&[u8], Trap> {
+fn read_slice(memory: &[u8], ptr: u32, len: u32) -> Result<&[u8]> {
     memory
         .get(ptr as usize..(ptr + len) as usize)
-        .ok_or_else(|| Trap::new("Out of bounds pointer and length pair."))
+        .ok_or_else(|| Error::msg("Out of bounds pointer and length pair."))
 }
 
-fn read_slice_mut(memory: &mut [u8], ptr: u32, len: u32) -> Result<&mut [u8], Trap> {
+fn read_slice_mut(memory: &mut [u8], ptr: u32, len: u32) -> Result<&mut [u8]> {
     memory
         .get_mut(ptr as usize..(ptr + len) as usize)
-        .ok_or_else(|| Trap::new("Out of bounds pointer and length pair."))
+        .ok_or_else(|| Error::msg("Out of bounds pointer and length pair."))
 }
 
-fn read_str(memory: &[u8], ptr: u32, len: u32) -> Result<&str, Trap> {
+fn read_str(memory: &[u8], ptr: u32, len: u32) -> Result<&str> {
     let slice = read_slice(memory, ptr, len)?;
-    str::from_utf8(slice).map_err(|_| Trap::new("Invalid utf-8"))
+    str::from_utf8(slice).map_err(|_| Error::msg("Invalid utf-8"))
 }
