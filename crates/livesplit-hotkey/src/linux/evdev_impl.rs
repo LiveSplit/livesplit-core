@@ -243,6 +243,7 @@ pub fn new() -> Result<Hook> {
     let waker = Waker::new(poll.registry(), PING_TOKEN).map_err(|_| Error::EPoll)?;
 
     let mut devices: Vec<Device> = evdev::enumerate()
+        .map(|(_, d)| d)
         .filter(|d| d.supported_events().contains(EventType::KEY))
         .collect();
 
