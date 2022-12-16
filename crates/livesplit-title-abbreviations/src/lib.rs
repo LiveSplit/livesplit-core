@@ -103,7 +103,7 @@ fn is_all_caps_or_digits(text: &str) -> bool {
 
 pub fn abbreviate(name: &str) -> Vec<Box<str>> {
     let name = name.trim();
-    let mut list = vec![name.into()];
+    let mut list = vec![];
     if name.is_empty() {
         return list;
     }
@@ -165,6 +165,13 @@ pub fn abbreviate(name: &str) -> Vec<Box<str>> {
     list.sort_unstable();
     list.dedup();
 
+    if let Some(idx) = list.iter().position(|x| name == x.as_ref()) {
+        let last = list.len() - 1;
+        list.swap(idx, last);
+    } else {
+        list.push(name.into());
+    }
+
     list
 }
 
@@ -213,4 +220,100 @@ pub fn abbreviate_category(category: &str) -> Vec<Box<str>> {
     abbrevs.push(category.into());
 
     abbrevs
+}
+
+#[cfg(test)]
+mod tests {
+    use super::abbreviate;
+    use alloc::boxed::Box;
+    use alloc::vec;
+
+    // The tests using actual game titles can be thrown out or edited if any
+    // major changes need to be made to the abbreviation algorithm. Do not
+    // hesitate to remove them if they are getting in the way of actual
+    // improvements.
+    //
+    // They exist purely as another measure to prevent accidental breakage.
+    #[test]
+    fn game_test_1() {
+        let abbreviations = abbreviate("Burnout 3: Takedown");
+
+        let expected = vec![
+            Box::from("B3"),
+            Box::from("B3: Takedown"),
+            Box::from("Burnout 3"),
+            Box::from("Takedown"),
+            Box::from("Burnout 3: Takedown"),
+        ];
+
+        assert_eq!(abbreviations, expected);
+    }
+
+    #[test]
+    fn game_test_2() {
+        let abbreviations = abbreviate("The Legend of Zelda: The Wind Waker");
+
+        let expected = vec![
+            Box::from("Legend of Zelda: TWW"),
+            Box::from("Legend of Zelda: The Wind Waker"),
+            Box::from("Legend of Zelda: Wind Waker"),
+            Box::from("TLoZ: TWW"),
+            Box::from("TLoZ: The Wind Waker"),
+            Box::from("TLoZ: Wind Waker"),
+            Box::from("TWW"),
+            Box::from("The Wind Waker"),
+            Box::from("Wind Waker"),
+            Box::from("The Legend of Zelda: The Wind Waker"),
+        ];
+
+        assert_eq!(abbreviations, expected);
+    }
+
+    #[test]
+    fn game_test_3() {
+        let abbreviations = abbreviate("SpongeBob SquarePants: Battle for Bikini Bottom");
+
+        let expected = vec![
+            Box::from("Battle for Bikini Bottom"),
+            Box::from("BfBB"),
+            Box::from("SS: Battle for Bikini Bottom"),
+            Box::from("SS: BfBB"),
+            Box::from("SpongeBob SquarePants: Battle for Bikini Bottom"),
+        ];
+
+        assert_eq!(abbreviations, expected);
+    }
+
+    #[test]
+    #[rustfmt::skip]
+    fn game_test_4() {
+        let abbreviations = abbreviate("Super Mario 64");
+
+        let expected = vec![
+            Box::from("SM64"),
+            Box::from("Super Mario 64"),
+        ];
+
+        assert_eq!(abbreviations, expected);
+    }
+
+    #[test]
+    fn contains_original_title() {
+        let abbreviations = abbreviate("test title: the game");
+        assert!(abbreviations.contains(&Box::from("test title: the game")));
+    }
+
+    #[test]
+    fn removes_parens() {
+        let abbreviations = abbreviate("test title (the game)");
+        assert!(abbreviations.contains(&Box::from("test title")));
+    }
+
+    #[test]
+    fn original_title_is_last() {
+        let abbreviations = abbreviate("test title: the game");
+        let last = abbreviations.last().unwrap();
+
+        assert_eq!("test title: the game", last.as_ref())
+    }
 }
