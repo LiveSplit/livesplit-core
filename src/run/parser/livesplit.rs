@@ -2,7 +2,7 @@
 
 use super::super::ComparisonError;
 use crate::{
-    platform::{path::PathBuf, prelude::*},
+    platform::prelude::*,
     util::xml::{
         helper::{
             attribute, attribute_escaped_err, end_tag, optional_attribute_escaped_err,
@@ -427,10 +427,8 @@ fn parse_attempt_history(version: Version, reader: &mut Reader<'_>, run: &mut Ru
     }
 }
 
-/// Attempts to parse a LiveSplit splits file. In addition to the source to
-/// parse, you can provide a path to the splits file, which helps saving the
-/// splits file again later.
-pub fn parse(source: &str, path: Option<PathBuf>) -> Result<Run> {
+/// Attempts to parse a LiveSplit splits file.
+pub fn parse(source: &str) -> Result<Run> {
     let mut reader = Reader::new(source);
 
     let mut image_buf = Vec::new();
@@ -495,8 +493,6 @@ pub fn parse(source: &str, path: Option<PathBuf>) -> Result<Run> {
             source: XmlError::ElementNotFound,
         });
     }
-
-    run.set_path(path);
 
     Ok(run)
 }

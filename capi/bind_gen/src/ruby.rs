@@ -114,7 +114,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         )?;
     }
 
-    for (name, typ) in function.inputs.iter().skip(if is_static { 0 } else { 1 }) {
+    for (name, typ) in function.inputs.iter().skip(usize::from(!is_static)) {
         write!(
             writer,
             r"
@@ -150,7 +150,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
     for (i, (name, _)) in function
         .inputs
         .iter()
-        .skip(if is_static { 0 } else { 1 })
+        .skip(usize::from(!is_static))
         .enumerate()
     {
         if i != 0 {

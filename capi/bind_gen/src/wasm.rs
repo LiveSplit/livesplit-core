@@ -111,7 +111,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
     }
 
     if !type_script {
-        for (name, ty) in function.inputs.iter().skip(if is_static { 0 } else { 1 }) {
+        for (name, ty) in function.inputs.iter().skip(usize::from(!is_static)) {
             write!(
                 writer,
                 r#"
@@ -148,7 +148,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
     for (i, (name, ty)) in function
         .inputs
         .iter()
-        .skip(if is_static { 0 } else { 1 })
+        .skip(usize::from(!is_static))
         .enumerate()
     {
         if i != 0 {
@@ -894,15 +894,15 @@ function dealloc(slice) {
                     writer,
                     "{}",
                     r#"
-    static parseArray(data: Int8Array, path: string, loadFiles: boolean): ParseRunResult {
+    static parseArray(data: Int8Array, loadFilesPath: string): ParseRunResult {
         const slice = allocInt8Array(data);
-        const result = Run.parse(slice.ptr, slice.len, path, loadFiles);
+        const result = Run.parse(slice.ptr, slice.len, loadFilesPath);
         dealloc(slice);
         return result;
     }
-    static parseString(text: string, path: string, loadFiles: boolean): ParseRunResult {
+    static parseString(text: string, loadFilesPath: string): ParseRunResult {
         const slice = allocString(text);
-        const result = Run.parse(slice.ptr, slice.len, path, loadFiles);
+        const result = Run.parse(slice.ptr, slice.len, loadFilesPath);
         dealloc(slice);
         return result;
     }"#
@@ -914,25 +914,23 @@ function dealloc(slice) {
                     r#"
     /**
      * @param {Int8Array} data
-     * @param {string} path
-     * @param {boolean} loadFiles
+     * @param {string} loadFilesPath
      * @return {ParseRunResult}
      */
-    static parseArray(data, path, loadFiles) {
+    static parseArray(data, loadFilesPath) {
         const slice = allocInt8Array(data);
-        const result = Run.parse(slice.ptr, slice.len, path, loadFiles);
+        const result = Run.parse(slice.ptr, slice.len, loadFilesPath);
         dealloc(slice);
         return result;
     }
     /**
      * @param {string} text
-     * @param {string} path
-     * @param {boolean} loadFiles
+     * @param {string} loadFilesPath
      * @return {ParseRunResult}
      */
-    static parseString(text, path, loadFiles) {
+    static parseString(text, loadFilesPath) {
         const slice = allocString(text);
-        const result = Run.parse(slice.ptr, slice.len, path, loadFiles);
+        const result = Run.parse(slice.ptr, slice.len, loadFilesPath);
         dealloc(slice);
         return result;
     }"#

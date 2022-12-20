@@ -9,17 +9,15 @@
 //! ```no_run
 //! use livesplit_core::run::parser::composite;
 //! use std::fs;
-//! use std::path::PathBuf;
+//! use std::path::Path;
 //!
 //! // Load the file.
-//! let path = PathBuf::from("path/to/splits_file");
-//! let file = fs::read(&path).expect("Failed reading the file.");
+//! let path = Path::new("path/to/splits_file");
+//! let file = fs::read(path).expect("Failed reading the file.");
 //!
-//! // We want to load additional files from the file system, like segment icons.
-//! let load_files = true;
-//!
-//! // Actually parse the file.
-//! let result = composite::parse(&file, Some(path), load_files);
+//! // Actually parse the file. We also pass the path to load additional files from
+//! // the file system, like segment icons.
+//! let result = composite::parse(&file, Some(path));
 //! let parsed = result.expect("Not a valid splits file.");
 //!
 //! // Print out the detected file format.
@@ -34,7 +32,7 @@ use super::{
     source_live_timer, speedrun_igt, splits_io, splitterino, splitterz, splitty,
     time_split_tracker, urn, wsplit, TimerKind,
 };
-use crate::{platform::path::PathBuf, Run};
+use crate::{platform::path::Path, Run};
 use core::{result::Result as StdResult, str};
 
 /// The Error type for splits files that couldn't be parsed by the Composite
@@ -73,42 +71,40 @@ const fn parsed(run: Run, kind: TimerKind<'_>) -> ParsedRun<'_> {
 }
 
 /// Attempts to parse and fix a splits file by invoking the corresponding parser
-/// for the file format detected. A path to the splits file can be provided,
-/// which helps saving the splits file again later. Additionally you need to
-/// specify if additional files, like external images are allowed to be loaded.
-/// If you are using livesplit-core in a server-like environment, set this to
-/// `false`. Only client-side applications should set this to `true`. Unlike the
-/// normal parsing function, it also fixes problems in the Run, such as
-/// decreasing times and missing information.
-pub fn parse_and_fix<R>(
-    source: &[u8],
-    path: Option<PathBuf>,
-    load_files: bool,
-) -> Result<ParsedRun<'_>> {
-    let mut run = parse(source, path, load_files)?;
+/// for the file format detected. Additionally you can provide the path of the
+/// splits file so additional files, like external images, can be loaded. If you
+/// are using livesplit-core in a server-like environment, set this to `None`.
+/// Only client-side applications should provide a path here. Unlike the normal
+/// parsing function, it also fixes problems in the Run, such as decreasing
+/// times and missing information.
+pub fn parse_and_fix<'source>(
+    source: &'source [u8],
+    load_files_path: Option<&Path>,
+) -> Result<ParsedRun<'source>> {
+    let mut run = parse(source, load_files_path)?;
     run.run.fix_splits();
     Ok(run)
 }
 
 /// Attempts to parse a splits file by invoking the corresponding parser for the
-/// file format detected. A path to the splits file can be provided, which helps
-/// saving the splits file again later. Additionally you need to specify if
-/// additional files, like external images are allowed to be loaded. If you are
-/// using livesplit-core in a server-like environment, set this to `false`. Only
-/// client-side applications should set this to `true`.
-pub fn parse(source: &[u8], path: Option<PathBuf>, load_files: bool) -> Result<ParsedRun<'_>> {
+/// file format detected. Additionally you can provide the path of the splits
+/// file so additional files, like external images, can be loaded. If you are
+/// using livesplit-core in a server-like environment, set this to `None`. Only
+/// client-side applications should provide a path here.
+pub fn parse<'source>(
+    source: &'source [u8],
+    load_files_path: Option<&Path>,
+) -> Result<ParsedRun<'source>> {
     if let Ok(source) = simdutf8::basic::from_utf8(source) {
-        let files_path = if load_files { path.clone() } else { None };
-
-        if let Ok(run) = livesplit::parse(source, path) {
+        if let Ok(run) = livesplit::parse(source) {
             return Ok(parsed(run, TimerKind::LiveSplit));
         }
 
-        if let Ok(run) = wsplit::parse(source, load_files) {
+        if let Ok(run) = wsplit::parse(source, load_files_path.is_some()) {
             return Ok(parsed(run, TimerKind::WSplit));
         }
 
-        if let Ok(run) = splitterz::parse(source, load_files) {
+        if let Ok(run) = splitterz::parse(source, load_files_path.is_some()) {
             return Ok(parsed(run, TimerKind::SplitterZ));
         }
 
@@ -120,7 +116,7 @@ pub fn parse(source: &[u8], path: Option<PathBuf>, load_files: bool) -> Result<P
             return Ok(parsed(run, TimerKind::Splitty));
         }
 
-        if let Ok(run) = time_split_tracker::parse(source, files_path) {
+        if let Ok(run) = time_split_tracker::parse(source, load_files_path) {
             return Ok(parsed(run, TimerKind::TimeSplitTracker));
         }
 
@@ -128,7 +124,7 @@ pub fn parse(source: &[u8], path: Option<PathBuf>, load_files: bool) -> Result<P
             return Ok(parsed(run, TimerKind::Portal2LiveTimer));
         }
 
-        if let Ok(run) = face_split::parse(source, load_files) {
+        if let Ok(run) = face_split::parse(source, load_files_path.is_some()) {
             return Ok(parsed(run, TimerKind::FaceSplit));
         }
 

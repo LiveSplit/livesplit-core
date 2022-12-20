@@ -136,7 +136,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
     for (i, (name, typ)) in function
         .inputs
         .iter()
-        .skip(if is_static { 0 } else { 1 })
+        .skip(usize::from(!is_static))
         .enumerate()
     {
         if i != 0 {
@@ -411,8 +411,8 @@ open class {class} : {base_class}, AutoCloseable {{
                 writer,
                 "{}",
                 r#"
-    fun parse(data: String, path: String, loadFiles: Boolean): ParseRunResult {
-        val result = ParseRunResult(LiveSplitCoreNative.Run_parseString(data, path, loadFiles))
+    fun parse(data: String, loadFilesPath: String): ParseRunResult {
+        val result = ParseRunResult(LiveSplitCoreNative.Run_parseString(data, loadFilesPath))
         return result
     }"#
             )?;

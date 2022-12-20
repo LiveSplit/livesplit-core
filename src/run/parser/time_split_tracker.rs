@@ -3,7 +3,10 @@
 use super::super::ComparisonError;
 use crate::{
     comparison::RACE_COMPARISON_PREFIX,
-    platform::{path::PathBuf, prelude::*},
+    platform::{
+        path::{Path, PathBuf},
+        prelude::*,
+    },
     timing, RealTime, Run, Segment, Time, TimeSpan,
 };
 #[cfg(feature = "std")]
@@ -76,13 +79,11 @@ fn parse_time_optional(time: &str) -> StdResult<Option<TimeSpan>, timing::ParseE
 /// this to `None`. Only client-side applications should provide the path here.
 pub fn parse(
     source: &str,
-    #[allow(unused)] path_for_loading_other_files: Option<PathBuf>,
+    #[allow(unused)] path_for_loading_other_files: Option<&Path>,
 ) -> Result<Run> {
     let mut run = Run::new();
     #[cfg(feature = "std")]
     let mut buf = Vec::new();
-    #[cfg(feature = "std")]
-    let mut path = path_for_loading_other_files;
 
     let mut lines = source.lines();
 
@@ -101,6 +102,9 @@ pub fn parse(
             .parse()
             .context(ParseOffset)?,
     );
+
+    #[cfg(feature = "std")]
+    let mut path = path_for_loading_other_files.map(Path::to_path_buf);
 
     #[cfg(feature = "std")]
     catch! {

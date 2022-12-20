@@ -20,7 +20,7 @@ pub extern "C" fn HotkeyConfig_drop(this: OwnedHotkeyConfig) {
 /// Creates a new Hotkey Configuration with default settings.
 #[no_mangle]
 pub extern "C" fn HotkeyConfig_new() -> OwnedHotkeyConfig {
-    Box::new(HotkeyConfig::default())
+    Default::default()
 }
 
 /// Encodes generic description of the settings available for the hotkey

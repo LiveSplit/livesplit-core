@@ -14,7 +14,7 @@ mod parse {
 
     #[track_caller]
     fn livesplit(data: &str) -> Run {
-        livesplit::parse(data, None).unwrap()
+        livesplit::parse(data).unwrap()
     }
 
     #[track_caller]
@@ -24,12 +24,12 @@ mod parse {
 
     #[test]
     fn livesplit_fuzz_crash() {
-        livesplit::parse(run_files::LIVESPLIT_FUZZ_CRASH, None).unwrap_err();
+        livesplit::parse(run_files::LIVESPLIT_FUZZ_CRASH).unwrap_err();
     }
 
     #[test]
     fn livesplit_fuzz_crash_utf8() {
-        livesplit::parse(run_files::LIVESPLIT_FUZZ_CRASH_UTF8, None).unwrap_err();
+        livesplit::parse(run_files::LIVESPLIT_FUZZ_CRASH_UTF8).unwrap_err();
     }
 
     #[test]
@@ -81,7 +81,7 @@ mod parse {
 
     #[test]
     fn llanfair_gered_doesnt_parse_as_livesplit() {
-        livesplit::parse(run_files::LLANFAIR_GERED, None).unwrap_err();
+        livesplit::parse(run_files::LLANFAIR_GERED).unwrap_err();
     }
 
     #[test]
@@ -182,46 +182,46 @@ mod parse {
 
     #[test]
     fn speedrun_igt_prefers_parsing_as_itself() {
-        let run = composite::parse(run_files::SPEEDRUN_IGT.as_bytes(), None, false).unwrap();
+        let run = composite::parse(run_files::SPEEDRUN_IGT.as_bytes(), None).unwrap();
         assert!(matches!(run.kind, TimerKind::SpeedRunIGT));
     }
 
     #[test]
     fn splits_io_prefers_parsing_as_itself() {
-        let run = composite::parse(run_files::GENERIC_SPLITS_IO.as_bytes(), None, false).unwrap();
+        let run = composite::parse(run_files::GENERIC_SPLITS_IO.as_bytes(), None).unwrap();
         assert!(matches!(run.kind, TimerKind::Generic(_)));
     }
 
     #[test]
     fn portal2_live_timer_prefers_parsing_as_itself() {
-        let run = composite::parse(run_files::PORTAL2_LIVE_TIMER1.as_bytes(), None, false).unwrap();
+        let run = composite::parse(run_files::PORTAL2_LIVE_TIMER1.as_bytes(), None).unwrap();
         assert_eq!(run.kind, TimerKind::Portal2LiveTimer);
     }
 
     #[test]
     fn splitterino_prefers_parsing_as_itself() {
-        let run = composite::parse(run_files::SPLITTERINO.as_bytes(), None, false).unwrap();
+        let run = composite::parse(run_files::SPLITTERINO.as_bytes(), None).unwrap();
         assert_eq!(run.kind, TimerKind::Splitterino);
     }
 
     #[test]
     fn urn_prefers_parsing_as_itself() {
-        let run = composite::parse(run_files::URN.as_bytes(), None, false).unwrap();
+        let run = composite::parse(run_files::URN.as_bytes(), None).unwrap();
         assert_eq!(run.kind, TimerKind::Urn);
     }
 
     #[test]
     fn source_live_time_prefers_parsing_as_itself() {
-        let run = composite::parse(run_files::SOURCE_LIVE_TIMER.as_bytes(), None, false).unwrap();
+        let run = composite::parse(run_files::SOURCE_LIVE_TIMER.as_bytes(), None).unwrap();
         assert_eq!(run.kind, TimerKind::SourceLiveTimer);
     }
 
     #[test]
     fn flitter_prefers_parsing_as_itself() {
-        let run = composite::parse(run_files::FLITTER.as_bytes(), None, false).unwrap();
+        let run = composite::parse(run_files::FLITTER.as_bytes(), None).unwrap();
         assert_eq!(run.kind, TimerKind::Flitter);
 
-        let run = composite::parse(run_files::FLITTER_SMALL.as_bytes(), None, false).unwrap();
+        let run = composite::parse(run_files::FLITTER_SMALL.as_bytes(), None).unwrap();
         assert_eq!(run.kind, TimerKind::Flitter);
     }
 }

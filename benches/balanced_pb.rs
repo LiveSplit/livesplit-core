@@ -46,7 +46,7 @@ fn fake_splits(c: &mut Criterion) {
 
 fn actual_splits(c: &mut Criterion) {
     let buf = fs::read_to_string("tests/run_files/livesplit1.6.lss").unwrap();
-    let mut run = livesplit::parse(&buf, None).unwrap();
+    let mut run = livesplit::parse(&buf).unwrap();
     run.comparison_generators_mut().clear();
     run.comparison_generators_mut().push(Box::new(BalancedPB));
 

@@ -26,7 +26,7 @@ fn t(r: &str, g: &str) -> Time {
 
 #[test]
 fn balanced_pb() {
-    let mut run = livesplit::parse(run_files::LIVESPLIT_1_6_GAMETIME, None).unwrap();
+    let mut run = livesplit::parse(run_files::LIVESPLIT_1_6_GAMETIME).unwrap();
     run.comparison_generators_mut().clear();
     run.comparison_generators_mut().push(Box::new(BalancedPB));
     run.regenerate_comparisons();

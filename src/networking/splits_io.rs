@@ -40,7 +40,7 @@ pub async fn download_run(
     id: &str,
 ) -> Result<composite::ParsedRun<'static>, DownloadError> {
     let bytes = api::run::download(client, id).await.context(Download)?;
-    let run = composite::parse(&bytes, None, false).context(Parse)?;
+    let run = composite::parse(&bytes, None).context(Parse)?;
     Ok(run.into_owned())
 }
 

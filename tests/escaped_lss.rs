@@ -12,7 +12,7 @@ fn escaping_works_for_segment_name() {
     saver::livesplit::save_run(&run, &mut buf).unwrap();
     assert!(buf.contains("A &lt; B"));
 
-    run = parser::livesplit::parse(&buf, None).unwrap();
+    run = parser::livesplit::parse(&buf).unwrap();
     assert_eq!(run.segment(0).name(), "A < B");
 }
 
@@ -26,6 +26,6 @@ fn escaping_works_for_auto_splitter_settings() {
     saver::livesplit::save_run(&run, &mut buf).unwrap();
     assert!(buf.contains("A &lt; B"));
 
-    run = parser::livesplit::parse(&buf, None).unwrap();
+    run = parser::livesplit::parse(&buf).unwrap();
     assert_eq!(run.auto_splitter_settings(), "<Hi>A &lt; B</Hi>");
 }
