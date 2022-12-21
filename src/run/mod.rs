@@ -35,7 +35,7 @@ pub use segment_history::SegmentHistory;
 
 use crate::{
     comparison::{default_generators, personal_best, ComparisonGenerator, RACE_COMPARISON_PREFIX},
-    platform::{path::PathBuf, prelude::*},
+    platform::prelude::*,
     settings::Image,
     util::PopulateString,
     AtomicDateTime, Time, TimeSpan, TimingMethod,
@@ -69,7 +69,6 @@ pub struct Run {
     attempt_history: Vec<Attempt>,
     metadata: RunMetadata,
     has_been_modified: bool,
-    path: Option<PathBuf>,
     segments: Vec<Segment>,
     custom_comparisons: Vec<String>,
     comparison_generators: ComparisonGenerators,
@@ -113,7 +112,6 @@ impl Run {
             attempt_history: Vec::new(),
             metadata: RunMetadata::new(),
             has_been_modified: false,
-            path: None,
             segments: Vec::new(),
             custom_comparisons: vec![personal_best::NAME.to_string()],
             comparison_generators: ComparisonGenerators(default_generators()),
@@ -161,18 +159,6 @@ impl Run {
         S: PopulateString,
     {
         name.populate(&mut self.category_name);
-    }
-
-    /// Returns the path of the associated splits file in the file system.
-    #[inline]
-    pub const fn path(&self) -> &Option<PathBuf> {
-        &self.path
-    }
-
-    /// Sets the path of the associated splits file in the file system.
-    #[inline]
-    pub fn set_path(&mut self, path: Option<PathBuf>) {
-        self.path = path;
     }
 
     /// Returns the amount of runs that have been attempted with these splits.

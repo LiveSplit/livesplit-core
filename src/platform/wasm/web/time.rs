@@ -19,9 +19,7 @@ thread_local! {
 impl Instant {
     pub fn now() -> Self {
         let secs = PERFORMANCE.with(|p| p.now()) * 0.001;
-        let nanos = (secs.fract() * 1_000_000_000.0) as _;
-        let secs = secs as _;
-        Instant(Duration::new(secs, nanos))
+        Instant(Duration::seconds_f64(secs))
     }
 }
 

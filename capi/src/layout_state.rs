@@ -7,14 +7,16 @@
 //! - Using the wrong getter function on the wrong type of component.
 
 use crate::{output_vec, Json};
-use livesplit_core::component::{
-    blank_space::State as BlankSpaceComponentState,
-    detailed_timer::State as DetailedTimerComponentState, graph::State as GraphComponentState,
-    key_value::State as KeyValueComponentState, separator::State as SeparatorComponentState,
-    splits::State as SplitsComponentState, text::State as TextComponentState,
-    timer::State as TimerComponentState, title::State as TitleComponentState,
+use livesplit_core::{
+    component::{
+        blank_space::State as BlankSpaceComponentState,
+        detailed_timer::State as DetailedTimerComponentState, graph::State as GraphComponentState,
+        key_value::State as KeyValueComponentState, separator::State as SeparatorComponentState,
+        splits::State as SplitsComponentState, text::State as TextComponentState,
+        timer::State as TimerComponentState, title::State as TitleComponentState,
+    },
+    layout::{ComponentState, LayoutState},
 };
-use livesplit_core::layout::{ComponentState, LayoutState};
 use std::os::raw::c_char;
 
 /// type
@@ -24,7 +26,7 @@ pub type OwnedLayoutState = Box<LayoutState>;
 /// layout state that gets updated over time.
 #[no_mangle]
 pub extern "C" fn LayoutState_new() -> OwnedLayoutState {
-    Box::new(LayoutState::default())
+    Default::default()
 }
 
 /// drop

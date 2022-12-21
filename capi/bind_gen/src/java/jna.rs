@@ -117,7 +117,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
     for (i, (name, typ)) in function
         .inputs
         .iter()
-        .skip(if is_static { 0 } else { 1 })
+        .skip(usize::from(!is_static))
         .enumerate()
     {
         if i != 0 {
@@ -409,7 +409,7 @@ public class {class} extends {base_class} implements AutoCloseable {{
             writer,
             "{}",
             r#"
-    public static ParseRunResult parse(java.io.InputStream stream, String path, boolean loadFiles) throws java.io.IOException {
+    public static ParseRunResult parse(java.io.InputStream stream, String loadFilesPath) throws java.io.IOException {
         java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
         byte[] buffer = new byte[1024];
         while (true) {
@@ -420,7 +420,7 @@ public class {class} extends {base_class} implements AutoCloseable {{
         byte[] arr = out.toByteArray();
         java.nio.ByteBuffer nativeBuf = java.nio.ByteBuffer.allocateDirect(arr.length);
         nativeBuf.put(arr);
-        return Run.parse(Native.getDirectBufferPointer(nativeBuf), arr.length, path, loadFiles);
+        return Run.parse(Native.getDirectBufferPointer(nativeBuf), arr.length, loadFilesPath);
     }"#
         )?;
     }

@@ -141,7 +141,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
     for (i, (name, typ)) in function
         .inputs
         .iter()
-        .skip(if is_static { 0 } else { 1 })
+        .skip(usize::from(!is_static))
         .enumerate()
     {
         if i != 0 {
@@ -417,7 +417,7 @@ namespace LiveSplitCore
                 writer,
                 "{}",
                 r#"
-        public static ParseRunResult Parse(Stream stream, string path, bool loadFiles)
+        public static ParseRunResult Parse(Stream stream, string loadFilesPath)
         {
             var data = new byte[stream.Length];
             stream.Read(data, 0, data.Length);
@@ -425,7 +425,7 @@ namespace LiveSplitCore
             try
             {
                 Marshal.Copy(data, 0, pnt, data.Length);
-                return Parse(pnt, data.Length, path, loadFiles);
+                return Parse(pnt, data.Length, loadFilesPath);
             }
             finally
             {

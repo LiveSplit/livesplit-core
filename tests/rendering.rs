@@ -17,7 +17,7 @@ use livesplit_core::{
 use std::fs;
 
 fn lss(data: &str) -> Run {
-    livesplit::parse(data, None).unwrap()
+    livesplit::parse(data).unwrap()
 }
 
 fn lsl(data: &str) -> Layout {

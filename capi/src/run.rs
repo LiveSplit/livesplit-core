@@ -12,7 +12,7 @@ use livesplit_core::{
 use std::{
     io::{Read, Write},
     os::raw::c_char,
-    path::PathBuf,
+    path::Path,
     slice,
 };
 
@@ -34,45 +34,45 @@ pub extern "C" fn Run_drop(this: OwnedRun) {
 }
 
 /// Attempts to parse a splits file from an array by invoking the corresponding
-/// parser for the file format detected. A path to the splits file can be
-/// provided, which helps saving the splits file again later. Additionally you
-/// need to specify if additional files, like external images are allowed to be
-/// loaded. If you are using livesplit-core in a server-like environment, set
-/// this to <FALSE>. Only client-side applications should set this to <TRUE>.
+/// parser for the file format detected. Additionally you can provide the path
+/// of the splits file so additional files, like external images, can be loaded.
+/// If you are using livesplit-core in a server-like environment, set this to
+/// <NULL>. Only client-side applications should provide a path here. Unlike the
+/// normal parsing function, it also fixes problems in the Run, such as
+/// decreasing times and missing information.
 #[no_mangle]
 pub unsafe extern "C" fn Run_parse(
     data: *const u8,
     length: usize,
-    path: *const c_char,
-    load_files: bool,
+    load_files_path: *const c_char,
 ) -> OwnedParseRunResult {
-    let path = str(path);
-    let path = if !path.is_empty() {
-        Some(PathBuf::from(path))
+    let load_files_path = str(load_files_path);
+    let load_files_path = if !load_files_path.is_empty() {
+        Some(Path::new(load_files_path))
     } else {
         None
     };
 
-    Box::new(parser::composite::parse(slice::from_raw_parts(data, length), path, load_files).ok())
+    Box::new(parser::composite::parse(slice::from_raw_parts(data, length), load_files_path).ok())
 }
 
 /// Attempts to parse a splits file from a file by invoking the corresponding
-/// parser for the file format detected. A path to the splits file can be
-/// provided, which helps saving the splits file again later. Additionally you
-/// need to specify if additional files, like external images are allowed to be
-/// loaded. If you are using livesplit-core in a server-like environment, set
-/// this to <FALSE>. Only client-side applications should set this to <TRUE>. On
-/// Unix you pass a file descriptor to this function. On Windows you pass a file
-/// handle to this function. The file descriptor / handle does not get closed.
+/// parser for the file format detected. Additionally you can provide the path
+/// of the splits file so additional files, like external images, can be loaded.
+/// If you are using livesplit-core in a server-like environment, set this to
+/// <NULL>. Only client-side applications should provide a path here. Unlike the
+/// normal parsing function, it also fixes problems in the Run, such as
+/// decreasing times and missing information. On Unix you pass a file descriptor
+/// to this function. On Windows you pass a file handle to this function. The
+/// file descriptor / handle does not get closed.
 #[no_mangle]
 pub unsafe extern "C" fn Run_parse_file_handle(
     handle: i64,
-    path: *const c_char,
-    load_files: bool,
+    load_files_path: *const c_char,
 ) -> OwnedParseRunResult {
-    let path = str(path);
-    let path = if !path.is_empty() {
-        Some(PathBuf::from(path))
+    let load_files_path = str(load_files_path);
+    let load_files_path = if !load_files_path.is_empty() {
+        Some(Path::new(load_files_path))
     } else {
         None
     };
@@ -83,7 +83,7 @@ pub unsafe extern "C" fn Run_parse_file_handle(
         Box::new(
             file.read_to_end(buf)
                 .ok()
-                .and_then(|_| parser::composite::parse(buf, path, load_files).ok())
+                .and_then(|_| parser::composite::parse(buf, load_files_path).ok())
                 .map(|p| p.into_owned()),
         )
     })

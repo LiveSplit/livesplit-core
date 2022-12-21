@@ -8,7 +8,7 @@ pub type OwnedGeneralLayoutSettings = Box<GeneralLayoutSettings>;
 /// Creates a default general layout settings configuration.
 #[no_mangle]
 pub extern "C" fn GeneralLayoutSettings_default() -> OwnedGeneralLayoutSettings {
-    Box::new(GeneralLayoutSettings::default())
+    Default::default()
 }
 
 /// drop

@@ -25,7 +25,7 @@ fn artificial() -> (Timer, Layout) {
 
 fn real() -> (Timer, Layout) {
     let buf = fs::read_to_string("tests/run_files/Celeste - Any% (1.2.1.5).lss").unwrap();
-    let run = livesplit::parse(&buf, None).unwrap();
+    let run = livesplit::parse(&buf).unwrap();
 
     let mut timer = Timer::new(run).unwrap();
     timer.start();

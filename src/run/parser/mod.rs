@@ -10,17 +10,15 @@
 //! ```no_run
 //! use livesplit_core::run::parser::composite;
 //! use std::fs;
-//! use std::path::PathBuf;
+//! use std::path::Path;
 //!
 //! // Load the file.
-//! let path = PathBuf::from("path/to/splits_file");
-//! let file = fs::read(&path).expect("Failed reading the file.");
+//! let path = Path::new("path/to/splits_file");
+//! let file = fs::read(path).expect("Failed reading the file.");
 //!
-//! // We want to load additional files from the file system, like segment icons.
-//! let load_files = true;
-//!
-//! // Actually parse the file.
-//! let result = composite::parse(&file, Some(path), load_files);
+//! // Actually parse the file. We also pass the path to load additional files from
+//! // the file system, like segment icons.
+//! let result = composite::parse(&file, Some(path));
 //! let parsed = result.expect("Not a valid splits file.");
 //!
 //! // Print out the detected file format.

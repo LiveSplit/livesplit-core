@@ -114,7 +114,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
     for (i, (name, typ)) in function
         .inputs
         .iter()
-        .skip(if is_static { 0 } else { 1 })
+        .skip(usize::from(!is_static))
         .enumerate()
     {
         if i != 0 {
@@ -373,8 +373,8 @@ public class {class} extends {base_class} implements AutoCloseable {{
             writer,
             "{}",
             r#"
-    public static ParseRunResult parse(String data, String path, boolean loadFiles) {
-        ParseRunResult result = new ParseRunResult(LiveSplitCoreNative.Run_parseString(data, path, loadFiles));
+    public static ParseRunResult parse(String data, String loadFilesPath) {
+        ParseRunResult result = new ParseRunResult(LiveSplitCoreNative.Run_parseString(data, loadFilesPath));
         return result;
     }"#
         )?;

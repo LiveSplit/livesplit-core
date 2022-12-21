@@ -121,7 +121,7 @@ cfg_if::cfg_if! {
         }
 
         fn lss(path: &str) -> Run {
-            livesplit::parse(&file(path), None).unwrap()
+            livesplit::parse(&file(path)).unwrap()
         }
 
         fn lsl(path: &str) -> Layout {

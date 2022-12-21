@@ -138,7 +138,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
     }
 
     if !type_script {
-        for (name, ty) in function.inputs.iter().skip(if is_static { 0 } else { 1 }) {
+        for (name, ty) in function.inputs.iter().skip(usize::from(!is_static)) {
             write!(
                 writer,
                 r#"
@@ -175,7 +175,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
     for (i, (name, ty)) in function
         .inputs
         .iter()
-        .skip(if is_static { 0 } else { 1 })
+        .skip(usize::from(!is_static))
         .enumerate()
     {
         if i != 0 {
@@ -621,20 +621,20 @@ const liveSplitCoreNative = ffi.Library('livesplit_core', {"#
                     writer,
                     "{}",
                     r#"
-    static parseArray(data: Int8Array, path: string, loadFiles: boolean): ParseRunResult {
+    static parseArray(data: Int8Array, loadFilesPath: string): ParseRunResult {
         let buf = Buffer.from(data.buffer);
         if (data.byteLength !== data.buffer.byteLength) {
             buf = buf.slice(data.byteOffset, data.byteOffset + data.byteLength);
         }
-        return Run.parse(buf, buf.byteLength, path, loadFiles);
+        return Run.parse(buf, buf.byteLength, loadFilesPath);
     }
-    static parseFile(file: any, path: string, loadFiles: boolean): ParseRunResult {
+    static parseFile(file: any, loadFilesPath: string): ParseRunResult {
         const data = fs.readFileSync(file);
-        return Run.parse(data, data.byteLength, path, loadFiles);
+        return Run.parse(data, data.byteLength, loadFilesPath);
     }
-    static parseString(text: string, path: string, loadFiles: boolean): ParseRunResult {
+    static parseString(text: string, loadFilesPath: string): ParseRunResult {
         const data = new Buffer(text);
-        return Run.parse(data, data.byteLength, path, loadFiles);
+        return Run.parse(data, data.byteLength, loadFilesPath);
     }"#
                 )?;
             } else {
@@ -644,36 +644,33 @@ const liveSplitCoreNative = ffi.Library('livesplit_core', {"#
                     r#"
     /**
      * @param {Int8Array} data
-     * @param {string} path
-     * @param {boolean} loadFiles
+     * @param {string} loadFilesPath
      * @return {ParseRunResult}
      */
-    static parseArray(data, path, loadFiles) {
+    static parseArray(data, loadFilesPath) {
         let buf = Buffer.from(data.buffer);
         if (data.byteLength !== data.buffer.byteLength) {
             buf = buf.slice(data.byteOffset, data.byteOffset + data.byteLength);
         }
-        return Run.parse(buf, buf.byteLength, path, loadFiles);
+        return Run.parse(buf, buf.byteLength, loadFilesPath);
     }
     /**
      * @param {string | Buffer | number} file
-     * @param {string} path
-     * @param {boolean} loadFiles
+     * @param {string} loadFilesPath
      * @return {ParseRunResult}
      */
-    static parseFile(file, path, loadFiles) {
+    static parseFile(file, loadFilesPath) {
         const data = fs.readFileSync(file);
-        return Run.parse(data, data.byteLength, path, loadFiles);
+        return Run.parse(data, data.byteLength, loadFilesPath);
     }
     /**
      * @param {string} text
-     * @param {string} path
-     * @param {boolean} loadFiles
+     * @param {string} loadFilesPath
      * @return {ParseRunResult}
      */
-    static parseString(text, path, loadFiles) {
+    static parseString(text, loadFilesPath) {
         const data = new Buffer(text);
-        return Run.parse(data, data.byteLength, path, loadFiles);
+        return Run.parse(data, data.byteLength, loadFilesPath);
     }"#
                 )?;
             }
