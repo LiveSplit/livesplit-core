@@ -25,8 +25,8 @@ fn base() -> Editor {
 
     editor.add_comparison("Some Comparison").unwrap();
     editor.add_comparison("Other Comparison").unwrap();
-    editor.active_segment().set_icon(&[2]);
-    editor.set_game_icon(&[2]);
+    editor.active_segment().set_icon([2]);
+    editor.set_game_icon([2]);
     editor.set_speedrun_com_variable("remove", "me");
 
     let mut run = editor.close();
@@ -55,7 +55,7 @@ fn not_when_just_accessing_active_segment() {
 #[test]
 fn when_changing_segment_icon() {
     let mut editor = base();
-    editor.active_segment().set_icon(&[1]);
+    editor.active_segment().set_icon([1]);
     assert!(editor.run().has_been_modified());
 }
 
@@ -154,7 +154,7 @@ fn when_changing_attempt_count() {
 #[test]
 fn when_changing_game_icon() {
     let mut editor = base();
-    editor.set_game_icon(&[1]);
+    editor.set_game_icon([1]);
     assert!(editor.run().has_been_modified());
 }
 

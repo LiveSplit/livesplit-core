@@ -297,7 +297,7 @@ impl Editor {
 
     /// Removes the game's icon.
     pub fn remove_game_icon(&mut self) {
-        self.run.set_game_icon(&[]);
+        self.run.set_game_icon([]);
         self.raise_run_edited();
     }
 

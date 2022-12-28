@@ -4,7 +4,7 @@ use crate::{GeneralLayoutSettings, Run, Segment, Timer};
 fn prepare() -> (Timer, Component, GeneralLayoutSettings) {
     let mut run = Run::new();
     let mut segment = Segment::new("foo");
-    segment.set_icon(&[0x00, 0x12, 0x34]);
+    segment.set_icon([0x00, 0x12, 0x34]);
     run.push_segment(segment);
     let timer = Timer::new(run).unwrap();
 

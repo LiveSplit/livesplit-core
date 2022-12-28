@@ -14,7 +14,6 @@ use crate::{
     AtomicDateTime, DateTime, Run, RunMetadata, Segment, Time, TimeSpan,
 };
 use alloc::borrow::Cow;
-use base64_simd::Base64;
 use core::{mem::MaybeUninit, str};
 use time::{Date, PrimitiveDateTime};
 
@@ -143,12 +142,12 @@ where
             let src = &text.as_bytes()[212..];
 
             image_buf.resize(
-                Base64::STANDARD.estimated_decoded_length(src.len()),
+                base64_simd::STANDARD.estimated_decoded_length(src.len()),
                 MaybeUninit::uninit(),
             );
 
             if let Ok(decoded) =
-                Base64::STANDARD.decode(src, base64_simd::OutBuf::uninit(image_buf))
+                base64_simd::STANDARD.decode(src, base64_simd::Out::from_uninit_slice(image_buf))
             {
                 f(&decoded[2..decoded.len() - 1]);
                 return Ok(());

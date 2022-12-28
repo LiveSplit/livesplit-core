@@ -315,11 +315,7 @@ impl Component {
         let current_split = timer.current_split_index();
         let method = timer.current_timing_method();
 
-        let locked_last_split = if self.settings.always_show_last_split {
-            1
-        } else {
-            0
-        };
+        let locked_last_split = isize::from(self.settings.always_show_last_split);
         let skip_count = min(
             current_split.map_or(0, |current_split| {
                 max(

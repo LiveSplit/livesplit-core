@@ -1,5 +1,4 @@
 use crate::platform::prelude::*;
-use base64_simd::Base64;
 use core::{
     ops::Deref,
     sync::atomic::{AtomicUsize, Ordering},
@@ -61,14 +60,13 @@ impl Serialize for ImageData {
                 // the length of the buffer by the amount of bytes written.
                 unsafe {
                     let buf = buf.as_mut_vec();
-                    let encoded_len = Base64::STANDARD.encoded_length(self.0.len());
+                    let encoded_len = base64_simd::STANDARD.encoded_length(self.0.len());
                     buf.reserve_exact(encoded_len);
-                    let additional_len = Base64::STANDARD
+                    let additional_len = base64_simd::STANDARD
                         .encode(
                             &self.0,
-                            base64_simd::OutBuf::uninit(buf.spare_capacity_mut()),
+                            base64_simd::Out::from_uninit_slice(buf.spare_capacity_mut()),
                         )
-                        .unwrap()
                         .len();
                     buf.set_len(buf.len() + additional_len);
                 }
@@ -93,11 +91,11 @@ impl<'de> Deserialize<'de> for ImageData {
             if data.is_empty() {
                 Ok(ImageData(Box::new([])))
             } else if let Some(encoded_image_data) = data.strip_prefix("data:;base64,") {
-                let image_data = Base64::STANDARD
-                    .decode_to_boxed_bytes(encoded_image_data.as_bytes())
+                let image_data = base64_simd::STANDARD
+                    .decode_to_vec(encoded_image_data.as_bytes())
                     .map_err(de::Error::custom)?;
 
-                Ok(ImageData(image_data))
+                Ok(ImageData(image_data.into_boxed_slice()))
             } else {
                 Err(de::Error::custom("Invalid Data URL for image"))
             }
@@ -183,7 +181,7 @@ impl Image {
             }
         }
         self.data.clear();
-        self.data.extend_from_slice(&*data);
+        self.data.extend_from_slice(&data);
     }
 
     /// Checks if the image data is empty.

@@ -34,7 +34,7 @@ members = ["capi", "capi/bind_gen", "crates/*"]
 
 [dependencies]
 # core
-base64-simd = { version = "0.7.0", default-features = false, features = ["alloc"] }
+base64-simd = { version = "0.8.0", default-features = false, features = ["alloc"] }
 bytemuck = { version = "1.9.1", default-features = false, features = ["derive"] }
 cfg-if = "1.0.0"
 itoa = { version = "1.0.3", default-features = false }
