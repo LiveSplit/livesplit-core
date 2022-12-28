@@ -92,19 +92,17 @@ fn image<F>(
 where
     F: FnMut(&[u8]),
 {
-    use base64_simd::Base64;
-
     single_child(reader, "ImageIcon", |reader, _| {
         let (width, height, image) = text_as_str_err::<_, _, Error>(reader, |t| {
             let src = t.as_bytes();
 
             raw_buf.resize(
-                Base64::STANDARD.estimated_decoded_length(src.len()),
+                base64_simd::STANDARD.estimated_decoded_length(src.len()),
                 MaybeUninit::uninit(),
             );
 
-            let decoded = Base64::STANDARD
-                .decode(src, base64_simd::OutBuf::uninit(raw_buf))
+            let decoded = base64_simd::STANDARD
+                .decode(src, base64_simd::Out::from_uninit_slice(raw_buf))
                 .map_err(|_| Error::Image)?;
 
             let (width, height);

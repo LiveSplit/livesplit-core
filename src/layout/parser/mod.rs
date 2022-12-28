@@ -1,7 +1,5 @@
 //! Provides the parser for layout files of the original LiveSplit.
 
-use base64_simd::Base64;
-
 use super::{Component, Layout, LayoutDirection};
 use crate::{
     component::{separator, timer::DeltaGradient},
@@ -324,12 +322,12 @@ where
         let rem = text.as_bytes().get(304..).ok_or(Error::ParseFont)?;
 
         font_buf.resize(
-            Base64::STANDARD.estimated_decoded_length(rem.len()),
+            base64_simd::STANDARD.estimated_decoded_length(rem.len()),
             MaybeUninit::uninit(),
         );
 
-        let decoded = Base64::STANDARD
-            .decode(rem, base64_simd::OutBuf::uninit(font_buf))
+        let decoded = base64_simd::STANDARD
+            .decode(rem, base64_simd::Out::from_uninit_slice(font_buf))
             .map_err(|_| Error::ParseFont)?;
 
         let mut cursor = decoded.get(1..).ok_or(Error::ParseFont)?.iter();

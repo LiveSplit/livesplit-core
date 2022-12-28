@@ -8,8 +8,9 @@ on:
     tags:
       - '*'
 
-env:
-  CARGO_TERM_COLOR: always
+# The colors mess with the problem matcher.
+# env:
+  # CARGO_TERM_COLOR: always
 
 jobs:
   build:

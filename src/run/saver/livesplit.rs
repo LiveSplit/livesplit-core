@@ -32,7 +32,6 @@ use crate::{
     DateTime, Run, Time, Timer, TimerPhase,
 };
 use alloc::borrow::Cow;
-use base64_simd::Base64;
 use core::{fmt, mem::MaybeUninit};
 use time::UtcOffset;
 
@@ -85,13 +84,12 @@ fn image<W: fmt::Write>(
         image_buf.push(0xB);
 
         base64_buf.resize(
-            Base64::STANDARD.encoded_length(image_buf.len()),
+            base64_simd::STANDARD.encoded_length(image_buf.len()),
             MaybeUninit::uninit(),
         );
 
-        let encoded = Base64::STANDARD
-            .encode_as_str(image_buf, base64_simd::OutBuf::uninit(base64_buf))
-            .unwrap();
+        let encoded = base64_simd::STANDARD
+            .encode_as_str(image_buf, base64_simd::Out::from_uninit_slice(base64_buf));
 
         tag.content(|writer| writer.cdata(Text::new_escaped(encoded)))
     })

@@ -265,11 +265,11 @@ impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager
             }
         }
 
-        let aspect_ratio = resolution.0 as f32 / resolution.1 as f32;
+        let aspect_ratio = resolution.0 / resolution.1;
 
         let mut context = RenderContext {
             handles: Handles::new(self.next_id, allocator),
-            transform: Transform::scale(resolution.0 as f32, resolution.1 as f32),
+            transform: Transform::scale(resolution.0, resolution.1),
             scene: &mut self.scene,
             fonts: &mut self.fonts,
         };
@@ -335,11 +335,11 @@ impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager
             }
         }
 
-        let aspect_ratio = resolution.0 as f32 / resolution.1 as f32;
+        let aspect_ratio = resolution.0 / resolution.1;
 
         let mut context = RenderContext {
             handles: Handles::new(self.next_id, allocator),
-            transform: Transform::scale(resolution.0 as f32, resolution.1 as f32),
+            transform: Transform::scale(resolution.0, resolution.1),
             scene: &mut self.scene,
             fonts: &mut self.fonts,
         };
