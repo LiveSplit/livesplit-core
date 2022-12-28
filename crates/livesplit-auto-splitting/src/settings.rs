@@ -8,7 +8,8 @@ pub struct UserSetting {
     pub key: Box<str>,
     /// The name of the setting that is shown to the user.
     pub description: Box<str>,
-    /// The default value of the setting. This also specifies the type of the setting.
+    /// The default value of the setting. This also specifies the type of the
+    /// setting.
     pub default_value: SettingValue,
 }
 

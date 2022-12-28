@@ -1,3 +1,5 @@
+#![allow(clippy::unnecessary_cast)]
+
 use std::{
     io,
     time::{Duration, Instant},

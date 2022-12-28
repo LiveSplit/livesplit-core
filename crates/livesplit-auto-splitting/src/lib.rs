@@ -143,7 +143,7 @@ mod runtime;
 mod settings;
 mod timer;
 
-pub use runtime::{CreationError, InterruptHandle, RunError, Runtime};
+pub use runtime::{CreationError, InterruptHandle, Runtime};
 pub use settings::{SettingValue, SettingsStore, UserSetting};
 pub use time;
 pub use timer::{Timer, TimerState};

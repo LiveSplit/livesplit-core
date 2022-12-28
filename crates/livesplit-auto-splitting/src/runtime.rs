@@ -1,14 +1,17 @@
+#![allow(clippy::unnecessary_cast)]
+
 use crate::{process::Process, settings::UserSetting, timer::Timer, SettingValue, SettingsStore};
 
+use anyhow::{Context as _, Result};
 use slotmap::{Key, KeyData, SlotMap};
-use snafu::{ResultExt, Snafu};
+use snafu::Snafu;
 use std::{
-    result, str,
+    str,
     time::{Duration, Instant},
 };
 use sysinfo::{ProcessRefreshKind, RefreshKind, System, SystemExt};
 use wasmtime::{
-    Caller, Config, Engine, Extern, Linker, Memory, Module, OptLevel, Store, Trap, TypedFunc,
+    Caller, Config, Engine, Extern, Linker, Memory, Module, OptLevel, Store, TypedFunc,
 };
 #[cfg(feature = "unstable")]
 use wasmtime_wasi::{WasiCtx, WasiCtxBuilder};
@@ -60,18 +63,7 @@ pub enum CreationError {
     /// Failed running the WebAssembly System Interface (WASI) `_start` function.
     WasiStart {
         /// The underlying error.
-        source: wasmtime::Trap,
-    },
-}
-
-/// An error that is returned when executing the WebAssembly module fails.
-#[derive(Debug, Snafu)]
-#[snafu(context(suffix(false)))]
-pub enum RunError {
-    /// Failed running the `update` function.
-    RunUpdate {
-        /// The underlying error.
-        source: Trap,
+        source: anyhow::Error,
     },
 }
 
@@ -159,9 +151,10 @@ impl<T: Timer> Runtime<T> {
                 .epoch_interruption(true)
                 .debug_info(true),
         )
-        .context(EngineCreation)?;
+        .map_err(|source| CreationError::EngineCreation { source })?;
 
-        let module = Module::from_binary(&engine, module).context(ModuleLoading)?;
+        let module = Module::from_binary(&engine, module)
+            .map_err(|source| CreationError::ModuleLoading { source })?;
 
         let mut store = Store::new(
             &engine,
@@ -184,23 +177,25 @@ impl<T: Timer> Runtime<T> {
         bind_interface(&mut linker)?;
 
         #[cfg(feature = "unstable")]
-        wasmtime_wasi::add_to_linker(&mut linker, |ctx| &mut ctx.wasi).context(Wasi)?;
+        wasmtime_wasi::add_to_linker(&mut linker, |ctx| &mut ctx.wasi)
+            .map_err(|source| CreationError::Wasi { source })?;
 
         let instance = linker
             .instantiate(&mut store, &module)
-            .context(ModuleInstantiation)?;
+            .map_err(|source| CreationError::ModuleInstantiation { source })?;
 
         #[cfg(feature = "unstable")]
         // TODO: _start is kind of correct, but not in the long term. They are
         // intending for us to use a different function for libraries. Look into
         // reactors.
         if let Ok(func) = instance.get_typed_func(&mut store, "_start") {
-            func.call(&mut store, ()).context(WasiStart)?;
+            func.call(&mut store, ())
+                .map_err(|source| CreationError::WasiStart { source })?;
         }
 
         let update = instance
             .get_typed_func(&mut store, "update")
-            .context(MissingUpdateFunction)?;
+            .map_err(|source| CreationError::MissingUpdateFunction { source })?;
 
         let Some(Extern::Memory(mem)) = instance.get_export(&mut store, "memory") else {
             return Err(CreationError::MissingMemory);
@@ -224,8 +219,8 @@ impl<T: Timer> Runtime<T> {
     /// Runs the exported `update` function of the WebAssembly module a single
     /// time and returns the duration to wait until the next execution. The auto
     /// splitter can change this tick rate. It is 120Hz by default.
-    pub fn update(&mut self) -> Result<Duration, RunError> {
-        self.update.call(&mut self.store, ()).context(RunUpdate)?;
+    pub fn update(&mut self) -> Result<Duration> {
+        self.update.call(&mut self.store, ())?;
         Ok(self.store.data().tick_rate)
     }
 
@@ -250,7 +245,8 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 caller.data_mut().timer.start();
             },
         )
-        .context(LinkFunction {
+        .map_err(|source| CreationError::LinkFunction {
+            source,
             name: "timer_start",
         })?
         .func_wrap(
@@ -260,7 +256,8 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 caller.data_mut().timer.split();
             },
         )
-        .context(LinkFunction {
+        .map_err(|source| CreationError::LinkFunction {
+            source,
             name: "timer_split",
         })?
         .func_wrap(
@@ -270,19 +267,22 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 caller.data_mut().timer.reset();
             },
         )
-        .context(LinkFunction {
+        .map_err(|source| CreationError::LinkFunction {
+            source,
             name: "timer_reset",
         })?
         .func_wrap("env", "timer_pause_game_time", {
             |mut caller: Caller<'_, Context<T>>| caller.data_mut().timer.pause_game_time()
         })
-        .context(LinkFunction {
+        .map_err(|source| CreationError::LinkFunction {
+            source,
             name: "timer_pause_game_time",
         })?
         .func_wrap("env", "timer_resume_game_time", {
             |mut caller: Caller<'_, Context<T>>| caller.data_mut().timer.resume_game_time()
         })
-        .context(LinkFunction {
+        .map_err(|source| CreationError::LinkFunction {
+            source,
             name: "timer_resume_game_time",
         })?
         .func_wrap("env", "timer_set_game_time", {
@@ -293,7 +293,8 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                     .set_game_time(time::Duration::new(secs, nanos));
             }
         })
-        .context(LinkFunction {
+        .map_err(|source| CreationError::LinkFunction {
+            source,
             name: "timer_set_game_time",
         })?
         .func_wrap("env", "runtime_set_tick_rate", {
@@ -305,13 +306,15 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 caller.data_mut().tick_rate = Duration::from_secs_f64(ticks_per_sec.recip());
             }
         })
-        .context(LinkFunction {
+        .map_err(|source| CreationError::LinkFunction {
+            source,
             name: "runtime_set_tick_rate",
         })?
         .func_wrap("env", "timer_get_state", {
             |caller: Caller<'_, Context<T>>| caller.data().timer.state() as u32
         })
-        .context(LinkFunction {
+        .map_err(|source| CreationError::LinkFunction {
+            source,
             name: "timer_get_state",
         })?
         .func_wrap("env", "runtime_print_message", {
@@ -322,7 +325,8 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 Ok(())
             }
         })
-        .context(LinkFunction {
+        .map_err(|source| CreationError::LinkFunction {
+            source,
             name: "runtime_print_message",
         })?
         .func_wrap("env", "timer_set_variable", {
@@ -331,7 +335,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
              name_len: u32,
              value_ptr: u32,
              value_len: u32|
-             -> result::Result<(), Trap> {
+             -> Result<()> {
                 let (memory, context) = memory_and_context(&mut caller);
                 let name = read_str(memory, name_ptr, name_len)?;
                 let value = read_str(memory, value_ptr, value_len)?;
@@ -339,7 +343,8 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 Ok(())
             }
         })
-        .context(LinkFunction {
+        .map_err(|source| CreationError::LinkFunction {
+            source,
             name: "timer_set_variable",
         })?
         .func_wrap("env", "process_attach", {
@@ -358,7 +363,8 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 )
             }
         })
-        .context(LinkFunction {
+        .map_err(|source| CreationError::LinkFunction {
+            source,
             name: "process_attach",
         })?
         .func_wrap("env", "process_detach", {
@@ -367,7 +373,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                     .data_mut()
                     .processes
                     .remove(ProcessKey::from(KeyData::from_ffi(process as u64)))
-                    .ok_or_else(|| Trap::new(format!("Invalid process handle {process}")))?;
+                    .ok_or_else(|| anyhow::format_err!("Invalid process handle {process}"))?;
                 caller
                     .data_mut()
                     .timer
@@ -375,7 +381,8 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 Ok(())
             }
         })
-        .context(LinkFunction {
+        .map_err(|source| CreationError::LinkFunction {
+            source,
             name: "process_detach",
         })?
         .func_wrap("env", "process_is_open", {
@@ -384,11 +391,12 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 let proc = ctx
                     .processes
                     .get(ProcessKey::from(KeyData::from_ffi(process as u64)))
-                    .ok_or_else(|| Trap::new(format!("Invalid process handle: {process}")))?;
+                    .ok_or_else(|| anyhow::format_err!("Invalid process handle: {process}"))?;
                 Ok(proc.is_open(&mut ctx.process_list) as u32)
             }
         })
-        .context(LinkFunction {
+        .map_err(|source| CreationError::LinkFunction {
+            source,
             name: "process_is_open",
         })?
         .func_wrap("env", "process_get_module_address", {
@@ -398,12 +406,13 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 Ok(context
                     .processes
                     .get_mut(ProcessKey::from(KeyData::from_ffi(process as u64)))
-                    .ok_or_else(|| Trap::new(format!("Invalid process handle: {process}")))?
+                    .ok_or_else(|| anyhow::format_err!("Invalid process handle: {process}"))?
                     .module_address(module_name)
                     .unwrap_or_default())
             }
         })
-        .context(LinkFunction {
+        .map_err(|source| CreationError::LinkFunction {
+            source,
             name: "process_get_module_address",
         })?
         .func_wrap("env", "process_get_module_size", {
@@ -413,12 +422,13 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 Ok(context
                     .processes
                     .get_mut(ProcessKey::from(KeyData::from_ffi(process as u64)))
-                    .ok_or_else(|| Trap::new(format!("Invalid process handle: {process}")))?
+                    .ok_or_else(|| anyhow::format_err!("Invalid process handle: {process}"))?
                     .module_size(module_name)
                     .unwrap_or_default())
             }
         })
-        .context(LinkFunction {
+        .map_err(|source| CreationError::LinkFunction {
+            source,
             name: "process_get_module_size",
         })?
         .func_wrap("env", "process_read", {
@@ -431,12 +441,13 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 Ok(context
                     .processes
                     .get(ProcessKey::from(KeyData::from_ffi(process as u64)))
-                    .ok_or_else(|| Trap::new(format!("Invalid process handle: {process}")))?
+                    .ok_or_else(|| anyhow::format_err!("Invalid process handle: {process}"))?
                     .read_mem(address, read_slice_mut(memory, buf_ptr, buf_len)?)
                     .is_ok() as u32)
             }
         })
-        .context(LinkFunction {
+        .map_err(|source| CreationError::LinkFunction {
+            source,
             name: "process_read",
         })?
         .func_wrap("env", "user_settings_add_bool", {
@@ -468,7 +479,8 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 Ok(value_in_store as u32)
             }
         })
-        .context(LinkFunction {
+        .map_err(|source| CreationError::LinkFunction {
+            source,
             name: "user_settings_add_bool",
         })?;
     Ok(())
@@ -480,19 +492,19 @@ fn memory_and_context<'a, T: Timer>(
     caller.data().memory.unwrap().data_and_store_mut(caller)
 }
 
-fn read_slice(memory: &[u8], ptr: u32, len: u32) -> Result<&[u8], Trap> {
+fn read_slice(memory: &[u8], ptr: u32, len: u32) -> Result<&[u8]> {
     memory
         .get(ptr as usize..(ptr + len) as usize)
-        .ok_or_else(|| Trap::new("Out of bounds pointer and length pair."))
+        .context("Out of bounds pointer and length pair.")
 }
 
-fn read_slice_mut(memory: &mut [u8], ptr: u32, len: u32) -> Result<&mut [u8], Trap> {
+fn read_slice_mut(memory: &mut [u8], ptr: u32, len: u32) -> Result<&mut [u8]> {
     memory
         .get_mut(ptr as usize..(ptr + len) as usize)
-        .ok_or_else(|| Trap::new("Out of bounds pointer and length pair."))
+        .context("Out of bounds pointer and length pair.")
 }
 
-fn read_str(memory: &[u8], ptr: u32, len: u32) -> Result<&str, Trap> {
+fn read_str(memory: &[u8], ptr: u32, len: u32) -> Result<&str> {
     let slice = read_slice(memory, ptr, len)?;
-    str::from_utf8(slice).map_err(|_| Trap::new("Invalid utf-8"))
+    str::from_utf8(slice).map_err(Into::into)
 }
