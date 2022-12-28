@@ -130,7 +130,7 @@ use livesplit_auto_splitting::{
     CreationError, InterruptHandle, Runtime as ScriptRuntime, SettingsStore,
     Timer as AutoSplitTimer, TimerState,
 };
-use snafu::{ErrorCompat, Snafu};
+use snafu::Snafu;
 use std::{fmt, fs, io, path::PathBuf, thread, time::Duration};
 use tokio::{
     runtime,
@@ -382,7 +382,7 @@ async fn run(
                         timeout_sender.send(Some(next_step)).ok();
                     }
                     Err(e) => {
-                        log::error!(target: "Auto Splitter", "Unloaded due to failure: {}", PrintChain(e));
+                        log::error!(target: "Auto Splitter", "Unloaded due to failure: {:?}", e);
                         continue 'back_to_not_having_a_runtime;
                     }
                 },
@@ -415,20 +415,5 @@ async fn watchdog(
                 }
             }
         }
-    }
-}
-
-struct PrintChain<E>(E);
-
-impl<E: 'static + ErrorCompat + snafu::Error> fmt::Display for PrintChain<E> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let mut chain = self.0.iter_chain();
-        if let Some(next) = chain.next() {
-            write!(f, "{}", next)?;
-        }
-        for next in chain {
-            write!(f, " {}", next)?;
-        }
-        Ok(())
     }
 }
