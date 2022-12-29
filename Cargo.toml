@@ -78,7 +78,7 @@ tiny-skia = { version = "0.8.2", default-features = false, features = [
 tiny-skia-path = { version = "0.8.2", default-features = false, optional = true }
 
 # Networking
-splits-io-api = { version = "0.2.0", optional = true }
+splits-io-api = { version = "0.3.0", optional = true }
 
 # Auto Splitting
 livesplit-auto-splitting = { path = "crates/livesplit-auto-splitting", version = "0.1.0", optional = true }
