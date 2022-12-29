@@ -2,6 +2,11 @@
 name = "livesplit-auto-splitting"
 version = "0.1.0"
 authors = ["Christopher Serr <christopher.serr@gmail.com>"]
+documentation = "https://docs.rs/livesplit-auto-splitting/"
+repository = "https://github.com/LiveSplit/livesplit-core/tree/master/crates/livesplit-auto-splitting"
+license = "Apache-2.0/MIT"
+description = "livesplit-auto-splitting is a library that provides a runtime for running auto splitters that can control a speedrun timer. These auto splitters are provided as WebAssembly modules."
+keywords = ["speedrun", "timer", "livesplit", "auto-splitting"]
 edition = "2021"
 
 [dependencies]

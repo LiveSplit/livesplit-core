@@ -1,6 +1,6 @@
 [package]
 name = "livesplit-title-abbreviations"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Christopher Serr <christopher.serr@gmail.com>"]
 documentation = "https://docs.rs/livesplit-title-abbreviations/"
 repository = "https://github.com/LiveSplit/livesplit-core/tree/master/crates/livesplit-title-abbreviations"

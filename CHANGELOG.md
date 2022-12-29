@@ -1,5 +1,136 @@
 # Changelog
 
+## [0.13.0] - 2022-12-29
+
+- The `livesplit-hotkey` crate is now documented. (@CryZe)
+  [#479](https://github.com/LiveSplit/livesplit-core/pull/479)
+- Not every key press emits a scan code on Windows. For those the virtual key
+  code is now translated to a scan code. (@CryZe)
+  [#480](https://github.com/LiveSplit/livesplit-core/pull/480)
+- Time parsing is now a lot more robust, handles more edge cases, and is also a
+  lot more accurate. (@CryZe)
+  [#483](https://github.com/LiveSplit/livesplit-core/pull/483) and
+  [#578](https://github.com/LiveSplit/livesplit-core/pull/578)
+- When parsing a GDI based font name, platforms other than Windows now don't
+  attempt to parse "normal" as part of the font name anymore as it is too
+  ambigious. It could either refer to a font weight or stretch. (@kadiwa4)
+  [#487](https://github.com/LiveSplit/livesplit-core/pull/487)
+- The text engine can now be customized. You can either provide your own text
+  engine or use the one provided by `livesplit-core`. The one provided is now
+  behind the `path-based-text-engine` and converts all glyphs to paths that can
+  easily be drawn. (@CryZe)
+  [#495](https://github.com/LiveSplit/livesplit-core/pull/495)
+- The path based text engine now caches the width of digits for tabular numbers,
+  as well as the ellipsis glyph and its width, so that they can be layed out
+  faster. (@kadiwa4)
+  [#490](https://github.com/LiveSplit/livesplit-core/pull/490) and
+  [#499](https://github.com/LiveSplit/livesplit-core/pull/499)
+- On Windows GDI is now used to resolve GDI based font names. (@CryZe)
+  [#500](https://github.com/LiveSplit/livesplit-core/pull/500)
+- (Total) Possible Time Save now properly indicates that it's updating
+  frequently. This results in faster rendering times. (@kadiwa4)
+  [#501](https://github.com/LiveSplit/livesplit-core/pull/501)
+- Initial support for auto splitting has landed in `livesplit-core`. Auto
+  splitters are provided as WebAssembly modules. Support can be activated via
+  the `auto-splitting` feature. (@P1n3appl3)
+  [#477](https://github.com/LiveSplit/livesplit-core/pull/477)
+- Auto splitting is also supported via the C API when activating its
+  `auto-splitting` feature. (@DarkRTA)
+  [#503](https://github.com/LiveSplit/livesplit-core/pull/503)
+- A watchdog for the Auto Splitting Runtime was added which unloads scripts that
+  aren't responsive. (@CryZe)
+  [#528](https://github.com/LiveSplit/livesplit-core/pull/528)
+- Splits and layouts can now be parsed and saved on `no_std` platforms. (@CryZe)
+  [#532](https://github.com/LiveSplit/livesplit-core/pull/532)
+- The splits component column labels can now be queried via the C API.
+  (@MichaelJBerk) [#526](https://github.com/LiveSplit/livesplit-core/pull/526)
+- The Software Renderer is now supported on `no_std` platforms. (@CryZe)
+  [#536](https://github.com/LiveSplit/livesplit-core/pull/536)
+- The parsers are now faster because they don't allocate as much memory anymore.
+  (@CryZe) [#546](https://github.com/LiveSplit/livesplit-core/pull/546)
+- The auto splitters have unstable support the `WebAssembly System Interface`
+  via the `unstable-auto-splitting` feature. (@CryZe)
+  [#547](https://github.com/LiveSplit/livesplit-core/pull/547)
+- The Timer component can now use the color of the delta for its background.
+  (@Hurricane996) [#539](https://github.com/LiveSplit/livesplit-core/pull/539)
+- The splits component now takes the font into account when calculating the
+  width of the columns. (@Hurricane996)
+  [#550](https://github.com/LiveSplit/livesplit-core/pull/550)
+- The `Resource Allocator` now decodes the images, allowing the underlying
+  renderer to do the encoding by itself. (@CryZe)
+  [#562](https://github.com/LiveSplit/livesplit-core/pull/562)
+- Cargo's `--crate-type` parameter is now used to build the C API. (@CryZe)
+  [#565](https://github.com/LiveSplit/livesplit-core/pull/565)
+- The columns of the splits component can now show the custom variables.
+  (@CryZe) [#566](https://github.com/LiveSplit/livesplit-core/pull/566)
+- On the web, the `keydown` event may not always pass a `KeyboardEvent` despite
+  the specification saying that this should be the case. This is now properly
+  handled. (@CryZe) [#567](https://github.com/LiveSplit/livesplit-core/pull/567)
+- An integer overflow in the `FuzzyList` used for searching game and category
+  names has been fixed. (@CryZe)
+  [#569](https://github.com/LiveSplit/livesplit-core/pull/569)
+- The way the background is handled in the Detailed Timer component has been
+  fixed. (@CryZe) [#572](https://github.com/LiveSplit/livesplit-core/pull/572)
+- The times are now formatted as strings without going through floating point
+  numbers which increases both the correctness and the performance. (@CryZe)
+  [#576](https://github.com/LiveSplit/livesplit-core/pull/576)
+- Instead of using `core::fmt` formatting machinery to format the times as
+  strings, we now use a custom implementation that's much faster. (@CryZe)
+  [#577](https://github.com/LiveSplit/livesplit-core/pull/577) and
+  [#580](https://github.com/LiveSplit/livesplit-core/pull/580)
+- Holding down a hotkey on Windows now doesn't cause it to be triggered over and
+  over again. Other platforms already behaved this way. (@CryZe)
+  [#584](https://github.com/LiveSplit/livesplit-core/pull/584)
+- The `base64` crate is now replaced with `base64-simd` which uses SIMD to speed
+  up the decoding of the images. (@CryZe)
+  [#585](https://github.com/LiveSplit/livesplit-core/pull/585)
+- Splits from `SpeedRunIGT`, which is a Minecraft speedruning mod, can now be
+  parsed. (@CryZe) [#591](https://github.com/LiveSplit/livesplit-core/pull/591)
+- It turns out using `evdev` for the hotkeys on Linux requires the user to be in
+  the `input` group, which is not always the case. Therefore we now fall back to
+  `X11` if `evdev` is not usable. (@CryZe)
+  [#592](https://github.com/LiveSplit/livesplit-core/pull/592)
+- When an auto splitter wants to attach to a Process by name, the start time and
+  process id are now used to prioritize duplicate processes. (@Eein)
+  [#589](https://github.com/LiveSplit/livesplit-core/pull/589)
+- It is now possible to resolve the key codes to the particular name of the key
+  based on the current keyboard layout on Linux and the web. This was already
+  the case on Windows and macOS. (@CryZe)
+  [#594](https://github.com/LiveSplit/livesplit-core/pull/594) and
+  [#595](https://github.com/LiveSplit/livesplit-core/pull/595)
+- It is now possible to trust the user of the C API to always pass valid UTF-8
+  strings to the C API via the optional `assume-str-parameters-are-utf8`
+  feature. This is also always the case when using WebAssembly on the web. This
+  improves the performance because no validation of the strings is necessary.
+  (@CryZe) [#597](https://github.com/LiveSplit/livesplit-core/pull/597)
+- There is now a new `max-opt` cargo profile that can be used to maximally
+  optimize the resulting executable. The release profile is now using its
+  default configuration again. (@CryZe)
+  [#598](https://github.com/LiveSplit/livesplit-core/pull/598)
+- When encountering images `livesplit-core` checks their dimensions to
+  potentially automatically shrink them if they are larger than necessary. It
+  turns out that checking the dimensions of PNG images was a lot less efficient
+  than it could have been. This even improves parsing speed of entire splits
+  files by up to 30%. (@CryZe)
+  [#600](https://github.com/LiveSplit/livesplit-core/pull/600)
+- The documentation now uses links to types mentioned. (@Eein)
+  [#596](https://github.com/LiveSplit/livesplit-core/pull/596)
+- Auto splitters can now query size of the modules of a process. (@CryZe)
+  [#602](https://github.com/LiveSplit/livesplit-core/pull/602)
+- The log messages emitted by auto splitters can now be consumed directly
+  instead of always being emitted via the `log` crate. (@CryZe)
+  [#603](https://github.com/LiveSplit/livesplit-core/pull/603)
+- The auto splitters can provide settings that can be configured. For now the
+  auto splitters need to be reloaded when the settings change. (@CryZe)
+  [#606](https://github.com/LiveSplit/livesplit-core/pull/606)
+- The file path used to be tracked in the `Run`, but no frontend even used this.
+  So it has been removed. (@CryZe)
+  [#616](https://github.com/LiveSplit/livesplit-core/pull/616)
+- The documentation states that the title component's lines store the
+  unabbreviated line as their last element. This was not actually the case and
+  has been fixed. (@DarkRTA)
+  [#615](https://github.com/LiveSplit/livesplit-core/pull/615)
+
 ## [0.12.0] - 2021-11-14
 
 - Runs now support custom variables that are key value pairs that either the
@@ -121,5 +252,6 @@ scenario.
 - Hotkeys can now be edited.
   [#152](https://github.com/LiveSplit/livesplit-core/pull/152)
 
+[0.13.0]: https://github.com/linebender/druid/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/linebender/druid/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/linebender/druid/compare/v0.10.0...v0.11.0

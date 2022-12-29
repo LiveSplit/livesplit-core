@@ -259,6 +259,7 @@ jobs:
             cross: skip
             tests: skip
             dylib: skip
+            release: skip
             install_target: true
 
           - label: WebAssembly Web
@@ -619,7 +620,7 @@ jobs:
 
     steps:
       - name: Checkout Commit
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install Rust
         uses: hecrj/setup-rust-action@v1
@@ -683,7 +684,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Commit
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install Rust
         uses: hecrj/setup-rust-action@v1
@@ -699,7 +700,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Commit
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install Rust
         uses: hecrj/setup-rust-action@v1
@@ -714,7 +715,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Commit
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install Rust
         uses: hecrj/setup-rust-action@v1
@@ -731,7 +732,7 @@ jobs:
       CRITERION_TOKEN: ${{ secrets.CRITERION_TOKEN }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install Rust
         uses: hecrj/setup-rust-action@v1
