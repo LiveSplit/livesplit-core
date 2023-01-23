@@ -66,6 +66,7 @@ impl ParsedRun<'_> {
     }
 }
 
+#[inline(always)]
 const fn parsed(run: Run, kind: TimerKind<'_>) -> ParsedRun<'_> {
     ParsedRun { run, kind }
 }

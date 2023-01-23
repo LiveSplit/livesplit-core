@@ -114,8 +114,9 @@ impl SkillCurve {
             let diff = max - min;
 
             if diff != 0.0 {
+                let r_diff = diff.recip();
                 for (weight, _) in weighted_segment_times.iter_mut() {
-                    *weight = (*weight - min) / diff;
+                    *weight = (*weight - min) * r_diff;
                 }
             }
         }

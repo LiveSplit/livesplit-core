@@ -27,11 +27,14 @@ pub struct SegmentTime {
 }
 
 impl SegmentTime {
+    /// The default accuracy that the segment times are formatted with.
+    pub const DEFAULT_ACCURACY: Accuracy = Accuracy::Hundredths;
+
     /// Creates a new Segment Time Formatter that uses hundredths for showing
     /// the fractional part.
     pub const fn new() -> Self {
         SegmentTime {
-            accuracy: Accuracy::Hundredths,
+            accuracy: Self::DEFAULT_ACCURACY,
         }
     }
 

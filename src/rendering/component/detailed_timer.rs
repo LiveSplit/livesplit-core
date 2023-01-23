@@ -47,8 +47,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
 ) {
     context.render_background([width, height], &component.background);
 
-    let text_color = solid(&layout_state.text_color);
-
     let vertical_padding = vertical_padding(height);
     let icon_size = height - 2.0 * vertical_padding;
 
@@ -63,7 +61,8 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         PADDING
     };
 
-    let top_height = 0.55 * height;
+    let total_height = component.timer.height + component.segment_timer.height;
+    let top_height = (component.timer.height as f32 / total_height as f32) * height;
     let bottom_height = height - top_height;
 
     let timer_end = timer::render(
@@ -74,12 +73,18 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     );
 
     if let Some(segment_name) = &component.segment_name {
+        let segment_name_color = solid(
+            &component
+                .segment_name_color
+                .unwrap_or(layout_state.text_color),
+        );
+
         context.render_text_ellipsis(
             segment_name,
             &mut cache.segment_name,
             [left_side, 0.6 * top_height],
             0.5 * top_height,
-            text_color,
+            segment_name_color,
             timer_end,
         );
     }
@@ -100,6 +105,12 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     let comparison2_y = 0.8 * bottom_height + top_height;
     let mut time_width = 0.0;
 
+    let comparison_names_color = solid(
+        &component
+            .comparison_names_color
+            .unwrap_or(layout_state.text_color),
+    );
+
     let comparison1_y = if let Some(comparison) = &component.comparison2 {
         name_end = context
             .render_text_ellipsis(
@@ -107,7 +118,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                 &mut cache.comparison2_name,
                 [left_side, comparison2_y],
                 comparison_text_scale,
-                text_color,
+                comparison_names_color,
                 segment_timer_end,
             )
             .max(name_end);
@@ -132,7 +143,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                 &mut cache.comparison1_name,
                 [left_side, comparison1_y],
                 comparison_text_scale,
-                text_color,
+                comparison_names_color,
                 segment_timer_end,
             )
             .max(name_end);
@@ -148,6 +159,11 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
 
     let time_x = name_end + PADDING + time_width;
 
+    let comparison_times_color = solid(
+        &component
+            .comparison_times_color
+            .unwrap_or(layout_state.text_color),
+    );
     if let Some(comparison) = &component.comparison2 {
         context.render_numbers(
             &comparison.time,
@@ -155,7 +171,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
             Layer::Bottom,
             [time_x, comparison2_y],
             comparison_text_scale,
-            text_color,
+            comparison_times_color,
         );
     }
     if let Some(comparison) = &component.comparison1 {
@@ -165,7 +181,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
             Layer::Bottom,
             [time_x, comparison1_y],
             comparison_text_scale,
-            text_color,
+            comparison_times_color,
         );
     }
 }

@@ -530,6 +530,21 @@ export interface DetailedTimerComponentStateJson {
      * that there is no icon.
      */
     icon_change: string | null,
+    /**
+     * The color of the segment name if it's shown. If `null` is specified, the
+     * color is taken from the layout.
+     */
+    segment_name_color: Color | null,
+    /**
+     * The color of the comparison names if they are shown. If `null` is
+     * specified, the color is taken from the layout.
+     */
+    comparison_names_color: Color | null,
+    /**
+     * The color of the comparison times if they are shown. If `null` is
+     * specified, the color is taken from the layout.
+     */
+    comparison_times_color: Color | null,
 }
 
 /** The state object describing a comparison to visualize. */

@@ -46,6 +46,9 @@ pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()
                         settings.segment_timer.accuracy = a;
                     })
                 }
+                "SegmentTimesAccuracy" => {
+                    accuracy(reader, |v| settings.comparison_times_accuracy = v)
+                }
                 "TimerAccuracy" => {
                     // Version < 1.5
                     settings.timer.digits_format = DigitsFormat::SingleDigitSeconds;
@@ -57,8 +60,16 @@ pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()
                     accuracy(reader, |v| settings.segment_timer.accuracy = v)
                 }
                 "TimerColor" => color(reader, |v| settings.timer.color_override = Some(v)),
+                "SegmentTimerColor" => {
+                    color(reader, |v| settings.segment_timer.color_override = Some(v))
+                }
+                "SegmentLabelsColor" => {
+                    color(reader, |v| settings.comparison_names_color = Some(v))
+                }
+                "SegmentTimesColor" => color(reader, |v| settings.comparison_times_color = Some(v)),
                 "DisplayIcon" => parse_bool(reader, |b| settings.display_icon = b),
                 "ShowSplitName" => parse_bool(reader, |b| settings.show_segment_name = b),
+                "SplitNameColor" => color(reader, |v| settings.segment_name_color = Some(v)),
                 "Comparison" => comparison_override(reader, |v| settings.comparison1 = v),
                 "Comparison2" => comparison_override(reader, |v| settings.comparison2 = v),
                 "HideComparison" => parse_bool(reader, |b| settings.hide_second_comparison = b),
@@ -68,15 +79,10 @@ pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()
                 _ => {
                     // FIXME:
                     // Width
-                    // SegmentTimesAccuracy
-                    // SegmentTimerColor
-                    // SegmentLabelsColor
-                    // SegmentTimesColor
                     // SegmentLabelsFont
                     // SegmentTimesFont
                     // SplitNameFont
                     // IconSize
-                    // SplitNameColor
                     // DecimalsSize
                     // SegmentTimerDecimalsSize
                     end_tag(reader)
@@ -88,12 +94,11 @@ pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()
     })?;
 
     if !timer_override_color {
-        // FIXME: This isn't actually exposed in the Detailed Timer's settings.
         settings.timer.color_override = None;
     }
     settings.background = background_builder.build();
 
-    settings.segment_timer.height = (total_height as f32 * segment_timer_ratio) as u32;
+    settings.segment_timer.height = (total_height as f32 * segment_timer_ratio + 0.5) as u32;
     settings.timer.height = total_height - settings.segment_timer.height;
 
     component.set_settings(settings);
