@@ -99,7 +99,9 @@ pub fn width(component: &ComponentState) -> f32 {
 pub fn height(component: &ComponentState) -> f32 {
     match component {
         ComponentState::BlankSpace(state) => state.size as f32 * PSEUDO_PIXELS,
-        ComponentState::DetailedTimer(_) => 2.5,
+        ComponentState::DetailedTimer(state) => {
+            (state.timer.height + state.segment_timer.height) as f32 * PSEUDO_PIXELS
+        }
         ComponentState::Graph(state) => state.height as f32 * PSEUDO_PIXELS,
         ComponentState::KeyValue(state) => {
             if state.display_two_rows {

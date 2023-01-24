@@ -1,7 +1,7 @@
 use alloc::borrow::Cow;
 use bytemuck::{Pod, Zeroable};
 use image::{
-    codecs::{farbfeld, hdr, ico, jpeg, pnm, tga, tiff, webp},
+    codecs::{bmp, farbfeld, hdr, ico, jpeg, pnm, tga, tiff, webp},
     guess_format, load_from_memory_with_format, ImageDecoder, ImageEncoder, ImageFormat,
 };
 use std::io::Cursor;
@@ -51,9 +51,7 @@ fn shrink_inner(data: &[u8], max_dim: u32) -> Option<Cow<'_, [u8]>> {
         ImageFormat::Pnm => pnm::PnmDecoder::new(data).ok()?.dimensions(),
         ImageFormat::Tiff => tiff::TiffDecoder::new(Cursor::new(data)).ok()?.dimensions(),
         ImageFormat::Tga => tga::TgaDecoder::new(Cursor::new(data)).ok()?.dimensions(),
-        // We always want to re-encode BMP images so we might as well skip the
-        // dimension checking.
-        ImageFormat::Bmp => (0, 0),
+        ImageFormat::Bmp => bmp::BmpDecoder::new(Cursor::new(data)).ok()?.dimensions(),
         ImageFormat::Ico => ico::IcoDecoder::new(Cursor::new(data)).ok()?.dimensions(),
         ImageFormat::Hdr => hdr::HdrAdapter::new(data).ok()?.dimensions(),
         ImageFormat::Farbfeld => farbfeld::FarbfeldDecoder::new(data).ok()?.dimensions(),

@@ -106,9 +106,9 @@ fn all_components() {
 
     let state = layout.state(&timer.snapshot());
 
-    check_dims(&state, [300, 800], "4en3ocnJJ/E=", "all_components");
+    check_dims(&state, [300, 800], "4WH3ocnJI/E=", "all_components");
 
-    check_dims(&state, [150, 800], "SXfHSWVpRlc=", "all_components_thin");
+    check_dims(&state, [150, 800], "SXPHSWVpRlc=", "all_components_thin");
 }
 
 #[test]
@@ -138,7 +138,7 @@ fn dark_layout() {
 
     check(
         &layout.state(&timer.snapshot()),
-        "T8QIQABIw4c=",
+        "b8AIQABIwYM=",
         "dark_layout",
     );
 }

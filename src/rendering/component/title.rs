@@ -102,7 +102,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         );
         (TEXT_ALIGN_TOP, width - PADDING)
     } else {
-        (height / 2.0 + TEXT_ALIGN_CENTER, line2_end_x)
+        (0.5 * height + TEXT_ALIGN_CENTER, line2_end_x)
     };
 
     context.render_abbreviated_text_align(

@@ -57,6 +57,17 @@ pub struct Settings {
     pub display_icon: bool,
     /// Specifies whether the segment name should be shown.
     pub show_segment_name: bool,
+    /// The color of the segment name if it's shown. If [`None`] is specified,
+    /// the color is taken from the layout.
+    pub segment_name_color: Option<Color>,
+    /// The color of the comparison names if they are shown. If [`None`] is
+    /// specified, the color is taken from the layout.
+    pub comparison_names_color: Option<Color>,
+    /// The color of the comparison times if they are shown. If [`None`] is
+    /// specified, the color is taken from the layout.
+    pub comparison_times_color: Option<Color>,
+    /// The accuracy of the comparison times.
+    pub comparison_times_accuracy: Accuracy,
 }
 
 /// The state object describes the information to visualize for this component.
@@ -72,7 +83,7 @@ pub struct State {
     pub comparison1: Option<ComparisonState>,
     /// The second comparison to visualize.
     pub comparison2: Option<ComparisonState>,
-    /// The name of the segment. This may be `None` if it's not supposed to be
+    /// The name of the segment. This may be [`None`] if it's not supposed to be
     /// visualized.
     pub segment_name: Option<String>,
     /// The segment's icon encoded as the raw file bytes. This value is only
@@ -80,6 +91,15 @@ pub struct State {
     /// this value, remount the component. The buffer itself may be empty. This
     /// indicates that there is no icon.
     pub icon_change: Option<ImageData>,
+    /// The color of the segment name if it's shown. If [`None`] is specified,
+    /// the color is taken from the layout.
+    pub segment_name_color: Option<Color>,
+    /// The color of the comparison names if they are shown. If [`None`] is
+    /// specified, the color is taken from the layout.
+    pub comparison_names_color: Option<Color>,
+    /// The color of the comparison times if they are shown. If [`None`] is
+    /// specified, the color is taken from the layout.
+    pub comparison_times_color: Option<Color>,
 }
 
 /// The state object describing a comparison to visualize.
@@ -94,6 +114,7 @@ pub struct ComparisonState {
 fn update_comparison(
     state: &mut Option<ComparisonState>,
     new_state: Option<(&str, Option<TimeSpan>)>,
+    accuracy: Accuracy,
 ) {
     if let Some((name, time)) = new_state {
         let state = state.get_or_insert_with(|| ComparisonState {
@@ -105,11 +126,17 @@ fn update_comparison(
         state.name.push_str(name);
 
         state.time.clear();
-        let _ = write!(state.time, "{}", SegmentTime::new().format(time));
+        let _ = write!(
+            state.time,
+            "{}",
+            SegmentTime::with_accuracy(accuracy).format(time)
+        );
     } else {
         *state = None;
     }
 }
+const SEGMENT_TIMER_DEFAULT_COLOR: Color =
+    Color::rgba(170.0 / 255.0, 170.0 / 255.0, 170.0 / 255.0, 1.0);
 
 impl Default for Settings {
     fn default() -> Self {
@@ -125,16 +152,15 @@ impl Default for Settings {
             segment_timer: timer::Settings {
                 height: 25,
                 is_segment_timer: true,
-                color_override: Some(Color::rgba(
-                    170.0 / 255.0,
-                    170.0 / 255.0,
-                    170.0 / 255.0,
-                    1.0,
-                )),
+                color_override: Some(SEGMENT_TIMER_DEFAULT_COLOR),
                 ..Default::default()
             },
             display_icon: false,
             show_segment_name: false,
+            segment_name_color: None,
+            comparison_names_color: None,
+            comparison_times_color: None,
+            comparison_times_accuracy: SegmentTime::DEFAULT_ACCURACY,
         }
     }
 }
@@ -282,8 +308,16 @@ impl Component {
             .background
             .gradient(state.timer.semantic_color.visualize(layout_settings));
 
-        update_comparison(&mut state.comparison1, comparison1);
-        update_comparison(&mut state.comparison2, comparison2);
+        update_comparison(
+            &mut state.comparison1,
+            comparison1,
+            self.settings.comparison_times_accuracy,
+        );
+        update_comparison(
+            &mut state.comparison2,
+            comparison2,
+            self.settings.comparison_times_accuracy,
+        );
 
         match current_split.filter(|_| self.settings.show_segment_name) {
             Some(segment) => {
@@ -295,6 +329,9 @@ impl Component {
         }
 
         state.icon_change = icon_change;
+        state.segment_name_color = self.settings.segment_name_color;
+        state.comparison_names_color = self.settings.comparison_names_color;
+        state.comparison_times_color = self.settings.comparison_times_color;
     }
 
     /// Calculates the component's state based on the timer and layout settings
@@ -348,10 +385,30 @@ impl Component {
                 u64::from(self.settings.segment_timer.height).into(),
             ),
             Field::new(
+                "Timer Color".into(),
+                self.settings.timer.color_override.into(),
+            ),
+            Field::new(
+                "Show Timer Gradient".into(),
+                self.settings.timer.show_gradient.into(),
+            ),
+            Field::new(
                 "Timer Digits Format".into(),
                 self.settings.timer.digits_format.into(),
             ),
             Field::new("Timer Accuracy".into(), self.settings.timer.accuracy.into()),
+            Field::new(
+                "Segment Timer Color".into(),
+                self.settings
+                    .segment_timer
+                    .color_override
+                    .unwrap_or(SEGMENT_TIMER_DEFAULT_COLOR)
+                    .into(),
+            ),
+            Field::new(
+                "Show Segment Timer Gradient".into(),
+                self.settings.segment_timer.show_gradient.into(),
+            ),
             Field::new(
                 "Segment Timer Digits Format".into(),
                 self.settings.segment_timer.digits_format.into(),
@@ -361,8 +418,24 @@ impl Component {
                 self.settings.segment_timer.accuracy.into(),
             ),
             Field::new(
+                "Comparison Names Color".into(),
+                self.settings.comparison_names_color.into(),
+            ),
+            Field::new(
+                "Comparison Times Color".into(),
+                self.settings.comparison_times_color.into(),
+            ),
+            Field::new(
+                "Comparison Times Accuracy".into(),
+                self.settings.comparison_times_accuracy.into(),
+            ),
+            Field::new(
                 "Show Segment Name".into(),
                 self.settings.show_segment_name.into(),
+            ),
+            Field::new(
+                "Segment Name Color".into(),
+                self.settings.segment_name_color.into(),
             ),
             Field::new("Display Icon".into(), self.settings.display_icon.into()),
         ])
@@ -397,27 +470,51 @@ impl Component {
                 self.segment_timer.settings_mut().height = value;
             }
             7 => {
+                let value: Option<Color> = value.into();
+                self.settings.timer.color_override = value;
+                self.timer.settings_mut().color_override = value;
+            }
+            8 => {
+                let value: bool = value.into();
+                self.settings.timer.show_gradient = value;
+                self.timer.settings_mut().show_gradient = value;
+            }
+            9 => {
                 let value: DigitsFormat = value.into();
                 self.settings.timer.digits_format = value;
                 self.timer.settings_mut().digits_format = value;
             }
-            8 => {
+            10 => {
                 let value: Accuracy = value.into();
                 self.settings.timer.accuracy = value;
                 self.timer.settings_mut().accuracy = value;
             }
-            9 => {
+            11 => {
+                let value: Color = value.into();
+                self.settings.segment_timer.color_override = Some(value);
+                self.segment_timer.settings_mut().color_override = Some(value);
+            }
+            12 => {
+                let value: bool = value.into();
+                self.settings.segment_timer.show_gradient = value;
+                self.segment_timer.settings_mut().show_gradient = value;
+            }
+            13 => {
                 let value: DigitsFormat = value.into();
                 self.settings.segment_timer.digits_format = value;
                 self.segment_timer.settings_mut().digits_format = value;
             }
-            10 => {
+            14 => {
                 let value: Accuracy = value.into();
                 self.settings.segment_timer.accuracy = value;
                 self.segment_timer.settings_mut().accuracy = value;
             }
-            11 => self.settings.show_segment_name = value.into(),
-            12 => self.settings.display_icon = value.into(),
+            15 => self.settings.comparison_names_color = value.into(),
+            16 => self.settings.comparison_times_color = value.into(),
+            17 => self.settings.comparison_times_accuracy = value.into(),
+            18 => self.settings.show_segment_name = value.into(),
+            19 => self.settings.segment_name_color = value.into(),
+            20 => self.settings.display_icon = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }
