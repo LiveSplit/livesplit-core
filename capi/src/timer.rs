@@ -126,6 +126,15 @@ pub extern "C" fn Timer_undo_split(this: &mut Timer) {
     this.undo_split();
 }
 
+/// Checks whether the current attempt has new best segment times in any of the
+/// segments (for both TimingMethods) or a new Personal Best (for the current
+/// TimingMethod). This can be used to ask the user whether to update the splits
+/// when resetting.
+#[no_mangle]
+pub extern "C" fn Timer_current_attempt_has_new_best_times(this: &Timer) -> bool {
+    this.current_attempt_has_new_best_times()
+}
+
 /// Resets the current attempt if there is one in progress. If the splits
 /// are to be updated, all the information of the current attempt is stored
 /// in the Run's history. Otherwise the current attempt's information is
@@ -309,7 +318,12 @@ pub extern "C" fn Timer_mark_as_unmodified(this: &mut Timer) {
 /// is being written to stdout.
 #[no_mangle]
 pub extern "C" fn Timer_print_debug(this: &Timer) {
-    println!("{:#?}", this);
+    // WebAssembly doesn't have stdout unless we use WASI or Emscripten.
+    #[cfg(not(all(
+        target_family = "wasm",
+        not(any(target_os = "wasi", target_os = "emscripten"))
+    )))]
+    println!("{this:#?}");
 }
 
 /// Returns the current time of the Timer. The Game Time is <NULL> if the Game
