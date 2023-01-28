@@ -104,8 +104,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         write!(
             writer,
             "
-    public init{}(",
-            return_suffix
+    public init{return_suffix}("
         )?;
     } else {
         write!(
@@ -143,9 +142,8 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
     } else if has_return_type {
         write!(
             writer,
-            ") -> {}{} {{
-        ",
-            return_type, return_suffix
+            ") -> {return_type}{return_suffix} {{
+        "
         )?;
     } else {
         write!(
@@ -242,8 +240,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
             write!(
                 writer,
                 "
-        return {}(ptr: result)",
-                return_type,
+        return {return_type}(ptr: result)",
             )?;
         } else {
             write!(
@@ -265,20 +262,19 @@ pub fn write<W: Write>(mut writer: W, classes: &BTreeMap<String, Class>) -> Resu
     writeln!(writer, "import CLiveSplitCore")?;
 
     for (class_name, class) in classes {
-        let class_name_ref = format!("{}Ref", class_name);
-        let class_name_ref_mut = format!("{}RefMut", class_name);
+        let class_name_ref = format!("{class_name}Ref");
+        let class_name_ref_mut = format!("{class_name}RefMut");
 
         let comment = write_class_comments(&mut writer, &class.comments)?;
 
         write!(
             writer,
             "
-public class {class} {{
+public class {class_name_ref} {{
     var ptr: UnsafeMutableRawPointer?
     init(ptr: UnsafeMutableRawPointer?) {{
         self.ptr = ptr
-    }}",
-            class = class_name_ref
+    }}"
         )?;
 
         for function in &class.shared_fns {
@@ -307,10 +303,7 @@ public class {class} {{
             "
 }}
 {comment}
-public class {class}: {base_class} {{",
-            comment = comment,
-            class = class_name_ref_mut,
-            base_class = class_name_ref
+public class {class_name_ref_mut}: {class_name_ref} {{"
         )?;
 
         for function in &class.mut_fns {
@@ -322,12 +315,9 @@ public class {class}: {base_class} {{",
             "
 }}
 {comment}
-public class {class} : {base_class} {{
+public class {class_name} : {class_name_ref_mut} {{
     private func drop() {{
-        if self.ptr != nil {{",
-            comment = comment,
-            class = class_name,
-            base_class = class_name_ref_mut
+        if self.ptr != nil {{"
         )?;
 
         if let Some(function) = class.own_fns.iter().find(|f| f.method == "drop") {

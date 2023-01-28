@@ -8,8 +8,8 @@ fn get_hl_type(ty: &Type) -> String {
     if ty.is_custom {
         let name = ty.name.to_string();
         match ty.kind {
-            TypeKind::Ref => format!("{}Ref", name),
-            TypeKind::RefMut => format!("{}RefMut", name),
+            TypeKind::Ref => format!("{name}Ref"),
+            TypeKind::RefMut => format!("{name}RefMut"),
             TypeKind::Value => name,
         }
     } else {
@@ -71,7 +71,7 @@ fn ptr_of(var: &str) -> String {
     if var == "this" {
         "@handle.ptr".to_string()
     } else {
-        format!("{}.handle.ptr", var)
+        format!("{var}.handle.ptr")
     }
 }
 
@@ -156,7 +156,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         if i != 0 {
             write!(writer, ", ")?;
         }
-        write!(writer, "{}", name)?;
+        write!(writer, "{name}")?;
     }
 
     write!(
@@ -181,7 +181,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
 
     if has_return_type {
         if function.output.is_custom {
-            write!(writer, r#"result = {}.new("#, return_type)?;
+            write!(writer, r#"result = {return_type}.new("#)?;
         } else {
             write!(writer, "result = ")?;
         }
@@ -199,7 +199,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
             if name == "this" {
                 "@handle.ptr".to_string()
             } else if typ.is_custom {
-                format!("{}.handle.ptr", name)
+                format!("{name}.handle.ptr")
             } else {
                 name.to_string()
             }
@@ -305,17 +305,16 @@ module LiveSplitCore
 
     for (class_name, class) in classes {
         let class_name = class_name.to_string();
-        let class_name_ref = format!("{}Ref", class_name);
-        let class_name_ref_mut = format!("{}RefMut", class_name);
+        let class_name_ref = format!("{class_name}Ref");
+        let class_name_ref_mut = format!("{class_name}RefMut");
 
         write_class_comments(&mut writer, &class.comments)?;
 
         write!(
             writer,
             r#"
-    class {class}
-        attr_accessor :handle"#,
-            class = class_name_ref
+    class {class_name_ref}
+        attr_accessor :handle"#
         )?;
 
         for function in &class.shared_fns {
@@ -354,9 +353,7 @@ module LiveSplitCore
         write!(
             writer,
             r#"
-    class {class} < {base_class}"#,
-            class = class_name_ref_mut,
-            base_class = class_name_ref
+    class {class_name_ref_mut} < {class_name_ref}"#
         )?;
 
         for function in &class.mut_fns {
@@ -377,12 +374,10 @@ module LiveSplitCore
         write!(
             writer,
             r#"
-    class {class} < {base_class}
+    class {class_name} < {class_name_ref_mut}
         def self.finalize(handle)
             proc {{
-                if handle.ptr != nil"#,
-            class = class_name,
-            base_class = class_name_ref_mut
+                if handle.ptr != nil"#
         )?;
 
         if let Some(function) = class.own_fns.iter().find(|f| f.method == "drop") {
@@ -402,14 +397,13 @@ module LiveSplitCore
             }}
         end
         def dispose
-            finalizer = {class}.finalize @handle
+            finalizer = {class_name}.finalize @handle
             finalizer.call
         end
         def with
             yield self
             self.dispose
-        end"#,
-            class = class_name
+        end"#
         )?;
 
         for function in class.static_fns.iter().chain(class.own_fns.iter()) {

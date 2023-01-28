@@ -1,9 +1,10 @@
-use crate::jni_cpp;
-use crate::{Class, Result};
-use std::collections::BTreeMap;
-use std::fs::{create_dir_all, File};
-use std::io::BufWriter;
-use std::path::Path;
+use crate::{jni_cpp, Class, Result};
+use std::{
+    collections::BTreeMap,
+    fs::{create_dir_all, File},
+    io::BufWriter,
+    path::Path,
+};
 
 mod jni;
 

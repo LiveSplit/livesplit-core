@@ -124,8 +124,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
         write!(
             writer,
             r#"
-        public {}("#,
-            class_name
+        public {class_name}("#
         )?;
     } else {
         write!(
@@ -189,7 +188,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
         if is_constructor {
             write!(writer, "this.ptr = ")?;
         } else if function.output.is_custom {
-            write!(writer, r#"var result = new {}("#, return_type)?;
+            write!(writer, r#"var result = new {return_type}("#)?;
         } else {
             write!(writer, "var result = ")?;
             if return_type_ll == "UIntPtr" {
@@ -288,18 +287,17 @@ namespace LiveSplitCore
     )?;
 
     for (class_name, class) in classes {
-        let class_name_ref = format!("{}Ref", class_name);
-        let class_name_ref_mut = format!("{}RefMut", class_name);
+        let class_name_ref = format!("{class_name}Ref");
+        let class_name_ref_mut = format!("{class_name}RefMut");
 
         write_class_comments(&mut writer, &class.comments)?;
 
         write!(
             writer,
             r#"
-    public class {class}
+    public class {class_name_ref}
     {{
-        internal IntPtr ptr;"#,
-            class = class_name_ref
+        internal IntPtr ptr;"#
         )?;
 
         for function in &class.shared_fns {
@@ -331,13 +329,12 @@ namespace LiveSplitCore
         write!(
             writer,
             r#"
-        internal {base_class}(IntPtr ptr)
+        internal {class_name_ref}(IntPtr ptr)
         {{
             this.ptr = ptr;
         }}
     }}
-"#,
-            base_class = class_name_ref
+"#
         )?;
 
         write_class_comments(&mut writer, &class.comments)?;
@@ -345,10 +342,8 @@ namespace LiveSplitCore
         write!(
             writer,
             r#"
-    public class {class} : {base_class}
-    {{"#,
-            class = class_name_ref_mut,
-            base_class = class_name_ref
+    public class {class_name_ref_mut} : {class_name_ref}
+    {{"#
         )?;
 
         for function in &class.mut_fns {
@@ -358,10 +353,9 @@ namespace LiveSplitCore
         write!(
             writer,
             r#"
-        internal {class}(IntPtr ptr) : base(ptr) {{ }}
+        internal {class_name_ref_mut}(IntPtr ptr) : base(ptr) {{ }}
     }}
-"#,
-            class = class_name_ref_mut
+"#
         )?;
 
         write_class_comments(&mut writer, &class.comments)?;
@@ -369,14 +363,12 @@ namespace LiveSplitCore
         write!(
             writer,
             r#"
-    public class {class} : {base_class}, IDisposable
+    public class {class_name} : {class_name_ref_mut}, IDisposable
     {{
         private void Drop()
         {{
             if (ptr != IntPtr.Zero)
-            {{"#,
-            class = class_name,
-            base_class = class_name_ref_mut
+            {{"#
         )?;
 
         if let Some(function) = class.own_fns.iter().find(|f| f.method == "drop") {
@@ -394,7 +386,7 @@ namespace LiveSplitCore
                 ptr = IntPtr.Zero;
             }}
         }}
-        ~{class}()
+        ~{class_name}()
         {{
             Drop();
         }}
@@ -402,8 +394,7 @@ namespace LiveSplitCore
         {{
             Drop();
             GC.SuppressFinalize(this);
-        }}"#,
-            class = class_name
+        }}"#
         )?;
 
         for function in class.static_fns.iter().chain(class.own_fns.iter()) {
@@ -438,9 +429,8 @@ namespace LiveSplitCore
         writeln!(
             writer,
             r#"
-        internal {class}(IntPtr ptr) : base(ptr) {{ }}
-    }}"#,
-            class = class_name
+        internal {class_name}(IntPtr ptr) : base(ptr) {{ }}
+    }}"#
         )?;
     }
 

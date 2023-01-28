@@ -100,8 +100,7 @@ extern "C" JNIEXPORT {} Java_livesplitcore_LiveSplitCoreNative_{}_1{}(JNIEnv* jn
             write!(
                 writer,
                 r#"auto cstr_{name} = jni_env->GetStringUTFChars({name}, nullptr);
-    "#,
-                name = name
+    "#
             )?;
         }
     }
@@ -110,7 +109,7 @@ extern "C" JNIEXPORT {} Java_livesplitcore_LiveSplitCoreNative_{}_1{}(JNIEnv* jn
         if return_type == "jstring" {
             write!(writer, r#"auto result = jni_env->NewStringUTF("#)?;
         } else {
-            write!(writer, r#"auto result = ({})("#, return_type)?;
+            write!(writer, r#"auto result = ({return_type})("#)?;
         }
     }
 
@@ -126,11 +125,11 @@ extern "C" JNIEXPORT {} Java_livesplitcore_LiveSplitCoreNative_{}_1{}(JNIEnv* jn
             writer,
             "{}",
             if name == "this" {
-                format!("({})self", ty_name)
+                format!("({ty_name})self")
             } else if jni_type == "jstring" {
-                format!("cstr_{}", name)
+                format!("cstr_{name}")
             } else {
-                format!("({}){}", ty_name, name)
+                format!("({ty_name}){name}")
             }
         )?;
     }
@@ -149,8 +148,7 @@ extern "C" JNIEXPORT {} Java_livesplitcore_LiveSplitCoreNative_{}_1{}(JNIEnv* jn
             write!(
                 writer,
                 r#"
-    jni_env->ReleaseStringUTFChars({name}, cstr_{name});"#,
-                name = name
+    jni_env->ReleaseStringUTFChars({name}, cstr_{name});"#
             )?;
         }
     }

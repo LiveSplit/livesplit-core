@@ -5,8 +5,7 @@
 
 use super::output_vec;
 use livesplit_core::run::editor::cleaning::PotentialCleanUp;
-use std::io::Write;
-use std::os::raw::c_char;
+use std::{io::Write, os::raw::c_char};
 
 /// type
 pub type OwnedPotentialCleanUp = Box<PotentialCleanUp<'static>>;
@@ -23,5 +22,5 @@ pub extern "C" fn PotentialCleanUp_drop(this: OwnedPotentialCleanUp) {
 /// to a Run.
 #[no_mangle]
 pub extern "C" fn PotentialCleanUp_message(this: &PotentialCleanUp<'static>) -> *const c_char {
-    output_vec(|s| write!(s, "{}", this).unwrap())
+    output_vec(|s| write!(s, "{this}").unwrap())
 }

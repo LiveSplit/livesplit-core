@@ -142,7 +142,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
 
     if has_return_type {
         if function.output.is_custom {
-            write!(writer, r#"result = {}("#, return_type)?;
+            write!(writer, r#"result = {return_type}("#)?;
         } else {
             write!(writer, "result = ")?;
         }
@@ -160,9 +160,9 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
             if name == "this" {
                 "self.ptr".to_string()
             } else if typ.is_custom {
-                format!("{}.ptr", name)
+                format!("{name}.ptr")
             } else if typ.name == "c_char" {
-                format!("{}.encode()", name)
+                format!("{name}.encode()")
             } else {
                 name.to_string()
             }
@@ -259,14 +259,13 @@ livesplit_core_native.{}.restype = {}"#,
     writeln!(writer)?;
 
     for (class_name, class) in classes {
-        let class_name_ref = format!("{}Ref", class_name);
-        let class_name_ref_mut = format!("{}RefMut", class_name);
+        let class_name_ref = format!("{class_name}Ref");
+        let class_name_ref_mut = format!("{class_name}RefMut");
 
         write!(
             writer,
             r#"
-class {class}:"#,
-            class = class_name_ref
+class {class_name_ref}:"#
         )?;
 
         write_class_comments(&mut writer, &class.comments)?;
@@ -281,9 +280,7 @@ class {class}:"#,
     def __init__(self, ptr):
         self.ptr = ptr
 
-class {class}({base_class}):"#,
-            class = class_name_ref_mut,
-            base_class = class_name_ref
+class {class_name_ref_mut}({class_name_ref}):"#
         )?;
 
         write_class_comments(&mut writer, &class.comments)?;
@@ -298,9 +295,7 @@ class {class}({base_class}):"#,
     def __init__(self, ptr):
         self.ptr = ptr
 
-class {class}({base_class}):"#,
-            class = class_name,
-            base_class = class_name_ref_mut
+class {class_name}({class_name_ref_mut}):"#
         )?;
 
         write_class_comments(&mut writer, &class.comments)?;
