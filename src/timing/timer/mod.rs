@@ -1,6 +1,7 @@
 use crate::{
-    comparison::personal_best, platform::prelude::*, util::PopulateString, AtomicDateTime, Run,
-    Segment, Time, TimeSpan, TimeStamp, TimerPhase, TimerPhase::*, TimingMethod,
+    analysis::check_best_segment, comparison::personal_best, platform::prelude::*,
+    util::PopulateString, AtomicDateTime, Run, Segment, Time, TimeSpan, TimeStamp, TimerPhase,
+    TimerPhase::*, TimingMethod,
 };
 use core::{mem, ops::Deref};
 
@@ -368,7 +369,7 @@ impl Timer {
 
     /// Removes the split time from the last split if an attempt is in progress
     /// and there is a previous split. The Timer Phase also switches to
-    /// `Running` if it previously was `Ended`.
+    /// [`Running`] if it previously was [`Ended`].
     pub fn undo_split(&mut self) {
         if self.phase != NotRunning && self.current_split_index > Some(0) {
             if self.phase == Ended {
@@ -382,6 +383,52 @@ impl Timer {
 
             // FIXME: OnUndoSplit
         }
+    }
+
+    /// Checks whether the current attempt has a new Personal Best for the
+    /// [`TimingMethod`] specified.
+    pub fn current_attempt_has_new_personal_best(&self, timing_method: TimingMethod) -> bool {
+        if self.phase != Ended {
+            return false;
+        }
+
+        let last_segment = self.run.segments().last().unwrap();
+
+        if let Some(final_time) = last_segment.split_time()[timing_method] {
+            if last_segment.personal_best_split_time()[timing_method]
+                .map_or(true, |pb| final_time < pb)
+            {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    /// Checks whether the current attempt has new best segment times in any of
+    /// the segments for the [`TimingMethod`] specified.
+    pub fn current_attempt_has_new_best_segments(&self, timing_method: TimingMethod) -> bool {
+        if self.phase == NotRunning {
+            return false;
+        }
+
+        for segment_index in 0..self.run.len() {
+            if check_best_segment(self, segment_index, timing_method) {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    /// Checks whether the current attempt has new best segment times in any of
+    /// the segments (for both [`TimingMethods`](TimingMethod)) or a new
+    /// Personal Best (for the current [`TimingMethod`]). This can be used to
+    /// ask the user whether to update the splits when resetting.
+    pub fn current_attempt_has_new_best_times(&self) -> bool {
+        self.current_attempt_has_new_best_segments(TimingMethod::RealTime)
+            || self.current_attempt_has_new_best_segments(TimingMethod::GameTime)
+            || self.current_attempt_has_new_personal_best(self.current_timing_method)
     }
 
     /// Resets the current attempt if there is one in progress. If the splits

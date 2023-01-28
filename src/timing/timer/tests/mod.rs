@@ -1,6 +1,8 @@
 use crate::{
     run::Editor,
-    util::tests_helper::{run_with_splits, run_with_splits_opt, start_run},
+    util::tests_helper::{
+        make_progress_run_with_splits_opt, run_with_splits, run_with_splits_opt, start_run,
+    },
     Run, Segment, TimeSpan, Timer, TimerPhase, TimingMethod,
 };
 
@@ -618,4 +620,42 @@ fn reset_and_set_attempt_as_pb() {
     let attempt = attempt_history.next().unwrap();
     assert_eq!(attempt.time().game_time, None);
     assert!(attempt.ended().unwrap().time >= attempt.started().unwrap().time);
+}
+
+#[test]
+fn identifies_new_best_times_in_current_attempt() {
+    let mut timer = timer();
+    run_with_splits(&mut timer, &[10.0, 11.0, 12.0]);
+
+    // Always false between attempts
+    assert!(!timer.current_attempt_has_new_best_times());
+
+    // New best segments
+    start_run(&mut timer);
+    assert!(!timer.current_attempt_has_new_best_times());
+    make_progress_run_with_splits_opt(&mut timer, &[Some(5.0), Some(10.0), Some(13.0)]);
+    assert!(!timer.current_attempt_has_new_personal_best(TimingMethod::GameTime));
+    assert!(timer.current_attempt_has_new_best_segments(TimingMethod::GameTime));
+    timer.reset(true);
+
+    // Always false between attempts
+    assert!(!timer.current_attempt_has_new_best_times());
+
+    // New personal best
+    start_run(&mut timer);
+    assert!(!timer.current_attempt_has_new_best_times());
+    make_progress_run_with_splits_opt(&mut timer, &[Some(7.0), Some(9.0), Some(11.0)]);
+    assert!(timer.current_attempt_has_new_personal_best(TimingMethod::GameTime));
+    assert!(!timer.current_attempt_has_new_best_segments(TimingMethod::GameTime));
+    timer.reset(true);
+
+    // Always false between attempts
+    assert!(!timer.current_attempt_has_new_best_times());
+
+    // No new best times
+    start_run(&mut timer);
+    assert!(!timer.current_attempt_has_new_best_times());
+    make_progress_run_with_splits_opt(&mut timer, &[Some(10.0), Some(11.0), Some(12.0)]);
+    assert!(!timer.current_attempt_has_new_personal_best(TimingMethod::GameTime));
+    assert!(!timer.current_attempt_has_new_best_segments(TimingMethod::GameTime));
 }
