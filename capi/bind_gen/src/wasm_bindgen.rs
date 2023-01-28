@@ -134,8 +134,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
             write!(
                 writer,
                 r#"
-     * @return {{{}}}"#,
-                return_type_with_null
+     * @return {{{return_type_with_null}}}"#
             )?;
         }
 
@@ -172,9 +171,8 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
     if type_script && has_return_type {
         write!(
             writer,
-            r#"): {} {{
-        "#,
-            return_type_with_null
+            r#"): {return_type_with_null} {{
+        "#
         )?;
     } else {
         write!(
@@ -218,11 +216,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
 
     if has_return_type {
         if function.output.is_custom {
-            write!(
-                writer,
-                r#"const result = new {}("#,
-                return_type_without_null
-            )?;
+            write!(writer, r#"const result = new {return_type_without_null}("#)?;
         } else {
             write!(writer, "const result = ")?;
         }
@@ -491,16 +485,15 @@ function dealloc(slice) {
     }
 
     for (class_name, class) in classes {
-        let class_name_ref = format!("{}Ref", class_name);
-        let class_name_ref_mut = format!("{}RefMut", class_name);
+        let class_name_ref = format!("{class_name}Ref");
+        let class_name_ref_mut = format!("{class_name}RefMut");
 
         write_class_comments(&mut writer, &class.comments)?;
 
         write!(
             writer,
             r#"
-export class {class} {{"#,
-            class = class_name_ref,
+export class {class_name_ref} {{"#,
         )?;
 
         if type_script {
@@ -654,9 +647,7 @@ export class {class} {{"#,
         write!(
             writer,
             r#"
-export class {class} extends {base_class} {{"#,
-            class = class_name_ref_mut,
-            base_class = class_name_ref,
+export class {class_name_ref_mut} extends {class_name_ref} {{"#,
         )?;
 
         for function in &class.mut_fns {
@@ -717,9 +708,7 @@ export class {class} extends {base_class} {{"#,
         write!(
             writer,
             r#"
-export class {class} extends {base_class} {{"#,
-            class = class_name,
-            base_class = class_name_ref_mut,
+export class {class_name} extends {class_name_ref_mut} {{"#,
         )?;
 
         if type_script {
@@ -732,8 +721,7 @@ export class {class} extends {base_class} {{"#,
      * early yourself anywhere within the scope. The scope's return value gets
      * carried to the outside of this function.
      */
-    with<T>(closure: (obj: {class}) => T): T {{"#,
-                class = class_name
+    with<T>(closure: (obj: {class_name}) => T): T {{"#
             )?;
         } else {
             write!(
@@ -744,10 +732,9 @@ export class {class} extends {base_class} {{"#,
      * disposed once this function returns. You are free to dispose the object
      * early yourself anywhere within the scope. The scope's return value gets
      * carried to the outside of this function.
-     * @param {{function({class})}} closure
+     * @param {{function({class_name})}} closure
      */
-    with(closure) {{"#,
-                class = class_name
+    with(closure) {{"#
             )?;
         }
 

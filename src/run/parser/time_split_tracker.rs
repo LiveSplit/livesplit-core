@@ -3,10 +3,7 @@
 use super::super::ComparisonError;
 use crate::{
     comparison::RACE_COMPARISON_PREFIX,
-    platform::{
-        path::{Path, PathBuf},
-        prelude::*,
-    },
+    platform::{path::Path, prelude::*},
     timing, RealTime, Run, Segment, Time, TimeSpan,
 };
 #[cfg(feature = "std")]
@@ -190,12 +187,12 @@ pub fn parse(
 }
 
 #[cfg(feature = "std")]
-fn parse_history(run: &mut Run, path: Option<PathBuf>) -> StdResult<(), ()> {
+fn parse_history(run: &mut Run, path: Option<std::path::PathBuf>) -> StdResult<(), ()> {
     if let Some(mut path) = path {
         path.set_extension("");
         let mut path = path.into_os_string();
         path.push("-RunLog.txt");
-        let path = PathBuf::from(path);
+        let path = std::path::PathBuf::from(path);
 
         let file = std::fs::read_to_string(path).map_err(drop)?;
         let mut lines = file.lines();

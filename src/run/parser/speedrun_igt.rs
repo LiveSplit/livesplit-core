@@ -454,9 +454,9 @@ pub fn parse(source: &str) -> Result<Run> {
             "trade_with_villager" => "Trade with Villager".into(),
             name => {
                 if let Some(rem) = name.strip_prefix("portal_no_") {
-                    format!("Portal No. {}", rem).into()
+                    format!("Portal No. {rem}").into()
                 } else if let Some(rem) = name.strip_prefix("got_shell_") {
-                    format!("Got Nautilus Shell {}", rem).into()
+                    format!("Got Nautilus Shell {rem}").into()
                 } else {
                     let mut new_name = String::with_capacity(name.len());
                     let mut last_is_space = true;

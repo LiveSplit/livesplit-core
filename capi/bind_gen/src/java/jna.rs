@@ -100,8 +100,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
         write!(
             writer,
             r#"
-    public {}("#,
-            class_name
+    public {class_name}("#
         )?;
     } else {
         write!(
@@ -163,13 +162,9 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
         if is_constructor {
             write!(writer, "this.ptr = ")?;
         } else if function.output.is_custom {
-            write!(
-                writer,
-                r#"{ret_type} result = new {ret_type}("#,
-                ret_type = return_type
-            )?;
+            write!(writer, r#"{return_type} result = new {return_type}("#)?;
         } else {
-            write!(writer, "{} result = ", return_type)?;
+            write!(writer, "{return_type} result = ")?;
         }
     }
 
@@ -259,7 +254,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
 
 fn write_class_ref<P: AsRef<Path>>(path: P, class_name: &str, class: &Class) -> Result<()> {
     let mut writer = BufWriter::new(File::create(path)?);
-    let class_name_ref = format!("{}Ref", class_name);
+    let class_name_ref = format!("{class_name}Ref");
 
     write!(
         writer,
@@ -274,9 +269,8 @@ import com.sun.jna.*;
     write!(
         writer,
         r#"
-public class {class} {{
-    Pointer ptr;"#,
-        class = class_name_ref
+public class {class_name_ref} {{
+    Pointer ptr;"#
     )?;
 
     for function in &class.shared_fns {
@@ -304,18 +298,17 @@ public class {class} {{
     write!(
         writer,
         r#"
-    {class}(Pointer ptr) {{
+    {class_name_ref}(Pointer ptr) {{
         this.ptr = ptr;
     }}
-}}"#,
-        class = class_name_ref
+}}"#
     )
 }
 
 fn write_class_ref_mut<P: AsRef<Path>>(path: P, class_name: &str, class: &Class) -> Result<()> {
     let mut writer = BufWriter::new(File::create(path)?);
-    let class_name_ref = format!("{}Ref", class_name);
-    let class_name_ref_mut = format!("{}RefMut", class_name);
+    let class_name_ref = format!("{class_name}Ref");
+    let class_name_ref_mut = format!("{class_name}RefMut");
 
     write!(
         writer,
@@ -330,9 +323,7 @@ import com.sun.jna.*;
     write!(
         writer,
         r#"
-public class {class} extends {base_class} {{"#,
-        class = class_name_ref_mut,
-        base_class = class_name_ref
+public class {class_name_ref_mut} extends {class_name_ref} {{"#
     )?;
 
     for function in &class.mut_fns {
@@ -342,17 +333,16 @@ public class {class} extends {base_class} {{"#,
     write!(
         writer,
         r#"
-    {class}(Pointer ptr) {{
+    {class_name_ref_mut}(Pointer ptr) {{
         super(ptr);
     }}
-}}"#,
-        class = class_name_ref_mut
+}}"#
     )
 }
 
 fn write_class<P: AsRef<Path>>(path: P, class_name: &str, class: &Class) -> Result<()> {
     let mut writer = BufWriter::new(File::create(path)?);
-    let class_name_ref_mut = format!("{}RefMut", class_name);
+    let class_name_ref_mut = format!("{class_name}RefMut");
 
     write!(
         writer,
@@ -367,11 +357,9 @@ import com.sun.jna.*;
     write!(
         writer,
         r#"
-public class {class} extends {base_class} implements AutoCloseable {{
+public class {class_name} extends {class_name_ref_mut} implements AutoCloseable {{
     private void drop() {{
-        if (ptr != Pointer.NULL) {{"#,
-        class = class_name,
-        base_class = class_name_ref_mut
+        if (ptr != Pointer.NULL) {{"#
     )?;
 
     if let Some(function) = class.own_fns.iter().find(|f| f.method == "drop") {
@@ -428,11 +416,10 @@ public class {class} extends {base_class} implements AutoCloseable {{
     write!(
         writer,
         r#"
-    {class}(Pointer ptr) {{
+    {class_name}(Pointer ptr) {{
         super(ptr);
     }}
-}}"#,
-        class = class_name
+}}"#
     )
 }
 
@@ -502,12 +489,12 @@ pub fn write<P: AsRef<Path>>(path: P, classes: &BTreeMap<String, Class>) -> Resu
     path.pop();
 
     for (class_name, class) in classes {
-        path.push(format!("{}Ref", class_name));
+        path.push(format!("{class_name}Ref"));
         path.set_extension("java");
         write_class_ref(&path, class_name, class)?;
         path.pop();
 
-        path.push(format!("{}RefMut", class_name));
+        path.push(format!("{class_name}RefMut"));
         path.set_extension("java");
         write_class_ref_mut(&path, class_name, class)?;
         path.pop();

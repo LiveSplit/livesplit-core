@@ -128,8 +128,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         write!(
             writer,
             r#"
-    fun {}("#,
-            method
+    fun {method}("#
         )?;
     }
 
@@ -157,7 +156,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         "#
         )?;
     } else if has_return_type {
-        write!(writer, r#"): {}"#, return_type)?;
+        write!(writer, r#"): {return_type}"#)?;
         if function.output.is_nullable && function.output.is_custom {
             write!(writer, "?")?;
         }
@@ -191,11 +190,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         if is_constructor {
             write!(writer, "this.ptr = ")?;
         } else if function.output.is_custom {
-            write!(
-                writer,
-                r#"val result = {ret_type}("#,
-                ret_type = return_type
-            )?;
+            write!(writer, r#"val result = {return_type}("#)?;
         } else {
             write!(writer, "val result = ")?;
         }
@@ -270,7 +265,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
 
 fn write_class_ref<P: AsRef<Path>>(path: P, class_name: &str, class: &Class) -> Result<()> {
     let mut writer = BufWriter::new(File::create(path)?);
-    let class_name_ref = format!("{}Ref", class_name);
+    let class_name_ref = format!("{class_name}Ref");
 
     writeln!(writer, r#"package livesplitcore"#)?;
 
@@ -279,8 +274,7 @@ fn write_class_ref<P: AsRef<Path>>(path: P, class_name: &str, class: &Class) -> 
     write!(
         writer,
         r#"
-open class {class} internal constructor(var ptr: Long) {{"#,
-        class = class_name_ref
+open class {class_name_ref} internal constructor(var ptr: Long) {{"#
     )?;
 
     for function in &class.shared_fns {
@@ -316,8 +310,8 @@ open class {class} internal constructor(var ptr: Long) {{"#,
 
 fn write_class_ref_mut<P: AsRef<Path>>(path: P, class_name: &str, class: &Class) -> Result<()> {
     let mut writer = BufWriter::new(File::create(path)?);
-    let class_name_ref = format!("{}Ref", class_name);
-    let class_name_ref_mut = format!("{}RefMut", class_name);
+    let class_name_ref = format!("{class_name}Ref");
+    let class_name_ref_mut = format!("{class_name}RefMut");
 
     writeln!(writer, r#"package livesplitcore"#)?;
 
@@ -326,9 +320,7 @@ fn write_class_ref_mut<P: AsRef<Path>>(path: P, class_name: &str, class: &Class)
     write!(
         writer,
         r#"
-open class {class} internal constructor(ptr: Long) : {base_class}(ptr) {{"#,
-        class = class_name_ref_mut,
-        base_class = class_name_ref
+open class {class_name_ref_mut} internal constructor(ptr: Long) : {class_name_ref}(ptr) {{"#
     )?;
 
     for function in &class.mut_fns {
@@ -344,7 +336,7 @@ open class {class} internal constructor(ptr: Long) : {base_class}(ptr) {{"#,
 
 fn write_class<P: AsRef<Path>>(path: P, class_name: &str, class: &Class) -> Result<()> {
     let mut writer = BufWriter::new(File::create(path)?);
-    let class_name_ref_mut = format!("{}RefMut", class_name);
+    let class_name_ref_mut = format!("{class_name}RefMut");
 
     writeln!(writer, r#"package livesplitcore"#)?;
 
@@ -353,11 +345,9 @@ fn write_class<P: AsRef<Path>>(path: P, class_name: &str, class: &Class) -> Resu
     write!(
         writer,
         r#"
-open class {class} : {base_class}, AutoCloseable {{
+open class {class_name} : {class_name_ref_mut}, AutoCloseable {{
     private fun drop() {{
-        if (ptr != 0L) {{"#,
-        class = class_name,
-        base_class = class_name_ref_mut
+        if (ptr != 0L) {{"#
     )?;
 
     if let Some(function) = class.own_fns.iter().find(|f| f.method == "drop") {
@@ -508,12 +498,12 @@ pub fn write<P: AsRef<Path>>(path: P, classes: &BTreeMap<String, Class>) -> Resu
     path.pop();
 
     for (class_name, class) in classes {
-        path.push(format!("{}Ref", class_name));
+        path.push(format!("{class_name}Ref"));
         path.set_extension("kt");
         write_class_ref(&path, class_name, class)?;
         path.pop();
 
-        path.push(format!("{}RefMut", class_name));
+        path.push(format!("{class_name}RefMut"));
         path.set_extension("kt");
         write_class_ref_mut(&path, class_name, class)?;
         path.pop();

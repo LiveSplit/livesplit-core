@@ -69,12 +69,11 @@ extern "C" {
     for name in classes.keys() {
         writeln!(
             writer,
-            r#"struct {0}_s;
-typedef struct {0}_s *restrict {0};
-typedef struct {0}_s *restrict {0}RefMut;
-typedef struct {0}_s const* {0}Ref;
-"#,
-            name
+            r#"struct {name}_s;
+typedef struct {name}_s *restrict {name};
+typedef struct {name}_s *restrict {name}RefMut;
+typedef struct {name}_s const* {name}Ref;
+"#
         )?;
     }
 
