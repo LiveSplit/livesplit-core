@@ -91,7 +91,24 @@ pub enum Weight {
 
 impl Weight {
     /// The numeric value of the weight.
-    pub const fn value(self) -> f32 {
+    pub const fn to_u16(self) -> u16 {
+        match self {
+            Weight::Thin => 100,
+            Weight::ExtraLight => 200,
+            Weight::Light => 300,
+            Weight::SemiLight => 350,
+            Weight::Normal => 400,
+            Weight::Medium => 500,
+            Weight::SemiBold => 600,
+            Weight::Bold => 700,
+            Weight::ExtraBold => 800,
+            Weight::Black => 900,
+            Weight::ExtraBlack => 950,
+        }
+    }
+
+    /// The numeric value of the weight.
+    pub const fn to_f32(self) -> f32 {
         match self {
             Weight::Thin => 100.0,
             Weight::ExtraLight => 200.0,

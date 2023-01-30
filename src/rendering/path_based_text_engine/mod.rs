@@ -6,12 +6,7 @@
 use crate::platform::{prelude::*, Arc, RwLock};
 
 #[cfg(feature = "font-loading")]
-use font_kit::{
-    family_name::FamilyName,
-    handle::Handle,
-    properties::{Properties, Stretch, Style, Weight},
-    source::SystemSource,
-};
+use fontdb::{Database, Family, Source, Stretch, Style, Weight};
 use hashbrown::HashMap;
 use rustybuzz::{
     ttf_parser::{GlyphId, OutlineBuilder},
@@ -33,7 +28,7 @@ mod color_font;
 /// need to be able to render text, as all the text gets turned into paths.
 pub struct TextEngine {
     #[cfg(feature = "font-loading")]
-    source: SystemSource,
+    source: Database,
     buffer: Option<UnicodeBuffer>,
 }
 
@@ -48,7 +43,11 @@ impl TextEngine {
     pub fn new() -> Self {
         Self {
             #[cfg(feature = "font-loading")]
-            source: SystemSource::new(),
+            source: {
+                let mut db = Database::new();
+                db.load_system_fonts();
+                db
+            },
             buffer: None,
         }
     }
@@ -274,33 +273,34 @@ pub struct Font<P> {
 
 impl<P> Font<P> {
     #[cfg(feature = "font-loading")]
-    fn try_load_font(
-        source: &mut SystemSource,
-        font: &settings::Font,
-        kind: FontKind,
-    ) -> Option<Self> {
-        let handle = source
-            .select_best_match(
-                &[FamilyName::Title(font.family.clone())],
-                &Properties {
-                    style: match font.style {
-                        FontStyle::Normal => Style::Normal,
-                        FontStyle::Italic => Style::Italic,
-                    },
-                    weight: Weight(font.weight.value()),
-                    stretch: Stretch(font.stretch.factor()),
-                },
-            )
-            .ok()?;
+    fn try_load_font(source: &mut Database, font: &settings::Font, kind: FontKind) -> Option<Self> {
+        let id = source.query(&fontdb::Query {
+            families: &[Family::Name(&font.family)],
+            weight: Weight(font.weight.to_u16()),
+            stretch: match font.stretch {
+                FontStretch::UltraCondensed => Stretch::UltraCondensed,
+                FontStretch::ExtraCondensed => Stretch::ExtraCondensed,
+                FontStretch::Condensed => Stretch::Condensed,
+                FontStretch::SemiCondensed => Stretch::SemiCondensed,
+                FontStretch::Normal => Stretch::Normal,
+                FontStretch::SemiExpanded => Stretch::SemiExpanded,
+                FontStretch::Expanded => Stretch::Expanded,
+                FontStretch::ExtraExpanded => Stretch::ExtraExpanded,
+                FontStretch::UltraExpanded => Stretch::UltraExpanded,
+            },
+            style: match font.style {
+                FontStyle::Normal => Style::Normal,
+                FontStyle::Italic => Style::Italic,
+            },
+        })?;
 
-        let (buf, font_index) = match handle {
-            Handle::Path { path, font_index } => (std::fs::read(path).ok()?, font_index),
-            Handle::Memory { bytes, font_index } => (
-                Arc::try_unwrap(bytes).unwrap_or_else(|bytes| (*bytes).clone()),
-                font_index,
-            ),
+        let (source, font_index) = source.face_source(id)?;
+        let buf = match source {
+            Source::File(path) => std::fs::read(path).ok()?.into_boxed_slice(),
+            Source::Binary(data) | Source::SharedFile(_, data) => {
+                AsRef::<[u8]>::as_ref(&*data).into()
+            }
         };
-        let buf = buf.into_boxed_slice();
 
         // Safety: We store our own buffer. If we never modify it and drop it
         // last, this is fine. It also needs to be heap allocated, so it's a
@@ -331,7 +331,7 @@ impl<P> Font<P> {
         let mut face = Face::from_slice(data, index)?;
 
         let italic = style.value_for_italic();
-        let weight = weight.value();
+        let weight = weight.to_f32();
         let stretch = stretch.percentage();
 
         face.set_variations(&[
