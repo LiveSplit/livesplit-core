@@ -3,6 +3,7 @@
 use super::super::ComparisonError;
 use crate::{
     platform::prelude::*,
+    run::LinkedLayout,
     util::xml::{
         helper::{
             attribute, attribute_escaped_err, end_tag, optional_attribute_escaped_err,
@@ -483,6 +484,15 @@ pub fn parse(source: &str) -> Result<Run> {
                 let settings = run.auto_splitter_settings_mut();
                 reencode_children(reader, settings).map_err(Into::into)
             }
+            "LayoutPath" => text(reader, |t| {
+                run.set_linked_layout(if t == "?default" {
+                    Some(LinkedLayout::Default)
+                } else if t.is_empty() {
+                    None
+                } else {
+                    Some(LinkedLayout::Path(t.into_owned()))
+                });
+            }),
             _ => end_tag(reader),
         })
     })?;

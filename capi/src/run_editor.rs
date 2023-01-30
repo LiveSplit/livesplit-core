@@ -4,11 +4,11 @@
 //! state objects that can be visualized by any kind of User Interface.
 
 use super::{output_vec, str, Json};
-use crate::run::OwnedRun;
-use crate::sum_of_best_cleaner::OwnedSumOfBestCleaner;
+use crate::{
+    linked_layout::OwnedLinkedLayout, run::OwnedRun, sum_of_best_cleaner::OwnedSumOfBestCleaner,
+};
 use livesplit_core::{Run, RunEditor, TimingMethod};
-use std::os::raw::c_char;
-use std::slice;
+use std::{os::raw::c_char, slice};
 
 /// type
 pub type OwnedRunEditor = Box<RunEditor>;
@@ -127,6 +127,16 @@ pub unsafe extern "C" fn RunEditor_set_game_icon(
 #[no_mangle]
 pub extern "C" fn RunEditor_remove_game_icon(this: &mut RunEditor) {
     this.remove_game_icon();
+}
+
+/// Sets the Linked Layout of the Run. If a Layout
+/// is linked, it is supposed to be loaded to visualize the Run.
+#[no_mangle]
+pub extern "C" fn set_linked_layout(
+    this: &mut RunEditor,
+    linked_layout: Option<OwnedLinkedLayout>,
+) {
+    this.set_linked_layout(linked_layout.map(|l| *l));
 }
 
 /// Sets the speedrun.com Run ID of the run. You need to ensure that the

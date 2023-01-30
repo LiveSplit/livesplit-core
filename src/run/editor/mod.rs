@@ -4,7 +4,7 @@
 //! current state of the editor as state objects that can be visualized by any
 //! kind of User Interface.
 
-use super::{ComparisonError, ComparisonResult};
+use super::{ComparisonError, ComparisonResult, LinkedLayout};
 use crate::{
     comparison,
     platform::prelude::*,
@@ -298,6 +298,13 @@ impl Editor {
     /// Removes the game's icon.
     pub fn remove_game_icon(&mut self) {
         self.run.set_game_icon([]);
+        self.raise_run_edited();
+    }
+
+    /// Sets the [`LinkedLayout`] of the [`Run`]. If a [`Layout`](crate::Layout)
+    /// is linked, it is supposed to be loaded to visualize the [`Run`].
+    pub fn set_linked_layout(&mut self, linked_layout: Option<LinkedLayout>) {
+        self.run.set_linked_layout(linked_layout);
         self.raise_run_edited();
     }
 

@@ -35,6 +35,7 @@ pub mod layout;
 pub mod layout_editor;
 pub mod layout_editor_state;
 pub mod layout_state;
+pub mod linked_layout;
 pub mod parse_run_result;
 pub mod pb_chance_component;
 pub mod possible_time_save_component;
