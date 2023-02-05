@@ -331,7 +331,7 @@ jobs:
           - label: Linux i586 musl
             target: i586-unknown-linux-musl
             os: ubuntu-latest
-            tests: skip
+            auto_splitting: skip
             dylib: skip
 
           - label: Linux i686
@@ -359,42 +359,44 @@ jobs:
             os: ubuntu-latest
             cross: skip
             install_target: true
+            # FIXME: The tests don't run because without cross we can't
+            # successfully link anything.
             tests: skip
             dylib: skip
 
           - label: Linux arm
             target: arm-unknown-linux-gnueabi
             os: ubuntu-latest
-            tests: skip
+            auto_splitting: skip
 
           - label: Linux arm musl
             target: arm-unknown-linux-musleabi
             os: ubuntu-latest
-            tests: skip
+            auto_splitting: skip
             dylib: skip
 
           - label: Linux arm Hardware Float
             target: arm-unknown-linux-gnueabihf
             os: ubuntu-latest
-            tests: skip
+            auto_splitting: skip
             dylib: skip
 
           - label: Linux arm musl Hardware Float
             target: arm-unknown-linux-musleabihf
             os: ubuntu-latest
-            tests: skip
+            auto_splitting: skip
             dylib: skip
 
           - label: Linux armv5te
             target: armv5te-unknown-linux-gnueabi
             os: ubuntu-latest
-            tests: skip
+            auto_splitting: skip
             dylib: skip
 
           - label: Linux armv5te musl
             target: armv5te-unknown-linux-musleabi
             os: ubuntu-latest
-            tests: skip
+            auto_splitting: skip
             dylib: skip
 
           - label: Linux armv7 Hardware Float
@@ -405,7 +407,7 @@ jobs:
           - label: Linux armv7 musl Hardware Float
             target: armv7-unknown-linux-musleabihf
             os: ubuntu-latest
-            tests: skip
+            auto_splitting: skip
             dylib: skip
 
           - label: Linux aarch64
@@ -419,10 +421,6 @@ jobs:
             networking: skip
             # FIXME: Networking Tests fail due to missing OpenSSL
             # https://github.com/LiveSplit/livesplit-core/issues/308
-            software_rendering: skip
-            # TODO: The software rendering is apparently not working on big
-            # endian platforms. Almost definitely caused by tiny-skia. This may
-            # or may not be intentional.
 
           - label: Linux mips64
             target: mips64-unknown-linux-gnuabi64
@@ -431,10 +429,6 @@ jobs:
             networking: skip
             # FIXME: Networking Tests fail due to missing OpenSSL
             # https://github.com/LiveSplit/livesplit-core/issues/308
-            software_rendering: skip
-            # TODO: The software rendering is apparently not working on big
-            # endian platforms. Almost definitely caused by tiny-skia. This may
-            # or may not be intentional.
 
           - label: Linux mips64el
             target: mips64el-unknown-linux-gnuabi64
@@ -455,23 +449,34 @@ jobs:
           - label: Linux mipsel musl
             target: mipsel-unknown-linux-musl
             os: ubuntu-latest
-            tests: skip
+            auto_splitting: skip
+            networking: skip
+            # FIXME: Networking Tests fail due to missing OpenSSL
+            # https://github.com/LiveSplit/livesplit-core/issues/308
             dylib: skip
 
           - label: Linux powerpc
             target: powerpc-unknown-linux-gnu
             os: ubuntu-latest
-            tests: skip
+            auto_splitting: skip
+            networking: skip
+            # FIXME: Networking Tests fail due to missing OpenSSL
+            # https://github.com/LiveSplit/livesplit-core/issues/308
 
           - label: Linux powerpc64le
             target: powerpc64le-unknown-linux-gnu
             os: ubuntu-latest
-            tests: skip
+            auto_splitting: skip
+            networking: skip
+            # FIXME: Networking Tests fail due to missing OpenSSL
+            # https://github.com/LiveSplit/livesplit-core/issues/308
 
           - label: Linux s390x
             target: s390x-unknown-linux-gnu
             os: ubuntu-latest
-            tests: skip
+            networking: skip
+            # FIXME: Networking Tests fail due to missing OpenSSL
+            # https://github.com/LiveSplit/livesplit-core/issues/308
 
           # These got removed from cross
           # - label: Linux powerpc64
@@ -661,7 +666,6 @@ jobs:
           SKIP_CROSS: ${{ matrix.cross }}
           SKIP_AUTO_SPLITTING: ${{ matrix.auto_splitting }}
           SKIP_NETWORKING: ${{ matrix.networking }}
-          SKIP_SOFTWARE_RENDERING: ${{ matrix.software_rendering }}
 
       - name: Prepare Release
         if: startsWith(github.ref, 'refs/tags/') && matrix.release == ''

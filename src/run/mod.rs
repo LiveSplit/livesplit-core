@@ -359,7 +359,6 @@ impl Run {
     #[inline]
     pub fn set_linked_layout(&mut self, linked_layout: Option<LinkedLayout>) {
         self.linked_layout = linked_layout;
-        self.mark_as_modified();
     }
 
     /// Returns the amount of segments stored in this Run.

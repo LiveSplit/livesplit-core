@@ -17,11 +17,11 @@ slotmap = { version = "1.0.2", default-features = false }
 snafu = "0.7.0"
 sysinfo = { version = "0.27.0", default-features = false, features = ["multithread"] }
 time = { version = "0.3.3", default-features = false }
-wasmtime = { version = "4.0.0", default-features = false, features = [
+wasmtime = { version = "5.0.0", default-features = false, features = [
   "cranelift",
   "parallel-compilation",
 ] }
-wasmtime-wasi = { version = "4.0.0", optional = true }
+wasmtime-wasi = { version = "5.0.0", optional = true }
 
 [features]
 unstable = ["wasmtime-wasi"]
