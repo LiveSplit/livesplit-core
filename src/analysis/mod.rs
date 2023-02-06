@@ -15,3 +15,4 @@ pub use self::state_helper::*;
 
 #[cfg(test)]
 mod tests;
+mod probability_distribution;
