@@ -9,10 +9,11 @@ mod skill_curve;
 pub mod state_helper;
 pub mod sum_of_segments;
 pub mod total_playtime;
+mod probability_distribution;
+mod discontinuous_fourier_transforms;
 
 pub use self::skill_curve::SkillCurve;
 pub use self::state_helper::*;
 
 #[cfg(test)]
 mod tests;
-mod probability_distribution;

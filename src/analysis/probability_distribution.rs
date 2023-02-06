@@ -1,4 +1,5 @@
 use std::ops;
+use rustfft::num_complex::Complex;
 use crate::{Segment, TimeSpan, TimingMethod};
 
 /// Utilities for handling Probability Distributions
@@ -27,13 +28,17 @@ struct ProbabilityDistribution {
     max_duration: f32, // the maximum simulated time duration
     omega_naught: f32, // the fundamental frequency of the fourier transform of the distribution
 
-    transform: Vec<num_complex::Complex> // Fourier coefficients
+    transform: Vec<Complex<f32>> // Fourier coefficients
 
 }
 
 impl ProbabilityDistribution {
 
     // pub fn new() -> Self {
+    //
+    // }
+
+    // pub fn probability_below(x: f32) -> f32{
     //
     // }
 
@@ -44,14 +49,14 @@ impl ops::Add<ProbabilityDistribution> for ProbabilityDistribution {
 
     fn add(self, other: ProbabilityDistribution) -> ProbabilityDistribution {
         let mut result: ProbabilityDistribution = ProbabilityDistribution {
-            max_duration: Self.max_duration,
-            omega_naught: Self.omega_naught,
-            transform: Self.transform,
+            max_duration: self.max_duration,
+            omega_naught: self.omega_naught,
+            transform: Vec::with_capacity(self.transform.capacity()),
         };
 
-        // multiply the
-        for i in 0..Self.transform.len() {
-            result.transform[i] *= other.transform[i];
+        // multiply the elements
+        for i in 0..self.transform.len() {
+            result.transform[i] = self.transform[i] * other.transform[i];
         }
 
         return result;
