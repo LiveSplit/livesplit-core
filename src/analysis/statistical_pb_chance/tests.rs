@@ -1,11 +1,11 @@
-use core::slice::Iter;
-use crate::analysis::discontinuous_fourier_transforms::delta_function_dft;
-use super::super::discontinuous_fourier_transforms;
-
 use std::f32::consts::TAU;
 use std::iter::Map;
 
+use assert_approx_eq::assert_approx_eq;
 use rustfft::{FftPlanner, num_complex::{Complex, ComplexFloat}};
+
+use core::slice::Iter;
+use crate::analysis::statistical_pb_chance::discontinuous_fourier_transforms::delta_function_dft;
 
 #[test]
 fn example_test() {
@@ -33,6 +33,10 @@ fn test_dirac_delta() {
     // convert to real numbers by taking the magnitude of the complex numbers
     let magnitudes: Vec<f32> = delta_fourier.iter().map(|x: &Complex<f32>| -> f32 { (x.re().powi(2) + x.im().powi(2)).sqrt() / delta_fourier.len() as f32}).collect();
 
-    println!("{:?}", magnitudes);
+    assert_approx_eq!(magnitudes[0], 1.0);
+
+    for i in 1..magnitudes.len() {
+        assert_approx_eq!(magnitudes[i], 0.0);
+    }
 
 }

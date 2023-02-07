@@ -34,7 +34,7 @@ pub fn delta_function_dft(omega_naught: f32, num_terms: usize, time: f32) -> Vec
 
     // insert the positive elements into the array
     for k in 0..num_terms {
-        let omega: f32 = omega_naught * k;
+        let omega = omega_naught * k as f32;
         fourier_series[k] = Complex::<f32>{re: 0.0, im: - omega * time}.exp();
     }
 
@@ -97,15 +97,15 @@ pub fn step_function_dft(omega_naught: f32, num_terms: usize, time: f32) -> Vec<
     fourier_series[0] = Complex::<f32>{re: (time + 0.5), im: 0.0};
 
     for k in 1..cutoff {
-        let omega = omega_naught * k;
-        fourier_series[k] = Complex::<f32>{re: 0.0, im: 1 / omega} * // 1/jω
+        let omega = omega_naught * k as f32;
+        fourier_series[k] = Complex::<f32>{re: 0.0, im: 1.0 / omega} * // 1/jω
             (Complex::<f32>{re: 0.0, im: - omega * (-0.5)}.exp() - // e^{-iω(-1/2)}
              Complex::<f32>{re: 0.0, im: - omega * (time)}); // e^{-iωt_{0}}
     }
 
     for k in cutoff..num_terms {
-        let omega = omega_naught * (k - num_terms); // different calculation of omega
-        fourier_series[k] = Complex::<f32>{re: 0.0, im: 1 / omega} * // 1/jω
+        let omega = omega_naught * (k - num_terms) as f32; // different calculation of omega
+        fourier_series[k] = Complex::<f32>{re: 0.0, im: 1.0 / omega} * // 1/jω
             (Complex::<f32>{re: 0.0, im: - omega * (-0.5)}.exp() - // e^{-iω(-1/2)}
                 Complex::<f32>{re: 0.0, im: - omega * (time)}); // e^{-iωt_{0}}
     }

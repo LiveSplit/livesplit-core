@@ -54,6 +54,7 @@ smallstr = { version = "0.3.0", default-features = false }
 snafu = { version = "0.7.0", default-features = false }
 unicase = "2.6.0"
 rustfft = "6.1.0"
+assert_approx_eq = "1.1.0"
 
 # std
 image = { version = "0.24.0", features = [
