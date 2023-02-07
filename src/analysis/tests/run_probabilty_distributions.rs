@@ -1,5 +1,5 @@
 use core::slice::Iter;
-use crate::analysis::discontinuous_fourier_transforms::delta_function_fourier_series;
+use crate::analysis::discontinuous_fourier_transforms::delta_function_dft;
 use super::super::discontinuous_fourier_transforms;
 
 use std::f32::consts::TAU;
@@ -21,17 +21,17 @@ fn test_dirac_delta() {
     let duration = 10;
 
     // create the delta function, with a peak at t=0
-    let mut delta_fourier = delta_function_fourier_series( TAU / duration as f32,
+    let mut delta_fourier = delta_function_dft( TAU / duration as f32,
                                                       duration, 0.0);
 
     // create the FFT planner
     let mut planner = FftPlanner::new();
-    let fft = planner.plan_fft_forward(duration);
+    let fft = planner.plan_fft_inverse(duration);
 
     fft.process(&mut delta_fourier);
 
     // convert to real numbers by taking the magnitude of the complex numbers
-    let magnitudes: Vec<f32> = delta_fourier.iter().map(|x: &Complex<f32>| -> f32 { (x.re().powi(2) + x.im().powi(2)).sqrt() }).collect();
+    let magnitudes: Vec<f32> = delta_fourier.iter().map(|x: &Complex<f32>| -> f32 { (x.re().powi(2) + x.im().powi(2)).sqrt() / delta_fourier.len() as f32}).collect();
 
     println!("{:?}", magnitudes);
 

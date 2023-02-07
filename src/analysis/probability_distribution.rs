@@ -30,6 +30,8 @@ struct ProbabilityDistribution {
 
     transform: Vec<Complex<f32>> // Fourier coefficients
 
+
+
 }
 
 impl ProbabilityDistribution {
