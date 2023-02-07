@@ -1,4 +1,4 @@
-use rustfft::num_complex::Complex;
+use rustfft::{FftPlanner, num_complex::Complex};
 use std::f64::consts::TAU;
 
 ///
@@ -17,10 +17,10 @@ use std::f64::consts::TAU;
 ///
 ///
 ///
-fn delta_function_fourier_series(omega_naught: f32, num_terms: usize, time: f32) -> Vec<Complex<f32>> {
+pub fn delta_function_fourier_series(omega_naught: f32, num_terms: usize, time: f32) -> Vec<Complex<f32>> {
 
     // initialize the fourier series
-    let mut fourier_series: Vec<Complex<f32>> = Vec::with_capacity(num_terms);
+    let mut fourier_series= vec![Complex::<f32>{re: 0.0, im: 0.0}; num_terms];
 
     let cutoff = (num_terms as f32 / 2.0 + 1.0).ceil() as usize;
 
