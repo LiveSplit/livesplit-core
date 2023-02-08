@@ -1,9 +1,10 @@
 use std::f32::consts::TAU;
 use std::mem::transmute;
 use std::ops;
-use rustfft::num_complex::Complex;
+use rustfft::num_complex::{Complex, ComplexFloat};
+
 use crate::{Segment, SegmentHistory, TimeSpan, TimingMethod};
-use crate::analysis::statistical_pb_chance::discontinuous_fourier_transforms::delta_function_dft;
+use crate::analysis::statistical_pb_chance::discontinuous_fourier_transforms::{delta_function_dft, step_function_dft};
 
 /// Utilities for handling Probability Distributions
 ///
@@ -49,7 +50,7 @@ impl ProbabilityDistribution {
     /// * `times` - SegmentHistory object containing the history of times on the specified split
     /// * `method` - The timing method to use to create the distribution
     /// * `max_duration` - the maximum* duration of the run
-    /// * `num_points` - the number of points to record data for in the distribution
+    /// * `num_terms` - the number of points to record data for in the distribution
     /// * `smoothing_factor` - Smoothing factor of the exponential smoothing applied to the SegmentHistory (See [here](https://en.wikipedia.org/wiki/Exponential_smoothing))
     ///
     /// *The time of the run can be larger than this maximum duration under most circumstances. Problems arise
@@ -57,7 +58,7 @@ impl ProbabilityDistribution {
     ///
     pub fn new(times: SegmentHistory,
                method: TimingMethod,
-               max_duration: f32, num_points: usize, smoothing_factor: f32) -> Self {
+               max_duration: f32, num_terms: usize, smoothing_factor: f32) -> Self {
 
         // initialize the distribution
         let mut dist = ProbabilityDistribution {
@@ -69,7 +70,7 @@ impl ProbabilityDistribution {
         // go through all the splits and add them to the distribution
         for (history_index, split) in times.iter_actual_runs().enumerate() {
             let time = split.1[method].expect("Missing specified timing method").total_seconds() as f32;
-            let dft = delta_function_dft(dist.omega_naught, num_points, time);
+            let dft = delta_function_dft(dist.omega_naught, num_terms, time);
 
             // on the very first segment, there is no weighing, so we just insert the time with no weight
             if history_index == 0 {
@@ -77,8 +78,8 @@ impl ProbabilityDistribution {
             }
             else {
                 // add the two vectors element wise in the form of an exponentially weighted average
-                for frequency_index in 0..num_points {
-                    dist.transform[frequency_index] = dft[frequency_index] * smoothing_factor + (1 - smoothing_factor) * dist.transform[frequency_index];
+                for frequency_index in 0..num_terms {
+                    dist.transform[frequency_index] = dft[frequency_index] * smoothing_factor + (1.0 - smoothing_factor) * dist.transform[frequency_index];
                 }
             }
         }
@@ -87,9 +88,16 @@ impl ProbabilityDistribution {
 
     }
 
-    // pub fn probability_below(x: f32) -> f32{
-    //
-    // }
+    pub fn probability_below(self, time: f32) -> f32{
+        let step = step_function_dft(self.omega_naught, self.transform.len(), time);
+
+        let convolution = (0..step.len()).map(|index| -> Complex<f32> {
+            return self.transform[index] * step[index];
+        });
+
+        return convolution.sum::<Complex<f32>>().abs();
+
+    }
 
 }
 
@@ -116,7 +124,7 @@ impl ops::AddAssign<ProbabilityDistribution> for ProbabilityDistribution {
 
     fn add_assign(&mut self, rhs: ProbabilityDistribution){
         for i in 0..self.transform.len() {
-            self.transform[i] *= other.transform[i];
+            self.transform[i] *= rhs.transform[i];
         }
     }
 }

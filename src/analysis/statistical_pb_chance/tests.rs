@@ -60,7 +60,7 @@ fn test_dirac_delta_different_duration() {
     fft.process(&mut delta_fourier);
 
     // convert to real numbers by taking the magnitude of the complex numbers
-    let magnitudes: Vec<f32> = delta_fourier.iter().map(|x: &Complex<f32>| -> f32 { (x.re().powi(2) + x.im().powi(2)).sqrt() / delta_fourier.len() as f32}).collect();
+    let magnitudes: Vec<f32> = delta_fourier.iter().map(|x: &Complex<f32>| -> f32 { x.abs() / delta_fourier.len() as f32}).collect();
 
     assert_approx_eq!(magnitudes[0], 1.0);
 
@@ -82,7 +82,7 @@ fn test_unit_step() {
     fft.process(&mut *heaviside_fourier);
 
     // convert to real numbers by taking the magnitude of the complex numbers
-    let magnitudes: Vec<f32> = heaviside_fourier.iter().map(|x: &Complex<f32>| -> f32 { (x.re().powi(2) + x.im().powi(2)).sqrt() / points as f32}).collect();
+    let magnitudes: Vec<f32> = heaviside_fourier.iter().map(|x: &Complex<f32>| -> f32 { x.abs() / points as f32}).collect();
 
     for i in 0..11 {
         assert_approx_eq!(magnitudes[i], 1f32, 0.1); // high tolerance b/c this isn't a precise unit step function
