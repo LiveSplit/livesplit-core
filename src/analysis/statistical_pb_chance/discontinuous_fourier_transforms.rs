@@ -11,9 +11,9 @@ use std::f64::consts::TAU;
 ///
 /// # Arguments
 ///
-/// * `omega_naught` - the fundamental frequency of the fourier transform we are computing
-/// * `num_terms` - the number of terms in the fourier transform to return
-/// * `time` - the point in time at which the delta function is nonzero
+/// * `omega_naught` - The fundamental frequency of the fourier transform we are computing
+/// * `num_terms` - The number of terms in the fourier transform to return
+/// * `time` - The point in time at which the delta function is nonzero
 ///
 /// # Mathematics
 ///
