@@ -636,9 +636,20 @@ jobs:
         if: matrix.install_target != ''
         run: rustup target add ${{ matrix.target }}
 
+      - name: Download cross
+        if: matrix.cross == '' && matrix.no_std == ''
+        uses: robinraju/release-downloader@v1.7
+        with:
+          repository: "cross-rs/cross"
+          latest: true
+          fileName: "cross-x86_64-unknown-linux-gnu.tar.gz"
+          out-file-path: "/home/runner/.cargo/bin"
+
       - name: Install cross
         if: matrix.cross == '' && matrix.no_std == ''
-        run: cargo install cross --debug
+        run: |
+          cd ~/.cargo/bin
+          tar -xzf cross-x86_64-unknown-linux-gnu.tar.gz
 
       - name: Build Static Library
         run: sh .github/workflows/build_static.sh
