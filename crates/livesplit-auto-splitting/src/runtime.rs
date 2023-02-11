@@ -7,14 +7,16 @@ use slotmap::{Key, KeyData, SlotMap};
 use snafu::Snafu;
 use std::{
     env::consts::{ARCH, OS},
+    path::PathBuf,
     str,
     time::{Duration, Instant},
 };
 use sysinfo::{ProcessRefreshKind, RefreshKind, System, SystemExt};
+use wasi_common::{dir::DirCaps, file::FileCaps};
 use wasmtime::{
     Caller, Config, Engine, Extern, Linker, Memory, Module, OptLevel, Store, TypedFunc,
 };
-use wasmtime_wasi::{WasiCtx, WasiCtxBuilder};
+use wasmtime_wasi::{ambient_authority, WasiCtx, WasiCtxBuilder};
 
 /// An error that is returned when the creation of a new runtime fails.
 #[derive(Debug, Snafu)]
@@ -122,7 +124,11 @@ impl ProcessList {
     }
 
     pub fn is_open(&self, pid: sysinfo::Pid) -> bool {
-        self.system.process(pid).is_some()
+        self.get(pid).is_some()
+    }
+
+    pub fn get(&self, pid: sysinfo::Pid) -> Option<&sysinfo::Process> {
+        self.system.process(pid)
     }
 }
 
@@ -162,7 +168,7 @@ impl<T: Timer> Runtime<T> {
                 timer,
                 memory: None,
                 process_list: ProcessList::new(),
-                wasi: WasiCtxBuilder::new().build(),
+                wasi: build_wasi(),
             },
         );
 
@@ -237,6 +243,59 @@ impl<T: Timer> Runtime<T> {
     pub fn user_settings(&self) -> &[UserSetting] {
         &self.store.data().user_settings
     }
+}
+
+fn build_wasi() -> WasiCtx {
+    let wasi = WasiCtxBuilder::new()
+        .inherit_stdout()
+        .inherit_stderr()
+        .build();
+
+    #[cfg(windows)]
+    {
+        let mut drives = unsafe { winapi::um::fileapi::GetLogicalDrives() };
+        loop {
+            let drive_idx = drives.trailing_zeros();
+            if drive_idx >= 26 {
+                break;
+            }
+            drives &= !(1 << drive_idx);
+            let drive = drive_idx as u8 + b'a';
+            if let Ok(path) = wasmtime_wasi::Dir::open_ambient_dir(
+                str::from_utf8(&[drive, b':', b'\\']).unwrap(),
+                ambient_authority(),
+            ) {
+                wasi.push_dir(
+                    Box::new(wasmtime_wasi::dir::Dir::from_cap_std(path)),
+                    DirCaps::OPEN
+                        | DirCaps::READDIR
+                        | DirCaps::READLINK
+                        | DirCaps::PATH_FILESTAT_GET
+                        | DirCaps::FILESTAT_GET,
+                    FileCaps::READ | FileCaps::SEEK | FileCaps::TELL | FileCaps::FILESTAT_GET,
+                    PathBuf::from(str::from_utf8(&[b'/', b'm', b'n', b't', b'/', drive]).unwrap()),
+                )
+                .unwrap();
+            }
+        }
+    }
+    #[cfg(not(windows))]
+    {
+        if let Ok(path) = wasmtime_wasi::Dir::open_ambient_dir("/", ambient_authority()) {
+            wasi.push_dir(
+                Box::new(wasmtime_wasi::dir::Dir::from_cap_std(path)),
+                DirCaps::OPEN
+                    | DirCaps::READDIR
+                    | DirCaps::READLINK
+                    | DirCaps::PATH_FILESTAT_GET
+                    | DirCaps::FILESTAT_GET,
+                FileCaps::READ | FileCaps::SEEK | FileCaps::TELL | FileCaps::FILESTAT_GET,
+                PathBuf::from("/mnt"),
+            )
+            .unwrap();
+        }
+    }
+    wasi
 }
 
 fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationError> {

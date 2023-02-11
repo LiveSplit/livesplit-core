@@ -19,8 +19,12 @@ sysinfo = { version = "0.29.0", default-features = false, features = [
   "multithread",
 ] }
 time = { version = "0.3.3", default-features = false }
-wasmtime = { version = "9.0.2", default-features = false, features = [
+wasmtime = { version = "8.0.1", default-features = false, features = [
   "cranelift",
   "parallel-compilation",
 ] }
-wasmtime-wasi = "9.0.2"
+wasmtime-wasi = "8.0.1"
+wasi-common = "8.0.1"
+
+[target.'cfg(windows)'.dependencies]
+winapi = { version = "0.3.2", features = ["fileapi"] }
