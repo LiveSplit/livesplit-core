@@ -1,6 +1,7 @@
-use std::{sync::mpsc::Sender, thread::JoinHandle};
+use std::thread::JoinHandle;
 
 use crate::{Hotkey, KeyCode};
+use crossbeam_channel::Sender;
 use mio::Waker;
 use nix::unistd::{getgroups, Group};
 use promising_future::{future_promise, Promise};

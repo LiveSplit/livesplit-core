@@ -62,7 +62,10 @@ impl<T> Drop for Owned<T> {
 #[derive(Copy, Clone)]
 struct RunLoop(cf::RunLoopRef);
 
+// https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Multithreading/RunLoopManagement/RunLoopManagement.html
+// "The functions in Core Foundation are generally thread-safe and can be called from any thread."
 unsafe impl Send for RunLoop {}
+unsafe impl Sync for RunLoop {}
 
 struct State {
     hotkeys: Mutex<HashMap<Hotkey, Box<dyn FnMut() + Send + 'static>>>,
