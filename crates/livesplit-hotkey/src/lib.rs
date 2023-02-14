@@ -31,7 +31,7 @@ cfg_if::cfg_if! {
         extern crate objc;
         mod macos;
         use self::macos as platform;
-    } else if #[cfg(all(target_arch = "wasm32", target_os = "unknown", feature = "wasm-web"))] {
+    } else if #[cfg(all(target_family = "wasm", target_os = "unknown", feature = "wasm-web"))] {
         mod wasm_web;
         use self::wasm_web as platform;
     } else {
@@ -44,6 +44,13 @@ mod hotkey;
 mod key_code;
 mod modifiers;
 pub use self::{hotkey::*, key_code::*, modifiers::*, platform::*};
+
+#[cfg(not(all(target_family = "wasm", target_os = "unknown", feature = "wasm-web")))]
+const _: () = {
+    #[allow(unused)]
+    const fn assert_thread_safe<T: Send + Sync>() {}
+    assert_thread_safe::<Hook>();
+};
 
 #[cfg(test)]
 mod tests {
