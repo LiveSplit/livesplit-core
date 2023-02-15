@@ -1,6 +1,8 @@
 use std::f32::consts::TAU;
 use std::mem::transmute;
 use std::ops;
+use std::sync::Arc;
+use rustfft::{FftPlanner, Fft};
 use rustfft::num_complex::{Complex, ComplexFloat};
 
 use crate::{Segment, SegmentHistory, TimeSpan, TimingMethod};
@@ -35,7 +37,9 @@ struct ProbabilityDistribution {
     max_duration: f32, // the maximum simulated time duration
     omega_naught: f32, // the fundamental frequency of the fourier transform of the distribution
 
-    transform: Vec<Complex<f32>> // Fourier coefficients
+    transform: Vec<Complex<f32>>, // Fourier coefficients
+
+    fft_inverse: Arc<dyn Fft<f32>>
 
 }
 
@@ -60,11 +64,15 @@ impl ProbabilityDistribution {
                method: TimingMethod,
                max_duration: f32, num_terms: usize, smoothing_factor: f32) -> Self {
 
+        // create a planner
+        let mut planner: FftPlanner<f32> = FftPlanner::new();
+
         // initialize the distribution
         let mut dist = ProbabilityDistribution {
             max_duration,
             omega_naught: TAU / max_duration,
-            transform: vec![Complex::<f32>{re: 0.0, im: 0.0}; num_terms]
+            transform: vec![Complex::<f32>{re: 0.0, im: 0.0}; num_terms],
+            fft_inverse: planner.plan_fft_inverse(num_terms)
         };
 
         // go through all the splits and add them to the distribution
@@ -88,6 +96,13 @@ impl ProbabilityDistribution {
 
     }
 
+    ///
+    /// Computes the Probability of the distribution being less than the specified amount
+    ///
+    /// # Arguments
+    ///
+    /// * `time` - The point in time below which we wish to know the probability of being
+    ///
     pub fn probability_below(self, time: f32) -> f32{
         let step = step_function_dft(self.omega_naught, self.transform.len(), time);
 
@@ -109,6 +124,7 @@ impl ops::Add<ProbabilityDistribution> for ProbabilityDistribution {
             max_duration: self.max_duration,
             omega_naught: self.omega_naught,
             transform: Vec::with_capacity(self.transform.capacity()),
+            fft_inverse: self.fft_inverse
         };
 
         // multiply the elements

@@ -1,9 +1,10 @@
 use std::f32::consts::TAU;
 
 use assert_approx_eq::assert_approx_eq;
-use rustfft::{FftPlanner, num_complex::{Complex, ComplexFloat}};
+use rustfft::{Fft, FftPlanner, num_complex::{Complex, ComplexFloat}};
 
 use core::slice::Iter;
+use std::sync::Arc;
 use crate::analysis::statistical_pb_chance::discontinuous_fourier_transforms::{delta_function_dft, step_function_dft};
 
 #[test]
@@ -70,6 +71,10 @@ fn test_dirac_delta_different_duration() {
 
 }
 
+fn print_type_of<T>(_: &T) {
+    println!("{}", std::any::type_name::<T>())
+}
+
 #[test]
 fn test_unit_step() {
     let points = 16;
@@ -77,7 +82,8 @@ fn test_unit_step() {
     let mut heaviside_fourier = step_function_dft(TAU / points as f32, points, 10.5f32);
 
     let mut planner = FftPlanner::new();
-    let fft = planner.plan_fft_inverse(points);
+    let fft: Arc<dyn Fft<f32>> = planner.plan_fft_inverse(points);
+
 
     fft.process(&mut *heaviside_fourier);
 
@@ -91,5 +97,10 @@ fn test_unit_step() {
     for i in 11..points {
         assert_approx_eq!(magnitudes[i], 0f32, 0.1);
     }
+
+}
+
+#[test]
+fn test_init_probability_distribution() {
 
 }
