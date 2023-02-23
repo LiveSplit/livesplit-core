@@ -5,7 +5,8 @@ use std::sync::Arc;
 use rustfft::{FftPlanner, Fft};
 use rustfft::num_complex::{Complex, ComplexFloat};
 
-use crate::{Segment, SegmentHistory, TimeSpan, TimingMethod};
+use crate::{Segment, SegmentHistory, TimeSpan};
+use crate::timing::TimingMethod;
 use crate::analysis::statistical_pb_chance::discontinuous_fourier_transforms::{delta_function_dft, step_function_dft};
 
 /// Utilities for handling Probability Distributions
@@ -32,7 +33,7 @@ use crate::analysis::statistical_pb_chance::discontinuous_fourier_transforms::{d
 ///
 ///
 
-struct ProbabilityDistribution {
+pub struct ProbabilityDistribution {
 
     max_duration: f32, // the maximum simulated time duration
     omega_naught: f32, // the fundamental frequency of the fourier transform of the distribution
@@ -60,7 +61,7 @@ impl ProbabilityDistribution {
     /// *The time of the run can be larger than this maximum duration under most circumstances. Problems arise
     /// when the duration of the run is close to the maximum duration of the run.
     ///
-    pub fn new(times: SegmentHistory,
+    pub fn new(times: &SegmentHistory,
                method: TimingMethod,
                max_duration: f32, num_terms: usize, smoothing_factor: f32) -> Self {
 
@@ -75,10 +76,17 @@ impl ProbabilityDistribution {
             fft_inverse: planner.plan_fft_inverse(num_terms)
         };
 
+        // println!("omega naught: {}", dist.omega_naught);
+        //
+        // println!("{:?}", dist.transform);
+
         // go through all the splits and add them to the distribution
         for (history_index, split) in times.iter_actual_runs().enumerate() {
-            let time = split.1[method].expect("Missing specified timing method").total_seconds() as f32;
+
+            let time = split.1[method].expect(&*format!("Split does not include the specified timing method {}", if method == TimingMethod::RealTime {"Real Time"} else {"In-Game Time"})).total_seconds() as f32;
             let dft = delta_function_dft(dist.omega_naught, num_terms, time);
+
+            // println!("{:?}", dft);
 
             // on the very first segment, there is no weighing, so we just insert the time with no weight
             if history_index == 0 {
@@ -92,6 +100,9 @@ impl ProbabilityDistribution {
             }
         }
 
+        // println!("after adding the points");
+        // println!("{:?}", dist.transform);
+
         return dist;
 
     }
@@ -104,14 +115,27 @@ impl ProbabilityDistribution {
     /// * `time` - The point in time below which we wish to know the probability of being
     ///
     pub fn probability_below(self, time: f32) -> f32{
+
+        // to take the integral, we evaluate the fourier transform at omega = 0. But this gives us the integral from -inf to inf.
+        // we want to limit our integral, which we can do by multiplying by a unit step function. In the frequency domain,
+        // this corresponds to taking a convolution. Since we only need to evaluate the result of the convolution at one point, all we're
+        // really doing is a multiply-add computation
+
         let step = step_function_dft(self.omega_naught, self.transform.len(), time);
 
-        let convolution = (0..step.len()).map(|index| -> Complex<f32> {
-            return self.transform[index] * step[index];
+        // to compute the convolution, we multiply the distribution and the step function element wise
+        // with one in reverse order and add them together. For a given index `i`, the correct product is
+        // calculated by multiplying element `i` of one function by `N - i` in the other function, where N
+        // is the number of elements in the arrays. For the case of i = 0 however, this results in us evaluating
+        // the array at index N, which is out of bounds. For this reason, we skip the first element and add
+        // it's product at the very end.
+        let convolution = (1..step.len()).map(|index| -> Complex<f32> {
+            return self.transform[index] * step[step.len() - index];
         });
 
-        return convolution.sum::<Complex<f32>>().abs();
+        println!("{:?}", convolution);
 
+        return (convolution.sum::<Complex<f32>>() + self.transform[0] * step[0]).abs() / self.transform.len() as f32;
     }
 
 }
