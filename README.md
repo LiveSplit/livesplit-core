@@ -51,7 +51,7 @@ library, not both, you can run either one of the following commands:
 # Shared Library
 cargo rustc --release -p livesplit-core-capi --crate-type cdylib
 # Static Library
-cargo rustc --release -p capi --crate-type staticlib
+cargo rustc --release -p livesplit-core-capi --crate-type staticlib
 ```
 
 If you want to build the bindings for the library too, you need to go into the
