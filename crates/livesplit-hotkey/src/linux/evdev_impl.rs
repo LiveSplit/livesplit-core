@@ -1,6 +1,4 @@
-use std::{
-    collections::hash_map::HashMap, os::unix::prelude::AsRawFd, ptr, sync::mpsc::channel, thread,
-};
+use std::{collections::hash_map::HashMap, os::unix::prelude::AsRawFd, ptr, thread};
 
 use evdev::{Device, EventType, InputEventKind, Key};
 use mio::{unix::SourceFd, Events, Interest, Poll, Token, Waker};
@@ -238,7 +236,7 @@ pub const fn code_for(key: KeyCode) -> Option<Key> {
 }
 
 pub fn new() -> Result<Hook> {
-    let (sender, receiver) = channel();
+    let (sender, receiver) = crossbeam_channel::unbounded();
     let mut poll = Poll::new().map_err(|_| Error::EPoll)?;
     let waker = Waker::new(poll.registry(), PING_TOKEN).map_err(|_| Error::EPoll)?;
 

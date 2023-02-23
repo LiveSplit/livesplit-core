@@ -2,9 +2,7 @@ use std::{
     collections::HashMap,
     mem::MaybeUninit,
     os::raw::{c_int, c_uint},
-    ptr,
-    sync::mpsc::channel,
-    thread,
+    ptr, thread,
 };
 
 use mio::{unix::SourceFd, Events, Interest, Poll, Token, Waker};
@@ -76,7 +74,7 @@ const PING_TOKEN: Token = Token(1);
 
 pub fn new() -> Result<Hook> {
     unsafe {
-        let (sender, receiver) = channel();
+        let (sender, receiver) = crossbeam_channel::unbounded();
 
         let xlib = Xlib::open().map_err(|_| Error::NoXLib)?;
         (xlib.XSetErrorHandler)(Some(handle_error));
