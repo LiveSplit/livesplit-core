@@ -264,14 +264,16 @@ impl ProbabilityDistribution {
     ///
     pub fn plot(self) -> (Vec<f32>, Vec<f32>) {
 
-        let x_points = (0..self.transform.len()).map(|x| x as f32 * self.max_duration / self.transform.len() as f32).collect();
+        let num_terms = self.transform.len();
+
+        let x_points = (0..num_terms).map(|x| x as f32 * self.max_duration / num_terms as f32).collect();
 
         // use the inverse fft we own to transform our points
         let mut inverted = self.transform.clone();
         self.fft_inverse.process(&mut *inverted);
 
         // take the magnitude of the y points to convert them to real numbers
-        let y_points = inverted.iter().map(|x| x.abs()).collect();
+        let y_points = inverted.iter().map(|x| x.abs() / num_terms as f32).collect();
 
         return (x_points, y_points);
     }
@@ -292,7 +294,7 @@ impl ops::Add<ProbabilityDistribution> for ProbabilityDistribution {
         let mut result: ProbabilityDistribution = ProbabilityDistribution {
             max_duration: self.max_duration,
             omega_naught: self.omega_naught,
-            transform: Vec::with_capacity(self.transform.capacity()),
+            transform: Vec::with_capacity(self.transform.len()),
             fft_inverse: self.fft_inverse
         };
 

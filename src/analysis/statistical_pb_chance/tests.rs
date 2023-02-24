@@ -153,3 +153,29 @@ fn test_init_probability_distribution() {
     //
     // }
 }
+
+#[test]
+fn test_inverse_fourier_transform() {
+
+    let mut times = SegmentHistory::default();
+
+    times.insert(1, Time::from(RealTime(Some(TimeSpan::from_seconds(0.625)))));
+    times.insert(2, Time::from(RealTime(Some(TimeSpan::from_seconds(6.25)))));
+
+    let dist = ProbabilityDistribution::new(&times, TimingMethod::RealTime,
+                                            10.0, 16, 0.5);
+
+    // plot the distribution
+    let (x_points, y_points) = dist.plot();
+
+    // make sure all the points except for the two delta functions are zero
+    assert_approx_eq!(y_points[0], 0.0);
+    assert_approx_eq!(y_points[1], 0.5);
+    assert_approx_eq!(y_points[2], 0.0);
+
+    assert_approx_eq!(y_points[9], 0.0);
+    assert_approx_eq!(y_points[10], 0.5);
+    assert_approx_eq!(y_points[11], 0.0);
+
+
+}
