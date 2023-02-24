@@ -3,10 +3,7 @@ use std::f32::consts::TAU;
 use assert_approx_eq::assert_approx_eq;
 use rustfft::{Fft, FftPlanner, num_complex::{Complex, ComplexFloat}};
 
-use core::slice::Iter;
-use std::any::Any;
 use std::sync::Arc;
-use time::Duration;
 use crate::analysis::statistical_pb_chance::discontinuous_fourier_transforms::{delta_function_dft, step_function_dft};
 use crate::analysis::statistical_pb_chance::probability_distribution::{ProbabilityDistribution};
 use crate::{RealTime, SegmentHistory, Time, TimeSpan, TimingMethod};
@@ -88,7 +85,7 @@ fn test_dirac_delta_non_integer() {
     let mut delta_fourier = delta_function_dft( TAU / 10f32,
                                                 points, 1.2);
 
-    println!("{:?}", delta_fourier);
+    // println!("{:?}", delta_fourier);
 
     // create the FFT planner
     let mut planner = FftPlanner::new();
@@ -99,7 +96,7 @@ fn test_dirac_delta_non_integer() {
     // convert to real numbers by taking the magnitude of the complex numbers
     let magnitudes: Vec<f32> = delta_fourier.iter().map(|x: &Complex<f32>| -> f32 { x.abs() / delta_fourier.len() as f32}).collect();
 
-    println!("{:?}", magnitudes);
+    // println!("{:?}", magnitudes);
 
 }
 
@@ -141,14 +138,14 @@ fn test_init_probability_distribution() {
     times.insert(2, Time::from(RealTime(Some(TimeSpan::from_seconds(6.0)))));
 
     let dist = ProbabilityDistribution::new(&times, TimingMethod::RealTime,
-                                            10.0, 16, 0.5);
+                                            10.0, 256, 0.5);
 
     let limit = 0.0;
 
-    println!("There is a {}% chance of being less than, {}", dist.probability_below(0.0) * 100.0, 0.0);
-    println!("There is a {}% chance of being less than, {}", dist.probability_below(3.0) * 100.0, 3.0);
-    println!("There is a {}% chance of being less than, {}", dist.probability_below(3.5) * 100.0, 3.5);
-    println!("There is a {}% chance of being less than, {}", dist.probability_below(8.0) * 100.0, 8.0);
+    assert_approx_eq!(dist.probability_below(0.0), 0.0, 0.1);
+    assert_approx_eq!(dist.probability_below(4.0), 0.5, 0.1);
+    assert_approx_eq!(dist.probability_below(5.0), 0.5, 0.1);
+    assert_approx_eq!(dist.probability_below(8.0), 1.0, 0.1);
 
     // for time in times.iter() {
     //

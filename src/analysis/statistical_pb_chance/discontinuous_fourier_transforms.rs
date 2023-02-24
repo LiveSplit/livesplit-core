@@ -1,5 +1,4 @@
-use rustfft::{FftPlanner, num_complex::Complex};
-use std::f64::consts::TAU;
+use rustfft::num_complex::Complex;
 
 ///
 /// Functions that calculate the Fourier transforms of crucial discontinuous functions (Dirac Delta

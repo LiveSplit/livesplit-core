@@ -1,12 +1,10 @@
-use std::cmp::{max, min};
 use std::f32::consts::TAU;
-use std::mem::transmute;
 use std::ops;
 use std::sync::Arc;
 use rustfft::{FftPlanner, Fft};
 use rustfft::num_complex::{Complex, ComplexFloat};
 
-use crate::{Segment, SegmentHistory, TimeSpan};
+use crate::SegmentHistory;
 use crate::timing::TimingMethod;
 use crate::analysis::statistical_pb_chance::discontinuous_fourier_transforms::{delta_function_dft, step_function_dft};
 
