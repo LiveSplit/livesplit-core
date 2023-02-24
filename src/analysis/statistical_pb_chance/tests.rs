@@ -8,12 +8,6 @@ use crate::analysis::statistical_pb_chance::discontinuous_fourier_transforms::{d
 use crate::analysis::statistical_pb_chance::probability_distribution::{ProbabilityDistribution};
 use crate::{RealTime, SegmentHistory, Time, TimeSpan, TimingMethod};
 
-
-#[test]
-fn example_test() {
-    assert!("hello world".contains("hello"));
-}
-
 ///
 /// Makes sure that the discontinuous Fourier transform yields the correct values
 ///
@@ -177,5 +171,9 @@ fn test_inverse_fourier_transform() {
     assert_approx_eq!(y_points[10], 0.5);
     assert_approx_eq!(y_points[11], 0.0);
 
+}
+
+#[test]
+fn addDistributions() {
 
 }

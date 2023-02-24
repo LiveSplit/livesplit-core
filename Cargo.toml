@@ -182,6 +182,10 @@ harness = false
 name = "software_rendering"
 harness = false
 
+[[bench]]
+name = "statistical_pb_chance"
+harness = false
+
 [profile.max-opt]
 inherits = "release"
 lto = true

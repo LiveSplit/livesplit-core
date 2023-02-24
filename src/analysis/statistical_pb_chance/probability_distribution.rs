@@ -290,7 +290,7 @@ impl ops::Add<ProbabilityDistribution> for ProbabilityDistribution {
     /// in the Frequency domain. Therefore, it is only necessary to do an element wise multiplication
     /// of the fourier transforms.
     ///
-    fn add(self, other: ProbabilityDistribution) -> ProbabilityDistribution {
+    fn add(self, other: &ProbabilityDistribution) -> ProbabilityDistribution {
         let mut result: ProbabilityDistribution = ProbabilityDistribution {
             max_duration: self.max_duration,
             omega_naught: self.omega_naught,
@@ -309,7 +309,7 @@ impl ops::Add<ProbabilityDistribution> for ProbabilityDistribution {
 
 impl ops::AddAssign<ProbabilityDistribution> for ProbabilityDistribution {
 
-    fn add_assign(&mut self, rhs: ProbabilityDistribution){
+    fn add_assign(&mut self, rhs: &ProbabilityDistribution){
         for i in 0..self.transform.len() {
             self.transform[i] *= rhs.transform[i];
         }
