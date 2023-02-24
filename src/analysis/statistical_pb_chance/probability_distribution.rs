@@ -1,3 +1,4 @@
+use std::cmp::{max, min};
 use std::f32::consts::TAU;
 use std::mem::transmute;
 use std::ops;
@@ -114,7 +115,7 @@ impl ProbabilityDistribution {
     ///
     /// * `time` - The point in time below which we wish to know the probability of being
     ///
-    pub fn probability_below(self, time: f32) -> f32{
+    pub fn probability_below(&self, time: f32) -> f32{
 
         // to take the integral, we evaluate the fourier transform at omega = 0. But this gives us the integral from -inf to inf.
         // we want to limit our integral, which we can do by multiplying by a unit step function. In the frequency domain,
@@ -130,12 +131,13 @@ impl ProbabilityDistribution {
         // the array at index N, which is out of bounds. For this reason, we skip the first element and add
         // it's product at the very end.
         let convolution = (1..step.len()).map(|index| -> Complex<f32> {
+            // println!("{}", self.transform[index] * step[step.len() - index]);
             return self.transform[index] * step[step.len() - index];
         });
 
-        println!("{:?}", convolution);
+        let integral = (convolution.sum::<Complex<f32>>() + self.transform[0] * step[0]).abs();
 
-        return (convolution.sum::<Complex<f32>>() + self.transform[0] * step[0]).abs() / self.transform.len() as f32;
+        return f32::max(f32::min(integral / self.max_duration as f32, 1.0), 0.0);
     }
 
 }

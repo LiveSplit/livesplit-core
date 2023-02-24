@@ -138,17 +138,17 @@ fn test_init_probability_distribution() {
     let mut times = SegmentHistory::default();
 
     times.insert(1, Time::from(RealTime(Some(TimeSpan::from_seconds(1.2)))));
-    // times.insert(2, Time::from(RealTime(Some(TimeSpan::from_seconds(2.0)))));
-    // times.insert(3, Time::from(RealTime(Some(TimeSpan::from_seconds(4.5)))));
-    // times.insert(4, Time::from(RealTime(Some(TimeSpan::from_seconds(5.3)))));
-    // times.insert(5, Time::from(RealTime(Some(TimeSpan::from_seconds(5.5)))));
+    times.insert(2, Time::from(RealTime(Some(TimeSpan::from_seconds(6.0)))));
 
     let dist = ProbabilityDistribution::new(&times, TimingMethod::RealTime,
-                                            10.0, 16, 1.0);
+                                            10.0, 16, 0.5);
 
-    let limit = 5.0;
+    let limit = 0.0;
 
-    println!("There is a {}% chance of being less than, {}", dist.probability_below(limit) * 100.0, limit);
+    println!("There is a {}% chance of being less than, {}", dist.probability_below(0.0) * 100.0, 0.0);
+    println!("There is a {}% chance of being less than, {}", dist.probability_below(3.0) * 100.0, 3.0);
+    println!("There is a {}% chance of being less than, {}", dist.probability_below(3.5) * 100.0, 3.5);
+    println!("There is a {}% chance of being less than, {}", dist.probability_below(8.0) * 100.0, 8.0);
 
     // for time in times.iter() {
     //

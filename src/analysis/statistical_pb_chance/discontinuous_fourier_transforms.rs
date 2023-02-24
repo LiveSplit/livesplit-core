@@ -29,12 +29,24 @@ use std::f64::consts::TAU;
 ///
 pub fn delta_function_dft(omega_naught: f32, num_terms: usize, time: f32) -> Vec<Complex<f32>> {
 
+    // determine the halfway point of the array. This is important because the frequencies in the second
+    // half of the transform are effectively negative frequencies. Since the formula for the fourier transform
+    // uses the frequency outside of a complex exponential we need to use the negative
+    // index of the second half of the array.
+    let cutoff = (num_terms as f32 / 2.0).ceil() as usize;
+
     // initialize the fourier series
     let mut fourier_series= vec![Complex::<f32>{re: 0.0, im: 0.0}; num_terms];
 
-    // insert the positive elements into the array
-    for k in 0..num_terms {
+    for k in 0..cutoff {
         let omega = omega_naught * k as f32;
+        // println!("Omega: {}", omega);
+        fourier_series[k] = Complex::<f32>{re: 0.0, im: - omega * time}.exp();
+    }
+
+    for k in cutoff..num_terms {
+        let omega = omega_naught * (k as i64 - num_terms as i64) as f32; // different calculation of omega
+        // println!("Omega: {}", omega);
         fourier_series[k] = Complex::<f32>{re: 0.0, im: - omega * time}.exp();
     }
 
@@ -98,6 +110,7 @@ pub fn step_function_dft(omega_naught: f32, num_terms: usize, time: f32) -> Vec<
 
     for k in 1..cutoff {
         let omega = omega_naught * k as f32;
+        // println!("Omega: {}", omega);
         fourier_series[k] = Complex::<f32>{re: 0.0, im: - 1.0 / omega} * // 1/jω
             (Complex::<f32>{re: 0.0, im: - omega * (-0.5)}.exp() - // e^{-iω(-1/2)}
              Complex::<f32>{re: 0.0, im: - omega * (time)}.exp()); // e^{-iωt_{0}}
@@ -105,6 +118,7 @@ pub fn step_function_dft(omega_naught: f32, num_terms: usize, time: f32) -> Vec<
 
     for k in cutoff..num_terms {
         let omega = omega_naught * (k as i64 - num_terms as i64) as f32; // different calculation of omega
+        // println!("Omega: {}", omega);
         fourier_series[k] = Complex::<f32>{re: 0.0, im: - 1.0 / omega} * // 1/jω
             (Complex::<f32>{re: 0.0, im: - omega * (-0.5)}.exp() - // e^{-iω(-1/2)}
                 Complex::<f32>{re: 0.0, im: - omega * (time)}.exp()); // e^{-iωt_{0}}
