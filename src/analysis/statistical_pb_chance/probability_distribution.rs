@@ -4,7 +4,7 @@ use std::sync::Arc;
 use rustfft::{FftPlanner, Fft};
 use rustfft::num_complex::{Complex, ComplexFloat};
 
-use crate::SegmentHistory;
+use crate::{SegmentHistory, TimeSpan};
 use crate::timing::TimingMethod;
 use crate::analysis::statistical_pb_chance::discontinuous_fourier_transforms::{delta_function_dft, step_function_dft};
 
@@ -177,16 +177,20 @@ impl ProbabilityDistribution {
         // go through all the splits and add them to the distribution
         for (history_index, split) in times.iter_actual_runs().enumerate() {
 
-            let time = split.1[method].expect(&*format!("Split does not include the specified timing method {}", if method == TimingMethod::RealTime {"Real Time"} else {"In-Game Time"})).total_seconds() as f32;
-
-            // println!("{:?}", dft);
-
-            // on the very first segment, there is no weighing, so we just insert the time with no weight
-            if history_index == 0 {
-                dist.transform = delta_function_dft(dist.omega_naught, num_terms, time);
-            }
-            else {
-                dist.add_point(time, smoothing_factor);
+            // only add splits to the distribution that use the specified timing method (Real time vs In-Game time)
+            match split.1[method] {
+                Some(time) => {
+                    // on the very first segment, there is no weighing, so we just insert the time with no weight
+                    if history_index == 0 {
+                        dist.transform = delta_function_dft(dist.omega_naught, num_terms, time.total_seconds() as f32);
+                    }
+                    else {
+                        dist.add_point(time.total_seconds() as f32, smoothing_factor);
+                    }
+                }
+                _ => {
+                    continue;
+                }
             }
         }
 
@@ -253,6 +257,23 @@ impl ProbabilityDistribution {
         let integral = (convolution.sum::<Complex<f32>>() + self.transform[0] * step[0]).abs();
 
         return f32::max(f32::min(integral / self.max_duration as f32, 1.0), 0.0);
+    }
+
+    ///
+    /// Obtains co-ordinate pairs to plot the probability density function
+    ///
+    pub fn plot(self) -> (Vec<f32>, Vec<f32>) {
+
+        let x_points = (0..self.transform.len()).map(|x| x as f32 * self.max_duration / self.transform.len() as f32).collect();
+
+        // use the inverse fft we own to transform our points
+        let mut inverted = self.transform.clone();
+        self.fft_inverse.process(&mut *inverted);
+
+        // take the magnitude of the y points to convert them to real numbers
+        let y_points = inverted.iter().map(|x| x.abs()).collect();
+
+        return (x_points, y_points);
     }
 
 }
