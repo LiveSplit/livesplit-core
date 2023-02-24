@@ -15,21 +15,116 @@ use crate::analysis::statistical_pb_chance::discontinuous_fourier_transforms::{d
 /// "Probability Distributions", or "Probability Density Functions" are essentially continuous histograms. The describe the relationship
 /// between possible times and the probability of obtaining them. The odds that the random variable
 /// will lie between points A and B is the integral from A to B of the probability density function.
+/// In the case of speedrunning, the Random variable is the time of a split or the time of the full run.
+/// Therefore, the probability of a speedrunner getting a time between A and B would be the integral
+/// from A to B of the probability density function.
+///
+/// Probability Distributions
+///
 /// The "Skill curve" used elsewhere is essentially the integral of a probability distribution.
 /// Both methods contain the same information, however the math required to combine probability distributions
 /// can be optimized better than a skill curve can be.
 ///
-/// For more details, see [Wikipedia](https://en.wikipedia.org//wiki/Probability_density_function), 3Blue1Brown also has a [video](https://www.3blue1brown.com/lessons/pdfs) on the subject,
+/// For more details, see [Wikipedia](https://en.wikipedia.org//wiki/Probability_density_function),
+/// 3Blue1Brown also has a [video](https://www.3blue1brown.com/lessons/pdfs) on the subject,
 /// but the central example of this video is irreverent to what is done here
 ///
 /// # Usage
 ///
+/// A probability distribution can be created from a split history object
+///
+/// ```rust
+/// use livesplit_core::{RealTime, SegmentHistory, TimingMethod};
+/// use livesplit_core::analysis::statistical_pb_chance::probability_distribution::ProbabilityDistribution;
+///
+/// // initialize some segment history
+/// let history: SegmentHistory = // [...]
+///
+/// // Max Duration: 2 Hrs = 7200 seconds. Amost always still works the run lasts more than Max_Duration.
+/// // Calculations will be inaccurate only if the total run time is close to a multiple of the Max Duration (2 hours, 4 hours, 6 hours, etc.)
+/// // num_terms: Number of terms in Fourier Transform (fewer terms = faster, more terms = greater precision)
+/// // smoothing_factor: The most recent split makes up 20% of the distribution (20% = 0.2)
+/// let dist = ProbabilityDistribution::new(&history, method: TimingMethod::RealTime, max_duration: 7200, num_terms: 8192, smoothing_factor: 0.2);
+/// ```
+/// (See `ProbabilityDistribution::new` for more details)
+///
+/// Once a probability Distribution has been created, additional splits can be added to it.
+///
+/// ```rust
+/// // adding a time of 2:12.7 to the split with weight 0.2
+/// dist.add_point(2 * 60 + 12.7, 0.2)
+/// ```
+///
+///
+/// There are two main pieces of functionality associated with probability distributions
+///
+/// 1) Combining the distributions of all splits in the run to generate the distribution of possible final
+/// times for the run
+/// 2) Using the distribution of the possible final times to determine the probability that the final
+/// time will be below a desired goal or objective.
+///
+/// The distributions of two splits can be added to each other by simply using the overloaded `add` trait
+///
+/// ```rust
+/// use livesplit_core::analysis::statistical_pb_chance::probability_distribution::ProbabilityDistribution;
+///
+/// // create from segment history
+/// let cap_kingdom: ProbabilityDistribution;
+/// let cascade_kingdom: ProbabilityDistribution;
+/// let sand_kingdom: ProbabilityDistribution;
+/// let lake_kingdom: ProbabilityDistribution;
+/// // ...
+///
+/// // compute the distributions of the remaining kingdoms
+/// let full_run = cap_kingdom + cascade_kingdom + sand_kingdom + lake_kingdom; // + ...
+/// let after_cap = cascade_kingdom + sand_kingdom + lake_kingdom; // + ...
+/// let after_cascade = sand_kingdom + lake_kingdom; // + ...
+/// // ...
+///
+/// ```
+///
+/// To determine the probability that a given distribution is below some specific amount, simply use
+/// the `probability_below` method
+///
+/// ```rust
+/// let sub_hour = full_run.probability_below(60 * 60);
+/// let below_55_minutes_after_cap = after_cap.probability_below(55 * 60);
+/// ```
 ///
 ///
 /// # Internal Functionality
 ///
-/// There are two computationally expensive tasks necessary to use probability distributions to compute
+/// Instead of tracking the data for the full probability distribution, the [Fourier Transform](https://en.wikipedia.org/wiki/Fourier_transform)
+/// of the distribution is tracked to allow for extremely efficient computations.
 ///
+/// The PDF of the sum of two random variables is equal to the convolution of the PDFs of the two random
+/// variables being added. The convolution theorem states that convolution in the time domain corresponds to
+/// multiplication in the frequency domain. Therefore, the distribution of the sum of any two splits is computed
+/// by complex multiplication.
+///
+/// The probability that a random variable will be less than a given point is a bit more difficult to explain.
+/// We wish to calculate...
+///
+/// $$\int_{-\infty}^{t}p(x)dx$$
+///
+/// ...where p(x) is the probability density function. We observe that the integral is very similar to the
+/// Fourier transform evaluated at the point $$\omega=0$$:
+///
+/// $$\int_{-\infty}^{\infty}p(x)dx = \hat{p}[\omega=0]$$
+///
+/// The only difference between the two is the upper limit of integration. We can now use a trick involving unit step functions. If you take an integral and multiply it by a unit step function, it has the effect of simply changing the limit of integration since the function is zero
+/// outside that limit of integration and one within it. Therefore
+///
+/// $$\int_{-\infty}^{\infty}p(x)u(t-x)dx = \int_{-\infty}^{t}p(x)dx$$
+///
+/// Therefore, if we can multiply the probability distribution by a unit step function and evaluate the resulting Fourier transform at $$\omega=0$$, we can calculate the integral. Due to the convolution theorem, multiplication by a unit step function in the time domain
+/// results in a convolution operation in the frequency domain. Convolution is computationally expensive, so we wish to avoid it as much as possible. Luckily, we only need to evaluate the Convolution of the distribution and the unit step function at a single point, $$\omega=0$$. Therefore, we do not need to compute the whole convolution, saving many computational resources.
+///
+/// From the definition of the discrete convolution,
+///
+/// $$(\hat{p}[x]*\hat{u}[x])[\omega=0] = \sum_{k=0}^{N}p[k]u[0-x] = \sum_{k=0}^{N}p[k]u[-x]$$
+///
+/// the `probability_below` function uses this methodology to compute the CDF of the distribution when desired
 ///
 
 pub struct ProbabilityDistribution {
@@ -37,7 +132,7 @@ pub struct ProbabilityDistribution {
     max_duration: f32, // the maximum simulated time duration
     omega_naught: f32, // the fundamental frequency of the fourier transform of the distribution
 
-    transform: Vec<Complex<f32>>, // Fourier coefficients
+    transform: Vec<Complex<f32>>, // Fourier transform of the function
 
     fft_inverse: Arc<dyn Fft<f32>>
 
@@ -58,7 +153,7 @@ impl ProbabilityDistribution {
     /// * `smoothing_factor` - Smoothing factor of the exponential smoothing applied to the SegmentHistory (See [here](https://en.wikipedia.org/wiki/Exponential_smoothing))
     ///
     /// *The time of the run can be larger than this maximum duration under most circumstances. Problems arise
-    /// when the duration of the run is close to the maximum duration of the run.
+    /// when the duration of the run is close to the maximum duration of the run, or a multiple of it.
     ///
     pub fn new(times: &SegmentHistory,
                method: TimingMethod,
@@ -83,19 +178,15 @@ impl ProbabilityDistribution {
         for (history_index, split) in times.iter_actual_runs().enumerate() {
 
             let time = split.1[method].expect(&*format!("Split does not include the specified timing method {}", if method == TimingMethod::RealTime {"Real Time"} else {"In-Game Time"})).total_seconds() as f32;
-            let dft = delta_function_dft(dist.omega_naught, num_terms, time);
 
             // println!("{:?}", dft);
 
             // on the very first segment, there is no weighing, so we just insert the time with no weight
             if history_index == 0 {
-                dist.transform = dft;
+                dist.transform = delta_function_dft(dist.omega_naught, num_terms, time);
             }
             else {
-                // add the two vectors element wise in the form of an exponentially weighted average
-                for frequency_index in 0..num_terms {
-                    dist.transform[frequency_index] = dft[frequency_index] * smoothing_factor + (1.0 - smoothing_factor) * dist.transform[frequency_index];
-                }
+                dist.add_point(time, smoothing_factor);
             }
         }
 
@@ -107,11 +198,37 @@ impl ProbabilityDistribution {
     }
 
     ///
-    /// Computes the Probability of the distribution being less than the specified amount
+    /// Adds a point to the probability distribution
+    ///
+    /// # Arguments
+    ///
+    /// * `time` - the time which is to be added to the distribution.
+    /// * `smoothing_factor` - Smoothing factor of the exponential smoothing applied to the SegmentHistory (See [here](https://en.wikipedia.org/wiki/Exponential_smoothing))
+    ///
+    pub fn add_point(&mut self, time: f32, smoothing_factor: f32){
+
+        let num_terms = self.transform.len();
+
+        let dft = delta_function_dft(self.omega_naught, num_terms, time);
+
+        // add the two vectors element wise in the form of an exponentially weighted average
+        for frequency_index in 0..num_terms {
+            self.transform[frequency_index] = dft[frequency_index] * smoothing_factor + (1.0 - smoothing_factor) * self.transform[frequency_index];
+        }
+    }
+
+    ///
+    /// Computes the Probability of the distribution being less than the specified amount (i.e. the
+    /// Cumulative Distribution Function or CDF).
     ///
     /// # Arguments
     ///
     /// * `time` - The point in time below which we wish to know the probability of being
+    ///
+    /// # Mathematics
+    ///
+    /// the Cumulative Distribution Function is defined as the integral from -∞ to t of the
+    /// probability density function (PDF)
     ///
     pub fn probability_below(&self, time: f32) -> f32{
 
@@ -143,6 +260,13 @@ impl ProbabilityDistribution {
 impl ops::Add<ProbabilityDistribution> for ProbabilityDistribution {
     type Output = ProbabilityDistribution;
 
+    ///
+    /// Computes the distribution of the sum of two random variables by convolution.
+    ///
+    /// By the Convolution theorem, convolution in the time domain corresponds to multiplication
+    /// in the Frequency domain. Therefore, it is only necessary to do an element wise multiplication
+    /// of the fourier transforms.
+    ///
     fn add(self, other: ProbabilityDistribution) -> ProbabilityDistribution {
         let mut result: ProbabilityDistribution = ProbabilityDistribution {
             max_duration: self.max_duration,

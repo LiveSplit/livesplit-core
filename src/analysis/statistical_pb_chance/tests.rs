@@ -140,7 +140,7 @@ fn test_init_probability_distribution() {
     let dist = ProbabilityDistribution::new(&times, TimingMethod::RealTime,
                                             10.0, 256, 0.5);
 
-    let limit = 0.0;
+    // we test to see if our distribution is working by using the CDF
 
     assert_approx_eq!(dist.probability_below(0.0), 0.0, 0.1);
     assert_approx_eq!(dist.probability_below(4.0), 0.5, 0.1);
