@@ -127,6 +127,7 @@ use crate::analysis::statistical_pb_chance::discontinuous_fourier_transforms::{d
 /// the `probability_below` function uses this methodology to compute the CDF of the distribution when desired
 ///
 
+#[derive(Clone)]
 pub struct ProbabilityDistribution {
 
     max_duration: f32, // the maximum simulated time duration
@@ -290,17 +291,14 @@ impl ops::Add<ProbabilityDistribution> for ProbabilityDistribution {
     /// in the Frequency domain. Therefore, it is only necessary to do an element wise multiplication
     /// of the fourier transforms.
     ///
-    fn add(self, other: &ProbabilityDistribution) -> ProbabilityDistribution {
-        let mut result: ProbabilityDistribution = ProbabilityDistribution {
-            max_duration: self.max_duration,
-            omega_naught: self.omega_naught,
-            transform: Vec::with_capacity(self.transform.len()),
-            fft_inverse: self.fft_inverse
-        };
+    fn add(self, other: ProbabilityDistribution) -> ProbabilityDistribution {
+
+        // copy self
+        let mut result = self.clone().to_owned();
 
         // multiply the elements
         for i in 0..self.transform.len() {
-            result.transform[i] = self.transform[i] * other.transform[i];
+            result.transform[i] *= other.transform[i];
         }
 
         return result;
@@ -309,7 +307,7 @@ impl ops::Add<ProbabilityDistribution> for ProbabilityDistribution {
 
 impl ops::AddAssign<ProbabilityDistribution> for ProbabilityDistribution {
 
-    fn add_assign(&mut self, rhs: &ProbabilityDistribution){
+    fn add_assign(self: &mut ProbabilityDistribution, rhs: ProbabilityDistribution){
         for i in 0..self.transform.len() {
             self.transform[i] *= rhs.transform[i];
         }

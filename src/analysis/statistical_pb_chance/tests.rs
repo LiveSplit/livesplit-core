@@ -174,6 +174,26 @@ fn test_inverse_fourier_transform() {
 }
 
 #[test]
-fn addDistributions() {
+fn add_distributions() {
+
+    let mut times = SegmentHistory::default();
+
+    times.insert(1, Time::from(RealTime(Some(TimeSpan::from_seconds(0.625)))));
+    times.insert(2, Time::from(RealTime(Some(TimeSpan::from_seconds(1.25)))));
+
+    let dist = ProbabilityDistribution::new(&times, TimingMethod::RealTime,
+                                            10.0, 16, 0.5);
+
+    let sum = dist.clone() + dist;
+
+    let (x_points, y_points) = sum.plot();
+
+    assert_approx_eq!(y_points[0], 0.0);
+    assert_approx_eq!(y_points[1], 0.0);
+    assert_approx_eq!(y_points[2], 0.25);
+    assert_approx_eq!(y_points[3], 0.5);
+    assert_approx_eq!(y_points[4], 0.25);
+    assert_approx_eq!(y_points[5], 0.0);
+    assert_approx_eq!(y_points[6], 0.0);
 
 }
