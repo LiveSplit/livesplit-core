@@ -33,12 +33,12 @@ use crate::analysis::statistical_pb_chance::discontinuous_fourier_transforms::{d
 ///
 /// A probability distribution can be created from a split history object
 ///
-/// ```rust
+/// ```ignore
 /// use livesplit_core::{RealTime, SegmentHistory, TimingMethod};
 /// use livesplit_core::analysis::statistical_pb_chance::probability_distribution::ProbabilityDistribution;
 ///
 /// // initialize some segment history
-/// let history: SegmentHistory = // [...]
+/// let history: SegmentHistory; // ...
 ///
 /// // Max Duration: 2 Hrs = 7200 seconds. Amost always still works the run lasts more than Max_Duration.
 /// // Calculations will be inaccurate only if the total run time is close to a multiple of the Max Duration (2 hours, 4 hours, 6 hours, etc.)
@@ -50,7 +50,7 @@ use crate::analysis::statistical_pb_chance::discontinuous_fourier_transforms::{d
 ///
 /// Once a probability Distribution has been created, additional splits can be added to it.
 ///
-/// ```rust
+/// ```ignore
 /// // adding a time of 2:12.7 to the split with weight 0.2
 /// dist.add_point(2 * 60 + 12.7, 0.2)
 /// ```
@@ -65,7 +65,7 @@ use crate::analysis::statistical_pb_chance::discontinuous_fourier_transforms::{d
 ///
 /// The distributions of two splits can be added to each other by simply using the overloaded `add` trait
 ///
-/// ```rust
+/// ```ignore
 /// use livesplit_core::analysis::statistical_pb_chance::probability_distribution::ProbabilityDistribution;
 ///
 /// // create from segment history
@@ -86,7 +86,7 @@ use crate::analysis::statistical_pb_chance::discontinuous_fourier_transforms::{d
 /// To determine the probability that a given distribution is below some specific amount, simply use
 /// the `probability_below` method
 ///
-/// ```rust
+/// ```ignore
 /// let sub_hour = full_run.probability_below(60 * 60);
 /// let below_55_minutes_after_cap = after_cap.probability_below(55 * 60);
 /// ```
