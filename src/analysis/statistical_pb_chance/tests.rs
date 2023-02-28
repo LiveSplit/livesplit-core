@@ -184,7 +184,7 @@ fn add_distributions() {
     let dist = ProbabilityDistribution::new(&times, TimingMethod::RealTime,
                                             10.0, 16, 0.5);
 
-    let sum = dist.clone() + dist;
+    let sum = &dist + &dist;
 
     let (x_points, y_points) = sum.plot();
 

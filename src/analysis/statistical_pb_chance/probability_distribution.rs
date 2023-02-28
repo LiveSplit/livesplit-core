@@ -4,7 +4,7 @@ use std::sync::Arc;
 use rustfft::{FftPlanner, Fft};
 use rustfft::num_complex::{Complex, ComplexFloat};
 
-use crate::{SegmentHistory, TimeSpan};
+use crate::SegmentHistory;
 use crate::timing::TimingMethod;
 use crate::analysis::statistical_pb_chance::discontinuous_fourier_transforms::{delta_function_dft, step_function_dft};
 
@@ -136,7 +136,6 @@ pub struct ProbabilityDistribution {
     transform: Vec<Complex<f32>>, // Fourier transform of the function
 
     fft_inverse: Arc<dyn Fft<f32>>
-
 }
 
 impl ProbabilityDistribution {
@@ -281,7 +280,7 @@ impl ProbabilityDistribution {
 
 }
 
-impl ops::Add<ProbabilityDistribution> for ProbabilityDistribution {
+impl<'a, 'b> ops::Add<&'b ProbabilityDistribution> for &'a ProbabilityDistribution {
     type Output = ProbabilityDistribution;
 
     ///
@@ -291,8 +290,7 @@ impl ops::Add<ProbabilityDistribution> for ProbabilityDistribution {
     /// in the Frequency domain. Therefore, it is only necessary to do an element wise multiplication
     /// of the fourier transforms.
     ///
-    fn add(self, other: ProbabilityDistribution) -> ProbabilityDistribution {
-
+    fn add(self, other: &'b ProbabilityDistribution) -> ProbabilityDistribution {
         // copy self
         let mut result = self.clone().to_owned();
 
@@ -303,6 +301,7 @@ impl ops::Add<ProbabilityDistribution> for ProbabilityDistribution {
 
         return result;
     }
+
 }
 
 impl ops::AddAssign<ProbabilityDistribution> for ProbabilityDistribution {
