@@ -42,6 +42,6 @@ fn add_distributions(c: &mut Criterion){
     let other = dist.clone();
 
     c.bench_function("Adding Distributions", |b| {
-        b.iter(|| &dist + &other)
+        b.iter(|| &black_box(dist.clone()) + &other)
     });
 }
