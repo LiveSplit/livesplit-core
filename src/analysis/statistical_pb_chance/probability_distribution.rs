@@ -127,7 +127,7 @@ use crate::analysis::statistical_pb_chance::discontinuous_fourier_transforms::{d
 /// the `probability_below` function uses this methodology to compute the CDF of the distribution when desired
 ///
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ProbabilityDistribution {
 
     max_duration: f32, // the maximum simulated time duration
