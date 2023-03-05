@@ -347,6 +347,7 @@ pub fn write<W: Write>(
             "{}{}",
             r#"// tslint:disable
 import * as wasm from "./livesplit_core_bg.wasm";
+import "./livesplit_core.js";
 
 declare class TextEncoder {
     constructor(label?: string, options?: TextEncoding.TextEncoderOptions);
@@ -440,6 +441,7 @@ function dealloc(slice: Slice) {
             writer,
             "{}",
             r#"import * as wasm from "./livesplit_core_bg.wasm";
+import "./livesplit_core.js";
 
 const encoder = new TextEncoder("UTF-8");
 const decoder = new TextDecoder("UTF-8");
