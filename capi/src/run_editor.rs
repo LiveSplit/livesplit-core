@@ -129,14 +129,21 @@ pub extern "C" fn RunEditor_remove_game_icon(this: &mut RunEditor) {
     this.remove_game_icon();
 }
 
-/// Sets the Linked Layout of the Run. If a Layout
-/// is linked, it is supposed to be loaded to visualize the Run.
+/// Sets the Linked Layout of the Run. If a Layout is linked, it is supposed to
+/// be loaded to visualize the Run.
 #[no_mangle]
-pub extern "C" fn set_linked_layout(
+pub extern "C" fn RunEditor_set_linked_layout(
     this: &mut RunEditor,
-    linked_layout: Option<OwnedLinkedLayout>,
+    linked_layout: OwnedLinkedLayout,
 ) {
-    this.set_linked_layout(linked_layout.map(|l| *l));
+    this.set_linked_layout(Some(*linked_layout));
+}
+
+/// Removes the Linked Layout of the Run if there is one. If a Layout is linked,
+/// it is supposed to be loaded to visualize the Run.
+#[no_mangle]
+pub extern "C" fn RunEditor_remove_linked_layout(this: &mut RunEditor) {
+    this.set_linked_layout(None);
 }
 
 /// Sets the speedrun.com Run ID of the run. You need to ensure that the

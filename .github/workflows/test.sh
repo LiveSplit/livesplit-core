@@ -18,6 +18,10 @@ main() {
         features="$features,networking"
     fi
 
+    if [ "$SKIP_SOFTWARE_RENDERING" != "skip" ]; then
+        features="$features,software-rendering"
+    fi
+
     if [ "$TARGET" = "wasm32-wasi" ]; then
         curl https://wasmtime.dev/install.sh -sSf | bash
         export PATH="$HOME/.wasmtime/bin:$PATH"
