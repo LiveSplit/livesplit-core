@@ -8,6 +8,8 @@ use std::os::raw::c_char;
 
 /// type
 pub type OwnedLinkedLayout = Box<LinkedLayout>;
+/// type
+pub type NullableOwnedLinkedLayout = Option<OwnedLinkedLayout>;
 
 /// Creates a new Linked Layout with the path specified. If the path is empty,
 /// the default layout is used instead.

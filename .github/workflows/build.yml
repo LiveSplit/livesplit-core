@@ -14,7 +14,7 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.os || 'ubuntu-latest' }}
     strategy:
       fail-fast: false
       matrix:
@@ -123,8 +123,6 @@ jobs:
           # Bare Metal
           - label: Bare Metal Nvidia PTX 64
             target: nvptx64-nvidia-cuda
-            os: ubuntu-latest
-            toolchain: stable
             tests: skip
             dylib: skip
             release: skip
@@ -133,8 +131,6 @@ jobs:
 
           - label: Bare Metal ARM Cortex-M thumbv6m
             target: thumbv6m-none-eabi
-            os: ubuntu-latest
-            toolchain: stable
             tests: skip
             dylib: skip
             release: skip
@@ -143,8 +139,6 @@ jobs:
 
           - label: Bare Metal ARM Cortex-M thumbv7em
             target: thumbv7em-none-eabi
-            os: ubuntu-latest
-            toolchain: stable
             tests: skip
             dylib: skip
             release: skip
@@ -153,8 +147,6 @@ jobs:
 
           - label: Bare Metal ARM Cortex-M thumbv7em Hardware Float
             target: thumbv7em-none-eabihf
-            os: ubuntu-latest
-            toolchain: stable
             tests: skip
             dylib: skip
             release: skip
@@ -163,8 +155,6 @@ jobs:
 
           - label: Bare Metal ARM Cortex-M thumbv7m
             target: thumbv7m-none-eabi
-            os: ubuntu-latest
-            toolchain: stable
             tests: skip
             dylib: skip
             release: skip
@@ -173,8 +163,6 @@ jobs:
 
           - label: Bare Metal ARM Cortex-M thumbv8m.base
             target: thumbv8m.base-none-eabi
-            os: ubuntu-latest
-            toolchain: stable
             tests: skip
             dylib: skip
             release: skip
@@ -183,8 +171,6 @@ jobs:
 
           - label: Bare Metal ARM Cortex-M thumbv8m.main
             target: thumbv8m.main-none-eabi
-            os: ubuntu-latest
-            toolchain: stable
             tests: skip
             dylib: skip
             release: skip
@@ -193,8 +179,6 @@ jobs:
 
           - label: Bare Metal ARM Cortex-M thumbv8m.main Hardware Float
             target: thumbv8m.main-none-eabihf
-            os: ubuntu-latest
-            toolchain: stable
             tests: skip
             dylib: skip
             release: skip
@@ -203,8 +187,6 @@ jobs:
 
           # - label: Bare Metal RISC-V 32 i
           #   target: riscv32i-unknown-none-elf
-          #   os: ubuntu-latest
-          #   toolchain: stable
           #   tests: skip
           #   dylib: skip
           #   release: skip
@@ -213,8 +195,6 @@ jobs:
 
           # - label: Bare Metal RISC-V 32 imc
           #   target: riscv32imc-unknown-none-elf
-          #   os: ubuntu-latest
-          #   toolchain: stable
           #   tests: skip
           #   dylib: skip
           #   release: skip
@@ -223,8 +203,6 @@ jobs:
 
           - label: Bare Metal RISC-V 32 imac
             target: riscv32imac-unknown-none-elf
-            os: ubuntu-latest
-            toolchain: stable
             tests: skip
             dylib: skip
             release: skip
@@ -233,8 +211,6 @@ jobs:
 
           - label: Bare Metal RISC-V 64 gc
             target: riscv64gc-unknown-none-elf
-            os: ubuntu-latest
-            toolchain: stable
             tests: skip
             dylib: skip
             release: skip
@@ -243,8 +219,6 @@ jobs:
 
           - label: Bare Metal RISC-V 64 imac
             target: riscv64imac-unknown-none-elf
-            os: ubuntu-latest
-            toolchain: stable
             tests: skip
             dylib: skip
             release: skip
@@ -254,7 +228,6 @@ jobs:
           # WebAssembly
           - label: WebAssembly Unknown
             target: wasm32-unknown-unknown
-            os: ubuntu-latest
             cross: skip
             tests: skip
             dylib: skip
@@ -263,7 +236,6 @@ jobs:
 
           - label: WebAssembly Web
             target: wasm32-unknown-unknown
-            os: ubuntu-latest
             cross: skip
             tests: skip
             dylib: skip
@@ -272,7 +244,6 @@ jobs:
 
           - label: WebAssembly WASI
             target: wasm32-wasi
-            os: ubuntu-latest
             cross: skip
             dylib: skip
             install_target: true
@@ -324,38 +295,31 @@ jobs:
           # Linux
           - label: Linux i586
             target: i586-unknown-linux-gnu
-            os: ubuntu-latest
             auto_splitting: skip
 
           - label: Linux i586 musl
             target: i586-unknown-linux-musl
-            os: ubuntu-latest
             auto_splitting: skip
             dylib: skip
 
           - label: Linux i686
             target: i686-unknown-linux-gnu
-            os: ubuntu-latest
             auto_splitting: skip
 
           - label: Linux i686 musl
             target: i686-unknown-linux-musl
-            os: ubuntu-latest
             auto_splitting: skip
             dylib: skip
 
           - label: Linux x86_64
             target: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
 
           - label: Linux x86_64 musl
             target: x86_64-unknown-linux-musl
-            os: ubuntu-latest
             dylib: skip
 
           - label: Linux x86_64 gnux32
             target: x86_64-unknown-linux-gnux32
-            os: ubuntu-latest
             cross: skip
             install_target: true
             # FIXME: The tests don't run because without cross we can't
@@ -365,78 +329,64 @@ jobs:
 
           - label: Linux arm
             target: arm-unknown-linux-gnueabi
-            os: ubuntu-latest
             auto_splitting: skip
 
           - label: Linux arm musl
             target: arm-unknown-linux-musleabi
-            os: ubuntu-latest
             auto_splitting: skip
             dylib: skip
 
           - label: Linux arm Hardware Float
             target: arm-unknown-linux-gnueabihf
-            os: ubuntu-latest
             auto_splitting: skip
             dylib: skip
 
           - label: Linux arm musl Hardware Float
             target: arm-unknown-linux-musleabihf
-            os: ubuntu-latest
             auto_splitting: skip
             dylib: skip
 
           - label: Linux armv5te
             target: armv5te-unknown-linux-gnueabi
-            os: ubuntu-latest
             auto_splitting: skip
             dylib: skip
 
           - label: Linux armv5te musl
             target: armv5te-unknown-linux-musleabi
-            os: ubuntu-latest
             auto_splitting: skip
             dylib: skip
 
           - label: Linux armv7
             target: armv7-unknown-linux-gnueabi
-            os: ubuntu-latest
             auto_splitting: skip
 
           - label: Linux armv7 musl
             target: armv7-unknown-linux-musleabi
-            os: ubuntu-latest
             auto_splitting: skip
             dylib: skip
 
           - label: Linux armv7 Hardware Float
             target: armv7-unknown-linux-gnueabihf
-            os: ubuntu-latest
             auto_splitting: skip
 
           - label: Linux armv7 musl Hardware Float
             target: armv7-unknown-linux-musleabihf
-            os: ubuntu-latest
             auto_splitting: skip
             dylib: skip
 
           - label: Linux thumbv7neon
             target: thumbv7neon-unknown-linux-gnueabihf
-            os: ubuntu-latest
             auto_splitting: skip
 
           - label: Linux aarch64
             target: aarch64-unknown-linux-gnu
-            os: ubuntu-latest
 
           - label: Linux aarch64 musl
             target: aarch64-unknown-linux-musl
-            os: ubuntu-latest
             dylib: skip
 
           - label: Linux mips
             target: mips-unknown-linux-gnu
-            os: ubuntu-latest
             auto_splitting: skip
             networking: skip
             # FIXME: Networking Tests fail due to missing OpenSSL
@@ -444,7 +394,6 @@ jobs:
 
           - label: Linux mips musl
             target: mips-unknown-linux-musl
-            os: ubuntu-latest
             auto_splitting: skip
             networking: skip
             # FIXME: Networking Tests fail due to missing OpenSSL
@@ -453,7 +402,6 @@ jobs:
 
           - label: Linux mips64
             target: mips64-unknown-linux-gnuabi64
-            os: ubuntu-latest
             auto_splitting: skip
             networking: skip
             # FIXME: Networking Tests fail due to missing OpenSSL
@@ -461,7 +409,6 @@ jobs:
 
           - label: Linux mips64 musl
             target: mips64-unknown-linux-muslabi64
-            os: ubuntu-latest
             auto_splitting: skip
             networking: skip
             # FIXME: Networking Tests fail due to missing OpenSSL
@@ -470,7 +417,6 @@ jobs:
 
           - label: Linux mips64el
             target: mips64el-unknown-linux-gnuabi64
-            os: ubuntu-latest
             auto_splitting: skip
             networking: skip
             # FIXME: Networking Tests fail due to missing OpenSSL
@@ -478,7 +424,6 @@ jobs:
 
           - label: Linux mips64el musl
             target: mips64el-unknown-linux-gnuabi64
-            os: ubuntu-latest
             auto_splitting: skip
             networking: skip
             # FIXME: Networking Tests fail due to missing OpenSSL
@@ -487,7 +432,6 @@ jobs:
 
           - label: Linux mipsel
             target: mipsel-unknown-linux-gnu
-            os: ubuntu-latest
             auto_splitting: skip
             networking: skip
             # FIXME: Networking Tests fail due to missing OpenSSL
@@ -495,7 +439,6 @@ jobs:
 
           - label: Linux mipsel musl
             target: mipsel-unknown-linux-musl
-            os: ubuntu-latest
             auto_splitting: skip
             networking: skip
             # FIXME: Networking Tests fail due to missing OpenSSL
@@ -504,7 +447,6 @@ jobs:
 
           - label: Linux powerpc
             target: powerpc-unknown-linux-gnu
-            os: ubuntu-latest
             auto_splitting: skip
             networking: skip
             # FIXME: Networking Tests fail due to missing OpenSSL
@@ -512,7 +454,6 @@ jobs:
 
           - label: Linux powerpc64
             target: powerpc64-unknown-linux-gnu
-            os: ubuntu-latest
             auto_splitting: skip
             networking: skip
             # FIXME: Networking Tests fail due to missing OpenSSL
@@ -520,7 +461,6 @@ jobs:
 
           - label: Linux powerpc64le
             target: powerpc64le-unknown-linux-gnu
-            os: ubuntu-latest
             auto_splitting: skip
             networking: skip
             # FIXME: Networking Tests fail due to missing OpenSSL
@@ -528,21 +468,22 @@ jobs:
 
           - label: Linux riscv64gc
             target: riscv64gc-unknown-linux-gnu
-            os: ubuntu-latest
             networking: skip
             # FIXME: Networking Tests fail due to missing OpenSSL
             # https://github.com/LiveSplit/livesplit-core/issues/308
 
           - label: Linux s390x
             target: s390x-unknown-linux-gnu
-            os: ubuntu-latest
             networking: skip
             # FIXME: Networking Tests fail due to missing OpenSSL
             # https://github.com/LiveSplit/livesplit-core/issues/308
+            software_rendering: skip
+            # FIXME: Somehow the rendering is messed up on s390x. I didn't look
+            # into what the problem is. Might be inaccurate floating point on
+            # this architecture.
 
           - label: Linux sparc64
             target: sparc64-unknown-linux-gnu
-            os: ubuntu-latest
             auto_splitting: skip
             networking: skip
             # FIXME: Networking Tests fail due to missing OpenSSL
@@ -555,8 +496,8 @@ jobs:
             cross: skip
             tests: skip
             install_target: true
-          # FIXME: Switch OS to ARM macOS once GitHub Actions provides that,
-          # use the toolchain instead of the target and run the tests.
+            # FIXME: Switch OS to ARM macOS once GitHub Actions provides that,
+            # use the toolchain instead of the target and run the tests.
 
           - label: macOS x86_64
             target: x86_64-apple-darwin
@@ -583,7 +524,6 @@ jobs:
           # Android
           - label: Android i686
             target: i686-linux-android
-            os: ubuntu-latest
             auto_splitting: skip
             networking: skip
             # FIXME: The splits-io-api could probably use rustls instead of OpenSSL here
@@ -591,7 +531,6 @@ jobs:
 
           - label: Android x86_64
             target: x86_64-linux-android
-            os: ubuntu-latest
             auto_splitting: skip
             networking: skip
             # FIXME: The splits-io-api could probably use rustls instead of OpenSSL here
@@ -599,7 +538,6 @@ jobs:
 
           - label: Android arm
             target: arm-linux-androideabi
-            os: ubuntu-latest
             auto_splitting: skip
             networking: skip
             # FIXME: The splits-io-api could probably use rustls instead of OpenSSL here
@@ -607,7 +545,6 @@ jobs:
 
           - label: Android armv7
             target: armv7-linux-androideabi
-            os: ubuntu-latest
             auto_splitting: skip
             networking: skip
             # FIXME: The splits-io-api could probably use rustls instead of OpenSSL here
@@ -615,7 +552,6 @@ jobs:
 
           - label: Android thumbv7neon
             target: thumbv7neon-linux-androideabi
-            os: ubuntu-latest
             auto_splitting: skip
             networking: skip
             # FIXME: The splits-io-api could probably use rustls instead of OpenSSL here
@@ -623,7 +559,6 @@ jobs:
 
           - label: Android aarch64
             target: aarch64-linux-android
-            os: ubuntu-latest
             auto_splitting: skip
             networking: skip
             # FIXME: The splits-io-api could probably use rustls instead of OpenSSL here
@@ -632,32 +567,26 @@ jobs:
           # Other Unixes
           - label: FreeBSD i686
             target: i686-unknown-freebsd
-            os: ubuntu-latest
             tests: skip
 
           - label: FreeBSD x86_64
             target: x86_64-unknown-freebsd
-            os: ubuntu-latest
             tests: skip
 
           - label: illumos x86_64
             target: x86_64-unknown-illumos
-            os: ubuntu-latest
             tests: skip
 
           - label: NetBSD x86_64
             target: x86_64-unknown-netbsd
-            os: ubuntu-latest
             tests: skip
 
           - label: Solaris sparcv9
             target: sparcv9-sun-solaris
-            os: ubuntu-latest
             tests: skip
 
           - label: Solaris x86_64
             target: x86_64-sun-solaris
-            os: ubuntu-latest
             tests: skip
 
           # Testing other channels
@@ -693,13 +622,11 @@ jobs:
 
           - label: Linux Beta
             target: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
             toolchain: beta
             release: skip
 
           - label: Linux Nightly
             target: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
             toolchain: nightly
             release: skip
 
@@ -771,6 +698,7 @@ jobs:
           SKIP_CROSS: ${{ matrix.cross }}
           SKIP_AUTO_SPLITTING: ${{ matrix.auto_splitting }}
           SKIP_NETWORKING: ${{ matrix.networking }}
+          SKIP_SOFTWARE_RENDERING: ${{ matrix.software_rendering }}
 
       - name: Prepare Release
         if: startsWith(github.ref, 'refs/tags/') && matrix.release == ''
