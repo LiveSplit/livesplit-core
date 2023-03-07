@@ -63,26 +63,27 @@ jobs:
           - Linux arm musl Hardware Float
           - Linux armv5te
           - Linux armv5te musl
+          - Linux armv7
+          - Linux armv7 musl
           - Linux armv7 Hardware Float
           - Linux armv7 musl Hardware Float
+          - Linux thumbv7neon
           - Linux aarch64
+          - Linux aarch64 musl
           - Linux mips
+          - Linux mips musl
           - Linux mips64
+          - Linux mips64 musl
           - Linux mips64el
+          - Linux mips64el musl
           - Linux mipsel
           - Linux mipsel musl
-          # Unstable
-          # - env: TARGET=mipsisa32r6-unknown-linux-gnu
-          # - env: TARGET=mipsisa32r6el-unknown-linux-gnu
-          # - env: TARGET=mipsisa64r6-unknown-linux-gnuabi64
-          # - env: TARGET=mipsisa64r6el-unknown-linux-gnuabi64
           - Linux powerpc
+          - Linux powerpc64
           - Linux powerpc64le
+          - Linux riscv64gc
           - Linux s390x
-          # These got removed from cross, because they kept breaking:
-          # https://github.com/rust-embedded/cross/pull/440
-          # - Linux powerpc64
-          # - Linux sparc64
+          - Linux sparc64
 
           # macOS
           - macOS aarch64
@@ -97,18 +98,16 @@ jobs:
           - Android x86_64
           - Android arm
           - Android armv7
+          - Android thumbv7neon
           - Android aarch64
 
-          # *BSD
-          # - i686-unknown-freebsd DISABLE_TESTS=1
-          # - x86_64-unknown-freebsd DISABLE_TESTS=1
+          # Other Unixes
+          - FreeBSD i686
+          - FreeBSD x86_64
+          - illumos x86_64
           - NetBSD x86_64
-
-          # Solaris
-          # - Solaris x86_64
-          # weird error
-          # https://travis-ci.org/LiveSplit/livesplit-core/jobs/327011754
-          # - env: TARGET=sparcv9-sun-solaris
+          - Solaris sparcv9
+          - Solaris x86_64
 
           # Testing other channels
           - Windows Beta
@@ -399,6 +398,17 @@ jobs:
             auto_splitting: skip
             dylib: skip
 
+          - label: Linux armv7
+            target: armv7-unknown-linux-gnueabi
+            os: ubuntu-latest
+            auto_splitting: skip
+
+          - label: Linux armv7 musl
+            target: armv7-unknown-linux-musleabi
+            os: ubuntu-latest
+            auto_splitting: skip
+            dylib: skip
+
           - label: Linux armv7 Hardware Float
             target: armv7-unknown-linux-gnueabihf
             os: ubuntu-latest
@@ -410,9 +420,19 @@ jobs:
             auto_splitting: skip
             dylib: skip
 
+          - label: Linux thumbv7neon
+            target: thumbv7neon-unknown-linux-gnueabihf
+            os: ubuntu-latest
+            auto_splitting: skip
+
           - label: Linux aarch64
             target: aarch64-unknown-linux-gnu
             os: ubuntu-latest
+
+          - label: Linux aarch64 musl
+            target: aarch64-unknown-linux-musl
+            os: ubuntu-latest
+            dylib: skip
 
           - label: Linux mips
             target: mips-unknown-linux-gnu
@@ -422,6 +442,15 @@ jobs:
             # FIXME: Networking Tests fail due to missing OpenSSL
             # https://github.com/LiveSplit/livesplit-core/issues/308
 
+          - label: Linux mips musl
+            target: mips-unknown-linux-musl
+            os: ubuntu-latest
+            auto_splitting: skip
+            networking: skip
+            # FIXME: Networking Tests fail due to missing OpenSSL
+            # https://github.com/LiveSplit/livesplit-core/issues/308
+            dylib: skip
+
           - label: Linux mips64
             target: mips64-unknown-linux-gnuabi64
             os: ubuntu-latest
@@ -430,6 +459,15 @@ jobs:
             # FIXME: Networking Tests fail due to missing OpenSSL
             # https://github.com/LiveSplit/livesplit-core/issues/308
 
+          - label: Linux mips64 musl
+            target: mips64-unknown-linux-muslabi64
+            os: ubuntu-latest
+            auto_splitting: skip
+            networking: skip
+            # FIXME: Networking Tests fail due to missing OpenSSL
+            # https://github.com/LiveSplit/livesplit-core/issues/308
+            dylib: skip
+
           - label: Linux mips64el
             target: mips64el-unknown-linux-gnuabi64
             os: ubuntu-latest
@@ -437,6 +475,15 @@ jobs:
             networking: skip
             # FIXME: Networking Tests fail due to missing OpenSSL
             # https://github.com/LiveSplit/livesplit-core/issues/308
+
+          - label: Linux mips64el musl
+            target: mips64el-unknown-linux-gnuabi64
+            os: ubuntu-latest
+            auto_splitting: skip
+            networking: skip
+            # FIXME: Networking Tests fail due to missing OpenSSL
+            # https://github.com/LiveSplit/livesplit-core/issues/308
+            dylib: skip
 
           - label: Linux mipsel
             target: mipsel-unknown-linux-gnu
@@ -463,10 +510,25 @@ jobs:
             # FIXME: Networking Tests fail due to missing OpenSSL
             # https://github.com/LiveSplit/livesplit-core/issues/308
 
+          - label: Linux powerpc64
+            target: powerpc64-unknown-linux-gnu
+            os: ubuntu-latest
+            auto_splitting: skip
+            networking: skip
+            # FIXME: Networking Tests fail due to missing OpenSSL
+            # https://github.com/LiveSplit/livesplit-core/issues/308
+
           - label: Linux powerpc64le
             target: powerpc64le-unknown-linux-gnu
             os: ubuntu-latest
             auto_splitting: skip
+            networking: skip
+            # FIXME: Networking Tests fail due to missing OpenSSL
+            # https://github.com/LiveSplit/livesplit-core/issues/308
+
+          - label: Linux riscv64gc
+            target: riscv64gc-unknown-linux-gnu
+            os: ubuntu-latest
             networking: skip
             # FIXME: Networking Tests fail due to missing OpenSSL
             # https://github.com/LiveSplit/livesplit-core/issues/308
@@ -478,18 +540,13 @@ jobs:
             # FIXME: Networking Tests fail due to missing OpenSSL
             # https://github.com/LiveSplit/livesplit-core/issues/308
 
-          # These got removed from cross
-          # - label: Linux powerpc64
-          #   target: powerpc64-unknown-linux-gnu
-          #   os: ubuntu-latest
-          #   tests: skip
-          #   # FIXME: Networking Tests fail due to missing OpenSSL
-          #   # https://github.com/LiveSplit/livesplit-core/issues/308
-
-          # - label: Linux sparc64
-          #   target: sparc64-unknown-linux-gnu
-          #   os: ubuntu-latest
-          #   tests: skip
+          - label: Linux sparc64
+            target: sparc64-unknown-linux-gnu
+            os: ubuntu-latest
+            auto_splitting: skip
+            networking: skip
+            # FIXME: Networking Tests fail due to missing OpenSSL
+            # https://github.com/LiveSplit/livesplit-core/issues/308
 
           # macOS
           - label: macOS aarch64
@@ -527,44 +584,81 @@ jobs:
           - label: Android i686
             target: i686-linux-android
             os: ubuntu-latest
-            tests: skip
+            auto_splitting: skip
+            networking: skip
+            # FIXME: The splits-io-api could probably use rustls instead of OpenSSL here
+            # https://github.com/LiveSplit/livesplit-core/issues/308
 
           - label: Android x86_64
             target: x86_64-linux-android
             os: ubuntu-latest
-            tests: skip
-             # The tests fail with an illegal instruction since 1.40
-             # https://github.com/rust-lang/rust/issues/67582
+            auto_splitting: skip
+            networking: skip
+            # FIXME: The splits-io-api could probably use rustls instead of OpenSSL here
+            # https://github.com/LiveSplit/livesplit-core/issues/308
 
           - label: Android arm
             target: arm-linux-androideabi
             os: ubuntu-latest
-            tests: skip
+            auto_splitting: skip
+            networking: skip
+            # FIXME: The splits-io-api could probably use rustls instead of OpenSSL here
+            # https://github.com/LiveSplit/livesplit-core/issues/308
 
           - label: Android armv7
             target: armv7-linux-androideabi
             os: ubuntu-latest
-            tests: skip
+            auto_splitting: skip
+            networking: skip
+            # FIXME: The splits-io-api could probably use rustls instead of OpenSSL here
+            # https://github.com/LiveSplit/livesplit-core/issues/308
+
+          - label: Android thumbv7neon
+            target: thumbv7neon-linux-androideabi
+            os: ubuntu-latest
+            auto_splitting: skip
+            networking: skip
+            # FIXME: The splits-io-api could probably use rustls instead of OpenSSL here
+            # https://github.com/LiveSplit/livesplit-core/issues/308
 
           - label: Android aarch64
             target: aarch64-linux-android
             os: ubuntu-latest
+            auto_splitting: skip
+            networking: skip
+            # FIXME: The splits-io-api could probably use rustls instead of OpenSSL here
+            # https://github.com/LiveSplit/livesplit-core/issues/308
+
+          # Other Unixes
+          - label: FreeBSD i686
+            target: i686-unknown-freebsd
+            os: ubuntu-latest
             tests: skip
 
-          # *BSD
+          - label: FreeBSD x86_64
+            target: x86_64-unknown-freebsd
+            os: ubuntu-latest
+            tests: skip
+
+          - label: illumos x86_64
+            target: x86_64-unknown-illumos
+            os: ubuntu-latest
+            tests: skip
+
           - label: NetBSD x86_64
             target: x86_64-unknown-netbsd
             os: ubuntu-latest
             tests: skip
 
-          # Solaris
-          # - label: Solaris x86_64
-          #   target: x86_64-sun-solaris
-          #   os: ubuntu-latest
-          #   tests: skip
-          #   dylib: skip
-          # FIXME: Solaris stopped working. core isn't available:
-          # https://github.com/LiveSplit/livesplit-core/runs/2777745289?check_suite_focus=true
+          - label: Solaris sparcv9
+            target: sparcv9-sun-solaris
+            os: ubuntu-latest
+            tests: skip
+
+          - label: Solaris x86_64
+            target: x86_64-sun-solaris
+            os: ubuntu-latest
+            tests: skip
 
           # Testing other channels
           - label: Windows Beta
