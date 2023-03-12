@@ -6,6 +6,7 @@ use anyhow::{Context as _, Result};
 use slotmap::{Key, KeyData, SlotMap};
 use snafu::Snafu;
 use std::{
+    env::consts::{ARCH, OS},
     str,
     time::{Duration, Instant},
 };
@@ -297,6 +298,13 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
             source,
             name: "timer_set_game_time",
         })?
+        .func_wrap("env", "timer_get_state", {
+            |caller: Caller<'_, Context<T>>| caller.data().timer.state() as u32
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "timer_get_state",
+        })?
         .func_wrap("env", "runtime_set_tick_rate", {
             |mut caller: Caller<'_, Context<T>>, ticks_per_sec: f64| {
                 caller
@@ -310,13 +318,6 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
             source,
             name: "runtime_set_tick_rate",
         })?
-        .func_wrap("env", "timer_get_state", {
-            |caller: Caller<'_, Context<T>>| caller.data().timer.state() as u32
-        })
-        .map_err(|source| CreationError::LinkFunction {
-            source,
-            name: "timer_get_state",
-        })?
         .func_wrap("env", "runtime_print_message", {
             |mut caller: Caller<'_, Context<T>>, ptr: u32, len: u32| {
                 let (memory, context) = memory_and_context(&mut caller);
@@ -328,6 +329,42 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
         .map_err(|source| CreationError::LinkFunction {
             source,
             name: "runtime_print_message",
+        })?
+        .func_wrap("env", "runtime_get_os", {
+            |mut caller: Caller<'_, Context<T>>, ptr: u32, len_ptr: u32| {
+                let (memory, _) = memory_and_context(&mut caller);
+                let len_bytes = read_arr_mut(memory, len_ptr)?;
+                let len = u32::from_le_bytes(*len_bytes) as usize;
+                *len_bytes = (OS.len() as u32).to_le_bytes();
+                if len < OS.len() {
+                    return Ok(0u32);
+                }
+                let buf = read_slice_mut(memory, ptr, OS.len() as _)?;
+                buf.copy_from_slice(OS.as_bytes());
+                Ok(1u32)
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "runtime_get_os",
+        })?
+        .func_wrap("env", "runtime_get_arch", {
+            |mut caller: Caller<'_, Context<T>>, ptr: u32, len_ptr: u32| {
+                let (memory, _) = memory_and_context(&mut caller);
+                let len_bytes = read_arr_mut(memory, len_ptr)?;
+                let len = u32::from_le_bytes(*len_bytes) as usize;
+                *len_bytes = (ARCH.len() as u32).to_le_bytes();
+                if len < ARCH.len() {
+                    return Ok(0u32);
+                }
+                let buf = read_slice_mut(memory, ptr, ARCH.len() as _)?;
+                buf.copy_from_slice(ARCH.as_bytes());
+                Ok(1u32)
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "runtime_get_arch",
         })?
         .func_wrap("env", "timer_set_variable", {
             |mut caller: Caller<'_, Context<T>>,
@@ -490,6 +527,11 @@ fn memory_and_context<'a, T: Timer>(
     caller: &'a mut Caller<'_, Context<T>>,
 ) -> (&'a mut [u8], &'a mut Context<T>) {
     caller.data().memory.unwrap().data_and_store_mut(caller)
+}
+
+fn read_arr_mut<const N: usize>(memory: &mut [u8], ptr: u32) -> Result<&mut [u8; N]> {
+    assert!(N <= u32::MAX as usize);
+    Ok(read_slice_mut(memory, ptr, N as _)?.try_into().unwrap())
 }
 
 fn read_slice(memory: &[u8], ptr: u32, len: u32) -> Result<&[u8]> {

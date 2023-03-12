@@ -1,0 +1,14 @@
+# Temporary workaround because Rust 1.68+ requires more up to date containers.
+
+[target.i686-linux-android]
+image = "ghcr.io/cross-rs/i686-linux-android:main"
+[target.x86_64-linux-android]
+image = "ghcr.io/cross-rs/x86_64-linux-android:main"
+[target.arm-linux-androideabi]
+image = "ghcr.io/cross-rs/arm-linux-androideabi:main"
+[target.armv7-linux-androideabi]
+image = "ghcr.io/cross-rs/armv7-linux-androideabi:main"
+[target.thumbv7neon-linux-androideabi]
+image = "ghcr.io/cross-rs/thumbv7neon-linux-androideabi:main"
+[target.aarch64-linux-android]
+image = "ghcr.io/cross-rs/aarch64-linux-android:main"
