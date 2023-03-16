@@ -30,6 +30,7 @@ pub enum EventTapOptions {
 }
 
 bitflags::bitflags! {
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     #[repr(transparent)]
     pub struct EventMask: u64 {
         /// Specifies a null event.

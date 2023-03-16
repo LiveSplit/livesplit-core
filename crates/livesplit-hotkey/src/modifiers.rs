@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 
 bitflags::bitflags! {
     /// The modifier keys that are currently pressed.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
     pub struct Modifiers: u8 {
         /// The shift key is pressed.
         const SHIFT = 1 << 0;
