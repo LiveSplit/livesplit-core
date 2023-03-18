@@ -22,8 +22,8 @@ use std::{
     rc::Rc,
 };
 use syn::{
-    parse_file, FnArg, Item, ItemFn, Lit, Meta, Pat, ReturnType, Signature, Type as SynType,
-    Visibility,
+    parse_file, Expr, ExprLit, FnArg, Item, ItemFn, Lit, Meta, Pat, ReturnType, Signature,
+    Type as SynType, Visibility,
 };
 
 #[derive(clap::Parser)]
@@ -155,12 +155,14 @@ fn get_type(ty: &SynType) -> Type {
 fn get_comment(attrs: &[syn::Attribute]) -> Vec<String> {
     attrs
         .iter()
-        .filter_map(|a| match a.parse_meta() {
-            Ok(Meta::NameValue(v)) if v.path.is_ident("doc") => Some(v),
+        .filter_map(|a| match &a.meta {
+            Meta::NameValue(v) if v.path.is_ident("doc") => Some(v),
             _ => None,
         })
-        .filter_map(|m| match m.lit {
-            Lit::Str(s) => Some(s.value().trim().to_string()),
+        .filter_map(|m| match &m.value {
+            Expr::Lit(ExprLit {
+                lit: Lit::Str(s), ..
+            }) => Some(s.value().trim().to_string()),
             _ => None,
         })
         .collect()
@@ -210,8 +212,8 @@ fn main() {
                 .as_ref()
                 .and_then(|a| a.name.as_ref())
                 .map_or(true, |n| n.value() != "C")
-                || attrs.iter().all(|a| match a.parse_meta() {
-                    Ok(Meta::Path(w)) => !w.is_ident("no_mangle"),
+                || attrs.iter().all(|a| match &a.meta {
+                    Meta::Path(w) => !w.is_ident("no_mangle"),
                     _ => true,
                 })
             {
