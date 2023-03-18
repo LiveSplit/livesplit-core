@@ -6,6 +6,9 @@ use serde::{Deserialize, Serialize};
 // This is based on the web KeyboardEvent code Values specification and the
 // individual mappings are based on the following sources:
 //
+// USB HID:
+// https://usb.org/sites/default/files/hut1_4.pdf
+//
 // MDN, but it turns out to be wrong in many ways:
 // https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code/code_values
 //

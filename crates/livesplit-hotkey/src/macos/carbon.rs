@@ -16,6 +16,7 @@ pub type UniChar = u16;
 pub type OSStatus = i32;
 
 bitflags::bitflags! {
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     #[repr(transparent)]
     pub struct UCKeyTranslateBits: OptionBits {
         const NO_DEAD_KEYS_BIT = 0;

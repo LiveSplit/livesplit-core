@@ -81,6 +81,8 @@ thread_local! {
 const fn parse_scan_code(value: DWORD) -> Option<KeyCode> {
     // Windows uses PS/2 scan code set 1.
     // https://www.avrfreaks.net/sites/default/files/PS2%20Keyboard.pdf Page 19
+    // This is the most up to the date documentation it seems:
+    // https://learn.microsoft.com/en-us/windows/win32/inputdev/about-keyboard-input#scan-codes
     use self::KeyCode::*;
     Some(match value {
         0x0001 => Escape,
@@ -171,6 +173,7 @@ const fn parse_scan_code(value: DWORD) -> Option<KeyCode> {
         0x0057 => F11,
         0x0058 => F12,
         0x0059 => NumpadEqual,
+        // 0x005C => International6, // Weird カソマ / "Kasoma" key that doesn't even exist.
         0x0064 => F13,
         0x0065 => F14,
         0x0066 => F15,
@@ -186,13 +189,15 @@ const fn parse_scan_code(value: DWORD) -> Option<KeyCode> {
         0x0071 => Lang2,
         0x0072 => Lang1,
         0x0073 => IntlRo,
-        0x0076 => F24,
+        0x0076 => F24,   // This overlaps with Lang5
         0x0077 => Lang4, // Not Firefox
         0x0078 => Lang3, // Not Firefox
         0x0079 => Convert,
         0x007B => NonConvert,
         0x007D => IntlYen,
         0x007E => NumpadComma,
+        // 0x00FC => PostFail, // Not keys
+        // 0x00FF => ErrorRollOver, // Not keys
         0xE008 => Undo,  // Not Firefox
         0xE00A => Paste, // Not Firefox
         0xE010 => MediaTrackPrevious,
@@ -244,6 +249,7 @@ const fn parse_scan_code(value: DWORD) -> Option<KeyCode> {
         0xE06D => MediaSelect,
         0xE0F1 => Lang2, // Not Chrome, Not Safari
         0xE0F2 => Lang1, // Not Chrome, Not Safari
+        // 0xE11D => Pause, // Not Chrome, Not Safari, Not Firefox
         _ => return None,
     })
 }

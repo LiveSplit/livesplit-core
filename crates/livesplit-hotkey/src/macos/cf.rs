@@ -1,4 +1,4 @@
-use std::ffi::c_void;
+use std::ffi::{c_ulong, c_void};
 
 mod opaque {
     pub enum Allocator {}
@@ -22,9 +22,12 @@ pub type RunLoopMode = StringRef;
 
 pub type Index = isize;
 
+pub type OptionFlags = c_ulong;
+
 bitflags::bitflags! {
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     #[repr(transparent)]
-    pub struct RunLoopActivity: usize {
+    pub struct RunLoopActivity: OptionFlags {
         const RUN_LOOP_ENTRY = 1 << 0;
         const RUN_LOOP_BEFORE_TIMERS = 1 << 1;
         const RUN_LOOP_BEFORE_SOURCES = 1 << 2;

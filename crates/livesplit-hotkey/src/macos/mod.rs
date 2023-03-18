@@ -444,6 +444,7 @@ unsafe extern "C" fn callback(
     let modifier_flags: ModifierFlags = msg_send![ns_event, modifierFlags];
 
     bitflags::bitflags! {
+        #[derive(Clone, Copy, Debug, PartialEq, Eq)]
         struct ModifierFlags: u64 {
             const CAPS_LOCK = 1 << 16;
             const SHIFT = 1 << 17;
