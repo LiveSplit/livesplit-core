@@ -62,13 +62,11 @@ image = { version = "0.24.0", features = [
 # Rendering
 # Currently doesn't require any additional dependencies.
 
-# Path-based Text Engine
-rustybuzz = { version = "0.7.0", default-features = false, features = [
-    "libm",
-], optional = true }
+# Default Text Engine
+cosmic-text = { git = "https://github.com/CryZe/cosmic-text", branch = "fix-wasm", default-features = false, optional = true }
 
 # Font Loading
-fontdb = { version = "0.13.0", optional = true }
+# Currently doesn't require any additional dependencies.
 
 # Software Rendering
 tiny-skia = { version = "0.8.2", default-features = false, features = [
@@ -121,7 +119,7 @@ std = [
     "libc",
     "livesplit-hotkey/std",
     "memchr/std",
-    "rustybuzz?/std",
+    "cosmic-text?/std",
     "serde_json/std",
     "serde/std",
     "simdutf8/std",
@@ -143,11 +141,12 @@ more-image-formats = [
 ]
 image-shrinking = ["std", "more-image-formats"]
 rendering = ["more-image-formats", "image?/gif"]
-path-based-text-engine = ["rendering", "rustybuzz"]
-font-loading = ["std", "path-based-text-engine", "fontdb"]
-software-rendering = ["path-based-text-engine", "tiny-skia", "tiny-skia-path"]
+default-text-engine = ["rendering", "cosmic-text"]
+font-loading = ["std", "default-text-engine"]
+software-rendering = ["default-text-engine", "tiny-skia", "tiny-skia-path"]
 wasm-web = [
     "std",
+    "cosmic-text?/wasm-web",
     "js-sys",
     "livesplit-hotkey/wasm-web",
     "wasm-bindgen",

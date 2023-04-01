@@ -2,7 +2,7 @@ use alloc::rc::Rc;
 
 /// Describes that ownership of a value can be cheaply shared. This is similar
 /// to the [`Clone`] trait, but is expected to only be implemented if sharing is
-/// cheap, such as for [`Rc`] and [`Arc`].
+/// cheap, such as for [`Rc`] and [`Arc`](alloc::sync::Arc).
 pub trait SharedOwnership {
     /// Share the value.
     fn share(&self) -> Self;

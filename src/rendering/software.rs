@@ -6,8 +6,8 @@ use alloc::rc::Rc;
 use core::{mem, ops::Deref};
 
 use super::{
+    default_text_engine::{Font, Label, TextEngine},
     entity::Entity,
-    path_based_text_engine::{Font, Label, TextEngine},
     resource::{self, ResourceAllocator},
     FillShader, FontKind, Scene, SceneManager, SharedOwnership, Transform,
 };
@@ -26,7 +26,7 @@ struct SkiaBuilder(PathBuilder);
 
 type SkiaPath = Option<UnsafeRc<Path>>;
 type SkiaImage = UnsafeRc<Pixmap>;
-type SkiaFont = Font<SkiaPath>;
+type SkiaFont = Font;
 type SkiaLabel = Label<SkiaPath>;
 
 impl resource::PathBuilder for SkiaBuilder {
@@ -73,7 +73,7 @@ fn convert_transform(transform: &Transform) -> tiny_skia::Transform {
 }
 
 struct SkiaAllocator {
-    text_engine: TextEngine,
+    text_engine: TextEngine<SkiaPath>,
 }
 
 impl ResourceAllocator for SkiaAllocator {
@@ -481,11 +481,11 @@ fn render_layer(
                     },
                 );
 
-                let transform = transform.pre_scale(label.scale(), label.scale());
-
                 for glyph in label.glyphs() {
                     if let Some(path) = &glyph.path {
-                        let transform = transform.pre_translate(glyph.x, glyph.y);
+                        let transform = transform
+                            .pre_translate(glyph.x, glyph.y)
+                            .pre_scale(glyph.scale, glyph.scale);
 
                         let glyph_paint;
                         let paint = if let Some(color) = &glyph.color {
