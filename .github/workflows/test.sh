@@ -4,7 +4,7 @@ main() {
     local cargo=cross
 
     # all features except those that sometimes should be skipped.
-    local features="--features std,more-image-formats,image-shrinking,rendering,path-based-text-engine,wasm-web,font-loading"
+    local features="--features std,more-image-formats,image-shrinking,rendering,default-text-engine,wasm-web,font-loading"
 
     if [ "$SKIP_CROSS" = "skip" ]; then
         cargo=cargo

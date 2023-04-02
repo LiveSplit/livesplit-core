@@ -1,4 +1,4 @@
-use rustybuzz::ttf_parser::{Face, GlyphId, Tag};
+use cosmic_text::rustybuzz::ttf_parser::{Face, GlyphId, Tag};
 
 use crate::settings::Color;
 

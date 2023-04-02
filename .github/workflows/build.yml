@@ -21,7 +21,9 @@ jobs:
         label:
           # Bare Metal
           - Bare Metal Nvidia PTX 64
-          - Bare Metal ARM Cortex-M thumbv6m
+          # FIXME: ouroboros currently can't handle this target.
+          # https://github.com/joshua-maros/ouroboros/issues/81
+          # - Bare Metal ARM Cortex-M thumbv6m
           - Bare Metal ARM Cortex-M thumbv7em
           - Bare Metal ARM Cortex-M thumbv7em Hardware Float
           - Bare Metal ARM Cortex-M thumbv7m
@@ -129,13 +131,15 @@ jobs:
             no_std: true
             install_target: true
 
-          - label: Bare Metal ARM Cortex-M thumbv6m
-            target: thumbv6m-none-eabi
-            tests: skip
-            dylib: skip
-            release: skip
-            no_std: true
-            install_target: true
+          # FIXME: ouroboros currently can't handle this target.
+          # https://github.com/joshua-maros/ouroboros/issues/81
+          # - label: Bare Metal ARM Cortex-M thumbv6m
+          #   target: thumbv6m-none-eabi
+          #   tests: skip
+          #   dylib: skip
+          #   release: skip
+          #   no_std: true
+          #   install_target: true
 
           - label: Bare Metal ARM Cortex-M thumbv7em
             target: thumbv7em-none-eabi

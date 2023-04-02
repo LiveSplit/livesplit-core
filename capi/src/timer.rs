@@ -317,7 +317,7 @@ pub extern "C" fn Timer_mark_as_unmodified(this: &mut Timer) {
 /// Prints out debug information representing the whole state of the Timer. This
 /// is being written to stdout.
 #[no_mangle]
-pub extern "C" fn Timer_print_debug(this: &Timer) {
+pub extern "C" fn Timer_print_debug(#[allow(unused)] this: &Timer) {
     // WebAssembly doesn't have stdout unless we use WASI or Emscripten.
     #[cfg(not(all(
         target_family = "wasm",

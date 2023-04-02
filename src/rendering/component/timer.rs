@@ -41,7 +41,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         &mut cache.fraction,
         render_target,
         [width - PADDING, 0.85 * height],
-        0.8 * height,
+        0.7 * height,
         shader,
     );
     context.render_timer(
@@ -49,7 +49,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         &mut cache.time,
         render_target,
         [x, 0.85 * height],
-        1.2 * height,
+        height,
         shader,
     )
 }

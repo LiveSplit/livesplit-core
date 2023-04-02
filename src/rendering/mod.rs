@@ -57,7 +57,7 @@
 //
 // The default height of a component in the component coordinate space is 1.
 // This is equal to the height of one split or one key value component. The
-// default text size is 0.725. There is a padding of 0.35 to the left and right
+// default text size is 0.6. There is a padding of 0.35 to the left and right
 // side of a component for the contents shown inside a component, such as images
 // and texts. The same padding of 0.35 is also used for the minimum spacing
 // between text and other content such as an icon or another text. A vertical
@@ -78,8 +78,8 @@ mod icon;
 mod resource;
 mod scene;
 
-#[cfg(feature = "path-based-text-engine")]
-pub mod path_based_text_engine;
+#[cfg(feature = "default-text-engine")]
+pub mod default_text_engine;
 
 #[cfg(feature = "software-rendering")]
 pub mod software;
