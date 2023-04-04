@@ -63,7 +63,7 @@ image = { version = "0.24.0", features = [
 # Currently doesn't require any additional dependencies.
 
 # Default Text Engine
-cosmic-text = { git = "https://github.com/CryZe/cosmic-text", branch = "fix-wasm", default-features = false, optional = true }
+cosmic-text = { git = "https://github.com/pop-os/cosmic-text", default-features = false, optional = true }
 
 # Font Loading
 # Currently doesn't require any additional dependencies.
