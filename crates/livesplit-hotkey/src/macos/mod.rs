@@ -14,13 +14,11 @@ use self::{
         CFRunLoopGetCurrent, CFRunLoopRemoveSource, CFRunLoopRun,
     },
     cg::{
-        CGEventTapCreate, EventMask, EventRef, EventTapLocation, EventTapOptions,
-        EventTapPlacement, EventTapProxy, EventType,
+        CGEventGetFlags, CGEventTapCreate, EventField, EventFlags, EventMask, EventRef,
+        EventTapLocation, EventTapOptions, EventTapPlacement, EventTapProxy, EventType,
     },
 };
 use crate::{Hotkey, KeyCode, Modifiers};
-use cg::EventField;
-use objc::runtime;
 use std::{
     collections::{hash_map::Entry, HashMap},
     ffi::c_void,
@@ -69,7 +67,6 @@ unsafe impl Sync for RunLoop {}
 
 struct State {
     hotkeys: Mutex<HashMap<Hotkey, Box<dyn FnMut() + Send + 'static>>>,
-    ns_event_class: &'static runtime::Class,
 }
 
 /// A hook allows you to listen to hotkeys.
@@ -100,7 +97,6 @@ impl Hook {
 
         let state = Arc::new(State {
             hotkeys: Mutex::new(HashMap::new()),
-            ns_event_class: class!(NSEvent),
         });
         let thread_state = state.clone();
 
@@ -116,7 +112,7 @@ impl Hook {
                 EventTapLocation::Session,
                 EventTapPlacement::HeadInsertEventTap,
                 EventTapOptions::DefaultTap,
-                EventMask::KEY_DOWN | EventMask::FLAGS_CHANGED,
+                EventMask::KEY_DOWN,
                 Some(callback),
                 state_ptr as *mut c_void,
             );
@@ -290,7 +286,7 @@ impl Hook {
 
 unsafe extern "C" fn callback(
     _: EventTapProxy,
-    ty: EventType,
+    _: EventType,
     event: EventRef,
     user_info: *mut c_void,
 ) -> EventRef {
@@ -437,57 +433,31 @@ unsafe extern "C" fn callback(
     let state = user_info as *const State;
     let state = &*state;
 
-    let ns_event: *mut runtime::Object = msg_send![state.ns_event_class, eventWithCGEvent: event];
-    if ns_event.is_null() {
-        return event;
-    }
-    let modifier_flags: ModifierFlags = msg_send![ns_event, modifierFlags];
-
-    bitflags::bitflags! {
-        #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-        struct ModifierFlags: u64 {
-            const CAPS_LOCK = 1 << 16;
-            const SHIFT = 1 << 17;
-            const CONTROL = 1 << 18;
-            const OPTION = 1 << 19;
-            const COMMAND = 1 << 20;
-            const NUMERIC_PAD = 1 << 21;
-            const HELP = 1 << 22;
-            const FUNCTION = 1 << 23;
-        }
-    }
-
+    let modifier_flags = CGEventGetFlags(event);
     let mut modifiers = Modifiers::empty();
-    if modifier_flags.contains(ModifierFlags::SHIFT) {
+
+    if modifier_flags.contains(EventFlags::SHIFT)
+        && !matches!(key_code, KeyCode::ShiftLeft | KeyCode::ShiftRight)
+    {
         modifiers.insert(Modifiers::SHIFT);
     }
-    if modifier_flags.contains(ModifierFlags::CONTROL) {
+
+    if modifier_flags.contains(EventFlags::CONTROL)
+        && !matches!(key_code, KeyCode::ControlLeft | KeyCode::ControlRight)
+    {
         modifiers.insert(Modifiers::CONTROL);
     }
-    if modifier_flags.contains(ModifierFlags::OPTION) {
+
+    if modifier_flags.contains(EventFlags::OPTION)
+        && !matches!(key_code, KeyCode::AltLeft | KeyCode::AltRight)
+    {
         modifiers.insert(Modifiers::ALT);
     }
-    if modifier_flags.contains(ModifierFlags::COMMAND) {
-        modifiers.insert(Modifiers::META);
-    }
 
-    // The modifier keys don't come in through the key down event, so we use the
-    // flags changed event. However in order to tell that they have been freshly
-    // pressed instead of released we need to check if they are part of the
-    // modifiers and only if they are not do we proceed with the event. The key
-    // also needs to be removed from the modifiers then to not appear twice.
-    if ty == EventType::FlagsChanged {
-        let modifier = match key_code {
-            KeyCode::AltLeft | KeyCode::AltRight => Modifiers::ALT,
-            KeyCode::ControlLeft | KeyCode::ControlRight => Modifiers::CONTROL,
-            KeyCode::MetaLeft | KeyCode::MetaRight => Modifiers::META,
-            KeyCode::ShiftLeft | KeyCode::ShiftRight => Modifiers::SHIFT,
-            _ => Modifiers::empty(),
-        };
-        if !modifiers.contains(modifier) {
-            return event;
-        }
-        modifiers.remove(modifier);
+    if modifier_flags.contains(EventFlags::COMMAND)
+        && !matches!(key_code, KeyCode::MetaLeft | KeyCode::MetaRight)
+    {
+        modifiers.insert(Modifiers::META);
     }
 
     if let Some(callback) = state

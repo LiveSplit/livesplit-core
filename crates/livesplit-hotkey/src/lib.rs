@@ -27,8 +27,6 @@ cfg_if::cfg_if! {
         mod linux;
         use self::linux as platform;
     } else if #[cfg(target_os = "macos")] {
-        #[macro_use]
-        extern crate objc;
         mod macos;
         use self::macos as platform;
     } else if #[cfg(all(target_family = "wasm", target_os = "unknown", feature = "wasm-web"))] {
