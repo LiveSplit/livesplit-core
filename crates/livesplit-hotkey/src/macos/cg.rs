@@ -186,8 +186,25 @@ pub type EventTapCallBack = Option<
     ) -> EventRef,
 >;
 
+bitflags::bitflags! {
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    #[repr(transparent)]
+    pub struct EventFlags: u64 {
+        const CAPS_LOCK = 1 << 16;
+        const SHIFT = 1 << 17;
+        const CONTROL = 1 << 18;
+        const OPTION = 1 << 19;
+        const COMMAND = 1 << 20;
+        const NUMERIC_PAD = 1 << 21;
+        const HELP = 1 << 22;
+        const FUNCTION = 1 << 23;
+    }
+}
+
 #[link(name = "CoreGraphics", kind = "framework")]
 extern "C" {
+    pub fn CGEventGetFlags(event: EventRef) -> EventFlags;
+
     pub fn CGEventTapCreate(
         tap: EventTapLocation,
         place: EventTapPlacement,
