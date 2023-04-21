@@ -15,13 +15,15 @@ proc-maps = { version = "0.3.0", default-features = false }
 read-process-memory = { version = "0.1.4", default-features = false }
 slotmap = { version = "1.0.2", default-features = false }
 snafu = "0.7.0"
-sysinfo = { version = "0.28.1", default-features = false, features = ["multithread"] }
+sysinfo = { version = "0.28.1", default-features = false, features = [
+  "multithread",
+] }
 time = { version = "0.3.3", default-features = false }
-wasmtime = { version = "6.0.1", default-features = false, features = [
+wasmtime = { version = "8.0.0", default-features = false, features = [
   "cranelift",
   "parallel-compilation",
 ] }
-wasmtime-wasi = { version = "6.0.1", optional = true }
+wasmtime-wasi = { version = "8.0.0", optional = true }
 
 [features]
 unstable = ["wasmtime-wasi"]

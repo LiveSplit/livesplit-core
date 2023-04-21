@@ -149,8 +149,7 @@ impl<T: Timer> Runtime<T> {
         let engine = Engine::new(
             Config::new()
                 .cranelift_opt_level(OptLevel::Speed)
-                .epoch_interruption(true)
-                .debug_info(true),
+                .epoch_interruption(true),
         )
         .map_err(|source| CreationError::EngineCreation { source })?;
 
