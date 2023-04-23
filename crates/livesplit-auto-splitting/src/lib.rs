@@ -106,27 +106,17 @@
 //!         name_ptr: *const u8,
 //!         name_len: usize,
 //!     ) -> Option<NonZeroU64>;
-//!     /// Gets the address of the first memory page matching a given size
-//!     pub fn process_get_page_address_by_size(
-//!         process: ProcessId,
-//!         size: u64,
-//!     ) -> Option<NonZeroAddress>;
-//!     /// Gets the address of the last memory page matching a given size
-//!     pub fn process_get_last_page_address_by_size(
-//!         process: ProcessId,
-//!         size: u64,
-//!     ) -> Option<NonZeroAddress>;
 //!     /// Gets the number of memory pages in a given process
-//!     pub fn process_get_pages_count(
+//!     pub fn process_get_map_count(
 //!         process: ProcessId,
 //!     ) -> Option<NonZeroU64>;
 //!     /// Gets the address of a memory page, sorted by ID
-//!     pub fn process_get_page_address_by_id(
+//!     pub fn process_get_map_address_by_id(
 //!         process: ProcessId,
 //!         id: u64.
 //!     ) -> Option<NonZeroAddress>;
 //!     /// Gets the size of a memory page, sorted by ID
-//!     pub fn process_get_page_size_by_id(
+//!     pub fn process_get_map_size_by_id(
 //!         process: ProcessId,
 //!         id: u64,
 //!     ) -> Option<NonZeroU64>;
