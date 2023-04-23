@@ -486,6 +486,81 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
             source,
             name: "process_read",
         })?
+        .func_wrap("env", "process_get_page_address_by_size", {
+            |mut caller: Caller<'_, Context<T>>, process: u64, ptr: u64| {
+                let ctx = caller.data_mut();
+                Ok(ctx
+                    .processes
+                    .get_mut(ProcessKey::from(KeyData::from_ffi(process as u64)))
+                    .ok_or_else(|| anyhow::format_err!("Invalid process handle: {process}"))?
+                    .get_page_address_by_size(ptr)
+                    .unwrap_or_default())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "process_get_page_address_by_size",
+        })?
+        .func_wrap("env", "process_get_last_page_address_by_size", {
+            |mut caller: Caller<'_, Context<T>>, process: u64, ptr: u64| {
+                let ctx = caller.data_mut();
+                Ok(ctx
+                    .processes
+                    .get_mut(ProcessKey::from(KeyData::from_ffi(process as u64)))
+                    .ok_or_else(|| anyhow::format_err!("Invalid process handle: {process}"))?
+                    .get_last_page_address_by_size(ptr)
+                    .unwrap_or_default())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "process_get_last_page_address_by_size",
+        })?
+        .func_wrap("env", "process_get_pages_count", {
+            |mut caller: Caller<'_, Context<T>>, process: u64| {
+                let ctx = caller.data_mut();
+                Ok(ctx
+                    .processes
+                    .get_mut(ProcessKey::from(KeyData::from_ffi(process as u64)))
+                    .ok_or_else(|| anyhow::format_err!("Invalid process handle: {process}"))?
+                    .get_pages_count()
+                    .unwrap_or_default())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "process_get_pages_count",
+        })?
+        .func_wrap("env", "process_get_page_address_by_id", {
+            |mut caller: Caller<'_, Context<T>>, process: u64, ptr: u64| {
+                let ctx = caller.data_mut();
+                Ok(ctx
+                    .processes
+                    .get_mut(ProcessKey::from(KeyData::from_ffi(process as u64)))
+                    .ok_or_else(|| anyhow::format_err!("Invalid process handle: {process}"))?
+                    .get_page_address_by_id(ptr)
+                    .unwrap_or_default())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "process_get_page_address_by_id",
+        })?
+        .func_wrap("env", "process_get_page_size_by_id", {
+            |mut caller: Caller<'_, Context<T>>, process: u64, ptr: u64| {
+                let ctx = caller.data_mut();
+                Ok(ctx
+                    .processes
+                    .get_mut(ProcessKey::from(KeyData::from_ffi(process as u64)))
+                    .ok_or_else(|| anyhow::format_err!("Invalid process handle: {process}"))?
+                    .get_page_size_by_id(ptr)
+                    .unwrap_or_default())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "process_get_page_size_by_id",
+        })?
         .func_wrap("env", "user_settings_add_bool", {
             |mut caller: Caller<'_, Context<T>>,
              key_ptr: u32,

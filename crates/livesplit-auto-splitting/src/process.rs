@@ -115,4 +115,89 @@ impl Process {
     pub fn read_mem(&self, address: Address, buf: &mut [u8]) -> io::Result<()> {
         self.handle.copy_address(address as usize, buf)
     }
+
+    pub fn get_page_address_by_size(&mut self, size: u64) -> Result<Address, ModuleError> {
+        let now = Instant::now();
+        if now - self.last_check >= Duration::from_secs(1) {
+            self.modules = match proc_maps::get_process_maps(self.pid) {
+                Ok(m) => m,
+                Err(source) => {
+                    self.modules.clear();
+                    return Err(ModuleError::ListModules { source });
+                }
+            };
+            self.last_check = now;
+        }
+        self.modules
+        .iter()
+        .find(|m| m.size() as u64 == size)
+        .context(ModuleDoesntExist)
+        .map(|m| m.start() as u64)
+    }
+
+    pub fn get_last_page_address_by_size(&mut self, size: u64) -> Result<Address, ModuleError> {
+        let now = Instant::now();
+        if now - self.last_check >= Duration::from_secs(1) {
+            self.modules = match proc_maps::get_process_maps(self.pid) {
+                Ok(m) => m,
+                Err(source) => {
+                    self.modules.clear();
+                    return Err(ModuleError::ListModules { source });
+                }
+            };
+            self.last_check = now;
+        }
+        let mut addr: u64 = 0;
+        for page in &self.modules {
+            if page.size() as u64 == size {
+                addr = page.start() as u64
+            }
+        }
+        Ok(addr)
+    }
+
+    pub fn get_pages_count(&mut self) -> Result<u64, ModuleError> {
+        let now = Instant::now();
+        if now - self.last_check >= Duration::from_secs(1) {
+            self.modules = match proc_maps::get_process_maps(self.pid) {
+                Ok(m) => m,
+                Err(source) => {
+                    self.modules.clear();
+                    return Err(ModuleError::ListModules { source });
+                }
+            };
+            self.last_check = now;
+        }
+        Ok(self.modules.len() as u64)
+    }
+
+    pub fn get_page_address_by_id(&mut self, id: u64) -> Result<Address, ModuleError> {
+        let now = Instant::now();
+        if now - self.last_check >= Duration::from_secs(1) {
+            self.modules = match proc_maps::get_process_maps(self.pid) {
+                Ok(m) => m,
+                Err(source) => {
+                    self.modules.clear();
+                    return Err(ModuleError::ListModules { source });
+                }
+            };
+            self.last_check = now;
+        }
+        Ok(self.modules[id as usize].start() as u64)
+    }
+
+    pub fn get_page_size_by_id(&mut self, id: u64) -> Result<u64, ModuleError> {
+        let now = Instant::now();
+        if now - self.last_check >= Duration::from_secs(1) {
+            self.modules = match proc_maps::get_process_maps(self.pid) {
+                Ok(m) => m,
+                Err(source) => {
+                    self.modules.clear();
+                    return Err(ModuleError::ListModules { source });
+                }
+            };
+            self.last_check = now;
+        }
+        Ok(self.modules[id as usize].size() as u64)
+    }
 }
