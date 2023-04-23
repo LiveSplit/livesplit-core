@@ -128,7 +128,10 @@ impl Process {
             };
             self.last_check = now;
         }
-        Ok(self.modules.len() as u32)
+        match self.modules.len() {
+            0 => Err(ModuleError::ModuleDoesntExist),
+            x => Ok(x as u32)
+        }
     }
 
     pub fn get_map_address_by_id(&mut self, id: u32) -> Result<Address, ModuleError> {
@@ -143,7 +146,7 @@ impl Process {
             };
             self.last_check = now;
         }
-        if id > self.modules.len() as u32 {
+        if id >= self.modules.len() as u32 {
             return Err(ModuleError::ModuleDoesntExist)
         }
         Ok(self.modules[id as usize].start() as u64)
@@ -161,7 +164,7 @@ impl Process {
             };
             self.last_check = now;
         }
-        if id > self.modules.len() as u32 {
+        if id >= self.modules.len() as u32 {
             return Err(ModuleError::ModuleDoesntExist)
         }
         Ok(self.modules[id as usize].size() as u64)
