@@ -109,16 +109,16 @@
 //!     /// Gets the number of memory pages in a given process
 //!     pub fn process_get_map_count(
 //!         process: ProcessId,
-//!     ) -> Option<NonZeroU64>;
+//!     ) -> Option<NonZeroU32>;
 //!     /// Gets the address of a memory page, sorted by ID
 //!     pub fn process_get_map_address_by_id(
 //!         process: ProcessId,
-//!         id: u64.
+//!         id: u32.
 //!     ) -> Option<NonZeroAddress>;
 //!     /// Gets the size of a memory page, sorted by ID
 //!     pub fn process_get_map_size_by_id(
 //!         process: ProcessId,
-//!         id: u64,
+//!         id: u32,
 //!     ) -> Option<NonZeroU64>;
 //!
 //!     /// Sets the tick rate of the runtime. This influences the amount of
