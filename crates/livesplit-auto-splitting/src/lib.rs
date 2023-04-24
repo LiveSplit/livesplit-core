@@ -51,6 +51,20 @@
 //!     pub const ENDED: Self = Self(3);
 //! }
 //!
+//! #[repr(transparent)]
+//! pub struct MemoryRangeFlags(NonZeroU64);
+//!
+//! impl MemoryRangeFlags {
+//!     /// The memory range is readable.
+//!     pub const READ: Self = Self(NonZeroU64::new(1 << 1).unwrap());
+//!     /// The memory range is writable.
+//!     pub const WRITE: Self = Self(NonZeroU64::new(1 << 2).unwrap());
+//!     /// The memory range is executable.
+//!     pub const EXECUTE: Self = Self(NonZeroU64::new(1 << 3).unwrap());
+//!     /// The memory range has a file path.
+//!     pub const PATH: Self = Self(NonZeroU64::new(1 << 4).unwrap());
+//! }
+//!
 //! extern "C" {
 //!     /// Gets the state that the timer currently is in.
 //!     pub fn timer_get_state() -> TimerState;
@@ -94,6 +108,7 @@
 //!         buf_ptr: *mut u8,
 //!         buf_len: usize,
 //!     ) -> bool;
+//!
 //!     /// Gets the address of a module in a process.
 //!     pub fn process_get_module_address(
 //!         process: ProcessId,
@@ -106,20 +121,21 @@
 //!         name_ptr: *const u8,
 //!         name_len: usize,
 //!     ) -> Option<NonZeroU64>;
-//!     /// Gets the number of memory pages in a given process
-//!     pub fn process_get_map_count(
+//!
+//!     /// Gets the number of memory ranges in a given process.
+//!     pub fn process_get_memory_range_count(process: ProcessId) -> Option<NonZeroU64>;
+//!     /// Gets the start address of a memory range by its index.
+//!     pub fn process_get_memory_range_address(
 //!         process: ProcessId,
-//!     ) -> Option<NonZeroU32>;
-//!     /// Gets the address of a memory page, sorted by ID
-//!     pub fn process_get_map_address_by_id(
-//!         process: ProcessId,
-//!         id: u32.
+//!         idx: u64,
 //!     ) -> Option<NonZeroAddress>;
-//!     /// Gets the size of a memory page, sorted by ID
-//!     pub fn process_get_map_size_by_id(
+//!     /// Gets the size of a memory range by its index.
+//!     pub fn process_get_memory_range_size(process: ProcessId, idx: u64) -> Option<NonZeroU64>;
+//!     /// Gets the flags of a memory range by its index.
+//!     pub fn process_get_memory_range_flags(
 //!         process: ProcessId,
-//!         id: u32,
-//!     ) -> Option<NonZeroU64>;
+//!         idx: u64,
+//!     ) -> Option<MemoryRangeFlags>;
 //!
 //!     /// Sets the tick rate of the runtime. This influences the amount of
 //!     /// times the `update` function is called per second.
