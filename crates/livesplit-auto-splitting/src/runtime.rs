@@ -486,6 +486,66 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
             source,
             name: "process_read",
         })?
+        .func_wrap("env", "process_get_memory_range_count", {
+            |mut caller: Caller<'_, Context<T>>, process: u64| {
+                let ctx = caller.data_mut();
+                Ok(ctx
+                    .processes
+                    .get_mut(ProcessKey::from(KeyData::from_ffi(process as u64)))
+                    .ok_or_else(|| anyhow::format_err!("Invalid process handle: {process}"))?
+                    .get_memory_range_count()
+                    .unwrap_or_default() as u64)
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "process_get_memory_range_count",
+        })?
+        .func_wrap("env", "process_get_memory_range_address", {
+            |mut caller: Caller<'_, Context<T>>, process: u64, idx: u64| {
+                let ctx = caller.data_mut();
+                Ok(ctx
+                    .processes
+                    .get_mut(ProcessKey::from(KeyData::from_ffi(process as u64)))
+                    .ok_or_else(|| anyhow::format_err!("Invalid process handle: {process}"))?
+                    .get_memory_range_address(idx as usize)
+                    .unwrap_or_default())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "process_get_memory_range_address",
+        })?
+        .func_wrap("env", "process_get_memory_range_size", {
+            |mut caller: Caller<'_, Context<T>>, process: u64, idx: u64| {
+                let ctx = caller.data_mut();
+                Ok(ctx
+                    .processes
+                    .get_mut(ProcessKey::from(KeyData::from_ffi(process as u64)))
+                    .ok_or_else(|| anyhow::format_err!("Invalid process handle: {process}"))?
+                    .get_memory_range_size(idx as usize)
+                    .unwrap_or_default())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "process_get_memory_range_size",
+        })?
+        .func_wrap("env", "process_get_memory_range_flags", {
+            |mut caller: Caller<'_, Context<T>>, process: u64, idx: u64| {
+                let ctx = caller.data_mut();
+                Ok(ctx
+                    .processes
+                    .get_mut(ProcessKey::from(KeyData::from_ffi(process as u64)))
+                    .ok_or_else(|| anyhow::format_err!("Invalid process handle: {process}"))?
+                    .get_memory_range_flags(idx as usize)
+                    .unwrap_or_default())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "process_get_memory_range_flags",
+        })?
         .func_wrap("env", "user_settings_add_bool", {
             |mut caller: Caller<'_, Context<T>>,
              key_ptr: u32,

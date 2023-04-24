@@ -31,7 +31,7 @@ pub type Address = u64;
 pub struct Process {
     handle: ProcessHandle,
     pid: Pid,
-    modules: Vec<MapRange>,
+    memory_ranges: Vec<MapRange>,
     last_check: Instant,
 }
 
@@ -62,7 +62,7 @@ impl Process {
         Ok(Process {
             handle,
             pid,
-            modules: Vec::new(),
+            memory_ranges: Vec::new(),
             last_check: Instant::now() - Duration::from_secs(1),
         })
     }
@@ -76,16 +76,16 @@ impl Process {
     pub fn module_address(&mut self, module: &str) -> Result<Address, ModuleError> {
         let now = Instant::now();
         if now - self.last_check >= Duration::from_secs(1) {
-            self.modules = match proc_maps::get_process_maps(self.pid) {
+            self.memory_ranges = match proc_maps::get_process_maps(self.pid) {
                 Ok(m) => m,
                 Err(source) => {
-                    self.modules.clear();
+                    self.memory_ranges.clear();
                     return Err(ModuleError::ListModules { source });
                 }
             };
             self.last_check = now;
         }
-        self.modules
+        self.memory_ranges
             .iter()
             .find(|m| m.filename().map_or(false, |f| f.ends_with(module)))
             .context(ModuleDoesntExist)
@@ -95,17 +95,17 @@ impl Process {
     pub fn module_size(&mut self, module: &str) -> Result<u64, ModuleError> {
         let now = Instant::now();
         if now - self.last_check >= Duration::from_secs(1) {
-            self.modules = match proc_maps::get_process_maps(self.pid) {
+            self.memory_ranges = match proc_maps::get_process_maps(self.pid) {
                 Ok(m) => m,
                 Err(source) => {
-                    self.modules.clear();
+                    self.memory_ranges.clear();
                     return Err(ModuleError::ListModules { source });
                 }
             };
             self.last_check = now;
         }
         Ok(self
-            .modules
+            .memory_ranges
             .iter()
             .filter(|m| m.filename().map_or(false, |f| f.ends_with(module)))
             .map(|m| m.size() as u64)
@@ -114,5 +114,58 @@ impl Process {
 
     pub fn read_mem(&self, address: Address, buf: &mut [u8]) -> io::Result<()> {
         self.handle.copy_address(address as usize, buf)
+    }
+
+    pub fn get_memory_range_count(&mut self) -> Result<usize, ModuleError> {
+        let now = Instant::now();
+        if now - self.last_check >= Duration::from_secs(1) {
+            self.memory_ranges = match proc_maps::get_process_maps(self.pid) {
+                Ok(m) => m,
+                Err(source) => {
+                    self.memory_ranges.clear();
+                    return Err(ModuleError::ListModules { source });
+                }
+            };
+            self.last_check = now;
+        }
+        Ok(self.memory_ranges.len())
+    }
+
+    pub fn get_memory_range_address(&mut self, idx: usize) -> Result<Address, ModuleError> {
+        self.memory_ranges
+            .get(idx)
+            .ok_or(ModuleError::ModuleDoesntExist)
+            .map(|m| m.start() as Address)
+    }
+
+    pub fn get_memory_range_size(&mut self, idx: usize) -> Result<u64, ModuleError> {
+        self.memory_ranges
+            .get(idx)
+            .ok_or(ModuleError::ModuleDoesntExist)
+            .map(|m| m.size() as u64)
+    }
+
+    pub fn get_memory_range_flags(&mut self, idx: usize) -> Result<u64, ModuleError> {
+        let module = self
+            .memory_ranges
+            .get(idx)
+            .ok_or(ModuleError::ModuleDoesntExist)?;
+
+        // We start with a non-zero flag, because we consider 0 to be an invalid flag.
+        let mut flags = 1;
+        if module.is_read() {
+            flags |= 1 << 1;
+        }
+        if module.is_write() {
+            flags |= 1 << 2;
+        }
+        if module.is_exec() {
+            flags |= 1 << 3;
+        }
+        if module.filename().is_some() {
+            flags |= 1 << 4;
+        }
+
+        Ok(flags)
     }
 }
