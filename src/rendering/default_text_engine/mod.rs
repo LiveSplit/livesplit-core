@@ -12,7 +12,7 @@ use crate::{
 use cosmic_text::{
     fontdb::{Database, Query, Source, ID},
     rustybuzz::ttf_parser::{GlyphId, OutlineBuilder},
-    Attrs, AttrsList, BufferLine, Family, FontSystem, Stretch, Style, Weight,
+    Attrs, AttrsList, Family, FontSystem, ShapeLine, Stretch, Style, Weight,
 };
 use hashbrown::HashMap;
 
@@ -164,8 +164,7 @@ impl<P: SharedOwnership> TextEngine<P> {
     }
 
     fn glyph_width(&mut self, glyph_text: &str, attrs_list: &AttrsList) -> Option<(ID, u16, f32)> {
-        let mut line = BufferLine::new(glyph_text, AttrsList::new(attrs_list.defaults()));
-        let shape_line = line.shape(&mut self.font_system);
+        let shape_line = ShapeLine::new(&mut self.font_system, glyph_text, attrs_list);
         if let [span] = &*shape_line.spans {
             if let [word] = &*span.words {
                 if let [glyph] = &*word.glyphs {
@@ -210,8 +209,7 @@ impl<P: SharedOwnership> TextEngine<P> {
 
         label.glyphs.clear();
 
-        let mut line = BufferLine::new(text, AttrsList::new(font.attrs_list.defaults()));
-        let shape_line = line.shape(&mut self.font_system);
+        let shape_line = ShapeLine::new(&mut self.font_system, text, &font.attrs_list);
         let [mut x, mut y] = [0.0; 2];
 
         if let Some(monotonic) = &font.monotonic {
