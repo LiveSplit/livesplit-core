@@ -108,7 +108,7 @@ libc = { version = "0.2.101", optional = true }
 img_hash = "3.1.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
-criterion = "0.4.0"
+criterion = "0.5.0"
 
 [features]
 default = ["image-shrinking", "std"]
