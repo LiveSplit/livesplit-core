@@ -14,7 +14,6 @@ use sysinfo::{ProcessRefreshKind, RefreshKind, System, SystemExt};
 use wasmtime::{
     Caller, Config, Engine, Extern, Linker, Memory, Module, OptLevel, Store, TypedFunc,
 };
-#[cfg(feature = "unstable")]
 use wasmtime_wasi::{WasiCtx, WasiCtxBuilder};
 
 /// An error that is returned when the creation of a new runtime fails.
@@ -54,13 +53,11 @@ pub enum CreationError {
     /// a requirement.
     MissingMemory,
 
-    #[cfg(feature = "unstable")]
     /// Failed linking the WebAssembly System Interface (WASI).
     Wasi {
         /// The underlying error.
         source: anyhow::Error,
     },
-    #[cfg(feature = "unstable")]
     /// Failed running the WebAssembly System Interface (WASI) `_start` function.
     WasiStart {
         /// The underlying error.
@@ -80,7 +77,6 @@ pub struct Context<T: Timer> {
     timer: T,
     memory: Option<Memory>,
     process_list: ProcessList,
-    #[cfg(feature = "unstable")]
     wasi: WasiCtx,
 }
 
@@ -122,7 +118,7 @@ impl ProcessList {
         &'a self,
         name: &'a str,
     ) -> Box<dyn Iterator<Item = &'a sysinfo::Process> + 'a> {
-        self.system.processes_by_name(name)
+        self.system.processes_by_exact_name(name)
     }
 
     pub fn is_open(&self, pid: sysinfo::Pid) -> bool {
@@ -166,7 +162,6 @@ impl<T: Timer> Runtime<T> {
                 timer,
                 memory: None,
                 process_list: ProcessList::new(),
-                #[cfg(feature = "unstable")]
                 wasi: WasiCtxBuilder::new().build(),
             },
         );
@@ -176,21 +171,29 @@ impl<T: Timer> Runtime<T> {
         let mut linker = Linker::new(&engine);
         bind_interface(&mut linker)?;
 
-        #[cfg(feature = "unstable")]
-        wasmtime_wasi::add_to_linker(&mut linker, |ctx| &mut ctx.wasi)
-            .map_err(|source| CreationError::Wasi { source })?;
+        let uses_wasi = module
+            .imports()
+            .any(|import| import.module() == "wasi_snapshot_preview1");
+
+        if uses_wasi {
+            wasmtime_wasi::add_to_linker(&mut linker, |ctx| &mut ctx.wasi)
+                .map_err(|source| CreationError::Wasi { source })?;
+        }
 
         let instance = linker
             .instantiate(&mut store, &module)
             .map_err(|source| CreationError::ModuleInstantiation { source })?;
 
-        #[cfg(feature = "unstable")]
-        // TODO: _start is kind of correct, but not in the long term. They are
-        // intending for us to use a different function for libraries. Look into
-        // reactors.
-        if let Ok(func) = instance.get_typed_func(&mut store, "_start") {
-            func.call(&mut store, ())
-                .map_err(|source| CreationError::WasiStart { source })?;
+        if uses_wasi {
+            store.data_mut().timer.log(format_args!("This auto splitter uses WASI. The API is subject to change, because WASI is still in preview. Auto splitters using WASI may need to be recompiled in the future."));
+
+            // TODO: _start is kind of correct, but not in the long term. They are
+            // intending for us to use a different function for libraries. Look into
+            // reactors.
+            if let Ok(func) = instance.get_typed_func(&mut store, "_start") {
+                func.call(&mut store, ())
+                    .map_err(|source| CreationError::WasiStart { source })?;
+            }
         }
 
         let update = instance

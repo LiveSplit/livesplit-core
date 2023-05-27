@@ -169,8 +169,9 @@
 //! }
 //! ```
 //!
-//! On top of the runtime's API, there's also unstable `WASI` support via the
-//! `unstable` feature.
+//! On top of the runtime's API, there's also WASI support. Considering WASI
+//! itself is still in preview, the API is subject to change. Auto splitters
+//! using WASI may need to be recompiled in the future.
 
 #![warn(
     clippy::complexity,

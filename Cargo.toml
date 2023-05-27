@@ -154,7 +154,6 @@ wasm-web = [
 ]
 networking = ["std", "splits-io-api"]
 auto-splitting = ["std", "livesplit-auto-splitting", "tokio", "log"]
-unstable-auto-splitting = ["livesplit-auto-splitting?/unstable"]
 
 [lib]
 bench = false
