@@ -107,6 +107,19 @@
 //!         name_len: usize,
 //!     ) -> Option<NonZeroU64>;
 //!
+//!     /// Stores the file system path of the executable in the buffer given. The
+//!     /// path is a path that is accessible through the WASI file system, so a
+//!     /// Windows path of `C:\foo\bar.exe` would be returned as
+//!     /// `/mnt/c/foo/bar.exe`. Returns `false` if the buffer is too small. After
+//!     /// this call, no matter whether it was successful or not, the
+//!     /// `buf_len_ptr` will be set to the required buffer size. The path is
+//!     /// guaranteed to be valid UTF-8 and is not nul-terminated.
+//!     pub fn process_get_path(
+//!         process: ProcessId,
+//!         buf_ptr: *mut u8,
+//!         buf_len_ptr: *mut usize,
+//!     ) -> bool;
+//!
 //!     /// Sets the tick rate of the runtime. This influences the amount of
 //!     /// times the `update` function is called per second.
 //!     pub fn runtime_set_tick_rate(ticks_per_second: f64);
@@ -138,6 +151,21 @@
 //!     ) -> bool;
 //! }
 //! ```
+//!
+//! On top of the runtime's API, there's also WASI support. Considering WASI
+//! itself is still in preview, the API is subject to change. Auto splitters
+//! using WASI may need to be recompiled in the future. Limitations of the WASI
+//! support:
+//!
+//! - `stout` / `stderr` / `stdin` are unbound. Those streams currently do
+//!   nothing.
+//! - The file system is currently almost entirely empty. The host's file system
+//!   is accessible through `/mnt`. It is entirely read-only. Windows paths are
+//!   mapped to `/mnt/c`, `/mnt/d`, etc. to match WSL.
+//! - There are no environment variables.
+//! - There are no command line arguments.
+//! - There is no networking.
+//! - There is no threading.
 
 use crate::timing::{SharedTimer, TimerPhase};
 use livesplit_auto_splitting::{

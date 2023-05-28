@@ -1,5 +1,3 @@
-#![cfg(feature = "unstable")]
-
 use livesplit_auto_splitting::{Runtime, SettingsStore, Timer, TimerState};
 use std::{
     ffi::OsStr,

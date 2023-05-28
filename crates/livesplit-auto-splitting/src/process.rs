@@ -2,6 +2,7 @@
 
 use std::{
     io,
+    path::{self, Path},
     time::{Duration, Instant},
 };
 
@@ -33,6 +34,7 @@ pub struct Process {
     pid: Pid,
     memory_ranges: Vec<MapRange>,
     last_check: Instant,
+    path: Option<Box<str>>,
 }
 
 impl std::fmt::Debug for Process {
@@ -51,11 +53,13 @@ impl Process {
         // use the process that was started the most recently, it's more
         // predictable for the user.
 
-        let pid = processes
+        let process = &processes
             .max_by_key(|p| (p.start_time(), p.pid().as_u32()))
-            .context(ProcessDoesntExist)?
-            .pid()
-            .as_u32() as Pid;
+            .context(ProcessDoesntExist)?;
+
+        let path = build_path(process.exe());
+
+        let pid = process.pid().as_u32() as Pid;
 
         let handle = pid.try_into().context(InvalidHandle)?;
 
@@ -64,6 +68,7 @@ impl Process {
             pid,
             memory_ranges: Vec::new(),
             last_check: Instant::now() - Duration::from_secs(1),
+            path,
         })
     }
 
@@ -74,17 +79,7 @@ impl Process {
     }
 
     pub fn module_address(&mut self, module: &str) -> Result<Address, ModuleError> {
-        let now = Instant::now();
-        if now - self.last_check >= Duration::from_secs(1) {
-            self.memory_ranges = match proc_maps::get_process_maps(self.pid) {
-                Ok(m) => m,
-                Err(source) => {
-                    self.memory_ranges.clear();
-                    return Err(ModuleError::ListModules { source });
-                }
-            };
-            self.last_check = now;
-        }
+        self.refresh_memory_ranges()?;
         self.memory_ranges
             .iter()
             .find(|m| m.filename().map_or(false, |f| f.ends_with(module)))
@@ -93,17 +88,7 @@ impl Process {
     }
 
     pub fn module_size(&mut self, module: &str) -> Result<u64, ModuleError> {
-        let now = Instant::now();
-        if now - self.last_check >= Duration::from_secs(1) {
-            self.memory_ranges = match proc_maps::get_process_maps(self.pid) {
-                Ok(m) => m,
-                Err(source) => {
-                    self.memory_ranges.clear();
-                    return Err(ModuleError::ListModules { source });
-                }
-            };
-            self.last_check = now;
-        }
+        self.refresh_memory_ranges()?;
         Ok(self
             .memory_ranges
             .iter()
@@ -117,17 +102,7 @@ impl Process {
     }
 
     pub fn get_memory_range_count(&mut self) -> Result<usize, ModuleError> {
-        let now = Instant::now();
-        if now - self.last_check >= Duration::from_secs(1) {
-            self.memory_ranges = match proc_maps::get_process_maps(self.pid) {
-                Ok(m) => m,
-                Err(source) => {
-                    self.memory_ranges.clear();
-                    return Err(ModuleError::ListModules { source });
-                }
-            };
-            self.last_check = now;
-        }
+        self.refresh_memory_ranges()?;
         Ok(self.memory_ranges.len())
     }
 
@@ -168,4 +143,47 @@ impl Process {
 
         Ok(flags)
     }
+
+    pub fn path(&self) -> Option<&str> {
+        self.path.as_deref()
+    }
+
+    fn refresh_memory_ranges(&mut self) -> Result<(), ModuleError> {
+        let now = Instant::now();
+        if now - self.last_check >= Duration::from_secs(1) {
+            self.memory_ranges = match proc_maps::get_process_maps(self.pid) {
+                Ok(m) => m,
+                Err(source) => {
+                    self.memory_ranges.clear();
+                    return Err(ModuleError::ListModules { source });
+                }
+            };
+            self.last_check = now;
+        }
+        Ok(())
+    }
+}
+
+fn build_path(original_path: &Path) -> Option<Box<str>> {
+    let mut path = String::from("/mnt");
+    for component in original_path.components() {
+        if !path.ends_with('/') {
+            path.push('/');
+        }
+        match component {
+            path::Component::Prefix(prefix) => match prefix.kind() {
+                path::Prefix::VerbatimDisk(disk) | path::Prefix::Disk(disk) => {
+                    path.push(disk.to_ascii_lowercase() as char)
+                }
+                _ => return None,
+            },
+            path::Component::Normal(c) => {
+                path.push_str(c.to_str()?);
+            }
+            path::Component::RootDir => {}
+            path::Component::CurDir => path.push('.'),
+            path::Component::ParentDir => path.push_str(".."),
+        }
+    }
+    Some(path.into_boxed_str())
 }
