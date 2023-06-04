@@ -282,8 +282,8 @@ pub fn check_live_delta(
 
         if split_delta && current_time > current_split
             || catch! { current_segment? > best_segment? }.unwrap_or(false)
-                && best_segment_delta.map_or(false, |d| d > TimeSpan::zero())
-            || comparison_delta.map_or(false, |d| d > TimeSpan::zero())
+                && best_segment_delta.is_some_and(|d| d > TimeSpan::zero())
+            || comparison_delta.is_some_and(|d| d > TimeSpan::zero())
         {
             return if split_delta {
                 catch! { current_time? - current_split? }
@@ -324,12 +324,12 @@ pub fn split_color(
             .checked_sub(1)
             .and_then(|n| last_delta(timer.run(), n, comparison, method));
         if time_difference < TimeSpan::zero() {
-            if show_segment_deltas && last_delta.map_or(false, |d| time_difference > d) {
+            if show_segment_deltas && last_delta.is_some_and(|d| time_difference > d) {
                 SemanticColor::AheadLosingTime
             } else {
                 SemanticColor::AheadGainingTime
             }
-        } else if show_segment_deltas && last_delta.map_or(false, |d| time_difference < d) {
+        } else if show_segment_deltas && last_delta.is_some_and(|d| time_difference < d) {
             SemanticColor::BehindGainingTime
         } else {
             SemanticColor::BehindLosingTime
@@ -356,6 +356,6 @@ pub fn check_best_segment(timer: &Timer, segment_index: usize, method: TimingMet
     let current_segment = previous_segment_time(timer, segment_index, method);
     let best_segment = timer.run().segment(segment_index).best_segment_time()[method];
     best_segment.map_or(true, |b| {
-        current_segment.map_or(false, |c| c < b) || delta.map_or(false, |d| d < TimeSpan::zero())
+        current_segment.is_some_and(|c| c < b) || delta.is_some_and(|d| d < TimeSpan::zero())
     })
 }

@@ -647,12 +647,13 @@ impl Editor {
         let max_index = self.run.max_attempt_history_index().unwrap_or(0);
         let min_index = self.run.min_segment_history_index().unwrap();
 
-        // Use split_at to prove that the 3 segments are distinct
+        // Use split_at to prove that the 2 segments and the one before if it
+        // exists are distinct
         let (a, b) = self.run.segments_mut().split_at_mut(index);
         let previous = a.last();
-        let (a, b) = b.split_at_mut(1);
-        let first = &mut a[0];
-        let second = &mut b[0];
+        let [first, second, ..] = b else {
+            panic!("There need to be at least 2 segments to switch them.");
+        };
 
         for run_index in min_index..=max_index {
             // Remove both segment history elements if one of them has a None
@@ -940,7 +941,7 @@ impl Editor {
 
 fn parse_positive(time: &str) -> Result<Option<TimeSpan>, ParseError> {
     let time = TimeSpan::parse_opt(time).context(ParseTime)?;
-    if time.map_or(false, |t| t < TimeSpan::zero()) {
+    if time.is_some_and(|t| t < TimeSpan::zero()) {
         Err(ParseError::NegativeTimeNotAllowed)
     } else {
         Ok(time)
