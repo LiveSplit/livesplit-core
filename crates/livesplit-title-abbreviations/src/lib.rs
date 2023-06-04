@@ -8,13 +8,14 @@ use unicase::UniCase;
 // FIXME: Use generators once those work on stable Rust.
 
 fn ends_with_roman_numeral(name: &str) -> bool {
-    name.split_whitespace().rev().next().map_or(false, |n| {
-        n.chars().all(|c| c == 'I' || c == 'V' || c == 'X')
-    })
+    name.split_whitespace()
+        .rev()
+        .next()
+        .is_some_and(|n| n.bytes().all(|c| matches!(c, b'I' | b'V' | b'X')))
 }
 
 fn ends_with_numeric(name: &str) -> bool {
-    name.chars().last().map_or(false, |c| c.is_numeric())
+    name.chars().last().is_some_and(|c| c.is_numeric())
 }
 
 fn series_subtitle_handling(name: &str, split_token: &str, list: &mut Vec<Box<str>>) -> bool {
@@ -225,8 +226,7 @@ pub fn abbreviate_category(category: &str) -> Vec<Box<str>> {
 #[cfg(test)]
 mod tests {
     use super::abbreviate;
-    use alloc::boxed::Box;
-    use alloc::vec;
+    use alloc::{boxed::Box, vec};
 
     // The tests using actual game titles can be thrown out or edited if any
     // major changes need to be made to the abbreviation algorithm. Do not

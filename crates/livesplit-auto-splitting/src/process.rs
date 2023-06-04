@@ -82,7 +82,7 @@ impl Process {
         self.refresh_memory_ranges()?;
         self.memory_ranges
             .iter()
-            .find(|m| m.filename().map_or(false, |f| f.ends_with(module)))
+            .find(|m| m.filename().is_some_and(|f| f.ends_with(module)))
             .context(ModuleDoesntExist)
             .map(|m| m.start() as u64)
     }
@@ -92,7 +92,7 @@ impl Process {
         Ok(self
             .memory_ranges
             .iter()
-            .filter(|m| m.filename().map_or(false, |f| f.ends_with(module)))
+            .filter(|m| m.filename().is_some_and(|f| f.ends_with(module)))
             .map(|m| m.size() as u64)
             .sum())
     }

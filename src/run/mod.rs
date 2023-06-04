@@ -567,7 +567,7 @@ impl Run {
     fn fix_comparison_times_and_history(&mut self, method: TimingMethod) {
         // Remove negative Best Segment Times
         for segment in &mut self.segments {
-            if segment.best_segment_time_mut()[method].map_or(false, |t| t < TimeSpan::zero()) {
+            if segment.best_segment_time_mut()[method].is_some_and(|t| t < TimeSpan::zero()) {
                 segment.best_segment_time_mut()[method] = None;
             }
         }

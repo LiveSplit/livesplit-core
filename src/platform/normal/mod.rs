@@ -7,7 +7,10 @@ cfg_if::cfg_if! {
     // guarantees "real time" nor does it guarantee measuring "uptime" (the time
     // the OS has been awake rather than suspended), meaning that you can't
     // actually rely on it in practice. In livesplit-core we definitely want
-    // real time rather than uptime. Various operating systems are problematic:
+    // real time rather than uptime. The problem in std is being tracked here:
+    // https://github.com/rust-lang/rust/issues/87906
+    //
+    // Various operating systems are problematic:
     //
     // # Linux, BSD and other Unixes
     //

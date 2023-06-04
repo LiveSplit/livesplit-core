@@ -317,7 +317,7 @@ impl Timer {
         if self.phase == Running
             && current_time
                 .real_time
-                .map_or(false, |t| t >= TimeSpan::zero())
+                .is_some_and(|t| t >= TimeSpan::zero())
         {
             // FIXME: We shouldn't need to collect here.
             let variables = self
@@ -744,7 +744,7 @@ impl Timer {
                 if split
                     .best_segment_time()
                     .real_time
-                    .map_or(true, |b| current_segment.map_or(false, |c| c < b))
+                    .map_or(true, |b| current_segment.is_some_and(|c| c < b))
                 {
                     new_best_segment.real_time = current_segment;
                 }
@@ -756,7 +756,7 @@ impl Timer {
                 if split
                     .best_segment_time()
                     .game_time
-                    .map_or(true, |b| current_segment.map_or(false, |c| c < b))
+                    .map_or(true, |b| current_segment.is_some_and(|c| c < b))
                 {
                     new_best_segment.game_time = current_segment;
                 }
@@ -774,7 +774,7 @@ impl Timer {
                 last_segment.personal_best_split_time()[method],
             )
         };
-        if split_time.map_or(false, |s| pb_split_time.map_or(true, |pb| s < pb)) {
+        if split_time.is_some_and(|s| pb_split_time.map_or(true, |pb| s < pb)) {
             self.set_run_as_pb();
         }
     }
