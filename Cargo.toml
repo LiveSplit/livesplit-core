@@ -69,7 +69,7 @@ cosmic-text = { git = "https://github.com/pop-os/cosmic-text", default-features 
 # Currently doesn't require any additional dependencies.
 
 # Software Rendering
-tiny-skia = { version = "0.9.0", default-features = false, features = [
+tiny-skia = { version = "0.11.0", default-features = false, features = [
     "no-std-float",
     "simd",
 ], optional = true }
