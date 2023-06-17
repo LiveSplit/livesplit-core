@@ -42,3 +42,17 @@ pub unsafe extern "C" fn TimeSpan_parse(text: *const c_char) -> NullableOwnedTim
 pub extern "C" fn TimeSpan_total_seconds(this: &TimeSpan) -> f64 {
     this.total_seconds()
 }
+
+/// Returns the total amount of whole seconds (excluding decimals) this Time
+/// Span represents.
+#[no_mangle]
+pub extern "C" fn TimeSpan_whole_seconds(this: &TimeSpan) -> i64 {
+    this.to_seconds_and_subsec_nanoseconds().0
+}
+
+/// Returns the number of nanoseconds past the last full second that makes up
+/// the Time Span.
+#[no_mangle]
+pub extern "C" fn TimeSpan_subsec_nanoseconds(this: &TimeSpan) -> i32 {
+    this.to_seconds_and_subsec_nanoseconds().1
+}
