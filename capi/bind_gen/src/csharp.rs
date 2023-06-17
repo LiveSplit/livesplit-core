@@ -191,9 +191,9 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
             write!(writer, r#"var result = new {return_type}("#)?;
         } else {
             write!(writer, "var result = ")?;
-            if return_type_ll == "UIntPtr" {
+            if return_type_ll == "UIntPtr" && return_type == "ulong" {
                 write!(writer, "(ulong)")?;
-            } else if return_type_ll == "IntPtr" {
+            } else if return_type_ll == "IntPtr" && return_type == "long" {
                 write!(writer, "(long)")?;
             }
         }
@@ -211,12 +211,12 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
             "{}",
             if name == "this" {
                 "this.ptr".to_string()
+            } else if typ.is_custom {
+                format!("{}.ptr", name.to_lower_camel_case())
             } else if ty_name == "UIntPtr" {
                 format!("(UIntPtr){}", name.to_lower_camel_case())
             } else if ty_name == "IntPtr" {
                 format!("(IntPtr){}", name.to_lower_camel_case())
-            } else if typ.is_custom {
-                format!("{}.ptr", name.to_lower_camel_case())
             } else {
                 name.to_lower_camel_case()
             }
@@ -416,7 +416,7 @@ namespace LiveSplitCore
             try
             {
                 Marshal.Copy(data, 0, pnt, data.Length);
-                return Parse(pnt, data.Length, loadFilesPath);
+                return Parse(pnt, (ulong)data.Length, loadFilesPath);
             }
             finally
             {
