@@ -19,7 +19,7 @@ sysinfo = { version = "0.29.0", default-features = false, features = [
   "multithread",
 ] }
 time = { version = "0.3.3", default-features = false }
-wasmtime = { version = "8.0.1", default-features = false, features = [
+wasmtime = { version = "10.0.0", default-features = false, features = [
   "cranelift",
   "parallel-compilation",
 ] }
