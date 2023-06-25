@@ -73,6 +73,10 @@
 //!     pub fn timer_start();
 //!     /// Splits the current segment.
 //!     pub fn timer_split();
+//!     /// Skips the current split.
+//!     pub fn timer_skip_split();
+//!     /// Undoes the previous split.
+//!     pub fn timer_undo_split();
 //!     /// Resets the timer.
 //!     pub fn timer_reset();
 //!     /// Sets a custom key value pair. This may be arbitrary information that
