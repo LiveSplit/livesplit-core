@@ -24,6 +24,10 @@ pub trait Timer {
     fn start(&mut self);
     /// Splits the current segment.
     fn split(&mut self);
+    /// Skips the current split.
+    fn skip_split(&mut self);
+    /// Undoes the previous split.
+    fn undo_split(&mut self);
     /// Resets the timer.
     fn reset(&mut self);
     /// Sets the game time.

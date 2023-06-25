@@ -322,6 +322,28 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
         })?
         .func_wrap(
             "env",
+            "timer_skip_split",
+            |mut caller: Caller<'_, Context<T>>| {
+                caller.data_mut().timer.skip_split();
+            },
+        )
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "timer_skip_split",
+        })?
+        .func_wrap(
+            "env",
+            "timer_undo_split",
+            |mut caller: Caller<'_, Context<T>>| {
+                caller.data_mut().timer.undo_split();
+            },
+        )
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "timer_undo_split",
+        })?
+        .func_wrap(
+            "env",
             "timer_reset",
             |mut caller: Caller<'_, Context<T>>| {
                 caller.data_mut().timer.reset();
