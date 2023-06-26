@@ -190,7 +190,15 @@ impl<T: Timer> Runtime<T> {
             .instantiate(&mut store, &module)
             .map_err(|source| CreationError::ModuleInstantiation { source })?;
 
-        if uses_wasi {
+        let Some(Extern::Memory(mem)) = instance.get_export(&mut store, "memory") else {
+            return Err(CreationError::MissingMemory);
+        };
+        store.data_mut().memory = Some(mem);
+
+        if uses_wasi
+            || module.get_export("_initialize").is_some()
+            || module.get_export("_start").is_some()
+        {
             store.data_mut().timer.log(format_args!("This auto splitter uses WASI. The API is subject to change, because WASI is still in preview. Auto splitters using WASI may need to be recompiled in the future."));
 
             // These may be different in future WASI versions.
@@ -206,11 +214,6 @@ impl<T: Timer> Runtime<T> {
         let update = instance
             .get_typed_func(&mut store, "update")
             .map_err(|source| CreationError::MissingUpdateFunction { source })?;
-
-        let Some(Extern::Memory(mem)) = instance.get_export(&mut store, "memory") else {
-            return Err(CreationError::MissingMemory);
-        };
-        store.data_mut().memory = Some(mem);
 
         Ok(Self {
             engine,
@@ -243,6 +246,18 @@ impl<T: Timer> Runtime<T> {
     /// the user.
     pub fn user_settings(&self) -> &[UserSetting] {
         &self.store.data().user_settings
+    }
+
+    /// Accesses the memory of the WebAssembly module. This may be useful for
+    /// debugging purposes.
+    pub fn memory(&self) -> &[u8] {
+        self.store.data().memory.as_ref().unwrap().data(&self.store)
+    }
+
+    /// Iterates over all the processes that the auto splitter is currently
+    /// attached to. This may be useful for debugging purposes.
+    pub fn attached_processes(&self) -> impl Iterator<Item = &Process> {
+        self.store.data().processes.values()
     }
 }
 

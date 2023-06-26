@@ -216,6 +216,7 @@ mod runtime;
 mod settings;
 mod timer;
 
+pub use process::Process;
 pub use runtime::{CreationError, InterruptHandle, Runtime};
 pub use settings::{SettingValue, SettingsStore, UserSetting};
 pub use time;
