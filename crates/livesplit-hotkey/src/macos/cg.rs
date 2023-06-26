@@ -4,29 +4,32 @@ use std::ffi::c_void;
 
 use super::cf::MachPortRef;
 
-#[repr(C)]
+#[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-#[non_exhaustive]
-pub enum EventTapLocation {
-    Hid,
-    Session,
-    AnnotatedSession,
+pub struct EventTapLocation(u32);
+
+impl EventTapLocation {
+    pub const HID: Self = Self(0);
+    pub const SESSION: Self = Self(1);
+    pub const ANNOTATED_SESSION: Self = Self(2);
 }
 
-#[repr(C)]
+#[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-#[non_exhaustive]
-pub enum EventTapPlacement {
-    HeadInsertEventTap,
-    TailAppendEventTap,
+pub struct EventTapPlacement(u32);
+
+impl EventTapPlacement {
+    pub const HEAD_INSERT_EVENT_TAP: Self = Self(0);
+    pub const TAIL_APPEND_EVENT_TAP: Self = Self(1);
 }
 
-#[repr(C)]
+#[repr(transparent)]
 #[derive(Clone, Copy, Debug)]
-#[non_exhaustive]
-pub enum EventTapOptions {
-    DefaultTap,
-    ListenOnly,
+pub struct EventTapOptions(u32);
+
+impl EventTapOptions {
+    pub const DEFAULT_TAP: Self = Self(0);
+    pub const LISTEN_ONLY: Self = Self(1);
 }
 
 bitflags::bitflags! {
@@ -72,101 +75,104 @@ bitflags::bitflags! {
     }
 }
 
-#[repr(u32)]
+#[repr(transparent)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-#[non_exhaustive]
-pub enum EventType {
-    Null = 0,
+pub struct EventType(u32);
+
+impl EventType {
+    pub const NULL: Self = Self(0);
 
     // Mouse events.
-    LeftMouseDown = 1,
-    LeftMouseUp = 2,
-    RightMouseDown = 3,
-    RightMouseUp = 4,
-    MouseMoved = 5,
-    LeftMouseDragged = 6,
-    RightMouseDragged = 7,
+    pub const LEFT_MOUSE_DOWN: Self = Self(1);
+    pub const LEFT_MOUSE_UP: Self = Self(2);
+    pub const RIGHT_MOUSE_DOWN: Self = Self(3);
+    pub const RIGHT_MOUSE_UP: Self = Self(4);
+    pub const MOUSE_MOVED: Self = Self(5);
+    pub const LEFT_MOUSE_DRAGGED: Self = Self(6);
+    pub const RIGHT_MOUSE_DRAGGED: Self = Self(7);
 
     // Keyboard events.
-    KeyDown = 10,
-    KeyUp = 11,
-    FlagsChanged = 12,
+    pub const KEY_DOWN: Self = Self(10);
+    pub const KEY_UP: Self = Self(11);
+    pub const FLAGS_CHANGED: Self = Self(12);
 
     // Specialized control devices.
-    ScrollWheel = 22,
-    TabletPointer = 23,
-    TabletProximity = 24,
-    OtherMouseDown = 25,
-    OtherMouseUp = 26,
-    OtherMouseDragged = 27,
+    pub const SCROLL_WHEEL: Self = Self(22);
+    pub const TABLET_POINTER: Self = Self(23);
+    pub const TABLET_PROXIMITY: Self = Self(24);
+    pub const OTHER_MOUSE_DOWN: Self = Self(25);
+    pub const OTHER_MOUSE_UP: Self = Self(26);
+    pub const OTHER_MOUSE_DRAGGED: Self = Self(27);
 
     // Out of band event types. These are delivered to the event tap callback
     // to notify it of unusual conditions that disable the event tap.
-    TapDisabledByTimeout = 0xFFFFFFFE,
-    TapDisabledByUserInput = 0xFFFFFFFF,
+    pub const TAP_DISABLED_BY_TIMEOUT: Self = Self(0xFFFFFFFE);
+    pub const TAP_DISABLED_BY_USER_INPUT: Self = Self(0xFFFFFFFF);
 }
 
-#[repr(u32)]
-#[non_exhaustive]
-pub enum EventField {
-    MouseEventNumber = 0,
-    MouseEventClickState = 1,
-    MouseEventPressure = 2,
-    MouseEventButtonNumber = 3,
-    MouseEventDeltaX = 4,
-    MouseEventDeltaY = 5,
-    MouseEventInstantMouser = 6,
-    MouseEventSubtype = 7,
-    KeyboardEventAutorepeat = 8,
-    KeyboardEventKeycode = 9,
-    KeyboardEventKeyboardType = 10,
-    ScrollWheelEventDeltaAxis1 = 11,
-    ScrollWheelEventDeltaAxis2 = 12,
-    ScrollWheelEventDeltaAxis3 = 13,
-    ScrollWheelEventFixedPtDeltaAxis1 = 93,
-    ScrollWheelEventFixedPtDeltaAxis2 = 94,
-    ScrollWheelEventFixedPtDeltaAxis3 = 95,
-    ScrollWheelEventPointDeltaAxis1 = 96,
-    ScrollWheelEventPointDeltaAxis2 = 97,
-    ScrollWheelEventPointDeltaAxis3 = 98,
-    ScrollWheelEventScrollPhase = 99,
-    ScrollWheelEventScrollCount = 100,
-    ScrollWheelEventMomentumPhase = 123,
-    ScrollWheelEventInstantMouser = 14,
-    TabletEventPointX = 15,
-    TabletEventPointY = 16,
-    TabletEventPointZ = 17,
-    TabletEventPointButtons = 18,
-    TabletEventPointPressure = 19,
-    TabletEventTiltX = 20,
-    TabletEventTiltY = 21,
-    TabletEventRotation = 22,
-    TabletEventTangentialPressure = 23,
-    TabletEventDeviceId = 24,
-    TabletEventVendor1 = 25,
-    TabletEventVendor2 = 26,
-    TabletEventVendor3 = 27,
-    TabletProximityEventVendorId = 28,
-    TabletProximityEventTabletId = 29,
-    TabletProximityEventPointerId = 30,
-    TabletProximityEventDeviceId = 31,
-    TabletProximityEventSystemTabletId = 32,
-    TabletProximityEventVendorPointerType = 33,
-    TabletProximityEventVendorPointerSerialNumber = 34,
-    TabletProximityEventVendorUniqueId = 35,
-    TabletProximityEventCapabilityMask = 36,
-    TabletProximityEventPointerType = 37,
-    TabletProximityEventEnterProximity = 38,
-    EventTargetProcessSerialNumber = 39,
-    EventTargetUnixProcessId = 40,
-    EventSourceUnixProcessId = 41,
-    EventSourceUserData = 42,
-    EventSourceUserId = 43,
-    EventSourceGroupId = 44,
-    EventSourceStateId = 45,
-    ScrollWheelEventIsContinuous = 88,
-    MouseEventWindowUnderMousePointer = 91,
-    MouseEventWindowUnderMousePointerThatCanHandleThisEvent = 92,
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct EventField(u32);
+
+impl EventField {
+    pub const MOUSE_EVENT_NUMBER: Self = Self(0);
+    pub const MOUSE_EVENT_CLICK_STATE: Self = Self(1);
+    pub const MOUSE_EVENT_PRESSURE: Self = Self(2);
+    pub const MOUSE_EVENT_BUTTON_NUMBER: Self = Self(3);
+    pub const MOUSE_EVENT_DELTA_X: Self = Self(4);
+    pub const MOUSE_EVENT_DELTA_Y: Self = Self(5);
+    pub const MOUSE_EVENT_INSTANT_MOUSER: Self = Self(6);
+    pub const MOUSE_EVENT_SUBTYPE: Self = Self(7);
+    pub const KEYBOARD_EVENT_AUTOREPEAT: Self = Self(8);
+    pub const KEYBOARD_EVENT_KEYCODE: Self = Self(9);
+    pub const KEYBOARD_EVENT_KEYBOARD_TYPE: Self = Self(10);
+    pub const SCROLL_WHEEL_EVENT_DELTA_AXIS1: Self = Self(11);
+    pub const SCROLL_WHEEL_EVENT_DELTA_AXIS2: Self = Self(12);
+    pub const SCROLL_WHEEL_EVENT_DELTA_AXIS3: Self = Self(13);
+    pub const SCROLL_WHEEL_EVENT_FIXED_PT_DELTA_AXIS1: Self = Self(93);
+    pub const SCROLL_WHEEL_EVENT_FIXED_PT_DELTA_AXIS2: Self = Self(94);
+    pub const SCROLL_WHEEL_EVENT_FIXED_PT_DELTA_AXIS3: Self = Self(95);
+    pub const SCROLL_WHEEL_EVENT_POINT_DELTA_AXIS1: Self = Self(96);
+    pub const SCROLL_WHEEL_EVENT_POINT_DELTA_AXIS2: Self = Self(97);
+    pub const SCROLL_WHEEL_EVENT_POINT_DELTA_AXIS3: Self = Self(98);
+    pub const SCROLL_WHEEL_EVENT_SCROLL_PHASE: Self = Self(99);
+    pub const SCROLL_WHEEL_EVENT_SCROLL_COUNT: Self = Self(100);
+    pub const SCROLL_WHEEL_EVENT_MOMENTUM_PHASE: Self = Self(123);
+    pub const SCROLL_WHEEL_EVENT_INSTANT_MOUSER: Self = Self(14);
+    pub const TABLET_EVENT_POINT_X: Self = Self(15);
+    pub const TABLET_EVENT_POINT_Y: Self = Self(16);
+    pub const TABLET_EVENT_POINT_Z: Self = Self(17);
+    pub const TABLET_EVENT_POINT_BUTTONS: Self = Self(18);
+    pub const TABLET_EVENT_POINT_PRESSURE: Self = Self(19);
+    pub const TABLET_EVENT_TILT_X: Self = Self(20);
+    pub const TABLET_EVENT_TILT_Y: Self = Self(21);
+    pub const TABLET_EVENT_ROTATION: Self = Self(22);
+    pub const TABLET_EVENT_TANGENTIAL_PRESSURE: Self = Self(23);
+    pub const TABLET_EVENT_DEVICE_ID: Self = Self(24);
+    pub const TABLET_EVENT_VENDOR1: Self = Self(25);
+    pub const TABLET_EVENT_VENDOR2: Self = Self(26);
+    pub const TABLET_EVENT_VENDOR3: Self = Self(27);
+    pub const TABLET_PROXIMITY_EVENT_VENDOR_ID: Self = Self(28);
+    pub const TABLET_PROXIMITY_EVENT_TABLET_ID: Self = Self(29);
+    pub const TABLET_PROXIMITY_EVENT_POINTER_ID: Self = Self(30);
+    pub const TABLET_PROXIMITY_EVENT_DEVICE_ID: Self = Self(31);
+    pub const TABLET_PROXIMITY_EVENT_SYSTEM_TABLET_ID: Self = Self(32);
+    pub const TABLET_PROXIMITY_EVENT_VENDOR_POINTER_TYPE: Self = Self(33);
+    pub const TABLET_PROXIMITY_EVENT_VENDOR_POINTER_SERIAL_NUMBER: Self = Self(34);
+    pub const TABLET_PROXIMITY_EVENT_VENDOR_UNIQUE_ID: Self = Self(35);
+    pub const TABLET_PROXIMITY_EVENT_CAPABILITY_MASK: Self = Self(36);
+    pub const TABLET_PROXIMITY_EVENT_POINTER_TYPE: Self = Self(37);
+    pub const TABLET_PROXIMITY_EVENT_ENTER_PROXIMITY: Self = Self(38);
+    pub const EVENT_TARGET_PROCESS_SERIAL_NUMBER: Self = Self(39);
+    pub const EVENT_TARGET_UNIX_PROCESS_ID: Self = Self(40);
+    pub const EVENT_SOURCE_UNIX_PROCESS_ID: Self = Self(41);
+    pub const EVENT_SOURCE_USER_DATA: Self = Self(42);
+    pub const EVENT_SOURCE_USER_ID: Self = Self(43);
+    pub const EVENT_SOURCE_GROUP_ID: Self = Self(44);
+    pub const EVENT_SOURCE_STATE_ID: Self = Self(45);
+    pub const SCROLL_WHEEL_EVENT_IS_CONTINUOUS: Self = Self(88);
+    pub const MOUSE_EVENT_WINDOW_UNDER_MOUSE_POINTER: Self = Self(91);
+    pub const MOUSE_EVENT_WINDOW_UNDER_MOUSE_POINTER_THAT_CAN_HANDLE_THIS_EVENT: Self = Self(92);
 }
 
 mod opaque {

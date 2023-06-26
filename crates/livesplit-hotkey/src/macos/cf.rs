@@ -3,16 +3,51 @@
 use std::ffi::{c_ulong, c_void};
 
 mod opaque {
-    pub enum Allocator {}
-    pub enum MachPort {}
-    pub enum RunLoop {}
-    pub enum RunLoopSource {}
-    pub enum String {}
-    pub enum Data {}
-    pub enum Boolean {}
-    pub enum Dictionary {}
-    pub enum DictionaryKeyCallBacks {}
-    pub enum DictionaryValueCallBacks {}
+    // TODO: Use extern types once they are stable.
+    // Relevant issue about empty enums:
+    // https://github.com/rust-lang/rust/issues/74840
+    // Right now we do what rust-cpython does:
+    // https://github.com/dgrunwald/rust-cpython/commit/06e61097a798bf9203884d3bb5ffddcf3296a3b2
+    #[repr(C)]
+    pub struct Allocator {
+        _private: [u8; 0],
+    }
+    #[repr(C)]
+    pub struct MachPort {
+        _private: [u8; 0],
+    }
+    #[repr(C)]
+    pub struct RunLoop {
+        _private: [u8; 0],
+    }
+    #[repr(C)]
+    pub struct RunLoopSource {
+        _private: [u8; 0],
+    }
+    #[repr(C)]
+    pub struct String {
+        _private: [u8; 0],
+    }
+    #[repr(C)]
+    pub struct Data {
+        _private: [u8; 0],
+    }
+    #[repr(C)]
+    pub struct Boolean {
+        _private: [u8; 0],
+    }
+    #[repr(C)]
+    pub struct Dictionary {
+        _private: [u8; 0],
+    }
+    #[repr(C)]
+    pub struct DictionaryKeyCallBacks {
+        _private: [u8; 0],
+    }
+    #[repr(C)]
+    pub struct DictionaryValueCallBacks {
+        _private: [u8; 0],
+    }
 }
 
 pub type AllocatorRef = *mut opaque::Allocator;

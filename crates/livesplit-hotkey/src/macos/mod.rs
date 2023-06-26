@@ -2,7 +2,7 @@ mod ax;
 mod carbon;
 mod cf;
 mod cg;
-pub mod permission;
+mod permission;
 
 use self::{
     carbon::{
@@ -92,11 +92,6 @@ impl Drop for Hook {
 impl Hook {
     /// Creates a new hook.
     pub fn new() -> Result<Self> {
-        #[link(name = "AppKit", kind = "framework")]
-        extern "C" {
-            // NSEvent is in the AppKit framework.
-        }
-
         let state = Arc::new(State {
             hotkeys: Mutex::new(HashMap::new()),
         });
@@ -110,10 +105,17 @@ impl Hook {
         thread::spawn(move || unsafe {
             let state_ptr: *const State = &*thread_state;
 
+            // If we don't have the permission to use the hotkeys, we want to
+            // request it. In that case, this however will fail regardless of
+            // whether the permission is then granted by the user or not. The
+            // user will have to restart the application. If the permission is
+            // already granted, this does nothing.
+            permission::request();
+
             let port = CGEventTapCreate(
-                EventTapLocation::Session,
-                EventTapPlacement::HeadInsertEventTap,
-                EventTapOptions::DefaultTap,
+                EventTapLocation::SESSION,
+                EventTapPlacement::HEAD_INSERT_EVENT_TAP,
+                EventTapOptions::DEFAULT_TAP,
                 EventMask::KEY_DOWN,
                 Some(callback),
                 state_ptr as *mut c_void,
@@ -299,12 +301,13 @@ unsafe extern "C" fn callback(
     //   return event;
     // }
 
-    let is_repeating = cg::CGEventGetIntegerValueField(event, EventField::KeyboardEventAutorepeat);
+    let is_repeating =
+        cg::CGEventGetIntegerValueField(event, EventField::KEYBOARD_EVENT_AUTOREPEAT);
     if is_repeating != 0 {
         return event;
     }
 
-    let key_code = cg::CGEventGetIntegerValueField(event, EventField::KeyboardEventKeycode);
+    let key_code = cg::CGEventGetIntegerValueField(event, EventField::KEYBOARD_EVENT_KEYCODE);
     let key_code = match key_code {
         0x00 => KeyCode::KeyA,
         0x01 => KeyCode::KeyS,
