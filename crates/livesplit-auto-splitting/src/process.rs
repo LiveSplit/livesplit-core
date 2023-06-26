@@ -29,6 +29,7 @@ pub enum ModuleError {
 
 pub type Address = u64;
 
+/// A process that an auto splitter is attached to.
 pub struct Process {
     handle: ProcessHandle,
     pid: Pid,
@@ -44,7 +45,7 @@ impl std::fmt::Debug for Process {
 }
 
 impl Process {
-    pub fn with_name(name: &str, process_list: &mut ProcessList) -> Result<Self, OpenError> {
+    pub(super) fn with_name(name: &str, process_list: &mut ProcessList) -> Result<Self, OpenError> {
         process_list.refresh();
         let processes = process_list.processes_by_name(name);
 
@@ -72,13 +73,13 @@ impl Process {
         })
     }
 
-    pub fn is_open(&self, process_list: &mut ProcessList) -> bool {
+    pub(super) fn is_open(&self, process_list: &mut ProcessList) -> bool {
         // FIXME: We can actually ask the list to only refresh the individual process.
         process_list.refresh();
         process_list.is_open(sysinfo::Pid::from_u32(self.pid as u32))
     }
 
-    pub fn module_address(&mut self, module: &str) -> Result<Address, ModuleError> {
+    pub(super) fn module_address(&mut self, module: &str) -> Result<Address, ModuleError> {
         self.refresh_memory_ranges()?;
         self.memory_ranges
             .iter()
@@ -87,7 +88,7 @@ impl Process {
             .map(|m| m.start() as u64)
     }
 
-    pub fn module_size(&mut self, module: &str) -> Result<u64, ModuleError> {
+    pub(super) fn module_size(&mut self, module: &str) -> Result<u64, ModuleError> {
         self.refresh_memory_ranges()?;
         Ok(self
             .memory_ranges
@@ -97,30 +98,30 @@ impl Process {
             .sum())
     }
 
-    pub fn read_mem(&self, address: Address, buf: &mut [u8]) -> io::Result<()> {
+    pub(super) fn read_mem(&self, address: Address, buf: &mut [u8]) -> io::Result<()> {
         self.handle.copy_address(address as usize, buf)
     }
 
-    pub fn get_memory_range_count(&mut self) -> Result<usize, ModuleError> {
+    pub(super) fn get_memory_range_count(&mut self) -> Result<usize, ModuleError> {
         self.refresh_memory_ranges()?;
         Ok(self.memory_ranges.len())
     }
 
-    pub fn get_memory_range_address(&mut self, idx: usize) -> Result<Address, ModuleError> {
+    pub(super) fn get_memory_range_address(&mut self, idx: usize) -> Result<Address, ModuleError> {
         self.memory_ranges
             .get(idx)
             .ok_or(ModuleError::ModuleDoesntExist)
             .map(|m| m.start() as Address)
     }
 
-    pub fn get_memory_range_size(&mut self, idx: usize) -> Result<u64, ModuleError> {
+    pub(super) fn get_memory_range_size(&mut self, idx: usize) -> Result<u64, ModuleError> {
         self.memory_ranges
             .get(idx)
             .ok_or(ModuleError::ModuleDoesntExist)
             .map(|m| m.size() as u64)
     }
 
-    pub fn get_memory_range_flags(&mut self, idx: usize) -> Result<u64, ModuleError> {
+    pub(super) fn get_memory_range_flags(&mut self, idx: usize) -> Result<u64, ModuleError> {
         let module = self
             .memory_ranges
             .get(idx)
@@ -144,6 +145,12 @@ impl Process {
         Ok(flags)
     }
 
+    /// Returns the process id of the process.
+    pub const fn pid(&self) -> Pid {
+        self.pid
+    }
+
+    /// Returns the path of the executable of the process.
     pub fn path(&self) -> Option<&str> {
         self.path.as_deref()
     }
