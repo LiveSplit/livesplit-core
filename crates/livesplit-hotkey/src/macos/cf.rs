@@ -1,12 +1,53 @@
+#![allow(dead_code)]
+
 use std::ffi::{c_ulong, c_void};
 
 mod opaque {
-    pub enum Allocator {}
-    pub enum MachPort {}
-    pub enum RunLoop {}
-    pub enum RunLoopSource {}
-    pub enum String {}
-    pub enum Data {}
+    // TODO: Use extern types once they are stable.
+    // Relevant issue about empty enums:
+    // https://github.com/rust-lang/rust/issues/74840
+    // Right now we do what rust-cpython does:
+    // https://github.com/dgrunwald/rust-cpython/commit/06e61097a798bf9203884d3bb5ffddcf3296a3b2
+    #[repr(C)]
+    pub struct Allocator {
+        _private: [u8; 0],
+    }
+    #[repr(C)]
+    pub struct MachPort {
+        _private: [u8; 0],
+    }
+    #[repr(C)]
+    pub struct RunLoop {
+        _private: [u8; 0],
+    }
+    #[repr(C)]
+    pub struct RunLoopSource {
+        _private: [u8; 0],
+    }
+    #[repr(C)]
+    pub struct String {
+        _private: [u8; 0],
+    }
+    #[repr(C)]
+    pub struct Data {
+        _private: [u8; 0],
+    }
+    #[repr(C)]
+    pub struct Boolean {
+        _private: [u8; 0],
+    }
+    #[repr(C)]
+    pub struct Dictionary {
+        _private: [u8; 0],
+    }
+    #[repr(C)]
+    pub struct DictionaryKeyCallBacks {
+        _private: [u8; 0],
+    }
+    #[repr(C)]
+    pub struct DictionaryValueCallBacks {
+        _private: [u8; 0],
+    }
 }
 
 pub type AllocatorRef = *mut opaque::Allocator;
@@ -14,9 +55,13 @@ pub type MachPortRef = *mut opaque::MachPort;
 pub type RunLoopRef = *mut opaque::RunLoop;
 pub type RunLoopSourceRef = *mut opaque::RunLoopSource;
 
+pub type BooleanRef = *const opaque::Boolean;
 pub type StringRef = *const opaque::String;
 pub type TypeRef = *const c_void;
 pub type DataRef = *const opaque::Data;
+pub type DictionaryRef = *mut opaque::Dictionary;
+pub type DictionaryKeyCallBacksRef = *const opaque::DictionaryKeyCallBacks;
+pub type DictionaryValueCallBacksRef = *const opaque::DictionaryValueCallBacks;
 
 pub type RunLoopMode = StringRef;
 
@@ -42,7 +87,13 @@ bitflags::bitflags! {
 extern "C" {
     pub static kCFAllocatorDefault: AllocatorRef;
 
+    pub static kCFBooleanTrue: BooleanRef;
+
     pub static kCFRunLoopDefaultMode: RunLoopMode;
+
+    pub static kCFTypeDictionaryKeyCallBacks: opaque::DictionaryKeyCallBacks;
+
+    pub static kCFTypeDictionaryValueCallBacks: opaque::DictionaryValueCallBacks;
 
     pub fn CFMachPortCreateRunLoopSource(
         allocator: AllocatorRef,
@@ -68,4 +119,13 @@ extern "C" {
     pub fn CFRelease(cf: TypeRef);
 
     pub fn CFDataGetBytePtr(the_data: DataRef) -> *const u8;
+
+    pub fn CFDictionaryCreate(
+        allocator: AllocatorRef,
+        keys: *const TypeRef,
+        values: *const TypeRef,
+        numValues: Index,
+        keyCallbacks: DictionaryKeyCallBacksRef,
+        valueCallbacks: DictionaryValueCallBacksRef,
+    ) -> DictionaryRef;
 }
