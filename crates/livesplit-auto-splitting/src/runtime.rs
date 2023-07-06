@@ -11,7 +11,7 @@ use std::{
     str,
     time::{Duration, Instant},
 };
-use sysinfo::{ProcessRefreshKind, RefreshKind, System, SystemExt};
+use sysinfo::{ProcessExt, ProcessRefreshKind, RefreshKind, System, SystemExt};
 use wasi_common::{dir::DirCaps, file::FileCaps};
 use wasmtime::{
     Caller, Config, Engine, Extern, Linker, Memory, Module, OptLevel, Store, TypedFunc,
@@ -116,11 +116,14 @@ impl ProcessList {
         }
     }
 
-    pub fn processes_by_name<'a>(
+    pub fn processes_by_name<'a: 'b, 'b>(
         &'a self,
-        name: &'a str,
-    ) -> Box<dyn Iterator<Item = &'a sysinfo::Process> + 'a> {
-        self.system.processes_by_exact_name(name)
+        name: &'b str,
+    ) -> impl Iterator<Item = &'a sysinfo::Process> + 'b {
+        self.system
+            .processes()
+            .values()
+            .filter(move |p| p.name() == name)
     }
 
     pub fn is_open(&self, pid: sysinfo::Pid) -> bool {
@@ -266,7 +269,7 @@ fn build_wasi() -> WasiCtx {
 
     #[cfg(windows)]
     {
-        let mut drives = unsafe { winapi::um::fileapi::GetLogicalDrives() };
+        let mut drives = unsafe { windows_sys::Win32::Storage::FileSystem::GetLogicalDrives() };
         loop {
             let drive_idx = drives.trailing_zeros();
             if drive_idx >= 26 {
