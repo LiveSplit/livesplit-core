@@ -8,10 +8,6 @@ on:
     tags:
       - '*'
 
-# The colors mess with the problem matcher.
-# env:
-  # CARGO_TERM_COLOR: always
-
 jobs:
   build:
     runs-on: ${{ matrix.os || 'ubuntu-latest' }}
@@ -21,8 +17,8 @@ jobs:
         label:
           # Bare Metal
           - Bare Metal Nvidia PTX 64
-          # FIXME: ouroboros currently can't handle this target.
-          # https://github.com/joshua-maros/ouroboros/issues/81
+          # FIXME: fontdb currently can't handle this target.
+          # The `alloc::sync` module does not exist.
           # - Bare Metal ARM Cortex-M thumbv6m
           - Bare Metal ARM Cortex-M thumbv7em
           - Bare Metal ARM Cortex-M thumbv7em Hardware Float
@@ -131,8 +127,8 @@ jobs:
             no_std: true
             install_target: true
 
-          # FIXME: ouroboros currently can't handle this target.
-          # https://github.com/joshua-maros/ouroboros/issues/81
+          # FIXME: fontdb currently can't handle this target.
+          # The `alloc::sync` module does not exist.
           # - label: Bare Metal ARM Cortex-M thumbv6m
           #   target: thumbv6m-none-eabi
           #   tests: skip
