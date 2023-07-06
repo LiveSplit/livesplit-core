@@ -1,15 +1,15 @@
-use core::{mem, ptr, str};
+use core::{mem::MaybeUninit, ptr, str};
 
-use mem::MaybeUninit;
-use winapi::{
-    shared::windef::{HDC, HFONT},
-    um::wingdi::{
-        CreateCompatibleDC, CreateFontW, DeleteDC, DeleteObject, GetFontData, GetTextMetricsW,
-        SelectObject, DEFAULT_PITCH, DEFAULT_QUALITY, GDI_ERROR, HGDI_ERROR, TEXTMETRICW,
+use windows_sys::Win32::{
+    Foundation::HANDLE,
+    Graphics::Gdi::{
+        CreateCompatibleDC, CreateFontW, CreatedHDC, DeleteDC, DeleteObject, GetFontData,
+        GetTextMetricsW, SelectObject, DEFAULT_PITCH, DEFAULT_QUALITY, GDI_ERROR, HFONT,
+        TEXTMETRICW,
     },
 };
 
-pub struct DeviceContext(HDC);
+pub struct DeviceContext(CreatedHDC);
 
 impl Drop for DeviceContext {
     fn drop(&mut self) {
@@ -27,8 +27,8 @@ impl DeviceContext {
         // parameters to `CreateCompatibleDC`. We also properly check the
         // result.
         unsafe {
-            let res = CreateCompatibleDC(ptr::null_mut());
-            if res.is_null() {
+            let res = CreateCompatibleDC(0);
+            if res == 0 {
                 return None;
             }
             Some(Self(res))
@@ -39,8 +39,8 @@ impl DeviceContext {
         // SAFETY: We call `SelectObject` with a valid `HDC` and a valid
         // `HFONT`. We also properly check the result.
         unsafe {
-            let res = SelectObject(self.0, font.0.cast());
-            if res.is_null() || res == HGDI_ERROR {
+            let res = SelectObject(self.0, font.0);
+            if res == 0 || res == GDI_ERROR as HANDLE {
                 return None;
             }
             Some(())
@@ -57,12 +57,12 @@ impl DeviceContext {
         unsafe {
             let name = u32::from_le_bytes(name);
             let len = GetFontData(self.0, name, 0, ptr::null_mut(), 0);
-            if len == GDI_ERROR {
+            if len as i32 == GDI_ERROR {
                 return None;
             }
             let mut name_table = Vec::<u8>::with_capacity(len as usize);
             let len = GetFontData(self.0, name, 0, name_table.as_mut_ptr().cast(), len);
-            if len == GDI_ERROR {
+            if len as i32 == GDI_ERROR {
                 return None;
             }
             name_table.set_len(len as usize);
@@ -93,7 +93,7 @@ impl Drop for Font {
         // SAFETY: We own the `HFONT` and this is in `Drop`, so it is safe to
         // call `DeleteObject`.
         unsafe {
-            DeleteObject(self.0.cast());
+            DeleteObject(self.0);
         }
     }
 }
@@ -128,11 +128,11 @@ impl Font {
                 0,
                 0,
                 0,
-                DEFAULT_QUALITY,
-                DEFAULT_PITCH,
+                DEFAULT_QUALITY as _,
+                DEFAULT_PITCH as _,
                 name_buf.as_ptr(),
             );
-            if res.is_null() {
+            if res == 0 {
                 return None;
             }
             Some(Self(res))

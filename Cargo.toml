@@ -97,8 +97,11 @@ web-sys = { version = "0.3.28", default-features = false, features = [
 ], optional = true }
 
 [target.'cfg(windows)'.dependencies]
-# We need winapi to use GDI to resolve fonts on Windows.
-winapi = { version = "0.3.9", features = ["wingdi"], optional = true }
+# We need windows-sys to use GDI to resolve fonts on Windows.
+windows-sys = { version = "0.48.0", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Gdi",
+], optional = true }
 
 [target.'cfg(any(target_os = "linux", target_os = "l4re", target_os = "android", target_os = "macos", target_os = "ios"))'.dependencies]
 # We need libc for our own implementation of Instant
@@ -126,7 +129,7 @@ std = [
     "snafu/std",
     "time/local-offset",
     "tiny-skia?/std",
-    "winapi",
+    "windows-sys",
 ]
 more-image-formats = [
     "image?/bmp",

@@ -9,25 +9,23 @@ use std::{
     },
     thread,
 };
-use winapi::{
-    ctypes::c_int,
-    shared::{
-        minwindef::{DWORD, LPARAM, LRESULT, UINT, WPARAM},
-        windef::HHOOK,
-    },
-    um::{
-        libloaderapi::GetModuleHandleW,
-        processthreadsapi::GetCurrentThreadId,
-        winuser::{
-            CallNextHookEx, GetMessageW, MapVirtualKeyW, PostThreadMessageW, SetWindowsHookExW,
-            UnhookWindowsHookEx, KBDLLHOOKSTRUCT, LLKHF_EXTENDED, MAPVK_VK_TO_CHAR,
-            MAPVK_VK_TO_VSC_EX, MAPVK_VSC_TO_VK_EX, WH_KEYBOARD_LL, WM_KEYDOWN, WM_KEYUP,
-            WM_SYSKEYDOWN, WM_SYSKEYUP,
+
+use windows_sys::Win32::{
+    Foundation::{LPARAM, LRESULT, WPARAM},
+    System::{LibraryLoader::GetModuleHandleW, Threading::GetCurrentThreadId},
+    UI::{
+        Input::KeyboardAndMouse::{
+            MapVirtualKeyW, MAPVK_VK_TO_CHAR, MAPVK_VK_TO_VSC_EX, MAPVK_VSC_TO_VK_EX,
+        },
+        WindowsAndMessaging::{
+            CallNextHookEx, GetMessageW, PostThreadMessageW, SetWindowsHookExW,
+            UnhookWindowsHookEx, HHOOK, KBDLLHOOKSTRUCT, LLKHF_EXTENDED, WH_KEYBOARD_LL,
+            WM_KEYDOWN, WM_KEYUP, WM_SYSKEYDOWN, WM_SYSKEYUP,
         },
     },
 };
 
-const MSG_EXIT: UINT = 0x400;
+const MSG_EXIT: u32 = 0x400;
 
 /// The error type for this crate.
 #[derive(Debug, snafu::Snafu)]
@@ -50,7 +48,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 /// A hook allows you to listen to hotkeys.
 pub struct Hook {
-    thread_id: DWORD,
+    thread_id: u32,
     hotkeys: Arc<Mutex<HashMap<Hotkey, Box<dyn FnMut() + Send + 'static>>>>,
 }
 
@@ -78,7 +76,7 @@ thread_local! {
     static STATE: RefCell<Option<State>> = RefCell::new(None);
 }
 
-const fn parse_scan_code(value: DWORD) -> Option<KeyCode> {
+const fn parse_scan_code(value: u32) -> Option<KeyCode> {
     // Windows uses PS/2 scan code set 1.
     // https://www.avrfreaks.net/sites/default/files/PS2%20Keyboard.pdf Page 19
     // This is the most up to the date documentation it seems:
@@ -254,14 +252,14 @@ const fn parse_scan_code(value: DWORD) -> Option<KeyCode> {
     })
 }
 
-unsafe extern "system" fn callback_proc(code: c_int, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
+unsafe extern "system" fn callback_proc(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
     STATE.with(|state| {
         let mut state = state.borrow_mut();
         let state = state.as_mut().expect("State should be initialized by now");
 
         if code >= 0 {
-            let hook_struct = *(lparam as *const KBDLLHOOKSTRUCT);
-            let event = wparam as UINT;
+            let hook_struct = &*(lparam as *const KBDLLHOOKSTRUCT);
+            let event = wparam as u32;
             if event == WM_KEYDOWN || event == WM_SYSKEYDOWN {
                 // Windows in addition to the scan code has a notion of a
                 // virtual key code. This however is already dependent on the
@@ -387,7 +385,7 @@ impl Hook {
         let (events_tx, events_rx) = channel();
 
         thread::spawn(move || {
-            let mut hook = ptr::null_mut();
+            let mut hook = 0;
 
             STATE.with(|state| {
                 hook = unsafe {
@@ -399,7 +397,7 @@ impl Hook {
                     )
                 };
 
-                if !hook.is_null() {
+                if hook != 0 {
                     initialized_tx
                         .send(Ok(unsafe { GetCurrentThreadId() }))
                         .map_err(|_| Error::ThreadStopped)?;
@@ -421,7 +419,7 @@ impl Hook {
 
             loop {
                 let mut msg = mem::MaybeUninit::uninit();
-                let ret = unsafe { GetMessageW(msg.as_mut_ptr(), ptr::null_mut(), 0, 0) };
+                let ret = unsafe { GetMessageW(msg.as_mut_ptr(), 0, 0, 0) };
                 if ret < 0 {
                     return Err(Error::MessageLoop);
                 }
