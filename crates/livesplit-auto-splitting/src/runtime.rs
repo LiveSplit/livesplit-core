@@ -1,6 +1,9 @@
 #![allow(clippy::unnecessary_cast)]
 
-use crate::{process::Process, settings::UserSetting, timer::Timer, SettingValue, SettingsStore};
+use crate::{
+    process::Process, settings::UserSetting, timer::Timer, SettingValue, SettingsStore,
+    UserSettingKind,
+};
 
 use anyhow::{format_err, Context as _, Result};
 use slotmap::{Key, KeyData, SlotMap};
@@ -684,18 +687,13 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 let default_value = default_value != 0;
                 let value_in_store = match context.settings_store.get(&key) {
                     Some(SettingValue::Bool(v)) => *v,
-                    None => {
-                        // TODO: Should this auto insert into the store?
-                        context
-                            .settings_store
-                            .set(key.clone(), SettingValue::Bool(default_value));
-                        default_value
-                    }
+                    None => default_value,
                 };
                 context.user_settings.push(UserSetting {
                     key,
                     description,
-                    default_value: SettingValue::Bool(default_value),
+                    tooltip: None,
+                    kind: UserSettingKind::Bool { default_value },
                 });
                 Ok(value_in_store as u32)
             }
@@ -703,6 +701,51 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
         .map_err(|source| CreationError::LinkFunction {
             source,
             name: "user_settings_add_bool",
+        })?
+        .func_wrap("env", "user_settings_add_title", {
+            |mut caller: Caller<'_, Context<T>>,
+             key_ptr: u32,
+             key_len: u32,
+             description_ptr: u32,
+             description_len: u32,
+             heading_level: u32| {
+                let (memory, context) = memory_and_context(&mut caller);
+                let key = get_str(memory, key_ptr, key_len)?.into();
+                let description = get_str(memory, description_ptr, description_len)?.into();
+                context.user_settings.push(UserSetting {
+                    key,
+                    description,
+                    tooltip: None,
+                    kind: UserSettingKind::Title { heading_level },
+                });
+                Ok(())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "user_settings_add_title",
+        })?
+        .func_wrap("env", "user_settings_set_tooltip", {
+            |mut caller: Caller<'_, Context<T>>,
+             key_ptr: u32,
+             key_len: u32,
+             tooltip_ptr: u32,
+             tooltip_len: u32| {
+                let (memory, context) = memory_and_context(&mut caller);
+                let key = get_str(memory, key_ptr, key_len)?.into();
+                let tooltip = get_str(memory, tooltip_ptr, tooltip_len)?.into();
+                context
+                    .user_settings
+                    .iter_mut()
+                    .find(|s| s.key == key)
+                    .context("There is no setting with the provided key.")?
+                    .tooltip = Some(tooltip);
+                Ok(())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "user_settings_set_tooltip",
         })?;
     Ok(())
 }

@@ -4,13 +4,35 @@ use std::collections::HashMap;
 #[non_exhaustive]
 pub struct UserSetting {
     /// A unique identifier for this setting. This is not meant to be shown to
-    /// the user and is only used to keep track of the setting.
+    /// the user and is only used to keep track of the setting. This key is used
+    /// to store and retrieve the value of the setting from the
+    /// [`SettingsStore`].
     pub key: Box<str>,
     /// The name of the setting that is shown to the user.
     pub description: Box<str>,
-    /// The default value of the setting. This also specifies the type of the
+    /// An optional tooltip that is shown to the user when hovering over the
     /// setting.
-    pub default_value: SettingValue,
+    pub tooltip: Option<Box<str>>,
+    /// The type of setting and additional information about it.
+    pub kind: UserSettingKind,
+}
+
+/// The type of a [`UserSetting`] and additional information about it.
+pub enum UserSettingKind {
+    /// A title that is shown to the user. It doesn't by itself store a value
+    /// and is instead used to group settings together.
+    Title {
+        /// The heading level of the title. This is used to determine the size
+        /// of the title and which other settings are grouped together with it.
+        /// The top level titles use a heading level of 0.
+        heading_level: u32,
+    },
+    /// A boolean setting. This could be visualized as a checkbox or a slider.
+    Bool {
+        /// The default value of the setting, if it's not available in the
+        /// settings store yet.
+        default_value: bool,
+    },
 }
 
 /// A value that a setting can have.

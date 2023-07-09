@@ -174,8 +174,10 @@
 //!     /// Example values: `x86`, `x86_64`, `arm`, `aarch64`
 //!     pub fn runtime_get_arch(buf_ptr: *mut u8, buf_len_ptr: *mut usize) -> bool;
 //!
-//!     /// Adds a new setting that the user can modify. This will return either
-//!     /// the specified default value or the value that the user has set.
+//!     /// Adds a new boolean setting that the user can modify. This will return
+//!     /// either the specified default value or the value that the user has set.
+//!     /// The key is used to store the setting and needs to be unique across all
+//!     /// types of settings.
 //!     pub fn user_settings_add_bool(
 //!         key_ptr: *const u8,
 //!         key_len: usize,
@@ -183,6 +185,25 @@
 //!         description_len: usize,
 //!         default_value: bool,
 //!     ) -> bool;
+//!     /// Adds a new title to the user settings. This is used to group settings
+//!     /// together. The heading level determines the size of the title. The top
+//!     /// level titles use a heading level of 0. The key needs to be unique across
+//!     /// all types of settings.
+//!     pub fn user_settings_add_title(
+//!         key_ptr: *const u8,
+//!         key_len: usize,
+//!         description_ptr: *const u8,
+//!         description_len: usize,
+//!         heading_level: u32,
+//!     );
+//!     /// Adds a tooltip to a setting based on its key. A tooltip is useful for
+//!     /// explaining the purpose of a setting to the user.
+//!     pub fn user_settings_set_tooltip(
+//!         key_ptr: *const u8,
+//!         key_len: usize,
+//!         tooltip_ptr: *const u8,
+//!         tooltip_len: usize,
+//!     );
 //! }
 //! ```
 //!
@@ -191,7 +212,7 @@
 //! using WASI may need to be recompiled in the future. Limitations of the WASI
 //! support:
 //!
-//! - `stout` / `stderr` / `stdin` are unbound. Those streams currently do
+//! - `stdout` / `stderr` / `stdin` are unbound. Those streams currently do
 //!   nothing.
 //! - The file system is currently almost entirely empty. The host's file system
 //!   is accessible through `/mnt`. It is entirely read-only. Windows paths are
@@ -218,6 +239,6 @@ mod timer;
 
 pub use process::Process;
 pub use runtime::{CreationError, InterruptHandle, Runtime};
-pub use settings::{SettingValue, SettingsStore, UserSetting};
+pub use settings::{SettingValue, SettingsStore, UserSetting, UserSettingKind};
 pub use time;
 pub use timer::{Timer, TimerState};
