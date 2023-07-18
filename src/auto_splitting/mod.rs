@@ -452,12 +452,16 @@ async fn run(
                 },
                 Ok(None) => return,
                 Err(_) => match runtime.update() {
-                    Ok(tick_rate) => {
-                        next_step += tick_rate;
+                    Ok(()) => {
+                        next_step = next_step
+                            .into_std()
+                            .checked_add(runtime.tick_rate())
+                            .map_or(next_step, |t| t.into());
+
                         timeout_sender.send(Some(next_step)).ok();
                     }
                     Err(e) => {
-                        log::error!(target: "Auto Splitter", "Unloaded due to failure: {:?}", e);
+                        log::error!(target: "Auto Splitter", "Unloaded, because the script trapped: {:?}", e);
                         continue 'back_to_not_having_a_runtime;
                     }
                 },

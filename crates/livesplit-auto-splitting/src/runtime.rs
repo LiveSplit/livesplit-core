@@ -5,7 +5,7 @@ use crate::{
     UserSettingKind,
 };
 
-use anyhow::{format_err, Context as _, Result};
+use anyhow::{ensure, format_err, Context as _, Result};
 use slotmap::{Key, KeyData, SlotMap};
 use snafu::Snafu;
 use std::{
@@ -144,6 +144,7 @@ pub struct Runtime<T: Timer> {
     store: Store<Context<T>>,
     update: TypedFunc<(), ()>,
     engine: Engine,
+    trapped: bool,
 }
 
 impl<T: Timer> Runtime<T> {
@@ -225,6 +226,7 @@ impl<T: Timer> Runtime<T> {
             engine,
             store,
             update,
+            trapped: false,
         })
     }
 
@@ -236,11 +238,26 @@ impl<T: Timer> Runtime<T> {
     }
 
     /// Runs the exported `update` function of the WebAssembly module a single
-    /// time and returns the duration to wait until the next execution. The auto
-    /// splitter can change this tick rate. It is 120Hz by default.
-    pub fn update(&mut self) -> Result<Duration> {
-        self.update.call(&mut self.store, ())?;
-        Ok(self.store.data().tick_rate)
+    /// time.
+    pub fn update(&mut self) -> Result<()> {
+        if self.trapped {
+            return Ok(());
+        }
+        match self.update.call(&mut self.store, ()) {
+            Ok(()) => Ok(()),
+            Err(e) => {
+                self.trapped = true;
+                Err(e)
+            }
+        }
+    }
+
+    /// Returns the duration to wait until the next execution. The auto splitter
+    /// can change this tick rate on every update. You should therefore call
+    /// this function after every update to sleep for the correct amount of
+    /// time. It is 120Hz by default.
+    pub fn tick_rate(&self) -> Duration {
+        self.store.data().tick_rate
     }
 
     /// Accesses the currently stored settings.
@@ -408,12 +425,24 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
             name: "timer_get_state",
         })?
         .func_wrap("env", "runtime_set_tick_rate", {
-            |mut caller: Caller<'_, Context<T>>, ticks_per_sec: f64| {
+            |mut caller: Caller<'_, Context<T>>, ticks_per_sec: f64| -> Result<()> {
                 caller
                     .data_mut()
                     .timer
                     .log(format_args!("New Tick Rate: {ticks_per_sec}"));
-                caller.data_mut().tick_rate = Duration::from_secs_f64(ticks_per_sec.recip());
+
+                ensure!(
+                    ticks_per_sec > 0.0,
+                    "The tick rate needs to be larger than 0."
+                );
+                let duration = ticks_per_sec.recip();
+
+                const MAX_DURATION: f64 = u64::MAX as f64;
+                ensure!(duration < MAX_DURATION, "The tick rate is too small.");
+
+                caller.data_mut().tick_rate = Duration::from_secs_f64(duration);
+
+                Ok(())
             }
         })
         .map_err(|source| CreationError::LinkFunction {
@@ -511,7 +540,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 caller
                     .data_mut()
                     .processes
-                    .remove(ProcessKey::from(KeyData::from_ffi(process as u64)))
+                    .remove(ProcessKey::from(KeyData::from_ffi(process)))
                     .ok_or_else(|| format_err!("Invalid process handle {process}"))?;
                 caller
                     .data_mut()
@@ -529,7 +558,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 let ctx = caller.data_mut();
                 let proc = ctx
                     .processes
-                    .get(ProcessKey::from(KeyData::from_ffi(process as u64)))
+                    .get(ProcessKey::from(KeyData::from_ffi(process)))
                     .ok_or_else(|| format_err!("Invalid process handle: {process}"))?;
                 Ok(proc.is_open(&mut ctx.process_list) as u32)
             }
@@ -544,7 +573,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 let module_name = get_str(memory, ptr, len)?;
                 Ok(context
                     .processes
-                    .get_mut(ProcessKey::from(KeyData::from_ffi(process as u64)))
+                    .get_mut(ProcessKey::from(KeyData::from_ffi(process)))
                     .ok_or_else(|| format_err!("Invalid process handle: {process}"))?
                     .module_address(module_name)
                     .unwrap_or_default())
@@ -560,7 +589,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 let module_name = get_str(memory, ptr, len)?;
                 Ok(context
                     .processes
-                    .get_mut(ProcessKey::from(KeyData::from_ffi(process as u64)))
+                    .get_mut(ProcessKey::from(KeyData::from_ffi(process)))
                     .ok_or_else(|| format_err!("Invalid process handle: {process}"))?
                     .module_size(module_name)
                     .unwrap_or_default())
@@ -575,7 +604,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 let (memory, context) = memory_and_context(&mut caller);
                 let path = context
                     .processes
-                    .get_mut(ProcessKey::from(KeyData::from_ffi(process as u64)))
+                    .get_mut(ProcessKey::from(KeyData::from_ffi(process)))
                     .ok_or_else(|| format_err!("Invalid process handle: {process}"))?
                     .path()
                     .unwrap_or_default();
@@ -604,7 +633,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 let (memory, context) = memory_and_context(&mut caller);
                 Ok(context
                     .processes
-                    .get(ProcessKey::from(KeyData::from_ffi(process as u64)))
+                    .get(ProcessKey::from(KeyData::from_ffi(process)))
                     .ok_or_else(|| format_err!("Invalid process handle: {process}"))?
                     .read_mem(address, get_slice_mut(memory, buf_ptr, buf_len)?)
                     .is_ok() as u32)
@@ -619,7 +648,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 let ctx = caller.data_mut();
                 Ok(ctx
                     .processes
-                    .get_mut(ProcessKey::from(KeyData::from_ffi(process as u64)))
+                    .get_mut(ProcessKey::from(KeyData::from_ffi(process)))
                     .ok_or_else(|| format_err!("Invalid process handle: {process}"))?
                     .get_memory_range_count()
                     .unwrap_or_default() as u64)
@@ -634,7 +663,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 let ctx = caller.data_mut();
                 Ok(ctx
                     .processes
-                    .get_mut(ProcessKey::from(KeyData::from_ffi(process as u64)))
+                    .get_mut(ProcessKey::from(KeyData::from_ffi(process)))
                     .ok_or_else(|| format_err!("Invalid process handle: {process}"))?
                     .get_memory_range_address(idx as usize)
                     .unwrap_or_default())
@@ -649,7 +678,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 let ctx = caller.data_mut();
                 Ok(ctx
                     .processes
-                    .get_mut(ProcessKey::from(KeyData::from_ffi(process as u64)))
+                    .get_mut(ProcessKey::from(KeyData::from_ffi(process)))
                     .ok_or_else(|| format_err!("Invalid process handle: {process}"))?
                     .get_memory_range_size(idx as usize)
                     .unwrap_or_default())
@@ -664,7 +693,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 let ctx = caller.data_mut();
                 Ok(ctx
                     .processes
-                    .get_mut(ProcessKey::from(KeyData::from_ffi(process as u64)))
+                    .get_mut(ProcessKey::from(KeyData::from_ffi(process)))
                     .ok_or_else(|| format_err!("Invalid process handle: {process}"))?
                     .get_memory_range_flags(idx as usize)
                     .unwrap_or_default())
