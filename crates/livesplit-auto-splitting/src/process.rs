@@ -34,13 +34,16 @@ pub struct Process {
     handle: ProcessHandle,
     pid: Pid,
     memory_ranges: Vec<MapRange>,
-    last_check: Instant,
+    next_check: Instant,
     path: Option<Box<str>>,
 }
 
 impl std::fmt::Debug for Process {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Process").field("pid", &self.pid).finish()
+        f.debug_struct("Process")
+            .field("pid", &self.pid)
+            .field("path", &self.path)
+            .finish()
     }
 }
 
@@ -68,7 +71,7 @@ impl Process {
             handle,
             pid,
             memory_ranges: Vec::new(),
-            last_check: Instant::now() - Duration::from_secs(1),
+            next_check: Instant::now(),
             path,
         })
     }
@@ -157,7 +160,7 @@ impl Process {
 
     fn refresh_memory_ranges(&mut self) -> Result<(), ModuleError> {
         let now = Instant::now();
-        if now - self.last_check >= Duration::from_secs(1) {
+        if now >= self.next_check {
             self.memory_ranges = match proc_maps::get_process_maps(self.pid) {
                 Ok(m) => m,
                 Err(source) => {
@@ -165,7 +168,7 @@ impl Process {
                     return Err(ModuleError::ListModules { source });
                 }
             };
-            self.last_check = now;
+            self.next_check = now + Duration::from_secs(1);
         }
         Ok(())
     }
