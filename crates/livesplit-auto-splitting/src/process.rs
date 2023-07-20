@@ -34,7 +34,8 @@ pub struct Process {
     handle: ProcessHandle,
     pid: Pid,
     memory_ranges: Vec<MapRange>,
-    next_check: Instant,
+    next_memory_range_check: Instant,
+    next_open_check: Instant,
     path: Option<Box<str>>,
 }
 
@@ -67,19 +68,25 @@ impl Process {
 
         let handle = pid.try_into().context(InvalidHandle)?;
 
+        let now = Instant::now();
         Ok(Process {
             handle,
             pid,
             memory_ranges: Vec::new(),
-            next_check: Instant::now(),
+            next_memory_range_check: now,
+            next_open_check: now + Duration::from_secs(1),
             path,
         })
     }
 
-    pub(super) fn is_open(&self, process_list: &mut ProcessList) -> bool {
-        // FIXME: We can actually ask the list to only refresh the individual process.
-        process_list.refresh();
-        process_list.is_open(sysinfo::Pid::from_u32(self.pid as u32))
+    pub(super) fn is_open(&mut self, process_list: &mut ProcessList) -> bool {
+        let now = Instant::now();
+        let pid = sysinfo::Pid::from_u32(self.pid as u32);
+        if now >= self.next_open_check {
+            process_list.refresh_single_process(pid);
+            self.next_open_check = now + Duration::from_secs(1);
+        }
+        process_list.is_open(pid)
     }
 
     pub(super) fn module_address(&mut self, module: &str) -> Result<Address, ModuleError> {
@@ -160,7 +167,7 @@ impl Process {
 
     fn refresh_memory_ranges(&mut self) -> Result<(), ModuleError> {
         let now = Instant::now();
-        if now >= self.next_check {
+        if now >= self.next_memory_range_check {
             self.memory_ranges = match proc_maps::get_process_maps(self.pid) {
                 Ok(m) => m,
                 Err(source) => {
@@ -168,7 +175,7 @@ impl Process {
                     return Err(ModuleError::ListModules { source });
                 }
             };
-            self.next_check = now + Duration::from_secs(1);
+            self.next_memory_range_check = now + Duration::from_secs(1);
         }
         Ok(())
     }
