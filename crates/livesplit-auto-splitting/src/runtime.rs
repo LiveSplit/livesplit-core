@@ -97,7 +97,7 @@ impl InterruptHandle {
 
 pub struct ProcessList {
     system: System,
-    last_check: Instant,
+    next_check: Instant,
 }
 
 impl ProcessList {
@@ -106,16 +106,31 @@ impl ProcessList {
             system: System::new_with_specifics(
                 RefreshKind::new().with_processes(ProcessRefreshKind::new()),
             ),
-            last_check: Instant::now() - Duration::from_secs(1),
+            next_check: Instant::now() + Duration::from_secs(1),
         }
     }
 
     pub fn refresh(&mut self) {
         let now = Instant::now();
-        if now - self.last_check >= Duration::from_secs(1) {
+        if now >= self.next_check {
             self.system
                 .refresh_processes_specifics(ProcessRefreshKind::new());
-            self.last_check = now;
+            self.next_check = now + Duration::from_secs(1);
+        }
+    }
+
+    pub fn refresh_single_process(&mut self, pid: sysinfo::Pid) {
+        if !self
+            .system
+            .refresh_process_specifics(pid, ProcessRefreshKind::new())
+        {
+            // FIXME: Unfortunately `refresh_process_specifics` doesn't remove
+            // the process if it doesn't exist anymore. There also doesn't seem
+            // to be a way to manually remove it. So we have to do a full
+            // refresh of all processes.
+            self.system
+                .refresh_processes_specifics(ProcessRefreshKind::new());
+            self.next_check = Instant::now() + Duration::from_secs(1);
         }
     }
 
@@ -558,7 +573,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 let ctx = caller.data_mut();
                 let proc = ctx
                     .processes
-                    .get(ProcessKey::from(KeyData::from_ffi(process)))
+                    .get_mut(ProcessKey::from(KeyData::from_ffi(process)))
                     .ok_or_else(|| format_err!("Invalid process handle: {process}"))?;
                 Ok(proc.is_open(&mut ctx.process_list) as u32)
             }
