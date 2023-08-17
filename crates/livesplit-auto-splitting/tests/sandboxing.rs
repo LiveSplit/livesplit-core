@@ -1,4 +1,4 @@
-use livesplit_auto_splitting::{Runtime, SettingsStore, Timer, TimerState};
+use livesplit_auto_splitting::{Config, Runtime, SettingsStore, Timer, TimerState};
 use std::{
     ffi::OsStr,
     fmt, fs,
@@ -64,7 +64,7 @@ fn compile(crate_name: &str) -> anyhow::Result<Runtime<DummyTimer>> {
     Ok(Runtime::new(
         &std::fs::read(wasm_path).unwrap(),
         DummyTimer,
-        SettingsStore::new(),
+        Config::default(),
     )?)
 }
 

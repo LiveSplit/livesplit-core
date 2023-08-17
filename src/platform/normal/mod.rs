@@ -65,6 +65,9 @@ cfg_if::cfg_if! {
     // defined as a clock measuring real time`, making it sound like a compliant
     // implementation should measure the time the OS is suspended as well.
     //
+    // Open issue:
+    // https://github.com/WebAssembly/wasi-clocks/issues/47
+    //
     // # Web
     //
     // In the web we use `performance.now()` which they want to specify as being

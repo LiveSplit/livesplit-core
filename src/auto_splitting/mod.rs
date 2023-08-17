@@ -194,8 +194,8 @@
 
 use crate::timing::{SharedTimer, TimerPhase};
 use livesplit_auto_splitting::{
-    CreationError, InterruptHandle, Runtime as ScriptRuntime, SettingsStore,
-    Timer as AutoSplitTimer, TimerState,
+    Config, CreationError, InterruptHandle, Runtime as ScriptRuntime, Timer as AutoSplitTimer,
+    TimerState,
 };
 use snafu::Snafu;
 use std::{fmt, fs, io, path::PathBuf, thread, time::Duration};
@@ -399,7 +399,7 @@ async fn run(
         let mut runtime = loop {
             match receiver.recv().await {
                 Some(Request::LoadScript(script, ret)) => {
-                    match ScriptRuntime::new(&script, Timer(timer.clone()), SettingsStore::new()) {
+                    match ScriptRuntime::new(&script, Timer(timer.clone()), Config::default()) {
                         Ok(r) => {
                             ret.send(Ok(())).ok();
                             break r;
@@ -428,11 +428,7 @@ async fn run(
             match timeout_at(next_step, receiver.recv()).await {
                 Ok(Some(request)) => match request {
                     Request::LoadScript(script, ret) => {
-                        match ScriptRuntime::new(
-                            &script,
-                            Timer(timer.clone()),
-                            SettingsStore::new(),
-                        ) {
+                        match ScriptRuntime::new(&script, Timer(timer.clone()), Config::default()) {
                             Ok(r) => {
                                 ret.send(Ok(())).ok();
                                 runtime = r;

@@ -181,7 +181,7 @@ impl Process {
     }
 }
 
-fn build_path(original_path: &Path) -> Option<Box<str>> {
+pub fn build_path(original_path: &Path) -> Option<Box<str>> {
     let mut path = String::from("/mnt");
     for component in original_path.components() {
         if !path.ends_with('/') {
