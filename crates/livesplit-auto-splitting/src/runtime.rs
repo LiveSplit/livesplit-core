@@ -280,6 +280,11 @@ impl<T: Timer> Runtime<T> {
         &self.store.data().settings_store
     }
 
+    /// Accesses the currently stored settings as mutable.
+    pub fn settings_store_mut(&mut self) -> &mut SettingsStore {
+        &mut self.store.data_mut().settings_store
+    }
+
     /// Accesses all the settings that are meant to be shown to and modified by
     /// the user.
     pub fn user_settings(&self) -> &[UserSetting] {
