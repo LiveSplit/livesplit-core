@@ -365,13 +365,13 @@ impl Runtime {
 
         let result = receiver.await;
 
-        return match result {
+        match result {
             Ok(settings) => match settings {
                 Some(settings) => Ok(settings),
                 None => Err(Error::SettingsLoadFailed),
             },
             Err(_) => Err(Error::ThreadStopped),
-        };
+        }
     }
 
     /// Get the custom auto splitter settings
@@ -392,13 +392,13 @@ impl Runtime {
 
         let result = receiver.await;
 
-        return match result {
+        match result {
             Ok(setting_value) => match setting_value {
                 Some(setting_value) => Ok(setting_value),
                 None => Err(Error::SettingNotFound),
             },
             Err(_) => Err(Error::ThreadStopped),
-        };
+        }
     }
 
     /// Get the value for a custom auto splitter setting
@@ -603,10 +603,7 @@ async fn run(
                         log::info!(target: "Auto Splitter", "Getting the settings");
                     }
                     Request::GetSettingValue(key, ret) => {
-                        let setting_value = match runtime.settings_store().get(key.as_str()) {
-                            Some(value) => Some(value),
-                            None => None,
-                        };
+                        let setting_value = runtime.settings_store().get(key.as_str());
 
                         let user_setting_value = match runtime
                             .user_settings()
