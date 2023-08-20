@@ -194,7 +194,8 @@
 
 use crate::timing::{SharedTimer, TimerPhase};
 use livesplit_auto_splitting::{
-    CreationError, InterruptHandle, Runtime as ScriptRuntime, Timer as AutoSplitTimer, TimerState,
+    Config, CreationError, InterruptHandle, Runtime as ScriptRuntime, Timer as AutoSplitTimer,
+    TimerState,
 };
 pub use livesplit_auto_splitting::{SettingValue, SettingsStore, UserSetting, UserSettingKind};
 use snafu::Snafu;
@@ -513,7 +514,7 @@ async fn run(
         let mut runtime = loop {
             match receiver.recv().await {
                 Some(Request::LoadScript(script, ret)) => {
-                    match ScriptRuntime::new(&script, Timer(timer.clone()), SettingsStore::new()) {
+                    match ScriptRuntime::new(&script, Timer(timer.clone()), Config::default()) {
                         Ok(r) => {
                             ret.send(Ok(())).ok();
                             script_path = script;
@@ -559,11 +560,7 @@ async fn run(
             match timeout_at(next_step, receiver.recv()).await {
                 Ok(Some(request)) => match request {
                     Request::LoadScript(script, ret) => {
-                        match ScriptRuntime::new(
-                            &script,
-                            Timer(timer.clone()),
-                            SettingsStore::new(),
-                        ) {
+                        match ScriptRuntime::new(&script, Timer(timer.clone()), Config::default()) {
                             Ok(r) => {
                                 ret.send(Ok(())).ok();
                                 runtime = r;
@@ -582,10 +579,13 @@ async fn run(
                         continue 'back_to_not_having_a_runtime;
                     }
                     Request::ReloadScript(ret) => {
+                        let mut config = Config::default();
+                        config.settings_store = Some(runtime.settings_store().clone());
+                        
                         match ScriptRuntime::new(
                             &script_path,
                             Timer(timer.clone()),
-                            runtime.settings_store().clone(),
+                            config,
                         ) {
                             Ok(r) => {
                                 ret.send(Ok(())).ok();

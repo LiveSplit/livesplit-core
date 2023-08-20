@@ -1,8 +1,10 @@
 #![allow(clippy::unnecessary_cast)]
 
 use crate::{
-    process::Process, settings::UserSetting, timer::Timer, SettingValue, SettingsStore,
-    UserSettingKind,
+    process::{build_path, Process},
+    settings::UserSetting,
+    timer::Timer,
+    SettingValue, SettingsStore, UserSettingKind,
 };
 
 use anyhow::{ensure, format_err, Context as _, Result};
@@ -10,14 +12,15 @@ use slotmap::{Key, KeyData, SlotMap};
 use snafu::Snafu;
 use std::{
     env::consts::{ARCH, OS},
-    path::PathBuf,
+    path::{Path, PathBuf},
     str,
     time::{Duration, Instant},
 };
 use sysinfo::{ProcessExt, ProcessRefreshKind, RefreshKind, System, SystemExt};
 use wasi_common::{dir::DirCaps, file::FileCaps};
 use wasmtime::{
-    Caller, Config, Engine, Extern, Linker, Memory, Module, OptLevel, Store, TypedFunc,
+    Caller, Engine, Extern, Linker, Memory, Module, OptLevel, Store, TypedFunc,
+    WasmBacktraceDetails,
 };
 use wasmtime_wasi::{ambient_authority, WasiCtx, WasiCtxBuilder};
 
@@ -153,6 +156,41 @@ impl ProcessList {
     }
 }
 
+/// The configuration to use when creating a new [`Runtime`].
+#[non_exhaustive]
+pub struct Config<'a> {
+    /// The settings store that is used to store the settings of the auto
+    /// splitter. This contains all the settings that are currently modified by
+    /// the user. It may not contain all the settings that are registered as
+    /// user settings, because the user may not have modified them yet.
+    pub settings_store: Option<SettingsStore>,
+    /// The auto splitter itself may be a runtime that wants to load a script
+    /// from a file to interpret. This is the path to that script. It is
+    /// provided to the auto splitter as the `SCRIPT_PATH` environment variable.
+    /// **This is currently experimental and may change in the future.**
+    pub interpreter_script_path: Option<&'a Path>,
+    /// This enables debug information for the WebAssembly module. This is
+    /// useful for debugging purposes, but due to bugs in wasmtime might
+    /// currently crash the runtime. This is disabled by default. Relevant
+    /// issue: https://github.com/bytecodealliance/wasmtime/issues/3999
+    pub debug_info: bool,
+    /// This enables backtrace details for the WebAssembly module. If a trap
+    /// occurs more details are printed in the backtrace. This is enabled by
+    /// default.
+    pub backtrace_details: bool,
+}
+
+impl Default for Config<'_> {
+    fn default() -> Self {
+        Self {
+            settings_store: None,
+            interpreter_script_path: None,
+            debug_info: false,
+            backtrace_details: true,
+        }
+    }
+}
+
 /// An auto splitter runtime that allows using an auto splitter provided as a
 /// WebAssembly module to control a timer.
 pub struct Runtime<T: Timer> {
@@ -165,14 +203,16 @@ pub struct Runtime<T: Timer> {
 impl<T: Timer> Runtime<T> {
     /// Creates a new runtime with the given path to the WebAssembly module and
     /// the timer that the module then controls.
-    pub fn new(
-        module: &[u8],
-        timer: T,
-        settings_store: SettingsStore,
-    ) -> Result<Self, CreationError> {
+    pub fn new(module: &[u8], timer: T, config: Config<'_>) -> Result<Self, CreationError> {
         let engine = Engine::new(
-            Config::new()
+            wasmtime::Config::new()
                 .cranelift_opt_level(OptLevel::Speed)
+                .debug_info(config.debug_info)
+                .wasm_backtrace_details(if config.backtrace_details {
+                    WasmBacktraceDetails::Enable
+                } else {
+                    WasmBacktraceDetails::Disable
+                })
                 .epoch_interruption(true),
         )
         .map_err(|source| CreationError::EngineCreation { source })?;
@@ -185,12 +225,12 @@ impl<T: Timer> Runtime<T> {
             Context {
                 processes: SlotMap::with_key(),
                 user_settings: Vec::new(),
-                settings_store,
+                settings_store: config.settings_store.unwrap_or_default(),
                 tick_rate: Duration::new(0, 1_000_000_000 / 120),
                 timer,
                 memory: None,
                 process_list: ProcessList::new(),
-                wasi: build_wasi(),
+                wasi: build_wasi(config.interpreter_script_path),
             },
         );
 
@@ -304,8 +344,14 @@ impl<T: Timer> Runtime<T> {
     }
 }
 
-fn build_wasi() -> WasiCtx {
-    let wasi = WasiCtxBuilder::new().build();
+fn build_wasi(script_path: Option<&Path>) -> WasiCtx {
+    let mut wasi = WasiCtxBuilder::new().build();
+
+    if let Some(script_path) = script_path {
+        if let Some(path) = build_path(script_path) {
+            let _ = wasi.push_env("SCRIPT_PATH", &path);
+        }
+    }
 
     #[cfg(windows)]
     {
