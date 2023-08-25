@@ -1,7 +1,7 @@
 //! Provides the parser for SpeedrunIGT splits files.
 
 use alloc::borrow::Cow;
-use serde::Deserialize;
+use serde_derive::Deserialize;
 use time::Duration;
 
 use crate::{

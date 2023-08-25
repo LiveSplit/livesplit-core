@@ -1,5 +1,5 @@
 use crate::platform::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 /// A `LinkedLayout` associates a [`Layout`](crate::Layout) with a
 /// [`Run`](crate::Run). If the [`Run`](crate::Run) has a `LinkedLayout`, it is

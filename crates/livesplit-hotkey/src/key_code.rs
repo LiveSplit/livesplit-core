@@ -1201,7 +1201,7 @@ impl<'de> serde::de::Visitor<'de> for KeyCodeVisitor {
 }
 
 /// Every [`KeyCode`] is grouped into one of these classes.
-#[derive(Debug, Eq, PartialEq, Hash, Copy, Clone, Serialize, Deserialize)]
+#[derive(Debug, Eq, PartialEq, Hash, Copy, Clone)]
 pub enum KeyCodeClass {
     /// The *writing system keys* are those that change meaning (i.e., they
     /// produce different key values) based on the current locale and keyboard
@@ -1246,6 +1246,78 @@ pub enum KeyCodeClass {
     Gamepad,
     /// These keys are supported by some browsers.
     NonStandard,
+}
+
+impl KeyCodeClass {
+    /// Returns the name of the key code.
+    pub const fn name(self) -> &'static str {
+        match self {
+            Self::WritingSystem => "WritingSystem",
+            Self::Functional => "Functional",
+            Self::ControlPad => "ControlPad",
+            Self::ArrowPad => "ArrowPad",
+            Self::Numpad => "Numpad",
+            Self::Function => "Function",
+            Self::Media => "Media",
+            Self::Legacy => "Legacy",
+            Self::Gamepad => "Gamepad",
+            Self::NonStandard => "NonStandard",
+        }
+    }
+}
+
+impl FromStr for KeyCodeClass {
+    type Err = ();
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "WritingSystem" => Self::WritingSystem,
+            "Functional" => Self::Functional,
+            "ControlPad" => Self::ControlPad,
+            "ArrowPad" => Self::ArrowPad,
+            "Numpad" => Self::Numpad,
+            "Function" => Self::Function,
+            "Media" => Self::Media,
+            "Legacy" => Self::Legacy,
+            "Gamepad" => Self::Gamepad,
+            "NonStandard" => Self::NonStandard,
+            _ => return Err(()),
+        })
+    }
+}
+
+impl Serialize for KeyCodeClass {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(self.name())
+    }
+}
+
+impl<'de> Deserialize<'de> for KeyCodeClass {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        deserializer.deserialize_str(KeyCodeClassVisitor)
+    }
+}
+
+struct KeyCodeClassVisitor;
+
+impl<'de> serde::de::Visitor<'de> for KeyCodeClassVisitor {
+    type Value = KeyCodeClass;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str("a valid key code class")
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: serde::de::Error,
+    {
+        KeyCodeClass::from_str(v).map_err(|()| serde::de::Error::custom("invalid key code class"))
+    }
 }
 
 impl KeyCode {

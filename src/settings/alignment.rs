@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 /// Describes the Alignment of the Title in the Title Component.
 #[derive(Copy, Clone, Serialize, Deserialize, PartialEq, Eq)]

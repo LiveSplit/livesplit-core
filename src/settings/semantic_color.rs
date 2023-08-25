@@ -1,6 +1,6 @@
 use super::Color;
 use crate::layout;
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 /// A `SemanticColor` describes a color by some meaningful event that is
 /// happening. This information can be visualized as a color, but can also be

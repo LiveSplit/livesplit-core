@@ -1,10 +1,19 @@
 use crate::{Hotkey, KeyCode};
-use alloc::string::String;
+use alloc::{fmt, string::String};
 
 /// The error type for this crate.
-#[derive(Debug, snafu::Snafu)]
+#[derive(Debug)]
 #[non_exhaustive]
 pub enum Error {}
+
+#[cfg(feature = "std")]
+impl std::error::Error for Error {}
+
+impl fmt::Display for Error {
+    fn fmt(&self, _: &mut fmt::Formatter<'_>) -> fmt::Result {
+        Ok(())
+    }
+}
 
 /// The result type for this crate.
 pub type Result<T> = core::result::Result<T, Error>;

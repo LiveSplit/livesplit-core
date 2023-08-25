@@ -1,5 +1,5 @@
 use alloc::borrow::Cow;
-use bytemuck::{Pod, Zeroable};
+use bytemuck_derive::{Pod, Zeroable};
 use image::{
     codecs::{bmp, farbfeld, hdr, ico, jpeg, pnm, tga, tiff, webp},
     guess_format, load_from_memory_with_format, ImageDecoder, ImageEncoder, ImageFormat,

@@ -2,7 +2,7 @@
 
 use crate::{comparison::world_record, platform::prelude::*, Run, Segment, Time, TimeSpan};
 use core::result::Result as StdResult;
-use serde::Deserialize;
+use serde_derive::Deserialize;
 
 mod s_expressions;
 

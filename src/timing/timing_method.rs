@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 /// A `TimingMethod` describes which form of timing is used. This can either be
 /// [`TimingMethod::RealTime`] or [`TimingMethod::GameTime`].

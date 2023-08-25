@@ -8,7 +8,7 @@ use crate::{
     settings::{Color, Gradient, SemanticColor},
 };
 use alloc::borrow::Cow;
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 /// The state object describes the information to visualize for a key value
 /// based component.

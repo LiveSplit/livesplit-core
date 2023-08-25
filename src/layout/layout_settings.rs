@@ -1,6 +1,6 @@
 use super::{ComponentSettings, GeneralSettings};
 use crate::platform::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 /// Describes a whole layout by its settings in a way that can easily be
 /// serialized and deserialized.

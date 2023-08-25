@@ -34,8 +34,11 @@ members = ["capi", "capi/bind_gen", "crates/*"]
 
 [dependencies]
 # core
-base64-simd = { version = "0.8.0", default-features = false, features = ["alloc"] }
-bytemuck = { version = "1.9.1", default-features = false, features = ["derive"] }
+base64-simd = { version = "0.8.0", default-features = false, features = [
+    "alloc",
+] }
+bytemuck = { version = "1.9.1", default-features = false }
+bytemuck_derive = { version = "1.4.1", default_features = false }
 cfg-if = "1.0.0"
 itoa = { version = "1.0.3", default-features = false }
 time = { version = "0.3.3", default-features = false }
@@ -44,12 +47,14 @@ libm = "0.2.1"
 livesplit-hotkey = { path = "crates/livesplit-hotkey", version = "0.7.0", default-features = false }
 livesplit-title-abbreviations = { path = "crates/livesplit-title-abbreviations", version = "0.3.0" }
 memchr = { version = "2.3.4", default-features = false }
-simdutf8 = { version = "0.1.4", default-features = false, features = ["aarch64_neon"] }
-serde = { version = "1.0.98", default-features = false, features = [
-    "alloc",
-    "derive",
+simdutf8 = { version = "0.1.4", default-features = false, features = [
+    "aarch64_neon",
 ] }
-serde_json = { version = "1.0.60", default-features = false, features = ["alloc"] }
+serde = { version = "1.0.186", default-features = false, features = ["alloc"] }
+serde_derive = { version = "1.0.186", default_features = false }
+serde_json = { version = "1.0.60", default-features = false, features = [
+    "alloc",
+] }
 smallstr = { version = "0.3.0", default-features = false }
 snafu = { version = "0.7.0", default-features = false }
 unicase = "2.6.0"

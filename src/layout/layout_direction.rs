@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 /// Describes the direction the components of a layout are laid out in.
 #[derive(Copy, Clone, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]

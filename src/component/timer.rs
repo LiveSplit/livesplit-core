@@ -14,7 +14,7 @@ use crate::{
     GeneralLayoutSettings, TimeSpan, TimerPhase, TimingMethod,
 };
 use core::fmt::Write;
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 /// The `Timer` Component is a component that shows the total time of the current
 /// attempt as a digital clock. The color of the time shown is based on a how
@@ -380,14 +380,14 @@ fn calculate_live_segment_time(
 
 // FIXME: Workaround for #[serde(flatten)] not being a thing on enums.
 mod serialize {
-    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(serde_derive::Serialize, serde_derive::Deserialize)]
     #[serde(untagged)]
     pub enum DeltaGradient {
         Gradient(super::Gradient),
         Delta(Delta),
     }
 
-    #[derive(serde::Serialize, serde::Deserialize)]
+    #[derive(serde_derive::Serialize, serde_derive::Deserialize)]
     #[allow(clippy::enum_variant_names)]
     pub enum Delta {
         DeltaPlain,

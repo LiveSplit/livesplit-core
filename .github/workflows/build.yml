@@ -68,13 +68,8 @@ jobs:
           - Linux thumbv7neon
           - Linux aarch64
           - Linux aarch64 musl
-          - Linux mips
           - Linux mips musl
-          - Linux mips64
           - Linux mips64 musl
-          - Linux mips64el
-          - Linux mips64el musl
-          - Linux mipsel
           - Linux mipsel musl
           - Linux powerpc
           - Linux powerpc64
@@ -385,13 +380,6 @@ jobs:
             target: aarch64-unknown-linux-musl
             dylib: skip
 
-          - label: Linux mips
-            target: mips-unknown-linux-gnu
-            auto_splitting: skip
-            networking: skip
-            # FIXME: Networking Tests fail due to missing OpenSSL
-            # https://github.com/LiveSplit/livesplit-core/issues/308
-
           - label: Linux mips musl
             target: mips-unknown-linux-musl
             auto_splitting: skip
@@ -400,13 +388,6 @@ jobs:
             # https://github.com/LiveSplit/livesplit-core/issues/308
             dylib: skip
 
-          - label: Linux mips64
-            target: mips64-unknown-linux-gnuabi64
-            auto_splitting: skip
-            networking: skip
-            # FIXME: Networking Tests fail due to missing OpenSSL
-            # https://github.com/LiveSplit/livesplit-core/issues/308
-
           - label: Linux mips64 musl
             target: mips64-unknown-linux-muslabi64
             auto_splitting: skip
@@ -414,28 +395,6 @@ jobs:
             # FIXME: Networking Tests fail due to missing OpenSSL
             # https://github.com/LiveSplit/livesplit-core/issues/308
             dylib: skip
-
-          - label: Linux mips64el
-            target: mips64el-unknown-linux-gnuabi64
-            auto_splitting: skip
-            networking: skip
-            # FIXME: Networking Tests fail due to missing OpenSSL
-            # https://github.com/LiveSplit/livesplit-core/issues/308
-
-          - label: Linux mips64el musl
-            target: mips64el-unknown-linux-gnuabi64
-            auto_splitting: skip
-            networking: skip
-            # FIXME: Networking Tests fail due to missing OpenSSL
-            # https://github.com/LiveSplit/livesplit-core/issues/308
-            dylib: skip
-
-          - label: Linux mipsel
-            target: mipsel-unknown-linux-gnu
-            auto_splitting: skip
-            networking: skip
-            # FIXME: Networking Tests fail due to missing OpenSSL
-            # https://github.com/LiveSplit/livesplit-core/issues/308
 
           - label: Linux mipsel musl
             target: mipsel-unknown-linux-musl

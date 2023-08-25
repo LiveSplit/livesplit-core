@@ -12,7 +12,7 @@ use crate::{
     timing::Snapshot,
 };
 use core::fmt::Write;
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 /// The PB Chance Component is a component that shows how likely it is to beat
 /// the Personal Best. If there is no active attempt it shows the general chance

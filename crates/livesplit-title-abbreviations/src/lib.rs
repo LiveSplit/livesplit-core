@@ -9,8 +9,7 @@ use unicase::UniCase;
 
 fn ends_with_roman_numeral(name: &str) -> bool {
     name.split_whitespace()
-        .rev()
-        .next()
+        .next_back()
         .is_some_and(|n| n.bytes().all(|c| matches!(c, b'I' | b'V' | b'X')))
 }
 

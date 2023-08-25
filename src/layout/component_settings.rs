@@ -1,11 +1,13 @@
 use super::Component;
-use crate::component::{
-    blank_space, current_comparison, current_pace, delta, detailed_timer, graph, pb_chance,
-    possible_time_save, previous_segment, segment_time, separator, splits, sum_of_best, text,
-    timer, title, total_playtime,
+use crate::{
+    component::{
+        blank_space, current_comparison, current_pace, delta, detailed_timer, graph, pb_chance,
+        possible_time_save, previous_segment, segment_time, separator, splits, sum_of_best, text,
+        timer, title, total_playtime,
+    },
+    platform::prelude::*,
 };
-use crate::platform::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 /// The settings for one of the components available.
 #[derive(Clone, Serialize, Deserialize)]

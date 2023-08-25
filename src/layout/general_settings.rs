@@ -3,7 +3,7 @@ use crate::{
     platform::prelude::*,
     settings::{Color, Field, Font, Gradient, SettingsDescription, Value},
 };
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 /// The general settings of a [`Layout`](crate::layout::Layout) that apply to all components.
 #[derive(Clone, Serialize, Deserialize)]

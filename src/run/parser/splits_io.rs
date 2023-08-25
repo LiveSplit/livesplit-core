@@ -5,7 +5,7 @@ use crate::{
 };
 use alloc::borrow::Cow;
 use core::result::Result as StdResult;
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 use serde_json::Error as JsonError;
 
 /// The Error type for splits files that couldn't be parsed by the generic

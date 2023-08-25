@@ -18,7 +18,7 @@ use crate::{
 };
 use alloc::borrow::Cow;
 use core::fmt::Write as FmtWrite;
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 /// The Possible Time Save Component is a component that shows how much time the
 /// chosen comparison could've saved for the current segment, based on the Best

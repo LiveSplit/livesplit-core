@@ -8,13 +8,15 @@
 //! around for historical reasons.
 
 use super::key_value;
-use crate::analysis::sum_of_segments::calculate_best;
-use crate::platform::prelude::*;
-use crate::settings::{Color, Field, Gradient, SettingsDescription, Value};
-use crate::timing::formatter::{Accuracy, Regular, TimeFormatter};
-use crate::Timer;
+use crate::{
+    analysis::sum_of_segments::calculate_best,
+    platform::prelude::*,
+    settings::{Color, Field, Gradient, SettingsDescription, Value},
+    timing::formatter::{Accuracy, Regular, TimeFormatter},
+    Timer,
+};
 use core::fmt::Write;
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 /// The Sum of Best Segments Component shows the fastest possible time to
 /// complete a run of this category, based on information collected from all the

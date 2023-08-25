@@ -3,9 +3,11 @@
 //! anything other than a background. It mostly serves as padding between other
 //! components.
 
-use crate::platform::prelude::*;
-use crate::settings::{Field, Gradient, SettingsDescription, Value};
-use serde::{Deserialize, Serialize};
+use crate::{
+    platform::prelude::*,
+    settings::{Field, Gradient, SettingsDescription, Value},
+};
+use serde_derive::{Deserialize, Serialize};
 
 /// The Blank Space Component is simply an empty component that doesn't show
 /// anything other than a background. It mostly serves as padding between other
