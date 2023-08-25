@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 /// A setting that is meant to be shown to and modified by the user.
 #[non_exhaustive]
+#[derive(Clone)]
 pub struct UserSetting {
     /// A unique identifier for this setting. This is not meant to be shown to
     /// the user and is only used to keep track of the setting. This key is used
@@ -18,6 +19,7 @@ pub struct UserSetting {
 }
 
 /// The type of a [`UserSetting`] and additional information about it.
+#[derive(Clone)]
 pub enum UserSettingKind {
     /// A title that is shown to the user. It doesn't by itself store a value
     /// and is instead used to group settings together.
