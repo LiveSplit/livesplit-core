@@ -18,7 +18,7 @@ use crate::{
     GeneralLayoutSettings, TimeSpan, Timer, TimerPhase,
 };
 use alloc::borrow::Cow;
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 const WIDTH: f32 = 1.0;
 const HEIGHT: f32 = 1.0;

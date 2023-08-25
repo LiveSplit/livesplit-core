@@ -14,7 +14,7 @@ use crate::{
 };
 use alloc::borrow::Cow;
 use core::fmt::Write;
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 #[cfg(test)]
 mod tests;

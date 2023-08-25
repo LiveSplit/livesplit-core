@@ -17,7 +17,7 @@ use crate::{
     GeneralLayoutSettings, Segment, TimeSpan, TimerPhase,
 };
 use core::fmt::Write;
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 #[cfg(test)]
 mod tests;

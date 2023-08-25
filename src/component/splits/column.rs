@@ -12,7 +12,7 @@ use crate::{
     GeneralLayoutSettings, Segment, TimeSpan, TimingMethod,
 };
 use core::fmt::Write;
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 /// The settings of an individual column showing timing information on each
 /// split.

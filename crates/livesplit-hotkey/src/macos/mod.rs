@@ -24,12 +24,13 @@ use crate::{Hotkey, KeyCode, Modifiers};
 use std::{
     collections::{hash_map::Entry, HashMap},
     ffi::c_void,
+    fmt,
     sync::{mpsc::channel, Arc, Mutex},
     thread,
 };
 
 /// The error type for this crate.
-#[derive(Debug, snafu::Snafu)]
+#[derive(Debug)]
 #[non_exhaustive]
 pub enum Error {
     /// The hotkey was already registered.
@@ -44,6 +45,21 @@ pub enum Error {
     CouldntGetCurrentRunLoop,
     /// The background thread stopped unexpectedly.
     ThreadStoppedUnexpectedly,
+}
+
+impl std::error::Error for Error {}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(match self {
+            Self::AlreadyRegistered => "The hotkey was already registered.",
+            Self::NotRegistered => "The hotkey to unregister was not registered.",
+            Self::CouldntCreateEventTap => "Failed creating the event tap.",
+            Self::CouldntCreateRunLoopSource => "Failed creating the run loop source.",
+            Self::CouldntGetCurrentRunLoop => "Failed getting the current run loop.",
+            Self::ThreadStoppedUnexpectedly => "The background thread stopped unexpectedly.",
+        })
+    }
 }
 
 /// The result type for this crate.

@@ -2,7 +2,7 @@ use crate::{Hotkey, KeyCode, Modifiers};
 use std::{
     cell::RefCell,
     collections::hash_map::{Entry, HashMap},
-    mem, ptr,
+    fmt, mem, ptr,
     sync::{
         mpsc::{channel, Sender},
         Arc, Mutex,
@@ -28,7 +28,7 @@ use windows_sys::Win32::{
 const MSG_EXIT: u32 = 0x400;
 
 /// The error type for this crate.
-#[derive(Debug, snafu::Snafu)]
+#[derive(Debug)]
 #[non_exhaustive]
 pub enum Error {
     /// The hotkey was already registered.
@@ -41,6 +41,20 @@ pub enum Error {
     ThreadStopped,
     /// An error occurred in the message loop.
     MessageLoop,
+}
+
+impl std::error::Error for Error {}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(match self {
+            Self::AlreadyRegistered => "The hotkey was already registered.",
+            Self::NotRegistered => "The hotkey to unregister was not registered.",
+            Self::WindowsHook => "An error in the Windows API occurred.",
+            Self::ThreadStopped => "The background thread stopped unexpectedly.",
+            Self::MessageLoop => "An error occurred in the message loop.",
+        })
+    }
 }
 
 /// The result type for this crate.

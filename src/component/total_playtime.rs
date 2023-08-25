@@ -11,7 +11,7 @@ use crate::{
     Timer,
 };
 use core::fmt::Write;
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 /// The Total Playtime Component is a component that shows the total amount of
 /// time that the current category has been played for.

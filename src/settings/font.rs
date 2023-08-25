@@ -1,5 +1,5 @@
 use crate::platform::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 /// Describes a Font to visualize text with. Depending on the platform, a font
 /// that matches the settings most closely is chosen. The settings may be

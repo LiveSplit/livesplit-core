@@ -5,7 +5,7 @@ use crate::{
         PopulateString,
     },
 };
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 /// A custom variable is a key value pair storing additional information about a
 /// run. Unlike the speedrun.com variables, these can be fully custom and don't

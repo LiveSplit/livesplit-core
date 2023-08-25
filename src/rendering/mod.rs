@@ -99,7 +99,7 @@ use crate::{
     settings::{Color, Gradient},
 };
 use alloc::borrow::Cow;
-use bytemuck::{Pod, Zeroable};
+use bytemuck_derive::{Pod, Zeroable};
 use core::iter;
 
 pub use self::{

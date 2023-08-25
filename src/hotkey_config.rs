@@ -5,7 +5,7 @@ use crate::{
     platform::prelude::*,
     settings::{Field, SettingsDescription, Value},
 };
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 /// The configuration to use for a [`HotkeySystem`](crate::HotkeySystem). It describes which [`Hotkey`](livesplit_hotkey::Hotkey) to use as hotkeys for the different actions.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]

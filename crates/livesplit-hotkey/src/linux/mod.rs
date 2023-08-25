@@ -1,4 +1,4 @@
-use std::thread::JoinHandle;
+use std::{fmt, thread::JoinHandle};
 
 use crate::{Hotkey, KeyCode};
 use crossbeam_channel::Sender;
@@ -10,7 +10,7 @@ mod evdev_impl;
 mod x11_impl;
 
 /// The error type for this crate.
-#[derive(Debug, Copy, Clone, snafu::Snafu)]
+#[derive(Debug, Copy, Clone)]
 #[non_exhaustive]
 pub enum Error {
     /// The hotkey was already registered.
@@ -27,6 +27,22 @@ pub enum Error {
     OpenXServerConnection,
     /// The background thread stopped unexpectedly.
     ThreadStopped,
+}
+
+impl std::error::Error for Error {}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(match self {
+            Self::AlreadyRegistered => "The hotkey was already registered.",
+            Self::NotRegistered => "The hotkey to unregister was not registered.",
+            Self::EvDev => "Failed fetching events from evdev.",
+            Self::EPoll => "Failed polling the event file descriptors.",
+            Self::NoXLib => "Failed dynamically linking to X11.",
+            Self::OpenXServerConnection => "Failed opening a connection to the X11 server.",
+            Self::ThreadStopped => "The background thread stopped unexpectedly.",
+        })
+    }
 }
 
 /// The result type for this crate.

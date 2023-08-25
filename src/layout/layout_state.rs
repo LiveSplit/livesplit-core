@@ -3,7 +3,7 @@ use crate::{
     platform::prelude::*,
     settings::{Color, Font, Gradient},
 };
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 /// The state object describes the information to visualize for the layout.
 #[derive(Default, Serialize, Deserialize)]

@@ -1,6 +1,6 @@
 use super::Value;
 use crate::platform::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 /// A Field describes a single setting by its name and its current value.
 #[derive(Serialize, Deserialize)]

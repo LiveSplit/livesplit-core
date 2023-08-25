@@ -19,7 +19,7 @@ use crate::{
 };
 use alloc::borrow::Cow;
 use core::fmt::Write as FmtWrite;
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 /// The Previous Segment Component is a component that shows how much time was
 /// saved or lost during the previous [`Segment`](crate::run::Segment) based on

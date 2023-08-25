@@ -13,7 +13,7 @@ use crate::{
 };
 use core::fmt::Write;
 use livesplit_title_abbreviations::{abbreviate as abbreviate_title, abbreviate_category};
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 use smallstr::SmallString;
 
 #[cfg(test)]

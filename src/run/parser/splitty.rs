@@ -3,7 +3,7 @@
 use crate::{platform::prelude::*, Run, Segment, Time, TimeSpan, TimingMethod};
 use alloc::borrow::Cow;
 use core::result::Result as StdResult;
-use serde::Deserialize;
+use serde_derive::Deserialize;
 use serde_json::Error as JsonError;
 
 /// The Error type for splits files that couldn't be parsed by the Splitty

@@ -13,7 +13,7 @@ use crate::{
 };
 use alloc::borrow::Cow;
 use core::mem;
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 #[cfg(test)]
 mod tests;

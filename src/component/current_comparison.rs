@@ -8,7 +8,7 @@ use crate::{
     settings::{Color, Field, Gradient, SettingsDescription, Value},
     Timer,
 };
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 /// The Current Comparison Component is a component that shows the name of the
 /// comparison that is currently selected to be compared against.

@@ -6,7 +6,7 @@ use crate::{
     settings::{CachedImageId, ImageData},
     timing::formatter::{none_wrapper::EmptyWrapper, Accuracy, SegmentTime, TimeFormatter},
 };
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 /// Represents the current state of the Run Editor in order to visualize it
 /// properly.

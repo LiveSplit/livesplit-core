@@ -11,7 +11,7 @@ use crate::{
     TimingMethod,
 };
 use core::result::Result as StdResult;
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 /// Describes the kind of a column.
 #[derive(Copy, Clone, PartialEq, Eq, Serialize, Deserialize)]

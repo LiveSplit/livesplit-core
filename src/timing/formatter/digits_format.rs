@@ -1,4 +1,4 @@
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 /// A Digits Format describes how many digits of a time to always shown. The
 /// times are prefixed by zeros to fill up the remaining digits.

@@ -3,7 +3,7 @@
 //! separators between components.
 
 use crate::settings::{SettingsDescription, Value};
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 /// The Separator Component is a simple component that only serves to render
 /// separators between components.

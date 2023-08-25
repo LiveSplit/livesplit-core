@@ -6,12 +6,13 @@ use web_sys::{window, Event, Gamepad, GamepadButton, KeyboardEvent};
 use std::{
     cell::{Cell, RefCell},
     collections::hash_map::{Entry, HashMap},
+    fmt,
     rc::Rc,
     sync::{Arc, Mutex},
 };
 
 /// The error type for this crate.
-#[derive(Debug, snafu::Snafu)]
+#[derive(Debug)]
 #[non_exhaustive]
 pub enum Error {
     /// The hotkey was already registered.
@@ -20,6 +21,18 @@ pub enum Error {
     NotRegistered,
     /// Failed creating the hook.
     FailedToCreateHook,
+}
+
+impl std::error::Error for Error {}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(match self {
+            Self::AlreadyRegistered => "The hotkey was already registered.",
+            Self::NotRegistered => "The hotkey to unregister was not registered.",
+            Self::FailedToCreateHook => "Failed creating the hook.",
+        })
+    }
 }
 
 /// The result type for this crate.

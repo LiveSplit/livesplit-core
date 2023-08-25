@@ -4,7 +4,7 @@ use bytemuck::AnyBitPattern;
 
 pub mod big_endian {
     use super::strip_pod;
-    use bytemuck::{Pod, Zeroable};
+    use bytemuck_derive::{Pod, Zeroable};
     use core::fmt;
 
     #[derive(Copy, Clone, Pod, Zeroable)]

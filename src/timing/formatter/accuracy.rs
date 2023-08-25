@@ -3,7 +3,7 @@ use core::{
     fmt::{Display, Formatter, Result},
     str,
 };
-use serde::{Deserialize, Serialize};
+use serde_derive::{Deserialize, Serialize};
 
 /// The `Accuracy` describes how many digits to show for the fractional part of a
 /// time.

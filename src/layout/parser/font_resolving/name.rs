@@ -4,7 +4,7 @@ use crate::{
     platform::prelude::*,
     util::byte_parsing::{big_endian::U16, pod, slice},
 };
-use bytemuck::{Pod, Zeroable};
+use bytemuck_derive::{Pod, Zeroable};
 
 #[derive(Debug, Copy, Clone, Pod, Zeroable)]
 #[repr(C)]
