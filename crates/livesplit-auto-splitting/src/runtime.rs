@@ -17,7 +17,11 @@ use std::{
     time::{Duration, Instant},
 };
 use sysinfo::{ProcessExt, ProcessRefreshKind, RefreshKind, System, SystemExt};
-use wasi_common::{dir::DirCaps, file::FileCaps};
+use wasi_common::{
+    dir::{OpenResult, ReaddirCursor, ReaddirEntity},
+    file::{FdFlags, Filestat, OFlags},
+    ErrorExt, WasiDir,
+};
 use wasmtime::{
     Caller, Engine, Extern, Linker, Memory, Module, OptLevel, Store, TypedFunc,
     WasmBacktraceDetails,
@@ -244,8 +248,11 @@ impl<T: Timer> Runtime<T> {
             .any(|import| import.module() == "wasi_snapshot_preview1");
 
         if uses_wasi {
-            wasmtime_wasi::add_to_linker(&mut linker, |ctx| &mut ctx.wasi)
-                .map_err(|source| CreationError::Wasi { source })?;
+            wasmtime_wasi::snapshots::preview_1::add_wasi_snapshot_preview1_to_linker(
+                &mut linker,
+                |ctx| &mut ctx.wasi,
+            )
+            .map_err(|source| CreationError::Wasi { source })?;
         }
 
         let instance = linker
@@ -368,13 +375,7 @@ fn build_wasi(script_path: Option<&Path>) -> WasiCtx {
                 ambient_authority(),
             ) {
                 wasi.push_dir(
-                    Box::new(wasmtime_wasi::dir::Dir::from_cap_std(path)),
-                    DirCaps::OPEN
-                        | DirCaps::READDIR
-                        | DirCaps::READLINK
-                        | DirCaps::PATH_FILESTAT_GET
-                        | DirCaps::FILESTAT_GET,
-                    FileCaps::READ | FileCaps::SEEK | FileCaps::TELL | FileCaps::FILESTAT_GET,
+                    Box::new(ReadOnlyDir(wasmtime_wasi::dir::Dir::from_cap_std(path))),
                     PathBuf::from(str::from_utf8(&[b'/', b'm', b'n', b't', b'/', drive]).unwrap()),
                 )
                 .unwrap();
@@ -385,19 +386,85 @@ fn build_wasi(script_path: Option<&Path>) -> WasiCtx {
     {
         if let Ok(path) = wasmtime_wasi::Dir::open_ambient_dir("/", ambient_authority()) {
             wasi.push_dir(
-                Box::new(wasmtime_wasi::dir::Dir::from_cap_std(path)),
-                DirCaps::OPEN
-                    | DirCaps::READDIR
-                    | DirCaps::READLINK
-                    | DirCaps::PATH_FILESTAT_GET
-                    | DirCaps::FILESTAT_GET,
-                FileCaps::READ | FileCaps::SEEK | FileCaps::TELL | FileCaps::FILESTAT_GET,
+                Box::new(ReadOnlyDir(wasmtime_wasi::dir::Dir::from_cap_std(path))),
                 PathBuf::from("/mnt"),
             )
             .unwrap();
         }
     }
     wasi
+}
+
+struct ReadOnlyDir(wasmtime_wasi::dir::Dir);
+
+#[async_trait::async_trait]
+impl WasiDir for ReadOnlyDir {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    async fn open_file(
+        &self,
+        symlink_follow: bool,
+        path: &str,
+        oflags: OFlags,
+        read: bool,
+        write: bool,
+        fdflags: FdFlags,
+    ) -> Result<OpenResult, wasi_common::Error> {
+        // We whitelist the OFlags and FdFlags to not accidentally allow
+        // ways to modify the file system.
+        const WHITELISTED_O_FLAGS: OFlags = OFlags::DIRECTORY;
+        const WHITELISTED_FD_FLAGS: FdFlags = FdFlags::NONBLOCK;
+
+        if write || !WHITELISTED_O_FLAGS.contains(oflags) || !WHITELISTED_FD_FLAGS.contains(fdflags)
+        {
+            return Err(wasi_common::Error::not_supported());
+        }
+
+        Ok(
+            match self
+                .0
+                .open_file_(symlink_follow, path, oflags, read, write, fdflags)?
+            {
+                wasmtime_wasi::dir::OpenResult::Dir(d) => OpenResult::Dir(Box::new(ReadOnlyDir(d))),
+                // We assume that wrapping the file type itself is not
+                // necessary, because we ensure that the open flags don't allow
+                // for any modifications anyway.
+                wasmtime_wasi::dir::OpenResult::File(f) => OpenResult::File(Box::new(f)),
+            },
+        )
+    }
+
+    async fn readdir(
+        &self,
+        cursor: ReaddirCursor,
+    ) -> Result<
+        Box<dyn Iterator<Item = Result<ReaddirEntity, wasi_common::Error>> + Send>,
+        wasi_common::Error,
+    > {
+        self.0.readdir(cursor).await
+    }
+
+    async fn read_link(&self, path: &str) -> Result<PathBuf, wasi_common::Error> {
+        self.0.read_link(path).await
+    }
+
+    async fn get_filestat(&self) -> Result<Filestat, wasi_common::Error> {
+        // FIXME: Make sure this says it's readonly, if it ever contains the
+        // permissions.
+        self.0.get_filestat().await
+    }
+
+    async fn get_path_filestat(
+        &self,
+        path: &str,
+        follow_symlinks: bool,
+    ) -> Result<Filestat, wasi_common::Error> {
+        // FIXME: Make sure this says it's readonly, if it ever contains the
+        // permissions.
+        self.0.get_path_filestat(path, follow_symlinks).await
+    }
 }
 
 fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationError> {
