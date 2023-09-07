@@ -11,6 +11,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = { version = "1.0.45", default-features = false }
+async-trait = "0.1.73"
 proc-maps = { version = "0.3.0", default-features = false }
 read-process-memory = { version = "0.1.4", default-features = false }
 slotmap = { version = "1.0.2", default-features = false }
@@ -19,12 +20,12 @@ sysinfo = { version = "0.29.0", default-features = false, features = [
   "multithread",
 ] }
 time = { version = "0.3.3", default-features = false }
-wasmtime = { version = "8.0.1", default-features = false, features = [
+wasmtime = { version = "12.0.1", default-features = false, features = [
   "cranelift",
   "parallel-compilation",
 ] }
-wasmtime-wasi = "8.0.1"
-wasi-common = "8.0.1"
+wasmtime-wasi = "12.0.1"
+wasi-common = "12.0.1"
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.48.0", features = ["Win32_Storage_FileSystem"] }

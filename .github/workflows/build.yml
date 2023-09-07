@@ -71,6 +71,7 @@ jobs:
           - Linux mips musl
           - Linux mips64 musl
           - Linux mipsel musl
+          - Linux mips64el musl
           - Linux powerpc
           - Linux powerpc64
           - Linux powerpc64le
@@ -398,6 +399,14 @@ jobs:
 
           - label: Linux mipsel musl
             target: mipsel-unknown-linux-musl
+            auto_splitting: skip
+            networking: skip
+            # FIXME: Networking Tests fail due to missing OpenSSL
+            # https://github.com/LiveSplit/livesplit-core/issues/308
+            dylib: skip
+
+          - label: Linux mips64el musl
+            target: mips64el-unknown-linux-muslabi64
             auto_splitting: skip
             networking: skip
             # FIXME: Networking Tests fail due to missing OpenSSL
