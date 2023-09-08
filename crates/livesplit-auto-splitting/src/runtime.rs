@@ -14,7 +14,7 @@ use std::{
     env::consts::{ARCH, OS},
     path::{Path, PathBuf},
     str,
-    time::{Duration, Instant},
+    time::{Duration, Instant}, mem,
 };
 use sysinfo::{ProcessExt, ProcessRefreshKind, RefreshKind, System, SystemExt};
 use wasi_common::{
@@ -668,6 +668,25 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
             source,
             name: "process_attach",
         })?
+        .func_wrap("env", "process_attach_pid", {
+            |mut caller: Caller<'_, Context<T>>, pid: u32| {
+                let (_, context) = memory_and_context(&mut caller);
+                Ok(
+                    if let Ok(p) = Process::with_pid(pid, &mut context.process_list) {
+                        context
+                            .timer
+                            .log(format_args!("Attached to a new process with pid {pid}"));
+                        context.processes.insert(p).data().as_ffi()
+                    } else {
+                        0
+                    },
+                )
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "process_attach_pid",
+        })?
         .func_wrap("env", "process_detach", {
             |mut caller: Caller<'_, Context<T>>, process: u64| {
                 caller
@@ -685,6 +704,33 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
         .map_err(|source| CreationError::LinkFunction {
             source,
             name: "process_detach",
+        })?
+        .func_wrap("env", "process_list", {
+            |mut caller: Caller<'_, Context<T>>, name_ptr: u32, name_len: u32, list_ptr: u32, list_len_ptr: u32| {
+                let (memory, context) = memory_and_context(&mut caller);
+                let process_name = get_str(memory, name_ptr, name_len)?;
+                if let Ok(list) = Process::list_pids_by_name(process_name, &mut context.process_list) {
+                    let list_len_bytes = get_arr_mut(memory, list_len_ptr)?;
+                    let list_len = u32::from_le_bytes(*list_len_bytes) as usize;
+                    *list_len_bytes = (list.len() as u32).to_le_bytes();
+                    if list_len < list.len() {
+                        return Ok(0u32);
+                    }
+                    let mut list_bytes = Vec::new();
+                    for i in &list {
+                        list_bytes.extend_from_slice(&i.to_le_bytes());
+                    }
+                    let buf = get_slice_mut(memory, list_ptr, (list.len() * mem::size_of_val(&list_len)) as _)?;
+                    buf.copy_from_slice(list_bytes.as_slice());
+                    Ok(1u32)
+                } else {
+                    Ok(0u32)
+                }
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "process_list",
         })?
         .func_wrap("env", "process_is_open", {
             |mut caller: Caller<'_, Context<T>>, process: u64| {

@@ -79,6 +79,42 @@ impl Process {
         })
     }
 
+    pub(super) fn with_pid(pid: u32, process_list: &mut ProcessList) -> Result<Self, OpenError> {
+        process_list.refresh();
+        let process = process_list.get(sysinfo::Pid::from_u32(pid)).context(ProcessDoesntExist)?;
+
+        let path = build_path(process.exe());
+
+        let handle = pid.try_into().context(InvalidHandle)?;
+
+        let now = Instant::now();
+        Ok(Process {
+            handle,
+            pid,
+            memory_ranges: Vec::new(),
+            next_memory_range_check: now,
+            next_open_check: now + Duration::from_secs(1),
+            path,
+        })
+    }
+
+    pub(super) fn list_pids_by_name(name: &str, process_list: &mut ProcessList) -> Result<Vec<u32>, OpenError> {
+        let mut result = Vec::new();
+
+        process_list.refresh();
+        let processes = process_list.processes_by_name(name);
+
+        for process in processes {
+            result.push(process.pid().as_u32());
+        }
+
+        if result.is_empty() {
+            Err(OpenError::ProcessDoesntExist)
+        } else {
+            Ok(result)
+        }
+    }
+
     pub(super) fn is_open(&mut self, process_list: &mut ProcessList) -> bool {
         let now = Instant::now();
         let pid = sysinfo::Pid::from_u32(self.pid as u32);

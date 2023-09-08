@@ -99,8 +99,12 @@
 //!
 //!     /// Attaches to a process based on its name.
 //!     pub fn process_attach(name_ptr: *const u8, name_len: usize) -> Option<ProcessId>;
+//!     /// Attaches to a process based on its pid.
+//!     pub fn process_attach_pid(pid: u32);
 //!     /// Detaches from a process.
 //!     pub fn process_detach(process: ProcessId);
+//!     /// Lists processes (as pids) based on their name.
+//!     pub fn process_list(name_ptr: *const u8, name_len: usize, list_ptr: *mut u8, list_len_ptr: *mut usize) -> bool
 //!     /// Checks whether is a process is still open. You should detach from a
 //!     /// process and stop using it if this returns `false`.
 //!     pub fn process_is_open(process: ProcessId) -> bool;
