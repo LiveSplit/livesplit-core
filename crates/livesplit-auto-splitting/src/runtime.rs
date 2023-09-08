@@ -720,7 +720,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                     for i in &list {
                         list_bytes.extend_from_slice(&i.to_le_bytes());
                     }
-                    let buf = get_slice_mut(memory, list_ptr, (list.len() * mem::size_of_val(&list_len)) as _)?;
+                    let buf = get_slice_mut(memory, list_ptr, (list.len() * mem::size_of::<u32>()) as _)?;
                     buf.copy_from_slice(list_bytes.as_slice());
                     Ok(1u32)
                 } else {
