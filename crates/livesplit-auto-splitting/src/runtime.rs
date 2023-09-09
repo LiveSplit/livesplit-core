@@ -14,7 +14,8 @@ use std::{
     env::consts::{ARCH, OS},
     path::{Path, PathBuf},
     str,
-    time::{Duration, Instant}, mem,
+    time::{Duration, Instant}, 
+    mem,
 };
 use sysinfo::{ProcessExt, ProcessRefreshKind, RefreshKind, System, SystemExt};
 use wasi_common::{
