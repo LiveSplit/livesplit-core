@@ -85,12 +85,14 @@ impl Process {
 
         let path = build_path(process.exe());
 
-        let handle = pid.try_into().context(InvalidHandle)?;
+        let pid_out = pid as Pid;
+
+        let handle = pid_out.try_into().context(InvalidHandle)?;
 
         let now = Instant::now();
         Ok(Process {
             handle,
-            pid,
+            pid: pid_out,
             memory_ranges: Vec::new(),
             next_memory_range_check: now,
             next_open_check: now + Duration::from_secs(1),
