@@ -103,7 +103,10 @@
 //!     pub fn process_attach_pid(pid: u32);
 //!     /// Detaches from a process.
 //!     pub fn process_detach(process: ProcessId);
-//!     /// Lists processes (as pids) based on their name.
+//!     /// Lists processes (as pids) based on their name. Returns `false` 
+//!     /// if the buffer is too small. After this call, no matter whether
+//!     /// it was successful or not, the `buf_len_ptr` will be set to the
+//!     /// required buffer size. 
 //!     pub fn process_list(name_ptr: *const u8, name_len: usize, list_ptr: *mut u8, list_len_ptr: *mut usize) -> bool
 //!     /// Checks whether is a process is still open. You should detach from a
 //!     /// process and stop using it if this returns `false`.
