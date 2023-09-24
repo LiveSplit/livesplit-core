@@ -581,12 +581,8 @@ async fn run(
                     Request::ReloadScript(ret) => {
                         let mut config = Config::default();
                         config.settings_store = Some(runtime.settings_store().clone());
-                        
-                        match ScriptRuntime::new(
-                            &script_path,
-                            Timer(timer.clone()),
-                            config,
-                        ) {
+
+                        match ScriptRuntime::new(&script_path, Timer(timer.clone()), config) {
                             Ok(r) => {
                                 ret.send(Ok(())).ok();
                                 runtime = r;

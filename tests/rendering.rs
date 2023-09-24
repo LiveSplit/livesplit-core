@@ -1,4 +1,7 @@
-#![cfg(feature = "software-rendering")]
+#![cfg(all(
+    feature = "software-rendering",
+    not(all(target_arch = "x86", not(target_feature = "sse"))),
+))]
 
 mod layout_files;
 mod run_files;
@@ -6,7 +9,6 @@ mod run_files;
 mod tests_helper;
 
 use image::Rgba;
-use img_hash::{HasherConfig, ImageHash};
 use livesplit_core::{
     component::{self, timer},
     layout::{self, Component, ComponentState, Layout, LayoutDirection, LayoutState},
@@ -38,26 +40,28 @@ fn default() {
 
     let state = layout.state(&timer.snapshot());
 
-    check(&state, "luIAAABAPLM=", "default");
+    check(&state, "670e0e09bf3dbfed", "default");
 }
 
+// Font fallback inherently requires fonts from the operating system to
+// work. On Windows we have a consistent set of fonts installed for all the
+// different languages. We could do the same check on macOS and possibly a
+// few other operating systems, which also provide a consistent set of
+// fonts, but with a different hash. On Linux however you may have a
+// different set of fonts installed, or possibly even none at all, so we
+// can't do the same check there.
+#[cfg(all(feature = "font-loading", windows))]
 #[test]
 fn font_fallback() {
     // This list is based on the most commonly used writing systems in the
     // world:
     // https://en.wikipedia.org/wiki/List_of_writing_systems#List_of_writing_systems_by_adoption
 
+    use sysinfo::SystemExt;
+
     let mut run = tests_helper::create_run(&[
-        // FIXME: Unfortunately we can't use emojis because the vendors like to
-        // update the look of the emojis every now and then. So for example the
-        // emojis changed between Windows 10 and 11. We'd have to either detect
-        // the version of the emoji font or would have to detect the operating
-        // system version. I believe the latter is something they plan on adding
-        // into std, so maybe we can eventually use that.
-
         // Emoji
-        // "❤✔👌🤔😂😁🎉💀🤣",
-
+        "❤✔👌🤔😂😁🎉💀🤣",
         // Braille
         "⠃⠗⠁⠊⠇⠇⠑",
         // Hebrew
@@ -84,8 +88,6 @@ fn font_fallback() {
         "ไทย",
         // Burmese
         "မြန်မာ",
-        // Canadian Aboriginal Syllabics
-        "ᖃᓂᐅᔮᖅᐸᐃᑦ ᒐᐦᑲᓯᓇᐦᐃᑫᐤ ᑯᖾᖹ ᖿᐟᖻ ᓱᖽᐧᖿ ᑐᑊᘁᗕᑋᗸ",
         // Hanzi, Kana
         "汉字 漢字 かな カナ",
     ]);
@@ -100,15 +102,16 @@ fn font_fallback() {
 
     let _state = layout.state(&timer.snapshot());
 
-    // Font fallback inherently requires fonts from the operating system to
-    // work. On Windows we have a consistent set of fonts installed for all the
-    // different languages. We could do the same check on macOS and possibly a
-    // few other operating systems, which also provide a consistent set of
-    // fonts, but with a different hash. On Linux however you may have a
-    // different set of fonts installed, or possibly even none at all, so we
-    // can't do the same check there.
-    #[cfg(all(feature = "font-loading", windows))]
-    check(&_state, "zeSAgJgEMbI=", "font_fallback");
+    let system = sysinfo::System::new();
+    let build_number: u64 = system.kernel_version().unwrap().parse().unwrap();
+    let expected_hash = if build_number >= 22000 {
+        // Windows 11
+        "d16b447322881767"
+    } else {
+        // Windows 10
+        "f4bffc6bc6fab953"
+    };
+    check(&_state, expected_hash, "font_fallback");
 }
 
 #[test]
@@ -119,7 +122,7 @@ fn actual_split_file() {
 
     check(
         &layout.state(&timer.snapshot()),
-        "jMDAARBAPLM=",
+        "cd9735cf9575f503",
         "actual_split_file",
     );
 }
@@ -133,7 +136,7 @@ fn wsplit() {
     check_dims(
         &layout.state(&timer.snapshot()),
         [250, 300],
-        "j/n8/PnZv/c=",
+        "9c69454a9258e768",
         "wsplit",
     );
 }
@@ -149,7 +152,7 @@ fn timer_delta_background() {
     check_dims(
         &layout.state(&timer.snapshot()),
         [250, 300],
-        "a+nRyKBfXc0=",
+        "fc8e7890593f9da6",
         "timer_delta_background_ahead",
     );
 
@@ -158,7 +161,7 @@ fn timer_delta_background() {
     check_dims(
         &layout.state(&timer.snapshot()),
         [250, 300],
-        "a+nZyaFfX80=",
+        "bc5b8383ebb556b8",
         "timer_delta_background_stopped",
     );
 }
@@ -176,9 +179,14 @@ fn all_components() {
 
     let state = layout.state(&timer.snapshot());
 
-    check_dims(&state, [300, 800], "4en3ocnJp/E=", "all_components");
+    check_dims(&state, [300, 800], "e4db4770453a6d06", "all_components");
 
-    check_dims(&state, [150, 800], "SXfHSWVpRkc=", "all_components_thin");
+    check_dims(
+        &state,
+        [150, 800],
+        "0ecd0bad25453ff6",
+        "all_components_thin",
+    );
 }
 
 #[test]
@@ -197,7 +205,7 @@ fn score_split() {
     state.components.push(ComponentState::Timer(timer_state));
     state.components.push(prev_seg);
 
-    check_dims(&state, [300, 400], "jOCAAQTABjc=", "score_split");
+    check_dims(&state, [300, 400], "6ec6913f5ace6ab6", "score_split");
 }
 
 #[test]
@@ -208,7 +216,7 @@ fn dark_layout() {
 
     check(
         &layout.state(&timer.snapshot()),
-        "T8AQQABqwYc=",
+        "a47c590792c1bab5",
         "dark_layout",
     );
 }
@@ -228,7 +236,7 @@ fn subsplits_layout() {
     check_dims(
         &layout.state(&timer.snapshot()),
         [300, 800],
-        "8/vz8/Pz/+c=",
+        "57165de23ce37b9c",
         "subsplits_layout",
     );
 }
@@ -251,7 +259,7 @@ fn display_two_rows() {
     check_dims(
         &layout.state(&timer.snapshot()),
         [200, 100],
-        "Q0UaMs1J0sA=",
+        "d174c2f9a0c54d66",
         "display_two_rows",
     );
 }
@@ -274,7 +282,7 @@ fn single_line_title() {
     check_dims(
         &layout.state(&timer.snapshot()),
         [300, 60],
-        "ABJtmxt4YZA=",
+        "5f0a41091c33ecad",
         "single_line_title",
     );
 }
@@ -308,20 +316,9 @@ fn horizontal() {
     check_dims(
         &layout.state(&timer.snapshot()),
         [1500, 40],
-        "YnJjcnJSUmM=",
+        "987157e649936cbb",
         "horizontal",
     );
-}
-
-fn get_comparison_tolerance() -> u32 {
-    // Without MMX the floating point calculations don't follow IEEE 754, so the tests require a
-    // tolerance that is greater than 0.
-    // FIXME: We use SSE as an approximation for the cfg because MMX isn't supported by Rust yet.
-    if cfg!(all(target_arch = "x86", not(target_feature = "sse"))) {
-        3
-    } else {
-        0
-    }
 }
 
 #[track_caller]
@@ -330,52 +327,33 @@ fn check(state: &LayoutState, expected_hash_data: &str, name: &str) {
 }
 
 #[track_caller]
-fn check_dims(
-    state: &LayoutState,
-    dims @ [width, height]: [u32; 2],
-    expected_hash_data: &str,
-    name: &str,
-) {
+fn check_dims(state: &LayoutState, dims: [u32; 2], expected_hash: &str, name: &str) {
     let mut renderer = Renderer::new();
     renderer.render(state, dims);
-    let hash_image =
-        img_hash::image::RgbaImage::from_raw(width, height, renderer.into_image_data()).unwrap();
-    let image =
-        image::ImageBuffer::<Rgba<u8>, _>::from_raw(width, height, hash_image.as_raw().as_slice())
-            .unwrap();
 
-    let hasher = HasherConfig::with_bytes_type::<[u8; 8]>().to_hasher();
-
-    let calculated_hash = hasher.hash_image(&hash_image);
-    let calculated_hash_data = calculated_hash.to_base64();
-    let expected_hash = ImageHash::<[u8; 8]>::from_base64(expected_hash_data).unwrap();
-    let distance = calculated_hash.dist(&expected_hash);
+    let hash_image = renderer.image();
+    let calculated_hash = seahash::hash(&hash_image);
+    let calculated_hash = format!("{calculated_hash:016x}");
 
     let mut path = PathBuf::from_iter(["target", "renders"]);
     fs::create_dir_all(&path).ok();
 
     let mut actual_path = path.clone();
-    actual_path.push(format!(
-        "{name}_{}.png",
-        calculated_hash_data.replace('/', "-"),
-    ));
-    image.save(&actual_path).ok();
+    actual_path.push(format!("{name}_{calculated_hash}.png"));
+    hash_image.save(&actual_path).ok();
 
-    if distance > get_comparison_tolerance() {
+    if calculated_hash != expected_hash {
         path.push("diff");
         fs::create_dir_all(&path).ok();
         path.pop();
 
         let mut expected_path = path.clone();
-        expected_path.push(format!(
-            "{name}_{}.png",
-            expected_hash_data.replace('/', "-"),
-        ));
+        expected_path.push(format!("{name}_{expected_hash}.png"));
         let diff_path = if let Ok(expected_image) = image::open(&expected_path) {
             let mut expected_image = expected_image.to_rgba8();
             for (x, y, Rgba([r, g, b, a])) in expected_image.enumerate_pixels_mut() {
                 if x < hash_image.width() && y < hash_image.height() {
-                    let img_hash::image::Rgba([r2, g2, b2, a2]) = *hash_image.get_pixel(x, y);
+                    let image::Rgba([r2, g2, b2, a2]) = *hash_image.get_pixel(x, y);
                     *r = r.abs_diff(r2);
                     *g = g.abs_diff(g2);
                     *b = b.abs_diff(b2);
@@ -394,10 +372,9 @@ fn check_dims(
 
         panic!(
             "Render mismatch for {name}
-expected: {expected_hash_data} {}
-actual: {calculated_hash_data} {}
-diff: {}
-distance: {distance}",
+expected: {expected_hash} {}
+actual: {calculated_hash} {}
+diff: {}",
             expected_path.display(),
             actual_path.display(),
             diff_path.display(),

@@ -24,7 +24,9 @@ wasmtime = { version = "13.0.0", default-features = false, features = [
   "cranelift",
   "parallel-compilation",
 ] }
-wasmtime-wasi = "13.0.0"
+wasmtime-wasi = { version = "13.0.0", default-features = false, features = [
+  "sync",
+] }
 wasi-common = "13.0.0"
 
 [target.'cfg(windows)'.dependencies]
