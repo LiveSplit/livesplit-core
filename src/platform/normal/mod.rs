@@ -18,21 +18,14 @@ cfg_if::cfg_if! {
     // correctly implemented in Linux and due to backwards compatibility
     // concerns they were never able to fix it properly. Thus `CLOCK_MONOTONIC`
     // means uptime on Linux whereas on other Unixes it means real time (the BSD
-    // family). They however introduced `CLOCK_BOOTTIME` in the Linux kernel
-    // 2.6.39 which measures real time. So the solution is to use this on all
-    // operating systems that are based on the Linux kernel and fall back to
-    // `CLOCK_MONOTONIC` if the kernel is too old and the syscall fails.
+    // family). So the solution is to use this on all operating systems that are
+    // based on the Linux kernel.
     //
     // # macOS and iOS
     //
-    // macOS and iOS actually do the right thing for `CLOCK_MONOTONIC` but Rust
-    // actually doesn't use it on iOS and macOS, so we also need to use our
-    // custom implementation for those too, but skip `CLOCK_BOOTTIME` as that is
-    // Linux specific. `clock_gettime` itself however has only been available
-    // since macOS 10.12 (Sierra) and iOS 10 which both got released in
-    // September 2016. While there is `mach_continuous_time` which does the same
-    // thing, it got introduced in the same update and is not recommended by the
-    // documentation, so it doesn't help with this problem.
+    // For macOS and iOS there is `mach_continuous_time` which does the right
+    // thing, but is not recommended by the documentation. The documentation
+    // recommends `clock_gettime_nsec_np(CLOCK_MONOTONIC_RAW)` instead.
     //
     // # Windows
     //
@@ -65,8 +58,7 @@ cfg_if::cfg_if! {
     // defined as a clock measuring real time`, making it sound like a compliant
     // implementation should measure the time the OS is suspended as well.
     //
-    // Open issue:
-    // https://github.com/WebAssembly/wasi-clocks/issues/47
+    // Open issue: https://github.com/WebAssembly/wasi-clocks/issues/47
     //
     // # Web
     //
@@ -104,15 +96,13 @@ cfg_if::cfg_if! {
     // We however remove emscripten from this list as it's not actually based on
     // the Linux kernel and instead has its own implementation in JavaScript
     // where it actually errors out on `CLOCK_BOOTTIME`:
-    // https://github.com/emscripten-core/emscripten/blob/0321203d3614a97e4042ffa0c19ab770b1f5aa6c/src/library.js#L1419-L1426
+    // https://github.com/emscripten-core/emscripten/blob/9bdb310b89472a0f4d64f36e4a79273d8dc7fa98/system/lib/libc/emscripten_time.c#L50-L57
     if #[cfg(any(
         target_os = "linux",
         target_os = "l4re",
         target_os = "android",
-        target_os = "macos",
-        target_os = "ios",
     ))] {
-        use core::ops::Sub;
+        use core::{mem::MaybeUninit, ops::Sub};
 
         #[derive(Copy, Clone, PartialOrd, PartialEq, Ord, Eq, Debug)]
         pub struct Instant(Duration);
@@ -120,35 +110,25 @@ cfg_if::cfg_if! {
         impl Instant {
             /// Accesses the current point in time.
             pub fn now() -> Self {
-                let mut t = libc::timespec { tv_sec: 0, tv_nsec: 0 };
+                // SAFETY: This is safe because we pass a valid pointer to a
+                // `timespec` to `clock_gettime` and check the return value.
+                unsafe {
+                    let mut t = MaybeUninit::uninit();
 
-                // `CLOCK_BOOTTIME` is only necessary on Linux.
-                #[cfg(not(any(target_os = "macos", target_os = "ios")))]
-                {
-                    // If it fails it always fails. So technically we could
-                    // cache that result, but the Linux kernels that Rust
-                    // supports that don't have `CLOCK_BOOTTIME` (2.6.32 to
-                    // 2.6.38) are all EOL since at least 2016, so we might as
-                    // well always use `CLOCK_BOOTTIME` on Linux. The additional
-                    // atomic isn't worth the slight performance penalty and
-                    // once Rust bumps the minimal Linux version we may also
-                    // just cfg out `CLOCK_MONOTONIC` here.
-                    if unsafe { libc::clock_gettime(libc::CLOCK_BOOTTIME, &mut t) } == 0 {
-                        return Self(Duration::new(t.tv_sec as _, t.tv_nsec as _));
+                    if libc::clock_gettime(libc::CLOCK_BOOTTIME, t.as_mut_ptr()) != 0 {
+                        panic!("clock_gettime doesn't work.");
                     }
-                }
 
-                if unsafe { libc::clock_gettime(libc::CLOCK_MONOTONIC, &mut t) } != 0 {
-                    panic!("clock_gettime doesn't work.");
+                    let t = t.assume_init_ref();
+                    Self(Duration::new(t.tv_sec as _, t.tv_nsec as _))
                 }
-
-                Self(Duration::new(t.tv_sec as _, t.tv_nsec as _))
             }
         }
 
         impl Sub<Duration> for Instant {
             type Output = Instant;
 
+            #[inline]
             fn sub(self, rhs: Duration) -> Instant {
                 Self(self.0 - rhs)
             }
@@ -157,8 +137,52 @@ cfg_if::cfg_if! {
         impl Sub for Instant {
             type Output = Duration;
 
+            #[inline]
             fn sub(self, rhs: Instant) -> Duration {
                 self.0 - rhs.0
+            }
+        }
+    } else if #[cfg(any(
+        target_os = "macos",
+        target_os = "ios",
+        target_os = "tvos",
+        target_os = "watchos",
+    ))] {
+        use core::ops::Sub;
+
+        extern "C" {
+            fn clock_gettime_nsec_np(clock_id: libc::clockid_t) -> u64;
+        }
+
+        #[derive(Copy, Clone, PartialOrd, PartialEq, Ord, Eq, Debug)]
+        pub struct Instant(u64);
+
+        impl Instant {
+            /// Accesses the current point in time.
+            #[inline]
+            pub fn now() -> Self {
+                // SAFETY: This is always safe.
+                unsafe {
+                    Self(clock_gettime_nsec_np(libc::CLOCK_MONOTONIC_RAW))
+                }
+            }
+        }
+
+        impl Sub<Duration> for Instant {
+            type Output = Instant;
+
+            #[inline]
+            fn sub(self, rhs: Duration) -> Instant {
+                Self((self.0 as i64 - i64::try_from(rhs.whole_nanoseconds()).unwrap()) as u64)
+            }
+        }
+
+        impl Sub for Instant {
+            type Output = Duration;
+
+            #[inline]
+            fn sub(self, rhs: Instant) -> Duration {
+                Duration::nanoseconds(self.0 as i64 - rhs.0 as i64)
             }
         }
     } else {
@@ -166,6 +190,7 @@ cfg_if::cfg_if! {
     }
 }
 
+#[inline]
 pub fn utc_now() -> DateTime {
     DateTime::now_utc()
 }

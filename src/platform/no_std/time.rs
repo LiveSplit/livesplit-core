@@ -73,6 +73,7 @@ pub fn utc_now() -> DateTime {
     if clock.is_null() {
         panic!("No clock registered");
     }
+    // SAFETY: If it's not null, we know it's valid.
     let clock = unsafe { &*clock };
     clock.date_now()
 }

@@ -13,6 +13,7 @@ extern "C" {
 }
 
 pub fn utc_now() -> DateTime {
+    // SAFETY: We pass a pointer to a valid `FFIDateTime` to `Date_now`.
     unsafe {
         let mut date_time = MaybeUninit::uninit();
         Date_now(date_time.as_mut_ptr());
@@ -31,6 +32,7 @@ pub struct Instant(Duration);
 
 impl Instant {
     pub fn now() -> Self {
+        // SAFETY: This is always safe to cal.
         let secs = unsafe { Instant_now() };
         let nanos = (secs.fract() * 1_000_000_000.0) as _;
         let secs = secs as _;
