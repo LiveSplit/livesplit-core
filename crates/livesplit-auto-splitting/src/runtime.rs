@@ -14,8 +14,7 @@ use std::{
     env::consts::{ARCH, OS},
     path::{Path, PathBuf},
     str,
-    time::{Duration, Instant}, 
-    mem,
+    time::{Duration, Instant},
 };
 use sysinfo::{ProcessExt, ProcessRefreshKind, RefreshKind, System, SystemExt};
 use wasi_common::{
@@ -655,9 +654,10 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 let process_name = get_str(memory, ptr, len)?;
                 Ok(
                     if let Ok(p) = Process::with_name(process_name, &mut context.process_list) {
-                        context
-                            .timer
-                            .log(format_args!("Attached to a new process: {process_name}"));
+                        context.timer.log(format_args!(
+                            "Attached to a new process: {}",
+                            p.name().unwrap_or("<Unnamed Process>")
+                        ));
                         context.processes.insert(p).data().as_ffi()
                     } else {
                         0
@@ -669,14 +669,19 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
             source,
             name: "process_attach",
         })?
-        .func_wrap("env", "process_attach_pid", {
-            |mut caller: Caller<'_, Context<T>>, pid: u32| {
+        .func_wrap("env", "process_attach_by_pid", {
+            |mut caller: Caller<'_, Context<T>>, pid: u64| {
                 let (_, context) = memory_and_context(&mut caller);
                 Ok(
-                    if let Ok(p) = Process::with_pid(pid, &mut context.process_list) {
-                        context
-                            .timer
-                            .log(format_args!("Attached to a new process with pid {pid}"));
+                    if let Some(p) = pid
+                        .try_into()
+                        .ok()
+                        .and_then(|pid| Process::with_pid(pid, &mut context.process_list).ok())
+                    {
+                        context.timer.log(format_args!(
+                            "Attached to a new process: {}",
+                            p.name().unwrap_or("<Unnamed Process>")
+                        ));
                         context.processes.insert(p).data().as_ffi()
                     } else {
                         0
@@ -686,7 +691,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
         })
         .map_err(|source| CreationError::LinkFunction {
             source,
-            name: "process_attach_pid",
+            name: "process_attach_by_pid",
         })?
         .func_wrap("env", "process_detach", {
             |mut caller: Caller<'_, Context<T>>, process: u64| {
@@ -706,32 +711,52 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
             source,
             name: "process_detach",
         })?
-        .func_wrap("env", "process_list", {
-            |mut caller: Caller<'_, Context<T>>, name_ptr: u32, name_len: u32, list_ptr: u32, list_len_ptr: u32| {
+        .func_wrap("env", "process_list_by_name", {
+            |mut caller: Caller<'_, Context<T>>,
+             name_ptr: u32,
+             name_len: u32,
+             list_ptr: u32,
+             list_len_ptr: u32| {
                 let (memory, context) = memory_and_context(&mut caller);
-                let process_name = get_str(memory, name_ptr, name_len)?;
-                if let Ok(list) = Process::list_pids_by_name(process_name, &mut context.process_list) {
-                    let list_len_bytes = get_arr_mut(memory, list_len_ptr)?;
-                    let list_len = u32::from_le_bytes(*list_len_bytes) as usize;
-                    *list_len_bytes = (list.len() as u32).to_le_bytes();
-                    if list_len < list.len() {
-                        return Ok(0u32);
-                    }
-                    let mut list_bytes = Vec::new();
-                    for i in &list {
-                        list_bytes.extend_from_slice(&i.to_le_bytes());
-                    }
-                    let buf = get_slice_mut(memory, list_ptr, (list.len() * mem::size_of::<u32>()) as _)?;
-                    buf.copy_from_slice(list_bytes.as_slice());
-                    Ok(1u32)
-                } else {
-                    Ok(0u32)
+
+                let list_len_bytes = get_arr_mut(memory, list_len_ptr)?;
+                let list_len = u32::from_le_bytes(*list_len_bytes);
+
+                let [name, list] = get_two_slice_mut(
+                    memory,
+                    name_ptr,
+                    name_len,
+                    list_ptr,
+                    list_len
+                        .checked_mul(8)
+                        .context("The list length overflows the size of the address space.")?,
+                )?;
+
+                let mut count = 0u32;
+
+                let mut iter =
+                    Process::list_pids_by_name(str::from_utf8(name)?, &mut context.process_list)
+                        .inspect(|_| {
+                            count = count.saturating_add(1);
+                        });
+
+                for (pid, list_element) in iter.by_ref().zip(bytemuck::cast_slice_mut(list)) {
+                    *list_element = (pid as u64).to_le_bytes();
                 }
+                // Consume the rest of the PIDs to ensure we fully count them.
+                iter.for_each(drop);
+
+                let list_len_bytes = get_arr_mut(memory, list_len_ptr)?;
+                *list_len_bytes = count.to_le_bytes();
+
+                // Currently this can't fail, but that's only because `sysinfo`
+                // doesn't report any errors when listing the processes fails.
+                Ok(1u32)
             }
         })
         .map_err(|source| CreationError::LinkFunction {
             source,
-            name: "process_list",
+            name: "process_list_by_name",
         })?
         .func_wrap("env", "process_is_open", {
             |mut caller: Caller<'_, Context<T>>, process: u64| {
@@ -972,17 +997,63 @@ fn get_arr_mut<const N: usize>(memory: &mut [u8], ptr: u32) -> Result<&mut [u8; 
 
 fn get_slice(memory: &[u8], ptr: u32, len: u32) -> Result<&[u8]> {
     memory
-        .get(ptr as usize..(ptr + len) as usize)
+        .get(ptr as usize..)
+        .context("Out of bounds pointer and length pair.")?
+        .get(..len as usize)
         .context("Out of bounds pointer and length pair.")
 }
 
 fn get_slice_mut(memory: &mut [u8], ptr: u32, len: u32) -> Result<&mut [u8]> {
     memory
-        .get_mut(ptr as usize..(ptr + len) as usize)
+        .get_mut(ptr as usize..)
+        .context("Out of bounds pointer and length pair.")?
+        .get_mut(..len as usize)
         .context("Out of bounds pointer and length pair.")
 }
 
 fn get_str(memory: &[u8], ptr: u32, len: u32) -> Result<&str> {
     let slice = get_slice(memory, ptr, len)?;
     str::from_utf8(slice).map_err(Into::into)
+}
+
+fn get_two_slice_mut(
+    memory: &mut [u8],
+    ptr1: u32,
+    len1: u32,
+    ptr2: u32,
+    len2: u32,
+) -> Result<[&mut [u8]; 2]> {
+    let (ptr1, ptr2) = (ptr1 as usize, ptr2 as usize);
+    let (len1, len2) = (len1 as usize, len2 as usize);
+    if ptr1 < ptr2 {
+        if ptr2 >= memory.len() {
+            return Err(format_err!("Out of bounds pointer and length pair."));
+        }
+        let (first, second) = memory.split_at_mut(ptr2);
+        Ok([
+            first
+                .get_mut(ptr1..)
+                .context("Out of bounds pointer and length pair.")?
+                .get_mut(..len1)
+                .context("Overlapping pair of pointer ranges.")?,
+            second
+                .get_mut(..len2)
+                .context("Out of bounds pointer and length pair.")?,
+        ])
+    } else {
+        if ptr1 >= memory.len() {
+            return Err(format_err!("Out of bounds pointer and length pair."));
+        }
+        let (first, second) = memory.split_at_mut(ptr1);
+        Ok([
+            second
+                .get_mut(..len1)
+                .context("Out of bounds pointer and length pair.")?,
+            first
+                .get_mut(ptr2..)
+                .context("Out of bounds pointer and length pair.")?
+                .get_mut(..len2)
+                .context("Overlapping pair of pointer ranges.")?,
+        ])
+    }
 }

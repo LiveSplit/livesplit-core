@@ -81,7 +81,9 @@ impl Process {
 
     pub(super) fn with_pid(pid: u32, process_list: &mut ProcessList) -> Result<Self, OpenError> {
         process_list.refresh();
-        let process = process_list.get(sysinfo::Pid::from_u32(pid)).context(ProcessDoesntExist)?;
+        let process = process_list
+            .get(sysinfo::Pid::from_u32(pid))
+            .context(ProcessDoesntExist)?;
 
         let path = build_path(process.exe());
 
@@ -100,21 +102,14 @@ impl Process {
         })
     }
 
-    pub(super) fn list_pids_by_name(name: &str, process_list: &mut ProcessList) -> Result<Vec<u32>, OpenError> {
-        let mut result = Vec::new();
-
+    pub(super) fn list_pids_by_name<'a>(
+        name: &'a str,
+        process_list: &'a mut ProcessList,
+    ) -> impl Iterator<Item = u32> + 'a {
         process_list.refresh();
-        let processes = process_list.processes_by_name(name);
-
-        for process in processes {
-            result.push(process.pid().as_u32());
-        }
-
-        if result.is_empty() {
-            Err(OpenError::ProcessDoesntExist)
-        } else {
-            Ok(result)
-        }
+        process_list
+            .processes_by_name(name)
+            .map(|p| p.pid().as_u32())
     }
 
     pub(super) fn is_open(&mut self, process_list: &mut ProcessList) -> bool {
@@ -201,6 +196,15 @@ impl Process {
     /// Returns the path of the executable of the process.
     pub fn path(&self) -> Option<&str> {
         self.path.as_deref()
+    }
+
+    /// Returns the name of the executable of the process.
+    pub fn name(&self) -> Option<&str> {
+        let path = &self.path.as_deref()?;
+        Some(match path.rsplit_once('/') {
+            Some((_, name)) => name,
+            None => path,
+        })
     }
 
     fn refresh_memory_ranges(&mut self) -> Result<(), ModuleError> {

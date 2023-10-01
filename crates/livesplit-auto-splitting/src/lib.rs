@@ -34,7 +34,10 @@
 //! pub struct NonZeroAddress(pub NonZeroU64);
 //!
 //! #[repr(transparent)]
-//! pub struct ProcessId(NonZeroU64);
+//! pub struct Process(NonZeroU64);
+//!
+//! #[repr(transparent)]
+//! pub struct ProcessId(u64);
 //!
 //! #[repr(transparent)]
 //! pub struct TimerState(u32);
@@ -56,13 +59,13 @@
 //!
 //! impl MemoryRangeFlags {
 //!     /// The memory range is readable.
-//!     pub const READ: Self = Self(NonZeroU64::new(1 << 1).unwrap());
+//!     pub const READ: Self = Self(match NonZeroU64::new(1 << 1) { Some(v) => v, None => panic!() });
 //!     /// The memory range is writable.
-//!     pub const WRITE: Self = Self(NonZeroU64::new(1 << 2).unwrap());
+//!     pub const WRITE: Self = Self(match NonZeroU64::new(1 << 2) { Some(v) => v, None => panic!() });
 //!     /// The memory range is executable.
-//!     pub const EXECUTE: Self = Self(NonZeroU64::new(1 << 3).unwrap());
+//!     pub const EXECUTE: Self = Self(match NonZeroU64::new(1 << 3) { Some(v) => v, None => panic!() });
 //!     /// The memory range has a file path.
-//!     pub const PATH: Self = Self(NonZeroU64::new(1 << 4).unwrap());
+//!     pub const PATH: Self = Self(match NonZeroU64::new(1 << 4) { Some(v) => v, None => panic!() });
 //! }
 //!
 //! extern "C" {
@@ -98,23 +101,35 @@
 //!     pub fn timer_resume_game_time();
 //!
 //!     /// Attaches to a process based on its name.
-//!     pub fn process_attach(name_ptr: *const u8, name_len: usize) -> Option<ProcessId>;
-//!     /// Attaches to a process based on its pid.
-//!     pub fn process_attach_pid(pid: u32);
+//!     pub fn process_attach(name_ptr: *const u8, name_len: usize) -> Option<Process>;
+//!     /// Attaches to a process based on its process id.
+//!     pub fn process_attach_by_pid(pid: ProcessId) -> Option<Process>;
 //!     /// Detaches from a process.
-//!     pub fn process_detach(process: ProcessId);
-//!     /// Lists processes (as pids) based on their name. Returns `false` 
-//!     /// if the buffer is too small. After this call, no matter whether
-//!     /// it was successful or not, the `buf_len_ptr` will be set to the
-//!     /// required buffer size. 
-//!     pub fn process_list(name_ptr: *const u8, name_len: usize, list_ptr: *mut u8, list_len_ptr: *mut usize) -> bool
+//!     pub fn process_detach(process: Process);
+//!     /// Lists processes based on their name. Returns `false` if listing the
+//!     /// processes failed. If it was successful, the buffer is now filled
+//!     /// with the process ids. They are in no specific order. The
+//!     /// `list_len_ptr` will be updated to the amount of process ids that
+//!     /// were found. If this is larger than the original value provided, the
+//!     /// buffer provided was too small and not all process ids could be
+//!     /// stored. This is still considered successful and can optionally be
+//!     /// treated as an error condition by the caller by checking if the
+//!     /// length increased and potentially reallocating a larger buffer. If
+//!     /// the length decreased after the call, the buffer was larger than
+//!     /// needed and the remaining entries are untouched.
+//!     pub fn process_list_by_name(
+//!         name_ptr: *const u8,
+//!         name_len: usize,
+//!         list_ptr: *mut ProcessId,
+//!         list_len_ptr: *mut usize,
+//!     ) -> bool;
 //!     /// Checks whether is a process is still open. You should detach from a
 //!     /// process and stop using it if this returns `false`.
-//!     pub fn process_is_open(process: ProcessId) -> bool;
+//!     pub fn process_is_open(process: Process) -> bool;
 //!     /// Reads memory from a process at the address given. This will write
 //!     /// the memory to the buffer given. Returns `false` if this fails.
 //!     pub fn process_read(
-//!         process: ProcessId,
+//!         process: Process,
 //!         address: Address,
 //!         buf_ptr: *mut u8,
 //!         buf_len: usize,
@@ -122,29 +137,29 @@
 //!
 //!     /// Gets the address of a module in a process.
 //!     pub fn process_get_module_address(
-//!         process: ProcessId,
+//!         process: Process,
 //!         name_ptr: *const u8,
 //!         name_len: usize,
 //!     ) -> Option<NonZeroAddress>;
 //!     /// Gets the size of a module in a process.
 //!     pub fn process_get_module_size(
-//!         process: ProcessId,
+//!         process: Process,
 //!         name_ptr: *const u8,
 //!         name_len: usize,
 //!     ) -> Option<NonZeroU64>;
 //!
 //!     /// Gets the number of memory ranges in a given process.
-//!     pub fn process_get_memory_range_count(process: ProcessId) -> Option<NonZeroU64>;
+//!     pub fn process_get_memory_range_count(process: Process) -> Option<NonZeroU64>;
 //!     /// Gets the start address of a memory range by its index.
 //!     pub fn process_get_memory_range_address(
-//!         process: ProcessId,
+//!         process: Process,
 //!         idx: u64,
 //!     ) -> Option<NonZeroAddress>;
 //!     /// Gets the size of a memory range by its index.
-//!     pub fn process_get_memory_range_size(process: ProcessId, idx: u64) -> Option<NonZeroU64>;
+//!     pub fn process_get_memory_range_size(process: Process, idx: u64) -> Option<NonZeroU64>;
 //!     /// Gets the flags of a memory range by its index.
 //!     pub fn process_get_memory_range_flags(
-//!         process: ProcessId,
+//!         process: Process,
 //!         idx: u64,
 //!     ) -> Option<MemoryRangeFlags>;
 //!
@@ -156,7 +171,7 @@
 //!     /// `buf_len_ptr` will be set to the required buffer size. The path is
 //!     /// guaranteed to be valid UTF-8 and is not nul-terminated.
 //!     pub fn process_get_path(
-//!         process: ProcessId,
+//!         process: Process,
 //!         buf_ptr: *mut u8,
 //!         buf_len_ptr: *mut usize,
 //!     ) -> bool;
