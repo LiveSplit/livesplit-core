@@ -226,6 +226,15 @@ extern "C" {
         tooltip_ptr: *const u8,
         tooltip_len: usize,
     );
+    /// Stores the AutoSplitterSettings XML contents in the
+    /// buffer given.
+    /// Returns `false` if the buffer is too small.
+    /// After this call, whether it was successful or not,
+    /// the `buf_len_ptr` will be set to the required buffer size.
+    pub fn get_auto_splitter_settings(
+        buf_ptr: *mut u8,
+        buf_len_ptr: *mut usize,
+    ) -> bool;
 }
 ```
 
