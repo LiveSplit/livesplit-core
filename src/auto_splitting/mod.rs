@@ -566,7 +566,13 @@ async fn run(
         let mut runtime = loop {
             match receiver.recv().await {
                 Some(Request::LoadScript(script, ret)) => {
-                    match ScriptRuntime::new(&script, Timer(timer.clone()), Config::default()) {
+                    let mut config = Config::default();
+                    if let Ok(t) = timer.read() {
+                        let s = t.run().auto_splitter_settings().to_string();
+                        let ss = SettingsStore::new_auto_splitter_settings(s);
+                        config.settings_store = Some(ss)
+                    }
+                    match ScriptRuntime::new(&script, Timer(timer.clone()), config) {
                         Ok(r) => {
                             ret.send(Ok(())).ok();
                             script_path = script;
@@ -612,7 +618,10 @@ async fn run(
             match timeout_at(next_step, receiver.recv()).await {
                 Ok(Some(request)) => match request {
                     Request::LoadScript(script, ret) => {
-                        match ScriptRuntime::new(&script, Timer(timer.clone()), Config::default()) {
+                        let mut config = Config::default();
+                        config.settings_store = Some(runtime.settings_store().clone());
+
+                        match ScriptRuntime::new(&script, Timer(timer.clone()), config) {
                             Ok(r) => {
                                 ret.send(Ok(())).ok();
                                 runtime = r;

@@ -980,6 +980,25 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
         .map_err(|source| CreationError::LinkFunction {
             source,
             name: "user_settings_set_tooltip",
+        })?
+        .func_wrap("env", "get_auto_splitter_settings", {
+            |mut caller: Caller<'_, Context<T>>, ptr: u32, len_ptr: u32| {
+                let (memory, context) = memory_and_context(&mut caller);
+                let auto_splitter_settings = &context.settings_store.get_auto_splitter_settings();
+                let len_bytes = get_arr_mut(memory, len_ptr)?;
+                let len = u32::from_le_bytes(*len_bytes) as usize;
+                *len_bytes = (auto_splitter_settings.len() as u32).to_le_bytes();
+                if len < auto_splitter_settings.len() {
+                    return Ok(0u32);
+                }
+                let buf = get_slice_mut(memory, ptr, auto_splitter_settings.len() as _)?;
+                buf.copy_from_slice(auto_splitter_settings.as_bytes());
+                Ok(1u32)
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "get_auto_splitter_settings",
         })?;
     Ok(())
 }

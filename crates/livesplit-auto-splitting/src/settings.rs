@@ -52,12 +52,21 @@ pub enum SettingValue {
 #[derive(Clone, Default)]
 pub struct SettingsStore {
     values: HashMap<Box<str>, SettingValue>,
+    auto_splitter_settings: String,
 }
 
 impl SettingsStore {
     /// Creates a new empty settings store.
     pub fn new() -> Self {
         Self::default()
+    }
+
+    /// Creates a new settings store from the AutoSplitterSettings XML contents.
+    pub fn new_auto_splitter_settings(auto_splitter_settings: String) -> Self {
+        Self {
+            values: Default::default(),
+            auto_splitter_settings
+        }
     }
 
     /// Sets a setting to the new value. If the key of the setting doesn't exist
@@ -78,5 +87,10 @@ impl SettingsStore {
     /// store.
     pub fn iter(&self) -> impl Iterator<Item = (&str, &SettingValue)> {
         self.values.iter().map(|(k, v)| (k.as_ref(), v))
+    }
+
+    /// Gets the AutoSplitterSettings XML contents.
+    pub fn get_auto_splitter_settings(&self) -> &str {
+        &self.auto_splitter_settings
     }
 }
