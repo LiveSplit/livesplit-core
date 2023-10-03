@@ -982,23 +982,99 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
             name: "user_settings_set_tooltip",
         })?
         .func_wrap("env", "get_auto_splitter_settings", {
-            |mut caller: Caller<'_, Context<T>>, ptr: u32, len_ptr: u32| {
+            |mut caller: Caller<'_, Context<T>>, obj_ptr: u32| {
                 let (memory, context) = memory_and_context(&mut caller);
-                let auto_splitter_settings = &context.settings_store.get_auto_splitter_settings();
-                let len_bytes = get_arr_mut(memory, len_ptr)?;
-                let len = u32::from_le_bytes(*len_bytes) as usize;
-                *len_bytes = (auto_splitter_settings.len() as u32).to_le_bytes();
-                if len < auto_splitter_settings.len() {
-                    return Ok(0u32);
-                }
-                let buf = get_slice_mut(memory, ptr, auto_splitter_settings.len() as _)?;
-                buf.copy_from_slice(auto_splitter_settings.as_bytes());
+                let obj = context.settings_store.get_auto_splitter_settings();
+                let obj_bytes = get_arr_mut(memory, obj_ptr)?;
+                *obj_bytes = obj.to_le_bytes();
                 Ok(1u32)
             }
         })
         .map_err(|source| CreationError::LinkFunction {
             source,
             name: "get_auto_splitter_settings",
+        })?
+        .func_wrap("env", "settings_object_as_bool", {
+            |mut caller: Caller<'_, Context<T>>, obj: u64| {
+                let (_memory, context) = memory_and_context(&mut caller);
+                let Some(b) = context.settings_store.object_as_bool(obj) else {
+                    return Ok(-0i32);
+                };
+                if b {
+                    Ok(1i32)
+                } else {
+                    Ok(0i32)
+                }
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "settings_object_as_bool",
+        })?
+        .func_wrap("env", "settings_object_as_str", {
+            |mut caller: Caller<'_, Context<T>>, obj: u64, ptr: u32, len_ptr: u32| {
+                let (memory, context) = memory_and_context(&mut caller);
+                let Some(str) = context.settings_store.object_as_str(obj) else {
+                    return Ok(0u32);
+                };
+                let len_bytes = get_arr_mut(memory, len_ptr)?;
+                let len = u32::from_le_bytes(*len_bytes) as usize;
+                *len_bytes = (str.len() as u32).to_le_bytes();
+                if len < str.len() {
+                    return Ok(0u32);
+                }
+                let buf = get_slice_mut(memory, ptr, str.len() as _)?;
+                buf.copy_from_slice(str.as_bytes());
+                Ok(1u32)
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "settings_object_as_str",
+        })?
+        .func_wrap("env", "settings_object_list_len", {
+            |mut caller: Caller<'_, Context<T>>, obj: u64| {
+                let (_memory, context) = memory_and_context(&mut caller);
+                let Some(l) = context.settings_store.object_list_len(obj) else {
+                    return Ok(-1i32);
+                };
+                Ok(l as i32)
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "settings_object_list_len",
+        })?
+        .func_wrap("env", "settings_object_list_get", {
+            |mut caller: Caller<'_, Context<T>>, obj: u64, index: u32, elem_ptr: u32| {
+                let (memory, context) = memory_and_context(&mut caller);
+                let Some(e) = context.settings_store.object_list_get(obj, index as usize) else {
+                    return Ok(0u32);
+                };
+                let elem_bytes = get_arr_mut(memory, elem_ptr)?;
+                *elem_bytes = e.to_le_bytes();
+                Ok(1u32)
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "settings_object_list_get",
+        })?
+        .func_wrap("env", "settings_object_dict_get", {
+            |mut caller: Caller<'_, Context<T>>, obj: u64, key_ptr: u32, key_len: u32, value_ptr: u32| {
+                let (memory, context) = memory_and_context(&mut caller);
+                let key = get_str(memory, key_ptr, key_len)?;
+                let Some(v) = context.settings_store.object_dict_get(obj, key) else {
+                    return Ok(0u32);
+                };
+                let value_bytes = get_arr_mut(memory, value_ptr)?;
+                *value_bytes = v.to_le_bytes();
+                Ok(1u32)
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "settings_object_dict_get",
         })?;
     Ok(())
 }

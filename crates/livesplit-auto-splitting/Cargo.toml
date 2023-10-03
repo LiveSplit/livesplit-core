@@ -30,5 +30,7 @@ wasmtime-wasi = { version = "13.0.0", default-features = false, features = [
 ] }
 wasi-common = "13.0.0"
 
+xmltree = { version = "0.10.3" }
+
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.48.0", features = ["Win32_Storage_FileSystem"] }
