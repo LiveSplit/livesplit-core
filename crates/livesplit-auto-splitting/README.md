@@ -226,6 +226,33 @@ extern "C" {
         tooltip_ptr: *const u8,
         tooltip_len: usize,
     );
+    /// Gets the AutoSplitterSettings as a settings object
+    /// and puts it in the obj_ptr.
+    /// This can be queried by functions such as
+    /// settings_object_as_bool, settings_object_list_get,
+    /// and settings_object_dict_get.
+    pub fn get_auto_splitter_settings(obj_ptr: *mut u64) -> bool;
+    /// Query a settings object as a bool:
+    ///   1 for Some(true)
+    ///   0 for Some(false)
+    ///   -1 for None
+    pub fn settings_object_as_bool(obj: u64) -> i32;
+    /// Query a settings object as a list, get the length:
+    ///   non-negative values for Some(len)
+    ///   -1 for None
+    pub fn settings_object_list_len(obj: u64) -> i32;
+    /// Query a settings object as a list, get an element by index,
+    /// putting the element at elem_ptr.
+    pub fn settings_object_list_get(obj: u64, index: u32, elem_ptr: *mut u64) -> bool;
+    /// Query a settings object as a dict, get a value by key,
+    /// putting the value at value_ptr.
+    pub fn settings_object_dict_get(obj: u64, key_ptr: *const u8, key_len: usize, value_ptr: *mut u64) -> bool;
+    /// Query a settings object as a string, storing the
+    /// contents in the buffer given.
+    /// Returns `false` if the buffer is too small.
+    /// After this call, whether it was successful or not,
+    /// the `buf_len_ptr` will be set to the required buffer size.
+    pub fn settings_object_as_str(obj: u64, buf_ptr: *mut u8, buf_len_ptr: *mut usize) -> bool;
 }
 ```
 
