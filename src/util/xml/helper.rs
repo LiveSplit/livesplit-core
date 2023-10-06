@@ -1,8 +1,10 @@
 use crate::platform::prelude::*;
 use alloc::borrow::Cow;
-use core::{fmt, mem::MaybeUninit, str};
+use core::fmt;
+use core::{mem::MaybeUninit, str};
 
-use super::{Attributes, Event, Reader, TagName, Text, Writer};
+use super::Writer;
+use super::{Attributes, Event, Reader, TagName, Text};
 
 /// The Error type for XML-based splits files that couldn't be parsed.
 #[derive(Debug, snafu::Snafu)]
