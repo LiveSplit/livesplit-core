@@ -9,8 +9,8 @@ use crate::{
         xml::{
             helper::{
                 attribute, attribute_escaped_err, end_tag, image, optional_attribute_escaped_err,
-                parse_attributes, parse_base, parse_children, reencode_children, text,
-                text_as_escaped_string_err, text_parsed, Error as XmlError,
+                parse_attributes, parse_base, parse_children, text, text_as_escaped_string_err,
+                text_parsed, Error as XmlError,
             },
             Reader,
         },
@@ -18,8 +18,14 @@ use crate::{
     AtomicDateTime, DateTime, Run, RunMetadata, Segment, Time, TimeSpan,
 };
 use alloc::borrow::Cow;
+use core::fmt::{Display, Formatter};
 use core::{mem::MaybeUninit, str};
 use time::{Date, Duration, PrimitiveDateTime};
+#[cfg(feature = "auto-splitting")]
+use {
+    crate::run::auto_splitter_settings::{AutoSplitterSettings, CustomSetting},
+    livesplit_auto_splitting::settings,
+};
 
 /// The Error type for splits files that couldn't be parsed by the LiveSplit
 /// Parser.
@@ -97,8 +103,21 @@ const fn type_hint<T>(v: Result<T>) -> Result<T> {
     v
 }
 
-#[derive(Copy, Clone, PartialOrd, PartialEq, Ord, Eq)]
-struct Version(u32, u32, u32, u32);
+/// The version type for the LiveSplit parser
+#[derive(Debug, Copy, Clone, PartialOrd, PartialEq, Ord, Eq)]
+pub struct Version(pub u32, pub u32, pub u32, pub u32);
+
+impl Default for Version {
+    fn default() -> Self {
+        Version(1, 0, 0, 0)
+    }
+}
+
+impl Display for Version {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{}.{}.{}.{}", self.0, self.1, self.2, self.3)
+    }
+}
 
 fn parse_version(version: &str) -> Result<Version> {
     let splits = version.split('.');
@@ -419,6 +438,63 @@ fn parse_attempt_history(version: Version, reader: &mut Reader<'_>, run: &mut Ru
     }
 }
 
+#[cfg(feature = "auto-splitting")]
+fn parse_auto_splitter_settings(
+    _version: Version,
+    reader: &mut Reader<'_>,
+    run: &mut Run,
+) -> Result<()> {
+    let mut settings = AutoSplitterSettings::default();
+
+    // The compiler seems to throw a warning that 'attributes' isn't used by default, it actually is though
+    #[allow(unused_variables)]
+    parse_children(reader, |reader, tag, attributes| match tag.name() {
+        "Version" => type_hint(text(reader, |t| {
+            settings.set_version(parse_version(t.as_ref()).unwrap_or_default())
+        })),
+        "ScriptPath" => type_hint(text(reader, |t| settings.set_script_path(t.to_string()))),
+        "CustomSettings" => {
+            parse_children(reader, |reader, _tag, attributes| {
+                let mut custom_setting = CustomSetting::new();
+
+                type_hint(parse_attributes(attributes, |k, v| {
+                    match k {
+                        "id" => custom_setting.set_id(v.unescape_str()),
+                        "type" => match v.unescape_str().as_str() {
+                            "bool" => custom_setting.set_setting_type(settings::WidgetKind::Bool {
+                                default_value: false,
+                            }),
+                            _ => custom_setting.set_setting_type(settings::WidgetKind::Bool {
+                                default_value: false,
+                            }),
+                        },
+                        _ => {}
+                    }
+                    Ok(true)
+                }))
+                .ok();
+                type_hint(text(reader, |t| {
+                    custom_setting.set_value(settings::Value::Bool(
+                        parse_bool(t.as_ref()).unwrap_or_default(),
+                    ))
+                }))
+                .ok();
+                settings.add_custom_setting(custom_setting);
+                Ok::<(), Error>(())
+            })
+            .ok();
+
+            Ok(())
+        }
+        _ => Ok(()),
+    })
+    .ok();
+
+    run.parsed_auto_splitter_settings = settings;
+
+    Ok(())
+}
+
 /// Attempts to parse a LiveSplit splits file.
 pub fn parse(source: &str) -> Result<Run> {
     let mut reader = Reader::new(source);
@@ -475,8 +551,14 @@ pub fn parse(source: &str) -> Result<Run> {
                 })
             }
             "AutoSplitterSettings" => {
-                let settings = run.auto_splitter_settings_mut();
-                reencode_children(reader, settings).map_err(Into::into)
+                #[cfg(not(feature = "auto-splitting"))]
+                {
+                    let settings = run.auto_splitter_settings_mut();
+                    crate::util::xml::helper::reencode_children(reader, settings)
+                        .map_err(Into::into)
+                }
+                #[cfg(feature = "auto-splitting")]
+                parse_auto_splitter_settings(version, reader, &mut run)
             }
             "LayoutPath" => text(reader, |t| {
                 run.set_linked_layout(if t == "?default" {

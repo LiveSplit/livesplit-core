@@ -15,6 +15,9 @@
 //! ```
 
 mod attempt;
+
+#[cfg(feature = "auto-splitting")]
+mod auto_splitter_settings;
 mod comparisons;
 pub mod editor;
 mod linked_layout;
@@ -35,6 +38,8 @@ pub use run_metadata::{CustomVariable, RunMetadata};
 pub use segment::Segment;
 pub use segment_history::SegmentHistory;
 
+#[cfg(feature = "auto-splitting")]
+use crate::run::auto_splitter_settings::AutoSplitterSettings;
 use crate::{
     comparison::{default_generators, personal_best, ComparisonGenerator, RACE_COMPARISON_PREFIX},
     platform::prelude::*,
@@ -75,6 +80,8 @@ pub struct Run {
     custom_comparisons: Vec<String>,
     comparison_generators: ComparisonGenerators,
     auto_splitter_settings: String,
+    #[cfg(feature = "auto-splitting")]
+    parsed_auto_splitter_settings: AutoSplitterSettings,
     linked_layout: Option<LinkedLayout>,
 }
 
@@ -128,6 +135,8 @@ impl Run {
             custom_comparisons: vec![personal_best::NAME.to_string()],
             comparison_generators: ComparisonGenerators(default_generators()),
             auto_splitter_settings: String::new(),
+            #[cfg(feature = "auto-splitting")]
+            parsed_auto_splitter_settings: AutoSplitterSettings::default(),
             linked_layout: None,
         }
     }
@@ -324,6 +333,20 @@ impl Run {
     #[inline]
     pub fn auto_splitter_settings_mut(&mut self) -> &mut String {
         &mut self.auto_splitter_settings
+    }
+
+    /// Accesses the Auto Splitter Settings.
+    #[inline]
+    #[cfg(feature = "auto-splitting")]
+    pub fn parsed_auto_splitter_settings(&self) -> &AutoSplitterSettings {
+        &self.parsed_auto_splitter_settings
+    }
+
+    /// Accesses the Auto Splitter Settings as mutable.
+    #[inline]
+    #[cfg(feature = "auto-splitting")]
+    pub fn parsed_auto_splitter_settings_mut(&mut self) -> &mut AutoSplitterSettings {
+        &mut self.parsed_auto_splitter_settings
     }
 
     /// Accesses the [`LinkedLayout`] of this `Run`. If a

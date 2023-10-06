@@ -34,6 +34,8 @@ use crate::{
 };
 use alloc::borrow::Cow;
 use core::{fmt, mem::MaybeUninit};
+#[cfg(feature = "auto-splitting")]
+use livesplit_auto_splitting::settings;
 use time::UtcOffset;
 
 const LSS_IMAGE_HEADER: &[u8; 156] = include_bytes!("lss_image_header.bin");
@@ -306,10 +308,43 @@ pub fn save_run<W: fmt::Write>(run: &Run, writer: W) -> fmt::Result {
             })
         })?;
 
-        writer.tag_with_text_content(
+        #[cfg(not(feature = "auto-splitting"))]
+        return writer.tag_with_text_content(
             "AutoSplitterSettings",
             NO_ATTRIBUTES,
             Text::new_escaped(run.auto_splitter_settings()),
-        )
+        );
+        #[cfg(feature = "auto-splitting")]
+        writer.tag_with_content("AutoSplitterSettings", NO_ATTRIBUTES, |writer| {
+            writer.tag_with_text_content(
+                "Version",
+                NO_ATTRIBUTES,
+                DisplayAlreadyEscaped(&run.parsed_auto_splitter_settings.version),
+            )?;
+            writer.tag_with_text_content(
+                "ScriptPath",
+                NO_ATTRIBUTES,
+                DisplayAlreadyEscaped(&run.parsed_auto_splitter_settings.script_path),
+            )?;
+
+            scoped_iter(
+                writer,
+                "CustomSettings",
+                &run.parsed_auto_splitter_settings.custom_settings,
+                |writer, custom_setting| {
+                    let value = match custom_setting.value {
+                        settings::Value::Bool(value) => value,
+                        _ => false,
+                    };
+                    writer.tag_with_text_content(
+                        "Setting",
+                        [("id", custom_setting.id.as_str()), ("type", "bool")],
+                        bool(value),
+                    )
+                },
+            )?;
+
+            Ok(())
+        })
     })
 }

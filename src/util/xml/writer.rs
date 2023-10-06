@@ -1,3 +1,4 @@
+use crate::run::parser::livesplit::Version;
 use core::fmt::{self, Write};
 
 use crate::util::{ascii_char::AsciiChar, ascii_set::AsciiSet};
@@ -9,6 +10,7 @@ pub struct Writer<T> {
 }
 
 impl<T: fmt::Write> Writer<T> {
+    #[cfg(not(feature = "auto-splitting"))]
     pub const fn new_skip_header(sink: T) -> Self {
         Self { sink }
     }
@@ -91,6 +93,7 @@ impl<T: fmt::Write> Writer<T> {
         })
     }
 
+    #[cfg(not(feature = "auto-splitting"))]
     pub fn comment(&mut self, text: impl Value) -> fmt::Result {
         self.sink.write_str("<!--")?;
         text.write_escaped(&mut self.sink)?;
@@ -103,12 +106,14 @@ impl<T: fmt::Write> Writer<T> {
         self.sink.write_str("]]>")
     }
 
+    #[cfg(not(feature = "auto-splitting"))]
     pub fn processing_instruction(&mut self, text: impl Value) -> fmt::Result {
         self.sink.write_str("<?")?;
         text.write_escaped(&mut self.sink)?;
         self.sink.write_str("?>")
     }
 
+    #[cfg(not(feature = "auto-splitting"))]
     pub fn just_start_tag<
         O,
         E: From<fmt::Error>,
@@ -129,6 +134,7 @@ impl<T: fmt::Write> Writer<T> {
         Ok(res)
     }
 
+    #[cfg(not(feature = "auto-splitting"))]
     pub fn just_end_tag(&mut self, tag: &str) -> fmt::Result {
         self.sink.write_str("</")?;
         self.sink.write_str(tag)?;
@@ -201,6 +207,16 @@ impl Value for Text<'_> {
 
     fn is_empty(&self) -> bool {
         self.0.is_empty()
+    }
+}
+
+impl Value for Version {
+    fn write_escaped<T: fmt::Write>(self, sink: &mut T) -> fmt::Result {
+        write!(sink, "{}.{}.{}.{}", self.0, self.1, self.2, self.3)
+    }
+
+    fn is_empty(&self) -> bool {
+        self.0 == 0 && self.1 == 0 && self.2 == 0 && self.3 == 0
     }
 }
 
