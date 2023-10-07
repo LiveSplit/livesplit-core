@@ -1,4 +1,4 @@
-use livesplit_auto_splitting::{Config, Runtime, SettingsStore, Timer, TimerState};
+use livesplit_auto_splitting::{Config, Runtime, Timer, TimerState};
 use std::{
     ffi::OsStr,
     fmt, fs,
