@@ -141,10 +141,10 @@ impl ProcessList {
         }
     }
 
-    pub fn processes_by_name<'a: 'b, 'b>(
-        &'a self,
-        name: &'b str,
-    ) -> impl Iterator<Item = &'a sysinfo::Process> + 'b {
+    pub fn processes_by_name<'process: 'both, 'both>(
+        &'process self,
+        name: &'both str,
+    ) -> impl Iterator<Item = &'process sysinfo::Process> + 'both {
         self.system
             .processes()
             .values()
@@ -174,10 +174,12 @@ pub struct Config<'a> {
     /// **This is currently experimental and may change in the future.**
     pub interpreter_script_path: Option<&'a Path>,
     /// This enables debug information for the WebAssembly module. This is
-    /// useful for debugging purposes, but due to bugs in wasmtime might
-    /// currently crash the runtime. This is disabled by default. Relevant
-    /// issue: https://github.com/bytecodealliance/wasmtime/issues/3999
+    /// useful for debugging purposes. This is disabled by default.
     pub debug_info: bool,
+    /// This enables optimizations for the WebAssembly module. This is enabled
+    /// by default. You may want to disable this when debugging the auto
+    /// splitter.
+    pub optimize: bool,
     /// This enables backtrace details for the WebAssembly module. If a trap
     /// occurs more details are printed in the backtrace. This is enabled by
     /// default.
@@ -190,6 +192,7 @@ impl Default for Config<'_> {
             settings_store: None,
             interpreter_script_path: None,
             debug_info: false,
+            optimize: true,
             backtrace_details: true,
         }
     }
@@ -208,18 +211,24 @@ impl<T: Timer> Runtime<T> {
     /// Creates a new runtime with the given path to the WebAssembly module and
     /// the timer that the module then controls.
     pub fn new(module: &[u8], timer: T, config: Config<'_>) -> Result<Self, CreationError> {
-        let engine = Engine::new(
-            wasmtime::Config::new()
-                .cranelift_opt_level(OptLevel::Speed)
-                .debug_info(config.debug_info)
-                .wasm_backtrace_details(if config.backtrace_details {
-                    WasmBacktraceDetails::Enable
-                } else {
-                    WasmBacktraceDetails::Disable
-                })
-                .epoch_interruption(true),
-        )
-        .map_err(|source| CreationError::EngineCreation { source })?;
+        let mut engine_config = wasmtime::Config::new();
+
+        engine_config
+            .cranelift_opt_level(if config.optimize {
+                OptLevel::Speed
+            } else {
+                OptLevel::None
+            })
+            .debug_info(config.debug_info)
+            .wasm_backtrace_details(if config.backtrace_details {
+                WasmBacktraceDetails::Enable
+            } else {
+                WasmBacktraceDetails::Disable
+            })
+            .epoch_interruption(true);
+
+        let engine = Engine::new(&engine_config)
+            .map_err(|source| CreationError::EngineCreation { source })?;
 
         let module = Module::from_binary(&engine, module)
             .map_err(|source| CreationError::ModuleLoading { source })?;
