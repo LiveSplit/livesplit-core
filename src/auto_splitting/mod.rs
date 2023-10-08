@@ -244,7 +244,10 @@
 //! - There is no networking.
 //! - There is no threading.
 
-use crate::timing::{SharedTimer, TimerPhase};
+use crate::{
+    platform::Arc,
+    timing::{SharedTimer, TimerPhase},
+};
 use livesplit_auto_splitting::{
     Config, CreationError, InterruptHandle, Runtime as ScriptRuntime, Timer as AutoSplitTimer,
     TimerState,
@@ -464,7 +467,7 @@ impl Runtime {
     }
 
     /// Set the value for a custom auto splitter setting
-    pub async fn set_setting_value(&self, key: String, value: SettingValue) -> Result<(), Error> {
+    pub async fn set_setting_value(&self, key: Arc<str>, value: SettingValue) -> Result<(), Error> {
         let (sender, receiver) = oneshot::channel();
         self.sender
             .send(Request::SetSettingValue(key, value, sender))
@@ -476,7 +479,7 @@ impl Runtime {
     /// Set the value for a custom auto splitter setting
     pub fn set_setting_value_blocking(
         &self,
-        key: String,
+        key: Arc<str>,
         value: SettingValue,
     ) -> Result<(), Error> {
         runtime::Builder::new_current_thread()
@@ -493,7 +496,7 @@ enum Request {
     ReloadScript(oneshot::Sender<Result<(), Error>>),
     GetSettings(oneshot::Sender<Option<Vec<UserSetting>>>),
     GetSettingValue(String, oneshot::Sender<Option<SettingValue>>),
-    SetSettingValue(String, SettingValue, oneshot::Sender<()>),
+    SetSettingValue(Arc<str>, SettingValue, oneshot::Sender<()>),
 }
 
 // This newtype is required because [`SharedTimer`](crate::timing::SharedTimer)
@@ -651,21 +654,19 @@ async fn run(
                         log::info!(target: "Auto Splitter", "Getting the settings");
                     }
                     Request::GetSettingValue(key, ret) => {
-                        let setting_value = runtime.settings_store().get(key.as_str());
+                        let store = &runtime.settings_store();
+                        let setting_value = store.get(key.as_str());
 
-                        let user_setting_value = match runtime
-                            .user_settings()
-                            .iter()
-                            .find(|x| x.key == key.clone().into_boxed_str())
-                        {
-                            Some(user_setting) => match user_setting.kind {
-                                UserSettingKind::Bool { default_value } => {
-                                    Some(SettingValue::Bool(default_value))
-                                }
-                                UserSettingKind::Title { heading_level: _ } => None,
-                            },
-                            None => None,
-                        };
+                        let user_setting_value =
+                            match runtime.user_settings().iter().find(|x| *x.key == key) {
+                                Some(user_setting) => match user_setting.kind {
+                                    UserSettingKind::Bool { default_value } => {
+                                        Some(SettingValue::Bool(default_value))
+                                    }
+                                    UserSettingKind::Title { heading_level: _ } => None,
+                                },
+                                None => None,
+                            };
 
                         if setting_value.is_some() {
                             ret.send(setting_value.cloned()).ok();
@@ -676,15 +677,20 @@ async fn run(
                         log::info!(target: "Auto Splitter", "Getting value for {}", key);
                     }
                     Request::SetSettingValue(key, value, ret) => {
-                        runtime
-                            .settings_store_mut()
-                            .set(key.clone().into_boxed_str(), value);
+                        loop {
+                            let old = runtime.settings_store();
+                            let mut new = old.clone();
+                            new.set(key.clone(), value.clone());
+                            if runtime.set_settings_store_if_unchanged(old, new) {
+                                break;
+                            }
+                        }
                         ret.send(()).ok();
                         log::info!(target: "Auto Splitter", "Setting value for {}", key);
                     }
                 },
                 Ok(None) => return,
-                Err(_) => match runtime.update() {
+                Err(_) => match runtime.lock().update() {
                     Ok(()) => {
                         next_step = next_step
                             .into_std()

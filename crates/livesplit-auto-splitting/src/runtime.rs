@@ -14,6 +14,7 @@ use std::{
     env::consts::{ARCH, OS},
     path::{Path, PathBuf},
     str,
+    sync::{Arc, Mutex, MutexGuard},
     time::{Duration, Instant},
 };
 use sysinfo::{ProcessExt, ProcessRefreshKind, RefreshKind, System, SystemExt};
@@ -82,17 +83,16 @@ slotmap::new_key_type! {
 }
 
 pub struct Context<T: Timer> {
-    tick_rate: Duration,
     processes: SlotMap<ProcessKey, Process>,
-    user_settings: Vec<UserSetting>,
-    settings_store: SettingsStore,
+    user_settings: Arc<Vec<UserSetting>>,
+    shared_data: Arc<SharedData>,
     timer: T,
     memory: Option<Memory>,
     process_list: ProcessList,
     wasi: WasiCtx,
 }
 
-/// A threadsafe handle used to interrupt the execution of the script.
+/// A thread-safe handle used to interrupt the execution of the script.
 pub struct InterruptHandle(Engine);
 
 impl InterruptHandle {
@@ -198,13 +198,79 @@ impl Default for Config<'_> {
     }
 }
 
-/// An auto splitter runtime that allows using an auto splitter provided as a
-/// WebAssembly module to control a timer.
-pub struct Runtime<T: Timer> {
+struct SharedData {
+    settings_store: Mutex<SettingsStore>,
+    tick_rate: Mutex<Duration>,
+}
+
+struct ExclusiveData<T: Timer> {
+    trapped: bool,
     store: Store<Context<T>>,
     update: TypedFunc<(), ()>,
+}
+
+/// An auto splitter runtime that allows using an auto splitter provided as a
+/// WebAssembly module to control a timer. You generally want to run the auto
+/// splitter on a separate background thread as the auto splitter may block
+/// indefinitely. The thread intending to run the auto splitter however needs to
+/// [`lock`] the runtime. This can only be done by one thread at a time. All
+/// other functions that are directly available on the runtime are generally
+/// thread-safe and don't block. This allows other threads to access and modify
+/// information such as settings without needing to worry that those threads get
+/// blocked.
+pub struct Runtime<T: Timer> {
+    exclusive_data: Mutex<ExclusiveData<T>>,
     engine: Engine,
-    trapped: bool,
+    user_settings: Mutex<Arc<Vec<UserSetting>>>,
+    shared_data: Arc<SharedData>,
+}
+
+/// This guard allows you to run the `update` function of the WebAssembly module
+/// and access other information about the runtime that requires the auto
+/// splitter to not run at the same time. It can only be accessed by one thread
+/// at a time.
+pub struct RuntimeGuard<'runtime, T: Timer> {
+    user_settings: &'runtime Mutex<Arc<Vec<UserSetting>>>,
+    data: MutexGuard<'runtime, ExclusiveData<T>>,
+}
+
+impl<T: Timer> RuntimeGuard<'_, T> {
+    /// Runs the exported `update` function of the WebAssembly module a single
+    /// time.
+    pub fn update(&mut self) -> Result<()> {
+        let data = &mut *self.data;
+        if data.trapped {
+            return Ok(());
+        }
+        match data.update.call(&mut data.store, ()) {
+            Ok(()) => {
+                *self.user_settings.lock().unwrap() = data.store.data().user_settings.clone();
+                Ok(())
+            }
+            Err(e) => {
+                data.trapped = true;
+                Err(e)
+            }
+        }
+    }
+
+    /// Accesses the memory of the WebAssembly module. This may be useful for
+    /// debugging purposes.
+    pub fn memory(&self) -> &[u8] {
+        self.data
+            .store
+            .data()
+            .memory
+            .as_ref()
+            .unwrap()
+            .data(&self.data.store)
+    }
+
+    /// Iterates over all the processes that the auto splitter is currently
+    /// attached to. This may be useful for debugging purposes.
+    pub fn attached_processes(&self) -> impl Iterator<Item = &Process> {
+        self.data.store.data().processes.values()
+    }
 }
 
 impl<T: Timer> Runtime<T> {
@@ -233,13 +299,19 @@ impl<T: Timer> Runtime<T> {
         let module = Module::from_binary(&engine, module)
             .map_err(|source| CreationError::ModuleLoading { source })?;
 
+        let user_settings = Arc::new(Vec::new());
+
+        let shared_data = Arc::new(SharedData {
+            settings_store: Mutex::new(config.settings_store.unwrap_or_default()),
+            tick_rate: Mutex::new(Duration::new(0, 1_000_000_000 / 120)),
+        });
+
         let mut store = Store::new(
             &engine,
             Context {
                 processes: SlotMap::with_key(),
-                user_settings: Vec::new(),
-                settings_store: config.settings_store.unwrap_or_default(),
-                tick_rate: Duration::new(0, 1_000_000_000 / 120),
+                user_settings: user_settings.clone(),
+                shared_data: shared_data.clone(),
                 timer,
                 memory: None,
                 process_list: ProcessList::new(),
@@ -294,10 +366,14 @@ impl<T: Timer> Runtime<T> {
             .map_err(|source| CreationError::MissingUpdateFunction { source })?;
 
         Ok(Self {
+            exclusive_data: Mutex::new(ExclusiveData {
+                trapped: false,
+                store,
+                update,
+            }),
             engine,
-            store,
-            update,
-            trapped: false,
+            user_settings: Mutex::new(user_settings),
+            shared_data,
         })
     }
 
@@ -308,18 +384,18 @@ impl<T: Timer> Runtime<T> {
         InterruptHandle(self.engine.clone())
     }
 
-    /// Runs the exported `update` function of the WebAssembly module a single
-    /// time.
-    pub fn update(&mut self) -> Result<()> {
-        if self.trapped {
-            return Ok(());
-        }
-        match self.update.call(&mut self.store, ()) {
-            Ok(()) => Ok(()),
-            Err(e) => {
-                self.trapped = true;
-                Err(e)
-            }
+    /// Calling this function allows you to run the `update` function of the
+    /// WebAssembly module and access other information about the runtime that
+    /// requires the auto splitter to not run at the same time. This blocks the
+    /// thread when another thread still has access to a [`RuntimeGuard`]. All
+    /// other functions that are directly available on the runtime are generally
+    /// thread-safe and don't block. This allows other threads to access and
+    /// modify information such as settings without needing to worry that those
+    /// threads get blocked.
+    pub fn lock(&self) -> RuntimeGuard<'_, T> {
+        RuntimeGuard {
+            user_settings: &self.user_settings,
+            data: self.exclusive_data.lock().unwrap(),
         }
     }
 
@@ -328,35 +404,44 @@ impl<T: Timer> Runtime<T> {
     /// this function after every update to sleep for the correct amount of
     /// time. It is 120Hz by default.
     pub fn tick_rate(&self) -> Duration {
-        self.store.data().tick_rate
+        *self.shared_data.tick_rate.lock().unwrap()
     }
 
-    /// Accesses the currently stored settings.
-    pub fn settings_store(&self) -> &SettingsStore {
-        &self.store.data().settings_store
+    /// Accesses a copy of the currently stored settings. The auto splitter can
+    /// change these at any time. If you intend to make modifications to the
+    /// settings, you need to set them again via [`set_settings_store`] or
+    /// [`set_settings_store_if_unchanged`].
+    pub fn settings_store(&self) -> SettingsStore {
+        self.shared_data.settings_store.lock().unwrap().clone()
     }
 
-    /// Accesses the currently stored settings as mutable.
-    pub fn settings_store_mut(&mut self) -> &mut SettingsStore {
-        &mut self.store.data_mut().settings_store
+    /// Unconditionally sets the settings store.
+    pub fn set_settings_store(&self, settings_store: SettingsStore) {
+        *self.shared_data.settings_store.lock().unwrap() = settings_store;
+    }
+
+    /// Sets the settings store if it didn't change in the meantime. Returns
+    /// [`true`] if it got set and [`false`] if it didn't. The auto splitter may
+    /// by itself change the settings store within each update. So changing the
+    /// settings from outside may race the auto splitter. You may use this to
+    /// reapply the changes if the auto splitter changed the settings in the
+    /// meantime.
+    pub fn set_settings_store_if_unchanged(&self, old: SettingsStore, new: SettingsStore) -> bool {
+        let mut guard = self.shared_data.settings_store.lock().unwrap();
+        let success = guard.is_unchanged(&old);
+        if success {
+            *guard = new;
+        }
+        success
     }
 
     /// Accesses all the settings that are meant to be shown to and modified by
-    /// the user.
-    pub fn user_settings(&self) -> &[UserSetting] {
-        &self.store.data().user_settings
-    }
-
-    /// Accesses the memory of the WebAssembly module. This may be useful for
-    /// debugging purposes.
-    pub fn memory(&self) -> &[u8] {
-        self.store.data().memory.as_ref().unwrap().data(&self.store)
-    }
-
-    /// Iterates over all the processes that the auto splitter is currently
-    /// attached to. This may be useful for debugging purposes.
-    pub fn attached_processes(&self) -> impl Iterator<Item = &Process> {
-        self.store.data().processes.values()
+    /// the user. The auto splitter may change these settings within each
+    /// update. You should change the settings that are shown whenever this
+    /// changes. These settings can't tear. Any changes from within the auto
+    /// splitter can only be perceived once the auto splitter tick is complete.
+    pub fn user_settings(&self) -> Arc<Vec<UserSetting>> {
+        self.user_settings.lock().unwrap().clone()
     }
 }
 
@@ -582,7 +667,8 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 const MAX_DURATION: f64 = u64::MAX as f64;
                 ensure!(duration < MAX_DURATION, "The tick rate is too small.");
 
-                caller.data_mut().tick_rate = Duration::from_secs_f64(duration);
+                *caller.data_mut().shared_data.tick_rate.lock().unwrap() =
+                    Duration::from_secs_f64(duration);
 
                 Ok(())
             }
@@ -925,14 +1011,15 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
              description_len: u32,
              default_value: u32| {
                 let (memory, context) = memory_and_context(&mut caller);
-                let key = Box::<str>::from(get_str(memory, key_ptr, key_len)?);
+                let key = Arc::<str>::from(get_str(memory, key_ptr, key_len)?);
                 let description = get_str(memory, description_ptr, description_len)?.into();
                 let default_value = default_value != 0;
-                let value_in_store = match context.settings_store.get(&key) {
-                    Some(SettingValue::Bool(v)) => *v,
-                    None => default_value,
-                };
-                context.user_settings.push(UserSetting {
+                let value_in_store =
+                    match context.shared_data.settings_store.lock().unwrap().get(&key) {
+                        Some(SettingValue::Bool(v)) => *v,
+                        None => default_value,
+                    };
+                Arc::make_mut(&mut context.user_settings).push(UserSetting {
                     key,
                     description,
                     tooltip: None,
@@ -955,7 +1042,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 let (memory, context) = memory_and_context(&mut caller);
                 let key = get_str(memory, key_ptr, key_len)?.into();
                 let description = get_str(memory, description_ptr, description_len)?.into();
-                context.user_settings.push(UserSetting {
+                Arc::make_mut(&mut context.user_settings).push(UserSetting {
                     key,
                     description,
                     tooltip: None,
@@ -977,8 +1064,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 let (memory, context) = memory_and_context(&mut caller);
                 let key = get_str(memory, key_ptr, key_len)?.into();
                 let tooltip = get_str(memory, tooltip_ptr, tooltip_len)?.into();
-                context
-                    .user_settings
+                Arc::make_mut(&mut context.user_settings)
                     .iter_mut()
                     .find(|s| s.key == key)
                     .context("There is no setting with the provided key.")?

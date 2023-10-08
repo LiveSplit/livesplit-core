@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 /// A setting that is meant to be shown to and modified by the user.
 #[non_exhaustive]
@@ -8,12 +8,12 @@ pub struct UserSetting {
     /// the user and is only used to keep track of the setting. This key is used
     /// to store and retrieve the value of the setting from the
     /// [`SettingsStore`].
-    pub key: Box<str>,
+    pub key: Arc<str>,
     /// The name of the setting that is shown to the user.
-    pub description: Box<str>,
+    pub description: Arc<str>,
     /// An optional tooltip that is shown to the user when hovering over the
     /// setting.
-    pub tooltip: Option<Box<str>>,
+    pub tooltip: Option<Arc<str>>,
     /// The type of setting and additional information about it.
     pub kind: UserSettingKind,
 }
@@ -51,7 +51,7 @@ pub enum SettingValue {
 /// here yet.
 #[derive(Clone, Default)]
 pub struct SettingsStore {
-    values: HashMap<Box<str>, SettingValue>,
+    values: Arc<HashMap<Arc<str>, SettingValue>>,
 }
 
 impl SettingsStore {
@@ -63,8 +63,8 @@ impl SettingsStore {
     /// Sets a setting to the new value. If the key of the setting doesn't exist
     /// yet it will be stored as a new value. Otherwise the value will be
     /// updated.
-    pub fn set(&mut self, key: Box<str>, value: SettingValue) {
-        self.values.insert(key, value);
+    pub fn set(&mut self, key: Arc<str>, value: SettingValue) {
+        Arc::make_mut(&mut self.values).insert(key, value);
     }
 
     /// Accesses the value of a setting by its key. While the setting may exist
@@ -78,5 +78,10 @@ impl SettingsStore {
     /// store.
     pub fn iter(&self) -> impl Iterator<Item = (&str, &SettingValue)> {
         self.values.iter().map(|(k, v)| (k.as_ref(), v))
+    }
+
+    #[inline]
+    pub(super) fn is_unchanged(&self, other: &Self) -> bool {
+        Arc::ptr_eq(&self.values, &other.values)
     }
 }

@@ -69,8 +69,8 @@ fn compile(crate_name: &str) -> anyhow::Result<Runtime<DummyTimer>> {
 }
 
 fn run(crate_name: &str) -> anyhow::Result<()> {
-    let mut runtime = compile(crate_name)?;
-    runtime.update()?;
+    let runtime = compile(crate_name)?;
+    runtime.lock().update()?;
     Ok(())
 }
 
@@ -139,7 +139,7 @@ fn random() {
 
 #[test]
 fn infinite_loop() {
-    let mut runtime = compile("infinite-loop").unwrap();
+    let runtime = compile("infinite-loop").unwrap();
 
     let interrupt = runtime.interrupt_handle();
 
@@ -148,7 +148,7 @@ fn infinite_loop() {
         interrupt.interrupt();
     });
 
-    assert!(runtime.update().is_err());
+    assert!(runtime.lock().update().is_err());
 }
 
 // FIXME: Test Network

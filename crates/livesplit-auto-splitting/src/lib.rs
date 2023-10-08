@@ -260,7 +260,7 @@ mod settings;
 mod timer;
 
 pub use process::Process;
-pub use runtime::{Config, CreationError, InterruptHandle, Runtime};
+pub use runtime::{Config, CreationError, InterruptHandle, Runtime, RuntimeGuard};
 pub use settings::{SettingValue, SettingsStore, UserSetting, UserSettingKind};
 pub use time;
 pub use timer::{Timer, TimerState};
