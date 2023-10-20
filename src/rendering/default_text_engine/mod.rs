@@ -12,7 +12,7 @@ use crate::{
 use cosmic_text::{
     fontdb::{Database, Query, Source, ID},
     rustybuzz::ttf_parser::{GlyphId, OutlineBuilder},
-    Attrs, AttrsList, Family, FontSystem, ShapeLine, Shaping, Stretch, Style, Weight,
+    Attrs, AttrsList, Family, FontSystem, ShapeBuffer, ShapeLine, Shaping, Stretch, Style, Weight,
 };
 use hashbrown::HashMap;
 
@@ -30,6 +30,7 @@ type CachedGlyph<P> = (f32, Vec<(Option<Rgba>, P)>);
 /// the underlying renderer doesn't by itself need to be able to render text.
 pub struct TextEngine<P> {
     font_system: FontSystem,
+    shape_buffer: ShapeBuffer,
     glyph_cache: HashMap<(ID, u16), CachedGlyph<P>>,
 }
 
@@ -54,6 +55,7 @@ impl<P: SharedOwnership> TextEngine<P> {
             // FIXME: Whenever we introduce localization, we need to make sure
             // to use the correct locale here.
             font_system: FontSystem::new_with_locale_and_db(String::from("en-US"), db),
+            shape_buffer: ShapeBuffer::default(),
             glyph_cache: HashMap::new(),
         }
     }
@@ -166,7 +168,8 @@ impl<P: SharedOwnership> TextEngine<P> {
     }
 
     fn glyph_width(&mut self, glyph_text: &str, attrs_list: &AttrsList) -> Option<(ID, u16, f32)> {
-        let shape_line = ShapeLine::new(
+        let shape_line = ShapeLine::new_in_buffer(
+            &mut self.shape_buffer,
             &mut self.font_system,
             glyph_text,
             attrs_list,
@@ -216,9 +219,9 @@ impl<P: SharedOwnership> TextEngine<P> {
 
         label.glyphs.clear();
 
-        // FIXME: ShapeLine::new_in_buffer in 0.10
         // FIXME: Look into shape plans in 0.11
-        let shape_line = ShapeLine::new(
+        let shape_line = ShapeLine::new_in_buffer(
+            &mut self.shape_buffer,
             &mut self.font_system,
             text,
             &font.attrs_list,
