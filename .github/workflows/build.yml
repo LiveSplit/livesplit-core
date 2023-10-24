@@ -279,8 +279,6 @@ jobs:
             os: windows-latest
             cross: skip
             auto_splitting: skip
-            networking: skip
-            # Networking fails due to some linking error regarding -lntdll
             install_target: true
 
           - label: Windows x86_64 gnu
@@ -386,9 +384,6 @@ jobs:
           - label: Linux mips musl
             target: mips-unknown-linux-musl
             auto_splitting: skip
-            networking: skip
-            # FIXME: Networking Tests fail due to missing OpenSSL
-            # https://github.com/LiveSplit/livesplit-core/issues/308
             dylib: skip
             # FIXME: The mips targets currently miscompile:
             # https://github.com/rust-lang/rust/issues/116177
@@ -397,9 +392,6 @@ jobs:
           - label: Linux mips64 musl
             target: mips64-unknown-linux-muslabi64
             auto_splitting: skip
-            networking: skip
-            # FIXME: Networking Tests fail due to missing OpenSSL
-            # https://github.com/LiveSplit/livesplit-core/issues/308
             dylib: skip
             # FIXME: The mips targets currently miscompile:
             # https://github.com/rust-lang/rust/issues/116177
@@ -408,9 +400,6 @@ jobs:
           - label: Linux mipsel musl
             target: mipsel-unknown-linux-musl
             auto_splitting: skip
-            networking: skip
-            # FIXME: Networking Tests fail due to missing OpenSSL
-            # https://github.com/LiveSplit/livesplit-core/issues/308
             dylib: skip
             # FIXME: The mips targets currently miscompile:
             # https://github.com/rust-lang/rust/issues/116177
@@ -419,9 +408,6 @@ jobs:
           - label: Linux mips64el musl
             target: mips64el-unknown-linux-muslabi64
             auto_splitting: skip
-            networking: skip
-            # FIXME: Networking Tests fail due to missing OpenSSL
-            # https://github.com/LiveSplit/livesplit-core/issues/308
             dylib: skip
             # FIXME: The mips targets currently miscompile:
             # https://github.com/rust-lang/rust/issues/116177
@@ -430,35 +416,20 @@ jobs:
           - label: Linux powerpc
             target: powerpc-unknown-linux-gnu
             auto_splitting: skip
-            networking: skip
-            # FIXME: Networking Tests fail due to missing OpenSSL
-            # https://github.com/LiveSplit/livesplit-core/issues/308
 
           - label: Linux powerpc64
             target: powerpc64-unknown-linux-gnu
             auto_splitting: skip
-            networking: skip
-            # FIXME: Networking Tests fail due to missing OpenSSL
-            # https://github.com/LiveSplit/livesplit-core/issues/308
 
           - label: Linux powerpc64le
             target: powerpc64le-unknown-linux-gnu
             auto_splitting: skip
-            networking: skip
-            # FIXME: Networking Tests fail due to missing OpenSSL
-            # https://github.com/LiveSplit/livesplit-core/issues/308
 
           - label: Linux riscv64gc
             target: riscv64gc-unknown-linux-gnu
-            networking: skip
-            # FIXME: Networking Tests fail due to missing OpenSSL
-            # https://github.com/LiveSplit/livesplit-core/issues/308
 
           - label: Linux s390x
             target: s390x-unknown-linux-gnu
-            networking: skip
-            # FIXME: Networking Tests fail due to missing OpenSSL
-            # https://github.com/LiveSplit/livesplit-core/issues/308
             software_rendering: skip
             # FIXME: Somehow the rendering is messed up on s390x. I didn't look
             # into what the problem is. Might be inaccurate floating point on
@@ -467,9 +438,8 @@ jobs:
           - label: Linux sparc64
             target: sparc64-unknown-linux-gnu
             auto_splitting: skip
+            # FIXME: rustls currently does not support sparc64.
             networking: skip
-            # FIXME: Networking Tests fail due to missing OpenSSL
-            # https://github.com/LiveSplit/livesplit-core/issues/308
 
           # macOS
           - label: macOS aarch64
@@ -507,44 +477,26 @@ jobs:
           - label: Android i686
             target: i686-linux-android
             auto_splitting: skip
-            networking: skip
-            # FIXME: The splits-io-api could probably use rustls instead of OpenSSL here
-            # https://github.com/LiveSplit/livesplit-core/issues/308
 
           - label: Android x86_64
             target: x86_64-linux-android
             auto_splitting: skip
-            networking: skip
-            # FIXME: The splits-io-api could probably use rustls instead of OpenSSL here
-            # https://github.com/LiveSplit/livesplit-core/issues/308
 
           - label: Android arm
             target: arm-linux-androideabi
             auto_splitting: skip
-            networking: skip
-            # FIXME: The splits-io-api could probably use rustls instead of OpenSSL here
-            # https://github.com/LiveSplit/livesplit-core/issues/308
 
           - label: Android armv7
             target: armv7-linux-androideabi
             auto_splitting: skip
-            networking: skip
-            # FIXME: The splits-io-api could probably use rustls instead of OpenSSL here
-            # https://github.com/LiveSplit/livesplit-core/issues/308
 
           - label: Android thumbv7neon
             target: thumbv7neon-linux-androideabi
             auto_splitting: skip
-            networking: skip
-            # FIXME: The splits-io-api could probably use rustls instead of OpenSSL here
-            # https://github.com/LiveSplit/livesplit-core/issues/308
 
           - label: Android aarch64
             target: aarch64-linux-android
             auto_splitting: skip
-            networking: skip
-            # FIXME: The splits-io-api could probably use rustls instead of OpenSSL here
-            # https://github.com/LiveSplit/livesplit-core/issues/308
 
           # Other Unixes
           - label: FreeBSD i686
