@@ -6,8 +6,8 @@ use std::{collections::HashMap, sync::Arc};
 pub struct UserSetting {
     /// A unique identifier for this setting. This is not meant to be shown to
     /// the user and is only used to keep track of the setting. This key is used
-    /// to store and retrieve the value of the setting from the
-    /// [`SettingsStore`].
+    /// to store and retrieve the value of the setting from the main
+    /// [`SettingsMap`].
     pub key: Arc<str>,
     /// The name of the setting that is shown to the user.
     pub description: Arc<str>,
@@ -32,7 +32,7 @@ pub enum UserSettingKind {
     /// A boolean setting. This could be visualized as a checkbox or a slider.
     Bool {
         /// The default value of the setting, if it's not available in the
-        /// settings store yet.
+        /// settings map yet.
         default_value: bool,
     },
 }
@@ -45,17 +45,17 @@ pub enum SettingValue {
     Bool(bool),
 }
 
-/// Stores all the settings of an auto splitter. Currently this only stores
+/// A key-value map that stores the settings of an auto splitter. It only stores
 /// values that are modified. So there may be settings that are registered as
 /// user settings, but because the user didn't modify them, they are not stored
 /// here yet.
 #[derive(Clone, Default)]
-pub struct SettingsStore {
+pub struct SettingsMap {
     values: Arc<HashMap<Arc<str>, SettingValue>>,
 }
 
-impl SettingsStore {
-    /// Creates a new empty settings store.
+impl SettingsMap {
+    /// Creates a new empty settings map.
     pub fn new() -> Self {
         Self::default()
     }
@@ -63,19 +63,18 @@ impl SettingsStore {
     /// Sets a setting to the new value. If the key of the setting doesn't exist
     /// yet it will be stored as a new value. Otherwise the value will be
     /// updated.
-    pub fn set(&mut self, key: Arc<str>, value: SettingValue) {
+    pub fn insert(&mut self, key: Arc<str>, value: SettingValue) {
         Arc::make_mut(&mut self.values).insert(key, value);
     }
 
     /// Accesses the value of a setting by its key. While the setting may exist
     /// as part of the user settings, it may not have been stored into the
-    /// settings store yet, so it may not exist, despite being registered.
+    /// settings map yet, so it may not exist, despite being registered.
     pub fn get(&self, key: &str) -> Option<&SettingValue> {
         self.values.get(key)
     }
 
-    /// Iterates over all the setting keys and their values in the settings
-    /// store.
+    /// Iterates over all the setting keys and their values in the map.
     pub fn iter(&self) -> impl Iterator<Item = (&str, &SettingValue)> {
         self.values.iter().map(|(k, v)| (k.as_ref(), v))
     }

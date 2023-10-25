@@ -4,7 +4,7 @@ use crate::{
     process::{build_path, Process},
     settings::UserSetting,
     timer::Timer,
-    SettingValue, SettingsStore, UserSettingKind,
+    SettingValue, SettingsMap, UserSettingKind,
 };
 
 use anyhow::{ensure, format_err, Context as _, Result};
@@ -80,10 +80,14 @@ pub enum CreationError {
 
 slotmap::new_key_type! {
     struct ProcessKey;
+    struct SettingsMapKey;
+    struct SettingValueKey;
 }
 
 pub struct Context<T: Timer> {
     processes: SlotMap<ProcessKey, Process>,
+    settings_maps: SlotMap<SettingsMapKey, SettingsMap>,
+    setting_values: SlotMap<SettingValueKey, SettingValue>,
     user_settings: Arc<Vec<UserSetting>>,
     shared_data: Arc<SharedData>,
     timer: T,
@@ -163,11 +167,11 @@ impl ProcessList {
 /// The configuration to use when creating a new [`Runtime`].
 #[non_exhaustive]
 pub struct Config<'a> {
-    /// The settings store that is used to store the settings of the auto
+    /// The settings map that is used to store the settings of the auto
     /// splitter. This contains all the settings that are currently modified by
     /// the user. It may not contain all the settings that are registered as
     /// user settings, because the user may not have modified them yet.
-    pub settings_store: Option<SettingsStore>,
+    pub settings_map: Option<SettingsMap>,
     /// The auto splitter itself may be a runtime that wants to load a script
     /// from a file to interpret. This is the path to that script. It is
     /// provided to the auto splitter as the `SCRIPT_PATH` environment variable.
@@ -189,7 +193,7 @@ pub struct Config<'a> {
 impl Default for Config<'_> {
     fn default() -> Self {
         Self {
-            settings_store: None,
+            settings_map: None,
             interpreter_script_path: None,
             debug_info: false,
             optimize: true,
@@ -199,7 +203,7 @@ impl Default for Config<'_> {
 }
 
 struct SharedData {
-    settings_store: Mutex<SettingsStore>,
+    settings_map: Mutex<SettingsMap>,
     tick_rate: Mutex<Duration>,
 }
 
@@ -271,6 +275,30 @@ impl<T: Timer> RuntimeGuard<'_, T> {
     pub fn attached_processes(&self) -> impl Iterator<Item = &Process> {
         self.data.store.data().processes.values()
     }
+
+    /// Returns the total amount of handles that are currently in use. This may
+    /// be useful for debugging purposes to detect leaked handles.
+    pub fn handles(&self) -> u64 {
+        let data = self.data.store.data();
+        data.processes.len() as u64
+            + data.settings_maps.len() as u64
+            + data.setting_values.len() as u64
+    }
+}
+
+impl SharedData {
+    fn set_settings_map(&self, settings_map: SettingsMap) {
+        *self.settings_map.lock().unwrap() = settings_map;
+    }
+
+    fn set_settings_map_if_unchanged(&self, old: &SettingsMap, new: SettingsMap) -> bool {
+        let mut guard = self.settings_map.lock().unwrap();
+        let success = guard.is_unchanged(old);
+        if success {
+            *guard = new;
+        }
+        success
+    }
 }
 
 impl<T: Timer> Runtime<T> {
@@ -302,7 +330,7 @@ impl<T: Timer> Runtime<T> {
         let user_settings = Arc::new(Vec::new());
 
         let shared_data = Arc::new(SharedData {
-            settings_store: Mutex::new(config.settings_store.unwrap_or_default()),
+            settings_map: Mutex::new(config.settings_map.unwrap_or_default()),
             tick_rate: Mutex::new(Duration::new(0, 1_000_000_000 / 120)),
         });
 
@@ -310,6 +338,8 @@ impl<T: Timer> Runtime<T> {
             &engine,
             Context {
                 processes: SlotMap::with_key(),
+                settings_maps: SlotMap::with_key(),
+                setting_values: SlotMap::with_key(),
                 user_settings: user_settings.clone(),
                 shared_data: shared_data.clone(),
                 timer,
@@ -409,30 +439,25 @@ impl<T: Timer> Runtime<T> {
 
     /// Accesses a copy of the currently stored settings. The auto splitter can
     /// change these at any time. If you intend to make modifications to the
-    /// settings, you need to set them again via [`set_settings_store`] or
-    /// [`set_settings_store_if_unchanged`].
-    pub fn settings_store(&self) -> SettingsStore {
-        self.shared_data.settings_store.lock().unwrap().clone()
+    /// settings, you need to set them again via [`set_settings_map`] or
+    /// [`set_settings_map_if_unchanged`].
+    pub fn settings_map(&self) -> SettingsMap {
+        self.shared_data.settings_map.lock().unwrap().clone()
     }
 
-    /// Unconditionally sets the settings store.
-    pub fn set_settings_store(&self, settings_store: SettingsStore) {
-        *self.shared_data.settings_store.lock().unwrap() = settings_store;
+    /// Unconditionally sets the settings map.
+    pub fn set_settings_map(&self, settings_map: SettingsMap) {
+        self.shared_data.set_settings_map(settings_map)
     }
 
-    /// Sets the settings store if it didn't change in the meantime. Returns
+    /// Sets the settings map if it didn't change in the meantime. Returns
     /// [`true`] if it got set and [`false`] if it didn't. The auto splitter may
-    /// by itself change the settings store within each update. So changing the
+    /// by itself change the settings map within each update. So changing the
     /// settings from outside may race the auto splitter. You may use this to
     /// reapply the changes if the auto splitter changed the settings in the
     /// meantime.
-    pub fn set_settings_store_if_unchanged(&self, old: SettingsStore, new: SettingsStore) -> bool {
-        let mut guard = self.shared_data.settings_store.lock().unwrap();
-        let success = guard.is_unchanged(&old);
-        if success {
-            *guard = new;
-        }
-        success
+    pub fn set_settings_map_if_unchanged(&self, old: &SettingsMap, new: SettingsMap) -> bool {
+        self.shared_data.set_settings_map_if_unchanged(old, new)
     }
 
     /// Accesses all the settings that are meant to be shown to and modified by
@@ -1014,18 +1039,18 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 let key = Arc::<str>::from(get_str(memory, key_ptr, key_len)?);
                 let description = get_str(memory, description_ptr, description_len)?.into();
                 let default_value = default_value != 0;
-                let value_in_store =
-                    match context.shared_data.settings_store.lock().unwrap().get(&key) {
-                        Some(SettingValue::Bool(v)) => *v,
-                        None => default_value,
-                    };
+                let value_in_map = match context.shared_data.settings_map.lock().unwrap().get(&key)
+                {
+                    Some(SettingValue::Bool(v)) => *v,
+                    _ => default_value,
+                };
                 Arc::make_mut(&mut context.user_settings).push(UserSetting {
                     key,
                     description,
                     tooltip: None,
                     kind: UserSettingKind::Bool { default_value },
                 });
-                Ok(value_in_store as u32)
+                Ok(value_in_map as u32)
             }
         })
         .map_err(|source| CreationError::LinkFunction {
@@ -1075,6 +1100,205 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
         .map_err(|source| CreationError::LinkFunction {
             source,
             name: "user_settings_set_tooltip",
+        })?
+        .func_wrap("env", "settings_map_new", {
+            |mut caller: Caller<'_, Context<T>>| {
+                let ctx = caller.data_mut();
+                ctx.settings_maps.insert(SettingsMap::new()).data().as_ffi()
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "settings_map_new",
+        })?
+        .func_wrap("env", "settings_map_free", {
+            |mut caller: Caller<'_, Context<T>>, settings_map: u64| {
+                caller
+                    .data_mut()
+                    .settings_maps
+                    .remove(SettingsMapKey::from(KeyData::from_ffi(settings_map)))
+                    .ok_or_else(|| format_err!("Invalid settings map handle: {settings_map}"))?;
+                Ok(())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "settings_map_free",
+        })?
+        .func_wrap("env", "settings_map_load", {
+            |mut caller: Caller<'_, Context<T>>| {
+                let ctx = caller.data_mut();
+                let settings_map = ctx.shared_data.settings_map.lock().unwrap().clone();
+                ctx.settings_maps.insert(settings_map).data().as_ffi()
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "settings_map_load",
+        })?
+        .func_wrap("env", "settings_map_store", {
+            |mut caller: Caller<'_, Context<T>>, settings_map: u64| {
+                let ctx = caller.data_mut();
+
+                let settings_map = ctx
+                    .settings_maps
+                    .get(SettingsMapKey::from(KeyData::from_ffi(settings_map)))
+                    .ok_or_else(|| format_err!("Invalid settings map handle: {settings_map}"))?
+                    .clone();
+
+                ctx.shared_data.set_settings_map(settings_map);
+
+                Ok(())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "settings_map_store",
+        })?
+        .func_wrap("env", "settings_map_store_if_unchanged", {
+            |mut caller: Caller<'_, Context<T>>, old_settings_map: u64, new_settings_map: u64| {
+                let ctx = caller.data_mut();
+
+                let old_settings_map = ctx
+                    .settings_maps
+                    .get(SettingsMapKey::from(KeyData::from_ffi(old_settings_map)))
+                    .ok_or_else(|| {
+                        format_err!("Invalid old settings map handle: {old_settings_map}")
+                    })?;
+
+                let new_settings_map = ctx
+                    .settings_maps
+                    .get(SettingsMapKey::from(KeyData::from_ffi(new_settings_map)))
+                    .ok_or_else(|| {
+                        format_err!("Invalid new settings map handle: {new_settings_map}")
+                    })?
+                    .clone();
+
+                let success = ctx
+                    .shared_data
+                    .set_settings_map_if_unchanged(old_settings_map, new_settings_map);
+
+                Ok(success as u32)
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "settings_map_store_if_unchanged",
+        })?
+        .func_wrap("env", "settings_map_copy", {
+            |mut caller: Caller<'_, Context<T>>, settings_map: u64| {
+                let ctx = caller.data_mut();
+
+                let settings_map = ctx
+                    .settings_maps
+                    .get(SettingsMapKey::from(KeyData::from_ffi(settings_map)))
+                    .ok_or_else(|| format_err!("Invalid settings map handle: {settings_map}"))?
+                    .clone();
+
+                Ok(ctx.settings_maps.insert(settings_map).data().as_ffi())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "settings_map_copy",
+        })?
+        .func_wrap("env", "settings_map_insert", {
+            |mut caller: Caller<'_, Context<T>>,
+             settings_map: u64,
+             key_ptr: u32,
+             key_len: u32,
+             setting_value: u64| {
+                let (memory, context) = memory_and_context(&mut caller);
+
+                let settings_map = context
+                    .settings_maps
+                    .get_mut(SettingsMapKey::from(KeyData::from_ffi(settings_map)))
+                    .ok_or_else(|| format_err!("Invalid settings map handle: {settings_map}"))?;
+
+                let setting_value = context
+                    .setting_values
+                    .get(SettingValueKey::from(KeyData::from_ffi(setting_value)))
+                    .ok_or_else(|| format_err!("Invalid setting value handle: {setting_value}"))?;
+
+                let key = get_str(memory, key_ptr, key_len)?;
+
+                settings_map.insert(key.into(), setting_value.clone());
+
+                Ok(())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "settings_map_insert",
+        })?
+        .func_wrap("env", "settings_map_get", {
+            |mut caller: Caller<'_, Context<T>>, settings_map: u64, key_ptr: u32, key_len: u32| {
+                let (memory, context) = memory_and_context(&mut caller);
+
+                let settings_map = context
+                    .settings_maps
+                    .get(SettingsMapKey::from(KeyData::from_ffi(settings_map)))
+                    .ok_or_else(|| format_err!("Invalid settings map handle: {settings_map}"))?;
+
+                let key = get_str(memory, key_ptr, key_len)?;
+
+                Ok(match settings_map.get(key) {
+                    Some(value) => context.setting_values.insert(value.clone()).data().as_ffi(),
+                    None => 0,
+                })
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "settings_map_get",
+        })?
+        .func_wrap("env", "setting_value_new_bool", {
+            |mut caller: Caller<'_, Context<T>>, value: u32| {
+                Ok(caller
+                    .data_mut()
+                    .setting_values
+                    .insert(SettingValue::Bool(value != 0))
+                    .data()
+                    .as_ffi())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "setting_value_new_bool",
+        })?
+        .func_wrap("env", "setting_value_free", {
+            |mut caller: Caller<'_, Context<T>>, setting_value: u64| {
+                caller
+                    .data_mut()
+                    .setting_values
+                    .remove(SettingValueKey::from(KeyData::from_ffi(setting_value)))
+                    .ok_or_else(|| format_err!("Invalid setting value handle: {setting_value}"))?;
+                Ok(())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "setting_value_free",
+        })?
+        .func_wrap("env", "setting_value_get_bool", {
+            |mut caller: Caller<'_, Context<T>>, setting_value: u64, value_ptr: u32| {
+                let (memory, context) = memory_and_context(&mut caller);
+
+                let setting_value = context
+                    .setting_values
+                    .get(SettingValueKey::from(KeyData::from_ffi(setting_value)))
+                    .ok_or_else(|| format_err!("Invalid setting value handle: {setting_value}"))?;
+
+                let [out] = get_arr_mut(memory, value_ptr)?;
+
+                let SettingValue::Bool(value) = setting_value;
+                *out = *value as u8;
+                Ok(1u32)
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "setting_value_get_bool",
         })?;
     Ok(())
 }
