@@ -40,6 +40,12 @@
 //! pub struct ProcessId(u64);
 //!
 //! #[repr(transparent)]
+//! pub struct SettingsMap(NonZeroU64);
+//!
+//! #[repr(transparent)]
+//! pub struct SettingValue(NonZeroU64);
+//!
+//! #[repr(transparent)]
 //! pub struct TimerState(u32);
 //!
 //! impl TimerState {
@@ -226,6 +232,63 @@
 //!         tooltip_ptr: *const u8,
 //!         tooltip_len: usize,
 //!     );
+//!
+//!     /// Creates a new settings map. You own the settings map and are responsible
+//!     /// for freeing it.
+//!     pub fn settings_map_new() -> SettingsMap;
+//!     /// Frees a settings map.
+//!     pub fn settings_map_free(map: SettingsMap);
+//!     /// Loads a copy of the currently set global settings map. Any changes to it
+//!     /// are only perceived if it's stored back. You own the settings map and are
+//!     /// responsible for freeing it.
+//!     pub fn settings_map_load() -> SettingsMap;
+//!     /// Stores a copy of the settings map as the new global settings map. This
+//!     /// will overwrite the previous global settings map. You still retain
+//!     /// ownership of the map, which means you still need to free it. There's a
+//!     /// chance that the settings map was changed in the meantime, so those
+//!     /// changes could get lost. Prefer using `settings_map_store_if_unchanged`
+//!     /// if you want to avoid that.
+//!     pub fn settings_map_store(map: SettingsMap);
+//!     /// Stores a copy of the new settings map as the new global settings map if
+//!     /// the map has not changed in the meantime. This is done by comparing the
+//!     /// old map. You still retain ownership of both maps, which means you still
+//!     /// need to free them. Returns `true` if the map was stored successfully.
+//!     /// Returns `false` if the map was changed in the meantime.
+//!     pub fn settings_map_store_if_unchanged(old_map: SettingsMap, new_map: SettingsMap) -> bool;
+//!     /// Copies a settings map. No changes inside the copy affect the original
+//!     /// settings map. You own the new settings map and are responsible for
+//!     /// freeing it.
+//!     pub fn settings_map_copy(map: SettingsMap) -> SettingsMap;
+//!     /// Inserts a copy of the setting value into the settings map based on the
+//!     /// key. If the key already exists, it will be overwritten. You still retain
+//!     /// ownership of the setting value, which means you still need to free it.
+//!     pub fn settings_map_insert(
+//!         map: SettingsMap,
+//!         key_ptr: *const u8,
+//!         key_len: usize,
+//!         value: SettingValue,
+//!     );
+//!     /// Gets a copy of the setting value from the settings map based on the key.
+//!     /// Returns `None` if the key does not exist. Any changes to it are only
+//!     /// perceived if it's stored back. You own the setting value and are
+//!     /// responsible for freeing it.
+//!     pub fn settings_map_get(
+//!         map: SettingsMap,
+//!         key_ptr: *const u8,
+//!         key_len: usize,
+//!     ) -> Option<SettingValue>;
+//!
+//!     /// Creates a new boolean setting value. You own the setting value and are
+//!     /// responsible for freeing it.
+//!     pub fn setting_value_new_bool(value: bool) -> SettingValue;
+//!     /// Frees a setting value.
+//!     pub fn setting_value_free(value: SettingValue);
+//!     /// Gets the value of a boolean setting value by storing it into the pointer
+//!     /// provided. Returns `false` if the setting value is not a boolean. No
+//!     /// value is stored into the pointer in that case. No matter what happens,
+//!     /// you still retain ownership of the setting value, which means you still
+//!     /// need to free it.
+//!     pub fn setting_value_get_bool(value: SettingValue, value_ptr: *mut bool) -> bool;
 //! }
 //! ```
 //!
@@ -261,6 +324,6 @@ mod timer;
 
 pub use process::Process;
 pub use runtime::{Config, CreationError, InterruptHandle, Runtime, RuntimeGuard};
-pub use settings::{SettingValue, SettingsStore, UserSetting, UserSettingKind};
+pub use settings::{SettingValue, SettingsMap, UserSetting, UserSettingKind};
 pub use time;
 pub use timer::{Timer, TimerState};
