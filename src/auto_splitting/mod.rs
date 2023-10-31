@@ -157,6 +157,23 @@
 //!         name_ptr: *const u8,
 //!         name_len: usize,
 //!     ) -> Option<NonZeroU64>;
+//!     /// Stores the file system path of a module in a process in the buffer
+//!     /// given. The pointer to the module name needs to point to valid UTF-8
+//!     /// encoded text with the given length. The path is a path that is
+//!     /// accessible through the WASI file system, so a Windows path of
+//!     /// `C:\foo\bar.exe` would be returned as `/mnt/c/foo/bar.exe`. Returns
+//!     /// `false` if the buffer is too small. After this call, no matter whether
+//!     /// it was successful or not, the `buf_len_ptr` will be set to the required
+//!     /// buffer size. If `false` is returned and the `buf_len_ptr` got set to 0,
+//!     /// the path or the module does not exist or it failed to get read. The path
+//!     /// is guaranteed to be valid UTF-8 and is not nul-terminated.
+//!     pub fn process_get_module_path(
+//!         process: Process,
+//!         name_ptr: *const u8,
+//!         name_len: usize,
+//!         buf_ptr: *mut u8,
+//!         buf_len_ptr: *mut usize,
+//!     ) -> bool;
 //!     /// Stores the file system path of the executable in the buffer given. The
 //!     /// path is a path that is accessible through the WASI file system, so a
 //!     /// Windows path of `C:\foo\bar.exe` would be returned as

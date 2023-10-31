@@ -141,6 +141,15 @@ impl Process {
             .sum())
     }
 
+    pub(super) fn module_path(&mut self, module: &str) -> Result<Box<str>, ModuleError> {
+        self.refresh_memory_ranges()?;
+        self.memory_ranges
+            .iter()
+            .find(|m| m.filename().is_some_and(|f| f.ends_with(module)))
+            .context(ModuleDoesntExist)
+            .map(|m| build_path(m.filename().unwrap()).unwrap_or_default())
+    }
+
     pub(super) fn read_mem(&self, address: Address, buf: &mut [u8]) -> io::Result<()> {
         self.handle.copy_address(address as usize, buf)
     }
