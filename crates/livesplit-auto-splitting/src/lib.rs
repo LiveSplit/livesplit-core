@@ -88,8 +88,9 @@
 //!     pub fn timer_undo_split();
 //!     /// Resets the timer.
 //!     pub fn timer_reset();
-//!     /// Sets a custom key value pair. This may be arbitrary information that
-//!     /// the auto splitter wants to provide for visualization.
+//!     /// Sets a custom key value pair. This may be arbitrary information that the
+//!     /// auto splitter wants to provide for visualization. The pointers need to
+//!     /// point to valid UTF-8 encoded text with the respective given length.
 //!     pub fn timer_set_variable(
 //!         key_ptr: *const u8,
 //!         key_len: usize,
@@ -106,23 +107,25 @@
 //!     /// automatic flow of time for the game time.
 //!     pub fn timer_resume_game_time();
 //!
-//!     /// Attaches to a process based on its name.
+//!     /// Attaches to a process based on its name. The pointer needs to point to
+//!     /// valid UTF-8 encoded text with the given length.
 //!     pub fn process_attach(name_ptr: *const u8, name_len: usize) -> Option<Process>;
 //!     /// Attaches to a process based on its process id.
 //!     pub fn process_attach_by_pid(pid: ProcessId) -> Option<Process>;
 //!     /// Detaches from a process.
 //!     pub fn process_detach(process: Process);
-//!     /// Lists processes based on their name. Returns `false` if listing the
-//!     /// processes failed. If it was successful, the buffer is now filled
-//!     /// with the process ids. They are in no specific order. The
-//!     /// `list_len_ptr` will be updated to the amount of process ids that
-//!     /// were found. If this is larger than the original value provided, the
-//!     /// buffer provided was too small and not all process ids could be
-//!     /// stored. This is still considered successful and can optionally be
-//!     /// treated as an error condition by the caller by checking if the
-//!     /// length increased and potentially reallocating a larger buffer. If
-//!     /// the length decreased after the call, the buffer was larger than
-//!     /// needed and the remaining entries are untouched.
+//!     /// Lists processes based on their name. The name pointer needs to point to
+//!     /// valid UTF-8 encoded text with the given length. Returns `false` if
+//!     /// listing the processes failed. If it was successful, the buffer is now
+//!     /// filled with the process ids. They are in no specific order. The
+//!     /// `list_len_ptr` will be updated to the amount of process ids that were
+//!     /// found. If this is larger than the original value provided, the buffer
+//!     /// provided was too small and not all process ids could be stored. This is
+//!     /// still considered successful and can optionally be treated as an error
+//!     /// condition by the caller by checking if the length increased and
+//!     /// potentially reallocating a larger buffer. If the length decreased after
+//!     /// the call, the buffer was larger than needed and the remaining entries
+//!     /// are untouched.
 //!     pub fn process_list_by_name(
 //!         name_ptr: *const u8,
 //!         name_len: usize,
@@ -140,52 +143,44 @@
 //!         buf_ptr: *mut u8,
 //!         buf_len: usize,
 //!     ) -> bool;
-//!
-//!     /// Gets the address of a module in a process.
+//!     /// Gets the address of a module in a process. The pointer needs to point to
+//!     /// valid UTF-8 encoded text with the given length.
 //!     pub fn process_get_module_address(
 //!         process: Process,
 //!         name_ptr: *const u8,
 //!         name_len: usize,
 //!     ) -> Option<NonZeroAddress>;
-//!     /// Gets the size of a module in a process.
+//!     /// Gets the size of a module in a process. The pointer needs to point to
+//!     /// valid UTF-8 encoded text with the given length.
 //!     pub fn process_get_module_size(
 //!         process: Process,
 //!         name_ptr: *const u8,
 //!         name_len: usize,
 //!     ) -> Option<NonZeroU64>;
-//!
-//!     /// Gets the number of memory ranges in a given process.
-//!     pub fn process_get_memory_range_count(process: Process) -> Option<NonZeroU64>;
-//!     /// Gets the start address of a memory range by its index.
-//!     pub fn process_get_memory_range_address(
-//!         process: Process,
-//!         idx: u64,
-//!     ) -> Option<NonZeroAddress>;
-//!     /// Gets the size of a memory range by its index.
-//!     pub fn process_get_memory_range_size(process: Process, idx: u64) -> Option<NonZeroU64>;
-//!     /// Gets the flags of a memory range by its index.
-//!     pub fn process_get_memory_range_flags(
-//!         process: Process,
-//!         idx: u64,
-//!     ) -> Option<MemoryRangeFlags>;
-//!
 //!     /// Stores the file system path of the executable in the buffer given. The
 //!     /// path is a path that is accessible through the WASI file system, so a
 //!     /// Windows path of `C:\foo\bar.exe` would be returned as
 //!     /// `/mnt/c/foo/bar.exe`. Returns `false` if the buffer is too small. After
-//!     /// this call, no matter whether it was successful or not, the
-//!     /// `buf_len_ptr` will be set to the required buffer size. The path is
-//!     /// guaranteed to be valid UTF-8 and is not nul-terminated.
-//!     pub fn process_get_path(
-//!         process: Process,
-//!         buf_ptr: *mut u8,
-//!         buf_len_ptr: *mut usize,
-//!     ) -> bool;
+//!     /// this call, no matter whether it was successful or not, the `buf_len_ptr`
+//!     /// will be set to the required buffer size. If `false` is returned and the
+//!     /// `buf_len_ptr` got set to 0, the path does not exist or failed to get
+//!     /// read. The path is guaranteed to be valid UTF-8 and is not
+//!     /// nul-terminated.
+//!     pub fn process_get_path(process: Process, buf_ptr: *mut u8, buf_len_ptr: *mut usize) -> bool;
+//!     /// Gets the number of memory ranges in a given process.
+//!     pub fn process_get_memory_range_count(process: Process) -> Option<NonZeroU64>;
+//!     /// Gets the start address of a memory range by its index.
+//!     pub fn process_get_memory_range_address(process: Process, idx: u64) -> Option<NonZeroAddress>;
+//!     /// Gets the size of a memory range by its index.
+//!     pub fn process_get_memory_range_size(process: Process, idx: u64) -> Option<NonZeroU64>;
+//!     /// Gets the flags of a memory range by its index.
+//!     pub fn process_get_memory_range_flags(process: Process, idx: u64) -> Option<NonZeroU64>;
 //!
 //!     /// Sets the tick rate of the runtime. This influences the amount of
 //!     /// times the `update` function is called per second.
 //!     pub fn runtime_set_tick_rate(ticks_per_second: f64);
-//!     /// Prints a log message for debugging purposes.
+//!     /// Prints a log message for debugging purposes. The pointer needs to point
+//!     /// to valid UTF-8 encoded text with the given length.
 //!     pub fn runtime_print_message(text_ptr: *const u8, text_len: usize);
 //!     /// Stores the name of the operating system that the runtime is running
 //!     /// on in the buffer given. Returns `false` if the buffer is too small.
@@ -205,7 +200,8 @@
 //!     /// Adds a new boolean setting that the user can modify. This will return
 //!     /// either the specified default value or the value that the user has set.
 //!     /// The key is used to store the setting and needs to be unique across all
-//!     /// types of settings.
+//!     /// types of settings. The pointers need to point to valid UTF-8 encoded
+//!     /// text with the respective given length.
 //!     pub fn user_settings_add_bool(
 //!         key_ptr: *const u8,
 //!         key_len: usize,
@@ -216,7 +212,8 @@
 //!     /// Adds a new title to the user settings. This is used to group settings
 //!     /// together. The heading level determines the size of the title. The top
 //!     /// level titles use a heading level of 0. The key needs to be unique across
-//!     /// all types of settings.
+//!     /// all types of settings. The pointers need to point to valid UTF-8 encoded
+//!     /// text with the respective given length.
 //!     pub fn user_settings_add_title(
 //!         key_ptr: *const u8,
 //!         key_len: usize,
@@ -225,7 +222,8 @@
 //!         heading_level: u32,
 //!     );
 //!     /// Adds a tooltip to a setting based on its key. A tooltip is useful for
-//!     /// explaining the purpose of a setting to the user.
+//!     /// explaining the purpose of a setting to the user. The pointers need to
+//!     /// point to valid UTF-8 encoded text with the respective given length.
 //!     pub fn user_settings_set_tooltip(
 //!         key_ptr: *const u8,
 //!         key_len: usize,
@@ -262,6 +260,8 @@
 //!     /// Inserts a copy of the setting value into the settings map based on the
 //!     /// key. If the key already exists, it will be overwritten. You still retain
 //!     /// ownership of the setting value, which means you still need to free it.
+//!     /// The pointer needs to point to valid UTF-8 encoded text with the given
+//!     /// length.
 //!     pub fn settings_map_insert(
 //!         map: SettingsMap,
 //!         key_ptr: *const u8,
@@ -271,24 +271,56 @@
 //!     /// Gets a copy of the setting value from the settings map based on the key.
 //!     /// Returns `None` if the key does not exist. Any changes to it are only
 //!     /// perceived if it's stored back. You own the setting value and are
-//!     /// responsible for freeing it.
+//!     /// responsible for freeing it. The pointer needs to point to valid UTF-8
+//!     /// encoded text with the given length.
 //!     pub fn settings_map_get(
 //!         map: SettingsMap,
 //!         key_ptr: *const u8,
 //!         key_len: usize,
 //!     ) -> Option<SettingValue>;
 //!
+//!     /// Creates a new setting value from a settings map. The value is a copy of
+//!     /// the settings map. Any changes to the original settings map afterwards
+//!     /// are not going to be perceived by the setting value. You own the setting
+//!     /// value and are responsible for freeing it. You also retain ownership of
+//!     /// the settings map, which means you still need to free it.
+//!     pub fn setting_value_new_map(value: SettingsMap) -> SettingValue;
 //!     /// Creates a new boolean setting value. You own the setting value and are
 //!     /// responsible for freeing it.
 //!     pub fn setting_value_new_bool(value: bool) -> SettingValue;
+//!     /// Creates a new string setting value. The pointer needs to point to valid
+//!     /// UTF-8 encoded text with the given length. You own the setting value and
+//!     /// are responsible for freeing it.
+//!     pub fn setting_value_new_string(value_ptr: *const u8, value_len: usize) -> SettingValue;
 //!     /// Frees a setting value.
 //!     pub fn setting_value_free(value: SettingValue);
+//!     /// Gets the value of a setting value as a settings map by storing it into
+//!     /// the pointer provided. Returns `false` if the setting value is not a
+//!     /// settings map. No value is stored into the pointer in that case. No
+//!     /// matter what happens, you still retain ownership of the setting value,
+//!     /// which means you still need to free it. You own the settings map and are
+//!     /// responsible for freeing it.
+//!     pub fn setting_value_get_map(value: SettingValue, value_ptr: *mut SettingsMap) -> bool;
 //!     /// Gets the value of a boolean setting value by storing it into the pointer
 //!     /// provided. Returns `false` if the setting value is not a boolean. No
 //!     /// value is stored into the pointer in that case. No matter what happens,
 //!     /// you still retain ownership of the setting value, which means you still
 //!     /// need to free it.
 //!     pub fn setting_value_get_bool(value: SettingValue, value_ptr: *mut bool) -> bool;
+//!     /// Gets the value of a string setting value by storing it into the buffer
+//!     /// provided. Returns `false` if the buffer is too small or if the setting
+//!     /// value is not a string. After this call, no matter whether it was
+//!     /// successful or not, the `buf_len_ptr` will be set to the required buffer
+//!     /// size. If `false` is returned and the `buf_len_ptr` got set to 0, the
+//!     /// setting value is not a string. The string is guaranteed to be valid
+//!     /// UTF-8 and is not nul-terminated. No matter what happens, you still
+//!     /// retain ownership of the setting value, which means you still need to
+//!     /// free it.
+//!     pub fn setting_value_get_string(
+//!         value: SettingValue,
+//!         buf_ptr: *mut u8,
+//!         buf_len_ptr: *mut usize,
+//!     ) -> bool;
 //! }
 //! ```
 //!
