@@ -954,6 +954,41 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
             source,
             name: "process_get_path",
         })?
+        .func_wrap("env", "process_get_module_path", {
+            |mut caller: Caller<'_, Context<T>>,
+             process: u64,
+             name_ptr: u32,
+             name_len: u32,
+             path_ptr: u32,
+             path_len_ptr: u32| {
+                let (memory, context) = memory_and_context(&mut caller);
+                let module_name = get_str(memory, name_ptr, name_len)?;
+                let path = context
+                    .processes
+                    .get_mut(ProcessKey::from(KeyData::from_ffi(process)))
+                    .ok_or_else(|| format_err!("Invalid process handle: {process}"))?
+                    .module_path(module_name);
+
+                let path_len_bytes = get_arr_mut(memory, path_len_ptr)?;
+                if let Ok(path) = path {
+                    let path_len = u32::from_le_bytes(*path_len_bytes) as usize;
+                    *path_len_bytes = (path.len() as u32).to_le_bytes();
+                    if path_len < path.len() {
+                        return Ok(0u32);
+                    }
+                    let buf = get_slice_mut(memory, path_ptr, path.len() as _)?;
+                    buf.copy_from_slice(path.as_bytes());
+                    Ok(1u32)
+                } else {
+                    *path_len_bytes = 0u32.to_le_bytes();
+                    Ok(0u32)
+                }
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "process_get_module_path",
+        })?
         .func_wrap("env", "process_read", {
             |mut caller: Caller<'_, Context<T>>,
              process: u64,
