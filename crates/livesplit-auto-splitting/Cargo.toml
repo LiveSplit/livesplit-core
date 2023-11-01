@@ -13,6 +13,7 @@ edition = "2021"
 anyhow = { version = "1.0.45", default-features = false }
 async-trait = "0.1.73"
 bytemuck = { version = "1.14.0", features = ["min_const_generics"] }
+indexmap = "2.0.2"
 proc-maps = { version = "0.3.0", default-features = false }
 read-process-memory = { version = "0.1.4", default-features = false }
 slotmap = { version = "1.0.2", default-features = false }

@@ -1,4 +1,6 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{fmt, sync::Arc};
+
+use indexmap::IndexMap;
 
 /// A setting that is meant to be shown to and modified by the user.
 #[non_exhaustive]
@@ -39,10 +41,24 @@ pub enum UserSettingKind {
 
 /// A value that a setting can have.
 #[non_exhaustive]
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub enum SettingValue {
+    /// A map of settings that are stored in the [`SettingsMap`].
+    Map(SettingsMap),
     /// A boolean value.
     Bool(bool),
+    /// A string value.
+    String(Arc<str>),
+}
+
+impl fmt::Debug for SettingValue {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Map(v) => fmt::Debug::fmt(v, f),
+            Self::Bool(v) => fmt::Debug::fmt(v, f),
+            Self::String(v) => fmt::Debug::fmt(v, f),
+        }
+    }
 }
 
 /// A key-value map that stores the settings of an auto splitter. It only stores
@@ -51,7 +67,13 @@ pub enum SettingValue {
 /// here yet.
 #[derive(Clone, Default)]
 pub struct SettingsMap {
-    values: Arc<HashMap<Arc<str>, SettingValue>>,
+    values: Arc<IndexMap<Arc<str>, SettingValue>>,
+}
+
+impl fmt::Debug for SettingsMap {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Debug::fmt(&self.values, f)
+    }
 }
 
 impl SettingsMap {

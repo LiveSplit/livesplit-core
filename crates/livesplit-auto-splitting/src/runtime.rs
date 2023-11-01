@@ -931,18 +931,23 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                     .processes
                     .get_mut(ProcessKey::from(KeyData::from_ffi(process)))
                     .ok_or_else(|| format_err!("Invalid process handle: {process}"))?
-                    .path()
-                    .unwrap_or_default();
+                    .path();
 
                 let len_bytes = get_arr_mut(memory, len_ptr)?;
-                let len = u32::from_le_bytes(*len_bytes) as usize;
-                *len_bytes = (path.len() as u32).to_le_bytes();
-                if len < path.len() {
-                    return Ok(0u32);
+                if let Some(path) = path {
+                    *len_bytes = (path.len() as u32).to_le_bytes();
+
+                    let len = u32::from_le_bytes(*len_bytes) as usize;
+                    if len < path.len() {
+                        return Ok(0u32);
+                    }
+                    let buf = get_slice_mut(memory, ptr, path.len() as _)?;
+                    buf.copy_from_slice(path.as_bytes());
+                    Ok(1u32)
+                } else {
+                    *len_bytes = 0u32.to_le_bytes();
+                    Ok(0u32)
                 }
-                let buf = get_slice_mut(memory, ptr, path.len() as _)?;
-                buf.copy_from_slice(path.as_bytes());
-                Ok(1u32)
             }
         })
         .map_err(|source| CreationError::LinkFunction {
@@ -1252,6 +1257,26 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
             source,
             name: "settings_map_get",
         })?
+        .func_wrap("env", "setting_value_new_map", {
+            |mut caller: Caller<'_, Context<T>>, settings_map: u64| {
+                let context = caller.data_mut();
+
+                let settings_map = context
+                    .settings_maps
+                    .get(SettingsMapKey::from(KeyData::from_ffi(settings_map)))
+                    .ok_or_else(|| format_err!("Invalid settings map handle: {settings_map}"))?;
+
+                Ok(context
+                    .setting_values
+                    .insert(SettingValue::Map(settings_map.clone()))
+                    .data()
+                    .as_ffi())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "setting_value_new_map",
+        })?
         .func_wrap("env", "setting_value_new_bool", {
             |mut caller: Caller<'_, Context<T>>, value: u32| {
                 Ok(caller
@@ -1265,6 +1290,21 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
         .map_err(|source| CreationError::LinkFunction {
             source,
             name: "setting_value_new_bool",
+        })?
+        .func_wrap("env", "setting_value_new_string", {
+            |mut caller: Caller<'_, Context<T>>, ptr: u32, len: u32| {
+                let (memory, context) = memory_and_context(&mut caller);
+                let value = get_str(memory, ptr, len)?;
+                Ok(context
+                    .setting_values
+                    .insert(SettingValue::String(value.into()))
+                    .data()
+                    .as_ffi())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "setting_value_new_string",
         })?
         .func_wrap("env", "setting_value_free", {
             |mut caller: Caller<'_, Context<T>>, setting_value: u64| {
@@ -1280,6 +1320,34 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
             source,
             name: "setting_value_free",
         })?
+        .func_wrap("env", "setting_value_get_map", {
+            |mut caller: Caller<'_, Context<T>>, setting_value: u64, value_ptr: u32| {
+                let (memory, context) = memory_and_context(&mut caller);
+
+                let setting_value = context
+                    .setting_values
+                    .get(SettingValueKey::from(KeyData::from_ffi(setting_value)))
+                    .ok_or_else(|| format_err!("Invalid setting value handle: {setting_value}"))?;
+
+                let value_ptr = get_arr_mut(memory, value_ptr)?;
+
+                if let SettingValue::Map(value) = setting_value {
+                    *value_ptr = context
+                        .settings_maps
+                        .insert(value.clone())
+                        .data()
+                        .as_ffi()
+                        .to_le_bytes();
+                    Ok(1u32)
+                } else {
+                    Ok(0u32)
+                }
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "setting_value_get_map",
+        })?
         .func_wrap("env", "setting_value_get_bool", {
             |mut caller: Caller<'_, Context<T>>, setting_value: u64, value_ptr: u32| {
                 let (memory, context) = memory_and_context(&mut caller);
@@ -1291,14 +1359,51 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
 
                 let [out] = get_arr_mut(memory, value_ptr)?;
 
-                let SettingValue::Bool(value) = setting_value;
-                *out = *value as u8;
-                Ok(1u32)
+                if let SettingValue::Bool(value) = setting_value {
+                    *out = *value as u8;
+                    Ok(1u32)
+                } else {
+                    Ok(0u32)
+                }
             }
         })
         .map_err(|source| CreationError::LinkFunction {
             source,
             name: "setting_value_get_bool",
+        })?
+        .func_wrap("env", "setting_value_get_string", {
+            |mut caller: Caller<'_, Context<T>>,
+             setting_value: u64,
+             buf_ptr: u32,
+             buf_len_ptr: u32| {
+                let (memory, context) = memory_and_context(&mut caller);
+
+                let setting_value = context
+                    .setting_values
+                    .get(SettingValueKey::from(KeyData::from_ffi(setting_value)))
+                    .ok_or_else(|| format_err!("Invalid setting value handle: {setting_value}"))?;
+
+                let len_bytes = get_arr_mut(memory, buf_len_ptr)?;
+
+                if let SettingValue::String(value) = setting_value {
+                    *len_bytes = (value.len() as u32).to_le_bytes();
+
+                    let len = u32::from_le_bytes(*len_bytes) as usize;
+                    if len < value.len() {
+                        return Ok(0u32);
+                    }
+                    let buf = get_slice_mut(memory, buf_ptr, value.len() as _)?;
+                    buf.copy_from_slice(value.as_bytes());
+                    Ok(1u32)
+                } else {
+                    *len_bytes = 0u32.to_le_bytes();
+                    Ok(0u32)
+                }
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "setting_value_get_string",
         })?;
     Ok(())
 }
