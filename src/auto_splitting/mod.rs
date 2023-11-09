@@ -305,6 +305,12 @@
 //!     /// Creates a new boolean setting value. You own the setting value and are
 //!     /// responsible for freeing it.
 //!     pub fn setting_value_new_bool(value: bool) -> SettingValue;
+//!     /// Creates a new 64-bit signed integer setting value. You own the setting
+//!     /// value and are responsible for freeing it.
+//!     pub fn setting_value_new_i64(value: i64) -> SettingValue;
+//!     /// Creates a new 64-bit floating point setting value. You own the setting
+//!     /// value and are responsible for freeing it.
+//!     pub fn setting_value_new_f64(value: f64) -> SettingValue;
 //!     /// Creates a new string setting value. The pointer needs to point to valid
 //!     /// UTF-8 encoded text with the given length. You own the setting value and
 //!     /// are responsible for freeing it.
@@ -324,6 +330,18 @@
 //!     /// you still retain ownership of the setting value, which means you still
 //!     /// need to free it.
 //!     pub fn setting_value_get_bool(value: SettingValue, value_ptr: *mut bool) -> bool;
+//!     /// Gets the value of a 64-bit signed integer setting value by storing it
+//!     /// into the pointer provided. Returns `false` if the setting value is not a
+//!     /// 64-bit signed integer. No value is stored into the pointer in that case.
+//!     /// No matter what happens, you still retain ownership of the setting value,
+//!     /// which means you still need to free it.
+//!     pub fn setting_value_get_i64(value: SettingValue, value_ptr: *mut i64) -> bool;
+//!     /// Gets the value of a 64-bit floating point setting value by storing it
+//!     /// into the pointer provided. Returns `false` if the setting value is not a
+//!     /// 64-bit floating point number. No value is stored into the pointer in
+//!     /// that case. No matter what happens, you still retain ownership of the
+//!     /// setting value, which means you still need to free it.
+//!     pub fn setting_value_get_f64(value: SettingValue, value_ptr: *mut f64) -> bool;
 //!     /// Gets the value of a string setting value by storing it into the buffer
 //!     /// provided. Returns `false` if the buffer is too small or if the setting
 //!     /// value is not a string. After this call, no matter whether it was
