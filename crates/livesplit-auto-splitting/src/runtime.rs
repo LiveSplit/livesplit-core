@@ -481,6 +481,7 @@ fn build_wasi(script_path: Option<&Path>) -> WasiCtx {
 
     #[cfg(windows)]
     {
+        // SAFETY: This is always safe to call.
         let mut drives = unsafe { windows_sys::Win32::Storage::FileSystem::GetLogicalDrives() };
         loop {
             let drive_idx = drives.trailing_zeros();
@@ -1326,6 +1327,34 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
             source,
             name: "setting_value_new_bool",
         })?
+        .func_wrap("env", "setting_value_new_i64", {
+            |mut caller: Caller<'_, Context<T>>, value: i64| {
+                Ok(caller
+                    .data_mut()
+                    .setting_values
+                    .insert(SettingValue::I64(value))
+                    .data()
+                    .as_ffi())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "setting_value_new_i64",
+        })?
+        .func_wrap("env", "setting_value_new_f64", {
+            |mut caller: Caller<'_, Context<T>>, value: f64| {
+                Ok(caller
+                    .data_mut()
+                    .setting_values
+                    .insert(SettingValue::F64(value))
+                    .data()
+                    .as_ffi())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "setting_value_new_f64",
+        })?
         .func_wrap("env", "setting_value_new_string", {
             |mut caller: Caller<'_, Context<T>>, ptr: u32, len: u32| {
                 let (memory, context) = memory_and_context(&mut caller);
@@ -1405,6 +1434,52 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
         .map_err(|source| CreationError::LinkFunction {
             source,
             name: "setting_value_get_bool",
+        })?
+        .func_wrap("env", "setting_value_get_i64", {
+            |mut caller: Caller<'_, Context<T>>, setting_value: u64, value_ptr: u32| {
+                let (memory, context) = memory_and_context(&mut caller);
+
+                let setting_value = context
+                    .setting_values
+                    .get(SettingValueKey::from(KeyData::from_ffi(setting_value)))
+                    .ok_or_else(|| format_err!("Invalid setting value handle: {setting_value}"))?;
+
+                let arr = get_arr_mut(memory, value_ptr)?;
+
+                if let SettingValue::I64(value) = setting_value {
+                    *arr = value.to_le_bytes();
+                    Ok(1u32)
+                } else {
+                    Ok(0u32)
+                }
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "setting_value_get_i64",
+        })?
+        .func_wrap("env", "setting_value_get_f64", {
+            |mut caller: Caller<'_, Context<T>>, setting_value: u64, value_ptr: u32| {
+                let (memory, context) = memory_and_context(&mut caller);
+
+                let setting_value = context
+                    .setting_values
+                    .get(SettingValueKey::from(KeyData::from_ffi(setting_value)))
+                    .ok_or_else(|| format_err!("Invalid setting value handle: {setting_value}"))?;
+
+                let arr = get_arr_mut(memory, value_ptr)?;
+
+                if let SettingValue::F64(value) = setting_value {
+                    *arr = value.to_le_bytes();
+                    Ok(1u32)
+                } else {
+                    Ok(0u32)
+                }
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "setting_value_get_f64",
         })?
         .func_wrap("env", "setting_value_get_string", {
             |mut caller: Caller<'_, Context<T>>,

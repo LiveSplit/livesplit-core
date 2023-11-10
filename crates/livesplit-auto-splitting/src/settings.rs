@@ -31,7 +31,7 @@ pub enum UserSettingKind {
         /// The top level titles use a heading level of 0.
         heading_level: u32,
     },
-    /// A boolean setting. This could be visualized as a checkbox or a slider.
+    /// A boolean setting. This could be visualized as a checkbox or a toggle.
     Bool {
         /// The default value of the setting, if it's not available in the
         /// settings map yet.
@@ -47,6 +47,10 @@ pub enum SettingValue {
     Map(SettingsMap),
     /// A boolean value.
     Bool(bool),
+    /// A 64-bit signed integer value.
+    I64(i64),
+    /// A 64-bit floating point value.
+    F64(f64),
     /// A string value.
     String(Arc<str>),
 }
@@ -56,6 +60,8 @@ impl fmt::Debug for SettingValue {
         match self {
             Self::Map(v) => fmt::Debug::fmt(v, f),
             Self::Bool(v) => fmt::Debug::fmt(v, f),
+            Self::I64(v) => fmt::Debug::fmt(v, f),
+            Self::F64(v) => fmt::Debug::fmt(v, f),
             Self::String(v) => fmt::Debug::fmt(v, f),
         }
     }
