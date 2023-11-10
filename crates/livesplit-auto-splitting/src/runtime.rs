@@ -2,7 +2,7 @@
 
 use crate::{
     process::{build_path, Process},
-    settings::UserSetting,
+    settings::{SettingsList, UserSetting},
     timer::Timer,
     SettingValue, SettingsMap, UserSettingKind,
 };
@@ -81,12 +81,14 @@ pub enum CreationError {
 slotmap::new_key_type! {
     struct ProcessKey;
     struct SettingsMapKey;
+    struct SettingsListKey;
     struct SettingValueKey;
 }
 
 pub struct Context<T: Timer> {
     processes: SlotMap<ProcessKey, Process>,
     settings_maps: SlotMap<SettingsMapKey, SettingsMap>,
+    settings_lists: SlotMap<SettingsListKey, SettingsList>,
     setting_values: SlotMap<SettingValueKey, SettingValue>,
     user_settings: Arc<Vec<UserSetting>>,
     shared_data: Arc<SharedData>,
@@ -282,6 +284,7 @@ impl<T: Timer> RuntimeGuard<'_, T> {
         let data = self.data.store.data();
         data.processes.len() as u64
             + data.settings_maps.len() as u64
+            + data.settings_lists.len() as u64
             + data.setting_values.len() as u64
     }
 }
@@ -339,6 +342,7 @@ impl<T: Timer> Runtime<T> {
             Context {
                 processes: SlotMap::with_key(),
                 settings_maps: SlotMap::with_key(),
+                settings_lists: SlotMap::with_key(),
                 setting_values: SlotMap::with_key(),
                 user_settings: user_settings.clone(),
                 shared_data: shared_data.clone(),
@@ -1293,6 +1297,227 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
             source,
             name: "settings_map_get",
         })?
+        .func_wrap("env", "settings_map_len", {
+            |mut caller: Caller<'_, Context<T>>, settings_map: u64| {
+                let ctx = caller.data_mut();
+
+                let len = ctx
+                    .settings_maps
+                    .get(SettingsMapKey::from(KeyData::from_ffi(settings_map)))
+                    .ok_or_else(|| format_err!("Invalid settings map handle: {settings_map}"))?
+                    .len()
+                    .try_into()
+                    .unwrap_or(u64::MAX);
+
+                Ok(len)
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "settings_map_len",
+        })?
+        .func_wrap("env", "settings_map_get_key_by_index", {
+            |mut caller: Caller<'_, Context<T>>,
+             settings_map: u64,
+             index: u64,
+             buf_ptr: u32,
+             buf_len_ptr: u32| {
+                let (memory, context) = memory_and_context(&mut caller);
+
+                let settings_map = context
+                    .settings_maps
+                    .get(SettingsMapKey::from(KeyData::from_ffi(settings_map)))
+                    .ok_or_else(|| format_err!("Invalid settings map handle: {settings_map}"))?;
+
+                let len_bytes = get_arr_mut(memory, buf_len_ptr)?;
+
+                let slot = settings_map.get_by_index(index.try_into().unwrap_or(usize::MAX));
+
+                if let Some((key, _)) = slot {
+                    *len_bytes = (key.len() as u32).to_le_bytes();
+
+                    let len = u32::from_le_bytes(*len_bytes) as usize;
+                    if len < key.len() {
+                        return Ok(0u32);
+                    }
+                    let buf = get_slice_mut(memory, buf_ptr, key.len() as _)?;
+                    buf.copy_from_slice(key.as_bytes());
+                    Ok(1u32)
+                } else {
+                    *len_bytes = 0u32.to_le_bytes();
+                    Ok(0u32)
+                }
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "settings_map_get_key_by_index",
+        })?
+        .func_wrap("env", "settings_map_get_value_by_index", {
+            |mut caller: Caller<'_, Context<T>>, settings_map: u64, index: u64| {
+                let ctx = caller.data_mut();
+
+                let maybe_slot = if let Ok(index) = index.try_into() {
+                    ctx.settings_maps
+                        .get(SettingsMapKey::from(KeyData::from_ffi(settings_map)))
+                        .ok_or_else(|| format_err!("Invalid settings map handle: {settings_map}"))?
+                        .get_by_index(index)
+                } else {
+                    None
+                };
+
+                Ok(if let Some((_, value)) = maybe_slot {
+                    ctx.setting_values.insert(value.clone()).data().as_ffi()
+                } else {
+                    0
+                })
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "settings_map_get_value_by_index",
+        })?
+        .func_wrap("env", "settings_list_new", {
+            |mut caller: Caller<'_, Context<T>>| {
+                let ctx = caller.data_mut();
+                ctx.settings_lists
+                    .insert(SettingsList::new())
+                    .data()
+                    .as_ffi()
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "settings_list_new",
+        })?
+        .func_wrap("env", "settings_list_free", {
+            |mut caller: Caller<'_, Context<T>>, settings_list: u64| {
+                caller
+                    .data_mut()
+                    .settings_lists
+                    .remove(SettingsListKey::from(KeyData::from_ffi(settings_list)))
+                    .ok_or_else(|| format_err!("Invalid settings list handle: {settings_list}"))?;
+                Ok(())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "settings_list_free",
+        })?
+        .func_wrap("env", "settings_list_copy", {
+            |mut caller: Caller<'_, Context<T>>, settings_list: u64| {
+                let ctx = caller.data_mut();
+
+                let settings_list = ctx
+                    .settings_lists
+                    .get(SettingsListKey::from(KeyData::from_ffi(settings_list)))
+                    .ok_or_else(|| format_err!("Invalid settings list handle: {settings_list}"))?
+                    .clone();
+
+                Ok(ctx.settings_lists.insert(settings_list).data().as_ffi())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "settings_list_copy",
+        })?
+        .func_wrap("env", "settings_list_len", {
+            |caller: Caller<'_, Context<T>>, settings_list: u64| {
+                let ctx = caller.data();
+
+                let len = ctx
+                    .settings_lists
+                    .get(SettingsListKey::from(KeyData::from_ffi(settings_list)))
+                    .ok_or_else(|| format_err!("Invalid settings list handle: {settings_list}"))?
+                    .len()
+                    .try_into()
+                    .unwrap_or(u64::MAX);
+
+                Ok(len)
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "settings_list_len",
+        })?
+        .func_wrap("env", "settings_list_get", {
+            |mut caller: Caller<'_, Context<T>>, settings_list: u64, index: u64| {
+                let ctx = caller.data_mut();
+
+                let maybe_value = if let Ok(index) = index.try_into() {
+                    ctx.settings_lists
+                        .get(SettingsListKey::from(KeyData::from_ffi(settings_list)))
+                        .ok_or_else(|| {
+                            format_err!("Invalid settings list handle: {settings_list}")
+                        })?
+                        .get(index)
+                } else {
+                    None
+                };
+
+                Ok(if let Some(value) = maybe_value {
+                    ctx.setting_values.insert(value.clone()).data().as_ffi()
+                } else {
+                    0
+                })
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "settings_list_get",
+        })?
+        .func_wrap("env", "settings_list_push", {
+            |mut caller: Caller<'_, Context<T>>, settings_list: u64, setting_value: u64| {
+                let context = caller.data_mut();
+
+                let settings_list = context
+                    .settings_lists
+                    .get_mut(SettingsListKey::from(KeyData::from_ffi(settings_list)))
+                    .ok_or_else(|| format_err!("Invalid settings list handle: {settings_list}"))?;
+
+                let setting_value = context
+                    .setting_values
+                    .get(SettingValueKey::from(KeyData::from_ffi(setting_value)))
+                    .ok_or_else(|| format_err!("Invalid setting value handle: {setting_value}"))?;
+
+                settings_list.push(setting_value.clone());
+
+                Ok(())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "settings_list_push",
+        })?
+        .func_wrap("env", "settings_list_insert", {
+            |mut caller: Caller<'_, Context<T>>,
+             settings_list: u64,
+             index: u64,
+             setting_value: u64| {
+                let context = caller.data_mut();
+
+                let settings_list = context
+                    .settings_lists
+                    .get_mut(SettingsListKey::from(KeyData::from_ffi(settings_list)))
+                    .ok_or_else(|| format_err!("Invalid settings list handle: {settings_list}"))?;
+
+                let setting_value = context
+                    .setting_values
+                    .get(SettingValueKey::from(KeyData::from_ffi(setting_value)))
+                    .ok_or_else(|| format_err!("Invalid setting value handle: {setting_value}"))?;
+
+                settings_list.insert(
+                    index.try_into().unwrap_or(usize::MAX),
+                    setting_value.clone(),
+                );
+
+                Ok(())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "settings_list_insert",
+        })?
         .func_wrap("env", "setting_value_new_map", {
             |mut caller: Caller<'_, Context<T>>, settings_map: u64| {
                 let context = caller.data_mut();
@@ -1312,6 +1537,26 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
         .map_err(|source| CreationError::LinkFunction {
             source,
             name: "setting_value_new_map",
+        })?
+        .func_wrap("env", "setting_value_new_list", {
+            |mut caller: Caller<'_, Context<T>>, settings_list: u64| {
+                let context = caller.data_mut();
+
+                let settings_list = context
+                    .settings_lists
+                    .get(SettingsListKey::from(KeyData::from_ffi(settings_list)))
+                    .ok_or_else(|| format_err!("Invalid settings list handle: {settings_list}"))?;
+
+                Ok(context
+                    .setting_values
+                    .insert(SettingValue::List(settings_list.clone()))
+                    .data()
+                    .as_ffi())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "setting_value_new_list",
         })?
         .func_wrap("env", "setting_value_new_bool", {
             |mut caller: Caller<'_, Context<T>>, value: u32| {
@@ -1384,6 +1629,23 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
             source,
             name: "setting_value_free",
         })?
+        .func_wrap("env", "setting_value_copy", {
+            |mut caller: Caller<'_, Context<T>>, setting_value: u64| {
+                let ctx = caller.data_mut();
+
+                let setting_value = ctx
+                    .setting_values
+                    .get(SettingValueKey::from(KeyData::from_ffi(setting_value)))
+                    .ok_or_else(|| format_err!("Invalid settings value handle: {setting_value}"))?
+                    .clone();
+
+                Ok(ctx.setting_values.insert(setting_value).data().as_ffi())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "setting_value_copy",
+        })?
         .func_wrap("env", "setting_value_get_map", {
             |mut caller: Caller<'_, Context<T>>, setting_value: u64, value_ptr: u32| {
                 let (memory, context) = memory_and_context(&mut caller);
@@ -1411,6 +1673,34 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
         .map_err(|source| CreationError::LinkFunction {
             source,
             name: "setting_value_get_map",
+        })?
+        .func_wrap("env", "setting_value_get_list", {
+            |mut caller: Caller<'_, Context<T>>, setting_value: u64, value_ptr: u32| {
+                let (memory, context) = memory_and_context(&mut caller);
+
+                let setting_value = context
+                    .setting_values
+                    .get(SettingValueKey::from(KeyData::from_ffi(setting_value)))
+                    .ok_or_else(|| format_err!("Invalid setting value handle: {setting_value}"))?;
+
+                let value_ptr = get_arr_mut(memory, value_ptr)?;
+
+                if let SettingValue::List(value) = setting_value {
+                    *value_ptr = context
+                        .settings_lists
+                        .insert(value.clone())
+                        .data()
+                        .as_ffi()
+                        .to_le_bytes();
+                    Ok(1u32)
+                } else {
+                    Ok(0u32)
+                }
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "setting_value_get_list",
         })?
         .func_wrap("env", "setting_value_get_bool", {
             |mut caller: Caller<'_, Context<T>>, setting_value: u64, value_ptr: u32| {
