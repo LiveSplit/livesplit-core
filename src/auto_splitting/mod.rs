@@ -339,10 +339,10 @@
 //!     /// to free it.
 //!     pub fn settings_list_push(list: SettingsList, value: SettingValue);
 //!     /// Inserts a copy of the setting value into the settings list at the index
-//!     /// given. If the index is out of bounds, the setting value is pushed to the
-//!     /// end of the settings list. You still retain ownership of the setting
-//!     /// value, which means you still need to free it.
-//!     pub fn settings_list_insert(list: SettingsList, idx: u64, value: SettingValue);
+//!     /// given. Returns `false` if the index is out of bounds. No matter what
+//!     /// happens, you still retain ownership of the setting value, which means
+//!     /// you still need to free it.
+//!     pub fn settings_list_insert(list: SettingsList, idx: u64, value: SettingValue) -> bool;
 //!
 //!     /// Creates a new setting value from a settings map. The value is a copy of
 //!     /// the settings map. Any changes to the original settings map afterwards
@@ -443,11 +443,11 @@ use crate::{
     platform::Arc,
     timing::{SharedTimer, TimerPhase},
 };
+pub use livesplit_auto_splitting::settings;
 use livesplit_auto_splitting::{
     Config, CreationError, InterruptHandle, Runtime as ScriptRuntime, Timer as AutoSplitTimer,
     TimerState,
 };
-pub use livesplit_auto_splitting::{SettingValue, SettingsMap, UserSetting, UserSettingKind};
 use snafu::Snafu;
 use std::{fmt, fs, io, path::PathBuf, thread, time::Duration};
 use tokio::{
@@ -608,7 +608,7 @@ impl Runtime {
     }
 
     /// Get the custom auto splitter settings
-    pub async fn get_settings(&self) -> Result<Vec<UserSetting>, Error> {
+    pub async fn get_settings(&self) -> Result<Vec<settings::Widget>, Error> {
         let (sender, receiver) = oneshot::channel();
         self.sender
             .send(Request::GetSettings(sender))
@@ -626,7 +626,7 @@ impl Runtime {
     }
 
     /// Get the custom auto splitter settings
-    pub fn get_settings_blocking(&self) -> Result<Vec<UserSetting>, Error> {
+    pub fn get_settings_blocking(&self) -> Result<Vec<settings::Widget>, Error> {
         runtime::Builder::new_current_thread()
             .enable_time()
             .build()
@@ -635,7 +635,7 @@ impl Runtime {
     }
 
     /// Get the value for a custom auto splitter setting
-    pub async fn get_setting_value(&self, key: String) -> Result<SettingValue, Error> {
+    pub async fn get_setting_value(&self, key: String) -> Result<settings::Value, Error> {
         let (sender, receiver) = oneshot::channel();
         self.sender
             .send(Request::GetSettingValue(key, sender))
@@ -653,7 +653,7 @@ impl Runtime {
     }
 
     /// Get the value for a custom auto splitter setting
-    pub fn get_setting_value_blocking(&self, key: String) -> Result<SettingValue, Error> {
+    pub fn get_setting_value_blocking(&self, key: String) -> Result<settings::Value, Error> {
         runtime::Builder::new_current_thread()
             .enable_time()
             .build()
@@ -662,7 +662,11 @@ impl Runtime {
     }
 
     /// Set the value for a custom auto splitter setting
-    pub async fn set_setting_value(&self, key: Arc<str>, value: SettingValue) -> Result<(), Error> {
+    pub async fn set_setting_value(
+        &self,
+        key: Arc<str>,
+        value: settings::Value,
+    ) -> Result<(), Error> {
         let (sender, receiver) = oneshot::channel();
         self.sender
             .send(Request::SetSettingValue(key, value, sender))
@@ -675,7 +679,7 @@ impl Runtime {
     pub fn set_setting_value_blocking(
         &self,
         key: Arc<str>,
-        value: SettingValue,
+        value: settings::Value,
     ) -> Result<(), Error> {
         runtime::Builder::new_current_thread()
             .enable_time()
@@ -689,9 +693,9 @@ enum Request {
     LoadScript(Vec<u8>, oneshot::Sender<Result<(), Error>>),
     UnloadScript(oneshot::Sender<()>),
     ReloadScript(oneshot::Sender<Result<(), Error>>),
-    GetSettings(oneshot::Sender<Option<Vec<UserSetting>>>),
-    GetSettingValue(String, oneshot::Sender<Option<SettingValue>>),
-    SetSettingValue(Arc<str>, SettingValue, oneshot::Sender<()>),
+    GetSettings(oneshot::Sender<Option<Vec<settings::Widget>>>),
+    GetSettingValue(String, oneshot::Sender<Option<settings::Value>>),
+    SetSettingValue(Arc<str>, settings::Value, oneshot::Sender<()>),
 }
 
 // This newtype is required because [`SharedTimer`](crate::timing::SharedTimer)
@@ -845,7 +849,7 @@ async fn run(
                         }
                     }
                     Request::GetSettings(ret) => {
-                        ret.send(Some(runtime.user_settings().to_vec())).ok();
+                        ret.send(Some(runtime.settings_widgets().to_vec())).ok();
                         log::info!(target: "Auto Splitter", "Getting the settings");
                     }
                     Request::GetSettingValue(key, ret) => {
@@ -855,17 +859,17 @@ async fn run(
                         if setting_value.is_some() {
                             ret.send(setting_value.cloned()).ok();
                         } else {
-                            let user_setting_value =
-                                match runtime.user_settings().iter().find(|x| *x.key == key) {
-                                    Some(user_setting) => match user_setting.kind {
-                                        UserSettingKind::Bool { default_value } => {
-                                            Some(SettingValue::Bool(default_value))
+                            let widget_value =
+                                match runtime.settings_widgets().iter().find(|x| *x.key == key) {
+                                    Some(widget) => match widget.kind {
+                                        settings::WidgetKind::Bool { default_value } => {
+                                            Some(settings::Value::Bool(default_value))
                                         }
-                                        UserSettingKind::Title { heading_level: _ } => None,
+                                        settings::WidgetKind::Title { heading_level: _ } => None,
                                     },
                                     None => None,
                                 };
-                            ret.send(user_setting_value).ok();
+                            ret.send(widget_value).ok();
                         }
 
                         log::info!(target: "Auto Splitter", "Getting value for {}", key);
