@@ -2,9 +2,8 @@
 
 use crate::{
     process::{build_path, Process},
-    settings::{SettingsList, UserSetting},
+    settings,
     timer::Timer,
-    SettingValue, SettingsMap, UserSettingKind,
 };
 
 use anyhow::{ensure, format_err, Context as _, Result};
@@ -87,10 +86,10 @@ slotmap::new_key_type! {
 
 pub struct Context<T: Timer> {
     processes: SlotMap<ProcessKey, Process>,
-    settings_maps: SlotMap<SettingsMapKey, SettingsMap>,
-    settings_lists: SlotMap<SettingsListKey, SettingsList>,
-    setting_values: SlotMap<SettingValueKey, SettingValue>,
-    user_settings: Arc<Vec<UserSetting>>,
+    settings_maps: SlotMap<SettingsMapKey, settings::Map>,
+    settings_lists: SlotMap<SettingsListKey, settings::List>,
+    setting_values: SlotMap<SettingValueKey, settings::Value>,
+    settings_widgets: Arc<Vec<settings::Widget>>,
     shared_data: Arc<SharedData>,
     timer: T,
     memory: Option<Memory>,
@@ -172,8 +171,8 @@ pub struct Config<'a> {
     /// The settings map that is used to store the settings of the auto
     /// splitter. This contains all the settings that are currently modified by
     /// the user. It may not contain all the settings that are registered as
-    /// user settings, because the user may not have modified them yet.
-    pub settings_map: Option<SettingsMap>,
+    /// settings widgets, because the user may not have modified them yet.
+    pub settings_map: Option<settings::Map>,
     /// The auto splitter itself may be a runtime that wants to load a script
     /// from a file to interpret. This is the path to that script. It is
     /// provided to the auto splitter as the `SCRIPT_PATH` environment variable.
@@ -205,7 +204,7 @@ impl Default for Config<'_> {
 }
 
 struct SharedData {
-    settings_map: Mutex<SettingsMap>,
+    settings_map: Mutex<settings::Map>,
     tick_rate: Mutex<Duration>,
 }
 
@@ -219,15 +218,15 @@ struct ExclusiveData<T: Timer> {
 /// WebAssembly module to control a timer. You generally want to run the auto
 /// splitter on a separate background thread as the auto splitter may block
 /// indefinitely. The thread intending to run the auto splitter however needs to
-/// [`lock`] the runtime. This can only be done by one thread at a time. All
-/// other functions that are directly available on the runtime are generally
-/// thread-safe and don't block. This allows other threads to access and modify
-/// information such as settings without needing to worry that those threads get
-/// blocked.
+/// [`lock`](Self::lock) the runtime. This can only be done by one thread at a
+/// time. All other functions that are directly available on the runtime are
+/// generally thread-safe and don't block. This allows other threads to access
+/// and modify information such as settings without needing to worry that those
+/// threads get blocked.
 pub struct Runtime<T: Timer> {
     exclusive_data: Mutex<ExclusiveData<T>>,
     engine: Engine,
-    user_settings: Mutex<Arc<Vec<UserSetting>>>,
+    settings_widgets: Mutex<Arc<Vec<settings::Widget>>>,
     shared_data: Arc<SharedData>,
 }
 
@@ -236,7 +235,7 @@ pub struct Runtime<T: Timer> {
 /// splitter to not run at the same time. It can only be accessed by one thread
 /// at a time.
 pub struct RuntimeGuard<'runtime, T: Timer> {
-    user_settings: &'runtime Mutex<Arc<Vec<UserSetting>>>,
+    settings_widgets: &'runtime Mutex<Arc<Vec<settings::Widget>>>,
     data: MutexGuard<'runtime, ExclusiveData<T>>,
 }
 
@@ -250,7 +249,7 @@ impl<T: Timer> RuntimeGuard<'_, T> {
         }
         match data.update.call(&mut data.store, ()) {
             Ok(()) => {
-                *self.user_settings.lock().unwrap() = data.store.data().user_settings.clone();
+                *self.settings_widgets.lock().unwrap() = data.store.data().settings_widgets.clone();
                 Ok(())
             }
             Err(e) => {
@@ -290,11 +289,11 @@ impl<T: Timer> RuntimeGuard<'_, T> {
 }
 
 impl SharedData {
-    fn set_settings_map(&self, settings_map: SettingsMap) {
+    fn set_settings_map(&self, settings_map: settings::Map) {
         *self.settings_map.lock().unwrap() = settings_map;
     }
 
-    fn set_settings_map_if_unchanged(&self, old: &SettingsMap, new: SettingsMap) -> bool {
+    fn set_settings_map_if_unchanged(&self, old: &settings::Map, new: settings::Map) -> bool {
         let mut guard = self.settings_map.lock().unwrap();
         let success = guard.is_unchanged(old);
         if success {
@@ -330,7 +329,7 @@ impl<T: Timer> Runtime<T> {
         let module = Module::from_binary(&engine, module)
             .map_err(|source| CreationError::ModuleLoading { source })?;
 
-        let user_settings = Arc::new(Vec::new());
+        let settings_widgets = Arc::new(Vec::new());
 
         let shared_data = Arc::new(SharedData {
             settings_map: Mutex::new(config.settings_map.unwrap_or_default()),
@@ -344,7 +343,7 @@ impl<T: Timer> Runtime<T> {
                 settings_maps: SlotMap::with_key(),
                 settings_lists: SlotMap::with_key(),
                 setting_values: SlotMap::with_key(),
-                user_settings: user_settings.clone(),
+                settings_widgets: settings_widgets.clone(),
                 shared_data: shared_data.clone(),
                 timer,
                 memory: None,
@@ -406,7 +405,7 @@ impl<T: Timer> Runtime<T> {
                 update,
             }),
             engine,
-            user_settings: Mutex::new(user_settings),
+            settings_widgets: Mutex::new(settings_widgets),
             shared_data,
         })
     }
@@ -428,7 +427,7 @@ impl<T: Timer> Runtime<T> {
     /// threads get blocked.
     pub fn lock(&self) -> RuntimeGuard<'_, T> {
         RuntimeGuard {
-            user_settings: &self.user_settings,
+            settings_widgets: &self.settings_widgets,
             data: self.exclusive_data.lock().unwrap(),
         }
     }
@@ -443,14 +442,15 @@ impl<T: Timer> Runtime<T> {
 
     /// Accesses a copy of the currently stored settings. The auto splitter can
     /// change these at any time. If you intend to make modifications to the
-    /// settings, you need to set them again via [`set_settings_map`] or
-    /// [`set_settings_map_if_unchanged`].
-    pub fn settings_map(&self) -> SettingsMap {
+    /// settings, you need to set them again via
+    /// [`set_settings_map`](Self::set_settings_map) or
+    /// [`set_settings_map_if_unchanged`](Self::set_settings_map_if_unchanged).
+    pub fn settings_map(&self) -> settings::Map {
         self.shared_data.settings_map.lock().unwrap().clone()
     }
 
     /// Unconditionally sets the settings map.
-    pub fn set_settings_map(&self, settings_map: SettingsMap) {
+    pub fn set_settings_map(&self, settings_map: settings::Map) {
         self.shared_data.set_settings_map(settings_map)
     }
 
@@ -460,17 +460,19 @@ impl<T: Timer> Runtime<T> {
     /// settings from outside may race the auto splitter. You may use this to
     /// reapply the changes if the auto splitter changed the settings in the
     /// meantime.
-    pub fn set_settings_map_if_unchanged(&self, old: &SettingsMap, new: SettingsMap) -> bool {
+    pub fn set_settings_map_if_unchanged(&self, old: &settings::Map, new: settings::Map) -> bool {
         self.shared_data.set_settings_map_if_unchanged(old, new)
     }
 
-    /// Accesses all the settings that are meant to be shown to and modified by
-    /// the user. The auto splitter may change these settings within each
-    /// update. You should change the settings that are shown whenever this
-    /// changes. These settings can't tear. Any changes from within the auto
-    /// splitter can only be perceived once the auto splitter tick is complete.
-    pub fn user_settings(&self) -> Arc<Vec<UserSetting>> {
-        self.user_settings.lock().unwrap().clone()
+    /// Accesses all the settings widgets that are meant to be shown to and
+    /// modified by the user. The auto splitter may change these settings
+    /// widgets within each update. You should change the settings widgets that
+    /// are shown whenever this changes. This list can't tear. Any changes from
+    /// within the auto splitter can only be perceived once the auto splitter
+    /// tick is complete. Any changes the user does to these widgets should be
+    /// applied to the settings map and stored back.
+    pub fn settings_widgets(&self) -> Arc<Vec<settings::Widget>> {
+        self.settings_widgets.lock().unwrap().clone()
     }
 }
 
@@ -1086,14 +1088,14 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 let default_value = default_value != 0;
                 let value_in_map = match context.shared_data.settings_map.lock().unwrap().get(&key)
                 {
-                    Some(SettingValue::Bool(v)) => *v,
+                    Some(settings::Value::Bool(v)) => *v,
                     _ => default_value,
                 };
-                Arc::make_mut(&mut context.user_settings).push(UserSetting {
+                Arc::make_mut(&mut context.settings_widgets).push(settings::Widget {
                     key,
                     description,
                     tooltip: None,
-                    kind: UserSettingKind::Bool { default_value },
+                    kind: settings::WidgetKind::Bool { default_value },
                 });
                 Ok(value_in_map as u32)
             }
@@ -1112,11 +1114,11 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 let (memory, context) = memory_and_context(&mut caller);
                 let key = get_str(memory, key_ptr, key_len)?.into();
                 let description = get_str(memory, description_ptr, description_len)?.into();
-                Arc::make_mut(&mut context.user_settings).push(UserSetting {
+                Arc::make_mut(&mut context.settings_widgets).push(settings::Widget {
                     key,
                     description,
                     tooltip: None,
-                    kind: UserSettingKind::Title { heading_level },
+                    kind: settings::WidgetKind::Title { heading_level },
                 });
                 Ok(())
             }
@@ -1134,7 +1136,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 let (memory, context) = memory_and_context(&mut caller);
                 let key = get_str(memory, key_ptr, key_len)?.into();
                 let tooltip = get_str(memory, tooltip_ptr, tooltip_len)?.into();
-                Arc::make_mut(&mut context.user_settings)
+                Arc::make_mut(&mut context.settings_widgets)
                     .iter_mut()
                     .find(|s| s.key == key)
                     .context("There is no setting with the provided key.")?
@@ -1149,7 +1151,10 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
         .func_wrap("env", "settings_map_new", {
             |mut caller: Caller<'_, Context<T>>| {
                 let ctx = caller.data_mut();
-                ctx.settings_maps.insert(SettingsMap::new()).data().as_ffi()
+                ctx.settings_maps
+                    .insert(settings::Map::new())
+                    .data()
+                    .as_ffi()
             }
         })
         .map_err(|source| CreationError::LinkFunction {
@@ -1381,7 +1386,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
             |mut caller: Caller<'_, Context<T>>| {
                 let ctx = caller.data_mut();
                 ctx.settings_lists
-                    .insert(SettingsList::new())
+                    .insert(settings::List::new())
                     .data()
                     .as_ffi()
             }
@@ -1506,12 +1511,12 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                     .get(SettingValueKey::from(KeyData::from_ffi(setting_value)))
                     .ok_or_else(|| format_err!("Invalid setting value handle: {setting_value}"))?;
 
-                settings_list.insert(
-                    index.try_into().unwrap_or(usize::MAX),
-                    setting_value.clone(),
-                );
-
-                Ok(())
+                Ok(settings_list
+                    .insert(
+                        index.try_into().unwrap_or(usize::MAX),
+                        setting_value.clone(),
+                    )
+                    .is_ok() as u32)
             }
         })
         .map_err(|source| CreationError::LinkFunction {
@@ -1529,7 +1534,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
 
                 Ok(context
                     .setting_values
-                    .insert(SettingValue::Map(settings_map.clone()))
+                    .insert(settings::Value::Map(settings_map.clone()))
                     .data()
                     .as_ffi())
             }
@@ -1549,7 +1554,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
 
                 Ok(context
                     .setting_values
-                    .insert(SettingValue::List(settings_list.clone()))
+                    .insert(settings::Value::List(settings_list.clone()))
                     .data()
                     .as_ffi())
             }
@@ -1563,7 +1568,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 Ok(caller
                     .data_mut()
                     .setting_values
-                    .insert(SettingValue::Bool(value != 0))
+                    .insert(settings::Value::Bool(value != 0))
                     .data()
                     .as_ffi())
             }
@@ -1577,7 +1582,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 Ok(caller
                     .data_mut()
                     .setting_values
-                    .insert(SettingValue::I64(value))
+                    .insert(settings::Value::I64(value))
                     .data()
                     .as_ffi())
             }
@@ -1591,7 +1596,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 Ok(caller
                     .data_mut()
                     .setting_values
-                    .insert(SettingValue::F64(value))
+                    .insert(settings::Value::F64(value))
                     .data()
                     .as_ffi())
             }
@@ -1606,7 +1611,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
                 let value = get_str(memory, ptr, len)?;
                 Ok(context
                     .setting_values
-                    .insert(SettingValue::String(value.into()))
+                    .insert(settings::Value::String(value.into()))
                     .data()
                     .as_ffi())
             }
@@ -1657,7 +1662,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
 
                 let value_ptr = get_arr_mut(memory, value_ptr)?;
 
-                if let SettingValue::Map(value) = setting_value {
+                if let settings::Value::Map(value) = setting_value {
                     *value_ptr = context
                         .settings_maps
                         .insert(value.clone())
@@ -1685,7 +1690,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
 
                 let value_ptr = get_arr_mut(memory, value_ptr)?;
 
-                if let SettingValue::List(value) = setting_value {
+                if let settings::Value::List(value) = setting_value {
                     *value_ptr = context
                         .settings_lists
                         .insert(value.clone())
@@ -1713,7 +1718,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
 
                 let [out] = get_arr_mut(memory, value_ptr)?;
 
-                if let SettingValue::Bool(value) = setting_value {
+                if let settings::Value::Bool(value) = setting_value {
                     *out = *value as u8;
                     Ok(1u32)
                 } else {
@@ -1736,7 +1741,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
 
                 let arr = get_arr_mut(memory, value_ptr)?;
 
-                if let SettingValue::I64(value) = setting_value {
+                if let settings::Value::I64(value) = setting_value {
                     *arr = value.to_le_bytes();
                     Ok(1u32)
                 } else {
@@ -1759,7 +1764,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
 
                 let arr = get_arr_mut(memory, value_ptr)?;
 
-                if let SettingValue::F64(value) = setting_value {
+                if let settings::Value::F64(value) = setting_value {
                     *arr = value.to_le_bytes();
                     Ok(1u32)
                 } else {
@@ -1785,7 +1790,7 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
 
                 let len_bytes = get_arr_mut(memory, buf_len_ptr)?;
 
-                if let SettingValue::String(value) = setting_value {
+                if let settings::Value::String(value) = setting_value {
                     *len_bytes = (value.len() as u32).to_le_bytes();
 
                     let len = u32::from_le_bytes(*len_bytes) as usize;

@@ -339,10 +339,10 @@
 //!     /// to free it.
 //!     pub fn settings_list_push(list: SettingsList, value: SettingValue);
 //!     /// Inserts a copy of the setting value into the settings list at the index
-//!     /// given. If the index is out of bounds, the setting value is pushed to the
-//!     /// end of the settings list. You still retain ownership of the setting
-//!     /// value, which means you still need to free it.
-//!     pub fn settings_list_insert(list: SettingsList, idx: u64, value: SettingValue);
+//!     /// given. Returns `false` if the index is out of bounds. No matter what
+//!     /// happens, you still retain ownership of the setting value, which means
+//!     /// you still need to free it.
+//!     pub fn settings_list_insert(list: SettingsList, idx: u64, value: SettingValue) -> bool;
 //!
 //!     /// Creates a new setting value from a settings map. The value is a copy of
 //!     /// the settings map. Any changes to the original settings map afterwards
@@ -452,11 +452,10 @@
 
 mod process;
 mod runtime;
-mod settings;
+pub mod settings;
 mod timer;
 
 pub use process::Process;
 pub use runtime::{Config, CreationError, InterruptHandle, Runtime, RuntimeGuard};
-pub use settings::{SettingValue, SettingsList, SettingsMap, UserSetting, UserSettingKind};
 pub use time;
 pub use timer::{Timer, TimerState};
