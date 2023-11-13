@@ -48,6 +48,25 @@ pub struct SettingsList(NonZeroU64);
 #[repr(transparent)]
 pub struct SettingValue(NonZeroU64);
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[repr(transparent)]
+pub struct SettingValueType(u32);
+
+impl SettingValueType {
+    /// The setting value is a settings map.
+    pub const MAP: Self = Self(1);
+    /// The setting value is a settings list.
+    pub const LIST: Self = Self(2);
+    /// The setting value is a boolean.
+    pub const BOOL: Self = Self(3);
+    /// The setting value is a 64-bit signed integer.
+    pub const I64: Self = Self(4);
+    /// The setting value is a 64-bit floating point number.
+    pub const F64: Self = Self(5);
+    /// The setting value is a string.
+    pub const STRING: Self = Self(6);
+}
+
 #[repr(transparent)]
 pub struct TimerState(u32);
 
@@ -375,6 +394,8 @@ extern "C" {
     /// setting value. You own the new setting value and are responsible for
     /// freeing it.
     pub fn setting_value_copy(value: SettingValue) -> SettingValue;
+    /// Gets the type of a setting value.
+    pub fn setting_value_get_type(value: SettingValue) -> SettingValueType;
     /// Gets the value of a setting value as a settings map by storing it into
     /// the pointer provided. Returns `false` if the setting value is not a
     /// settings map. No value is stored into the pointer in that case. No
