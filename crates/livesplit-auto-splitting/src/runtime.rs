@@ -1651,6 +1651,29 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
             source,
             name: "setting_value_copy",
         })?
+        .func_wrap("env", "setting_value_get_type", {
+            |mut caller: Caller<'_, Context<T>>, setting_value: u64| -> Result<u32> {
+                let (_, context) = memory_and_context(&mut caller);
+
+                let setting_value = context
+                    .setting_values
+                    .get(SettingValueKey::from(KeyData::from_ffi(setting_value)))
+                    .ok_or_else(|| format_err!("Invalid setting value handle: {setting_value}"))?;
+
+                Ok(match setting_value {
+                    settings::Value::Map(_) => 1,
+                    settings::Value::List(_) => 2,
+                    settings::Value::Bool(_) => 3,
+                    settings::Value::I64(_) => 4,
+                    settings::Value::F64(_) => 5,
+                    settings::Value::String(_) => 6,
+                })
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "setting_value_get_type",
+        })?
         .func_wrap("env", "setting_value_get_map", {
             |mut caller: Caller<'_, Context<T>>, setting_value: u64, value_ptr: u32| {
                 let (memory, context) = memory_and_context(&mut caller);
