@@ -32,4 +32,4 @@ wasmtime-wasi = { version = "14.0.0", default-features = false, features = [
 wasi-common = "14.0.0"
 
 [target.'cfg(windows)'.dependencies]
-windows-sys = { version = "0.48.0", features = ["Win32_Storage_FileSystem"] }
+windows-sys = { version = "0.52.0", features = ["Win32_Storage_FileSystem"] }

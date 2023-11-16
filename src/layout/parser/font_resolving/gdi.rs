@@ -3,13 +3,12 @@ use core::{mem::MaybeUninit, ptr, str};
 use windows_sys::Win32::{
     Foundation::HANDLE,
     Graphics::Gdi::{
-        CreateCompatibleDC, CreateFontW, CreatedHDC, DeleteDC, DeleteObject, GetFontData,
-        GetTextMetricsW, SelectObject, DEFAULT_PITCH, DEFAULT_QUALITY, GDI_ERROR, HFONT,
-        TEXTMETRICW,
+        CreateCompatibleDC, CreateFontW, DeleteDC, DeleteObject, GetFontData, GetTextMetricsW,
+        SelectObject, DEFAULT_PITCH, DEFAULT_QUALITY, GDI_ERROR, HDC, HFONT, TEXTMETRICW,
     },
 };
 
-pub struct DeviceContext(CreatedHDC);
+pub struct DeviceContext(HDC);
 
 impl Drop for DeviceContext {
     fn drop(&mut self) {
