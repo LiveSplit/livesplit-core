@@ -267,7 +267,7 @@ const fn parse_scan_code(value: u32) -> Option<KeyCode> {
 }
 
 unsafe extern "system" fn callback_proc(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
-    STATE.with(|state| {
+    let hook = STATE.with(|state| {
         let mut state = state.borrow_mut();
         let state = state.as_mut().expect("State should be initialized by now");
 
@@ -377,8 +377,10 @@ unsafe extern "system" fn callback_proc(code: i32, wparam: WPARAM, lparam: LPARA
             }
         }
 
-        CallNextHookEx(state.hook, code, wparam, lparam)
-    })
+        state.hook
+    });
+
+    CallNextHookEx(hook, code, wparam, lparam)
 }
 
 #[inline]
