@@ -35,4 +35,24 @@ pub enum WidgetKind {
         /// settings [`Map`](super::Map) yet.
         default_value: bool,
     },
+    /// A choice setting. This could be shown as a dropdown or radio buttons.
+    Choice {
+        /// The default value of the setting, if it's not available in the
+        /// settings [`Map`](super::Map) yet.
+        default_option_key: Arc<str>,
+        /// The available options for the setting.
+        options: Arc<Vec<ChoiceOption>>,
+    },
+}
+
+/// An option for a choice setting.
+#[derive(Clone)]
+pub struct ChoiceOption {
+    /// The unique identifier of the option. This is not meant to be shown to
+    /// the user and is only used to keep track of the option. This key is used
+    /// to store and retrieve the value of the option from the main settings
+    /// [`Map`](super::Map).
+    pub key: Arc<str>,
+    /// The name of the option that is shown to the user.
+    pub description: Arc<str>,
 }
