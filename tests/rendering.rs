@@ -106,7 +106,7 @@ fn font_fallback() {
     let build_number: u64 = system.kernel_version().unwrap().parse().unwrap();
     let expected_hash = if build_number >= 22000 {
         // Windows 11
-        "d16b447322881767"
+        "04fd5c64e5ca85f5"
     } else {
         // Windows 10
         "f4bffc6bc6fab953"

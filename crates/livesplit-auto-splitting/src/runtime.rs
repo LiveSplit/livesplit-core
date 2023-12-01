@@ -6,7 +6,7 @@ use crate::{
     timer::Timer,
 };
 
-use anyhow::{ensure, format_err, Context as _, Result};
+use anyhow::{bail, ensure, format_err, Context as _, Result};
 use slotmap::{Key, KeyData, SlotMap};
 use snafu::Snafu;
 use std::{
@@ -1126,6 +1126,70 @@ fn bind_interface<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), Creat
         .map_err(|source| CreationError::LinkFunction {
             source,
             name: "user_settings_add_title",
+        })?
+        .func_wrap("env", "user_settings_add_choice", {
+            |mut caller: Caller<'_, Context<T>>,
+             key_ptr: u32,
+             key_len: u32,
+             description_ptr: u32,
+             description_len: u32,
+             default_option_key_ptr: u32,
+             default_option_key_len: u32| {
+                let (memory, context) = memory_and_context(&mut caller);
+                let key = get_str(memory, key_ptr, key_len)?.into();
+                let description = get_str(memory, description_ptr, description_len)?.into();
+                let default_option_key =
+                    get_str(memory, default_option_key_ptr, default_option_key_len)?.into();
+                Arc::make_mut(&mut context.settings_widgets).push(settings::Widget {
+                    key,
+                    description,
+                    tooltip: None,
+                    kind: settings::WidgetKind::Choice {
+                        default_option_key,
+                        options: Arc::new(Vec::new()),
+                    },
+                });
+                Ok(())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "user_settings_add_choice",
+        })?
+        .func_wrap("env", "user_settings_add_choice_option", {
+            |mut caller: Caller<'_, Context<T>>,
+             key_ptr: u32,
+             key_len: u32,
+             option_key_ptr: u32,
+             option_key_len: u32,
+             option_description_ptr: u32,
+             option_description_len: u32| {
+                let (memory, context) = memory_and_context(&mut caller);
+                let key = get_str(memory, key_ptr, key_len)?.into();
+                let option_key = get_str(memory, option_key_ptr, option_key_len)?.into();
+                let option_description =
+                    get_str(memory, option_description_ptr, option_description_len)?.into();
+                let setting = Arc::make_mut(&mut context.settings_widgets)
+                    .iter_mut()
+                    .find(|s| s.key == key)
+                    .context("There is no setting with the provided key.")?;
+                let (options, is_chosen) = match &mut setting.kind {
+                    settings::WidgetKind::Choice {
+                        options,
+                        default_option_key,
+                    } => (options, *default_option_key == option_key),
+                    _ => bail!("The setting is not a choice."),
+                };
+                Arc::make_mut(options).push(settings::ChoiceOption {
+                    key: option_key,
+                    description: option_description,
+                });
+                Ok(is_chosen as u32)
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "user_settings_add_choice_option",
         })?
         .func_wrap("env", "user_settings_set_tooltip", {
             |mut caller: Caller<'_, Context<T>>,

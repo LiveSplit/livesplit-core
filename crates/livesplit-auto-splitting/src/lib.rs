@@ -260,6 +260,34 @@
 //!         description_len: usize,
 //!         heading_level: u32,
 //!     );
+//!     /// Adds a new choice setting that the user can modify. This allows the user
+//!     /// to choose between various options. The key is used to store the setting
+//!     /// in the settings map and needs to be unique across all types of settings.
+//!     /// The description is what's shown to the user. The key of the default
+//!     /// option to show needs to be specified. The pointers need to point to
+//!     /// valid UTF-8 encoded text with the respective given length.
+//!     pub fn user_settings_add_choice(
+//!         key_ptr: *const u8,
+//!         key_len: usize,
+//!         description_ptr: *const u8,
+//!         description_len: usize,
+//!         default_option_key_ptr: *const u8,
+//!         default_option_key_len: usize,
+//!     );
+//!     /// Adds a new option to a choice setting. The key needs to match the key of
+//!     /// the choice setting that it's supposed to be added to. The option key is
+//!     /// used as the value to store when the user chooses this option. The
+//!     /// description is what's shown to the user. The pointers need to point to
+//!     /// valid UTF-8 encoded text with the respective given length. Returns
+//!     /// `true` if the option is at this point in time chosen by the user.
+//!     pub fn user_settings_add_choice_option(
+//!         key_ptr: *const u8,
+//!         key_len: usize,
+//!         option_key_ptr: *const u8,
+//!         option_key_len: usize,
+//!         option_description_ptr: *const u8,
+//!         option_description_len: usize,
+//!     ) -> bool;
 //!     /// Adds a tooltip to a setting based on its key. A tooltip is useful for
 //!     /// explaining the purpose of a setting to the user. The pointers need to
 //!     /// point to valid UTF-8 encoded text with the respective given length.

@@ -120,10 +120,9 @@ fn with_vec<F, R>(f: F) -> R
 where
     F: FnOnce(&mut Vec<u8>) -> R,
 {
-    OUTPUT_VEC.with(|output| {
-        let mut output = output.borrow_mut();
+    OUTPUT_VEC.with_borrow_mut(|output| {
         output.clear();
-        f(&mut output)
+        f(output)
     })
 }
 
@@ -131,10 +130,9 @@ fn output_vec<F>(f: F) -> *const c_char
 where
     F: FnOnce(&mut Vec<u8>),
 {
-    OUTPUT_VEC.with(|output| {
-        let mut output = output.borrow_mut();
+    OUTPUT_VEC.with_borrow_mut(|output| {
         output.clear();
-        f(&mut output);
+        f(output);
         output.push(0);
         output.as_ptr() as *const c_char
     })
@@ -207,5 +205,5 @@ pub extern "C" fn dealloc(ptr: *mut u8, cap: usize) {
 /// current thread. The length excludes the nul-terminator.
 #[no_mangle]
 pub extern "C" fn get_buf_len() -> usize {
-    OUTPUT_VEC.with(|v| v.borrow().len() - 1)
+    OUTPUT_VEC.with_borrow(|v| v.len() - 1)
 }
