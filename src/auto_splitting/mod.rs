@@ -748,6 +748,10 @@ impl AutoSplitTimer for Timer {
         self.0.write().unwrap().reset(true)
     }
 
+    fn current_split_index(&self) -> Option<usize> {
+        self.0.read().unwrap().current_split_index()
+    }
+
     fn set_game_time(&mut self, time: time::Duration) {
         self.0.write().unwrap().set_game_time(time.into());
     }
