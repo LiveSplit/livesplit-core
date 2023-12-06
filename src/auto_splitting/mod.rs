@@ -807,6 +807,10 @@ impl<E: event::CommandSink + TimerQuery + Send> AutoSplitTimer for Timer<E> {
         drop(self.0.reset(None));
     }
 
+    fn current_split_index(&self) -> Option<usize> {
+        self.0.get_timer().current_split_index()
+    }
+
     fn set_game_time(&mut self, time: time::Duration) {
         drop(self.0.set_game_time(time.into()));
     }
