@@ -288,6 +288,19 @@ extern "C" {
         option_description_ptr: *const u8,
         option_description_len: usize,
     ) -> bool;
+    /// Adds a new file selection setting that the user can modify.
+    /// This allows the user to select a file path to be stored at the key.
+    /// The filter can include `*` wildcards, for example `"*.txt"`.
+    /// The pointers need to point to valid UTF-8 encoded text with the
+    /// respective given length.
+    pub fn user_settings_add_file_selection(
+        key_ptr: *const u8,
+        key_len: usize,
+        description_ptr: *const u8,
+        description_len: usize,
+        filter_ptr: *const u8,
+        filter_len: usize,
+    );
     /// Adds a tooltip to a setting based on its key. A tooltip is useful for
     /// explaining the purpose of a setting to the user. The pointers need to
     /// point to valid UTF-8 encoded text with the respective given length.
