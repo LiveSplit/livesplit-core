@@ -43,6 +43,12 @@ pub enum WidgetKind {
         /// The available options for the setting.
         options: Arc<Vec<ChoiceOption>>,
     },
+    /// A file selection. This could be a button that opens a File Dialog.
+    FileSelection {
+        /// A filter on which files are selectable,
+        /// for example `"*.txt"` for text files.
+        filter: Arc<str>,
+    }
 }
 
 /// An option for a choice setting.
