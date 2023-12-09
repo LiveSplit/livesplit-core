@@ -124,6 +124,34 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             source,
             name: "user_settings_add_choice_option",
         })?
+        .func_wrap("env", "user_settings_add_file_selection", {
+            |mut caller: Caller<'_, Context<T>>,
+             key_ptr: u32,
+             key_len: u32,
+             description_ptr: u32,
+             description_len: u32,
+             filter_ptr: u32,
+             filter_len: u32| {
+                let (memory, context) = memory_and_context(&mut caller);
+                let key = get_str(memory, key_ptr, key_len)?.into();
+                let description = get_str(memory, description_ptr, description_len)?.into();
+                let filter =
+                    get_str(memory, filter_ptr, filter_len)?.into();
+                Arc::make_mut(&mut context.settings_widgets).push(settings::Widget {
+                    key,
+                    description,
+                    tooltip: None,
+                    kind: settings::WidgetKind::FileSelection {
+                        filter,
+                    },
+                });
+                Ok(())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "user_settings_add_file_selection",
+        })?
         .func_wrap("env", "user_settings_set_tooltip", {
             |mut caller: Caller<'_, Context<T>>,
              key_ptr: u32,
