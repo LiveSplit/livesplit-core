@@ -516,6 +516,7 @@ mod process;
 mod runtime;
 pub mod settings;
 mod timer;
+pub mod wasi_path;
 
 pub use process::Process;
 pub use runtime::{

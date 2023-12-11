@@ -2,7 +2,6 @@
 
 use std::{
     io,
-    path::{self, Path},
     time::{Duration, Instant},
 };
 
@@ -11,7 +10,7 @@ use read_process_memory::{CopyAddress, ProcessHandle};
 use snafu::{OptionExt, ResultExt, Snafu};
 use sysinfo::{self, PidExt, ProcessExt};
 
-use crate::runtime::ProcessList;
+use crate::{runtime::ProcessList, wasi_path::path_to_wasi};
 
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)))]
@@ -70,7 +69,7 @@ impl Process {
             .max_by_key(|p| (p.start_time(), p.pid().as_u32()))
             .context(ProcessDoesntExist)?;
 
-        let path = build_path(process.exe());
+        let path = path_to_wasi(process.exe());
 
         let pid = process.pid().as_u32() as Pid;
 
@@ -93,7 +92,7 @@ impl Process {
             .get(sysinfo::Pid::from_u32(pid))
             .context(ProcessDoesntExist)?;
 
-        let path = build_path(process.exe());
+        let path = path_to_wasi(process.exe());
 
         let pid_out = pid as Pid;
 
@@ -155,7 +154,7 @@ impl Process {
             .iter()
             .find(|m| m.filename().is_some_and(|f| f.ends_with(module)))
             .context(ModuleDoesntExist)
-            .map(|m| build_path(m.filename().unwrap()).unwrap_or_default())
+            .map(|m| path_to_wasi(m.filename().unwrap()).unwrap_or_default())
     }
 
     pub(super) fn read_mem(&self, address: Address, buf: &mut [u8]) -> io::Result<()> {
@@ -238,28 +237,4 @@ impl Process {
         }
         Ok(())
     }
-}
-
-pub fn build_path(original_path: &Path) -> Option<Box<str>> {
-    let mut path = String::from("/mnt");
-    for component in original_path.components() {
-        if !path.ends_with('/') {
-            path.push('/');
-        }
-        match component {
-            path::Component::Prefix(prefix) => match prefix.kind() {
-                path::Prefix::VerbatimDisk(disk) | path::Prefix::Disk(disk) => {
-                    path.push(disk.to_ascii_lowercase() as char)
-                }
-                _ => return None,
-            },
-            path::Component::Normal(c) => {
-                path.push_str(c.to_str()?);
-            }
-            path::Component::RootDir => {}
-            path::Component::CurDir => path.push('.'),
-            path::Component::ParentDir => path.push_str(".."),
-        }
-    }
-    Some(path.into_boxed_str())
 }
