@@ -45,20 +45,23 @@ pub fn wasi_to_path(wasi_path_str: &str) -> Option<PathBuf> {
             (2, Component::Normal(d)) if d.len() == 1 && d.to_ascii_lowercase() == d => {
                 let disk = d.to_string_lossy().to_ascii_uppercase();
                 path.push(format!("{}{}{}", r"\\?\", disk, r":\"));
-            },
+            }
             (2, Component::Normal(c)) if !path.has_root() => {
-                if let Some(root) = [r"/", r"\"].into_iter().map(PathBuf::from).find(|p| p.has_root()) {
+                if let Some(root) = [r"/", r"\"]
+                    .into_iter()
+                    .map(PathBuf::from)
+                    .find(|p| p.has_root())
+                {
                     path.push(root);
                 }
                 path.push(c);
-            },
+            }
             (i, Component::Normal(c)) if 2 <= i => path.push(c),
             _ => return None,
         }
     }
     Some(path)
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -67,24 +70,36 @@ mod tests {
     #[cfg(windows)]
     #[test]
     fn test_windows_to_wasi() {
-        assert_eq!(path_to_wasi(Path::new(r"C:\foo\bar.exe")), Some(r"/mnt/c/foo/bar.exe".into()));
+        assert_eq!(
+            path_to_wasi(Path::new(r"C:\foo\bar.exe")),
+            Some(r"/mnt/c/foo/bar.exe".into())
+        );
     }
 
     #[cfg(windows)]
     #[test]
     fn test_wasi_to_windows() {
-        assert_eq!(wasi_to_path(r"/mnt/c/foo/bar.exe"), Some(r"C:\foo\bar.exe".into()));
+        assert_eq!(
+            wasi_to_path(r"/mnt/c/foo/bar.exe"),
+            Some(r"C:\foo\bar.exe".into())
+        );
     }
 
     #[cfg(not(windows))]
     #[test]
     fn test_non_windows_to_wasi() {
-        assert_eq!(path_to_wasi(Path::new(r"/foo/bar.exe")), Some(r"/mnt/foo/bar.exe".into()));
+        assert_eq!(
+            path_to_wasi(Path::new(r"/foo/bar.exe")),
+            Some(r"/mnt/foo/bar.exe".into())
+        );
     }
 
     #[cfg(not(windows))]
     #[test]
     fn test_wasi_to_non_windows() {
-        assert_eq!(wasi_to_path(r"/mnt/foo/bar.exe"), Some(r"/foo/bar.exe".into()));
+        assert_eq!(
+            wasi_to_path(r"/mnt/foo/bar.exe"),
+            Some(r"/foo/bar.exe".into())
+        );
     }
 }

@@ -135,15 +135,12 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let (memory, context) = memory_and_context(&mut caller);
                 let key = get_str(memory, key_ptr, key_len)?.into();
                 let description = get_str(memory, description_ptr, description_len)?.into();
-                let filter =
-                    get_str(memory, filter_ptr, filter_len)?.into();
+                let filter = get_str(memory, filter_ptr, filter_len)?.into();
                 Arc::make_mut(&mut context.settings_widgets).push(settings::Widget {
                     key,
                     description,
                     tooltip: None,
-                    kind: settings::WidgetKind::FileSelection {
-                        filter,
-                    },
+                    kind: settings::WidgetKind::FileSelection { filter },
                 });
                 Ok(())
             }

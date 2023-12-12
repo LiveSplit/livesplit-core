@@ -48,7 +48,7 @@ pub enum WidgetKind {
         /// A filter on which files are selectable,
         /// for example `"*.txt"` for text files.
         filter: Arc<str>,
-    }
+    },
 }
 
 /// An option for a choice setting.
