@@ -44,7 +44,7 @@ pub fn wasi_to_path(wasi_path_str: &str) -> Option<PathBuf> {
             (1, Component::Normal(mnt)) if mnt == "mnt" => (),
             (2, Component::Normal(d)) if d.len() == 1 && d.to_ascii_lowercase() == d => {
                 let disk = d.to_string_lossy().to_ascii_uppercase();
-                path.push(format!("{}{}{}", r"\\?\", disk, r":\"));
+                path.push(format!("{}{}", disk, r":\"));
             }
             (2, Component::Normal(c)) if !path.has_root() => {
                 if let Some(root) = [r"/", r"\"]
@@ -72,6 +72,10 @@ mod tests {
     fn test_windows_to_wasi() {
         assert_eq!(
             path_to_wasi(Path::new(r"C:\foo\bar.exe")),
+            Some(r"/mnt/c/foo/bar.exe".into())
+        );
+        assert_eq!(
+            path_to_wasi(Path::new(r"\\?\C:\foo\bar.exe")),
             Some(r"/mnt/c/foo/bar.exe".into())
         );
     }
