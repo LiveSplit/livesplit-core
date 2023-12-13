@@ -290,7 +290,8 @@
 //!     ) -> bool;
 //!     /// Adds a new file selection setting that the user can modify.
 //!     /// This allows the user to select a file path to be stored at the key.
-//!     /// The filter can include `*` wildcards, for example `"*.txt"`.
+//!     /// The filter can include `*` wildcards, for example `"*.txt"`,
+//!     /// and multiple patterns separated by `;` semicolons, like `"*.txt;*.md"`.
 //!     /// The pointers need to point to valid UTF-8 encoded text with the
 //!     /// respective given length.
 //!     pub fn user_settings_add_file_selection(

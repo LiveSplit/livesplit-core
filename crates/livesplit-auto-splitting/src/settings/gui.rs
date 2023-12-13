@@ -45,8 +45,9 @@ pub enum WidgetKind {
     },
     /// A file selection. This could be a button that opens a File Dialog.
     FileSelection {
-        /// A filter on which files are selectable,
-        /// for example `"*.txt"` for text files.
+        /// A filter on which files are selectable.
+        /// Can include `*` wildcards, for example `"*.txt"`,
+        /// and multiple patterns separated by `;` semicolons, like `"*.txt;*.md"`.
         filter: Arc<str>,
     },
 }
