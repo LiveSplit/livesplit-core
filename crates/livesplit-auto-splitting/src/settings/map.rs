@@ -9,8 +9,9 @@ use super::Value;
 /// user settings, but because the user didn't modify them, they are not stored
 /// here yet.
 #[derive(Clone, Default, PartialEq)]
+#[repr(transparent)]
 pub struct Map {
-    values: Arc<IndexMap<Arc<str>, Value>>,
+    pub(crate) values: Arc<IndexMap<Arc<str>, Value>>,
 }
 
 impl fmt::Debug for Map {
@@ -73,20 +74,6 @@ impl Map {
     #[inline]
     pub fn is_empty(&self) -> bool {
         self.values.is_empty()
-    }
-
-    /// Returns [`true`] if the identity of the map is the same as the identity
-    /// of the other map. Maps use the copy-on-write principle. This means that
-    /// cloning a map is cheap because it references all the same data as the
-    /// original until one of the variables is changed. With this function you
-    /// can check if two variables internally share the same data and are
-    /// therefore identical. This is useful to determine if the map has changed
-    /// since the last time it was checked. You may use this as part of a
-    /// compare-and-swap loop.
-    #[must_use]
-    #[inline]
-    pub fn is_unchanged(&self, other: &Self) -> bool {
-        Arc::ptr_eq(&self.values, &other.values)
     }
 }
 
@@ -164,23 +151,5 @@ mod tests {
         assert!(!map.is_empty());
         map.insert("c".into(), Value::Bool(true));
         assert!(!map.is_empty());
-    }
-
-    #[test]
-    fn test_is_unchanged() {
-        let mut map = Map::new();
-        let mut map2 = map.clone();
-        assert!(map.is_unchanged(&map2));
-        map.insert("a".into(), Value::Bool(true));
-        assert!(!map.is_unchanged(&map2));
-        map2.insert("a".into(), Value::Bool(true));
-        assert!(!map.is_unchanged(&map2));
-        map.insert("b".into(), Value::Bool(false));
-        assert!(!map.is_unchanged(&map2));
-        map2.insert("b".into(), Value::Bool(false));
-        assert!(!map.is_unchanged(&map2));
-        map2 = map.clone();
-        assert!(map.is_unchanged(&map2));
-        assert!(map2.is_unchanged(&map));
     }
 }

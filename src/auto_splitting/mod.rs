@@ -494,14 +494,13 @@ use crate::{
 };
 pub use livesplit_auto_splitting::settings;
 use livesplit_auto_splitting::{
-    Config, CreationError, InterruptHandle, Runtime as ScriptRuntime, Timer as AutoSplitTimer,
-    TimerState,
+    AutoSplitter, Config, CreationError, InterruptHandle, Timer as AutoSplitTimer, TimerState,
 };
 use snafu::Snafu;
 use std::{fmt, fs, io, path::PathBuf, thread, time::Duration};
 use tokio::{
     runtime,
-    sync::{mpsc, oneshot, watch},
+    sync::watch,
     time::{timeout_at, Instant},
 };
 
@@ -532,7 +531,8 @@ pub enum Error {
 /// WebAssembly module to control a timer.
 pub struct Runtime {
     interrupt_receiver: watch::Receiver<Option<InterruptHandle>>,
-    sender: mpsc::UnboundedSender<Request>,
+    auto_splitter: watch::Sender<Option<AutoSplitter<Timer>>>,
+    runtime: livesplit_auto_splitting::Runtime,
 }
 
 impl Drop for Runtime {
@@ -543,11 +543,17 @@ impl Drop for Runtime {
     }
 }
 
+impl Default for Runtime {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Runtime {
     /// Starts the runtime. Doesn't actually load an auto splitter until
-    /// [`load_script`][Runtime::load_script] is called.
-    pub fn new(timer: SharedTimer) -> Self {
-        let (sender, receiver) = mpsc::unbounded_channel();
+    /// [`load`][Runtime::load] is called.
+    pub fn new() -> Self {
+        let (sender, receiver) = watch::channel(None);
         let (interrupt_sender, interrupt_receiver) = watch::channel(None);
         let (timeout_sender, timeout_receiver) = watch::channel(None);
 
@@ -558,7 +564,7 @@ impl Runtime {
                     .enable_time()
                     .build()
                     .unwrap()
-                    .block_on(run(receiver, timer, timeout_sender, interrupt_sender))
+                    .block_on(run(receiver, timeout_sender, interrupt_sender))
             })
             .unwrap();
 
@@ -578,173 +584,81 @@ impl Runtime {
 
         Self {
             interrupt_receiver,
-            sender,
+            auto_splitter: sender,
+            // TODO: unwrap?
+            runtime: livesplit_auto_splitting::Runtime::new(Config::default()).unwrap(),
         }
     }
 
-    /// Attempts to load a wasm file containing an auto splitter module. This
-    /// call will block until the auto splitter has either loaded successfully
-    /// or failed.
-    pub async fn load_script(&self, script: PathBuf) -> Result<(), Error> {
-        let (sender, receiver) = oneshot::channel();
-        let script = fs::read(script).map_err(|e| Error::ReadFileFailed { source: e })?;
-        self.sender
-            .send(Request::LoadScript(script, sender))
-            .map_err(|_| Error::ThreadStopped)?;
+    /// Attempts to load a wasm file containing an auto splitter module.
+    pub fn load(&self, path: PathBuf, timer: SharedTimer) -> Result<(), Error> {
+        let data = fs::read(path).map_err(|e| Error::ReadFileFailed { source: e })?;
 
-        receiver.await.map_err(|_| Error::ThreadStopped)??;
+        let auto_splitter = self
+            .runtime
+            .compile(&data)
+            .map_err(|e| Error::LoadFailed { source: e })?
+            .instantiate(Timer(timer), None, None)
+            .map_err(|e| Error::LoadFailed { source: e })?;
 
-        Ok(())
-    }
-
-    /// Attempts to load a wasm file containing an auto splitter module. This
-    /// call will block until the auto splitter has either loaded successfully
-    /// or failed.
-    pub fn load_script_blocking(&self, script: PathBuf) -> Result<(), Error> {
-        runtime::Builder::new_current_thread()
-            .enable_time()
-            .build()
-            .unwrap()
-            .block_on(self.load_script(script))
+        self.auto_splitter
+            .send(Some(auto_splitter))
+            .map_err(|_| Error::ThreadStopped)
     }
 
     /// Unloads the current auto splitter. This will _not_ return an error if
     /// there isn't currently an auto splitter loaded, only if the runtime
     /// thread stops unexpectedly.
-    pub async fn unload_script(&self) -> Result<(), Error> {
-        let (sender, receiver) = oneshot::channel();
-        self.sender
-            .send(Request::UnloadScript(sender))
-            .map_err(|_| Error::ThreadStopped)?;
-
-        receiver.await.map_err(|_| Error::ThreadStopped)
+    pub fn unload(&self) -> Result<(), Error> {
+        self.auto_splitter
+            .send(None)
+            .map_err(|_| Error::ThreadStopped)
     }
 
-    /// Unloads the current auto splitter. This will _not_ return an error if
-    /// there isn't currently an auto splitter loaded, only if the runtime
-    /// thread stops unexpectedly.
-    pub fn unload_script_blocking(&self) -> Result<(), Error> {
-        runtime::Builder::new_current_thread()
-            .enable_time()
-            .build()
-            .unwrap()
-            .block_on(self.unload_script())
+    /// Accesses a copy of the currently stored settings. The auto splitter can
+    /// change these at any time. If you intend to make modifications to the
+    /// settings, you need to set them again via
+    /// [`set_settings_map`](Self::set_settings_map) or
+    /// [`set_settings_map_if_unchanged`](Self::set_settings_map_if_unchanged).
+    pub fn settings_map(&self) -> Option<settings::Map> {
+        Some(self.auto_splitter.borrow().as_ref()?.settings_map())
     }
 
-    /// Attempts to reload the currently loaded auto splitter.
-    /// This call will block until the auto splitter has either reloaded successfully
-    /// or failed to reload.
-    pub async fn reload_script(&self) -> Result<(), Error> {
-        let (sender, receiver) = oneshot::channel();
-        self.sender
-            .send(Request::ReloadScript(sender))
-            .map_err(|_| Error::ThreadStopped)?;
-
-        receiver.await.map_err(|_| Error::ThreadStopped)??;
-
-        Ok(())
+    /// Unconditionally sets the settings map.
+    pub fn set_settings_map(&self, map: settings::Map) -> Option<()> {
+        self.auto_splitter.borrow().as_ref()?.set_settings_map(map);
+        Some(())
     }
 
-    /// Attempts to reload the currently loaded auto splitter.
-    /// This call will block until the auto splitter has either reloaded successfully
-    /// or failed to reload.
-    pub fn reload_script_blocking(&self) -> Result<(), Error> {
-        runtime::Builder::new_current_thread()
-            .enable_time()
-            .build()
-            .unwrap()
-            .block_on(self.reload_script())
-    }
-
-    /// Get the custom auto splitter settings
-    pub async fn get_settings(&self) -> Result<Vec<settings::Widget>, Error> {
-        let (sender, receiver) = oneshot::channel();
-        self.sender
-            .send(Request::GetSettings(sender))
-            .map_err(|_| Error::ThreadStopped)?;
-
-        let result = receiver.await;
-
-        match result {
-            Ok(settings) => match settings {
-                Some(settings) => Ok(settings),
-                None => Err(Error::SettingsLoadFailed),
-            },
-            Err(_) => Err(Error::ThreadStopped),
-        }
-    }
-
-    /// Get the custom auto splitter settings
-    pub fn get_settings_blocking(&self) -> Result<Vec<settings::Widget>, Error> {
-        runtime::Builder::new_current_thread()
-            .enable_time()
-            .build()
-            .unwrap()
-            .block_on(self.get_settings())
-    }
-
-    /// Get the value for a custom auto splitter setting
-    pub async fn get_setting_value(&self, key: String) -> Result<settings::Value, Error> {
-        let (sender, receiver) = oneshot::channel();
-        self.sender
-            .send(Request::GetSettingValue(key, sender))
-            .map_err(|_| Error::ThreadStopped)?;
-
-        let result = receiver.await;
-
-        match result {
-            Ok(setting_value) => match setting_value {
-                Some(setting_value) => Ok(setting_value),
-                None => Err(Error::SettingNotFound),
-            },
-            Err(_) => Err(Error::ThreadStopped),
-        }
-    }
-
-    /// Get the value for a custom auto splitter setting
-    pub fn get_setting_value_blocking(&self, key: String) -> Result<settings::Value, Error> {
-        runtime::Builder::new_current_thread()
-            .enable_time()
-            .build()
-            .unwrap()
-            .block_on(self.get_setting_value(key))
-    }
-
-    /// Set the value for a custom auto splitter setting
-    pub async fn set_setting_value(
+    /// Sets the settings map if it didn't change in the meantime. Returns
+    /// [`true`] if it got set and [`false`] if it didn't. The auto splitter may
+    /// by itself change the settings map within each update. So changing the
+    /// settings from outside may race the auto splitter. You may use this to
+    /// reapply the changes if the auto splitter changed the settings in the
+    /// meantime. Returns [`None`] if there is no auto splitter loaded.
+    pub fn set_settings_map_if_unchanged(
         &self,
-        key: Arc<str>,
-        value: settings::Value,
-    ) -> Result<(), Error> {
-        let (sender, receiver) = oneshot::channel();
-        self.sender
-            .send(Request::SetSettingValue(key, value, sender))
-            .map_err(|_| Error::ThreadStopped)?;
-
-        receiver.await.map_err(|_| Error::ThreadStopped)
+        old: &settings::Map,
+        new: settings::Map,
+    ) -> Option<bool> {
+        Some(
+            self.auto_splitter
+                .borrow()
+                .as_ref()?
+                .set_settings_map_if_unchanged(old, new),
+        )
     }
 
-    /// Set the value for a custom auto splitter setting
-    pub fn set_setting_value_blocking(
-        &self,
-        key: Arc<str>,
-        value: settings::Value,
-    ) -> Result<(), Error> {
-        runtime::Builder::new_current_thread()
-            .enable_time()
-            .build()
-            .unwrap()
-            .block_on(self.set_setting_value(key, value))
+    /// Accesses all the settings widgets that are meant to be shown to and
+    /// modified by the user. The auto splitter may change these settings
+    /// widgets within each update. You should change the settings widgets that
+    /// are shown whenever this changes. This list can't tear. Any changes from
+    /// within the auto splitter can only be perceived once the auto splitter
+    /// tick is complete. Any changes the user does to these widgets should be
+    /// applied to the settings map and stored back.
+    pub fn settings_widgets(&self) -> Option<Arc<Vec<settings::Widget>>> {
+        Some(self.auto_splitter.borrow().as_ref()?.settings_widgets())
     }
-}
-
-enum Request {
-    LoadScript(Vec<u8>, oneshot::Sender<Result<(), Error>>),
-    UnloadScript(oneshot::Sender<()>),
-    ReloadScript(oneshot::Sender<Result<(), Error>>),
-    GetSettings(oneshot::Sender<Option<Vec<settings::Widget>>>),
-    GetSettingValue(String, oneshot::Sender<Option<settings::Value>>),
-    SetSettingValue(Arc<str>, settings::Value, oneshot::Sender<()>),
 }
 
 // This newtype is required because [`SharedTimer`](crate::timing::SharedTimer)
@@ -803,159 +717,65 @@ impl AutoSplitTimer for Timer {
 }
 
 async fn run(
-    mut receiver: mpsc::UnboundedReceiver<Request>,
-    timer: SharedTimer,
+    mut auto_splitter: watch::Receiver<Option<AutoSplitter<Timer>>>,
     timeout_sender: watch::Sender<Option<Instant>>,
     interrupt_sender: watch::Sender<Option<InterruptHandle>>,
 ) {
-    'back_to_not_having_a_runtime: loop {
+    'back_to_not_having_an_auto_splitter: loop {
         interrupt_sender.send(None).ok();
         timeout_sender.send(None).ok();
 
-        let mut script_path;
-
-        let mut runtime = loop {
-            match receiver.recv().await {
-                Some(Request::LoadScript(script, ret)) => {
-                    match ScriptRuntime::new(&script, Timer(timer.clone()), Config::default()) {
-                        Ok(r) => {
-                            ret.send(Ok(())).ok();
-                            script_path = script;
-                            break r;
-                        }
-                        Err(source) => {
-                            ret.send(Err(Error::LoadFailed { source })).ok();
-                        }
-                    };
+        let mut next_step = loop {
+            match auto_splitter.changed().await {
+                Ok(()) => {
+                    if let Some(auto_splitter) = &*auto_splitter.borrow() {
+                        log::info!(target: "Auto Splitter", "Loaded auto splitter");
+                        let next_step = Instant::now();
+                        interrupt_sender
+                            .send(Some(auto_splitter.interrupt_handle()))
+                            .ok();
+                        timeout_sender.send(Some(next_step)).ok();
+                        break next_step;
+                    }
                 }
-                Some(Request::UnloadScript(ret)) => {
-                    log::warn!(target: "Auto Splitter", "Attempted to unload already unloaded script");
-                    ret.send(()).ok();
-                }
-                Some(Request::ReloadScript(ret)) => {
-                    log::warn!(target: "Auto Splitter", "Attempted to reload a non existing script");
-                    ret.send(Err(Error::ImpossibleReload)).ok();
-                }
-                Some(Request::GetSettings(ret)) => {
-                    log::warn!(target: "Auto Splitter", "Attempted to get the settings when no script is loaded");
-                    ret.send(None).ok();
-                }
-                Some(Request::GetSettingValue(_, ret)) => {
-                    log::warn!(target: "Auto Splitter", "Attempted to get a setting value when no script is loaded");
-                    ret.send(None).ok();
-                }
-                Some(Request::SetSettingValue(_, _, ret)) => {
-                    log::warn!(target: "Auto Splitter", "Attempted to set a setting value when no script is loaded");
-                    ret.send(()).ok();
-                }
-                None => {
-                    return;
-                }
+                Err(_) => return,
             };
         };
 
-        log::info!(target: "Auto Splitter", "Loaded script");
-        let mut next_step = Instant::now();
-        interrupt_sender.send(Some(runtime.interrupt_handle())).ok();
-        timeout_sender.send(Some(next_step)).ok();
-
         loop {
-            match timeout_at(next_step, receiver.recv()).await {
-                Ok(Some(request)) => match request {
-                    Request::LoadScript(script, ret) => {
-                        match ScriptRuntime::new(&script, Timer(timer.clone()), Config::default()) {
-                            Ok(r) => {
-                                ret.send(Ok(())).ok();
-                                runtime = r;
-                                script_path = script;
-                                log::info!(target: "Auto Splitter", "Loaded new script");
-                            }
-                            Err(source) => {
-                                ret.send(Err(Error::LoadFailed { source })).ok();
-                                log::info!(target: "Auto Splitter", "Failed to load the new script");
-                            }
+            let result = timeout_at(next_step, auto_splitter.changed()).await;
+            let Some(auto_splitter) = &*auto_splitter.borrow() else {
+                log::info!(target: "Auto Splitter", "Unloaded auto splitter");
+                continue 'back_to_not_having_an_auto_splitter;
+            };
+
+            match result {
+                Ok(Ok(())) => {
+                    log::info!(target: "Auto Splitter", "Replaced auto splitter");
+                    next_step = Instant::now();
+                    interrupt_sender
+                        .send(Some(auto_splitter.interrupt_handle()))
+                        .ok();
+                    timeout_sender.send(Some(next_step)).ok();
+                }
+                Ok(Err(_)) => return,
+                Err(_) => {
+                    let result = auto_splitter.lock().update();
+                    match result {
+                        Ok(()) => {
+                            next_step = next_step
+                                .into_std()
+                                .checked_add(auto_splitter.tick_rate())
+                                .map_or(next_step, |t| t.into());
+
+                            timeout_sender.send(Some(next_step)).ok();
+                        }
+                        Err(e) => {
+                            log::error!(target: "Auto Splitter", "Unloaded, because the script trapped: {:?}", e);
+                            continue 'back_to_not_having_an_auto_splitter;
                         }
                     }
-                    Request::UnloadScript(ret) => {
-                        ret.send(()).ok();
-                        log::info!(target: "Auto Splitter", "Unloaded script");
-                        continue 'back_to_not_having_a_runtime;
-                    }
-                    Request::ReloadScript(ret) => {
-                        let mut config = Config::default();
-                        config.settings_map = Some(runtime.settings_map().clone());
-
-                        match ScriptRuntime::new(&script_path, Timer(timer.clone()), config) {
-                            Ok(r) => {
-                                ret.send(Ok(())).ok();
-                                runtime = r;
-                                log::info!(target: "Auto Splitter", "Reloaded script");
-                            }
-                            Err(source) => {
-                                ret.send(Err(Error::LoadFailed { source })).ok();
-                                log::info!(target: "Auto Splitter", "Failed to reload the script");
-                            }
-                        }
-                    }
-                    Request::GetSettings(ret) => {
-                        ret.send(Some(runtime.settings_widgets().to_vec())).ok();
-                        log::info!(target: "Auto Splitter", "Getting the settings");
-                    }
-                    Request::GetSettingValue(key, ret) => {
-                        let settings_map = runtime.settings_map();
-                        let setting_value = settings_map.get(key.as_str());
-
-                        if setting_value.is_some() {
-                            ret.send(setting_value.cloned()).ok();
-                        } else {
-                            let widget_value =
-                                match runtime.settings_widgets().iter().find(|x| *x.key == key) {
-                                    Some(widget) => match &widget.kind {
-                                        settings::WidgetKind::Bool { default_value } => {
-                                            Some(settings::Value::Bool(*default_value))
-                                        }
-                                        settings::WidgetKind::Title { .. } => None,
-                                        settings::WidgetKind::Choice {
-                                            default_option_key, ..
-                                        } => Some(settings::Value::String(
-                                            default_option_key.clone(),
-                                        )),
-                                    },
-                                    None => None,
-                                };
-                            ret.send(widget_value).ok();
-                        }
-
-                        log::info!(target: "Auto Splitter", "Getting value for {}", key);
-                    }
-                    Request::SetSettingValue(key, value, ret) => {
-                        loop {
-                            let old = runtime.settings_map();
-                            let mut new = old.clone();
-                            new.insert(key.clone(), value.clone());
-                            if runtime.set_settings_map_if_unchanged(&old, new) {
-                                break;
-                            }
-                        }
-                        ret.send(()).ok();
-                        log::info!(target: "Auto Splitter", "Setting value for {}", key);
-                    }
-                },
-                Ok(None) => return,
-                Err(_) => match runtime.lock().update() {
-                    Ok(()) => {
-                        next_step = next_step
-                            .into_std()
-                            .checked_add(runtime.tick_rate())
-                            .map_or(next_step, |t| t.into());
-
-                        timeout_sender.send(Some(next_step)).ok();
-                    }
-                    Err(e) => {
-                        log::error!(target: "Auto Splitter", "Unloaded, because the script trapped: {:?}", e);
-                        continue 'back_to_not_having_a_runtime;
-                    }
-                },
+                }
             }
         }
     }
@@ -970,7 +790,12 @@ async fn watchdog(
     loop {
         let instant = *timeout_receiver.borrow();
         match instant {
-            Some(time) => match timeout_at(time + TIMEOUT, timeout_receiver.changed()).await {
+            Some(time) => match timeout_at(
+                time.checked_add(TIMEOUT).unwrap_or(time),
+                timeout_receiver.changed(),
+            )
+            .await
+            {
                 Ok(Ok(_)) => {}
                 Ok(Err(_)) => return,
                 Err(_) => {

@@ -3,11 +3,16 @@
 use crate::{process::Process, settings, timer::Timer};
 
 use anyhow::Result;
+use arc_swap::ArcSwap;
+use indexmap::IndexMap;
 use slotmap::SlotMap;
 use snafu::Snafu;
 use std::{
     path::Path,
-    sync::{Arc, Mutex, MutexGuard},
+    sync::{
+        atomic::{self, AtomicU64},
+        Arc, Mutex, MutexGuard,
+    },
     time::{Duration, Instant},
 };
 use sysinfo::{ProcessExt, ProcessRefreshKind, RefreshKind, System, SystemExt};
@@ -157,17 +162,7 @@ impl ProcessList {
 
 /// The configuration to use when creating a new [`Runtime`].
 #[non_exhaustive]
-pub struct Config<'a> {
-    /// The settings map that is used to store the settings of the auto
-    /// splitter. This contains all the settings that are currently modified by
-    /// the user. It may not contain all the settings that are registered as
-    /// settings widgets, because the user may not have modified them yet.
-    pub settings_map: Option<settings::Map>,
-    /// The auto splitter itself may be a runtime that wants to load a script
-    /// from a file to interpret. This is the path to that script. It is
-    /// provided to the auto splitter as the `SCRIPT_PATH` environment variable.
-    /// **This is currently experimental and may change in the future.**
-    pub interpreter_script_path: Option<&'a Path>,
+pub struct Config {
     /// This enables debug information for the WebAssembly module. This is
     /// useful for debugging purposes. This is disabled by default.
     pub debug_info: bool,
@@ -181,11 +176,9 @@ pub struct Config<'a> {
     pub backtrace_details: bool,
 }
 
-impl Default for Config<'_> {
+impl Default for Config {
     fn default() -> Self {
         Self {
-            settings_map: None,
-            interpreter_script_path: None,
             debug_info: false,
             optimize: true,
             backtrace_details: true,
@@ -194,8 +187,8 @@ impl Default for Config<'_> {
 }
 
 struct SharedData {
-    settings_map: Mutex<settings::Map>,
-    tick_rate: Mutex<Duration>,
+    settings_map: ArcSwap<IndexMap<Arc<str>, settings::Value>>,
+    tick_rate: AtomicU64,
 }
 
 struct ExclusiveData<T: Timer> {
@@ -204,32 +197,30 @@ struct ExclusiveData<T: Timer> {
     update: TypedFunc<(), ()>,
 }
 
-/// An auto splitter runtime that allows using an auto splitter provided as a
-/// WebAssembly module to control a timer. You generally want to run the auto
-/// splitter on a separate background thread as the auto splitter may block
-/// indefinitely. The thread intending to run the auto splitter however needs to
-/// [`lock`](Self::lock) the runtime. This can only be done by one thread at a
-/// time. All other functions that are directly available on the runtime are
-/// generally thread-safe and don't block. This allows other threads to access
-/// and modify information such as settings without needing to worry that those
-/// threads get blocked.
-pub struct Runtime<T: Timer> {
+/// An instantiated auto splitter that is ready to be executed. You generally
+/// want to run the auto splitter on a separate background thread as the auto
+/// splitter may block indefinitely. The thread intending to run the auto
+/// splitter however needs to [`lock`](Self::lock) the auto splitter. This can
+/// only be done by one thread at a time. All other functions that are directly
+/// available on the auto splitter are generally thread-safe and don't block.
+/// This allows other threads to access and modify information such as settings
+/// without needing to worry that those threads get blocked.
+pub struct AutoSplitter<T: Timer> {
     exclusive_data: Mutex<ExclusiveData<T>>,
     engine: Engine,
-    settings_widgets: Mutex<Arc<Vec<settings::Widget>>>,
+    settings_widgets: ArcSwap<Vec<settings::Widget>>,
     shared_data: Arc<SharedData>,
 }
 
 /// This guard allows you to run the `update` function of the WebAssembly module
-/// and access other information about the runtime that requires the auto
-/// splitter to not run at the same time. It can only be accessed by one thread
-/// at a time.
-pub struct RuntimeGuard<'runtime, T: Timer> {
-    settings_widgets: &'runtime Mutex<Arc<Vec<settings::Widget>>>,
+/// and access other information of the auto splitter that requires it to not
+/// run at the same time. It can only be accessed by one thread at a time.
+pub struct ExecutionGuard<'runtime, T: Timer> {
+    settings_widgets: &'runtime ArcSwap<Vec<settings::Widget>>,
     data: MutexGuard<'runtime, ExclusiveData<T>>,
 }
 
-impl<T: Timer> RuntimeGuard<'_, T> {
+impl<T: Timer> ExecutionGuard<'_, T> {
     /// Runs the exported `update` function of the WebAssembly module a single
     /// time.
     pub fn update(&mut self) -> Result<()> {
@@ -239,7 +230,8 @@ impl<T: Timer> RuntimeGuard<'_, T> {
         }
         match data.update.call(&mut data.store, ()) {
             Ok(()) => {
-                *self.settings_widgets.lock().unwrap() = data.store.data().settings_widgets.clone();
+                self.settings_widgets
+                    .store(data.store.data().settings_widgets.clone());
                 Ok(())
             }
             Err(e) => {
@@ -280,23 +272,35 @@ impl<T: Timer> RuntimeGuard<'_, T> {
 
 impl SharedData {
     fn set_settings_map(&self, settings_map: settings::Map) {
-        *self.settings_map.lock().unwrap() = settings_map;
+        self.settings_map.store(settings_map.values);
+    }
+
+    fn get_settings_map(&self) -> settings::Map {
+        settings::Map {
+            values: self.settings_map.load_full(),
+        }
     }
 
     fn set_settings_map_if_unchanged(&self, old: &settings::Map, new: settings::Map) -> bool {
-        let mut guard = self.settings_map.lock().unwrap();
-        let success = guard.is_unchanged(old);
-        if success {
-            *guard = new;
-        }
-        success
+        let previous = self.settings_map.compare_and_swap(&old.values, new.values);
+        Arc::ptr_eq(&previous, &old.values)
     }
 }
 
-impl<T: Timer> Runtime<T> {
-    /// Creates a new runtime with the given path to the WebAssembly module and
-    /// the timer that the module then controls.
-    pub fn new(module: &[u8], timer: T, config: Config<'_>) -> Result<Self, CreationError> {
+/// A runtime that allows using an auto splitter provided as a WebAssembly
+/// module to control a timer.
+pub struct Runtime {
+    engine: Engine,
+}
+
+/// A compiled auto splitter that can be instantiated.
+pub struct CompiledAutoSplitter {
+    module: Module,
+}
+
+impl Runtime {
+    /// Creates a new runtime with the given configuration.
+    pub fn new(config: Config) -> Result<Self, CreationError> {
         let mut engine_config = wasmtime::Config::new();
 
         engine_config
@@ -316,18 +320,38 @@ impl<T: Timer> Runtime<T> {
         let engine = Engine::new(&engine_config)
             .map_err(|source| CreationError::EngineCreation { source })?;
 
-        let module = Module::from_binary(&engine, module)
-            .map_err(|source| CreationError::ModuleLoading { source })?;
+        Ok(Self { engine })
+    }
+
+    /// Compiles the given auto splitter that is provided as a WebAssembly
+    /// module.
+    pub fn compile(&self, module: &[u8]) -> Result<CompiledAutoSplitter, CreationError> {
+        Ok(CompiledAutoSplitter {
+            module: Module::from_binary(&self.engine, module)
+                .map_err(|source| CreationError::ModuleLoading { source })?,
+        })
+    }
+}
+
+impl CompiledAutoSplitter {
+    /// Instantiates the auto splitter with the given timer.
+    pub fn instantiate<T: Timer>(
+        &self,
+        timer: T,
+        settings_map: Option<settings::Map>,
+        interpreter_script_path: Option<&Path>,
+    ) -> Result<AutoSplitter<T>, CreationError> {
+        let engine = self.module.engine();
 
         let settings_widgets = Arc::new(Vec::new());
 
         let shared_data = Arc::new(SharedData {
-            settings_map: Mutex::new(config.settings_map.unwrap_or_default()),
-            tick_rate: Mutex::new(Duration::new(0, 1_000_000_000 / 120)),
+            settings_map: ArcSwap::new(settings_map.unwrap_or_default().values),
+            tick_rate: AtomicU64::new(f64::to_bits(1.0 / 120.0)),
         });
 
         let mut store = Store::new(
-            &engine,
+            engine,
             Context {
                 processes: SlotMap::with_key(),
                 settings_maps: SlotMap::with_key(),
@@ -338,16 +362,17 @@ impl<T: Timer> Runtime<T> {
                 timer,
                 memory: None,
                 process_list: ProcessList::new(),
-                wasi: api::wasi::build(config.interpreter_script_path),
+                wasi: api::wasi::build(interpreter_script_path),
             },
         );
 
         store.set_epoch_deadline(1);
 
-        let mut linker = Linker::new(&engine);
+        let mut linker = Linker::new(engine);
         api::bind(&mut linker)?;
 
-        let uses_wasi = module
+        let uses_wasi = self
+            .module
             .imports()
             .any(|import| import.module() == "wasi_snapshot_preview1");
 
@@ -360,7 +385,7 @@ impl<T: Timer> Runtime<T> {
         }
 
         let instance = linker
-            .instantiate(&mut store, &module)
+            .instantiate(&mut store, &self.module)
             .map_err(|source| CreationError::ModuleInstantiation { source })?;
 
         let Some(Extern::Memory(mem)) = instance.get_export(&mut store, "memory") else {
@@ -369,8 +394,8 @@ impl<T: Timer> Runtime<T> {
         store.data_mut().memory = Some(mem);
 
         if uses_wasi
-            || module.get_export("_initialize").is_some()
-            || module.get_export("_start").is_some()
+            || self.module.get_export("_initialize").is_some()
+            || self.module.get_export("_start").is_some()
         {
             store.data_mut().timer.log(format_args!("This auto splitter uses WASI. The API is subject to change, because WASI is still in preview. Auto splitters using WASI may need to be recompiled in the future."));
 
@@ -388,18 +413,20 @@ impl<T: Timer> Runtime<T> {
             .get_typed_func(&mut store, "update")
             .map_err(|source| CreationError::MissingUpdateFunction { source })?;
 
-        Ok(Self {
+        Ok(AutoSplitter {
             exclusive_data: Mutex::new(ExclusiveData {
                 trapped: false,
                 store,
                 update,
             }),
-            engine,
-            settings_widgets: Mutex::new(settings_widgets),
+            engine: engine.clone(),
+            settings_widgets: ArcSwap::new(settings_widgets),
             shared_data,
         })
     }
+}
 
+impl<T: Timer> AutoSplitter<T> {
     /// Accesses an interrupt handle that allows you to interrupt the ongoing
     /// execution of the WebAssembly module. A WebAssembly module may
     /// accidentally or maliciously loop forever, which is why this is needed.
@@ -408,18 +435,34 @@ impl<T: Timer> Runtime<T> {
     }
 
     /// Calling this function allows you to run the `update` function of the
-    /// WebAssembly module and access other information about the runtime that
-    /// requires the auto splitter to not run at the same time. This blocks the
-    /// thread when another thread still has access to a [`RuntimeGuard`]. All
-    /// other functions that are directly available on the runtime are generally
+    /// WebAssembly module and access other information about the auto splitter
+    /// that requires it to not run at the same time. This blocks the thread
+    /// when another thread still has access to a [`ExecutionGuard`]. All other
+    /// functions that are directly available on the auto splitter are generally
     /// thread-safe and don't block. This allows other threads to access and
     /// modify information such as settings without needing to worry that those
     /// threads get blocked.
-    pub fn lock(&self) -> RuntimeGuard<'_, T> {
-        RuntimeGuard {
+    pub fn lock(&self) -> ExecutionGuard<'_, T> {
+        ExecutionGuard {
             settings_widgets: &self.settings_widgets,
             data: self.exclusive_data.lock().unwrap(),
         }
+    }
+
+    /// Tries to lock the auto splitter. If the auto splitter is currently
+    /// locked by another thread, this returns [`None`]. Otherwise it returns a
+    /// guard that allows you to run the `update` function of the WebAssembly
+    /// module and access other information about the auto splitter that
+    /// requires it to not run at the same time. All other functions that are
+    /// directly available on the auto splitter are generally thread-safe and
+    /// don't block. This allows other threads to access and modify information
+    /// such as settings without needing to worry that those threads get
+    /// blocked.
+    pub fn try_lock(&self) -> Option<ExecutionGuard<'_, T>> {
+        Some(ExecutionGuard {
+            settings_widgets: &self.settings_widgets,
+            data: self.exclusive_data.try_lock().ok()?,
+        })
     }
 
     /// Returns the duration to wait until the next execution. The auto splitter
@@ -427,7 +470,9 @@ impl<T: Timer> Runtime<T> {
     /// this function after every update to sleep for the correct amount of
     /// time. It is 120Hz by default.
     pub fn tick_rate(&self) -> Duration {
-        *self.shared_data.tick_rate.lock().unwrap()
+        Duration::from_secs_f64(f64::from_bits(
+            self.shared_data.tick_rate.load(atomic::Ordering::Relaxed),
+        ))
     }
 
     /// Accesses a copy of the currently stored settings. The auto splitter can
@@ -436,7 +481,7 @@ impl<T: Timer> Runtime<T> {
     /// [`set_settings_map`](Self::set_settings_map) or
     /// [`set_settings_map_if_unchanged`](Self::set_settings_map_if_unchanged).
     pub fn settings_map(&self) -> settings::Map {
-        self.shared_data.settings_map.lock().unwrap().clone()
+        self.shared_data.get_settings_map()
     }
 
     /// Unconditionally sets the settings map.
@@ -462,6 +507,6 @@ impl<T: Timer> Runtime<T> {
     /// tick is complete. Any changes the user does to these widgets should be
     /// applied to the settings map and stored back.
     pub fn settings_widgets(&self) -> Arc<Vec<settings::Widget>> {
-        self.settings_widgets.lock().unwrap().clone()
+        self.settings_widgets.load_full()
     }
 }

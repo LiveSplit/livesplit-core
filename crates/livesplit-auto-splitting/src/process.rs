@@ -29,9 +29,17 @@ pub enum ModuleError {
 
 pub type Address = u64;
 
+// FIXME: Temporary workaround until this is merged and released:
+// https://github.com/rbspy/read-process-memory/pull/21
+struct UnsafeSendSync<T>(T);
+// SAFETY: Temporary
+unsafe impl<T> Send for UnsafeSendSync<T> {}
+// SAFETY: Temporary
+unsafe impl<T> Sync for UnsafeSendSync<T> {}
+
 /// A process that an auto splitter is attached to.
 pub struct Process {
-    handle: ProcessHandle,
+    handle: UnsafeSendSync<ProcessHandle>,
     pid: Pid,
     memory_ranges: Vec<MapRange>,
     next_memory_range_check: Instant,
@@ -66,7 +74,7 @@ impl Process {
 
         let pid = process.pid().as_u32() as Pid;
 
-        let handle = pid.try_into().context(InvalidHandle)?;
+        let handle = UnsafeSendSync(pid.try_into().context(InvalidHandle)?);
 
         let now = Instant::now();
         Ok(Process {
@@ -89,7 +97,7 @@ impl Process {
 
         let pid_out = pid as Pid;
 
-        let handle = pid_out.try_into().context(InvalidHandle)?;
+        let handle = UnsafeSendSync(pid_out.try_into().context(InvalidHandle)?);
 
         let now = Instant::now();
         Ok(Process {
@@ -151,7 +159,7 @@ impl Process {
     }
 
     pub(super) fn read_mem(&self, address: Address, buf: &mut [u8]) -> io::Result<()> {
-        self.handle.copy_address(address as usize, buf)
+        self.handle.0.copy_address(address as usize, buf)
     }
 
     pub(super) fn get_memory_range_count(&mut self) -> Result<usize, ModuleError> {

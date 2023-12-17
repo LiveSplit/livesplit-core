@@ -505,6 +505,20 @@ pub mod settings;
 mod timer;
 
 pub use process::Process;
-pub use runtime::{Config, CreationError, InterruptHandle, Runtime, RuntimeGuard};
+pub use runtime::{
+    AutoSplitter, CompiledAutoSplitter, Config, CreationError, ExecutionGuard, InterruptHandle,
+    Runtime,
+};
 pub use time;
 pub use timer::{Timer, TimerState};
+
+const _: () = {
+    const fn assert_send_sync<T: Send + Sync>() {}
+    assert_send_sync::<Config>();
+    assert_send_sync::<Process>();
+    assert_send_sync::<Runtime>();
+    assert_send_sync::<CompiledAutoSplitter>();
+    const fn with_timer<T: Send + Sync + Timer>() {
+        assert_send_sync::<AutoSplitter<T>>();
+    }
+};
