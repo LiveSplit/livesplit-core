@@ -20,6 +20,89 @@ pub enum Value {
     String(Arc<str>),
 }
 
+impl Value {
+    /// Accesses the value as boolean, if it is one.
+    pub const fn to_bool(&self) -> Option<bool> {
+        if let Self::Bool(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    /// Accesses the value as 64-bit signed integer, if it is one.
+    pub const fn to_i64(&self) -> Option<i64> {
+        if let Self::I64(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    /// Accesses the value as 64-bit floating point, if it is one.
+    pub const fn to_f64(&self) -> Option<f64> {
+        if let Self::F64(v) = self {
+            Some(*v)
+        } else {
+            None
+        }
+    }
+
+    /// Accesses the value as a map, if it is one.
+    pub const fn as_map(&self) -> Option<&Map> {
+        if let Self::Map(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    /// Accesses the value as a list, if it is one.
+    pub const fn as_list(&self) -> Option<&List> {
+        if let Self::List(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    /// Accesses the value as a string, if it is one.
+    pub const fn as_string(&self) -> Option<&Arc<str>> {
+        if let Self::String(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    /// Converts the value into a map, if it is one.
+    pub fn into_map(self) -> Option<Map> {
+        if let Self::Map(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    /// Converts the value into a list, if it is one.
+    pub fn into_list(self) -> Option<List> {
+        if let Self::List(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+
+    /// Converts the value into a string, if it is one.
+    pub fn into_string(self) -> Option<Arc<str>> {
+        if let Self::String(v) = self {
+            Some(v)
+        } else {
+            None
+        }
+    }
+}
+
 impl fmt::Debug for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

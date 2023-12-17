@@ -11,6 +11,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = { version = "1.0.45", default-features = false }
+arc-swap = "1.6.0"
 async-trait = "0.1.73"
 bytemuck = { version = "1.14.0", features = ["min_const_generics"] }
 indexmap = "2.0.2"

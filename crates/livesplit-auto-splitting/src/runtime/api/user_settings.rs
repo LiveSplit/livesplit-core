@@ -20,8 +20,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let key = Arc::<str>::from(get_str(memory, key_ptr, key_len)?);
                 let description = get_str(memory, description_ptr, description_len)?.into();
                 let default_value = default_value != 0;
-                let value_in_map = match context.shared_data.settings_map.lock().unwrap().get(&key)
-                {
+                let value_in_map = match context.shared_data.get_settings_map().get(&key) {
                     Some(settings::Value::Bool(v)) => *v,
                     _ => default_value,
                 };

@@ -1,6 +1,6 @@
 use std::{
     env::consts::{ARCH, OS},
-    time::Duration,
+    sync::atomic,
 };
 
 use anyhow::{ensure, Result};
@@ -28,8 +28,11 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 const MAX_DURATION: f64 = u64::MAX as f64;
                 ensure!(duration < MAX_DURATION, "The tick rate is too small.");
 
-                *caller.data_mut().shared_data.tick_rate.lock().unwrap() =
-                    Duration::from_secs_f64(duration);
+                caller
+                    .data_mut()
+                    .shared_data
+                    .tick_rate
+                    .store(duration.to_bits(), atomic::Ordering::Relaxed);
 
                 Ok(())
             }

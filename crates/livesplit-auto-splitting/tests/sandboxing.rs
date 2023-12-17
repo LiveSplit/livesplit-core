@@ -1,4 +1,4 @@
-use livesplit_auto_splitting::{Config, Runtime, Timer, TimerState};
+use livesplit_auto_splitting::{AutoSplitter, Config, Runtime, Timer, TimerState};
 use std::{
     ffi::OsStr,
     fmt, fs,
@@ -26,7 +26,8 @@ impl Timer for DummyTimer {
     fn log(&mut self, _message: fmt::Arguments<'_>) {}
 }
 
-fn compile(crate_name: &str) -> anyhow::Result<Runtime<DummyTimer>> {
+#[track_caller]
+fn compile(crate_name: &str) -> anyhow::Result<AutoSplitter<DummyTimer>> {
     let mut path = PathBuf::from("tests");
     path.push("test-cases");
     path.push(crate_name);
@@ -61,13 +62,12 @@ fn compile(crate_name: &str) -> anyhow::Result<Runtime<DummyTimer>> {
         })
         .unwrap();
 
-    Ok(Runtime::new(
-        &std::fs::read(wasm_path).unwrap(),
-        DummyTimer,
-        Config::default(),
-    )?)
+    Ok(Runtime::new(Config::default())?
+        .compile(&fs::read(wasm_path).unwrap())?
+        .instantiate(DummyTimer, None, None)?)
 }
 
+#[track_caller]
 fn run(crate_name: &str) -> anyhow::Result<()> {
     let runtime = compile(crate_name)?;
     runtime.lock().update()?;

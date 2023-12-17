@@ -18,15 +18,15 @@ pub struct AutoSplittingRuntime;
 #[allow(missing_docs)]
 #[cfg(not(feature = "auto-splitting"))]
 impl AutoSplittingRuntime {
-    pub fn new(_: SharedTimer) -> Self {
+    pub fn new() -> Self {
         Self
     }
 
-    pub fn unload_script_blocking(&self) -> Result<(), ()> {
+    pub fn unload(&self) -> Result<(), ()> {
         Err(())
     }
 
-    pub fn load_script_blocking(&self, _: PathBuf) -> Result<(), ()> {
+    pub fn load(&self, _: PathBuf, _: SharedTimer) -> Result<(), ()> {
         Err(())
     }
 }
@@ -36,32 +36,26 @@ pub type OwnedAutoSplittingRuntime = Box<AutoSplittingRuntime>;
 /// type
 pub type NullableOwnedAutoSplittingRuntime = Option<OwnedAutoSplittingRuntime>;
 
-/// Creates a new Auto Splitting Runtime for a Timer.
+/// Creates a new Auto Splitting Runtime.
 #[no_mangle]
-pub extern "C" fn AutoSplittingRuntime_new(
-    shared_timer: OwnedSharedTimer,
-) -> OwnedAutoSplittingRuntime {
-    Box::new(AutoSplittingRuntime::new(*shared_timer))
+pub extern "C" fn AutoSplittingRuntime_new() -> OwnedAutoSplittingRuntime {
+    Box::new(AutoSplittingRuntime::new())
 }
 
 /// Attempts to load an auto splitter. Returns true if successful.
 #[no_mangle]
-pub unsafe extern "C" fn AutoSplittingRuntime_load_script(
+pub unsafe extern "C" fn AutoSplittingRuntime_load(
     this: &AutoSplittingRuntime,
     path: *const c_char,
+    shared_timer: OwnedSharedTimer,
 ) -> bool {
-    let path = str(path);
-    if !path.is_empty() {
-        this.load_script_blocking(PathBuf::from(path)).is_ok()
-    } else {
-        false
-    }
+    this.load(PathBuf::from(str(path)), *shared_timer).is_ok()
 }
 
 /// Attempts to unload the auto splitter. Returns true if successful.
 #[no_mangle]
-pub extern "C" fn AutoSplittingRuntime_unload_script(this: &AutoSplittingRuntime) -> bool {
-    this.unload_script_blocking().is_ok()
+pub extern "C" fn AutoSplittingRuntime_unload(this: &AutoSplittingRuntime) -> bool {
+    this.unload().is_ok()
 }
 
 /// drop

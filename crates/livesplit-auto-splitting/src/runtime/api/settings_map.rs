@@ -41,7 +41,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
         .func_wrap("env", "settings_map_load", {
             |mut caller: Caller<'_, Context<T>>| {
                 let ctx = caller.data_mut();
-                let settings_map = ctx.shared_data.settings_map.lock().unwrap().clone();
+                let settings_map = ctx.shared_data.get_settings_map();
                 ctx.settings_maps.insert(settings_map).data().as_ffi()
             }
         })
