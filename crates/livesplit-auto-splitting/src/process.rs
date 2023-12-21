@@ -10,7 +10,7 @@ use read_process_memory::{CopyAddress, ProcessHandle};
 use snafu::{OptionExt, ResultExt, Snafu};
 use sysinfo::{self, PidExt, ProcessExt};
 
-use crate::{runtime::ProcessList, wasi_path::path_to_wasi};
+use crate::{runtime::ProcessList, wasi_path};
 
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)))]
@@ -69,7 +69,7 @@ impl Process {
             .max_by_key(|p| (p.start_time(), p.pid().as_u32()))
             .context(ProcessDoesntExist)?;
 
-        let path = path_to_wasi(process.exe());
+        let path = wasi_path::from_native(process.exe());
 
         let pid = process.pid().as_u32() as Pid;
 
@@ -92,7 +92,7 @@ impl Process {
             .get(sysinfo::Pid::from_u32(pid))
             .context(ProcessDoesntExist)?;
 
-        let path = path_to_wasi(process.exe());
+        let path = wasi_path::from_native(process.exe());
 
         let pid_out = pid as Pid;
 
@@ -154,7 +154,7 @@ impl Process {
             .iter()
             .find(|m| m.filename().is_some_and(|f| f.ends_with(module)))
             .context(ModuleDoesntExist)
-            .map(|m| path_to_wasi(m.filename().unwrap()).unwrap_or_default())
+            .map(|m| wasi_path::from_native(m.filename().unwrap()).unwrap_or_default())
     }
 
     pub(super) fn read_mem(&self, address: Address, buf: &mut [u8]) -> io::Result<()> {

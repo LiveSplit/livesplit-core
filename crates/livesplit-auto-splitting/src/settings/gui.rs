@@ -44,12 +44,41 @@ pub enum WidgetKind {
         options: Arc<Vec<ChoiceOption>>,
     },
     /// A file selection. This could be a button that opens a File Dialog.
-    FileSelection {
-        /// A filter on which files are selectable.
-        /// Can include `*` wildcards, for example `"*.txt"`,
-        /// and multiple patterns separated by `;` semicolons, like `"*.txt;*.md"`.
-        filter: Arc<str>,
+    FileSelect {
+        /// The filters that are used to filter the files that can be selected.
+        filters: Arc<Vec<FileFilter>>,
     },
+}
+
+/// A filter for a file selection setting.
+#[derive(Clone)]
+pub enum FileFilter {
+    /// A filter that matches on the name of the file.
+    Name {
+        /// The description is what's shown to the user for the specific filter.
+        description: Option<Arc<str>>,
+        /// The pattern is a [glob
+        /// pattern](https://en.wikipedia.org/wiki/Glob_(programming)) that is
+        /// used to filter the files. The pattern generally only supports `*`
+        /// wildcards, not `?` or brackets. This may however differ between
+        /// frontends. Additionally `;` can't be used in Windows's native file
+        /// dialog if it's part of the pattern. Multiple patterns may be
+        /// specified by separating them with ASCII space characters. There are
+        /// operating systems where glob patterns are not supported. A best
+        /// effort lookup of the fitting MIME type may be used by a frontend on
+        /// those operating systems instead. The
+        /// [`mime_guess`](https://docs.rs/mime_guess) crate offers such a
+        /// lookup.
+        pattern: Arc<str>,
+    },
+    /// A filter that matches on the MIME type of the file. Most operating
+    /// systems do not support MIME types, but the frontends are encouraged to
+    /// look up the file extensions that are associated with the MIME type and
+    /// use those as a filter in those cases. You may also use wildcards as part
+    /// of the MIME types such as `image/*`. The support likely also varies
+    /// between frontends however. The
+    /// [`mime_guess`](https://docs.rs/mime_guess) crate offers such a lookup.
+    MimeType(Arc<str>),
 }
 
 /// An option for a choice setting.
