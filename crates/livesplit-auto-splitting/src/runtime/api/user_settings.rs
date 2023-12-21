@@ -124,6 +124,88 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             source,
             name: "user_settings_add_choice_option",
         })?
+        .func_wrap("env", "user_settings_add_file_select", {
+            |mut caller: Caller<'_, Context<T>>,
+             key_ptr: u32,
+             key_len: u32,
+             description_ptr: u32,
+             description_len: u32| {
+                let (memory, context) = memory_and_context(&mut caller);
+                let key = get_str(memory, key_ptr, key_len)?.into();
+                let description = get_str(memory, description_ptr, description_len)?.into();
+                Arc::make_mut(&mut context.settings_widgets).push(settings::Widget {
+                    key,
+                    description,
+                    tooltip: None,
+                    kind: settings::WidgetKind::FileSelect {
+                        filters: Arc::new(Vec::new()),
+                    },
+                });
+                Ok(())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "user_settings_add_file_select",
+        })?
+        .func_wrap("env", "user_settings_add_file_select_name_filter", {
+            |mut caller: Caller<'_, Context<T>>,
+             key_ptr: u32,
+             key_len: u32,
+             description_ptr: u32,
+             description_len: u32,
+             pattern_ptr: u32,
+             pattern_len: u32| {
+                let (memory, context) = memory_and_context(&mut caller);
+                let key = get_str(memory, key_ptr, key_len)?.into();
+                let description = if description_ptr != 0 {
+                    Some(get_str(memory, description_ptr, description_len)?.into())
+                } else {
+                    None
+                };
+                let pattern = get_str(memory, pattern_ptr, pattern_len)?.into();
+                let setting = Arc::make_mut(&mut context.settings_widgets)
+                    .iter_mut()
+                    .find(|s| s.key == key)
+                    .context("There is no setting with the provided key.")?;
+                let settings::WidgetKind::FileSelect { filters } = &mut setting.kind else {
+                    bail!("The setting is not a file select.");
+                };
+                Arc::make_mut(filters).push(settings::FileFilter::Name {
+                    description,
+                    pattern,
+                });
+                Ok(())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "user_settings_add_file_select_name_filter",
+        })?
+        .func_wrap("env", "user_settings_add_file_select_mime_filter", {
+            |mut caller: Caller<'_, Context<T>>,
+             key_ptr: u32,
+             key_len: u32,
+             mime_ptr: u32,
+             mime_len: u32| {
+                let (memory, context) = memory_and_context(&mut caller);
+                let key = get_str(memory, key_ptr, key_len)?.into();
+                let mime = get_str(memory, mime_ptr, mime_len)?.into();
+                let setting = Arc::make_mut(&mut context.settings_widgets)
+                    .iter_mut()
+                    .find(|s| s.key == key)
+                    .context("There is no setting with the provided key.")?;
+                let settings::WidgetKind::FileSelect { filters } = &mut setting.kind else {
+                    bail!("The setting is not a file select.");
+                };
+                Arc::make_mut(filters).push(settings::FileFilter::MimeType(mime));
+                Ok(())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "user_settings_add_file_select_mime_filter",
+        })?
         .func_wrap("env", "user_settings_set_tooltip", {
             |mut caller: Caller<'_, Context<T>>,
              key_ptr: u32,

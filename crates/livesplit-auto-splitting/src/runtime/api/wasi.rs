@@ -10,13 +10,13 @@ use wasi_common::{
 };
 use wasmtime_wasi::{ambient_authority, WasiCtxBuilder};
 
-use crate::process::build_path;
+use crate::wasi_path;
 
 pub fn build(script_path: Option<&Path>) -> WasiCtx {
     let mut wasi = WasiCtxBuilder::new().build();
 
     if let Some(script_path) = script_path {
-        if let Some(path) = build_path(script_path) {
+        if let Some(path) = wasi_path::from_native(script_path) {
             let _ = wasi.push_env("SCRIPT_PATH", &path);
         }
     }

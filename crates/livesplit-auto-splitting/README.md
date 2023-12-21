@@ -288,6 +288,58 @@ extern "C" {
         option_description_ptr: *const u8,
         option_description_len: usize,
     ) -> bool;
+    /// Adds a new file select setting that the user can modify. This allows the
+    /// user to choose a file from the file system. The key is used to store the
+    /// path of the file in the settings map and needs to be unique across all
+    /// types of settings. The description is what's shown to the user. The
+    /// pointers need to point to valid UTF-8 encoded text with the respective
+    /// given length. The path is a path that is accessible through the WASI
+    /// file system, so a Windows path of `C:\foo\bar.exe` would be stored as
+    /// `/mnt/c/foo/bar.exe`.
+    pub fn user_settings_add_file_select(
+        key_ptr: *const u8,
+        key_len: usize,
+        description_ptr: *const u8,
+        description_len: usize,
+    );
+    /// Adds a filter to a file select setting. The key needs to match the key
+    /// of the file select setting that it's supposed to be added to. The
+    /// description is what's shown to the user for the specific filter. The
+    /// description is optional. You may provide a null pointer if you don't
+    /// want to specify a description. The pattern is a [glob
+    /// pattern](https://en.wikipedia.org/wiki/Glob_(programming)) that is used
+    /// to filter the files. The pattern generally only supports `*` wildcards,
+    /// not `?` or brackets. This may however differ between frontends.
+    /// Additionally `;` can't be used in Windows's native file dialog if it's
+    /// part of the pattern. Multiple patterns may be specified by separating
+    /// them with ASCII space characters. There are operating systems where glob
+    /// patterns are not supported. A best effort lookup of the fitting MIME
+    /// type may be used by a frontend on those operating systems instead. The
+    /// pointers need to point to valid UTF-8 encoded text with the respective
+    /// given length.
+    pub fn user_settings_add_file_select_name_filter(
+        key_ptr: *const u8,
+        key_len: usize,
+        description_ptr: *const u8,
+        description_len: usize,
+        pattern_ptr: *const u8,
+        pattern_len: usize,
+    );
+    /// Adds a filter to a file select setting. The key needs to match the key
+    /// of the file select setting that it's supposed to be added to. The MIME
+    /// type is what's used to filter the files. Most operating systems do not
+    /// support MIME types, but the frontends are encouraged to look up the file
+    /// extensions that are associated with the MIME type and use those as a
+    /// filter in those cases. You may also use wildcards as part of the MIME
+    /// types such as `image/*`. The support likely also varies between
+    /// frontends however. The pointers need to point to valid UTF-8 encoded
+    /// text with the respective given length.
+    pub fn user_settings_add_file_select_mime_filter(
+        key_ptr: *const u8,
+        key_len: usize,
+        mime_type_ptr: *const u8,
+        mime_type_len: usize,
+    );
     /// Adds a tooltip to a setting based on its key. A tooltip is useful for
     /// explaining the purpose of a setting to the user. The pointers need to
     /// point to valid UTF-8 encoded text with the respective given length.
