@@ -57,8 +57,6 @@ fn font_fallback() {
     // world:
     // https://en.wikipedia.org/wiki/List_of_writing_systems#List_of_writing_systems_by_adoption
 
-    use sysinfo::SystemExt;
-
     let mut run = tests_helper::create_run(&[
         // Emoji
         "❤✔👌🤔😂😁🎉💀🤣",
@@ -102,8 +100,7 @@ fn font_fallback() {
 
     let _state = layout.state(&timer.snapshot());
 
-    let system = sysinfo::System::new();
-    let build_number: u64 = system.kernel_version().unwrap().parse().unwrap();
+    let build_number: u64 = sysinfo::System::kernel_version().unwrap().parse().unwrap();
     let expected_hash = if build_number >= 22000 {
         // Windows 11
         "04fd5c64e5ca85f5"

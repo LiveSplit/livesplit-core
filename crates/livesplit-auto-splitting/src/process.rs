@@ -8,7 +8,6 @@ use std::{
 use proc_maps::{MapRange, Pid};
 use read_process_memory::{CopyAddress, ProcessHandle};
 use snafu::{OptionExt, ResultExt, Snafu};
-use sysinfo::{self, PidExt, ProcessExt};
 
 use crate::{runtime::ProcessList, wasi_path};
 
@@ -69,7 +68,7 @@ impl Process {
             .max_by_key(|p| (p.start_time(), p.pid().as_u32()))
             .context(ProcessDoesntExist)?;
 
-        let path = wasi_path::from_native(process.exe());
+        let path = process.exe().and_then(wasi_path::from_native);
 
         let pid = process.pid().as_u32() as Pid;
 
@@ -92,7 +91,7 @@ impl Process {
             .get(sysinfo::Pid::from_u32(pid))
             .context(ProcessDoesntExist)?;
 
-        let path = wasi_path::from_native(process.exe());
+        let path = process.exe().and_then(wasi_path::from_native);
 
         let pid_out = pid as Pid;
 
