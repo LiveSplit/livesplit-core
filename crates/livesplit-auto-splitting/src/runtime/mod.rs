@@ -15,7 +15,7 @@ use std::{
     },
     time::{Duration, Instant},
 };
-use sysinfo::{ProcessExt, ProcessRefreshKind, RefreshKind, System, SystemExt};
+use sysinfo::{ProcessRefreshKind, RefreshKind, System, UpdateKind};
 use wasmtime::{
     Engine, Extern, Linker, Memory, Module, OptLevel, Store, TypedFunc, WasmBacktraceDetails,
 };
@@ -111,7 +111,7 @@ impl ProcessList {
     fn new() -> Self {
         Self {
             system: System::new_with_specifics(
-                RefreshKind::new().with_processes(ProcessRefreshKind::new()),
+                RefreshKind::new().with_processes(multiple_processes()),
             ),
             next_check: Instant::now() + Duration::from_secs(1),
         }
@@ -121,22 +121,19 @@ impl ProcessList {
         let now = Instant::now();
         if now >= self.next_check {
             self.system
-                .refresh_processes_specifics(ProcessRefreshKind::new());
+                .refresh_processes_specifics(multiple_processes());
             self.next_check = now + Duration::from_secs(1);
         }
     }
 
     pub fn refresh_single_process(&mut self, pid: sysinfo::Pid) {
-        if !self
-            .system
-            .refresh_process_specifics(pid, ProcessRefreshKind::new())
-        {
+        if !self.system.refresh_process_specifics(pid, single_process()) {
             // FIXME: Unfortunately `refresh_process_specifics` doesn't remove
             // the process if it doesn't exist anymore. There also doesn't seem
             // to be a way to manually remove it. So we have to do a full
             // refresh of all processes.
             self.system
-                .refresh_processes_specifics(ProcessRefreshKind::new());
+                .refresh_processes_specifics(multiple_processes());
             self.next_check = Instant::now() + Duration::from_secs(1);
         }
     }
@@ -158,6 +155,16 @@ impl ProcessList {
     pub fn get(&self, pid: sysinfo::Pid) -> Option<&sysinfo::Process> {
         self.system.process(pid)
     }
+}
+
+#[inline]
+fn multiple_processes() -> ProcessRefreshKind {
+    ProcessRefreshKind::new().with_exe(UpdateKind::OnlyIfNotSet)
+}
+
+#[inline]
+fn single_process() -> ProcessRefreshKind {
+    ProcessRefreshKind::new()
 }
 
 /// The configuration to use when creating a new [`Runtime`].
