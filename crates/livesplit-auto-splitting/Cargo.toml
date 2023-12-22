@@ -34,3 +34,8 @@ wasi-common = "16.0.0"
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.52.0", features = ["Win32_Storage_FileSystem"] }
+
+[features]
+default = ["enhanced-backtrace"]
+debugger-support = ["wasmtime/debug-builtins"]
+enhanced-backtrace = ["wasmtime/addr2line", "wasmtime/demangle"]
