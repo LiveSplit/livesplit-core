@@ -30,6 +30,7 @@ pub mod math;
 pub use std::path;
 
 #[cfg(not(feature = "std"))]
+#[allow(unused)]
 pub mod path {
     pub use alloc::string::String as PathBuf;
     pub use str as Path;
