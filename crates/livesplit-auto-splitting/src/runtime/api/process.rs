@@ -16,7 +16,11 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
         .func_wrap("env", "process_attach", {
             |mut caller: Caller<'_, Context<T>>, ptr: u32, len: u32| {
                 let (memory, context) = memory_and_context(&mut caller);
-                let process_name = get_str(memory, ptr, len)?;
+                let mut process_name = get_str(memory, ptr, len)?;
+                #[cfg(target_os = "linux")]
+                if process_name.ends_with(".exe") {
+                    process_name = &process_name[..15.min(len as _)];
+                }
                 Ok(
                     if let Ok(p) = Process::with_name(process_name, &mut context.process_list) {
                         context.timer.log(format_args!(
