@@ -21,6 +21,7 @@ use self::{
     },
 };
 use crate::{ConsumePreference, Hotkey, KeyCode, Modifiers, Result};
+use core::ptr::null_mut;
 use std::{
     collections::{hash_map::Entry, HashMap},
     ffi::c_void,
@@ -97,9 +98,10 @@ impl Drop for Hook {
 
 impl Hook {
     pub fn new(consume: ConsumePreference) -> Result<Self> {
-        if matches!(consume, ConsumePreference::MustConsume) {
-            return Err(crate::Error::UnmatchedPreference);
-        }
+        let is_consuming = matches!(
+            consume,
+            ConsumePreference::PreferConsume | ConsumePreference::MustConsume,
+        );
 
         let state = Arc::new(State {
             hotkeys: Mutex::new(HashMap::new()),
@@ -124,7 +126,11 @@ impl Hook {
             let port = CGEventTapCreate(
                 EventTapLocation::SESSION,
                 EventTapPlacement::HEAD_INSERT_EVENT_TAP,
-                EventTapOptions::DEFAULT_TAP,
+                if is_consuming {
+                    EventTapOptions::DEFAULT_TAP
+                } else {
+                    EventTapOptions::LISTEN_ONLY
+                },
                 EventMask::KEY_DOWN,
                 Some(callback),
                 state_ptr as *mut c_void,
@@ -479,7 +485,12 @@ unsafe extern "C" fn callback(
         .get_mut(&key_code.with_modifiers(modifiers))
     {
         callback();
-    }
 
-    event
+        // If we handled the event and the hook is consuming, we should return
+        // null so the system deletes the event. If the hook is not consuming
+        // the return value will be ignored, so return null anyway.
+        null_mut()
+    } else {
+        event
+    }
 }
