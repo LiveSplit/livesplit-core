@@ -4,8 +4,8 @@ use evdev::{Device, EventType, InputEventKind, Key};
 use mio::{unix::SourceFd, Events, Interest, Poll, Token, Waker};
 use x11_dl::xlib::{Xlib, _XDisplay};
 
-use super::{x11_impl, Message};
-use crate::{Error, Hook, KeyCode, Modifiers, Result};
+use super::{x11_impl, Error, Hook, Message};
+use crate::{KeyCode, Modifiers, Result};
 
 // Low numbered tokens are allocated to devices.
 const PING_TOKEN: Token = Token(usize::MAX);
@@ -321,7 +321,7 @@ pub fn new() -> Result<Hook> {
                                         .and_then(|k| hotkeys.insert((k, key.modifiers), callback))
                                         .is_some()
                                     {
-                                        Err(Error::AlreadyRegistered)
+                                        Err(crate::Error::AlreadyRegistered)
                                     } else {
                                         Ok(())
                                     },
@@ -330,7 +330,7 @@ pub fn new() -> Result<Hook> {
                             Message::Unregister(key, promise) => promise.set(
                                 code_for(key.key_code)
                                     .and_then(|k| hotkeys.remove(&(k, key.modifiers)).map(drop))
-                                    .ok_or(Error::NotRegistered),
+                                    .ok_or(crate::Error::NotRegistered),
                             ),
                             Message::Resolve(key_code, promise) => {
                                 promise.set(resolve(&mut xlib, &mut display, key_code))
@@ -348,7 +348,7 @@ pub fn new() -> Result<Hook> {
             unsafe { (xlib.XCloseDisplay)(display) };
         }
 
-        result
+        result.map_err(Into::into)
     });
 
     Ok(Hook {

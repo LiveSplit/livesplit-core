@@ -41,7 +41,92 @@ cfg_if::cfg_if! {
 mod hotkey;
 mod key_code;
 mod modifiers;
-pub use self::{hotkey::*, key_code::*, modifiers::*, platform::*};
+use core::fmt;
+
+pub use self::{hotkey::*, key_code::*, modifiers::*};
+
+/// A hook allows you to listen to hotkeys.
+#[repr(transparent)]
+pub struct Hook(platform::Hook);
+
+/// The preference of whether the hotkeys should be consumed or not. Consuming a
+/// hotkey means that the hotkey won't be passed on to the application that is
+/// currently in focus.
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+pub enum ConsumePreference {
+    /// There is no preference, the crate chooses the most suitable implementation.
+    NoPreference,
+    /// Prefers the hotkeys to be consumed, but does not require it.
+    PreferConsume,
+    /// Prefers the hotkeys to not be consumed, but does not require it.
+    PreferNoConsume,
+    /// Requires the hotkeys to be consumed, the [`Hook`] won't be created otherwise.
+    MustConsume,
+    /// Requires the hotkeys to not be consumed, the [`Hook`] won't be created
+    /// otherwise.
+    MustNotConsume,
+}
+
+impl Hook {
+    /// Creates a new hook without any preference of whether the hotkeys should
+    /// be consumed or not.
+    pub fn new() -> Result<Self> {
+        Ok(Self(platform::Hook::new(ConsumePreference::NoPreference)?))
+    }
+
+    /// Creates a new hook with a specific preference of whether the hotkeys
+    /// should be consumed or not.
+    pub fn with_consume_preference(consume: ConsumePreference) -> Result<Self> {
+        Ok(Self(platform::Hook::new(consume)?))
+    }
+
+    /// Registers a hotkey to listen to.
+    pub fn register<F>(&self, hotkey: Hotkey, callback: F) -> Result<()>
+    where
+        F: FnMut() + Send + 'static,
+    {
+        self.0.register(hotkey, callback)
+    }
+
+    /// Unregisters a previously registered hotkey.
+    pub fn unregister(&self, hotkey: Hotkey) -> Result<()> {
+        self.0.unregister(hotkey)
+    }
+}
+
+/// The result type for this crate.
+pub type Result<T> = core::result::Result<T, Error>;
+
+/// The error type for this crate.
+#[derive(Debug)]
+#[non_exhaustive]
+pub enum Error {
+    /// The consume preference could not be met on the current platform.
+    UnmatchedPreference,
+    /// The hotkey was already registered.
+    AlreadyRegistered,
+    /// The hotkey to unregister was not registered.
+    NotRegistered,
+    /// A platform specific error occurred.
+    Platform(platform::Error),
+}
+
+// FIXME: Impl core::error::Error once it's stable.
+#[cfg(feature = "std")]
+impl std::error::Error for Error {}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(match self {
+            Self::UnmatchedPreference => {
+                "The consume preference could not be met on the current platform."
+            }
+            Self::AlreadyRegistered => "The hotkey was already registered.",
+            Self::NotRegistered => "The hotkey to unregister was not registered.",
+            Self::Platform(e) => return fmt::Display::fmt(e, f),
+        })
+    }
+}
 
 #[cfg(not(all(target_family = "wasm", target_os = "unknown", feature = "wasm-web")))]
 const _: () = {

@@ -1,4 +1,4 @@
-use crate::{Hotkey, KeyCode, Modifiers};
+use crate::{ConsumePreference, Hotkey, KeyCode, Modifiers, Result};
 use std::{
     cell::RefCell,
     collections::hash_map::{Entry, HashMap},
@@ -27,43 +27,29 @@ use windows_sys::Win32::{
 
 const MSG_EXIT: u32 = 0x400;
 
-/// The error type for this crate.
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum Error {
-    /// The hotkey was already registered.
-    AlreadyRegistered,
-    /// The hotkey to unregister was not registered.
-    NotRegistered,
-    /// An error in the Windows API occurred.
     WindowsHook,
-    /// The background thread stopped unexpectedly.
     ThreadStopped,
-    /// An error occurred in the message loop.
     MessageLoop,
 }
-
-impl std::error::Error for Error {}
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match self {
-            Self::AlreadyRegistered => "The hotkey was already registered.",
-            Self::NotRegistered => "The hotkey to unregister was not registered.",
-            Self::WindowsHook => "An error in the Windows API occurred.",
+            Self::WindowsHook => "An error occurred in the Windows API.",
             Self::ThreadStopped => "The background thread stopped unexpectedly.",
             Self::MessageLoop => "An error occurred in the message loop.",
         })
     }
 }
 
-/// The result type for this crate.
-pub type Result<T> = std::result::Result<T, Error>;
+type Callback = Box<dyn FnMut() + Send + 'static>;
 
-/// A hook allows you to listen to hotkeys.
 pub struct Hook {
     thread_id: u32,
-    hotkeys: Arc<Mutex<HashMap<Hotkey, Box<dyn FnMut() + Send + 'static>>>>,
+    hotkeys: Arc<Mutex<HashMap<Hotkey, Callback>>>,
 }
 
 impl Drop for Hook {
@@ -389,8 +375,11 @@ fn key_idx(key_code: KeyCode) -> (u8, u8) {
 }
 
 impl Hook {
-    /// Creates a new hook.
-    pub fn new() -> Result<Self> {
+    pub fn new(consume: ConsumePreference) -> Result<Self> {
+        if matches!(consume, ConsumePreference::MustConsume) {
+            return Err(crate::Error::UnmatchedPreference);
+        }
+
         let hotkeys = Arc::new(Mutex::new(HashMap::<
             Hotkey,
             Box<dyn FnMut() + Send + 'static>,
@@ -418,7 +407,7 @@ impl Hook {
                         .map_err(|_| Error::ThreadStopped)?;
                 } else {
                     initialized_tx
-                        .send(Err(Error::WindowsHook))
+                        .send(Err(crate::Error::Platform(Error::WindowsHook)))
                         .map_err(|_| Error::ThreadStopped)?;
                 }
 
@@ -460,12 +449,13 @@ impl Hook {
             }
         });
 
-        let thread_id = initialized_rx.recv().map_err(|_| Error::ThreadStopped)??;
+        let thread_id = initialized_rx
+            .recv()
+            .map_err(|_| crate::Error::Platform(Error::ThreadStopped))??;
 
         Ok(Hook { thread_id, hotkeys })
     }
 
-    /// Registers a hotkey to listen to.
     pub fn register<F>(&self, hotkey: Hotkey, callback: F) -> Result<()>
     where
         F: FnMut() + Send + 'static,
@@ -474,20 +464,19 @@ impl Hook {
             vacant.insert(Box::new(callback));
             Ok(())
         } else {
-            Err(Error::AlreadyRegistered)
+            Err(crate::Error::AlreadyRegistered)
         }
     }
 
-    /// Unregisters a previously registered hotkey.
     pub fn unregister(&self, hotkey: Hotkey) -> Result<()> {
         if self.hotkeys.lock().unwrap().remove(&hotkey).is_some() {
             Ok(())
         } else {
-            Err(Error::NotRegistered)
+            Err(crate::Error::NotRegistered)
         }
     }
 
-    pub(crate) fn try_resolve(&self, key_code: KeyCode) -> Option<String> {
+    pub fn try_resolve(&self, key_code: KeyCode) -> Option<String> {
         use self::KeyCode::*;
         let scan_code = match key_code {
             Backquote => 0x0029,

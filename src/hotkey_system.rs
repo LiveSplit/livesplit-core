@@ -1,12 +1,12 @@
 use alloc::borrow::Cow;
-use livesplit_hotkey::KeyCode;
+use livesplit_hotkey::{ConsumePreference, KeyCode};
 
 use crate::{
     hotkey::{Hook, Hotkey},
     HotkeyConfig, SharedTimer,
 };
 
-pub use crate::hotkey::{Error, Result};
+pub use crate::hotkey::Result;
 
 // This enum might be better situated in hotkey_config, but the last method should stay in this file
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -105,7 +105,7 @@ impl HotkeySystem {
     pub fn with_config(timer: SharedTimer, config: HotkeyConfig) -> Result<Self> {
         let mut hotkey_system = Self {
             config,
-            hook: Hook::new()?,
+            hook: Hook::with_consume_preference(ConsumePreference::PreferNoConsume)?,
             timer,
             is_active: false,
         };
