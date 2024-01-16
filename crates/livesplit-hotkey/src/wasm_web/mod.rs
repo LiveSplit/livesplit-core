@@ -1,4 +1,4 @@
-use crate::{Hotkey, KeyCode, Modifiers};
+use crate::{ConsumePreference, Hotkey, KeyCode, Modifiers, Result};
 use js_sys::{Function, Promise, Reflect};
 use wasm_bindgen::{prelude::*, JsCast};
 use web_sys::{window, Event, Gamepad, GamepadButton, KeyboardEvent};
@@ -11,34 +11,20 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-/// The error type for this crate.
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum Error {
-    /// The hotkey was already registered.
-    AlreadyRegistered,
-    /// The hotkey to unregister was not registered.
-    NotRegistered,
-    /// Failed creating the hook.
     FailedToCreateHook,
 }
-
-impl std::error::Error for Error {}
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match self {
-            Self::AlreadyRegistered => "The hotkey was already registered.",
-            Self::NotRegistered => "The hotkey to unregister was not registered.",
             Self::FailedToCreateHook => "Failed creating the hook.",
         })
     }
 }
 
-/// The result type for this crate.
-pub type Result<T> = std::result::Result<T, Error>;
-
-/// A hook allows you to listen to hotkeys.
 pub struct Hook {
     hotkeys: Arc<Mutex<HashMap<Hotkey, Box<dyn FnMut() + Send + 'static>>>>,
     keyboard_callback: Closure<dyn FnMut(Event)>,
@@ -87,14 +73,18 @@ static GAMEPAD_BUTTONS: [KeyCode; TOTAL_BUTTONS] = [
 ];
 
 impl Hook {
-    /// Creates a new hook.
-    pub fn new() -> Result<Self> {
+    pub fn new(consume: ConsumePreference) -> Result<Self> {
+        let prevent_default = matches!(
+            consume,
+            ConsumePreference::PreferConsume | ConsumePreference::MustConsume
+        );
+
         let hotkeys = Arc::new(Mutex::new(HashMap::<
             Hotkey,
             Box<dyn FnMut() + Send + 'static>,
         >::new()));
 
-        let window = window().ok_or(Error::FailedToCreateHook)?;
+        let window = window().ok_or(crate::Error::Platform(Error::FailedToCreateHook))?;
 
         let hotkey_map = hotkeys.clone();
         let keyboard_callback = Closure::wrap(Box::new(move |event: Event| {
@@ -132,6 +122,9 @@ impl Hook {
                             .get_mut(&code.with_modifiers(modifiers))
                         {
                             callback();
+                            if prevent_default {
+                                event.prevent_default();
+                            }
                         }
                     }
                 }
@@ -140,7 +133,7 @@ impl Hook {
 
         window
             .add_event_listener_with_callback("keydown", keyboard_callback.as_ref().unchecked_ref())
-            .map_err(|_| Error::FailedToCreateHook)?;
+            .map_err(|_| crate::Error::Platform(Error::FailedToCreateHook))?;
 
         let hotkey_map = hotkeys.clone();
 
@@ -218,7 +211,6 @@ impl Hook {
         })
     }
 
-    /// Registers a hotkey to listen to.
     pub fn register<F>(&self, hotkey: Hotkey, callback: F) -> Result<()>
     where
         F: FnMut() + Send + 'static,
@@ -226,31 +218,30 @@ impl Hook {
         if let Entry::Vacant(vacant) = self.hotkeys.lock().unwrap().entry(hotkey) {
             if GAMEPAD_BUTTONS.contains(&hotkey.key_code) && self.interval_id.get().is_none() {
                 let interval_id = window()
-                    .ok_or(Error::FailedToCreateHook)?
+                    .ok_or(crate::Error::Platform(Error::FailedToCreateHook))?
                     .set_interval_with_callback_and_timeout_and_arguments_0(
                         self.gamepad_callback.as_ref().unchecked_ref(),
                         1000 / 60,
                     )
-                    .map_err(|_| Error::FailedToCreateHook)?;
+                    .map_err(|_| crate::Error::Platform(Error::FailedToCreateHook))?;
                 self.interval_id.set(Some(interval_id));
             }
             vacant.insert(Box::new(callback));
             Ok(())
         } else {
-            Err(Error::AlreadyRegistered)
+            Err(crate::Error::AlreadyRegistered)
         }
     }
 
-    /// Unregisters a previously registered hotkey.
     pub fn unregister(&self, hotkey: Hotkey) -> Result<()> {
         if self.hotkeys.lock().unwrap().remove(&hotkey).is_some() {
             Ok(())
         } else {
-            Err(Error::NotRegistered)
+            Err(crate::Error::NotRegistered)
         }
     }
 
-    pub(crate) fn try_resolve(&self, key_code: KeyCode) -> Option<String> {
+    pub fn try_resolve(&self, key_code: KeyCode) -> Option<String> {
         let keyboard_layout_resolver = self.keyboard_layout_resolver.borrow();
         let (layout, resolve_fn) = keyboard_layout_resolver.as_ref()?;
 

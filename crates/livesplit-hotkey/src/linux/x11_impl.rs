@@ -11,8 +11,8 @@ use x11_dl::xlib::{
     ShiftMask, XErrorEvent, XKeyEvent, Xlib, _XDisplay,
 };
 
-use super::Message;
-use crate::{Error, Hook, KeyCode, Modifiers, Result};
+use super::{Error, Hook, Message};
+use crate::{KeyCode, Modifiers, Result};
 
 unsafe fn ungrab_all(xlib: &Xlib, display: *mut Display) {
     let screencount = (xlib.XScreenCount)(display);
@@ -81,7 +81,7 @@ pub fn new() -> Result<Hook> {
 
         let display = (xlib.XOpenDisplay)(ptr::null());
         if display.is_null() {
-            return Err(Error::OpenXServerConnection);
+            return Err(Error::OpenXServerConnection.into());
         }
 
         let fd = (xlib.XConnectionNumber)(display) as std::os::unix::io::RawFd;
@@ -103,8 +103,7 @@ pub fn new() -> Result<Hook> {
 
         let join_handle = thread::spawn(move || -> Result<()> {
             // Force the whole XData to be moved.
-            let xdata = xdata;
-            let XData(xlib, display) = xdata;
+            let XData(xlib, display) = { xdata };
 
             let mut result = Ok(());
             let mut events = Events::with_capacity(1024);
@@ -132,7 +131,7 @@ pub fn new() -> Result<Hook> {
                                             })
                                             .is_some()
                                         {
-                                            Err(Error::AlreadyRegistered)
+                                            Err(crate::Error::AlreadyRegistered)
                                         } else {
                                             let keys = hotkeys.keys().copied().collect::<Vec<_>>();
                                             grab_all(&xlib, display, &keys);
@@ -143,7 +142,7 @@ pub fn new() -> Result<Hook> {
                                 Message::Unregister(key, promise) => {
                                     let res = code_for(key.key_code)
                                         .and_then(|k| hotkeys.remove(&(k, key.modifiers)).map(drop))
-                                        .ok_or(Error::NotRegistered);
+                                        .ok_or(crate::Error::NotRegistered);
                                     if res.is_ok() {
                                         let keys = hotkeys.keys().copied().collect::<Vec<_>>();
                                         grab_all(&xlib, display, &keys);
@@ -199,7 +198,7 @@ pub fn new() -> Result<Hook> {
 
             (xlib.XCloseDisplay)(display);
 
-            result
+            result.map_err(Into::into)
         });
 
         Ok(Hook {

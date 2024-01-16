@@ -20,7 +20,7 @@ use self::{
         EventTapLocation, EventTapOptions, EventTapPlacement, EventTapProxy, EventType,
     },
 };
-use crate::{Hotkey, KeyCode, Modifiers};
+use crate::{ConsumePreference, Hotkey, KeyCode, Modifiers, Result};
 use std::{
     collections::{hash_map::Entry, HashMap},
     ffi::c_void,
@@ -29,31 +29,24 @@ use std::{
     thread,
 };
 
-/// The error type for this crate.
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum Error {
-    /// The hotkey was already registered.
-    AlreadyRegistered,
-    /// The hotkey to unregister was not registered.
-    NotRegistered,
-    /// Failed creating the event tap.
     CouldntCreateEventTap,
-    /// Failed creating the run loop source.
     CouldntCreateRunLoopSource,
-    /// Failed getting the current run loop.
     CouldntGetCurrentRunLoop,
-    /// The background thread stopped unexpectedly.
     ThreadStoppedUnexpectedly,
 }
 
-impl std::error::Error for Error {}
+impl From<Error> for crate::Error {
+    fn from(e: Error) -> Self {
+        Self::Platform(e)
+    }
+}
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match self {
-            Self::AlreadyRegistered => "The hotkey was already registered.",
-            Self::NotRegistered => "The hotkey to unregister was not registered.",
             Self::CouldntCreateEventTap => "Failed creating the event tap.",
             Self::CouldntCreateRunLoopSource => "Failed creating the run loop source.",
             Self::CouldntGetCurrentRunLoop => "Failed getting the current run loop.",
@@ -61,9 +54,6 @@ impl fmt::Display for Error {
         })
     }
 }
-
-/// The result type for this crate.
-pub type Result<T> = std::result::Result<T, Error>;
 
 struct Owned<T>(*mut T);
 
@@ -106,8 +96,11 @@ impl Drop for Hook {
 }
 
 impl Hook {
-    /// Creates a new hook.
-    pub fn new() -> Result<Self> {
+    pub fn new(consume: ConsumePreference) -> Result<Self> {
+        if matches!(consume, ConsumePreference::MustConsume) {
+            return Err(crate::Error::UnmatchedPreference);
+        }
+
         let state = Arc::new(State {
             hotkeys: Mutex::new(HashMap::new()),
         });
@@ -173,7 +166,6 @@ impl Hook {
         Ok(Hook { event_loop, state })
     }
 
-    /// Registers a hotkey to listen to.
     pub fn register<F>(&self, hotkey: Hotkey, callback: F) -> Result<()>
     where
         F: FnMut() + Send + 'static,
@@ -182,11 +174,10 @@ impl Hook {
             vacant.insert(Box::new(callback));
             Ok(())
         } else {
-            Err(Error::AlreadyRegistered)
+            Err(crate::Error::AlreadyRegistered)
         }
     }
 
-    /// Unregisters a previously registered hotkey.
     pub fn unregister(&self, hotkey: Hotkey) -> Result<()> {
         let _ = self
             .state
@@ -194,11 +185,11 @@ impl Hook {
             .lock()
             .unwrap()
             .remove(&hotkey)
-            .ok_or(Error::NotRegistered)?;
+            .ok_or(crate::Error::NotRegistered)?;
         Ok(())
     }
 
-    pub(crate) fn try_resolve(&self, key_code: KeyCode) -> Option<String> {
+    pub fn try_resolve(&self, key_code: KeyCode) -> Option<String> {
         unsafe {
             let current_keyboard_raw = TISCopyCurrentKeyboardInputSource();
             if current_keyboard_raw.is_null() {

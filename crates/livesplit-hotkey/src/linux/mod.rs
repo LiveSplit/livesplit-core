@@ -1,6 +1,6 @@
 use std::{fmt, thread::JoinHandle};
 
-use crate::{Hotkey, KeyCode};
+use crate::{ConsumePreference, Hotkey, KeyCode, Result};
 use crossbeam_channel::Sender;
 use mio::Waker;
 use nix::unistd::{getgroups, Group};
@@ -9,33 +9,25 @@ use promising_future::{future_promise, Promise};
 mod evdev_impl;
 mod x11_impl;
 
-/// The error type for this crate.
 #[derive(Debug, Copy, Clone)]
 #[non_exhaustive]
 pub enum Error {
-    /// The hotkey was already registered.
-    AlreadyRegistered,
-    /// The hotkey to unregister was not registered.
-    NotRegistered,
-    /// Failed fetching events from evdev.
     EvDev,
-    /// Failed polling the event file descriptors.
     EPoll,
-    /// Failed dynamically linking to X11.
     NoXLib,
-    /// Failed opening a connection to the X11 server.
     OpenXServerConnection,
-    /// The background thread stopped unexpectedly.
     ThreadStopped,
 }
 
-impl std::error::Error for Error {}
+impl From<Error> for crate::Error {
+    fn from(e: Error) -> Self {
+        Self::Platform(e)
+    }
+}
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.write_str(match self {
-            Self::AlreadyRegistered => "The hotkey was already registered.",
-            Self::NotRegistered => "The hotkey to unregister was not registered.",
             Self::EvDev => "Failed fetching events from evdev.",
             Self::EPoll => "Failed polling the event file descriptors.",
             Self::NoXLib => "Failed dynamically linking to X11.",
@@ -44,9 +36,6 @@ impl fmt::Display for Error {
         })
     }
 }
-
-/// The result type for this crate.
-pub type Result<T> = std::result::Result<T, Error>;
 
 enum Message {
     Register(
@@ -59,7 +48,6 @@ enum Message {
     End,
 }
 
-/// A hook allows you to listen to hotkeys.
 pub struct Hook {
     sender: Sender<Message>,
     waker: Waker,
@@ -83,16 +71,25 @@ fn can_use_evdev() -> Option<()> {
 }
 
 impl Hook {
-    /// Creates a new hook.
-    pub fn new() -> Result<Self> {
-        if can_use_evdev().is_some() {
-            evdev_impl::new()
+    pub fn new(consume: ConsumePreference) -> Result<Self> {
+        if matches!(consume, ConsumePreference::PreferConsume) {
+            if let Ok(x11) = x11_impl::new() {
+                return Ok(x11);
+            }
+        }
+
+        if !matches!(consume, ConsumePreference::MustConsume) && can_use_evdev().is_some() {
+            evdev_impl::new().map_err(Into::into)
+        } else if !matches!(
+            consume,
+            ConsumePreference::MustNotConsume | ConsumePreference::PreferConsume
+        ) {
+            x11_impl::new().map_err(Into::into)
         } else {
-            x11_impl::new()
+            Err(crate::Error::UnmatchedPreference)
         }
     }
 
-    /// Registers a hotkey to listen to.
     pub fn register<F>(&self, hotkey: Hotkey, callback: F) -> Result<()>
     where
         F: FnMut() + Send + 'static,
@@ -108,7 +105,6 @@ impl Hook {
         future.value().ok_or(Error::ThreadStopped)?
     }
 
-    /// Unregisters a previously registered hotkey.
     pub fn unregister(&self, hotkey: Hotkey) -> Result<()> {
         let (future, promise) = future_promise();
 
@@ -121,7 +117,7 @@ impl Hook {
         future.value().ok_or(Error::ThreadStopped)?
     }
 
-    pub(crate) fn try_resolve(&self, key_code: KeyCode) -> Option<String> {
+    pub fn try_resolve(&self, key_code: KeyCode) -> Option<String> {
         let (future, promise) = future_promise();
 
         self.sender.send(Message::Resolve(key_code, promise)).ok()?;

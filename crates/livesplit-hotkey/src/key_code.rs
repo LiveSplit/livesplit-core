@@ -1845,7 +1845,7 @@ impl KeyCode {
     pub fn resolve(self, hook: &Hook) -> Cow<'static, str> {
         let class = self.classify();
         if class == KeyCodeClass::WritingSystem {
-            if let Some(resolved) = hook.try_resolve(self) {
+            if let Some(resolved) = hook.0.try_resolve(self) {
                 let uppercase = if resolved != "ß" {
                     resolved.to_uppercase()
                 } else {
