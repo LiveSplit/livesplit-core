@@ -545,6 +545,7 @@ use crate::{
     timing::{SharedTimer, TimerPhase},
 };
 pub use livesplit_auto_splitting::settings;
+pub use livesplit_auto_splitting::wasi_path;
 use livesplit_auto_splitting::{
     AutoSplitter, Config, CreationError, InterruptHandle, Timer as AutoSplitTimer, TimerState,
 };
