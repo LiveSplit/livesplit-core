@@ -1,27 +1,47 @@
+#![warn(
+    clippy::complexity,
+    clippy::correctness,
+    clippy::perf,
+    clippy::style,
+    clippy::missing_const_for_fn,
+    clippy::undocumented_unsafe_blocks,
+    // TODO: Write documentation
+    // missing_docs,
+    rust_2018_idioms
+)]
 #![no_std]
 
 extern crate alloc;
 
-use alloc::{boxed::Box, format, string::String, vec, vec::Vec};
-use unicase::UniCase;
+use alloc::{boxed::Box, string::String, vec, vec::Vec};
 
 // FIXME: Use generators once those work on stable Rust.
 
 fn ends_with_roman_numeral(name: &str) -> bool {
-    name.split_whitespace()
-        .next_back()
-        .is_some_and(|n| n.bytes().all(|c| matches!(c, b'I' | b'V' | b'X')))
+    let roman_count = name
+        .bytes()
+        .rev()
+        .take_while(|c| matches!(c, b'I' | b'V' | b'X'))
+        .count();
+
+    let rem = &name[..name.len() - roman_count];
+
+    rem.is_empty() || rem.ends_with(|c: char| c.is_whitespace())
 }
 
 fn ends_with_numeric(name: &str) -> bool {
     name.chars().last().is_some_and(|c| c.is_numeric())
 }
 
-fn series_subtitle_handling(name: &str, split_token: &str, list: &mut Vec<Box<str>>) -> bool {
-    let mut iter = name.splitn(2, split_token);
-    if let (Some(series), Some(subtitle)) = (iter.next(), iter.next()) {
-        let series_abbreviations = abbreviate(series);
-        let subtitle_abbreviations = abbreviate(subtitle);
+fn series_subtitle_handling(
+    name: &str,
+    split_token: &str,
+    list: &mut Vec<Box<str>>,
+    depth: usize,
+) -> bool {
+    if let Some((series, subtitle)) = name.split_once(split_token) {
+        let series_abbreviations = abbreviate_recurse(series, depth);
+        let subtitle_abbreviations = abbreviate_recurse(subtitle, depth);
         let series_trimmed = series.trim_end();
 
         let is_series_representative =
@@ -36,7 +56,9 @@ fn series_subtitle_handling(name: &str, split_token: &str, list: &mut Vec<Box<st
                     || is_there_only_one_series_abbreviation
                 {
                     list.push(
-                        format!("{series_abbreviation}{split_token}{subtitle_abbreviation}").into(),
+                        [&**series_abbreviation, &**subtitle_abbreviation]
+                            .join(split_token)
+                            .into(),
                     );
                 }
             }
@@ -53,16 +75,22 @@ fn series_subtitle_handling(name: &str, split_token: &str, list: &mut Vec<Box<st
     }
 }
 
-fn left_right_handling(name: &str, split_token: &str, list: &mut Vec<Box<str>>) -> bool {
-    let mut iter = name.splitn(2, split_token);
-    if let (Some(series), Some(subtitle)) = (iter.next(), iter.next()) {
-        let series_abbreviations = abbreviate(series);
-        let subtitle_abbreviations = abbreviate(subtitle);
+fn left_right_handling(
+    name: &str,
+    split_token: &str,
+    list: &mut Vec<Box<str>>,
+    depth: usize,
+) -> bool {
+    if let Some((series, subtitle)) = name.split_once(split_token) {
+        let series_abbreviations = abbreviate_recurse(series, depth);
+        let subtitle_abbreviations = abbreviate_recurse(subtitle, depth);
 
         for subtitle_abbreviation in &subtitle_abbreviations {
             for series_abbreviation in &series_abbreviations {
                 list.push(
-                    format!("{series_abbreviation}{split_token}{subtitle_abbreviation}").into(),
+                    [&**series_abbreviation, &**subtitle_abbreviation]
+                        .join(split_token)
+                        .into(),
                 );
             }
         }
@@ -73,24 +101,34 @@ fn left_right_handling(name: &str, split_token: &str, list: &mut Vec<Box<str>>) 
     }
 }
 
-fn and_handling(name: &str, list: &mut Vec<Box<str>>) -> bool {
-    let and = UniCase::new("and");
+fn matches_ascii_key(value: &str, ascii_key_lower: &[u8]) -> bool {
+    value
+        .bytes()
+        .map(|c| c.to_ascii_lowercase())
+        .eq(ascii_key_lower.iter().copied())
+}
+
+fn and_handling(name: &str, list: &mut Vec<Box<str>>, depth: usize) -> bool {
+    let mut buf = String::new();
     for word in name.split_whitespace() {
-        if UniCase::new(word) == and {
+        if matches_ascii_key(word, b"and") {
             let index = word.as_ptr() as usize - name.as_ptr() as usize;
             let (left, rest) = name.split_at(index);
             let right = &rest[word.len()..];
-            let name = format!("{left}&{right}");
-            list.extend(abbreviate(&name));
+            buf.clear();
+            buf.push_str(left);
+            buf.push('&');
+            buf.push_str(right);
+            list.extend(abbreviate_recurse(&buf, depth));
             return true;
         }
     }
     false
 }
 
-fn remove_prefix_word<'a>(text: &'a str, word: &str) -> Option<&'a str> {
+fn remove_prefix_word<'a>(text: &'a str, ascii_key_lower: &[u8]) -> Option<&'a str> {
     let first_word = text.split_whitespace().next()?;
-    if unicase::eq(first_word, word) {
+    if matches_ascii_key(first_word, ascii_key_lower) {
         Some(text[first_word.len()..].trim_start())
     } else {
         None
@@ -101,41 +139,33 @@ fn is_all_caps_or_digits(text: &str) -> bool {
     text.chars().all(|c| c.is_uppercase() || c.is_numeric())
 }
 
-pub fn abbreviate(name: &str) -> Vec<Box<str>> {
+fn abbreviate_recurse(name: &str, depth: usize) -> Vec<Box<str>> {
     let name = name.trim();
     let mut list = vec![];
     if name.is_empty() {
         return list;
     }
 
-    let parenthesis = name
-        .char_indices()
-        .rev()
-        .find(|&(_, c)| c == '(')
-        .and_then(|(start, _)| {
-            name[start + 1..]
-                .char_indices()
-                .find(|&(_, c)| c == ')')
-                .map(|(end, _)| (start, end + 2))
-        });
+    if depth >= 10 {
+        list.push(name.into());
+        return list;
+    }
+    let depth = depth + 1;
 
-    if let Some((start, end)) = parenthesis {
-        let (before_parenthesis, rest) = name.split_at(start);
-        let after_parenthesis = &rest[end..];
-        let name = format!(
-            "{} {}",
-            before_parenthesis.trim_end(),
-            after_parenthesis.trim_start()
-        );
-        list.extend(abbreviate(&name));
-    } else if series_subtitle_handling(name, ": ", &mut list)
-        || series_subtitle_handling(name, " - ", &mut list)
-        || left_right_handling(name, " | ", &mut list)
-        || and_handling(name, &mut list)
+    if let Some((before, after)) = name
+        .rsplit_once('(')
+        .and_then(|(before, rest)| Some((before, rest.split_once(')')?.1)))
+    {
+        let name = [before, after].join(" ");
+        list.extend(abbreviate_recurse(&name, depth + 1));
+    } else if series_subtitle_handling(name, ": ", &mut list, depth)
+        || series_subtitle_handling(name, " - ", &mut list, depth)
+        || left_right_handling(name, " | ", &mut list, depth)
+        || and_handling(name, &mut list, depth)
     {
     } else {
         if let Some(rest) =
-            remove_prefix_word(name, "the").or_else(|| remove_prefix_word(name, "a"))
+            remove_prefix_word(name, b"the").or_else(|| remove_prefix_word(name, b"a"))
         {
             list.push(rest.into());
         }
@@ -144,17 +174,27 @@ pub fn abbreviate(name: &str) -> Vec<Box<str>> {
             let mut abbreviated = String::new();
             for word in name.split(|c: char| c.is_whitespace() || c == '-') {
                 if let Some(first_char) = word.chars().next() {
-                    let word_mapped = word.chars().map(|c| if c == '&' { 'a' } else { c });
-
-                    if first_char.is_numeric() {
-                        abbreviated.extend(word_mapped);
-                    } else if word.len() <= 4 && is_all_caps_or_digits(word) {
-                        if !abbreviated.is_empty() {
-                            abbreviated.push(' ');
+                    if !first_char.is_numeric() {
+                        if word.len() <= 4 && is_all_caps_or_digits(word) {
+                            if !abbreviated.is_empty() {
+                                abbreviated.push(' ');
+                            }
+                        } else {
+                            abbreviated.push(if first_char == '&' { 'a' } else { first_char });
+                            continue;
                         }
-                        abbreviated.extend(word_mapped);
-                    } else {
-                        abbreviated.push(first_char);
+                    }
+
+                    // SAFETY: We only replace ASCII characters, which means the
+                    // UTF-8 encoding stays valid.
+                    unsafe {
+                        let from = abbreviated.len();
+                        abbreviated.push_str(word);
+                        abbreviated.as_bytes_mut()[from..].iter_mut().for_each(|c| {
+                            if *c == b'&' {
+                                *c = b'a';
+                            }
+                        });
                     }
                 }
             }
@@ -175,16 +215,16 @@ pub fn abbreviate(name: &str) -> Vec<Box<str>> {
     list
 }
 
+pub fn abbreviate(name: &str) -> Vec<Box<str>> {
+    abbreviate_recurse(name, 0)
+}
+
 pub fn abbreviate_category(category: &str) -> Vec<Box<str>> {
     let mut abbrevs = Vec::new();
 
-    let mut splits = category.splitn(2, '(');
-    let before = splits.next().unwrap().trim();
-
-    if let Some(rest) = splits.next() {
-        splits = rest.splitn(2, ')');
-        let inside = splits.next().unwrap();
-        if let Some(after) = splits.next() {
+    if let Some((before, rest)) = category.split_once('(') {
+        if let Some((inside, after)) = rest.split_once(')') {
+            let before = before.trim();
             let after = after.trim_end();
 
             let mut buf = String::with_capacity(category.len());
@@ -206,7 +246,7 @@ pub fn abbreviate_category(category: &str) -> Vec<Box<str>> {
                 variable = next_variable;
             }
 
-            if after.trim().is_empty() {
+            if after.trim_start().is_empty() {
                 buf.drain(before.len()..);
             } else {
                 buf.drain(before.len() + 1..);
@@ -225,7 +265,8 @@ pub fn abbreviate_category(category: &str) -> Vec<Box<str>> {
 #[cfg(test)]
 mod tests {
     use super::abbreviate;
-    use alloc::{boxed::Box, vec};
+    use alloc::{boxed::Box, string::String, vec};
+    use core::iter::FromIterator;
 
     // The tests using actual game titles can be thrown out or edited if any
     // major changes need to be made to the abbreviation algorithm. Do not
@@ -294,6 +335,13 @@ mod tests {
         ];
 
         assert_eq!(abbreviations, expected);
+    }
+
+    #[test]
+    #[rustfmt::skip]
+    fn doesnt_overflow_stack() {
+        let s = String::from_iter((0..4 << 20).map(|_| ": "));
+        abbreviate(&s);
     }
 
     #[test]
