@@ -1,3 +1,4 @@
+#[allow(unused)]
 pub use std::sync::RwLock;
 use time::UtcOffset;
 pub use time::{Duration, OffsetDateTime as DateTime};

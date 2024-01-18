@@ -24,11 +24,13 @@ use super::{FontKind, PathBuilder, Rgba, SharedOwnership, TEXT_FONT, TIMER_FONT}
 
 mod color_font;
 
+type CachedGlyph<P> = (f32, Vec<(Option<Rgba>, P)>);
+
 /// The text engine allows you to create fonts and manage text labels. That way
 /// the underlying renderer doesn't by itself need to be able to render text.
 pub struct TextEngine<P> {
     font_system: FontSystem,
-    glyph_cache: HashMap<(ID, u16), (f32, Vec<(Option<Rgba>, P)>)>,
+    glyph_cache: HashMap<(ID, u16), CachedGlyph<P>>,
 }
 
 impl<P: SharedOwnership> Default for TextEngine<P> {
@@ -214,6 +216,8 @@ impl<P: SharedOwnership> TextEngine<P> {
 
         label.glyphs.clear();
 
+        // FIXME: ShapeLine::new_in_buffer in 0.10
+        // FIXME: Look into shape plans in 0.11
         let shape_line = ShapeLine::new(
             &mut self.font_system,
             text,
@@ -272,17 +276,17 @@ impl<P: SharedOwnership> TextEngine<P> {
                                 .extend(layer_glyphs.iter().map(|(color, path)| Glyph {
                                     color: *color,
                                     x: x + x_offset,
-                                    y: y + glyph.y_offset,
+                                    y: y - glyph.y_offset,
                                     path: path.share(),
                                     scale: *scale,
                                 }));
 
                             x += x_advance;
-                            y += glyph.y_advance;
+                            y -= glyph.y_advance;
                         }
                     } else {
                         x += word.x_advance;
-                        y += word.y_advance;
+                        y -= word.y_advance;
                     }
                 }
             }
@@ -324,17 +328,17 @@ impl<P: SharedOwnership> TextEngine<P> {
                                 .extend(layer_glyphs.iter().map(|(color, path)| Glyph {
                                     color: *color,
                                     x: glyph_x + glyph.x_offset,
-                                    y: glyph_y + glyph.y_offset,
+                                    y: glyph_y - glyph.y_offset,
                                     path: path.share(),
                                     scale: *scale,
                                 }));
 
                             glyph_x += glyph.x_advance;
-                            glyph_y += glyph.y_advance;
+                            glyph_y -= glyph.y_advance;
                         }
                     }
                     x += word.x_advance;
-                    y += word.y_advance;
+                    y -= word.y_advance;
                 }
             }
         }

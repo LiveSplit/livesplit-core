@@ -103,10 +103,10 @@ fn font_fallback() {
     let build_number: u64 = sysinfo::System::kernel_version().unwrap().parse().unwrap();
     let expected_hash = if build_number >= 22000 {
         // Windows 11
-        "04fd5c64e5ca85f5"
+        "5a0e8df5e424a5cf"
     } else {
         // Windows 10
-        "f4bffc6bc6fab953"
+        "dd5663f95a5b43ec"
     };
     check(&_state, expected_hash, "font_fallback");
 }
