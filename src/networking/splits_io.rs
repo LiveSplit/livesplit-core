@@ -10,9 +10,9 @@ use crate::{
     },
     Run, Timer,
 };
-use snafu::ResultExt;
+use snafu::{OptionExt, ResultExt};
 
-pub use api::{run::UploadedRun, Client, Error as UploadError};
+pub use api::{run::UploadedRun, Client, Error as ApiError};
 pub use splits_io_api as api;
 
 /// Describes an error that happened when downloading a run from Splits.io. This
@@ -33,6 +33,21 @@ pub enum DownloadError {
     },
 }
 
+/// Describes an error that happened when uploading a run to Splits.io. This may
+/// either be because the upload itself had a problem or because the run itself
+/// couldn't be saved.
+#[derive(Debug, snafu::Snafu)]
+#[snafu(context(suffix(false)))]
+pub enum UploadError {
+    /// Failed to upload the run.
+    Upload {
+        /// The underlying upload error.
+        source: api::Error,
+    },
+    /// Failed to save the run.
+    Save,
+}
+
 /// Asynchronously downloads a run from Splits.io based on its Splits.io ID. The
 /// run automatically gets parsed into a Run object.
 pub async fn download_run(
@@ -48,10 +63,11 @@ pub async fn download_run(
 /// the uploaded run and its claim token gets returned when the run was
 /// successfully uploaded.
 pub async fn upload_run(client: &Client, run: &Run) -> Result<UploadedRun, UploadError> {
-    api::run::upload_lazy(client, |writer| {
-        saver::livesplit::save_run(run, IoWrite(writer))
-    })
-    .await
+    let mut buf = Vec::new();
+    saver::livesplit::save_run(run, IoWrite(&mut buf))
+        .ok()
+        .context(Save)?;
+    api::run::upload(client, buf).await.context(Upload)
 }
 
 /// Asynchronously uploads the run of the timer provided to Splits.io. If there
@@ -59,8 +75,9 @@ pub async fn upload_run(client: &Client, run: &Run) -> Result<UploadedRun, Uploa
 /// object representing the ID of the uploaded run and its claim token gets
 /// returned when the run was successfully uploaded.
 pub async fn upload_timer(client: &Client, timer: &Timer) -> Result<UploadedRun, UploadError> {
-    api::run::upload_lazy(client, |writer| {
-        saver::livesplit::save_timer(timer, IoWrite(writer))
-    })
-    .await
+    let mut buf = Vec::new();
+    saver::livesplit::save_timer(timer, IoWrite(&mut buf))
+        .ok()
+        .context(Save)?;
+    api::run::upload(client, buf).await.context(Upload)
 }
