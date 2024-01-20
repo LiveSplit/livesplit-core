@@ -142,10 +142,21 @@ impl ProcessList {
         &'process self,
         name: &'both str,
     ) -> impl Iterator<Item = &'process sysinfo::Process> + 'both {
+        let name = name.as_bytes();
+
+        // On Linux the process name is limited to 15 bytes. So we ensure that
+        // we don't compare more than that. This may lead to false positives
+        // where we may find the wrong process, but it's better than not finding
+        // it at all. We could also try to look at the entire path, but
+        // apparently the path may be something entirely different in emulated
+        // situations like with Wine.
+        #[cfg(target_os = "linux")]
+        let name = &name[..name.len().min(15)];
+
         self.system
             .processes()
             .values()
-            .filter(move |p| p.name() == name)
+            .filter(move |p| p.name().as_bytes() == name)
     }
 
     pub fn is_open(&self, pid: sysinfo::Pid) -> bool {
