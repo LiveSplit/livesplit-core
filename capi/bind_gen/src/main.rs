@@ -65,7 +65,7 @@ pub struct Function {
 
 impl Function {
     fn is_static(&self) -> bool {
-        if let Some((name, _)) = self.inputs.get(0) {
+        if let Some((name, _)) = self.inputs.first() {
             name != "this"
         } else {
             true
@@ -277,7 +277,7 @@ fn fns_to_classes(functions: Vec<Function>) -> BTreeMap<String, Class> {
 
         class.comments = function.class_comments.clone();
 
-        match function.inputs.get(0) {
+        match function.inputs.first() {
             Some((name, ty)) if name == "this" => match ty.kind {
                 TypeKind::Value => class.own_fns.push(function),
                 TypeKind::Ref => class.shared_fns.push(function),
