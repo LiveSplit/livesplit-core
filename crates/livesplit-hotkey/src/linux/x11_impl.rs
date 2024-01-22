@@ -7,8 +7,8 @@ use std::{
 
 use mio::{unix::SourceFd, Events, Interest, Poll, Token, Waker};
 use x11_dl::xlib::{
-    AnyKey, AnyModifier, ControlMask, Display, GrabModeAsync, KeyPress, Mod1Mask, Mod4Mask,
-    ShiftMask, XErrorEvent, XKeyEvent, Xlib, _XDisplay,
+    AnyKey, AnyModifier, ControlMask, Display, GrabModeAsync, KeyPress, LockMask, Mod1Mask,
+    Mod2Mask, Mod3Mask, Mod4Mask, ShiftMask, XErrorEvent, XKeyEvent, Xlib, _XDisplay,
 };
 
 use super::{Error, Hook, Message};
@@ -25,6 +25,33 @@ unsafe fn ungrab_all(xlib: &Xlib, display: *mut Display) {
         }
     }
 }
+
+const fn mask(x: c_uint) -> u8 {
+    if x < 256 {
+        x as u8
+    } else {
+        panic!()
+    }
+}
+
+const CAPS_LOCK: u8 = mask(LockMask);
+const NUM_LOCK: u8 = mask(Mod2Mask);
+const SCROLL_LOCK: u8 = mask(Mod3Mask);
+
+// X11 has no way of ignoring additional modifiers, so we have to register every
+// single combination of them. We are mostly only interested in the lock keys,
+// because they may be in the wrong state without you actively interacting with
+// them.
+const IGNORE_MASKS: [u8; 8] = [
+    0,
+    CAPS_LOCK,
+    NUM_LOCK,
+    NUM_LOCK | CAPS_LOCK,
+    SCROLL_LOCK,
+    SCROLL_LOCK | CAPS_LOCK,
+    SCROLL_LOCK | NUM_LOCK,
+    SCROLL_LOCK | NUM_LOCK | CAPS_LOCK,
+];
 
 unsafe fn grab_all(xlib: &Xlib, display: *mut Display, keylist: &[(c_uint, Modifiers)]) {
     ungrab_all(xlib, display);
@@ -45,15 +72,18 @@ unsafe fn grab_all(xlib: &Xlib, display: *mut Display, keylist: &[(c_uint, Modif
             if modifiers.contains(Modifiers::META) {
                 mod_mask |= Mod4Mask;
             }
-            (xlib.XGrabKey)(
-                display,
-                code as c_int,
-                mod_mask,
-                rootwindow,
-                false as _,
-                GrabModeAsync,
-                GrabModeAsync,
-            );
+
+            for ignore_mask in IGNORE_MASKS {
+                (xlib.XGrabKey)(
+                    display,
+                    code as c_int,
+                    mod_mask | (ignore_mask as c_uint),
+                    rootwindow,
+                    false as _,
+                    GrabModeAsync,
+                    GrabModeAsync,
+                );
+            }
         }
     }
 }
