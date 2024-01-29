@@ -33,7 +33,7 @@ pub fn build(script_path: Option<&Path>) -> WasiCtx {
             drives &= !(1 << drive_idx);
             let drive = drive_idx as u8 + b'a';
             if let Ok(path) = wasmtime_wasi::Dir::open_ambient_dir(
-                str::from_utf8(&[drive, b':', b'\\']).unwrap(),
+                str::from_utf8(&[b'\\', b'\\', b'?', b'\\', drive, b':', b'\\']).unwrap(),
                 ambient_authority(),
             ) {
                 wasi.push_dir(
@@ -43,6 +43,9 @@ pub fn build(script_path: Option<&Path>) -> WasiCtx {
                 .unwrap();
             }
         }
+
+        wasi.push_dir(Box::new(DeviceDir), PathBuf::from("/mnt/device"))
+            .unwrap();
     }
     #[cfg(not(windows))]
     {
@@ -127,4 +130,66 @@ impl WasiDir for ReadOnlyDir {
         // permissions.
         self.0.get_path_filestat(path, follow_symlinks).await
     }
+}
+
+#[cfg(windows)]
+struct DeviceDir;
+
+#[cfg(windows)]
+#[async_trait::async_trait]
+impl WasiDir for DeviceDir {
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    async fn open_file(
+        &self,
+        symlink_follow: bool,
+        path: &str,
+        oflags: OFlags,
+        read: bool,
+        write: bool,
+        fdflags: FdFlags,
+    ) -> Result<OpenResult, wasi_common::Error> {
+        let (dir, file) = device_path(path)?;
+        dir.open_file(symlink_follow, file, oflags, read, write, fdflags)
+            .await
+    }
+
+    // FIXME: cap-primitives/src/windows/fs/get_path tries to strip `\\?\`,
+    // which breaks paths that aren't valid without it, such as UNC paths:
+    // https://github.com/bytecodealliance/cap-std/issues/348
+
+    async fn read_link(&self, path: &str) -> Result<PathBuf, wasi_common::Error> {
+        let (dir, file) = device_path(path)?;
+        dir.read_link(file).await
+    }
+
+    async fn get_path_filestat(
+        &self,
+        path: &str,
+        follow_symlinks: bool,
+    ) -> Result<Filestat, wasi_common::Error> {
+        let (dir, file) = device_path(path)?;
+        dir.get_path_filestat(file, follow_symlinks).await
+    }
+}
+
+#[cfg(windows)]
+fn device_path(path: &str) -> Result<(ReadOnlyDir, &str), wasi_common::Error> {
+    let (parent, file) = path
+        .strip_suffix('/')
+        .unwrap_or(path)
+        .rsplit_once('/')
+        .ok_or_else(wasi_common::Error::not_supported)?;
+
+    let parent = wasi_path::to_native(&format!("/mnt/device/{parent}"), true)
+        .ok_or_else(wasi_common::Error::not_supported)?;
+
+    let dir = wasmtime_wasi::dir::Dir::from_cap_std(
+        wasmtime_wasi::Dir::open_ambient_dir(parent, ambient_authority())
+            .map_err(|_| wasi_common::Error::not_supported())?,
+    );
+
+    Ok((ReadOnlyDir(dir), file))
 }
