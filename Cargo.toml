@@ -58,6 +58,8 @@ serde_json = { version = "1.0.60", default-features = false, features = [
 smallstr = { version = "0.3.0", default-features = false }
 snafu = { version = "0.8.0", default-features = false }
 unicase = "2.6.0"
+rustfft = "6.1.0"
+assert_approx_eq = "1.1.0"
 
 # std
 image = { version = "0.24.0", features = [
@@ -189,6 +191,10 @@ harness = false
 
 [[bench]]
 name = "software_rendering"
+harness = false
+
+[[bench]]
+name = "statistical_pb_chance"
 harness = false
 
 [profile.max-opt]

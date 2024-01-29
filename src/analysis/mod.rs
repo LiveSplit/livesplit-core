@@ -9,6 +9,7 @@ mod skill_curve;
 pub mod state_helper;
 pub mod sum_of_segments;
 pub mod total_playtime;
+pub mod statistical_pb_chance;
 
 pub use self::skill_curve::SkillCurve;
 pub use self::state_helper::*;
