@@ -534,7 +534,8 @@
 //!   nothing.
 //! - The file system is currently almost entirely empty. The host's file system
 //!   is accessible through `/mnt`. It is entirely read-only. Windows paths are
-//!   mapped to `/mnt/c`, `/mnt/d`, etc. to match WSL.
+//!   mapped to `/mnt/c`, `/mnt/d`, etc. to match WSL. Additionally
+//!   `/mnt/device` maps to `\\?\` on Windows to access additional paths.
 //! - There are no environment variables.
 //! - There are no command line arguments.
 //! - There is no networking.
