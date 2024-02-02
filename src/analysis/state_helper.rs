@@ -319,7 +319,7 @@ pub fn split_color(
 ) -> SemanticColor {
     if show_best_segments && check_best_segment(timer, segment_index, method) {
         SemanticColor::BestSegment
-    } else if let Some(time_difference) = time_difference {
+    } else if let Some(time_difference) = time_difference.filter(|t| t != &TimeSpan::zero()) {
         let last_delta = segment_index
             .checked_sub(1)
             .and_then(|n| last_delta(timer.run(), n, comparison, method));

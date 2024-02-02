@@ -26,6 +26,7 @@ pub struct Inner {
 /// * Hours without Decimal Dropping `+12:34:56.1`
 /// * Hours with Decimal Dropping `+12:34:56`
 /// * Negative Times `−23.1`
+/// * Exactly zero `0.0`
 pub struct Delta(bool, Accuracy);
 
 impl Delta {
@@ -74,11 +75,14 @@ impl Display for Inner {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         if let Some(time) = self.time {
             let (total_seconds, nanoseconds) = time.to_seconds_and_subsec_nanoseconds();
-            let (total_seconds, nanoseconds) = if (total_seconds | nanoseconds as i64) < 0 {
+            let bit_or = total_seconds | nanoseconds as i64;
+            let (total_seconds, nanoseconds) = if bit_or < 0 {
                 f.write_str(MINUS)?;
                 ((-total_seconds) as u64, (-nanoseconds) as u32)
             } else {
-                f.write_str(PLUS)?;
+                if bit_or > 0 {
+                    f.write_str(PLUS)?;
+                }
                 (total_seconds as u64, nanoseconds as u32)
             };
             // These are intentionally not data dependent, such that the CPU can
@@ -113,5 +117,38 @@ impl Display for Inner {
         } else {
             f.write_str(DASH)
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sign_works() {
+        assert_eq!(
+            Delta::new()
+                .format(TimeSpan::from_seconds(-1.5))
+                .to_string(),
+            "−1.5"
+        );
+        assert_eq!(
+            Delta::new()
+                .format(TimeSpan::from_seconds(-0.5))
+                .to_string(),
+            "−0.5"
+        );
+
+        // We drop the sign entirely when it's exactly 0.
+        assert_eq!(Delta::new().format(TimeSpan::zero()).to_string(), "0.0");
+
+        assert_eq!(
+            Delta::new().format(TimeSpan::from_seconds(0.5)).to_string(),
+            "+0.5"
+        );
+        assert_eq!(
+            Delta::new().format(TimeSpan::from_seconds(1.5)).to_string(),
+            "+1.5"
+        );
     }
 }
