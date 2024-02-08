@@ -68,7 +68,7 @@ image = { version = "0.24.0", features = [
 # Currently doesn't require any additional dependencies.
 
 # Default Text Engine
-cosmic-text = { version = "0.10.0", default-features = false, features = [
+cosmic-text = { version = "0.11.0", default-features = false, features = [
     "no_std",
 ], optional = true }
 
