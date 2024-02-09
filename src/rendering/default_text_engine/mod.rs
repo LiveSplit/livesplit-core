@@ -219,7 +219,13 @@ impl<P: SharedOwnership> TextEngine<P> {
 
         label.glyphs.clear();
 
-        // FIXME: Look into shape plans in 0.11
+        // FIXME: Look into shape run caches. The problem is that we do fairly
+        // high quality caching ourselves, which means that we don't hit the
+        // cache unless something actually changes... however that doesn't mean
+        // we want to collect "everything". Additionally how many "frames" do we
+        // want to keep stuff alive even? Doesn't that also heavily depend on
+        // the frame rate? We don't even have a notion of a frame rate. Should
+        // we just run it every N label updates instead?
         let shape_line = ShapeLine::new_in_buffer(
             &mut self.shape_buffer,
             &mut self.font_system,
