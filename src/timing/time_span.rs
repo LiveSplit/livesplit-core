@@ -29,11 +29,6 @@ impl TimeSpan {
         Self(Duration::seconds_f64(0.001 * milliseconds))
     }
 
-    /// Creates a new `TimeSpan` from a given amount of days.
-    pub fn from_days(days: f64) -> Self {
-        Self(Duration::seconds_f64(days * (24.0 * 60.0 * 60.0)))
-    }
-
     /// Converts the `TimeSpan` to a `Duration` from the `time` crate.
     pub const fn to_duration(&self) -> Duration {
         self.0
@@ -167,14 +162,14 @@ impl From<TimeSpan> for Duration {
 impl Add for TimeSpan {
     type Output = TimeSpan;
     fn add(self, rhs: TimeSpan) -> TimeSpan {
-        TimeSpan(self.0 + rhs.0)
+        TimeSpan(self.0.saturating_add(rhs.0))
     }
 }
 
 impl Sub for TimeSpan {
     type Output = TimeSpan;
     fn sub(self, rhs: TimeSpan) -> TimeSpan {
-        TimeSpan(self.0 - rhs.0)
+        TimeSpan(self.0.saturating_sub(rhs.0))
     }
 }
 

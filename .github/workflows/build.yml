@@ -99,7 +99,7 @@ jobs:
           # "ld: cannot find -lexecinfo"
           # - NetBSD x86_64
           - Solaris sparcv9
-          - Solaris x86_64
+          # - Solaris x86_64
 
           # Testing other channels
           - Windows Beta
@@ -482,9 +482,10 @@ jobs:
             target: sparcv9-sun-solaris
             tests: skip
 
-          - label: Solaris x86_64
-            target: x86_64-sun-solaris
-            tests: skip
+          # FIXME: The target got renamed and cross doesn't support it yet.
+          # - label: Solaris x86_64
+          #   target: x86_64-pc-solaris
+          #   tests: skip
 
           # Testing other channels
           - label: Windows Beta
