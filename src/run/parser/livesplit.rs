@@ -4,19 +4,22 @@ use super::super::ComparisonError;
 use crate::{
     platform::prelude::*,
     run::LinkedLayout,
-    util::xml::{
-        helper::{
-            attribute, attribute_escaped_err, end_tag, optional_attribute_escaped_err,
-            parse_attributes, parse_base, parse_children, reencode_children, text,
-            text_as_escaped_string_err, text_parsed, Error as XmlError,
+    util::{
+        ascii_char::AsciiChar,
+        xml::{
+            helper::{
+                attribute, attribute_escaped_err, end_tag, optional_attribute_escaped_err,
+                parse_attributes, parse_base, parse_children, reencode_children, text,
+                text_as_escaped_string_err, text_parsed, Error as XmlError,
+            },
+            Reader,
         },
-        Reader,
     },
     AtomicDateTime, DateTime, Run, RunMetadata, Segment, Time, TimeSpan,
 };
 use alloc::borrow::Cow;
 use core::{mem::MaybeUninit, str};
-use time::{Date, PrimitiveDateTime};
+use time::{Date, Duration, PrimitiveDateTime};
 
 /// The Error type for splits files that couldn't be parsed by the LiveSplit
 /// Parser.
@@ -42,6 +45,8 @@ pub enum Error {
         /// The underlying error.
         source: crate::timing::ParseError,
     },
+    /// Failed to parse a time that contains days.
+    ParseExtendedTime,
     /// Failed to parse a date.
     ParseDate,
     /// Parsed comparison has an invalid name.
@@ -164,17 +169,7 @@ where
     F: FnOnce(TimeSpan),
 {
     text_as_escaped_string_err(reader, |text| {
-        let time_span = || -> Result<TimeSpan> {
-            if let Some((before_dot, after_dot)) = text.split_once('.') {
-                if after_dot.contains(':') {
-                    let days = TimeSpan::from_days(before_dot.parse()?);
-                    let time = after_dot.parse()?;
-                    return Ok(days + time);
-                }
-            }
-            text.parse().map_err(Into::into)
-        }()?;
-        f(time_span);
+        f(parse_time_span(text)?);
         Ok(())
     })
 }
@@ -184,22 +179,42 @@ where
     F: FnOnce(Option<TimeSpan>),
 {
     text_as_escaped_string_err(reader, |text| {
-        let time_span = || -> Result<Option<TimeSpan>> {
-            if text.is_empty() {
-                return Ok(None);
-            }
-            if let Some((before_dot, after_dot)) = text.split_once('.') {
-                if after_dot.contains(':') {
-                    let days = TimeSpan::from_days(before_dot.parse()?);
-                    let time = after_dot.parse()?;
-                    return Ok(Some(days + time));
-                }
-            }
-            Ok(Some(text.parse()?))
-        }()?;
-        f(time_span);
+        f(if text.is_empty() {
+            None
+        } else {
+            Some(parse_time_span(text)?)
+        });
         Ok(())
     })
+}
+
+fn parse_time_span(text: &str) -> Result<TimeSpan> {
+    if let Some((before_dot, after_dot)) = AsciiChar::DOT.split_once(text) {
+        if AsciiChar::COLON.contains(after_dot) {
+            const SECS_PER_DAY: i64 = 24 * 60 * 60;
+
+            let days_secs = before_dot
+                .parse::<i64>()
+                .ok()
+                .and_then(|s| s.checked_mul(SECS_PER_DAY))
+                .ok_or(Error::ParseExtendedTime)?;
+
+            let days: TimeSpan = Duration::seconds(days_secs).into();
+
+            let time: TimeSpan = after_dot.parse()?;
+
+            if time < TimeSpan::zero() {
+                return Err(Error::ParseExtendedTime);
+            }
+
+            return Ok(if days < TimeSpan::zero() {
+                days - time
+            } else {
+                days + time
+            });
+        }
+    }
+    text.parse().map_err(Into::into)
 }
 
 fn time<F>(reader: &mut Reader<'_>, f: F) -> Result<()>
@@ -504,4 +519,30 @@ pub fn parse(source: &str) -> Result<Run> {
     }
 
     Ok(run)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn time_span_parsing() {
+        assert_eq!(
+            parse_time_span("1.23:34:56.789")
+                .unwrap()
+                .to_seconds_and_subsec_nanoseconds(),
+            (171296, 789000000)
+        );
+        assert_eq!(
+            parse_time_span("-1.23:34:56.789")
+                .unwrap()
+                .to_seconds_and_subsec_nanoseconds(),
+            (-171296, -789000000)
+        );
+        parse_time_span("-1.-23:34:56.789").unwrap_err();
+        parse_time_span("1.-23:34:56.789").unwrap_err();
+        parse_time_span("-123.45.23:34:56.789").unwrap_err();
+        parse_time_span("NaN.23:34:56.789").unwrap_err();
+        parse_time_span("Inf.23:34:56.789").unwrap_err();
+    }
 }
