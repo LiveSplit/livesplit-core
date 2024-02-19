@@ -1,10 +1,13 @@
 use super::{Component, Settings};
-use crate::{GeneralLayoutSettings, Run, Segment, Timer};
+use crate::{
+    settings::{Image, ImageCache},
+    GeneralLayoutSettings, Run, Segment, Timer,
+};
 
-fn prepare() -> (Timer, Component, GeneralLayoutSettings) {
+fn prepare() -> (Timer, Component, GeneralLayoutSettings, ImageCache) {
     let mut run = Run::new();
     let mut segment = Segment::new("foo");
-    segment.set_icon([0x00, 0x12, 0x34]);
+    segment.set_icon(Image::new([0x00, 0x12, 0x34].into(), Image::ICON));
     run.push_segment(segment);
     let timer = Timer::new(run).unwrap();
 
@@ -14,16 +17,21 @@ fn prepare() -> (Timer, Component, GeneralLayoutSettings) {
         ..Default::default()
     });
 
-    (timer, component, GeneralLayoutSettings::default())
+    (
+        timer,
+        component,
+        GeneralLayoutSettings::default(),
+        ImageCache::new(),
+    )
 }
 
 #[test]
 fn doesnt_show_segment_name_outside_attempt() {
-    let (timer, mut component, layout_settings) = prepare();
+    let (timer, component, layout_settings, mut image_cache) = prepare();
 
     assert_eq!(
         component
-            .state(&timer.snapshot(), &layout_settings)
+            .state(&mut image_cache, &timer.snapshot(), &layout_settings)
             .segment_name,
         None
     );
@@ -31,13 +39,13 @@ fn doesnt_show_segment_name_outside_attempt() {
 
 #[test]
 fn shows_segment_name_during_attempt() {
-    let (mut timer, mut component, layout_settings) = prepare();
+    let (mut timer, component, layout_settings, mut image_cache) = prepare();
 
     timer.start();
 
     assert_eq!(
         component
-            .state(&timer.snapshot(), &layout_settings)
+            .state(&mut image_cache, &timer.snapshot(), &layout_settings)
             .segment_name
             .unwrap(),
         "foo",
@@ -46,14 +54,14 @@ fn shows_segment_name_during_attempt() {
 
 #[test]
 fn shows_segment_name_at_the_end_of_an_attempt() {
-    let (mut timer, mut component, layout_settings) = prepare();
+    let (mut timer, component, layout_settings, mut image_cache) = prepare();
 
     timer.start();
     timer.split();
 
     assert_eq!(
         component
-            .state(&timer.snapshot(), &layout_settings)
+            .state(&mut image_cache, &timer.snapshot(), &layout_settings)
             .segment_name
             .unwrap(),
         "foo",
@@ -62,7 +70,7 @@ fn shows_segment_name_at_the_end_of_an_attempt() {
 
 #[test]
 fn stops_showing_segment_name_when_resetting() {
-    let (mut timer, mut component, layout_settings) = prepare();
+    let (mut timer, component, layout_settings, mut image_cache) = prepare();
 
     timer.start();
     timer.split();
@@ -70,7 +78,7 @@ fn stops_showing_segment_name_when_resetting() {
 
     assert_eq!(
         component
-            .state(&timer.snapshot(), &layout_settings)
+            .state(&mut image_cache, &timer.snapshot(), &layout_settings)
             .segment_name,
         None
     );
@@ -78,109 +86,64 @@ fn stops_showing_segment_name_when_resetting() {
 
 #[test]
 fn doesnt_show_icon_outside_attempt() {
-    let (timer, mut component, layout_settings) = prepare();
+    let (timer, component, layout_settings, mut image_cache) = prepare();
 
     assert!(component
-        .state(&timer.snapshot(), &layout_settings)
-        .icon_change
-        .filter(|i| i.is_empty())
-        .is_some());
-
-    assert!(component
-        .state(&timer.snapshot(), &layout_settings)
-        .icon_change
-        .is_none());
+        .state(&mut image_cache, &timer.snapshot(), &layout_settings)
+        .icon
+        .is_empty());
 }
 
 #[test]
 fn shows_icon_during_attempt() {
-    let (mut timer, mut component, layout_settings) = prepare();
+    let (mut timer, component, layout_settings, mut image_cache) = prepare();
 
-    component.state(&timer.snapshot(), &layout_settings);
+    component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
 
     timer.start();
 
-    assert!(component
-        .state(&timer.snapshot(), &layout_settings)
-        .icon_change
-        .filter(|s| !s.is_empty())
-        .is_some());
-
-    assert!(component
-        .state(&timer.snapshot(), &layout_settings)
-        .icon_change
-        .is_none());
+    assert!(!component
+        .state(&mut image_cache, &timer.snapshot(), &layout_settings)
+        .icon
+        .is_empty());
 }
 
 #[test]
 fn still_shows_icon_of_last_segment_at_the_end_of_an_attempt() {
-    let (mut timer, mut component, layout_settings) = prepare();
+    let (mut timer, component, layout_settings, mut image_cache) = prepare();
 
-    component.state(&timer.snapshot(), &layout_settings);
+    component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
 
     timer.start();
 
-    component.state(&timer.snapshot(), &layout_settings);
+    component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
 
     timer.split();
 
-    assert!(component
-        .state(&timer.snapshot(), &layout_settings)
-        .icon_change
-        .is_none());
+    assert!(!component
+        .state(&mut image_cache, &timer.snapshot(), &layout_settings)
+        .icon
+        .is_empty());
 }
 
 #[test]
 fn stops_showing_icon_when_resetting() {
-    let (mut timer, mut component, layout_settings) = prepare();
+    let (mut timer, component, layout_settings, mut image_cache) = prepare();
 
-    component.state(&timer.snapshot(), &layout_settings);
+    component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
 
     timer.start();
 
-    component.state(&timer.snapshot(), &layout_settings);
+    component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
 
     timer.split();
 
-    component.state(&timer.snapshot(), &layout_settings);
+    component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
 
     timer.reset(true);
 
     assert!(component
-        .state(&timer.snapshot(), &layout_settings)
-        .icon_change
-        .filter(|i| i.is_empty())
-        .is_some());
-
-    assert!(component
-        .state(&timer.snapshot(), &layout_settings)
-        .icon_change
-        .is_none());
-}
-
-#[test]
-fn shows_icon_again_when_remounting() {
-    let (mut timer, mut component, layout_settings) = prepare();
-
-    component.state(&timer.snapshot(), &layout_settings);
-
-    timer.start();
-
-    component.state(&timer.snapshot(), &layout_settings);
-
-    component.remount();
-
-    assert!(component
-        .state(&timer.snapshot(), &layout_settings)
-        .icon_change
-        .filter(|s| !s.is_empty())
-        .is_some());
-
-    component.remount();
-
-    assert!(component
-        .state(&timer.snapshot(), &layout_settings)
-        .icon_change
-        .filter(|s| !s.is_empty())
-        .is_some());
+        .state(&mut image_cache, &timer.snapshot(), &layout_settings)
+        .icon
+        .is_empty());
 }

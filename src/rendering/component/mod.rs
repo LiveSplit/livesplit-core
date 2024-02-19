@@ -16,20 +16,20 @@ pub mod text;
 pub mod timer;
 pub mod title;
 
-pub enum Cache<I, L> {
+pub enum Cache<L> {
     Empty,
-    DetailedTimer(detailed_timer::Cache<I, L>),
-    KeyValue(key_value::Cache<I, L>),
-    Splits(splits::Cache<I, L>),
-    Text(text::Cache<I, L>),
-    Timer(timer::Cache<I, L>),
-    Title(title::Cache<I, L>),
+    DetailedTimer(detailed_timer::Cache<L>),
+    KeyValue(key_value::Cache<L>),
+    Splits(splits::Cache<L>),
+    Text(text::Cache<L>),
+    Timer(timer::Cache<L>),
+    Title(title::Cache<L>),
 }
 
 macro_rules! accessors {
     ($($variant:ident $module:ident),*) => {
         $(
-            fn $module(&mut self) -> &mut $module::Cache<I, L> {
+            fn $module(&mut self) -> &mut $module::Cache<L> {
                 match self {
                     Self::$variant(c) => c,
                     _ => {
@@ -42,7 +42,7 @@ macro_rules! accessors {
     };
 }
 
-impl<I, L> Cache<I, L> {
+impl<L> Cache<L> {
     pub const fn new(component: &ComponentState) -> Self {
         match component {
             ComponentState::DetailedTimer(_) => Self::DetailedTimer(detailed_timer::Cache::new()),
@@ -137,7 +137,7 @@ pub fn height(component: &ComponentState) -> f32 {
 }
 
 pub(super) fn render<A: ResourceAllocator>(
-    cache: &mut Cache<A::Image, A::Label>,
+    cache: &mut Cache<A::Label>,
     context: &mut RenderContext<'_, A>,
     component: &ComponentState,
     state: &LayoutState,

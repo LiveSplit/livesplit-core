@@ -425,6 +425,11 @@ function decodeSlice(ptr: number): Uint8Array {
     return memory.slice(ptr, ptr + len);
 }
 
+function decodePtrLen(ptr: number, len: number): Uint8Array {
+    const memory = new Uint8Array(wasm.memory.buffer);
+    return memory.slice(ptr, ptr + len);
+}
+
 function decodeString(ptr: number): string {
     return decodeUtf8(decodeSlice(ptr));
 }
@@ -473,6 +478,11 @@ function allocString(str) {
 function decodeSlice(ptr) {
     const memory = new Uint8Array(wasm.memory.buffer);
     const len = wasm.get_buf_len();
+    return memory.slice(ptr, ptr + len);
+}
+
+function decodePtrLen(ptr, len) {
+    const memory = new Uint8Array(wasm.memory.buffer);
     return memory.slice(ptr, ptr + len);
 }
 
@@ -612,6 +622,61 @@ export class {class_name_ref} {{"#,
     }"#
                 )?;
             }
+        } else if class_name == "ImageCache" {
+            if type_script {
+                write!(
+                    writer,
+                    "{}",
+                    r#"
+    /**
+     * Looks up an image in the cache based on its image ID. The bytes are the image in its original
+     * file format. The format is not specified and can be any image format. The
+     * data may not even represent a valid image at all. If the image is not in the
+     * cache, null is returned. This does not mark the image as visited.
+     */
+    lookupData(key: string): Uint8Array | undefined {
+        if (this.ptr == 0) {
+            throw "this is disposed";
+        }
+        const key_allocated = allocString(key);
+        const ptr = wasm.ImageCache_lookup_data_ptr(this.ptr, key_allocated.ptr);
+        const len = wasm.ImageCache_lookup_data_len(this.ptr, key_allocated.ptr);
+        dealloc(key_allocated);
+        if (ptr === 0) {
+            return undefined;
+        }
+        return decodePtrLen(ptr, len);
+    }"#
+                )?;
+            } else {
+                write!(
+                    writer,
+                    "{}",
+                    r#"
+    /**
+     * Looks up an image in the cache based on its image ID. The bytes are the image in its original
+     * file format. The format is not specified and can be any image format. The
+     * data may not even represent a valid image at all. If the image is not in the
+     * cache, null is returned. This does not mark the image as visited.
+     *
+     * @param {string} key
+     * @return {Uint8Array | undefined}
+     */
+    lookupData(key) {
+        if (this.ptr == 0) {
+            throw "this is disposed";
+        }
+        const key_allocated = allocString(key);
+        const ptr = wasm.ImageCache_lookup_data_ptr(this.ptr, key_allocated.ptr);
+        const len = wasm.ImageCache_lookup_data_len(this.ptr, key_allocated.ptr);
+        dealloc(key_allocated);
+        if (ptr === 0) {
+            return undefined;
+        }
+        return decodePtrLen(ptr, len);
+    }"#
+                )?;
+            }
         }
 
         if type_script {
@@ -693,6 +758,32 @@ export class {class_name_ref_mut} extends {class_name_ref} {{"#,
         const slice = allocUint8Array(data);
         this.activeSetIcon(slice.ptr, slice.len);
         dealloc(slice);
+    }"#
+                )?;
+            }
+        } else if class_name == "ImageCache" {
+            if type_script {
+                write!(
+                    writer,
+                    "{}",
+                    r#"
+    cacheFromArray(data: Uint8Array, isLarge: boolean): string {
+        const slice = allocUint8Array(data);
+        const result = this.cache(slice.ptr, slice.len, isLarge);
+        dealloc(slice);
+        return result;
+    }"#
+                )?;
+            } else {
+                write!(
+                    writer,
+                    "{}",
+                    r#"
+    cacheFromArray(data, isLarge) {
+        const slice = allocUint8Array(data);
+        const result = this.cache(slice.ptr, slice.len, isLarge);
+        dealloc(slice);
+        return result;
     }"#
                 )?;
             }

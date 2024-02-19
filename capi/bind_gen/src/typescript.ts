@@ -35,6 +35,48 @@ export type ListGradient =
     { Same: Gradient } |
     { Alternating: Color[] };
 
+/**
+ * The ID of an image that can be used for looking up an image in an image
+ * cache.
+ */
+export type ImageId = string;
+
+/**
+ * A constant that is part of the formula to calculate the sigma of a gaussian
+ * blur for a background image. Check its documentation for a deeper
+ * explanation.
+ */
+export const BLUR_FACTOR = 0.05;
+
+export interface BackgroundImage {
+    /** The image ID to look up the actual image in an image cache. */
+    image: ImageId,
+    /**
+     * The brightness of the image in the range from `0` to `1`. This is for
+     * darkening the image if it's too bright.
+     */
+    brightness: number,
+    /**
+     * The opacity of the image in the range from `0` to `1`. This is for making
+     * the image more transparent.
+     */
+    opacity: number,
+    /**
+     * An additional gaussian blur that is applied to the image. It is in the
+     * range from `0` to `1` and is meant to be multiplied with the larger of
+     * the two dimensions of the image to ensure that the blur is independent of
+     * the resolution of the image and then multiplied by `BLUR_FACTOR` to scale
+     * it to a reasonable value. The resulting value is the sigma (standard
+     * deviation) of the gaussian blur.
+     *
+     * sigma = BLUR_FACTOR * blur * max(width, height)
+     */
+    blur: number,
+}
+
+/** The background of a layout. */
+export type LayoutBackground = Gradient | BackgroundImage;
+
 /** Describes the Alignment of the Title in the Title Component. */
 export type Alignment = "Auto" | "Left" | "Center";
 
@@ -215,12 +257,11 @@ export interface TitleComponentStateJson {
      */
     text_color: Color | null,
     /**
-     * The game's icon encoded as a Data URL. This value is only specified
-     * whenever the icon changes. If you explicitly want to query this value,
-     * remount the component. The String itself may be empty. This indicates
-     * that there is no icon.
+     * The game icon to show. The associated image can be looked up in the image
+     * cache. The image may be the empty image. This indicates that there is no
+     * icon.
      */
-    icon_change: string | null,
+    icon: ImageId,
     /**
      * The first title line to show. This is either the game's name, or a
      * combination of the game's name and the category. This is a list of all
@@ -266,13 +307,6 @@ export interface SplitsComponentStateJson {
     /** The list of all the segments to visualize. */
     splits: SplitStateJson[],
     /**
-     * This list describes all the icon changes that happened. Each time a
-     * segment is first shown or its icon changes, the new icon is provided in
-     * this list. If necessary, you may remount this component to reset the
-     * component into a state where these icons are provided again.
-     */
-    icon_changes: SplitsComponentIconChangeJson[],
-    /**
      * Specifies whether the current run has any icons, even those that are not
      * currently visible by the splits component. This allows for properly
      * indenting the icon column, even when the icons are scrolled outside the
@@ -301,29 +335,14 @@ export interface SplitsComponentStateJson {
     current_split_gradient: Gradient,
 }
 
-/**
- * Describes the icon to be shown for a certain segment. This is provided
- * whenever a segment is first shown or whenever its icon changes. If necessary,
- * you may remount this component to reset the component into a state where
- * these icons are provided again.
- */
-export interface SplitsComponentIconChangeJson {
-    /**
-     * The index of the segment of which the icon changed. This is based on the
-     * index in the run, not on the index of the `SplitStateJson` in the
-     * `SplitsComponentStateJson` object. The corresponding index is the `index`
-     * field of the `SplitStateJson` object.
-     */
-    segment_index: number,
-    /**
-     * The segment's icon encoded as a Data URL. The String itself may be empty.
-     * This indicates that there is no icon.
-     */
-    icon: string,
-}
-
 /** The state object that describes a single segment's information to visualize. */
 export interface SplitStateJson {
+    /**
+     * The icon of the segment. The associated image can be looked up in the
+     * image cache. The image may be the empty image. This indicates that there
+     * is no icon.
+     */
+    icon: ImageId,
     /** The name of the segment. */
     name: string,
     /**
@@ -524,12 +543,11 @@ export interface DetailedTimerComponentStateJson {
      */
     segment_name: string | null,
     /**
-     * The segment's icon encoded as a Data URL. This value is only specified
-     * whenever the icon changes. If you explicitly want to query this value,
-     * remount the component. The String itself may be empty. This indicates
-     * that there is no icon.
+     * The icon of the segment. The associated image can be looked up in the
+     * image cache. The image may be the empty image. This indicates that there
+     * is no icon.
      */
-    icon_change: string | null,
+    icon: ImageId,
     /**
      * The color of the segment name if it's shown. If `null` is specified, the
      * color is taken from the layout.
@@ -644,6 +662,7 @@ export type SettingsDescriptionValueJson =
     { LayoutDirection: LayoutDirection } |
     { Font: Font | null } |
     { DeltaGradient: DeltaGradient } |
+    { LayoutBackground: LayoutBackground } |
     { CustomCombobox: CustomCombobox };
 
 /** Describes the kind of a column. */
@@ -725,11 +744,11 @@ export type DigitsFormatJson =
  */
 export interface RunEditorStateJson {
     /**
-     * The game's icon encoded as a Data URL. This value is only specified
-     * whenever the icon changes. The String itself may be empty. This
-     * indicates that there is no icon.
+     * The game icon of the run. The associated image can be looked up in the
+     * image cache. The image may be the empty image. This indicates that there
+     * is no icon.
      */
-    icon_change: string | null,
+    icon: ImageId,
     /** The name of the game the Run is for. */
     game: string,
     /** The name of the category the Run is for. */
@@ -854,11 +873,11 @@ export interface RunEditorButtonsJson {
 /** Describes the current state of a segment. */
 export interface RunEditorRowJson {
     /**
-     * The segment's icon encoded as a Data URL. This value is only specified
-     * whenever the icon changes. The String itself may be empty. This
-     * indicates that there is no icon.
+     * The icon of the segment. The associated image can be looked up in the
+     * image cache. The image may be the empty image. This indicates that there
+     * is no icon.
      */
-    icon_change: string | null,
+    icon: ImageId,
     /** The name of the segment. */
     name: string,
     /** The segment's split time for the active timing method. */

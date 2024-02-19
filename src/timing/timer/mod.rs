@@ -148,6 +148,7 @@ impl Timer {
     /// that was in use by the Timer is being returned. Before the Run is
     /// returned, the current attempt is reset and the splits are being updated
     /// depending on the `update_splits` parameter.
+    #[allow(clippy::result_large_err)]
     pub fn replace_run(&mut self, mut run: Run, update_splits: bool) -> Result<Run, Run> {
         if run.is_empty() {
             return Err(run);
@@ -168,6 +169,7 @@ impl Timer {
     /// the Run provided contains no segments, it can't be used for timing and
     /// is returned as the Err case of the Result. The Run object in use by the
     /// Timer is dropped by this method.
+    #[allow(clippy::result_large_err)]
     pub fn set_run(&mut self, run: Run) -> Result<(), Run> {
         self.replace_run(run, false).map(drop)
     }

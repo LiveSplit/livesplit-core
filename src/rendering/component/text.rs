@@ -1,5 +1,3 @@
-use core::marker::PhantomData;
-
 use crate::{
     component::text::{State, TextState},
     layout::{LayoutDirection, LayoutState},
@@ -11,24 +9,22 @@ use crate::{
     },
 };
 
-pub struct Cache<I, L> {
+pub struct Cache<L> {
     label1: AbbreviatedLabel<L>,
     label2: CachedLabel<L>,
-    _image: PhantomData<I>,
 }
 
-impl<I, L> Cache<I, L> {
+impl<L> Cache<L> {
     pub const fn new() -> Self {
         Self {
             label1: AbbreviatedLabel::new(),
             label2: CachedLabel::new(),
-            _image: PhantomData,
         }
     }
 }
 
 pub(in crate::rendering) fn render<A: ResourceAllocator>(
-    cache: &mut Cache<A::Image, A::Label>,
+    cache: &mut Cache<A::Label>,
     context: &mut RenderContext<'_, A>,
     [width, height]: [f32; 2],
     component: &State,

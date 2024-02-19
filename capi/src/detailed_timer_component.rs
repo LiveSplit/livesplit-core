@@ -4,10 +4,13 @@
 //! comparisons, the segment icon, and the segment's name, can also be shown.
 
 use super::{output_vec, Json};
-use crate::component::OwnedComponent;
-use crate::detailed_timer_component_state::OwnedDetailedTimerComponentState;
-use livesplit_core::component::detailed_timer::Component as DetailedTimerComponent;
-use livesplit_core::{GeneralLayoutSettings, Timer};
+use crate::{
+    component::OwnedComponent, detailed_timer_component_state::OwnedDetailedTimerComponentState,
+};
+use livesplit_core::{
+    component::detailed_timer::Component as DetailedTimerComponent, settings::ImageCache,
+    GeneralLayoutSettings, Timer,
+};
 
 /// type
 pub type OwnedDetailedTimerComponent = Box<DetailedTimerComponent>;
@@ -37,11 +40,12 @@ pub extern "C" fn DetailedTimerComponent_into_generic(
 #[no_mangle]
 pub extern "C" fn DetailedTimerComponent_state_as_json(
     this: &mut DetailedTimerComponent,
+    image_cache: &mut ImageCache,
     timer: &Timer,
     layout_settings: &GeneralLayoutSettings,
 ) -> Json {
     output_vec(|o| {
-        this.state(&timer.snapshot(), layout_settings)
+        this.state(image_cache, &timer.snapshot(), layout_settings)
             .write_json(o)
             .unwrap();
     })
@@ -52,8 +56,9 @@ pub extern "C" fn DetailedTimerComponent_state_as_json(
 #[no_mangle]
 pub extern "C" fn DetailedTimerComponent_state(
     this: &mut DetailedTimerComponent,
+    image_cache: &mut ImageCache,
     timer: &Timer,
     layout_settings: &GeneralLayoutSettings,
 ) -> OwnedDetailedTimerComponentState {
-    Box::new(this.state(&timer.snapshot(), layout_settings))
+    Box::new(this.state(image_cache, &timer.snapshot(), layout_settings))
 }

@@ -5,10 +5,14 @@
 
 use super::{output_vec, str, Json};
 use crate::{
-    linked_layout::OwnedLinkedLayout, run::OwnedRun, sum_of_best_cleaner::OwnedSumOfBestCleaner,
+    linked_layout::OwnedLinkedLayout, run::OwnedRun, slice,
+    sum_of_best_cleaner::OwnedSumOfBestCleaner,
 };
-use livesplit_core::{Run, RunEditor, TimingMethod};
-use std::{os::raw::c_char, slice};
+use livesplit_core::{
+    settings::{Image, ImageCache},
+    Run, RunEditor, TimingMethod,
+};
+use std::os::raw::c_char;
 
 /// type
 pub type OwnedRunEditor = Box<RunEditor>;
@@ -35,9 +39,9 @@ pub extern "C" fn RunEditor_close(this: OwnedRunEditor) -> OwnedRun {
 /// Calculates the Run Editor's state and encodes it as
 /// JSON in order to visualize it.
 #[no_mangle]
-pub extern "C" fn RunEditor_state_as_json(this: &mut RunEditor) -> Json {
+pub extern "C" fn RunEditor_state_as_json(this: &RunEditor, image_cache: &mut ImageCache) -> Json {
     output_vec(|o| {
-        this.state().write_json(o).unwrap();
+        this.state(image_cache).write_json(o).unwrap();
     })
 }
 
@@ -120,7 +124,7 @@ pub unsafe extern "C" fn RunEditor_set_game_icon(
     data: *const u8,
     length: usize,
 ) {
-    this.set_game_icon(slice::from_raw_parts(data, length));
+    this.set_game_icon(Image::new(slice(data, length).into(), Image::ICON));
 }
 
 /// Removes the game's icon.
@@ -283,7 +287,7 @@ pub unsafe extern "C" fn RunEditor_active_set_icon(
     length: usize,
 ) {
     this.active_segment()
-        .set_icon(slice::from_raw_parts(data, length));
+        .set_icon(Image::new(slice(data, length).into(), Image::ICON));
 }
 
 /// Removes the icon of the active segment.

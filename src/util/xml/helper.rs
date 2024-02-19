@@ -1,6 +1,6 @@
 use crate::platform::prelude::*;
 use alloc::borrow::Cow;
-use core::{fmt, str};
+use core::{fmt, mem::MaybeUninit, str};
 
 use super::{Attributes, Event, Reader, TagName, Text, Writer};
 
@@ -59,7 +59,7 @@ where
 {
     loop {
         match reader.read_event().ok_or(Error::Xml)? {
-            Event::Start(_) => return Err(Error::UnexpectedElement).map_err(Into::into),
+            Event::Start(_) => return Err(Error::UnexpectedElement.into()),
             Event::End(_) => {
                 return f("");
             }
@@ -71,7 +71,7 @@ where
                 end_tag_immediately(reader)?;
                 return Ok(val);
             }
-            Event::Ended => return Err(Error::UnexpectedEndOfFile).map_err(Into::into),
+            Event::Ended => return Err(Error::UnexpectedEndOfFile.into()),
             _ => {}
         }
     }
@@ -84,7 +84,7 @@ where
 {
     loop {
         match reader.read_event().ok_or(Error::Xml)? {
-            Event::Start(_) => return Err(Error::UnexpectedElement).map_err(Into::into),
+            Event::Start(_) => return Err(Error::UnexpectedElement.into()),
             Event::End(_) => {
                 return f(Cow::Borrowed(""));
             }
@@ -97,7 +97,7 @@ where
                 end_tag_immediately(reader)?;
                 return Ok(val);
             }
-            Event::Ended => return Err(Error::UnexpectedEndOfFile).map_err(Into::into),
+            Event::Ended => return Err(Error::UnexpectedEndOfFile.into()),
             _ => {}
         }
     }
@@ -109,9 +109,9 @@ where
 {
     loop {
         match reader.read_event().ok_or(Error::Xml)? {
-            Event::Start(_) => return Err(Error::UnexpectedElement).map_err(Into::into),
+            Event::Start(_) => return Err(Error::UnexpectedElement.into()),
             Event::End(_) => return Ok(()),
-            Event::Ended => return Err(Error::UnexpectedEndOfFile).map_err(Into::into),
+            Event::Ended => return Err(Error::UnexpectedEndOfFile.into()),
             _ => {}
         }
     }
@@ -182,7 +182,7 @@ where
                 }
                 depth -= 1;
             }
-            Event::Ended => return Err(Error::UnexpectedEndOfFile).map_err(Into::into),
+            Event::Ended => return Err(Error::UnexpectedEndOfFile.into()),
             _ => {}
         }
     }
@@ -202,7 +202,7 @@ where
             end_tag(reader)
         }
     })?;
-    val.ok_or(Error::ElementNotFound).map_err(Into::into)
+    val.ok_or(Error::ElementNotFound.into())
 }
 
 pub fn parse_children<F, E>(reader: &mut Reader<'_>, mut f: F) -> Result<(), E>
@@ -217,7 +217,7 @@ where
                 f(reader, name, attributes)?;
             }
             Event::End(_) => return Ok(()),
-            Event::Ended => return Err(Error::UnexpectedEndOfFile).map_err(Into::into),
+            Event::Ended => return Err(Error::UnexpectedEndOfFile.into()),
             _ => {}
         }
     }
@@ -235,10 +235,10 @@ where
                 return if name.name() == tag {
                     f(reader, attributes)
                 } else {
-                    Err(Error::ElementNotFound).map_err(Into::into)
+                    Err(Error::ElementNotFound.into())
                 };
             }
-            Event::Ended => return Err(Error::UnexpectedEndOfFile).map_err(Into::into),
+            Event::Ended => return Err(Error::UnexpectedEndOfFile.into()),
             _ => {}
         }
     }
@@ -294,7 +294,7 @@ where
     if called {
         Ok(())
     } else {
-        Err(Error::AttributeNotFound).map_err(Into::into)
+        Err(Error::AttributeNotFound.into())
     }
 }
 
@@ -316,7 +316,7 @@ where
     if called {
         Ok(())
     } else {
-        Err(Error::AttributeNotFound).map_err(Into::into)
+        Err(Error::AttributeNotFound.into())
     }
 }
 
@@ -327,6 +327,36 @@ where
 {
     attribute_err(attributes, key, |t| {
         f(t);
+        Ok(())
+    })
+}
+
+pub fn image<F, E>(
+    reader: &mut Reader<'_>,
+    image_buf: &mut Vec<MaybeUninit<u8>>,
+    f: F,
+) -> Result<(), E>
+where
+    F: FnOnce(&[u8]),
+    E: From<Error>,
+{
+    text_as_escaped_string_err(reader, |text| {
+        if text.len() >= 216 {
+            let src = &text.as_bytes()[212..];
+
+            image_buf.resize(
+                base64_simd::STANDARD.estimated_decoded_length(src.len()),
+                MaybeUninit::uninit(),
+            );
+
+            if let Ok(decoded) =
+                base64_simd::STANDARD.decode(src, base64_simd::Out::from_uninit_slice(image_buf))
+            {
+                f(&decoded[2..decoded.len() - 1]);
+                return Ok(());
+            }
+        }
+        f(&[]);
         Ok(())
     })
 }

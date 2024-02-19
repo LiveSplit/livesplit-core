@@ -47,14 +47,20 @@ pub trait ResourceAllocator {
     /// performance you can change the implementation.
     fn build_circle(&mut self, x: f32, y: f32, r: f32) -> Self::Path {
         // Based on https://spencermortensen.com/articles/bezier-circle/
-        const C: f64 = 0.551915024494;
+        const A: f64 = 1.00005519;
+        const B: f64 = 0.55342686;
+        const C: f64 = 0.99873585;
+
+        let a = (A * r as f64) as f32;
+        let b = (B * r as f64) as f32;
         let c = (C * r as f64) as f32;
+
         let mut builder = self.path_builder();
-        builder.move_to(x, y - r);
-        builder.curve_to(x + c, y - r, x + r, y - c, x + r, y);
-        builder.curve_to(x + r, y + c, x + c, y + r, x, y + r);
-        builder.curve_to(x - c, y + r, x - r, y + c, x - r, y);
-        builder.curve_to(x - r, y - c, x - c, y - r, x, y - r);
+        builder.move_to(x, y + a);
+        builder.curve_to(x + b, y + c, x + c, y + b, x + a, y);
+        builder.curve_to(x + c, y - b, x + b, y - c, x, y - a);
+        builder.curve_to(x - b, y - c, x - c, y - b, x - a, y);
+        builder.curve_to(x - c, y + b, x - b, y + c, x, y + a);
         builder.close();
         builder.finish()
     }
@@ -82,9 +88,8 @@ pub trait ResourceAllocator {
 
     /// Creates a new text label with the text and font provided. An optional
     /// maximum width is provided as well. If the width of the text measured at
-    /// a size of 1 (spanning from the descender to the ascender) is greater
-    /// than the maximum width, then it is expected to be truncated with an
-    /// ellipsis such that it fits within the maximum width.
+    /// a size of 1 is greater than the maximum width, then it is expected to be
+    /// truncated with an ellipsis such that it fits within the maximum width.
     fn create_label(
         &mut self,
         text: &str,
@@ -94,9 +99,9 @@ pub trait ResourceAllocator {
 
     /// Updates an existing text label with the new text and font provided. An
     /// optional maximum width is provided as well. If the width of the text
-    /// measured at a size of 1 (spanning from the descender to the ascender) is
-    /// greater than the maximum width, then it is expected to be truncated with
-    /// an ellipsis such that it fits within the maximum width.
+    /// measured at a size of 1 is greater than the maximum width, then it is
+    /// expected to be truncated with an ellipsis such that it fits within the
+    /// maximum width.
     fn update_label(
         &mut self,
         label: &mut Self::Label,
@@ -108,13 +113,11 @@ pub trait ResourceAllocator {
 
 /// A text label created by a [`ResourceAllocator`].
 pub trait Label: SharedOwnership {
-    /// The width of the current text scaled by the scale factor provided. The
-    /// scale is meant to be the distance from the descender to the ascender.
+    /// The width of the current text scaled by the scale factor provided.
     fn width(&self, scale: f32) -> f32;
 
     /// The width of the current text scaled by the scale factor provided as if
-    /// it wasn't truncated by the maximum width that was provided. The scale is
-    /// meant to be the distance from the descender to the ascender.
+    /// it wasn't truncated by the maximum width that was provided.
     fn width_without_max_width(&self, scale: f32) -> f32;
 }
 

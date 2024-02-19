@@ -9,13 +9,13 @@ use livesplit_core::{
     },
     layout::LayoutDirection,
     settings::{
-        Alignment, Color, ColumnKind, Font, FontStretch, FontStyle, FontWeight, Gradient,
-        ListGradient, Value as SettingValue,
+        Alignment, BackgroundImage, Color, ColumnKind, Font, FontStretch, FontStyle, FontWeight,
+        Gradient, ImageId, LayoutBackground, ListGradient, Value as SettingValue,
     },
     timing::formatter::{Accuracy, DigitsFormat},
     TimingMethod,
 };
-use std::os::raw::c_char;
+use std::{os::raw::c_char, str::FromStr};
 
 /// type
 pub type OwnedSettingValue = Box<SettingValue>;
@@ -384,4 +384,25 @@ pub unsafe extern "C" fn SettingValue_from_delta_gradient(
         _ => return None,
     };
     Some(Box::new(value.into()))
+}
+
+/// Creates a new setting value from the background image with the image ID and
+/// the brightness, opacity, and blur provided. If the image ID is invalid,
+/// <NULL> is returned.
+#[no_mangle]
+pub unsafe extern "C" fn SettingValue_from_background_image(
+    image_id: *const c_char,
+    brightness: f32,
+    opacity: f32,
+    blur: f32,
+) -> NullableOwnedSettingValue {
+    Some(Box::new(
+        LayoutBackground::Image(BackgroundImage {
+            image: ImageId::from_str(str(image_id)).ok()?,
+            brightness,
+            opacity,
+            blur,
+        })
+        .into(),
+    ))
 }

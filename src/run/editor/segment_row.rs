@@ -1,38 +1,81 @@
+use core::borrow::Borrow;
+
 use super::{parse_positive, Editor, ParseError};
 use crate::{settings::Image, util::PopulateString, TimeSpan};
 
 /// A Segment Row describes the segment in the Run Editor actively selected for
 /// editing.
-pub struct SegmentRow<'editor> {
+pub struct SegmentRow<T> {
     index: usize,
-    editor: &'editor mut Editor,
+    editor: T,
 }
 
-impl<'a> SegmentRow<'a> {
-    pub(super) fn new(index: usize, editor: &'a mut Editor) -> Self {
+impl<T: Borrow<Editor>> SegmentRow<T> {
+    /// Accesses the icon of the segment.
+    pub fn icon(&self) -> &Image {
+        let editor: &Editor = self.editor.borrow();
+        editor.run.segment(self.index).icon()
+    }
+
+    /// Accesses the name of the segment.
+    pub fn name(&self) -> &str {
+        let editor: &Editor = self.editor.borrow();
+        editor.run.segment(self.index).name()
+    }
+
+    /// Accesses the split time of the segment for the active timing method.
+    pub fn split_time(&self) -> Option<TimeSpan> {
+        let editor: &Editor = self.editor.borrow();
+        let method = editor.selected_method;
+        editor.run.segment(self.index).personal_best_split_time()[method]
+    }
+
+    /// Accesses the segment time of the segment for the active timing method.
+    pub fn segment_time(&self) -> Option<TimeSpan> {
+        let editor: &Editor = self.editor.borrow();
+        editor.segment_times[self.index]
+    }
+
+    /// Accesses the best segment time of the segment for the active timing method.
+    pub fn best_segment_time(&self) -> Option<TimeSpan> {
+        let editor: &Editor = self.editor.borrow();
+        let method = editor.selected_method;
+        editor.run.segment(self.index).best_segment_time()[method]
+    }
+
+    /// Accesses the provided comparison's time of the segment for the active
+    /// timing method.
+    pub fn comparison_time(&self, comparison: &str) -> Option<TimeSpan> {
+        let editor: &Editor = self.editor.borrow();
+        let method = editor.selected_method;
+        editor.run.segment(self.index).comparison(comparison)[method]
+    }
+}
+
+impl<'a> SegmentRow<&'a Editor> {
+    pub(super) const fn new(index: usize, editor: &'a Editor) -> Self {
+        SegmentRow { index, editor }
+    }
+}
+
+impl<'a> SegmentRow<&'a mut Editor> {
+    pub(super) fn new_mut(index: usize, editor: &'a mut Editor) -> Self {
         SegmentRow { index, editor }
     }
 
-    /// Accesses the icon of the segment.
-    pub fn icon(&self) -> &Image {
-        self.editor.run.segment(self.index).icon()
-    }
-
     /// Sets the icon of the segment.
-    pub fn set_icon<D: Into<Image>>(&mut self, image: D) {
+    pub fn set_icon(&mut self, image: Image) {
         self.editor.run.segment_mut(self.index).set_icon(image);
         self.editor.raise_run_edited();
     }
 
     /// Removes the icon of the segment.
     pub fn remove_icon(&mut self) {
-        self.editor.run.segment_mut(self.index).set_icon([]);
+        self.editor
+            .run
+            .segment_mut(self.index)
+            .set_icon(Image::EMPTY.clone());
         self.editor.raise_run_edited();
-    }
-
-    /// Accesses the name of the segment.
-    pub fn name(&self) -> &str {
-        self.editor.run.segment(self.index).name()
     }
 
     /// Sets the name of the segment.
@@ -42,15 +85,6 @@ impl<'a> SegmentRow<'a> {
     {
         self.editor.run.segment_mut(self.index).set_name(name);
         self.editor.raise_run_edited();
-    }
-
-    /// Accesses the split time of the segment for the active timing method.
-    pub fn split_time(&self) -> Option<TimeSpan> {
-        let method = self.editor.selected_method;
-        self.editor
-            .run
-            .segment(self.index)
-            .personal_best_split_time()[method]
     }
 
     /// Sets the split time of the segment for the active timing method.
@@ -71,11 +105,6 @@ impl<'a> SegmentRow<'a> {
         Ok(())
     }
 
-    /// Accesses the segment time of the segment for the active timing method.
-    pub fn segment_time(&self) -> Option<TimeSpan> {
-        self.editor.segment_times[self.index]
-    }
-
     /// Sets the segment time of the segment for the active timing method.
     pub fn set_segment_time(&mut self, time: Option<TimeSpan>) {
         self.editor.segment_times[self.index] = time;
@@ -89,12 +118,6 @@ impl<'a> SegmentRow<'a> {
     pub fn parse_and_set_segment_time(&mut self, time: &str) -> Result<(), ParseError> {
         self.set_segment_time(parse_positive(time)?);
         Ok(())
-    }
-
-    /// Accesses the best segment time of the segment for the active timing method.
-    pub fn best_segment_time(&self) -> Option<TimeSpan> {
-        let method = self.editor.selected_method;
-        self.editor.run.segment(self.index).best_segment_time()[method]
     }
 
     /// Sets the best segment time of the segment for the active timing method.
@@ -113,13 +136,6 @@ impl<'a> SegmentRow<'a> {
     pub fn parse_and_set_best_segment_time(&mut self, time: &str) -> Result<(), ParseError> {
         self.set_best_segment_time(parse_positive(time)?);
         Ok(())
-    }
-
-    /// Accesses the provided comparison's time of the segment for the active
-    /// timing method.
-    pub fn comparison_time(&self, comparison: &str) -> Option<TimeSpan> {
-        let method = self.editor.selected_method;
-        self.editor.run.segment(self.index).comparison(comparison)[method]
     }
 
     /// Sets the provided comparison's time of the segment for the active timing method.

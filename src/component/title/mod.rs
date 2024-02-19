@@ -6,8 +6,7 @@
 use crate::{
     platform::prelude::*,
     settings::{
-        Alignment, CachedImageId, Color, Field, Gradient, Image, ImageData, SettingsDescription,
-        Value,
+        Alignment, Color, Field, Gradient, Image, ImageCache, ImageId, SettingsDescription, Value,
     },
     Timer, TimerPhase,
 };
@@ -24,7 +23,6 @@ mod tests;
 /// and the total number of finished runs can be shown.
 #[derive(Default, Clone)]
 pub struct Component {
-    icon_id: CachedImageId,
     settings: Settings,
 }
 
@@ -78,11 +76,10 @@ pub struct State {
     /// The color of the text. If `None` is specified, the color is taken from
     /// the layout.
     pub text_color: Option<Color>,
-    /// The game's icon encoded as the raw file bytes. This value is only
-    /// specified whenever the icon changes. If you explicitly want to query
-    /// this value, remount the component. The buffer itself may be empty. This
-    /// indicates that there is no icon.
-    pub icon_change: Option<ImageData>,
+    /// The game icon to show. The associated image can be looked up in the
+    /// image cache. The image may be the empty image. This indicates that there
+    /// is no icon.
+    pub icon: ImageId,
     /// The first title line to show. This is either the game's name, or a
     /// combination of the game's name and the category. This is a list of all
     /// the possible abbreviations. It contains at least one element and the
@@ -145,11 +142,8 @@ impl Component {
     }
 
     /// Creates a new Title Component with the given settings.
-    pub fn with_settings(settings: Settings) -> Self {
-        Self {
-            settings,
-            ..Default::default()
-        }
+    pub const fn with_settings(settings: Settings) -> Self {
+        Self { settings }
     }
 
     /// Accesses the settings of the component.
@@ -167,8 +161,12 @@ impl Component {
         "Title"
     }
 
-    /// Updates the component's state based on the timer provided.
-    pub fn update_state(&mut self, state: &mut State, timer: &Timer) {
+    /// Updates the component's state based on the timer provided. The
+    /// [`ImageCache`] is updated with all the images that are part of the
+    /// state. The images are marked as visited in the [`ImageCache`]. You still
+    /// need to manually run [`ImageCache::collect`] to ensure unused images are
+    /// removed from the cache.
+    pub fn update_state(&self, state: &mut State, image_cache: &mut ImageCache, timer: &Timer) {
         let run = timer.run();
 
         let finished_runs = if self.settings.show_finished_runs_count {
@@ -194,13 +192,17 @@ impl Component {
             None
         };
 
-        let game_icon = Some(run.game_icon()).filter(|_| self.settings.display_game_icon);
-        let icon_change = self.icon_id.update_with(game_icon).map(Into::into);
+        let icon = if self.settings.display_game_icon {
+            run.game_icon()
+        } else {
+            Image::EMPTY
+        };
+        state.icon = *image_cache.cache(icon.id(), || icon.clone()).id();
 
         let is_centered = match self.settings.text_alignment {
             Alignment::Center => true,
             Alignment::Left => false,
-            Alignment::Auto => game_icon.map_or(true, Image::is_empty),
+            Alignment::Auto => state.icon.is_empty(),
         };
 
         let game_name = if self.settings.show_game_name {
@@ -338,26 +340,20 @@ impl Component {
 
         state.background = self.settings.background;
         state.text_color = self.settings.text_color;
-        state.icon_change = icon_change;
         state.finished_runs = finished_runs;
         state.attempts = attempts;
         state.is_centered = is_centered;
     }
 
-    /// Calculates the component's state based on the timer provided.
-    pub fn state(&mut self, timer: &Timer) -> State {
+    /// Calculates the component's state based on the timer provided. The
+    /// [`ImageCache`] is updated with all the images that are part of the
+    /// state. The images are marked as visited in the [`ImageCache`]. You still
+    /// need to manually run [`ImageCache::collect`] to ensure unused images are
+    /// removed from the cache.
+    pub fn state(&self, image_cache: &mut ImageCache, timer: &Timer) -> State {
         let mut state = Default::default();
-        self.update_state(&mut state, timer);
+        self.update_state(&mut state, image_cache, timer);
         state
-    }
-
-    /// Remounts the component as if it was freshly initialized. The game icon
-    /// shown by this component is only provided in the state objects whenever
-    /// the icon changes or whenever the component's state is first queried.
-    /// Remounting returns the game icon again, whenever its state is queried
-    /// the next time.
-    pub fn remount(&mut self) {
-        self.icon_id.reset();
     }
 
     /// Accesses a generic description of the settings available for this

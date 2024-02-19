@@ -10,26 +10,23 @@ use crate::{
             TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP,
         },
         font::{AbbreviatedLabel, CachedLabel},
-        icon::Icon,
         resource::ResourceAllocator,
         solid, Layer, RenderContext,
     },
 };
 
-pub struct Cache<I, L> {
+pub struct Cache<L> {
     line1: AbbreviatedLabel<L>,
     line2: AbbreviatedLabel<L>,
-    game_icon: Option<Icon<I>>,
     attempts: CachedLabel<L>,
     attempts_buffer: String,
 }
 
-impl<I, L> Cache<I, L> {
+impl<L> Cache<L> {
     pub const fn new() -> Self {
         Self {
             line1: AbbreviatedLabel::new(),
             line2: AbbreviatedLabel::new(),
-            game_icon: None,
             attempts: CachedLabel::new(),
             attempts_buffer: String::new(),
         }
@@ -37,7 +34,7 @@ impl<I, L> Cache<I, L> {
 }
 
 pub(in crate::rendering) fn render<A: ResourceAllocator>(
-    cache: &mut Cache<A::Image, A::Label>,
+    cache: &mut Cache<A::Label>,
     context: &mut RenderContext<'_, A>,
     [width, height]: [f32; 2],
     component: &State,
@@ -47,14 +44,10 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     let text_color = component.text_color.unwrap_or(layout_state.text_color);
     let text_color = solid(&text_color);
 
-    if let Some(icon) = &component.icon_change {
-        cache.game_icon = context.create_icon(icon);
-    }
-
-    let left_bound = if let Some(icon) = &cache.game_icon {
+    let left_bound = if let Some(icon) = context.create_image(&component.icon) {
         let vertical_padding = vertical_padding(height);
         let icon_size = height - 2.0 * vertical_padding;
-        context.render_icon([PADDING, vertical_padding], [icon_size, icon_size], icon);
+        context.render_image([PADDING, vertical_padding], [icon_size, icon_size], icon);
         BOTH_PADDINGS + icon_size
     } else {
         PADDING

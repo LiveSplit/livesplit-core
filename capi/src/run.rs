@@ -3,7 +3,7 @@
 use super::{get_file, output_str, output_time_span, output_vec, str};
 use crate::{
     linked_layout::NullableOwnedLinkedLayout, parse_run_result::OwnedParseRunResult,
-    segment::OwnedSegment, with_vec,
+    segment::OwnedSegment, slice, with_vec,
 };
 use livesplit_core::{
     run::{
@@ -16,7 +16,6 @@ use std::{
     io::{Read, Write},
     os::raw::c_char,
     path::Path,
-    slice,
 };
 
 /// type
@@ -56,7 +55,7 @@ pub unsafe extern "C" fn Run_parse(
         None
     };
 
-    Box::new(parser::composite::parse(slice::from_raw_parts(data, length), load_files_path).ok())
+    Box::new(parser::composite::parse(slice(data, length), load_files_path).ok())
 }
 
 /// Attempts to parse a splits file from a file by invoking the corresponding

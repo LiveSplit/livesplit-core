@@ -14,6 +14,7 @@ use livesplit_core::{
     layout::{self, Component, ComponentState, Layout, LayoutDirection, LayoutState},
     rendering::software::Renderer,
     run::parser::{livesplit, llanfair, wsplit},
+    settings::ImageCache,
     Run, Segment, TimeSpan, Timer, TimingMethod,
 };
 use std::{fs, path::PathBuf};
@@ -38,9 +39,10 @@ fn default() {
     tests_helper::start_run(&mut timer);
     tests_helper::make_progress_run_with_splits_opt(&mut timer, &[Some(5.0), None, Some(10.0)]);
 
-    let state = layout.state(&timer.snapshot());
+    let mut image_cache = ImageCache::new();
+    let state = layout.state(&mut image_cache, &timer.snapshot());
 
-    check(&state, "670e0e09bf3dbfed", "default");
+    check(&state, &image_cache, "670e0e09bf3dbfed", "default");
 }
 
 // Font fallback inherently requires fonts from the operating system to
@@ -98,7 +100,8 @@ fn font_fallback() {
     tests_helper::start_run(&mut timer);
     tests_helper::make_progress_run_with_splits_opt(&mut timer, &[Some(5.0), None, Some(10.0)]);
 
-    let _state = layout.state(&timer.snapshot());
+    let mut image_cache = ImageCache::new();
+    let _state = layout.state(&mut image_cache, &timer.snapshot());
 
     let build_number: u64 = sysinfo::System::kernel_version().unwrap().parse().unwrap();
     let expected_hash = if build_number >= 22000 {
@@ -108,7 +111,7 @@ fn font_fallback() {
         // Windows 10
         "dd5663f95a5b43ec"
     };
-    check(&_state, expected_hash, "font_fallback");
+    check(&_state, &image_cache, expected_hash, "font_fallback");
 }
 
 #[test]
@@ -117,8 +120,10 @@ fn actual_split_file() {
     let timer = Timer::new(run).unwrap();
     let mut layout = Layout::default_layout();
 
+    let mut image_cache = ImageCache::new();
     check(
-        &layout.state(&timer.snapshot()),
+        &layout.state(&mut image_cache, &timer.snapshot()),
+        &image_cache,
         "cd9735cf9575f503",
         "actual_split_file",
     );
@@ -130,8 +135,10 @@ fn wsplit() {
     let timer = Timer::new(run).unwrap();
     let mut layout = lsl(layout_files::WSPLIT);
 
+    let mut image_cache = ImageCache::new();
     check_dims(
-        &layout.state(&timer.snapshot()),
+        &layout.state(&mut image_cache, &timer.snapshot()),
+        &image_cache,
         [250, 300],
         "9c69454a9258e768",
         "wsplit",
@@ -146,8 +153,11 @@ fn timer_delta_background() {
     tests_helper::start_run(&mut timer);
     tests_helper::make_progress_run_with_splits_opt(&mut timer, &[Some(5.0), None, Some(10.0)]);
 
+    let mut image_cache = ImageCache::new();
+
     check_dims(
-        &layout.state(&timer.snapshot()),
+        &layout.state(&mut image_cache, &timer.snapshot()),
+        &image_cache,
         [250, 300],
         "fc8e7890593f9da6",
         "timer_delta_background_ahead",
@@ -156,9 +166,10 @@ fn timer_delta_background() {
     timer.reset(true);
 
     check_dims(
-        &layout.state(&timer.snapshot()),
+        &layout.state(&mut image_cache, &timer.snapshot()),
+        &image_cache,
         [250, 300],
-        "bc5b8383ebb556b8",
+        "c56d1f6715627391",
         "timer_delta_background_stopped",
     );
 }
@@ -174,12 +185,21 @@ fn all_components() {
         &[Some(10.0), None, Some(20.0), Some(55.0)],
     );
 
-    let state = layout.state(&timer.snapshot());
+    let mut image_cache = ImageCache::new();
 
-    check_dims(&state, [300, 800], "e4db4770453a6d06", "all_components");
+    let state = layout.state(&mut image_cache, &timer.snapshot());
 
     check_dims(
         &state,
+        &image_cache,
+        [300, 800],
+        "a4a9f27478717418",
+        "all_components",
+    );
+
+    check_dims(
+        &state,
+        &image_cache,
         [150, 800],
         "0ecd0bad25453ff6",
         "all_components_thin",
@@ -192,7 +212,9 @@ fn score_split() {
     let timer = Timer::new(run).unwrap();
     let mut layout = Layout::default_layout();
 
-    let mut state = layout.state(&timer.snapshot());
+    let mut image_cache = ImageCache::new();
+
+    let mut state = layout.state(&mut image_cache, &timer.snapshot());
     let prev_seg = state.components.pop().unwrap();
     state.components.pop();
     let mut timer_state =
@@ -202,7 +224,13 @@ fn score_split() {
     state.components.push(ComponentState::Timer(timer_state));
     state.components.push(prev_seg);
 
-    check_dims(&state, [300, 400], "6ec6913f5ace6ab6", "score_split");
+    check_dims(
+        &state,
+        &image_cache,
+        [300, 400],
+        "6ec6913f5ace6ab6",
+        "score_split",
+    );
 }
 
 #[test]
@@ -211,8 +239,11 @@ fn dark_layout() {
     let timer = Timer::new(run).unwrap();
     let mut layout = lsl(layout_files::DARK);
 
+    let mut image_cache = ImageCache::new();
+
     check(
-        &layout.state(&timer.snapshot()),
+        &layout.state(&mut image_cache, &timer.snapshot()),
+        &image_cache,
         "a47c590792c1bab5",
         "dark_layout",
     );
@@ -230,8 +261,11 @@ fn subsplits_layout() {
         &[Some(10.0), None, Some(20.0), Some(55.0)],
     );
 
+    let mut image_cache = ImageCache::new();
+
     check_dims(
-        &layout.state(&timer.snapshot()),
+        &layout.state(&mut image_cache, &timer.snapshot()),
+        &image_cache,
         [300, 800],
         "57165de23ce37b9c",
         "subsplits_layout",
@@ -253,8 +287,11 @@ fn display_two_rows() {
     component.settings_mut().display_two_rows = true;
     layout.push(component);
 
+    let mut image_cache = ImageCache::new();
+
     check_dims(
-        &layout.state(&timer.snapshot()),
+        &layout.state(&mut image_cache, &timer.snapshot()),
+        &image_cache,
         [200, 100],
         "d174c2f9a0c54d66",
         "display_two_rows",
@@ -276,8 +313,11 @@ fn single_line_title() {
     settings.show_finished_runs_count = true;
     layout.push(component);
 
+    let mut image_cache = ImageCache::new();
+
     check_dims(
-        &layout.state(&timer.snapshot()),
+        &layout.state(&mut image_cache, &timer.snapshot()),
+        &image_cache,
         [300, 60],
         "5f0a41091c33ecad",
         "single_line_title",
@@ -310,8 +350,11 @@ fn horizontal() {
         &[Some(10.0), None, Some(20.0), Some(55.0)],
     );
 
+    let mut image_cache = ImageCache::new();
+
     check_dims(
-        &layout.state(&timer.snapshot()),
+        &layout.state(&mut image_cache, &timer.snapshot()),
+        &image_cache,
         [1500, 40],
         "987157e649936cbb",
         "horizontal",
@@ -319,14 +362,20 @@ fn horizontal() {
 }
 
 #[track_caller]
-fn check(state: &LayoutState, expected_hash_data: &str, name: &str) {
-    check_dims(state, [300, 500], expected_hash_data, name);
+fn check(state: &LayoutState, image_cache: &ImageCache, expected_hash_data: &str, name: &str) {
+    check_dims(state, image_cache, [300, 500], expected_hash_data, name);
 }
 
 #[track_caller]
-fn check_dims(state: &LayoutState, dims: [u32; 2], expected_hash: &str, name: &str) {
+fn check_dims(
+    state: &LayoutState,
+    image_cache: &ImageCache,
+    dims: [u32; 2],
+    expected_hash: &str,
+    name: &str,
+) {
     let mut renderer = Renderer::new();
-    renderer.render(state, dims);
+    renderer.render(state, image_cache, dims);
 
     let hash_image = renderer.image();
     let calculated_hash = seahash::hash(&hash_image);

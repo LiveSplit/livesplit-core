@@ -90,13 +90,13 @@ use self::{
         TWO_ROW_HEIGHT,
     },
     font::{AbbreviatedLabel, CachedLabel, FontCache},
-    icon::Icon,
+    icon::{CachedImage, ImageHandle},
     resource::Handles,
 };
 use crate::{
     layout::{LayoutDirection, LayoutState},
     platform::prelude::*,
-    settings::{Color, Gradient},
+    settings::{BackgroundImage, Color, Gradient, Image, ImageCache, ImageId, LayoutBackground},
 };
 use alloc::borrow::Cow;
 use bytemuck_derive::{Pod, Zeroable};
@@ -143,6 +143,14 @@ pub enum FillShader {
     HorizontalGradient(Rgba, Rgba),
 }
 
+/// The background of the bottom layer of the scene.
+pub enum Background<I> {
+    /// A shader is used to fill the background.
+    Shader(FillShader),
+    /// An image is used to fill the background.
+    Image(BackgroundImage<Handle<I>>, Transform),
+}
+
 enum CachedSize {
     Vertical(f32),
     Horizontal(f32),
@@ -160,10 +168,11 @@ enum CachedSize {
 /// curves, fonts and labels.
 pub struct SceneManager<P, I, F, L> {
     scene: Scene<P, I, L>,
-    components: Vec<component::Cache<I, L>>,
+    components: Vec<component::Cache<L>>,
     next_id: usize,
     cached_size: Option<CachedSize>,
     fonts: FontCache<F>,
+    images: ImageCache<CachedImage<I>>,
 }
 
 impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager<P, I, F, L> {
@@ -188,6 +197,7 @@ impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager
             scene: Scene::new(rectangle),
             cached_size: None,
             fonts,
+            images: ImageCache::new(),
         }
     }
 
@@ -209,11 +219,9 @@ impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager
         allocator: A,
         resolution: (f32, f32),
         state: &LayoutState,
+        image_cache: &ImageCache,
     ) -> Option<(f32, f32)> {
         self.scene.clear();
-
-        self.scene
-            .set_background(decode_gradient(&state.background));
 
         // Ensure we have exactly as many cached components as the layout state.
         if let Some(new_components) = state.components.get(self.components.len()..) {
@@ -224,11 +232,17 @@ impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager
         }
 
         let new_dimensions = match state.direction {
-            LayoutDirection::Vertical => self.render_vertical(allocator, resolution, state),
-            LayoutDirection::Horizontal => self.render_horizontal(allocator, resolution, state),
+            LayoutDirection::Vertical => {
+                self.render_vertical(allocator, resolution, state, image_cache)
+            }
+            LayoutDirection::Horizontal => {
+                self.render_horizontal(allocator, resolution, state, image_cache)
+            }
         };
 
         self.scene.recalculate_if_bottom_layer_changed();
+
+        self.images.collect();
 
         new_dimensions
     }
@@ -238,6 +252,7 @@ impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager
         allocator: impl ResourceAllocator<Path = P, Image = I, Font = F, Label = L>,
         resolution: (f32, f32),
         state: &LayoutState,
+        image_cache: &ImageCache,
     ) -> Option<(f32, f32)> {
         let total_height = component::layout_height(state);
 
@@ -272,7 +287,12 @@ impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager
             transform: Transform::scale(resolution.0, resolution.1),
             scene: &mut self.scene,
             fonts: &mut self.fonts,
+            images: &mut self.images,
+            image_cache,
         };
+
+        let background = context.decode_layout_background(&state.background, resolution);
+        context.scene.set_background(background);
 
         context.fonts.maybe_reload(&mut context.handles, state);
 
@@ -309,6 +329,7 @@ impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager
         allocator: impl ResourceAllocator<Path = P, Image = I, Font = F, Label = L>,
         resolution: (f32, f32),
         state: &LayoutState,
+        image_cache: &ImageCache,
     ) -> Option<(f32, f32)> {
         let total_width = component::layout_width(state);
 
@@ -342,7 +363,12 @@ impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager
             transform: Transform::scale(resolution.0, resolution.1),
             scene: &mut self.scene,
             fonts: &mut self.fonts,
+            images: &mut self.images,
+            image_cache,
         };
+
+        let background = context.decode_layout_background(&state.background, resolution);
+        context.scene.set_background(background);
 
         context.fonts.maybe_reload(&mut context.handles, state);
 
@@ -384,6 +410,8 @@ struct RenderContext<'b, A: ResourceAllocator> {
     handles: Handles<A>,
     scene: &'b mut Scene<A::Path, A::Image, A::Label>,
     fonts: &'b mut FontCache<A::Font>,
+    images: &'b mut ImageCache<CachedImage<A::Image>>,
+    image_cache: &'b ImageCache,
 }
 
 impl<A: ResourceAllocator> RenderContext<'_, A> {
@@ -443,12 +471,19 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         ));
     }
 
-    fn create_icon(&mut self, image_data: &[u8]) -> Option<Icon<A::Image>> {
-        let (image, aspect_ratio) = self.handles.create_image(image_data)?;
-        Some(Icon {
-            aspect_ratio,
-            image,
-        })
+    fn create_image(&mut self, id: &ImageId) -> Option<ImageHandle<A::Image>> {
+        let image = self.images.cache(id, || {
+            let image = self
+                .handles
+                .create_image(self.image_cache.lookup(id).unwrap_or(Image::EMPTY).data())
+                .map(|(handle, aspect_ratio)| ImageHandle {
+                    handle,
+                    aspect_ratio,
+                });
+            CachedImage { id: *id, image }
+        });
+
+        image.image.share()
     }
 
     fn scale(&mut self, factor: f32) {
@@ -475,14 +510,14 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         }
     }
 
-    fn render_icon(
+    fn render_image(
         &mut self,
         [mut x, mut y]: Pos,
         [mut width, mut height]: Pos,
-        icon: &Icon<A::Image>,
+        image: ImageHandle<A::Image>,
     ) {
         let box_aspect_ratio = width / height;
-        let aspect_ratio_diff = box_aspect_ratio / icon.aspect_ratio;
+        let aspect_ratio_diff = box_aspect_ratio / image.aspect_ratio;
 
         if aspect_ratio_diff > 1.0 {
             let new_width = width / aspect_ratio_diff;
@@ -500,7 +535,7 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
 
         self.scene
             .bottom_layer_mut()
-            .push(Entity::Image(icon.image.share(), transform));
+            .push(Entity::Image(image.handle.share(), transform));
     }
 
     fn render_key_value_component(
@@ -749,6 +784,45 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
     ) -> f32 {
         let label = label.update(text, &mut self.handles, &mut self.fonts.times.font, None);
         label.width(scale)
+    }
+
+    fn decode_layout_background(
+        &mut self,
+        background: &LayoutBackground<ImageId>,
+        (mut width, mut height): (f32, f32),
+    ) -> Option<Background<A::Image>> {
+        Some(match background {
+            LayoutBackground::Gradient(gradient) => Background::Shader(decode_gradient(gradient)?),
+            LayoutBackground::Image(background_image) => {
+                let image = self.create_image(&background_image.image)?;
+
+                let box_aspect_ratio = width / height;
+                let aspect_ratio_diff = image.aspect_ratio / box_aspect_ratio;
+                let [mut x, mut y] = [0.0; 2];
+
+                if aspect_ratio_diff > 1.0 {
+                    let new_width = width * aspect_ratio_diff;
+                    let diff_width = width - new_width;
+                    x += 0.5 * diff_width;
+                    width = new_width;
+                } else if aspect_ratio_diff < 1.0 {
+                    let new_height = height / aspect_ratio_diff;
+                    let diff_height = height - new_height;
+                    y += 0.5 * diff_height;
+                    height = new_height;
+                }
+
+                Background::Image(
+                    background_image.map(image.handle),
+                    Transform {
+                        scale_x: width,
+                        scale_y: height,
+                        x,
+                        y,
+                    },
+                )
+            }
+        })
     }
 }
 

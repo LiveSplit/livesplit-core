@@ -3,7 +3,7 @@ use crate::{
     comparison::personal_best,
     platform::prelude::*,
     run::RunMetadata,
-    settings::{CachedImageId, ImageData},
+    settings::{ImageCache, ImageId},
     timing::formatter::{none_wrapper::EmptyWrapper, Accuracy, SegmentTime, TimeFormatter},
 };
 use serde_derive::{Deserialize, Serialize};
@@ -12,10 +12,10 @@ use serde_derive::{Deserialize, Serialize};
 /// properly.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct State {
-    /// The game's icon encoded as the raw file bytes. This value is only
-    /// specified whenever the icon changes. The buffer itself may be empty.
-    /// This indicates that there is no icon.
-    pub icon_change: Option<ImageData>,
+    /// The game icon of the run. The associated image can be looked up in the
+    /// image cache. The image may be the empty image. This indicates that there
+    /// is no icon.
+    pub icon: ImageId,
     /// The name of the game the Run is for.
     pub game: String,
     /// The name of the category the Run is for.
@@ -61,10 +61,10 @@ pub struct Buttons {
 /// Describes the current state of a segment.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Segment {
-    /// The segment's icon encoded as the raw file bytes. This value is only
-    /// specified whenever the icon changes. The buffer itself may be empty.
-    /// This indicates that there is no icon.
-    pub icon_change: Option<ImageData>,
+    /// The icon of the segment. The associated image can be looked up in the
+    /// image cache. The image may be the empty image. This indicates that there
+    /// is no icon.
+    pub icon: ImageId,
     /// The name of the segment.
     pub name: String,
     /// The segment's split time for the active timing method.
@@ -112,14 +112,17 @@ impl State {
 }
 
 impl Editor {
-    /// Calculates the Run Editor's state in order to visualize it.
-    pub fn state(&mut self) -> State {
+    /// Calculates the Run Editor's state in order to visualize it. The
+    /// [`ImageCache`] is updated with all the images that are part of the
+    /// state. The images are marked as visited in the [`ImageCache`]. You still
+    /// need to manually run [`ImageCache::collect`] to ensure unused images are
+    /// removed from the cache.
+    pub fn state(&self, image_cache: &mut ImageCache) -> State {
         let formatter = EmptyWrapper::new(SegmentTime::with_accuracy(Accuracy::Hundredths));
 
-        let icon_change = self
-            .game_icon_id
-            .update_with(self.run.game_icon().into())
-            .map(Into::into);
+        let icon = self.run.game_icon();
+        let icon = *image_cache.cache(icon.id(), || icon.clone()).id();
+
         let game = self.game_name().to_string();
         let category = self.category_name().to_string();
         let offset = formatter.format(self.offset()).to_string();
@@ -139,9 +142,6 @@ impl Editor {
         };
         let mut segments = Vec::with_capacity(self.run.len());
 
-        self.segment_icon_ids
-            .resize(self.run.len(), CachedImageId::default());
-
         for segment_index in 0..self.run.len() {
             let (name, split_time, segment_time, best_segment_time, comparison_times);
             {
@@ -156,9 +156,8 @@ impl Editor {
                     .collect();
             }
 
-            let icon_change = self.segment_icon_ids[segment_index]
-                .update_with(self.run.segment(segment_index).icon().into())
-                .map(Into::into);
+            let icon = self.run.segment(segment_index).icon();
+            let icon = *image_cache.cache(icon.id(), || icon.clone()).id();
 
             let selected = if self.active_segment_index() == segment_index {
                 SelectionState::Active
@@ -169,7 +168,7 @@ impl Editor {
             };
 
             segments.push(Segment {
-                icon_change,
+                icon,
                 name,
                 split_time,
                 segment_time,
@@ -180,7 +179,7 @@ impl Editor {
         }
 
         State {
-            icon_change,
+            icon,
             game,
             category,
             offset,

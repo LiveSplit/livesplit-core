@@ -1,7 +1,9 @@
 use super::LayoutDirection;
 use crate::{
     platform::prelude::*,
-    settings::{Color, Field, Font, Gradient, SettingsDescription, Value},
+    settings::{
+        Color, Field, Font, Gradient, ImageCache, LayoutBackground, SettingsDescription, Value,
+    },
 };
 use serde_derive::{Deserialize, Serialize};
 
@@ -21,7 +23,7 @@ pub struct GeneralSettings {
     /// used.
     pub text_font: Option<Font>,
     /// The background to show behind the layout.
-    pub background: Gradient,
+    pub background: LayoutBackground,
     /// The color to use for when the runner achieved a best segment.
     pub best_segment_color: Color,
     /// The color to use for when the runner is ahead of the comparison and is
@@ -57,7 +59,9 @@ impl Default for GeneralSettings {
             timer_font: None,
             times_font: None,
             text_font: None,
-            background: Gradient::Plain(Color::hsla(0.0, 0.0, 0.06, 1.0)),
+            background: LayoutBackground::Gradient(Gradient::Plain(Color::hsla(
+                0.0, 0.0, 0.06, 1.0,
+            ))),
             best_segment_color: Color::hsla(50.0, 1.0, 0.5, 1.0),
             ahead_gaining_time_color: Color::hsla(136.0, 1.0, 0.4, 1.0),
             ahead_losing_time_color: Color::hsla(136.0, 0.55, 0.6, 1.0),
@@ -75,14 +79,21 @@ impl Default for GeneralSettings {
 
 impl GeneralSettings {
     /// Accesses a generic description of the general settings available for the
-    /// layout and their current values.
-    pub fn settings_description(&self) -> SettingsDescription {
+    /// layout and their current values. The [`ImageCache`] is updated with all
+    /// the images that are part of the state. The images are marked as visited
+    /// in the [`ImageCache`]. You still need to manually run
+    /// [`ImageCache::collect`] to ensure unused images are removed from the
+    /// cache.
+    pub fn settings_description(&self, image_cache: &mut ImageCache) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new("Layout Direction".into(), self.direction.into()),
             Field::new("Custom Timer Font".into(), self.timer_font.clone().into()),
             Field::new("Custom Times Font".into(), self.times_font.clone().into()),
             Field::new("Custom Text Font".into(), self.text_font.clone().into()),
-            Field::new("Background".into(), self.background.into()),
+            Field::new(
+                "Background".into(),
+                self.background.cache(image_cache).into(),
+            ),
             Field::new("Best Segment".into(), self.best_segment_color.into()),
             Field::new(
                 "Ahead (Gaining Time)".into(),
@@ -116,13 +127,13 @@ impl GeneralSettings {
     /// This panics if the type of the value to be set is not compatible with
     /// the type of the setting's value. A panic can also occur if the index of
     /// the setting provided is out of bounds.
-    pub fn set_value(&mut self, index: usize, value: Value) {
+    pub fn set_value(&mut self, index: usize, value: Value, image_cache: &ImageCache) {
         match index {
             0 => self.direction = value.into(),
             1 => self.timer_font = value.into(),
             2 => self.times_font = value.into(),
             3 => self.text_font = value.into(),
-            4 => self.background = value.into(),
+            4 => self.background = LayoutBackground::from(value).from_cache(image_cache),
             5 => self.best_segment_color = value.into(),
             6 => self.ahead_gaining_time_color = value.into(),
             7 => self.ahead_losing_time_color = value.into(),

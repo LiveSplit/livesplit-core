@@ -1,5 +1,3 @@
-use core::marker::PhantomData;
-
 use crate::{
     component::timer::State,
     rendering::{
@@ -8,24 +6,22 @@ use crate::{
     },
 };
 
-pub struct Cache<I, L> {
+pub struct Cache<L> {
     time: CachedLabel<L>,
     fraction: CachedLabel<L>,
-    _image: PhantomData<I>,
 }
 
-impl<I, L> Cache<I, L> {
+impl<L> Cache<L> {
     pub const fn new() -> Self {
         Self {
             time: CachedLabel::new(),
             fraction: CachedLabel::new(),
-            _image: PhantomData,
         }
     }
 }
 
 pub(in crate::rendering) fn render<A: ResourceAllocator>(
-    cache: &mut Cache<A::Image, A::Label>,
+    cache: &mut Cache<A::Label>,
     context: &mut RenderContext<'_, A>,
     [width, height]: [f32; 2],
     component: &State,

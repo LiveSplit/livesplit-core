@@ -66,8 +66,8 @@ impl Segment {
 
     /// Sets the icon of the segment.
     #[inline]
-    pub fn set_icon<D: Into<Image>>(&mut self, image: D) {
-        self.icon = image.into();
+    pub fn set_icon(&mut self, image: Image) {
+        self.icon = image;
     }
 
     /// Grants mutable access to the comparison times stored in the Segment.

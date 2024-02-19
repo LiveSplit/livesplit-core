@@ -173,7 +173,12 @@ fn parse_segment(
                     }
                 }
                 #[cfg(feature = "std")]
-                "icon" => image(reader, _raw_buf, _png_buf, |i| segment.set_icon(i)),
+                "icon" => image(reader, _raw_buf, _png_buf, |i| {
+                    segment.set_icon(crate::settings::Image::new(
+                        i.into(),
+                        crate::settings::Image::ICON,
+                    ))
+                }),
                 _ => end_tag(reader),
             })?;
 

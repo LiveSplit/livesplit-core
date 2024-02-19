@@ -10,7 +10,6 @@ use crate::{
             TEXT_ALIGN_BOTTOM, TEXT_ALIGN_TOP, THIN_SEPARATOR_THICKNESS, TWO_ROW_HEIGHT,
         },
         font::CachedLabel,
-        icon::Icon,
         resource::ResourceAllocator,
         scene::Layer,
         solid, RenderContext,
@@ -18,8 +17,7 @@ use crate::{
     settings::{Gradient, ListGradient},
 };
 
-pub struct Cache<I, L> {
-    icons: Vec<Option<Icon<I>>>,
+pub struct Cache<L> {
     splits: Vec<SplitCache<L>>,
     column_labels: Vec<CachedLabel<L>>,
     column_width_label: CachedLabel<L>,
@@ -40,10 +38,9 @@ impl<L> SplitCache<L> {
     }
 }
 
-impl<I, L> Cache<I, L> {
+impl<L> Cache<L> {
     pub const fn new() -> Self {
         Self {
-            icons: Vec::new(),
             splits: Vec::new(),
             column_labels: Vec::new(),
             column_width_label: CachedLabel::new(),
@@ -53,7 +50,7 @@ impl<I, L> Cache<I, L> {
 }
 
 pub(in crate::rendering) fn render<A: ResourceAllocator>(
-    cache: &mut Cache<A::Image, A::Label>,
+    cache: &mut Cache<A::Label>,
     context: &mut RenderContext<'_, A>,
     [width, height]: [f32; 2],
     component: &State,
@@ -105,15 +102,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         };
 
     let transform = context.transform;
-
-    for icon_change in &component.icon_changes {
-        if icon_change.segment_index >= cache.icons.len() {
-            cache
-                .icons
-                .resize_with(icon_change.segment_index + 1, || None);
-        }
-        cache.icons[icon_change.segment_index] = context.create_icon(&icon_change.icon);
-    }
 
     cache.column_label_widths.clear();
 
@@ -179,8 +167,8 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         }
 
         {
-            if let Some(Some(icon)) = cache.icons.get(split.index) {
-                context.render_icon([PADDING, icon_y], [icon_size, icon_size], icon);
+            if let Some(icon) = context.create_image(&split.icon) {
+                context.render_image([PADDING, icon_y], [icon_size, icon_size], icon);
             }
 
             let mut left_x = split_width - PADDING;

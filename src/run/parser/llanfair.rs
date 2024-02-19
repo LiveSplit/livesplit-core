@@ -191,7 +191,10 @@ pub fn parse(source: &[u8]) -> Result<Run> {
                     .write_image(image.as_ref(), width, height, ColorType::Rgba8)
                     .is_ok()
                 {
-                    icon = Some(crate::settings::Image::new(&buf));
+                    icon = Some(crate::settings::Image::new(
+                        buf.as_slice().into(),
+                        crate::settings::Image::ICON,
+                    ));
                 }
             }
         }

@@ -107,7 +107,7 @@ pub fn parse(
     catch! {
         let path = path.as_mut()?;
         path.set_file_name(splits.next()?);
-        let image = Image::from_file(path, &mut buf).ok()?;
+        let image = Image::from_file(path, &mut buf, Image::ICON).ok()?;
         run.set_game_icon(image);
     };
 
@@ -172,7 +172,7 @@ pub fn parse(
             if !file.is_empty() {
                 let path = path.as_mut()?;
                 path.set_file_name(file);
-                let image = Image::from_file(path, &mut buf).ok()?;
+                let image = Image::from_file(path, &mut buf, Image::ICON).ok()?;
                 segment.set_icon(image);
             }
         };

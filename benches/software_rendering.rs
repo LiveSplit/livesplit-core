@@ -6,6 +6,7 @@ cfg_if::cfg_if! {
                 layout::{self, Layout},
                 rendering::software::Renderer,
                 run::parser::livesplit,
+                settings::ImageCache,
                 Run, Segment, TimeSpan, Timer, TimingMethod,
             },
             std::fs,
@@ -21,21 +22,16 @@ cfg_if::cfg_if! {
             run.set_attempt_count(1337);
             let mut timer = Timer::new(run).unwrap();
             let mut layout = Layout::default_layout();
+            let mut image_cache = ImageCache::new();
 
             start_run(&mut timer);
             make_progress_run_with_splits_opt(&mut timer, &[Some(5.0), None, Some(10.0)]);
 
-            let snapshot = timer.snapshot();
-            let mut state = layout.state(&snapshot);
+            let state = layout.state(&mut image_cache, &timer.snapshot());
             let mut renderer = Renderer::new();
 
-            // Do a single frame beforehand as otherwise the layout state will
-            // keep saying that the icons changed.
-            renderer.render(&state, [300, 500]);
-            layout.update_state(&mut state, &snapshot);
-
             c.bench_function("Software Rendering (Default)", move |b| {
-                b.iter(|| renderer.render(&state, [300, 500]))
+                b.iter(|| renderer.render(&state, &image_cache, [300, 500]))
             });
         }
 
@@ -43,21 +39,16 @@ cfg_if::cfg_if! {
             let run = lss("tests/run_files/Celeste - Any% (1.2.1.5).lss");
             let mut timer = Timer::new(run).unwrap();
             let mut layout = lsl("tests/layout_files/subsplits.lsl");
+            let mut image_cache = ImageCache::new();
 
             start_run(&mut timer);
             make_progress_run_with_splits_opt(&mut timer, &[Some(10.0), None, Some(20.0), Some(55.0)]);
 
-            let snapshot = timer.snapshot();
-            let mut state = layout.state(&snapshot);
+            let state = layout.state(&mut image_cache, &timer.snapshot());
             let mut renderer = Renderer::new();
 
-            // Do a single frame beforehand as otherwise the layout state will
-            // keep saying that the icons changed.
-            renderer.render(&state, [300, 800]);
-            layout.update_state(&mut state, &snapshot);
-
             c.bench_function("Software Rendering (Subsplits Layout)", move |b| {
-                b.iter(|| renderer.render(&state, [300, 800]))
+                b.iter(|| renderer.render(&state, &image_cache, [300, 800]))
             });
         }
 

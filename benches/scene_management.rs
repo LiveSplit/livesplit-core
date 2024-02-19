@@ -7,7 +7,7 @@ cfg_if::cfg_if! {
                 PathBuilder, ResourceAllocator, SceneManager, Label, FontKind, SharedOwnership,
             },
             run::parser::livesplit,
-            settings::Font,
+            settings::{Font, ImageCache},
             Run, Segment, TimeSpan, Timer, TimingMethod,
         };
         use std::fs;
@@ -81,16 +81,17 @@ cfg_if::cfg_if! {
             run.set_attempt_count(1337);
             let mut timer = Timer::new(run).unwrap();
             let mut layout = Layout::default_layout();
+            let mut image_cache = ImageCache::new();
 
             start_run(&mut timer);
             make_progress_run_with_splits_opt(&mut timer, &[Some(5.0), None, Some(10.0)]);
 
-            let state = layout.state(&timer.snapshot());
+            let state = layout.state(&mut image_cache, &timer.snapshot());
 
             let mut manager = SceneManager::new(Dummy);
 
             c.bench_function("Scene Management (Default)", move |b| {
-                b.iter(|| manager.update_scene(Dummy, (300.0, 500.0), &state))
+                b.iter(|| manager.update_scene(Dummy, (300.0, 500.0), &state, &image_cache))
             });
         }
 
@@ -98,6 +99,7 @@ cfg_if::cfg_if! {
             let run = lss("tests/run_files/Celeste - Any% (1.2.1.5).lss");
             let mut timer = Timer::new(run).unwrap();
             let mut layout = lsl("tests/layout_files/subsplits.lsl");
+            let mut image_cache = ImageCache::new();
 
             start_run(&mut timer);
             make_progress_run_with_splits_opt(
@@ -106,13 +108,12 @@ cfg_if::cfg_if! {
             );
 
             let snapshot = timer.snapshot();
-            let mut state = layout.state(&snapshot);
-            layout.update_state(&mut state, &snapshot);
+            let state = layout.state(&mut image_cache, &snapshot);
 
             let mut manager = SceneManager::new(Dummy);
 
             c.bench_function("Scene Management (Subsplits Layout)", move |b| {
-                b.iter(|| manager.update_scene(Dummy, (300.0, 800.0), &state))
+                b.iter(|| manager.update_scene(Dummy, (300.0, 800.0), &state, &image_cache))
             });
         }
 

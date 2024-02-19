@@ -1,7 +1,7 @@
 use super::{
     entity::{calculate_hash, Entity},
     resource::{Handle, SharedOwnership},
-    FillShader,
+    Background,
 };
 use crate::platform::prelude::*;
 
@@ -37,7 +37,7 @@ impl Layer {
 /// [`Layer`] has a background that needs to be considered.
 pub struct Scene<P, I, L> {
     rectangle: Handle<P>,
-    background: Option<FillShader>,
+    background: Option<Background<I>>,
     bottom_hash: u64,
     bottom_layer_changed: bool,
     bottom_layer: Vec<Entity<P, I, L>>,
@@ -61,7 +61,7 @@ impl<P: SharedOwnership, I: SharedOwnership, L: SharedOwnership> Scene<P, I, L> 
     /// Get a reference to the bottom [`Layer's`](Layer) background. While the
     /// top [`Layer`] is inherently transparent, the bottom [`Layer`] has a
     /// background that needs to be considered.
-    pub const fn background(&self) -> &Option<FillShader> {
+    pub const fn background(&self) -> &Option<Background<I>> {
         &self.background
     }
 
@@ -91,7 +91,7 @@ impl<P: SharedOwnership, I: SharedOwnership, L: SharedOwnership> Scene<P, I, L> 
     }
 
     /// Set the bottom [`Layer's`](Layer) background.
-    pub fn set_background(&mut self, background: Option<FillShader>) {
+    pub fn set_background(&mut self, background: Option<Background<I>>) {
         self.background = background;
     }
 

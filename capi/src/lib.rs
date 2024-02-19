@@ -1,5 +1,13 @@
+#![warn(
+    clippy::complexity,
+    clippy::correctness,
+    clippy::perf,
+    clippy::style,
+    clippy::needless_pass_by_ref_mut,
+    missing_docs,
+    rust_2018_idioms
+)]
 #![allow(clippy::missing_safety_doc, non_camel_case_types, non_snake_case)]
-#![warn(missing_docs)]
 
 //! mod
 
@@ -9,7 +17,7 @@ use std::{
     fs::File,
     mem::ManuallyDrop,
     os::raw::c_char,
-    ptr,
+    ptr, slice,
 };
 
 pub mod analysis;
@@ -30,6 +38,7 @@ pub mod graph_component;
 pub mod graph_component_state;
 pub mod hotkey_config;
 pub mod hotkey_system;
+pub mod image_cache;
 pub mod key_value_component_state;
 pub mod layout;
 pub mod layout_editor;
@@ -88,12 +97,12 @@ pub type Json = *const c_char;
 pub type Nullablec_char = c_char;
 
 thread_local! {
-    static OUTPUT_VEC: RefCell<Vec<u8>> = RefCell::new(Vec::new());
-    static TIME_SPAN: Cell<TimeSpan> = Cell::default();
-    static TIME: Cell<Time> = Cell::default();
-    static SEGMENT_HISTORY_ELEMENT: Cell<SegmentHistoryElement> = Cell::default();
-    static RUN_METADATA_SPEEDRUN_COM_VARIABLE: Cell<RunMetadataSpeedrunComVariable> = Cell::new(("", ptr::null()));
-    static RUN_METADATA_CUSTOM_VARIABLE: Cell<RunMetadataCustomVariable> = Cell::new(("", ptr::null()));
+    static OUTPUT_VEC: RefCell<Vec<u8>> = const { RefCell::new(Vec::new()) };
+    static TIME_SPAN: Cell<TimeSpan> = const { Cell::new(TimeSpan::zero()) };
+    static TIME: Cell<Time> = const { Cell::new(Time::new()) };
+    static SEGMENT_HISTORY_ELEMENT: Cell<SegmentHistoryElement> = const { Cell::new((0, Time::new())) };
+    static RUN_METADATA_SPEEDRUN_COM_VARIABLE: Cell<RunMetadataSpeedrunComVariable> = const { Cell::new(("", ptr::null())) };
+    static RUN_METADATA_CUSTOM_VARIABLE: Cell<RunMetadataCustomVariable> = const { Cell::new(("", ptr::null())) };
 }
 
 fn output_time_span(time_span: TimeSpan) -> *const TimeSpan {
@@ -136,6 +145,22 @@ where
         output.push(0);
         output.as_ptr() as *const c_char
     })
+}
+
+unsafe fn slice<T>(ptr: *const T, len: usize) -> &'static [T] {
+    if len == 0 {
+        &[]
+    } else {
+        slice::from_raw_parts(ptr, len)
+    }
+}
+
+unsafe fn slice_mut<T>(ptr: *mut T, len: usize) -> &'static mut [T] {
+    if len == 0 {
+        &mut []
+    } else {
+        slice::from_raw_parts_mut(ptr, len)
+    }
 }
 
 unsafe fn str(s: *const c_char) -> &'static str {

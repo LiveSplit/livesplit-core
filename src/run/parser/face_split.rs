@@ -111,7 +111,11 @@ pub fn parse(source: &str, #[allow(unused)] load_icons: bool) -> Result<Run> {
         if load_icons {
             if let Some(icon_path) = splits.next() {
                 if !icon_path.is_empty() {
-                    if let Ok(image) = crate::settings::Image::from_file(icon_path, &mut icon_buf) {
+                    if let Ok(image) = crate::settings::Image::from_file(
+                        icon_path,
+                        &mut icon_buf,
+                        crate::settings::Image::ICON,
+                    ) {
                         segment.set_icon(image);
                     }
                 }

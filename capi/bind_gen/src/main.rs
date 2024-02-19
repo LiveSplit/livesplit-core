@@ -10,7 +10,6 @@ mod python;
 mod ruby;
 mod swift;
 mod typescript;
-mod wasm;
 mod wasm_bindgen;
 
 use clap::Parser;
@@ -306,19 +305,6 @@ fn write_files(classes: &BTreeMap<String, Class>, opt: &Opt) -> Result<()> {
 
         path.push("livesplit_core.ts");
         node::write(BufWriter::new(File::create(&path)?), classes, true)?;
-        path.pop();
-    }
-    path.pop();
-
-    path.push("wasm");
-    create_dir_all(&path)?;
-    {
-        path.push("livesplit_core.js");
-        wasm::write(BufWriter::new(File::create(&path)?), classes, false)?;
-        path.pop();
-
-        path.push("livesplit_core.ts");
-        wasm::write(BufWriter::new(File::create(&path)?), classes, true)?;
         path.pop();
     }
     path.pop();
