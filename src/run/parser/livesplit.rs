@@ -1,14 +1,14 @@
 //! Provides the parser for LiveSplit splits files.
 
-use super::super::ComparisonError;
 use crate::{
     platform::prelude::*,
-    run::LinkedLayout,
+    run::{ComparisonError, LinkedLayout},
+    settings::Image,
     util::{
         ascii_char::AsciiChar,
         xml::{
             helper::{
-                attribute, attribute_escaped_err, end_tag, optional_attribute_escaped_err,
+                attribute, attribute_escaped_err, end_tag, image, optional_attribute_escaped_err,
                 parse_attributes, parse_base, parse_children, reencode_children, text,
                 text_as_escaped_string_err, text_parsed, Error as XmlError,
             },
@@ -137,31 +137,6 @@ fn parse_date_time(text: &str) -> Result<DateTime> {
         .assume_utc()
     }
     .ok_or(Error::ParseDate)
-}
-
-fn image<F>(reader: &mut Reader<'_>, image_buf: &mut Vec<MaybeUninit<u8>>, f: F) -> Result<()>
-where
-    F: FnOnce(&[u8]),
-{
-    text_as_escaped_string_err(reader, |text| {
-        if text.len() >= 216 {
-            let src = &text.as_bytes()[212..];
-
-            image_buf.resize(
-                base64_simd::STANDARD.estimated_decoded_length(src.len()),
-                MaybeUninit::uninit(),
-            );
-
-            if let Ok(decoded) =
-                base64_simd::STANDARD.decode(src, base64_simd::Out::from_uninit_slice(image_buf))
-            {
-                f(&decoded[2..decoded.len() - 1]);
-                return Ok(());
-            }
-        }
-        f(&[]);
-        Ok(())
-    })
 }
 
 fn time_span<F>(reader: &mut Reader<'_>, f: F) -> Result<()>
@@ -306,7 +281,9 @@ fn parse_segment(
 
     parse_children(reader, |reader, tag, _| match tag.name() {
         "Name" => text(reader, |t| segment.set_name(t)),
-        "Icon" => image(reader, image_buf, |i| segment.set_icon(i)),
+        "Icon" => image(reader, image_buf, |i| {
+            segment.set_icon(Image::new(i.into(), Image::ICON))
+        }),
         "SplitTimes" => {
             if version >= Version(1, 3, 0, 0) {
                 parse_children(reader, |reader, tag, attributes| {
@@ -462,7 +439,9 @@ pub fn parse(source: &str) -> Result<Run> {
         parse_children(reader, |reader, tag, _| match tag.name() {
             "GameIcon" => {
                 required_flags |= 1;
-                image(reader, &mut image_buf, |i| run.set_game_icon(i))
+                image(reader, &mut image_buf, |i| {
+                    run.set_game_icon(Image::new(i.into(), Image::ICON))
+                })
             }
             "GameName" => {
                 required_flags |= 1 << 1;

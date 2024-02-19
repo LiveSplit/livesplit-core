@@ -5,10 +5,11 @@
 //! to be shown all the time.
 
 use super::{output_vec, Json};
-use crate::component::OwnedComponent;
-use crate::splits_component_state::OwnedSplitsComponentState;
-use livesplit_core::component::splits::Component as SplitsComponent;
-use livesplit_core::{GeneralLayoutSettings, Timer};
+use crate::{component::OwnedComponent, splits_component_state::OwnedSplitsComponentState};
+use livesplit_core::{
+    component::splits::Component as SplitsComponent, settings::ImageCache, GeneralLayoutSettings,
+    Timer,
+};
 
 /// type
 pub type OwnedSplitsComponent = Box<SplitsComponent>;
@@ -36,11 +37,12 @@ pub extern "C" fn SplitsComponent_into_generic(this: OwnedSplitsComponent) -> Ow
 #[no_mangle]
 pub extern "C" fn SplitsComponent_state_as_json(
     this: &mut SplitsComponent,
+    image_cache: &mut ImageCache,
     timer: &Timer,
     layout_settings: &GeneralLayoutSettings,
 ) -> Json {
     output_vec(|o| {
-        this.state(&timer.snapshot(), layout_settings)
+        this.state(image_cache, &timer.snapshot(), layout_settings)
             .write_json(o)
             .unwrap();
     })
@@ -51,10 +53,11 @@ pub extern "C" fn SplitsComponent_state_as_json(
 #[no_mangle]
 pub extern "C" fn SplitsComponent_state(
     this: &mut SplitsComponent,
+    image_cache: &mut ImageCache,
     timer: &Timer,
     layout_settings: &GeneralLayoutSettings,
 ) -> OwnedSplitsComponentState {
-    Box::new(this.state(&timer.snapshot(), layout_settings))
+    Box::new(this.state(image_cache, &timer.snapshot(), layout_settings))
 }
 
 /// Scrolls up the window of the segments that are shown. Doesn't move the

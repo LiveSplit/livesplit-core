@@ -8,8 +8,7 @@
 use crate::{
     platform::prelude::*,
     settings::{
-        self, CachedImageId, Color, Field, Gradient, ImageData, ListGradient, SettingsDescription,
-        Value,
+        self, Color, Field, Gradient, ImageCache, ImageId, ListGradient, SettingsDescription, Value,
     },
     timing::{formatter::Accuracy, Snapshot},
     util::{Clear, ClearVec},
@@ -40,7 +39,6 @@ const SETTINGS_PER_VARIABLE_COLUMN: usize = 2;
 /// to be shown all the time.
 #[derive(Default, Clone)]
 pub struct Component {
-    icon_ids: Vec<CachedImageId>,
     settings: Settings,
     current_split_index: Option<usize>,
     scroll_offset: isize,
@@ -107,6 +105,10 @@ pub struct Settings {
 /// The state object that describes a single segment's information to visualize.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SplitState {
+    /// The icon of the segment. The associated image can be looked up in the
+    /// image cache. The image may be the empty image. This indicates that there
+    /// is no icon.
+    pub icon: ImageId,
     /// The name of the segment.
     pub name: String,
     /// The state of each column from right to left. The amount of columns is
@@ -124,25 +126,10 @@ pub struct SplitState {
 
 impl Clear for SplitState {
     fn clear(&mut self) {
+        self.icon = *ImageId::EMPTY;
         self.name.clear();
         self.columns.clear();
     }
-}
-
-/// Describes the icon to be shown for a certain segment. This is provided
-/// whenever a segment is first shown or whenever its icon changes. If
-/// necessary, you may remount this component to reset the component into a
-/// state where these icons are provided again.
-#[derive(Debug, Serialize, Deserialize)]
-pub struct IconChange {
-    /// The index of the segment of which the icon changed. This is based on the
-    /// index in the run, not on the index of the `SplitState` in the `State`
-    /// object. The corresponding index is the `index` field of the `SplitState`
-    /// object.
-    pub segment_index: usize,
-    /// The segment's icon encoded as the raw file bytes. The buffer itself may
-    /// be empty. This indicates that there is no icon.
-    pub icon: ImageData,
 }
 
 /// The state object describes the information to visualize for this component.
@@ -156,11 +143,6 @@ pub struct State {
     pub column_labels: Option<ClearVec<String>>,
     /// The list of all the segments to visualize.
     pub splits: ClearVec<SplitState>,
-    /// This list describes all the icon changes that happened. Each time a
-    /// segment is first shown or its icon changes, the new icon is provided in
-    /// this list. If necessary, you may remount this component to reset the
-    /// component into a state where these icons are provided again.
-    pub icon_changes: Vec<IconChange>,
     /// Specifies whether the current run has any icons, even those that are not
     /// currently visible by the splits component. This allows for properly
     /// indenting the icon column, even when the icons are scrolled outside the
@@ -276,25 +258,20 @@ impl Component {
         self.scroll_offset = self.scroll_offset.saturating_add(1);
     }
 
-    /// Remounts the component as if it was freshly initialized. The segment
-    /// icons shown by this component are only provided in the state objects
-    /// whenever the icon changes or whenever the component's state is first
-    /// queried. Remounting returns the segment icons again, whenever its state
-    /// is queried the next time.
-    pub fn remount(&mut self) {
-        self.icon_ids.clear();
-    }
-
     /// Accesses the name of the component.
     pub const fn name(&self) -> &'static str {
         "Splits"
     }
 
     /// Updates the component's state based on the timer and layout settings
-    /// provided.
+    /// provided. The [`ImageCache`] is updated with all the images that are
+    /// part of the state. The images are marked as visited in the
+    /// [`ImageCache`]. You still need to manually run [`ImageCache::collect`]
+    /// to ensure unused images are removed from the cache.
     pub fn update_state(
         &mut self,
         state: &mut State,
+        image_cache: &mut ImageCache,
         timer: &Snapshot<'_>,
         layout_settings: &GeneralLayoutSettings,
     ) {
@@ -305,7 +282,6 @@ impl Component {
         }
 
         let run = timer.run();
-        self.icon_ids.resize(run.len(), CachedImageId::default());
 
         let mut visual_split_count = self.settings.visual_split_count;
         if visual_split_count == 0 {
@@ -361,33 +337,26 @@ impl Component {
             state.column_labels = None;
         }
 
-        let icon_changes = &mut state.icon_changes;
-        icon_changes.clear();
-
         state.splits.clear();
-        for ((i, segment), icon_id) in run
+        for (i, segment) in run
             .segments()
             .iter()
             .enumerate()
-            .zip(self.icon_ids.iter_mut())
             .skip(skip_count)
-            .filter(|&((i, _), _)| {
+            .filter(|&(i, _)| {
                 i - skip_count < take_count || (always_show_last_split && i + 1 == run.len())
             })
         {
             let state = state.splits.push_with(|| SplitState {
+                icon: *ImageId::EMPTY,
                 name: String::new(),
                 columns: ClearVec::new(),
                 is_current_split: false,
                 index: 0,
             });
 
-            if let Some(icon_change) = icon_id.update_with(Some(segment.icon())) {
-                icon_changes.push(IconChange {
-                    segment_index: i,
-                    icon: icon_change.into(),
-                });
-            }
+            let icon = segment.icon();
+            state.icon = *image_cache.cache(icon.id(), || icon.clone()).id();
 
             state.name.push_str(segment.name());
 
@@ -418,6 +387,7 @@ impl Component {
             let blank_split_count = visual_split_count - state.splits.len();
             for i in 0..blank_split_count {
                 let state = state.splits.push_with(|| SplitState {
+                    icon: *ImageId::EMPTY,
                     name: String::new(),
                     columns: ClearVec::new(),
                     is_current_split: false,
@@ -436,14 +406,18 @@ impl Component {
     }
 
     /// Calculates the component's state based on the timer and layout settings
-    /// provided.
+    /// provided. The [`ImageCache`] is updated with all the images that are
+    /// part of the state. The images are marked as visited in the
+    /// [`ImageCache`]. You still need to manually run [`ImageCache::collect`]
+    /// to ensure unused images are removed from the cache.
     pub fn state(
         &mut self,
+        image_cache: &mut ImageCache,
         timer: &Snapshot<'_>,
         layout_settings: &GeneralLayoutSettings,
     ) -> State {
         let mut state = Default::default();
-        self.update_state(&mut state, timer, layout_settings);
+        self.update_state(&mut state, image_cache, timer, layout_settings);
         state
     }
 

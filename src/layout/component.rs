@@ -6,7 +6,7 @@ use crate::{
         timer, title, total_playtime,
     },
     platform::prelude::*,
-    settings::{SettingsDescription, Value},
+    settings::{ImageCache, SettingsDescription, Value},
     timing::Snapshot,
 };
 use alloc::borrow::Cow;
@@ -157,10 +157,14 @@ impl Component {
     /// Updates the component's state based on the timer and settings provided.
     /// The timer provides the information to visualize and the layout settings
     /// provide general information about how to expose that information in the
-    /// state.
+    /// state. The [`ImageCache`] is updated with all the images that are part
+    /// of the state. The images are marked as visited in the [`ImageCache`].
+    /// You still need to manually run [`ImageCache::collect`] to ensure unused
+    /// images are removed from the cache.
     pub fn update_state(
         &mut self,
         state: &mut ComponentState,
+        image_cache: &mut ImageCache,
         timer: &Snapshot<'_>,
         layout_settings: &GeneralSettings,
     ) {
@@ -178,7 +182,7 @@ impl Component {
                 component.update_state(state, timer, layout_settings)
             }
             (ComponentState::DetailedTimer(state), Component::DetailedTimer(component)) => {
-                component.update_state(&mut *state, timer, layout_settings)
+                component.update_state(state, image_cache, timer, layout_settings)
             }
             (ComponentState::Graph(state), Component::Graph(component)) => {
                 component.update_state(state, timer, layout_settings)
@@ -199,7 +203,7 @@ impl Component {
                 component.update_state(state)
             }
             (ComponentState::Splits(state), Component::Splits(component)) => {
-                component.update_state(state, timer, layout_settings)
+                component.update_state(state, image_cache, timer, layout_settings)
             }
             (ComponentState::KeyValue(state), Component::SumOfBest(component)) => {
                 component.update_state(state, timer)
@@ -211,21 +215,26 @@ impl Component {
                 component.update_state(state, timer, layout_settings)
             }
             (ComponentState::Title(state), Component::Title(component)) => {
-                component.update_state(state, timer)
+                component.update_state(state, image_cache, timer)
             }
             (ComponentState::KeyValue(state), Component::TotalPlaytime(component)) => {
                 component.update_state(state, timer)
             }
-            (state, component) => *state = component.state(timer, layout_settings),
+            (state, component) => *state = component.state(image_cache, timer, layout_settings),
         }
     }
 
     /// Calculates the component's state based on the timer and settings
     /// provided. The timer provides the information to visualize and the layout
     /// settings provide general information about how to expose that
-    /// information in the state.
+    /// information in the state. The [`ImageCache`] is updated with all the
+    /// images that are part of the state. The images are marked as visited in
+    /// the [`ImageCache`]. You still need to manually run
+    /// [`ImageCache::collect`] to ensure unused images are removed from the
+    /// cache.
     pub fn state(
         &mut self,
+        image_cache: &mut ImageCache,
         timer: &Snapshot<'_>,
         layout_settings: &GeneralSettings,
     ) -> ComponentState {
@@ -238,9 +247,9 @@ impl Component {
             Component::Delta(component) => {
                 ComponentState::KeyValue(component.state(timer, layout_settings))
             }
-            Component::DetailedTimer(component) => {
-                ComponentState::DetailedTimer(Box::new(component.state(timer, layout_settings)))
-            }
+            Component::DetailedTimer(component) => ComponentState::DetailedTimer(Box::new(
+                component.state(image_cache, timer, layout_settings),
+            )),
             Component::Graph(component) => {
                 ComponentState::Graph(component.state(timer, layout_settings))
             }
@@ -254,14 +263,16 @@ impl Component {
             Component::SegmentTime(component) => ComponentState::KeyValue(component.state(timer)),
             Component::Separator(component) => ComponentState::Separator(component.state()),
             Component::Splits(component) => {
-                ComponentState::Splits(component.state(timer, layout_settings))
+                ComponentState::Splits(component.state(image_cache, timer, layout_settings))
             }
             Component::SumOfBest(component) => ComponentState::KeyValue(component.state(timer)),
             Component::Text(component) => ComponentState::Text(component.state(timer)),
             Component::Timer(component) => {
                 ComponentState::Timer(component.state(timer, layout_settings))
             }
-            Component::Title(component) => ComponentState::Title(component.state(timer)),
+            Component::Title(component) => {
+                ComponentState::Title(component.state(image_cache, timer))
+            }
             Component::TotalPlaytime(component) => ComponentState::KeyValue(component.state(timer)),
         }
     }
@@ -348,19 +359,6 @@ impl Component {
     pub fn scroll_down(&mut self) {
         if let Component::Splits(component) = self {
             component.scroll_down();
-        }
-    }
-
-    /// Some component states provide relative information based on information
-    /// they already provided. Remounting forces the components to provide
-    /// absolute information again, as if they provide the state for the first
-    /// time.
-    pub fn remount(&mut self) {
-        match self {
-            Component::DetailedTimer(component) => component.remount(),
-            Component::Splits(component) => component.remount(),
-            Component::Title(component) => component.remount(),
-            _ => {}
         }
     }
 

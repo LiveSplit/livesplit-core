@@ -1,5 +1,5 @@
 use super::super::Editor;
-use crate::{Run, Segment, TimeSpan, TimingMethod};
+use crate::{settings::Image, Run, Segment, TimeSpan, TimingMethod};
 
 fn base() -> Editor {
     let mut run = Run::new();
@@ -25,8 +25,10 @@ fn base() -> Editor {
 
     editor.add_comparison("Some Comparison").unwrap();
     editor.add_comparison("Other Comparison").unwrap();
-    editor.active_segment().set_icon([2]);
-    editor.set_game_icon([2]);
+    editor
+        .active_segment()
+        .set_icon(Image::new([2].into(), Image::ICON));
+    editor.set_game_icon(Image::new([2].into(), Image::ICON));
     editor.set_speedrun_com_variable("remove", "me");
 
     let mut run = editor.close();
@@ -55,7 +57,9 @@ fn not_when_just_accessing_active_segment() {
 #[test]
 fn when_changing_segment_icon() {
     let mut editor = base();
-    editor.active_segment().set_icon([1]);
+    editor
+        .active_segment()
+        .set_icon(Image::new([1].into(), Image::ICON));
     assert!(editor.run().has_been_modified());
 }
 
@@ -154,7 +158,7 @@ fn when_changing_attempt_count() {
 #[test]
 fn when_changing_game_icon() {
     let mut editor = base();
-    editor.set_game_icon([1]);
+    editor.set_game_icon(Image::new([1].into(), Image::ICON));
     assert!(editor.run().has_been_modified());
 }
 

@@ -15,7 +15,7 @@ use livesplit_core::SharedTimer;
 #[allow(missing_docs)]
 pub struct AutoSplittingRuntime;
 
-#[allow(missing_docs)]
+#[allow(warnings)]
 #[cfg(not(feature = "auto-splitting"))]
 impl AutoSplittingRuntime {
     pub fn new() -> Self {

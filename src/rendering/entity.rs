@@ -3,9 +3,11 @@ use core::{
     mem,
 };
 
+use crate::settings::BackgroundImage;
+
 use super::{
     resource::{Handle, LabelHandle},
-    FillShader, Rgba, Transform,
+    Background, FillShader, Rgba, Transform,
 };
 
 struct FxHasher(u64);
@@ -83,13 +85,13 @@ pub enum Entity<P, I, L> {
 }
 
 pub fn calculate_hash<P, I, L>(
-    background: &Option<FillShader>,
+    background: &Option<Background<I>>,
     entities: &[Entity<P, I, L>],
 ) -> u64 {
     let mut hasher = FxHasher(0x517cc1b727220a95);
     mem::discriminant(background).hash(&mut hasher);
     if let Some(background) = background {
-        hash_shader(background, &mut hasher);
+        background.hash(&mut hasher);
     }
     entities.hash(&mut hasher);
     hasher.finish()
@@ -152,6 +154,28 @@ impl<P, I, L> Hash for Entity<P, I, L> {
             Entity::Label(label, shader, transform) => {
                 label.hash(state);
                 hash_shader(shader, state);
+                hash_transform(transform, state);
+            }
+        }
+    }
+}
+
+impl<I> Hash for Background<I> {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        mem::discriminant(self).hash(state);
+        match self {
+            Background::Shader(shader) => hash_shader(shader, state),
+            Background::Image(image, transform) => {
+                let BackgroundImage {
+                    image,
+                    brightness,
+                    opacity,
+                    blur,
+                } = image;
+                image.hash(state);
+                hash_float(*brightness, state);
+                hash_float(*opacity, state);
+                hash_float(*blur, state);
                 hash_transform(transform, state);
             }
         }

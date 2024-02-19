@@ -146,8 +146,8 @@ impl Run {
 
     /// Sets the game's icon.
     #[inline]
-    pub fn set_game_icon<D: Into<Image>>(&mut self, image: D) {
-        self.game_icon = image.into();
+    pub fn set_game_icon(&mut self, image: Image) {
+        self.game_icon = image;
     }
 
     /// Accesses the name of the category this Run is for.
@@ -732,7 +732,7 @@ impl Run {
     ///
     /// This panics if there is no attempt in the Attempt History.
     pub fn update_segment_history(&mut self, current_split_index: usize) {
-        let mut last_split_time = Time::zero();
+        let mut previous_split_time = Time::zero();
 
         let segments = self.segments.iter_mut().take(current_split_index);
         let index = self
@@ -743,13 +743,13 @@ impl Run {
 
         for segment in segments {
             let split_time = segment.split_time();
-            let segment_time = Time::op(split_time, last_split_time, |a, b| a - b);
+            let segment_time = split_time - previous_split_time;
             segment.segment_history_mut().insert(index, segment_time);
             if let Some(time) = split_time.real_time {
-                last_split_time.real_time = Some(time);
+                previous_split_time.real_time = Some(time);
             }
             if let Some(time) = split_time.game_time {
-                last_split_time.game_time = Some(time);
+                previous_split_time.game_time = Some(time);
             }
         }
     }

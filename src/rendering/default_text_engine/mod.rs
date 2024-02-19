@@ -191,16 +191,16 @@ impl<P: SharedOwnership> TextEngine<P> {
         &mut self,
         path_builder: impl FnMut() -> PB,
         text: &str,
-        font: &mut Font,
+        font: &Font,
         max_width: Option<f32>,
     ) -> Label<P> {
-        let mut label = Arc::new(RwLock::new(LockedLabel {
+        let label = Arc::new(RwLock::new(LockedLabel {
             width: 0.0,
             width_without_max_width: 0.0,
             glyphs: Vec::new(),
         }));
 
-        self.update_label(path_builder, &mut label, text, font, max_width);
+        self.update_label(path_builder, &label, text, font, max_width);
 
         label
     }
@@ -210,9 +210,9 @@ impl<P: SharedOwnership> TextEngine<P> {
     pub fn update_label<PB: PathBuilder<Path = P>>(
         &mut self,
         mut path_builder: impl FnMut() -> PB,
-        label: &mut Label<P>,
+        label: &Label<P>,
         text: &str,
-        font: &mut Font,
+        font: &Font,
         max_width: Option<f32>,
     ) {
         let mut label = label.write().unwrap();

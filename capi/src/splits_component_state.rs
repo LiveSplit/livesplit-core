@@ -2,8 +2,7 @@
 
 use super::{output_str, output_vec};
 use livesplit_core::component::splits::State as SplitsComponentState;
-use std::io::Write;
-use std::os::raw::c_char;
+use std::{io::Write, os::raw::c_char};
 
 /// type
 pub type OwnedSplitsComponentState = Box<SplitsComponentState>;
@@ -27,43 +26,15 @@ pub extern "C" fn SplitsComponentState_len(this: &SplitsComponentState) -> usize
     this.splits.len()
 }
 
-/// Returns the amount of icon changes that happened in this state object.
+/// The icon of the segment. The associated image can be looked up in the image
+/// cache. The image may be the empty image. This indicates that there is no
+/// icon.
 #[no_mangle]
-pub extern "C" fn SplitsComponentState_icon_change_count(this: &SplitsComponentState) -> usize {
-    this.icon_changes.len()
-}
-
-/// Accesses the index of the segment of the icon change with the specified
-/// index. This is based on the index in the run, not on the index of the
-/// SplitState in the State object. The corresponding index is the index field
-/// of the SplitState object. You may not provide an out of bounds index.
-#[no_mangle]
-pub extern "C" fn SplitsComponentState_icon_change_segment_index(
+pub extern "C" fn SplitsComponentState_icon(
     this: &SplitsComponentState,
-    icon_change_index: usize,
-) -> usize {
-    this.icon_changes[icon_change_index].segment_index
-}
-
-/// The icon data of the segment of the icon change with the specified index.
-/// The buffer may be empty. This indicates that there is no icon. You may not
-/// provide an out of bounds index.
-#[no_mangle]
-pub extern "C" fn SplitsComponentState_icon_change_icon_ptr(
-    this: &SplitsComponentState,
-    icon_change_index: usize,
-) -> *const u8 {
-    this.icon_changes[icon_change_index].icon.as_ptr()
-}
-
-/// The length of the icon data of the segment of the icon change with the
-/// specified index.
-#[no_mangle]
-pub extern "C" fn SplitsComponentState_icon_change_icon_len(
-    this: &SplitsComponentState,
-    icon_change_index: usize,
-) -> usize {
-    this.icon_changes[icon_change_index].icon.len()
+    index: usize,
+) -> *const c_char {
+    output_str(this.splits[index].icon.format_str(&mut [0; 64]))
 }
 
 /// The name of the segment with the specified index. You may not provide an out

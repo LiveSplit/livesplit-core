@@ -1,6 +1,6 @@
 //! Provides functionality to calculate the chance to beat the Personal Best for
-//! either a [`Run`](crate::Run) or a [`Timer`](crate::timing::Timer). For a
-//! [`Run`](crate::Run) it calculates the general chance to beat the Personal Best.
+//! either a [`Run`] or a [`Timer`](crate::timing::Timer). For a
+//! [`Run`] it calculates the general chance to beat the Personal Best.
 //! For a [`Timer`](crate::timing::Timer) the chance is calculated in terms of the
 //! current attempt. If there is no attempt in progress it yields the same
 //! result as the PB chance for the run. The value is being reported as a
@@ -30,10 +30,10 @@ fn calculate(segments: &[Segment], method: TimingMethod, offset: TimeSpan) -> f6
     comparison::goal::determine_percentile(offset, segments, method, None, &mut SkillCurve::new())
 }
 
-/// Calculates the PB chance for a [`Run`](crate::Run). No information about
-/// an active attempt is used. Instead the general chance to beat the Personal
-/// Best is calculated. The value is being reported as a floating point number
-/// in the range from 0 (0%) to 1 (100%).
+/// Calculates the PB chance for a [`Run`]. No information about an active
+/// attempt is used. Instead the general chance to beat the Personal Best is
+/// calculated. The value is being reported as a floating point number in the
+/// range from 0 (0%) to 1 (100%).
 pub fn for_run(run: &Run, method: TimingMethod) -> f64 {
     calculate(run.segments(), method, TimeSpan::zero())
 }

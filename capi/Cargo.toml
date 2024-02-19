@@ -12,7 +12,7 @@ crate-type = ["staticlib", "cdylib"]
 livesplit-core = { path = "..", default-features = false, features = ["std"] }
 serde_json = { version = "1.0.8", default-features = false }
 time = { version = "0.3.4", default-features = false, features = ["formatting"] }
-simdutf8 = { version = "0.1.4", default-features = false }
+simdutf8 = { git = "https://github.com/CryZe/simdutf8", branch = "wasm-ub-panic", default-features = false }
 
 [features]
 default = ["image-shrinking"]

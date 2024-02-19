@@ -2,15 +2,13 @@
 //! variety of information the runner is interested in.
 
 use super::{get_file, output_vec, str, Json};
-use crate::{component::OwnedComponent, layout_state::OwnedLayoutState};
+use crate::{component::OwnedComponent, layout_state::OwnedLayoutState, slice};
 use livesplit_core::{
     layout::{parser, LayoutSettings, LayoutState},
+    settings::ImageCache,
     Layout, Timer,
 };
-use std::{
-    io::{BufReader, Cursor},
-    slice,
-};
+use std::io::{BufReader, Cursor};
 
 /// type
 pub type OwnedLayout = Box<Layout>;
@@ -79,20 +77,29 @@ pub unsafe extern "C" fn Layout_parse_original_livesplit(
     data: *const u8,
     length: usize,
 ) -> NullableOwnedLayout {
-    let data = simdutf8::basic::from_utf8(slice::from_raw_parts(data, length)).ok()?;
+    let data = simdutf8::basic::from_utf8(slice(data, length)).ok()?;
     Some(Box::new(parser::parse(data).ok()?))
 }
 
 /// Calculates and returns the layout's state based on the timer provided.
 #[no_mangle]
-pub extern "C" fn Layout_state(this: &mut Layout, timer: &Timer) -> OwnedLayoutState {
-    Box::new(this.state(&timer.snapshot()))
+pub extern "C" fn Layout_state(
+    this: &mut Layout,
+    image_cache: &mut ImageCache,
+    timer: &Timer,
+) -> OwnedLayoutState {
+    Box::new(this.state(image_cache, &timer.snapshot()))
 }
 
 /// Updates the layout's state based on the timer provided.
 #[no_mangle]
-pub extern "C" fn Layout_update_state(this: &mut Layout, state: &mut LayoutState, timer: &Timer) {
-    this.update_state(state, &timer.snapshot())
+pub extern "C" fn Layout_update_state(
+    this: &mut Layout,
+    state: &mut LayoutState,
+    image_cache: &mut ImageCache,
+    timer: &Timer,
+) {
+    this.update_state(state, image_cache, &timer.snapshot())
 }
 
 /// Updates the layout's state based on the timer provided and encodes it as
@@ -101,9 +108,10 @@ pub extern "C" fn Layout_update_state(this: &mut Layout, state: &mut LayoutState
 pub extern "C" fn Layout_update_state_as_json(
     this: &mut Layout,
     state: &mut LayoutState,
+    image_cache: &mut ImageCache,
     timer: &Timer,
 ) -> Json {
-    this.update_state(state, &timer.snapshot());
+    this.update_state(state, image_cache, &timer.snapshot());
     output_vec(|o| {
         state.write_json(o).unwrap();
     })
@@ -112,9 +120,15 @@ pub extern "C" fn Layout_update_state_as_json(
 /// Calculates the layout's state based on the timer provided and encodes it as
 /// JSON. You can use this to visualize all of the components of a layout.
 #[no_mangle]
-pub extern "C" fn Layout_state_as_json(this: &mut Layout, timer: &Timer) -> Json {
+pub extern "C" fn Layout_state_as_json(
+    this: &mut Layout,
+    image_cache: &mut ImageCache,
+    timer: &Timer,
+) -> Json {
     output_vec(|o| {
-        this.state(&timer.snapshot()).write_json(o).unwrap();
+        this.state(image_cache, &timer.snapshot())
+            .write_json(o)
+            .unwrap();
     })
 }
 
@@ -142,13 +156,4 @@ pub extern "C" fn Layout_scroll_up(this: &mut Layout) {
 #[no_mangle]
 pub extern "C" fn Layout_scroll_down(this: &mut Layout) {
     this.scroll_down();
-}
-
-/// Remounts all the components as if they were freshly initialized. Some
-/// components may only provide some information whenever it changes or when
-/// their state is first queried. Remounting returns this information again,
-/// whenever the layout's state is queried the next time.
-#[no_mangle]
-pub extern "C" fn Layout_remount(this: &mut Layout) {
-    this.remount();
 }

@@ -5,17 +5,15 @@ use crate::{
         component::timer,
         consts::{vertical_padding, BOTH_PADDINGS, PADDING},
         font::CachedLabel,
-        icon::Icon,
         resource::ResourceAllocator,
         scene::Layer,
         solid, RenderContext,
     },
 };
 
-pub struct Cache<I, L> {
-    icon: Option<Icon<I>>,
-    timer: timer::Cache<I, L>,
-    segment_timer: timer::Cache<I, L>,
+pub struct Cache<L> {
+    timer: timer::Cache<L>,
+    segment_timer: timer::Cache<L>,
     segment_name: CachedLabel<L>,
     comparison1_name: CachedLabel<L>,
     comparison2_name: CachedLabel<L>,
@@ -23,10 +21,9 @@ pub struct Cache<I, L> {
     comparison2_time: CachedLabel<L>,
 }
 
-impl<I, L> Cache<I, L> {
+impl<L> Cache<L> {
     pub const fn new() -> Self {
         Self {
-            icon: None,
             timer: timer::Cache::new(),
             segment_timer: timer::Cache::new(),
             segment_name: CachedLabel::new(),
@@ -39,7 +36,7 @@ impl<I, L> Cache<I, L> {
 }
 
 pub(in crate::rendering) fn render<A: ResourceAllocator>(
-    cache: &mut Cache<A::Image, A::Label>,
+    cache: &mut Cache<A::Label>,
     context: &mut RenderContext<'_, A>,
     [width, height]: [f32; 2],
     component: &State,
@@ -50,12 +47,8 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     let vertical_padding = vertical_padding(height);
     let icon_size = height - 2.0 * vertical_padding;
 
-    if let Some(icon) = &component.icon_change {
-        cache.icon = context.create_icon(icon);
-    }
-
-    let left_side = if let Some(icon) = &cache.icon {
-        context.render_icon([PADDING, vertical_padding], [icon_size, icon_size], icon);
+    let left_side = if let Some(icon) = context.create_image(&component.icon) {
+        context.render_image([PADDING, vertical_padding], [icon_size, icon_size], icon);
         BOTH_PADDINGS + icon_size
     } else {
         PADDING

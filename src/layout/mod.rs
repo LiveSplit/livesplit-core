@@ -1,7 +1,6 @@
 //! The layout module provides everything necessary for working with a
-//! [`Layout`](crate::layout::Layout). A [`Layout`](crate::layout::Layout)
-//! allows you to combine multiple components together to visualize a
-//! variety of information the runner is interested in.
+//! [`Layout`]. A [`Layout`] allows you to combine multiple components together
+//! to visualize a variety of information the runner is interested in.
 
 mod component;
 mod component_settings;
@@ -22,6 +21,7 @@ pub use self::{
 use crate::{
     component::{previous_segment, splits, timer, title},
     platform::prelude::*,
+    settings::ImageCache,
     timing::Snapshot,
 };
 
@@ -86,26 +86,35 @@ impl Layout {
     }
 
     /// Updates the layout's state based on the timer provided. You can use this
-    /// to visualize all of the components of a layout.
-    pub fn update_state(&mut self, state: &mut LayoutState, timer: &Snapshot<'_>) {
+    /// to visualize all of the components of a layout. The [`ImageCache`] is
+    /// updated with all the images that are part of the state. The images are
+    /// marked as visited in the [`ImageCache`]. You still need to manually run
+    /// [`ImageCache::collect`] to ensure unused images are removed from the
+    /// cache.
+    pub fn update_state(
+        &mut self,
+        state: &mut LayoutState,
+        image_cache: &mut ImageCache,
+        timer: &Snapshot<'_>,
+    ) {
         let settings = &self.settings;
 
         state.components.truncate(self.components.len());
         let mut components = self.components.iter_mut();
         // First update all the states that we have.
         for (state, component) in state.components.iter_mut().zip(components.by_ref()) {
-            component.update_state(state, timer, settings);
+            component.update_state(state, image_cache, timer, settings);
         }
         // Then add states for all the components that don't have states yet.
         state
             .components
-            .extend(components.map(|c| c.state(timer, settings)));
+            .extend(components.map(|c| c.state(image_cache, timer, settings)));
 
         state.timer_font.clone_from(&settings.timer_font);
         state.times_font.clone_from(&settings.times_font);
         state.text_font.clone_from(&settings.text_font);
 
-        state.background = settings.background;
+        state.background = settings.background.cache(image_cache);
         state.thin_separators_color = settings.thin_separators_color;
         state.separators_color = settings.separators_color;
         state.text_color = settings.text_color;
@@ -113,10 +122,14 @@ impl Layout {
     }
 
     /// Calculates the layout's state based on the timer provided. You can use
-    /// this to visualize all of the components of a layout.
-    pub fn state(&mut self, timer: &Snapshot<'_>) -> LayoutState {
+    /// this to visualize all of the components of a layout. The [`ImageCache`]
+    /// is updated with all the images that are part of the state. The images
+    /// are marked as visited in the [`ImageCache`]. You still need to manually
+    /// run [`ImageCache::collect`] to ensure unused images are removed from the
+    /// cache.
+    pub fn state(&mut self, image_cache: &mut ImageCache, timer: &Snapshot<'_>) -> LayoutState {
         let mut state = Default::default();
-        self.update_state(&mut state, timer);
+        self.update_state(&mut state, image_cache, timer);
         state
     }
 
@@ -139,16 +152,6 @@ impl Layout {
     pub fn scroll_down(&mut self) {
         for component in &mut self.components {
             component.scroll_down();
-        }
-    }
-
-    /// Remounts all the components as if they were freshly initialized. Some
-    /// components may only provide some information whenever it changes or when
-    /// their state is first queried. Remounting returns this information again,
-    /// whenever the layout's state is queried the next time.
-    pub fn remount(&mut self) {
-        for component in &mut self.components {
-            component.remount();
         }
     }
 }

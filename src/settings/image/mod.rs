@@ -1,143 +1,167 @@
-use crate::platform::prelude::*;
-use core::{
-    ops::Deref,
-    sync::atomic::{AtomicUsize, Ordering},
+use crate::platform::{prelude::*, Arc};
+use core::{fmt, ops::Deref};
+use serde::{
+    de::{self, Visitor},
+    Deserialize, Deserializer, Serialize, Serializer,
 };
-use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
+use sha2::{Digest, Sha256};
 
 #[cfg(test)]
 mod tests;
 
+mod cache;
+mod image_id;
 #[cfg(all(feature = "std", feature = "image-shrinking"))]
 mod shrinking;
 
-static LAST_IMAGE_ID: AtomicUsize = AtomicUsize::new(0);
+pub use cache::{HasImageId, ImageCache};
+pub use image_id::ImageId;
 
 /// Images can be used to store segment and game icons. Each image object comes
-/// with an ID that changes whenever the image is modified. IDs are unique
-/// across different images. There's no specific image format you need to use
-/// for the images.
-#[derive(Debug, Clone)]
+/// with a strong hash to quickly compare images. There's no specific image
+/// format you need to use for the images.
+#[derive(Clone)]
 pub struct Image {
-    data: Vec<u8>,
-    id: usize,
+    data: Option<Arc<[u8]>>,
+    id: ImageId,
 }
 
-/// Describes an owned representation of an image's data. It is suitable to be
-/// used in state objects. It can efficiently be serialized for various formats.
-/// For binary formats it gets serialized as its raw byte representation, while
-/// for textual formats it gets serialized as a Base64 Data URL instead.
-#[derive(Debug, Clone)]
-pub struct ImageData(pub Box<[u8]>);
-
-impl<T> From<T> for ImageData
-where
-    Box<[u8]>: From<T>,
-{
-    fn from(value: T) -> Self {
-        ImageData(value.into())
+impl fmt::Debug for Image {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Image")
+            .field("is_empty", &self.is_empty())
+            .field("id", &self.id)
+            .finish()
     }
 }
 
-impl Deref for ImageData {
+impl Deref for Image {
     type Target = [u8];
     fn deref(&self) -> &Self::Target {
-        &self.0
+        self.data.as_deref().unwrap_or_default()
     }
 }
 
-impl Serialize for ImageData {
+impl Serialize for Image {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
+        let data = self.data();
         if serializer.is_human_readable() {
-            if !self.0.is_empty() {
-                let mut buf = String::from("data:;base64,");
-
-                // SAFETY: We encode Base64 to the end of the string, which is
-                // always valid UTF-8. Once we've written it, we simply increase
-                // the length of the buffer by the amount of bytes written.
-                unsafe {
-                    let buf = buf.as_mut_vec();
-                    let encoded_len = base64_simd::STANDARD.encoded_length(self.0.len());
-                    buf.reserve_exact(encoded_len);
-                    let additional_len = base64_simd::STANDARD
-                        .encode(
-                            &self.0,
-                            base64_simd::Out::from_uninit_slice(buf.spare_capacity_mut()),
-                        )
-                        .len();
-                    buf.set_len(buf.len() + additional_len);
-                }
-
-                serializer.serialize_str(&buf)
+            if !data.is_empty() {
+                let base64 = base64_simd::STANDARD.encode_to_string(data);
+                serializer.serialize_str(&base64)
             } else {
                 serializer.serialize_str("")
             }
         } else {
-            serializer.serialize_bytes(&self.0)
+            serializer.serialize_bytes(data)
         }
     }
 }
 
-impl<'de> Deserialize<'de> for ImageData {
+impl<'de> Deserialize<'de> for Image {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
         if deserializer.is_human_readable() {
-            let data: &'de str = Deserialize::deserialize(deserializer)?;
-            if data.is_empty() {
-                Ok(ImageData(Box::new([])))
-            } else if let Some(encoded_image_data) = data.strip_prefix("data:;base64,") {
-                let image_data = base64_simd::STANDARD
-                    .decode_to_vec(encoded_image_data.as_bytes())
-                    .map_err(de::Error::custom)?;
-
-                Ok(ImageData(image_data.into_boxed_slice()))
-            } else {
-                Err(de::Error::custom("Invalid Data URL for image"))
-            }
+            deserializer.deserialize_str(ImageVisitor)
         } else {
-            Ok(ImageData(Deserialize::deserialize(deserializer)?))
+            deserializer.deserialize_bytes(ImageVisitor)
         }
     }
 }
 
+struct ImageVisitor;
+
+impl<'de> Visitor<'de> for ImageVisitor {
+    type Value = Image;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        formatter.write_str("a base64 encoded image or its bytes")
+    }
+
+    fn visit_str<E>(self, value: &str) -> Result<Image, E>
+    where
+        E: de::Error,
+    {
+        if value.is_empty() {
+            Ok(Image::new_inner([].into()))
+        } else {
+            let image_data = base64_simd::STANDARD
+                .decode_to_vec(value.as_bytes())
+                .map_err(de::Error::custom)?;
+
+            Ok(Image::new_inner(image_data.into()))
+        }
+    }
+
+    fn visit_bytes<E>(self, v: &[u8]) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        Ok(Image::new_inner(v.into()))
+    }
+
+    fn visit_byte_buf<E>(self, v: Vec<u8>) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        Ok(Image::new_inner(v.into()))
+    }
+}
+
 impl PartialEq for Image {
-    fn eq(&self, other: &Image) -> bool {
-        self.id == other.id || self.data == other.data
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id
     }
 }
 
 impl Default for Image {
-    fn default() -> Image {
-        Image::new(&[])
-    }
-}
-
-impl<D: AsRef<[u8]>> From<D> for Image {
-    fn from(d: D) -> Self {
-        Image::new(d.as_ref())
+    fn default() -> Self {
+        Self::EMPTY.clone()
     }
 }
 
 impl Image {
-    /// Creates a new image with a unique ID with the image data provided.
-    pub fn new(data: &[u8]) -> Self {
-        let mut image = Image {
-            data: Vec::new(),
-            id: 0,
+    /// The maximum size of an image that's used as an icon.
+    pub const ICON: u32 = 128;
+    /// The maximum size of an image that is meant to be large.
+    pub const LARGE: u32 = 512;
+
+    /// An empty image.
+    pub const EMPTY: &'static Self = &Self {
+        data: None,
+        id: *ImageId::EMPTY,
+    };
+
+    fn new_inner(data: Arc<[u8]>) -> Self {
+        let hash = Sha256::digest(&*data);
+        Self {
+            data: Some(data),
+            id: ImageId(hash.as_slice().try_into().unwrap()),
+        }
+    }
+
+    /// Creates a new image with the image data provided.
+    pub fn new(data: Arc<[u8]>, max_image_size: u32) -> Self {
+        let _ = max_image_size;
+        #[cfg(all(feature = "std", feature = "image-shrinking"))]
+        let data = {
+            match shrinking::shrink(&data, max_image_size) {
+                alloc::borrow::Cow::Borrowed(_) => data,
+                alloc::borrow::Cow::Owned(data) => data.into(),
+            }
         };
-        image.modify(data);
-        image
+        Self::new_inner(data)
     }
 
     /// Loads an image from the file system. You need to provide a buffer used
     /// for temporarily storing the image's data.
     #[cfg(feature = "std")]
-    pub fn from_file<P>(path: P, buf: &mut Vec<u8>) -> std::io::Result<Image>
+    pub fn from_file<P>(path: P, buf: &mut Vec<u8>, max_image_size: u32) -> std::io::Result<Self>
     where
         P: AsRef<std::path::Path>,
     {
@@ -147,87 +171,26 @@ impl Image {
         buf.clear();
         file.read_to_end(buf)?;
 
-        Ok(Image::new(buf))
-    }
-
-    /// Accesses the unique ID for this image.
-    #[inline]
-    pub const fn id(&self) -> usize {
-        self.id
+        Ok(Self::new(buf.as_slice().into(), max_image_size))
     }
 
     /// Accesses the image's data. If the image's data is empty, this returns an
     /// empty slice.
     #[inline]
     pub fn data(&self) -> &[u8] {
-        &self.data
+        self
     }
 
-    /// Modifies an image by replacing its image data with the new image data
-    /// provided. The image's ID changes to a new unique ID.
-    pub fn modify(&mut self, data: &[u8]) {
-        #[cfg(all(feature = "std", feature = "image-shrinking"))]
-        let data = {
-            const MAX_IMAGE_SIZE: u32 = 128;
-
-            shrinking::shrink(data, MAX_IMAGE_SIZE)
-        };
-        cfg_if::cfg_if! {
-            if #[cfg(target_has_atomic = "ptr")] {
-                self.id = LAST_IMAGE_ID.fetch_add(1, Ordering::Relaxed);
-            } else {
-                self.id = LAST_IMAGE_ID.load(Ordering::SeqCst) + 1;
-                LAST_IMAGE_ID.store(self.id, Ordering::SeqCst);
-            }
-        }
-        self.data.clear();
-        self.data.extend_from_slice(&data);
+    /// Accesses the image's ID. This is a unique identifier for the image. It
+    /// is implemented via a SHA-256 hash.
+    #[inline]
+    pub const fn id(&self) -> &ImageId {
+        &self.id
     }
 
     /// Checks if the image data is empty.
+    #[inline]
     pub fn is_empty(&self) -> bool {
-        self.data.is_empty()
-    }
-}
-
-/// With a Cached Image ID you can track image changes. It starts with an
-/// uncached state and then gets updated with the images provided to it. It can
-/// be reset at any point in order to force a change to be detected.
-#[derive(Copy, Clone, Default, PartialEq, Eq)]
-pub enum CachedImageId {
-    /// The initial uncached state.
-    #[default]
-    Uncached,
-    /// The last image observed either was missing or contained no data.
-    NoImage,
-    /// The last image had actual data and the ID stored here.
-    Image(usize),
-}
-
-impl CachedImageId {
-    /// Updates the cached image ID based on the optional image provided to this
-    /// method. If a change is observed the image's data is returned. An empty
-    /// slice is returned when a transition to no image or no image data is
-    /// observed.
-    pub fn update_with<'i>(&mut self, image: Option<&'i Image>) -> Option<&'i [u8]> {
-        let new_value = image.map_or(CachedImageId::NoImage, |i| {
-            if i.is_empty() {
-                CachedImageId::NoImage
-            } else {
-                CachedImageId::Image(i.id())
-            }
-        });
-
-        if *self != new_value {
-            *self = new_value;
-            Some(image.map_or(&[], |i| &i.data))
-        } else {
-            None
-        }
-    }
-
-    /// Resets the state of the cached image ID to uncached.
-    pub fn reset(&mut self) {
-        *self = CachedImageId::Uncached;
+        self.data().is_empty()
     }
 }

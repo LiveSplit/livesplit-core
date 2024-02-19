@@ -2,9 +2,7 @@
 
 use super::{output_str, output_vec, Nullablec_char};
 use livesplit_core::component::detailed_timer::State as DetailedTimerComponentState;
-use std::io::Write;
-use std::os::raw::c_char;
-use std::ptr;
+use std::{io::Write, os::raw::c_char, ptr};
 
 /// type
 pub type OwnedDetailedTimerComponentState = Box<DetailedTimerComponentState>;
@@ -132,25 +130,14 @@ pub extern "C" fn DetailedTimerComponentState_comparison2_time(
     )
 }
 
-/// The data of the segment's icon. This value is only specified whenever the
-/// icon changes. If you explicitly want to query this value, remount the
-/// component. The buffer itself may be empty. This indicates that there is no
+/// The icon of the segment. The associated image can be looked up in the image
+/// cache. The image may be the empty image. This indicates that there is no
 /// icon.
 #[no_mangle]
-pub extern "C" fn DetailedTimerComponentState_icon_change_ptr(
+pub extern "C" fn DetailedTimerComponentState_icon(
     this: &DetailedTimerComponentState,
-) -> *const u8 {
-    this.icon_change
-        .as_ref()
-        .map_or_else(ptr::null, |i| i.as_ptr())
-}
-
-/// The length of the data of the segment's icon.
-#[no_mangle]
-pub extern "C" fn DetailedTimerComponentState_icon_change_len(
-    this: &DetailedTimerComponentState,
-) -> usize {
-    this.icon_change.as_ref().map_or(0, |i| i.len())
+) -> *const c_char {
+    output_str(this.icon.format_str(&mut [0; 64]))
 }
 
 /// The name of the segment. This may be <NULL> if it's not supposed to be

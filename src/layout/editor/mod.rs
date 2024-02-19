@@ -5,7 +5,10 @@
 //! Interface.
 
 use super::{Component, Layout, LayoutState};
-use crate::{settings::Value, timing::Snapshot};
+use crate::{
+    settings::{ImageCache, Value},
+    timing::Snapshot,
+};
 use core::result::Result as StdResult;
 
 mod state;
@@ -35,12 +38,10 @@ pub type Result<T> = StdResult<T, Error>;
 impl Editor {
     /// Creates a new Layout Editor that modifies the Layout provided. Creation
     /// of the Layout Editor fails when a Layout with no components is provided.
-    pub fn new(mut layout: Layout) -> Result<Self> {
+    pub fn new(layout: Layout) -> Result<Self> {
         if layout.components.is_empty() {
             return Err(Error::EmptyLayout);
         }
-
-        layout.remount();
 
         Ok(Self {
             layout,
@@ -58,16 +59,33 @@ impl Editor {
 
     /// Calculates the layout's state based on the timer provided. You can use
     /// this to visualize all of the components of a layout, while it is still
-    /// being edited by the Layout Editor.
-    pub fn layout_state(&mut self, timer: &Snapshot<'_>) -> LayoutState {
-        self.layout.state(timer)
+    /// being edited by the Layout Editor. The [`ImageCache`] is updated with
+    /// all the images that are part of the state. The images are marked as
+    /// visited in the [`ImageCache`]. You still need to manually run
+    /// [`ImageCache::collect`] to ensure unused images are removed from the
+    /// cache.
+    pub fn layout_state(
+        &mut self,
+        image_cache: &mut ImageCache,
+        timer: &Snapshot<'_>,
+    ) -> LayoutState {
+        self.layout.state(image_cache, timer)
     }
 
     /// Updates the layout's state based on the timer provided. You can use this
     /// to visualize all of the components of a layout, while it is still being
-    /// edited by the Layout Editor.
-    pub fn update_layout_state(&mut self, state: &mut LayoutState, timer: &Snapshot<'_>) {
-        self.layout.update_state(state, timer)
+    /// edited by the Layout Editor. The [`ImageCache`] is updated with all the
+    /// images that are part of the state. The images are marked as visited in
+    /// the [`ImageCache`]. You still need to manually run
+    /// [`ImageCache::collect`] to ensure unused images are removed from the
+    /// cache.
+    pub fn update_layout_state(
+        &mut self,
+        state: &mut LayoutState,
+        image_cache: &mut ImageCache,
+        timer: &Snapshot<'_>,
+    ) {
+        self.layout.update_state(state, image_cache, timer)
     }
 
     /// Selects the component with the given index in order to modify its
@@ -103,7 +121,6 @@ impl Editor {
             if self.selected_component >= self.layout.components.len() {
                 self.selected_component = self.layout.components.len() - 1;
             }
-            self.layout.remount();
         }
     }
 
@@ -120,7 +137,6 @@ impl Editor {
                 .components
                 .swap(self.selected_component, self.selected_component - 1);
             self.selected_component -= 1;
-            self.layout.remount();
         }
     }
 
@@ -138,7 +154,6 @@ impl Editor {
                 .components
                 .swap(self.selected_component, self.selected_component + 1);
             self.selected_component += 1;
-            self.layout.remount();
         }
     }
 
@@ -165,7 +180,6 @@ impl Editor {
         self.layout.components.insert(new_index, component);
 
         self.selected_component = new_index;
-        self.layout.remount();
     }
 
     /// Sets a setting's value of the selected component by its setting index
@@ -188,7 +202,14 @@ impl Editor {
     /// This panics if the type of the value to be set is not compatible with
     /// the type of the setting's value. A panic can also occur if the index of
     /// the setting provided is out of bounds.
-    pub fn set_general_settings_value(&mut self, index: usize, value: Value) {
-        self.layout.general_settings_mut().set_value(index, value);
+    pub fn set_general_settings_value(
+        &mut self,
+        index: usize,
+        value: Value,
+        image_cache: &ImageCache,
+    ) {
+        self.layout
+            .general_settings_mut()
+            .set_value(index, value, image_cache);
     }
 }

@@ -107,6 +107,7 @@ pub fn parse(source: &str, #[allow(unused)] load_icons: bool) -> Result<Run> {
                     if let Ok(image) = crate::settings::Image::from_file(
                         unescape(icon_path).as_ref(),
                         &mut icon_buf,
+                        crate::settings::Image::ICON,
                     ) {
                         segment.set_icon(image);
                     }

@@ -5,13 +5,12 @@ use crate::{
     Timer, TimerPhase, TimingMethod,
 };
 
-/// Gets the last non-live delta in the [`Run`](crate::Run) starting
-/// from `segment_index`.
+/// Gets the last non-live delta in the [`Run`] starting from `segment_index`.
 ///
-/// - `run`: The current [`Run`](crate::Run).
+/// - `run`: The current [`Run`].
 /// - `segment_index`: The split number to start checking deltas from.
 /// - `comparison`: The comparison that you are comparing with.
-/// - `method`: The [`TimingMethod`](crate::timing::TimingMethod) that you are using.
+/// - `method`: The [`TimingMethod`] that you are using.
 ///
 /// Returns the last non-live delta or None if there have been no deltas yet.
 pub fn last_delta(
@@ -157,10 +156,10 @@ fn segment_time(
 
 /// Gets the length of the last segment that leads up to a certain split.
 ///
-/// - `timer`: The current [`Timer`](crate::timing::Timer).
+/// - `timer`: The current [`Timer`].
 /// - `segment_index`: The index of the split that represents the end of the
 ///   segment.
-/// - `method`: The [`TimingMethod`](crate::timing::TimingMethod) that you are using.
+/// - `method`: The [`TimingMethod`] that you are using.
 ///
 /// Returns the length of the segment leading up to `segment_index`, returning
 /// None if the split is not completed yet.
@@ -181,10 +180,10 @@ pub fn previous_segment_time(
 /// Gets the length of the last segment that leads up to a certain split, using
 /// the live segment time if the split is not completed yet.
 ///
-/// - `timer`: The current [`Timer`](crate::timing::Timer).
+/// - `timer`: The current [`Timer`].
 /// - `segment_index`: The index of the split that represents the end of the
 ///   segment.
-/// - `method`: The [`TimingMethod`](crate::timing::TimingMethod) that you are using.
+/// - `method`: The [`TimingMethod`] that you are using.
 ///
 /// Returns the length of the segment leading up to `segment_index`, returning
 /// the live segment time if the split is not completed yet.
@@ -204,10 +203,10 @@ pub fn live_segment_time(
 
 /// Gets the amount of time lost or gained on a certain split.
 ///
-/// - `timer`: The current [`Timer`](crate::timing::Timer).
+/// - `timer`: The current [`Timer`].
 /// - `segment_index`: The index of the split for which the delta is calculated.
 /// - `comparison`: The comparison that you are comparing with.
-/// - `method`: The [`TimingMethod`](crate::timing::TimingMethod) that you are using.
+/// - `method`: The [`TimingMethod`] that you are using.
 ///
 /// Returns the segment delta for a certain split, returning None if the split
 /// is not completed yet.
@@ -229,10 +228,10 @@ pub fn previous_segment_delta(
 /// Gets the amount of time lost or gained on a certain split, using the live
 /// segment delta if the split is not completed yet.
 ///
-/// - `timer`: The current [`Timer`](crate::timing::Timer).
+/// - `timer`: The current [`Timer`].
 /// - `segment_index`: The index of the split for which the delta is calculated.
 /// - `comparison`: The comparison that you are comparing with.
-/// - `method`: The [`TimingMethod`](crate::timing::TimingMethod) that you are using.
+/// - `method`: The [`TimingMethod`] that you are using.
 ///
 /// Returns the segment delta for a certain split, returning the live segment
 /// delta if the split is not completed yet.
@@ -253,12 +252,11 @@ pub fn live_segment_delta(
 
 /// Checks whether the live segment should now be shown.
 ///
-/// - `timer`: The current [`Timer`](crate::timing::Timer).
-/// - `split_delta`: Specifies whether to return a split delta
-///    rather than a segment delta and to start showing the live
-///    segment once you are behind.
+/// - `timer`: The current [`Timer`].
+/// - `split_delta`: Specifies whether to return a split delta rather than a
+///    segment delta and to start showing the live segment once you are behind.
 /// - `comparison`: The comparison that you are comparing with.
-/// - `method`: The [`TimingMethod`](crate::timing::TimingMethod) that you are using.
+/// - `method`: The [`TimingMethod`] that you are using.
 ///
 /// Returns the current live delta.
 pub fn check_live_delta(
@@ -295,17 +293,17 @@ pub fn check_live_delta(
     None
 }
 
-/// Chooses a split color from the [`LayoutSettings`](crate::layout::LayoutSettings)
-/// based on the current run.
+/// Chooses a split color from the
+/// [`LayoutSettings`](crate::layout::LayoutSettings) based on the current run.
 ///
-/// - `timer`: The current [`Timer`](crate::timing::Timer).
+/// - `timer`: The current [`Timer`].
 /// - `time_difference`: The delta that you want to find a color for.
 /// - `segment_index`: The split number that is associated with this delta.
 /// - `show_segment_deltas`: Can show ahead gaining and behind losing colors if
 ///    true.
 /// - `show_best_segments`: Can show the best segment color if true.
 /// - `comparison`: The comparison that you are comparing this delta to.
-/// - `method`: The [`TimingMethod`](crate::timing::TimingMethod) of this delta.
+/// - `method`: The [`TimingMethod`] of this delta.
 ///
 /// Returns the chosen color.
 pub fn split_color(
@@ -342,9 +340,9 @@ pub fn split_color(
 /// Calculates whether or not the Split Times for the indicated split qualify as
 /// a Best Segment.
 ///
-/// - `timer`: The current [`Timer`](crate::timing::Timer).
+/// - `timer`: The current [`Timer`].
 /// - `segment_index`: The split to check.
-/// - `method`: The [`TimingMethod`](crate::timing::TimingMethod) to use.
+/// - `method`: The [`TimingMethod`] to use.
 ///
 /// Returns whether or not the indicated split is a Best Segment.
 pub fn check_best_segment(timer: &Timer, segment_index: usize, method: TimingMethod) -> bool {

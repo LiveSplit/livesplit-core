@@ -119,7 +119,7 @@ impl Text {
 }
 
 /// The state object describes the information to visualize for this component.
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Default, Serialize, Deserialize)]
 pub struct State {
     /// The background shown behind the component.
     pub background: Gradient,

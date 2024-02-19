@@ -2,8 +2,9 @@
 //! Separator Component is a simple component that only serves to render
 //! separators between components.
 
-use crate::settings::{SettingsDescription, Value};
 use serde_derive::{Deserialize, Serialize};
+
+use crate::settings::{SettingsDescription, Value};
 
 /// The Separator Component is a simple component that only serves to render
 /// separators between components.

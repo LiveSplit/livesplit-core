@@ -6,7 +6,7 @@ use crate::{
     hotkey::Hotkey,
     layout::LayoutDirection,
     platform::prelude::*,
-    settings::{Alignment, Color, Font, Gradient, ListGradient},
+    settings::{Alignment, Color, Font, Gradient, ImageId, LayoutBackground, ListGradient},
     timing::formatter::{Accuracy, DigitsFormat},
     TimingMethod,
 };
@@ -68,12 +68,14 @@ pub enum Value {
     Hotkey(Option<Hotkey>),
     /// A value describing the direction of a layout.
     LayoutDirection(LayoutDirection),
-    /// A value describing a font to use. `None` if a default font should be
+    /// A value describing a font to use. [`None`] if a default font should be
     /// used.
     Font(Option<Font>),
     /// A gradient that may or may not take one of it's colors from the current
     /// delta.
     DeltaGradient(DeltaGradient),
+    /// A value describing the background of a layout.
+    LayoutBackground(LayoutBackground<ImageId>),
 }
 
 impl From<bool> for Value {
@@ -199,6 +201,12 @@ impl From<DeltaGradient> for Value {
 impl From<ColumnKind> for Value {
     fn from(x: ColumnKind) -> Self {
         Value::ColumnKind(x)
+    }
+}
+
+impl From<LayoutBackground<ImageId>> for Value {
+    fn from(x: LayoutBackground<ImageId>) -> Self {
+        Value::LayoutBackground(x)
     }
 }
 
@@ -392,6 +400,16 @@ impl Value {
             _ => Err(Error::WrongType),
         }
     }
+
+    /// Tries to convert the value into a layout background.
+    pub fn into_layout_background(self) -> Result<LayoutBackground<ImageId>> {
+        match self {
+            Value::Color(v) => Ok(LayoutBackground::Gradient(Gradient::Plain(v))),
+            Value::Gradient(v) => Ok(LayoutBackground::Gradient(v)),
+            Value::LayoutBackground(v) => Ok(v),
+            _ => Err(Error::WrongType),
+        }
+    }
 }
 
 impl From<Value> for bool {
@@ -517,5 +535,11 @@ impl From<Value> for DeltaGradient {
 impl From<Value> for ColumnKind {
     fn from(value: Value) -> Self {
         value.into_column_kind().unwrap()
+    }
+}
+
+impl From<Value> for LayoutBackground<ImageId> {
+    fn from(value: Value) -> Self {
+        value.into_layout_background().unwrap()
     }
 }

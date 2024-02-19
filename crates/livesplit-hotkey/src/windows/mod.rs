@@ -73,7 +73,7 @@ struct State {
 const _: () = assert!(mem::size_of::<KeyCode>() == 1);
 
 thread_local! {
-    static STATE: RefCell<Option<State>> = RefCell::new(None);
+    static STATE: RefCell<Option<State>> = const { RefCell::new(None) };
 }
 
 const fn parse_scan_code(value: u32) -> Option<KeyCode> {

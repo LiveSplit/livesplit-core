@@ -88,7 +88,11 @@ pub fn parse(source: &str, #[allow(unused)] load_icons: bool) -> Result<Run> {
                 for path in _icons.split(',') {
                     if path.len() >= 2 {
                         let path = &path[1..path.len() - 1];
-                        if let Ok(image) = crate::settings::Image::from_file(path, &mut icon_buf) {
+                        if let Ok(image) = crate::settings::Image::from_file(
+                            path,
+                            &mut icon_buf,
+                            crate::settings::Image::ICON,
+                        ) {
                             icons_list.push(image);
                             continue;
                         }

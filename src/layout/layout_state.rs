@@ -1,9 +1,10 @@
+use serde_derive::{Deserialize, Serialize};
+
 use super::{ComponentState, LayoutDirection};
 use crate::{
     platform::prelude::*,
-    settings::{Color, Font, Gradient},
+    settings::{Color, Font, ImageId, LayoutBackground},
 };
-use serde_derive::{Deserialize, Serialize};
 
 /// The state object describes the information to visualize for the layout.
 #[derive(Default, Serialize, Deserialize)]
@@ -22,7 +23,7 @@ pub struct LayoutState {
     /// used.
     pub text_font: Option<Font>,
     /// The background to show behind the layout.
-    pub background: Gradient,
+    pub background: LayoutBackground<ImageId>,
     /// The color of thin separators.
     pub thin_separators_color: Color,
     /// The color of normal separators.

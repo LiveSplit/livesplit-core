@@ -1,5 +1,8 @@
 use super::Editor;
-use crate::{platform::prelude::*, settings::SettingsDescription};
+use crate::{
+    platform::prelude::*,
+    settings::{ImageCache, SettingsDescription},
+};
 use serde_derive::{Deserialize, Serialize};
 
 /// Represents the current state of the Layout Editor in order to visualize it
@@ -48,8 +51,12 @@ impl State {
 }
 
 impl Editor {
-    /// Calculates the Layout Editor's state in order to visualize it.
-    pub fn state(&self) -> State {
+    /// Calculates the Layout Editor's state in order to visualize it. The
+    /// [`ImageCache`] is updated with all the images that are part of the
+    /// state. The images are marked as visited in the [`ImageCache`]. You still
+    /// need to manually run [`ImageCache::collect`] to ensure unused images are
+    /// removed from the cache.
+    pub fn state(&self, image_cache: &mut ImageCache) -> State {
         let components = self
             .layout
             .components
@@ -69,7 +76,10 @@ impl Editor {
             selected_component: self.selected_component as u32,
             component_settings: self.layout.components[self.selected_component]
                 .settings_description(),
-            general_settings: self.layout.general_settings().settings_description(),
+            general_settings: self
+                .layout
+                .general_settings()
+                .settings_description(image_cache),
         }
     }
 }

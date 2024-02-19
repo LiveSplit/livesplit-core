@@ -1,6 +1,7 @@
 //! The comparison module provides all the different automatically generated
-//! comparisons, like [`BestSegments`](crate::comparison::best_segments::BestSegments) and [`AverageSegments`](crate::comparison::average_segments::AverageSegments).
-//! Additionally, functions for dealing with comparisons, like shortening a comparison, are provided.
+//! comparisons, like [`BestSegments`] and [`AverageSegments`]. Additionally,
+//! functions for dealing with comparisons, like shortening a comparison, are
+//! provided.
 
 #[cfg(test)]
 mod tests;

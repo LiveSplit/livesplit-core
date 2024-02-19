@@ -17,7 +17,8 @@ use alloc::collections::BinaryHeap;
 /// ```
 #[derive(Default)]
 pub struct FuzzyList {
-    list: Vec<(String, String)>,
+    complex_list: Vec<(Box<str>, Box<str>)>,
+    ascii_list: Vec<(Box<str>, Box<str>)>,
 }
 
 impl FuzzyList {
@@ -28,8 +29,13 @@ impl FuzzyList {
 
     /// Adds a new element to the list.
     pub fn push(&mut self, element: &str) {
-        self.list
-            .push((element.to_string(), element.to_lowercase()));
+        let lower = element.to_lowercase().into_boxed_str();
+        if lower.is_ascii() {
+            &mut self.ascii_list
+        } else {
+            &mut self.complex_list
+        }
+        .push((element.into(), lower));
     }
 
     /// Searches for the pattern provided in the list. A list of all the
@@ -38,7 +44,8 @@ impl FuzzyList {
     pub fn search<'a>(&'a self, pattern: &str, max: usize) -> Vec<&'a str> {
         let pattern = pattern.to_lowercase();
         let mut heap = BinaryHeap::new();
-        for (element, element_lower) in &self.list {
+
+        for (element, element_lower) in &self.complex_list {
             if let Some(score) = match_against(&pattern, element_lower) {
                 if heap.len() >= max {
                     heap.pop();
@@ -46,10 +53,28 @@ impl FuzzyList {
                 heap.push((NotNaN(-score), element));
             }
         }
-        heap.into_sorted_vec()
-            .iter()
-            .map(|(_, s)| s.as_str())
-            .collect()
+
+        if pattern.is_ascii() {
+            for (element, element_lower) in &self.ascii_list {
+                if let Some(score) = match_against_ascii(&pattern, element_lower) {
+                    if heap.len() >= max {
+                        heap.pop();
+                    }
+                    heap.push((NotNaN(-score), element));
+                }
+            }
+        } else {
+            for (element, element_lower) in &self.ascii_list {
+                if let Some(score) = match_against(&pattern, element_lower) {
+                    if heap.len() >= max {
+                        heap.pop();
+                    }
+                    heap.push((NotNaN(-score), element));
+                }
+            }
+        }
+
+        heap.into_sorted_vec().iter().map(|(_, s)| &***s).collect()
     }
 }
 
@@ -59,6 +84,32 @@ fn match_against(pattern: &str, text: &str) -> Option<f64> {
     let mut pattern_char = pattern_chars.next();
 
     for c in text.chars() {
+        if pattern_char == Some(c) {
+            pattern_char = pattern_chars.next();
+            current_score = 1.0 + 2.0 * current_score;
+        } else {
+            current_score = 0.0;
+        }
+        total_score += current_score;
+    }
+
+    if pattern_char.is_none() {
+        if pattern == text {
+            Some(f64::INFINITY)
+        } else {
+            Some(total_score)
+        }
+    } else {
+        None
+    }
+}
+
+fn match_against_ascii(pattern: &str, text: &str) -> Option<f64> {
+    let (mut current_score, mut total_score) = (0.0, 0.0);
+    let mut pattern_chars = pattern.bytes();
+    let mut pattern_char = pattern_chars.next();
+
+    for c in text.bytes() {
         if pattern_char == Some(c) {
             pattern_char = pattern_chars.next();
             current_score = 1.0 + 2.0 * current_score;

@@ -8,7 +8,7 @@ use crate::{
     component::OwnedComponent, layout::OwnedLayout, layout_editor_state::OwnedLayoutEditorState,
     setting_value::OwnedSettingValue,
 };
-use livesplit_core::{layout::LayoutState, LayoutEditor, Timer};
+use livesplit_core::{layout::LayoutState, settings::ImageCache, LayoutEditor, Timer};
 
 /// type
 pub type OwnedLayoutEditor = Box<LayoutEditor>;
@@ -33,16 +33,22 @@ pub extern "C" fn LayoutEditor_close(this: OwnedLayoutEditor) -> OwnedLayout {
 
 /// Encodes the Layout Editor's state as JSON in order to visualize it.
 #[no_mangle]
-pub extern "C" fn LayoutEditor_state_as_json(this: &LayoutEditor) -> Json {
+pub extern "C" fn LayoutEditor_state_as_json(
+    this: &LayoutEditor,
+    image_cache: &mut ImageCache,
+) -> Json {
     output_vec(|o| {
-        this.state().write_json(o).unwrap();
+        this.state(image_cache).write_json(o).unwrap();
     })
 }
 
 /// Returns the state of the Layout Editor.
 #[no_mangle]
-pub extern "C" fn LayoutEditor_state(this: &LayoutEditor) -> OwnedLayoutEditorState {
-    Box::new(this.state())
+pub extern "C" fn LayoutEditor_state(
+    this: &LayoutEditor,
+    image_cache: &mut ImageCache,
+) -> OwnedLayoutEditorState {
+    Box::new(this.state(image_cache))
 }
 
 /// Encodes the layout's state as JSON based on the timer provided. You can use
@@ -51,10 +57,13 @@ pub extern "C" fn LayoutEditor_state(this: &LayoutEditor) -> OwnedLayoutEditorSt
 #[no_mangle]
 pub extern "C" fn LayoutEditor_layout_state_as_json(
     this: &mut LayoutEditor,
+    image_cache: &mut ImageCache,
     timer: &Timer,
 ) -> Json {
     output_vec(|o| {
-        this.layout_state(&timer.snapshot()).write_json(o).unwrap();
+        this.layout_state(image_cache, &timer.snapshot())
+            .write_json(o)
+            .unwrap();
     })
 }
 
@@ -63,9 +72,10 @@ pub extern "C" fn LayoutEditor_layout_state_as_json(
 pub extern "C" fn LayoutEditor_update_layout_state(
     this: &mut LayoutEditor,
     state: &mut LayoutState,
+    image_cache: &mut ImageCache,
     timer: &Timer,
 ) {
-    this.update_layout_state(state, &timer.snapshot())
+    this.update_layout_state(state, image_cache, &timer.snapshot())
 }
 
 /// Updates the layout's state based on the timer provided and encodes it as
@@ -74,9 +84,10 @@ pub extern "C" fn LayoutEditor_update_layout_state(
 pub extern "C" fn LayoutEditor_update_layout_state_as_json(
     this: &mut LayoutEditor,
     state: &mut LayoutState,
+    image_cache: &mut ImageCache,
     timer: &Timer,
 ) -> Json {
-    this.update_layout_state(state, &timer.snapshot());
+    this.update_layout_state(state, image_cache, &timer.snapshot());
     output_vec(|o| {
         state.write_json(o).unwrap();
     })
@@ -159,6 +170,7 @@ pub extern "C" fn LayoutEditor_set_general_settings_value(
     this: &mut LayoutEditor,
     index: usize,
     value: OwnedSettingValue,
+    image_cache: &ImageCache,
 ) {
-    this.set_general_settings_value(index, *value);
+    this.set_general_settings_value(index, *value, image_cache);
 }

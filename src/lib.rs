@@ -5,12 +5,13 @@
     clippy::style,
     clippy::missing_const_for_fn,
     clippy::undocumented_unsafe_blocks,
+    clippy::needless_pass_by_ref_mut,
     missing_docs,
     rust_2018_idioms
 )]
 // Clippy false positives
 #![allow(
-    clippy::blocks_in_if_conditions,
+    clippy::blocks_in_conditions,
     clippy::redundant_closure_call,
     clippy::new_ret_no_self
 )]

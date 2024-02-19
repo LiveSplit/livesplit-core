@@ -288,11 +288,15 @@ jobs:
           - label: Linux i586
             target: i586-unknown-linux-gnu
             auto_splitting: skip
+            # FIXME: rustls currently does not support i586.
+            networking: skip
 
           - label: Linux i586 musl
             target: i586-unknown-linux-musl
             auto_splitting: skip
             dylib: skip
+            # FIXME: rustls currently does not support i586.
+            networking: skip
 
           - label: Linux i686
             target: i686-unknown-linux-gnu
@@ -544,10 +548,10 @@ jobs:
 
     steps:
       - name: Checkout Commit
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Rust
-        uses: hecrj/setup-rust-action@v1
+        uses: hecrj/setup-rust-action@v2
         with:
           rust-version: ${{ matrix.toolchain || 'stable' }}
 
@@ -557,7 +561,7 @@ jobs:
 
       - name: Download cross
         if: matrix.cross == '' && matrix.no_std == ''
-        uses: robinraju/release-downloader@v1.7
+        uses: robinraju/release-downloader@v1.9
         with:
           repository: "cross-rs/cross"
           latest: true
@@ -619,10 +623,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Commit
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Rust
-        uses: hecrj/setup-rust-action@v1
+        uses: hecrj/setup-rust-action@v2
 
       - name: Generate bindings
         run: |
@@ -635,10 +639,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Commit
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Rust
-        uses: hecrj/setup-rust-action@v1
+        uses: hecrj/setup-rust-action@v2
         with:
           components: clippy
 
@@ -650,10 +654,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Commit
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Rust
-        uses: hecrj/setup-rust-action@v1
+        uses: hecrj/setup-rust-action@v2
         with:
           components: rustfmt
 
@@ -667,10 +671,10 @@ jobs:
       CRITERION_TOKEN: ${{ secrets.CRITERION_TOKEN }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Install Rust
-        uses: hecrj/setup-rust-action@v1
+        uses: hecrj/setup-rust-action@v2
 
       - name: Run benchmarks
         run: |

@@ -4,6 +4,7 @@ use super::{
 };
 use crate::{
     component::splits::{ColumnKind, TimeColumn},
+    settings::ImageCache,
     Run, Segment, TimeSpan, Timer, TimingMethod,
 };
 
@@ -22,19 +23,21 @@ fn zero_visual_split_count_always_shows_all_splits() {
         ..Default::default()
     });
 
-    let mut state = component.state(&timer.snapshot(), &layout_settings);
+    let mut image_cache = ImageCache::new();
+
+    let mut state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
     assert_eq!(state.splits.len(), 32);
 
     component.scroll_down();
-    state = component.state(&timer.snapshot(), &layout_settings);
+    state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
     assert_eq!(state.splits.len(), 32);
 
     component.scroll_down();
-    state = component.state(&timer.snapshot(), &layout_settings);
+    state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
     assert_eq!(state.splits.len(), 32);
 
     component.scroll_up();
-    state = component.state(&timer.snapshot(), &layout_settings);
+    state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
     assert_eq!(state.splits.len(), 32);
 }
 
@@ -55,27 +58,29 @@ fn one_visual_split() {
         ..Default::default()
     });
 
-    let mut state = component.state(&timer.snapshot(), &layout_settings);
+    let mut image_cache = ImageCache::new();
+
+    let mut state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
     assert_eq!(state.splits[0].name, "A");
     assert_eq!(state.splits.len(), 1);
 
     timer.start();
-    state = component.state(&timer.snapshot(), &layout_settings);
+    state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
     assert_eq!(state.splits[0].name, "A");
     assert_eq!(state.splits.len(), 1);
 
     timer.split();
-    state = component.state(&timer.snapshot(), &layout_settings);
+    state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
     assert_eq!(state.splits[0].name, "B");
     assert_eq!(state.splits.len(), 1);
 
     timer.split();
-    state = component.state(&timer.snapshot(), &layout_settings);
+    state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
     assert_eq!(state.splits[0].name, "C");
     assert_eq!(state.splits.len(), 1);
 
     timer.split();
-    state = component.state(&timer.snapshot(), &layout_settings);
+    state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
     assert_eq!(state.splits[0].name, "C");
     assert_eq!(state.splits.len(), 1);
 }
@@ -107,7 +112,9 @@ fn negative_segment_times() {
     timer.pause_game_time();
     timer.set_game_time(TimeSpan::from_seconds(-1.0));
 
-    let state = component.state(&timer.snapshot(), &layout_settings);
+    let mut image_cache = ImageCache::new();
+
+    let state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
     assert_eq!(state.splits[0].columns[0].value, "−1.00");
 }
 
@@ -125,7 +132,9 @@ fn unique_split_indices() {
         ..Default::default()
     });
 
-    let state = component.state(&timer.snapshot(), &Default::default());
+    let mut image_cache = ImageCache::new();
+
+    let state = component.state(&mut image_cache, &timer.snapshot(), &Default::default());
 
     let mut indices = state
         .splits

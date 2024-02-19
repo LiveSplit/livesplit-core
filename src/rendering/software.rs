@@ -1,23 +1,30 @@
 //! Provides a software renderer that can be used without a GPU. The renderer is
 //! surprisingly fast and can be considered the default rendering backend.
 
-use crate::platform::prelude::*;
-use alloc::rc::Rc;
-use core::{mem, ops::Deref};
-
 use super::{
     default_text_engine::{Font, Label, TextEngine},
     entity::Entity,
     resource::{self, ResourceAllocator},
     FillShader, FontKind, Scene, SceneManager, SharedOwnership, Transform,
 };
-use crate::{layout::LayoutState, settings};
-#[cfg(feature = "image")]
-use image::ImageBuffer;
+use crate::{
+    layout::LayoutState, platform::prelude::*, rendering::Background, settings,
+    settings::ImageCache,
+};
+use alloc::rc::Rc;
+use core::{mem, ops::Deref};
 use tiny_skia::{
     BlendMode, Color, FillRule, FilterQuality, GradientStop, LinearGradient, Paint, Path,
     PathBuilder, Pattern, Pixmap, PixmapMut, Point, Rect, Shader, SpreadMode, Stroke,
 };
+use tiny_skia_path::NormalizedF32;
+
+#[cfg(feature = "image")]
+use crate::settings::{BackgroundImage, BLUR_FACTOR};
+#[cfg(feature = "image")]
+use image::{imageops::FilterType, ImageBuffer};
+#[cfg(feature = "image")]
+use tiny_skia_path::IntSize;
 
 #[cfg(feature = "image")]
 pub use image::{self, RgbaImage};
@@ -110,10 +117,7 @@ impl ResourceAllocator for SkiaAllocator {
 
             let (width, height) = (buf.width(), buf.height());
 
-            let pixmap = Pixmap::from_vec(
-                buf.into_raw(),
-                tiny_skia_path::IntSize::from_wh(width, height)?,
-            )?;
+            let pixmap = Pixmap::from_vec(buf.into_raw(), IntSize::from_wh(width, height)?)?;
 
             Some((UnsafeRc::new(pixmap), width as f32 / height as f32))
         }
@@ -161,6 +165,8 @@ fn path_builder() -> SkiaBuilder {
 pub struct BorrowedRenderer {
     allocator: SkiaAllocator,
     scene_manager: SceneManager<SkiaPath, SkiaImage, SkiaFont, SkiaLabel>,
+    #[cfg(feature = "image")]
+    blurred_background_image: Option<(BackgroundImage<usize>, Pixmap)>,
     background: Pixmap,
     min_y: f32,
     max_y: f32,
@@ -220,6 +226,8 @@ impl BorrowedRenderer {
         Self {
             allocator,
             scene_manager,
+            #[cfg(feature = "image")]
+            blurred_background_image: None,
             background: Pixmap::new(1, 1).unwrap(),
             min_y: f32::INFINITY,
             max_y: f32::NEG_INFINITY,
@@ -241,6 +249,7 @@ impl BorrowedRenderer {
     pub fn render(
         &mut self,
         state: &LayoutState,
+        image_cache: &ImageCache,
         image: &mut [u8],
         [width, height]: [u32; 2],
         stride: u32,
@@ -252,9 +261,12 @@ impl BorrowedRenderer {
             self.background = Pixmap::new(stride, height).unwrap();
         }
 
-        let new_resolution =
-            self.scene_manager
-                .update_scene(&mut self.allocator, (width as _, height as _), state);
+        let new_resolution = self.scene_manager.update_scene(
+            &mut self.allocator,
+            (width as _, height as _),
+            state,
+            image_cache,
+        );
 
         let scene = self.scene_manager.scene();
         let rectangle = scene.rectangle();
@@ -265,7 +277,15 @@ impl BorrowedRenderer {
         let mut background = self.background.as_mut();
 
         if bottom_layer_changed {
-            fill_background(scene, &mut background, width, height);
+            fill_background(
+                scene,
+                #[cfg(feature = "image")]
+                &mut self.blurred_background_image,
+                &mut background,
+                width,
+                height,
+                rectangle,
+            );
             render_layer(&mut background, scene.bottom_layer(), rectangle);
         }
 
@@ -322,13 +342,19 @@ impl Renderer {
     /// detect that the layout got resized. In that case it returns the new
     /// ideal size. This is just a hint and can be ignored entirely. The image
     /// is always rendered with the resolution provided.
-    pub fn render(&mut self, state: &LayoutState, [width, height]: [u32; 2]) -> Option<(f32, f32)> {
+    pub fn render(
+        &mut self,
+        state: &LayoutState,
+        image_cache: &ImageCache,
+        [width, height]: [u32; 2],
+    ) -> Option<(f32, f32)> {
         if width != self.frame_buffer.width() || height != self.frame_buffer.height() {
             self.frame_buffer = Pixmap::new(width, height).unwrap();
         }
 
         self.renderer.render(
             state,
+            image_cache,
             self.frame_buffer.data_mut(),
             [width, height],
             width,
@@ -559,63 +585,198 @@ fn convert_shader<T>(
 
 fn fill_background(
     scene: &Scene<SkiaPath, SkiaImage, SkiaLabel>,
-    background: &mut PixmapMut<'_>,
+    #[cfg(feature = "image")] blurred_background_image: &mut Option<(
+        BackgroundImage<usize>,
+        Pixmap,
+    )>,
+    background_layer: &mut PixmapMut<'_>,
     width: u32,
     height: u32,
+    rectangle: &Path,
 ) {
+    #[cfg(feature = "image")]
+    update_blurred_background_image(scene, blurred_background_image);
+
     match scene.background() {
-        Some(shader) => match shader {
-            FillShader::SolidColor(color) => {
-                background
-                    .pixels_mut()
-                    .fill(convert_color(color).premultiply().to_color_u8());
-            }
-            FillShader::VerticalGradient(top, bottom) => {
-                background.fill_rect(
-                    Rect::from_xywh(0.0, 0.0, width as _, height as _).unwrap(),
+        Some(background) => match background {
+            Background::Shader(shader) => match shader {
+                FillShader::SolidColor(color) => {
+                    background_layer
+                        .pixels_mut()
+                        .fill(convert_color(color).premultiply().to_color_u8());
+                }
+                FillShader::VerticalGradient(top, bottom) => {
+                    background_layer.fill_rect(
+                        Rect::from_xywh(0.0, 0.0, width as _, height as _).unwrap(),
+                        &Paint {
+                            shader: LinearGradient::new(
+                                Point::from_xy(0.0, 0.0),
+                                Point::from_xy(0.0, height as _),
+                                vec![
+                                    GradientStop::new(0.0, convert_color(top)),
+                                    GradientStop::new(1.0, convert_color(bottom)),
+                                ],
+                                SpreadMode::Pad,
+                                tiny_skia::Transform::identity(),
+                            )
+                            .unwrap(),
+                            blend_mode: BlendMode::Source,
+                            ..Default::default()
+                        },
+                        tiny_skia::Transform::identity(),
+                        None,
+                    );
+                }
+                FillShader::HorizontalGradient(left, right) => {
+                    background_layer.fill_rect(
+                        Rect::from_xywh(0.0, 0.0, width as _, height as _).unwrap(),
+                        &Paint {
+                            shader: LinearGradient::new(
+                                Point::from_xy(0.0, 0.0),
+                                Point::from_xy(width as _, 0.0),
+                                vec![
+                                    GradientStop::new(0.0, convert_color(left)),
+                                    GradientStop::new(1.0, convert_color(right)),
+                                ],
+                                SpreadMode::Pad,
+                                tiny_skia::Transform::identity(),
+                            )
+                            .unwrap(),
+                            blend_mode: BlendMode::Source,
+                            ..Default::default()
+                        },
+                        tiny_skia::Transform::identity(),
+                        None,
+                    );
+                }
+            },
+            Background::Image(image, transform) => {
+                #[cfg(feature = "image")]
+                let pixmap = if image.blur != 0.0 {
+                    blurred_background_image
+                        .as_ref()
+                        .map(|(_, pixmap)| pixmap)
+                        .unwrap()
+                } else {
+                    &*image.image.0
+                };
+                #[cfg(not(feature = "image"))]
+                let pixmap = &*image.image.0;
+
+                let transform = convert_transform(transform);
+                background_layer.fill_path(
+                    rectangle,
                     &Paint {
-                        shader: LinearGradient::new(
-                            Point::from_xy(0.0, 0.0),
-                            Point::from_xy(0.0, height as _),
-                            vec![
-                                GradientStop::new(0.0, convert_color(top)),
-                                GradientStop::new(1.0, convert_color(bottom)),
-                            ],
+                        shader: Pattern::new(
+                            pixmap.as_ref(),
                             SpreadMode::Pad,
-                            tiny_skia::Transform::identity(),
-                        )
-                        .unwrap(),
+                            FilterQuality::Bilinear,
+                            image.opacity,
+                            tiny_skia::Transform::from_scale(
+                                1.0 / pixmap.width() as f32,
+                                1.0 / pixmap.height() as f32,
+                            ),
+                        ),
+                        anti_alias: true,
                         blend_mode: BlendMode::Source,
                         ..Default::default()
                     },
-                    tiny_skia::Transform::identity(),
+                    FillRule::Winding,
+                    transform,
                     None,
                 );
-            }
-            FillShader::HorizontalGradient(left, right) => {
-                background.fill_rect(
-                    Rect::from_xywh(0.0, 0.0, width as _, height as _).unwrap(),
-                    &Paint {
-                        shader: LinearGradient::new(
-                            Point::from_xy(0.0, 0.0),
-                            Point::from_xy(width as _, 0.0),
-                            vec![
-                                GradientStop::new(0.0, convert_color(left)),
-                                GradientStop::new(1.0, convert_color(right)),
-                            ],
-                            SpreadMode::Pad,
-                            tiny_skia::Transform::identity(),
-                        )
-                        .unwrap(),
-                        blend_mode: BlendMode::Source,
-                        ..Default::default()
-                    },
-                    tiny_skia::Transform::identity(),
-                    None,
-                );
+
+                if image.brightness != 1.0 {
+                    let brightness = NormalizedF32::new_clamped(image.brightness).get();
+                    let color = Color::from_rgba(brightness, brightness, brightness, 1.0).unwrap();
+                    background_layer.fill_path(
+                        rectangle,
+                        &Paint {
+                            shader: Shader::SolidColor(color),
+                            anti_alias: true,
+                            blend_mode: BlendMode::Modulate,
+                            ..Default::default()
+                        },
+                        FillRule::Winding,
+                        transform,
+                        None,
+                    );
+                }
             }
         },
-        None => background.data_mut().fill(0),
+        None => background_layer.data_mut().fill(0),
+    }
+}
+
+#[cfg(feature = "image")]
+fn update_blurred_background_image(
+    scene: &Scene<SkiaPath, SkiaImage, SkiaLabel>,
+    blurred_background_image: &mut Option<(BackgroundImage<usize>, Pixmap)>,
+) {
+    match scene.background() {
+        Some(Background::Image(image, _)) if image.blur != 0.0 => {
+            let current_key = image.map(image.image.id);
+            if !blurred_background_image
+                .as_ref()
+                .is_some_and(|(key, _)| &current_key == key)
+            {
+                let original_image = ImageBuffer::<image::Rgba<u8>, _>::from_raw(
+                    image.image.width(),
+                    image.image.height(),
+                    image.image.data(),
+                )
+                .unwrap();
+
+                // Formula to calculate the sigma as specified
+                let dim = original_image.width().max(original_image.height()) as f32;
+                let sigma = BLUR_FACTOR * image.blur * dim;
+
+                // For large blurs the calculation is actually very expensive,
+                // but we can get around that because large blurs don't require
+                // high resolutions in the first place. So we simply scale down
+                // the image based on the sigma to a smaller size and then blur
+                // the image. For the scaled down image we always use a sigma of
+                // 2.0, so scaling the image by 2.0 / sigma should resulting in
+                // the same amount of blur. Of course we never want to scale the
+                // image up, so in case the scale factor would end up in >= 1x,
+                // we simply don't do any scaling and keep the original sigma.
+                const SIGMA_WHEN_SCALED: f32 = 2.0;
+                let scale = SIGMA_WHEN_SCALED / sigma;
+
+                let scaled;
+                let (image, sigma) = if scale < 1.0 {
+                    // The image needs to at least be 1x1, because tiny-skia
+                    // doesn't allow images to be smaller than that. A triangle
+                    // filter is probably fine, the blur will hide most scaling
+                    // artifacts anyway.
+                    scaled = image::imageops::resize(
+                        &original_image,
+                        ((scale * original_image.width() as f32) as u32).max(1),
+                        ((scale * original_image.height() as f32) as u32).max(1),
+                        FilterType::Triangle,
+                    );
+                    (
+                        ImageBuffer::<image::Rgba<u8>, _>::from_raw(
+                            scaled.width(),
+                            scaled.height(),
+                            &*scaled,
+                        )
+                        .unwrap(),
+                        SIGMA_WHEN_SCALED,
+                    )
+                } else {
+                    (original_image, sigma)
+                };
+
+                let image_buffer = image::imageops::blur(&image, sigma);
+                let size = IntSize::from_wh(image_buffer.width(), image_buffer.height()).unwrap();
+                let pixmap = Pixmap::from_vec(image_buffer.into_raw(), size).unwrap();
+                *blurred_background_image = Some((current_key, pixmap));
+            }
+        }
+        _ => {
+            *blurred_background_image = None;
+        }
     }
 }
 

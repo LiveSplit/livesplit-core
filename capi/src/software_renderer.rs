@@ -1,10 +1,12 @@
 //! The software renderer allows rendering layouts entirely on the CPU. This is
 //! surprisingly fast and can be considered the default renderer.
 
-use livesplit_core::layout::LayoutState;
+use livesplit_core::{layout::LayoutState, settings::ImageCache};
 
 #[cfg(feature = "software-rendering")]
 use livesplit_core::rendering::software::BorrowedRenderer as SoftwareRenderer;
+
+use crate::slice_mut;
 
 #[cfg(not(feature = "software-rendering"))]
 /// dummy
@@ -15,7 +17,16 @@ impl SoftwareRenderer {
         panic!("The software renderer is not compiled in.")
     }
 
-    fn render(&mut self, _: &LayoutState, _: &mut [u8], _: [u32; 2], _: u32, _: bool) {}
+    fn render(
+        &mut self,
+        _: &LayoutState,
+        _: &ImageCache,
+        _: &mut [u8],
+        _: [u32; 2],
+        _: u32,
+        _: bool,
+    ) {
+    }
 }
 
 /// type
@@ -46,6 +57,7 @@ pub extern "C" fn SoftwareRenderer_drop(this: OwnedSoftwareRenderer) {
 pub unsafe extern "C" fn SoftwareRenderer_render(
     this: &mut SoftwareRenderer,
     layout_state: &LayoutState,
+    image_cache: &ImageCache,
     data: *mut u8,
     width: u32,
     height: u32,
@@ -54,7 +66,8 @@ pub unsafe extern "C" fn SoftwareRenderer_render(
 ) {
     this.render(
         layout_state,
-        std::slice::from_raw_parts_mut(data, stride as usize * height as usize * 4),
+        image_cache,
+        slice_mut(data, stride as usize * height as usize * 4),
         [width, height],
         stride,
         force_redraw,

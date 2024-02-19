@@ -7,6 +7,7 @@ mod field;
 mod font;
 mod gradient;
 mod image;
+mod layout_background;
 mod semantic_color;
 mod settings_description;
 mod value;
@@ -17,7 +18,8 @@ pub use self::{
     field::Field,
     font::{Font, Stretch as FontStretch, Style as FontStyle, Weight as FontWeight},
     gradient::{Gradient, ListGradient},
-    image::{CachedImageId, Image, ImageData},
+    image::{HasImageId, Image, ImageCache, ImageId},
+    layout_background::{BackgroundImage, LayoutBackground, BLUR_FACTOR},
     semantic_color::SemanticColor,
     settings_description::SettingsDescription,
     value::{ColumnKind, Error as ValueError, Result as ValueResult, Value},

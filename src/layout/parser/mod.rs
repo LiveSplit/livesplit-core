@@ -5,7 +5,8 @@ use crate::{
     component::{separator, timer::DeltaGradient},
     platform::{math::f32::powf, prelude::*},
     settings::{
-        Alignment, Color, Font, FontStretch, FontStyle, FontWeight, Gradient, ListGradient,
+        Alignment, BackgroundImage, Color, Font, FontStretch, FontStyle, FontWeight, Gradient,
+        Image, LayoutBackground, ListGradient,
     },
     timing::{
         formatter::{Accuracy, DigitsFormat},
@@ -13,8 +14,8 @@ use crate::{
     },
     util::xml::{
         helper::{
-            end_tag, parse_base, parse_children, text, text_as_escaped_string_err, text_parsed,
-            Error as XmlError,
+            end_tag, image, parse_base, parse_children, text, text_as_escaped_string_err,
+            text_parsed, Error as XmlError,
         },
         Reader,
     },
@@ -81,6 +82,10 @@ pub enum Error {
     ParseColumnType,
     /// Failed to parse a font.
     ParseFont,
+    /// Failed to parse a percentage.
+    ParsePercentage,
+    /// The background image is missing.
+    MissingBackgroundImage,
     /// Parsed an empty layout, which is considered an invalid layout.
     Empty,
 }
@@ -120,6 +125,11 @@ enum DeltaGradientKind {
 enum ListGradientKind {
     Same(GradientKind),
     Alternating,
+}
+
+enum LayoutBackgroundKind {
+    Gradient(GradientKind),
+    Image,
 }
 
 trait GradientType: Sized {
@@ -215,6 +225,26 @@ impl GradientType for ListGradientKind {
     }
 }
 
+impl GradientType for LayoutBackgroundKind {
+    type Built = Option<Gradient>;
+    fn default() -> Self {
+        LayoutBackgroundKind::Gradient(GradientKind::default())
+    }
+    fn parse(kind: &str) -> Result<Self> {
+        Ok(if kind == "Image" {
+            LayoutBackgroundKind::Image
+        } else {
+            LayoutBackgroundKind::Gradient(GradientKind::parse(kind)?)
+        })
+    }
+    fn build(self, first: Color, second: Color) -> Self::Built {
+        match self {
+            LayoutBackgroundKind::Image => None,
+            LayoutBackgroundKind::Gradient(gradient) => Some(gradient.build(first, second)),
+        }
+    }
+}
+
 struct GradientBuilder<T: GradientType = GradientKind> {
     tag_color1: &'static str,
     tag_color2: &'static str,
@@ -295,6 +325,21 @@ where
             (1.0 - lightness) * (1.0 - powf(1.0 - a, 1.0 / 2.2)) + lightness * powf(a, 1.0 / 1.75);
 
         func(color);
+        Ok(())
+    })
+}
+
+fn percentage<F>(reader: &mut Reader<'_>, func: F) -> Result<()>
+where
+    F: FnOnce(f32),
+{
+    text_as_escaped_string_err(reader, |text| {
+        let percentage: f32 = text.parse().map_err(|_| Error::ParsePercentage)?;
+        if !(0.0..=1.0).contains(&percentage) {
+            return Err(Error::ParsePercentage);
+        }
+
+        func(percentage);
         Ok(())
     })
 }
@@ -450,7 +495,7 @@ where
             font_resolving::FontInfo::from_gdi(original_family_name, bold_flag, italic_flag)
         {
             weight = match info.weight {
-                i32::MIN..=149 => FontWeight::Thin,
+                ..=149 => FontWeight::Thin,
                 150..=249 => FontWeight::ExtraLight,
                 250..=324 => FontWeight::Light,
                 325..=374 => FontWeight::SemiLight,
@@ -656,9 +701,13 @@ where
 
 fn parse_general_settings(layout: &mut Layout, reader: &mut Reader<'_>) -> Result<()> {
     let settings = layout.general_settings_mut();
-    let mut background_builder = GradientBuilder::new();
+    let mut background_builder = GradientBuilder::<LayoutBackgroundKind>::new_gradient_type();
 
-    let mut font_buf = Vec::new();
+    let mut buf = Vec::new();
+
+    let mut background_image = None;
+    let mut image_opacity = 1.0;
+    let mut image_blur = 0.0;
 
     parse_children(reader, |reader, tag, _| match tag.name() {
         "TextColor" => color(reader, |color| {
@@ -700,39 +749,54 @@ fn parse_general_settings(layout: &mut Layout, reader: &mut Reader<'_>) -> Resul
         "PausedColor" => color(reader, |color| {
             settings.paused_color = color;
         }),
-        "TimerFont" => font(reader, &mut font_buf, |font| {
+        "TimerFont" => font(reader, &mut buf, |font| {
             if font.family != "Calibri" && font.family != "Century Gothic" {
                 settings.timer_font = Some(font);
             }
         }),
-        "TimesFont" => font(reader, &mut font_buf, |font| {
+        "TimesFont" => font(reader, &mut buf, |font| {
             if font.family != "Segoe UI" {
                 settings.times_font = Some(font);
             }
         }),
-        "TextFont" => font(reader, &mut font_buf, |font| {
+        "TextFont" => font(reader, &mut buf, |font| {
             if font.family != "Segoe UI" {
                 settings.text_font = Some(font);
             }
         }),
         "BackgroundType" => text_as_escaped_string_err(reader, |text| {
             background_builder.kind = match text {
-                "SolidColor" => GradientKind::Plain,
-                "VerticalGradient" => GradientKind::Vertical,
-                "HorizontalGradient" => GradientKind::Horizontal,
-                "Image" => {
-                    background_builder.first = Color::black();
-                    background_builder.second = Color::black();
-                    GradientKind::Plain
-                }
+                "SolidColor" => LayoutBackgroundKind::Gradient(GradientKind::Plain),
+                "VerticalGradient" => LayoutBackgroundKind::Gradient(GradientKind::Vertical),
+                "HorizontalGradient" => LayoutBackgroundKind::Gradient(GradientKind::Horizontal),
+                "Image" => LayoutBackgroundKind::Image,
                 _ => return Err(Error::ParseGradientType),
             };
             Ok(())
         }),
+        "BackgroundImage" => image(reader, &mut buf, |i| {
+            background_image = Some(Image::new(i.into(), Image::LARGE))
+        }),
+        "ImageOpacity" => percentage(reader, |v| image_opacity = v),
+        "ImageBlur" => percentage(reader, |v| image_blur = v),
         _ => end_tag(reader),
     })?;
 
-    settings.background = background_builder.build();
+    settings.background = match background_builder.build() {
+        Some(gradient) => LayoutBackground::Gradient(gradient),
+        None => match background_image {
+            Some(background_image) => LayoutBackground::Image(BackgroundImage {
+                image: background_image,
+                // We explicitly interpret the opacity as brightness because the
+                // original LiveSplit does not support any transparency, so in
+                // practice the setting is used as a brightness setting.
+                brightness: image_opacity,
+                opacity: 1.0,
+                blur: image_blur,
+            }),
+            None => return Err(Error::MissingBackgroundImage),
+        },
+    };
 
     Ok(())
 }

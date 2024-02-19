@@ -4,7 +4,7 @@ version = "0.13.0"
 authors = ["Christopher Serr <christopher.serr@gmail.com>"]
 documentation = "https://docs.rs/livesplit-core/"
 repository = "https://github.com/LiveSplit/livesplit-core"
-license = "Apache-2.0/MIT"
+license = "MIT OR Apache-2.0"
 description = "livesplit-core is a library that provides a lot of functionality for creating a speedrun timer."
 readme = "README.md"
 keywords = ["speedrun", "timer", "livesplit", "gaming"]
@@ -47,7 +47,7 @@ libm = "0.2.1"
 livesplit-hotkey = { path = "crates/livesplit-hotkey", version = "0.7.0", default-features = false }
 livesplit-title-abbreviations = { path = "crates/livesplit-title-abbreviations", version = "0.3.0" }
 memchr = { version = "2.3.4", default-features = false }
-simdutf8 = { version = "0.1.4", default-features = false, features = [
+simdutf8 = { git = "https://github.com/CryZe/simdutf8", branch = "wasm-ub-panic", default-features = false, features = [
     "aarch64_neon",
 ] }
 serde = { version = "1.0.186", default-features = false, features = ["alloc"] }
@@ -55,6 +55,8 @@ serde_derive = { version = "1.0.186", default_features = false }
 serde_json = { version = "1.0.60", default-features = false, features = [
     "alloc",
 ] }
+sha2 = { version = "0.10.8", default-features = false }
+slab = { version = "0.4.9", default-features = false }
 smallstr = { version = "0.3.0", default-features = false }
 snafu = { version = "0.8.0", default-features = false }
 unicase = "2.6.0"
@@ -135,6 +137,8 @@ std = [
     "cosmic-text?/std",
     "serde_json/std",
     "serde/std",
+    "sha2/std",
+    "slab/std",
     "simdutf8/std",
     "snafu/std",
     "time/local-offset",

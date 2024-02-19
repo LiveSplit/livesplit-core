@@ -6,12 +6,8 @@
 
 use super::{ComparisonError, ComparisonResult, LinkedLayout};
 use crate::{
-    comparison,
-    platform::prelude::*,
-    settings::{CachedImageId, Image},
-    timing::ParseError as ParseTimeSpanError,
-    util::PopulateString,
-    Run, Segment, Time, TimeSpan, TimingMethod,
+    comparison, platform::prelude::*, settings::Image, timing::ParseError as ParseTimeSpanError,
+    util::PopulateString, Run, Segment, Time, TimeSpan, TimingMethod,
 };
 use core::{mem::swap, num::ParseIntError};
 use snafu::{OptionExt, ResultExt};
@@ -76,8 +72,6 @@ pub struct Editor {
     selected_method: TimingMethod,
     selected_segments: Vec<usize>,
     previous_personal_best_time: Time,
-    game_icon_id: CachedImageId,
-    segment_icon_ids: Vec<CachedImageId>,
     segment_times: Vec<Option<TimeSpan>>,
 }
 
@@ -98,8 +92,6 @@ impl Editor {
             selected_method: TimingMethod::RealTime,
             selected_segments: vec![0],
             previous_personal_best_time: personal_best_time,
-            game_icon_id: CachedImageId::default(),
-            segment_icon_ids: Vec::with_capacity(len),
             segment_times: Vec::with_capacity(len),
         };
 
@@ -141,8 +133,8 @@ impl Editor {
     /// Grants mutable access to the actively selected segment row. You can
     /// select multiple segment rows at the same time, but only the one that is
     /// most recently selected is the active segment.
-    pub fn active_segment(&mut self) -> SegmentRow<'_> {
-        SegmentRow::new(self.active_segment_index(), self)
+    pub fn active_segment(&mut self) -> SegmentRow<&mut Self> {
+        SegmentRow::new_mut(self.active_segment_index(), self)
     }
 
     /// Unselects the segment with the given index. If it's not selected or the
@@ -290,14 +282,14 @@ impl Editor {
     }
 
     /// Sets the game's icon.
-    pub fn set_game_icon<D: Into<Image>>(&mut self, image: D) {
+    pub fn set_game_icon(&mut self, image: Image) {
         self.run.set_game_icon(image);
         self.raise_run_edited();
     }
 
     /// Removes the game's icon.
     pub fn remove_game_icon(&mut self) {
-        self.run.set_game_icon([]);
+        self.run.set_game_icon(Image::EMPTY.clone());
         self.raise_run_edited();
     }
 

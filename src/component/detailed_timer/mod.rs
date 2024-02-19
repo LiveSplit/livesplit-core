@@ -9,12 +9,12 @@ use crate::{
     analysis::comparison_single_segment_time,
     comparison::{self, best_segments, none},
     platform::prelude::*,
-    settings::{CachedImageId, Color, Field, Gradient, ImageData, SettingsDescription, Value},
+    settings::{Color, Field, Gradient, Image, ImageCache, ImageId, SettingsDescription, Value},
     timing::{
         formatter::{Accuracy, DigitsFormat, SegmentTime, TimeFormatter},
         Snapshot,
     },
-    GeneralLayoutSettings, Segment, TimeSpan, TimerPhase,
+    GeneralLayoutSettings, TimeSpan, TimerPhase,
 };
 use core::fmt::Write;
 use serde_derive::{Deserialize, Serialize};
@@ -28,7 +28,6 @@ mod tests;
 /// comparisons, the segment icon, and the segment's name, can also be shown.
 #[derive(Default, Clone)]
 pub struct Component {
-    icon_id: CachedImageId,
     timer: timer::Component,
     segment_timer: timer::Component,
     settings: Settings,
@@ -86,11 +85,10 @@ pub struct State {
     /// The name of the segment. This may be [`None`] if it's not supposed to be
     /// visualized.
     pub segment_name: Option<String>,
-    /// The segment's icon encoded as the raw file bytes. This value is only
-    /// specified whenever the icon changes. If you explicitly want to query
-    /// this value, remount the component. The buffer itself may be empty. This
-    /// indicates that there is no icon.
-    pub icon_change: Option<ImageData>,
+    /// The icon of the segment. The associated image can be looked up in the
+    /// image cache. The image may be the empty image. This indicates that there
+    /// is no icon.
+    pub icon: ImageId,
     /// The color of the segment name if it's shown. If [`None`] is specified,
     /// the color is taken from the layout.
     pub segment_name_color: Option<Color>,
@@ -190,7 +188,6 @@ impl Component {
             timer,
             segment_timer,
             settings,
-            ..Default::default()
         }
     }
 
@@ -212,10 +209,14 @@ impl Component {
     }
 
     /// Updates the component's state based on the timer and layout settings
-    /// provided.
+    /// provided. The [`ImageCache`] is updated with all the images that are
+    /// part of the state. The images are marked as visited in the
+    /// [`ImageCache`]. You still need to manually run [`ImageCache::collect`]
+    /// to ensure unused images are removed from the cache.
     pub fn update_state(
-        &mut self,
+        &self,
         state: &mut State,
+        image_cache: &mut ImageCache,
         timer: &Snapshot<'_>,
         layout_settings: &GeneralLayoutSettings,
     ) {
@@ -291,11 +292,11 @@ impl Component {
             Default::default()
         };
 
-        let display_icon = self.settings.display_icon;
-        let icon_change = self
-            .icon_id
-            .update_with(current_split.filter(|_| display_icon).map(Segment::icon))
-            .map(Into::into);
+        let icon = current_split
+            .filter(|_| self.settings.display_icon)
+            .map(|s| s.icon())
+            .unwrap_or(Image::EMPTY);
+        state.icon = *image_cache.cache(icon.id(), || icon.clone()).id();
 
         self.timer
             .update_state(&mut state.timer, timer, layout_settings);
@@ -328,31 +329,25 @@ impl Component {
             None => state.segment_name = None,
         }
 
-        state.icon_change = icon_change;
         state.segment_name_color = self.settings.segment_name_color;
         state.comparison_names_color = self.settings.comparison_names_color;
         state.comparison_times_color = self.settings.comparison_times_color;
     }
 
     /// Calculates the component's state based on the timer and layout settings
-    /// provided.
+    /// provided. The [`ImageCache`] is updated with all the images that are
+    /// part of the state. The images are marked as visited in the
+    /// [`ImageCache`]. You still need to manually run [`ImageCache::collect`]
+    /// to ensure unused images are removed from the cache.
     pub fn state(
-        &mut self,
+        &self,
+        image_cache: &mut ImageCache,
         timer: &Snapshot<'_>,
         layout_settings: &GeneralLayoutSettings,
     ) -> State {
         let mut state = Default::default();
-        self.update_state(&mut state, timer, layout_settings);
+        self.update_state(&mut state, image_cache, timer, layout_settings);
         state
-    }
-
-    /// Remounts the component as if it was freshly initialized. The segment
-    /// icons shown by this component are only provided in the state objects
-    /// whenever the icon changes or whenever the component's state is first
-    /// queried. Remounting returns the segment icon again, whenever its state
-    /// is queried the next time.
-    pub fn remount(&mut self) {
-        self.icon_id.reset();
     }
 
     /// Accesses a generic description of the settings available for this

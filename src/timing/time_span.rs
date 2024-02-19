@@ -258,5 +258,17 @@ mod tests {
                 .to_seconds_and_subsec_nanoseconds(),
             (10, 98765432)
         );
+        assert_eq!(
+            TimeSpan::from_str("10.000000000")
+                .unwrap()
+                .to_seconds_and_subsec_nanoseconds(),
+            (10, 0)
+        );
+        assert_eq!(
+            TimeSpan::from_str("10")
+                .unwrap()
+                .to_seconds_and_subsec_nanoseconds(),
+            (10, 0)
+        );
     }
 }
