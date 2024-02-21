@@ -23,11 +23,11 @@ sysinfo = { version = "0.30.0", default-features = false, features = [
   "multithread",
 ] }
 time = { version = "0.3.3", default-features = false }
-wasmtime = { version = "17.0.0", default-features = false, features = [
+wasmtime = { version = "18.0.1", default-features = false, features = [
   "cranelift",
   "parallel-compilation",
 ] }
-wasmtime-wasi = { version = "17.0.0", default-features = false, features = [
+wasmtime-wasi = { version = "18.0.1", default-features = false, features = [
   "sync",
 ] }
 wasi-common = "17.0.0"
