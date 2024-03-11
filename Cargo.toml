@@ -62,7 +62,7 @@ snafu = { version = "0.8.0", default-features = false }
 unicase = "2.6.0"
 
 # std
-image = { version = "0.24.0", features = [
+image = { version = "0.25.0", features = [
     "png",
 ], default-features = false, optional = true }
 
@@ -147,7 +147,7 @@ std = [
 ]
 more-image-formats = [
     "image?/bmp",
-    "image?/farbfeld",
+    "image?/ff",
     "image?/hdr",
     "image?/ico",
     "image?/jpeg",

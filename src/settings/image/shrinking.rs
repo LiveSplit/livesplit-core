@@ -46,14 +46,14 @@ fn shrink_inner(data: &[u8], max_dim: u32) -> Option<Cow<'_, [u8]>> {
             let beginning_of_png: &BeginningOfPng = strip_pod(&mut &*data)?;
             (beginning_of_png.width.get(), beginning_of_png.height.get())
         }
-        ImageFormat::Jpeg => jpeg::JpegDecoder::new(data).ok()?.dimensions(),
-        ImageFormat::WebP => webp::WebPDecoder::new(data).ok()?.dimensions(),
+        ImageFormat::Jpeg => jpeg::JpegDecoder::new(Cursor::new(data)).ok()?.dimensions(),
+        ImageFormat::WebP => webp::WebPDecoder::new(Cursor::new(data)).ok()?.dimensions(),
         ImageFormat::Pnm => pnm::PnmDecoder::new(data).ok()?.dimensions(),
         ImageFormat::Tiff => tiff::TiffDecoder::new(Cursor::new(data)).ok()?.dimensions(),
         ImageFormat::Tga => tga::TgaDecoder::new(Cursor::new(data)).ok()?.dimensions(),
         ImageFormat::Bmp => bmp::BmpDecoder::new(Cursor::new(data)).ok()?.dimensions(),
         ImageFormat::Ico => ico::IcoDecoder::new(Cursor::new(data)).ok()?.dimensions(),
-        ImageFormat::Hdr => hdr::HdrAdapter::new(data).ok()?.dimensions(),
+        ImageFormat::Hdr => hdr::HdrDecoder::new(data).ok()?.dimensions(),
         ImageFormat::Farbfeld => farbfeld::FarbfeldDecoder::new(data).ok()?.dimensions(),
         // FIXME: For GIF we would need to properly shrink the whole animation.
         // The image crate can't properly handle this at this point in time.
@@ -79,7 +79,7 @@ fn shrink_inner(data: &[u8], max_dim: u32) -> Option<Cow<'_, [u8]>> {
                 image.as_bytes(),
                 image.width(),
                 image.height(),
-                image.color(),
+                image.color().into(),
             )
             .ok()?;
         data.into()
