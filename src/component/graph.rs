@@ -182,7 +182,7 @@ struct DrawInfo {
 #[derive(Default)]
 struct GridLines {
     /// The offset of the first grid line followed by the grid line distance.
-    horizontal: Option<(f32, f32)>,
+    horizontal: Option<[f32; 2]>,
     vertical: Option<f32>,
 }
 
@@ -553,10 +553,10 @@ fn calculate_grid_lines(draw_info: &DrawInfo, x_axis: f32) -> GridLines {
         // The x-axis should always be on a grid line.
         let offset = x_axis % distance;
 
-        ret.horizontal = Some((offset, distance));
+        ret.horizontal = Some([offset, distance]);
     } else {
         // Show just one grid line, the x-axis.
-        ret.horizontal = Some((DEFAULT_X_AXIS, f32::INFINITY));
+        ret.horizontal = Some([DEFAULT_X_AXIS, f32::INFINITY]);
     }
 
     if let Some(scale_factor_x) = draw_info.scale_factor_x {
@@ -574,7 +574,7 @@ fn calculate_grid_lines(draw_info: &DrawInfo, x_axis: f32) -> GridLines {
 /// Copies the information from `grid_lines` into `Vec`s.
 fn update_grid_line_vecs(state: &mut State, grid_lines: GridLines) {
     state.horizontal_grid_lines.clear();
-    if let Some((offset, distance)) = grid_lines.horizontal {
+    if let Some([offset, distance]) = grid_lines.horizontal {
         let mut y = offset;
         while y < HEIGHT {
             state.horizontal_grid_lines.push(y);

@@ -201,7 +201,11 @@ impl<T: Send + Sync> SharedOwnership for UnsafeRc<T> {
 // SceneManager it's harder to prove. However as long as the trait bounds for
 // the ResourceAllocator's Image and Path types do not require Sync or Send,
 // then the SceneManager simply can't share any of the allocated resources
-// across any threads at all.
+// across any threads at all. FIXME: However the Send bound may not actually
+// hold, because Rc may not actually be allowed to be sent across threads at
+// all, as it may for example use a thread local heap allocator. So deallocating
+// from a different thread would be unsound. Upstream issue:
+// https://github.com/rust-lang/rust/issues/122452
 unsafe impl<T: Send + Sync> Send for UnsafeRc<T> {}
 
 // Safety: The BorrowedSoftwareRenderer only has a render method which requires
@@ -254,7 +258,7 @@ impl BorrowedRenderer {
         [width, height]: [u32; 2],
         stride: u32,
         force_redraw: bool,
-    ) -> Option<(f32, f32)> {
+    ) -> Option<[f32; 2]> {
         let mut frame_buffer = PixmapMut::from_bytes(image, stride, height).unwrap();
 
         if stride != self.background.width() || height != self.background.height() {
@@ -263,7 +267,7 @@ impl BorrowedRenderer {
 
         let new_resolution = self.scene_manager.update_scene(
             &mut self.allocator,
-            (width as _, height as _),
+            [width as _, height as _],
             state,
             image_cache,
         );
@@ -291,7 +295,7 @@ impl BorrowedRenderer {
 
         let top_layer = scene.top_layer();
 
-        let (min_y, max_y) = calculate_bounds(top_layer);
+        let [min_y, max_y] = calculate_bounds(top_layer);
         let min_y = mem::replace(&mut self.min_y, min_y).min(min_y);
         let max_y = mem::replace(&mut self.max_y, max_y).max(max_y);
 
@@ -347,7 +351,7 @@ impl Renderer {
         state: &LayoutState,
         image_cache: &ImageCache,
         [width, height]: [u32; 2],
-    ) -> Option<(f32, f32)> {
+    ) -> Option<[f32; 2]> {
         if width != self.frame_buffer.width() || height != self.frame_buffer.height() {
             self.frame_buffer = Pixmap::new(width, height).unwrap();
         }
@@ -411,11 +415,11 @@ fn render_layer(
                         path,
                         |path| {
                             let bounds = path.bounds();
-                            (bounds.top(), bounds.bottom())
+                            [bounds.top(), bounds.bottom()]
                         },
                         |path| {
                             let bounds = path.bounds();
-                            (bounds.left(), bounds.right())
+                            [bounds.left(), bounds.right()]
                         },
                     );
 
@@ -485,9 +489,9 @@ fn render_layer(
                             }
                         }
                         if bottom < top {
-                            (0.0, 0.0)
+                            [0.0, 0.0]
                         } else {
-                            (top, bottom)
+                            [top, bottom]
                         }
                     },
                     |label| {
@@ -500,9 +504,9 @@ fn render_layer(
                             }
                         }
                         if right < left {
-                            (0.0, 0.0)
+                            [0.0, 0.0]
                         } else {
-                            (left, right)
+                            [left, right]
                         }
                     },
                 );
@@ -541,13 +545,13 @@ fn render_layer(
 fn convert_shader<T>(
     shader: &FillShader,
     has_bounds: &T,
-    calculate_top_bottom: impl FnOnce(&T) -> (f32, f32),
-    calculate_left_right: impl FnOnce(&T) -> (f32, f32),
+    calculate_top_bottom: impl FnOnce(&T) -> [f32; 2],
+    calculate_left_right: impl FnOnce(&T) -> [f32; 2],
 ) -> Paint<'static> {
     let shader = match shader {
         FillShader::SolidColor(col) => Shader::SolidColor(convert_color(col)),
         FillShader::VerticalGradient(top, bottom) => {
-            let (bound_top, bound_bottom) = calculate_top_bottom(has_bounds);
+            let [bound_top, bound_bottom] = calculate_top_bottom(has_bounds);
             LinearGradient::new(
                 Point::from_xy(0.0, bound_top),
                 Point::from_xy(0.0, bound_bottom),
@@ -561,7 +565,7 @@ fn convert_shader<T>(
             .unwrap()
         }
         FillShader::HorizontalGradient(left, right) => {
-            let (bound_left, bound_right) = calculate_left_right(has_bounds);
+            let [bound_left, bound_right] = calculate_left_right(has_bounds);
             LinearGradient::new(
                 Point::from_xy(bound_left, 0.0),
                 Point::from_xy(bound_right, 0.0),
@@ -780,7 +784,7 @@ fn update_blurred_background_image(
     }
 }
 
-fn calculate_bounds(layer: &[Entity<SkiaPath, SkiaImage, SkiaLabel>]) -> (f32, f32) {
+fn calculate_bounds(layer: &[Entity<SkiaPath, SkiaImage, SkiaLabel>]) -> [f32; 2] {
     let (mut min_y, mut max_y) = (f32::INFINITY, f32::NEG_INFINITY);
     for entity in layer.iter() {
         match entity {
@@ -827,5 +831,5 @@ fn calculate_bounds(layer: &[Entity<SkiaPath, SkiaImage, SkiaLabel>]) -> (f32, f
             }
         }
     }
-    (min_y, max_y)
+    [min_y, max_y]
 }

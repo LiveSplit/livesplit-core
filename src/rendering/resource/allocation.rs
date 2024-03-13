@@ -65,6 +65,21 @@ pub trait ResourceAllocator {
         builder.finish()
     }
 
+    /// Builds a new square. The square is defined by the points `(0, 0)`, `(0,
+    /// 1)`, `(1, 1)`, and `(1, 0)`. The square is transformed into various
+    /// rectangles that make up the different parts of the timer. If you want to
+    /// detect that the square for this purpose is being created you can change
+    /// this implementation and draw actual rectangles instead of a path.
+    fn build_square(&mut self) -> Self::Path {
+        let mut builder = self.path_builder();
+        builder.move_to(0.0, 0.0);
+        builder.line_to(0.0, 1.0);
+        builder.line_to(1.0, 1.0);
+        builder.line_to(1.0, 0.0);
+        builder.close();
+        builder.finish()
+    }
+
     /// Creates an image out of the image data provided. The data represents the
     /// image in its original file format. It needs to be parsed in order to be
     /// visualized. The parsed image as well as the aspect ratio (width /
@@ -193,6 +208,14 @@ impl<A: ResourceAllocator> ResourceAllocator for &mut A {
 
     fn path_builder(&mut self) -> Self::PathBuilder {
         MutPathBuilder((*self).path_builder())
+    }
+
+    fn build_circle(&mut self, x: f32, y: f32, r: f32) -> Self::Path {
+        (*self).build_circle(x, y, r)
+    }
+
+    fn build_square(&mut self) -> Self::Path {
+        (*self).build_square()
     }
 
     fn create_image(&mut self, data: &[u8]) -> Option<(Self::Image, f32)> {

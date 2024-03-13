@@ -54,7 +54,8 @@ jobs:
           - Linux i686 musl
           - Linux x86_64
           - Linux x86_64 musl
-          - Linux x86_64 gnux32
+          # FIXME: We can't link anything without cross.
+          # - Linux x86_64 gnux32
           - Linux arm
           - Linux arm musl
           - Linux arm Hardware Float
@@ -314,14 +315,12 @@ jobs:
             target: x86_64-unknown-linux-musl
             dylib: skip
 
-          - label: Linux x86_64 gnux32
-            target: x86_64-unknown-linux-gnux32
-            cross: skip
-            install_target: true
-            # FIXME: The tests don't run because without cross we can't
-            # successfully link anything.
-            tests: skip
-            dylib: skip
+          # FIXME: We can't link anything without cross.
+          # - label: Linux x86_64 gnux32
+          #   target: x86_64-unknown-linux-gnux32
+          #   cross: skip
+          #   install_target: true
+          #   dylib: skip
 
           - label: Linux arm
             target: arm-unknown-linux-gnueabi

@@ -1,5 +1,5 @@
 #![cfg(all(
-    feature = "software-rendering",
+    any(feature = "software-rendering", feature = "svg-rendering"),
     not(all(target_arch = "x86", not(target_feature = "sse"))),
 ))]
 
@@ -8,11 +8,10 @@ mod run_files;
 #[path = "../src/util/tests_helper.rs"]
 mod tests_helper;
 
-use image::Rgba;
 use livesplit_core::{
     component::{self, timer},
     layout::{self, Component, ComponentState, Layout, LayoutDirection, LayoutState},
-    rendering::software::Renderer,
+    rendering,
     run::parser::{livesplit, llanfair, wsplit},
     settings::ImageCache,
     Run, Segment, TimeSpan, Timer, TimingMethod,
@@ -42,7 +41,13 @@ fn default() {
     let mut image_cache = ImageCache::new();
     let state = layout.state(&mut image_cache, &timer.snapshot());
 
-    check(&state, &image_cache, "670e0e09bf3dbfed", "default");
+    check(
+        &state,
+        &image_cache,
+        "670e0e09bf3dbfed",
+        "ff7a86855648dd1b",
+        "default",
+    );
 }
 
 // Font fallback inherently requires fonts from the operating system to
@@ -55,6 +60,17 @@ fn default() {
 #[cfg(all(feature = "font-loading", windows))]
 #[test]
 fn font_fallback() {
+    let build_number: u64 = sysinfo::System::kernel_version().unwrap().parse().unwrap();
+
+    if build_number < 22000 {
+        // The hash is different before Windows 11.
+        println!(
+            "Skipping font fallback test on Windows with build number {}.",
+            build_number
+        );
+        return;
+    }
+
     // This list is based on the most commonly used writing systems in the
     // world:
     // https://en.wikipedia.org/wiki/List_of_writing_systems#List_of_writing_systems_by_adoption
@@ -101,17 +117,15 @@ fn font_fallback() {
     tests_helper::make_progress_run_with_splits_opt(&mut timer, &[Some(5.0), None, Some(10.0)]);
 
     let mut image_cache = ImageCache::new();
-    let _state = layout.state(&mut image_cache, &timer.snapshot());
+    let state = layout.state(&mut image_cache, &timer.snapshot());
 
-    let build_number: u64 = sysinfo::System::kernel_version().unwrap().parse().unwrap();
-    let expected_hash = if build_number >= 22000 {
-        // Windows 11
-        "5a0e8df5e424a5cf"
-    } else {
-        // Windows 10
-        "dd5663f95a5b43ec"
-    };
-    check(&_state, &image_cache, expected_hash, "font_fallback");
+    check(
+        &state,
+        &image_cache,
+        "5a0e8df5e424a5cf",
+        "23e71509050b368f",
+        "font_fallback",
+    );
 }
 
 #[test]
@@ -125,6 +139,7 @@ fn actual_split_file() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         "cd9735cf9575f503",
+        "442e5df389ce2add",
         "actual_split_file",
     );
 }
@@ -141,6 +156,7 @@ fn wsplit() {
         &image_cache,
         [250, 300],
         "9c69454a9258e768",
+        "d1eebea6860d57c3",
         "wsplit",
     );
 }
@@ -160,6 +176,7 @@ fn timer_delta_background() {
         &image_cache,
         [250, 300],
         "fc8e7890593f9da6",
+        "0140697763078566",
         "timer_delta_background_ahead",
     );
 
@@ -170,6 +187,7 @@ fn timer_delta_background() {
         &image_cache,
         [250, 300],
         "c56d1f6715627391",
+        "75b3c2a49c0f0b93",
         "timer_delta_background_stopped",
     );
 }
@@ -194,6 +212,7 @@ fn all_components() {
         &image_cache,
         [300, 800],
         "a4a9f27478717418",
+        "2294184b8afcea27",
         "all_components",
     );
 
@@ -202,6 +221,7 @@ fn all_components() {
         &image_cache,
         [150, 800],
         "0ecd0bad25453ff6",
+        "b4186e90d4a93b4a",
         "all_components_thin",
     );
 }
@@ -229,6 +249,7 @@ fn score_split() {
         &image_cache,
         [300, 400],
         "6ec6913f5ace6ab6",
+        "1acd4eb5a81f4665",
         "score_split",
     );
 }
@@ -245,6 +266,7 @@ fn dark_layout() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         "a47c590792c1bab5",
+        "3f8dfb2da2d43648",
         "dark_layout",
     );
 }
@@ -268,6 +290,7 @@ fn subsplits_layout() {
         &image_cache,
         [300, 800],
         "57165de23ce37b9c",
+        "0984cf3a14c0edef",
         "subsplits_layout",
     );
 }
@@ -294,6 +317,7 @@ fn display_two_rows() {
         &image_cache,
         [200, 100],
         "d174c2f9a0c54d66",
+        "1cf9537c6fe5ed76",
         "display_two_rows",
     );
 }
@@ -320,6 +344,7 @@ fn single_line_title() {
         &image_cache,
         [300, 60],
         "5f0a41091c33ecad",
+        "229c2e381e03328a",
         "single_line_title",
     );
 }
@@ -357,13 +382,20 @@ fn horizontal() {
         &image_cache,
         [1500, 40],
         "987157e649936cbb",
+        "ca63a8972570fac6",
         "horizontal",
     );
 }
 
 #[track_caller]
-fn check(state: &LayoutState, image_cache: &ImageCache, expected_hash_data: &str, name: &str) {
-    check_dims(state, image_cache, [300, 500], expected_hash_data, name);
+fn check(
+    state: &LayoutState,
+    image_cache: &ImageCache,
+    png_hash: &str,
+    svg_hash: &str,
+    name: &str,
+) {
+    check_dims(state, image_cache, [300, 500], png_hash, svg_hash, name);
 }
 
 #[track_caller]
@@ -371,10 +403,26 @@ fn check_dims(
     state: &LayoutState,
     image_cache: &ImageCache,
     dims: [u32; 2],
+    _png_hash: &str,
+    _svg_hash: &str,
+    name: &str,
+) {
+    #[cfg(feature = "software-rendering")]
+    check_software(state, image_cache, dims, _png_hash, name);
+    #[cfg(feature = "svg-rendering")]
+    check_svg(state, image_cache, dims, _svg_hash, name);
+}
+
+#[cfg(feature = "software-rendering")]
+#[track_caller]
+fn check_software(
+    state: &LayoutState,
+    image_cache: &ImageCache,
+    dims: [u32; 2],
     expected_hash: &str,
     name: &str,
 ) {
-    let mut renderer = Renderer::new();
+    let mut renderer = rendering::software::Renderer::new();
     renderer.render(state, image_cache, dims);
 
     let hash_image = renderer.image();
@@ -397,7 +445,7 @@ fn check_dims(
         expected_path.push(format!("{name}_{expected_hash}.png"));
         let diff_path = if let Ok(expected_image) = image::open(&expected_path) {
             let mut expected_image = expected_image.to_rgba8();
-            for (x, y, Rgba([r, g, b, a])) in expected_image.enumerate_pixels_mut() {
+            for (x, y, image::Rgba([r, g, b, a])) in expected_image.enumerate_pixels_mut() {
                 if x < hash_image.width() && y < hash_image.height() {
                     let image::Rgba([r2, g2, b2, a2]) = *hash_image.get_pixel(x, y);
                     *r = r.abs_diff(r2);
@@ -417,13 +465,56 @@ fn check_dims(
         };
 
         panic!(
-            "Render mismatch for {name}
+            "Software render mismatch for {name}
 expected: {expected_hash} {}
 actual: {calculated_hash} {}
 diff: {}",
             expected_path.display(),
             actual_path.display(),
             diff_path.display(),
+        );
+    }
+}
+
+#[cfg(feature = "svg-rendering")]
+#[track_caller]
+fn check_svg(
+    state: &LayoutState,
+    image_cache: &ImageCache,
+    dims: [u32; 2],
+    expected_hash: &str,
+    name: &str,
+) {
+    let mut hash_image = String::new();
+    let mut renderer = rendering::svg::Renderer::new();
+    renderer
+        .render(&mut hash_image, state, image_cache, dims.map(|v| v as f32))
+        .unwrap();
+
+    let calculated_hash = seahash::hash(hash_image.as_bytes());
+    let calculated_hash = format!("{calculated_hash:016x}");
+
+    let mut path = PathBuf::from_iter(["target", "renders"]);
+    fs::create_dir_all(&path).ok();
+
+    let mut actual_path = path.clone();
+    actual_path.push(format!("{name}_{calculated_hash}.svg"));
+    fs::write(&actual_path, hash_image).ok();
+
+    if calculated_hash != expected_hash {
+        path.push("diff");
+        fs::create_dir_all(&path).ok();
+        path.pop();
+
+        let mut expected_path = path.clone();
+        expected_path.push(format!("{name}_{expected_hash}.svg"));
+
+        panic!(
+            "SVG render mismatch for {name}
+expected: {expected_hash} {}
+actual: {calculated_hash} {}",
+            expected_path.display(),
+            actual_path.display(),
         );
     }
 }

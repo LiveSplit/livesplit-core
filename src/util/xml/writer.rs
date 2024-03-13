@@ -204,11 +204,11 @@ impl Value for Text<'_> {
     }
 }
 
-pub struct DisplayValue<T>(pub T);
+pub struct DisplayAlreadyEscaped<T>(pub T);
 
-impl<D: fmt::Display> Value for DisplayValue<D> {
+impl<D: fmt::Display> Value for DisplayAlreadyEscaped<D> {
     fn write_escaped<T: fmt::Write>(self, sink: &mut T) -> fmt::Result {
-        write!(EscapeSink(sink), "{}", self.0)
+        write!(sink, "{}", self.0)
     }
 
     fn is_empty(&self) -> bool {
@@ -218,30 +218,12 @@ impl<D: fmt::Display> Value for DisplayValue<D> {
     }
 }
 
-impl Value for fmt::Arguments<'_> {
-    fn write_escaped<T: fmt::Write>(self, sink: &mut T) -> fmt::Result {
-        DisplayValue(self).write_escaped(sink)
-    }
-
-    fn is_empty(&self) -> bool {
-        DisplayValue(self).is_empty()
-    }
-}
-
 struct IsEmptySink(bool);
 
 impl fmt::Write for IsEmptySink {
     fn write_str(&mut self, s: &str) -> fmt::Result {
         self.0 &= s.is_empty();
         Ok(())
-    }
-}
-
-struct EscapeSink<'a, T>(&'a mut T);
-
-impl<T: fmt::Write> fmt::Write for EscapeSink<'_, T> {
-    fn write_str(&mut self, s: &str) -> fmt::Result {
-        s.write_escaped(self.0)
     }
 }
 
