@@ -83,6 +83,8 @@ pub mod default_text_engine;
 
 #[cfg(feature = "software-rendering")]
 pub mod software;
+#[cfg(feature = "svg-rendering")]
+pub mod svg;
 
 use self::{
     consts::{
@@ -178,17 +180,10 @@ pub struct SceneManager<P, I, F, L> {
 impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager<P, I, F, L> {
     /// Creates a new scene manager.
     pub fn new(
-        mut allocator: impl ResourceAllocator<Path = P, Image = I, Font = F, Label = L>,
+        allocator: impl ResourceAllocator<Path = P, Image = I, Font = F, Label = L>,
     ) -> Self {
-        let mut builder = allocator.path_builder();
-        builder.move_to(0.0, 0.0);
-        builder.line_to(0.0, 1.0);
-        builder.line_to(1.0, 1.0);
-        builder.line_to(1.0, 0.0);
-        builder.close();
-        let rectangle = Handle::new(0, builder.finish());
-
-        let mut handles = Handles::new(1, allocator);
+        let mut handles = Handles::new(0, allocator);
+        let rectangle = handles.build_square();
         let fonts = FontCache::new(&mut handles);
 
         Self {
@@ -217,10 +212,10 @@ impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager
     pub fn update_scene<A: ResourceAllocator<Path = P, Image = I, Font = F, Label = L>>(
         &mut self,
         allocator: A,
-        resolution: (f32, f32),
+        resolution: [f32; 2],
         state: &LayoutState,
         image_cache: &ImageCache,
-    ) -> Option<(f32, f32)> {
+    ) -> Option<[f32; 2]> {
         self.scene.clear();
 
         // Ensure we have exactly as many cached components as the layout state.
@@ -250,10 +245,10 @@ impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager
     fn render_vertical(
         &mut self,
         allocator: impl ResourceAllocator<Path = P, Image = I, Font = F, Label = L>,
-        resolution: (f32, f32),
+        resolution @ [width, height]: [f32; 2],
         state: &LayoutState,
         image_cache: &ImageCache,
-    ) -> Option<(f32, f32)> {
+    ) -> Option<[f32; 2]> {
         let total_height = component::layout_height(state);
 
         let cached_total_size = self
@@ -264,27 +259,24 @@ impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager
         match cached_total_size {
             CachedSize::Vertical(cached_total_height) => {
                 if cached_total_height.to_bits() != total_height.to_bits() {
-                    new_resolution = Some((
-                        resolution.0,
-                        resolution.1 / *cached_total_height * total_height,
-                    ));
+                    new_resolution = Some([width, height / *cached_total_height * total_height]);
                     *cached_total_height = total_height;
                 }
             }
             CachedSize::Horizontal(_) => {
-                let to_pixels = resolution.1 / TWO_ROW_HEIGHT;
+                let to_pixels = height / TWO_ROW_HEIGHT;
                 let new_height = total_height * to_pixels;
                 let new_width = DEFAULT_VERTICAL_WIDTH * to_pixels;
-                new_resolution = Some((new_width, new_height));
+                new_resolution = Some([new_width, new_height]);
                 *cached_total_size = CachedSize::Vertical(total_height);
             }
         }
 
-        let aspect_ratio = resolution.0 / resolution.1;
+        let aspect_ratio = width / height;
 
         let mut context = RenderContext {
             handles: Handles::new(self.next_id, allocator),
-            transform: Transform::scale(resolution.0, resolution.1),
+            transform: Transform::scale(width, height),
             scene: &mut self.scene,
             fonts: &mut self.fonts,
             images: &mut self.images,
@@ -327,10 +319,10 @@ impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager
     fn render_horizontal(
         &mut self,
         allocator: impl ResourceAllocator<Path = P, Image = I, Font = F, Label = L>,
-        resolution: (f32, f32),
+        resolution @ [width, height]: [f32; 2],
         state: &LayoutState,
         image_cache: &ImageCache,
-    ) -> Option<(f32, f32)> {
+    ) -> Option<[f32; 2]> {
         let total_width = component::layout_width(state);
 
         let cached_total_size = self
@@ -340,27 +332,24 @@ impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager
 
         match cached_total_size {
             CachedSize::Vertical(cached_total_height) => {
-                let new_height = resolution.1 * TWO_ROW_HEIGHT / *cached_total_height;
+                let new_height = height * TWO_ROW_HEIGHT / *cached_total_height;
                 let new_width = total_width * new_height / TWO_ROW_HEIGHT;
-                new_resolution = Some((new_width, new_height));
+                new_resolution = Some([new_width, new_height]);
                 *cached_total_size = CachedSize::Horizontal(total_width);
             }
             CachedSize::Horizontal(cached_total_width) => {
                 if cached_total_width.to_bits() != total_width.to_bits() {
-                    new_resolution = Some((
-                        resolution.0 / *cached_total_width * total_width,
-                        resolution.1,
-                    ));
+                    new_resolution = Some([width / *cached_total_width * total_width, height]);
                     *cached_total_width = total_width;
                 }
             }
         }
 
-        let aspect_ratio = resolution.0 / resolution.1;
+        let aspect_ratio = width / height;
 
         let mut context = RenderContext {
             handles: Handles::new(self.next_id, allocator),
-            transform: Transform::scale(resolution.0, resolution.1),
+            transform: Transform::scale(width, height),
             scene: &mut self.scene,
             fonts: &mut self.fonts,
             images: &mut self.images,
@@ -789,7 +778,7 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
     fn decode_layout_background(
         &mut self,
         background: &LayoutBackground<ImageId>,
-        (mut width, mut height): (f32, f32),
+        [mut width, mut height]: [f32; 2],
     ) -> Option<Background<A::Image>> {
         Some(match background {
             LayoutBackground::Gradient(gradient) => Background::Shader(decode_gradient(gradient)?),

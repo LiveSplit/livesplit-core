@@ -29,7 +29,7 @@ use crate::{
     run::LinkedLayout,
     settings::Image,
     timing::formatter::{Complete, TimeFormatter},
-    util::xml::{AttributeWriter, DisplayValue, Text, Writer, NO_ATTRIBUTES},
+    util::xml::{AttributeWriter, DisplayAlreadyEscaped, Text, Writer, NO_ATTRIBUTES},
     DateTime, Run, Time, Timer, TimerPhase,
 };
 use alloc::borrow::Cow;
@@ -108,7 +108,9 @@ fn date<W: fmt::Write>(
 
     writer.attribute(
         key,
-        format_args!("{month:02}/{day:02}/{year:04} {hour:02}:{minute:02}:{second:02}"),
+        DisplayAlreadyEscaped(format_args!(
+            "{month:02}/{day:02}/{year:04} {hour:02}:{minute:02}:{second:02}"
+        )),
     )
 }
 
@@ -117,7 +119,7 @@ fn time_inner<W: fmt::Write>(writer: &mut Writer<W>, time: Time) -> fmt::Result 
         writer.tag_with_text_content(
             "RealTime",
             NO_ATTRIBUTES,
-            DisplayValue(Complete.format(time)),
+            DisplayAlreadyEscaped(Complete.format(time)),
         )?;
     }
 
@@ -125,7 +127,7 @@ fn time_inner<W: fmt::Write>(writer: &mut Writer<W>, time: Time) -> fmt::Result 
         writer.tag_with_text_content(
             "GameTime",
             NO_ATTRIBUTES,
-            DisplayValue(Complete.format(time)),
+            DisplayAlreadyEscaped(Complete.format(time)),
         )?;
     }
 
@@ -221,12 +223,12 @@ pub fn save_run<W: fmt::Write>(run: &Run, writer: W) -> fmt::Result {
         writer.tag_with_text_content(
             "Offset",
             NO_ATTRIBUTES,
-            DisplayValue(Complete.format(run.offset())),
+            DisplayAlreadyEscaped(Complete.format(run.offset())),
         )?;
         writer.tag_with_text_content(
             "AttemptCount",
             NO_ATTRIBUTES,
-            DisplayValue(run.attempt_count()),
+            DisplayAlreadyEscaped(run.attempt_count()),
         )?;
 
         scoped_iter(
@@ -235,7 +237,7 @@ pub fn save_run<W: fmt::Write>(run: &Run, writer: W) -> fmt::Result {
             run.attempt_history(),
             |writer, attempt| {
                 writer.tag("Attempt", |mut tag| {
-                    tag.attribute("id", DisplayValue(attempt.index()))?;
+                    tag.attribute("id", DisplayAlreadyEscaped(attempt.index()))?;
 
                     if let Some(started) = attempt.started() {
                         date(&mut tag, "started", started.time)?;
@@ -258,7 +260,7 @@ pub fn save_run<W: fmt::Write>(run: &Run, writer: W) -> fmt::Result {
                                 writer.tag_with_text_content(
                                     "PauseTime",
                                     NO_ATTRIBUTES,
-                                    DisplayValue(Complete.format(pause_time)),
+                                    DisplayAlreadyEscaped(Complete.format(pause_time)),
                                 )?;
                             }
 
@@ -298,7 +300,7 @@ pub fn save_run<W: fmt::Write>(run: &Run, writer: W) -> fmt::Result {
                     segment.segment_history(),
                     |writer, &(index, history_time)| {
                         writer.tag("Time", |mut tag| {
-                            tag.attribute("id", DisplayValue(index))?;
+                            tag.attribute("id", DisplayAlreadyEscaped(index))?;
                             time(tag, history_time)
                         })
                     },

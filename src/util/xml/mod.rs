@@ -11,7 +11,7 @@ mod writer;
 
 pub use self::{
     reader::{Event, Reader},
-    writer::{AttributeWriter, DisplayValue, Value, Writer, NO_ATTRIBUTES},
+    writer::{AttributeWriter, DisplayAlreadyEscaped, Value, Writer, NO_ATTRIBUTES},
 };
 
 use super::{ascii_char::AsciiChar, ascii_set::AsciiSet};

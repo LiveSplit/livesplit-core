@@ -4,6 +4,8 @@ pub(crate) mod ascii_char;
 pub(crate) mod ascii_set;
 pub(crate) mod byte_parsing;
 mod clear_vec;
+#[cfg(any(feature = "image-shrinking", feature = "svg-rendering"))]
+pub(crate) mod image;
 pub(crate) mod not_nan;
 pub mod ordered_map;
 mod populate_string;

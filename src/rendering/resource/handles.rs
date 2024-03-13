@@ -78,6 +78,11 @@ impl<A: ResourceAllocator> ResourceAllocator for Handles<A> {
         self.next(circle)
     }
 
+    fn build_square(&mut self) -> Self::Path {
+        let square = self.allocator.build_square();
+        self.next(square)
+    }
+
     fn create_image(&mut self, data: &[u8]) -> Option<(Self::Image, f32)> {
         let (image, aspect_ratio) = self.allocator.create_image(data)?;
         Some((self.next(image), aspect_ratio))
