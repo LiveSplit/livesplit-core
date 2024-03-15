@@ -44,8 +44,8 @@ fn default() {
     check(
         &state,
         &image_cache,
-        "670e0e09bf3dbfed",
-        "ff7a86855648dd1b",
+        "a98ef51c25f115fe",
+        "08cbb11aa1719035",
         "default",
     );
 }
@@ -122,8 +122,8 @@ fn font_fallback() {
     check(
         &state,
         &image_cache,
-        "5a0e8df5e424a5cf",
-        "23e71509050b368f",
+        "d908fda633352ba5",
+        "299f188d2a8ccf5d",
         "font_fallback",
     );
 }
@@ -138,8 +138,8 @@ fn actual_split_file() {
     check(
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
-        "cd9735cf9575f503",
-        "442e5df389ce2add",
+        "86ccc8595787d41b",
+        "ec4e4283ff1aaf7c",
         "actual_split_file",
     );
 }
@@ -155,8 +155,8 @@ fn wsplit() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [250, 300],
-        "9c69454a9258e768",
-        "d1eebea6860d57c3",
+        "be70116db88c23c1",
+        "cf399969d8ac9baf",
         "wsplit",
     );
 }
@@ -211,8 +211,8 @@ fn all_components() {
         &state,
         &image_cache,
         [300, 800],
-        "a4a9f27478717418",
-        "2294184b8afcea27",
+        "9c3a68e4c9c6b73c",
+        "f94f2b05c06f8d16",
         "all_components",
     );
 
@@ -220,8 +220,8 @@ fn all_components() {
         &state,
         &image_cache,
         [150, 800],
-        "0ecd0bad25453ff6",
-        "b4186e90d4a93b4a",
+        "37cc2602ef0402a8",
+        "1ceb8d7ff13d1741",
         "all_components_thin",
     );
 }
@@ -248,8 +248,8 @@ fn score_split() {
         &state,
         &image_cache,
         [300, 400],
-        "6ec6913f5ace6ab6",
-        "1acd4eb5a81f4665",
+        "f5dadfe58e621e7b",
+        "c7fec6cb25b993bc",
         "score_split",
     );
 }
@@ -289,8 +289,8 @@ fn subsplits_layout() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [300, 800],
-        "57165de23ce37b9c",
-        "0984cf3a14c0edef",
+        "8694d76628ff63f8",
+        "f2bcd20608fb35df",
         "subsplits_layout",
     );
 }
@@ -317,7 +317,7 @@ fn display_two_rows() {
         &image_cache,
         [200, 100],
         "d174c2f9a0c54d66",
-        "1cf9537c6fe5ed76",
+        "12b6ab31502b1baa",
         "display_two_rows",
     );
 }
@@ -343,8 +343,8 @@ fn single_line_title() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [300, 60],
-        "5f0a41091c33ecad",
-        "229c2e381e03328a",
+        "db305e29ec814f33",
+        "1848cdb01676cfec",
         "single_line_title",
     );
 }
@@ -381,8 +381,8 @@ fn horizontal() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [1500, 40],
-        "987157e649936cbb",
-        "ca63a8972570fac6",
+        "944a515a48627b31",
+        "65b9819a3e903307",
         "horizontal",
     );
 }

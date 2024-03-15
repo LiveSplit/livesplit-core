@@ -24,7 +24,11 @@ use super::{FontKind, PathBuilder, Rgba, SharedOwnership, TEXT_FONT, TIMER_FONT}
 
 mod color_font;
 
-type CachedGlyph<P> = (f32, Vec<(Option<Rgba>, P)>);
+struct CachedGlyph<P> {
+    scale: f32,
+    paths: Vec<(Option<Rgba>, P)>,
+    unkerned_x_advance: f32,
+}
 
 /// The text engine allows you to create fonts and manage text labels. That way
 /// the underlying renderer doesn't by itself need to be able to render text.
@@ -239,27 +243,22 @@ impl<P: SharedOwnership> TextEngine<P> {
                         } else {
                             glyphs.next()
                         } {
-                            let (scale, layer_glyphs) = self
-                                .glyph_cache
-                                .entry((glyph.font_id, glyph.glyph_id))
-                                .or_insert_with(|| {
-                                    let font = self.font_system.get_font(glyph.font_id).unwrap();
-                                    let mut glyphs = Vec::new();
-                                    let color_tables = ColorTables::new(font.rustybuzz());
-                                    let glyph = GlyphId(glyph.glyph_id);
-                                    color_font::iter_colored_glyphs(
-                                        &color_tables,
-                                        0,
-                                        glyph,
-                                        |glyph, color| {
-                                            let mut builder = GlyphBuilder(path_builder());
-                                            font.rustybuzz().outline_glyph(glyph, &mut builder);
-                                            let path = builder.0.finish();
-                                            glyphs.push((color.map(|c| c.to_array()), path));
-                                        },
-                                    );
-                                    (f32::recip(font.rustybuzz().units_per_em() as _), glyphs)
-                                });
+                            let cached_glyph = cache_glyph(
+                                &mut self.glyph_cache,
+                                &mut self.font_system,
+                                glyph.font_id,
+                                glyph.glyph_id,
+                                &mut path_builder,
+                            );
+
+                            // FIXME: We use the x advance of the individual
+                            // glyph to remove any kerning that happened during
+                            // shaping. This is a workaround for the fact that
+                            // cosmic-text doesn't provide a way to turn off
+                            // kerning (and / or enable tabular nums) at the
+                            // moment.
+                            // https://github.com/pop-os/cosmic-text/issues/229
+                            let unkerned_x_advance = cached_glyph.unkerned_x_advance;
 
                             let (x_advance, x_offset) = if monotonic
                                 .digit_glyphs
@@ -267,21 +266,21 @@ impl<P: SharedOwnership> TextEngine<P> {
                             {
                                 (
                                     monotonic.digit_width,
-                                    0.5 * (monotonic.digit_width - glyph.x_advance)
+                                    0.5 * (monotonic.digit_width - unkerned_x_advance)
                                         + glyph.x_offset,
                                 )
                             } else {
-                                (glyph.x_advance, glyph.x_offset)
+                                (unkerned_x_advance, glyph.x_offset)
                             };
 
                             label
                                 .glyphs
-                                .extend(layer_glyphs.iter().map(|(color, path)| Glyph {
+                                .extend(cached_glyph.paths.iter().map(|(color, path)| Glyph {
                                     color: *color,
                                     x: x + x_offset,
                                     y: y - glyph.y_offset,
                                     path: path.share(),
-                                    scale: *scale,
+                                    scale: cached_glyph.scale,
                                 }));
 
                             x += x_advance;
@@ -304,36 +303,22 @@ impl<P: SharedOwnership> TextEngine<P> {
                         } else {
                             glyphs.next()
                         } {
-                            let (scale, layer_glyphs) = self
-                                .glyph_cache
-                                .entry((glyph.font_id, glyph.glyph_id))
-                                .or_insert_with(|| {
-                                    let font = self.font_system.get_font(glyph.font_id).unwrap();
-                                    let mut glyphs = Vec::new();
-                                    let color_tables = ColorTables::new(font.rustybuzz());
-                                    let glyph = GlyphId(glyph.glyph_id);
-                                    color_font::iter_colored_glyphs(
-                                        &color_tables,
-                                        0,
-                                        glyph,
-                                        |glyph, color| {
-                                            let mut builder = GlyphBuilder(path_builder());
-                                            font.rustybuzz().outline_glyph(glyph, &mut builder);
-                                            let path = builder.0.finish();
-                                            glyphs.push((color.map(|c| c.to_array()), path));
-                                        },
-                                    );
-                                    (f32::recip(font.rustybuzz().units_per_em() as _), glyphs)
-                                });
+                            let cached_glyph = cache_glyph(
+                                &mut self.glyph_cache,
+                                &mut self.font_system,
+                                glyph.font_id,
+                                glyph.glyph_id,
+                                &mut path_builder,
+                            );
 
                             label
                                 .glyphs
-                                .extend(layer_glyphs.iter().map(|(color, path)| Glyph {
+                                .extend(cached_glyph.paths.iter().map(|(color, path)| Glyph {
                                     color: *color,
                                     x: glyph_x + glyph.x_offset,
                                     y: glyph_y - glyph.y_offset,
                                     path: path.share(),
-                                    scale: *scale,
+                                    scale: cached_glyph.scale,
                                 }));
 
                             glyph_x += glyph.x_advance;
@@ -365,33 +350,24 @@ impl<P: SharedOwnership> TextEngine<P> {
                     .unwrap_or_default();
                 label.glyphs.drain(last_index..);
 
-                let font_id = font.ellipsis_font_id;
-                let glyph_id = font.ellipsis_glyph_id;
-                let (scale, layer_glyphs) = self
-                    .glyph_cache
-                    .entry((font_id, glyph_id))
-                    .or_insert_with(|| {
-                        let font = self.font_system.get_font(font_id).unwrap();
-                        let mut glyphs = Vec::new();
-                        let color_tables = ColorTables::new(font.rustybuzz());
-                        let glyph = GlyphId(glyph_id);
-                        color_font::iter_colored_glyphs(&color_tables, 0, glyph, |glyph, color| {
-                            let mut builder = GlyphBuilder(path_builder());
-                            font.rustybuzz().outline_glyph(glyph, &mut builder);
-                            let path = builder.0.finish();
-                            glyphs.push((color.map(|c| c.to_array()), path));
-                        });
-                        (f32::recip(font.rustybuzz().units_per_em() as _), glyphs)
-                    });
+                // FIXME: Test RTL text.
+
+                let cached_glyph = cache_glyph(
+                    &mut self.glyph_cache,
+                    &mut self.font_system,
+                    font.ellipsis_font_id,
+                    font.ellipsis_glyph_id,
+                    &mut path_builder,
+                );
 
                 label
                     .glyphs
-                    .extend(layer_glyphs.iter().map(|(color, path)| Glyph {
+                    .extend(cached_glyph.paths.iter().map(|(color, path)| Glyph {
                         color: *color,
                         x,
                         y,
                         path: path.share(),
-                        scale: *scale,
+                        scale: cached_glyph.scale,
                     }));
                 x += font.ellipsis_width;
             }
@@ -399,6 +375,37 @@ impl<P: SharedOwnership> TextEngine<P> {
 
         label.width = x;
     }
+}
+
+fn cache_glyph<'gc, P, PB: PathBuilder<Path = P>>(
+    glyph_cache: &'gc mut HashMap<(ID, u16), CachedGlyph<P>>,
+    font_system: &mut FontSystem,
+    font_id: ID,
+    glyph_id: u16,
+    path_builder: &mut impl FnMut() -> PB,
+) -> &'gc mut CachedGlyph<P> {
+    glyph_cache.entry((font_id, glyph_id)).or_insert_with(|| {
+        let font = font_system.get_font(font_id).unwrap();
+        let font = font.rustybuzz();
+        let mut paths = Vec::new();
+        let color_tables = ColorTables::new(font);
+        let glyph = GlyphId(glyph_id);
+        color_font::iter_colored_glyphs(&color_tables, 0, glyph, |glyph, color| {
+            let mut builder = GlyphBuilder(path_builder());
+            font.outline_glyph(glyph, &mut builder);
+            let path = builder.0.finish();
+            paths.push((color.map(|c| c.to_array()), path));
+        });
+        let scale = f32::recip(font.units_per_em() as _);
+        CachedGlyph {
+            scale,
+            paths,
+            unkerned_x_advance: font
+                .glyph_hor_advance(glyph)
+                .map(|v| v as f32 * scale)
+                .unwrap_or_default(),
+        }
+    })
 }
 
 struct MonotonicInfo {
