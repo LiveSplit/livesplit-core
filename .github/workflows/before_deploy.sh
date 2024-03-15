@@ -5,7 +5,7 @@ main() {
     local src=$(pwd) \
           stage=
 
-    if [ "$OS_NAME" = "macOS-latest" ]; then
+    if [[ $OS_NAME =~ ^macos\-.*$ ]]; then
         stage=$(mktemp -d -t tmp)
     else
         stage=$(mktemp -d)
