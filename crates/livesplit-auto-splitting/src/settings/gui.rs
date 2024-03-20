@@ -82,7 +82,7 @@ pub enum FileFilter {
 }
 
 /// An option for a choice setting.
-#[derive(Clone)]
+#[derive(Clone, Eq, Hash, PartialEq)]
 pub struct ChoiceOption {
     /// The unique identifier of the option. This is not meant to be shown to
     /// the user and is only used to keep track of the option. This key is used
