@@ -37,6 +37,13 @@ impl Map {
         Arc::make_mut(&mut self.values).insert(key, value);
     }
 
+    /// Removes a setting from the map and returns it if it exists. If the
+    /// setting doesn't exist, nothing happens.
+    #[inline]
+    pub fn remove(&mut self, key: &str) -> Option<Value> {
+        Arc::make_mut(&mut self.values).swap_remove(key)
+    }
+
     /// Accesses the value of a setting by its key. While the setting may exist
     /// as part of the user settings, it may not have been stored into the
     /// settings map yet, so it may not exist, despite being registered.
