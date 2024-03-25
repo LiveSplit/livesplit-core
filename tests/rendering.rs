@@ -296,6 +296,30 @@ fn subsplits_layout() {
 }
 
 #[test]
+fn background_image() {
+    let run = lss(run_files::CELESTE);
+    let mut timer = Timer::new(run).unwrap();
+    let mut layout = lsl(layout_files::WITH_BACKGROUND_IMAGE);
+
+    tests_helper::start_run(&mut timer);
+    tests_helper::make_progress_run_with_splits_opt(
+        &mut timer,
+        &[Some(10.0), None, Some(20.0), Some(55.0)],
+    );
+
+    let mut image_cache = ImageCache::new();
+
+    check_dims(
+        &layout.state(&mut image_cache, &timer.snapshot()),
+        &image_cache,
+        [300, 300],
+        "efc369e681d98dfe",
+        "f2bcd20608fb35df",
+        "background_image",
+    );
+}
+
+#[test]
 fn display_two_rows() {
     let timer = tests_helper::create_timer(&["A"]);
     let mut layout = Layout::new();
