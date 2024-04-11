@@ -1,4 +1,4 @@
-# <img src="https://raw.githubusercontent.com/LiveSplit/LiveSplit/master/LiveSplit/Resources/Icon.png" alt="LiveSplit" height="42" width="45" align="top"/> livesplit-auto-splitting
+# <img src="https://raw.githubusercontent.com/LiveSplit/LiveSplit/master/res/Icon.png" alt="LiveSplit" height="42" width="45" align="top"/> livesplit-auto-splitting
 
 livesplit-auto-splitting is a library that provides a runtime for running
 auto splitters that can control a speedrun timer. These auto splitters are
