@@ -1,4 +1,4 @@
-# <img src="https://raw.githubusercontent.com/LiveSplit/LiveSplit/master/res/Icon.png" alt="LiveSplit" height="42" width="45" align="top"/> livesplit-core
+# <img src="https://raw.githubusercontent.com/LiveSplit/LiveSplit/master/res/Icon.svg" alt="LiveSplit" height="42" width="45" align="top"/> livesplit-core
 
 [![Build Status](https://github.com/LiveSplit/livesplit-core/workflows/Build/badge.svg)](https://github.com/LiveSplit/livesplit-core/actions)
 [![crates.io](https://img.shields.io/crates/v/livesplit-core.svg)](https://crates.io/crates/livesplit-core)
