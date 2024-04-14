@@ -65,6 +65,8 @@ pub mod analysis;
 pub mod auto_splitting;
 pub mod comparison;
 pub mod component;
+#[cfg(feature = "dbus")]
+pub mod dbus;
 #[cfg(feature = "std")]
 mod hotkey_config;
 #[cfg(feature = "std")]

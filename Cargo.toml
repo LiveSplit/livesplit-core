@@ -99,6 +99,9 @@ tokio = { version = "1.24.2", default-features = false, features = [
 ], optional = true }
 log = { version = "0.4.14", default-features = false, optional = true }
 
+# DBus
+zbus = { version = "4.1.2", optional = true}
+
 [target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
 # WebAssembly in the Web
 js-sys = { version = "0.3.55", optional = true }
@@ -175,6 +178,7 @@ wasm-web = [
 ]
 networking = ["std", "splits-io-api"]
 auto-splitting = ["std", "livesplit-auto-splitting", "tokio", "log"]
+dbus = ["tokio", "zbus"]
 
 [lib]
 bench = false
