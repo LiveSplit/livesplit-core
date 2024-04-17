@@ -29,7 +29,7 @@ The documentation is available here:
 
 - [LiveSplit One Web](https://github.com/LiveSplit/LiveSplitOne)
 - [LiveSplit One Desktop Prototype](https://github.com/CryZe/livesplit-one-desktop)
-- [LiveSplit One OBS Plugin](https://github.com/CryZe/obs-livesplit-one)
+- [LiveSplit One OBS Plugin](https://github.com/LiveSplit/obs-livesplit-one)
 - [chronos Terminal Timer](https://github.com/DarkRTA/chronos)
 - [annelid](https://github.com/dagit/annelid)
 - [splits.io (Parsing)](https://splits.io)
