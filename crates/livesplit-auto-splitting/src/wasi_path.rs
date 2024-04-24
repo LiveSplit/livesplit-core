@@ -281,6 +281,9 @@ mod tests {
     #[cfg(not(windows))]
     #[test]
     fn test_wasi_to_non_windows() {
-        assert_eq!(to_native(r"/mnt/foo/bar.exe", false), Some(r"/foo/bar.exe".into()));
+        assert_eq!(
+            to_native(r"/mnt/foo/bar.exe", false),
+            Some(r"/foo/bar.exe".into())
+        );
     }
 }
