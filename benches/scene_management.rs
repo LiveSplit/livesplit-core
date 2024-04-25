@@ -4,7 +4,8 @@ cfg_if::cfg_if! {
         use livesplit_core::{
             layout::{self, Layout},
             rendering::{
-                PathBuilder, ResourceAllocator, SceneManager, Label, FontKind, SharedOwnership,
+                PathBuilder, ResourceAllocator, SceneManager,
+                Image, Label, FontKind, SharedOwnership,
             },
             run::parser::livesplit,
             settings::{Font, ImageCache},
@@ -31,15 +32,15 @@ cfg_if::cfg_if! {
         impl ResourceAllocator for Dummy {
             type PathBuilder = Dummy;
             type Path = ();
-            type Image = ();
+            type Image = Dummy;
             type Font = ();
             type Label = Dummy;
 
             fn path_builder(&mut self) -> Self::PathBuilder {
                 Dummy
             }
-            fn create_image(&mut self, _: &[u8]) -> Option<(Self::Image, f32)> {
-                Some(((), 1.0))
+            fn create_image(&mut self, _: &[u8]) -> Option<Self::Image> {
+                Some(Dummy)
             }
             fn create_font(&mut self, _: Option<&Font>, _: FontKind) -> Self::Font {}
             fn create_label(
@@ -65,6 +66,12 @@ cfg_if::cfg_if! {
             }
             fn width_without_max_width(&self, _: f32) -> f32 {
                 0.0
+            }
+        }
+
+        impl Image for Dummy {
+            fn aspect_ratio(&self) -> f32 {
+                1.0
             }
         }
 

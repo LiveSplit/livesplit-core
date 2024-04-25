@@ -5,7 +5,7 @@ use core::{
 
 use crate::settings::Font;
 
-use super::{Label, PathBuilder, ResourceAllocator, SharedOwnership};
+use super::{Image, Label, PathBuilder, ResourceAllocator, SharedOwnership};
 
 pub struct Handles<A> {
     next_id: usize,
@@ -83,9 +83,9 @@ impl<A: ResourceAllocator> ResourceAllocator for Handles<A> {
         self.next(square)
     }
 
-    fn create_image(&mut self, data: &[u8]) -> Option<(Self::Image, f32)> {
-        let (image, aspect_ratio) = self.allocator.create_image(data)?;
-        Some((self.next(image), aspect_ratio))
+    fn create_image(&mut self, data: &[u8]) -> Option<Self::Image> {
+        let image = self.allocator.create_image(data)?;
+        Some(self.next(image))
     }
 
     fn create_font(&mut self, font: Option<&Font>, kind: super::FontKind) -> Self::Font {
@@ -172,6 +172,12 @@ impl<T> PartialEq for LabelHandle<T> {
 pub struct Handle<T> {
     pub(crate) id: usize,
     inner: T,
+}
+
+impl<T: Image> Image for Handle<T> {
+    fn aspect_ratio(&self) -> f32 {
+        self.inner.aspect_ratio()
+    }
 }
 
 impl<T: SharedOwnership> SharedOwnership for Handle<T> {

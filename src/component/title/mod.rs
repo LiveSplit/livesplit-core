@@ -234,16 +234,10 @@ impl Component {
                     let unchanged = catch! {
                         let mut rem = &**state.line1.last()?;
 
-                        let Some(rest) = rem.strip_prefix(game_name) else {
-                            return None;
-                        };
-                        rem = rest;
+                        rem = rem.strip_prefix(game_name)?;
 
                         if !game_name.is_empty() && !full_category_name.is_empty() {
-                            let Some(rest) = rem.strip_prefix(" - ") else {
-                                return None;
-                            };
-                            rem = rest;
+                            rem = rem.strip_prefix(" - ")?;
                         }
 
                         if rem != full_category_name {

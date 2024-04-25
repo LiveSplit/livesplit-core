@@ -83,6 +83,8 @@ pub mod timer_write_lock;
 pub mod title_component;
 pub mod title_component_state;
 pub mod total_playtime_component;
+#[cfg(all(target_family = "wasm", feature = "web-rendering"))]
+pub mod web_rendering;
 
 use crate::{
     run_metadata_custom_variable::RunMetadataCustomVariable,
@@ -211,18 +213,19 @@ unsafe fn get_file(_: i64) -> ManuallyDrop<File> {
 #[cfg(all(target_family = "wasm", not(target_os = "wasi")))]
 #[no_mangle]
 pub extern "C" fn alloc(size: usize) -> *mut u8 {
-    let mut buf = Vec::with_capacity(size);
-    let ptr = buf.as_mut_ptr();
-    core::mem::forget(buf);
-    ptr
+    if size == 0 {
+        std::ptr::NonNull::dangling().as_ptr()
+    } else {
+        unsafe { std::alloc::alloc(std::alloc::Layout::from_size_align_unchecked(size, 1)) }
+    }
 }
 
 /// Deallocate memory.
 #[cfg(all(target_family = "wasm", not(target_os = "wasi")))]
 #[no_mangle]
-pub extern "C" fn dealloc(ptr: *mut u8, cap: usize) {
-    unsafe {
-        let _buf = Vec::from_raw_parts(ptr, 0, cap);
+pub unsafe extern "C" fn dealloc(ptr: *mut u8, cap: usize) {
+    if cap != 0 {
+        std::alloc::dealloc(ptr, std::alloc::Layout::from_size_align_unchecked(cap, 1));
     }
 }
 

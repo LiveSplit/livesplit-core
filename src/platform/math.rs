@@ -1,5 +1,5 @@
 cfg_if::cfg_if! {
-    if #[cfg(feature = "std")] {
+    if #[cfg(all(feature = "std", not(test)))] {
         pub mod f32 {
             #[inline(always)]
             pub fn abs(x: f32) -> f32 {

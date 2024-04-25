@@ -85,6 +85,8 @@ pub mod default_text_engine;
 pub mod software;
 #[cfg(feature = "svg-rendering")]
 pub mod svg;
+#[cfg(all(target_family = "wasm", feature = "web-rendering"))]
+pub mod web;
 
 use self::{
     consts::{
@@ -98,7 +100,7 @@ use self::{
 use crate::{
     layout::{LayoutDirection, LayoutState},
     platform::prelude::*,
-    settings::{BackgroundImage, Color, Gradient, Image, ImageCache, ImageId, LayoutBackground},
+    settings::{self, BackgroundImage, Color, Gradient, ImageCache, ImageId, LayoutBackground},
 };
 use alloc::borrow::Cow;
 use bytemuck_derive::{Pod, Zeroable};
@@ -108,7 +110,8 @@ pub use self::{
     entity::Entity,
     font::{TEXT_FONT, TIMER_FONT},
     resource::{
-        FontKind, Handle, Label, LabelHandle, PathBuilder, ResourceAllocator, SharedOwnership,
+        FontKind, Handle, Image, Label, LabelHandle, PathBuilder, ResourceAllocator,
+        SharedOwnership,
     },
     scene::{Layer, Scene},
 };
@@ -464,11 +467,13 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         let image = self.images.cache(id, || {
             let image = self
                 .handles
-                .create_image(self.image_cache.lookup(id).unwrap_or(Image::EMPTY).data())
-                .map(|(handle, aspect_ratio)| ImageHandle {
-                    handle,
-                    aspect_ratio,
-                });
+                .create_image(
+                    self.image_cache
+                        .lookup(id)
+                        .unwrap_or(settings::Image::EMPTY)
+                        .data(),
+                )
+                .map(|handle| ImageHandle { handle });
             CachedImage { id: *id, image }
         });
 
@@ -506,7 +511,7 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         image: ImageHandle<A::Image>,
     ) {
         let box_aspect_ratio = width / height;
-        let aspect_ratio_diff = box_aspect_ratio / image.aspect_ratio;
+        let aspect_ratio_diff = box_aspect_ratio / image.handle.aspect_ratio();
 
         if aspect_ratio_diff > 1.0 {
             let new_width = width / aspect_ratio_diff;
@@ -786,7 +791,7 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
                 let image = self.create_image(&background_image.image)?;
 
                 let box_aspect_ratio = width / height;
-                let aspect_ratio_diff = image.aspect_ratio / box_aspect_ratio;
+                let aspect_ratio_diff = image.handle.aspect_ratio() / box_aspect_ratio;
                 let [mut x, mut y] = [0.0; 2];
 
                 if aspect_ratio_diff > 1.0 {

@@ -99,10 +99,11 @@ tokio = { version = "1.24.2", default-features = false, features = [
 ], optional = true }
 log = { version = "0.4.14", default-features = false, optional = true }
 
-[target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
+[target.'cfg(all(target_family = "wasm", target_os = "unknown"))'.dependencies]
 # WebAssembly in the Web
 js-sys = { version = "0.3.55", optional = true }
 wasm-bindgen = { version = "0.2.78", optional = true }
+wasm-bindgen-futures = { version = "0.4.28", optional = true }
 web-sys = { version = "0.3.28", default-features = false, features = [
     "Performance",
     "Window",
@@ -125,7 +126,7 @@ seahash = "4.1.0"
 [target.'cfg(windows)'.dev-dependencies]
 sysinfo = { version = "0.30.0", default-features = false }
 
-[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
+[target.'cfg(not(target_family = "wasm"))'.dev-dependencies]
 criterion = "0.5.0"
 
 [features]
@@ -165,6 +166,20 @@ default-text-engine = ["rendering", "cosmic-text"]
 font-loading = ["std", "default-text-engine"]
 software-rendering = ["default-text-engine", "tiny-skia", "tiny-skia-path"]
 svg-rendering = ["default-text-engine", "ahash"]
+web-rendering = [
+    "wasm-web",
+    "rendering",
+    "wasm-bindgen-futures",
+    "web-sys/Blob",
+    "web-sys/CanvasGradient",
+    "web-sys/Document",
+    "web-sys/DomRect",
+    "web-sys/Element",
+    "web-sys/HtmlCanvasElement",
+    "web-sys/ImageBitmap",
+    "web-sys/Path2d",
+    "web-sys/TextMetrics",
+]
 wasm-web = [
     "std",
     "cosmic-text?/wasm-web",

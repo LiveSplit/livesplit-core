@@ -12,7 +12,7 @@
     <BackgroundColor>FF0F0F0F</BackgroundColor>
     <BackgroundColor2>00000000</BackgroundColor2>
     <ThinSeparatorsColor>03FFFFFF</ThinSeparatorsColor>
-    <SeparatorsColor>642580FF</SeparatorsColor>
+    <SeparatorsColor>FF2580FF</SeparatorsColor>
     <PersonalBestColor>FF16A6FF</PersonalBestColor>
     <AheadGainingTimeColor>FF00CC36</AheadGainingTimeColor>
     <AheadLosingTimeColor>FF52CC73</AheadLosingTimeColor>
@@ -52,8 +52,8 @@
         <CenterTitle>False</CenterTitle>
         <SingleLine>False</SingleLine>
         <TitleColor>FFFFFFFF</TitleColor>
-        <BackgroundColor>6400FFFF</BackgroundColor>
-        <BackgroundColor2>640000FF</BackgroundColor2>
+        <BackgroundColor>FF00003F</BackgroundColor>
+        <BackgroundColor2>FF0000FF</BackgroundColor2>
         <BackgroundGradient>Vertical</BackgroundGradient>
         <DisplayGameIcon>True</DisplayGameIcon>
         <ShowRegion>False</ShowRegion>
@@ -69,7 +69,7 @@
         <OverrideTextColor>False</OverrideTextColor>
         <TimeColor>FFFFFFFF</TimeColor>
         <OverrideTimeColor>False</OverrideTimeColor>
-        <BackgroundColor>640000FF</BackgroundColor>
+        <BackgroundColor>FF00003F</BackgroundColor>
         <BackgroundColor2>00FFFFFF</BackgroundColor2>
         <BackgroundGradient>Plain</BackgroundGradient>
         <Display2Rows>False</Display2Rows>
@@ -87,8 +87,8 @@
         <OverrideTextColor>False</OverrideTextColor>
         <TimeColor>FFFFFFFF</TimeColor>
         <OverrideTimeColor>False</OverrideTimeColor>
-        <BackgroundColor>640000FF</BackgroundColor>
-        <BackgroundColor2>646400FF</BackgroundColor2>
+        <BackgroundColor>FF00003F</BackgroundColor>
+        <BackgroundColor2>FF3F003F</BackgroundColor2>
         <BackgroundGradient>Vertical</BackgroundGradient>
         <Font1><![CDATA[AAEAAAD/////AQAAAAAAAAAMAgAAAFFTeXN0ZW0uRHJhd2luZywgVmVyc2lvbj00LjAuMC4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPWIwM2Y1ZjdmMTFkNTBhM2EFAQAAABNTeXN0ZW0uRHJhd2luZy5Gb250BAAAAAROYW1lBFNpemUFU3R5bGUEVW5pdAEABAQLGFN5c3RlbS5EcmF3aW5nLkZvbnRTdHlsZQIAAAAbU3lzdGVtLkRyYXdpbmcuR3JhcGhpY3NVbml0AgAAAAIAAAAGAwAAAAhTZWdvZSBVSQAAUEEF/P///xhTeXN0ZW0uRHJhd2luZy5Gb250U3R5bGUBAAAAB3ZhbHVlX18ACAIAAAAAAAAABfv///8bU3lzdGVtLkRyYXdpbmcuR3JhcGhpY3NVbml0AQAAAAd2YWx1ZV9fAAgCAAAAAgAAAAs=]]></Font1>
         <Font2><![CDATA[AAEAAAD/////AQAAAAAAAAAMAgAAAFFTeXN0ZW0uRHJhd2luZywgVmVyc2lvbj00LjAuMC4wLCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPWIwM2Y1ZjdmMTFkNTBhM2EFAQAAABNTeXN0ZW0uRHJhd2luZy5Gb250BAAAAAROYW1lBFNpemUFU3R5bGUEVW5pdAEABAQLGFN5c3RlbS5EcmF3aW5nLkZvbnRTdHlsZQIAAAAbU3lzdGVtLkRyYXdpbmcuR3JhcGhpY3NVbml0AgAAAAIAAAAGAwAAAAhTZWdvZSBVSQAAUEEF/P///xhTeXN0ZW0uRHJhd2luZy5Gb250U3R5bGUBAAAAB3ZhbHVlX18ACAIAAAAAAAAABfv///8bU3lzdGVtLkRyYXdpbmcuR3JhcGhpY3NVbml0AQAAAAd2YWx1ZV9fAAgCAAAAAgAAAAs=]]></Font2>
@@ -101,8 +101,8 @@
       <Path>LiveSplit.Subsplits.dll</Path>
       <Settings>
         <Version>1.7</Version>
-        <CurrentSplitTopColor>966400FF</CurrentSplitTopColor>
-        <CurrentSplitBottomColor>9600FFFF</CurrentSplitBottomColor>
+        <CurrentSplitTopColor>FF640000</CurrentSplitTopColor>
+        <CurrentSplitBottomColor>FF006464</CurrentSplitBottomColor>
         <VisualSplitCount>21</VisualSplitCount>
         <SplitPreviewCount>7</SplitPreviewCount>
         <MinimumMajorSplits>0</MinimumMajorSplits>
@@ -124,8 +124,8 @@
         <IconShadows>True</IconShadows>
         <SplitHeight>5.8</SplitHeight>
         <CurrentSplitGradient>Horizontal</CurrentSplitGradient>
-        <BackgroundColor>646400FF</BackgroundColor>
-        <BackgroundColor2>6400FFFF</BackgroundColor2>
+        <BackgroundColor>FF200000</BackgroundColor>
+        <BackgroundColor2>FF002020</BackgroundColor2>
         <BackgroundGradient>Horizontal</BackgroundGradient>
         <SeparatorLastSplit>True</SeparatorLastSplit>
         <DeltasAccuracy>Tenths</DeltasAccuracy>
@@ -205,8 +205,8 @@
         <IconSize>40</IconSize>
         <ShowSplitName>False</ShowSplitName>
         <SplitNameColor>FFFFFFFF</SplitNameColor>
-        <BackgroundColor>966400FF</BackgroundColor>
-        <BackgroundColor2>9600FFFF</BackgroundColor2>
+        <BackgroundColor>FF6400FF</BackgroundColor>
+        <BackgroundColor2>FF00FFFF</BackgroundColor2>
         <BackgroundGradient>Horizontal</BackgroundGradient>
         <Comparison>Current Comparison</Comparison>
         <Comparison2>Best Segments</Comparison2>
@@ -225,8 +225,8 @@
         <TimeColor>FFFFFFFF</TimeColor>
         <OverrideTimeColor>False</OverrideTimeColor>
         <Accuracy>Tenths</Accuracy>
-        <BackgroundColor>966400FF</BackgroundColor>
-        <BackgroundColor2>9600FFFF</BackgroundColor2>
+        <BackgroundColor>FF6400FF</BackgroundColor>
+        <BackgroundColor2>FF00FFFF</BackgroundColor2>
         <BackgroundGradient>Horizontal</BackgroundGradient>
         <Comparison>Current Comparison</Comparison>
         <Display2Rows>False</Display2Rows>
@@ -239,8 +239,8 @@
         <Version>1.6</Version>
         <TextColor>FFFFFFFF</TextColor>
         <OverrideTextColor>False</OverrideTextColor>
-        <BackgroundColor>644B00FF</BackgroundColor>
-        <BackgroundColor2>6400FFFF</BackgroundColor2>
+        <BackgroundColor>FF4B00FF</BackgroundColor>
+        <BackgroundColor2>FF00FFFF</BackgroundColor2>
         <BackgroundGradient>Horizontal</BackgroundGradient>
         <DeltaAccuracy>Tenths</DeltaAccuracy>
         <DropDecimals>True</DropDecimals>
@@ -257,8 +257,8 @@
         <TextColor>FFFFFFFF</TextColor>
         <OverrideTextColor>False</OverrideTextColor>
         <Accuracy>Tenths</Accuracy>
-        <BackgroundColor>644B00FF</BackgroundColor>
-        <BackgroundColor2>6400FFFF</BackgroundColor2>
+        <BackgroundColor>FF4B00FF</BackgroundColor>
+        <BackgroundColor2>FF00FFFF</BackgroundColor2>
         <BackgroundGradient>Horizontal</BackgroundGradient>
         <Comparison>Best Split Times</Comparison>
         <Display2Rows>False</Display2Rows>
@@ -274,8 +274,8 @@
         <TimeColor>FFFFFFFF</TimeColor>
         <OverrideTimeColor>False</OverrideTimeColor>
         <Accuracy>Seconds</Accuracy>
-        <BackgroundColor>644B00FF</BackgroundColor>
-        <BackgroundColor2>6400FFFF</BackgroundColor2>
+        <BackgroundColor>FF4B00FF</BackgroundColor>
+        <BackgroundColor2>FF00FFFF</BackgroundColor2>
         <BackgroundGradient>Horizontal</BackgroundGradient>
         <Display2Rows>False</Display2Rows>
       </Settings>
@@ -289,8 +289,8 @@
         <TimeColor>FFFFFFFF</TimeColor>
         <OverrideTimeColor>False</OverrideTimeColor>
         <Accuracy>Seconds</Accuracy>
-        <BackgroundColor>644B00FF</BackgroundColor>
-        <BackgroundColor2>6400FFFF</BackgroundColor2>
+        <BackgroundColor>FF4B00FF</BackgroundColor>
+        <BackgroundColor2>FF00FFFF</BackgroundColor2>
         <BackgroundGradient>Horizontal</BackgroundGradient>
         <Comparison>Best Segments</Comparison>
         <Display2Rows>False</Display2Rows>

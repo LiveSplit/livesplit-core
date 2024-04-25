@@ -33,7 +33,7 @@ pub trait ResourceAllocator {
     /// The type the renderer uses for paths.
     type Path: SharedOwnership;
     /// The type the renderer uses for images.
-    type Image: SharedOwnership;
+    type Image: Image;
     /// The type the renderer uses for fonts.
     type Font;
     /// The type the renderer uses for text labels.
@@ -82,9 +82,9 @@ pub trait ResourceAllocator {
 
     /// Creates an image out of the image data provided. The data represents the
     /// image in its original file format. It needs to be parsed in order to be
-    /// visualized. The parsed image as well as the aspect ratio (width /
-    /// height) are returned in case the image was parsed successfully.
-    fn create_image(&mut self, data: &[u8]) -> Option<(Self::Image, f32)>;
+    /// visualized. The parsed image is returned in case it was successfully
+    /// parsed.
+    fn create_image(&mut self, data: &[u8]) -> Option<Self::Image>;
 
     /// Creates a font from the font description provided. It is expected that
     /// the the font description is used in a font matching algorithm to find
@@ -124,6 +124,12 @@ pub trait ResourceAllocator {
         font: &mut Self::Font,
         max_width: Option<f32>,
     );
+}
+
+/// An image created by a [`ResourceAllocator`].
+pub trait Image: SharedOwnership {
+    /// The aspect ratio of the image. This is the width divided by the height.
+    fn aspect_ratio(&self) -> f32;
 }
 
 /// A text label created by a [`ResourceAllocator`].
@@ -218,7 +224,7 @@ impl<A: ResourceAllocator> ResourceAllocator for &mut A {
         (*self).build_square()
     }
 
-    fn create_image(&mut self, data: &[u8]) -> Option<(Self::Image, f32)> {
+    fn create_image(&mut self, data: &[u8]) -> Option<Self::Image> {
         (*self).create_image(data)
     }
 

@@ -18,14 +18,6 @@ struct Header {
 
 #[derive(Debug, Copy, Clone, Pod, Zeroable)]
 #[repr(C)]
-struct HeaderV1Extra {
-    palette_types_array_offset: O32,
-    palette_labels_array_offset: O32,
-    palette_entry_labels_array_offset: O32,
-}
-
-#[derive(Debug, Copy, Clone, Pod, Zeroable)]
-#[repr(C)]
 pub struct ColorRecord {
     pub blue: u8,
     pub green: u8,

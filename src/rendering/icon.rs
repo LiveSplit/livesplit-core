@@ -7,16 +7,15 @@ pub struct CachedImage<T> {
     pub image: Option<ImageHandle<T>>,
 }
 
+// FIXME: Is this still useful?
 pub struct ImageHandle<T> {
     pub handle: Handle<T>,
-    pub aspect_ratio: f32,
 }
 
 impl<T: SharedOwnership> SharedOwnership for ImageHandle<T> {
     fn share(&self) -> Self {
         Self {
             handle: self.handle.share(),
-            aspect_ratio: self.aspect_ratio,
         }
     }
 }

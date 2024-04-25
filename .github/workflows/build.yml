@@ -239,6 +239,7 @@ jobs:
 
           - label: WebAssembly WASI
             target: wasm32-wasi
+            auto_splitting: skip
             cross: skip
             dylib: skip
             install_target: true
@@ -411,14 +412,14 @@ jobs:
           # macOS
           - label: macOS aarch64
             target: aarch64-apple-darwin
-            os: macos-14
+            os: macos-latest
             cross: skip
-            install_target: true
 
           - label: macOS x86_64
             target: x86_64-apple-darwin
-            os: macos-13
+            os: macos-latest
             cross: skip
+            install_target: true
 
           # iOS
           - label: iOS aarch64
@@ -532,14 +533,14 @@ jobs:
             release: skip
 
           - label: macOS Beta
-            target: x86_64-apple-darwin
+            target: aarch64-apple-darwin
             os: macOS-latest
             toolchain: beta
             release: skip
             cross: skip
 
           - label: macOS Nightly
-            target: x86_64-apple-darwin
+            target: aarch64-apple-darwin
             os: macOS-latest
             toolchain: nightly
             release: skip
@@ -600,6 +601,13 @@ jobs:
           SKIP_AUTO_SPLITTING: ${{ matrix.auto_splitting }}
           SKIP_NETWORKING: ${{ matrix.networking }}
           SKIP_SOFTWARE_RENDERING: ${{ matrix.software_rendering }}
+
+      - name: Upload screenshots
+        if: matrix.tests == '' && (success() || failure())
+        uses: actions/upload-artifact@v4
+        with:
+          name: Screenshots ${{ matrix.label }}
+          path: target/renders
 
       - name: Prepare Release
         if: startsWith(github.ref, 'refs/tags/') && matrix.release == ''
