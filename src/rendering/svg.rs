@@ -19,8 +19,8 @@ use crate::{
 
 use super::{
     default_text_engine::{self, TextEngine},
-    Background, Entity, FillShader, FontKind, ResourceAllocator, SceneManager, SharedOwnership,
-    Transform,
+    resource, Background, Entity, FillShader, FontKind, ResourceAllocator, SceneManager,
+    SharedOwnership, Transform,
 };
 
 type SvgImage = Rc<Image>;
@@ -528,6 +528,13 @@ struct Image {
     data: String,
     scale_x: f32,
     scale_y: f32,
+    aspect_ratio: f32,
+}
+
+impl resource::Image for SvgImage {
+    fn aspect_ratio(&self) -> f32 {
+        self.aspect_ratio
+    }
 }
 
 impl SharedOwnership for SvgPath {
@@ -690,7 +697,7 @@ impl ResourceAllocator for SvgAllocator {
         }
     }
 
-    fn create_image(&mut self, _data: &[u8]) -> Option<(Self::Image, f32)> {
+    fn create_image(&mut self, _data: &[u8]) -> Option<Self::Image> {
         #[cfg(feature = "image")]
         {
             let format = image::guess_format(_data).ok()?;
@@ -718,15 +725,13 @@ impl ResourceAllocator for SvgAllocator {
                 buf.set_len(buf.len() + additional_len);
             }
 
-            Some((
-                Rc::new(Image {
-                    id: Cell::new(0),
-                    data: buf,
-                    scale_x: rwidth,
-                    scale_y: rheight,
-                }),
-                width * rheight,
-            ))
+            Some(Rc::new(Image {
+                id: Cell::new(0),
+                data: buf,
+                scale_x: rwidth,
+                scale_y: rheight,
+                aspect_ratio: width * rheight,
+            }))
         }
         #[cfg(not(feature = "image"))]
         {

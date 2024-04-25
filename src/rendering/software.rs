@@ -32,9 +32,20 @@ pub use image::{self, RgbaImage};
 struct SkiaBuilder(PathBuilder);
 
 type SkiaPath = Option<UnsafeRc<Path>>;
-type SkiaImage = UnsafeRc<Pixmap>;
+type SkiaImage = UnsafeRc<Image>;
 type SkiaFont = Font;
 type SkiaLabel = Label<SkiaPath>;
+
+struct Image {
+    pixmap: Pixmap,
+    aspect_ratio: f32,
+}
+
+impl resource::Image for SkiaImage {
+    fn aspect_ratio(&self) -> f32 {
+        self.aspect_ratio
+    }
+}
 
 impl resource::PathBuilder for SkiaBuilder {
     type Path = SkiaPath;
@@ -94,7 +105,7 @@ impl ResourceAllocator for SkiaAllocator {
         path_builder()
     }
 
-    fn create_image(&mut self, _data: &[u8]) -> Option<(Self::Image, f32)> {
+    fn create_image(&mut self, _data: &[u8]) -> Option<Self::Image> {
         #[cfg(feature = "image")]
         {
             let mut buf = image::load_from_memory(_data).ok()?.to_rgba8();
@@ -119,7 +130,10 @@ impl ResourceAllocator for SkiaAllocator {
 
             let pixmap = Pixmap::from_vec(buf.into_raw(), IntSize::from_wh(width, height)?)?;
 
-            Some((UnsafeRc::new(pixmap), width as f32 / height as f32))
+            Some(UnsafeRc::new(Image {
+                pixmap,
+                aspect_ratio: width as f32 / height as f32,
+            }))
         }
         #[cfg(not(feature = "image"))]
         {
@@ -455,13 +469,13 @@ fn render_layer(
                     rectangle,
                     &Paint {
                         shader: Pattern::new(
-                            image.as_ref(),
+                            image.pixmap.as_ref(),
                             SpreadMode::Pad,
                             FilterQuality::Bilinear,
                             1.0,
                             tiny_skia::Transform::from_scale(
-                                1.0 / image.width() as f32,
-                                1.0 / image.height() as f32,
+                                1.0 / image.pixmap.width() as f32,
+                                1.0 / image.pixmap.height() as f32,
                             ),
                         ),
                         anti_alias: true,
@@ -662,10 +676,10 @@ fn fill_background(
                         .map(|(_, pixmap)| pixmap)
                         .unwrap()
                 } else {
-                    &*image.image.0
+                    &image.image.pixmap
                 };
                 #[cfg(not(feature = "image"))]
-                let pixmap = &*image.image.0;
+                let pixmap = &image.image.pixmap;
 
                 let transform = convert_transform(transform);
                 background_layer.fill_path(
@@ -725,9 +739,9 @@ fn update_blurred_background_image(
                 .is_some_and(|(key, _)| &current_key == key)
             {
                 let original_image = ImageBuffer::<image::Rgba<u8>, _>::from_raw(
-                    image.image.width(),
-                    image.image.height(),
-                    image.image.data(),
+                    image.image.pixmap.width(),
+                    image.image.pixmap.height(),
+                    image.image.pixmap.data(),
                 )
                 .unwrap();
 

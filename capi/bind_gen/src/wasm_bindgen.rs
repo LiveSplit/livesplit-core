@@ -387,10 +387,8 @@ declare namespace TextEncoding {
     }
 }
 
-const encoder = new TextEncoder("UTF-8");
-const decoder = new TextDecoder("UTF-8");
-const encodeUtf8: (str: string) => Uint8Array = (str) => encoder.encode(str);
-const decodeUtf8: (data: Uint8Array) => string = (data) => decoder.decode(data);
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
 
 interface Slice {
     ptr: number,
@@ -408,13 +406,12 @@ function allocUint8Array(src: Uint8Array): Slice {
 }
 
 function allocString(str: string): Slice {
-    const stringBuffer = encodeUtf8(str);
-    const len = stringBuffer.length + 1;
+    const len = 3 * str.length + 1;
     const ptr = wasm.alloc(len);
     const slice = new Uint8Array(wasm.memory.buffer, ptr, len);
 
-    slice.set(stringBuffer);
-    slice[len - 1] = 0;
+    const stats = encoder.encodeInto(str, slice);
+    slice[stats.written] = 0;
 
     return { ptr, len };
 }
@@ -431,7 +428,7 @@ function decodePtrLen(ptr: number, len: number): Uint8Array {
 }
 
 function decodeString(ptr: number): string {
-    return decodeUtf8(decodeSlice(ptr));
+    return decoder.decode(decodeSlice(ptr));
 }
 
 function dealloc(slice: Slice) {
@@ -448,10 +445,8 @@ function dealloc(slice: Slice) {
             r#"import * as wasm from "./livesplit_core_bg.wasm";
 import "./livesplit_core.js";
 
-const encoder = new TextEncoder("UTF-8");
-const decoder = new TextDecoder("UTF-8");
-const encodeUtf8 = (str) => encoder.encode(str);
-const decodeUtf8 = (data) => decoder.decode(data);
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
 
 function allocUint8Array(src) {
     const len = src.length;
@@ -464,13 +459,12 @@ function allocUint8Array(src) {
 }
 
 function allocString(str) {
-    const stringBuffer = encodeUtf8(str);
-    const len = stringBuffer.length + 1;
+    const len = 3 * str.length + 1;
     const ptr = wasm.alloc(len);
     const slice = new Uint8Array(wasm.memory.buffer, ptr, len);
 
-    slice.set(stringBuffer);
-    slice[len - 1] = 0;
+    const stats = encoder.encodeInto(str, slice);
+    slice[stats.written] = 0;
 
     return { ptr, len };
 }
@@ -487,7 +481,7 @@ function decodePtrLen(ptr, len) {
 }
 
 function decodeString(ptr) {
-    return decodeUtf8(decodeSlice(ptr));
+    return decoder.decode(decodeSlice(ptr));
 }
 
 function dealloc(slice) {

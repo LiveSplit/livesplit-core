@@ -289,8 +289,8 @@ fn subsplits_layout() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [300, 800],
-        "8694d76628ff63f8",
-        "f2bcd20608fb35df",
+        "78250961341ef747",
+        "95ba6dcf34c60078",
         "subsplits_layout",
     );
 }
@@ -314,7 +314,7 @@ fn background_image() {
         &image_cache,
         [300, 300],
         "efc369e681d98dfe",
-        "f2bcd20608fb35df",
+        "f0ec188c38f0e26d",
         "background_image",
     );
 }

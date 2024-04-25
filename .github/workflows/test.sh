@@ -4,7 +4,7 @@ main() {
     local cargo=cross
 
     # all features except those that sometimes should be skipped.
-    local features="--features std,more-image-formats,image-shrinking,rendering,default-text-engine,wasm-web,font-loading"
+    local features="--features std,more-image-formats,image-shrinking,rendering,svg-rendering,default-text-engine,font-loading"
 
     if [ "$SKIP_CROSS" = "skip" ]; then
         cargo=cargo
@@ -25,8 +25,8 @@ main() {
     if [ "$TARGET" = "wasm32-wasi" ]; then
         curl https://wasmtime.dev/install.sh -sSf | bash
         export PATH="$HOME/.wasmtime/bin:$PATH"
-        $cargo test -p livesplit-core --features software-rendering --target $TARGET
-        return
+    else
+        features="$features,wasm-web,web-rendering"
     fi
 
     $cargo test -p livesplit-core $features --target $TARGET
