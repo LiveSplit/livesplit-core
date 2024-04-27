@@ -223,6 +223,7 @@ inherits = "release"
 lto = true
 panic = "abort"
 codegen-units = 1
+strip = true
 
 [profile.max-opt.build-override]
 opt-level = 0
