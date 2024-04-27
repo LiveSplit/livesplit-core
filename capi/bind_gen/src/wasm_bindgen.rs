@@ -349,71 +349,34 @@ pub fn write<W: Write>(
 import * as wasm from "./livesplit_core_bg.wasm";
 import "./livesplit_core.js";
 
-declare class TextEncoder {
-    constructor(label?: string, options?: TextEncoding.TextEncoderOptions);
-    encoding: string;
-    encode(input?: string, options?: TextEncoding.TextEncodeOptions): Uint8Array;
-}
-
-declare class TextDecoder {
-    constructor(utfLabel?: string, options?: TextEncoding.TextDecoderOptions)
-    encoding: string;
-    fatal: boolean;
-    ignoreBOM: boolean;
-    decode(input?: ArrayBufferView, options?: TextEncoding.TextDecodeOptions): string;
-}
-
-declare namespace TextEncoding {
-    interface TextDecoderOptions {
-        fatal?: boolean;
-        ignoreBOM?: boolean;
-    }
-
-    interface TextDecodeOptions {
-        stream?: boolean;
-    }
-
-    interface TextEncoderOptions {
-        NONSTANDARD_allowLegacyEncoding?: boolean;
-    }
-
-    interface TextEncodeOptions {
-        stream?: boolean;
-    }
-
-    interface TextEncodingStatic {
-        TextDecoder: typeof TextDecoder;
-        TextEncoder: typeof TextEncoder;
-    }
-}
-
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
 interface Slice {
     ptr: number,
     len: number,
+    cap: number,
 }
 
 function allocUint8Array(src: Uint8Array): Slice {
-    const len = src.length;
-    const ptr = wasm.alloc(len);
-    const slice = new Uint8Array(wasm.memory.buffer, ptr, len);
+    const cap = src.length;
+    const ptr = wasm.alloc(cap);
+    const slice = new Uint8Array(wasm.memory.buffer, ptr, cap);
 
     slice.set(src);
 
-    return { ptr, len };
+    return { ptr, len: cap, cap };
 }
 
 function allocString(str: string): Slice {
-    const len = 3 * str.length + 1;
-    const ptr = wasm.alloc(len);
-    const slice = new Uint8Array(wasm.memory.buffer, ptr, len);
+    const cap = 3 * str.length + 1;
+    const ptr = wasm.alloc(cap);
+    const slice = new Uint8Array(wasm.memory.buffer, ptr, cap);
 
     const stats = encoder.encodeInto(str, slice);
     slice[stats.written] = 0;
 
-    return { ptr, len };
+    return { ptr, len: stats.written, cap };
 }
 
 function decodeSlice(ptr: number): Uint8Array {
@@ -432,7 +395,7 @@ function decodeString(ptr: number): string {
 }
 
 function dealloc(slice: Slice) {
-    wasm.dealloc(slice.ptr, slice.len);
+    wasm.dealloc(slice.ptr, slice.cap);
 }
 
 "#,
@@ -449,24 +412,24 @@ const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
 function allocUint8Array(src) {
-    const len = src.length;
-    const ptr = wasm.alloc(len);
-    const slice = new Uint8Array(wasm.memory.buffer, ptr, len);
+    const cap = src.length;
+    const ptr = wasm.alloc(cap);
+    const slice = new Uint8Array(wasm.memory.buffer, ptr, cap);
 
     slice.set(src);
 
-    return { ptr, len };
+    return { ptr, len: cap, cap };
 }
 
 function allocString(str) {
-    const len = 3 * str.length + 1;
-    const ptr = wasm.alloc(len);
-    const slice = new Uint8Array(wasm.memory.buffer, ptr, len);
+    const cap = 3 * str.length + 1;
+    const ptr = wasm.alloc(cap);
+    const slice = new Uint8Array(wasm.memory.buffer, ptr, cap);
 
     const stats = encoder.encodeInto(str, slice);
     slice[stats.written] = 0;
 
-    return { ptr, len };
+    return { ptr, len: stats.written, cap };
 }
 
 function decodeSlice(ptr) {
@@ -485,7 +448,7 @@ function decodeString(ptr) {
 }
 
 function dealloc(slice) {
-    wasm.dealloc(slice.ptr, slice.len);
+    wasm.dealloc(slice.ptr, slice.cap);
 }"#,
         )?;
     }

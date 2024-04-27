@@ -560,7 +560,7 @@ impl Renderer {
 
     /// Renders the layout state into the canvas. The image cache is used to
     /// retrieve images that are used in the layout state.
-    pub fn render(&mut self, state: &LayoutState, image_cache: &ImageCache) {
+    pub fn render(&mut self, state: &LayoutState, image_cache: &ImageCache) -> Option<[f32; 2]> {
         // Scaling is based on:
         // https://webglfundamentals.org/webgl/lessons/webgl-resizing-the-canvas.html
 
@@ -579,7 +579,7 @@ impl Renderer {
             self.canvas_top.set_height(height as _);
         }
 
-        self.manager.update_scene(
+        let new_dims = self.manager.update_scene(
             &mut self.allocator,
             [width as _, height as _],
             state,
@@ -670,6 +670,11 @@ impl Renderer {
         }
         self.top_layer_is_cleared = layer.is_empty();
         render_layer(ctx, &mut self.cache, str_buf, layer, &self.allocator.digits);
+
+        new_dims.map(|[width, height]| {
+            let ratio = (1.0 / ratio) as f32;
+            [width * ratio, height * ratio]
+        })
     }
 }
 
