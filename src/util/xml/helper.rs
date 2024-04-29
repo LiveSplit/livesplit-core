@@ -1,10 +1,8 @@
 use crate::platform::prelude::*;
 use alloc::borrow::Cow;
-#[cfg(not(feature = "auto-splitting"))]
 use core::fmt;
 use core::{mem::MaybeUninit, str};
 
-#[cfg(not(feature = "auto-splitting"))]
 use super::Writer;
 use super::{Attributes, Event, Reader, TagName, Text};
 
@@ -121,7 +119,6 @@ where
     }
 }
 
-#[cfg(not(feature = "auto-splitting"))]
 pub fn reencode_children(reader: &mut Reader<'_>, target_buf: &mut String) -> Result<(), Error> {
     let mut writer = Writer::new_skip_header(target_buf);
     let mut depth = 0usize;

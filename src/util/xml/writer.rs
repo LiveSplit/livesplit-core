@@ -10,7 +10,6 @@ pub struct Writer<T> {
 }
 
 impl<T: fmt::Write> Writer<T> {
-    #[cfg(not(feature = "auto-splitting"))]
     pub const fn new_skip_header(sink: T) -> Self {
         Self { sink }
     }
@@ -93,7 +92,6 @@ impl<T: fmt::Write> Writer<T> {
         })
     }
 
-    #[cfg(not(feature = "auto-splitting"))]
     pub fn comment(&mut self, text: impl Value) -> fmt::Result {
         self.sink.write_str("<!--")?;
         text.write_escaped(&mut self.sink)?;
@@ -106,14 +104,12 @@ impl<T: fmt::Write> Writer<T> {
         self.sink.write_str("]]>")
     }
 
-    #[cfg(not(feature = "auto-splitting"))]
     pub fn processing_instruction(&mut self, text: impl Value) -> fmt::Result {
         self.sink.write_str("<?")?;
         text.write_escaped(&mut self.sink)?;
         self.sink.write_str("?>")
     }
 
-    #[cfg(not(feature = "auto-splitting"))]
     pub fn just_start_tag<
         O,
         E: From<fmt::Error>,
@@ -134,7 +130,6 @@ impl<T: fmt::Write> Writer<T> {
         Ok(res)
     }
 
-    #[cfg(not(feature = "auto-splitting"))]
     pub fn just_end_tag(&mut self, tag: &str) -> fmt::Result {
         self.sink.write_str("</")?;
         self.sink.write_str(tag)?;

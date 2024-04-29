@@ -81,7 +81,7 @@ pub struct Run {
     comparison_generators: ComparisonGenerators,
     auto_splitter_settings: String,
     #[cfg(feature = "auto-splitting")]
-    parsed_auto_splitter_settings: AutoSplitterSettings,
+    parsed_auto_splitter_settings: Option<AutoSplitterSettings>,
     linked_layout: Option<LinkedLayout>,
 }
 
@@ -136,7 +136,7 @@ impl Run {
             comparison_generators: ComparisonGenerators(default_generators()),
             auto_splitter_settings: String::new(),
             #[cfg(feature = "auto-splitting")]
-            parsed_auto_splitter_settings: AutoSplitterSettings::default(),
+            parsed_auto_splitter_settings: None,
             linked_layout: None,
         }
     }
@@ -338,14 +338,14 @@ impl Run {
     /// Accesses the Auto Splitter Settings.
     #[inline]
     #[cfg(feature = "auto-splitting")]
-    pub fn parsed_auto_splitter_settings(&self) -> &AutoSplitterSettings {
+    pub fn parsed_auto_splitter_settings(&self) -> &Option<AutoSplitterSettings> {
         &self.parsed_auto_splitter_settings
     }
 
     /// Accesses the Auto Splitter Settings as mutable.
     #[inline]
     #[cfg(feature = "auto-splitting")]
-    pub fn parsed_auto_splitter_settings_mut(&mut self) -> &mut AutoSplitterSettings {
+    pub fn parsed_auto_splitter_settings_mut(&mut self) -> &mut Option<AutoSplitterSettings> {
         &mut self.parsed_auto_splitter_settings
     }
 
