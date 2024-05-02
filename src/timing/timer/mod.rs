@@ -569,7 +569,11 @@ impl Timer {
             .position(|c| c == self.current_comparison)
             .unwrap();
         let index = (index + 1) % len;
-        self.current_comparison = self.run.comparisons().nth(index).unwrap().to_owned();
+        self.run
+            .comparisons()
+            .nth(index)
+            .unwrap()
+            .populate(&mut self.current_comparison);
 
         // FIXME: OnNextComparison
     }
@@ -582,7 +586,11 @@ impl Timer {
             .position(|c| c == self.current_comparison)
             .unwrap();
         let index = (index + len - 1) % len;
-        self.current_comparison = self.run.comparisons().nth(index).unwrap().to_owned();
+        self.run
+            .comparisons()
+            .nth(index)
+            .unwrap()
+            .populate(&mut self.current_comparison);
 
         // FIXME: OnPreviousComparison
     }

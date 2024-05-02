@@ -280,9 +280,14 @@ fn update_time_column(
             false,
         )
     });
+
     let is_empty = column_settings.start_with == ColumnStartWith::Empty && !updated;
-    state.updates_frequently = is_live && column_value.is_some();
+
+    state.updates_frequently =
+        is_live && column_value.is_some() && timer.current_phase().updates_frequently(method);
+
     state.value.clear();
+
     if !is_empty {
         let _ = match formatter {
             ColumnFormatter::Time => write!(

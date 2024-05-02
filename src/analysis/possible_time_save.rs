@@ -52,7 +52,7 @@ pub fn calculate(
                 let segment_delta = TimeSpan::zero() - segment_delta;
                 if segment_delta < time {
                     time = segment_delta;
-                    updates_frequently = timer.current_phase().is_running();
+                    updates_frequently = timer.current_phase().updates_frequently(method);
                 }
             }
         }

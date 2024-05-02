@@ -1,7 +1,7 @@
 use crate::{
     component::graph::State,
     layout::LayoutState,
-    rendering::{PathBuilder, RenderContext, ResourceAllocator},
+    rendering::{Layer, PathBuilder, RenderContext, ResourceAllocator},
     settings::Gradient,
 };
 
@@ -19,30 +19,36 @@ pub(in crate::rendering) fn render(
     const LINE_WIDTH: f32 = 0.025;
     const CIRCLE_RADIUS: f32 = 0.035;
 
-    context.render_top_rectangle(
+    let layer = Layer::from_updates_frequently(component.updates_frequently);
+
+    context.render_layer_rectangle(
         [0.0, 0.0],
         [width, component.middle],
         &Gradient::Plain(component.top_background_color),
+        layer,
     );
-    context.render_top_rectangle(
+    context.render_layer_rectangle(
         [0.0, component.middle],
         [width, 1.0],
         &Gradient::Plain(component.bottom_background_color),
+        layer,
     );
 
     for &y in &component.horizontal_grid_lines {
-        context.render_top_rectangle(
+        context.render_layer_rectangle(
             [0.0, y - GRID_LINE_WIDTH],
             [width, y + GRID_LINE_WIDTH],
             &Gradient::Plain(component.grid_lines_color),
+            layer,
         );
     }
 
     for &x in &component.vertical_grid_lines {
-        context.render_top_rectangle(
+        context.render_layer_rectangle(
             [width * x - GRID_LINE_WIDTH, 0.0],
             [width * x + GRID_LINE_WIDTH, 1.0],
             &Gradient::Plain(component.grid_lines_color),
+            layer,
         );
     }
 
@@ -57,7 +63,7 @@ pub(in crate::rendering) fn render(
         builder.line_to(width * p2.x, component.middle);
         builder.close();
         let partial_fill_path = builder.finish();
-        context.top_layer_path(partial_fill_path, component.partial_fill_color);
+        context.fill_path(partial_fill_path, component.partial_fill_color, layer);
 
         component.points.len() - 1
     } else {
@@ -72,7 +78,7 @@ pub(in crate::rendering) fn render(
     builder.line_to(width * component.points[len - 1].x, component.middle);
     builder.close();
     let fill_path = builder.finish();
-    context.top_layer_path(fill_path, component.complete_fill_color);
+    context.fill_path(fill_path, component.complete_fill_color, layer);
 
     for points in component.points.windows(2) {
         let mut builder = context.handles.path_builder();
@@ -86,7 +92,7 @@ pub(in crate::rendering) fn render(
         };
 
         let line_path = builder.finish();
-        context.top_layer_stroke_path(line_path, color, LINE_WIDTH);
+        context.stroke_path(line_path, color, LINE_WIDTH, layer);
     }
 
     for (i, point) in component.points.iter().enumerate().skip(1) {
@@ -100,7 +106,7 @@ pub(in crate::rendering) fn render(
             let circle_path = context
                 .handles
                 .build_circle(width * point.x, point.y, CIRCLE_RADIUS);
-            context.top_layer_path(circle_path, color);
+            context.fill_path(circle_path, color, layer);
         }
     }
 

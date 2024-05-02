@@ -8,7 +8,7 @@ use crate::{
     platform::prelude::*,
     settings::{Color, Field, Gradient, SettingsDescription, Value},
     timing::formatter::{Days, Regular, TimeFormatter},
-    Timer,
+    Timer, TimingMethod,
 };
 use core::fmt::Write;
 use serde_derive::{Deserialize, Serialize};
@@ -101,7 +101,9 @@ impl Component {
         state.key_abbreviations.push("Playtime".into());
 
         state.display_two_rows = self.settings.display_two_rows;
-        state.updates_frequently = timer.current_phase().is_running();
+        state.updates_frequently = timer
+            .current_phase()
+            .updates_frequently(TimingMethod::RealTime);
     }
 
     /// Calculates the component's state based on the timer provided.

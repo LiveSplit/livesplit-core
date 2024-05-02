@@ -118,6 +118,9 @@ pub struct State {
     pub best_segment_color: Color,
     /// The height of the chart.
     pub height: u32,
+    /// This value indicates whether the graph is currently frequently being
+    /// updated. This can be used for rendering optimizations.
+    pub updates_frequently: bool,
 }
 
 /// Describes a point on the graph to visualize.
@@ -257,6 +260,9 @@ impl Component {
         state.middle = x_axis;
         state.is_live_delta_active = draw_info.is_live_delta_active;
         state.points = draw_info.points;
+        state.updates_frequently = timer
+            .current_phase()
+            .updates_frequently(timer.current_timing_method());
     }
 
     /// Calculates the component's state based on the timer and layout settings

@@ -435,7 +435,13 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
             .push(Entity::FillPath(rectangle, shader, transform));
     }
 
-    fn backend_render_top_rectangle(&mut self, [x1, y1]: Pos, [x2, y2]: Pos, shader: FillShader) {
+    fn backend_render_layer_rectangle(
+        &mut self,
+        [x1, y1]: Pos,
+        [x2, y2]: Pos,
+        shader: FillShader,
+        layer: Layer,
+    ) {
         let transform = self
             .transform
             .pre_translate(x1, y1)
@@ -444,18 +450,24 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         let rectangle = self.rectangle();
 
         self.scene
-            .top_layer_mut()
+            .layer_mut(layer)
             .push(Entity::FillPath(rectangle, shader, transform));
     }
 
-    fn top_layer_path(&mut self, path: Handle<A::Path>, color: Color) {
+    fn fill_path(&mut self, path: Handle<A::Path>, color: Color, layer: Layer) {
         self.scene
-            .top_layer_mut()
+            .layer_mut(layer)
             .push(Entity::FillPath(path, solid(&color), self.transform));
     }
 
-    fn top_layer_stroke_path(&mut self, path: Handle<A::Path>, color: Color, stroke_width: f32) {
-        self.scene.top_layer_mut().push(Entity::StrokePath(
+    fn stroke_path(
+        &mut self,
+        path: Handle<A::Path>,
+        color: Color,
+        stroke_width: f32,
+        layer: Layer,
+    ) {
+        self.scene.layer_mut(layer).push(Entity::StrokePath(
             path,
             stroke_width,
             color.to_array(),
@@ -498,9 +510,15 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         }
     }
 
-    fn render_top_rectangle(&mut self, top_left: Pos, bottom_right: Pos, gradient: &Gradient) {
+    fn render_layer_rectangle(
+        &mut self,
+        top_left: Pos,
+        bottom_right: Pos,
+        gradient: &Gradient,
+        layer: Layer,
+    ) {
         if let Some(colors) = decode_gradient(gradient) {
-            self.backend_render_top_rectangle(top_left, bottom_right, colors);
+            self.backend_render_layer_rectangle(top_left, bottom_right, colors, layer);
         }
     }
 
