@@ -604,7 +604,7 @@ impl Renderer {
                         if let Some((image, _)) = &*image {
                             str_buf.clear();
                             use std::fmt::Write;
-                            if background_image.brightness != 0.0 {
+                            if background_image.brightness != 1.0 {
                                 let _ = write!(
                                     str_buf,
                                     "brightness({}%)",

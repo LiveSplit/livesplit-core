@@ -115,7 +115,7 @@ pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()
                         comparison_override(reader, |v| {
                             for column in &mut settings.columns {
                                 if let ColumnKind::Time(column) = &mut column.kind {
-                                    column.comparison_override = v.clone();
+                                    column.comparison_override.clone_from(&v);
                                 }
                             }
                         })

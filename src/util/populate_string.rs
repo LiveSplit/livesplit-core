@@ -27,6 +27,10 @@ impl PopulateString for String {
 }
 
 impl PopulateString for &str {
+    // If the string doesn't fit into the capacity of the buffer, we just
+    // allocate a new buffer instead of forcing it to reallocate, which would
+    // mean copying all the bytes of the previous buffer, which we don't care about.
+    #[allow(clippy::assigning_clones)]
     fn populate(self, buf: &mut String) {
         if self.len() <= buf.capacity() {
             buf.clear();

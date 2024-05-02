@@ -239,7 +239,7 @@ impl Component {
         }
 
         state.display_two_rows = self.settings.display_two_rows;
-        state.updates_frequently = live_segment.is_some() && phase.is_running();
+        state.updates_frequently = live_segment.is_some() && phase.updates_frequently(method);
     }
 
     /// Calculates the component's state based on the timer and the layout

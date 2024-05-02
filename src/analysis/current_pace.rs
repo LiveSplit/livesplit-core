@@ -10,8 +10,9 @@ use crate::{analysis, timing::Snapshot, TimeSpan, TimerPhase};
 pub fn calculate(timer: &Snapshot<'_>, comparison: &str) -> (Option<TimeSpan>, bool) {
     let timing_method = timer.current_timing_method();
     let last_segment = timer.run().segments().last().unwrap();
+    let phase = timer.current_phase();
 
-    match timer.current_phase() {
+    match phase {
         TimerPhase::Running | TimerPhase::Paused => {
             let mut delta = analysis::last_delta(
                 timer.run(),
@@ -39,7 +40,7 @@ pub fn calculate(timer: &Snapshot<'_>, comparison: &str) -> (Option<TimeSpan>, b
 
             (
                 value,
-                is_live && timer.current_phase().is_running() && value.is_some(),
+                is_live && phase.updates_frequently(timing_method) && value.is_some(),
             )
         }
         TimerPhase::Ended => (last_segment.split_time()[timing_method], false),

@@ -296,7 +296,7 @@ impl Component {
             formatter::Fraction::with_accuracy(self.settings.accuracy).format(time),
         );
 
-        state.updates_frequently = phase.is_running() && time.is_some();
+        state.updates_frequently = phase.updates_frequently(method) && time.is_some();
         state.semantic_color = semantic_color;
         state.height = self.settings.height;
     }
