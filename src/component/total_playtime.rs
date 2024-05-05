@@ -117,14 +117,31 @@ impl Component {
     /// component and their current values.
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
-            Field::new("Background".into(), self.settings.background.into()),
+            Field::new(
+                "Background".into(),
+                "The background shown behind the component.".into(),
+                self.settings.background.into(),
+            ),
             Field::new(
                 "Display 2 Rows".into(),
+                "Specifies whether to display the name of the component and the total playtime in two separate rows.".into(),
                 self.settings.display_two_rows.into(),
             ),
-            Field::new("Show Days (>24h)".into(), self.settings.show_days.into()),
-            Field::new("Label Color".into(), self.settings.label_color.into()),
-            Field::new("Value Color".into(), self.settings.value_color.into()),
+            Field::new(
+                "Show Days (>24h)".into(),
+                "Specifies whether to show the amount of days, when the total playtime reaches 24 hours or more.".into(),
+                self.settings.show_days.into(),
+            ),
+            Field::new(
+                "Label Color".into(),
+                "The color of the component's name. If not specified, the color is taken from the layout.".into(),
+                self.settings.label_color.into(),
+            ),
+            Field::new(
+                "Value Color".into(),
+                "The color of the total playtime. If not specified, the color is taken from the layout.".into(),
+                self.settings.value_color.into(),
+            ),
         ])
     }
 

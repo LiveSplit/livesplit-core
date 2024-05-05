@@ -279,37 +279,57 @@ impl Component {
         SettingsDescription::with_fields(vec![
             Field::new(
                 "Comparison".into(),
+                "The comparison to use for the graph. If not set, the current comparison is taken from the timer.".into(),
                 self.settings.comparison_override.clone().into(),
             ),
-            Field::new("Height".into(), u64::from(self.settings.height).into()),
+            Field::new(
+                "Height".into(),
+                "The height of the chart.".into(),
+                u64::from(self.settings.height).into(),
+            ),
             Field::new(
                 "Show Best Segments".into(),
+                "Specifies whether to color the best segments with the layout's best segment color.".into(),
                 self.settings.show_best_segments.into(),
             ),
-            Field::new("Live Graph".into(), self.settings.live_graph.into()),
-            Field::new("Flip Graph".into(), self.settings.flip_graph.into()),
+            Field::new(
+                "Live Graph".into(),
+                "Specifies whether the graph should automatically refresh all the time. If this is deactivated, changes to the graph only happen whenever the current segment changes.".into(),
+                self.settings.live_graph.into(),
+            ),
+            Field::new(
+                "Flip Graph".into(),
+                "Specifies whether the chart should be flipped vertically. If not set, split times which are ahead of the comparison are displayed below the x-axis and times which are behind are above it. Enabling this settings flips it.".into(),
+                self.settings.flip_graph.into(),
+            ),
             Field::new(
                 "Behind Background Color".into(),
+                "The background color for the chart region containing the times that are behind the comparison.".into(),
                 self.settings.behind_background_color.into(),
             ),
             Field::new(
                 "Ahead Background Color".into(),
+                "The background color for the chart region containing the times that are ahead of the comparison.".into(),
                 self.settings.ahead_background_color.into(),
             ),
             Field::new(
                 "Grid Lines Color".into(),
+                "The color of the chart's grid lines.".into(),
                 self.settings.grid_lines_color.into(),
             ),
             Field::new(
                 "Graph Lines Color".into(),
+                "The color of the lines connecting the graph's points.".into(),
                 self.settings.graph_lines_color.into(),
             ),
             Field::new(
                 "Partial Fill Color".into(),
+                "The color of the region enclosed by the x-axis and the graph. The partial fill color is only used for live changes. More specifically, this color is used in the interval from the last split time to the current time.".into(),
                 self.settings.partial_fill_color.into(),
             ),
             Field::new(
                 "Complete Fill Color".into(),
+                "The color of the region enclosed by the x-axis and the graph, excluding the graph segment with live changes.".into(),
                 self.settings.complete_fill_color.into(),
             ),
         ])

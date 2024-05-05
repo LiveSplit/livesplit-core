@@ -86,37 +86,93 @@ impl GeneralSettings {
     /// cache.
     pub fn settings_description(&self, image_cache: &mut ImageCache) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
-            Field::new("Layout Direction".into(), self.direction.into()),
-            Field::new("Custom Timer Font".into(), self.timer_font.clone().into()),
-            Field::new("Custom Times Font".into(), self.times_font.clone().into()),
-            Field::new("Custom Text Font".into(), self.text_font.clone().into()),
+            Field::new(
+                "Layout Direction".into(),
+                "The direction in which the components are laid out.".into(),
+                self.direction.into(),
+            ),
+            Field::new(
+                "Custom Timer Font".into(),
+                "Allows you to specify a custom font for the timer. If this is not set, the default font is used."
+                    .into(),
+                self.timer_font.clone().into(),
+            ),
+            Field::new(
+                "Custom Times Font".into(),
+                "Allows you to specify a custom font for the times. If this is not set, the default font is used."
+                    .into(),
+                self.times_font.clone().into(),
+            ),
+            Field::new(
+                "Custom Text Font".into(),
+                "Allows you to specify a custom font for the text. If this is not set, the default font is used."
+                    .into(),
+                self.text_font.clone().into(),
+            ),
             Field::new(
                 "Background".into(),
+                "The background shown behind the entire layout.".into(),
                 self.background.cache(image_cache).into(),
             ),
-            Field::new("Best Segment".into(), self.best_segment_color.into()),
+            Field::new(
+                "Best Segment".into(),
+                "The color to use for when you achieve a new best segment.".into(),
+                self.best_segment_color.into(),
+            ),
             Field::new(
                 "Ahead (Gaining Time)".into(),
+                "The color to use for when you are ahead of the comparison and are gaining even more time."
+                    .into(),
                 self.ahead_gaining_time_color.into(),
             ),
             Field::new(
                 "Ahead (Losing Time)".into(),
+                "The color to use for when you are ahead of the comparison, but are losing time."
+                    .into(),
                 self.ahead_losing_time_color.into(),
             ),
             Field::new(
                 "Behind (Gaining Time)".into(),
+                "The color to use for when you are behind the comparison, but are gaining back time."
+                    .into(),
                 self.behind_gaining_time_color.into(),
             ),
             Field::new(
                 "Behind (Losing Time)".into(),
+                "The color to use for when you are behind the comparison and are losing even more time."
+                    .into(),
                 self.behind_losing_time_color.into(),
             ),
-            Field::new("Not Running".into(), self.not_running_color.into()),
-            Field::new("Personal Best".into(), self.personal_best_color.into()),
-            Field::new("Paused".into(), self.paused_color.into()),
-            Field::new("Thin Separators".into(), self.thin_separators_color.into()),
-            Field::new("Separators".into(), self.separators_color.into()),
-            Field::new("Text".into(), self.text_color.into()),
+            Field::new(
+                "Not Running".into(),
+                "The color to use for when there is no active attempt.".into(),
+                self.not_running_color.into(),
+            ),
+            Field::new(
+                "Personal Best".into(),
+                "The color to use for when you achieve a new Personal Best.".into(),
+                self.personal_best_color.into(),
+            ),
+            Field::new(
+                "Paused".into(),
+                "The color to use for when the timer is paused.".into(),
+                self.paused_color.into(),
+            ),
+            Field::new(
+                "Thin Separators".into(),
+                "The color of thin separators.".into(),
+                self.thin_separators_color.into(),
+            ),
+            Field::new(
+                "Separators".into(),
+                "The color of normal separators.".into(),
+                self.separators_color.into(),
+            ),
+            Field::new(
+                "Text".into(),
+                "The color of the text that doesn't specify its own color.".into(),
+                self.text_color.into(),
+            ),
         ])
     }
 

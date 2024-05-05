@@ -19,8 +19,8 @@ pub struct HotkeyConfig {
     pub undo: Option<Hotkey>,
     /// The key to use for skipping the current split.
     pub skip: Option<Hotkey>,
-    /// The key to use for pausing the current attempt and starting a new
-    /// attempt.
+    /// The key to use for pausing the current attempt. It can also be used for
+    /// starting a new attempt.
     pub pause: Option<Hotkey>,
     /// The key to use for removing all the pause times from the current time.
     pub undo_all_pauses: Option<Hotkey>,
@@ -55,19 +55,49 @@ impl HotkeyConfig {
     /// configuration and their current values.
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
-            Field::new("Start / Split".into(), self.split.into()),
-            Field::new("Reset".into(), self.reset.into()),
-            Field::new("Undo Split".into(), self.undo.into()),
-            Field::new("Skip Split".into(), self.skip.into()),
-            Field::new("Pause".into(), self.pause.into()),
-            Field::new("Undo All Pauses".into(), self.undo_all_pauses.into()),
+            Field::new(
+                "Start / Split".into(),
+                "The hotkey to use for splitting and starting a new attempt.".into(),
+                self.split.into(),
+            ),
+            Field::new(
+                "Reset".into(),
+                "The hotkey to use for resetting the current attempt.".into(),
+                self.reset.into(),
+            ),
+            Field::new(
+                "Undo Split".into(),
+                "The hotkey to use for undoing the last split.".into(),
+                self.undo.into(),
+            ),
+            Field::new(
+                "Skip Split".into(),
+                "The hotkey to use for skipping the current split.".into(),
+                self.skip.into(),
+            ),
+            Field::new(
+                "Pause".into(),
+                "The hotkey to use for pausing the current attempt. It can also be used for starting a new attempt.".into(),
+                self.pause.into(),
+            ),
+            Field::new(
+                "Undo All Pauses".into(),
+                "The hotkey to use for removing all the pause times from the current time. This is useful in case you accidentally paused and want to undo it.".into(),
+                self.undo_all_pauses.into(),
+            ),
             Field::new(
                 "Previous Comparison".into(),
+                "The hotkey to use for switching to the previous comparison.".into(),
                 self.previous_comparison.into(),
             ),
-            Field::new("Next Comparison".into(), self.next_comparison.into()),
+            Field::new(
+                "Next Comparison".into(),
+                "The hotkey to use for switching to the next comparison.".into(),
+                self.next_comparison.into(),
+            ),
             Field::new(
                 "Toggle Timing Method".into(),
+                r#"The key to use for toggling between the "Real Time" and "Game Time" timing methods."#.into(),
                 self.toggle_timing_method.into(),
             ),
         ])

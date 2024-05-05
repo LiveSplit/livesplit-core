@@ -632,6 +632,8 @@ export interface SettingsDescriptionJson {
 export interface SettingsDescriptionFieldJson {
     /** The name of the setting. */
     text: string,
+    /** The tooltip to show for the setting. */
+    tooltip: string,
     /** The current value of the setting. */
     value: SettingsDescriptionValueJson,
 }
