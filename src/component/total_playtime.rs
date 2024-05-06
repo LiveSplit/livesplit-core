@@ -129,7 +129,7 @@ impl Component {
             ),
             Field::new(
                 "Show Days (>24h)".into(),
-                "Specifies whether to show the amount of days, when the total playtime reaches 24 hours or more.".into(),
+                "Specifies whether to show the number of days, when the total playtime reaches 24 hours or more.".into(),
                 self.settings.show_days.into(),
             ),
             Field::new(

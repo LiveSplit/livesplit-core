@@ -379,13 +379,13 @@ impl Component {
             ),
             Field::new(
                 "Show Finished Runs Count".into(),
-                "Specifies whether the amount of successfully finished attempts should be shown."
+                "Specifies whether the number of successfully finished attempts should be shown."
                     .into(),
                 self.settings.show_finished_runs_count.into(),
             ),
             Field::new(
                 "Show Attempt Count".into(),
-                "Specifies whether the total amount of attempts should be shown.".into(),
+                "Specifies whether the total number of attempts should be shown.".into(),
                 self.settings.show_attempt_count.into(),
             ),
             Field::new(
@@ -401,25 +401,25 @@ impl Component {
             ),
             Field::new(
                 "Display Game Icon".into(),
-                "Specifies whether the game's icon should be shown, in case there is a game icon stored in the splits."
+                "Specifies whether the game's icon should be shown, if there is a game icon stored in the splits."
                     .into(),
                 self.settings.display_game_icon.into(),
             ),
             Field::new(
                 "Show Region".into(),
-                "The category name can be extended by additional information. This extends it by the game's region, if it is provided in the variables tab of the splits editor."
+                "The category name can be extended with additional information. This extends it with the game's region, if it is provided in the variables tab of the splits editor."
                     .into(),
                 self.settings.show_region.into(),
             ),
             Field::new(
                 "Show Platform".into(),
-                "The category name can be extended by additional information. This extends it by the platform the game is being played on, if it is provided in the variables tab of the splits editor."
+                "The category name can be extended with additional information. This extends it with the platform the game is being played on, if it is provided in the variables tab of the splits editor."
                     .into(),
                 self.settings.show_platform.into(),
             ),
             Field::new(
                 "Show Variables".into(),
-                "The category name can be extended by additional information. This extends it by additional variables provided in the variables tab of the splits editor. This refers to speedrun.com variables, not custom variables."
+                "The category name can be extended with additional information. This extends it with additional variables provided in the variables tab of the splits editor. This refers to speedrun.com variables, not custom variables."
                     .into(),
                 self.settings.show_variables.into(),
             ),

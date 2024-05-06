@@ -279,7 +279,7 @@ impl Component {
         SettingsDescription::with_fields(vec![
             Field::new(
                 "Comparison".into(),
-                "The comparison to use for the graph. If not set, the current comparison is taken from the timer.".into(),
+                "The comparison to use for the graph. If not specified, the current comparison is used.".into(),
                 self.settings.comparison_override.clone().into(),
             ),
             Field::new(
@@ -299,7 +299,7 @@ impl Component {
             ),
             Field::new(
                 "Flip Graph".into(),
-                "Specifies whether the chart should be flipped vertically. If not set, split times which are ahead of the comparison are displayed below the x-axis and times which are behind are above it. Enabling this settings flips it.".into(),
+                "Specifies whether the chart should be flipped vertically. If not enabled, split times which are ahead of the comparison are displayed below the x-axis and times which are behind are above it. Enabling this settings flips it.".into(),
                 self.settings.flip_graph.into(),
             ),
             Field::new(

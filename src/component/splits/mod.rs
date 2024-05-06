@@ -432,17 +432,17 @@ impl Component {
             ),
             Field::new(
                 "Total Rows".into(),
-                "The total number of rows of segments to show in the list. If set to 0, all the segments are shown. If set to a number lower than the total amount of segments, only a certain window of all the segments is shown. This window can scroll up or down.".into(),
+                "The total number of rows of segments to show in the list. If set to 0, all the segments are shown. If set to a number lower than the total number of segments, only a certain window of all the segments is shown. This window can scroll up or down.".into(),
                 Value::UInt(self.settings.visual_split_count as _),
             ),
             Field::new(
                 "Upcoming Segments".into(),
-                "If there's more segments than rows that are shown, the window showing the segments automatically scrolls up and down when the current segment changes. This number determines the minimum number of future segments to be shown in this scrolling window when it automatically scrolls.".into(),
+                "If there's more segments than rows that are shown, the window showing the segments automatically scrolls up and down when the current segment changes. This number determines the minimum number of future segments to be shown in this scrolling window.".into(),
                 Value::UInt(self.settings.split_preview_count as _),
             ),
             Field::new(
                 "Show Thin Separators".into(),
-                "Specifies whether thin separators should be shown between the individual segments shown by the component.".into(),
+                "Specifies whether thin separators should be shown between the individual segment rows.".into(),
                 self.settings.show_thin_separators.into(),
             ),
             Field::new(
@@ -452,12 +452,12 @@ impl Component {
             ),
             Field::new(
                 "Always Show Last Split".into(),
-                "If not every segment is shown in the scrolling window of segments, then this option determines whether the final segment is always to be shown, as it contains valuable information about the total duration of the chosen comparison, which is often the runner's Personal Best.".into(),
+                "If not every segment is shown in the scrolling window of segments, then this option determines whether the final segment should always be shown, as it contains the total duration of the chosen comparison. This can be valuable information, as it is often the runner's Personal Best.".into(),
                 self.settings.always_show_last_split.into(),
             ),
             Field::new(
                 "Fill with Blank Space".into(),
-                "If there's not enough segments to fill the list, this option allows filling the remaining rows with blank space in order to maintain the number of total rows specified. Otherwise the number of total rows shown is reduced to the actual amount of segments.".into(),
+                "If there's not enough segments to fill the list, this option allows filling the remaining rows with blank space in order to always show the number of total rows specified in the settings. Otherwise, the number of total rows shown is reduced to the actual number of segments.".into(),
                 self.settings.fill_with_blank_space.into(),
             ),
             Field::new(
@@ -482,12 +482,12 @@ impl Component {
             ),
             Field::new(
                 "Delta Time Accuracy".into(),
-                "Specifies the accuracy to use for visualizing columns that contain the amount time you are ahead or behind.".into(),
+                "Specifies the accuracy to use for visualizing columns that contain the amount of time you are ahead or behind.".into(),
                 self.settings.delta_time_accuracy.into(),
             ),
             Field::new(
                 "Drop Delta Decimals When Showing Minutes".into(),
-                "Specifies if the decimals should not be shown anymore when a column that contain the amount of time you are ahead or behind once is above one minute.".into(),
+                "Specifies if the decimals should not be shown anymore when a column that contains the amount of time you are ahead or behind is over a minute.".into(),
                 self.settings.delta_drop_decimals.into(),
             ),
             Field::new(
@@ -497,7 +497,7 @@ impl Component {
             ),
             Field::new(
                 "Columns".into(),
-                "The amount of columns to show in each row. Each column can be configured to show different information. The columns are defined from right to left.".into(),
+                "The number of columns to show in each row. Each column can be configured to show different information. The columns are defined from right to left.".into(),
                 Value::UInt(self.settings.columns.len() as _),
             ),
         ]);
@@ -545,29 +545,29 @@ impl Component {
                         .fields
                         .push(Field::new(
                             "Start With".into(),
-                            "The value that this column starts with for each segment. The update trigger determines when this time is replaced.".into(),
+                            "The value that this column starts with for each segment. The Update Trigger determines when this time is replaced.".into(),
                             column.start_with.into(),
                         ));
                     settings
                         .fields
                         .push(Field::new(
                             "Update With".into(),
-                            "Once a certain condition is met, which is usually being on the split or already having completed the split, the time gets updated with the value specified here.".into(),
+                            "Once a certain condition is met, which is usually being on the segment or having already completed the segment, the time gets updated with the value specified here.".into(),
                             column.update_with.into(),
                     ));
                     settings.fields.push(Field::new(
                         "Update Trigger".into(),
-                        "The condition that needs to be met for the time to get updated with the value specified in the update with field. Before this condition is met, the time is the value specified in the start with field.".into(),
+                        "The condition that needs to be met for the time to get updated with the value specified in the Update With field. Before this condition is met, the time is the value specified in the Start With field.".into(),
                         column.update_trigger.into(),
                     ));
                     settings.fields.push(Field::new(
                         "Comparison".into(),
-                        "The comparison that is being compared against for this column. If not set, the current comparison is taken from the timer.".into(),
+                        "The comparison that is being compared against for this column. If not specified, the current comparison is used.".into(),
                         column.comparison_override.clone().into(),
                     ));
                     settings.fields.push(Field::new(
                         "Timing Method".into(),
-                        "Specifies the timing method to use for this column. If not specified, the current timing method of the timer is used for showing the time.".into(),
+                        "Specifies the timing method to use for this column. If not specified, the current timing method is used.".into(),
                         column.timing_method.into(),
                     ));
                 }

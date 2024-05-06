@@ -170,7 +170,7 @@ impl GeneralSettings {
             ),
             Field::new(
                 "Text".into(),
-                "The color of the text that doesn't specify its own color.".into(),
+                "The color to use for text that doesn't specify its own color.".into(),
                 self.text_color.into(),
             ),
         ])

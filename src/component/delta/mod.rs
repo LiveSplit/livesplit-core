@@ -174,7 +174,7 @@ impl Component {
             ),
             Field::new(
                 "Comparison".into(),
-                "The comparison to use for calculating how far ahead or behind the current attempt is. If not set, the current comparison is taken from the timer.".into(),
+                "The comparison to use for calculating how far ahead or behind the current attempt is. If not specified, the current comparison is used.".into(),
                 self.settings.comparison_override.clone().into(),
             ),
             Field::new(
@@ -189,7 +189,7 @@ impl Component {
             ),
             Field::new(
                 "Drop Decimals".into(),
-                "Specifies if the decimals should not be shown anymore when the visualized delta is above one minute.".into(),
+                "Specifies if the decimals should not be shown anymore when the visualized delta is over a minute.".into(),
                 self.settings.drop_decimals.into(),
             ),
             Field::new(

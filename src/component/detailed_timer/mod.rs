@@ -361,17 +361,17 @@ impl Component {
             ),
             Field::new(
                 "Timing Method".into(),
-                "Specifies the timing method to use. If not specified, the current timing method of the timer is used for showing the time.".into(),
+                "Specifies the timing method to use. If not specified, the current timing method is used.".into(),
                 self.settings.timer.timing_method.into(),
             ),
             Field::new(
                 "Comparison 1".into(),
-                "The first comparison to show the segment time of. If it's not specified, the current comparison is used.".into(),
+                "The first comparison to show the segment time of. If not specified, the current comparison is used.".into(),
                 self.settings.comparison1.clone().into(),
             ),
             Field::new(
                 "Comparison 2".into(),
-                "The second comparison to show the segment time of. If it's not specified, the current comparison is used, unless the first comparison is also None. This is not shown if the second comparison is hidden.".into(),
+                "The second comparison to show the segment time of. If not specified, the current comparison is used, unless the first comparison is also None. This is not shown if the second comparison is hidden.".into(),
                 self.settings.comparison2.clone().into(),
             ),
             Field::new(
@@ -391,17 +391,17 @@ impl Component {
             ),
             Field::new(
                 "Timer Color".into(),
-                "Instead of automatically determining the color for the main timer, based on a how well the current attempt is doing, a specific color to always be used can be provided instead.".into(),
+                "Instead of automatically determining the color for the main timer based on a how well the current attempt is doing, a specific color to always be used can be provided instead.".into(),
                 self.settings.timer.color_override.into(),
             ),
             Field::new(
                 "Show Timer Gradient".into(),
-                "The main timer automatically turns its color into a vertical gradient if this setting is activated. Otherwise the actual color is used instead of a gradient.".into(),
+                "The main timer automatically turns its color into a vertical gradient if this setting is activated. Otherwise, the actual color is used instead of a gradient.".into(),
                 self.settings.timer.show_gradient.into(),
             ),
             Field::new(
                 "Timer Digits Format".into(),
-                "Determines how many digits are to always be shown for the main timer. If the duration is lower than the digits to be shown, they are filled up with zeros.".into(),
+                "Specifies how many digits to show for the main timer. If the duration is lower than the digits to be shown, zeros are shown instead.".into(),
                 self.settings.timer.digits_format.into(),
             ),
             Field::new(
@@ -420,12 +420,12 @@ impl Component {
             ),
             Field::new(
                 "Show Segment Timer Gradient".into(),
-                "The segment timer automatically turns its color into a vertical gradient if this setting is activated. Otherwise the actual color is used instead of a gradient.".into(),
+                "The segment timer automatically turns its color into a vertical gradient if this setting is activated. Otherwise, the actual color is used instead of a gradient.".into(),
                 self.settings.segment_timer.show_gradient.into(),
             ),
             Field::new(
                 "Segment Timer Digits Format".into(),
-                "Determines how many digits are to always be shown for the segment timer. If the duration is lower than the digits to be shown, they are filled up with zeros.".into(),
+                "Specifies how many digits to show for the segment timer. If the duration is lower than the digits to be shown, zeros are shown instead.".into(),
                 self.settings.segment_timer.digits_format.into(),
             ),
             Field::new(

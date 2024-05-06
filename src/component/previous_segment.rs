@@ -265,7 +265,7 @@ impl Component {
             ),
             Field::new(
                 "Comparison".into(),
-                "The comparison to calculate how much time was saved or lost is based on. If not set, the current comparison is taken from the timer.".into(),
+                "The comparison used for calculating how much time was saved or lost. If not specified, the current comparison is used.".into(),
                 self.settings.comparison_override.clone().into(),
             ),
             Field::new(
@@ -280,7 +280,7 @@ impl Component {
             ),
             Field::new(
                 "Drop Decimals".into(),
-                "Specifies whether to drop the decimals from the time when the visualized time is over a minute.".into(),
+                "Specifies whether to drop the decimals from the time when the time shown is over a minute.".into(),
                 self.settings.drop_decimals.into(),
             ),
             Field::new(

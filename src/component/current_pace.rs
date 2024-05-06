@@ -178,7 +178,7 @@ impl Component {
             ),
             Field::new(
                 "Comparison".into(),
-                "The comparison to predict the final time from. If not set, the current comparison is taken from the timer.".into(),
+                "The comparison to predict the final time from. If not specified, the current comparison is used.".into(),
                 self.settings.comparison_override.clone().into(),
             ),
             Field::new(

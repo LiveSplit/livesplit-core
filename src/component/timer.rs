@@ -320,12 +320,12 @@ impl Component {
             ),
             Field::new(
                 "Segment Timer".into(),
-                "Specifies whether to show how much time has passed since the start current segment, rather than how much time has passed since the start of the current attempt.".into(),
+                "Specifies whether to show how much time has passed since the start of the current segment, rather than how much time has passed since the start of the current attempt.".into(),
                 self.settings.is_segment_timer.into(),
             ),
             Field::new(
                 "Timing Method".into(),
-                "Specifies the timing method to use. If not specified, the current timing method of the timer is used for showing the time.".into(),
+                "Specifies the timing method to use. If not specified, the current timing method is used.".into(),
                 self.settings.timing_method.into(),
             ),
             Field::new(
@@ -345,7 +345,7 @@ impl Component {
             ),
             Field::new(
                 "Digits Format".into(),
-                "Determines how many digits are to always be shown. If the duration is lower than the digits to be shown, they are filled up with zeros.".into(),
+                "Specifies how many digits to show. If the duration is lower than the digits to be shown, zeros are shown instead.".into(),
                 self.settings.digits_format.into(),
             ),
             Field::new(

@@ -97,7 +97,7 @@ impl HotkeyConfig {
             ),
             Field::new(
                 "Toggle Timing Method".into(),
-                r#"The key to use for toggling between the "Real Time" and "Game Time" timing methods."#.into(),
+                r#"The hotkey to use for toggling between the "Real Time" and "Game Time" timing methods."#.into(),
                 self.toggle_timing_method.into(),
             ),
         ])

@@ -189,7 +189,7 @@ impl Component {
             ),
             Field::new(
                 "Comparison".into(),
-                "The comparison chosen. If not specified, uses the timer's current comparison."
+                "The comparison for the segment time. If not specified, the current comparison is used."
                     .into(),
                 self.settings.comparison_override.clone().into(),
             ),
