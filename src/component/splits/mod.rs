@@ -76,8 +76,8 @@ pub struct Settings {
     pub always_show_last_split: bool,
     /// If there's not enough segments to fill the list of splits, this option
     /// allows filling the remaining splits with blank space in order to
-    /// maintain the visual split count specified. Otherwise the visual split
-    /// count is reduced to the actual amount of segments.
+    /// maintain the visual split count specified. Otherwise the visual
+    /// split count is reduced to the actual amount of segments.
     pub fill_with_blank_space: bool,
     /// Specifies whether to display each split as two rows, with the segment
     /// name being in one row and the times being in the other.
@@ -425,61 +425,79 @@ impl Component {
     /// component and their current values.
     pub fn settings_description(&self) -> SettingsDescription {
         let mut settings = SettingsDescription::with_fields(vec![
-            Field::new("Background".into(), self.settings.background.into()),
             Field::new(
-                "Total Splits".into(),
+                "Background".into(),
+                "The background shown behind the component. You can choose for the colors to be alternating. In that case each row alternates between the two colors chosen.".into(),
+                self.settings.background.into(),
+            ),
+            Field::new(
+                "Total Rows".into(),
+                "The total number of rows of segments to show in the list. If set to 0, all the segments are shown. If set to a number lower than the total number of segments, only a certain window of all the segments is shown. This window can scroll up or down.".into(),
                 Value::UInt(self.settings.visual_split_count as _),
             ),
             Field::new(
-                "Upcoming Splits".into(),
+                "Upcoming Segments".into(),
+                "If there's more segments than rows that are shown, the window showing the segments automatically scrolls up and down when the current segment changes. This number determines the minimum number of future segments to be shown in this scrolling window.".into(),
                 Value::UInt(self.settings.split_preview_count as _),
             ),
             Field::new(
                 "Show Thin Separators".into(),
+                "Specifies whether thin separators should be shown between the individual segment rows.".into(),
                 self.settings.show_thin_separators.into(),
             ),
             Field::new(
                 "Show Separator Before Last Split".into(),
+                "If the last segment is to always be shown, this determines whether to show a more pronounced separator in front of the last segment, if it is not directly adjacent to the segment shown right before it in the scrolling window.".into(),
                 self.settings.separator_last_split.into(),
             ),
             Field::new(
                 "Always Show Last Split".into(),
+                "If not every segment is shown in the scrolling window of segments, then this option determines whether the final segment should always be shown, as it contains the total duration of the chosen comparison. This can be valuable information, as it is often the runner's Personal Best.".into(),
                 self.settings.always_show_last_split.into(),
             ),
             Field::new(
-                "Fill with Blank Space if Not Enough Splits".into(),
+                "Fill with Blank Space".into(),
+                "If there's not enough segments to fill the list, this option allows filling the remaining rows with blank space in order to always show the number of total rows specified in the settings. Otherwise, the number of total rows shown is reduced to the actual number of segments.".into(),
                 self.settings.fill_with_blank_space.into(),
             ),
             Field::new(
-                "Display 2 Rows".into(),
+                "Show Times Below Segment Name".into(),
+                "Specifies whether to show the times below the segment name. Otherwise the times are shown next to the segment name.".into(),
                 self.settings.display_two_rows.into(),
             ),
             Field::new(
-                "Current Split Gradient".into(),
+                "Current Segment Gradient".into(),
+                "The gradient to show behind the current segment as an indicator of it being the current segment.".into(),
                 self.settings.current_split_gradient.into(),
             ),
             Field::new(
                 "Split Time Accuracy".into(),
+                "Specifies the accuracy to use for visualizing columns that contain split times.".into(),
                 self.settings.split_time_accuracy.into(),
             ),
             Field::new(
                 "Segment Time Accuracy".into(),
+                "Specifies the accuracy to use for visualizing columns that contain segment times.".into(),
                 self.settings.segment_time_accuracy.into(),
             ),
             Field::new(
                 "Delta Time Accuracy".into(),
+                "Specifies the accuracy to use for visualizing columns that contain the amount of time you are ahead or behind.".into(),
                 self.settings.delta_time_accuracy.into(),
             ),
             Field::new(
                 "Drop Delta Decimals When Showing Minutes".into(),
+                "Specifies if the decimals should not be shown anymore when a column that contains the amount of time you are ahead or behind is over a minute.".into(),
                 self.settings.delta_drop_decimals.into(),
             ),
             Field::new(
                 "Show Column Labels".into(),
+                "Specifies whether to show the names of the columns at the top of the list.".into(),
                 self.settings.show_column_labels.into(),
             ),
             Field::new(
                 "Columns".into(),
+                "The number of columns to show in each row. Each column can be configured to show different information. The columns are defined from right to left.".into(),
                 Value::UInt(self.settings.columns.len() as _),
             ),
         ]);
@@ -498,40 +516,58 @@ impl Component {
         for column in &self.settings.columns {
             settings
                 .fields
-                .push(Field::new("Column Name".into(), column.name.clone().into()));
+                .push(Field::new(
+                    "Column Name".into(),
+                    "The name of the column. This is shown at the top of the list if the option to show column labels is enabled.".into(),
+                    column.name.clone().into(),
+                ));
 
             match &column.kind {
                 ColumnKind::Variable(column) => {
                     settings.fields.push(Field::new(
                         "Column Type".into(),
+                        "The type of information this column displays. This can be a time or a custom variable that you have stored in your splits.".into(),
                         settings::ColumnKind::Variable.into(),
                     ));
                     settings.fields.push(Field::new(
                         "Variable Name".into(),
+                        "The name of the custom variable that this column displays.".into(),
                         column.variable_name.clone().into(),
                     ));
                 }
                 ColumnKind::Time(column) => {
                     settings.fields.push(Field::new(
                         "Column Type".into(),
+                        "The type of information this column displays. This can be a time or a custom variable that you have stored in your splits.".into(),
                         settings::ColumnKind::Time.into(),
                     ));
                     settings
                         .fields
-                        .push(Field::new("Start With".into(), column.start_with.into()));
+                        .push(Field::new(
+                            "Start With".into(),
+                            "The value that this column starts with for each segment. The Update Trigger determines when this time is replaced.".into(),
+                            column.start_with.into(),
+                        ));
                     settings
                         .fields
-                        .push(Field::new("Update With".into(), column.update_with.into()));
+                        .push(Field::new(
+                            "Update With".into(),
+                            "Once a certain condition is met, which is usually being on the segment or having already completed the segment, the time gets updated with the value specified here.".into(),
+                            column.update_with.into(),
+                    ));
                     settings.fields.push(Field::new(
                         "Update Trigger".into(),
+                        "The condition that needs to be met for the time to get updated with the value specified in the Update With field. Before this condition is met, the time is the value specified in the Start With field.".into(),
                         column.update_trigger.into(),
                     ));
                     settings.fields.push(Field::new(
                         "Comparison".into(),
+                        "The comparison that is being compared against for this column. If not specified, the current comparison is used.".into(),
                         column.comparison_override.clone().into(),
                     ));
                     settings.fields.push(Field::new(
                         "Timing Method".into(),
+                        "Specifies the timing method to use for this column. If not specified, the current timing method is used.".into(),
                         column.timing_method.into(),
                     ));
                 }

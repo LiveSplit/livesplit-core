@@ -167,18 +167,36 @@ impl Component {
     /// component and their current values.
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
-            Field::new("Background".into(), self.settings.background.into()),
+            Field::new(
+                "Background".into(),
+                "The background shown behind the component.".into(),
+                self.settings.background.into(),
+            ),
             Field::new(
                 "Comparison".into(),
+                "The comparison to use for calculating how far ahead or behind the current attempt is. If not specified, the current comparison is used.".into(),
                 self.settings.comparison_override.clone().into(),
             ),
             Field::new(
                 "Display 2 Rows".into(),
+                "Specifies whether to display the name of the comparison and the delta in two separate rows.".into(),
                 self.settings.display_two_rows.into(),
             ),
-            Field::new("Label Color".into(), self.settings.label_color.into()),
-            Field::new("Drop Decimals".into(), self.settings.drop_decimals.into()),
-            Field::new("Accuracy".into(), self.settings.accuracy.into()),
+            Field::new(
+                "Label Color".into(),
+                "The color of the comparison name. If not specified, the color is taken from the layout.".into(),
+                self.settings.label_color.into()
+            ),
+            Field::new(
+                "Drop Decimals".into(),
+                "Specifies if the decimals should not be shown anymore when the visualized delta is over a minute.".into(),
+                self.settings.drop_decimals.into(),
+            ),
+            Field::new(
+                "Accuracy".into(),
+                "The accuracy of the delta shown.".into(),
+                self.settings.accuracy.into()
+            ),
         ])
     }
 

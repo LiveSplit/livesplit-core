@@ -100,8 +100,16 @@ impl Component {
     /// component and their current values.
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
-            Field::new("Background".into(), self.settings.background.into()),
-            Field::new("Size".into(), u64::from(self.settings.size).into()),
+            Field::new(
+                "Background".into(),
+                "The background shown behind the component.".into(),
+                self.settings.background.into(),
+            ),
+            Field::new(
+                "Size".into(),
+                "The size of the component.".into(),
+                u64::from(self.settings.size).into(),
+            ),
         ])
     }
 

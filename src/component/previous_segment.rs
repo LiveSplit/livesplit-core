@@ -258,20 +258,39 @@ impl Component {
     /// component and their current values.
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
-            Field::new("Background".into(), self.settings.background.into()),
+            Field::new(
+                "Background".into(),
+                "The background shown behind the component.".into(),
+                self.settings.background.into(),
+            ),
             Field::new(
                 "Comparison".into(),
+                "The comparison used for calculating how much time was saved or lost. If not specified, the current comparison is used.".into(),
                 self.settings.comparison_override.clone().into(),
             ),
             Field::new(
                 "Display 2 Rows".into(),
+                "Specifies whether to display the name of the component and how much time was saved or lost in two separate rows.".into(),
                 self.settings.display_two_rows.into(),
             ),
-            Field::new("Label Color".into(), self.settings.label_color.into()),
-            Field::new("Drop Decimals".into(), self.settings.drop_decimals.into()),
-            Field::new("Accuracy".into(), self.settings.accuracy.into()),
+            Field::new(
+                "Label Color".into(),
+                "The color of the component's name. If not specified, the color is taken from the layout.".into(),
+                self.settings.label_color.into(),
+            ),
+            Field::new(
+                "Drop Decimals".into(),
+                "Specifies whether to drop the decimals from the time when the time shown is over a minute.".into(),
+                self.settings.drop_decimals.into(),
+            ),
+            Field::new(
+                "Accuracy".into(),
+                "The accuracy of the time shown.".into(),
+                self.settings.accuracy.into(),
+            ),
             Field::new(
                 "Show Possible Time Save".into(),
+                "Specifies whether to show how much time could've been saved for the previous segment in addition to the time saved or lost.".into(),
                 self.settings.show_possible_time_save.into(),
             ),
         ])

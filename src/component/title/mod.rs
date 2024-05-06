@@ -354,33 +354,75 @@ impl Component {
     /// component and their current values.
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
-            Field::new("Background".into(), self.settings.background.into()),
-            Field::new("Text Color".into(), self.settings.text_color.into()),
-            Field::new("Show Game Name".into(), self.settings.show_game_name.into()),
+            Field::new(
+                "Background".into(),
+                "The background shown behind the component.".into(),
+                self.settings.background.into(),
+            ),
+            Field::new(
+                "Text Color".into(),
+                "The color of the title text. If no color is specified, the color is taken from the layout."
+                    .into(),
+                self.settings.text_color.into(),
+            ),
+            Field::new(
+                "Show Game Name".into(),
+                "Specifies whether the game name should be part of the title that is being shown."
+                    .into(),
+                self.settings.show_game_name.into(),
+            ),
             Field::new(
                 "Show Category Name".into(),
+                "Specifies whether the category name should be part of the title that is being shown."
+                    .into(),
                 self.settings.show_category_name.into(),
             ),
             Field::new(
                 "Show Finished Runs Count".into(),
+                "Specifies whether the number of successfully finished attempts should be shown."
+                    .into(),
                 self.settings.show_finished_runs_count.into(),
             ),
             Field::new(
                 "Show Attempt Count".into(),
+                "Specifies whether the total number of attempts should be shown.".into(),
                 self.settings.show_attempt_count.into(),
             ),
-            Field::new("Text Alignment".into(), self.settings.text_alignment.into()),
+            Field::new(
+                "Text Alignment".into(),
+                "Specifies the alignment of the title.".into(),
+                self.settings.text_alignment.into(),
+            ),
             Field::new(
                 "Display Text as Single Line".into(),
+                "Specifies if the title should be shown as a single line, instead of being separated into one line for the game name and one for the category name."
+                    .into(),
                 self.settings.display_as_single_line.into(),
             ),
             Field::new(
                 "Display Game Icon".into(),
+                "Specifies whether the game's icon should be shown, if there is a game icon stored in the splits."
+                    .into(),
                 self.settings.display_game_icon.into(),
             ),
-            Field::new("Show Region".into(), self.settings.show_region.into()),
-            Field::new("Show Platform".into(), self.settings.show_platform.into()),
-            Field::new("Show Variables".into(), self.settings.show_variables.into()),
+            Field::new(
+                "Show Region".into(),
+                "The category name can be extended with additional information. This extends it with the game's region, if it is provided in the variables tab of the splits editor."
+                    .into(),
+                self.settings.show_region.into(),
+            ),
+            Field::new(
+                "Show Platform".into(),
+                "The category name can be extended with additional information. This extends it with the platform the game is being played on, if it is provided in the variables tab of the splits editor."
+                    .into(),
+                self.settings.show_platform.into(),
+            ),
+            Field::new(
+                "Show Variables".into(),
+                "The category name can be extended with additional information. This extends it with additional variables provided in the variables tab of the splits editor. This refers to speedrun.com variables, not custom variables."
+                    .into(),
+                self.settings.show_variables.into(),
+            ),
         ])
     }
 

@@ -270,44 +270,82 @@ impl Component {
     /// Accesses a generic description of the settings available for this
     /// component and their current values.
     pub fn settings_description(&self) -> SettingsDescription {
-        let (first, second, is_variable, is_split, left_color, right_color) =
-            match &self.settings.text {
-                Text::Center(text) => (
-                    Field::new("Text".into(), text.to_string().into()),
-                    None,
-                    false,
-                    false,
-                    "Text Color",
-                    "",
+        let (
+            first,
+            second,
+            is_variable,
+            is_split,
+            (left_color, left_color_text),
+            (right_color, right_color_text),
+        ) = match &self.settings.text {
+            Text::Center(text) => (
+                Field::new(
+                    "Text".into(),
+                    "Specifies the text to display in the center.".into(),
+                    text.to_string().into(),
                 ),
-                Text::Split(left, right) => (
-                    Field::new("Left".into(), left.to_string().into()),
-                    Some(Field::new("Right".into(), right.to_string().into())),
-                    false,
-                    true,
-                    "Left Color",
-                    "Right Color",
+                None,
+                false,
+                false,
+                ("Text Color", "The color of the text."),
+                ("", ""),
+            ),
+            Text::Split(left, right) => (
+                Field::new(
+                    "Left".into(),
+                    "Specifies the text to display on the left.".into(),
+                    left.to_string().into(),
                 ),
-                Text::Variable(var_name, is_split) => (
-                    Field::new("Variable".into(), var_name.to_string().into()),
-                    None,
-                    true,
-                    *is_split,
-                    if *is_split {
-                        "Name Color"
-                    } else {
-                        "Value Color"
-                    },
-                    "Value Color",
+                Some(Field::new(
+                    "Right".into(),
+                    "Specifies the text to display on the right.".into(),
+                    right.to_string().into(),
+                )),
+                false,
+                true,
+                ("Left Color", "The color of the text on the left."),
+                ("Right Color", "The color of the text on the right."),
+            ),
+            Text::Variable(var_name, is_split) => (
+                Field::new(
+                    "Variable".into(),
+                    "Specifies the name of the custom variable to display.".into(),
+                    var_name.to_string().into(),
                 ),
-            };
+                None,
+                true,
+                *is_split,
+                if *is_split {
+                    ("Name Color", "The color of the variable name.")
+                } else {
+                    ("Value Color", "The color of the variable value.")
+                },
+                ("Value Color", "The color of the variable value."),
+            ),
+        };
 
         let mut fields = vec![
-            Field::new("Background".into(), self.settings.background.into()),
-            Field::new("Use Variable".into(), is_variable.into()),
-            Field::new("Split".into(), is_split.into()),
+            Field::new(
+                "Background".into(),
+                "The background shown behind the component.".into(),
+                self.settings.background.into(),
+            ),
+            Field::new(
+                "Use Variable".into(),
+                "Specifies whether to use a custom variable to display a dynamic value. Custom variables can be specified in the splits editor and provided automatically by auto splitters.".into(),
+                is_variable.into(),
+            ),
+            Field::new(
+                "Split".into(),
+                "Specifies whether to split the text into a left and right part. If this is not the case then only a single centered text is displayed.".into(),
+                is_split.into(),
+            ),
             first,
-            Field::new(left_color.into(), self.settings.left_center_color.into()),
+            Field::new(
+                left_color.into(),
+                left_color_text.into(),
+                self.settings.left_center_color.into(),
+            ),
         ];
 
         if let Some(second) = second {
@@ -317,10 +355,12 @@ impl Component {
         if is_split {
             fields.push(Field::new(
                 right_color.into(),
+                right_color_text.into(),
                 self.settings.right_color.into(),
             ));
             fields.push(Field::new(
                 "Display 2 Rows".into(),
+                "Specifies whether to display the left and right text in two separate rows.".into(),
                 self.settings.display_two_rows.into(),
             ));
         }

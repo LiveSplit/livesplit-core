@@ -103,7 +103,7 @@ pub struct Settings {
     pub digits_format: DigitsFormat,
     /// The accuracy of the time shown.
     pub accuracy: Accuracy,
-    /// Specifies whether to show the how much time has passed since the start
+    /// Specifies whether to show how much time has passed since the start
     /// current segment, rather than how much time has passed since the start of
     /// the current attempt.
     pub is_segment_timer: bool,
@@ -313,17 +313,46 @@ impl Component {
     /// component and their current values.
     pub fn settings_description(&self) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
-            Field::new("Background".into(), self.settings.background.into()),
+            Field::new(
+                "Background".into(),
+                "The background shown behind the component. It is also possible to apply the color associated with the time ahead or behind as the background color.".into(),
+                self.settings.background.into(),
+            ),
             Field::new(
                 "Segment Timer".into(),
+                "Specifies whether to show how much time has passed since the start of the current segment, rather than how much time has passed since the start of the current attempt.".into(),
                 self.settings.is_segment_timer.into(),
             ),
-            Field::new("Timing Method".into(), self.settings.timing_method.into()),
-            Field::new("Height".into(), u64::from(self.settings.height).into()),
-            Field::new("Text Color".into(), self.settings.color_override.into()),
-            Field::new("Show Gradient".into(), self.settings.show_gradient.into()),
-            Field::new("Digits Format".into(), self.settings.digits_format.into()),
-            Field::new("Accuracy".into(), self.settings.accuracy.into()),
+            Field::new(
+                "Timing Method".into(),
+                "Specifies the timing method to use. If not specified, the current timing method is used.".into(),
+                self.settings.timing_method.into(),
+            ),
+            Field::new(
+                "Height".into(),
+                "The height of the timer.".into(),
+                u64::from(self.settings.height).into(),
+            ),
+            Field::new(
+                "Text Color".into(),
+                "The color of the time shown. If not specified, the color is automatically chosen based on how well the current attempt is going. Those colors can be specified in the general settings for the layout.".into(),
+                self.settings.color_override.into(),
+            ),
+            Field::new(
+                "Show Gradient".into(),
+                "Determines whether to display the timer's color as a gradient.".into(),
+                self.settings.show_gradient.into(),
+            ),
+            Field::new(
+                "Digits Format".into(),
+                "Specifies how many digits to show. If the duration is lower than the digits to be shown, zeros are shown instead.".into(),
+                self.settings.digits_format.into(),
+            ),
+            Field::new(
+                "Accuracy".into(),
+                "The accuracy of the time shown.".into(),
+                self.settings.accuracy.into(),
+            ),
         ])
     }
 
