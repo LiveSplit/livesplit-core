@@ -3,6 +3,7 @@
 pub(crate) mod ascii_char;
 pub(crate) mod ascii_set;
 pub(crate) mod byte_parsing;
+pub(crate) mod caseless;
 mod clear_vec;
 #[cfg(any(feature = "image-shrinking", feature = "svg-rendering"))]
 pub(crate) mod image;

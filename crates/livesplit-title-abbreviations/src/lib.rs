@@ -9,6 +9,7 @@
     // missing_docs,
     rust_2018_idioms
 )]
+#![forbid(clippy::incompatible_msrv)]
 #![no_std]
 
 extern crate alloc;

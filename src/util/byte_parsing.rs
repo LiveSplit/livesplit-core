@@ -22,7 +22,7 @@ pub mod big_endian {
             u16::from_be_bytes(self.0)
         }
 
-        #[cfg(any(windows, feature = "default-text-engine"))]
+        #[cfg(any(all(windows, feature = "std"), feature = "default-text-engine"))]
         pub const fn usize(self) -> usize {
             self.get() as usize
         }
@@ -85,12 +85,12 @@ pub fn strip_slice<'a, T: AnyBitPattern>(cursor: &mut &'a [u8], n: usize) -> Opt
     Some(bytemuck::cast_slice(before))
 }
 
-#[cfg(any(windows, feature = "default-text-engine"))]
+#[cfg(any(all(windows, feature = "std"), feature = "default-text-engine"))]
 pub fn pod<P: AnyBitPattern>(bytes: &[u8]) -> Option<&P> {
     Some(bytemuck::from_bytes(bytes.get(..mem::size_of::<P>())?))
 }
 
-#[cfg(any(windows, feature = "default-text-engine"))]
+#[cfg(any(all(windows, feature = "std"), feature = "default-text-engine"))]
 pub fn slice<P: AnyBitPattern>(bytes: &[u8], n: usize) -> Option<&[P]> {
     Some(bytemuck::cast_slice(bytes.get(..n * mem::size_of::<P>())?))
 }

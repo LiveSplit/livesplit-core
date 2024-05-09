@@ -8,6 +8,7 @@ license = "MIT OR Apache-2.0"
 description = "livesplit-hotkey provides cross-platform global hotkey hooks."
 keywords = ["speedrun", "timer", "livesplit", "hotkey", "keyboard"]
 edition = "2021"
+rust-version = "1.73"
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.52.0", features = [

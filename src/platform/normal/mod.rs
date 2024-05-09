@@ -106,6 +106,7 @@ cfg_if::cfg_if! {
         use core::{mem::MaybeUninit, ops::Sub};
 
         #[derive(Copy, Clone, PartialOrd, PartialEq, Ord, Eq, Debug)]
+        #[repr(transparent)]
         pub struct Instant(Duration);
 
         impl Instant {
@@ -156,6 +157,7 @@ cfg_if::cfg_if! {
         }
 
         #[derive(Copy, Clone, PartialOrd, PartialEq, Ord, Eq, Debug)]
+        #[repr(transparent)]
         pub struct Instant(u64);
 
         impl Instant {
@@ -187,7 +189,37 @@ cfg_if::cfg_if! {
             }
         }
     } else {
-        pub use time::Instant;
+        use core::ops::Sub;
+
+        #[derive(Copy, Clone, PartialOrd, PartialEq, Ord, Eq, Debug)]
+        #[repr(transparent)]
+        pub struct Instant(std::time::Instant);
+
+        impl Instant {
+            /// Accesses the current point in time.
+            #[inline]
+            pub fn now() -> Self {
+                Self(std::time::Instant::now())
+            }
+        }
+
+        impl Sub<Duration> for Instant {
+            type Output = Instant;
+
+            #[inline]
+            fn sub(self, rhs: Duration) -> Instant {
+                Self(time::ext::InstantExt::sub_signed(self.0, rhs))
+            }
+        }
+
+        impl Sub for Instant {
+            type Output = Duration;
+
+            #[inline]
+            fn sub(self, rhs: Instant) -> Duration {
+                time::ext::InstantExt::signed_duration_since(&self.0, rhs.0)
+            }
+        }
     }
 }
 

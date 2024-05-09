@@ -6,8 +6,12 @@
 
 use super::{ComparisonError, ComparisonResult, LinkedLayout};
 use crate::{
-    comparison, platform::prelude::*, settings::Image, timing::ParseError as ParseTimeSpanError,
-    util::PopulateString, Run, Segment, Time, TimeSpan, TimingMethod,
+    comparison,
+    platform::prelude::*,
+    settings::Image,
+    timing::ParseError as ParseTimeSpanError,
+    util::{caseless, PopulateString},
+    Run, Segment, Time, TimeSpan, TimingMethod,
 };
 use core::{mem::swap, num::ParseIntError};
 use snafu::{OptionExt, ResultExt};
@@ -758,7 +762,7 @@ impl Editor {
             if let Some((segment_index, my_segment)) = remaining_segments
                 .iter_mut()
                 .enumerate()
-                .find(|(_, s)| unicase::eq(segment.name(), s.name()))
+                .find(|(_, s)| caseless::eq(segment.name(), s.name()))
             {
                 *my_segment.comparison_mut(comparison) = segment.personal_best_split_time();
                 remaining_segments = &mut remaining_segments[segment_index + 1..];

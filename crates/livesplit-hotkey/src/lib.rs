@@ -6,6 +6,7 @@
     missing_docs,
     rust_2018_idioms
 )]
+#![forbid(clippy::incompatible_msrv)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 //! `livesplit-hotkey` is a crate that allows listening to hotkeys even when the
