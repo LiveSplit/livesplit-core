@@ -2,11 +2,11 @@
 //! then be attached anywhere in the DOM with any desired positioning and size.
 
 use bytemuck::cast;
+use hashbrown::HashMap;
 use js_sys::{Array, JsString, Uint8Array};
 use std::{
     array,
     cell::{Cell, RefCell},
-    collections::HashMap,
     f64::consts::TAU,
     ops::Deref,
     rc::Rc,
@@ -597,7 +597,19 @@ impl Renderer {
                 match background {
                     Background::Shader(shader) => {
                         set_fill_style(shader, ctx, &mut self.cache, str_buf, &*scene.rectangle());
-                        ctx.fill_rect(0.0, 0.0, width, height);
+                        // Instead of scaling the rectangle we need to use a
+                        // transform so that the gradient's endpoints are
+                        // correct.
+                        set_transform(
+                            ctx,
+                            &Transform {
+                                x: 0.0,
+                                y: 0.0,
+                                scale_x: width as _,
+                                scale_y: height as _,
+                            },
+                        );
+                        ctx.fill_rect(0.0, 0.0, 1.0, 1.0);
                     }
                     Background::Image(background_image, transform) => {
                         let image = background_image.image.0.borrow();

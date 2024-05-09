@@ -11,6 +11,7 @@ use snafu::{ensure, OptionExt, ResultExt};
 
 /// A `TimeSpan` represents a certain span of time.
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
+#[repr(transparent)]
 pub struct TimeSpan(Duration);
 
 impl TimeSpan {

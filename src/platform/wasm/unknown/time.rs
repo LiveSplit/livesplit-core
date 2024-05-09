@@ -28,6 +28,7 @@ extern "C" {
 }
 
 #[derive(Copy, Clone, PartialOrd, PartialEq, Ord, Eq, Debug)]
+#[repr(transparent)]
 pub struct Instant(Duration);
 
 impl Instant {

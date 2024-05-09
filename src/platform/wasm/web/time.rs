@@ -7,6 +7,7 @@ use web_sys::Performance;
 pub use time::{Duration, OffsetDateTime as DateTime};
 
 #[derive(Copy, Clone, PartialOrd, PartialEq, Ord, Eq, Debug)]
+#[repr(transparent)]
 pub struct Instant(Duration);
 
 thread_local! {

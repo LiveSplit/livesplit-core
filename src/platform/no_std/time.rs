@@ -38,6 +38,7 @@ pub fn register_clock(clock: impl Clock) {
 }
 
 #[derive(Copy, Clone, PartialOrd, PartialEq, Ord, Eq, Debug)]
+#[repr(transparent)]
 pub struct Instant(Duration);
 
 impl Instant {

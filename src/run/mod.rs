@@ -39,7 +39,7 @@ use crate::{
     comparison::{default_generators, personal_best, ComparisonGenerator, RACE_COMPARISON_PREFIX},
     platform::prelude::*,
     settings::Image,
-    util::PopulateString,
+    util::{caseless::matches_ascii_key, PopulateString},
     AtomicDateTime, Time, TimeSpan, TimingMethod,
 };
 use alloc::borrow::Cow;
@@ -907,9 +907,9 @@ impl fmt::Display for ExtendedCategoryName<'_> {
             for (name, value) in self.run.metadata.speedrun_com_variables() {
                 let name = name.trim_end_matches('?');
 
-                if unicase::eq(value.as_str(), "yes") {
+                if matches_ascii_key("yes", value) {
                     push(&[name])?;
-                } else if unicase::eq(value.as_str(), "no") {
+                } else if matches_ascii_key("no", value) {
                     push(&["No ", value])?;
                 } else {
                     push(&[value])?;
