@@ -484,14 +484,12 @@ export class {class_name_ref} {{"#,
                     "{}",
                     r#"
     readWith<T>(action: (timer: TimerRef) => T): T {
-        return this.read().with(function (lock) {
-            return action(lock.timer());
-        });
+        using lock = this.read();
+        return action(lock.timer());
     }
     writeWith<T>(action: (timer: TimerRefMut) => T): T {
-        return this.write().with(function (lock) {
-            return action(lock.timer());
-        });
+        using lock = this.write();
+        return action(lock.timer());
     }"#
                 )?;
             } else {
@@ -503,17 +501,15 @@ export class {class_name_ref} {{"#,
      * @param {function(TimerRef)} action
      */
     readWith(action) {
-        return this.read().with(function (lock) {
-            return action(lock.timer());
-        });
+        using lock = this.read();
+        return action(lock.timer());
     }
     /**
      * @param {function(TimerRefMut)} action
      */
     writeWith(action) {
-        return this.write().with(function (lock) {
-            return action(lock.timer());
-        });
+        using lock = this.write();
+        return action(lock.timer());
     }"#
                 )?;
             }
@@ -758,51 +754,13 @@ export class {class_name_ref_mut} extends {class_name_ref} {{"#,
         write!(
             writer,
             r#"
-export class {class_name} extends {class_name_ref_mut} {{"#,
-        )?;
-
-        if type_script {
-            write!(
-                writer,
-                r#"
-    /**
-     * Allows for scoped usage of the object. The object is guaranteed to get
-     * disposed once this function returns. You are free to dispose the object
-     * early yourself anywhere within the scope. The scope's return value gets
-     * carried to the outside of this function.
-     */
-    with<T>(closure: (obj: {class_name}) => T): T {{"#
-            )?;
-        } else {
-            write!(
-                writer,
-                r#"
-    /**
-     * Allows for scoped usage of the object. The object is guaranteed to get
-     * disposed once this function returns. You are free to dispose the object
-     * early yourself anywhere within the scope. The scope's return value gets
-     * carried to the outside of this function.
-     * @param {{function({class_name})}} closure
-     */
-    with(closure) {{"#
-            )?;
-        }
-
-        write!(
-            writer,
-            r#"
-        try {{
-            return closure(this);
-        }} finally {{
-            this.dispose();
-        }}
-    }}
+export class {class_name} extends {class_name_ref_mut} {{
     /**
      * Disposes the object, allowing it to clean up all of its memory. You need
      * to call this for every object that you don't use anymore and hasn't
      * already been disposed.
      */
-    dispose() {{
+    [Symbol.dispose]() {{
         if (this.ptr != 0) {{"#
         )?;
 
