@@ -566,11 +566,25 @@ impl Renderer {
 
         let ratio = self.allocator.window.device_pixel_ratio();
         let bounding_rect = self.canvas_bottom.get_bounding_client_rect();
+        let [bounding_width, bounding_height] = [bounding_rect.width(), bounding_rect.height()];
 
-        let (width, height) = (
-            (ratio * bounding_rect.width()).round(),
-            (ratio * bounding_rect.height()).round(),
-        );
+        // If the width or height is 0, the element likely isn't mounted into
+        // the DOM. This usually isn't a problem, but if we end up resizing the
+        // layout, we would resize it based on a size of 0, which would break
+        // the entire layout. This happened here:
+        //
+        // https://github.com/LiveSplit/LiveSplitOne/issues/881
+        //
+        // Rendering the layout with a size of 0 is also a waste of time, so
+        // this ends up benefiting us in multiple ways.
+        if bounding_width == 0.0 || bounding_height == 0.0 {
+            return None;
+        }
+
+        let [width, height] = [
+            (ratio * bounding_width).round(),
+            (ratio * bounding_height).round(),
+        ];
 
         if (self.canvas_bottom.width(), self.canvas_bottom.height()) != (width as _, height as _) {
             self.canvas_bottom.set_width(width as _);
