@@ -30,6 +30,8 @@ pub struct LayoutState {
     pub separators_color: Color,
     /// The text color to use for text that doesn't specify its own color.
     pub text_color: Color,
+    /// Ignore Mouse While Running and Not In Focus
+    pub mouse_pass_through_while_running: bool,
 }
 
 #[cfg(feature = "std")]
