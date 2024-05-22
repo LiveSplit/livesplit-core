@@ -50,6 +50,8 @@ pub struct GeneralSettings {
     pub separators_color: Color,
     /// The text color to use for text that doesn't specify its own color.
     pub text_color: Color,
+    /// Ignore Mouse While Running and Not In Focus
+    pub mouse_pass_through_while_running: bool,
 }
 
 impl Default for GeneralSettings {
@@ -73,6 +75,7 @@ impl Default for GeneralSettings {
             thin_separators_color: Color::hsla(0.0, 0.0, 1.0, 0.09),
             separators_color: Color::hsla(0.0, 0.0, 1.0, 0.35),
             text_color: Color::hsla(0.0, 0.0, 1.0, 1.0),
+            mouse_pass_through_while_running: false,
         }
     }
 }
@@ -173,6 +176,11 @@ impl GeneralSettings {
                 "The color to use for text that doesn't specify its own color.".into(),
                 self.text_color.into(),
             ),
+            Field::new(
+                "Running Ignore Mouse".into(),
+                "Ignore Mouse While Running and Not In Focus".into(),
+                self.mouse_pass_through_while_running.into(),
+            ),
         ])
     }
 
@@ -201,6 +209,7 @@ impl GeneralSettings {
             13 => self.thin_separators_color = value.into(),
             14 => self.separators_color = value.into(),
             15 => self.text_color = value.into(),
+            16 => self.mouse_pass_through_while_running = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }
