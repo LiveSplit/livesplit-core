@@ -558,11 +558,11 @@ use crate::{
 };
 pub use livesplit_auto_splitting::{settings, wasi_path};
 use livesplit_auto_splitting::{
-    AutoSplitter, Config, CreationError, InterruptHandle, LogLevel, Timer as AutoSplitTimer,
-    TimerState,
+    AutoSplitter, CompiledAutoSplitter, Config, CreationError, InterruptHandle, LogLevel,
+    Timer as AutoSplitTimer, TimerState,
 };
 use snafu::Snafu;
-use std::{fmt, fs, io, path::PathBuf, thread, time::Duration};
+use std::{cell::RefCell, fmt, fs, io, path::PathBuf, thread, time::Duration};
 use tokio::{
     runtime,
     sync::watch,
@@ -598,6 +598,7 @@ pub struct Runtime<T> {
     interrupt_receiver: watch::Receiver<Option<InterruptHandle>>,
     auto_splitter: watch::Sender<Option<AutoSplitter<Timer<T>>>>,
     runtime: livesplit_auto_splitting::Runtime,
+    compiled_auto_splitter: RefCell<Option<CompiledAutoSplitter>>,
 }
 
 impl<T> Drop for Runtime<T> {
@@ -652,6 +653,7 @@ impl<T: event::CommandSink + TimerQuery + Send + 'static> Runtime<T> {
             auto_splitter: sender,
             // TODO: unwrap?
             runtime: livesplit_auto_splitting::Runtime::new(Config::default()).unwrap(),
+            compiled_auto_splitter: RefCell::new(None),
         }
     }
 
@@ -659,10 +661,22 @@ impl<T: event::CommandSink + TimerQuery + Send + 'static> Runtime<T> {
     pub fn load(&self, path: PathBuf, timer: T) -> Result<(), Error> {
         let data = fs::read(path).map_err(|e| Error::ReadFileFailed { source: e })?;
 
-        let auto_splitter = self
+        let compiled_auto_splitter = self
             .runtime
             .compile(&data)
-            .map_err(|e| Error::LoadFailed { source: e })?
+            .map_err(|e| Error::LoadFailed { source: e })?;
+        self.instantiate(&compiled_auto_splitter, timer)?;
+        *self.compiled_auto_splitter.borrow_mut() = Some(compiled_auto_splitter);
+        Ok(())
+    }
+
+    /// Instantiates the compiled auto splitter.
+    fn instantiate(
+        &self,
+        compiled_auto_splitter: &CompiledAutoSplitter,
+        timer: T,
+    ) -> Result<(), Error> {
+        let auto_splitter = compiled_auto_splitter
             .instantiate(Timer(timer), None, None)
             .map_err(|e| Error::LoadFailed { source: e })?;
 
@@ -678,6 +692,15 @@ impl<T: event::CommandSink + TimerQuery + Send + 'static> Runtime<T> {
         self.auto_splitter
             .send(None)
             .map_err(|_| Error::ThreadStopped)
+    }
+
+    /// Reloads the auto splitter without re-compiling.
+    pub fn reload(&self, timer: T) -> Result<(), Error> {
+        self.unload()?;
+        if let Some(compiled_auto_splitter) = self.compiled_auto_splitter.borrow().as_ref() {
+            self.instantiate(compiled_auto_splitter, timer)?;
+        }
+        Ok(())
     }
 
     /// Accesses a copy of the currently stored settings. The auto splitter can
