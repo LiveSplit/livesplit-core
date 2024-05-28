@@ -66,6 +66,7 @@ pub mod analysis;
 pub mod auto_splitting;
 pub mod comparison;
 pub mod component;
+pub mod event;
 #[cfg(feature = "std")]
 mod hotkey_config;
 #[cfg(feature = "std")]

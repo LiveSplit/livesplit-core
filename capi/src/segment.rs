@@ -11,7 +11,7 @@ pub type OwnedSegment = Box<Segment>;
 
 /// Creates a new Segment with the name given.
 #[no_mangle]
-pub unsafe extern "C" fn Segment_new(name: &c_char) -> OwnedSegment {
+pub unsafe extern "C" fn Segment_new(name: *const c_char) -> OwnedSegment {
     Box::new(Segment::new(str(name)))
 }
 

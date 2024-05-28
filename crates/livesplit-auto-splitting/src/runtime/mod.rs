@@ -79,7 +79,7 @@ slotmap::new_key_type! {
     struct SettingValueKey;
 }
 
-pub struct Context<T: Timer> {
+pub struct Context<T> {
     processes: SlotMap<ProcessKey, Process>,
     settings_maps: SlotMap<SettingsMapKey, settings::Map>,
     settings_lists: SlotMap<SettingsListKey, settings::List>,
@@ -210,7 +210,7 @@ struct SharedData {
     tick_rate: AtomicU64,
 }
 
-struct ExclusiveData<T: Timer> {
+struct ExclusiveData<T> {
     trapped: bool,
     store: Store<Context<T>>,
     update: TypedFunc<(), ()>,
@@ -224,7 +224,7 @@ struct ExclusiveData<T: Timer> {
 /// available on the auto splitter are generally thread-safe and don't block.
 /// This allows other threads to access and modify information such as settings
 /// without needing to worry that those threads get blocked.
-pub struct AutoSplitter<T: Timer> {
+pub struct AutoSplitter<T> {
     exclusive_data: Mutex<ExclusiveData<T>>,
     engine: Engine,
     settings_widgets: ArcSwap<Vec<settings::Widget>>,

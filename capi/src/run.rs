@@ -234,6 +234,12 @@ pub extern "C" fn Run_segment(this: &Run, index: usize) -> &Segment {
     this.segment(index)
 }
 
+/// Returns the amount of segments in this Run.
+#[no_mangle]
+pub extern "C" fn Run_segments_len(this: &Run) -> usize {
+    this.segments().len()
+}
+
 /// Returns the amount attempt history elements are stored in this Run.
 #[no_mangle]
 pub extern "C" fn Run_attempt_history_len(this: &Run) -> usize {

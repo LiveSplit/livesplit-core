@@ -542,8 +542,9 @@
 //! - There is no threading.
 
 use crate::{
+    event::{self, TimerQuery},
     platform::Arc,
-    timing::{SharedTimer, TimerPhase},
+    timing::TimerPhase,
 };
 pub use livesplit_auto_splitting::{settings, wasi_path};
 use livesplit_auto_splitting::{
@@ -582,13 +583,13 @@ pub enum Error {
 
 /// An auto splitter runtime that allows using an auto splitter provided as a
 /// WebAssembly module to control a timer.
-pub struct Runtime {
+pub struct Runtime<T> {
     interrupt_receiver: watch::Receiver<Option<InterruptHandle>>,
-    auto_splitter: watch::Sender<Option<AutoSplitter<Timer>>>,
+    auto_splitter: watch::Sender<Option<AutoSplitter<Timer<T>>>>,
     runtime: livesplit_auto_splitting::Runtime,
 }
 
-impl Drop for Runtime {
+impl<T> Drop for Runtime<T> {
     fn drop(&mut self) {
         if let Some(handle) = &*self.interrupt_receiver.borrow() {
             handle.interrupt();
@@ -596,13 +597,13 @@ impl Drop for Runtime {
     }
 }
 
-impl Default for Runtime {
+impl<T: event::Sink + TimerQuery + Send + 'static> Default for Runtime<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl Runtime {
+impl<T: event::Sink + TimerQuery + Send + 'static> Runtime<T> {
     /// Starts the runtime. Doesn't actually load an auto splitter until
     /// [`load`][Runtime::load] is called.
     pub fn new() -> Self {
@@ -644,7 +645,7 @@ impl Runtime {
     }
 
     /// Attempts to load a wasm file containing an auto splitter module.
-    pub fn load(&self, path: PathBuf, timer: SharedTimer) -> Result<(), Error> {
+    pub fn load(&self, path: PathBuf, timer: T) -> Result<(), Error> {
         let data = fs::read(path).map_err(|e| Error::ReadFileFailed { source: e })?;
 
         let auto_splitter = self
@@ -716,11 +717,11 @@ impl Runtime {
 
 // This newtype is required because [`SharedTimer`](crate::timing::SharedTimer)
 // is an Arc<RwLock<T>>, so we can't implement the trait directly on it.
-struct Timer(SharedTimer);
+struct Timer<E>(E);
 
-impl AutoSplitTimer for Timer {
+impl<E: event::Sink + TimerQuery> AutoSplitTimer for Timer<E> {
     fn state(&self) -> TimerState {
-        match self.0.read().unwrap().current_phase() {
+        match self.0.current_phase() {
             TimerPhase::NotRunning => TimerState::NotRunning,
             TimerPhase::Running => TimerState::Running,
             TimerPhase::Paused => TimerState::Paused,
@@ -729,39 +730,39 @@ impl AutoSplitTimer for Timer {
     }
 
     fn start(&mut self) {
-        self.0.write().unwrap().start()
+        self.0.start()
     }
 
     fn split(&mut self) {
-        self.0.write().unwrap().split()
+        self.0.split()
     }
 
     fn skip_split(&mut self) {
-        self.0.write().unwrap().skip_split()
+        self.0.skip_split()
     }
 
     fn undo_split(&mut self) {
-        self.0.write().unwrap().undo_split()
+        self.0.undo_split()
     }
 
     fn reset(&mut self) {
-        self.0.write().unwrap().reset(true)
+        self.0.reset(None)
     }
 
     fn set_game_time(&mut self, time: time::Duration) {
-        self.0.write().unwrap().set_game_time(time.into());
+        self.0.set_game_time(time.into());
     }
 
     fn pause_game_time(&mut self) {
-        self.0.write().unwrap().pause_game_time()
+        self.0.pause_game_time()
     }
 
     fn resume_game_time(&mut self) {
-        self.0.write().unwrap().resume_game_time()
+        self.0.resume_game_time()
     }
 
     fn set_variable(&mut self, name: &str, value: &str) {
-        self.0.write().unwrap().set_custom_variable(name, value)
+        self.0.set_custom_variable(name, value)
     }
 
     fn log(&mut self, message: fmt::Arguments<'_>) {
@@ -769,8 +770,8 @@ impl AutoSplitTimer for Timer {
     }
 }
 
-async fn run(
-    mut auto_splitter: watch::Receiver<Option<AutoSplitter<Timer>>>,
+async fn run<T: event::Sink + TimerQuery>(
+    mut auto_splitter: watch::Receiver<Option<AutoSplitter<Timer<T>>>>,
     timeout_sender: watch::Sender<Option<Instant>>,
     interrupt_sender: watch::Sender<Option<InterruptHandle>>,
 ) {

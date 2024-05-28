@@ -307,8 +307,6 @@ impl Timer {
             self.time_paused_at = self.run.offset();
             self.deinitialize_game_time();
             self.run.start_next_run();
-
-            // FIXME: OnStart
         }
     }
 
@@ -339,8 +337,6 @@ impl Timer {
                 self.attempt_ended = Some(AtomicDateTime::now());
             }
             self.run.mark_as_modified();
-
-            // FIXME: OnSplit
         }
     }
 
@@ -364,8 +360,6 @@ impl Timer {
 
             self.current_split_index = self.current_split_index.map(|i| i + 1);
             self.run.mark_as_modified();
-
-            // FIXME: OnSkipSplit
         }
     }
 
@@ -382,8 +376,6 @@ impl Timer {
             self.current_split_mut().unwrap().clear_split_info();
 
             self.run.mark_as_modified();
-
-            // FIXME: OnUndoSplit
         }
     }
 
@@ -479,8 +471,6 @@ impl Timer {
             segment.clear_split_info();
         }
 
-        // FIXME: OnReset
-
         self.run.fix_splits();
         self.run.regenerate_comparisons();
     }
@@ -490,8 +480,6 @@ impl Timer {
         if self.phase == Running {
             self.time_paused_at = self.current_time().real_time.unwrap();
             self.phase = Paused;
-
-            // FIXME: OnPause
         }
     }
 
@@ -500,8 +488,6 @@ impl Timer {
         if self.phase == Paused {
             self.adjusted_start_time = TimeStamp::now() - self.time_paused_at;
             self.phase = Running;
-
-            // FIXME: OnResume
         }
     }
 
@@ -514,8 +500,8 @@ impl Timer {
         }
     }
 
-    /// Toggles an active attempt between `Paused` and `Running` or starts an
-    /// attempt if there's none in progress.
+    /// Toggles an active attempt between [`Paused`] and [`Running`] or starts
+    /// an attempt if there's none in progress.
     pub fn toggle_pause_or_start(&mut self) {
         match self.phase {
             Running => self.pause(),
@@ -557,8 +543,6 @@ impl Timer {
         }
 
         self.adjusted_start_time = self.start_time_with_offset;
-
-        // FIXME: OnUndoAllPauses
     }
 
     /// Switches the current comparison to the next comparison in the list.
@@ -574,8 +558,6 @@ impl Timer {
             .nth(index)
             .unwrap()
             .populate(&mut self.current_comparison);
-
-        // FIXME: OnNextComparison
     }
 
     /// Switches the current comparison to the previous comparison in the list.
@@ -591,8 +573,6 @@ impl Timer {
             .nth(index)
             .unwrap()
             .populate(&mut self.current_comparison);
-
-        // FIXME: OnPreviousComparison
     }
 
     /// Returns the total duration of the current attempt. This is not affected

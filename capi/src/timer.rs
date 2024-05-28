@@ -1,6 +1,6 @@
 //! A Timer provides all the capabilities necessary for doing speedrun attempts.
 
-use super::{output_str, output_time, output_time_span, output_vec};
+use super::{output_str, output_time, output_time_span, output_vec, str};
 use crate::{
     run::{NullableOwnedRun, OwnedRun},
     shared_timer::OwnedSharedTimer,
@@ -204,6 +204,12 @@ pub extern "C" fn Timer_set_current_timing_method(this: &mut Timer, method: Timi
     this.set_current_timing_method(method);
 }
 
+/// Toggles between the Real Time and Game Time timing methods.
+#[no_mangle]
+pub extern "C" fn Timer_toggle_timing_method(this: &mut Timer) {
+    this.toggle_timing_method();
+}
+
 /// Returns the current comparison that is being compared against. This may
 /// be a custom comparison or one of the Comparison Generators.
 #[no_mangle]
@@ -285,6 +291,18 @@ pub extern "C" fn Timer_loading_times(this: &Timer) -> *const TimeSpan {
 #[no_mangle]
 pub extern "C" fn Timer_set_loading_times(this: &mut Timer, time: &TimeSpan) {
     this.set_loading_times(*time);
+}
+
+/// Sets the value of a custom variable with the name specified. If the variable
+/// does not exist, a temporary variable gets created that will not be stored in
+/// the splits file.
+#[no_mangle]
+pub unsafe extern "C" fn Timer_set_custom_variable(
+    this: &mut Timer,
+    name: *const c_char,
+    value: *const c_char,
+) {
+    this.set_custom_variable(str(name), str(value));
 }
 
 /// Returns the current Timer Phase.

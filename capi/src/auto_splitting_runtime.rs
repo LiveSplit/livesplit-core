@@ -6,7 +6,7 @@ use crate::shared_timer::OwnedSharedTimer;
 use std::{os::raw::c_char, path::PathBuf};
 
 #[cfg(feature = "auto-splitting")]
-use livesplit_core::auto_splitting::Runtime as AutoSplittingRuntime;
+type AutoSplittingRuntime = livesplit_core::auto_splitting::Runtime<livesplit_core::SharedTimer>;
 
 #[cfg(not(feature = "auto-splitting"))]
 use livesplit_core::SharedTimer;
