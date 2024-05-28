@@ -1,9 +1,9 @@
 use alloc::borrow::Cow;
-use livesplit_hotkey::{ConsumePreference, KeyCode};
 
 use crate::{
-    hotkey::{Hook, Hotkey},
-    HotkeyConfig, SharedTimer,
+    event,
+    hotkey::{ConsumePreference, Hook, Hotkey, KeyCode},
+    HotkeyConfig,
 };
 
 pub use crate::hotkey::Result;
@@ -61,23 +61,22 @@ impl Action {
         }
     }
 
-    fn callback(self, timer: SharedTimer) -> Box<dyn FnMut() + Send + 'static> {
+    fn callback<E: event::Sink + Send + 'static>(
+        self,
+        event_sink: E,
+    ) -> Box<dyn FnMut() + Send + 'static> {
         match self {
-            Action::Split => Box::new(move || timer.write().unwrap().split_or_start()),
-            Action::Reset => Box::new(move || timer.write().unwrap().reset(true)),
-            Action::Undo => Box::new(move || timer.write().unwrap().undo_split()),
-            Action::Skip => Box::new(move || timer.write().unwrap().skip_split()),
-            Action::Pause => Box::new(move || timer.write().unwrap().toggle_pause_or_start()),
-            Action::UndoAllPauses => Box::new(move || timer.write().unwrap().undo_all_pauses()),
+            Action::Split => Box::new(move || event_sink.split_or_start()),
+            Action::Reset => Box::new(move || event_sink.reset(None)),
+            Action::Undo => Box::new(move || event_sink.undo_split()),
+            Action::Skip => Box::new(move || event_sink.skip_split()),
+            Action::Pause => Box::new(move || event_sink.toggle_pause_or_start()),
+            Action::UndoAllPauses => Box::new(move || event_sink.undo_all_pauses()),
             Action::PreviousComparison => {
-                Box::new(move || timer.write().unwrap().switch_to_previous_comparison())
+                Box::new(move || event_sink.switch_to_previous_comparison())
             }
-            Action::NextComparison => {
-                Box::new(move || timer.write().unwrap().switch_to_next_comparison())
-            }
-            Action::ToggleTimingMethod => {
-                Box::new(move || timer.write().unwrap().toggle_timing_method())
-            }
+            Action::NextComparison => Box::new(move || event_sink.switch_to_next_comparison()),
+            Action::ToggleTimingMethod => Box::new(move || event_sink.toggle_timing_method()),
         }
     }
 }
@@ -87,26 +86,26 @@ impl Action {
 /// focus. The behavior of the hotkeys depends on the platform and is stubbed
 /// out on platforms that don't support hotkeys. You can turn off a `HotkeySystem`
 /// temporarily. By default the `HotkeySystem` is activated.
-pub struct HotkeySystem {
+pub struct HotkeySystem<E> {
     config: HotkeyConfig,
     hook: Hook,
-    timer: SharedTimer,
+    event_sink: E,
     is_active: bool,
 }
 
-impl HotkeySystem {
+impl<E: event::Sink + Clone + Send + 'static> HotkeySystem<E> {
     /// Creates a new Hotkey System for a Timer with the default hotkeys.
-    pub fn new(timer: SharedTimer) -> Result<Self> {
-        Self::with_config(timer, Default::default())
+    pub fn new(event_sink: E) -> Result<Self> {
+        Self::with_config(event_sink, Default::default())
     }
 
     /// Creates a new Hotkey System for a Timer with a custom configuration for
     /// the hotkeys.
-    pub fn with_config(timer: SharedTimer, config: HotkeyConfig) -> Result<Self> {
+    pub fn with_config(event_sink: E, config: HotkeyConfig) -> Result<Self> {
         let mut hotkey_system = Self {
             config,
             hook: Hook::with_consume_preference(ConsumePreference::PreferNoConsume)?,
-            timer,
+            event_sink,
             is_active: false,
         };
         hotkey_system.activate()?;
@@ -116,7 +115,7 @@ impl HotkeySystem {
     // This method should never be public, because it might mess up the internal
     // state and we might leak a registered hotkey
     fn register_inner(&mut self, action: Action) -> Result<()> {
-        let inner = self.timer.clone();
+        let inner = self.event_sink.clone();
         if let Some(hotkey) = action.get_hotkey(&self.config) {
             self.hook.register(hotkey, action.callback(inner))?;
         }

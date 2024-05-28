@@ -1,6 +1,6 @@
 //! Provides a renderer for the web that renders into a canvas. The element can
 //! then be attached anywhere in the DOM with any desired positioning and size.
-//!
+
 use livesplit_core::{layout::LayoutState, rendering::web, settings::ImageCache};
 use wasm_bindgen::prelude::*;
 use web_sys::Element;
@@ -21,6 +21,7 @@ impl WebRenderer {
     /// fully loaded before creating the renderer as otherwise information about
     /// a fallback font is cached instead.
     #[allow(clippy::new_without_default)]
+    #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
         Self {
             inner: web::Renderer::new(),

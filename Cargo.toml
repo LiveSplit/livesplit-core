@@ -41,7 +41,7 @@ bytemuck = { version = "1.9.1", default-features = false }
 bytemuck_derive = { version = "1.4.1", default_features = false }
 cfg-if = "1.0.0"
 itoa = { version = "1.0.3", default-features = false }
-time = { version = "0.3.3", default-features = false }
+time = { version = "0.3.36", default-features = false }
 hashbrown = "0.14.0"
 libm = "0.2.1"
 livesplit-hotkey = { path = "crates/livesplit-hotkey", version = "0.7.0", default-features = false }

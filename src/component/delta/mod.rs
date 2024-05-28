@@ -1,5 +1,5 @@
 //! Provides the Delta Component and relevant types for using it. The Delta
-//! Component is a component that shows the how far ahead or behind the current
+//! Component is a component that shows how far ahead or behind the current
 //! attempt is compared to the chosen comparison.
 
 use super::key_value;
@@ -21,8 +21,8 @@ use serde_derive::{Deserialize, Serialize};
 #[cfg(test)]
 mod tests;
 
-/// The Delta Component is a component that shows the how far ahead or behind
-/// the current attempt is compared to the chosen comparison.
+/// The Delta Component is a component that shows how far ahead or behind the
+/// current attempt is compared to the chosen comparison.
 #[derive(Default, Clone)]
 pub struct Component {
     settings: Settings,

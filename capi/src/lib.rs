@@ -32,6 +32,7 @@ pub mod current_pace_component;
 pub mod delta_component;
 pub mod detailed_timer_component;
 pub mod detailed_timer_component_state;
+pub mod event_sink;
 pub mod fuzzy_list;
 pub mod general_layout_settings;
 pub mod graph_component;
@@ -83,6 +84,8 @@ pub mod timer_write_lock;
 pub mod title_component;
 pub mod title_component_state;
 pub mod total_playtime_component;
+#[cfg(all(target_family = "wasm", feature = "wasm-web"))]
+pub mod web_event_sink;
 #[cfg(all(target_family = "wasm", feature = "web-rendering"))]
 pub mod web_rendering;
 
