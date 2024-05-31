@@ -840,6 +840,7 @@ async fn watchdog(
     interrupt_receiver: watch::Receiver<Option<InterruptHandle>>,
 ) {
     const TIMEOUT: Duration = Duration::from_secs(5);
+    let mut has_timed_out = false;
 
     loop {
         let instant = *timeout_receiver.borrow();
@@ -854,6 +855,10 @@ async fn watchdog(
                 Ok(Err(_)) => return,
                 Err(_) => {
                     if let Some(handle) = &*interrupt_receiver.borrow() {
+                        if !has_timed_out {
+                            log::error!(target: "Auto Splitter", "timeout, no update in {} seconds", TIMEOUT.as_secs_f32());
+                            has_timed_out = true;
+                        }
                         handle.interrupt();
                     }
                 }
