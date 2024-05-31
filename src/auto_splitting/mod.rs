@@ -920,6 +920,7 @@ fn run<T: event::CommandSink + TimerQuery + Send>(
 
 fn watchdog<T: event::CommandSink + TimerQuery + Send>(shared_state: Arc<SharedState<T>>) {
     const TIMEOUT: Duration = Duration::from_secs(5);
+    let mut has_timed_out = false;
 
     let Ok(mut state) = shared_state.watchdog_state.lock() else {
         return;
@@ -944,6 +945,10 @@ fn watchdog<T: event::CommandSink + TimerQuery + Send>(shared_state: Arc<SharedS
                 };
 
                 if result.timed_out() {
+                    if !has_timed_out {
+                        log::error!(target: "Auto Splitter", "timeout, no update in {} seconds", TIMEOUT.as_secs_f32());
+                        has_timed_out = true;
+                    }
                     if let Some(auto_splitter) = &*shared_state.auto_splitter.load() {
                         auto_splitter.interrupt_handle().interrupt();
                     }
