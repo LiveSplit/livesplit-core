@@ -217,6 +217,16 @@ pub extern "C" fn Timer_current_comparison(this: &Timer) -> *const c_char {
     output_str(this.current_comparison())
 }
 
+/// Tries to set the current comparison to the comparison specified. If the
+/// comparison doesn't exist <FALSE> is returned.
+#[no_mangle]
+pub unsafe extern "C" fn Timer_set_current_comparison(
+    this: &mut Timer,
+    comparison: *const c_char,
+) -> bool {
+    this.set_current_comparison(str(comparison)).is_ok()
+}
+
 /// Switches the current comparison to the next comparison in the list.
 #[no_mangle]
 pub extern "C" fn Timer_switch_to_next_comparison(this: &mut Timer) {

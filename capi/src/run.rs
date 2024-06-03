@@ -279,6 +279,25 @@ pub extern "C" fn Run_custom_comparison(this: &Run, index: usize) -> *const c_ch
     output_str(&this.custom_comparisons()[index])
 }
 
+/// Returns the amount of total comparisons stored in this Run.
+#[no_mangle]
+pub extern "C" fn Run_comparisons_len(this: &Run) -> usize {
+    this.custom_comparisons().len() + this.comparison_generators().len()
+}
+
+/// Accesses a comparison stored in this Run by its index. This includes both
+/// custom comparisons as well as all the Comparison Generators. You may not
+/// provide an out of bounds index.
+#[no_mangle]
+pub extern "C" fn Run_comparison(this: &Run, index: usize) -> *const c_char {
+    let custom_len = this.custom_comparisons().len();
+    output_str(if index < custom_len {
+        &this.custom_comparisons()[index]
+    } else {
+        this.comparison_generators()[index - custom_len].name()
+    })
+}
+
 /// Accesses the Auto Splitter Settings that are encoded as XML.
 #[no_mangle]
 pub extern "C" fn Run_auto_splitter_settings(this: &Run) -> *const c_char {
