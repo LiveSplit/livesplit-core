@@ -90,17 +90,26 @@ impl PartialEq for ComparisonGenerators {
     }
 }
 
-/// Error type for an invalid comparison name
+/// Error type for an invalid comparison name to be added.
 #[derive(PartialEq, Eq, Debug, snafu::Snafu)]
-pub enum ComparisonError {
+pub enum AddComparisonError {
     /// Comparison name starts with "\[Race\]".
     NameStartsWithRace,
     /// Comparison name is a duplicate.
     DuplicateName,
 }
 
-/// Result type for an invalid comparison name
-pub type ComparisonResult<T> = Result<T, ComparisonError>;
+/// Error type for copying a comparison.
+#[derive(PartialEq, Eq, Debug, snafu::Snafu)]
+pub enum CopyComparisonError {
+    /// There is no comparison with the provided name to copy.
+    NoSuchComparison,
+    /// The new comparison could not be added.
+    AddComparison {
+        /// The underlying error.
+        source: AddComparisonError,
+    },
+}
 
 impl Run {
     /// Creates a new Run object with no segments.
@@ -443,7 +452,7 @@ impl Run {
     /// Adds a new custom comparison. If a custom comparison with that name
     /// already exists, it is not added.
     #[inline]
-    pub fn add_custom_comparison<S>(&mut self, comparison: S) -> ComparisonResult<()>
+    pub fn add_custom_comparison<S>(&mut self, comparison: S) -> Result<(), AddComparisonError>
     where
         S: PopulateString,
     {
@@ -756,11 +765,11 @@ impl Run {
 
     /// Checks a given name against the current comparisons in the Run to
     /// ensure that it is valid for use.
-    pub fn validate_comparison_name(&self, new: &str) -> ComparisonResult<()> {
+    pub fn validate_comparison_name(&self, new: &str) -> Result<(), AddComparisonError> {
         if new.starts_with(RACE_COMPARISON_PREFIX) {
-            Err(ComparisonError::NameStartsWithRace)
+            Err(AddComparisonError::NameStartsWithRace)
         } else if self.comparisons().any(|c| c == new) {
-            Err(ComparisonError::DuplicateName)
+            Err(AddComparisonError::DuplicateName)
         } else {
             Ok(())
         }

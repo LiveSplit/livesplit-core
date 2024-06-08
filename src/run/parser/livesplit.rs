@@ -2,7 +2,7 @@
 
 use crate::{
     platform::prelude::*,
-    run::{ComparisonError, LinkedLayout},
+    run::{AddComparisonError, LinkedLayout},
     settings::Image,
     util::{
         ascii_char::AsciiChar,
@@ -52,7 +52,7 @@ pub enum Error {
     /// Parsed comparison has an invalid name.
     InvalidComparisonName {
         /// The underlying error.
-        source: ComparisonError,
+        source: AddComparisonError,
     },
     /// Failed to parse a boolean.
     ParseBool,
@@ -82,8 +82,8 @@ impl From<crate::timing::ParseError> for Error {
     }
 }
 
-impl From<ComparisonError> for Error {
-    fn from(source: ComparisonError) -> Self {
+impl From<AddComparisonError> for Error {
+    fn from(source: AddComparisonError) -> Self {
         Self::InvalidComparisonName { source }
     }
 }
@@ -295,10 +295,10 @@ fn parse_segment(
                         } else {
                             time_old(reader, |t| *segment.comparison_mut(&comparison) = t)?;
                         }
-                        if let Err(ComparisonError::NameStartsWithRace) =
+                        if let Err(AddComparisonError::NameStartsWithRace) =
                             run.add_custom_comparison(comparison)
                         {
-                            return Err(ComparisonError::NameStartsWithRace.into());
+                            return Err(AddComparisonError::NameStartsWithRace.into());
                         }
                         Ok(())
                     } else {

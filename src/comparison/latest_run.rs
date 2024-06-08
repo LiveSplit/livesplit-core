@@ -27,7 +27,7 @@ pub const NAME: &str = "Latest Run";
 
 fn generate(segments: &mut [Segment], method: TimingMethod) {
     let mut attempt_id = None;
-    for segment in segments.iter_mut().rev() {
+    for segment in segments.iter().rev() {
         if let Some(max_index) = segment.segment_history().try_get_max_index() {
             attempt_id = Some(max_index);
             break;

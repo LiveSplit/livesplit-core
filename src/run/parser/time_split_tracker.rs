@@ -1,6 +1,6 @@
 //! Provides the parser for Time Split Tracker splits files.
 
-use super::super::ComparisonError;
+use super::super::AddComparisonError;
 use crate::{
     comparison::RACE_COMPARISON_PREFIX,
     platform::{path::Path, prelude::*},
@@ -124,13 +124,13 @@ pub fn parse(
         loop {
             match run.add_custom_comparison(&**comparison) {
                 Ok(_) => break,
-                Err(ComparisonError::DuplicateName) => {
+                Err(AddComparisonError::DuplicateName) => {
                     let comparison = comparison.to_mut();
                     comparison.drain(orig_len..);
                     let _ = write!(comparison, " {number}");
                     number += 1;
                 }
-                Err(ComparisonError::NameStartsWithRace) => {
+                Err(AddComparisonError::NameStartsWithRace) => {
                     let comparison = comparison.to_mut();
                     // After removing the `[Race]`, there might be some
                     // whitespace we want to trim too.
