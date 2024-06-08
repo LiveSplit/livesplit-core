@@ -123,7 +123,7 @@ libc = { version = "0.2.101", optional = true }
 seahash = "4.1.0"
 
 [target.'cfg(windows)'.dev-dependencies]
-sysinfo = { version = "0.30.0", default-features = false }
+winreg = "0.52.0"
 
 [target.'cfg(not(target_family = "wasm"))'.dev-dependencies]
 criterion = "0.5.0"

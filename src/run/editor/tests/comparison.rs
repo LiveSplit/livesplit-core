@@ -1,5 +1,8 @@
-use crate::run::{ComparisonError, Editor, RenameError};
-use crate::{Run, Segment};
+use crate::{
+    comparison::{best_segments, personal_best},
+    run::{AddComparisonError, CopyComparisonError, Editor, RenameError},
+    Run, Segment,
+};
 
 #[test]
 fn adding_a_new_comparison_works() {
@@ -15,8 +18,54 @@ fn adding_a_duplicate_fails() {
     let mut run = Run::new();
     run.push_segment(Segment::new("s"));
     let mut editor = Editor::new(run).unwrap();
-    let c = editor.add_comparison("Best Segments");
-    assert_eq!(c, Err(ComparisonError::DuplicateName));
+    let c = editor.add_comparison(best_segments::NAME);
+    assert_eq!(c, Err(AddComparisonError::DuplicateName));
+}
+
+#[test]
+fn copying_a_comparison_works() {
+    let mut run = Run::new();
+    run.push_segment(Segment::new("s"));
+    let mut editor = Editor::new(run).unwrap();
+    let c = editor.copy_comparison(personal_best::NAME, "My Comparison");
+    assert_eq!(c, Ok(()));
+}
+
+#[test]
+fn copying_a_duplicate_fails() {
+    let mut run = Run::new();
+    run.push_segment(Segment::new("s"));
+    let mut editor = Editor::new(run).unwrap();
+    let c = editor.copy_comparison(personal_best::NAME, best_segments::NAME);
+    assert_eq!(
+        c,
+        Err(CopyComparisonError::AddComparison {
+            source: AddComparisonError::DuplicateName,
+        })
+    );
+}
+
+#[test]
+fn copying_to_a_race_name_fails() {
+    let mut run = Run::new();
+    run.push_segment(Segment::new("s"));
+    let mut editor = Editor::new(run).unwrap();
+    let c = editor.copy_comparison(personal_best::NAME, "[Race]Custom");
+    assert_eq!(
+        c,
+        Err(CopyComparisonError::AddComparison {
+            source: AddComparisonError::NameStartsWithRace,
+        })
+    );
+}
+
+#[test]
+fn copying_an_inexistent_comparison_fails() {
+    let mut run = Run::new();
+    run.push_segment(Segment::new("s"));
+    let mut editor = Editor::new(run).unwrap();
+    let c = editor.copy_comparison("My Comparison", "My Comparison 2");
+    assert_eq!(c, Err(CopyComparisonError::NoSuchComparison));
 }
 
 #[test]
@@ -49,7 +98,7 @@ fn renaming_to_a_race_name_fails() {
     assert_eq!(
         c,
         Err(RenameError::InvalidName {
-            source: ComparisonError::NameStartsWithRace
+            source: AddComparisonError::NameStartsWithRace
         })
     );
 }
@@ -65,7 +114,7 @@ fn renaming_to_an_existing_name_fails() {
     assert_eq!(
         c,
         Err(RenameError::InvalidName {
-            source: ComparisonError::DuplicateName
+            source: AddComparisonError::DuplicateName
         })
     );
 }

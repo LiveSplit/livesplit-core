@@ -4,7 +4,7 @@
 //! current state of the editor as state objects that can be visualized by any
 //! kind of User Interface.
 
-use super::{ComparisonError, ComparisonResult, LinkedLayout};
+use super::{AddComparisonError, CopyComparisonError, LinkedLayout};
 use crate::{
     comparison,
     platform::prelude::*,
@@ -63,7 +63,7 @@ pub enum RenameError {
     /// Name was invalid.
     InvalidName {
         /// The underlying error.
-        source: ComparisonError,
+        source: AddComparisonError,
     },
 }
 
@@ -743,8 +743,11 @@ impl Editor {
     }
 
     /// Adds a new custom comparison. It can't be added if it starts with
-    /// `[Race]` or already exists.
-    pub fn add_comparison<S: PopulateString>(&mut self, comparison: S) -> ComparisonResult<()> {
+    /// `[Race]` or it already exists.
+    pub fn add_comparison<S: PopulateString>(
+        &mut self,
+        comparison: S,
+    ) -> Result<(), AddComparisonError> {
         self.run.add_custom_comparison(comparison)?;
         self.fix();
         Ok(())
@@ -753,7 +756,11 @@ impl Editor {
     /// Imports the Personal Best from the provided run as a comparison. The
     /// comparison can't be added if its name starts with `[Race]` or it already
     /// exists.
-    pub fn import_comparison(&mut self, run: &Run, comparison: &str) -> ComparisonResult<()> {
+    pub fn import_comparison(
+        &mut self,
+        run: &Run,
+        comparison: &str,
+    ) -> Result<(), AddComparisonError> {
         self.run.add_custom_comparison(comparison)?;
 
         let mut remaining_segments = self.run.segments_mut().as_mut_slice();
@@ -905,6 +912,31 @@ impl Editor {
         self.generate_goal_comparison(
             parse_positive(time)?.ok_or(ParseError::EmptyTimeNotAllowed)?,
         );
+        Ok(())
+    }
+
+    /// Copies a comparison with the given name as a new custom comparison with
+    /// the new name provided. It can't be added if it starts with `[Race]` or
+    /// it already exists. The old comparison needs to exist.
+    pub fn copy_comparison(
+        &mut self,
+        old_name: &str,
+        new_name: &str,
+    ) -> Result<(), CopyComparisonError> {
+        if !self.run.comparisons().any(|c| c == old_name) {
+            return Err(CopyComparisonError::NoSuchComparison);
+        }
+
+        self.run
+            .add_custom_comparison(new_name)
+            .map_err(|source| CopyComparisonError::AddComparison { source })?;
+
+        for segment in self.run.segments_mut() {
+            *segment.comparison_mut(new_name) = segment.comparison(old_name);
+        }
+
+        self.raise_run_edited();
+
         Ok(())
     }
 

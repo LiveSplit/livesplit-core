@@ -352,7 +352,7 @@ pub unsafe extern "C" fn RunEditor_active_parse_and_set_comparison_time(
 }
 
 /// Adds a new custom comparison. It can't be added if it starts with
-/// `[Race]` or already exists.
+/// `[Race]` or it already exists.
 #[no_mangle]
 pub unsafe extern "C" fn RunEditor_add_comparison(
     this: &mut RunEditor,
@@ -423,6 +423,18 @@ pub unsafe extern "C" fn RunEditor_parse_and_generate_goal_comparison(
     time: *const c_char,
 ) -> bool {
     this.parse_and_generate_goal_comparison(str(time)).is_ok()
+}
+
+/// Copies a comparison with the given name as a new custom comparison with the
+/// new name provided. It can't be added if it starts with `[Race]` or it
+/// already exists. The old comparison needs to exist.
+#[no_mangle]
+pub unsafe extern "C" fn RunEditor_copy_comparison(
+    this: &mut RunEditor,
+    old_name: *const c_char,
+    new_name: *const c_char,
+) -> bool {
+    this.copy_comparison(str(old_name), str(new_name)).is_ok()
 }
 
 /// Clears out the Attempt History and the Segment Histories of all the

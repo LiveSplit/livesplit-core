@@ -1,4 +1,4 @@
-use crate::run::{ComparisonError, Run};
+use crate::run::{AddComparisonError, Run};
 
 #[test]
 fn adding_a_new_comparison_works() {
@@ -11,5 +11,5 @@ fn adding_a_new_comparison_works() {
 fn adding_a_duplicate_fails() {
     let mut run = Run::new();
     let c = run.add_custom_comparison("Best Segments");
-    assert_eq!(c, Err(ComparisonError::DuplicateName));
+    assert_eq!(c, Err(AddComparisonError::DuplicateName));
 }

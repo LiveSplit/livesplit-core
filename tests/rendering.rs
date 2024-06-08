@@ -60,13 +60,18 @@ fn default() {
 #[cfg(all(feature = "font-loading", windows))]
 #[test]
 fn font_fallback() {
-    let build_number: u64 = sysinfo::System::kernel_version().unwrap().parse().unwrap();
+    let hklm = winreg::RegKey::predef(winreg::enums::HKEY_LOCAL_MACHINE);
+    let cur_ver = hklm
+        .open_subkey(r"SOFTWARE\Microsoft\Windows NT\CurrentVersion")
+        .unwrap();
+    let build_number: String = cur_ver.get_value("CurrentBuildNumber").unwrap();
+    let build_number: u64 = build_number.parse().unwrap();
+    let revision: u32 = cur_ver.get_value("UBR").unwrap();
 
-    if build_number < 22000 {
-        // The hash is different before Windows 11.
+    if (build_number, revision) < (22631, 3672) {
+        // The hash is different before Windows 11 23H2 (end of May 2024 update).
         println!(
-            "Skipping font fallback test on Windows with build number {}.",
-            build_number
+            "Skipping font fallback test on Windows with build number {build_number}.{revision}.",
         );
         return;
     }
@@ -122,8 +127,8 @@ fn font_fallback() {
     check(
         &state,
         &image_cache,
-        "d908fda633352ba5",
-        "299f188d2a8ccf5d",
+        "e3c55d333d082bab",
+        "267615d875c8cf61",
         "font_fallback",
     );
 }
