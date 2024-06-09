@@ -44,8 +44,8 @@ fn default() {
     check(
         &state,
         &image_cache,
-        "a98ef51c25f115fe",
-        "08cbb11aa1719035",
+        "e32259a84233e364",
+        "0520a7a32958470a",
         "default",
     );
 }
@@ -127,8 +127,8 @@ fn font_fallback() {
     check(
         &state,
         &image_cache,
-        "e3c55d333d082bab",
-        "267615d875c8cf61",
+        "924286709a5b32f3",
+        "88f140654343de5f",
         "font_fallback",
     );
 }
@@ -216,8 +216,8 @@ fn all_components() {
         &state,
         &image_cache,
         [300, 800],
-        "9c3a68e4c9c6b73c",
-        "f94f2b05c06f8d16",
+        "7e7aa83a3b80e1da",
+        "39b5d1923053c5d9",
         "all_components",
     );
 
@@ -225,8 +225,8 @@ fn all_components() {
         &state,
         &image_cache,
         [150, 800],
-        "37cc2602ef0402a8",
-        "1ceb8d7ff13d1741",
+        "97afa51bfd8a8597",
+        "82b26ae781d58b78",
         "all_components_thin",
     );
 }
@@ -294,8 +294,8 @@ fn subsplits_layout() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [300, 800],
-        "78250961341ef747",
-        "95ba6dcf34c60078",
+        "39ab965781d0ceee",
+        "405baac87e52acc5",
         "subsplits_layout",
     );
 }
@@ -318,8 +318,8 @@ fn background_image() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [300, 300],
-        "efc369e681d98dfe",
-        "f0ec188c38f0e26d",
+        "b5238ec57ba70c3a",
+        "e4df7276b1603cd5",
         "background_image",
     );
 }
@@ -410,8 +410,8 @@ fn horizontal() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [1500, 40],
-        "944a515a48627b31",
-        "65b9819a3e903307",
+        "4a9c12d00233f3c1",
+        "9353fac22b4cfde4",
         "horizontal",
     );
 }
