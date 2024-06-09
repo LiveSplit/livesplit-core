@@ -1,8 +1,8 @@
 use js_sys::{Date, Reflect};
-use std::ops::Sub;
+use std::{cell::Cell, ops::Sub};
 use time::UtcOffset;
 use wasm_bindgen::{prelude::*, JsCast};
-use web_sys::Performance;
+use web_sys::{Performance, VisibilityState};
 
 pub use time::{Duration, OffsetDateTime as DateTime};
 
@@ -10,16 +10,73 @@ pub use time::{Duration, OffsetDateTime as DateTime};
 #[repr(transparent)]
 pub struct Instant(Duration);
 
+// Every browser's `performance.now()` implementation is not spec compliant,
+// unless the browser is running on Windows. On every other operating system,
+// `performance.now()` does not properly keep ticking while the operating system
+// is suspended / sleeping. There isn't much that we can do. What we can do is
+// we calculate the initial difference between `performance.now()` and
+// `Date.now()` and store it in a thread local. Later, when the phone gets
+// locked, `performance.now()` starts to break. However, we can detect when the
+// phone gets unlocked again by listening to the `visibilitychange` event. This
+// is where we can update the difference again. This of course isn't ideal, as
+// `Date.now()` gets adjusted by NTP synchronizations, but it's the best we can
+// do.
+//
+// More information:
+// https://developer.mozilla.org/en-US/docs/Web/API/Performance/now#ticking_during_sleep
+fn init_fallback(performance: &Performance) {
+    let Some(window) = web_sys::window() else {
+        // Not running in a browser environment.
+        return;
+    };
+
+    if window.navigator().platform().is_ok_and(|v| v == "Win32") {
+        // Windows is not affected by this issue.
+        return;
+    }
+
+    let Some(document) = window.document() else {
+        // Not running in a browser environment.
+        return;
+    };
+
+    DIFF_TO_DATE_NOW.set(Date::now() - performance.now());
+
+    let callback = Closure::wrap(Box::new({
+        let document = document.clone();
+        move || {
+            if document.visibility_state() == VisibilityState::Visible {
+                PERFORMANCE.with(|p| DIFF_TO_DATE_NOW.set(Date::now() - p.now()));
+            }
+        }
+    }) as Box<dyn FnMut()>);
+
+    if document
+        .add_event_listener_with_callback("visibilitychange", callback.as_ref().unchecked_ref())
+        .is_ok()
+    {
+        // Leak the callback to keep it alive. This is only done once, and we
+        // need it for the entire duration of the web app anyway.
+        callback.forget();
+    }
+}
+
 thread_local! {
-    static PERFORMANCE: Performance =
-        Reflect::get(&js_sys::global(), &JsValue::from_str("performance"))
+    static DIFF_TO_DATE_NOW: Cell<f64> = const { Cell::new(0.0) };
+    static PERFORMANCE: Performance = {
+        let performance: Performance = Reflect::get(&js_sys::global(), &JsValue::from_str("performance"))
             .expect("Failed to get performance from global object")
             .unchecked_into();
+
+        init_fallback(&performance);
+
+        performance
+    };
 }
 
 impl Instant {
     pub fn now() -> Self {
-        let secs = PERFORMANCE.with(|p| p.now()) * 0.001;
+        let secs = PERFORMANCE.with(|p| p.now() + DIFF_TO_DATE_NOW.get()) * 0.001;
         Instant(Duration::seconds_f64(secs))
     }
 }
