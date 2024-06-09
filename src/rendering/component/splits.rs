@@ -1,5 +1,3 @@
-use core::iter;
-
 use crate::{
     component::splits::State,
     layout::{LayoutDirection, LayoutState},
@@ -20,9 +18,44 @@ use crate::{
 pub struct Cache<L> {
     splits: Vec<SplitCache<L>>,
     column_labels: Vec<CachedLabel<L>>,
-    column_width_label: CachedLabel<L>,
-    column_label_widths: Vec<f32>,
+    column_width_labels: Vec<(f32, CachedLabel<L>)>,
+    longest_column_values: Vec<ShortLivedStr>,
 }
+
+#[derive(Copy, Clone)]
+struct ShortLivedStr {
+    str: *const str,
+    char_count: usize,
+}
+
+impl ShortLivedStr {
+    // We use this as the smallest possible "space" we use for each column. This
+    // prevents the columns from changing size too much. We could bump this up
+    // to include hours, but that's not ideal for delta based columns, which are
+    // usually smaller.
+    const MIN: Self = Self {
+        str: "88:88",
+        char_count: 5,
+    };
+
+    fn new(s: &str) -> Self {
+        Self {
+            str: s,
+            char_count: s.chars().count(),
+        }
+    }
+
+    /// # Safety
+    /// Only call this function for a string that's still valid.
+    const unsafe fn get(&self) -> &str {
+        &*self.str
+    }
+}
+
+// SAFETY: These strings are never actually kept across calls to render.
+unsafe impl Send for ShortLivedStr {}
+// SAFETY: These strings are never actually kept across calls to render.
+unsafe impl Sync for ShortLivedStr {}
 
 struct SplitCache<L> {
     name: CachedLabel<L>,
@@ -43,8 +76,8 @@ impl<L> Cache<L> {
         Self {
             splits: Vec::new(),
             column_labels: Vec::new(),
-            column_width_label: CachedLabel::new(),
-            column_label_widths: Vec::new(),
+            column_width_labels: Vec::new(),
+            longest_column_values: Vec::new(),
         }
     }
 }
@@ -56,11 +89,57 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     component: &State,
     layout_state: &LayoutState,
 ) {
-    const COLUMN_PADDING: f32 = 0.2;
-    let max_column_width =
-        context.measure_numbers("88:88:88", &mut cache.column_width_label, DEFAULT_TEXT_SIZE);
+    // We measure the longest value in each column in terms of unicode scalar
+    // values. This is not perfect, but gives a decent enough approximation for
+    // now. Long term we probably want to shape all the texts first and then lay
+    // them out.
 
-    let text_color = solid(&layout_state.text_color);
+    cache.longest_column_values.clear();
+
+    for split in &component.splits {
+        if split.columns.len() > cache.longest_column_values.len() {
+            cache
+                .longest_column_values
+                .resize(split.columns.len(), ShortLivedStr::MIN);
+        }
+        for (column, longest_column_value) in
+            split.columns.iter().zip(&mut cache.longest_column_values)
+        {
+            let column_value = ShortLivedStr::new(column.value.as_str());
+            if column_value.char_count > longest_column_value.char_count {
+                *longest_column_value = column_value;
+            }
+        }
+    }
+
+    cache.column_width_labels.resize_with(
+        cache.longest_column_values.len().max(
+            component
+                .column_labels
+                .as_ref()
+                .map(|labels| labels.len())
+                .unwrap_or_default(),
+        ),
+        || (0.0, CachedLabel::new()),
+    );
+
+    for (longest_column_value, (column_width, column_width_label)) in cache
+        .longest_column_values
+        .iter()
+        .zip(&mut cache.column_width_labels)
+    {
+        // SAFETY: The longest_column_values vector is cleared on every render
+        // call. We only store references to the column values in the vector and
+        // a 'static default string. All of these are valid for the entire
+        // duration of the render call.
+        unsafe {
+            *column_width = context.measure_numbers(
+                longest_column_value.get(),
+                column_width_label,
+                DEFAULT_TEXT_SIZE,
+            );
+        }
+    }
 
     let split_background = match component.background {
         ListGradient::Same(gradient) => {
@@ -102,8 +181,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         };
 
     let transform = context.transform;
-
-    cache.column_label_widths.clear();
+    let text_color = solid(&layout_state.text_color);
 
     if let Some(column_labels) = &component.column_labels {
         if layout_state.direction == LayoutDirection::Vertical {
@@ -112,8 +190,11 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                 .resize_with(column_labels.len(), CachedLabel::new);
 
             let mut right_x = width - PADDING;
-            for (label, column_cache) in column_labels.iter().zip(&mut cache.column_labels) {
-                // FIXME: The column width should depend on the column type too.
+            for ((label, column_cache), (max_width, _)) in column_labels
+                .iter()
+                .zip(&mut cache.column_labels)
+                .zip(&mut cache.column_width_labels)
+            {
                 let left_x = context.render_text_right_align(
                     label,
                     column_cache,
@@ -123,8 +204,10 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                     text_color,
                 );
                 let label_width = right_x - left_x;
-                cache.column_label_widths.push(right_x - left_x);
-                right_x -= label_width.max(max_column_width) + COLUMN_PADDING;
+                if label_width > *max_width {
+                    *max_width = label_width;
+                }
+                right_x -= *max_width + PADDING;
             }
 
             context.translate(0.0, DEFAULT_COMPONENT_HEIGHT);
@@ -178,14 +261,11 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                 .columns
                 .resize_with(split.columns.len(), CachedLabel::new);
 
-            for ((column, column_cache), column_label_width) in
-                split.columns.iter().zip(&mut split_cache.columns).zip(
-                    cache
-                        .column_label_widths
-                        .iter()
-                        .cloned()
-                        .chain(iter::repeat(max_column_width)),
-                )
+            for ((column, column_cache), (max_width, _)) in split
+                .columns
+                .iter()
+                .zip(&mut split_cache.columns)
+                .zip(&cache.column_width_labels)
             {
                 if !column.value.is_empty() {
                     left_x = context.render_numbers(
@@ -197,7 +277,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                         solid(&column.visual_color),
                     );
                 }
-                right_x -= max_column_width.max(column_label_width) + COLUMN_PADDING;
+                right_x -= max_width + PADDING;
             }
 
             if display_two_rows {
@@ -215,6 +295,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         }
         context.translate(delta_x, delta_y);
     }
+
     if component.show_final_separator {
         let (pos, end) = if layout_state.direction == LayoutDirection::Horizontal {
             (
@@ -229,5 +310,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         };
         context.render_rectangle(pos, end, &Gradient::Plain(layout_state.separators_color));
     }
+
     context.transform = transform;
 }
