@@ -531,13 +531,11 @@ fn render_layer(
                             .pre_translate(glyph.x, glyph.y)
                             .pre_scale(glyph.scale, glyph.scale);
 
-                        let glyph_paint;
                         let paint = if let Some(color) = &glyph.color {
-                            glyph_paint = Paint {
+                            &Paint {
                                 shader: Shader::SolidColor(convert_color(color)),
                                 ..paint
-                            };
-                            &glyph_paint
+                            }
                         } else {
                             &paint
                         };

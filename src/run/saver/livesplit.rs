@@ -157,12 +157,10 @@ impl<W: std::io::Write> fmt::Write for IoWrite<W> {
 /// Saves the Run in use by the Timer provided as a LiveSplit splits file
 /// (*.lss).
 pub fn save_timer<W: fmt::Write>(timer: &Timer, writer: W) -> fmt::Result {
-    let run;
     let run = if timer.current_phase() == TimerPhase::NotRunning {
         timer.run()
     } else {
-        run = timer.clone().into_run(true);
-        &run
+        &timer.clone().into_run(true)
     };
     save_run(run, writer)
 }

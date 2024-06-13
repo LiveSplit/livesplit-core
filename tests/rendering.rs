@@ -80,55 +80,92 @@ fn font_fallback() {
     // world:
     // https://en.wikipedia.org/wiki/List_of_writing_systems#List_of_writing_systems_by_adoption
 
-    let mut run = tests_helper::create_run(&[
+    let run = tests_helper::create_run(&[
+        // Latin
+        "Latin",
+        // Chinese
+        "汉字 漢字",
+        // Arabic
+        "اَلْعَرَبِيَّةُ",
+        // Devanagari
+        "देवनागरी",
+        // Cyrillic
+        "Кирилица",
+        // Bengali–Assamese
+        "বাংলা-অসমীয়া",
+        // Kana
+        "かな カナ",
+        // Telugu
+        "తెలుగు",
+        // Hangul
+        "한글 조선글",
+        // Tamil
+        "தமிழ்",
+        // Thai
+        "ไทย",
+        // Gujarati
+        "ગુજરાતી",
+        // Kannada
+        "ಕನ್ನಡ",
+        // Geʽez
+        "ግዕዝ",
+        // Burmese
+        "မြန်မာ",
+        // Malayalam
+        "മലയാളം",
+        // Odia
+        "ଓଡ଼ିଆ",
+        // Gurmukhi
+        "ਗੁਰਮੁਖੀ",
+        // Sinhala
+        "සිංහල",
+        // Khmer
+        "ខ្មែរ",
+        // Greek
+        "Ελληνικά",
+        // Ol Chiki
+        "ᱚᱞ ᱪᱤᱠᱤ",
+        // Lao
+        "ລາວ",
+        // Hebrew
+        "עברית",
+        // Tibetan
+        "བོད་",
+        // Armenian
+        // While it may look like the first character renders incorrectly, it
+        // simply has different shapes in different fonts:
+        // https://en.wiktionary.org/wiki/%D5%80#Armenian
+        "Հայոց",
+        // Mongolian
+        "ᠮᠣᠩᠭᠣᠯ",
+        // Georgian
+        "ქართული",
+        // Meitei
+        "ꯃꯩꯇꯩ ꯃꯌꯦꯛ",
+        // Thaana
+        "ދިވެހި",
+        // Canadian Syllabics
+        "ᖃᓂᐅᔮᖅᐸᐃᑦ ᒐᐦᑲᓯᓇᐦᐃᑫᐤ ᑯᖾᖹ ᖿᐟᖻ ᓱᖽᐧᖿ ᑐᑊᘁᗕᑋᗸ",
         // Emoji
         "❤✔👌🤔😂😁🎉💀🤣",
         // Braille
         "⠃⠗⠁⠊⠇⠇⠑",
-        // Hebrew
-        "עברית",
-        // Arabic
-        "اَلْعَرَبِيَّةُ",
-        // Dhivehi
-        "ދިވެހި",
-        // Devanagari
-        "देवनागरी",
-        // Assamese
-        "বাংলা-অসমীয়া",
-        // Gujarati
-        "ગુજરાતી",
-        // Tamil
-        "தமிழ்",
-        // Telugu
-        "తెలుగు",
-        // Malayalam
-        "മലയാളം",
-        // Sinhala
-        "සිංහල",
-        // Thai
-        "ไทย",
-        // Burmese
-        "မြန်မာ",
-        // Hanzi, Kana
-        "汉字 漢字 かな カナ",
     ]);
-    run.set_game_name("한국어도 돼요"); // Hangul
-    run.set_category_name("Кирилица"); // Cyrillic
-    run.set_attempt_count(1337);
-    let mut timer = Timer::new(run).unwrap();
-    let mut layout = Layout::default_layout();
-
-    tests_helper::start_run(&mut timer);
-    tests_helper::make_progress_run_with_splits_opt(&mut timer, &[Some(5.0), None, Some(10.0)]);
+    let timer = Timer::new(run).unwrap();
+    let mut layout = Layout::new();
+    let mut splits = component::splits::Component::new();
+    splits.settings_mut().visual_split_count = 0;
+    layout.push(splits);
 
     let mut image_cache = ImageCache::new();
     let state = layout.state(&mut image_cache, &timer.snapshot());
 
-    check(
+    check_dims(
         &state,
         &image_cache,
-        "924286709a5b32f3",
-        "88f140654343de5f",
+        [320, 750],
+        "2b3e4a75f3eafdc4",
+        "cdbbe94245ed4f69",
         "font_fallback",
     );
 }
