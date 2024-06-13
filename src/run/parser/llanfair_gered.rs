@@ -18,7 +18,7 @@ use crate::{
     RealTime, Run, Segment, Time, TimeSpan,
 };
 #[cfg(feature = "std")]
-use image::{codecs::png, ExtendedColorType, ImageEncoder};
+use image::{ExtendedColorType, ImageEncoder};
 #[cfg(feature = "std")]
 use snafu::OptionExt;
 
@@ -123,7 +123,7 @@ where
         })?;
 
         png_buf.clear();
-        png::PngEncoder::new(&mut *png_buf)
+        crate::util::image::create_reencoder(&mut *png_buf)
             .write_image(image, width, height, ExtendedColorType::Rgba8)
             .map_err(|_| Error::Image)?;
 

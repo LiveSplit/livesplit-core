@@ -217,7 +217,7 @@ fn all_components() {
         &image_cache,
         [300, 800],
         "7e7aa83a3b80e1da",
-        "39b5d1923053c5d9",
+        "fa3c0357219389d8",
         "all_components",
     );
 
@@ -226,7 +226,7 @@ fn all_components() {
         &image_cache,
         [150, 800],
         "97afa51bfd8a8597",
-        "82b26ae781d58b78",
+        "eda169eec3995eeb",
         "all_components_thin",
     );
 }
@@ -271,7 +271,7 @@ fn dark_layout() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         "a47c590792c1bab5",
-        "3f8dfb2da2d43648",
+        "91a89f563eb4f43d",
         "dark_layout",
     );
 }

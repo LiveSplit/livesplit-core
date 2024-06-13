@@ -5,7 +5,7 @@ pub(crate) mod ascii_set;
 pub(crate) mod byte_parsing;
 pub(crate) mod caseless;
 mod clear_vec;
-#[cfg(any(feature = "image-shrinking", feature = "svg-rendering"))]
+#[cfg(feature = "std")]
 pub(crate) mod image;
 pub(crate) mod not_nan;
 pub mod ordered_map;
