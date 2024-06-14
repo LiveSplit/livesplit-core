@@ -9,7 +9,7 @@ use crate::{
 };
 use core::{result::Result as StdResult, str};
 #[cfg(feature = "std")]
-use image::{codecs::png, ExtendedColorType, ImageBuffer, ImageEncoder, Rgba};
+use image::{ExtendedColorType, ImageBuffer, ImageEncoder, Rgba};
 use snafu::{OptionExt, ResultExt};
 
 /// The Error type for splits files that couldn't be parsed by the Llanfair
@@ -187,7 +187,7 @@ pub fn parse(source: &[u8]) -> Result<Run> {
             #[cfg(feature = "std")]
             if let Some(image) = ImageBuffer::<Rgba<u8>, _>::from_raw(width, height, _image_data) {
                 buf.clear();
-                if png::PngEncoder::new(&mut buf)
+                if crate::util::image::create_reencoder(&mut buf)
                     .write_image(image.as_ref(), width, height, ExtendedColorType::Rgba8)
                     .is_ok()
                 {

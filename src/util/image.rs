@@ -1,14 +1,21 @@
-use std::io::Cursor;
+use image::codecs::png::{CompressionType, FilterType, PngEncoder};
 
-use bytemuck_derive::{Pod, Zeroable};
-use image::{
-    codecs::{bmp, farbfeld, hdr, ico, jpeg, pnm, tga, tiff, webp},
-    ImageDecoder, ImageFormat,
-};
+pub fn create_reencoder(target_buf: &mut Vec<u8>) -> PngEncoder<&mut Vec<u8>> {
+    PngEncoder::new_with_quality(target_buf, CompressionType::Best, FilterType::default())
+}
 
-use crate::util::byte_parsing::{big_endian::U32, strip_pod};
+#[cfg(any(feature = "image-shrinking", feature = "svg-rendering"))]
+pub fn get_dimensions(format: image::ImageFormat, data: &[u8]) -> Option<(u32, u32)> {
+    use std::io::Cursor;
 
-pub fn get_dimensions(format: ImageFormat, data: &[u8]) -> Option<(u32, u32)> {
+    use bytemuck_derive::{Pod, Zeroable};
+    use image::{
+        codecs::{bmp, farbfeld, hdr, ico, jpeg, pnm, tga, tiff, webp},
+        ImageDecoder, ImageFormat,
+    };
+
+    use crate::util::byte_parsing::{big_endian::U32, strip_pod};
+
     Some(match format {
         ImageFormat::Png => {
             // We encounter a lot of PNG images in splits files and decoding

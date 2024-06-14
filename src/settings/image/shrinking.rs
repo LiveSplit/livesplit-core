@@ -1,7 +1,7 @@
 use alloc::borrow::Cow;
 use image::{guess_format, load_from_memory_with_format, ImageEncoder, ImageFormat};
 
-use crate::util::image::get_dimensions;
+use crate::util::image::{create_reencoder, get_dimensions};
 
 fn shrink_inner(data: &[u8], max_dim: u32) -> Option<Cow<'_, [u8]>> {
     let format = guess_format(data).ok()?;
@@ -27,8 +27,10 @@ fn shrink_inner(data: &[u8], max_dim: u32) -> Option<Cow<'_, [u8]>> {
         if is_too_large {
             image = image.thumbnail(max_dim, max_dim);
         }
+
         let mut data = Vec::new();
-        image::codecs::png::PngEncoder::new(&mut data)
+
+        create_reencoder(&mut data)
             .write_image(
                 image.as_bytes(),
                 image.width(),
@@ -36,6 +38,7 @@ fn shrink_inner(data: &[u8], max_dim: u32) -> Option<Cow<'_, [u8]>> {
                 image.color().into(),
             )
             .ok()?;
+
         data.into()
     } else {
         data.into()
