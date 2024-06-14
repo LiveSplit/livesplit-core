@@ -24,7 +24,7 @@ include = [
 ]
 edition = "2021"
 resolver = "2"
-rust-version = "1.73"
+rust-version = "1.79"
 
 [package.metadata.docs.rs]
 all-features = true
