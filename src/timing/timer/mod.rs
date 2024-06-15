@@ -8,6 +8,9 @@ use core::{mem, ops::Deref};
 #[cfg(test)]
 mod tests;
 
+mod active_attempt;
+use active_attempt::{ActiveAttempt, State};
+
 /// A `Timer` provides all the capabilities necessary for doing speedrun attempts.
 ///
 /// # Examples
@@ -43,20 +46,9 @@ mod tests;
 #[derive(Debug, Clone)]
 pub struct Timer {
     run: Run,
-    phase: TimerPhase,
-    current_split_index: Option<usize>,
-    current_timing_method: TimingMethod,
     current_comparison: String,
-    attempt_started: Option<AtomicDateTime>,
-    attempt_ended: Option<AtomicDateTime>,
-    start_time: TimeStamp,
-    start_time_with_offset: TimeStamp,
-    // This gets adjusted after resuming
-    adjusted_start_time: TimeStamp,
-    time_paused_at: TimeSpan,
-    is_game_time_paused: bool,
-    game_time_pause_time: Option<TimeSpan>,
-    loading_times: Option<TimeSpan>,
+    current_timing_method: TimingMethod,
+    active_attempt: Option<ActiveAttempt>,
 }
 
 /// A snapshot represents a specific point in time that the timer was observed
@@ -106,23 +98,12 @@ impl Timer {
 
         run.fix_splits();
         run.regenerate_comparisons();
-        let now = TimeStamp::now();
 
         Ok(Timer {
             run,
-            phase: NotRunning,
-            current_split_index: None,
-            current_timing_method: TimingMethod::RealTime,
             current_comparison: personal_best::NAME.into(),
-            attempt_started: None,
-            attempt_ended: None,
-            start_time: now,
-            start_time_with_offset: now,
-            adjusted_start_time: now,
-            time_paused_at: TimeSpan::zero(),
-            is_game_time_paused: false,
-            game_time_pause_time: None,
-            loading_times: None,
+            current_timing_method: TimingMethod::RealTime,
+            active_attempt: None,
         })
     }
 
@@ -190,34 +171,19 @@ impl Timer {
     /// Returns the current Timer Phase.
     #[inline]
     pub const fn current_phase(&self) -> TimerPhase {
-        self.phase
-    }
-
-    fn current_time(&self) -> Time {
-        let real_time = match self.phase {
-            NotRunning => Some(self.run.offset()),
-            Running => Some(TimeStamp::now() - self.adjusted_start_time),
-            Paused => Some(self.time_paused_at),
-            Ended => self.run.segments().last().unwrap().split_time().real_time,
+        let Some(active_attempt) = &self.active_attempt else {
+            return TimerPhase::NotRunning;
         };
-
-        let game_time = match self.phase {
-            NotRunning => Some(self.run.offset()),
-            Ended => self.run.segments().last().unwrap().split_time().game_time,
-            _ => {
-                if self.is_game_time_paused() {
-                    self.game_time_pause_time
-                } else if self.is_game_time_initialized() {
-                    catch! { real_time? - self.loading_times() }
+        match active_attempt.state {
+            State::NotEnded { time_paused_at, .. } => {
+                if time_paused_at.is_some() {
+                    Paused
                 } else {
-                    None
+                    Running
                 }
             }
-        };
-
-        Time::new()
-            .with_real_time(real_time)
-            .with_game_time(game_time)
+            State::Ended { .. } => Ended,
+        }
     }
 
     /// Creates a new snapshot of the timer at the point in time of this call.
@@ -225,10 +191,18 @@ impl Timer {
     /// work with an entirely consistent view of the timer without the current
     /// time changing underneath.
     pub fn snapshot(&self) -> Snapshot<'_> {
-        Snapshot {
-            timer: self,
-            time: self.current_time(),
-        }
+        let time = match &self.active_attempt {
+            Some(active_attempt) => active_attempt.current_time(&self.run).into(),
+            None => {
+                let offset = Some(self.run.offset());
+                Time {
+                    real_time: offset,
+                    game_time: offset,
+                }
+            }
+        };
+
+        Snapshot { timer: self, time }
     }
 
     /// Returns the currently selected Timing Method.
@@ -275,13 +249,10 @@ impl Timer {
     /// Accesses the split the attempt is currently on. If there's no attempt in
     /// progress or the run finished, `None` is returned instead.
     pub fn current_split(&self) -> Option<&Segment> {
-        self.current_split_index
-            .and_then(|i| self.run.segments().get(i))
-    }
-
-    fn current_split_mut(&mut self) -> Option<&mut Segment> {
-        self.current_split_index
-            .and_then(move |i| self.run.segments_mut().get_mut(i))
+        self.active_attempt
+            .as_ref()?
+            .current_split_index()
+            .map(|i| self.run.segment(i))
     }
 
     /// Accesses the index of the split the attempt is currently on. If there's
@@ -290,22 +261,34 @@ impl Timer {
     /// finished, but has not been reset. So you need to be careful when using
     /// this value for indexing.
     #[inline]
-    pub const fn current_split_index(&self) -> Option<usize> {
-        self.current_split_index
+    pub fn current_split_index(&self) -> Option<usize> {
+        Some(
+            self.active_attempt
+                .as_ref()?
+                .current_split_index_overflowing(&self.run),
+        )
     }
 
     /// Starts the Timer if there is no attempt in progress. If that's not the
     /// case, nothing happens.
     pub fn start(&mut self) {
-        if self.phase == NotRunning {
-            self.phase = Running;
-            self.current_split_index = Some(0);
-            self.attempt_started = Some(AtomicDateTime::now());
-            self.start_time = TimeStamp::now();
-            self.start_time_with_offset = self.start_time - self.run.offset();
-            self.adjusted_start_time = self.start_time_with_offset;
-            self.time_paused_at = self.run.offset();
-            self.deinitialize_game_time();
+        if self.active_attempt.is_none() {
+            let attempt_started = AtomicDateTime::now();
+            let start_time = TimeStamp::now();
+            let start_time_with_offset = start_time - self.run.offset();
+
+            self.active_attempt = Some(ActiveAttempt {
+                state: State::NotEnded {
+                    current_split_index: 0,
+                    time_paused_at: None,
+                },
+                attempt_started,
+                start_time,
+                start_time_with_offset,
+                adjusted_start_time: start_time_with_offset,
+                game_time_paused_at: None,
+                loading_times: None,
+            });
             self.run.start_next_run();
         }
     }
@@ -313,37 +296,33 @@ impl Timer {
     /// If an attempt is in progress, stores the current time as the time of the
     /// current split. The attempt ends if the last split time is stored.
     pub fn split(&mut self) {
-        let current_time = self.current_time();
-        if self.phase == Running
-            && current_time
-                .real_time
-                .is_some_and(|t| t >= TimeSpan::zero())
-        {
-            // FIXME: We shouldn't need to collect here.
-            let variables = self
-                .run
-                .metadata()
-                .custom_variables()
-                .map(|(k, v)| (k.to_owned(), v.value.clone()))
-                .collect();
-            let segment = self.current_split_mut().unwrap();
+        let Some(active_attempt) = &mut self.active_attempt else {
+            return;
+        };
 
-            segment.set_split_time(current_time);
-            *segment.variables_mut() = variables;
+        let Some((split_index, current_time)) = active_attempt.prepare_split(&self.run) else {
+            return;
+        };
 
-            *self.current_split_index.as_mut().unwrap() += 1;
-            if Some(self.run.len()) == self.current_split_index {
-                self.phase = Ended;
-                self.attempt_ended = Some(AtomicDateTime::now());
-            }
-            self.run.mark_as_modified();
-        }
+        // FIXME: We shouldn't need to collect here.
+        let variables = self
+            .run
+            .metadata()
+            .custom_variables()
+            .map(|(k, v)| (k.to_owned(), v.value.clone()))
+            .collect();
+
+        let segment = self.run.segment_mut(split_index);
+        segment.set_split_time(current_time);
+        *segment.variables_mut() = variables;
+
+        self.run.mark_as_modified();
     }
 
     /// Starts a new attempt or stores the current time as the time of the
     /// current split. The attempt ends if the last split time is stored.
     pub fn split_or_start(&mut self) {
-        if self.phase == NotRunning {
+        if self.active_attempt.is_none() {
             self.start();
         } else {
             self.split();
@@ -353,12 +332,21 @@ impl Timer {
     /// Skips the current split if an attempt is in progress and the
     /// current split is not the last split.
     pub fn skip_split(&mut self) {
-        if (self.phase == Running || self.phase == Paused)
-            && self.current_split_index < self.run.len().checked_sub(1)
-        {
-            self.current_split_mut().unwrap().clear_split_info();
+        let Some(active_attempt) = &mut self.active_attempt else {
+            return;
+        };
 
-            self.current_split_index = self.current_split_index.map(|i| i + 1);
+        let Some(current_split_index) = active_attempt.current_split_index_mut() else {
+            return;
+        };
+
+        if *current_split_index + 1 < self.run.len() {
+            self.run
+                .segment_mut(*current_split_index)
+                .clear_split_info();
+
+            *current_split_index += 1;
+
             self.run.mark_as_modified();
         }
     }
@@ -367,13 +355,27 @@ impl Timer {
     /// and there is a previous split. The Timer Phase also switches to
     /// [`Running`] if it previously was [`Ended`].
     pub fn undo_split(&mut self) {
-        if self.phase != NotRunning && self.current_split_index > Some(0) {
-            if self.phase == Ended {
-                self.phase = Running;
-            }
-            self.current_split_index = self.current_split_index.map(|i| i - 1);
+        let Some(active_attempt) = &mut self.active_attempt else {
+            return;
+        };
 
-            self.current_split_mut().unwrap().clear_split_info();
+        if let Some(previous_split_index) = active_attempt
+            .current_split_index_overflowing(&self.run)
+            .checked_sub(1)
+        {
+            let time_paused_at = match &active_attempt.state {
+                State::NotEnded { time_paused_at, .. } => *time_paused_at,
+                State::Ended { .. } => None,
+            };
+
+            active_attempt.state = State::NotEnded {
+                current_split_index: previous_split_index,
+                time_paused_at,
+            };
+
+            self.run
+                .segment_mut(previous_split_index)
+                .clear_split_info();
 
             self.run.mark_as_modified();
         }
@@ -382,7 +384,7 @@ impl Timer {
     /// Checks whether the current attempt has a new Personal Best for the
     /// [`TimingMethod`] specified.
     pub fn current_attempt_has_new_personal_best(&self, timing_method: TimingMethod) -> bool {
-        if self.phase != Ended {
+        if self.current_phase() != Ended {
             return false;
         }
 
@@ -402,7 +404,7 @@ impl Timer {
     /// Checks whether the current attempt has new best segment times in any of
     /// the segments for the [`TimingMethod`] specified.
     pub fn current_attempt_has_new_best_segments(&self, timing_method: TimingMethod) -> bool {
-        if self.phase == NotRunning {
+        if self.active_attempt.is_none() {
             return false;
         }
 
@@ -430,7 +432,7 @@ impl Timer {
     /// in the Run's history. Otherwise the current attempt's information is
     /// discarded.
     pub fn reset(&mut self, update_splits: bool) {
-        if self.phase != NotRunning {
+        if self.active_attempt.is_some() {
             self.reset_state(update_splits);
             self.reset_splits();
         }
@@ -440,32 +442,24 @@ impl Timer {
     /// updated such that the current attempt's split times are being stored as
     /// the new Personal Best.
     pub fn reset_and_set_attempt_as_pb(&mut self) {
-        if self.phase != NotRunning {
+        if self.active_attempt.is_some() {
             self.reset_state(true);
-            self.set_run_as_pb();
+            set_run_as_pb(&mut self.run);
             self.reset_splits();
         }
     }
 
     fn reset_state(&mut self, update_times: bool) {
-        if self.phase != Ended {
-            self.attempt_ended = Some(AtomicDateTime::now());
-        }
-        self.resume_game_time();
-        self.set_loading_times(TimeSpan::zero());
+        let Some(active_attempt) = self.active_attempt.take() else {
+            return;
+        };
 
         if update_times {
-            self.update_attempt_history();
-            self.update_best_segments();
-            self.update_pb_splits();
-            self.update_segment_history();
+            active_attempt.update_times(&mut self.run, self.current_timing_method);
         }
     }
 
     fn reset_splits(&mut self) {
-        self.phase = NotRunning;
-        self.current_split_index = None;
-
         // Reset Splits
         for segment in self.run.segments_mut() {
             segment.clear_split_info();
@@ -477,23 +471,36 @@ impl Timer {
 
     /// Pauses an active attempt that is not paused.
     pub fn pause(&mut self) {
-        if self.phase == Running {
-            self.time_paused_at = self.current_time().real_time.unwrap();
-            self.phase = Paused;
+        if let Some(ActiveAttempt {
+            state: State::NotEnded { time_paused_at, .. },
+            adjusted_start_time,
+            ..
+        }) = &mut self.active_attempt
+        {
+            if time_paused_at.is_none() {
+                *time_paused_at = Some(TimeStamp::now() - *adjusted_start_time);
+            }
         }
     }
 
     /// Resumes an attempt that is paused.
     pub fn resume(&mut self) {
-        if self.phase == Paused {
-            self.adjusted_start_time = TimeStamp::now() - self.time_paused_at;
-            self.phase = Running;
+        if let Some(ActiveAttempt {
+            state: State::NotEnded { time_paused_at, .. },
+            adjusted_start_time,
+            ..
+        }) = &mut self.active_attempt
+        {
+            if let Some(pause_time) = *time_paused_at {
+                *adjusted_start_time = TimeStamp::now() - pause_time;
+                *time_paused_at = None;
+            }
         }
     }
 
     /// Toggles an active attempt between `Paused` and `Running`.
     pub fn toggle_pause(&mut self) {
-        match self.phase {
+        match self.current_phase() {
             Running => self.pause(),
             Paused => self.resume(),
             _ => {}
@@ -503,7 +510,7 @@ impl Timer {
     /// Toggles an active attempt between [`Paused`] and [`Running`] or starts
     /// an attempt if there's none in progress.
     pub fn toggle_pause_or_start(&mut self) {
-        match self.phase {
+        match self.current_phase() {
             Running => self.pause(),
             Paused => self.resume(),
             NotRunning => self.start(),
@@ -542,7 +549,9 @@ impl Timer {
             _ => {}
         }
 
-        self.adjusted_start_time = self.start_time_with_offset;
+        if let Some(active_attempt) = &mut self.active_attempt {
+            active_attempt.adjusted_start_time = active_attempt.start_time_with_offset;
+        }
     }
 
     /// Switches the current comparison to the next comparison in the list.
@@ -583,70 +592,85 @@ impl Timer {
     /// duration only counts the time the Timer Phase has actually been
     /// `Running`.
     pub fn current_attempt_duration(&self) -> TimeSpan {
-        match self.current_phase() {
-            NotRunning => TimeSpan::zero(),
-            Paused | Running => TimeStamp::now() - self.start_time,
-            Ended => self.attempt_ended.unwrap() - self.attempt_started.unwrap(),
+        let Some(active_attempt) = &self.active_attempt else {
+            return TimeSpan::zero();
+        };
+
+        if let State::Ended { attempt_ended } = active_attempt.state {
+            attempt_ended - active_attempt.attempt_started
+        } else {
+            TimeStamp::now() - active_attempt.start_time
         }
     }
 
     /// Returns the total amount of time the current attempt has been paused
     /// for. None is returned if there have not been any pauses.
     pub fn get_pause_time(&self) -> Option<TimeSpan> {
-        match self.current_phase() {
-            Paused => Some(TimeStamp::now() - self.start_time_with_offset - self.time_paused_at),
-            Running | Ended if self.start_time_with_offset != self.adjusted_start_time => {
-                Some(self.adjusted_start_time - self.start_time_with_offset)
-            }
-            _ => None,
-        }
+        self.active_attempt.as_ref()?.get_pause_time()
     }
 
     /// Returns whether Game Time is currently initialized. Game Time
     /// automatically gets uninitialized for each new attempt.
     #[inline]
     pub const fn is_game_time_initialized(&self) -> bool {
-        self.loading_times.is_some()
+        match &self.active_attempt {
+            Some(active_attempt) => active_attempt.loading_times.is_some(),
+            None => false,
+        }
     }
 
     /// Initializes Game Time for the current attempt. Game Time automatically
     /// gets uninitialized for each new attempt.
     #[inline]
     pub fn initialize_game_time(&mut self) {
-        self.loading_times = Some(self.loading_times());
+        if let Some(active_attempt) = &mut self.active_attempt {
+            if active_attempt.loading_times.is_none() {
+                active_attempt.loading_times = Some(TimeSpan::zero());
+            }
+        }
     }
 
     /// Deinitializes Game Time for the current attempt.
     #[inline]
     pub fn deinitialize_game_time(&mut self) {
-        self.loading_times = None;
+        if let Some(active_attempt) = &mut self.active_attempt {
+            active_attempt.loading_times = None;
+        }
     }
 
     /// Returns whether the Game Timer is currently paused. If the Game Timer is
     /// not paused, it automatically increments similar to Real Time.
     #[inline]
     pub const fn is_game_time_paused(&self) -> bool {
-        self.is_game_time_paused
+        match &self.active_attempt {
+            Some(active_attempt) => active_attempt.game_time_paused_at.is_some(),
+            None => false,
+        }
     }
 
     /// Pauses the Game Timer such that it doesn't automatically increment
     /// similar to Real Time.
     pub fn pause_game_time(&mut self) {
-        if !self.is_game_time_paused() {
-            let current_time = self.current_time();
-            self.game_time_pause_time = current_time.game_time.or(current_time.real_time);
-            self.is_game_time_paused = true;
+        if let Some(active_attempt) = &mut self.active_attempt {
+            if active_attempt.game_time_paused_at.is_none() {
+                let current_time = active_attempt.current_time(&self.run);
+
+                active_attempt.game_time_paused_at =
+                    current_time.game_time.or(Some(current_time.real_time));
+            }
         }
     }
 
     /// Resumes the Game Timer such that it automatically increments similar to
     /// Real Time, starting from the Game Time it was paused at.
     pub fn resume_game_time(&mut self) {
-        if self.is_game_time_paused() {
-            let current_time = self.current_time();
-            let diff = catch! { current_time.real_time? - current_time.game_time? };
-            self.set_loading_times(diff.unwrap_or_default());
-            self.is_game_time_paused = false;
+        if let Some(active_attempt) = &mut self.active_attempt {
+            if active_attempt.game_time_paused_at.take().is_some() {
+                let current_time = active_attempt.current_time(&self.run);
+
+                let diff = catch! { current_time.real_time - current_time.game_time? };
+                active_attempt.set_loading_times(diff.unwrap_or_default(), &self.run);
+            }
         }
     }
 
@@ -656,16 +680,22 @@ impl Timer {
     /// the Game Timer never shows any time that is not coming from the game.
     #[inline]
     pub fn set_game_time(&mut self, game_time: TimeSpan) {
-        if self.is_game_time_paused() {
-            self.game_time_pause_time = Some(game_time);
+        if let Some(active_attempt) = &mut self.active_attempt {
+            if active_attempt.game_time_paused_at.is_some() {
+                active_attempt.game_time_paused_at = Some(game_time);
+            }
+            active_attempt.loading_times =
+                Some(active_attempt.current_time(&self.run).real_time - game_time);
         }
-        self.loading_times = Some(self.current_time().real_time.unwrap() - game_time);
     }
 
     /// Accesses the loading times. Loading times are defined as Game Time - Real Time.
     #[inline]
     pub fn loading_times(&self) -> TimeSpan {
-        self.loading_times.unwrap_or_default()
+        self.active_attempt
+            .as_ref()
+            .and_then(|a| a.loading_times)
+            .unwrap_or_default()
     }
 
     /// Instead of setting the Game Time directly, this method can be used to
@@ -673,9 +703,8 @@ impl Timer {
     /// is then automatically determined by Real Time - Loading Times.
     #[inline]
     pub fn set_loading_times(&mut self, time: TimeSpan) {
-        self.loading_times = Some(time);
-        if self.is_game_time_paused() {
-            self.game_time_pause_time = Some(self.current_time().real_time.unwrap() - time);
+        if let Some(active_attempt) = &mut self.active_attempt {
+            active_attempt.set_loading_times(time, &self.run);
         }
     }
 
@@ -708,80 +737,14 @@ impl Timer {
             self.run.mark_as_modified();
         }
     }
+}
 
-    fn update_attempt_history(&mut self) {
-        let time = if self.phase == Ended {
-            self.current_time()
-        } else {
-            Default::default()
-        };
-
-        let pause_time = self.get_pause_time();
-
-        self.run
-            .add_attempt(time, self.attempt_started, self.attempt_ended, pause_time);
+fn set_run_as_pb(run: &mut Run) {
+    run.import_pb_into_segment_history();
+    run.fix_splits();
+    for segment in run.segments_mut() {
+        let split_time = segment.split_time();
+        segment.set_personal_best_split_time(split_time);
     }
-
-    fn update_best_segments(&mut self) {
-        let mut previous_split_time_rta = Some(TimeSpan::zero());
-        let mut previous_split_time_game_time = Some(TimeSpan::zero());
-
-        for split in self.run.segments_mut() {
-            let mut new_best_segment = split.best_segment_time();
-            if let Some(split_time) = split.split_time().real_time {
-                let current_segment = previous_split_time_rta.map(|previous| split_time - previous);
-                previous_split_time_rta = Some(split_time);
-                if split
-                    .best_segment_time()
-                    .real_time
-                    .map_or(true, |b| current_segment.is_some_and(|c| c < b))
-                {
-                    new_best_segment.real_time = current_segment;
-                }
-            }
-            if let Some(split_time) = split.split_time().game_time {
-                let current_segment =
-                    previous_split_time_game_time.map(|previous| split_time - previous);
-                previous_split_time_game_time = Some(split_time);
-                if split
-                    .best_segment_time()
-                    .game_time
-                    .map_or(true, |b| current_segment.is_some_and(|c| c < b))
-                {
-                    new_best_segment.game_time = current_segment;
-                }
-            }
-            split.set_best_segment_time(new_best_segment);
-        }
-    }
-
-    fn update_pb_splits(&mut self) {
-        let method = self.current_timing_method;
-        let (split_time, pb_split_time) = {
-            let last_segment = self.run.segments().last().unwrap();
-            (
-                last_segment.split_time()[method],
-                last_segment.personal_best_split_time()[method],
-            )
-        };
-        if split_time.is_some_and(|s| pb_split_time.map_or(true, |pb| s < pb)) {
-            self.set_run_as_pb();
-        }
-    }
-
-    fn update_segment_history(&mut self) {
-        if let Some(index) = self.current_split_index {
-            self.run.update_segment_history(index);
-        }
-    }
-
-    fn set_run_as_pb(&mut self) {
-        self.run.import_pb_into_segment_history();
-        self.run.fix_splits();
-        for segment in self.run.segments_mut() {
-            let split_time = segment.split_time();
-            segment.set_personal_best_split_time(split_time);
-        }
-        self.run.clear_run_id();
-    }
+    run.clear_run_id();
 }

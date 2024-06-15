@@ -740,10 +740,10 @@ impl Run {
     /// # Panics
     ///
     /// This panics if there is no attempt in the Attempt History.
-    pub fn update_segment_history(&mut self, current_split_index: usize) {
+    pub fn update_segment_history(&mut self, segments_count: usize) {
         let mut previous_split_time = Time::zero();
 
-        let segments = self.segments.iter_mut().take(current_split_index);
+        let segments = &mut self.segments[..segments_count];
         let index = self
             .attempt_history
             .last()

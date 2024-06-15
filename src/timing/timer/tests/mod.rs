@@ -659,3 +659,18 @@ fn identifies_new_best_times_in_current_attempt() {
     assert!(!timer.current_attempt_has_new_personal_best(TimingMethod::GameTime));
     assert!(!timer.current_attempt_has_new_best_segments(TimingMethod::GameTime));
 }
+
+#[test]
+fn skipping_keeps_timer_paused() {
+    let mut timer = timer();
+    start_run(&mut timer);
+    timer.pause();
+
+    timer.skip_split();
+    assert_eq!(timer.current_phase(), TimerPhase::Paused);
+    assert_eq!(timer.current_split_index(), Some(1));
+
+    timer.undo_split();
+    assert_eq!(timer.current_phase(), TimerPhase::Paused);
+    assert_eq!(timer.current_split_index(), Some(0));
+}
