@@ -155,10 +155,10 @@ pub fn reencode_children(reader: &mut Reader<'_>, target_buf: &mut String) -> Re
                     .processing_instruction(text)
                     .map_err(|_| Error::Xml)?;
             }
-            Event::Decl(_) => {
+            Event::Decl => {
                 // Shouldn't really be a child anyway.
             }
-            Event::DocType(_) => {
+            Event::DocType => {
                 // A DOCTYPE is not allowed in content.
             }
             Event::Ended => return Err(Error::UnexpectedEndOfFile),

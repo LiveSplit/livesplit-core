@@ -15,8 +15,8 @@ pub enum Event<'a> {
     End(TagName<'a>),
     Comment(Text<'a>),
     CData(Text<'a>),
-    DocType(Text<'a>),
-    Decl(&'a str),
+    DocType,
+    Decl,
     ProcessingInstruction(Text<'a>),
     Ended,
 }
@@ -59,8 +59,8 @@ impl<'a> Reader<'a> {
                 Event::Comment(Text(comment))
             } else if let Some(cdata) = strip_surrounding("[CDATA[", tag_inner, "]]") {
                 Event::CData(Text(cdata))
-            } else if let Some(doc_type) = tag_inner.strip_prefix("DOCTYPE") {
-                Event::DocType(Text(doc_type))
+            } else if tag_inner.starts_with("DOCTYPE") {
+                Event::DocType
             } else {
                 return None;
             }
@@ -68,11 +68,12 @@ impl<'a> Reader<'a> {
             self.source = rem;
             let tag_inner = self.read_until(AsciiChar::GREATER_THAN)?;
             if let Some(pi) = tag_inner.strip_suffix('?') {
-                if let Some(decl) = pi
+                if pi
                     .strip_prefix("xml")
                     .and_then(|decl| decl.strip_prefix(|b: char| b.is_ascii_whitespace()))
+                    .is_some()
                 {
-                    Event::Decl(decl)
+                    Event::Decl
                 } else {
                     Event::ProcessingInstruction(Text(pi))
                 }
