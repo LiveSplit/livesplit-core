@@ -2,7 +2,7 @@ use crate::TimingMethod;
 
 /// Describes which phase the timer is currently in. This tells you if there's
 /// an active speedrun attempt and whether it is paused or it ended.
-#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, serde_derive::Serialize, serde_derive::Deserialize)]
 #[repr(u8)]
 pub enum TimerPhase {
     /// There's currently no active attempt.

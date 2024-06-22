@@ -1,7 +1,12 @@
 use crate::{
-    analysis::check_best_segment, comparison::personal_best, platform::prelude::*,
-    util::PopulateString, AtomicDateTime, Run, Segment, Time, TimeSpan, TimeStamp, TimerPhase,
-    TimerPhase::*, TimingMethod,
+    analysis::check_best_segment,
+    comparison::personal_best,
+    event::{Error, Event},
+    platform::prelude::*,
+    util::PopulateString,
+    AtomicDateTime, Run, Segment, Time, TimeSpan, TimeStamp,
+    TimerPhase::{self, *},
+    TimingMethod,
 };
 use core::{mem, ops::Deref};
 
@@ -28,17 +33,17 @@ use active_attempt::{ActiveAttempt, State};
 /// let mut timer = Timer::new(run).expect("Run with at least one segment provided");
 ///
 /// // Start a new attempt.
-/// timer.start();
+/// timer.start().unwrap();
 /// assert_eq!(timer.current_phase(), TimerPhase::Running);
 ///
 /// // Create a split.
-/// timer.split();
+/// timer.split().unwrap();
 ///
 /// // The run should be finished now.
 /// assert_eq!(timer.current_phase(), TimerPhase::Ended);
 ///
 /// // Reset the attempt and confirm that we want to store the attempt.
-/// timer.reset(true);
+/// timer.reset(true).unwrap();
 ///
 /// // The attempt is now over.
 /// assert_eq!(timer.current_phase(), TimerPhase::NotRunning);
@@ -85,6 +90,8 @@ pub enum CreationError {
     EmptyRun,
 }
 
+pub type Result<T = Event, E = Error> = core::result::Result<T, E>;
+
 impl Timer {
     /// Creates a new Timer based on a Run object storing all the information
     /// about the splits. The Run object needs to have at least one segment, so
@@ -119,7 +126,7 @@ impl Timer {
     /// of the current attempt is stored in the Run's history. Otherwise the
     /// current attempt's information is discarded.
     pub fn into_run(mut self, update_splits: bool) -> Run {
-        self.reset(update_splits);
+        let _ = self.reset(update_splits);
         self.run
     }
 
@@ -135,7 +142,7 @@ impl Timer {
             return Err(run);
         }
 
-        self.reset(update_splits);
+        let _ = self.reset(update_splits);
         if !run.comparisons().any(|c| c == self.current_comparison) {
             self.current_comparison = personal_best::NAME.to_string();
         }
@@ -205,13 +212,13 @@ impl Timer {
         Snapshot { timer: self, time }
     }
 
-    /// Returns the currently selected Timing Method.
+    /// Returns the currently selected timing method.
     #[inline]
     pub const fn current_timing_method(&self) -> TimingMethod {
         self.current_timing_method
     }
 
-    /// Sets the current Timing Method to the Timing Method provided.
+    /// Sets the current timing method to the timing method provided.
     #[inline]
     pub fn set_current_timing_method(&mut self, method: TimingMethod) {
         self.current_timing_method = method;
@@ -236,13 +243,13 @@ impl Timer {
     /// Tries to set the current comparison to the comparison specified. If the
     /// comparison doesn't exist `Err` is returned.
     #[inline]
-    pub fn set_current_comparison<S: PopulateString>(&mut self, comparison: S) -> Result<(), ()> {
+    pub fn set_current_comparison<S: PopulateString>(&mut self, comparison: S) -> Result {
         let as_str = comparison.as_str();
         if self.run.comparisons().any(|c| c == as_str) {
             comparison.populate(&mut self.current_comparison);
-            Ok(())
+            Ok(Event::ComparisonChanged)
         } else {
-            Err(())
+            Err(Error::ComparisonDoesntExist)
         }
     }
 
@@ -271,7 +278,7 @@ impl Timer {
 
     /// Starts the Timer if there is no attempt in progress. If that's not the
     /// case, nothing happens.
-    pub fn start(&mut self) {
+    pub fn start(&mut self) -> Result {
         if self.active_attempt.is_none() {
             let attempt_started = AtomicDateTime::now();
             let start_time = TimeStamp::now();
@@ -290,19 +297,19 @@ impl Timer {
                 loading_times: None,
             });
             self.run.start_next_run();
+
+            Ok(Event::Started)
+        } else {
+            Err(Error::RunAlreadyInProgress)
         }
     }
 
     /// If an attempt is in progress, stores the current time as the time of the
     /// current split. The attempt ends if the last split time is stored.
-    pub fn split(&mut self) {
-        let Some(active_attempt) = &mut self.active_attempt else {
-            return;
-        };
+    pub fn split(&mut self) -> Result {
+        let active_attempt = self.active_attempt.as_mut().ok_or(Error::NoRunInProgress)?;
 
-        let Some((split_index, current_time)) = active_attempt.prepare_split(&self.run) else {
-            return;
-        };
+        let (split_index, current_time, event) = active_attempt.prepare_split(&self.run)?;
 
         // FIXME: We shouldn't need to collect here.
         let variables = self
@@ -317,27 +324,27 @@ impl Timer {
         *segment.variables_mut() = variables;
 
         self.run.mark_as_modified();
+
+        Ok(event)
     }
 
     /// Starts a new attempt or stores the current time as the time of the
     /// current split. The attempt ends if the last split time is stored.
-    pub fn split_or_start(&mut self) {
+    pub fn split_or_start(&mut self) -> Result {
         if self.active_attempt.is_none() {
-            self.start();
+            self.start()
         } else {
-            self.split();
+            self.split()
         }
     }
 
     /// Skips the current split if an attempt is in progress and the
     /// current split is not the last split.
-    pub fn skip_split(&mut self) {
-        let Some(active_attempt) = &mut self.active_attempt else {
-            return;
-        };
+    pub fn skip_split(&mut self) -> Result {
+        let active_attempt = self.active_attempt.as_mut().ok_or(Error::NoRunInProgress)?;
 
         let Some(current_split_index) = active_attempt.current_split_index_mut() else {
-            return;
+            return Err(Error::RunFinished);
         };
 
         if *current_split_index + 1 < self.run.len() {
@@ -348,16 +355,18 @@ impl Timer {
             *current_split_index += 1;
 
             self.run.mark_as_modified();
+
+            Ok(Event::SplitSkipped)
+        } else {
+            Err(Error::CantSkipLastSplit)
         }
     }
 
     /// Removes the split time from the last split if an attempt is in progress
     /// and there is a previous split. The Timer Phase also switches to
     /// [`Running`] if it previously was [`Ended`].
-    pub fn undo_split(&mut self) {
-        let Some(active_attempt) = &mut self.active_attempt else {
-            return;
-        };
+    pub fn undo_split(&mut self) -> Result {
+        let active_attempt = self.active_attempt.as_mut().ok_or(Error::NoRunInProgress)?;
 
         if let Some(previous_split_index) = active_attempt
             .current_split_index_overflowing(&self.run)
@@ -378,6 +387,10 @@ impl Timer {
                 .clear_split_info();
 
             self.run.mark_as_modified();
+
+            Ok(Event::SplitUndone)
+        } else {
+            Err(Error::CantUndoFirstSplit)
         }
     }
 
@@ -431,21 +444,27 @@ impl Timer {
     /// are to be updated, all the information of the current attempt is stored
     /// in the Run's history. Otherwise the current attempt's information is
     /// discarded.
-    pub fn reset(&mut self, update_splits: bool) {
+    pub fn reset(&mut self, update_splits: bool) -> Result {
         if self.active_attempt.is_some() {
             self.reset_state(update_splits);
             self.reset_splits();
+            Ok(Event::Reset)
+        } else {
+            Err(Error::NoRunInProgress)
         }
     }
 
     /// Resets the current attempt if there is one in progress. The splits are
     /// updated such that the current attempt's split times are being stored as
     /// the new Personal Best.
-    pub fn reset_and_set_attempt_as_pb(&mut self) {
+    pub fn reset_and_set_attempt_as_pb(&mut self) -> Result {
         if self.active_attempt.is_some() {
             self.reset_state(true);
             set_run_as_pb(&mut self.run);
             self.reset_splits();
+            Ok(Event::Reset)
+        } else {
+            Err(Error::NoRunInProgress)
         }
     }
 
@@ -470,51 +489,56 @@ impl Timer {
     }
 
     /// Pauses an active attempt that is not paused.
-    pub fn pause(&mut self) {
-        if let Some(ActiveAttempt {
-            state: State::NotEnded { time_paused_at, .. },
-            adjusted_start_time,
-            ..
-        }) = &mut self.active_attempt
-        {
-            if time_paused_at.is_none() {
-                *time_paused_at = Some(TimeStamp::now() - *adjusted_start_time);
-            }
+    pub fn pause(&mut self) -> Result {
+        let active_attempt = self.active_attempt.as_mut().ok_or(Error::NoRunInProgress)?;
+
+        let State::NotEnded { time_paused_at, .. } = &mut active_attempt.state else {
+            return Err(Error::RunFinished);
+        };
+
+        if time_paused_at.is_none() {
+            *time_paused_at = Some(TimeStamp::now() - active_attempt.adjusted_start_time);
+            Ok(Event::Paused)
+        } else {
+            Err(Error::AlreadyPaused)
         }
     }
 
     /// Resumes an attempt that is paused.
-    pub fn resume(&mut self) {
-        if let Some(ActiveAttempt {
-            state: State::NotEnded { time_paused_at, .. },
-            adjusted_start_time,
-            ..
-        }) = &mut self.active_attempt
-        {
-            if let Some(pause_time) = *time_paused_at {
-                *adjusted_start_time = TimeStamp::now() - pause_time;
-                *time_paused_at = None;
-            }
+    pub fn resume(&mut self) -> Result {
+        let active_attempt = self.active_attempt.as_mut().ok_or(Error::NoRunInProgress)?;
+
+        let State::NotEnded { time_paused_at, .. } = &mut active_attempt.state else {
+            return Err(Error::RunFinished);
+        };
+
+        if let Some(pause_time) = *time_paused_at {
+            active_attempt.adjusted_start_time = TimeStamp::now() - pause_time;
+            *time_paused_at = None;
+            Ok(Event::Resumed)
+        } else {
+            Err(Error::NotPaused)
         }
     }
 
     /// Toggles an active attempt between `Paused` and `Running`.
-    pub fn toggle_pause(&mut self) {
+    pub fn toggle_pause(&mut self) -> Result {
         match self.current_phase() {
             Running => self.pause(),
             Paused => self.resume(),
-            _ => {}
+            NotRunning => Err(Error::NoRunInProgress),
+            Ended => Err(Error::RunFinished),
         }
     }
 
     /// Toggles an active attempt between [`Paused`] and [`Running`] or starts
     /// an attempt if there's none in progress.
-    pub fn toggle_pause_or_start(&mut self) {
+    pub fn toggle_pause_or_start(&mut self) -> Result {
         match self.current_phase() {
             Running => self.pause(),
             Paused => self.resume(),
             NotRunning => self.start(),
-            _ => {}
+            Ended => Err(Error::RunFinished),
         }
     }
 
@@ -528,9 +552,12 @@ impl Timer {
     /// This behavior is not entirely optimal, as generally only the final split
     /// time is modified, while all other split times are left unmodified, which
     /// may not be what actually happened during the run.
-    pub fn undo_all_pauses(&mut self) {
-        match self.current_phase() {
-            Paused => self.resume(),
+    pub fn undo_all_pauses(&mut self) -> Result {
+        let event = match self.current_phase() {
+            Paused => {
+                self.resume()?;
+                Event::PausesUndoneAndResumed
+            }
             Ended => {
                 let pause_time = Some(self.get_pause_time().unwrap_or_default());
 
@@ -545,12 +572,17 @@ impl Timer {
                 *split_time += Time::new()
                     .with_real_time(pause_time)
                     .with_game_time(pause_time);
+
+                Event::PausesUndone
             }
-            _ => {}
-        }
+            _ => Event::PausesUndone,
+        };
 
         if let Some(active_attempt) = &mut self.active_attempt {
             active_attempt.adjusted_start_time = active_attempt.start_time_with_offset;
+            Ok(event)
+        } else {
+            Err(Error::NoRunInProgress)
         }
     }
 
@@ -619,14 +651,17 @@ impl Timer {
         }
     }
 
-    /// Initializes Game Time for the current attempt. Game Time automatically
+    /// Initializes game time for the current attempt. Game time automatically
     /// gets uninitialized for each new attempt.
     #[inline]
-    pub fn initialize_game_time(&mut self) {
-        if let Some(active_attempt) = &mut self.active_attempt {
-            if active_attempt.loading_times.is_none() {
-                active_attempt.loading_times = Some(TimeSpan::zero());
-            }
+    pub fn initialize_game_time(&mut self) -> Result {
+        let active_attempt = self.active_attempt.as_mut().ok_or(Error::NoRunInProgress)?;
+
+        if active_attempt.loading_times.is_none() {
+            active_attempt.loading_times = Some(TimeSpan::zero());
+            Ok(Event::GameTimeInitialized)
+        } else {
+            Err(Error::GameTimeAlreadyInitialized)
         }
     }
 
@@ -650,27 +685,35 @@ impl Timer {
 
     /// Pauses the Game Timer such that it doesn't automatically increment
     /// similar to Real Time.
-    pub fn pause_game_time(&mut self) {
-        if let Some(active_attempt) = &mut self.active_attempt {
-            if active_attempt.game_time_paused_at.is_none() {
-                let current_time = active_attempt.current_time(&self.run);
+    pub fn pause_game_time(&mut self) -> Result {
+        let active_attempt = self.active_attempt.as_mut().ok_or(Error::NoRunInProgress)?;
 
-                active_attempt.game_time_paused_at =
-                    current_time.game_time.or(Some(current_time.real_time));
-            }
+        if active_attempt.game_time_paused_at.is_none() {
+            let current_time = active_attempt.current_time(&self.run);
+
+            active_attempt.game_time_paused_at =
+                current_time.game_time.or(Some(current_time.real_time));
+
+            Ok(Event::GameTimePaused)
+        } else {
+            Err(Error::GameTimeAlreadyPaused)
         }
     }
 
     /// Resumes the Game Timer such that it automatically increments similar to
     /// Real Time, starting from the Game Time it was paused at.
-    pub fn resume_game_time(&mut self) {
-        if let Some(active_attempt) = &mut self.active_attempt {
-            if active_attempt.game_time_paused_at.take().is_some() {
-                let current_time = active_attempt.current_time(&self.run);
+    pub fn resume_game_time(&mut self) -> Result {
+        let active_attempt = self.active_attempt.as_mut().ok_or(Error::NoRunInProgress)?;
 
-                let diff = catch! { current_time.real_time - current_time.game_time? };
-                active_attempt.set_loading_times(diff.unwrap_or_default(), &self.run);
-            }
+        if active_attempt.game_time_paused_at.take().is_some() {
+            let current_time = active_attempt.current_time(&self.run);
+
+            let diff = catch! { current_time.real_time - current_time.game_time? };
+            active_attempt.set_loading_times(diff.unwrap_or_default(), &self.run);
+
+            Ok(Event::GameTimeResumed)
+        } else {
+            Err(Error::GameTimeNotPaused)
         }
     }
 
@@ -679,14 +722,16 @@ impl Timer {
     /// periodically without it automatically moving forward. This ensures that
     /// the Game Timer never shows any time that is not coming from the game.
     #[inline]
-    pub fn set_game_time(&mut self, game_time: TimeSpan) {
-        if let Some(active_attempt) = &mut self.active_attempt {
-            if active_attempt.game_time_paused_at.is_some() {
-                active_attempt.game_time_paused_at = Some(game_time);
-            }
-            active_attempt.loading_times =
-                Some(active_attempt.current_time(&self.run).real_time - game_time);
+    pub fn set_game_time(&mut self, game_time: TimeSpan) -> Result {
+        let active_attempt = self.active_attempt.as_mut().ok_or(Error::NoRunInProgress)?;
+
+        if active_attempt.game_time_paused_at.is_some() {
+            active_attempt.game_time_paused_at = Some(game_time);
         }
+        active_attempt.loading_times =
+            Some(active_attempt.current_time(&self.run).real_time - game_time);
+
+        Ok(Event::GameTimeSet)
     }
 
     /// Accesses the loading times. Loading times are defined as Game Time - Real Time.
@@ -698,13 +743,16 @@ impl Timer {
             .unwrap_or_default()
     }
 
-    /// Instead of setting the Game Time directly, this method can be used to
-    /// just specify the amount of time the game has been loading. The Game Time
+    /// Instead of setting the game time directly, this method can be used to
+    /// just specify the amount of time the game has been loading. The game time
     /// is then automatically determined by Real Time - Loading Times.
     #[inline]
-    pub fn set_loading_times(&mut self, time: TimeSpan) {
+    pub fn set_loading_times(&mut self, time: TimeSpan) -> Result {
         if let Some(active_attempt) = &mut self.active_attempt {
             active_attempt.set_loading_times(time, &self.run);
+            Ok(Event::LoadingTimesSet)
+        } else {
+            Err(Error::NoRunInProgress)
         }
     }
 

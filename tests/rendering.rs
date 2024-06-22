@@ -180,8 +180,8 @@ fn actual_split_file() {
     check(
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
-        "86ccc8595787d41b",
-        "ec4e4283ff1aaf7c",
+        "42b2292f5c884c17",
+        "1e4c66359bdc32e8",
         "actual_split_file",
     );
 }
@@ -217,19 +217,19 @@ fn timer_delta_background() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [250, 300],
-        "fc8e7890593f9da6",
-        "0140697763078566",
+        "4d9c5c580b0c435f",
+        "bf8e5c596684688d",
         "timer_delta_background_ahead",
     );
 
-    timer.reset(true);
+    timer.reset(true).unwrap();
 
     check_dims(
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [250, 300],
-        "c56d1f6715627391",
-        "75b3c2a49c0f0b93",
+        "e96525c84aa77f66",
+        "bd8139d0f625af38",
         "timer_delta_background_stopped",
     );
 }

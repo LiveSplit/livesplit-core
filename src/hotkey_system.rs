@@ -61,22 +61,38 @@ impl Action {
         }
     }
 
-    fn callback<E: event::Sink + Send + 'static>(
+    fn callback<S: event::CommandSink + Send + 'static>(
         self,
-        event_sink: E,
+        command_sink: S,
     ) -> Box<dyn FnMut() + Send + 'static> {
         match self {
-            Action::Split => Box::new(move || event_sink.split_or_start()),
-            Action::Reset => Box::new(move || event_sink.reset(None)),
-            Action::Undo => Box::new(move || event_sink.undo_split()),
-            Action::Skip => Box::new(move || event_sink.skip_split()),
-            Action::Pause => Box::new(move || event_sink.toggle_pause_or_start()),
-            Action::UndoAllPauses => Box::new(move || event_sink.undo_all_pauses()),
-            Action::PreviousComparison => {
-                Box::new(move || event_sink.switch_to_previous_comparison())
-            }
-            Action::NextComparison => Box::new(move || event_sink.switch_to_next_comparison()),
-            Action::ToggleTimingMethod => Box::new(move || event_sink.toggle_timing_method()),
+            Action::Split => Box::new(move || {
+                drop(command_sink.split_or_start());
+            }),
+            Action::Reset => Box::new(move || {
+                drop(command_sink.reset(None));
+            }),
+            Action::Undo => Box::new(move || {
+                drop(command_sink.undo_split());
+            }),
+            Action::Skip => Box::new(move || {
+                drop(command_sink.skip_split());
+            }),
+            Action::Pause => Box::new(move || {
+                drop(command_sink.toggle_pause_or_start());
+            }),
+            Action::UndoAllPauses => Box::new(move || {
+                drop(command_sink.undo_all_pauses());
+            }),
+            Action::PreviousComparison => Box::new(move || {
+                drop(command_sink.switch_to_previous_comparison());
+            }),
+            Action::NextComparison => Box::new(move || {
+                drop(command_sink.switch_to_next_comparison());
+            }),
+            Action::ToggleTimingMethod => Box::new(move || {
+                drop(command_sink.toggle_timing_method());
+            }),
         }
     }
 }
@@ -86,26 +102,26 @@ impl Action {
 /// focus. The behavior of the hotkeys depends on the platform and is stubbed
 /// out on platforms that don't support hotkeys. You can turn off a `HotkeySystem`
 /// temporarily. By default the `HotkeySystem` is activated.
-pub struct HotkeySystem<E> {
+pub struct HotkeySystem<S> {
     config: HotkeyConfig,
     hook: Hook,
-    event_sink: E,
+    command_sink: S,
     is_active: bool,
 }
 
-impl<E: event::Sink + Clone + Send + 'static> HotkeySystem<E> {
+impl<S: event::CommandSink + Clone + Send + 'static> HotkeySystem<S> {
     /// Creates a new Hotkey System for a Timer with the default hotkeys.
-    pub fn new(event_sink: E) -> Result<Self> {
-        Self::with_config(event_sink, Default::default())
+    pub fn new(command_sink: S) -> Result<Self> {
+        Self::with_config(command_sink, Default::default())
     }
 
     /// Creates a new Hotkey System for a Timer with a custom configuration for
     /// the hotkeys.
-    pub fn with_config(event_sink: E, config: HotkeyConfig) -> Result<Self> {
+    pub fn with_config(command_sink: S, config: HotkeyConfig) -> Result<Self> {
         let mut hotkey_system = Self {
             config,
             hook: Hook::with_consume_preference(ConsumePreference::PreferNoConsume)?,
-            event_sink,
+            command_sink,
             is_active: false,
         };
         hotkey_system.activate()?;
@@ -115,7 +131,7 @@ impl<E: event::Sink + Clone + Send + 'static> HotkeySystem<E> {
     // This method should never be public, because it might mess up the internal
     // state and we might leak a registered hotkey
     fn register_inner(&mut self, action: Action) -> Result<()> {
-        let inner = self.event_sink.clone();
+        let inner = self.command_sink.clone();
         if let Some(hotkey) = action.get_hotkey(&self.config) {
             self.hook.register(hotkey, action.callback(inner))?;
         }

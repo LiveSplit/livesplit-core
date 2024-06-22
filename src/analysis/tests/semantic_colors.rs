@@ -22,7 +22,7 @@ fn segment_colors_are_correct() {
 
     assert_eq!(color(&timer, 0.0), SemanticColor::Default);
 
-    timer.reset(false);
+    timer.reset(false).unwrap();
 
     start_run(&mut timer);
     make_progress_run_with_splits_opt(&mut timer, &[Some(15.0)]);

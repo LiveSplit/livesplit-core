@@ -6,10 +6,10 @@
 
 use std::{os::raw::c_char, str::FromStr};
 
-use crate::{event_sink::EventSink, hotkey_config::OwnedHotkeyConfig, output_str, str};
+use crate::{command_sink::CommandSink, hotkey_config::OwnedHotkeyConfig, output_str, str};
 use livesplit_core::hotkey::KeyCode;
 
-type HotkeySystem = livesplit_core::HotkeySystem<EventSink>;
+type HotkeySystem = livesplit_core::HotkeySystem<CommandSink>;
 
 /// type
 pub type OwnedHotkeySystem = Box<HotkeySystem>;
@@ -18,18 +18,18 @@ pub type NullableOwnedHotkeySystem = Option<OwnedHotkeySystem>;
 
 /// Creates a new Hotkey System for a Timer with the default hotkeys.
 #[no_mangle]
-pub extern "C" fn HotkeySystem_new(event_sink: &EventSink) -> NullableOwnedHotkeySystem {
-    HotkeySystem::new(event_sink.clone()).ok().map(Box::new)
+pub extern "C" fn HotkeySystem_new(command_sink: &CommandSink) -> NullableOwnedHotkeySystem {
+    HotkeySystem::new(command_sink.clone()).ok().map(Box::new)
 }
 
 /// Creates a new Hotkey System for a Timer with a custom configuration for the
 /// hotkeys.
 #[no_mangle]
 pub extern "C" fn HotkeySystem_with_config(
-    event_sink: &EventSink,
+    command_sink: &CommandSink,
     config: OwnedHotkeyConfig,
 ) -> NullableOwnedHotkeySystem {
-    HotkeySystem::with_config(event_sink.clone(), *config)
+    HotkeySystem::with_config(command_sink.clone(), *config)
         .ok()
         .map(Box::new)
 }

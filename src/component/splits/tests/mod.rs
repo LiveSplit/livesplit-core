@@ -64,22 +64,22 @@ fn one_visual_split() {
     assert_eq!(state.splits[0].name, "A");
     assert_eq!(state.splits.len(), 1);
 
-    timer.start();
+    timer.start().unwrap();
     state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
     assert_eq!(state.splits[0].name, "A");
     assert_eq!(state.splits.len(), 1);
 
-    timer.split();
+    timer.split().unwrap();
     state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
     assert_eq!(state.splits[0].name, "B");
     assert_eq!(state.splits.len(), 1);
 
-    timer.split();
+    timer.split().unwrap();
     state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
     assert_eq!(state.splits[0].name, "C");
     assert_eq!(state.splits.len(), 1);
 
-    timer.split();
+    timer.split().unwrap();
     state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
     assert_eq!(state.splits[0].name, "C");
     assert_eq!(state.splits.len(), 1);
@@ -104,13 +104,13 @@ fn negative_segment_times() {
         ..Default::default()
     });
 
-    timer.start();
+    timer.start().unwrap();
 
     // Emulate a negative offset through game time.
     timer.set_current_timing_method(TimingMethod::GameTime);
-    timer.initialize_game_time();
-    timer.pause_game_time();
-    timer.set_game_time(TimeSpan::from_seconds(-1.0));
+    timer.initialize_game_time().unwrap();
+    timer.pause_game_time().unwrap();
+    timer.set_game_time(TimeSpan::from_seconds(-1.0)).unwrap();
 
     let mut image_cache = ImageCache::new();
 

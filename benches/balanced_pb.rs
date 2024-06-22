@@ -9,16 +9,16 @@ criterion_main!(benches);
 criterion_group!(benches, fake_splits, actual_splits);
 
 fn run_with_splits(timer: &mut Timer, splits: &[f64]) {
-    timer.start();
-    timer.initialize_game_time();
-    timer.pause_game_time();
+    timer.start().unwrap();
+    timer.initialize_game_time().unwrap();
+    timer.pause_game_time().unwrap();
 
     for &split in splits {
-        timer.set_game_time(TimeSpan::from_seconds(split));
-        timer.split();
+        timer.set_game_time(TimeSpan::from_seconds(split)).unwrap();
+        timer.split().unwrap();
     }
 
-    timer.reset(true);
+    timer.reset(true).unwrap();
 }
 
 fn fake_splits(c: &mut Criterion) {

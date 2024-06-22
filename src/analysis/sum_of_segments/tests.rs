@@ -66,7 +66,7 @@ pub fn sum_of_best() {
         [(5.0, 0, true), (20.0, 1, true), (60.0, 2, true)],
     );
 
-    run_with_splits_opt(&mut timer, &[None, Some(10.0), None]);
+    run_with_splits_opt(&mut timer, &[None, Some(10.0)]);
     predictions = [None; 4];
     best::calculate(
         timer.run().segments(),
@@ -96,7 +96,7 @@ pub fn sum_of_best() {
         [(5.0, 0, true), (10.0, 0, false), (25.0, 1, true)],
     );
 
-    run_with_splits_opt(&mut timer, &[Some(7.0), Some(10.0), None]);
+    run_with_splits_opt(&mut timer, &[Some(7.0), Some(10.0)]);
     predictions = [None; 4];
     best::calculate(
         timer.run().segments(),

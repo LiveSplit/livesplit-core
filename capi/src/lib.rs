@@ -26,13 +26,13 @@ pub mod attempt;
 pub mod auto_splitting_runtime;
 pub mod blank_space_component;
 pub mod blank_space_component_state;
+pub mod command_sink;
 pub mod component;
 pub mod current_comparison_component;
 pub mod current_pace_component;
 pub mod delta_component;
 pub mod detailed_timer_component;
 pub mod detailed_timer_component_state;
-pub mod event_sink;
 pub mod fuzzy_list;
 pub mod general_layout_settings;
 pub mod graph_component;
@@ -65,6 +65,8 @@ pub mod segment_history_iter;
 pub mod segment_time_component;
 pub mod separator_component;
 pub mod separator_component_state;
+#[cfg(all(target_family = "wasm", feature = "wasm-web"))]
+pub mod server_protocol;
 pub mod setting_value;
 pub mod shared_timer;
 pub mod software_renderer;
@@ -85,7 +87,7 @@ pub mod title_component;
 pub mod title_component_state;
 pub mod total_playtime_component;
 #[cfg(all(target_family = "wasm", feature = "wasm-web"))]
-pub mod web_event_sink;
+pub mod web_command_sink;
 #[cfg(all(target_family = "wasm", feature = "web-rendering"))]
 pub mod web_rendering;
 
@@ -99,6 +101,7 @@ use livesplit_core::{Time, TimeSpan};
 /// type
 pub type Json = *const c_char;
 /// type
+#[allow(non_camel_case_types)]
 pub type Nullablec_char = c_char;
 
 thread_local! {

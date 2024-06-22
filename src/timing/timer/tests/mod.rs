@@ -6,6 +6,7 @@ use crate::{
     Run, Segment, TimeSpan, Timer, TimerPhase, TimingMethod,
 };
 
+mod events;
 mod mark_as_modified;
 mod variables;
 
@@ -490,8 +491,6 @@ fn clears_run_id_when_pbing() {
         ],
     );
 
-    timer.reset(true);
-
     assert_eq!(timer.run().metadata().run_id(), "");
 }
 
@@ -501,7 +500,7 @@ fn reset_and_set_attempt_as_pb() {
 
     // Call it for the phase NotRunning
     assert_eq!(timer.current_phase(), TimerPhase::NotRunning);
-    timer.reset_and_set_attempt_as_pb();
+    timer.reset_and_set_attempt_as_pb().unwrap_err();
     for segment in timer.run().segments() {
         assert_eq!(segment.personal_best_split_time().game_time, None);
     }
@@ -509,7 +508,7 @@ fn reset_and_set_attempt_as_pb() {
     // Call it for the phase Running, but don't do any splits yet
     start_run(&mut timer);
     assert_eq!(timer.current_phase(), TimerPhase::Running);
-    timer.reset_and_set_attempt_as_pb();
+    timer.reset_and_set_attempt_as_pb().unwrap();
     assert_eq!(timer.current_phase(), TimerPhase::NotRunning);
     for segment in timer.run().segments() {
         assert_eq!(segment.personal_best_split_time().game_time, None);
@@ -517,9 +516,9 @@ fn reset_and_set_attempt_as_pb() {
 
     // Call it for the phase Paused, but don't do any splits yet
     start_run(&mut timer);
-    timer.pause();
+    timer.pause().unwrap();
     assert_eq!(timer.current_phase(), TimerPhase::Paused);
-    timer.reset_and_set_attempt_as_pb();
+    timer.reset_and_set_attempt_as_pb().unwrap();
     assert_eq!(timer.current_phase(), TimerPhase::NotRunning);
     for segment in timer.run().segments() {
         assert_eq!(segment.personal_best_split_time().game_time, None);
@@ -528,13 +527,13 @@ fn reset_and_set_attempt_as_pb() {
     // Call it for the phase Running, this time with splits
     start_run(&mut timer);
     let first = TimeSpan::from_seconds(1.0);
-    timer.set_game_time(first);
-    timer.split();
+    timer.set_game_time(first).unwrap();
+    timer.split().unwrap();
     let second = TimeSpan::from_seconds(2.0);
-    timer.set_game_time(second);
-    timer.split();
+    timer.set_game_time(second).unwrap();
+    timer.split().unwrap();
     assert_eq!(timer.current_phase(), TimerPhase::Running);
-    timer.reset_and_set_attempt_as_pb();
+    timer.reset_and_set_attempt_as_pb().unwrap();
     assert_eq!(
         timer.run().segment(0).personal_best_split_time().game_time,
         Some(first)
@@ -551,16 +550,16 @@ fn reset_and_set_attempt_as_pb() {
     // Call it for the phase Ended
     start_run(&mut timer);
     let first = TimeSpan::from_seconds(4.0);
-    timer.set_game_time(first);
-    timer.split();
+    timer.set_game_time(first).unwrap();
+    timer.split().unwrap();
     let second = TimeSpan::from_seconds(5.0);
-    timer.set_game_time(second);
-    timer.split();
+    timer.set_game_time(second).unwrap();
+    timer.split().unwrap();
     let third = TimeSpan::from_seconds(6.0);
-    timer.set_game_time(third);
-    timer.split();
+    timer.set_game_time(third).unwrap();
+    timer.split().unwrap();
     assert_eq!(timer.current_phase(), TimerPhase::Ended);
-    timer.reset_and_set_attempt_as_pb();
+    timer.reset_and_set_attempt_as_pb().unwrap();
     assert_eq!(
         timer.run().segment(0).personal_best_split_time().game_time,
         Some(first)
@@ -579,16 +578,16 @@ fn reset_and_set_attempt_as_pb() {
     // Call it for the phase Ended, this time with slower splits
     start_run(&mut timer);
     let first = TimeSpan::from_seconds(14.0);
-    timer.set_game_time(first);
-    timer.split();
+    timer.set_game_time(first).unwrap();
+    timer.split().unwrap();
     let second = TimeSpan::from_seconds(15.0);
-    timer.set_game_time(second);
-    timer.split();
+    timer.set_game_time(second).unwrap();
+    timer.split().unwrap();
     let third = TimeSpan::from_seconds(16.0);
-    timer.set_game_time(third);
-    timer.split();
+    timer.set_game_time(third).unwrap();
+    timer.split().unwrap();
     assert_eq!(timer.current_phase(), TimerPhase::Ended);
-    timer.reset_and_set_attempt_as_pb();
+    timer.reset_and_set_attempt_as_pb().unwrap();
     assert_eq!(
         timer.run().segment(0).personal_best_split_time().game_time,
         Some(first)
@@ -636,7 +635,7 @@ fn identifies_new_best_times_in_current_attempt() {
     make_progress_run_with_splits_opt(&mut timer, &[Some(5.0), Some(10.0), Some(13.0)]);
     assert!(!timer.current_attempt_has_new_personal_best(TimingMethod::GameTime));
     assert!(timer.current_attempt_has_new_best_segments(TimingMethod::GameTime));
-    timer.reset(true);
+    timer.reset(true).unwrap();
 
     // Always false between attempts
     assert!(!timer.current_attempt_has_new_best_times());
@@ -647,7 +646,7 @@ fn identifies_new_best_times_in_current_attempt() {
     make_progress_run_with_splits_opt(&mut timer, &[Some(7.0), Some(9.0), Some(11.0)]);
     assert!(timer.current_attempt_has_new_personal_best(TimingMethod::GameTime));
     assert!(!timer.current_attempt_has_new_best_segments(TimingMethod::GameTime));
-    timer.reset(true);
+    timer.reset(true).unwrap();
 
     // Always false between attempts
     assert!(!timer.current_attempt_has_new_best_times());
@@ -664,13 +663,13 @@ fn identifies_new_best_times_in_current_attempt() {
 fn skipping_keeps_timer_paused() {
     let mut timer = timer();
     start_run(&mut timer);
-    timer.pause();
+    timer.pause().unwrap();
 
-    timer.skip_split();
+    timer.skip_split().unwrap();
     assert_eq!(timer.current_phase(), TimerPhase::Paused);
     assert_eq!(timer.current_split_index(), Some(1));
 
-    timer.undo_split();
+    timer.undo_split().unwrap();
     assert_eq!(timer.current_phase(), TimerPhase::Paused);
     assert_eq!(timer.current_split_index(), Some(0));
 }
