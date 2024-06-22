@@ -180,8 +180,8 @@ fn actual_split_file() {
     check(
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
-        "42b2292f5c884c17",
-        "1e4c66359bdc32e8",
+        "c1e9e757c15a35ae",
+        "4fe65a630b531c54",
         "actual_split_file",
     );
 }
@@ -228,8 +228,8 @@ fn timer_delta_background() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [250, 300],
-        "e96525c84aa77f66",
-        "bd8139d0f625af38",
+        "748fa26a41a8d5a3",
+        "8bae1351d0dd52d7",
         "timer_delta_background_stopped",
     );
 }

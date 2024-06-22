@@ -6,11 +6,14 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct ActiveAttempt {
     pub state: State,
+    /// The date time when the attempt started.
     pub attempt_started: AtomicDateTime,
+    /// The time stamp when the attempt started.
     pub start_time: TimeStamp,
-    pub start_time_with_offset: TimeStamp,
-    // This gets adjusted after resuming
-    pub adjusted_start_time: TimeStamp,
+    /// The original offset gets kept around to undo the pauses.
+    pub original_offset: TimeSpan,
+    /// The adjusted offset gets modified as pauses get accumulated.
+    pub adjusted_offset: TimeSpan,
     pub game_time_paused_at: Option<TimeSpan>,
     pub loading_times: Option<TimeSpan>,
 }
@@ -54,9 +57,8 @@ impl ActiveAttempt {
                     game_time,
                 };
             }
-            State::NotEnded { time_paused_at, .. } => {
-                time_paused_at.unwrap_or_else(|| TimeStamp::now() - self.adjusted_start_time)
-            }
+            State::NotEnded { time_paused_at, .. } => time_paused_at
+                .unwrap_or_else(|| TimeStamp::now() - self.start_time + self.adjusted_offset),
         };
 
         let game_time = self
@@ -75,11 +77,11 @@ impl ActiveAttempt {
             ..
         } = self.state
         {
-            return Some(TimeStamp::now() - self.start_time_with_offset - pause_time);
+            return Some(TimeStamp::now() - self.start_time + self.original_offset - pause_time);
         }
 
-        if self.start_time_with_offset != self.adjusted_start_time {
-            Some(self.start_time_with_offset - self.adjusted_start_time)
+        if self.original_offset != self.adjusted_offset {
+            Some(self.original_offset - self.adjusted_offset)
         } else {
             None
         }
@@ -105,7 +107,7 @@ impl ActiveAttempt {
             return Err(Error::TimerPaused);
         }
 
-        let real_time = TimeStamp::now() - self.adjusted_start_time;
+        let real_time = TimeStamp::now() - self.start_time + self.adjusted_offset;
 
         if real_time < TimeSpan::zero() {
             return Err(Error::NegativeTime);

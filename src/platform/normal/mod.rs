@@ -127,15 +127,6 @@ cfg_if::cfg_if! {
             }
         }
 
-        impl Sub<Duration> for Instant {
-            type Output = Instant;
-
-            #[inline]
-            fn sub(self, rhs: Duration) -> Instant {
-                Self(self.0 - rhs)
-            }
-        }
-
         impl Sub for Instant {
             type Output = Duration;
 
@@ -171,15 +162,6 @@ cfg_if::cfg_if! {
             }
         }
 
-        impl Sub<Duration> for Instant {
-            type Output = Instant;
-
-            #[inline]
-            fn sub(self, rhs: Duration) -> Instant {
-                Self((self.0 as i64 - i64::try_from(rhs.whole_nanoseconds()).unwrap()) as u64)
-            }
-        }
-
         impl Sub for Instant {
             type Output = Duration;
 
@@ -200,15 +182,6 @@ cfg_if::cfg_if! {
             #[inline]
             pub fn now() -> Self {
                 Self(std::time::Instant::now())
-            }
-        }
-
-        impl Sub<Duration> for Instant {
-            type Output = Instant;
-
-            #[inline]
-            fn sub(self, rhs: Duration) -> Instant {
-                Self(time::ext::InstantExt::sub_signed(self.0, rhs))
             }
         }
 
