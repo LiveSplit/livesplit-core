@@ -282,7 +282,7 @@ impl Timer {
         if self.active_attempt.is_none() {
             let attempt_started = AtomicDateTime::now();
             let start_time = TimeStamp::now();
-            let start_time_with_offset = start_time - self.run.offset();
+            let offset = self.run.offset();
 
             self.active_attempt = Some(ActiveAttempt {
                 state: State::NotEnded {
@@ -291,8 +291,8 @@ impl Timer {
                 },
                 attempt_started,
                 start_time,
-                start_time_with_offset,
-                adjusted_start_time: start_time_with_offset,
+                original_offset: offset,
+                adjusted_offset: offset,
                 game_time_paused_at: None,
                 loading_times: None,
             });
@@ -497,7 +497,8 @@ impl Timer {
         };
 
         if time_paused_at.is_none() {
-            *time_paused_at = Some(TimeStamp::now() - active_attempt.adjusted_start_time);
+            *time_paused_at =
+                Some(TimeStamp::now() - active_attempt.start_time + active_attempt.adjusted_offset);
             Ok(Event::Paused)
         } else {
             Err(Error::AlreadyPaused)
@@ -513,7 +514,8 @@ impl Timer {
         };
 
         if let Some(pause_time) = *time_paused_at {
-            active_attempt.adjusted_start_time = TimeStamp::now() - pause_time;
+            active_attempt.adjusted_offset =
+                pause_time - (TimeStamp::now() - active_attempt.start_time);
             *time_paused_at = None;
             Ok(Event::Resumed)
         } else {
@@ -579,7 +581,7 @@ impl Timer {
         };
 
         if let Some(active_attempt) = &mut self.active_attempt {
-            active_attempt.adjusted_start_time = active_attempt.start_time_with_offset;
+            active_attempt.adjusted_offset = active_attempt.original_offset;
             Ok(event)
         } else {
             Err(Error::NoRunInProgress)

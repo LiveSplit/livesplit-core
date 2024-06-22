@@ -1,7 +1,4 @@
-use crate::{
-    platform::{Duration, Instant},
-    TimeSpan,
-};
+use crate::{platform::Instant, TimeSpan};
 use core::ops::Sub;
 
 /// A `TimeStamp` stores a point in time that can be used to calculate a
@@ -24,14 +21,5 @@ impl Sub for TimeStamp {
     #[inline]
     fn sub(self, rhs: TimeStamp) -> TimeSpan {
         TimeSpan::from(self.0 - rhs.0)
-    }
-}
-
-impl Sub<TimeSpan> for TimeStamp {
-    type Output = TimeStamp;
-
-    #[inline]
-    fn sub(self, rhs: TimeSpan) -> TimeStamp {
-        TimeStamp(self.0 - Duration::from(rhs))
     }
 }

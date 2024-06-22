@@ -41,14 +41,6 @@ impl Instant {
     }
 }
 
-impl Sub<Duration> for Instant {
-    type Output = Instant;
-
-    fn sub(self, rhs: Duration) -> Instant {
-        Self(self.0 - rhs)
-    }
-}
-
 impl Sub for Instant {
     type Output = Duration;
 
