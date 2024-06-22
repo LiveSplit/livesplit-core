@@ -1,4 +1,7 @@
-use crate::{AtomicDateTime, Run, Time, TimeSpan, TimeStamp, TimingMethod};
+use crate::{
+    event::{Error, Event, Result},
+    AtomicDateTime, Run, Time, TimeSpan, TimeStamp, TimingMethod,
+};
 
 #[derive(Debug, Clone)]
 pub struct ActiveAttempt {
@@ -89,19 +92,23 @@ impl ActiveAttempt {
         }
     }
 
-    pub fn prepare_split(&mut self, run: &Run) -> Option<(usize, Time)> {
+    pub fn prepare_split(&mut self, run: &Run) -> Result<(usize, Time, Event)> {
         let State::NotEnded {
             current_split_index,
-            time_paused_at: None,
+            time_paused_at,
         } = &mut self.state
         else {
-            return None;
+            return Err(Error::RunFinished);
         };
+
+        if time_paused_at.is_some() {
+            return Err(Error::TimerPaused);
+        }
 
         let real_time = TimeStamp::now() - self.adjusted_start_time;
 
         if real_time < TimeSpan::zero() {
-            return None;
+            return Err(Error::NegativeTime);
         }
 
         let game_time = self
@@ -111,18 +118,22 @@ impl ActiveAttempt {
         let previous_split_index = *current_split_index;
         *current_split_index += 1;
 
-        if *current_split_index == run.len() {
+        let event = if *current_split_index == run.len() {
             self.state = State::Ended {
                 attempt_ended: AtomicDateTime::now(),
             };
-        }
+            Event::Finished
+        } else {
+            Event::Splitted
+        };
 
-        Some((
+        Ok((
             previous_split_index,
             Time {
                 real_time: Some(real_time),
                 game_time,
             },
+            event,
         ))
     }
 

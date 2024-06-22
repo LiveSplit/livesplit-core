@@ -394,7 +394,7 @@ impl Component {
                     index: 0,
                 });
                 state.is_current_split = false;
-                state.index = (usize::max_value() ^ 1) - 2 * i;
+                state.index = (usize::MAX ^ 1) - 2 * i;
             }
         }
 

@@ -16,7 +16,7 @@ fn can_set_variable() {
         "10"
     );
 
-    timer.start();
+    timer.start().unwrap();
 
     assert_eq!(
         timer
@@ -49,7 +49,7 @@ fn can_set_variable() {
         "30"
     );
 
-    timer.split();
+    timer.split().unwrap();
 
     assert_eq!(
         timer
@@ -82,7 +82,7 @@ fn can_set_variable() {
         "50"
     );
 
-    timer.reset(true);
+    timer.reset(true).unwrap();
 
     assert_eq!(
         timer

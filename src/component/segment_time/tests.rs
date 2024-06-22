@@ -34,7 +34,7 @@ fn is_not_empty_when_attempt_is_paused() {
     let mut timer = create_timer();
     start_run(&mut timer);
     make_progress_run_with_splits_opt(&mut timer, &[Some(467.23)]);
-    timer.pause();
+    timer.pause().unwrap();
     let state = component.state(&timer);
     assert_eq!(&*state.value, "33.30");
 }

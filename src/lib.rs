@@ -35,17 +35,17 @@
 //! let mut timer = Timer::new(run).expect("Run with at least one segment provided");
 //!
 //! // Start a new attempt.
-//! timer.start();
+//! timer.start().unwrap();
 //! assert_eq!(timer.current_phase(), TimerPhase::Running);
 //!
 //! // Create a split.
-//! timer.split();
+//! timer.split().unwrap();
 //!
 //! // The run should be finished now.
 //! assert_eq!(timer.current_phase(), TimerPhase::Ended);
 //!
 //! // Reset the attempt and confirm that we want to store the attempt.
-//! timer.reset(true);
+//! timer.reset(true).unwrap();
 //!
 //! // The attempt is now over.
 //! assert_eq!(timer.current_phase(), TimerPhase::NotRunning);
@@ -72,7 +72,6 @@ mod hotkey_config;
 #[cfg(feature = "std")]
 mod hotkey_system;
 pub mod layout;
-#[cfg(feature = "networking")]
 pub mod networking;
 #[cfg(feature = "rendering")]
 pub mod rendering;

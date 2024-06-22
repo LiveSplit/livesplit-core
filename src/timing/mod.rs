@@ -10,12 +10,14 @@ mod timer;
 mod timer_phase;
 mod timing_method;
 
-pub use self::atomic_date_time::AtomicDateTime;
-pub use self::time::{GameTime, RealTime, Time};
-pub use self::time_span::{ParseError, TimeSpan};
-pub use self::time_stamp::TimeStamp;
 #[cfg(feature = "std")]
 pub use self::timer::SharedTimer;
-pub use self::timer::{CreationError as TimerCreationError, Snapshot, Timer};
-pub use self::timer_phase::TimerPhase;
-pub use self::timing_method::TimingMethod;
+pub use self::{
+    atomic_date_time::AtomicDateTime,
+    time::{GameTime, RealTime, Time},
+    time_span::{ParseError, TimeSpan},
+    time_stamp::TimeStamp,
+    timer::{CreationError as TimerCreationError, Snapshot, Timer},
+    timer_phase::TimerPhase,
+    timing_method::TimingMethod,
+};

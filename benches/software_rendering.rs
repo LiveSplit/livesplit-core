@@ -74,19 +74,19 @@ cfg_if::cfg_if! {
 
         fn start_run(timer: &mut Timer) {
             timer.set_current_timing_method(TimingMethod::GameTime);
-            timer.start();
-            timer.initialize_game_time();
-            timer.pause_game_time();
-            timer.set_game_time(TimeSpan::zero());
+            timer.start().unwrap();
+            timer.initialize_game_time().unwrap();
+            timer.pause_game_time().unwrap();
+            timer.set_game_time(TimeSpan::zero()).unwrap();
         }
 
         fn make_progress_run_with_splits_opt(timer: &mut Timer, splits: &[Option<f64>]) {
             for &split in splits {
                 if let Some(split) = split {
-                    timer.set_game_time(TimeSpan::from_seconds(split));
-                    timer.split();
+                    timer.set_game_time(TimeSpan::from_seconds(split)).unwrap();
+                    timer.split().unwrap();
                 } else {
-                    timer.skip_split();
+                    timer.skip_split().unwrap();
                 }
             }
         }

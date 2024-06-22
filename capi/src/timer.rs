@@ -6,6 +6,7 @@ use crate::{
     shared_timer::OwnedSharedTimer,
 };
 use livesplit_core::{
+    event::{Error, Event},
     run::saver::{self, livesplit::IoWrite},
     Run, Time, TimeSpan, Timer, TimerPhase, TimingMethod,
 };
@@ -90,40 +91,47 @@ pub extern "C" fn Timer_current_split_index(this: &Timer) -> isize {
     this.current_split_index().map_or(-1, |i| i as isize)
 }
 
+fn convert(result: Result<Event, Error>) -> i32 {
+    match result {
+        Ok(a) => a as i32,
+        Err(e) => -1 - (e as i32),
+    }
+}
+
 /// Starts the Timer if there is no attempt in progress. If that's not the
 /// case, nothing happens.
 #[no_mangle]
-pub extern "C" fn Timer_start(this: &mut Timer) {
-    this.start();
+pub extern "C" fn Timer_start(this: &mut Timer) -> i32 {
+    convert(this.start())
 }
 
 /// If an attempt is in progress, stores the current time as the time of the
 /// current split. The attempt ends if the last split time is stored.
 #[no_mangle]
-pub extern "C" fn Timer_split(this: &mut Timer) {
-    this.split();
+pub extern "C" fn Timer_split(this: &mut Timer) -> i32 {
+    convert(this.split())
 }
 
 /// Starts a new attempt or stores the current time as the time of the
 /// current split. The attempt ends if the last split time is stored.
 #[no_mangle]
-pub extern "C" fn Timer_split_or_start(this: &mut Timer) {
-    this.split_or_start();
+pub extern "C" fn Timer_split_or_start(this: &mut Timer) -> i32 {
+    convert(this.split_or_start())
 }
 
 /// Skips the current split if an attempt is in progress and the
 /// current split is not the last split.
 #[no_mangle]
-pub extern "C" fn Timer_skip_split(this: &mut Timer) {
-    this.skip_split();
+pub extern "C" fn Timer_skip_split(this: &mut Timer) -> i32 {
+    convert(this.skip_split())
 }
 
 /// Removes the split time from the last split if an attempt is in progress
 /// and there is a previous split. The Timer Phase also switches to
 /// `Running` if it previously was `Ended`.
 #[no_mangle]
-pub extern "C" fn Timer_undo_split(this: &mut Timer) {
-    this.undo_split();
+pub extern "C" fn Timer_undo_split(this: &mut Timer) -> i32 {
+    convert(this.undo_split())
 }
 
 /// Checks whether the current attempt has new best segment times in any of the
@@ -140,41 +148,41 @@ pub extern "C" fn Timer_current_attempt_has_new_best_times(this: &Timer) -> bool
 /// in the Run's history. Otherwise the current attempt's information is
 /// discarded.
 #[no_mangle]
-pub extern "C" fn Timer_reset(this: &mut Timer, update_splits: bool) {
-    this.reset(update_splits);
+pub extern "C" fn Timer_reset(this: &mut Timer, update_splits: bool) -> i32 {
+    convert(this.reset(update_splits))
 }
 
 /// Resets the current attempt if there is one in progress. The splits are
 /// updated such that the current attempt's split times are being stored as
 /// the new Personal Best.
 #[no_mangle]
-pub extern "C" fn Timer_reset_and_set_attempt_as_pb(this: &mut Timer) {
-    this.reset_and_set_attempt_as_pb();
+pub extern "C" fn Timer_reset_and_set_attempt_as_pb(this: &mut Timer) -> i32 {
+    convert(this.reset_and_set_attempt_as_pb())
 }
 
 /// Pauses an active attempt that is not paused.
 #[no_mangle]
-pub extern "C" fn Timer_pause(this: &mut Timer) {
-    this.pause();
+pub extern "C" fn Timer_pause(this: &mut Timer) -> i32 {
+    convert(this.pause())
 }
 
 /// Resumes an attempt that is paused.
 #[no_mangle]
-pub extern "C" fn Timer_resume(this: &mut Timer) {
-    this.resume();
+pub extern "C" fn Timer_resume(this: &mut Timer) -> i32 {
+    convert(this.resume())
 }
 
 /// Toggles an active attempt between `Paused` and `Running`.
 #[no_mangle]
-pub extern "C" fn Timer_toggle_pause(this: &mut Timer) {
-    this.toggle_pause();
+pub extern "C" fn Timer_toggle_pause(this: &mut Timer) -> i32 {
+    convert(this.toggle_pause())
 }
 
 /// Toggles an active attempt between `Paused` and `Running` or starts an
 /// attempt if there's none in progress.
 #[no_mangle]
-pub extern "C" fn Timer_toggle_pause_or_start(this: &mut Timer) {
-    this.toggle_pause_or_start();
+pub extern "C" fn Timer_toggle_pause_or_start(this: &mut Timer) -> i32 {
+    convert(this.toggle_pause_or_start())
 }
 
 /// Removes all the pause times from the current time. If the current
@@ -188,8 +196,8 @@ pub extern "C" fn Timer_toggle_pause_or_start(this: &mut Timer) {
 /// time is modified, while all other split times are left unmodified, which
 /// may not be what actually happened during the run.
 #[no_mangle]
-pub extern "C" fn Timer_undo_all_pauses(this: &mut Timer) {
-    this.undo_all_pauses();
+pub extern "C" fn Timer_undo_all_pauses(this: &mut Timer) -> i32 {
+    convert(this.undo_all_pauses())
 }
 
 /// Returns the currently selected Timing Method.
@@ -223,8 +231,8 @@ pub extern "C" fn Timer_current_comparison(this: &Timer) -> *const c_char {
 pub unsafe extern "C" fn Timer_set_current_comparison(
     this: &mut Timer,
     comparison: *const c_char,
-) -> bool {
-    this.set_current_comparison(str(comparison)).is_ok()
+) -> i32 {
+    convert(this.set_current_comparison(str(comparison)))
 }
 
 /// Switches the current comparison to the next comparison in the list.
@@ -249,8 +257,8 @@ pub extern "C" fn Timer_is_game_time_initialized(this: &Timer) -> bool {
 /// Initializes Game Time for the current attempt. Game Time automatically
 /// gets uninitialized for each new attempt.
 #[no_mangle]
-pub extern "C" fn Timer_initialize_game_time(this: &mut Timer) {
-    this.initialize_game_time();
+pub extern "C" fn Timer_initialize_game_time(this: &mut Timer) -> i32 {
+    convert(this.initialize_game_time())
 }
 
 /// Deinitializes Game Time for the current attempt.
@@ -269,15 +277,15 @@ pub extern "C" fn Timer_is_game_time_paused(this: &Timer) -> bool {
 /// Pauses the Game Timer such that it doesn't automatically increment
 /// similar to Real Time.
 #[no_mangle]
-pub extern "C" fn Timer_pause_game_time(this: &mut Timer) {
-    this.pause_game_time();
+pub extern "C" fn Timer_pause_game_time(this: &mut Timer) -> i32 {
+    convert(this.pause_game_time())
 }
 
 /// Resumes the Game Timer such that it automatically increments similar to
 /// Real Time, starting from the Game Time it was paused at.
 #[no_mangle]
-pub extern "C" fn Timer_resume_game_time(this: &mut Timer) {
-    this.resume_game_time();
+pub extern "C" fn Timer_resume_game_time(this: &mut Timer) -> i32 {
+    convert(this.resume_game_time())
 }
 
 /// Sets the Game Time to the time specified. This also works if the Game
@@ -285,8 +293,8 @@ pub extern "C" fn Timer_resume_game_time(this: &mut Timer) {
 /// periodically without it automatically moving forward. This ensures that
 /// the Game Timer never shows any time that is not coming from the game.
 #[no_mangle]
-pub extern "C" fn Timer_set_game_time(this: &mut Timer, time: &TimeSpan) {
-    this.set_game_time(*time);
+pub extern "C" fn Timer_set_game_time(this: &mut Timer, time: &TimeSpan) -> i32 {
+    convert(this.set_game_time(*time))
 }
 
 /// Accesses the loading times. Loading times are defined as Game Time - Real Time.
@@ -299,8 +307,8 @@ pub extern "C" fn Timer_loading_times(this: &Timer) -> *const TimeSpan {
 /// just specify the amount of time the game has been loading. The Game Time
 /// is then automatically determined by Real Time - Loading Times.
 #[no_mangle]
-pub extern "C" fn Timer_set_loading_times(this: &mut Timer, time: &TimeSpan) {
-    this.set_loading_times(*time);
+pub extern "C" fn Timer_set_loading_times(this: &mut Timer, time: &TimeSpan) -> i32 {
+    convert(this.set_loading_times(*time))
 }
 
 /// Sets the value of a custom variable with the name specified. If the variable

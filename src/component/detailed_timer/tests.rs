@@ -41,7 +41,7 @@ fn doesnt_show_segment_name_outside_attempt() {
 fn shows_segment_name_during_attempt() {
     let (mut timer, component, layout_settings, mut image_cache) = prepare();
 
-    timer.start();
+    timer.start().unwrap();
 
     assert_eq!(
         component
@@ -56,8 +56,8 @@ fn shows_segment_name_during_attempt() {
 fn shows_segment_name_at_the_end_of_an_attempt() {
     let (mut timer, component, layout_settings, mut image_cache) = prepare();
 
-    timer.start();
-    timer.split();
+    timer.start().unwrap();
+    timer.split().unwrap();
 
     assert_eq!(
         component
@@ -72,9 +72,9 @@ fn shows_segment_name_at_the_end_of_an_attempt() {
 fn stops_showing_segment_name_when_resetting() {
     let (mut timer, component, layout_settings, mut image_cache) = prepare();
 
-    timer.start();
-    timer.split();
-    timer.reset(true);
+    timer.start().unwrap();
+    timer.split().unwrap();
+    timer.reset(true).unwrap();
 
     assert_eq!(
         component
@@ -100,7 +100,7 @@ fn shows_icon_during_attempt() {
 
     component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
 
-    timer.start();
+    timer.start().unwrap();
 
     assert!(!component
         .state(&mut image_cache, &timer.snapshot(), &layout_settings)
@@ -114,11 +114,11 @@ fn still_shows_icon_of_last_segment_at_the_end_of_an_attempt() {
 
     component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
 
-    timer.start();
+    timer.start().unwrap();
 
     component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
 
-    timer.split();
+    timer.split().unwrap();
 
     assert!(!component
         .state(&mut image_cache, &timer.snapshot(), &layout_settings)
@@ -132,15 +132,15 @@ fn stops_showing_icon_when_resetting() {
 
     component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
 
-    timer.start();
+    timer.start().unwrap();
 
     component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
 
-    timer.split();
+    timer.split().unwrap();
 
     component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
 
-    timer.reset(true);
+    timer.reset(true).unwrap();
 
     assert!(component
         .state(&mut image_cache, &timer.snapshot(), &layout_settings)

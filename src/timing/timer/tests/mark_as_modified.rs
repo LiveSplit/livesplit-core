@@ -1,5 +1,6 @@
 use crate::{Run, Segment, TimeSpan, Timer, TimingMethod};
 
+#[track_caller]
 fn timer() -> Timer {
     use super::run;
     let mut run = run();
@@ -7,6 +8,15 @@ fn timer() -> Timer {
         .custom_variable_mut("Permanent")
         .permanent();
     let timer = Timer::new(run).unwrap();
+    assert!(!timer.run().has_been_modified());
+    timer
+}
+
+#[track_caller]
+fn started_but_unmodified_timer() -> Timer {
+    let mut timer = timer();
+    timer.start().unwrap();
+    timer.mark_as_unmodified();
     assert!(!timer.run().has_been_modified());
     timer
 }
@@ -47,93 +57,93 @@ fn not_when_setting_current_timing_method() {
 #[test]
 fn when_starting_the_timer() {
     let mut timer = timer();
-    timer.start();
+    timer.start().unwrap();
     assert!(timer.run().has_been_modified());
 }
 
 #[test]
 fn not_when_splitting_without_an_attempt() {
     let mut timer = timer();
-    timer.split();
+    timer.split().unwrap_err();
     assert!(!timer.run().has_been_modified());
 }
 
 #[test]
 fn when_splitting_or_starting_the_timer() {
     let mut timer = timer();
-    timer.split_or_start();
+    timer.split_or_start().unwrap();
     assert!(timer.run().has_been_modified());
 }
 
 #[test]
 fn not_when_skipping_a_split_without_an_attempt() {
     let mut timer = timer();
-    timer.skip_split();
+    timer.skip_split().unwrap_err();
     assert!(!timer.run().has_been_modified());
 }
 
 #[test]
 fn not_when_undoing_a_split_without_an_attempt() {
     let mut timer = timer();
-    timer.undo_split();
+    timer.undo_split().unwrap_err();
     assert!(!timer.run().has_been_modified());
 }
 
 #[test]
 fn when_starting_and_resetting_with_update_splits() {
     let mut timer = timer();
-    timer.start();
-    timer.reset(true);
+    timer.start().unwrap();
+    timer.reset(true).unwrap();
     assert!(timer.run().has_been_modified());
 }
 
 #[test]
 fn when_starting_and_resetting_without_update_splits() {
     let mut timer = timer();
-    timer.start();
-    timer.reset(false);
+    timer.start().unwrap();
+    timer.reset(false).unwrap();
     assert!(timer.run().has_been_modified());
 }
 
 #[test]
 fn not_when_resetting_without_an_attempt() {
     let mut timer = timer();
-    timer.reset(true);
+    timer.reset(true).unwrap_err();
     assert!(!timer.run().has_been_modified());
 }
 
 #[test]
 fn not_when_pausing_without_an_attempt() {
     let mut timer = timer();
-    timer.pause();
+    timer.pause().unwrap_err();
     assert!(!timer.run().has_been_modified());
 }
 
 #[test]
 fn not_when_resuming_without_an_attempt() {
     let mut timer = timer();
-    timer.resume();
+    timer.resume().unwrap_err();
     assert!(!timer.run().has_been_modified());
 }
 
 #[test]
 fn not_when_toggling_pause_without_an_attempt() {
     let mut timer = timer();
-    timer.toggle_pause();
+    timer.toggle_pause().unwrap_err();
     assert!(!timer.run().has_been_modified());
 }
 
 #[test]
 fn when_toggling_pause_or_start() {
     let mut timer = timer();
-    timer.toggle_pause_or_start();
+    timer.toggle_pause_or_start().unwrap();
     assert!(timer.run().has_been_modified());
 }
 
 #[test]
 fn not_when_undoing_all_pauses_without_an_attempt() {
     let mut timer = timer();
-    timer.undo_all_pauses();
+    timer.undo_all_pauses().unwrap_err();
     assert!(!timer.run().has_been_modified());
 }
 
@@ -148,8 +158,8 @@ fn not_when_switching_comparisons() {
 
 #[test]
 fn not_when_initializing_or_deinitializing_game_time() {
-    let mut timer = timer();
-    timer.initialize_game_time();
+    let mut timer = started_but_unmodified_timer();
+    timer.initialize_game_time().unwrap();
     assert!(!timer.run().has_been_modified());
     timer.deinitialize_game_time();
     assert!(!timer.run().has_been_modified());
@@ -158,13 +168,13 @@ fn not_when_initializing_or_deinitializing_game_time() {
 #[test]
 fn not_when_pausing_resuming_or_setting_game_time_without_an_attempt() {
     let mut timer = timer();
-    timer.pause_game_time();
+    timer.pause_game_time().unwrap_err();
     assert!(!timer.run().has_been_modified());
-    timer.resume_game_time();
+    timer.resume_game_time().unwrap_err();
     assert!(!timer.run().has_been_modified());
-    timer.set_game_time(TimeSpan::default());
+    timer.set_game_time(TimeSpan::default()).unwrap_err();
     assert!(!timer.run().has_been_modified());
-    timer.set_loading_times(TimeSpan::default());
+    timer.set_loading_times(TimeSpan::default()).unwrap_err();
     assert!(!timer.run().has_been_modified());
 }
 

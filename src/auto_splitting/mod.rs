@@ -597,13 +597,13 @@ impl<T> Drop for Runtime<T> {
     }
 }
 
-impl<T: event::Sink + TimerQuery + Send + 'static> Default for Runtime<T> {
+impl<T: event::CommandSink + TimerQuery + Send + 'static> Default for Runtime<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T: event::Sink + TimerQuery + Send + 'static> Runtime<T> {
+impl<T: event::CommandSink + TimerQuery + Send + 'static> Runtime<T> {
     /// Starts the runtime. Doesn't actually load an auto splitter until
     /// [`load`][Runtime::load] is called.
     pub fn new() -> Self {
@@ -719,9 +719,9 @@ impl<T: event::Sink + TimerQuery + Send + 'static> Runtime<T> {
 // is an Arc<RwLock<T>>, so we can't implement the trait directly on it.
 struct Timer<E>(E);
 
-impl<E: event::Sink + TimerQuery> AutoSplitTimer for Timer<E> {
+impl<E: event::CommandSink + TimerQuery> AutoSplitTimer for Timer<E> {
     fn state(&self) -> TimerState {
-        match self.0.current_phase() {
+        match self.0.get_timer().current_phase() {
             TimerPhase::NotRunning => TimerState::NotRunning,
             TimerPhase::Running => TimerState::Running,
             TimerPhase::Paused => TimerState::Paused,
@@ -730,39 +730,39 @@ impl<E: event::Sink + TimerQuery> AutoSplitTimer for Timer<E> {
     }
 
     fn start(&mut self) {
-        self.0.start()
+        drop(self.0.start());
     }
 
     fn split(&mut self) {
-        self.0.split()
+        drop(self.0.split());
     }
 
     fn skip_split(&mut self) {
-        self.0.skip_split()
+        drop(self.0.skip_split());
     }
 
     fn undo_split(&mut self) {
-        self.0.undo_split()
+        drop(self.0.undo_split());
     }
 
     fn reset(&mut self) {
-        self.0.reset(None)
+        drop(self.0.reset(None));
     }
 
     fn set_game_time(&mut self, time: time::Duration) {
-        self.0.set_game_time(time.into());
+        drop(self.0.set_game_time(time.into()));
     }
 
     fn pause_game_time(&mut self) {
-        self.0.pause_game_time()
+        drop(self.0.pause_game_time());
     }
 
     fn resume_game_time(&mut self) {
-        self.0.resume_game_time()
+        drop(self.0.resume_game_time());
     }
 
     fn set_variable(&mut self, name: &str, value: &str) {
-        self.0.set_custom_variable(name, value)
+        drop(self.0.set_custom_variable(name, value));
     }
 
     fn log(&mut self, message: fmt::Arguments<'_>) {
@@ -770,7 +770,7 @@ impl<E: event::Sink + TimerQuery> AutoSplitTimer for Timer<E> {
     }
 }
 
-async fn run<T: event::Sink + TimerQuery>(
+async fn run<T: event::CommandSink + TimerQuery>(
     mut auto_splitter: watch::Receiver<Option<AutoSplitter<Timer<T>>>>,
     timeout_sender: watch::Sender<Option<Instant>>,
     interrupt_sender: watch::Sender<Option<InterruptHandle>>,

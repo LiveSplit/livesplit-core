@@ -18,7 +18,7 @@ fn artificial() -> (Timer, Layout, ImageCache) {
     run.push_segment(Segment::new("Foo"));
 
     let mut timer = Timer::new(run).unwrap();
-    timer.start();
+    timer.start().unwrap();
 
     (timer, Layout::default_layout(), ImageCache::new())
 }
@@ -28,7 +28,7 @@ fn real() -> (Timer, Layout, ImageCache) {
     let run = livesplit::parse(&buf).unwrap();
 
     let mut timer = Timer::new(run).unwrap();
-    timer.start();
+    timer.start().unwrap();
 
     (timer, Layout::default_layout(), ImageCache::new())
 }

@@ -216,6 +216,99 @@ export enum TimerPhase {
     Paused = 3,
 }
 
+/** An event informs you about a change in the timer. */
+export enum Event {
+    /** The timer has been started. */
+    Started = 0,
+    /**
+     * A split happened. Note that the final split is signaled by `Finished`.
+     */
+    Splitted = 1,
+    /**
+     * The final split happened, the run is now finished, but has not been reset
+     * yet.
+     */
+    Finished = 2,
+    /** The timer has been reset. */
+    Reset = 3,
+    /** The previous split has been undone. */
+    SplitUndone = 4,
+    /** The current split has been skipped. */
+    SplitSkipped = 5,
+    /** The timer has been paused. */
+    Paused = 6,
+    /** The timer has been resumed. */
+    Resumed = 7,
+    /** All the pauses have been undone. */
+    PausesUndone = 8,
+    /** All the pauses have been undone and the timer has been resumed. */
+    PausesUndoneAndResumed = 9,
+    /** The comparison has been changed. */
+    ComparisonChanged = 10,
+    /** The timing method has been changed. */
+    TimingMethodChanged = 11,
+    /** The game time has been initialized. */
+    GameTimeInitialized = 12,
+    /** The game time has been set. */
+    GameTimeSet = 13,
+    /** The game time has been paused. */
+    GameTimePaused = 14,
+    /** The game time has been resumed. */
+    GameTimeResumed = 15,
+    /** The loading times have been set. */
+    LoadingTimesSet = 16,
+    /** A custom variable has been set. */
+    CustomVariableSet = 17,
+}
+
+/** An error that occurred when a command was being processed. */
+export enum CommandError {
+    /** The operation is not supported. */
+    Unsupported = -1,
+    /** The timer can't be interacted with at the moment. */
+    Busy = -2,
+    /** There is already a run in progress. */
+    RunAlreadyInProgress = -3,
+    /** There is no run in progress. */
+    NoRunInProgress = -4,
+    /** The run is already finished. */
+    RunFinished = -5,
+    /** The time is negative, you can't split yet. */
+    NegativeTime = -6,
+    /** The last split can't be skipped. */
+    CantSkipLastSplit = -7,
+    /** There is no split to undo. */
+    CantUndoFirstSplit = -8,
+    /** The timer is already paused. */
+    AlreadyPaused = -9,
+    /** The timer is not paused. */
+    NotPaused = -10,
+    /** The requested comparison doesn't exist. */
+    ComparisonDoesntExist = -11,
+    /** The game time is already initialized. */
+    GameTimeAlreadyInitialized = -12,
+    /** The game time is already paused. */
+    GameTimeAlreadyPaused = -13,
+    /** The game time is not paused. */
+    GameTimeNotPaused = -14,
+    /** The time could not be parsed. */
+    CouldNotParseTime = -15,
+    /** The timer is currently paused. */
+    TimerPaused = -16,
+    /** The runner decided to not reset the run. */
+    RunnerDecidedAgainstReset = -17,
+}
+
+/** The result of a command that was processed. */
+export type CommandResult = Event | CommandError;
+
+/**
+ * Checks if the result of a command is a successful event instead of an error.
+ */
+export function isEvent(result: CommandResult): result is Event {
+    return result >= 0;
+}
+
 /** The state object describes the information to visualize for this component. */
 export interface BlankSpaceComponentStateJson {
     /** The background shown behind the component. */

@@ -2,7 +2,7 @@
 name = "livesplit-core-capi"
 version = "0.11.0"
 authors = ["Christopher Serr <christopher.serr@gmail.com>"]
-edition = "2018"
+edition = "2021"
 
 [lib]
 name = "livesplit_core"
@@ -15,13 +15,14 @@ time = { version = "0.3.4", default-features = false, features = ["formatting"] 
 simdutf8 = { git = "https://github.com/CryZe/simdutf8", branch = "wasm-ub-panic", default-features = false }
 
 wasm-bindgen = { version = "0.2.78", optional = true }
+wasm-bindgen-futures = { version = "0.4.28", optional = true }
 web-sys = { version = "0.3.28", optional = true }
 
 [features]
 default = ["image-shrinking"]
 image-shrinking = ["livesplit-core/image-shrinking"]
 software-rendering = ["livesplit-core/software-rendering"]
-wasm-web = ["livesplit-core/wasm-web", "wasm-bindgen", "web-sys"]
+wasm-web = ["livesplit-core/wasm-web", "wasm-bindgen", "wasm-bindgen-futures", "web-sys"]
 auto-splitting = ["livesplit-core/auto-splitting"]
 assume-str-parameters-are-utf8 = []
 web-rendering = ["wasm-web", "livesplit-core/web-rendering"]

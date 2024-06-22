@@ -162,7 +162,7 @@ fn is_0_percent_if_we_cant_pb_anymore() {
     run_with_splits(&mut timer, &[12.0, 20.0]);
     start_run(&mut timer);
     make_progress_run_with_splits_opt(&mut timer, &[Some(7.0)]);
-    timer.set_game_time(span(21.0));
+    timer.set_game_time(span(21.0)).unwrap();
     // We don't split yet, we are simply losing so much time that we can't PB anymore.
     assert_eq!(chance(&timer), 0);
 }
