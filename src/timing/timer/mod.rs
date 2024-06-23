@@ -712,7 +712,7 @@ impl Timer {
 
             let diff = catch! { current_time.real_time - current_time.game_time? };
             active_attempt.set_loading_times(diff.unwrap_or_default(), &self.run);
-            active_attempt.game_time_paused_at.take();
+            active_attempt.game_time_paused_at = None;
 
             Ok(Event::GameTimeResumed)
         } else {
