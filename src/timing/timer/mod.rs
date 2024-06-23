@@ -707,11 +707,12 @@ impl Timer {
     pub fn resume_game_time(&mut self) -> Result {
         let active_attempt = self.active_attempt.as_mut().ok_or(Error::NoRunInProgress)?;
 
-        if active_attempt.game_time_paused_at.take().is_some() {
+        if active_attempt.game_time_paused_at.is_some() {
             let current_time = active_attempt.current_time(&self.run);
 
             let diff = catch! { current_time.real_time - current_time.game_time? };
             active_attempt.set_loading_times(diff.unwrap_or_default(), &self.run);
+            active_attempt.game_time_paused_at.take();
 
             Ok(Event::GameTimeResumed)
         } else {
