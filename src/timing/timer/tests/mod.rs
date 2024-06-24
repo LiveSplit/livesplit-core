@@ -673,3 +673,19 @@ fn skipping_keeps_timer_paused() {
     assert_eq!(timer.current_phase(), TimerPhase::Paused);
     assert_eq!(timer.current_split_index(), Some(0));
 }
+
+#[test]
+fn paused_then_resumed_game_time_lags_behind_real_time() {
+    let mut timer = timer();
+
+    timer.start().unwrap();
+    timer.pause_game_time().unwrap();
+    timer.resume_game_time().unwrap();
+
+    let time = timer
+        .active_attempt
+        .as_ref()
+        .unwrap()
+        .current_time(timer.run());
+    assert!(time.game_time.unwrap() < time.real_time);
+}
