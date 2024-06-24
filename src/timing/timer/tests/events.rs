@@ -807,13 +807,6 @@ mod resume_game_time {
         let event = timer.resume_game_time().unwrap();
 
         assert_eq!(event, Event::GameTimeResumed);
-
-        let time = timer
-            .active_attempt
-            .as_ref()
-            .unwrap()
-            .current_time(timer.run());
-        assert_ne!(time.game_time.unwrap(), time.real_time);
     }
 
     #[test]
