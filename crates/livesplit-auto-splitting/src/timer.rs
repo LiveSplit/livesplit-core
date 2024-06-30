@@ -30,6 +30,12 @@ pub trait Timer {
     fn undo_split(&mut self);
     /// Resets the timer.
     fn reset(&mut self);
+    /// Accesses the index of the split the attempt is currently on. If there's
+    /// no attempt in progress, `None` is returned instead. This returns an
+    /// index that is equal to the amount of segments when the attempt is
+    /// finished, but has not been reset. So you need to be careful when using
+    /// this value for indexing.
+    fn current_split_index(&self) -> Option<usize>;
     /// Sets the game time.
     fn set_game_time(&mut self, time: time::Duration);
     /// Pauses the game time. This does not pause the timer, only the automatic
