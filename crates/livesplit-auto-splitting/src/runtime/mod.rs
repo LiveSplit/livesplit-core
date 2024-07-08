@@ -208,6 +208,7 @@ impl Default for Config {
 struct SharedData {
     settings_map: ArcSwap<IndexMap<Arc<str>, settings::Value>>,
     tick_rate: AtomicU64,
+    current_tick: AtomicU64,
 }
 
 struct ExclusiveData<T> {
@@ -244,6 +245,13 @@ impl<T: Timer> ExecutionGuard<'_, T> {
     /// time.
     pub fn update(&mut self) -> Result<()> {
         let data = &mut *self.data;
+
+        data.store
+            .data_mut()
+            .shared_data
+            .current_tick
+            .fetch_add(1, atomic::Ordering::Relaxed);
+
         if data.trapped {
             return Ok(());
         }
@@ -367,6 +375,7 @@ impl CompiledAutoSplitter {
         let shared_data = Arc::new(SharedData {
             settings_map: ArcSwap::new(settings_map.unwrap_or_default().values),
             tick_rate: AtomicU64::new(f64::to_bits(1.0 / 120.0)),
+            current_tick: AtomicU64::new(0),
         });
 
         let mut store = Store::new(
