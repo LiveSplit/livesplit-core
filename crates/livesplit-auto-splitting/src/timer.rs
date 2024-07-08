@@ -17,7 +17,7 @@ pub enum TimerState {
 }
 
 /// A timer that can be controlled by an auto splitter.
-pub trait Timer {
+pub trait Timer: Send {
     /// Returns the current state of the timer.
     fn state(&self) -> TimerState;
     /// Starts the timer.
