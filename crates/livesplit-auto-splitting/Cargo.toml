@@ -24,14 +24,14 @@ sysinfo = { version = "0.30.0", default-features = false, features = [
   "multithread",
 ] }
 time = { version = "0.3.3", default-features = false }
-wasmtime = { version = "17.0.0", default-features = false, features = [
+wasmtime = { version = "22.0.0", default-features = false, features = [
   "cranelift",
   "parallel-compilation",
+  "runtime",
 ] }
-wasmtime-wasi = { version = "17.0.0", default-features = false, features = [
-  "sync",
+wasmtime-wasi = { version = "22.0.0", default-features = false, features = [
+  "preview1",
 ] }
-wasi-common = "17.0.0"
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.52.0", features = ["Win32_Storage_FileSystem"] }

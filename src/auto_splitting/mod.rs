@@ -534,8 +534,7 @@
 //!   nothing.
 //! - The file system is currently almost entirely empty. The host's file system
 //!   is accessible through `/mnt`. It is entirely read-only. Windows paths are
-//!   mapped to `/mnt/c`, `/mnt/d`, etc. to match WSL. Additionally
-//!   `/mnt/device` maps to `\\?\` on Windows to access additional paths.
+//!   mapped to `/mnt/c`, `/mnt/d`, etc. to match WSL.
 //! - There are no environment variables.
 //! - There are no command line arguments.
 //! - There is no networking.
@@ -719,7 +718,7 @@ impl<T: event::CommandSink + TimerQuery + Send + 'static> Runtime<T> {
 // is an Arc<RwLock<T>>, so we can't implement the trait directly on it.
 struct Timer<E>(E);
 
-impl<E: event::CommandSink + TimerQuery> AutoSplitTimer for Timer<E> {
+impl<E: event::CommandSink + TimerQuery + Send> AutoSplitTimer for Timer<E> {
     fn state(&self) -> TimerState {
         match self.0.get_timer().current_phase() {
             TimerPhase::NotRunning => TimerState::NotRunning,
@@ -770,7 +769,7 @@ impl<E: event::CommandSink + TimerQuery> AutoSplitTimer for Timer<E> {
     }
 }
 
-async fn run<T: event::CommandSink + TimerQuery>(
+async fn run<T: event::CommandSink + TimerQuery + Send>(
     mut auto_splitter: watch::Receiver<Option<AutoSplitter<Timer<T>>>>,
     timeout_sender: watch::Sender<Option<Instant>>,
     interrupt_sender: watch::Sender<Option<InterruptHandle>>,

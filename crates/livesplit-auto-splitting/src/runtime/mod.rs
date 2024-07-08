@@ -19,7 +19,7 @@ use sysinfo::{ProcessRefreshKind, RefreshKind, System, UpdateKind};
 use wasmtime::{
     Engine, Extern, Linker, Memory, Module, OptLevel, Store, TypedFunc, WasmBacktraceDetails,
 };
-use wasmtime_wasi::WasiCtx;
+use wasmtime_wasi::preview1::WasiP1Ctx;
 
 mod api;
 
@@ -89,7 +89,7 @@ pub struct Context<T> {
     timer: T,
     memory: Option<Memory>,
     process_list: ProcessList,
-    wasi: WasiCtx,
+    wasi: WasiP1Ctx,
 }
 
 /// A thread-safe handle used to interrupt the execution of the script.
@@ -396,11 +396,8 @@ impl CompiledAutoSplitter {
             .any(|import| import.module() == "wasi_snapshot_preview1");
 
         if uses_wasi {
-            wasmtime_wasi::snapshots::preview_1::add_wasi_snapshot_preview1_to_linker(
-                &mut linker,
-                |ctx| &mut ctx.wasi,
-            )
-            .map_err(|source| CreationError::Wasi { source })?;
+            wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |ctx| &mut ctx.wasi)
+                .map_err(|source| CreationError::Wasi { source })?;
         }
 
         let instance = linker

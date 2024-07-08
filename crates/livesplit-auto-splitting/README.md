@@ -154,7 +154,7 @@ extern "C" {
         list_ptr: *mut ProcessId,
         list_len_ptr: *mut usize,
     ) -> bool;
-    /// Checks whether is a process is still open. You should detach from a
+    /// Checks whether a process is still open. You should detach from a
     /// process and stop using it if this returns `false`.
     pub fn process_is_open(process: Process) -> bool;
     /// Reads memory from a process at the address given. This will write
@@ -534,8 +534,7 @@ support:
   nothing.
 - The file system is currently almost entirely empty. The host's file system is
   accessible through `/mnt`. It is entirely read-only. Windows paths are mapped
-  to `/mnt/c`, `/mnt/d`, etc. to match WSL. Additionally `/mnt/device` maps to
-  `\\?\` on Windows to access additional paths.
+  to `/mnt/c`, `/mnt/d`, etc. to match WSL.
 - There are no environment variables.
 - There are no command line arguments.
 - There is no networking.
