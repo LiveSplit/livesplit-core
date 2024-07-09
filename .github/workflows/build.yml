@@ -53,15 +53,20 @@ jobs:
           cd ~/.cargo/bin
           tar -xzf cross-x86_64-unknown-linux-gnu.tar.gz
 
-      - name: Test
-        if: matrix.tests == ''
-        run: sh .github/workflows/test.sh
-        env:
-          TARGET: ${{ matrix.target }}
-          SKIP_CROSS: ${{ matrix.cross }}
-          SKIP_AUTO_SPLITTING: ${{ matrix.auto_splitting }}
-          SKIP_NETWORKING: ${{ matrix.networking }}
-          SKIP_SOFTWARE_RENDERING: ${{ matrix.software_rendering }}
+      - name: Install bisect
+        run: |
+          cargo install cargo-bisect-rustc
+          cargo bisect-rustc --start=9c3bc805d --end=e9e6e2e44 -- test --all-features
+
+      # - name: Test
+      #   if: matrix.tests == ''
+      #   run: sh .github/workflows/test.sh
+      #   env:
+      #     TARGET: ${{ matrix.target }}
+      #     SKIP_CROSS: ${{ matrix.cross }}
+      #     SKIP_AUTO_SPLITTING: ${{ matrix.auto_splitting }}
+      #     SKIP_NETWORKING: ${{ matrix.networking }}
+      #     SKIP_SOFTWARE_RENDERING: ${{ matrix.software_rendering }}
 
       - name: Upload screenshots
         if: matrix.tests == '' && (success() || failure())
