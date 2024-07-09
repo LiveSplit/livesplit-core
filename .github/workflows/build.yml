@@ -21,7 +21,7 @@ jobs:
           - label: Windows Nightly
             target: x86_64-pc-windows-msvc
             os: windows-latest
-            toolchain: nightly-2024-06-29
+            toolchain: nightly-2024-06-25
             release: skip
             cross: skip
 
