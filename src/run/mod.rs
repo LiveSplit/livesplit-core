@@ -338,7 +338,9 @@ impl Run {
     /// Loads a copy of the Auto Splitter Settings as a settings map.
     #[inline]
     #[cfg(feature = "auto-splitting")]
-    pub fn auto_splitter_settings_map_load(&self) -> Option<livesplit_auto_splitting::settings::Map> {
+    pub fn auto_splitter_settings_map_load(
+        &self,
+    ) -> Option<livesplit_auto_splitting::settings::Map> {
         if let Some(p) = &self.parsed_auto_splitter_settings {
             return Some(p.custom_settings.clone());
         }

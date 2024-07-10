@@ -599,9 +599,7 @@ impl<T> Drop for Runtime<T> {
     }
 }
 
-impl<T: event::CommandSink + TimerQuery + Send + 'static> Default
-    for Runtime<T>
-{
+impl<T: event::CommandSink + TimerQuery + Send + 'static> Default for Runtime<T> {
     fn default() -> Self {
         Self::new()
     }
@@ -668,10 +666,7 @@ impl<T: event::CommandSink + TimerQuery + Send + 'static> Runtime<T> {
         compiled_auto_splitter: &CompiledAutoSplitter,
         timer: T,
     ) -> Result<(), Error> {
-        let settings_map = timer
-            .get_timer()
-            .run()
-            .auto_splitter_settings_map_load();
+        let settings_map = timer.get_timer().run().auto_splitter_settings_map_load();
         let auto_splitter = compiled_auto_splitter
             .instantiate(Timer(timer), settings_map, None)
             .map_err(|e| Error::LoadFailed { source: e })?;
