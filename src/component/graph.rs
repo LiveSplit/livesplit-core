@@ -3,7 +3,7 @@
 //! the chosen comparison throughout the whole attempt. Every point of the graph
 //! represents a split. Its x-coordinate is proportional to the split time and
 //! its y-coordinate is proportional to the split delta. The entire diagram is
-//! refered to as the chart and it contains the graph. The x-axis is the
+//! referred to as the chart and it contains the graph. The x-axis is the
 //! horizontal line that separates positive deltas from negative ones.
 
 // The words "padding" and "content" are from the CSS box model. "Padding" is an

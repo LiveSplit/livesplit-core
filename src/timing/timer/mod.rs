@@ -66,7 +66,7 @@ pub struct Snapshot<'timer> {
 
 impl Snapshot<'_> {
     /// Returns the time the timer was at when the snapshot was taken. The Game
-    /// Time is None if the Game Time has not been initialized.
+    /// Time is [`None`] if the Game Time has not been initialized.
     pub const fn current_time(&self) -> Time {
         self.time
     }

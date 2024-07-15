@@ -761,7 +761,7 @@ impl<E: event::CommandSink + TimerQuery + Send> AutoSplitTimer for Timer<E> {
     }
 
     fn set_variable(&mut self, name: &str, value: &str) {
-        drop(self.0.set_custom_variable(name, value));
+        drop(self.0.set_custom_variable(name.into(), value.into()));
     }
 
     fn log(&mut self, message: fmt::Arguments<'_>) {
