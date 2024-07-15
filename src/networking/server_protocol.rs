@@ -49,6 +49,9 @@
 //! Keep in mind the experimental nature of the protocol. It will likely change
 //! a lot in the future.
 
+use alloc::borrow::Cow;
+use serde::Serializer;
+
 use crate::{
     event::{self, Event},
     timing::formatter::{self, TimeFormatter, ASCII_MINUS},
@@ -60,7 +63,7 @@ pub async fn handle_command<S: event::CommandSink + event::TimerQuery>(
     command: &str,
     command_sink: &S,
 ) -> String {
-    let response = match serde_json::from_str::<Command>(command) {
+    let response = match serde_json::from_str::<Command<'_>>(command) {
         Ok(command) => command.handle(command_sink).await.into(),
         Err(e) => CommandResult::Error(Error::InvalidCommand {
             message: e.to_string(),
@@ -96,63 +99,195 @@ struct IsEvent {
     event: Event,
 }
 
-#[derive(serde_derive::Deserialize)]
+fn serialize_time_span<S: Serializer>(
+    time_span: &TimeSpan,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    let (secs, nanos) = time_span.to_seconds_and_subsec_nanoseconds();
+    serializer.collect_str(&format_args!("{secs}.{:09}", nanos.abs()))
+}
+
+const fn is_false(v: &bool) -> bool {
+    !*v
+}
+
+/// A command that can be sent to the timer.
+#[derive(Clone, serde_derive::Serialize, serde_derive::Deserialize)]
 #[serde(tag = "command", rename_all = "camelCase")]
-enum Command {
-    SplitOrStart,
-    Split,
-    UndoSplit,
-    SkipSplit,
-    Pause,
-    Resume,
-    TogglePauseOrStart,
-    Reset,
+pub enum Command<'a> {
+    /// Starts the timer if there is no attempt in progress. If that's not the
+    /// case, nothing happens.
     Start,
-    InitializeGameTime,
-    SetGameTime {
-        time: TimeSpan,
+    /// If an attempt is in progress, stores the current time as the time of the
+    /// current split. The attempt ends if the last split time is stored.
+    Split,
+    /// Starts a new attempt or stores the current time as the time of the
+    /// current split. The attempt ends if the last split time is stored.
+    SplitOrStart,
+    /// Resets the current attempt if there is one in progress. If the splits
+    /// are to be updated, all the information of the current attempt is stored
+    /// in the run's history. Otherwise the current attempt's information is
+    /// discarded.
+    #[serde(rename_all = "camelCase")]
+    Reset {
+        /// Whether to save the current attempt in the run's history.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        save_attempt: Option<bool>,
     },
-    SetLoadingTimes {
-        time: TimeSpan,
-    },
-    PauseGameTime,
-    ResumeGameTime,
-    SetCustomVariable {
-        key: String,
-        value: String,
-    },
+    /// Removes the split time from the last split if an attempt is in progress
+    /// and there is a previous split. The Timer Phase also switches to
+    /// [`Running`](TimerPhase::Running) if it previously was
+    /// [`Ended`](TimerPhase::Ended).
+    UndoSplit,
+    /// Skips the current split if an attempt is in progress and the current
+    /// split is not the last split.
+    SkipSplit,
+    /// Toggles an active attempt between [`Paused`](TimerPhase::Paused) and
+    /// [`Running`](TimerPhase::Paused) or starts an attempt if there's none in
+    /// progress.
+    TogglePauseOrStart,
+    /// Pauses an active attempt that is not paused.
+    Pause,
+    /// Resumes an attempt that is paused.
+    Resume,
+    /// Removes all the pause times from the current time. If the current
+    /// attempt is paused, it also resumes that attempt. Additionally, if the
+    /// attempt is finished, the final split time is adjusted to not include the
+    /// pause times as well.
+    ///
+    /// # Warning
+    ///
+    /// This behavior is not entirely optimal, as generally only the final split
+    /// time is modified, while all other split times are left unmodified, which
+    /// may not be what actually happened during the run.
+    UndoAllPauses,
+    /// Switches the current comparison to the previous comparison in the list.
+    SwitchToPreviousComparison,
+    /// Switches the current comparison to the next comparison in the list.
+    SwitchToNextComparison,
+    /// Tries to set the current comparison to the comparison specified. If the
+    /// comparison doesn't exist an error is returned.
     SetCurrentComparison {
-        comparison: String,
+        /// The name of the comparison.
+        #[serde(borrow)]
+        comparison: Cow<'a, str>,
     },
+    /// Toggles between the `Real Time` and `Game Time` timing methods.
+    ToggleTimingMethod,
+    /// Sets the current timing method to the timing method provided.
     #[serde(rename_all = "camelCase")]
     SetCurrentTimingMethod {
+        /// The timing method to use.
         timing_method: TimingMethod,
     },
+    /// Initializes game time for the current attempt. Game time automatically
+    /// gets uninitialized for each new attempt.
+    InitializeGameTime,
+    /// Sets the game time to the time specified. This also works if the game
+    /// time is paused, which can be used as a way of updating the game timer
+    /// periodically without it automatically moving forward. This ensures that
+    /// the game timer never shows any time that is not coming from the game.
+    SetGameTime {
+        /// The time to set the game time to.
+        #[serde(serialize_with = "serialize_time_span")]
+        time: TimeSpan,
+    },
+    /// Pauses the game timer such that it doesn't automatically increment
+    /// similar to real time.
+    PauseGameTime,
+    /// Resumes the game timer such that it automatically increments similar to
+    /// real time, starting from the game time it was paused at.
+    ResumeGameTime,
+    /// Instead of setting the game time directly, this method can be used to
+    /// just specify the amount of time the game has been loading. The game time
+    /// is then automatically determined by Real Time - Loading Times.
+    SetLoadingTimes {
+        /// The loading times to set the game time to.
+        #[serde(serialize_with = "serialize_time_span")]
+        time: TimeSpan,
+    },
+    /// Sets the value of a custom variable with the name specified. If the
+    /// variable does not exist, a temporary variable gets created that will not
+    /// be stored in the splits file.
+    SetCustomVariable {
+        /// The name of the custom variable.
+        #[serde(borrow)]
+        key: Cow<'a, str>,
+        /// The value of the custom variable.
+        #[serde(borrow)]
+        value: Cow<'a, str>,
+    },
+
+    /// Returns the timer's current time. The Game Time is [`None`] if the Game
+    /// Time has not been initialized.
     #[serde(rename_all = "camelCase")]
     GetCurrentTime {
+        /// The timing method to retrieve the time for.
+        #[serde(skip_serializing_if = "Option::is_none")]
         timing_method: Option<TimingMethod>,
     },
+    /// Returns the name of the segment with the specified index. If no index is
+    /// specified, the name of the current segment is returned. If the index is
+    /// out of bounds, an error is returned. If the index is negative, it is
+    /// treated as relative to the end of the segment list. If the `relative`
+    /// field is set to `true`, the index is treated as relative to the current
+    /// segment index.
     GetSegmentName {
+        /// The index of the segment.
+        #[serde(skip_serializing_if = "Option::is_none")]
         index: Option<isize>,
-        #[serde(default)]
+        /// Specifies whether the index is relative to the current segment
+        /// index.
+        #[serde(default, skip_serializing_if = "is_false")]
         relative: bool,
     },
+    /// Returns the time of the comparison with the specified name for the
+    /// segment with the specified index. If the segment index is out of bounds,
+    /// an error is returned. If the segment index is negative, it is treated as
+    /// relative to the end of the segment list. If the `relative` field is set
+    /// to `true`, the index is treated as relative to the current segment
+    /// index. The current comparison is used if the comparison name is not
+    /// specified. The current timing method is used if the timing method is not
+    /// specified.
     #[serde(rename_all = "camelCase")]
     GetComparisonTime {
+        /// The index of the segment.
+        #[serde(skip_serializing_if = "Option::is_none")]
         index: Option<isize>,
-        #[serde(default)]
+        /// Specifies whether the index is relative to the current segment
+        /// index.
+        #[serde(default, skip_serializing_if = "is_false")]
         relative: bool,
-        comparison: Option<String>,
+        /// The name of the comparison.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        #[serde(borrow)]
+        comparison: Option<Cow<'a, str>>,
+        /// The timing method to retrieve the time for.
+        #[serde(skip_serializing_if = "Option::is_none")]
         timing_method: Option<TimingMethod>,
     },
+    /// Returns the current split time of the segment with the specified index
+    /// and timing method. If the segment index is out of bounds, an error is
+    /// returned. If the segment index is negative, it is treated as relative to
+    /// the end of the segment list. If the `relative` field is set to `true`,
+    /// the index is treated as relative to the current segment index. The
+    /// current timing method is used if the timing method is not specified.
     #[serde(rename_all = "camelCase")]
     GetCurrentRunSplitTime {
+        /// The index of the segment.
+        #[serde(skip_serializing_if = "Option::is_none")]
         index: Option<isize>,
-        #[serde(default)]
+        /// Specifies whether the index is relative to the current segment
+        /// index.
+        #[serde(default, skip_serializing_if = "is_false")]
         relative: bool,
+        /// The timing method to retrieve the time for.
+        #[serde(skip_serializing_if = "Option::is_none")]
         timing_method: Option<TimingMethod>,
     },
+    /// Returns the current timer phase and split index.
     GetCurrentState,
+    /// Pings the application to check whether it is still running.
     Ping,
 }
 
@@ -192,18 +327,29 @@ impl Error {
     }
 }
 
-impl Command {
+impl Command<'_> {
     async fn handle<E: event::CommandSink + event::TimerQuery>(
-        &self,
+        self,
         command_sink: &E,
     ) -> Result<Response, Error> {
         Ok(match self {
-            Command::SplitOrStart => {
-                command_sink.split_or_start().await.map_err(Error::timer)?;
+            Command::Start => {
+                command_sink.start().await.map_err(Error::timer)?;
                 Response::None
             }
             Command::Split => {
                 command_sink.split().await.map_err(Error::timer)?;
+                Response::None
+            }
+            Command::SplitOrStart => {
+                command_sink.split_or_start().await.map_err(Error::timer)?;
+                Response::None
+            }
+            Command::Reset { save_attempt } => {
+                command_sink
+                    .reset(save_attempt)
+                    .await
+                    .map_err(Error::timer)?;
                 Response::None
             }
             Command::UndoSplit => {
@@ -214,6 +360,13 @@ impl Command {
                 command_sink.skip_split().await.map_err(Error::timer)?;
                 Response::None
             }
+            Command::TogglePauseOrStart => {
+                command_sink
+                    .toggle_pause_or_start()
+                    .await
+                    .map_err(Error::timer)?;
+                Response::None
+            }
             Command::Pause => {
                 command_sink.pause().await.map_err(Error::timer)?;
                 Response::None
@@ -222,19 +375,43 @@ impl Command {
                 command_sink.resume().await.map_err(Error::timer)?;
                 Response::None
             }
-            Command::TogglePauseOrStart => {
+            Command::UndoAllPauses => {
+                command_sink.undo_all_pauses().await.map_err(Error::timer)?;
+                Response::None
+            }
+            Command::SwitchToPreviousComparison => {
                 command_sink
-                    .toggle_pause_or_start()
+                    .switch_to_previous_comparison()
                     .await
                     .map_err(Error::timer)?;
                 Response::None
             }
-            Command::Reset => {
-                command_sink.reset(None).await.map_err(Error::timer)?;
+            Command::SwitchToNextComparison => {
+                command_sink
+                    .switch_to_next_comparison()
+                    .await
+                    .map_err(Error::timer)?;
                 Response::None
             }
-            Command::Start => {
-                command_sink.start().await.map_err(Error::timer)?;
+            Command::SetCurrentComparison { comparison } => {
+                command_sink
+                    .set_current_comparison(comparison)
+                    .await
+                    .map_err(Error::timer)?;
+                Response::None
+            }
+            Command::ToggleTimingMethod => {
+                command_sink
+                    .toggle_timing_method()
+                    .await
+                    .map_err(Error::timer)?;
+                Response::None
+            }
+            Command::SetCurrentTimingMethod { timing_method } => {
+                command_sink
+                    .set_current_timing_method(timing_method)
+                    .await
+                    .map_err(Error::timer)?;
                 Response::None
             }
             Command::InitializeGameTime => {
@@ -246,14 +423,7 @@ impl Command {
             }
             Command::SetGameTime { time } => {
                 command_sink
-                    .set_game_time(*time)
-                    .await
-                    .map_err(Error::timer)?;
-                Response::None
-            }
-            Command::SetLoadingTimes { time } => {
-                command_sink
-                    .set_loading_times(*time)
+                    .set_game_time(time)
                     .await
                     .map_err(Error::timer)?;
                 Response::None
@@ -269,6 +439,13 @@ impl Command {
                     .map_err(Error::timer)?;
                 Response::None
             }
+            Command::SetLoadingTimes { time } => {
+                command_sink
+                    .set_loading_times(time)
+                    .await
+                    .map_err(Error::timer)?;
+                Response::None
+            }
             Command::SetCustomVariable { key, value } => {
                 command_sink
                     .set_custom_variable(key, value)
@@ -276,20 +453,7 @@ impl Command {
                     .map_err(Error::timer)?;
                 Response::None
             }
-            Command::SetCurrentComparison { comparison } => {
-                command_sink
-                    .set_current_comparison(comparison)
-                    .await
-                    .map_err(Error::timer)?;
-                Response::None
-            }
-            Command::SetCurrentTimingMethod { timing_method } => {
-                command_sink
-                    .set_current_timing_method(*timing_method)
-                    .await
-                    .map_err(Error::timer)?;
-                Response::None
-            }
+
             Command::GetCurrentTime { timing_method } => {
                 let guard = command_sink.get_timer();
                 let timer = &*guard;
@@ -305,7 +469,7 @@ impl Command {
             Command::GetSegmentName { index, relative } => {
                 let guard = command_sink.get_timer();
                 let timer = &*guard;
-                let index = resolve_index(timer, *index, *relative)?;
+                let index = resolve_index(timer, index, relative)?;
                 Response::String(timer.run().segment(index).name().into())
             }
             Command::GetComparisonTime {
@@ -316,7 +480,7 @@ impl Command {
             } => {
                 let guard = command_sink.get_timer();
                 let timer = &*guard;
-                let index = resolve_index(timer, *index, *relative)?;
+                let index = resolve_index(timer, index, relative)?;
                 let timing_method = timing_method.unwrap_or_else(|| timer.current_timing_method());
 
                 let comparison = comparison.as_deref().unwrap_or(timer.current_comparison());
@@ -335,7 +499,7 @@ impl Command {
             } => {
                 let guard = command_sink.get_timer();
                 let timer = &*guard;
-                let index = resolve_index(timer, *index, *relative)?;
+                let index = resolve_index(timer, index, relative)?;
                 let timing_method = timing_method.unwrap_or_else(|| timer.current_timing_method());
 
                 let time = timer.run().segment(index).split_time()[timing_method];
@@ -384,6 +548,8 @@ fn resolve_index(timer: &Timer, index: Option<isize>, relative: bool) -> Result<
 }
 
 fn format_time(time: TimeSpan) -> String {
+    // FIXME: I don't think we can parse it again if days are included. Let's not
+    // use this formatter.
     formatter::none_wrapper::NoneWrapper::new(formatter::Complete::new(), ASCII_MINUS)
         .format(time)
         .to_string()

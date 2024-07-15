@@ -11,7 +11,7 @@
 
 use core::{future::Future, ops::Deref};
 
-use alloc::sync::Arc;
+use alloc::{borrow::Cow, sync::Arc};
 
 use crate::{TimeSpan, Timer, TimingMethod};
 
@@ -59,13 +59,14 @@ pub enum Event {
     LoadingTimesSet = 16,
     /// A custom variable has been set.
     CustomVariableSet = 17,
+    /// An unknown event occurred.
+    #[serde(other)]
+    Unknown,
 }
 
-impl TryFrom<u32> for Event {
-    type Error = ();
-
-    fn try_from(value: u32) -> Result<Self, Self::Error> {
-        Ok(match value {
+impl From<u32> for Event {
+    fn from(value: u32) -> Self {
+        match value {
             0 => Event::Started,
             1 => Event::Splitted,
             2 => Event::Finished,
@@ -84,8 +85,8 @@ impl TryFrom<u32> for Event {
             15 => Event::GameTimeResumed,
             16 => Event::LoadingTimesSet,
             17 => Event::CustomVariableSet,
-            _ => return Err(()),
-        })
+            _ => Event::Unknown,
+        }
     }
 }
 
@@ -238,7 +239,10 @@ pub trait CommandSink {
     fn switch_to_next_comparison(&self) -> impl Future<Output = Result> + 'static;
     /// Tries to set the current comparison to the comparison specified. If the
     /// comparison doesn't exist an error is returned.
-    fn set_current_comparison(&self, comparison: &str) -> impl Future<Output = Result> + 'static;
+    fn set_current_comparison(
+        &self,
+        comparison: Cow<'_, str>,
+    ) -> impl Future<Output = Result> + 'static;
     /// Toggles between the `Real Time` and `Game Time` timing methods.
     fn toggle_timing_method(&self) -> impl Future<Output = Result> + 'static;
     /// Sets the current timing method to the timing method provided.
@@ -269,8 +273,8 @@ pub trait CommandSink {
     /// be stored in the splits file.
     fn set_custom_variable(
         &self,
-        name: &str,
-        value: &str,
+        name: Cow<'_, str>,
+        value: Cow<'_, str>,
     ) -> impl Future<Output = Result> + 'static;
 }
 
@@ -347,7 +351,10 @@ impl CommandSink for crate::SharedTimer {
         async { Ok(Event::ComparisonChanged) }
     }
 
-    fn set_current_comparison(&self, comparison: &str) -> impl Future<Output = Result> + 'static {
+    fn set_current_comparison(
+        &self,
+        comparison: Cow<'_, str>,
+    ) -> impl Future<Output = Result> + 'static {
         let result = self.write().unwrap().set_current_comparison(comparison);
         async move { result }
     }
@@ -392,8 +399,8 @@ impl CommandSink for crate::SharedTimer {
 
     fn set_custom_variable(
         &self,
-        name: &str,
-        value: &str,
+        name: Cow<'_, str>,
+        value: Cow<'_, str>,
     ) -> impl Future<Output = Result> + 'static {
         self.write().unwrap().set_custom_variable(name, value);
         async { Ok(Event::CustomVariableSet) }
@@ -457,7 +464,10 @@ impl<T: CommandSink + ?Sized> CommandSink for Arc<T> {
         CommandSink::switch_to_next_comparison(&**self)
     }
 
-    fn set_current_comparison(&self, comparison: &str) -> impl Future<Output = Result> + 'static {
+    fn set_current_comparison(
+        &self,
+        comparison: Cow<'_, str>,
+    ) -> impl Future<Output = Result> + 'static {
         CommandSink::set_current_comparison(&**self, comparison)
     }
 
@@ -494,8 +504,8 @@ impl<T: CommandSink + ?Sized> CommandSink for Arc<T> {
 
     fn set_custom_variable(
         &self,
-        name: &str,
-        value: &str,
+        name: Cow<'_, str>,
+        value: Cow<'_, str>,
     ) -> impl Future<Output = Result> + 'static {
         CommandSink::set_custom_variable(&**self, name, value)
     }

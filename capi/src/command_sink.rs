@@ -8,7 +8,7 @@
 //! processing a command, changes to the timer are reported as events. Various
 //! error conditions can occur if the command couldn't be processed.
 
-use std::{future::Future, ops::Deref, pin::Pin, sync::Arc};
+use std::{borrow::Cow, future::Future, ops::Deref, pin::Pin, sync::Arc};
 
 use livesplit_core::{
     event::{self, Result},
@@ -50,7 +50,7 @@ pub(crate) trait CommandSinkAndQuery: Send + Sync + 'static {
     fn dyn_undo_all_pauses(&self) -> Fut;
     fn dyn_switch_to_previous_comparison(&self) -> Fut;
     fn dyn_switch_to_next_comparison(&self) -> Fut;
-    fn dyn_set_current_comparison(&self, comparison: &str) -> Fut;
+    fn dyn_set_current_comparison(&self, comparison: Cow<'_, str>) -> Fut;
     fn dyn_toggle_timing_method(&self) -> Fut;
     fn dyn_set_current_timing_method(&self, method: TimingMethod) -> Fut;
     fn dyn_initialize_game_time(&self) -> Fut;
@@ -58,7 +58,7 @@ pub(crate) trait CommandSinkAndQuery: Send + Sync + 'static {
     fn dyn_pause_game_time(&self) -> Fut;
     fn dyn_resume_game_time(&self) -> Fut;
     fn dyn_set_loading_times(&self, time: TimeSpan) -> Fut;
-    fn dyn_set_custom_variable(&self, name: &str, value: &str) -> Fut;
+    fn dyn_set_custom_variable(&self, name: Cow<'_, str>, value: Cow<'_, str>) -> Fut;
 }
 
 type Fut = Pin<Box<dyn Future<Output = Result> + 'static>>;
@@ -107,7 +107,7 @@ where
     fn dyn_switch_to_next_comparison(&self) -> Fut {
         Box::pin(self.switch_to_next_comparison())
     }
-    fn dyn_set_current_comparison(&self, comparison: &str) -> Fut {
+    fn dyn_set_current_comparison(&self, comparison: Cow<'_, str>) -> Fut {
         Box::pin(self.set_current_comparison(comparison))
     }
     fn dyn_toggle_timing_method(&self) -> Fut {
@@ -131,7 +131,7 @@ where
     fn dyn_set_loading_times(&self, time: TimeSpan) -> Fut {
         Box::pin(self.set_loading_times(time))
     }
-    fn dyn_set_custom_variable(&self, name: &str, value: &str) -> Fut {
+    fn dyn_set_custom_variable(&self, name: Cow<'_, str>, value: Cow<'_, str>) -> Fut {
         Box::pin(self.set_custom_variable(name, value))
     }
 }
@@ -185,7 +185,10 @@ impl event::CommandSink for CommandSink {
         self.0.dyn_switch_to_next_comparison()
     }
 
-    fn set_current_comparison(&self, comparison: &str) -> impl Future<Output = Result> + 'static {
+    fn set_current_comparison(
+        &self,
+        comparison: Cow<'_, str>,
+    ) -> impl Future<Output = Result> + 'static {
         self.0.dyn_set_current_comparison(comparison)
     }
 
@@ -222,8 +225,8 @@ impl event::CommandSink for CommandSink {
 
     fn set_custom_variable(
         &self,
-        name: &str,
-        value: &str,
+        name: Cow<'_, str>,
+        value: Cow<'_, str>,
     ) -> impl Future<Output = Result> + 'static {
         self.0.dyn_set_custom_variable(name, value)
     }

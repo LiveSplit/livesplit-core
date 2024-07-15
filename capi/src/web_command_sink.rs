@@ -3,7 +3,7 @@
 //! timer commands. All of them are optional except for `getTimer`.
 
 use core::ptr;
-use std::{cell::Cell, convert::TryFrom, future::Future, sync::Arc};
+use std::{borrow::Cow, cell::Cell, convert::TryFrom, future::Future, sync::Arc};
 
 use livesplit_core::{
     event::{CommandSink, Error, Event, Result, TimerQuery},
@@ -221,12 +221,15 @@ impl CommandSink for WebCommandSink {
         )
     }
 
-    fn set_current_comparison(&self, comparison: &str) -> impl Future<Output = Result> + 'static {
+    fn set_current_comparison(
+        &self,
+        comparison: Cow<'_, str>,
+    ) -> impl Future<Output = Result> + 'static {
         debug_assert!(!self.locked.get());
         handle_action_value(
             self.set_current_comparison
                 .as_ref()
-                .and_then(|f| f.call1(&self.obj, &JsValue::from_str(comparison)).ok()),
+                .and_then(|f| f.call1(&self.obj, &JsValue::from_str(&comparison)).ok()),
         )
     }
 
@@ -301,15 +304,15 @@ impl CommandSink for WebCommandSink {
 
     fn set_custom_variable(
         &self,
-        name: &str,
-        value: &str,
+        name: Cow<'_, str>,
+        value: Cow<'_, str>,
     ) -> impl Future<Output = Result> + 'static {
         debug_assert!(!self.locked.get());
         handle_action_value(self.set_custom_variable.as_ref().and_then(|f| {
             f.call2(
                 &self.obj,
-                &JsValue::from_str(name),
-                &JsValue::from_str(value),
+                &JsValue::from_str(&name),
+                &JsValue::from_str(&value),
             )
             .ok()
         }))
