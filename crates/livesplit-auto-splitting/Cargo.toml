@@ -24,12 +24,12 @@ sysinfo = { version = "0.30.0", default-features = false, features = [
   "multithread",
 ] }
 time = { version = "0.3.3", default-features = false }
-wasmtime = { version = "22.0.0", default-features = false, features = [
+wasmtime = { version = "23.0.0", default-features = false, features = [
   "cranelift",
   "parallel-compilation",
   "runtime",
 ] }
-wasmtime-wasi = { version = "22.0.0", default-features = false, features = [
+wasmtime-wasi = { version = "23.0.0", default-features = false, features = [
   "preview1",
 ] }
 
