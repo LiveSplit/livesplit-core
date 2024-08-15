@@ -143,6 +143,9 @@ fn font_fallback() {
         // Meitei
         "ꯃꯩꯇꯩ ꯃꯌꯦꯛ",
         // Thaana
+        // FIXME: Fails font fallback because it's a cursive font, but we never
+        // specified that we want a cursive font:
+        // https://github.com/pop-os/cosmic-text/issues/277
         "ދިވެހި",
         // Canadian Syllabics
         "ᖃᓂᐅᔮᖅᐸᐃᑦ ᒐᐦᑲᓯᓇᐦᐃᑫᐤ ᑯᖾᖹ ᖿᐟᖻ ᓱᖽᐧᖿ ᑐᑊᘁᗕᑋᗸ",
@@ -164,8 +167,8 @@ fn font_fallback() {
         &state,
         &image_cache,
         [320, 750],
-        "2b3e4a75f3eafdc4",
-        "cdbbe94245ed4f69",
+        "0379ab7ed4cad84f",
+        "fea17ece738ce1be",
         "font_fallback",
     );
 }

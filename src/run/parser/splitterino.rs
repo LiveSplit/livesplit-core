@@ -46,13 +46,13 @@ struct Splits<'a> {
     // timing: SplitterinoTimingMethod,
 }
 
-/// Timing methods which can be used for segment times
-#[derive(Deserialize)]
-#[serde(rename_all = "camelCase")]
-enum SplitterinoTimingMethod {
-    Igt,
-    Rta,
-}
+// /// Timing methods which can be used for segment times
+// #[derive(Deserialize)]
+// #[serde(rename_all = "camelCase")]
+// enum SplitterinoTimingMethod {
+//     Igt,
+//     Rta,
+// }
 
 /// Detailed information about the game and run details
 #[derive(Deserialize, Default)]

@@ -178,6 +178,7 @@ impl<P: SharedOwnership> TextEngine<P> {
             glyph_text,
             attrs_list,
             Shaping::Advanced,
+            4,
         );
         if let [span] = &*shape_line.spans {
             if let [word] = &*span.words {
@@ -230,6 +231,7 @@ impl<P: SharedOwnership> TextEngine<P> {
             text,
             &font.attrs_list,
             Shaping::Advanced,
+            4,
         );
         let [mut x, mut y] = [0.0; 2];
 
@@ -287,8 +289,7 @@ impl<P: SharedOwnership> TextEngine<P> {
                             y -= glyph.y_advance;
                         }
                     } else {
-                        x += word.x_advance;
-                        y -= word.y_advance;
+                        x += word.width(1.0);
                     }
                 }
             }
@@ -325,8 +326,7 @@ impl<P: SharedOwnership> TextEngine<P> {
                             glyph_y -= glyph.y_advance;
                         }
                     }
-                    x += word.x_advance;
-                    y -= word.y_advance;
+                    x += word.width(1.0);
                 }
             }
         }

@@ -69,7 +69,7 @@ image = { version = "0.25.0", features = [
 # Currently doesn't require any additional dependencies.
 
 # Default Text Engine
-cosmic-text = { version = "0.10.0", default-features = false, features = [
+cosmic-text = { version = "0.12.1", default-features = false, features = [
     "no_std",
 ], optional = true }
 
@@ -112,7 +112,7 @@ web-sys = { version = "0.3.28", default-features = false, features = [
 
 [target.'cfg(windows)'.dependencies]
 # We need windows-sys to use GDI to resolve fonts on Windows.
-windows-sys = { version = "0.52.0", features = [
+windows-sys = { version = "0.59.0", features = [
     "Win32_Foundation",
     "Win32_Graphics_Gdi",
 ], optional = true }

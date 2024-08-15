@@ -104,7 +104,9 @@ fn hash_float(f: f32, state: &mut impl Hasher) {
 
 #[inline]
 fn hash_transform(f: &Transform, state: &mut impl Hasher) {
-    const _: () = assert!(core::mem::size_of::<Transform>() == 16);
+    const {
+        assert!(core::mem::size_of::<Transform>() == 16);
+    }
     let [a, b]: [u64; 2] = bytemuck::cast(*f);
     u64::hash(&a, state);
     u64::hash(&b, state);
