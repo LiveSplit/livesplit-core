@@ -389,7 +389,7 @@ impl Hook {
         let (events_tx, events_rx) = channel();
 
         thread::spawn(move || {
-            let mut hook = 0;
+            let mut hook = ptr::null_mut();
 
             STATE.with(|state| {
                 hook = unsafe {
@@ -401,7 +401,7 @@ impl Hook {
                     )
                 };
 
-                if hook != 0 {
+                if !hook.is_null() {
                     initialized_tx
                         .send(Ok(unsafe { GetCurrentThreadId() }))
                         .map_err(|_| Error::ThreadStopped)?;
@@ -423,7 +423,7 @@ impl Hook {
 
             loop {
                 let mut msg = mem::MaybeUninit::uninit();
-                let ret = unsafe { GetMessageW(msg.as_mut_ptr(), 0, 0, 0) };
+                let ret = unsafe { GetMessageW(msg.as_mut_ptr(), ptr::null_mut(), 0, 0) };
                 if ret < 0 {
                     return Err(Error::MessageLoop);
                 }
