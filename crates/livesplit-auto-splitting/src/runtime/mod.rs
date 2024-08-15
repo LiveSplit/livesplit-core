@@ -15,7 +15,7 @@ use std::{
     },
     time::{Duration, Instant},
 };
-use sysinfo::{ProcessRefreshKind, RefreshKind, System, UpdateKind};
+use sysinfo::{ProcessRefreshKind, ProcessesToUpdate, RefreshKind, System, UpdateKind};
 use wasmtime::{
     Engine, Extern, Linker, Memory, Module, OptLevel, Store, TypedFunc, WasmBacktraceDetails,
 };
@@ -121,19 +121,23 @@ impl ProcessList {
         let now = Instant::now();
         if now >= self.next_check {
             self.system
-                .refresh_processes_specifics(multiple_processes());
+                .refresh_processes_specifics(ProcessesToUpdate::All, multiple_processes());
             self.next_check = now + Duration::from_secs(1);
         }
     }
 
     pub fn refresh_single_process(&mut self, pid: sysinfo::Pid) {
-        if !self.system.refresh_process_specifics(pid, single_process()) {
+        if self
+            .system
+            .refresh_processes_specifics(ProcessesToUpdate::Some(&[pid]), single_process())
+            != 0
+        {
             // FIXME: Unfortunately `refresh_process_specifics` doesn't remove
             // the process if it doesn't exist anymore. There also doesn't seem
             // to be a way to manually remove it. So we have to do a full
             // refresh of all processes.
             self.system
-                .refresh_processes_specifics(multiple_processes());
+                .refresh_processes_specifics(ProcessesToUpdate::All, multiple_processes());
             self.next_check = Instant::now() + Duration::from_secs(1);
         }
     }
@@ -156,7 +160,7 @@ impl ProcessList {
         self.system
             .processes()
             .values()
-            .filter(move |p| p.name().as_bytes() == name)
+            .filter(move |p| p.name().as_encoded_bytes() == name)
     }
 
     pub fn is_open(&self, pid: sysinfo::Pid) -> bool {

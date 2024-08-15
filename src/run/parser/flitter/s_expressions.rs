@@ -69,7 +69,7 @@ impl<'source> Deserializer<'source> {
         self.source = self.source.trim_start();
     }
 
-    fn starts_with(&mut self, c: char) -> bool {
+    fn starts_with(&self, c: char) -> bool {
         self.source.starts_with(c)
     }
 

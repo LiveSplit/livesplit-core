@@ -102,10 +102,7 @@ impl Renderer {
         Ok(new_dims)
     }
 
-    fn write_defs<W: Write>(
-        &mut self,
-        writer: &mut Writer<W>,
-    ) -> Result<Option<usize>, fmt::Error> {
+    fn write_defs<W: Write>(&self, writer: &mut Writer<W>) -> Result<Option<usize>, fmt::Error> {
         let current_id = &mut 0;
         let mut background_filter_id = None;
 
@@ -195,7 +192,7 @@ impl Renderer {
     }
 
     fn write_scene<W: Write>(
-        &mut self,
+        &self,
         writer: &mut Writer<W>,
         width: f32,
         height: f32,
