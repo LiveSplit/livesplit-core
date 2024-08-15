@@ -1,4 +1,4 @@
-use std::{path::Path, str};
+use std::path::Path;
 
 use wasmtime_wasi::{preview1::WasiP1Ctx, DirPerms, FilePerms, WasiCtxBuilder};
 
@@ -26,8 +26,8 @@ pub fn build(script_path: Option<&Path>) -> WasiP1Ctx {
             let drive = drive_idx as u8 + b'a';
             // Unfortunate if this fails, but we should still continue.
             let _ = wasi.preopened_dir(
-                str::from_utf8(&[b'\\', b'\\', b'?', b'\\', drive, b':', b'\\']).unwrap(),
-                str::from_utf8(&[b'/', b'm', b'n', b't', b'/', drive]).unwrap(),
+                std::str::from_utf8(&[b'\\', b'\\', b'?', b'\\', drive, b':', b'\\']).unwrap(),
+                std::str::from_utf8(&[b'/', b'm', b'n', b't', b'/', drive]).unwrap(),
                 DirPerms::READ,
                 FilePerms::READ,
             );

@@ -416,10 +416,10 @@ impl CompiledAutoSplitter {
             store.data_mut().timer.log(format_args!("This auto splitter uses WASI. The API is subject to change, because WASI is still in preview. Auto splitters using WASI may need to be recompiled in the future."));
 
             // These may be different in future WASI versions.
-            if let Ok(func) = instance.get_typed_func(&mut store, "_initialize") {
+            if let Ok(func) = instance.get_typed_func::<(), ()>(&mut store, "_initialize") {
                 func.call(&mut store, ())
                     .map_err(|source| CreationError::WasiStart { source })?;
-            } else if let Ok(func) = instance.get_typed_func(&mut store, "_start") {
+            } else if let Ok(func) = instance.get_typed_func::<(), ()>(&mut store, "_start") {
                 func.call(&mut store, ())
                     .map_err(|source| CreationError::WasiStart { source })?;
             }

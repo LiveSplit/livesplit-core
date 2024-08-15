@@ -130,7 +130,7 @@ impl<S: event::CommandSink + Clone + Send + 'static> HotkeySystem<S> {
 
     // This method should never be public, because it might mess up the internal
     // state and we might leak a registered hotkey
-    fn register_inner(&mut self, action: Action) -> Result<()> {
+    fn register_inner(&self, action: Action) -> Result<()> {
         let inner = self.command_sink.clone();
         if let Some(hotkey) = action.get_hotkey(&self.config) {
             self.hook.register(hotkey, action.callback(inner))?;
@@ -145,7 +145,7 @@ impl<S: event::CommandSink + Clone + Send + 'static> HotkeySystem<S> {
 
     // This method should never be public, because it might mess up the internal
     // state and we might leak a registered hotkey
-    fn unregister_inner(&mut self, action: Action) -> Result<()> {
+    fn unregister_inner(&self, action: Action) -> Result<()> {
         if let Some(hotkey) = action.get_hotkey(&self.config) {
             self.hook.unregister(hotkey)?;
         }

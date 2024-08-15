@@ -58,6 +58,6 @@ impl Component {
     /// This panics if the type of the value to be set is not compatible with
     /// the type of the setting's value. A panic can also occur if the index of
     /// the setting provided is out of bounds.
-    #[allow(clippy::needless_pass_by_value)]
+    #[allow(clippy::needless_pass_by_value, clippy::needless_pass_by_ref_mut)]
     pub fn set_value(&mut self, _index: usize, _value: Value) {}
 }

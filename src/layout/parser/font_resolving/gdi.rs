@@ -26,8 +26,8 @@ impl DeviceContext {
         // parameters to `CreateCompatibleDC`. We also properly check the
         // result.
         unsafe {
-            let res = CreateCompatibleDC(0);
-            if res == 0 {
+            let res = CreateCompatibleDC(ptr::null_mut());
+            if res.is_null() {
                 return None;
             }
             Some(Self(res))
@@ -39,7 +39,7 @@ impl DeviceContext {
         // `HFONT`. We also properly check the result.
         unsafe {
             let res = SelectObject(self.0, font.0);
-            if res == 0 || res == GDI_ERROR as HANDLE {
+            if res.is_null() || res == GDI_ERROR as HANDLE {
                 return None;
             }
             Some(())
@@ -131,7 +131,7 @@ impl Font {
                 DEFAULT_PITCH as _,
                 name_buf.as_ptr(),
             );
-            if res == 0 {
+            if res.is_null() {
                 return None;
             }
             Some(Self(res))
