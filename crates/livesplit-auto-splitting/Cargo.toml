@@ -26,6 +26,7 @@ sysinfo = { version = "0.30.0", default-features = false, features = [
 time = { version = "0.3.3", default-features = false }
 wasmtime = { version = "23.0.0", default-features = false, features = [
   "cranelift",
+  "gc",
   "parallel-compilation",
   "runtime",
 ] }
