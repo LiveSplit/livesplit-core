@@ -6,7 +6,7 @@ use std::{
 use anyhow::{ensure, Result};
 use wasmtime::{Caller, Linker};
 
-use crate::{runtime::Context, CreationError, Timer};
+use crate::{runtime::Context, timer::LogLevel, CreationError, Timer};
 
 use super::{get_arr_mut, get_slice_mut, get_str, memory_and_context};
 
@@ -14,10 +14,10 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
     linker
         .func_wrap("env", "runtime_set_tick_rate", {
             |mut caller: Caller<'_, Context<T>>, ticks_per_sec: f64| -> Result<()> {
-                caller
-                    .data_mut()
-                    .timer
-                    .log(format_args!("New Tick Rate: {ticks_per_sec}"));
+                caller.data_mut().timer.log_runtime(
+                    format_args!("New Tick Rate: {ticks_per_sec}"),
+                    LogLevel::Debug,
+                );
 
                 ensure!(
                     ticks_per_sec > 0.0,
@@ -45,7 +45,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             |mut caller: Caller<'_, Context<T>>, ptr: u32, len: u32| {
                 let (memory, context) = memory_and_context(&mut caller);
                 let message = get_str(memory, ptr, len)?;
-                context.timer.log(format_args!("{message}"));
+                context.timer.log_auto_splitter(format_args!("{message}"));
                 Ok(())
             }
         })

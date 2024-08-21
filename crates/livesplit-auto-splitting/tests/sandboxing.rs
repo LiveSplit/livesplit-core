@@ -1,4 +1,4 @@
-use livesplit_auto_splitting::{AutoSplitter, Config, Runtime, Timer, TimerState};
+use livesplit_auto_splitting::{AutoSplitter, Config, LogLevel, Runtime, Timer, TimerState};
 use std::{
     ffi::OsStr,
     fmt, fs,
@@ -23,7 +23,8 @@ impl Timer for DummyTimer {
     fn pause_game_time(&mut self) {}
     fn resume_game_time(&mut self) {}
     fn set_variable(&mut self, _key: &str, _value: &str) {}
-    fn log(&mut self, _message: fmt::Arguments<'_>) {}
+    fn log_auto_splitter(&mut self, _message: fmt::Arguments<'_>) {}
+    fn log_runtime(&mut self, _message: fmt::Arguments<'_>, _log_level: LogLevel) {}
 }
 
 #[track_caller]

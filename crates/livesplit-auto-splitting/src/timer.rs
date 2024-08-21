@@ -16,6 +16,21 @@ pub enum TimerState {
     Ended = 3,
 }
 
+/// The level of criticalness of a log message.
+pub enum LogLevel {
+    /// A trace message. This is the least critical and most verbose message.
+    Trace,
+    /// A debug message. This is a message that is useful for debugging.
+    Debug,
+    /// An info message. This is a message that provides information.
+    Info,
+    /// A warning message. This is a message that warns about something that
+    /// may be problematic.
+    Warning,
+    /// An error message. This is a message that indicates an error.
+    Error,
+}
+
 /// A timer that can be controlled by an auto splitter.
 pub trait Timer: Send {
     /// Returns the current state of the timer.
@@ -41,7 +56,8 @@ pub trait Timer: Send {
     /// Sets a custom key value pair. This may be arbitrary information that the
     /// auto splitter wants to provide for visualization.
     fn set_variable(&mut self, key: &str, value: &str);
-    /// Logs a message either from the auto splitter directly or from the
-    /// runtime.
-    fn log(&mut self, message: fmt::Arguments<'_>);
+    /// Logs a message from the auto splitter.
+    fn log_auto_splitter(&mut self, message: fmt::Arguments<'_>);
+    /// Logs a message from the runtime.
+    fn log_runtime(&mut self, message: fmt::Arguments<'_>, log_level: LogLevel);
 }
