@@ -34,7 +34,7 @@ pub struct Address(pub u64);
 pub struct NonZeroAddress(pub NonZeroU64);
 
 #[repr(transparent)]
-pub struct Process(NonZeroU64);
+pub struct AttachedProcess(NonZeroU64);
 
 #[repr(transparent)]
 pub struct ProcessId(u64);
@@ -130,12 +130,14 @@ extern "C" {
     pub fn timer_resume_game_time();
 
     /// Attaches to a process based on its name. The pointer needs to point to
-    /// valid UTF-8 encoded text with the given length.
-    pub fn process_attach(name_ptr: *const u8, name_len: usize) -> Option<Process>;
+    /// valid UTF-8 encoded text with the given length. If multiple processes
+    /// with the same name are running, the process that most recently started
+    /// is being attached to.
+    pub fn process_attach(name_ptr: *const u8, name_len: usize) -> Option<AttachedProcess>;
     /// Attaches to a process based on its process id.
-    pub fn process_attach_by_pid(pid: ProcessId) -> Option<Process>;
+    pub fn process_attach_by_pid(pid: ProcessId) -> Option<AttachedProcess>;
     /// Detaches from a process.
-    pub fn process_detach(process: Process);
+    pub fn process_detach(process: AttachedProcess);
     /// Lists processes based on their name. The name pointer needs to point to
     /// valid UTF-8 encoded text with the given length. Returns `false` if
     /// listing the processes failed. If it was successful, the buffer is now
@@ -156,11 +158,11 @@ extern "C" {
     ) -> bool;
     /// Checks whether a process is still open. You should detach from a
     /// process and stop using it if this returns `false`.
-    pub fn process_is_open(process: Process) -> bool;
+    pub fn process_is_open(process: AttachedProcess) -> bool;
     /// Reads memory from a process at the address given. This will write
     /// the memory to the buffer given. Returns `false` if this fails.
     pub fn process_read(
-        process: Process,
+        process: AttachedProcess,
         address: Address,
         buf_ptr: *mut u8,
         buf_len: usize,
@@ -168,14 +170,14 @@ extern "C" {
     /// Gets the address of a module in a process. The pointer needs to point to
     /// valid UTF-8 encoded text with the given length.
     pub fn process_get_module_address(
-        process: Process,
+        process: AttachedProcess,
         name_ptr: *const u8,
         name_len: usize,
     ) -> Option<NonZeroAddress>;
     /// Gets the size of a module in a process. The pointer needs to point to
     /// valid UTF-8 encoded text with the given length.
     pub fn process_get_module_size(
-        process: Process,
+        process: AttachedProcess,
         name_ptr: *const u8,
         name_len: usize,
     ) -> Option<NonZeroU64>;
@@ -190,7 +192,7 @@ extern "C" {
     /// the path or the module does not exist or it failed to get read. The path
     /// is guaranteed to be valid UTF-8 and is not nul-terminated.
     pub fn process_get_module_path(
-        process: Process,
+        process: AttachedProcess,
         name_ptr: *const u8,
         name_len: usize,
         buf_ptr: *mut u8,
@@ -205,15 +207,22 @@ extern "C" {
     /// `buf_len_ptr` got set to 0, the path does not exist or failed to get
     /// read. The path is guaranteed to be valid UTF-8 and is not
     /// nul-terminated.
-    pub fn process_get_path(process: Process, buf_ptr: *mut u8, buf_len_ptr: *mut usize) -> bool;
+    pub fn process_get_path(
+        process: AttachedProcess,
+        buf_ptr: *mut u8,
+        buf_len_ptr: *mut usize,
+    ) -> bool;
     /// Gets the number of memory ranges in a given process.
-    pub fn process_get_memory_range_count(process: Process) -> Option<NonZeroU64>;
+    pub fn process_get_memory_range_count(process: AttachedProcess) -> Option<NonZeroU64>;
     /// Gets the start address of a memory range by its index.
-    pub fn process_get_memory_range_address(process: Process, idx: u64) -> Option<NonZeroAddress>;
+    pub fn process_get_memory_range_address(
+        process: AttachedProcess,
+        idx: u64,
+    ) -> Option<NonZeroAddress>;
     /// Gets the size of a memory range by its index.
-    pub fn process_get_memory_range_size(process: Process, idx: u64) -> Option<NonZeroU64>;
+    pub fn process_get_memory_range_size(process: AttachedProcess, idx: u64) -> Option<NonZeroU64>;
     /// Gets the flags of a memory range by its index.
-    pub fn process_get_memory_range_flags(process: Process, idx: u64) -> Option<NonZeroU64>;
+    pub fn process_get_memory_range_flags(process: AttachedProcess, idx: u64) -> Option<MemoryRangeFlags>;
 
     /// Sets the tick rate of the runtime. This influences the amount of
     /// times the `update` function is called per second.
@@ -525,13 +534,13 @@ extern "C" {
 }
 ```
 
-On top of the runtime's API, there's also WASI support. Considering WASI
-itself is still in preview, the API is subject to change. Auto splitters
-using WASI may need to be recompiled in the future. Limitations of the WASI
-support:
+On top of the runtime's API, there's also WASI 0.1 support. Considering WASI
+itself is still in preview, the API is subject to change. Auto splitters using
+WASI may need to be recompiled in the future. Limitations of the WASI support:
 
-- `stdout` / `stderr` / `stdin` are unbound. Those streams currently do
-  nothing.
+- `stdout` and `stdin` are unbound. Those streams currently do nothing.
+- `stderr` is available for logging purposes. It is line buffered. Only
+  completed lines or flushing it will cause the output to be logged.
 - The file system is currently almost entirely empty. The host's file system is
   accessible through `/mnt`. It is entirely read-only. Windows paths are mapped
   to `/mnt/c`, `/mnt/d`, etc. to match WSL.
@@ -539,3 +548,4 @@ support:
 - There are no command line arguments.
 - There is no networking.
 - There is no threading.
+- Time and random numbers are available.

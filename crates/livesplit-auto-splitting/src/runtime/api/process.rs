@@ -6,6 +6,7 @@ use wasmtime::{Caller, Linker};
 
 use crate::{
     runtime::{Context, ProcessKey},
+    timer::LogLevel,
     CreationError, Process, Timer,
 };
 
@@ -19,10 +20,13 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let process_name = get_str(memory, ptr, len)?;
                 Ok(
                     if let Ok(p) = Process::with_name(process_name, &mut context.process_list) {
-                        context.timer.log(format_args!(
-                            "Attached to a new process: {}",
-                            p.name().unwrap_or("<Unnamed Process>")
-                        ));
+                        context.timer.log_runtime(
+                            format_args!(
+                                "Attached to a new process: {}",
+                                p.name().unwrap_or("<Unnamed Process>")
+                            ),
+                            LogLevel::Debug,
+                        );
                         context.processes.insert(p).data().as_ffi()
                     } else {
                         0
@@ -43,10 +47,13 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                         .ok()
                         .and_then(|pid| Process::with_pid(pid, &mut context.process_list).ok())
                     {
-                        context.timer.log(format_args!(
-                            "Attached to a new process: {}",
-                            p.name().unwrap_or("<Unnamed Process>")
-                        ));
+                        context.timer.log_runtime(
+                            format_args!(
+                                "Attached to a new process: {}",
+                                p.name().unwrap_or("<Unnamed Process>")
+                            ),
+                            LogLevel::Debug,
+                        );
                         context.processes.insert(p).data().as_ffi()
                     } else {
                         0
@@ -68,7 +75,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 caller
                     .data_mut()
                     .timer
-                    .log(format_args!("Detached from a process."));
+                    .log_runtime(format_args!("Detached from a process."), LogLevel::Debug);
                 Ok(())
             }
         })

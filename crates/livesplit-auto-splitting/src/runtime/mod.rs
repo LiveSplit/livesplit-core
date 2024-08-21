@@ -1,8 +1,13 @@
 #![allow(clippy::unnecessary_cast)]
 
-use crate::{process::Process, settings, timer::Timer};
+use crate::{
+    process::Process,
+    settings,
+    timer::{LogLevel, Timer},
+};
 
 use anyhow::Result;
+use api::wasi::StdErr;
 use arc_swap::ArcSwap;
 use indexmap::IndexMap;
 use slotmap::SlotMap;
@@ -90,6 +95,7 @@ pub struct Context<T> {
     memory: Option<Memory>,
     process_list: ProcessList,
     wasi: WasiP1Ctx,
+    stderr: StdErr,
 }
 
 /// A thread-safe handle used to interrupt the execution of the script.
@@ -251,17 +257,19 @@ impl<T: Timer> ExecutionGuard<'_, T> {
         if data.trapped {
             return Ok(());
         }
-        match data.update.call(&mut data.store, ()) {
-            Ok(()) => {
-                self.settings_widgets
-                    .store(data.store.data().settings_widgets.clone());
-                Ok(())
-            }
-            Err(e) => {
-                data.trapped = true;
-                Err(e)
-            }
+        let result = data.update.call(&mut data.store, ());
+
+        if result.is_ok() {
+            self.settings_widgets
+                .store(data.store.data().settings_widgets.clone());
+        } else {
+            data.trapped = true;
         }
+
+        let data = data.store.data_mut();
+        data.stderr.print_lines(&mut data.timer);
+
+        result
     }
 
     /// Accesses the memory of the WebAssembly module. This may be useful for
@@ -373,6 +381,8 @@ impl CompiledAutoSplitter {
             tick_rate: AtomicU64::new(f64::to_bits(1.0 / 120.0)),
         });
 
+        let (wasi, stderr) = api::wasi::build(interpreter_script_path);
+
         let mut store = Store::new(
             engine,
             Context {
@@ -385,7 +395,8 @@ impl CompiledAutoSplitter {
                 timer,
                 memory: None,
                 process_list: ProcessList::new(),
-                wasi: api::wasi::build(interpreter_script_path),
+                wasi,
+                stderr,
             },
         );
 
@@ -417,7 +428,10 @@ impl CompiledAutoSplitter {
             || self.module.get_export("_initialize").is_some()
             || self.module.get_export("_start").is_some()
         {
-            store.data_mut().timer.log(format_args!("This auto splitter uses WASI. The API is subject to change, because WASI is still in preview. Auto splitters using WASI may need to be recompiled in the future."));
+            store.data_mut().timer.log_runtime(
+                format_args!("This auto splitter uses WASI. The API is subject to change, because WASI is still in preview. Auto splitters using WASI may need to be recompiled in the future."),
+                LogLevel::Warning,
+            );
 
             // These may be different in future WASI versions.
             if let Ok(func) = instance.get_typed_func::<(), ()>(&mut store, "_initialize") {
