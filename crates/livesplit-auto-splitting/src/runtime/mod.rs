@@ -136,7 +136,7 @@ impl ProcessList {
         if self
             .system
             .refresh_processes_specifics(ProcessesToUpdate::Some(&[pid]), single_process())
-            != 0
+            == 0
         {
             // FIXME: Unfortunately `refresh_process_specifics` doesn't remove
             // the process if it doesn't exist anymore. There also doesn't seem
