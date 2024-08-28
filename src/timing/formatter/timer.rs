@@ -72,7 +72,7 @@ impl Display for TimeInner {
             let (total_seconds, nanoseconds) = time.to_seconds_and_subsec_nanoseconds();
             let total_seconds = if (total_seconds | nanoseconds as i64) < 0 {
                 f.write_str(MINUS)?;
-                (-total_seconds) as u64
+                total_seconds.wrapping_neg() as u64
             } else {
                 total_seconds as u64
             };
@@ -189,8 +189,177 @@ impl Display for FractionInner {
     }
 }
 
-#[test]
-fn test() {
-    let time = "4:20.999999".parse::<TimeSpan>().unwrap();
-    assert_eq!(Fraction::new().format(Some(time)).to_string(), ".99");
+#[cfg(test)]
+mod tests {
+    use core::str::FromStr;
+
+    use super::*;
+
+    #[test]
+    fn min() {
+        // This verifies that flipping the sign of the minimum value doesn't
+        // cause a panic.
+        let time = TimeSpan::from(crate::platform::Duration::MIN);
+        let inner = Time::new().format(Some(time));
+        assert_eq!(inner.to_string(), "−2562047788015215:30:08");
+        let inner = Fraction::new().format(Some(time));
+        assert_eq!(inner.to_string(), ".99");
+    }
+
+    #[test]
+    fn max() {
+        let time = TimeSpan::from(crate::platform::Duration::MAX);
+        let inner = Time::new().format(Some(time));
+        assert_eq!(inner.to_string(), "2562047788015215:30:07");
+        let inner = Fraction::new().format(Some(time));
+        assert_eq!(inner.to_string(), ".99");
+    }
+
+    #[test]
+    fn zero() {
+        let time = TimeSpan::zero();
+        let inner = Time::new().format(Some(time));
+        assert_eq!(inner.to_string(), "0");
+        let inner = Fraction::new().format(Some(time));
+        assert_eq!(inner.to_string(), ".00");
+    }
+
+    #[test]
+    fn empty() {
+        let inner = Time::new().format(None);
+        assert_eq!(inner.to_string(), "—");
+        let inner = Fraction::new().format(None);
+        assert_eq!(inner.to_string(), "");
+    }
+
+    #[test]
+    fn slightly_positive() {
+        let time = TimeSpan::from_str("0.000000001").unwrap();
+        let inner = Time::new().format(Some(time));
+        assert_eq!(inner.to_string(), "0");
+        let inner = Fraction::new().format(Some(time));
+        assert_eq!(inner.to_string(), ".00");
+
+        let time = TimeSpan::from_seconds(0.5);
+        let inner = Time::new().format(Some(time));
+        assert_eq!(inner.to_string(), "0");
+        let inner = Fraction::new().format(Some(time));
+        assert_eq!(inner.to_string(), ".50");
+
+        let time = TimeSpan::from_seconds(1.5);
+        let inner = Time::new().format(Some(time));
+        assert_eq!(inner.to_string(), "1");
+        let inner = Fraction::new().format(Some(time));
+        assert_eq!(inner.to_string(), ".50");
+    }
+
+    #[test]
+    fn slightly_negative() {
+        let time = TimeSpan::from_str("-0.000000001").unwrap();
+        let inner = Time::new().format(Some(time));
+        assert_eq!(inner.to_string(), "−0");
+        let inner = Fraction::new().format(Some(time));
+        assert_eq!(inner.to_string(), ".00");
+
+        let time = TimeSpan::from_seconds(-0.5);
+        let inner = Time::new().format(Some(time));
+        assert_eq!(inner.to_string(), "−0");
+        let inner = Fraction::new().format(Some(time));
+        assert_eq!(inner.to_string(), ".50");
+
+        let time = TimeSpan::from_seconds(-1.5);
+        let inner = Time::new().format(Some(time));
+        assert_eq!(inner.to_string(), "−1");
+        let inner = Fraction::new().format(Some(time));
+        assert_eq!(inner.to_string(), ".50");
+    }
+
+    #[test]
+    fn seconds() {
+        let time = TimeSpan::from_str("23.1234").unwrap();
+        let inner = Time::new().format(Some(time));
+        assert_eq!(inner.to_string(), "23");
+        let inner = Fraction::new().format(Some(time));
+        assert_eq!(inner.to_string(), ".12");
+    }
+
+    #[test]
+    fn minutes() {
+        let time = TimeSpan::from_str("12:34.987654321").unwrap();
+        let inner = Time::new().format(Some(time));
+        assert_eq!(inner.to_string(), "12:34");
+        let inner = Fraction::new().format(Some(time));
+        assert_eq!(inner.to_string(), ".98");
+    }
+
+    #[test]
+    fn hours() {
+        let time = TimeSpan::from_str("12:34:56.123456789").unwrap();
+        let inner = Time::new().format(Some(time));
+        assert_eq!(inner.to_string(), "12:34:56");
+        let inner = Fraction::new().format(Some(time));
+        assert_eq!(inner.to_string(), ".12");
+    }
+
+    #[test]
+    fn negative() {
+        let time = TimeSpan::from_str("-12:34:56.123456789").unwrap();
+        let inner = Time::new().format(Some(time));
+        assert_eq!(inner.to_string(), "−12:34:56");
+        let inner = Fraction::new().format(Some(time));
+        assert_eq!(inner.to_string(), ".12");
+    }
+
+    #[test]
+    fn days() {
+        let time = TimeSpan::from_str("2148:34:56.123456789").unwrap();
+        let inner = Time::new().format(Some(time));
+        assert_eq!(inner.to_string(), "2148:34:56");
+        let inner = Fraction::new().format(Some(time));
+        assert_eq!(inner.to_string(), ".12");
+    }
+
+    #[test]
+    fn negative_days() {
+        let time = TimeSpan::from_str("-2148:34:56.123456789").unwrap();
+        let inner = Time::new().format(Some(time));
+        assert_eq!(inner.to_string(), "−2148:34:56");
+        let inner = Fraction::new().format(Some(time));
+        assert_eq!(inner.to_string(), ".12");
+    }
+
+    #[test]
+    fn fractions_default() {
+        let time = TimeSpan::from_str("0.987654321").unwrap();
+        let inner = Fraction::new().format(Some(time));
+        assert_eq!(inner.to_string(), ".98");
+    }
+
+    #[test]
+    fn fractions_seconds() {
+        let time = TimeSpan::from_str("0.987654321").unwrap();
+        let inner = Fraction::with_accuracy(Accuracy::Seconds).format(Some(time));
+        assert_eq!(inner.to_string(), "");
+    }
+
+    #[test]
+    fn fractions_tenths() {
+        let time = TimeSpan::from_str("0.987654321").unwrap();
+        let inner = Fraction::with_accuracy(Accuracy::Tenths).format(Some(time));
+        assert_eq!(inner.to_string(), ".9");
+    }
+
+    #[test]
+    fn fractions_hundredths() {
+        let time = TimeSpan::from_str("0.987654321").unwrap();
+        let inner = Fraction::with_accuracy(Accuracy::Hundredths).format(Some(time));
+        assert_eq!(inner.to_string(), ".98");
+    }
+
+    #[test]
+    fn fractions_milliseconds() {
+        let time = TimeSpan::from_str("0.987654321").unwrap();
+        let inner = Fraction::with_accuracy(Accuracy::Milliseconds).format(Some(time));
+        assert_eq!(inner.to_string(), ".987");
+    }
 }

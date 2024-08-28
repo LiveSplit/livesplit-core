@@ -71,7 +71,7 @@ impl Display for Inner {
             let (total_seconds, nanoseconds) = time.to_seconds_and_subsec_nanoseconds();
             let (total_seconds, nanoseconds) = if (total_seconds | nanoseconds as i64) < 0 {
                 f.write_str(MINUS)?;
-                ((-total_seconds) as u64, (-nanoseconds) as u32)
+                (total_seconds.wrapping_neg() as u64, (-nanoseconds) as u32)
             } else {
                 (total_seconds as u64, nanoseconds as u32)
             };
@@ -105,9 +105,120 @@ impl Display for Inner {
     }
 }
 
-#[test]
-fn test() {
-    let time = "4:20.69".parse::<TimeSpan>().unwrap();
-    let formatted = SegmentTime::new().format(time).to_string();
-    assert_eq!(formatted, "4:20.69");
+#[cfg(test)]
+mod tests {
+    use core::str::FromStr;
+
+    use super::*;
+
+    #[test]
+    fn min() {
+        // This verifies that flipping the sign of the minimum value doesn't
+        // cause a panic.
+        let time = TimeSpan::from(crate::platform::Duration::MIN);
+        let inner = SegmentTime::new().format(Some(time));
+        assert_eq!(inner.to_string(), "−2562047788015215:30:08.99");
+    }
+
+    #[test]
+    fn max() {
+        let time = TimeSpan::from(crate::platform::Duration::MAX);
+        let inner = SegmentTime::new().format(Some(time));
+        assert_eq!(inner.to_string(), "2562047788015215:30:07.99");
+    }
+
+    #[test]
+    fn zero() {
+        let time = TimeSpan::zero();
+        let inner = SegmentTime::new().format(Some(time));
+        assert_eq!(inner.to_string(), "0.00");
+    }
+
+    #[test]
+    fn empty() {
+        let inner = SegmentTime::new().format(None);
+        assert_eq!(inner.to_string(), "—");
+    }
+
+    #[test]
+    fn slightly_positive() {
+        let time = TimeSpan::from_str("0.000000001").unwrap();
+        let inner = SegmentTime::new().format(Some(time));
+        assert_eq!(inner.to_string(), "0.00");
+
+        assert_eq!(
+            SegmentTime::new()
+                .format(TimeSpan::from_seconds(0.5))
+                .to_string(),
+            "0.50"
+        );
+        assert_eq!(
+            SegmentTime::new()
+                .format(TimeSpan::from_seconds(1.5))
+                .to_string(),
+            "1.50"
+        );
+    }
+
+    #[test]
+    fn slightly_negative() {
+        let time = TimeSpan::from_str("-0.000000001").unwrap();
+        let inner = SegmentTime::new().format(Some(time));
+        assert_eq!(inner.to_string(), "−0.00");
+
+        assert_eq!(
+            SegmentTime::new()
+                .format(TimeSpan::from_seconds(-1.5))
+                .to_string(),
+            "−1.50"
+        );
+        assert_eq!(
+            SegmentTime::new()
+                .format(TimeSpan::from_seconds(-0.5))
+                .to_string(),
+            "−0.50"
+        );
+    }
+
+    #[test]
+    fn seconds() {
+        let time = TimeSpan::from_str("23.1234").unwrap();
+        let inner = SegmentTime::new().format(Some(time));
+        assert_eq!(inner.to_string(), "23.12");
+    }
+
+    #[test]
+    fn minutes() {
+        let time = TimeSpan::from_str("12:34.987654321").unwrap();
+        let inner = SegmentTime::new().format(Some(time));
+        assert_eq!(inner.to_string(), "12:34.98");
+    }
+
+    #[test]
+    fn hours() {
+        let time = TimeSpan::from_str("12:34:56.123456789").unwrap();
+        let inner = SegmentTime::new().format(Some(time));
+        assert_eq!(inner.to_string(), "12:34:56.12");
+    }
+
+    #[test]
+    fn negative() {
+        let time = TimeSpan::from_str("-12:34:56.123456789").unwrap();
+        let inner = SegmentTime::new().format(Some(time));
+        assert_eq!(inner.to_string(), "−12:34:56.12");
+    }
+
+    #[test]
+    fn days() {
+        let time = TimeSpan::from_str("2148:34:56.123456789").unwrap();
+        let inner = SegmentTime::new().format(Some(time));
+        assert_eq!(inner.to_string(), "2148:34:56.12");
+    }
+
+    #[test]
+    fn negative_days() {
+        let time = TimeSpan::from_str("-2148:34:56.123456789").unwrap();
+        let inner = SegmentTime::new().format(Some(time));
+        assert_eq!(inner.to_string(), "−2148:34:56.12");
+    }
 }
