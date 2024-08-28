@@ -48,7 +48,7 @@ impl Display for Inner {
             let (total_seconds, nanoseconds) = time.to_seconds_and_subsec_nanoseconds();
             let total_seconds = if (total_seconds | nanoseconds as i64) < 0 {
                 f.write_str(MINUS)?;
-                (-total_seconds) as u64
+                total_seconds.wrapping_neg() as u64
             } else {
                 total_seconds as u64
             };
@@ -80,5 +80,109 @@ impl Display for Inner {
         } else {
             f.write_str("0:00")
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use core::str::FromStr;
+
+    use super::*;
+
+    #[test]
+    fn min() {
+        // This verifies that flipping the sign of the minimum value doesn't
+        // cause a panic.
+        let time = TimeSpan::from(crate::platform::Duration::MIN);
+        let inner = Days.format(Some(time));
+        assert_eq!(inner.to_string(), "−106751991167300d 15:30:08");
+    }
+
+    #[test]
+    fn max() {
+        let time = TimeSpan::from(crate::platform::Duration::MAX);
+        let inner = Days.format(Some(time));
+        assert_eq!(inner.to_string(), "106751991167300d 15:30:07");
+    }
+
+    #[test]
+    fn zero() {
+        let time = TimeSpan::zero();
+        let inner = Days.format(Some(time));
+        assert_eq!(inner.to_string(), "0:00");
+    }
+
+    #[test]
+    fn empty() {
+        let inner = Days.format(None);
+        assert_eq!(inner.to_string(), "0:00");
+    }
+
+    #[test]
+    fn slightly_positive() {
+        let time = TimeSpan::from_str("0.000000001").unwrap();
+        let inner = Days.format(Some(time));
+        assert_eq!(inner.to_string(), "0:00");
+
+        assert_eq!(Days.format(TimeSpan::from_seconds(0.5)).to_string(), "0:00");
+        assert_eq!(Days.format(TimeSpan::from_seconds(1.5)).to_string(), "0:01");
+    }
+
+    #[test]
+    fn slightly_negative() {
+        let time = TimeSpan::from_str("-0.000000001").unwrap();
+        let inner = Days.format(Some(time));
+        assert_eq!(inner.to_string(), "−0:00");
+
+        assert_eq!(
+            Days.format(TimeSpan::from_seconds(-1.5)).to_string(),
+            "−0:01"
+        );
+        assert_eq!(
+            Days.format(TimeSpan::from_seconds(-0.5)).to_string(),
+            "−0:00"
+        );
+    }
+
+    #[test]
+    fn seconds() {
+        let time = TimeSpan::from_str("23.1234").unwrap();
+        let inner = Days.format(Some(time));
+        assert_eq!(inner.to_string(), "0:23");
+    }
+
+    #[test]
+    fn minutes() {
+        let time = TimeSpan::from_str("12:34.987654321").unwrap();
+        let inner = Days.format(Some(time));
+        assert_eq!(inner.to_string(), "12:34");
+    }
+
+    #[test]
+    fn hours() {
+        let time = TimeSpan::from_str("12:34:56.123456789").unwrap();
+        let inner = Days.format(Some(time));
+        assert_eq!(inner.to_string(), "12:34:56");
+    }
+
+    #[test]
+    fn negative() {
+        let time = TimeSpan::from_str("-12:34:56.123456789").unwrap();
+        let inner = Days.format(Some(time));
+        assert_eq!(inner.to_string(), "−12:34:56");
+    }
+
+    #[test]
+    fn days() {
+        let time = TimeSpan::from_str("2148:34:56.123456789").unwrap();
+        let inner = Days.format(Some(time));
+        assert_eq!(inner.to_string(), "89d 12:34:56");
+    }
+
+    #[test]
+    fn negative_days() {
+        let time = TimeSpan::from_str("-2148:34:56.123456789").unwrap();
+        let inner = Days.format(Some(time));
+        assert_eq!(inner.to_string(), "−89d 12:34:56");
     }
 }
