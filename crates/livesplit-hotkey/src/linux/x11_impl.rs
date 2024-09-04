@@ -18,11 +18,7 @@ unsafe fn ungrab_all(xlib: &Xlib, display: *mut Display) {
     let screencount = (xlib.XScreenCount)(display);
     for screen in 0..screencount {
         let rootwindow = (xlib.XRootWindow)(display, screen);
-        for _i in 0..rootwindow {
-            // FIXME: This loop looks very stupid, but it somehow it prevents
-            // button presses getting lost.
-            (xlib.XUngrabKey)(display, AnyKey, AnyModifier, rootwindow);
-        }
+        (xlib.XUngrabKey)(display, AnyKey, AnyModifier, rootwindow);
     }
 }
 
@@ -53,32 +49,45 @@ const IGNORE_MASKS: [u8; 8] = [
     SCROLL_LOCK | NUM_LOCK | CAPS_LOCK,
 ];
 
-unsafe fn grab_all(xlib: &Xlib, display: *mut Display, keylist: &[(c_uint, Modifiers)]) {
-    ungrab_all(xlib, display);
+unsafe fn grab_key(
+    xlib: &Xlib,
+    display: *mut Display,
+    code: c_uint,
+    modifiers: Modifiers,
+    ungrab: bool,
+) {
     let screencount = (xlib.XScreenCount)(display);
     for screen in 0..screencount {
-        let rootwindow = (xlib.XRootWindow)(display, screen);
-        for &(code, modifiers) in keylist {
-            let mut mod_mask = 0;
-            if modifiers.contains(Modifiers::SHIFT) {
-                mod_mask |= ShiftMask;
-            }
-            if modifiers.contains(Modifiers::CONTROL) {
-                mod_mask |= ControlMask;
-            }
-            if modifiers.contains(Modifiers::ALT) {
-                mod_mask |= Mod1Mask;
-            }
-            if modifiers.contains(Modifiers::META) {
-                mod_mask |= Mod4Mask;
-            }
+        let window = (xlib.XRootWindow)(display, screen);
 
-            for ignore_mask in IGNORE_MASKS {
+        let mut mod_mask = 0;
+        if modifiers.contains(Modifiers::SHIFT) {
+            mod_mask |= ShiftMask;
+        }
+        if modifiers.contains(Modifiers::CONTROL) {
+            mod_mask |= ControlMask;
+        }
+        if modifiers.contains(Modifiers::ALT) {
+            mod_mask |= Mod1Mask;
+        }
+        if modifiers.contains(Modifiers::META) {
+            mod_mask |= Mod4Mask;
+        }
+
+        for ignore_mask in IGNORE_MASKS {
+            if ungrab {
+                (xlib.XUngrabKey)(
+                    display,
+                    code as c_int,
+                    mod_mask | (ignore_mask as c_uint),
+                    window,
+                );
+            } else {
                 (xlib.XGrabKey)(
                     display,
                     code as c_int,
                     mod_mask | (ignore_mask as c_uint),
-                    rootwindow,
+                    window,
                     false as _,
                     GrabModeAsync,
                     GrabModeAsync,
@@ -86,6 +95,10 @@ unsafe fn grab_all(xlib: &Xlib, display: *mut Display, keylist: &[(c_uint, Modif
             }
         }
     }
+
+    // On some X11 connections it's crucial for the events to be flushed. They
+    // may otherwise stay buffered and the hotkeys don't actually work.
+    (xlib.XFlush)(display);
 }
 
 unsafe extern "C" fn handle_error(_: *mut Display, _: *mut XErrorEvent) -> c_int {
@@ -154,29 +167,31 @@ pub fn new() -> Result<Hook> {
                         for message in receiver.try_iter() {
                             match message {
                                 Message::Register(key, callback, promise) => {
-                                    promise.set(
-                                        if code_for(key.key_code)
-                                            .and_then(|k| {
-                                                hotkeys.insert((k, key.modifiers), callback)
-                                            })
-                                            .is_some()
+                                    promise.set(if let Some(code) = code_for(key.key_code) {
+                                        if hotkeys.insert((code, key.modifiers), callback).is_some()
                                         {
                                             Err(crate::Error::AlreadyRegistered)
                                         } else {
-                                            let keys = hotkeys.keys().copied().collect::<Vec<_>>();
-                                            grab_all(&xlib, display, &keys);
+                                            grab_key(&xlib, display, code, key.modifiers, false);
                                             Ok(())
-                                        },
-                                    );
+                                        }
+                                    } else {
+                                        Ok(())
+                                    });
                                 }
                                 Message::Unregister(key, promise) => {
-                                    let res = code_for(key.key_code)
-                                        .and_then(|k| hotkeys.remove(&(k, key.modifiers)).map(drop))
-                                        .ok_or(crate::Error::NotRegistered);
-                                    if res.is_ok() {
-                                        let keys = hotkeys.keys().copied().collect::<Vec<_>>();
-                                        grab_all(&xlib, display, &keys);
-                                    }
+                                    let res = if let Some(code) = code_for(key.key_code) {
+                                        let res = hotkeys
+                                            .remove(&(code, key.modifiers))
+                                            .map(drop)
+                                            .ok_or(crate::Error::NotRegistered);
+                                        if res.is_ok() {
+                                            grab_key(&xlib, display, code, key.modifiers, true);
+                                        }
+                                        res
+                                    } else {
+                                        Ok(())
+                                    };
                                     promise.set(res);
                                 }
                                 Message::Resolve(key_code, promise) => {
@@ -215,8 +230,6 @@ pub fn new() -> Result<Hook> {
                                     {
                                         callback();
                                     }
-                                    // FIXME: We should check else here: these amount to lost
-                                    // keypresses.
                                 }
                             }
                         }
@@ -252,7 +265,7 @@ pub(super) fn resolve(xlib: &Xlib, display: *mut _XDisplay, key_code: KeyCode) -
 }
 
 // Based on this public domain code:
-// https://github.com/xkbcommon/libxkbcommon/blob/2530f6444bfad2bf67ee926e57df8987afeebf4a/src/keysym-utf.c
+// https://github.com/xkbcommon/libxkbcommon/blob/9af1f9f2cb3a7895f6ed7a130ffd3da1006dcc7b/src/keysym-utf.c
 fn keysym_to_utf32(keysym: u64) -> u32 {
     const KP_SPACE: u64 = 0xff80;
     const KP_TAB: u64 = 0xff89;
@@ -266,6 +279,13 @@ fn keysym_to_utf32(keysym: u64) -> u32 {
     const ESCAPE: u64 = 0xff1b;
     const DELETE: u64 = 0xffff;
     const KP_9: u64 = 0xffb9;
+
+    const NO_KEYSYM_UNICODE_CONVERSION: u32 = 0;
+
+    /// Offset to use when converting a Unicode code point to a keysym
+    const XKB_KEYSYM_UNICODE_OFFSET: u64 = 0x01000000;
+    /// Maximum Unicode keysym, correspoding to the maximum Unicode code point
+    const XKB_KEYSYM_UNICODE_MAX: u64 = 0x0110ffff;
 
     // first check for Latin-1 characters (1:1 mapping)
     if matches!(keysym, 0x0020..=0x007e | 0x00a0..=0x00ff) {
@@ -288,13 +308,20 @@ fn keysym_to_utf32(keysym: u64) -> u32 {
     }
 
     // also check for directly encoded Unicode codepoints
-    //
+
+    // Exclude surrogates: they are invalid in UTF-32.
+    // See https://www.unicode.org/versions/Unicode15.0.0/ch03.pdf#G28875
+    // for further details.
+    if matches!(keysym, 0x0100d800..=0x0100dfff) {
+        return NO_KEYSYM_UNICODE_CONVERSION;
+    }
+
     // In theory, this is supposed to start from 0x100100, such that the ASCII
     // range, which is already covered by 0x00-0xff, can't be encoded in two
     // ways. However, changing this after a couple of decades probably won't
     // go well, so it stays as it is.
-    if (0x01000000..=0x0110ffff).contains(&keysym) {
-        return (keysym - 0x01000000) as u32;
+    if matches!(keysym, XKB_KEYSYM_UNICODE_OFFSET..=XKB_KEYSYM_UNICODE_MAX) {
+        return (keysym - XKB_KEYSYM_UNICODE_OFFSET) as u32;
     }
 
     match keysym {
