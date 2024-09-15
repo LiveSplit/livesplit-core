@@ -7,7 +7,7 @@ use core::{
     ops::{Add, AddAssign, Neg, Sub, SubAssign},
     str::FromStr,
 };
-use snafu::{ensure, OptionExt, ResultExt};
+use snafu::{OptionExt, ResultExt};
 
 /// A `TimeSpan` represents a certain span of time.
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -67,11 +67,13 @@ impl TimeSpan {
 }
 
 /// The Error type for a `TimeSpan` that couldn't be parsed.
-#[derive(Debug, snafu::Snafu)]
+#[derive(Debug, snafu::Snafu, PartialEq, Eq)]
 #[snafu(context(suffix(false)))]
 pub enum ParseError {
-    /// An empty string is not a valid `TimeSpan`.
-    Empty,
+    /// There are too many colons in the string.
+    TooManyColons,
+    /// A piece separate by a colon is too large.
+    PieceOverflow,
     /// The time is too large to be represented.
     Overflow,
     /// The fractional part contains characters that are not digits.
@@ -82,63 +84,115 @@ pub enum ParseError {
         source: ParseIntError,
     },
     /// Couldn't parse the seconds, minutes, or hours.
-    Time {
+    Piece {
         /// The underlying error.
         source: ParseIntError,
     },
 }
 
+pub(crate) trait CustomParser {
+    const ASCII_ONLY: bool = false;
+    const ALLOW_NEGATIVE: bool = true;
+    const WITH_DAYS: bool = false;
+}
+
+struct DefaultParser;
+
+impl CustomParser for DefaultParser {}
+
+pub(crate) fn parse_custom<T: CustomParser>(mut text: &str) -> Result<TimeSpan, ParseError> {
+    // It's faster to use `strip_prefix` with char literals if it's an ASCII
+    // char, otherwise prefer using string literals.
+    #[allow(clippy::single_char_pattern)]
+    let negate = if T::ALLOW_NEGATIVE {
+        if let Some(remainder) = text.strip_prefix('-').or_else(|| {
+            if T::ASCII_ONLY {
+                None
+            } else {
+                text.strip_prefix("−")
+            }
+        }) {
+            text = remainder;
+            true
+        } else {
+            false
+        }
+    } else {
+        false
+    };
+
+    let (mut rem, nanos) = if let Some((seconds, mut nanos)) = AsciiChar::DOT.split_once(text) {
+        if nanos.len() > 9 {
+            nanos = nanos.get(..9).context(FractionDigits)?;
+        }
+        (
+            seconds,
+            nanos.parse::<u32>().context(Fraction)? * 10_u32.pow(9 - nanos.len() as u32),
+        )
+    } else {
+        (text, 0u32)
+    };
+
+    let mut seconds = 0u64;
+
+    let mut factor = 1;
+    let max_pieces = const {
+        if T::WITH_DAYS {
+            4
+        } else {
+            3
+        }
+    };
+    for i in 0.. {
+        if i == max_pieces {
+            return Err(ParseError::TooManyColons);
+        }
+        match AsciiChar::COLON.rsplit_once(rem) {
+            Some((new_rem, piece)) => {
+                rem = new_rem;
+                let piece = piece.parse::<u64>().context(Piece)?;
+                let max = if i < 3 { 60 } else { 24 };
+                if piece >= max {
+                    return Err(ParseError::PieceOverflow);
+                }
+                seconds = piece
+                    .checked_mul(factor)
+                    .context(Overflow)?
+                    .checked_add(seconds)
+                    .context(Overflow)?;
+                factor *= max;
+            }
+            None => {
+                let piece = rem.parse::<u64>().context(Piece)?;
+                seconds = piece
+                    .checked_mul(factor)
+                    .context(Overflow)?
+                    .checked_add(seconds)
+                    .context(Overflow)?;
+                break;
+            }
+        }
+    }
+
+    let (mut seconds, mut nanos) = (
+        i64::try_from(seconds).ok().context(Overflow)?,
+        i32::try_from(nanos).ok().context(Overflow)?,
+    );
+
+    if T::ALLOW_NEGATIVE && negate {
+        seconds = -seconds;
+        nanos = -nanos;
+    }
+
+    Ok(Duration::new(seconds, nanos).into())
+}
+
 impl FromStr for TimeSpan {
     type Err = ParseError;
 
-    fn from_str(mut text: &str) -> Result<Self, ParseError> {
-        // It's faster to use `strip_prefix` with char literals if it's an ASCII
-        // char, otherwise prefer using string literals.
-        #[allow(clippy::single_char_pattern)]
-        let negate =
-            if let Some(remainder) = text.strip_prefix('-').or_else(|| text.strip_prefix("−")) {
-                text = remainder;
-                true
-            } else {
-                false
-            };
-
-        let (seconds_text, nanos) =
-            if let Some((seconds, mut nanos)) = AsciiChar::DOT.split_once(text) {
-                if nanos.len() > 9 {
-                    nanos = nanos.get(..9).context(FractionDigits)?;
-                }
-                (
-                    seconds,
-                    nanos.parse::<u32>().context(Fraction)? * 10_u32.pow(9 - nanos.len() as u32),
-                )
-            } else {
-                (text, 0u32)
-            };
-
-        ensure!(!seconds_text.is_empty(), Empty);
-
-        let mut seconds = 0u64;
-
-        for split in AsciiChar::COLON.split_iter(seconds_text) {
-            seconds = seconds
-                .checked_mul(60)
-                .context(Overflow)?
-                .checked_add(split.parse::<u64>().context(Time)?)
-                .context(Overflow)?;
-        }
-
-        let (mut seconds, mut nanos) = (
-            i64::try_from(seconds).ok().context(Overflow)?,
-            i32::try_from(nanos).ok().context(Overflow)?,
-        );
-
-        if negate {
-            seconds = -seconds;
-            nanos = -nanos;
-        }
-
-        Ok(Duration::new(seconds, nanos).into())
+    #[inline]
+    fn from_str(text: &str) -> Result<Self, ParseError> {
+        parse_custom::<DefaultParser>(text)
     }
 }
 
@@ -237,16 +291,44 @@ mod tests {
         TimeSpan::from_str("-100").unwrap();
         TimeSpan::from_str("--30").unwrap_err();
         TimeSpan::from_str("-").unwrap_err();
-        TimeSpan::from_str("").unwrap_err();
         TimeSpan::from_str("-10:-30").unwrap_err();
         TimeSpan::from_str("10:-30").unwrap_err();
         TimeSpan::from_str("10.5:30.5").unwrap_err();
         TimeSpan::from_str("NaN").unwrap_err();
         TimeSpan::from_str("Inf").unwrap_err();
         assert!(matches!(
-            TimeSpan::from_str("1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1"),
-            Err(ParseError::Overflow),
+            TimeSpan::from_str(""),
+            Err(ParseError::Piece {
+                source: ParseIntError { .. }
+            })
         ));
+        assert_eq!(
+            TimeSpan::from_str("60")
+                .unwrap()
+                .to_seconds_and_subsec_nanoseconds(),
+            (60, 0)
+        );
+        assert_eq!(TimeSpan::from_str("0:60"), Err(ParseError::PieceOverflow));
+        assert_eq!(
+            TimeSpan::from_str("60:00")
+                .unwrap()
+                .to_seconds_and_subsec_nanoseconds(),
+            (3600, 0)
+        );
+        assert_eq!(
+            TimeSpan::from_str("0:60:00"),
+            Err(ParseError::PieceOverflow)
+        );
+        assert_eq!(
+            TimeSpan::from_str("24:00:00")
+                .unwrap()
+                .to_seconds_and_subsec_nanoseconds(),
+            (86400, 0)
+        );
+        assert_eq!(
+            TimeSpan::from_str("0:24:00:00"),
+            Err(ParseError::TooManyColons),
+        );
         assert_eq!(
             TimeSpan::from_str("10.123456789")
                 .unwrap()

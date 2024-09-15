@@ -21,3 +21,5 @@ pub use self::{
     timer_phase::TimerPhase,
     timing_method::TimingMethod,
 };
+
+pub(crate) use self::time_span::{parse_custom, CustomParser};
