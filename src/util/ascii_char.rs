@@ -1,5 +1,3 @@
-use core::iter;
-
 #[derive(Copy, Clone, PartialEq, Eq)]
 #[repr(transparent)]
 pub struct AsciiChar(u8);
@@ -38,28 +36,19 @@ impl AsciiChar {
         memchr::memchr(self.0, text.as_bytes()).is_some()
     }
 
-    pub fn split_once(self, text: &str) -> Option<(&str, &str)> {
-        let pos = memchr::memchr(self.0, text.as_bytes())?;
+    pub fn rsplit_once(self, text: &str) -> Option<(&str, &str)> {
+        let pos = memchr::memrchr(self.0, text.as_bytes())?;
         // SAFETY: memchr guarantees that the position is valid. Also since we
         // are looking for ASCII bytes, splitting at the position is guaranteed
         // to be valid UTF-8.
         unsafe { Some((text.get_unchecked(..pos), text.get_unchecked(pos + 1..))) }
     }
 
-    pub fn split_iter(self, text: &str) -> impl Iterator<Item = &str> {
-        let mut slot = Some(text);
-        iter::from_fn(move || {
-            let rem = slot?;
-            Some(match self.split_once(rem) {
-                Some((before, after)) => {
-                    slot = Some(after);
-                    before
-                }
-                None => {
-                    slot = None;
-                    rem
-                }
-            })
-        })
+    pub fn split_once(self, text: &str) -> Option<(&str, &str)> {
+        let pos = memchr::memchr(self.0, text.as_bytes())?;
+        // SAFETY: memchr guarantees that the position is valid. Also since we
+        // are looking for ASCII bytes, splitting at the position is guaranteed
+        // to be valid UTF-8.
+        unsafe { Some((text.get_unchecked(..pos), text.get_unchecked(pos + 1..))) }
     }
 }

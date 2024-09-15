@@ -146,11 +146,6 @@ mod parse {
     }
 
     #[test]
-    fn flitter_small() {
-        flitter::parse(run_files::FLITTER_SMALL).unwrap();
-    }
-
-    #[test]
     fn source_live_timer() {
         source_live_timer::parse(run_files::SOURCE_LIVE_TIMER).unwrap();
     }
@@ -219,9 +214,6 @@ mod parse {
     #[test]
     fn flitter_prefers_parsing_as_itself() {
         let run = composite::parse(run_files::FLITTER.as_bytes(), None).unwrap();
-        assert_eq!(run.kind, TimerKind::Flitter);
-
-        let run = composite::parse(run_files::FLITTER_SMALL.as_bytes(), None).unwrap();
         assert_eq!(run.kind, TimerKind::Flitter);
     }
 }

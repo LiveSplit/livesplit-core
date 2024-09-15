@@ -32,7 +32,7 @@ pub struct BackgroundImage<I> {
     /// to a reasonable value. The resulting value is the sigma (standard
     /// deviation) of the gaussian blur.
     ///
-    /// ```ignore
+    /// ```text
     /// sigma = BLUR_FACTOR * blur * max(width, height)
     /// ```
     pub blur: f32,
