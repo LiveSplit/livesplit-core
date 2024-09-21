@@ -119,6 +119,7 @@ impl Layout {
         state.separators_color = settings.separators_color;
         state.text_color = settings.text_color;
         state.direction = settings.direction;
+        state.mouse_pass_through_while_running = settings.mouse_pass_through_while_running;
     }
 
     /// Calculates the layout's state based on the timer provided. You can use
