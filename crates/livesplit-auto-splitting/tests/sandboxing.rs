@@ -19,6 +19,9 @@ impl Timer for DummyTimer {
     fn skip_split(&mut self) {}
     fn undo_split(&mut self) {}
     fn reset(&mut self) {}
+    fn current_split_index(&self) -> Option<usize> {
+        None
+    }
     fn set_game_time(&mut self, _time: time::Duration) {}
     fn pause_game_time(&mut self) {}
     fn resume_game_time(&mut self) {}
