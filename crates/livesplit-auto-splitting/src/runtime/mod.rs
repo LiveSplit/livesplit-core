@@ -126,24 +126,22 @@ impl ProcessList {
     pub fn refresh(&mut self) {
         let now = Instant::now();
         if now >= self.next_check {
-            self.system
-                .refresh_processes_specifics(ProcessesToUpdate::All, multiple_processes());
+            self.system.refresh_processes_specifics(
+                ProcessesToUpdate::All,
+                true,
+                multiple_processes(),
+            );
             self.next_check = now + Duration::from_secs(1);
         }
     }
 
     pub fn refresh_single_process(&mut self, pid: sysinfo::Pid) {
-        if self
-            .system
-            .refresh_processes_specifics(ProcessesToUpdate::Some(&[pid]), single_process())
-            == 0
+        if self.system.refresh_processes_specifics(
+            ProcessesToUpdate::Some(&[pid]),
+            true,
+            single_process(),
+        ) == 0
         {
-            // FIXME: Unfortunately `refresh_process_specifics` doesn't remove
-            // the process if it doesn't exist anymore. There also doesn't seem
-            // to be a way to manually remove it. So we have to do a full
-            // refresh of all processes.
-            self.system
-                .refresh_processes_specifics(ProcessesToUpdate::All, multiple_processes());
             self.next_check = Instant::now() + Duration::from_secs(1);
         }
     }
