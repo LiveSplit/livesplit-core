@@ -3,10 +3,9 @@
 use core::{
     cell::{Cell, RefCell},
     fmt::{self, Write},
-    hash::{BuildHasher, BuildHasherDefault},
+    hash::BuildHasher,
 };
 
-use ahash::AHasher;
 use alloc::rc::Rc;
 use hashbrown::{HashSet, HashTable};
 
@@ -477,7 +476,7 @@ struct Defs {
 
 impl Defs {
     fn add_gradient(&mut self, vertical: bool, start: &[f32; 4], end: &[f32; 4]) -> Rc<Gradient> {
-        let hasher = BuildHasherDefault::<AHasher>::default();
+        let hasher = foldhash::fast::FixedState::default();
         let hasher = |val: &Gradient| hasher.hash_one(val);
         let gradient = Gradient {
             id: Cell::new(0),
