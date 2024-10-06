@@ -22,18 +22,18 @@ proc-maps = { version = "0.3.0", default-features = false }
 read-process-memory = { version = "0.1.4", default-features = false }
 slotmap = { version = "1.0.2", default-features = false }
 snafu = "0.8.0"
-sysinfo = { version = "0.31.2", default-features = false, features = [
+sysinfo = { version = "0.32.0", default-features = false, features = [
   "multithread",
   "system",
 ] }
 time = { version = "0.3.3", default-features = false }
-wasmtime = { version = "24.0.0", default-features = false, features = [
+wasmtime = { version = "25.0.1", default-features = false, features = [
   "cranelift",
   "gc",
   "parallel-compilation",
   "runtime",
 ] }
-wasmtime-wasi = { version = "24.0.0", default-features = false, features = [
+wasmtime-wasi = { version = "25.0.1", default-features = false, features = [
   "preview1",
 ] }
 
