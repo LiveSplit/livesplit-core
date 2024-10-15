@@ -24,6 +24,8 @@
 //! livesplit::save_run(&run, IoWrite(writer)).expect("Couldn't save the splits file");
 //! ```
 
+#[cfg(feature = "auto-splitting")]
+use crate::run::AutoSplitterSettings;
 use crate::{
     platform::prelude::*,
     run::LinkedLayout,
@@ -34,6 +36,8 @@ use crate::{
 };
 use alloc::borrow::Cow;
 use core::{fmt, mem::MaybeUninit};
+#[cfg(feature = "auto-splitting")]
+use livesplit_auto_splitting::settings;
 use time::UtcOffset;
 
 const LSS_IMAGE_HEADER: &[u8; 156] = include_bytes!("lss_image_header.bin");
@@ -306,10 +310,222 @@ pub fn save_run<W: fmt::Write>(run: &Run, writer: W) -> fmt::Result {
             })
         })?;
 
-        writer.tag_with_text_content(
-            "AutoSplitterSettings",
-            NO_ATTRIBUTES,
-            Text::new_escaped(run.auto_splitter_settings()),
-        )
+        write_run_auto_splitter_settings(writer, run)
     })
+}
+
+fn write_run_auto_splitter_settings<W: fmt::Write>(
+    writer: &mut Writer<W>,
+    run: &Run,
+) -> fmt::Result {
+    #[cfg(feature = "auto-splitting")]
+    if let Some(AutoSplitterSettings {
+        version,
+        script_path,
+        custom_settings,
+    }) = &run.parsed_auto_splitter_settings
+    {
+        return writer.tag_with_content("AutoSplitterSettings", NO_ATTRIBUTES, |writer| {
+            writer.tag_with_text_content(
+                "Version",
+                NO_ATTRIBUTES,
+                DisplayAlreadyEscaped(version),
+            )?;
+            writer.tag_with_text_content(
+                "ScriptPath",
+                NO_ATTRIBUTES,
+                DisplayAlreadyEscaped(script_path),
+            )?;
+
+            write_settings_map(writer, "CustomSettings", vec![], custom_settings)?;
+
+            Ok(())
+        });
+    }
+
+    writer.tag_with_text_content(
+        "AutoSplitterSettings",
+        NO_ATTRIBUTES,
+        Text::new_escaped(run.auto_splitter_settings()),
+    )
+}
+
+#[cfg(feature = "auto-splitting")]
+fn write_settings_map<W: fmt::Write>(
+    writer: &mut Writer<W>,
+    tag: &str,
+    attrs: Vec<(&str, &str)>,
+    map: &settings::Map,
+) -> fmt::Result {
+    writer.tag_with_content(tag, attrs, |writer| {
+        for (id, value) in map.iter() {
+            write_settings_entry(writer, vec![("id", id)], value).ok();
+        }
+        Ok(())
+    })
+}
+
+#[cfg(feature = "auto-splitting")]
+fn write_settings_list<W: fmt::Write>(
+    writer: &mut Writer<W>,
+    tag: &str,
+    attrs: Vec<(&str, &str)>,
+    map: &settings::List,
+) -> fmt::Result {
+    writer.tag_with_content(tag, attrs, |writer| {
+        for value in map.iter() {
+            write_settings_entry(writer, vec![], value).ok();
+        }
+        Ok(())
+    })
+}
+
+#[cfg(feature = "auto-splitting")]
+fn write_settings_entry<'a, W>(
+    writer: &mut Writer<W>,
+    mut attrs: Vec<(&str, &'a str)>,
+    value: &'a settings::Value,
+) -> fmt::Result
+where
+    W: fmt::Write,
+{
+    match value {
+        settings::Value::Map(m) => {
+            attrs.push(("type", "map"));
+            write_settings_map(writer, "Setting", attrs, m)
+        }
+        settings::Value::List(l) => {
+            attrs.push(("type", "list"));
+            write_settings_list(writer, "Setting", attrs, l)
+        }
+        settings::Value::Bool(b) => {
+            attrs.push(("type", "bool"));
+            writer.tag_with_text_content("Setting", attrs, bool(*b))
+        }
+        settings::Value::I64(i) => {
+            attrs.push(("type", "i64"));
+            writer.tag_with_text_content("Setting", attrs, Text::new_escaped(&i.to_string()))
+        }
+        settings::Value::F64(f) => {
+            attrs.push(("type", "f64"));
+            writer.tag_with_text_content("Setting", attrs, Text::new_escaped(&f.to_string()))
+        }
+        settings::Value::String(s) => {
+            attrs.push(("type", "string"));
+            attrs.push(("value", s));
+            writer.empty_tag("Setting", attrs)
+        }
+        _ => writer.empty_tag("Setting", attrs),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[cfg(feature = "auto-splitting")]
+    use super::*;
+    #[cfg(feature = "auto-splitting")]
+    use livesplit_auto_splitting::settings;
+
+    #[cfg(feature = "auto-splitting")]
+    #[test]
+    fn test_write_settings() {
+        assert_eq!(
+            {
+                let mut s = String::new();
+                let mut writer = Writer::new_skip_header(&mut s);
+                write_settings_entry(&mut writer, vec![], &settings::Value::Bool(true)).ok();
+                s
+            },
+            r#"<Setting type="bool">True</Setting>"#
+        );
+
+        assert_eq!(
+            {
+                let mut s = String::new();
+                let mut writer = Writer::new_skip_header(&mut s);
+                write_settings_entry(
+                    &mut writer,
+                    vec![("id", "start")],
+                    &settings::Value::Bool(true),
+                )
+                .ok();
+                s
+            },
+            r#"<Setting id="start" type="bool">True</Setting>"#
+        );
+
+        assert_eq!(
+            {
+                let mut s = String::new();
+                let mut writer = Writer::new_skip_header(&mut s);
+                let mut m = settings::Map::new();
+                m.insert("start".into(), settings::Value::Bool(true));
+                m.insert("split".into(), settings::Value::Bool(true));
+                m.insert("remove_loads".into(), settings::Value::Bool(true));
+                write_settings_map(&mut writer, "CustomSettings", vec![], &m).ok();
+                s
+            },
+            format!(
+                "{}{}{}{}{}",
+                r#"<CustomSettings>"#,
+                r#"<Setting id="start" type="bool">True</Setting>"#,
+                r#"<Setting id="split" type="bool">True</Setting>"#,
+                r#"<Setting id="remove_loads" type="bool">True</Setting>"#,
+                r#"</CustomSettings>"#,
+            )
+        );
+
+        assert_eq!(
+            {
+                let mut s = String::new();
+                let mut writer = Writer::new_skip_header(&mut s);
+                let mut m = settings::Map::new();
+                m.insert("first".into(), settings::Value::Bool(true));
+                m.insert("second".into(), settings::Value::String("bar".into()));
+                write_settings_entry(
+                    &mut writer,
+                    vec![("id", "inner_map")],
+                    &settings::Value::Map(m),
+                )
+                .ok();
+                s
+            },
+            format!(
+                "{}{}{}{}",
+                r#"<Setting id="inner_map" type="map">"#,
+                r#"<Setting id="first" type="bool">True</Setting>"#,
+                r#"<Setting id="second" type="string" value="bar"/>"#,
+                r#"</Setting>"#,
+            )
+        );
+
+        assert_eq!(
+            {
+                let mut s = String::new();
+                let mut writer = Writer::new_skip_header(&mut s);
+                let mut m = settings::Map::new();
+                m.insert("first".into(), settings::Value::Bool(true));
+                m.insert("second".into(), settings::Value::String("bar".into()));
+                m.insert("recursive".into(), settings::Value::Map(m.clone()));
+                write_settings_entry(
+                    &mut writer,
+                    vec![("id", "inner_map")],
+                    &settings::Value::Map(m),
+                )
+                .ok();
+                s
+            },
+            format!(
+                "{}{}{}{}{}{}{}{}",
+                r#"<Setting id="inner_map" type="map">"#,
+                r#"<Setting id="first" type="bool">True</Setting>"#,
+                r#"<Setting id="second" type="string" value="bar"/>"#,
+                r#"<Setting id="recursive" type="map">"#,
+                r#"<Setting id="first" type="bool">True</Setting>"#,
+                r#"<Setting id="second" type="string" value="bar"/>"#,
+                r#"</Setting>"#,
+                r#"</Setting>"#,
+            )
+        );
+    }
 }
