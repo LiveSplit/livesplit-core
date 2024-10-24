@@ -56,3 +56,9 @@ pub extern "C" fn TimeSpan_whole_seconds(this: &TimeSpan) -> i64 {
 pub extern "C" fn TimeSpan_subsec_nanoseconds(this: &TimeSpan) -> i32 {
     this.to_seconds_and_subsec_nanoseconds().1
 }
+
+/// Changes a Time Span by adding a Time Span onto it.
+#[no_mangle]
+pub extern "C" fn TimeSpan_add_assign(this: &mut TimeSpan, other: &TimeSpan) {
+    *this += *other;
+}
