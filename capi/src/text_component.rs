@@ -3,9 +3,11 @@
 //! suitable for a situation where you have a label and a value.
 
 use super::{output_vec, str, Json};
-use crate::component::OwnedComponent;
-use crate::text_component_state::OwnedTextComponentState;
-use livesplit_core::{component::text::Component as TextComponent, Timer};
+use crate::{component::OwnedComponent, text_component_state::OwnedTextComponentState};
+use livesplit_core::{
+    component::text::{Component as TextComponent, Text},
+    Timer,
+};
 use std::os::raw::c_char;
 
 /// type
@@ -36,6 +38,18 @@ pub extern "C" fn TextComponent_state_as_json(this: &TextComponent, timer: &Time
     output_vec(|o| {
         this.state(timer).write_json(o).unwrap();
     })
+}
+
+/// Switches the component to display the specified custom variable instead of a
+/// fixed text. The boolean indicates whether the name should also be shown as a
+/// key value pair.
+#[no_mangle]
+pub unsafe extern "C" fn TextComponent_use_variable(
+    this: &mut TextComponent,
+    variable: *const c_char,
+    split: bool,
+) {
+    this.settings_mut().text = Text::Variable(str(variable).into(), split);
 }
 
 /// Sets the centered text. If the current mode is split, it is switched to
