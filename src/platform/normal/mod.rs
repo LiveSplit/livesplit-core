@@ -19,8 +19,8 @@ cfg_if::cfg_if! {
     // correctly implemented in Linux and due to backwards compatibility
     // concerns they were never able to fix it properly. Thus `CLOCK_MONOTONIC`
     // means uptime on Linux whereas on other Unixes it means real time (the BSD
-    // family). So the solution is to use this on all operating systems that are
-    // based on the Linux kernel.
+    // family). As a solution the Linux kernel provides `CLOCK_BOOTTIME` to
+    // measure the real time.
     //
     // # macOS and iOS
     //
@@ -36,26 +36,19 @@ cfg_if::cfg_if! {
     //
     // # Fuchsia
     //
-    // Fuchsia is based on the new Zircon kernel. It has two functions for
-    // querying the time:
+    // Fuchsia is based on the new Zircon kernel. It has `zx_clock_get_boot` to
+    // query the real time  and `zx_clock_get_monotonic` to query the uptime.
     //
-    // zx_clock_get:
-    // https://fuchsia.dev/fuchsia-src/reference/syscalls/clock_get
-    // zx_clock_get_monotonic:
-    // https://fuchsia.dev/fuchsia-src/reference/syscalls/clock_get_monotonic
+    // https://fuchsia.dev/reference/syscalls/clock_get_boot
     //
-    // `zx_clock_get_monotonic` specifically calls out that it `does not adjust
-    // during sleep` which seems to mean that it doesn't count the time the OS
-    // is suspended. This is further evidenced by their libc implementation not
-    // treating `CLOCK_BOOTTIME` differently and a bug ticket being linked
-    // there:
-    // https://cs.opensource.google/fuchsia/fuchsia/+/main:zircon/third_party/ulib/musl/src/time/clock_gettime.c;l=40;drc=35e7a15cb21e16f0705560e5812b7a045d42c8a5
+    // They are supposed to be available through `CLOCK_BOOTTIME` and
+    // `CLOCK_MONOTONIC` respectively, just like on Linux.
     //
     // # WASI
     //
     // https://github.com/WebAssembly/WASI/blob/5ab83a68d4eb4f218a898ed03b963b7393caaedc/phases/snapshot/docs.md#variant-cases
     //
-    // WASI seems to underspecify its `monotonic` a bit, but says that it `is
+    // WASI seems to under specify its `monotonic` a bit, but says that it `is
     // defined as a clock measuring real time`, making it sound like a compliant
     // implementation should measure the time the OS is suspended as well.
     //
@@ -98,10 +91,14 @@ cfg_if::cfg_if! {
     // the Linux kernel and instead has its own implementation in JavaScript
     // where it actually errors out on `CLOCK_BOOTTIME`:
     // https://github.com/emscripten-core/emscripten/blob/9bdb310b89472a0f4d64f36e4a79273d8dc7fa98/system/lib/libc/emscripten_time.c#L50-L57
+    //
+    // And we add Fuchsia to this list as it's based on the Zircon kernel which
+    // uses `CLOCK_BOOTTIME` in the same way as Linux.
     if #[cfg(any(
         target_os = "linux",
         target_os = "l4re",
         target_os = "android",
+        target_os = "fuchsia",
     ))] {
         use core::{mem::MaybeUninit, ops::Sub};
 
