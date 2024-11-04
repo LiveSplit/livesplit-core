@@ -252,7 +252,7 @@ impl Component {
                         .unwrap()
                         .comparison(current_comparison)[method];
 
-                    if pb_time.map_or(true, |t| time < t) {
+                    if pb_time.is_none_or(|t| time < t) {
                         SemanticColor::PersonalBest
                     } else {
                         SemanticColor::BehindLosingTime

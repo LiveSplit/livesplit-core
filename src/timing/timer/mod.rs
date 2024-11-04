@@ -405,7 +405,7 @@ impl Timer {
 
         if let Some(final_time) = last_segment.split_time()[timing_method] {
             if last_segment.personal_best_split_time()[timing_method]
-                .map_or(true, |pb| final_time < pb)
+                .is_none_or(|pb| final_time < pb)
             {
                 return true;
             }

@@ -241,7 +241,7 @@ fn check_prediction<'a>(
     method: TimingMethod,
 ) -> Option<PotentialCleanUp<'a>> {
     if let Some(predicted_time) = predicted_time {
-        if predictions[ending_index + 1].map_or(true, |p| predicted_time < p.time) {
+        if predictions[ending_index + 1].is_none_or(|p| predicted_time < p.time) {
             if let Some(segment_history_element) =
                 run.segment(ending_index).segment_history().get(run_index)
             {

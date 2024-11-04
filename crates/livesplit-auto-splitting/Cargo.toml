@@ -8,7 +8,7 @@ license = "MIT OR Apache-2.0"
 description = "livesplit-auto-splitting is a library that provides a runtime for running auto splitters that can control a speedrun timer. These auto splitters are provided as WebAssembly modules."
 keywords = ["speedrun", "timer", "livesplit", "auto-splitting"]
 edition = "2021"
-rust-version = "1.79"
+rust-version = "1.82"
 
 [dependencies]
 anyhow = { version = "1.0.45", default-features = false }

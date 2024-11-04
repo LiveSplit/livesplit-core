@@ -57,7 +57,7 @@ impl Debug for TagName<'_> {
 pub struct Attributes<'a>(&'a str);
 
 impl<'a> Attributes<'a> {
-    pub fn iter(self) -> impl Iterator<Item = (&'a str, Text<'a>)> + 'a {
+    pub fn iter(self) -> impl Iterator<Item = (&'a str, Text<'a>)> + use<'a> {
         let mut rem = self.0;
         iter::from_fn(move || {
             rem = trim_start(rem);

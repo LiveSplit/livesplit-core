@@ -210,7 +210,7 @@ fn main() {
             if abi
                 .as_ref()
                 .and_then(|a| a.name.as_ref())
-                .map_or(true, |n| n.value() != "C")
+                .is_none_or(|n| n.value() != "C")
                 || attrs.iter().all(|a| match &a.meta {
                     Meta::Path(w) => !w.is_ident("no_mangle"),
                     _ => true,

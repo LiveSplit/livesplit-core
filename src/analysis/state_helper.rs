@@ -353,7 +353,7 @@ pub fn check_best_segment(timer: &Timer, segment_index: usize, method: TimingMet
     let delta = previous_segment_delta(timer, segment_index, best_segments::NAME, method);
     let current_segment = previous_segment_time(timer, segment_index, method);
     let best_segment = timer.run().segment(segment_index).best_segment_time()[method];
-    best_segment.map_or(true, |b| {
+    best_segment.is_none_or(|b| {
         current_segment.is_some_and(|c| c < b) || delta.is_some_and(|d| d < TimeSpan::zero())
     })
 }

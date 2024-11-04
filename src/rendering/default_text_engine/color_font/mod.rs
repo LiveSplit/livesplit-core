@@ -26,7 +26,7 @@ impl<'f> ColorTables<'f> {
         &self,
         palette: usize,
         glyph: u16,
-    ) -> Option<impl Iterator<Item = (u16, Option<Color>)> + '_> {
+    ) -> Option<impl Iterator<Item = (u16, Option<Color>)> + use<'_>> {
         let layers = colr::look_up(self.colr, glyph)?;
         Some(layers.iter().map(move |layer| {
             let entry_idx = layer.palette_entry_idx();
