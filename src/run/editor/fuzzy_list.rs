@@ -1,4 +1,7 @@
-use crate::{platform::prelude::*, util::not_nan::NotNaN};
+use crate::{
+    platform::prelude::*,
+    util::not_nan::{NotNaN, PositiveNotNaN, PositiveNotNaNNotZero},
+};
 use alloc::collections::BinaryHeap;
 
 /// With a Fuzzy List, you can implement a fuzzy searching algorithm. The list
@@ -50,7 +53,7 @@ impl FuzzyList {
                 if heap.len() >= max {
                     heap.pop();
                 }
-                heap.push((NotNaN(-score), element));
+                heap.push((-score, element));
             }
         }
 
@@ -60,7 +63,7 @@ impl FuzzyList {
                     if heap.len() >= max {
                         heap.pop();
                     }
-                    heap.push((NotNaN(-score), element));
+                    heap.push((-score, element));
                 }
             }
         } else {
@@ -69,7 +72,7 @@ impl FuzzyList {
                     if heap.len() >= max {
                         heap.pop();
                     }
-                    heap.push((NotNaN(-score), element));
+                    heap.push((-score, element));
                 }
             }
         }
@@ -78,53 +81,53 @@ impl FuzzyList {
     }
 }
 
-fn match_against(pattern: &str, text: &str) -> Option<f64> {
-    let (mut current_score, mut total_score) = (0.0, 0.0);
+fn match_against(pattern: &str, text: &str) -> Option<NotNaN> {
+    let [mut current_score, mut total_score] = [PositiveNotNaN::ZERO; 2];
     let mut pattern_chars = pattern.chars();
     let mut pattern_char = pattern_chars.next();
 
     for c in text.chars() {
         if pattern_char == Some(c) {
             pattern_char = pattern_chars.next();
-            current_score = 1.0 + 2.0 * current_score;
+            current_score = current_score * PositiveNotNaNNotZero::TWO + PositiveNotNaN::ONE;
         } else {
-            current_score = 0.0;
+            current_score = PositiveNotNaN::ZERO;
         }
-        total_score += current_score;
+        total_score = total_score + current_score;
     }
 
     if pattern_char.is_none() {
-        if pattern == text {
-            Some(f64::INFINITY)
+        Some(if pattern == text {
+            NotNaN::INFINITY
         } else {
-            Some(total_score)
-        }
+            total_score.into()
+        })
     } else {
         None
     }
 }
 
-fn match_against_ascii(pattern: &str, text: &str) -> Option<f64> {
-    let (mut current_score, mut total_score) = (0.0, 0.0);
+fn match_against_ascii(pattern: &str, text: &str) -> Option<NotNaN> {
+    let [mut current_score, mut total_score] = [PositiveNotNaN::ZERO; 2];
     let mut pattern_chars = pattern.bytes();
     let mut pattern_char = pattern_chars.next();
 
     for c in text.bytes() {
         if pattern_char == Some(c) {
             pattern_char = pattern_chars.next();
-            current_score = 1.0 + 2.0 * current_score;
+            current_score = current_score * PositiveNotNaNNotZero::TWO + PositiveNotNaN::ONE;
         } else {
-            current_score = 0.0;
+            current_score = PositiveNotNaN::ZERO;
         }
-        total_score += current_score;
+        total_score = total_score + current_score;
     }
 
     if pattern_char.is_none() {
-        if pattern == text {
-            Some(f64::INFINITY)
+        Some(if pattern == text {
+            NotNaN::INFINITY
         } else {
-            Some(total_score)
-        }
+            total_score.into()
+        })
     } else {
         None
     }
