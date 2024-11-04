@@ -38,7 +38,7 @@ base64-simd = { version = "0.8.0", default-features = false, features = [
     "alloc",
 ] }
 bytemuck = { version = "1.9.1", default-features = false }
-bytemuck_derive = { version = "1.4.1", default_features = false }
+bytemuck_derive = { version = "1.4.1", default-features = false }
 cfg-if = "1.0.0"
 itoa = { version = "1.0.3", default-features = false }
 time = { version = "0.3.36", default-features = false }
@@ -51,7 +51,7 @@ simdutf8 = { git = "https://github.com/CryZe/simdutf8", branch = "wasm-ub-panic"
     "aarch64_neon",
 ] }
 serde = { version = "1.0.186", default-features = false, features = ["alloc"] }
-serde_derive = { version = "1.0.186", default_features = false }
+serde_derive = { version = "1.0.186", default-features = false }
 serde_json = { version = "1.0.60", default-features = false, features = [
     "alloc",
 ] }
