@@ -131,7 +131,7 @@ impl<L> CachedLabel<L> {
                     .as_ref()
                     .zip(max_width)
                     .zip(self.max_width)
-                    .map_or(true, |((l, max_width), old_max_width)| {
+                    .is_none_or(|((l, max_width), old_max_width)| {
                         // If both the current and old max width fall outside the
                         // range where the label would need to use ellipsis, then we
                         // can consider the label to not be dirty.
