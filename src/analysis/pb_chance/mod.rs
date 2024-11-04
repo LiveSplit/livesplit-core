@@ -80,7 +80,7 @@ pub fn for_timer(timer: &Snapshot<'_>) -> (f64, bool) {
         let beat_pb = all_segments
             .last()
             .and_then(|s| s.personal_best_split_time()[method])
-            .map_or(true, |pb| current_time < pb);
+            .is_none_or(|pb| current_time < pb);
         if beat_pb {
             1.0
         } else {

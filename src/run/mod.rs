@@ -598,8 +598,7 @@ impl Run {
                     // Fix Best Segment time if the PB segment is faster
                     if comparison == personal_best::NAME {
                         let current_segment = time - previous_time;
-                        if segment.best_segment_time()[method].map_or(true, |t| t > current_segment)
-                        {
+                        if segment.best_segment_time()[method].is_none_or(|t| t > current_segment) {
                             segment.best_segment_time_mut()[method] = Some(current_segment);
                         }
                     }

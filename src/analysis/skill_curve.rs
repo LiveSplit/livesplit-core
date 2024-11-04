@@ -132,7 +132,7 @@ impl SkillCurve {
     pub fn iter_segment_times_at_percentile(
         &self,
         percentile: f64,
-    ) -> impl Iterator<Item = TimeSpan> + '_ {
+    ) -> impl Iterator<Item = TimeSpan> + use<'_> {
         self.all_weighted_segment_times
             .iter()
             .map(move |weighted_segment_times| {
@@ -181,7 +181,7 @@ impl SkillCurve {
         &self,
         percentile: f64,
         offset: TimeSpan,
-    ) -> impl Iterator<Item = TimeSpan> + '_ {
+    ) -> impl Iterator<Item = TimeSpan> + use<'_> {
         let mut sum = offset;
         self.iter_segment_times_at_percentile(percentile)
             .map(move |segment_time| {

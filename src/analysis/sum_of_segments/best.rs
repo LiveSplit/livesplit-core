@@ -16,7 +16,7 @@ fn populate_prediction(
     predicted_time: Option<TimeSpan>,
 ) {
     if let Some(predicted_time) = predicted_time {
-        if target_prediction.map_or(true, |p| predicted_time < p.time) {
+        if target_prediction.is_none_or(|p| predicted_time < p.time) {
             *target_prediction = Some(Prediction {
                 time: predicted_time,
                 predecessor,

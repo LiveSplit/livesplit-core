@@ -111,7 +111,7 @@ impl Process {
     pub(super) fn list_pids_by_name<'a>(
         name: &'a str,
         process_list: &'a mut ProcessList,
-    ) -> impl Iterator<Item = u32> + 'a {
+    ) -> impl Iterator<Item = u32> + use<'a> {
         process_list.refresh();
         process_list
             .processes_by_name(name)

@@ -267,7 +267,7 @@ impl CommandSink for WebCommandSink {
         handle_action_value(self.set_game_time.as_ref().and_then(|f| {
             f.call1(
                 &self.obj,
-                &JsValue::from_f64(ptr::addr_of!(time) as usize as f64),
+                &JsValue::from_f64(&raw const time as usize as f64),
             )
             .ok()
         }))
@@ -296,7 +296,7 @@ impl CommandSink for WebCommandSink {
         handle_action_value(self.set_loading_times.as_ref().and_then(|f| {
             f.call1(
                 &self.obj,
-                &JsValue::from_f64(ptr::addr_of!(time) as usize as f64),
+                &JsValue::from_f64(&raw const time as usize as f64),
             )
             .ok()
         }))

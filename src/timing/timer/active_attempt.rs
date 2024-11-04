@@ -207,7 +207,7 @@ fn update_best_segments(run: &mut Run) {
             if split
                 .best_segment_time()
                 .real_time
-                .map_or(true, |b| current_segment.is_some_and(|c| c < b))
+                .is_none_or(|b| current_segment.is_some_and(|c| c < b))
             {
                 new_best_segment.real_time = current_segment;
             }
@@ -219,7 +219,7 @@ fn update_best_segments(run: &mut Run) {
             if split
                 .best_segment_time()
                 .game_time
-                .map_or(true, |b| current_segment.is_some_and(|c| c < b))
+                .is_none_or(|b| current_segment.is_some_and(|c| c < b))
             {
                 new_best_segment.game_time = current_segment;
             }
@@ -236,7 +236,7 @@ fn update_pb_splits(run: &mut Run, method: TimingMethod) {
             last_segment.personal_best_split_time()[method],
         )
     };
-    if split_time.is_some_and(|s| pb_split_time.map_or(true, |pb| s < pb)) {
+    if split_time.is_some_and(|s| pb_split_time.is_none_or(|pb| s < pb)) {
         super::set_run_as_pb(run);
     }
 }

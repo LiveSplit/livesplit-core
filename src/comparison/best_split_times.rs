@@ -30,7 +30,7 @@ fn generate(segments: &mut [Segment], attempts: &[Attempt], method: TimingMethod
                     total_time += time;
 
                     let comp = &mut segment.comparison_mut(NAME)[method];
-                    if comp.map_or(true, |c| total_time < c) {
+                    if comp.is_none_or(|c| total_time < c) {
                         *comp = Some(total_time);
                     }
                 }

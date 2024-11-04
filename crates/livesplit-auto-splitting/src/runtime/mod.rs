@@ -146,10 +146,10 @@ impl ProcessList {
         }
     }
 
-    pub fn processes_by_name<'process: 'both, 'both>(
+    pub fn processes_by_name<'process, 'both>(
         &'process self,
         name: &'both str,
-    ) -> impl Iterator<Item = &'process sysinfo::Process> + 'both {
+    ) -> impl Iterator<Item = &'process sysinfo::Process> + use<'both, 'process> {
         let name = name.as_bytes();
 
         // On Linux the process name is limited to 15 bytes. So we ensure that

@@ -69,14 +69,14 @@ impl Comparisons {
     }
 
     /// Iterates over all the comparisons and their times.
-    pub fn iter(&self) -> impl Iterator<Item = &(Box<str>, Time)> + '_ {
+    pub fn iter(&self) -> impl Iterator<Item = &(Box<str>, Time)> + use<'_> {
         self.0.iter()
     }
 
     /// Mutably iterates over all the comparisons and their times. Be careful
     /// when modifying the comparison name. Having duplicates will likely cause
     /// problems.
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut (Box<str>, Time)> + '_ {
+    pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut (Box<str>, Time)> + use<'_> {
         self.0.iter_mut()
     }
 }

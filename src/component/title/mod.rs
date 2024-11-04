@@ -293,14 +293,14 @@ impl Component {
                     }
                     state.line2.clear();
                 } else {
-                    if state.line1.last().map_or(true, |g| game_name != &**g) {
+                    if state.line1.last().is_none_or(|g| game_name != &**g) {
                         state.line1.clear();
                         state.line1.extend(abbreviate_title(game_name));
                     }
                     if state
                         .line2
                         .last()
-                        .map_or(true, |c| full_category_name != &**c)
+                        .is_none_or(|c| full_category_name != &**c)
                     {
                         state.line2.clear();
                         state.line2.extend(abbreviate_category(full_category_name));
@@ -308,7 +308,7 @@ impl Component {
                 }
             }
             (true, false) => {
-                if state.line1.last().map_or(true, |g| game_name != &**g) {
+                if state.line1.last().is_none_or(|g| game_name != &**g) {
                     state.line1.clear();
                     state.line1.extend(abbreviate_title(game_name));
                 }
@@ -318,7 +318,7 @@ impl Component {
                 if state
                     .line1
                     .last()
-                    .map_or(true, |c| full_category_name != &**c)
+                    .is_none_or(|c| full_category_name != &**c)
                 {
                     state.line1.clear();
                     state.line1.extend(abbreviate_category(full_category_name));
