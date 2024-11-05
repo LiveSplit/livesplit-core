@@ -312,12 +312,38 @@ fn write_files(classes: &BTreeMap<String, Class>, opt: &Opt) -> Result<()> {
     path.push("wasm_bindgen");
     create_dir_all(&path)?;
     {
-        path.push("index.js");
-        wasm_bindgen::write(BufWriter::new(File::create(&path)?), classes, false)?;
+        path.push("bundler");
+        create_dir_all(&path)?;
+        {
+            path.push("index.js");
+            wasm_bindgen::write(BufWriter::new(File::create(&path)?), classes, false, true)?;
+            path.pop();
+
+            path.push("index.ts");
+            wasm_bindgen::write(BufWriter::new(File::create(&path)?), classes, true, true)?;
+            path.pop();
+        }
         path.pop();
 
-        path.push("index.ts");
-        wasm_bindgen::write(BufWriter::new(File::create(&path)?), classes, true)?;
+        path.push("web");
+        create_dir_all(&path)?;
+        {
+            path.push("index.js");
+            wasm_bindgen::write(BufWriter::new(File::create(&path)?), classes, false, false)?;
+            path.pop();
+
+            path.push("index.ts");
+            wasm_bindgen::write(BufWriter::new(File::create(&path)?), classes, true, false)?;
+            path.pop();
+
+            path.push("preload.js");
+            wasm_bindgen::write_preload(BufWriter::new(File::create(&path)?), false)?;
+            path.pop();
+
+            path.push("preload.ts");
+            wasm_bindgen::write_preload(BufWriter::new(File::create(&path)?), true)?;
+            path.pop();
+        }
         path.pop();
     }
     path.pop();

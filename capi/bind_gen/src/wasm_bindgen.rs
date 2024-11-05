@@ -336,19 +336,60 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
     Ok(())
 }
 
+pub fn write_preload<W: Write>(mut writer: W, type_script: bool) -> Result<()> {
+    let content = if type_script {
+        r#"import init, { InitOutput } from "./livesplit_core.js";
+
+let promise: Promise<InitOutput> | null = null;
+export async function preloadWasm(): Promise<InitOutput> {
+    if (!promise) {
+        promise = init();
+    }
+    return await promise;
+}"#
+    } else {
+        r#"import init from "./livesplit_core.js
+
+let promise = null;
+export async function preloadWasm() {
+    if (!promise) {
+        promise = init();
+    }
+    return await promise;
+}"#
+    };
+    writeln!(writer, "{content}")
+}
+
 pub fn write<W: Write>(
     mut writer: W,
     classes: &BTreeMap<String, Class>,
     type_script: bool,
+    bundler: bool,
 ) -> Result<()> {
     if type_script {
+        if bundler {
+            writeln!(
+                writer,
+                "{}",
+                r#"// tslint:disable
+import * as wasm from "./livesplit_core_bg.wasm";
+import "./livesplit_core.js";"#
+            )?;
+        } else {
+            writeln!(
+                writer,
+                "{}",
+                r#"// tslint:disable
+import { preloadWasm } from "./preload";
+
+const wasm = await preloadWasm();"#
+            )?;
+        }
         writeln!(
             writer,
             "{}{}",
-            r#"// tslint:disable
-import * as wasm from "./livesplit_core_bg.wasm";
-import "./livesplit_core.js";
-
+            r#"
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
@@ -402,12 +443,26 @@ function dealloc(slice: Slice) {
             typescript::HEADER,
         )?;
     } else {
+        if bundler {
+            writeln!(
+                writer,
+                "{}",
+                r#"import * as wasm from "./livesplit_core_bg.wasm";
+import "./livesplit_core.js";"#
+            )?;
+        } else {
+            writeln!(
+                writer,
+                "{}",
+                r#"import { preloadWasm } from "./preload";
+
+const wasm = await preloadWasm();"#
+            )?;
+        }
         writeln!(
             writer,
             "{}",
-            r#"import * as wasm from "./livesplit_core_bg.wasm";
-import "./livesplit_core.js";
-
+            r#"
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
