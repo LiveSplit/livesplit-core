@@ -952,6 +952,8 @@ fn watchdog<T: event::CommandSink + TimerQuery + Send>(shared_state: Arc<SharedS
                     if let Some(auto_splitter) = &*shared_state.auto_splitter.load() {
                         auto_splitter.interrupt_handle().interrupt();
                     }
+                } else {
+                    has_timed_out = false;
                 }
 
                 new_state
