@@ -190,7 +190,7 @@ fn single_process() -> ProcessRefreshKind {
 #[non_exhaustive]
 pub struct Config {
     /// This enables debug information for the WebAssembly module. This is
-    /// useful for debugging purposes. By default this `true` if the feature
+    /// useful for debugging purposes. By default this is `true` if the feature
     /// `debugger-support` is enabled.
     pub debug_info: bool,
     /// This enables optimizations for the WebAssembly module. This is enabled
@@ -198,8 +198,8 @@ pub struct Config {
     /// splitter.
     pub optimize: bool,
     /// This enables backtrace details for the WebAssembly module. If a trap
-    /// occurs more details are printed in the backtrace. By default this `true`
-    /// if the feature `enhanced-backtrace` is enabled.
+    /// occurs more details are printed in the backtrace. By default this is
+    /// `true` if the feature `enhanced-backtrace` is enabled.
     pub backtrace_details: bool,
 }
 

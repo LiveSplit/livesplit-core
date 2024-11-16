@@ -91,11 +91,7 @@ splits-io-api = { version = "0.4.0", optional = true }
 
 # Auto Splitting
 livesplit-auto-splitting = { path = "crates/livesplit-auto-splitting", version = "0.1.0", optional = true }
-tokio = { version = "1.24.2", default-features = false, features = [
-    "rt",
-    "sync",
-    "time",
-], optional = true }
+arc-swap = { version = "1.7.1", optional = true }
 log = { version = "0.4.14", default-features = false, optional = true }
 
 [target.'cfg(all(target_family = "wasm", target_os = "unknown"))'.dependencies]
@@ -191,7 +187,7 @@ wasm-web = [
     "web-sys",
 ]
 networking = ["std", "splits-io-api"]
-auto-splitting = ["std", "livesplit-auto-splitting", "tokio", "log"]
+auto-splitting = ["std", "livesplit-auto-splitting", "arc-swap", "log"]
 
 [lib]
 bench = false
