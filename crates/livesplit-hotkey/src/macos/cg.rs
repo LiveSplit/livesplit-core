@@ -220,5 +220,7 @@ extern "C" {
         userInfo: *mut c_void,
     ) -> MachPortRef;
 
+    pub fn CGEventTapEnable(tap: MachPortRef, enable: bool);
+
     pub fn CGEventGetIntegerValueField(event: EventRef, field: EventField) -> i64;
 }
