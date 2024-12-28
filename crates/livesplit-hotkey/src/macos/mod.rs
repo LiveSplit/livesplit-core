@@ -16,8 +16,8 @@ use self::{
         CFRunLoopGetCurrent, CFRunLoopRemoveSource, CFRunLoopRun,
     },
     cg::{
-        CGEventGetFlags, CGEventTapCreate, EventField, EventFlags, EventMask, EventRef,
-        EventTapLocation, EventTapOptions, EventTapPlacement, EventTapProxy, EventType,
+        CGEventGetFlags, CGEventTapCreate, CGEventTapEnable, EventField, EventFlags, EventMask,
+        EventRef, EventTapLocation, EventTapOptions, EventTapPlacement, EventTapProxy, EventType,
     },
 };
 use crate::{ConsumePreference, Hotkey, KeyCode, Modifiers, Result};
@@ -163,6 +163,7 @@ impl Hook {
             if CFRunLoopContainsSource(event_loop, source.0, kCFRunLoopDefaultMode) {
                 CFRunLoopRemoveSource(event_loop, source.0, kCFRunLoopDefaultMode);
             }
+            CGEventTapEnable(port.0, false);
         });
 
         let event_loop = receiver
