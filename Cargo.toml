@@ -44,7 +44,7 @@ itoa = { version = "1.0.3", default-features = false }
 time = { version = "0.3.36", default-features = false }
 hashbrown = "0.15.0"
 libm = "0.2.1"
-livesplit-hotkey = { path = "crates/livesplit-hotkey", version = "0.7.0", default-features = false }
+livesplit-hotkey = { path = "crates/livesplit-hotkey", version = "0.8.0", default-features = false }
 livesplit-title-abbreviations = { path = "crates/livesplit-title-abbreviations", version = "0.3.0" }
 memchr = { version = "2.3.4", default-features = false }
 simdutf8 = { git = "https://github.com/CryZe/simdutf8", branch = "wasm-ub-panic", default-features = false, features = [

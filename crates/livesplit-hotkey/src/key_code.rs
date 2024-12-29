@@ -1185,7 +1185,7 @@ impl<'de> Deserialize<'de> for KeyCode {
 
 struct KeyCodeVisitor;
 
-impl<'de> serde::de::Visitor<'de> for KeyCodeVisitor {
+impl serde::de::Visitor<'_> for KeyCodeVisitor {
     type Value = KeyCode;
 
     fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -1305,7 +1305,7 @@ impl<'de> Deserialize<'de> for KeyCodeClass {
 
 struct KeyCodeClassVisitor;
 
-impl<'de> serde::de::Visitor<'de> for KeyCodeClassVisitor {
+impl serde::de::Visitor<'_> for KeyCodeClassVisitor {
     type Value = KeyCodeClass;
 
     fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {

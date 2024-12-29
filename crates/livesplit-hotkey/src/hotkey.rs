@@ -74,7 +74,7 @@ impl<'de> Deserialize<'de> for Hotkey {
 
 struct HotkeyVisitor;
 
-impl<'de> serde::de::Visitor<'de> for HotkeyVisitor {
+impl serde::de::Visitor<'_> for HotkeyVisitor {
     type Value = Hotkey;
 
     fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {

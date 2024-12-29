@@ -1,6 +1,6 @@
 [package]
 name = "livesplit-hotkey"
-version = "0.7.0"
+version = "0.8.0"
 authors = ["Christopher Serr <christopher.serr@gmail.com>"]
 documentation = "https://docs.rs/livesplit-hotkey/"
 repository = "https://github.com/LiveSplit/livesplit-core/tree/master/crates/livesplit-hotkey"
