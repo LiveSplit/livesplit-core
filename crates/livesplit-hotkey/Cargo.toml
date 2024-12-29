@@ -32,7 +32,7 @@ x11-dl = { version = "2.20.0", optional = true }
 
 [target.'cfg(all(target_family = "wasm", target_os = "unknown"))'.dependencies]
 wasm-bindgen = { version = "0.2.54", optional = true }
-web-sys = { version = "0.3.28", default-features = false, features = [
+web-sys = { version = "0.3.65", default-features = false, features = [
     "EventTarget",
     "Gamepad",
     "GamepadButton",
@@ -40,7 +40,7 @@ web-sys = { version = "0.3.28", default-features = false, features = [
     "Navigator",
     "Window",
 ], optional = true }
-js-sys = { version = "0.3.28", default-features = false, optional = true }
+js-sys = { version = "0.3.65", default-features = false, optional = true }
 
 [dependencies]
 cfg-if = "1.0.0"
