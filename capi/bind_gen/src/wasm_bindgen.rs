@@ -27,7 +27,7 @@ fn get_hl_type_without_null(ty: &Type) -> String {
                 "i8" => "number",
                 "i16" => "number",
                 "i32" => "number",
-                "i64" => "number",
+                "i64" => "BigInt",
                 "u8" => "number",
                 "u16" => "number",
                 "u32" => "number",
