@@ -831,7 +831,10 @@ fn calculate_bounds(layer: &[Entity<SkiaPath, SkiaImage, SkiaLabel>]) -> [f32; 2
             Entity::Label(label, _, transform) => {
                 for glyph in label.read().unwrap().glyphs() {
                     if let Some(path) = &glyph.path {
-                        let transform = transform.pre_translate(glyph.x, glyph.y);
+                        let transform = transform
+                            .pre_translate(glyph.x, glyph.y)
+                            .pre_scale(glyph.scale, glyph.scale);
+
                         let bounds = path.bounds();
                         for y in [bounds.top(), bounds.bottom()] {
                             let transformed_y = transform.transform_y(y);
