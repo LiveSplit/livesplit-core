@@ -22,7 +22,7 @@ main() {
         features="$features,software-rendering"
     fi
 
-    if [ "$TARGET" = "wasm32-wasi" ]; then
+    if [ "$TARGET" = "wasm32-wasip1" ]; then
         curl https://wasmtime.dev/install.sh -sSf | bash
         export PATH="$HOME/.wasmtime/bin:$PATH"
     else

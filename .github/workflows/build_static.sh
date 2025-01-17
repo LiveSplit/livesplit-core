@@ -19,7 +19,7 @@ main() {
         wasm32-unknown-unknown)
             $cargo rustc -p livesplit-core-capi --crate-type cdylib --target $TARGET $release_flag $FEATURES
             ;;
-        wasm32-wasi)
+        wasm32-wasip1)
             $cargo rustc -p livesplit-core-capi --crate-type cdylib --target $TARGET $release_flag $FEATURES
             ;;
         *)
