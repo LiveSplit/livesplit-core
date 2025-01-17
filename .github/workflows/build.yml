@@ -4,9 +4,9 @@ on:
   pull_request:
   push:
     branches:
-      - 'master'
+      - "master"
     tags:
-      - '*'
+      - "*"
 
 jobs:
   build:
@@ -36,7 +36,7 @@ jobs:
           # WebAssembly
           - WebAssembly Unknown
           - WebAssembly Web
-          - WebAssembly WASI
+          - WebAssembly WASI 0.1
 
           # Windows
           - Windows aarch64
@@ -237,8 +237,8 @@ jobs:
             install_target: true
             features: "--features wasm-web"
 
-          - label: WebAssembly WASI
-            target: wasm32-wasi
+          - label: WebAssembly WASI 0.1
+            target: wasm32-wasip1
             auto_splitting: skip
             cross: skip
             dylib: skip
@@ -706,7 +706,7 @@ jobs:
       - name: Use Node 10
         uses: actions/setup-node@v1
         with:
-          node-version: '10.x'
+          node-version: "10.x"
       - name: Build TypeScript documentation
         run: |
           cd capi/js

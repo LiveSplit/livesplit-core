@@ -37,7 +37,7 @@ fn compile(crate_name: &str) -> anyhow::Result<AutoSplitter<DummyTimer>> {
         .current_dir(&path)
         .arg("build")
         .arg("--target")
-        .arg("wasm32-wasi")
+        .arg("wasm32-wasip1")
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .output()
@@ -49,7 +49,7 @@ fn compile(crate_name: &str) -> anyhow::Result<AutoSplitter<DummyTimer>> {
     }
 
     path.push("target");
-    path.push("wasm32-wasi");
+    path.push("wasm32-wasip1");
     path.push("debug");
     let wasm_path = fs::read_dir(path)
         .unwrap()
