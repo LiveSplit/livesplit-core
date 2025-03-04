@@ -66,6 +66,7 @@ pub struct Run {
     game_icon: Image,
     game_name: String,
     category_name: String,
+    level_name: String,
     offset: TimeSpan,
     attempt_count: u32,
     attempt_history: Vec<Attempt>,
@@ -119,6 +120,7 @@ impl Run {
             game_icon: Image::default(),
             game_name: String::new(),
             category_name: String::new(),
+            level_name: String::new(),
             offset: TimeSpan::zero(),
             attempt_count: 0,
             attempt_history: Vec::new(),
@@ -172,6 +174,21 @@ impl Run {
         S: PopulateString,
     {
         name.populate(&mut self.category_name);
+    }
+
+    /// Accesses the name of the level of this Run.
+    #[inline]
+    pub fn level_name(&self) -> &str {
+        &self.level_name
+    }
+
+    /// Sets the name of the level of this Run.
+    #[inline]
+    pub fn set_level_name<S>(&mut self, name: S)
+    where
+        S: PopulateString,
+    {
+        name.populate(&mut self.level_name);
     }
 
     /// Returns the amount of runs that have been attempted with these splits.

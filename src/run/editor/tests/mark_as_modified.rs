@@ -142,6 +142,13 @@ fn when_changing_category_name() {
 }
 
 #[test]
+fn when_changing_level_name() {
+    let mut editor = base();
+    editor.set_level_name("Hello");
+    assert!(editor.run().has_been_modified());
+}
+
+#[test]
 fn when_changing_offset() {
     let mut editor = base();
     editor.parse_and_set_offset("1.23").unwrap();

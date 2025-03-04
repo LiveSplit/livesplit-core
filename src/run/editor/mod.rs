@@ -238,6 +238,21 @@ impl Editor {
         self.run.clear_run_id();
     }
 
+    /// Accesses the name of the level.
+    pub fn level_name(&self) -> &str {
+        self.run.level_name()
+    }
+
+    /// Sets the name of the level.
+    pub fn set_level_name<S>(&mut self, name: S)
+    where
+        S: PopulateString,
+    {
+        self.run.set_level_name(name);
+        self.raise_run_edited();
+        self.run.clear_run_id();
+    }
+
     /// Accesses the timer offset. The timer offset specifies the time, the
     /// timer starts at when starting a new attempt.
     pub const fn offset(&self) -> TimeSpan {
