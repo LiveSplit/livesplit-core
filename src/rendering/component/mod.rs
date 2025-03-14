@@ -169,7 +169,7 @@ pub(super) fn render<A: ResourceAllocator>(
             text::render(cache.text(), context, dim, component, state)
         }
         ComponentState::Timer(component) => {
-            timer::render(cache.timer(), context, dim, component);
+            timer::render(cache.timer(), context, dim, component, state);
         }
         ComponentState::Title(component) => {
             title::render(cache.title(), context, dim, component, state)
