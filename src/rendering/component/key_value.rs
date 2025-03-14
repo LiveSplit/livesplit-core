@@ -4,7 +4,7 @@ use crate::{
     rendering::{
         font::{AbbreviatedLabel, CachedLabel},
         resource::ResourceAllocator,
-        RenderContext,
+        RenderContext, FillShader
     },
 };
 
@@ -30,6 +30,9 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     layout_state: &LayoutState,
 ) {
     context.render_background(dim, &component.background);
+
+    let shadow_offset = [0.05, 0.05];
+    let shadow_color = FillShader::SolidColor([0.0, 0.0, 0.0, 0.5]);
     context.render_key_value_component(
         &component.key,
         &component.key_abbreviations,
@@ -38,8 +41,12 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         &mut cache.value,
         component.updates_frequently,
         dim,
+        shadow_offset,
+        shadow_color,
+        shadow_color,
         component.key_color.unwrap_or(layout_state.text_color),
         component.value_color.unwrap_or(layout_state.text_color),
         component.display_two_rows || layout_state.direction == LayoutDirection::Horizontal,
+        layout_state
     );
 }

@@ -11,7 +11,7 @@ use crate::{
         },
         font::{AbbreviatedLabel, CachedLabel},
         resource::ResourceAllocator,
-        solid, Layer, RenderContext,
+        solid, Layer, RenderContext, FillShader
     },
 };
 
@@ -41,6 +41,9 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     layout_state: &LayoutState,
 ) {
     context.render_background([width, height], &component.background);
+    let shadow_offset = [0.05, 0.05];
+    let shadow_color = FillShader::SolidColor([0.0, 0.0, 0.0, 0.5]);
+    
     let text_color = component.text_color.unwrap_or(layout_state.text_color);
     let text_color = solid(&text_color);
 
@@ -80,6 +83,9 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         [width - PADDING, height + TEXT_ALIGN_BOTTOM],
         DEFAULT_TEXT_SIZE,
         text_color,
+        shadow_offset,
+        shadow_color,
+        layout_state
     ) - PADDING;
 
     let (line1_y, line1_end_x) = if !component.line2.is_empty() {
@@ -91,7 +97,10 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
             [line_x, height + TEXT_ALIGN_BOTTOM],
             DEFAULT_TEXT_SIZE,
             component.is_centered,
+            shadow_offset,
+            shadow_color,
             text_color,
+            layout_state
         );
         (TEXT_ALIGN_TOP, width - PADDING)
     } else {
@@ -106,6 +115,9 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         [line_x, line1_y],
         DEFAULT_TEXT_SIZE,
         component.is_centered,
+        shadow_offset,
+        shadow_color,
         text_color,
+        layout_state
     );
 }
