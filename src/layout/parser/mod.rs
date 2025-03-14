@@ -14,8 +14,8 @@ use crate::{
     },
     util::xml::{
         helper::{
-            end_tag, image, parse_base, parse_children, text, text_as_escaped_string_err,
-            text_parsed, Error as XmlError,
+            Error as XmlError, end_tag, image, parse_base, parse_children, text,
+            text_as_escaped_string_err, text_parsed,
         },
         Reader,
     },
