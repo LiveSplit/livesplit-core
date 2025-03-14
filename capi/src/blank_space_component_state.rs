@@ -6,13 +6,13 @@ use livesplit_core::component::blank_space::State as BlankSpaceComponentState;
 pub type OwnedBlankSpaceComponentState = Box<BlankSpaceComponentState>;
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn BlankSpaceComponentState_drop(this: OwnedBlankSpaceComponentState) {
     drop(this);
 }
 
 /// The size of the component.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn BlankSpaceComponentState_size(this: &BlankSpaceComponentState) -> u32 {
     this.size
 }

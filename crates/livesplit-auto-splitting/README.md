@@ -10,7 +10,7 @@ The auto splitters must provide an `update` function with the following
 signature:
 
 ```rust
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn update() {}
 ```
 
@@ -96,20 +96,20 @@ impl MemoryRangeFlags {
     pub const PATH: Self = Self(match NonZeroU64::new(1 << 4) { Some(v) => v, None => panic!() });
 }
 
-extern "C" {
+unsafe extern "C" {
     /// Gets the state that the timer currently is in.
-    pub fn timer_get_state() -> TimerState;
+    pub safe fn timer_get_state() -> TimerState;
 
     /// Starts the timer.
-    pub fn timer_start();
+    pub safe fn timer_start();
     /// Splits the current segment.
-    pub fn timer_split();
+    pub safe fn timer_split();
     /// Skips the current split.
-    pub fn timer_skip_split();
+    pub safe fn timer_skip_split();
     /// Undoes the previous split.
-    pub fn timer_undo_split();
+    pub safe fn timer_undo_split();
     /// Resets the timer.
-    pub fn timer_reset();
+    pub safe fn timer_reset();
     /// Sets a custom key value pair. This may be arbitrary information that the
     /// auto splitter wants to provide for visualization. The pointers need to
     /// point to valid UTF-8 encoded text with the respective given length.
@@ -121,13 +121,13 @@ extern "C" {
     );
 
     /// Sets the game time.
-    pub fn timer_set_game_time(secs: i64, nanos: i32);
+    pub safe fn timer_set_game_time(secs: i64, nanos: i32);
     /// Pauses the game time. This does not pause the timer, only the
     /// automatic flow of time for the game time.
-    pub fn timer_pause_game_time();
+    pub safe fn timer_pause_game_time();
     /// Resumes the game time. This does not resume the timer, only the
     /// automatic flow of time for the game time.
-    pub fn timer_resume_game_time();
+    pub safe fn timer_resume_game_time();
 
     /// Attaches to a process based on its name. The pointer needs to point to
     /// valid UTF-8 encoded text with the given length. If multiple processes
@@ -135,7 +135,7 @@ extern "C" {
     /// is being attached to.
     pub fn process_attach(name_ptr: *const u8, name_len: usize) -> Option<AttachedProcess>;
     /// Attaches to a process based on its process id.
-    pub fn process_attach_by_pid(pid: ProcessId) -> Option<AttachedProcess>;
+    pub safe fn process_attach_by_pid(pid: ProcessId) -> Option<AttachedProcess>;
     /// Detaches from a process.
     pub fn process_detach(process: AttachedProcess);
     /// Lists processes based on their name. The name pointer needs to point to
@@ -226,7 +226,7 @@ extern "C" {
 
     /// Sets the tick rate of the runtime. This influences the amount of
     /// times the `update` function is called per second.
-    pub fn runtime_set_tick_rate(ticks_per_second: f64);
+    pub safe fn runtime_set_tick_rate(ticks_per_second: f64);
     /// Prints a log message for debugging purposes. The pointer needs to point
     /// to valid UTF-8 encoded text with the given length.
     pub fn runtime_print_message(text_ptr: *const u8, text_len: usize);
@@ -361,13 +361,13 @@ extern "C" {
 
     /// Creates a new settings map. You own the settings map and are responsible
     /// for freeing it.
-    pub fn settings_map_new() -> SettingsMap;
+    pub safe fn settings_map_new() -> SettingsMap;
     /// Frees a settings map.
     pub fn settings_map_free(map: SettingsMap);
     /// Loads a copy of the currently set global settings map. Any changes to it
     /// are only perceived if it's stored back. You own the settings map and are
     /// responsible for freeing it.
-    pub fn settings_map_load() -> SettingsMap;
+    pub safe fn settings_map_load() -> SettingsMap;
     /// Stores a copy of the settings map as the new global settings map. This
     /// will overwrite the previous global settings map. You still retain
     /// ownership of the map, which means you still need to free it. There's a
@@ -428,7 +428,7 @@ extern "C" {
 
     /// Creates a new settings list. You own the settings list and are
     /// responsible for freeing it.
-    pub fn settings_list_new() -> SettingsList;
+    pub safe fn settings_list_new() -> SettingsList;
     /// Frees a settings list.
     pub fn settings_list_free(list: SettingsList);
     /// Copies a settings list. No changes inside the copy affect the original
@@ -466,13 +466,13 @@ extern "C" {
     pub fn setting_value_new_list(value: SettingsList) -> SettingValue;
     /// Creates a new boolean setting value. You own the setting value and are
     /// responsible for freeing it.
-    pub fn setting_value_new_bool(value: bool) -> SettingValue;
+    pub safe fn setting_value_new_bool(value: bool) -> SettingValue;
     /// Creates a new 64-bit signed integer setting value. You own the setting
     /// value and are responsible for freeing it.
-    pub fn setting_value_new_i64(value: i64) -> SettingValue;
+    pub safe fn setting_value_new_i64(value: i64) -> SettingValue;
     /// Creates a new 64-bit floating point setting value. You own the setting
     /// value and are responsible for freeing it.
-    pub fn setting_value_new_f64(value: f64) -> SettingValue;
+    pub safe fn setting_value_new_f64(value: f64) -> SettingValue;
     /// Creates a new string setting value. The pointer needs to point to valid
     /// UTF-8 encoded text with the given length. You own the setting value and
     /// are responsible for freeing it.

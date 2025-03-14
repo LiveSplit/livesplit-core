@@ -2,6 +2,7 @@ cfg_if::cfg_if! {
     if #[cfg(all(feature = "std", not(test)))] {
         pub mod f32 {
             #[inline(always)]
+            #[allow(clippy::missing_const_for_fn)] // Can't do this for the libm counterpart.
             pub fn abs(x: f32) -> f32 {
                 x.abs()
             }

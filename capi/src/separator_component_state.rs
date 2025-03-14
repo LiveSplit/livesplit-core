@@ -6,7 +6,7 @@ use livesplit_core::component::separator::State as SeparatorComponentState;
 pub type OwnedSeparatorComponentState = Box<SeparatorComponentState>;
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SeparatorComponentState_drop(this: OwnedSeparatorComponentState) {
     drop(this);
 }

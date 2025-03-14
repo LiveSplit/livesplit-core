@@ -5,14 +5,14 @@
 use core::str;
 
 use crate::{
-    platform::{prelude::*, Arc, RwLock},
+    platform::{Arc, RwLock, prelude::*},
     settings::{FontStretch, FontStyle},
 };
 
 use cosmic_text::{
-    fontdb::{Database, Query, Source, ID},
+    Attrs, AttrsList, Family, FontSystem, ShapeLine, Shaping, Stretch, Style, Weight,
+    fontdb::{Database, ID, Query, Source},
     rustybuzz::ttf_parser::{GlyphId, OutlineBuilder},
-    Attrs, AttrsList, Family, FontSystem, ShapeBuffer, ShapeLine, Shaping, Stretch, Style, Weight,
 };
 use hashbrown::HashMap;
 
@@ -34,7 +34,6 @@ struct CachedGlyph<P> {
 /// the underlying renderer doesn't by itself need to be able to render text.
 pub struct TextEngine<P> {
     font_system: FontSystem,
-    shape_buffer: ShapeBuffer,
     glyph_cache: HashMap<(ID, u16), CachedGlyph<P>>,
 }
 
@@ -59,7 +58,6 @@ impl<P: SharedOwnership> TextEngine<P> {
             // FIXME: Whenever we introduce localization, we need to make sure
             // to use the correct locale here.
             font_system: FontSystem::new_with_locale_and_db(String::from("en-US"), db),
-            shape_buffer: ShapeBuffer::default(),
             glyph_cache: HashMap::new(),
         }
     }
@@ -140,12 +138,11 @@ impl<P: SharedOwnership> TextEngine<P> {
             let mut digit_glyphs = [(ID::dummy(), 0); 10];
             let mut digit_width = 0.0;
             for (digit, glyph) in digit_glyphs.iter_mut().enumerate() {
-                if let Some((font_id, glyph_id, width)) = self.glyph_width(
-                    // SAFETY: We iterate through the 10 ASCII digits. They are
-                    // all valid UTF-8.
-                    unsafe { str::from_utf8_unchecked(&[digit as u8 + b'0']) },
-                    &attrs_list,
-                ) {
+                // SAFETY: We iterate through the 10 ASCII digits. They are
+                // all valid UTF-8.
+                if let Some((font_id, glyph_id, width)) = unsafe {
+                    self.glyph_width(str::from_utf8_unchecked(&[digit as u8 + b'0']), &attrs_list)
+                } {
                     *glyph = (font_id, glyph_id);
                     if width > digit_width {
                         digit_width = width;
@@ -172,8 +169,7 @@ impl<P: SharedOwnership> TextEngine<P> {
     }
 
     fn glyph_width(&mut self, glyph_text: &str, attrs_list: &AttrsList) -> Option<(ID, u16, f32)> {
-        let shape_line = ShapeLine::new_in_buffer(
-            &mut self.shape_buffer,
+        let shape_line = ShapeLine::new(
             &mut self.font_system,
             glyph_text,
             attrs_list,
@@ -225,8 +221,7 @@ impl<P: SharedOwnership> TextEngine<P> {
         label.glyphs.clear();
 
         // FIXME: Look into shape plans in 0.11
-        let shape_line = ShapeLine::new_in_buffer(
-            &mut self.shape_buffer,
+        let shape_line = ShapeLine::new(
             &mut self.font_system,
             text,
             &font.attrs_list,

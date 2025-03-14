@@ -22,9 +22,8 @@ include = [
     "/LICENSE-MIT",
     "/README.md",
 ]
-edition = "2021"
-resolver = "2"
-rust-version = "1.82"
+edition = "2024"
+rust-version = "1.85"
 
 [package.metadata.docs.rs]
 all-features = true
@@ -42,7 +41,7 @@ bytemuck_derive = { version = "1.4.1", default-features = false }
 cfg-if = "1.0.0"
 itoa = { version = "1.0.3", default-features = false }
 time = { version = "0.3.36", default-features = false }
-hashbrown = "0.15.0"
+hashbrown = "0.15.2"
 libm = "0.2.1"
 livesplit-hotkey = { path = "crates/livesplit-hotkey", version = "0.8.0", default-features = false }
 livesplit-title-abbreviations = { path = "crates/livesplit-title-abbreviations", version = "0.3.0" }
@@ -69,7 +68,7 @@ image = { version = "0.25.0", features = [
 # Currently doesn't require any additional dependencies.
 
 # Default Text Engine
-cosmic-text = { version = "0.12.1", default-features = false, features = [
+cosmic-text = { version = "0.13.2", default-features = false, features = [
     "no_std",
 ], optional = true }
 
@@ -121,7 +120,7 @@ libc = { version = "0.2.101", optional = true }
 seahash = "4.1.0"
 
 [target.'cfg(windows)'.dev-dependencies]
-winreg = "0.52.0"
+winreg = "0.55.0"
 
 [target.'cfg(not(target_family = "wasm"))'.dev-dependencies]
 criterion = "0.5.0"

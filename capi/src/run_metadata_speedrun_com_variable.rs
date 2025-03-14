@@ -13,23 +13,25 @@ pub type NullableRunMetadataSpeedrunComVariable = RunMetadataSpeedrunComVariable
 pub type OwnedRunMetadataSpeedrunComVariable = Box<RunMetadataSpeedrunComVariable>;
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn RunMetadataSpeedrunComVariable_drop(this: OwnedRunMetadataSpeedrunComVariable) {
     drop(this);
 }
 
 /// Accesses the name of this speedrun.com variable.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn RunMetadataSpeedrunComVariable_name(
     this: &RunMetadataSpeedrunComVariable,
 ) -> *const c_char {
-    output_str(&*this.0)
+    // SAFETY: The caller guarantees that `this` is valid.
+    unsafe { output_str(&*this.0) }
 }
 
 /// Accesses the value of this speedrun.com variable.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn RunMetadataSpeedrunComVariable_value(
     this: &RunMetadataSpeedrunComVariable,
 ) -> *const c_char {
-    output_str(&*this.1)
+    // SAFETY: The caller guarantees that `this` is valid.
+    unsafe { output_str(&*this.1) }
 }

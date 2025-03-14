@@ -11,13 +11,13 @@ pub type TimerWriteLock = RwLockWriteGuard<'static, Timer>;
 pub type OwnedTimerWriteLock = Box<TimerWriteLock>;
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn TimerWriteLock_drop(this: OwnedTimerWriteLock) {
     drop(this);
 }
 
 /// Accesses the timer.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn TimerWriteLock_timer(this: &mut TimerWriteLock) -> &mut Timer {
     &mut *this
 }

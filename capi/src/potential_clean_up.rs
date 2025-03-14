@@ -13,14 +13,14 @@ pub type OwnedPotentialCleanUp = Box<PotentialCleanUp<'static>>;
 pub type NullableOwnedPotentialCleanUp = Option<OwnedPotentialCleanUp>;
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn PotentialCleanUp_drop(this: OwnedPotentialCleanUp) {
     drop(this);
 }
 
 /// Accesses the message describing the potential clean up that can be applied
 /// to a Run.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn PotentialCleanUp_message(this: &PotentialCleanUp<'static>) -> *const c_char {
     output_vec(|s| write!(s, "{this}").unwrap())
 }

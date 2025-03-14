@@ -25,13 +25,13 @@ pub struct CommandSink(pub(crate) Arc<dyn CommandSinkAndQuery>);
 pub type OwnedCommandSink = Box<CommandSink>;
 
 /// Creates a new Command Sink.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn CommandSink_from_timer(timer: OwnedSharedTimer) -> OwnedCommandSink {
     Box::new(CommandSink(Arc::new(*timer)))
 }
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn CommandSink_drop(this: OwnedCommandSink) {
     drop(this);
 }

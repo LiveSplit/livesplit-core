@@ -1,8 +1,9 @@
 //! Describes a setting's value. Such a value can be of a variety of different
 //! types.
 
-use crate::{output_vec, str, Json};
+use crate::{Json, output_vec, str};
 use livesplit_core::{
+    TimingMethod,
     component::{
         splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith},
         timer::DeltaGradient,
@@ -13,7 +14,6 @@ use livesplit_core::{
         Gradient, ImageId, LayoutBackground, ListGradient, Value as SettingValue,
     },
     timing::formatter::{Accuracy, DigitsFormat},
-    TimingMethod,
 };
 use std::{os::raw::c_char, str::FromStr};
 
@@ -23,13 +23,13 @@ pub type OwnedSettingValue = Box<SettingValue>;
 pub type NullableOwnedSettingValue = Option<OwnedSettingValue>;
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SettingValue_drop(this: OwnedSettingValue) {
     drop(this);
 }
 
 /// Encodes this Setting Value's state as JSON.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SettingValue_as_json(this: &SettingValue) -> Json {
     output_vec(|o| {
         serde_json::to_writer(o, this).unwrap();
@@ -37,55 +37,58 @@ pub extern "C" fn SettingValue_as_json(this: &SettingValue) -> Json {
 }
 
 /// Creates a new setting value from a boolean value.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SettingValue_from_bool(value: bool) -> OwnedSettingValue {
     Box::new(value.into())
 }
 
 /// Creates a new setting value from an unsigned integer.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SettingValue_from_uint(value: u32) -> OwnedSettingValue {
     Box::new((value as u64).into())
 }
 
 /// Creates a new setting value from a signed integer.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SettingValue_from_int(value: i32) -> OwnedSettingValue {
     Box::new((value as i64).into())
 }
 
 /// Creates a new setting value from a string.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn SettingValue_from_string(value: *const c_char) -> OwnedSettingValue {
-    Box::new(str(value).to_string().into())
+    // SAFETY: The caller guarantees that `value` is valid.
+    Box::new(unsafe { str(value).to_string().into() })
 }
 
 /// Creates a new setting value from a string that has the type `optional string`.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn SettingValue_from_optional_string(
     value: *const c_char,
 ) -> OwnedSettingValue {
     let value = if value.is_null() {
         None::<String>.into()
     } else {
-        Some(str(value).to_string()).into()
+        // SAFETY: The caller guarantees that `value` is valid.
+        Some(unsafe { str(value).to_string() }).into()
     };
     Box::new(value)
 }
 
 /// Creates a new empty setting value that has the type `optional string`.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SettingValue_from_optional_empty_string() -> OwnedSettingValue {
     Box::new(None::<String>.into())
 }
 
 /// Creates a new setting value from an accuracy name. If it doesn't match a
 /// known accuracy, <NULL> is returned.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn SettingValue_from_accuracy(
     value: *const c_char,
 ) -> NullableOwnedSettingValue {
-    let value = str(value);
+    // SAFETY: The caller guarantees that `value` is valid.
+    let value = unsafe { str(value) };
     let value = match value {
         "Seconds" => Accuracy::Seconds,
         "Tenths" => Accuracy::Tenths,
@@ -98,11 +101,12 @@ pub unsafe extern "C" fn SettingValue_from_accuracy(
 
 /// Creates a new setting value from a digits format name. If it doesn't match a
 /// known digits format, <NULL> is returned.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn SettingValue_from_digits_format(
     value: *const c_char,
 ) -> NullableOwnedSettingValue {
-    let value = str(value);
+    // SAFETY: The caller guarantees that `value` is valid.
+    let value = unsafe { str(value) };
     let value = match value {
         "SingleDigitSeconds" => DigitsFormat::SingleDigitSeconds,
         "DoubleDigitSeconds" => DigitsFormat::DoubleDigitSeconds,
@@ -118,14 +122,15 @@ pub unsafe extern "C" fn SettingValue_from_digits_format(
 /// Creates a new setting value from a timing method name with the type
 /// `optional timing method`. If it doesn't match a known timing method, <NULL>
 /// is returned.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn SettingValue_from_optional_timing_method(
     value: *const c_char,
 ) -> NullableOwnedSettingValue {
     if value.is_null() {
         Some(Box::new(None::<TimingMethod>.into()))
     } else {
-        let value = str(value);
+        // SAFETY: The caller guarantees that `value` is valid.
+        let value = unsafe { str(value) };
         let value = match value {
             "RealTime" => TimingMethod::RealTime,
             "GameTime" => TimingMethod::GameTime,
@@ -136,20 +141,20 @@ pub unsafe extern "C" fn SettingValue_from_optional_timing_method(
 }
 
 /// Creates a new empty setting value with the type `optional timing method`.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SettingValue_from_optional_empty_timing_method() -> OwnedSettingValue {
     Box::new(None::<TimingMethod>.into())
 }
 
 /// Creates a new setting value from the color provided as RGBA.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SettingValue_from_color(r: f32, g: f32, b: f32, a: f32) -> OwnedSettingValue {
     Box::new(Color::rgba(r, g, b, a).into())
 }
 
 /// Creates a new setting value from the color provided as RGBA with the type
 /// `optional color`.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SettingValue_from_optional_color(
     r: f32,
     g: f32,
@@ -160,19 +165,19 @@ pub extern "C" fn SettingValue_from_optional_color(
 }
 
 /// Creates a new empty setting value with the type `optional color`.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SettingValue_from_optional_empty_color() -> OwnedSettingValue {
     Box::new(None::<Color>.into())
 }
 
 /// Creates a new setting value that is a transparent gradient.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SettingValue_from_transparent_gradient() -> OwnedSettingValue {
     Box::new(Gradient::Transparent.into())
 }
 
 /// Creates a new setting value from the vertical gradient provided as two RGBA colors.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SettingValue_from_vertical_gradient(
     r1: f32,
     g1: f32,
@@ -187,7 +192,7 @@ pub extern "C" fn SettingValue_from_vertical_gradient(
 }
 
 /// Creates a new setting value from the horizontal gradient provided as two RGBA colors.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SettingValue_from_horizontal_gradient(
     r1: f32,
     g1: f32,
@@ -202,7 +207,7 @@ pub extern "C" fn SettingValue_from_horizontal_gradient(
 }
 
 /// Creates a new setting value from the alternating gradient provided as two RGBA colors.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SettingValue_from_alternating_gradient(
     r1: f32,
     g1: f32,
@@ -220,11 +225,12 @@ pub extern "C" fn SettingValue_from_alternating_gradient(
 
 /// Creates a new setting value from the alignment name provided. If it doesn't
 /// match a known alignment, <NULL> is returned.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn SettingValue_from_alignment(
     value: *const c_char,
 ) -> NullableOwnedSettingValue {
-    let value = str(value);
+    // SAFETY: The caller guarantees that `value` is valid.
+    let value = unsafe { str(value) };
     let value = match value {
         "Center" => Alignment::Center,
         "Left" => Alignment::Left,
@@ -236,11 +242,12 @@ pub unsafe extern "C" fn SettingValue_from_alignment(
 
 /// Creates a new setting value from the column kind with the name provided. If
 /// it doesn't match a known column kind, <NULL> is returned.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn SettingValue_from_column_kind(
     value: *const c_char,
 ) -> NullableOwnedSettingValue {
-    let value = str(value);
+    // SAFETY: The caller guarantees that `value` is valid.
+    let value = unsafe { str(value) };
     let value = match value {
         "Time" => ColumnKind::Time,
         "Variable" => ColumnKind::Variable,
@@ -251,11 +258,12 @@ pub unsafe extern "C" fn SettingValue_from_column_kind(
 
 /// Creates a new setting value from the column start with the name provided. If
 /// it doesn't match a known column start with, <NULL> is returned.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn SettingValue_from_column_start_with(
     value: *const c_char,
 ) -> NullableOwnedSettingValue {
-    let value = str(value);
+    // SAFETY: The caller guarantees that `value` is valid.
+    let value = unsafe { str(value) };
     let value = match value {
         "Empty" => ColumnStartWith::Empty,
         "ComparisonTime" => ColumnStartWith::ComparisonTime,
@@ -268,11 +276,12 @@ pub unsafe extern "C" fn SettingValue_from_column_start_with(
 
 /// Creates a new setting value from the column update with the name provided.
 /// If it doesn't match a known column update with, <NULL> is returned.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn SettingValue_from_column_update_with(
     value: *const c_char,
 ) -> NullableOwnedSettingValue {
-    let value = str(value);
+    // SAFETY: The caller guarantees that `value` is valid.
+    let value = unsafe { str(value) };
     let value = match value {
         "DontUpdate" => ColumnUpdateWith::DontUpdate,
         "SplitTime" => ColumnUpdateWith::SplitTime,
@@ -288,11 +297,12 @@ pub unsafe extern "C" fn SettingValue_from_column_update_with(
 
 /// Creates a new setting value from the column update trigger. If it doesn't
 /// match a known column update trigger, <NULL> is returned.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn SettingValue_from_column_update_trigger(
     value: *const c_char,
 ) -> NullableOwnedSettingValue {
-    let value = str(value);
+    // SAFETY: The caller guarantees that `value` is valid.
+    let value = unsafe { str(value) };
     let value = match value {
         "OnStartingSegment" => ColumnUpdateTrigger::OnStartingSegment,
         "Contextual" => ColumnUpdateTrigger::Contextual,
@@ -304,11 +314,12 @@ pub unsafe extern "C" fn SettingValue_from_column_update_trigger(
 
 /// Creates a new setting value from the layout direction. If it doesn't
 /// match a known layout direction, <NULL> is returned.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn SettingValue_from_layout_direction(
     value: *const c_char,
 ) -> NullableOwnedSettingValue {
-    let value = str(value);
+    // SAFETY: The caller guarantees that `value` is valid.
+    let value = unsafe { str(value) };
     let value = match value {
         "Vertical" => LayoutDirection::Vertical,
         "Horizontal" => LayoutDirection::Horizontal,
@@ -318,22 +329,24 @@ pub unsafe extern "C" fn SettingValue_from_layout_direction(
 }
 
 /// Creates a new setting value with the type `font`.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn SettingValue_from_font(
     family: *const c_char,
     style: *const c_char,
     weight: *const c_char,
     stretch: *const c_char,
 ) -> NullableOwnedSettingValue {
+    // SAFETY: The caller guarantees that `family`, `style`, `weight`, and
+    // `stretch` are valid.
     Some(Box::new(
         Some(Font {
-            family: str(family).to_owned(),
-            style: match str(style) {
+            family: unsafe { str(family).to_owned() },
+            style: match unsafe { str(style) } {
                 "normal" => FontStyle::Normal,
                 "italic" => FontStyle::Italic,
                 _ => return None,
             },
-            weight: match str(weight) {
+            weight: match unsafe { str(weight) } {
                 "thin" => FontWeight::Thin,
                 "extra-light" => FontWeight::ExtraLight,
                 "light" => FontWeight::Light,
@@ -347,7 +360,7 @@ pub unsafe extern "C" fn SettingValue_from_font(
                 "extra-black" => FontWeight::ExtraBlack,
                 _ => return None,
             },
-            stretch: match str(stretch) {
+            stretch: match unsafe { str(stretch) } {
                 "ultra-condensed" => FontStretch::UltraCondensed,
                 "extra-condensed" => FontStretch::ExtraCondensed,
                 "condensed" => FontStretch::Condensed,
@@ -365,18 +378,19 @@ pub unsafe extern "C" fn SettingValue_from_font(
 }
 
 /// Creates a new empty setting value with the type `font`.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SettingValue_from_empty_font() -> OwnedSettingValue {
     Box::new(None::<Font>.into())
 }
 
 /// Creates a new setting value from the delta gradient with the name provided.
 /// If it doesn't match a known delta gradient, <NULL> is returned.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn SettingValue_from_delta_gradient(
     value: *const c_char,
 ) -> NullableOwnedSettingValue {
-    let value = str(value);
+    // SAFETY: The caller guarantees that `value` is valid.
+    let value = unsafe { str(value) };
     let value = match value {
         "DeltaPlain" => DeltaGradient::DeltaPlain,
         "DeltaVertical" => DeltaGradient::DeltaVertical,
@@ -389,7 +403,7 @@ pub unsafe extern "C" fn SettingValue_from_delta_gradient(
 /// Creates a new setting value from the background image with the image ID and
 /// the brightness, opacity, and blur provided. If the image ID is invalid,
 /// <NULL> is returned.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn SettingValue_from_background_image(
     image_id: *const c_char,
     brightness: f32,
@@ -398,7 +412,8 @@ pub unsafe extern "C" fn SettingValue_from_background_image(
 ) -> NullableOwnedSettingValue {
     Some(Box::new(
         LayoutBackground::Image(BackgroundImage {
-            image: ImageId::from_str(str(image_id)).ok()?,
+            // SAFETY: The caller guarantees that `image_id` is valid.
+            image: ImageId::from_str(unsafe { str(image_id) }).ok()?,
             brightness,
             opacity,
             blur,

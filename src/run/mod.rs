@@ -36,11 +36,11 @@ pub use segment::Segment;
 pub use segment_history::SegmentHistory;
 
 use crate::{
-    comparison::{default_generators, personal_best, ComparisonGenerator, RACE_COMPARISON_PREFIX},
+    AtomicDateTime, Time, TimeSpan, TimingMethod,
+    comparison::{ComparisonGenerator, RACE_COMPARISON_PREFIX, default_generators, personal_best},
     platform::prelude::*,
     settings::Image,
-    util::{caseless::matches_ascii_key, PopulateString},
-    AtomicDateTime, Time, TimeSpan, TimingMethod,
+    util::{PopulateString, caseless::matches_ascii_key},
 };
 use alloc::borrow::Cow;
 use core::{cmp::max, fmt};

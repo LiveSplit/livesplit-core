@@ -3,14 +3,15 @@ use crate::{
     layout::{LayoutDirection, LayoutState},
     platform::prelude::*,
     rendering::{
+        RenderContext,
         consts::{
-            vertical_padding, BOTH_PADDINGS, DEFAULT_COMPONENT_HEIGHT, DEFAULT_TEXT_SIZE, PADDING,
-            TEXT_ALIGN_BOTTOM, TEXT_ALIGN_TOP, THIN_SEPARATOR_THICKNESS, TWO_ROW_HEIGHT,
+            BOTH_PADDINGS, DEFAULT_COMPONENT_HEIGHT, DEFAULT_TEXT_SIZE, PADDING, TEXT_ALIGN_BOTTOM,
+            TEXT_ALIGN_TOP, THIN_SEPARATOR_THICKNESS, TWO_ROW_HEIGHT, vertical_padding,
         },
         font::CachedLabel,
         resource::ResourceAllocator,
         scene::Layer,
-        solid, RenderContext,
+        solid,
     },
     settings::{Gradient, ListGradient},
 };
@@ -48,7 +49,8 @@ impl ShortLivedStr {
     /// # Safety
     /// Only call this function for a string that's still valid.
     const unsafe fn get(&self) -> &str {
-        &*self.str
+        // SAFETY: Safety is guaranteed by the caller.
+        unsafe { &*self.str }
     }
 }
 

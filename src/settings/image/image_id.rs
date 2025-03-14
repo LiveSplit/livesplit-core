@@ -1,6 +1,6 @@
 use core::{fmt, str::FromStr};
 
-use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 
 /// A unique identifier for an image. It is implemented via a SHA-256 hash. This
 /// usually can be used to look up the image in an
@@ -60,7 +60,7 @@ impl FromStr for ImageId {
         let bytes: &[[u8; 2]; 32] = bytemuck::try_from_bytes(s.as_bytes()).map_err(drop)?;
         let mut dst = [0; 32];
         for (&[a, b], dst) in bytes.iter().zip(&mut dst) {
-            *dst = parse_hex_nibble(a).ok_or(())? << 4 | parse_hex_nibble(b).ok_or(())?;
+            *dst = (parse_hex_nibble(a).ok_or(())? << 4) | parse_hex_nibble(b).ok_or(())?;
         }
         Ok(ImageId(dst))
     }

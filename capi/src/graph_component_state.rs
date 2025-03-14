@@ -7,7 +7,7 @@ use livesplit_core::component::graph::State as GraphComponentState;
 pub type OwnedGraphComponentState = Box<GraphComponentState>;
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn GraphComponentState_drop(this: OwnedGraphComponentState) {
     drop(this);
 }
@@ -16,21 +16,21 @@ pub extern "C" fn GraphComponentState_drop(this: OwnedGraphComponentState) {
 /// the graph. If the live delta is active, the last point is to be interpreted
 /// as a preview of the next split that is about to happen. Use the partial fill
 /// color to visualize the region beneath that graph segment.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn GraphComponentState_points_len(this: &GraphComponentState) -> usize {
     this.points.len()
 }
 
 /// Returns the x coordinate of the point specified. You may not provide an out
 /// of bounds index.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn GraphComponentState_point_x(this: &GraphComponentState, index: usize) -> f32 {
     this.points[index].x
 }
 
 /// Returns the y coordinate of the point specified. You may not provide an out
 /// of bounds index.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn GraphComponentState_point_y(this: &GraphComponentState, index: usize) -> f32 {
     this.points[index].y
 }
@@ -38,7 +38,7 @@ pub extern "C" fn GraphComponentState_point_y(this: &GraphComponentState, index:
 /// Describes whether the segment the point specified is visualizing achieved a
 /// new best segment time. Use the best segment color for it, in that case. You
 /// may not provide an out of bounds index.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn GraphComponentState_point_is_best_segment(
     this: &GraphComponentState,
     index: usize,
@@ -47,7 +47,7 @@ pub extern "C" fn GraphComponentState_point_is_best_segment(
 }
 
 /// Describes how many horizontal grid lines to visualize.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn GraphComponentState_horizontal_grid_lines_len(
     this: &GraphComponentState,
 ) -> usize {
@@ -56,7 +56,7 @@ pub extern "C" fn GraphComponentState_horizontal_grid_lines_len(
 
 /// Accesses the y coordinate of the horizontal grid line specified. You may not
 /// provide an out of bounds index.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn GraphComponentState_horizontal_grid_line(
     this: &GraphComponentState,
     index: usize,
@@ -65,14 +65,14 @@ pub extern "C" fn GraphComponentState_horizontal_grid_line(
 }
 
 /// Describes how many vertical grid lines to visualize.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn GraphComponentState_vertical_grid_lines_len(this: &GraphComponentState) -> usize {
     this.vertical_grid_lines.len()
 }
 
 /// Accesses the x coordinate of the vertical grid line specified. You may not
 /// provide an out of bounds index.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn GraphComponentState_vertical_grid_line(
     this: &GraphComponentState,
     index: usize,
@@ -82,7 +82,7 @@ pub extern "C" fn GraphComponentState_vertical_grid_line(
 
 /// The y coordinate that separates the region that shows the times that are
 /// ahead of the comparison and those that are behind.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn GraphComponentState_middle(this: &GraphComponentState) -> f32 {
     this.middle
 }
@@ -90,7 +90,7 @@ pub extern "C" fn GraphComponentState_middle(this: &GraphComponentState) -> f32 
 /// If the live delta is active, the last point is to be interpreted as a
 /// preview of the next split that is about to happen. Use the partial fill
 /// color to visualize the region beneath that graph segment.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn GraphComponentState_is_live_delta_active(this: &GraphComponentState) -> bool {
     this.is_live_delta_active
 }
@@ -98,7 +98,7 @@ pub extern "C" fn GraphComponentState_is_live_delta_active(this: &GraphComponent
 /// Describes whether the graph is flipped vertically. For visualizing the
 /// graph, this usually doesn't need to be interpreted, as this information is
 /// entirely encoded into the other variables.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn GraphComponentState_is_flipped(this: &GraphComponentState) -> bool {
     this.is_flipped
 }

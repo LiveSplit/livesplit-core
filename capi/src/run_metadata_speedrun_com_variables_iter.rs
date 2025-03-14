@@ -14,7 +14,7 @@ pub type RunMetadataSpeedrunComVariablesIter = ordered_map::Iter<'static, String
 pub type OwnedRunMetadataSpeedrunComVariablesIter = Box<RunMetadataSpeedrunComVariablesIter>;
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn RunMetadataSpeedrunComVariablesIter_drop(
     this: OwnedRunMetadataSpeedrunComVariablesIter,
 ) {
@@ -23,7 +23,7 @@ pub extern "C" fn RunMetadataSpeedrunComVariablesIter_drop(
 
 /// Accesses the next speedrun.com variable. Returns <NULL> if there are no more
 /// variables.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn RunMetadataSpeedrunComVariablesIter_next(
     this: &mut RunMetadataSpeedrunComVariablesIter,
 ) -> *const NullableRunMetadataSpeedrunComVariable {

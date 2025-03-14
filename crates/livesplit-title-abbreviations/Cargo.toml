@@ -7,5 +7,5 @@ repository = "https://github.com/LiveSplit/livesplit-core/tree/master/crates/liv
 license = "MIT OR Apache-2.0"
 description = "livesplit-title-abbreviations encapsulates the algorithm that LiveSplit uses to abbreviate game titles."
 keywords = ["speedrun", "timer", "livesplit", "title", "abbreviation"]
-edition = "2018"
-rust-version = "1.70"
+edition = "2024"
+rust-version = "1.85"

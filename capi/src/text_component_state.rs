@@ -8,14 +8,14 @@ use std::os::raw::c_char;
 pub type OwnedTextComponentState = Box<TextComponentState>;
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn TextComponentState_drop(this: OwnedTextComponentState) {
     drop(this);
 }
 
 /// Accesses the left part of the text. If the text isn't split up, an empty
 /// string is returned instead.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn TextComponentState_left(this: &TextComponentState) -> *const c_char {
     if let TextState::Split(left, _) = &this.text {
         output_str(left)
@@ -26,7 +26,7 @@ pub extern "C" fn TextComponentState_left(this: &TextComponentState) -> *const c
 
 /// Accesses the right part of the text. If the text isn't split up, an empty
 /// string is returned instead.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn TextComponentState_right(this: &TextComponentState) -> *const c_char {
     if let TextState::Split(_, right) = &this.text {
         output_str(right)
@@ -37,7 +37,7 @@ pub extern "C" fn TextComponentState_right(this: &TextComponentState) -> *const 
 
 /// Accesses the centered text. If the text isn't centered, an empty string is
 /// returned instead.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn TextComponentState_center(this: &TextComponentState) -> *const c_char {
     if let TextState::Center(center) = &this.text {
         output_str(center)
@@ -47,7 +47,7 @@ pub extern "C" fn TextComponentState_center(this: &TextComponentState) -> *const
 }
 
 /// Returns whether the text is split up into a left and right part.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn TextComponentState_is_split(this: &TextComponentState) -> bool {
     matches!(this.text, TextState::Split(_, _))
 }

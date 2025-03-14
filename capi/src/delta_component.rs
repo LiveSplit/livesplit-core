@@ -9,26 +9,26 @@ use livesplit_core::{component::delta::Component as DeltaComponent, GeneralLayou
 pub type OwnedDeltaComponent = Box<DeltaComponent>;
 
 /// Creates a new Delta Component.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn DeltaComponent_new() -> OwnedDeltaComponent {
     Box::new(DeltaComponent::new())
 }
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn DeltaComponent_drop(this: OwnedDeltaComponent) {
     drop(this);
 }
 
 /// Converts the component into a generic component suitable for using with a
 /// layout.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn DeltaComponent_into_generic(this: OwnedDeltaComponent) -> OwnedComponent {
     Box::new((*this).into())
 }
 
 /// Encodes the component's state information as JSON.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn DeltaComponent_state_as_json(
     this: &mut DeltaComponent,
     timer: &Timer,
@@ -43,7 +43,7 @@ pub extern "C" fn DeltaComponent_state_as_json(
 
 /// Calculates the component's state based on the timer and the layout
 /// settings provided.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn DeltaComponent_state(
     this: &mut DeltaComponent,
     timer: &Timer,

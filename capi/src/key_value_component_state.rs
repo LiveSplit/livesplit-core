@@ -9,25 +9,25 @@ use std::os::raw::c_char;
 pub type OwnedKeyValueComponentState = Box<KeyValueComponentState>;
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn KeyValueComponentState_drop(this: OwnedKeyValueComponentState) {
     drop(this);
 }
 
 /// The key to visualize.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn KeyValueComponentState_key(this: &KeyValueComponentState) -> *const c_char {
     output_str(&this.key)
 }
 
 /// The value to visualize.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn KeyValueComponentState_value(this: &KeyValueComponentState) -> *const c_char {
     output_str(&this.value)
 }
 
 /// The semantic coloring information the value carries.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn KeyValueComponentState_semantic_color(
     this: &KeyValueComponentState,
 ) -> *const c_char {

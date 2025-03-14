@@ -8,7 +8,7 @@ struct FFIDateTime {
     nsecs: u32,
 }
 
-extern "C" {
+unsafe extern "C" {
     fn Date_now(data: *mut FFIDateTime);
 }
 
@@ -23,8 +23,8 @@ pub fn utc_now() -> DateTime {
     }
 }
 
-extern "C" {
-    fn Instant_now() -> f64;
+unsafe extern "C" {
+    safe fn Instant_now() -> f64;
 }
 
 #[derive(Copy, Clone, PartialOrd, PartialEq, Ord, Eq, Debug)]
@@ -33,8 +33,7 @@ pub struct Instant(Duration);
 
 impl Instant {
     pub fn now() -> Self {
-        // SAFETY: This is always safe to cal.
-        let secs = unsafe { Instant_now() };
+        let secs = Instant_now();
         let nanos = (secs.fract() * 1_000_000_000.0) as _;
         let secs = secs as _;
         Instant(Duration::new(secs, nanos))

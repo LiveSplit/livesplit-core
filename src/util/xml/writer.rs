@@ -141,7 +141,7 @@ pub struct AttributeWriter<'a, T> {
     has_content: &'a mut bool,
 }
 
-impl<'a, T: fmt::Write> AttributeWriter<'a, T> {
+impl<T: fmt::Write> AttributeWriter<'_, T> {
     pub fn attribute(&mut self, key: &str, value: impl Value) -> fmt::Result {
         self.writer.sink.write_str(" ")?;
         self.writer.sink.write_str(key)?;

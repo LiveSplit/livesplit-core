@@ -6,11 +6,11 @@ use crate::{
     segment::OwnedSegment, slice, with_vec,
 };
 use livesplit_core::{
+    Attempt, Run, RunMetadata, Segment, TimeSpan,
     run::{
         parser,
         saver::{self, livesplit::IoWrite},
     },
-    Attempt, Run, RunMetadata, Segment, TimeSpan,
 };
 use std::{
     io::{Read, Write},
@@ -24,13 +24,13 @@ pub type OwnedRun = Box<Run>;
 pub type NullableOwnedRun = Option<OwnedRun>;
 
 /// Creates a new Run object with no segments.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Run_new() -> OwnedRun {
     Box::new(Run::new())
 }
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Run_drop(this: OwnedRun) {
     drop(this);
 }
@@ -42,20 +42,22 @@ pub extern "C" fn Run_drop(this: OwnedRun) {
 /// <NULL>. Only client-side applications should provide a path here. Unlike the
 /// normal parsing function, it also fixes problems in the Run, such as
 /// decreasing times and missing information.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn Run_parse(
     data: *const u8,
     length: usize,
     load_files_path: *const c_char,
 ) -> OwnedParseRunResult {
-    let load_files_path = str(load_files_path);
+    // SAFETY: The caller guarantees that `load_files_path` is valid.
+    let load_files_path = unsafe { str(load_files_path) };
     let load_files_path = if !load_files_path.is_empty() {
         Some(Path::new(load_files_path))
     } else {
         None
     };
 
-    Box::new(parser::composite::parse(slice(data, length), load_files_path).ok())
+    // SAFETY: The caller guarantees that `data` is valid for `length`.
+    Box::new(parser::composite::parse(unsafe { slice(data, length) }, load_files_path).ok())
 }
 
 /// Attempts to parse a splits file from a file by invoking the corresponding
@@ -67,19 +69,21 @@ pub unsafe extern "C" fn Run_parse(
 /// decreasing times and missing information. On Unix you pass a file descriptor
 /// to this function. On Windows you pass a file handle to this function. The
 /// file descriptor / handle does not get closed.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn Run_parse_file_handle(
     handle: i64,
     load_files_path: *const c_char,
 ) -> OwnedParseRunResult {
-    let load_files_path = str(load_files_path);
+    // SAFETY: The caller guarantees that `load_files_path` is valid.
+    let load_files_path = unsafe { str(load_files_path) };
     let load_files_path = if !load_files_path.is_empty() {
         Some(Path::new(load_files_path))
     } else {
         None
     };
 
-    let mut file = get_file(handle);
+    // SAFETY: The caller guarantees that `handle` is valid.
+    let mut file = unsafe { get_file(handle) };
 
     with_vec(|buf| {
         Box::new(
@@ -92,52 +96,54 @@ pub unsafe extern "C" fn Run_parse_file_handle(
 }
 
 /// Clones the Run object.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Run_clone(this: &Run) -> OwnedRun {
     Box::new(this.clone())
 }
 
 /// Pushes the segment provided to the end of the list of segments of this Run.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Run_push_segment(this: &mut Run, segment: OwnedSegment) {
     this.push_segment(*segment);
 }
 
 /// Accesses the name of the game this Run is for.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Run_game_name(this: &Run) -> *const c_char {
     output_str(this.game_name())
 }
 
 /// Sets the name of the game this Run is for.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn Run_set_game_name(this: &mut Run, game: *const c_char) {
-    this.set_game_name(str(game));
+    // SAFETY: The caller guarantees that `game` is valid.
+    this.set_game_name(unsafe { str(game) });
 }
 
 /// Accesses the game icon's data. If there is no game icon, this returns an
 /// empty buffer.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Run_game_icon_ptr(this: &Run) -> *const u8 {
     this.game_icon().data().as_ptr()
 }
 
 /// Accesses the amount of bytes the game icon's data takes up.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Run_game_icon_len(this: &Run) -> usize {
     this.game_icon().data().len()
 }
 
 /// Accesses the name of the category this Run is for.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Run_category_name(this: &Run) -> *const c_char {
     output_str(this.category_name())
 }
 
 /// Sets the name of the category this Run is for.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn Run_set_category_name(this: &mut Run, category: *const c_char) {
-    this.set_category_name(str(category));
+    // SAFETY: The caller guarantees that `category` is valid.
+    this.set_category_name(unsafe { str(category) });
 }
 
 /// Returns a file name (without the extension) suitable for this Run that
@@ -148,7 +154,7 @@ pub unsafe extern "C" fn Run_set_category_name(this: &mut Run, category: *const 
 /// If either is empty, the dash is omitted. Special characters that cause
 /// problems in file names are also omitted. If an extended category name is
 /// used, the variables of the category are appended in a parenthesis.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Run_extended_file_name(
     this: &Run,
     use_extended_category_name: bool,
@@ -162,7 +168,7 @@ pub extern "C" fn Run_extended_file_name(
 ///
 /// If either is empty, the dash is omitted. If an extended category name is
 /// used, the variables of the category are appended in a parenthesis.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Run_extended_name(this: &Run, use_extended_category_name: bool) -> *const c_char {
     output_str(this.extended_name(use_extended_category_name))
 }
@@ -172,7 +178,7 @@ pub extern "C" fn Run_extended_name(this: &Run, use_extended_category_name: bool
 /// category name may look like this:
 ///
 /// Any% (No Tuner, JPN, Wii Emulator)
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Run_extended_category_name(
     this: &Run,
     show_region: bool,
@@ -189,59 +195,59 @@ pub extern "C" fn Run_extended_category_name(
 }
 
 /// Returns the amount of runs that have been attempted with these splits.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Run_attempt_count(this: &Run) -> u32 {
     this.attempt_count()
 }
 
 /// Accesses additional metadata of this Run, like the platform and region
 /// of the game.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Run_metadata(this: &Run) -> &RunMetadata {
     this.metadata()
 }
 
 /// Accesses the time an attempt of this Run should start at.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Run_offset(this: &Run) -> *const TimeSpan {
     output_time_span(this.offset())
 }
 
 /// Returns the amount of segments stored in this Run.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Run_len(this: &Run) -> usize {
     this.len()
 }
 
 /// Marks the Run as modified, so that it is known that there are changes
 /// that should be saved.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Run_mark_as_modified(this: &mut Run) {
     this.mark_as_modified();
 }
 
 /// Returns whether the Run has been modified and should be saved so that the
 /// changes don't get lost.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Run_has_been_modified(this: &Run) -> bool {
     this.has_been_modified()
 }
 
 /// Accesses a certain segment of this Run. You may not provide an out of bounds
 /// index.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Run_segment(this: &Run, index: usize) -> &Segment {
     this.segment(index)
 }
 
 /// Returns the amount of segments in this Run.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Run_segments_len(this: &Run) -> usize {
     this.segments().len()
 }
 
 /// Returns the amount attempt history elements are stored in this Run.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Run_attempt_history_len(this: &Run) -> usize {
     this.attempt_history().len()
 }
@@ -250,7 +256,7 @@ pub extern "C" fn Run_attempt_history_len(this: &Run) -> usize {
 /// the actual segment times, just the overall attempt information. Information
 /// about the individual segments is stored within each segment. You may not
 /// provide an out of bounds index.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Run_attempt_history_index(this: &Run, index: usize) -> &Attempt {
     &this.attempt_history()[index]
 }
@@ -258,7 +264,7 @@ pub extern "C" fn Run_attempt_history_index(this: &Run, index: usize) -> &Attemp
 /// Saves a Run as a LiveSplit splits file (*.lss). If the run is actively in
 /// use by a timer, use the appropriate method on the timer instead, in order to
 /// properly save the current attempt as well.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Run_save_as_lss(this: &Run) -> *const c_char {
     output_vec(|o| {
         saver::livesplit::save_run(this, IoWrite(o)).unwrap();
@@ -266,7 +272,7 @@ pub extern "C" fn Run_save_as_lss(this: &Run) -> *const c_char {
 }
 
 /// Returns the amount of custom comparisons stored in this Run.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Run_custom_comparisons_len(this: &Run) -> usize {
     this.custom_comparisons().len()
 }
@@ -274,13 +280,13 @@ pub extern "C" fn Run_custom_comparisons_len(this: &Run) -> usize {
 /// Accesses a custom comparison stored in this Run by its index. This includes
 /// `Personal Best` but excludes all the other Comparison Generators. You may
 /// not provide an out of bounds index.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Run_custom_comparison(this: &Run, index: usize) -> *const c_char {
     output_str(&this.custom_comparisons()[index])
 }
 
 /// Returns the amount of total comparisons stored in this Run.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Run_comparisons_len(this: &Run) -> usize {
     this.custom_comparisons().len() + this.comparison_generators().len()
 }
@@ -288,7 +294,7 @@ pub extern "C" fn Run_comparisons_len(this: &Run) -> usize {
 /// Accesses a comparison stored in this Run by its index. This includes both
 /// custom comparisons as well as all the Comparison Generators. You may not
 /// provide an out of bounds index.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Run_comparison(this: &Run, index: usize) -> *const c_char {
     let custom_len = this.custom_comparisons().len();
     output_str(if index < custom_len {
@@ -299,14 +305,14 @@ pub extern "C" fn Run_comparison(this: &Run, index: usize) -> *const c_char {
 }
 
 /// Accesses the Auto Splitter Settings that are encoded as XML.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Run_auto_splitter_settings(this: &Run) -> *const c_char {
     output_str(this.auto_splitter_settings())
 }
 
 /// Accesses the linked layout of this Run. If a Layout is linked, it is
 /// supposed to be loaded to visualize the Run.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Run_linked_layout(this: &Run) -> NullableOwnedLinkedLayout {
     // FIXME: Unnecessary clone. The binding generator can't handle optional
     // references yet.

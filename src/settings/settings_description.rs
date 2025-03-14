@@ -12,7 +12,7 @@ pub struct SettingsDescription {
 
 impl SettingsDescription {
     /// Creates a new Settings Description with the settings provided.
-    pub fn with_fields(fields: Vec<Field>) -> Self {
+    pub const fn with_fields(fields: Vec<Field>) -> Self {
         Self { fields }
     }
 }

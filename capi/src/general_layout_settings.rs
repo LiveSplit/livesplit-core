@@ -6,13 +6,13 @@ use livesplit_core::GeneralLayoutSettings;
 pub type OwnedGeneralLayoutSettings = Box<GeneralLayoutSettings>;
 
 /// Creates a default general layout settings configuration.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn GeneralLayoutSettings_default() -> OwnedGeneralLayoutSettings {
     Default::default()
 }
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn GeneralLayoutSettings_drop(this: OwnedGeneralLayoutSettings) {
     drop(this);
 }

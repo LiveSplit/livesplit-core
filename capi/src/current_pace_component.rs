@@ -12,20 +12,20 @@ use livesplit_core::Timer;
 pub type OwnedCurrentPaceComponent = Box<CurrentPaceComponent>;
 
 /// Creates a new Current Pace Component.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn CurrentPaceComponent_new() -> OwnedCurrentPaceComponent {
     Box::new(CurrentPaceComponent::new())
 }
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn CurrentPaceComponent_drop(this: OwnedCurrentPaceComponent) {
     drop(this);
 }
 
 /// Converts the component into a generic component suitable for using with a
 /// layout.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn CurrentPaceComponent_into_generic(
     this: OwnedCurrentPaceComponent,
 ) -> OwnedComponent {
@@ -33,7 +33,7 @@ pub extern "C" fn CurrentPaceComponent_into_generic(
 }
 
 /// Encodes the component's state information as JSON.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn CurrentPaceComponent_state_as_json(
     this: &mut CurrentPaceComponent,
     timer: &Timer,
@@ -44,7 +44,7 @@ pub extern "C" fn CurrentPaceComponent_state_as_json(
 }
 
 /// Calculates the component's state based on the timer provided.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn CurrentPaceComponent_state(
     this: &mut CurrentPaceComponent,
     timer: &Timer,

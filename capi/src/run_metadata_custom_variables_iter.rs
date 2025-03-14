@@ -14,14 +14,14 @@ pub type RunMetadataCustomVariablesIter = ordered_map::Iter<'static, CustomVaria
 pub type OwnedRunMetadataCustomVariablesIter = Box<RunMetadataCustomVariablesIter>;
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn RunMetadataCustomVariablesIter_drop(this: OwnedRunMetadataCustomVariablesIter) {
     drop(this);
 }
 
 /// Accesses the next custom variable. Returns <NULL> if there are no more
 /// variables.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn RunMetadataCustomVariablesIter_next(
     this: &mut RunMetadataCustomVariablesIter,
 ) -> *const NullableRunMetadataCustomVariable {

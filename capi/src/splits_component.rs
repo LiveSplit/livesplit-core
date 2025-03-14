@@ -15,26 +15,26 @@ use livesplit_core::{
 pub type OwnedSplitsComponent = Box<SplitsComponent>;
 
 /// Creates a new Splits Component.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SplitsComponent_new() -> OwnedSplitsComponent {
     Box::new(SplitsComponent::new())
 }
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SplitsComponent_drop(this: OwnedSplitsComponent) {
     drop(this);
 }
 
 /// Converts the component into a generic component suitable for using with a
 /// layout.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SplitsComponent_into_generic(this: OwnedSplitsComponent) -> OwnedComponent {
     Box::new((*this).into())
 }
 
 /// Encodes the component's state information as JSON.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SplitsComponent_state_as_json(
     this: &mut SplitsComponent,
     image_cache: &mut ImageCache,
@@ -50,7 +50,7 @@ pub extern "C" fn SplitsComponent_state_as_json(
 
 /// Calculates the component's state based on the timer and layout settings
 /// provided.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SplitsComponent_state(
     this: &mut SplitsComponent,
     image_cache: &mut ImageCache,
@@ -62,14 +62,14 @@ pub extern "C" fn SplitsComponent_state(
 
 /// Scrolls up the window of the segments that are shown. Doesn't move the
 /// scroll window if it reaches the top of the segments.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SplitsComponent_scroll_up(this: &mut SplitsComponent) {
     this.scroll_up();
 }
 
 /// Scrolls down the window of the segments that are shown. Doesn't move the
 /// scroll window if it reaches the bottom of the segments.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SplitsComponent_scroll_down(this: &mut SplitsComponent) {
     this.scroll_down();
 }
@@ -78,7 +78,7 @@ pub extern "C" fn SplitsComponent_scroll_down(this: &mut SplitsComponent) {
 /// set to 0, all the segments are shown. If this is set to a number lower
 /// than the total amount of segments, only a certain window of all the
 /// segments is shown. This window can scroll up or down.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SplitsComponent_set_visual_split_count(this: &mut SplitsComponent, count: usize) {
     this.settings_mut().visual_split_count = count;
 }
@@ -88,7 +88,7 @@ pub extern "C" fn SplitsComponent_set_visual_split_count(this: &mut SplitsCompon
 /// segment changes. This count determines the minimum number of future
 /// segments to be shown in this scrolling window when it automatically
 /// scrolls.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SplitsComponent_set_split_preview_count(
     this: &mut SplitsComponent,
     count: usize,
@@ -100,7 +100,7 @@ pub extern "C" fn SplitsComponent_set_split_preview_count(
 /// this determines whether the final segment is always to be shown, as it
 /// contains valuable information about the total duration of the chosen
 /// comparison, which is often the runner's Personal Best.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SplitsComponent_set_always_show_last_split(
     this: &mut SplitsComponent,
     always_show_last_split: bool,
@@ -112,7 +112,7 @@ pub extern "C" fn SplitsComponent_set_always_show_last_split(
 /// show a more pronounced separator in front of the last segment, if it is
 /// not directly adjacent to the segment shown right before it in the
 /// scrolling window.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SplitsComponent_set_separator_last_split(
     this: &mut SplitsComponent,
     separator_last_split: bool,

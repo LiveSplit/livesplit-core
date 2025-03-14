@@ -24,20 +24,20 @@ pub type OwnedLayoutState = Box<LayoutState>;
 
 /// Creates a new empty Layout State. This is useful for creating an empty
 /// layout state that gets updated over time.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutState_new() -> OwnedLayoutState {
     Default::default()
 }
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutState_drop(this: OwnedLayoutState) {
     drop(this);
 }
 
 /// Encodes the layout state as JSON. You can use this to visualize all of the
 /// components of a layout.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutState_as_json(this: &LayoutState) -> Json {
     output_vec(|o| {
         this.write_json(o).unwrap();
@@ -45,14 +45,14 @@ pub extern "C" fn LayoutState_as_json(this: &LayoutState) -> Json {
 }
 
 /// Gets the number of Components in the Layout State.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutState_len(this: &LayoutState) -> usize {
     this.components.len()
 }
 
 /// Returns a string describing the type of the Component at the specified
 /// index.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutState_component_type(this: &LayoutState, index: usize) -> *const c_char {
     (match this.components[index] {
         ComponentState::BlankSpace(_) => "BlankSpace\0",
@@ -70,7 +70,7 @@ pub extern "C" fn LayoutState_component_type(this: &LayoutState, index: usize) -
 }
 
 /// Gets the Blank Space component state at the specified index.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutState_component_as_blank_space(
     this: &LayoutState,
     index: usize,
@@ -82,7 +82,7 @@ pub extern "C" fn LayoutState_component_as_blank_space(
 }
 
 /// Gets the Detailed Timer component state at the specified index.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutState_component_as_detailed_timer(
     this: &LayoutState,
     index: usize,
@@ -94,7 +94,7 @@ pub extern "C" fn LayoutState_component_as_detailed_timer(
 }
 
 /// Gets the Graph component state at the specified index.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutState_component_as_graph(
     this: &LayoutState,
     index: usize,
@@ -106,7 +106,7 @@ pub extern "C" fn LayoutState_component_as_graph(
 }
 
 /// Gets the Key Value component state at the specified index.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutState_component_as_key_value(
     this: &LayoutState,
     index: usize,
@@ -118,7 +118,7 @@ pub extern "C" fn LayoutState_component_as_key_value(
 }
 
 /// Gets the Separator component state at the specified index.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutState_component_as_separator(
     this: &LayoutState,
     index: usize,
@@ -130,7 +130,7 @@ pub extern "C" fn LayoutState_component_as_separator(
 }
 
 /// Gets the Splits component state at the specified index.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutState_component_as_splits(
     this: &LayoutState,
     index: usize,
@@ -142,7 +142,7 @@ pub extern "C" fn LayoutState_component_as_splits(
 }
 
 /// Gets the Text component state at the specified index.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutState_component_as_text(
     this: &LayoutState,
     index: usize,
@@ -154,7 +154,7 @@ pub extern "C" fn LayoutState_component_as_text(
 }
 
 /// Gets the Timer component state at the specified index.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutState_component_as_timer(
     this: &LayoutState,
     index: usize,
@@ -166,7 +166,7 @@ pub extern "C" fn LayoutState_component_as_timer(
 }
 
 /// Gets the Title component state at the specified index.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutState_component_as_title(
     this: &LayoutState,
     index: usize,

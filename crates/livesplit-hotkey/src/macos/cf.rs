@@ -84,7 +84,7 @@ bitflags::bitflags! {
 }
 
 #[link(name = "CoreFoundation", kind = "framework")]
-extern "C" {
+unsafe extern "C" {
     pub static kCFAllocatorDefault: AllocatorRef;
 
     pub static kCFBooleanTrue: BooleanRef;

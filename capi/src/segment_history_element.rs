@@ -14,13 +14,13 @@ pub type NullableSegmentHistoryElement = SegmentHistoryElement;
 pub type OwnedSegmentHistoryElement = Box<SegmentHistoryElement>;
 
 /// Accesses the index of the segment history element.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SegmentHistoryElement_index(this: &SegmentHistoryElement) -> i32 {
     this.0
 }
 
 /// Accesses the segment time of the segment history element.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SegmentHistoryElement_time(this: &SegmentHistoryElement) -> *const Time {
     output_time(this.1)
 }
