@@ -451,6 +451,10 @@ pub fn parse(source: &str) -> Result<Run> {
                 required_flags |= 1 << 2;
                 text(reader, |t| run.set_category_name(t))
             }
+            "LevelName" => {
+                // not required, for compatibility
+                text(reader, |t| run.set_level_name(t))
+            }
             "Offset" => {
                 required_flags |= 1 << 3;
                 time_span(reader, |t| run.set_offset(t))
