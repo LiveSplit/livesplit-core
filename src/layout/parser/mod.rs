@@ -9,15 +9,15 @@ use crate::{
         Image, LayoutBackground, ListGradient,
     },
     timing::{
-        TimingMethod,
         formatter::{Accuracy, DigitsFormat},
+        TimingMethod,
     },
     util::xml::{
-        Reader,
         helper::{
-            Error as XmlError, end_tag, image, parse_base, parse_children, text,
-            text_as_escaped_string_err, text_parsed,
+            end_tag, image, parse_base, parse_children, text, text_as_escaped_string_err,
+            text_parsed, Error as XmlError,
         },
+        Reader,
     },
 };
 use core::{mem::MaybeUninit, num::ParseIntError, str};
@@ -381,7 +381,7 @@ where
         let mut len = 0;
         for _ in 0..5 {
             let byte = *cursor.next().ok_or(Error::ParseFont)?;
-            len = (len << 7) | (byte & 0b0111_1111) as usize;
+            len = len << 7 | (byte & 0b0111_1111) as usize;
             if byte <= 0b0111_1111 {
                 break;
             }
@@ -779,6 +779,12 @@ fn parse_general_settings(layout: &mut Layout, reader: &mut Reader<'_>) -> Resul
         }),
         "ImageOpacity" => percentage(reader, |v| image_opacity = v),
         "ImageBlur" => percentage(reader, |v| image_blur = v),
+        "MousePassThroughWhileRunning" => {
+            parse_bool(reader, |b| settings.mouse_pass_through_while_running = b)
+        }
+        "DropShadow" => {
+            parse_bool(reader, |b| settings.drop_shadow = b)
+        }
         _ => end_tag(reader),
     })?;
 
