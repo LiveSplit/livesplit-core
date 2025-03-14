@@ -9,15 +9,15 @@ use crate::{
         Image, LayoutBackground, ListGradient,
     },
     timing::{
-        formatter::{Accuracy, DigitsFormat},
         TimingMethod,
+        formatter::{Accuracy, DigitsFormat},
     },
     util::xml::{
+        Reader,
         helper::{
             Error as XmlError, end_tag, image, parse_base, parse_children, text,
             text_as_escaped_string_err, text_parsed,
         },
-        Reader,
     },
 };
 use core::{mem::MaybeUninit, num::ParseIntError, str};
