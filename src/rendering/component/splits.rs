@@ -48,7 +48,7 @@ impl ShortLivedStr {
     /// # Safety
     /// Only call this function for a string that's still valid.
     const unsafe fn get(&self) -> &str {
-        &*self.str
+        unsafe &*self.str
     }
 }
 
