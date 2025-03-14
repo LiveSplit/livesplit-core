@@ -13,20 +13,20 @@ use livesplit_core::Timer;
 pub type OwnedPossibleTimeSaveComponent = Box<PossibleTimeSaveComponent>;
 
 /// Creates a new Possible Time Save Component.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn PossibleTimeSaveComponent_new() -> OwnedPossibleTimeSaveComponent {
     Box::new(PossibleTimeSaveComponent::new())
 }
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn PossibleTimeSaveComponent_drop(this: OwnedPossibleTimeSaveComponent) {
     drop(this);
 }
 
 /// Converts the component into a generic component suitable for using with a
 /// layout.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn PossibleTimeSaveComponent_into_generic(
     this: OwnedPossibleTimeSaveComponent,
 ) -> OwnedComponent {
@@ -34,7 +34,7 @@ pub extern "C" fn PossibleTimeSaveComponent_into_generic(
 }
 
 /// Encodes the component's state information as JSON.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn PossibleTimeSaveComponent_state_as_json(
     this: &PossibleTimeSaveComponent,
     timer: &Timer,
@@ -45,7 +45,7 @@ pub extern "C" fn PossibleTimeSaveComponent_state_as_json(
 }
 
 /// Calculates the component's state based on the timer provided.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn PossibleTimeSaveComponent_state(
     this: &PossibleTimeSaveComponent,
     timer: &Timer,

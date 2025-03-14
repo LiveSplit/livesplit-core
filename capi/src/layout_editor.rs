@@ -18,7 +18,7 @@ pub type NullableOwnedLayoutEditor = Option<OwnedLayoutEditor>;
 /// Creates a new Layout Editor that modifies the Layout provided. Creation of
 /// the Layout Editor fails when a Layout with no components is provided. In
 /// that case <NULL> is returned instead.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutEditor_new(layout: OwnedLayout) -> NullableOwnedLayoutEditor {
     LayoutEditor::new(*layout).ok().map(Box::new)
 }
@@ -26,13 +26,13 @@ pub extern "C" fn LayoutEditor_new(layout: OwnedLayout) -> NullableOwnedLayoutEd
 /// Closes the Layout Editor and gives back access to the modified Layout. In
 /// case you want to implement a Cancel Button, just dispose the Layout object
 /// you get here.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutEditor_close(this: OwnedLayoutEditor) -> OwnedLayout {
     Box::new((*this).close())
 }
 
 /// Encodes the Layout Editor's state as JSON in order to visualize it.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutEditor_state_as_json(
     this: &LayoutEditor,
     image_cache: &mut ImageCache,
@@ -43,7 +43,7 @@ pub extern "C" fn LayoutEditor_state_as_json(
 }
 
 /// Returns the state of the Layout Editor.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutEditor_state(
     this: &LayoutEditor,
     image_cache: &mut ImageCache,
@@ -54,7 +54,7 @@ pub extern "C" fn LayoutEditor_state(
 /// Encodes the layout's state as JSON based on the timer provided. You can use
 /// this to visualize all of the components of a layout, while it is still being
 /// edited by the Layout Editor.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutEditor_layout_state_as_json(
     this: &mut LayoutEditor,
     image_cache: &mut ImageCache,
@@ -68,7 +68,7 @@ pub extern "C" fn LayoutEditor_layout_state_as_json(
 }
 
 /// Updates the layout's state based on the timer provided.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutEditor_update_layout_state(
     this: &mut LayoutEditor,
     state: &mut LayoutState,
@@ -80,7 +80,7 @@ pub extern "C" fn LayoutEditor_update_layout_state(
 
 /// Updates the layout's state based on the timer provided and encodes it as
 /// JSON.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutEditor_update_layout_state_as_json(
     this: &mut LayoutEditor,
     state: &mut LayoutState,
@@ -96,14 +96,14 @@ pub extern "C" fn LayoutEditor_update_layout_state_as_json(
 /// Selects the component with the given index in order to modify its
 /// settings. Only a single component is selected at any given time. You may
 /// not provide an invalid index.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutEditor_select(this: &mut LayoutEditor, index: usize) {
     this.select(index);
 }
 
 /// Adds the component provided to the end of the layout. The newly added
 /// component becomes the selected component.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutEditor_add_component(this: &mut LayoutEditor, component: OwnedComponent) {
     this.add_component(*component);
 }
@@ -112,34 +112,34 @@ pub extern "C" fn LayoutEditor_add_component(this: &mut LayoutEditor, component:
 /// component in the layout. The next component becomes the selected
 /// component. If there's none, the previous component becomes the selected
 /// component instead.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutEditor_remove_component(this: &mut LayoutEditor) {
     this.remove_component();
 }
 
 /// Moves the selected component up, unless the first component is selected.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutEditor_move_component_up(this: &mut LayoutEditor) {
     this.move_component_up();
 }
 
 /// Moves the selected component down, unless the last component is
 /// selected.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutEditor_move_component_down(this: &mut LayoutEditor) {
     this.move_component_down();
 }
 
 /// Moves the selected component to the index provided. You may not provide
 /// an invalid index.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutEditor_move_component(this: &mut LayoutEditor, dst_index: usize) {
     this.move_component(dst_index);
 }
 
 /// Duplicates the currently selected component. The copy gets placed right
 /// after the selected component and becomes the newly selected component.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutEditor_duplicate_component(this: &mut LayoutEditor) {
     this.duplicate_component();
 }
@@ -150,7 +150,7 @@ pub extern "C" fn LayoutEditor_duplicate_component(this: &mut LayoutEditor) {
 /// This panics if the type of the value to be set is not compatible with
 /// the type of the setting's value. A panic can also occur if the index of
 /// the setting provided is out of bounds.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutEditor_set_component_settings_value(
     this: &mut LayoutEditor,
     index: usize,
@@ -165,7 +165,7 @@ pub extern "C" fn LayoutEditor_set_component_settings_value(
 /// This panics if the type of the value to be set is not compatible with
 /// the type of the setting's value. A panic can also occur if the index of
 /// the setting provided is out of bounds.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LayoutEditor_set_general_settings_value(
     this: &mut LayoutEditor,
     index: usize,

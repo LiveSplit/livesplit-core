@@ -16,26 +16,26 @@ use livesplit_core::Timer;
 pub type OwnedSumOfBestComponent = Box<SumOfBestComponent>;
 
 /// Creates a new Sum of Best Segments Component.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SumOfBestComponent_new() -> OwnedSumOfBestComponent {
     Box::new(SumOfBestComponent::new())
 }
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SumOfBestComponent_drop(this: OwnedSumOfBestComponent) {
     drop(this);
 }
 
 /// Converts the component into a generic component suitable for using with a
 /// layout.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SumOfBestComponent_into_generic(this: OwnedSumOfBestComponent) -> OwnedComponent {
     Box::new((*this).into())
 }
 
 /// Encodes the component's state information as JSON.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SumOfBestComponent_state_as_json(
     this: &SumOfBestComponent,
     timer: &Timer,
@@ -46,7 +46,7 @@ pub extern "C" fn SumOfBestComponent_state_as_json(
 }
 
 /// Calculates the component's state based on the timer provided.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SumOfBestComponent_state(
     this: &SumOfBestComponent,
     timer: &Timer,

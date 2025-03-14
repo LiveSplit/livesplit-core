@@ -2,12 +2,11 @@
 //! a JavaScript object that implements the necessary functions to handle the
 //! timer commands. All of them are optional except for `getTimer`.
 
-use core::ptr;
 use std::{borrow::Cow, cell::Cell, convert::TryFrom, future::Future, sync::Arc};
 
 use livesplit_core::{
-    event::{CommandSink, Error, Event, Result, TimerQuery},
     TimeSpan, Timer, TimingMethod,
+    event::{CommandSink, Error, Event, Result, TimerQuery},
 };
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_futures::JsFuture;

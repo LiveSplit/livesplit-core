@@ -6,12 +6,11 @@
 
 use super::{AddComparisonError, CopyComparisonError, LinkedLayout};
 use crate::{
-    comparison,
+    Run, Segment, Time, TimeSpan, TimingMethod, comparison,
     platform::prelude::*,
     settings::Image,
     timing::ParseError as ParseTimeSpanError,
-    util::{caseless, PopulateString},
-    Run, Segment, Time, TimeSpan, TimingMethod,
+    util::{PopulateString, caseless},
 };
 use core::{mem::swap, num::ParseIntError};
 use snafu::{OptionExt, ResultExt};

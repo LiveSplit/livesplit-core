@@ -12,14 +12,14 @@ pub type OwnedAttempt = Box<Attempt>;
 
 /// Accesses the unique index of the attempt. This index is unique for the
 /// Run, not for all of them.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Attempt_index(this: &Attempt) -> i32 {
     this.index()
 }
 
 /// Accesses the split time of the last segment. If the attempt got reset
 /// early and didn't finish, this may be empty.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Attempt_time(this: &Attempt) -> *const Time {
     output_time(this.time())
 }
@@ -28,7 +28,7 @@ pub extern "C" fn Attempt_time(this: &Attempt) -> *const Time {
 /// known, this returns <NULL>. This means that it may not necessarily be
 /// possible to differentiate whether a Run has not been paused or it simply
 /// wasn't stored.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Attempt_pause_time(this: &Attempt) -> *const NullableTimeSpan {
     if let Some(pause_time) = this.pause_time() {
         output_time_span(pause_time)
@@ -39,14 +39,14 @@ pub extern "C" fn Attempt_pause_time(this: &Attempt) -> *const NullableTimeSpan 
 
 /// Accesses the point in time the attempt was started at. This returns <NULL>
 /// if this information is not known.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Attempt_started(this: &Attempt) -> NullableOwnedAtomicDateTime {
     this.started().map(Box::new)
 }
 
 /// Accesses the point in time the attempt was ended at. This returns <NULL> if
 /// this information is not known.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Attempt_ended(this: &Attempt) -> NullableOwnedAtomicDateTime {
     this.ended().map(Box::new)
 }

@@ -5,29 +5,27 @@ use std::{
     ptr, thread,
 };
 
-use mio::{unix::SourceFd, Events, Interest, Poll, Token, Waker};
+use mio::{Events, Interest, Poll, Token, Waker, unix::SourceFd};
 use x11_dl::xlib::{
-    AnyKey, AnyModifier, ControlMask, Display, GrabModeAsync, KeyPress, LockMask, Mod1Mask,
-    Mod2Mask, Mod3Mask, Mod4Mask, ShiftMask, XErrorEvent, XKeyEvent, Xlib, _XDisplay,
+    _XDisplay, AnyKey, AnyModifier, ControlMask, Display, GrabModeAsync, KeyPress, LockMask,
+    Mod1Mask, Mod2Mask, Mod3Mask, Mod4Mask, ShiftMask, XErrorEvent, XKeyEvent, Xlib,
 };
 
 use super::{Error, Hook, Message};
 use crate::{KeyCode, Modifiers, Result};
 
 unsafe fn ungrab_all(xlib: &Xlib, display: *mut Display) {
-    let screencount = (xlib.XScreenCount)(display);
-    for screen in 0..screencount {
-        let rootwindow = (xlib.XRootWindow)(display, screen);
-        (xlib.XUngrabKey)(display, AnyKey, AnyModifier, rootwindow);
+    unsafe {
+        let screencount = (xlib.XScreenCount)(display);
+        for screen in 0..screencount {
+            let rootwindow = (xlib.XRootWindow)(display, screen);
+            (xlib.XUngrabKey)(display, AnyKey, AnyModifier, rootwindow);
+        }
     }
 }
 
 const fn mask(x: c_uint) -> u8 {
-    if x < 256 {
-        x as u8
-    } else {
-        panic!()
-    }
+    if x < 256 { x as u8 } else { panic!() }
 }
 
 const CAPS_LOCK: u8 = mask(LockMask);
@@ -56,49 +54,51 @@ unsafe fn grab_key(
     modifiers: Modifiers,
     ungrab: bool,
 ) {
-    let screencount = (xlib.XScreenCount)(display);
-    for screen in 0..screencount {
-        let window = (xlib.XRootWindow)(display, screen);
+    unsafe {
+        let screencount = (xlib.XScreenCount)(display);
+        for screen in 0..screencount {
+            let window = (xlib.XRootWindow)(display, screen);
 
-        let mut mod_mask = 0;
-        if modifiers.contains(Modifiers::SHIFT) {
-            mod_mask |= ShiftMask;
-        }
-        if modifiers.contains(Modifiers::CONTROL) {
-            mod_mask |= ControlMask;
-        }
-        if modifiers.contains(Modifiers::ALT) {
-            mod_mask |= Mod1Mask;
-        }
-        if modifiers.contains(Modifiers::META) {
-            mod_mask |= Mod4Mask;
-        }
+            let mut mod_mask = 0;
+            if modifiers.contains(Modifiers::SHIFT) {
+                mod_mask |= ShiftMask;
+            }
+            if modifiers.contains(Modifiers::CONTROL) {
+                mod_mask |= ControlMask;
+            }
+            if modifiers.contains(Modifiers::ALT) {
+                mod_mask |= Mod1Mask;
+            }
+            if modifiers.contains(Modifiers::META) {
+                mod_mask |= Mod4Mask;
+            }
 
-        for ignore_mask in IGNORE_MASKS {
-            if ungrab {
-                (xlib.XUngrabKey)(
-                    display,
-                    code as c_int,
-                    mod_mask | (ignore_mask as c_uint),
-                    window,
-                );
-            } else {
-                (xlib.XGrabKey)(
-                    display,
-                    code as c_int,
-                    mod_mask | (ignore_mask as c_uint),
-                    window,
-                    false as _,
-                    GrabModeAsync,
-                    GrabModeAsync,
-                );
+            for ignore_mask in IGNORE_MASKS {
+                if ungrab {
+                    (xlib.XUngrabKey)(
+                        display,
+                        code as c_int,
+                        mod_mask | (ignore_mask as c_uint),
+                        window,
+                    );
+                } else {
+                    (xlib.XGrabKey)(
+                        display,
+                        code as c_int,
+                        mod_mask | (ignore_mask as c_uint),
+                        window,
+                        false as _,
+                        GrabModeAsync,
+                        GrabModeAsync,
+                    );
+                }
             }
         }
-    }
 
-    // On some X11 connections it's crucial for the events to be flushed. They
-    // may otherwise stay buffered and the hotkeys don't actually work.
-    (xlib.XFlush)(display);
+        // On some X11 connections it's crucial for the events to be flushed. They
+        // may otherwise stay buffered and the hotkeys don't actually work.
+        (xlib.XFlush)(display);
+    }
 }
 
 unsafe extern "C" fn handle_error(_: *mut Display, _: *mut XErrorEvent) -> c_int {

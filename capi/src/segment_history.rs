@@ -10,7 +10,7 @@ use livesplit_core::SegmentHistory;
 pub type OwnedSegmentHistory = Box<SegmentHistory>;
 
 /// Iterates over all the segment times and their indices.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SegmentHistory_iter(this: &'static SegmentHistory) -> OwnedSegmentHistoryIter {
     Box::new(this.iter())
 }

@@ -1,8 +1,8 @@
-use crate::platform::{prelude::*, Arc};
+use crate::platform::{Arc, prelude::*};
 use core::{fmt, ops::Deref};
 use serde::{
-    de::{self, Visitor},
     Deserialize, Deserializer, Serialize, Serializer,
+    de::{self, Visitor},
 };
 use sha2::{Digest, Sha256};
 
@@ -76,7 +76,7 @@ impl<'de> Deserialize<'de> for Image {
 
 struct ImageVisitor;
 
-impl<'de> Visitor<'de> for ImageVisitor {
+impl Visitor<'_> for ImageVisitor {
     type Value = Image;
 
     fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {

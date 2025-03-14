@@ -8,13 +8,13 @@ use std::{io::Write, os::raw::c_char, ptr};
 pub type OwnedDetailedTimerComponentState = Box<DetailedTimerComponentState>;
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn DetailedTimerComponentState_drop(this: OwnedDetailedTimerComponentState) {
     drop(this);
 }
 
 /// The time shown by the component's main timer without the fractional part.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn DetailedTimerComponentState_timer_time(
     this: &DetailedTimerComponentState,
 ) -> *const c_char {
@@ -22,7 +22,7 @@ pub extern "C" fn DetailedTimerComponentState_timer_time(
 }
 
 /// The fractional part of the time shown by the main timer (including the dot).
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn DetailedTimerComponentState_timer_fraction(
     this: &DetailedTimerComponentState,
 ) -> *const c_char {
@@ -30,7 +30,7 @@ pub extern "C" fn DetailedTimerComponentState_timer_fraction(
 }
 
 /// The semantic coloring information the main timer's time carries.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn DetailedTimerComponentState_timer_semantic_color(
     this: &DetailedTimerComponentState,
 ) -> *const c_char {
@@ -38,7 +38,7 @@ pub extern "C" fn DetailedTimerComponentState_timer_semantic_color(
 }
 
 /// The time shown by the component's segment timer without the fractional part.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn DetailedTimerComponentState_segment_timer_time(
     this: &DetailedTimerComponentState,
 ) -> *const c_char {
@@ -47,7 +47,7 @@ pub extern "C" fn DetailedTimerComponentState_segment_timer_time(
 
 /// The fractional part of the time shown by the segment timer (including the
 /// dot).
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn DetailedTimerComponentState_segment_timer_fraction(
     this: &DetailedTimerComponentState,
 ) -> *const c_char {
@@ -55,7 +55,7 @@ pub extern "C" fn DetailedTimerComponentState_segment_timer_fraction(
 }
 
 /// Returns whether the first comparison is visible.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn DetailedTimerComponentState_comparison1_visible(
     this: &DetailedTimerComponentState,
 ) -> bool {
@@ -64,7 +64,7 @@ pub extern "C" fn DetailedTimerComponentState_comparison1_visible(
 
 /// Returns the name of the first comparison. You may not call this if the first
 /// comparison is not visible.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn DetailedTimerComponentState_comparison1_name(
     this: &DetailedTimerComponentState,
 ) -> *const c_char {
@@ -79,7 +79,7 @@ pub extern "C" fn DetailedTimerComponentState_comparison1_name(
 
 /// Returns the time of the first comparison. You may not call this if the first
 /// comparison is not visible.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn DetailedTimerComponentState_comparison1_time(
     this: &DetailedTimerComponentState,
 ) -> *const c_char {
@@ -93,7 +93,7 @@ pub extern "C" fn DetailedTimerComponentState_comparison1_time(
 }
 
 /// Returns whether the second comparison is visible.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn DetailedTimerComponentState_comparison2_visible(
     this: &DetailedTimerComponentState,
 ) -> bool {
@@ -102,7 +102,7 @@ pub extern "C" fn DetailedTimerComponentState_comparison2_visible(
 
 /// Returns the name of the second comparison. You may not call this if the
 /// second comparison is not visible.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn DetailedTimerComponentState_comparison2_name(
     this: &DetailedTimerComponentState,
 ) -> *const c_char {
@@ -117,7 +117,7 @@ pub extern "C" fn DetailedTimerComponentState_comparison2_name(
 
 /// Returns the time of the second comparison. You may not call this if the
 /// second comparison is not visible.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn DetailedTimerComponentState_comparison2_time(
     this: &DetailedTimerComponentState,
 ) -> *const c_char {
@@ -133,7 +133,7 @@ pub extern "C" fn DetailedTimerComponentState_comparison2_time(
 /// The icon of the segment. The associated image can be looked up in the image
 /// cache. The image may be the empty image. This indicates that there is no
 /// icon.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn DetailedTimerComponentState_icon(
     this: &DetailedTimerComponentState,
 ) -> *const c_char {
@@ -142,7 +142,7 @@ pub extern "C" fn DetailedTimerComponentState_icon(
 
 /// The name of the segment. This may be <NULL> if it's not supposed to be
 /// visualized.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn DetailedTimerComponentState_segment_name(
     this: &DetailedTimerComponentState,
 ) -> *const Nullablec_char {

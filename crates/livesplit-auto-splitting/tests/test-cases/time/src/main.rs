@@ -3,7 +3,7 @@ use std::{
     time::{Duration, Instant, SystemTime},
 };
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn update() {
     assert!(SystemTime::now() > SystemTime::UNIX_EPOCH);
 

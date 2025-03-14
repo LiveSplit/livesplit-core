@@ -12,26 +12,26 @@ use livesplit_core::{GeneralLayoutSettings, Timer};
 pub type OwnedGraphComponent = Box<GraphComponent>;
 
 /// Creates a new Graph Component.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn GraphComponent_new() -> OwnedGraphComponent {
     Box::new(GraphComponent::new())
 }
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn GraphComponent_drop(this: OwnedGraphComponent) {
     drop(this);
 }
 
 /// Converts the component into a generic component suitable for using with a
 /// layout.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn GraphComponent_into_generic(this: OwnedGraphComponent) -> OwnedComponent {
     Box::new((*this).into())
 }
 
 /// Encodes the component's state information as JSON.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn GraphComponent_state_as_json(
     this: &GraphComponent,
     timer: &Timer,
@@ -46,7 +46,7 @@ pub extern "C" fn GraphComponent_state_as_json(
 
 /// Calculates the component's state based on the timer and layout settings
 /// provided.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn GraphComponent_state(
     this: &GraphComponent,
     timer: &Timer,

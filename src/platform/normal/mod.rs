@@ -140,7 +140,7 @@ cfg_if::cfg_if! {
     ))] {
         use core::ops::Sub;
 
-        extern "C" {
+        unsafe extern "C" {
             fn clock_gettime_nsec_np(clock_id: libc::clockid_t) -> u64;
         }
 

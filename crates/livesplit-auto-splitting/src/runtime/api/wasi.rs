@@ -9,8 +9,8 @@ use std::{
 
 use bstr::ByteSlice;
 use wasmtime_wasi::{
-    preview1::WasiP1Ctx, DirPerms, FilePerms, HostOutputStream, StdoutStream, StreamError,
-    Subscribe, WasiCtxBuilder,
+    preview1::WasiP1Ctx, DirPerms, FilePerms, OutputStream, Pollable, StdoutStream, StreamError,
+    WasiCtxBuilder,
 };
 
 use crate::{wasi_path, Timer};
@@ -28,7 +28,7 @@ struct Buf {
 }
 
 impl StdoutStream for StdErr {
-    fn stream(&self) -> Box<dyn HostOutputStream> {
+    fn stream(&self) -> Box<dyn OutputStream> {
         Box::new(self.clone())
     }
 
@@ -63,7 +63,7 @@ impl StdErr {
     }
 }
 
-impl HostOutputStream for StdErr {
+impl OutputStream for StdErr {
     fn write(&mut self, bytes: bytes::Bytes) -> Result<(), StreamError> {
         let buffer = &mut *self.buffer.buf.lock().unwrap();
         if bytes.len() > ERR_CAPACITY - buffer.len() {
@@ -94,7 +94,7 @@ impl HostOutputStream for StdErr {
 }
 
 #[async_trait::async_trait]
-impl Subscribe for StdErr {
+impl Pollable for StdErr {
     async fn ready(&mut self) {}
 }
 

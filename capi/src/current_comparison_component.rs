@@ -11,20 +11,20 @@ use livesplit_core::Timer;
 pub type OwnedCurrentComparisonComponent = Box<CurrentComparisonComponent>;
 
 /// Creates a new Current Comparison Component.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn CurrentComparisonComponent_new() -> OwnedCurrentComparisonComponent {
     Box::new(CurrentComparisonComponent::new())
 }
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn CurrentComparisonComponent_drop(this: OwnedCurrentComparisonComponent) {
     drop(this);
 }
 
 /// Converts the component into a generic component suitable for using with a
 /// layout.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn CurrentComparisonComponent_into_generic(
     this: OwnedCurrentComparisonComponent,
 ) -> OwnedComponent {
@@ -32,7 +32,7 @@ pub extern "C" fn CurrentComparisonComponent_into_generic(
 }
 
 /// Encodes the component's state information as JSON.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn CurrentComparisonComponent_state_as_json(
     this: &mut CurrentComparisonComponent,
     timer: &Timer,
@@ -43,7 +43,7 @@ pub extern "C" fn CurrentComparisonComponent_state_as_json(
 }
 
 /// Calculates the component's state based on the timer provided.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn CurrentComparisonComponent_state(
     this: &mut CurrentComparisonComponent,
     timer: &Timer,

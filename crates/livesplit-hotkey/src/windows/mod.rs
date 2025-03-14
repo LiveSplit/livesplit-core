@@ -4,8 +4,8 @@ use std::{
     collections::hash_map::{Entry, HashMap},
     fmt, mem, ptr,
     sync::{
-        mpsc::{channel, Sender},
         Arc, Mutex,
+        mpsc::{Sender, channel},
     },
     thread,
 };
@@ -15,12 +15,12 @@ use windows_sys::Win32::{
     System::{LibraryLoader::GetModuleHandleW, Threading::GetCurrentThreadId},
     UI::{
         Input::KeyboardAndMouse::{
-            MapVirtualKeyW, MAPVK_VK_TO_CHAR, MAPVK_VK_TO_VSC_EX, MAPVK_VSC_TO_VK_EX,
+            MAPVK_VK_TO_CHAR, MAPVK_VK_TO_VSC_EX, MAPVK_VSC_TO_VK_EX, MapVirtualKeyW,
         },
         WindowsAndMessaging::{
-            CallNextHookEx, GetMessageW, PostThreadMessageW, SetWindowsHookExW,
-            UnhookWindowsHookEx, HHOOK, KBDLLHOOKSTRUCT, LLKHF_EXTENDED, WH_KEYBOARD_LL,
-            WM_KEYDOWN, WM_KEYUP, WM_SYSKEYDOWN, WM_SYSKEYUP,
+            CallNextHookEx, GetMessageW, HHOOK, KBDLLHOOKSTRUCT, LLKHF_EXTENDED,
+            PostThreadMessageW, SetWindowsHookExW, UnhookWindowsHookEx, WH_KEYBOARD_LL, WM_KEYDOWN,
+            WM_KEYUP, WM_SYSKEYDOWN, WM_SYSKEYUP,
         },
     },
 };
@@ -257,7 +257,9 @@ unsafe extern "system" fn callback_proc(code: i32, wparam: WPARAM, lparam: LPARA
         let state = state.as_mut().expect("State should be initialized by now");
 
         if code >= 0 {
-            let hook_struct = &*(lparam as *const KBDLLHOOKSTRUCT);
+            // SAFETY: We checked whether it's valid. The caller guarantees that
+            // lparam is a valid pointer to a KBDLLHOOKSTRUCT.
+            let hook_struct = unsafe { &*(lparam as *const KBDLLHOOKSTRUCT) };
             let event = wparam as u32;
             if event == WM_KEYDOWN || event == WM_SYSKEYDOWN {
                 // Windows in addition to the scan code has a notion of a
@@ -281,7 +283,8 @@ unsafe extern "system" fn callback_proc(code: i32, wparam: WPARAM, lparam: LPARA
                 let scan_code = if hook_struct.scanCode != 0 {
                     hook_struct.scanCode + ((hook_struct.flags & LLKHF_EXTENDED) * 0xE000)
                 } else {
-                    MapVirtualKeyW(hook_struct.vkCode, MAPVK_VK_TO_VSC_EX)
+                    // SAFETY: Always safe to call.
+                    unsafe { MapVirtualKeyW(hook_struct.vkCode, MAPVK_VK_TO_VSC_EX) }
                 };
 
                 if let Some(key_code) = parse_scan_code(scan_code) {
@@ -336,7 +339,8 @@ unsafe extern "system" fn callback_proc(code: i32, wparam: WPARAM, lparam: LPARA
                 let scan_code = if hook_struct.scanCode != 0 {
                     hook_struct.scanCode + ((hook_struct.flags & LLKHF_EXTENDED) * 0xE000)
                 } else {
-                    MapVirtualKeyW(hook_struct.vkCode, MAPVK_VK_TO_VSC_EX)
+                    // SAFETY: Always safe to call.
+                    unsafe { MapVirtualKeyW(hook_struct.vkCode, MAPVK_VK_TO_VSC_EX) }
                 };
 
                 if let Some(key_code) = parse_scan_code(scan_code) {
@@ -365,7 +369,9 @@ unsafe extern "system" fn callback_proc(code: i32, wparam: WPARAM, lparam: LPARA
         state.hook
     });
 
-    CallNextHookEx(hook, code, wparam, lparam)
+    // SAFETY: We are forwarding everything to the next hook as per
+    // documentation.
+    unsafe { CallNextHookEx(hook, code, wparam, lparam) }
 }
 
 #[inline]

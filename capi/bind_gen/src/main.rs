@@ -21,8 +21,8 @@ use std::{
     rc::Rc,
 };
 use syn::{
-    parse_file, Expr, ExprLit, FnArg, Item, ItemFn, Lit, Meta, Pat, ReturnType, Signature,
-    Type as SynType, Visibility,
+    parse_file, Expr, ExprLit, FnArg, Item, ItemFn, Lit, Meta, MetaList, Pat, ReturnType,
+    Signature, Type as SynType, Visibility,
 };
 
 #[derive(clap::Parser)]
@@ -212,7 +212,7 @@ fn main() {
                 .and_then(|a| a.name.as_ref())
                 .is_none_or(|n| n.value() != "C")
                 || attrs.iter().all(|a| match &a.meta {
-                    Meta::Path(w) => !w.is_ident("no_mangle"),
+                    Meta::List(list) => !is_no_mangle(list),
                     _ => true,
                 })
             {
@@ -266,6 +266,20 @@ fn main() {
     }
 
     write_files(&fns_to_classes(functions), &opt).unwrap();
+}
+
+fn is_no_mangle(list: &MetaList) -> bool {
+    if !list.path.is_ident("unsafe") {
+        return false;
+    }
+    let mut contains_no_mangle = false;
+    let _ = list.parse_nested_meta(|meta| {
+        if meta.path.is_ident("no_mangle") {
+            contains_no_mangle = true;
+        }
+        Ok(())
+    });
+    contains_no_mangle
 }
 
 fn fns_to_classes(functions: Vec<Function>) -> BTreeMap<String, Class> {

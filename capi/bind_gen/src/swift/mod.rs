@@ -44,5 +44,5 @@ pub fn write<P: AsRef<Path>>(path: P, classes: &BTreeMap<String, Class>) -> Resu
     path.pop();
 
     path.push("module.modulemap");
-    fs::write(&path, MODULE_MAP).map_err(Into::into)
+    fs::write(&path, MODULE_MAP)
 }

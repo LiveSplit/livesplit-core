@@ -13,9 +13,10 @@ pub type NullableOwnedLinkedLayout = Option<OwnedLinkedLayout>;
 
 /// Creates a new Linked Layout with the path specified. If the path is empty,
 /// the default layout is used instead.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn LinkedLayout_new(path: *const c_char) -> OwnedLinkedLayout {
-    let path = str(path);
+    // SAFETY: The caller guarantees that `path` is valid.
+    let path = unsafe { str(path) };
     Box::new(if path.is_empty() {
         LinkedLayout::Default
     } else {
@@ -24,19 +25,19 @@ pub unsafe extern "C" fn LinkedLayout_new(path: *const c_char) -> OwnedLinkedLay
 }
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LinkedLayout_drop(this: OwnedLinkedLayout) {
     drop(this);
 }
 
 /// Checks whether the linked layout is the default layout.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LinkedLayout_is_default(this: &LinkedLayout) -> bool {
     matches!(this, LinkedLayout::Default)
 }
 
 /// Returns the path of the linked layout, if it's not the default layout.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn LinkedLayout_path(this: &LinkedLayout) -> *const c_char {
     output_str(match this {
         LinkedLayout::Path(path) => path,

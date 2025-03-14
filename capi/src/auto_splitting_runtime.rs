@@ -37,29 +37,31 @@ pub type OwnedAutoSplittingRuntime = Box<AutoSplittingRuntime>;
 pub type NullableOwnedAutoSplittingRuntime = Option<OwnedAutoSplittingRuntime>;
 
 /// Creates a new Auto Splitting Runtime.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn AutoSplittingRuntime_new() -> OwnedAutoSplittingRuntime {
     Box::new(AutoSplittingRuntime::new())
 }
 
 /// Attempts to load an auto splitter. Returns true if successful.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn AutoSplittingRuntime_load(
     this: &AutoSplittingRuntime,
     path: *const c_char,
     shared_timer: OwnedSharedTimer,
 ) -> bool {
-    this.load(PathBuf::from(str(path)), *shared_timer).is_ok()
+    // SAFETY: The caller guarantees that `path` is valid.
+    this.load(PathBuf::from(unsafe { str(path) }), *shared_timer)
+        .is_ok()
 }
 
 /// Attempts to unload the auto splitter. Returns true if successful.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn AutoSplittingRuntime_unload(this: &AutoSplittingRuntime) -> bool {
     this.unload().is_ok()
 }
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn AutoSplittingRuntime_drop(this: OwnedAutoSplittingRuntime) {
     drop(this);
 }

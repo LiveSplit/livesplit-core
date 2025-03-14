@@ -1,6 +1,6 @@
 use std::{thread, time};
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn update() {
     thread::yield_now();
     thread::sleep(time::Duration::from_secs(10));

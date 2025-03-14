@@ -13,26 +13,26 @@ use livesplit_core::Timer;
 pub type OwnedPbChanceComponent = Box<PbChanceComponent>;
 
 /// Creates a new PB Chance Component.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn PbChanceComponent_new() -> OwnedPbChanceComponent {
     Box::new(PbChanceComponent::new())
 }
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn PbChanceComponent_drop(this: OwnedPbChanceComponent) {
     drop(this);
 }
 
 /// Converts the component into a generic component suitable for using with a
 /// layout.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn PbChanceComponent_into_generic(this: OwnedPbChanceComponent) -> OwnedComponent {
     Box::new((*this).into())
 }
 
 /// Encodes the component's state information as JSON.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn PbChanceComponent_state_as_json(this: &PbChanceComponent, timer: &Timer) -> Json {
     output_vec(|o| {
         this.state(&timer.snapshot()).write_json(o).unwrap();
@@ -40,7 +40,7 @@ pub extern "C" fn PbChanceComponent_state_as_json(this: &PbChanceComponent, time
 }
 
 /// Calculates the component's state based on the timer provided.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn PbChanceComponent_state(
     this: &PbChanceComponent,
     timer: &Timer,

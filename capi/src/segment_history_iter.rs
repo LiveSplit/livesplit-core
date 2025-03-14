@@ -11,14 +11,14 @@ pub type SegmentHistoryIter = slice::Iter<'static, (i32, Time)>;
 pub type OwnedSegmentHistoryIter = Box<SegmentHistoryIter>;
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SegmentHistoryIter_drop(this: OwnedSegmentHistoryIter) {
     drop(this);
 }
 
 /// Accesses the next Segment History element. Returns <NULL> if there are no
 /// more elements.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SegmentHistoryIter_next(
     this: &mut SegmentHistoryIter,
 ) -> *const NullableSegmentHistoryElement {

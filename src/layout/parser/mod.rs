@@ -9,15 +9,15 @@ use crate::{
         Image, LayoutBackground, ListGradient,
     },
     timing::{
-        formatter::{Accuracy, DigitsFormat},
         TimingMethod,
+        formatter::{Accuracy, DigitsFormat},
     },
     util::xml::{
-        helper::{
-            end_tag, image, parse_base, parse_children, text, text_as_escaped_string_err,
-            text_parsed, Error as XmlError,
-        },
         Reader,
+        helper::{
+            Error as XmlError, end_tag, image, parse_base, parse_children, text,
+            text_as_escaped_string_err, text_parsed,
+        },
     },
 };
 use core::{mem::MaybeUninit, num::ParseIntError, str};
@@ -381,7 +381,7 @@ where
         let mut len = 0;
         for _ in 0..5 {
             let byte = *cursor.next().ok_or(Error::ParseFont)?;
-            len = len << 7 | (byte & 0b0111_1111) as usize;
+            len = (len << 7) | (byte & 0b0111_1111) as usize;
             if byte <= 0b0111_1111 {
                 break;
             }

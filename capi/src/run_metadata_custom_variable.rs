@@ -17,33 +17,36 @@ pub type NullableRunMetadataCustomVariable = RunMetadataCustomVariable;
 pub type OwnedRunMetadataCustomVariable = Box<RunMetadataCustomVariable>;
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn RunMetadataCustomVariable_drop(this: OwnedRunMetadataCustomVariable) {
     drop(this);
 }
 
 /// Accesses the name of this custom variable.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn RunMetadataCustomVariable_name(
     this: &RunMetadataCustomVariable,
 ) -> *const c_char {
-    output_str(&*this.0)
+    // SAFETY: The caller guarantees that `this` is valid.
+    unsafe { output_str(&*this.0) }
 }
 
 /// Accesses the value of this custom variable.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn RunMetadataCustomVariable_value(
     this: &RunMetadataCustomVariable,
 ) -> *const c_char {
-    output_str(&(*this.1).value)
+    // SAFETY: The caller guarantees that `this` is valid.
+    unsafe { output_str(&(*this.1).value) }
 }
 
 /// Returns <TRUE> if the custom variable is permanent. Permanent variables get
 /// stored in the splits file and are visible in the run editor. Temporary
 /// variables are not.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn RunMetadataCustomVariable_is_permanent(
     this: &RunMetadataCustomVariable,
 ) -> bool {
-    (*this.1).is_permanent
+    // SAFETY: The caller guarantees that `this` is valid.
+    unsafe { (*this.1).is_permanent }
 }

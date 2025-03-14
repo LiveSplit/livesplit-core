@@ -4,9 +4,9 @@
 use crate::{platform::prelude::*, util::PopulateString};
 use core::{fmt, marker::PhantomData};
 use serde::{
+    Deserialize, Deserializer, Serialize, Serializer,
     de::{MapAccess, Visitor},
     ser::SerializeMap,
-    Deserialize, Deserializer, Serialize, Serializer,
 };
 
 /// An ordered [`Map`] is a map where the iteration order of the key-value pairs is

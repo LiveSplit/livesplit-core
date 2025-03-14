@@ -7,7 +7,7 @@ use livesplit_core::Component;
 pub type OwnedComponent = Box<Component>;
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Component_drop(this: OwnedComponent) {
     drop(this);
 }

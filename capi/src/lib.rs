@@ -159,7 +159,8 @@ unsafe fn slice<T>(ptr: *const T, len: usize) -> &'static [T] {
     if len == 0 {
         &[]
     } else {
-        slice::from_raw_parts(ptr, len)
+        // SAFETY: The caller guarantees that `ptr` is valid for `len`.
+        unsafe { slice::from_raw_parts(ptr, len) }
     }
 }
 
@@ -167,7 +168,8 @@ unsafe fn slice_mut<T>(ptr: *mut T, len: usize) -> &'static mut [T] {
     if len == 0 {
         &mut []
     } else {
-        slice::from_raw_parts_mut(ptr, len)
+        // SAFETY: The caller guarantees that `ptr` is valid for `len`.
+        unsafe { slice::from_raw_parts_mut(ptr, len) }
     }
 }
 
@@ -175,7 +177,8 @@ unsafe fn str(s: *const c_char) -> &'static str {
     if s.is_null() {
         ""
     } else {
-        let bytes = CStr::from_ptr(s as _).to_bytes();
+        // SAFETY: The caller guarantees that `s` is valid.
+        let bytes = unsafe { CStr::from_ptr(s as _).to_bytes() };
 
         // Depending on where the C API is used, you may be able to fully trust
         // that the caller always passes valid UTF-8. On the web we use the
@@ -185,7 +188,8 @@ unsafe fn str(s: *const c_char) -> &'static str {
             all(target_family = "wasm", feature = "wasm-web"),
         ))]
         {
-            std::str::from_utf8_unchecked(bytes)
+            // SAFETY: The caller guarantees that `s` is valid UTF-8.
+            unsafe { std::str::from_utf8_unchecked(bytes) }
         }
         #[cfg(not(any(
             feature = "assume-str-parameters-are-utf8",
@@ -201,13 +205,15 @@ unsafe fn str(s: *const c_char) -> &'static str {
 #[cfg(unix)]
 unsafe fn get_file(fd: i64) -> ManuallyDrop<File> {
     use std::os::unix::io::FromRawFd;
-    ManuallyDrop::new(File::from_raw_fd(fd as _))
+    // SAFETY: The caller guarantees that `fd` is valid.
+    ManuallyDrop::new(unsafe { File::from_raw_fd(fd as _) })
 }
 
 #[cfg(windows)]
 unsafe fn get_file(handle: i64) -> ManuallyDrop<File> {
     use std::os::windows::io::FromRawHandle;
-    ManuallyDrop::new(File::from_raw_handle(handle as *mut () as _))
+    // SAFETY: The caller guarantees that `handle` is valid.
+    ManuallyDrop::new(unsafe { File::from_raw_handle(handle as *mut () as _) })
 }
 
 #[cfg(not(any(windows, unix)))]
@@ -217,27 +223,33 @@ unsafe fn get_file(_: i64) -> ManuallyDrop<File> {
 
 /// Allocate memory.
 #[cfg(all(target_family = "wasm", not(target_os = "wasi")))]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn alloc(size: usize) -> *mut u8 {
     if size == 0 {
         std::ptr::NonNull::dangling().as_ptr()
     } else {
+        // SAFETY: We checked that the size is not 0, so this is safe.
         unsafe { std::alloc::alloc(std::alloc::Layout::from_size_align_unchecked(size, 1)) }
     }
 }
 
 /// Deallocate memory.
 #[cfg(all(target_family = "wasm", not(target_os = "wasi")))]
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn dealloc(ptr: *mut u8, cap: usize) {
     if cap != 0 {
-        std::alloc::dealloc(ptr, std::alloc::Layout::from_size_align_unchecked(cap, 1));
+        // SAFETY: We checked that the capacity is not 0 and the caller
+        // guarantees that the pointer is valid to be deallocated for the given
+        // capacity.
+        unsafe {
+            std::alloc::dealloc(ptr, std::alloc::Layout::from_size_align_unchecked(cap, 1));
+        }
     }
 }
 
 /// Returns the byte length of the last nul-terminated string returned on the
 /// current thread. The length excludes the nul-terminator.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn get_buf_len() -> usize {
     OUTPUT_VEC.with_borrow(|v| v.len() - 1)
 }

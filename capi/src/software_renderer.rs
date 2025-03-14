@@ -17,6 +17,7 @@ impl SoftwareRenderer {
         panic!("The software renderer is not compiled in.")
     }
 
+    #[allow(warnings)]
     fn render(
         &mut self,
         _: &LayoutState,
@@ -33,13 +34,13 @@ impl SoftwareRenderer {
 pub type OwnedSoftwareRenderer = Box<SoftwareRenderer>;
 
 /// Creates a new software renderer.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SoftwareRenderer_new() -> OwnedSoftwareRenderer {
     Box::new(SoftwareRenderer::new())
 }
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SoftwareRenderer_drop(this: OwnedSoftwareRenderer) {
     drop(this);
 }
@@ -53,7 +54,7 @@ pub extern "C" fn SoftwareRenderer_drop(this: OwnedSoftwareRenderer) {
 /// width of the underlying buffer. By default the renderer will try not to
 /// redraw parts of the image that haven't changed. You can force a redraw in
 /// case the image provided or its contents have changed.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn SoftwareRenderer_render(
     this: &mut SoftwareRenderer,
     layout_state: &LayoutState,
@@ -67,7 +68,9 @@ pub unsafe extern "C" fn SoftwareRenderer_render(
     this.render(
         layout_state,
         image_cache,
-        slice_mut(data, stride as usize * height as usize * 4),
+        // SAFETY: The caller guarantees that `data` is valid for `stride *
+        // height * 4` bytes.
+        unsafe { slice_mut(data, stride as usize * height as usize * 4) },
         [width, height],
         stride,
         force_redraw,

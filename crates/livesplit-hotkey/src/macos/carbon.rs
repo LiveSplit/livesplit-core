@@ -33,7 +33,7 @@ pub enum UCKeyAction {
 }
 
 #[link(name = "Carbon", kind = "framework")]
-extern "C" {
+unsafe extern "C" {
     pub static kTISPropertyUnicodeKeyLayoutData: StringRef;
     pub fn TISCopyCurrentKeyboardInputSource() -> TISInputSourceRef;
     pub fn TISCopyCurrentKeyboardLayoutInputSource() -> TISInputSourceRef;
