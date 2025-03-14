@@ -72,6 +72,7 @@ impl Renderer {
             [width, height],
             layout_state,
             image_cache,
+            layout_state
         );
 
         let writer = &mut Writer::new_with_default_header(writer)?;

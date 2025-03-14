@@ -119,7 +119,6 @@ impl Layout {
         state.separators_color = settings.separators_color;
         state.text_color = settings.text_color;
         state.direction = settings.direction;
-        state.mouse_pass_through_while_running = settings.mouse_pass_through_while_running;
         state.drop_shadow = settings.drop_shadow;
     }
 
