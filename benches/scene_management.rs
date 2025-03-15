@@ -2,7 +2,7 @@ cfg_if::cfg_if! {
     if #[cfg(feature = "rendering")] {
         use criterion::{criterion_group, criterion_main, Criterion};
         use livesplit_core::{
-            layout::{self, Layout},
+            layout::{self, Layout, LayoutState},
             rendering::{
                 PathBuilder, ResourceAllocator, SceneManager,
                 Image, Label, FontKind, SharedOwnership,
