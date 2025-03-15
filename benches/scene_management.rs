@@ -98,7 +98,7 @@ cfg_if::cfg_if! {
             let mut manager = SceneManager::new(Dummy);
 
             c.bench_function("Scene Management (Default)", move |b| {
-                b.iter(|| manager.update_scene(Dummy, [300.0, 500.0], &state, &image_cache, &state))
+                b.iter(|| manager.update_scene(Dummy, [300.0, 500.0], &state, &image_cache))
             });
         }
 
@@ -120,7 +120,7 @@ cfg_if::cfg_if! {
             let mut manager = SceneManager::new(Dummy);
 
             c.bench_function("Scene Management (Subsplits Layout)", move |b| {
-                b.iter(|| manager.update_scene(Dummy, [300.0, 800.0], &state, &image_cache, &state))
+                b.iter(|| manager.update_scene(Dummy, [300.0, 800.0], &state, &image_cache))
             });
         }
 
