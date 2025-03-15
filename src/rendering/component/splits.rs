@@ -11,7 +11,7 @@ use crate::{
         font::CachedLabel,
         resource::ResourceAllocator,
         scene::Layer,
-        solid,
+        solid, FillShader
     },
     settings::{Gradient, ListGradient},
 };
@@ -98,6 +98,8 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
 
     cache.longest_column_values.clear();
 
+    let shadow_offset = [0.05, 0.05];
+    let shadow_color = FillShader::SolidColor([0.0, 0.0, 0.0, 0.5]);
     for split in &component.splits {
         if split.columns.len() > cache.longest_column_values.len() {
             cache
@@ -204,6 +206,9 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                     [right_x, TEXT_ALIGN_TOP],
                     DEFAULT_TEXT_SIZE,
                     text_color,
+                    shadow_offset,
+                    shadow_color,
+                    layout_state
                 );
                 let label_width = right_x - left_x;
                 if label_width > *max_width {
@@ -277,6 +282,9 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                         [right_x, split_height + TEXT_ALIGN_BOTTOM],
                         DEFAULT_TEXT_SIZE,
                         solid(&column.visual_color),
+                        shadow_offset,
+                        shadow_color,
+                        layout_state
                     );
                 }
                 right_x -= max_width + PADDING;
@@ -292,7 +300,10 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                 [icon_right, TEXT_ALIGN_TOP],
                 DEFAULT_TEXT_SIZE,
                 text_color,
+                shadow_offset,
+                shadow_color,
                 left_x - PADDING,
+                layout_state
             );
         }
         context.translate(delta_x, delta_y);

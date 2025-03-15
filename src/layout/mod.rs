@@ -119,6 +119,7 @@ impl Layout {
         state.separators_color = settings.separators_color;
         state.text_color = settings.text_color;
         state.direction = settings.direction;
+        state.drop_shadow = settings.drop_shadow;
     }
 
     /// Calculates the layout's state based on the timer provided. You can use
