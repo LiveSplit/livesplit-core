@@ -67,7 +67,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         context,
         [width, top_height],
         &component.timer,
-        layout_state
     );
 
     if let Some(segment_name) = &component.segment_name {
@@ -86,7 +85,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
             shadow_offset,
             shadow_color,
             timer_end,
-            layout_state
         );
     }
 
@@ -97,7 +95,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         context,
         [width, bottom_height],
         &component.segment_timer,
-        layout_state
     );
 
     context.translate(0.0, -top_height);
@@ -124,7 +121,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                 shadow_offset,
                 shadow_color,
                 segment_timer_end,
-                layout_state
             )
             .max(name_end);
 
@@ -152,7 +148,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                 shadow_offset,
                 shadow_color,
                 segment_timer_end,
-                layout_state
             )
             .max(name_end);
 
@@ -182,7 +177,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
             comparison_times_color,
             shadow_offset,
             shadow_color,
-            layout_state
         );
     }
     if let Some(comparison) = &component.comparison1 {
@@ -195,7 +189,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
             comparison_times_color,
             shadow_offset,
             shadow_color,
-            layout_state
         );
     }
 }

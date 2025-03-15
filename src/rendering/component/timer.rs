@@ -1,6 +1,5 @@
 use crate::{
     component::timer::State,
-    layout::LayoutState,
     rendering::{
         consts::PADDING, font::CachedLabel, resource::ResourceAllocator, scene::Layer, FillShader,
         RenderContext,
@@ -26,7 +25,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     context: &mut RenderContext<'_, A>,
     [width, height]: [f32; 2],
     component: &State,
-    layout_state: &LayoutState
 ) -> f32 {
     context.render_background([width, height], &component.background);
     let shadow_offset = [0.05, 0.05];
@@ -46,7 +44,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         shader,
         shadow_offset,
         shadow_color,
-        layout_state
     );
     context.render_timer(
         &component.time,
@@ -57,6 +54,5 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         shader,
         shadow_offset,
         shadow_color,
-        layout_state
     )
 }

@@ -208,7 +208,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                     text_color,
                     shadow_offset,
                     shadow_color,
-                    layout_state
                 );
                 let label_width = right_x - left_x;
                 if label_width > *max_width {
@@ -284,7 +283,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                         solid(&column.visual_color),
                         shadow_offset,
                         shadow_color,
-                        layout_state
                     );
                 }
                 right_x -= max_width + PADDING;
@@ -303,7 +301,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                 shadow_offset,
                 shadow_color,
                 left_x - PADDING,
-                layout_state
             );
         }
         context.translate(delta_x, delta_y);

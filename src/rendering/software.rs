@@ -284,7 +284,6 @@ impl BorrowedRenderer {
             [width as _, height as _],
             state,
             image_cache,
-            state
         );
 
         let scene = self.scene_manager.scene();

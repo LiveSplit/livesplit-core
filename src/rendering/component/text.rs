@@ -49,7 +49,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
             ),
             shadow_offset,
             shadow_color,
-            layout_state
         ),
         TextState::Split(left, right) => context.render_key_value_component(
             left,
@@ -65,7 +64,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
             component.left_center_color.unwrap_or(layout_state.text_color),
             component.right_color.unwrap_or(layout_state.text_color),
             component.display_two_rows || layout_state.direction == LayoutDirection::Horizontal,
-            layout_state
         ),
     }
 }

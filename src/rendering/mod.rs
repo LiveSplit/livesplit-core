@@ -218,7 +218,6 @@ impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager
         resolution: [f32; 2],
         state: &LayoutState,
         image_cache: &ImageCache,
-        layout_state: &LayoutState
     ) -> Option<[f32; 2]> {
         self.scene.clear();
 
@@ -232,10 +231,10 @@ impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager
 
         let new_dimensions = match state.direction {
             LayoutDirection::Vertical => {
-                self.render_vertical(allocator, resolution, state, image_cache, layout_state)
+                self.render_vertical(allocator, resolution, state, image_cache)
             }
             LayoutDirection::Horizontal => {
-                self.render_horizontal(allocator, resolution, state, image_cache, layout_state)
+                self.render_horizontal(allocator, resolution, state, image_cache)
             }
         };
 
@@ -252,7 +251,6 @@ impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager
         resolution @ [width, height]: [f32; 2],
         state: &LayoutState,
         image_cache: &ImageCache,
-        layout_state: &LayoutState
     ) -> Option<[f32; 2]> {
         let total_height = component::layout_height(state);
 
@@ -286,7 +284,7 @@ impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager
             fonts: &mut self.fonts,
             images: &mut self.images,
             image_cache,
-            layout_state
+            state
         };
 
         let background = context.decode_layout_background(&state.background, resolution);
@@ -328,7 +326,6 @@ impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager
         resolution @ [width, height]: [f32; 2],
         state: &LayoutState,
         image_cache: &ImageCache,
-        layout_state: &LayoutState
     ) -> Option<[f32; 2]> {
         let total_width = component::layout_width(state);
 
@@ -361,7 +358,7 @@ impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager
             fonts: &mut self.fonts,
             images: &mut self.images,
             image_cache,
-            layout_state
+            state
         };
 
         let background = context.decode_layout_background(&state.background, resolution);
@@ -409,7 +406,7 @@ struct RenderContext<'b, A: ResourceAllocator> {
     fonts: &'b mut FontCache<A::Font>,
     images: &'b mut ImageCache<CachedImage<A::Image>>,
     image_cache: &'b ImageCache,
-    layout_state: &'b LayoutState
+    state: &'b LayoutState
 }
 
 impl<A: ResourceAllocator> RenderContext<'_, A> {
@@ -571,7 +568,6 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         key_color: Color,
         value_color: Color,
         display_two_rows: bool,
-        layout_state: &LayoutState
     ) {
         let left_of_value_x = self.render_numbers(
             value,
@@ -582,7 +578,6 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
             solid(&value_color),
             shadow_offset,
             value_shadow,
-            layout_state
         );
         let end_x = if display_two_rows {
             width
@@ -599,7 +594,6 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
             key_shadow,
             solid(&key_color),
             end_x - PADDING,
-            layout_state
         );
     }
 
@@ -613,7 +607,6 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         shadow_color: FillShader,
         shader: FillShader,
         max_x: f32,
-        layout_state: &LayoutState
     ) -> f32 {
         let label = label.update(
             abbreviations,
@@ -622,7 +615,7 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
             (max_x - x) / scale,
         );
 
-        if layout_state.drop_shadow {
+        if self.state.drop_shadow {
             self.scene.bottom_layer_mut().push(Entity::Label(
                 label.share(),
                 shadow_color,
@@ -649,7 +642,6 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         shadow_offset: Pos,
         shadow_color: FillShader,
         max_x: f32,
-        layout_state: &LayoutState
     ) -> f32 {
         let label = label.update(
             text,
@@ -657,7 +649,7 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
             &mut self.fonts.text.font,
             Some((max_x - x) / scale),
         );
-        if layout_state.drop_shadow {
+        if self.state.drop_shadow {
             self.scene.bottom_layer_mut().push(Entity::Label(
                 label.share(),
                 shadow_color,
@@ -684,7 +676,6 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         shader: FillShader,
         shadow_offset: Pos,
         shadow_color: FillShader,
-        layout_state: &LayoutState
     ) {
         let label = label.update(
             text,
@@ -692,7 +683,7 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
             &mut self.fonts.text.font,
             Some((max_x - min_x) / scale),
         );
-        if layout_state.drop_shadow {
+        if self.state.drop_shadow {
             self.scene.bottom_layer_mut().push(Entity::Label(
                 label.share(),
                 shadow_color,
@@ -732,7 +723,6 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         shader: FillShader,
         shadow_offset: Pos,
         shadow_color: FillShader,
-        layout_state: &LayoutState
     ) {
         let label = label.update(
             abbreviations,
@@ -740,7 +730,7 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
             &mut self.fonts.text.font,
             (max_x - min_x) / scale,
         );
-        if layout_state.drop_shadow {
+        if self.state.drop_shadow {
             self.scene.bottom_layer_mut().push(Entity::Label(
                 label.share(),
                 shadow_color,
@@ -778,12 +768,11 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         shader: FillShader,
         shadow_offset: Pos,
         shadow_color: FillShader,
-        layout_state: &LayoutState
     ) -> f32 {
         let label = label.update(text, &mut self.handles, &mut self.fonts.text.font, None);
         let width = label.width(scale);
         
-        if layout_state.drop_shadow {
+        if self.state.drop_shadow {
             self.scene.layer_mut(layer).push(Entity::Label(
                 label.share(),
                 shadow_color,
@@ -812,7 +801,6 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         shadow_offset: Pos,
         shadow_color: FillShader,
         shader: FillShader,
-        layout_state: &LayoutState
     ) {
         if centered {
             self.render_abbreviated_text_centered(
@@ -825,10 +813,9 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
                 shader,
                 shadow_offset,
                 shadow_color,
-                layout_state
             );
         } else {
-            self.render_abbreviated_text_ellipsis(abbreviations, label, pos, scale, shadow_offset, shadow_color, shader, max_x, layout_state);
+            self.render_abbreviated_text_ellipsis(abbreviations, label, pos, scale, shadow_offset, shadow_color, shader, max_x);
         }
     }
 
@@ -842,12 +829,11 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         shader: FillShader,
         shadow_offset: Pos,
         shadow_color: FillShader,
-        layout_state: &LayoutState
     ) -> f32 {
         let label = label.update(text, &mut self.handles, &mut self.fonts.times.font, None);
         let width = label.width(scale);
 
-        if layout_state.drop_shadow {
+        if self.state.drop_shadow {
             self.scene.layer_mut(layer).push(Entity::Label(
                 label.share(),
                 shadow_color,
@@ -873,11 +859,10 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         shader: FillShader,
         shadow_offset: Pos,
         shadow_color: FillShader,
-        layout_state: &LayoutState
     ) -> f32 {
         let label = label.update(text, &mut self.handles, &mut self.fonts.timer.font, None);
         let width = label.width(scale);
-        if layout_state.drop_shadow {
+        if self.state.drop_shadow {
             self.scene.layer_mut(layer).push(Entity::Label(
                 label.share(),
                 shadow_color,

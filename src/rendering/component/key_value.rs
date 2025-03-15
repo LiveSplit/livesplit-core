@@ -47,6 +47,5 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         component.key_color.unwrap_or(layout_state.text_color),
         component.value_color.unwrap_or(layout_state.text_color),
         component.display_two_rows || layout_state.direction == LayoutDirection::Horizontal,
-        layout_state
     );
 }

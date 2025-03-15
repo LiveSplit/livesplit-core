@@ -85,7 +85,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         text_color,
         shadow_offset,
         shadow_color,
-        layout_state
     ) - PADDING;
 
     let (line1_y, line1_end_x) = if !component.line2.is_empty() {
@@ -100,7 +99,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
             shadow_offset,
             shadow_color,
             text_color,
-            layout_state
         );
         (TEXT_ALIGN_TOP, width - PADDING)
     } else {
@@ -118,6 +116,5 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         shadow_offset,
         shadow_color,
         text_color,
-        layout_state
     );
 }
