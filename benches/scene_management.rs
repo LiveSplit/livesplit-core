@@ -2,7 +2,7 @@ cfg_if::cfg_if! {
     if #[cfg(feature = "rendering")] {
         use criterion::{criterion_group, criterion_main, Criterion};
         use livesplit_core::{
-            layout::{self, Layout, LayoutState},
+            layout::{self, Layout},
             rendering::{
                 PathBuilder, ResourceAllocator, SceneManager,
                 Image, Label, FontKind, SharedOwnership,
@@ -98,7 +98,7 @@ cfg_if::cfg_if! {
             let mut manager = SceneManager::new(Dummy);
 
             c.bench_function("Scene Management (Default)", move |b| {
-                b.iter(|| manager.update_scene(Dummy, [300.0, 500.0], &state, &image_cache, &LayoutState))
+                b.iter(|| manager.update_scene(Dummy, [300.0, 500.0], &state, &image_cache, &state))
             });
         }
 
@@ -120,7 +120,7 @@ cfg_if::cfg_if! {
             let mut manager = SceneManager::new(Dummy);
 
             c.bench_function("Scene Management (Subsplits Layout)", move |b| {
-                b.iter(|| manager.update_scene(Dummy, [300.0, 800.0], &state, &image_cache, &LayoutState))
+                b.iter(|| manager.update_scene(Dummy, [300.0, 800.0], &state, &image_cache, &state))
             });
         }
 
