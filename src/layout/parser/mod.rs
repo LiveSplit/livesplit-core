@@ -782,6 +782,9 @@ fn parse_general_settings(layout: &mut Layout, reader: &mut Reader<'_>) -> Resul
         "DropShadow" => {
             parse_bool(reader, |b| settings.drop_shadow = b)
         }
+        "ShadowColor" => color(reader, |color| {
+            settings.shadow_color = color;
+        }),
         _ => end_tag(reader),
     })?;
 

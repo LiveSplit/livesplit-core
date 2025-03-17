@@ -4,7 +4,7 @@ use crate::{
     rendering::{
         font::{AbbreviatedLabel, CachedLabel},
         resource::ResourceAllocator,
-        RenderContext, FillShader
+        RenderContext,
     },
 };
 
@@ -32,7 +32,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     context.render_background(dim, &component.background);
 
     let shadow_offset = [0.05, 0.05];
-    let shadow_color = FillShader::SolidColor([0.0, 0.0, 0.0, 0.5]);
+    let shadow_color = layout_state.shadow_color;
     context.render_key_value_component(
         &component.key,
         &component.key_abbreviations,

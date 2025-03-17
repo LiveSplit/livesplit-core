@@ -563,8 +563,8 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         updates_frequently: bool,
         [width, height]: [f32; 2],
         shadow_offset: Pos,
-        key_shadow: FillShader,
-        value_shadow: FillShader,
+        key_shadow: Color,
+        value_shadow: Color,
         key_color: Color,
         value_color: Color,
         display_two_rows: bool,
@@ -577,7 +577,7 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
             DEFAULT_TEXT_SIZE,
             solid(&value_color),
             shadow_offset,
-            value_shadow,
+            solid(&value_shadow),
         );
         let end_x = if display_two_rows {
             width
@@ -591,7 +591,7 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
             [PADDING, TEXT_ALIGN_TOP],
             DEFAULT_TEXT_SIZE,
             shadow_offset,
-            key_shadow,
+            solid(&key_shadow),
             solid(&key_color),
             end_x - PADDING,
         );

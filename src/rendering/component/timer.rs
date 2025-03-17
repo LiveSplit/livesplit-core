@@ -2,7 +2,7 @@ use crate::{
     component::timer::State,
     rendering::{
         consts::PADDING, font::CachedLabel, resource::ResourceAllocator, scene::Layer, FillShader,
-        RenderContext,
+        RenderContext, solid,
     },
 };
 
@@ -28,8 +28,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
 ) -> f32 {
     context.render_background([width, height], &component.background);
     let shadow_offset = [0.05, 0.05];
-    let shadow_color = FillShader::SolidColor([0.0, 0.0, 0.0, 0.5]);
-
+    let shadow_color = solid(&context.state.shadow_color);
     let shader = FillShader::VerticalGradient(
         component.top_color.to_array(),
         component.bottom_color.to_array(),

@@ -120,6 +120,7 @@ impl Layout {
         state.text_color = settings.text_color;
         state.direction = settings.direction;
         state.drop_shadow = settings.drop_shadow;
+        state.shadow_color = settings.shadow_color;
     }
 
     /// Calculates the layout's state based on the timer provided. You can use

@@ -2,7 +2,6 @@ use crate::{
     component::detailed_timer::State,
     layout::LayoutState,
     rendering::{
-        FillShader,
         component::timer,
         consts::{vertical_padding, BOTH_PADDINGS, PADDING},
         font::CachedLabel,
@@ -46,7 +45,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     context.render_background([width, height], &component.background);
     
     let shadow_offset = [0.05, 0.05];
-    let shadow_color = FillShader::SolidColor([0.0, 0.0, 0.0, 0.5]);
+    let shadow_color = solid(&layout_state.shadow_color);
 
     let vertical_padding = vertical_padding(height);
     let icon_size = height - 2.0 * vertical_padding;

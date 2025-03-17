@@ -11,7 +11,7 @@ use crate::{
         font::CachedLabel,
         resource::ResourceAllocator,
         scene::Layer,
-        solid, FillShader
+        solid,
     },
     settings::{Gradient, ListGradient},
 };
@@ -98,8 +98,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
 
     cache.longest_column_values.clear();
 
-    let shadow_offset = [0.05, 0.05];
-    let shadow_color = FillShader::SolidColor([0.0, 0.0, 0.0, 0.5]);
     for split in &component.splits {
         if split.columns.len() > cache.longest_column_values.len() {
             cache
@@ -187,6 +185,8 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     let transform = context.transform;
     let text_color = solid(&layout_state.text_color);
 
+    let shadow_offset = [0.05, 0.05];
+    let shadow_color = solid(&layout_state.shadow_color);
     if let Some(column_labels) = &component.column_labels {
         if layout_state.direction == LayoutDirection::Vertical {
             cache

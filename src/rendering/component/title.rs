@@ -11,7 +11,7 @@ use crate::{
         },
         font::{AbbreviatedLabel, CachedLabel},
         resource::ResourceAllocator,
-        solid, Layer, RenderContext, FillShader
+        solid, Layer, RenderContext,
     },
 };
 
@@ -42,8 +42,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
 ) {
     context.render_background([width, height], &component.background);
     let shadow_offset = [0.05, 0.05];
-    let shadow_color = FillShader::SolidColor([0.0, 0.0, 0.0, 0.5]);
-    
+    let shadow_color = solid(&layout_state.shadow_color);
     let text_color = component.text_color.unwrap_or(layout_state.text_color);
     let text_color = solid(&text_color);
 

@@ -24,6 +24,8 @@ pub struct GeneralSettings {
     pub text_font: Option<Font>,
     /// The background to show behind the layout.
     pub background: LayoutBackground,
+    /// The color to use for drawn shadows.
+    pub shadow_color: Color,
     /// Draw drop shadow
     pub drop_shadow: bool,
     /// The color to use for when the runner achieved a best segment.
@@ -64,6 +66,7 @@ impl Default for GeneralSettings {
             background: LayoutBackground::Gradient(Gradient::Plain(Color::hsla(
                 0.0, 0.0, 0.06, 1.0,
             ))),
+            shadow_color: Color::hsla(0.0, 0.0, 0.0, 0.5),
             drop_shadow: false,
             best_segment_color: Color::hsla(50.0, 1.0, 0.5, 1.0),
             ahead_gaining_time_color: Color::hsla(136.0, 1.0, 0.4, 1.0),
@@ -113,14 +116,19 @@ impl GeneralSettings {
                 self.text_font.clone().into(),
             ),
             Field::new(
-                "Background".into(),
-                "The background shown behind the entire layout.".into(),
-                self.background.cache(image_cache).into(),
-            ),
-            Field::new(
                 "Drop Shadow".into(),
                 "Draws shadow behind timer & splits".into(),
                 self.drop_shadow.into(),
+            ),
+            Field::new(
+                "Shadow".into(),
+                "The color to use for drawn shadows.".into(),
+                self.shadow_color.into(),
+            ),
+            Field::new(
+                "Background".into(),
+                "The background shown behind the entire layout.".into(),
+                self.background.cache(image_cache).into(),
             ),
             Field::new(
                 "Best Segment".into(),
@@ -197,19 +205,20 @@ impl GeneralSettings {
             1 => self.timer_font = value.into(),
             2 => self.times_font = value.into(),
             3 => self.text_font = value.into(),
-            4 => self.background = LayoutBackground::from(value).from_cache(image_cache),
-            5 => self.drop_shadow = value.into(),
-            6 => self.best_segment_color = value.into(),
-            7 => self.ahead_gaining_time_color = value.into(),
-            8 => self.ahead_losing_time_color = value.into(),
-            9 => self.behind_gaining_time_color = value.into(),
-            10 => self.behind_losing_time_color = value.into(),
-            11 => self.not_running_color = value.into(),
-            12 => self.personal_best_color = value.into(),
-            13 => self.paused_color = value.into(),
-            14 => self.thin_separators_color = value.into(),
-            15 => self.separators_color = value.into(),
-            16 => self.text_color = value.into(),
+            4 => self.drop_shadow = value.into(),
+            5 => self.shadow_color = value.into(),
+            6 => self.background = LayoutBackground::from(value).from_cache(image_cache),
+            7 => self.best_segment_color = value.into(),
+            8 => self.ahead_gaining_time_color = value.into(),
+            9 => self.ahead_losing_time_color = value.into(),
+            10 => self.behind_gaining_time_color = value.into(),
+            11 => self.behind_losing_time_color = value.into(),
+            12 => self.not_running_color = value.into(),
+            13 => self.personal_best_color = value.into(),
+            14 => self.paused_color = value.into(),
+            15 => self.thin_separators_color = value.into(),
+            16 => self.separators_color = value.into(),
+            17 => self.text_color = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

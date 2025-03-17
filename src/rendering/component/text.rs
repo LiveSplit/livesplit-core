@@ -5,7 +5,7 @@ use crate::{
         consts::{DEFAULT_TEXT_SIZE, PADDING, TEXT_ALIGN_TOP},
         font::{AbbreviatedLabel, CachedLabel},
         resource::ResourceAllocator,
-        solid, RenderContext, FillShader
+        solid, RenderContext,
     },
 };
 
@@ -32,7 +32,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
 ) {
     context.render_background([width, height], &component.background);
     let shadow_offset = [0.05, 0.05];
-    let shadow_color = FillShader::SolidColor([0.0, 0.0, 0.0, 0.5]);
+    let shadow_color = layout_state.shadow_color;
 
     match &component.text {
         TextState::Center(text) => context.render_text_centered(
@@ -48,7 +48,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                     .unwrap_or(layout_state.text_color),
             ),
             shadow_offset,
-            shadow_color,
+            solid(&shadow_color),
         ),
         TextState::Split(left, right) => context.render_key_value_component(
             left,
