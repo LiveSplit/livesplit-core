@@ -29,7 +29,7 @@ sysinfo = { version = "0.33.1", default-features = false, features = [
 time = { version = "0.3.3", default-features = false }
 wasmtime = { version = "30.0.2", default-features = false, features = [
   "cranelift",
-  "gc",
+  "gc-drc",
   "parallel-compilation",
   "runtime",
 ] }
