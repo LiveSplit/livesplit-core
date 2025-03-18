@@ -256,8 +256,8 @@ fn all_components() {
         &state,
         &image_cache,
         [300, 800],
-        "7e7aa83a3b80e1da",
-        "fa3c0357219389d8",
+        "cb6ddee1b2cb296e",
+        "3935895199fbf883",
         "all_components",
     );
 
@@ -265,8 +265,8 @@ fn all_components() {
         &state,
         &image_cache,
         [150, 800],
-        "97afa51bfd8a8597",
-        "eda169eec3995eeb",
+        "70c4e38cea684e91",
+        "33b14971943c049c",
         "all_components_thin",
     );
 }
@@ -311,7 +311,7 @@ fn dark_layout() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         "a47c590792c1bab5",
-        "91a89f563eb4f43d",
+        "3a3a4f53c146d472",
         "dark_layout",
     );
 }
@@ -334,8 +334,8 @@ fn subsplits_layout() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [300, 800],
-        "39ab965781d0ceee",
-        "405baac87e52acc5",
+        "620825a1f684554a",
+        "355e302202735dbe",
         "subsplits_layout",
     );
 }
@@ -358,8 +358,8 @@ fn background_image() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [300, 300],
-        "b5238ec57ba70c3a",
-        "e4df7276b1603cd5",
+        "044e60eab4dc7faf",
+        "0ba24da5eb4cd8a6",
         "background_image",
     );
 }

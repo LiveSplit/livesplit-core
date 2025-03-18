@@ -186,7 +186,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     let text_color = solid(&layout_state.text_color);
 
     let shadow_offset = [0.05, 0.05];
-    let shadow_color = solid(&layout_state.shadow_color);
+    let shadow_color = solid(&layout_state.shadow_color.unwrap_or_default());
     if let Some(column_labels) = &component.column_labels {
         if layout_state.direction == LayoutDirection::Vertical {
             cache

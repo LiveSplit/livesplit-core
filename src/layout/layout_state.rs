@@ -33,7 +33,7 @@ pub struct LayoutState {
     /// Draws drop shadow
     pub drop_shadow: bool,
     /// The color to use for drawn shadows.
-    pub shadow_color: Color,
+    pub shadow_color: Option<Color>,
 }
 
 #[cfg(feature = "std")]

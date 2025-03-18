@@ -42,7 +42,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
 ) {
     context.render_background([width, height], &component.background);
     let shadow_offset = [0.05, 0.05];
-    let shadow_color = solid(&layout_state.shadow_color);
+    let shadow_color = solid(&layout_state.shadow_color.unwrap_or_default());
     let text_color = component.text_color.unwrap_or(layout_state.text_color);
     let text_color = solid(&text_color);
 
