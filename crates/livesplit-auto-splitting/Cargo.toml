@@ -27,13 +27,13 @@ sysinfo = { version = "0.33.1", default-features = false, features = [
   "system",
 ] }
 time = { version = "0.3.3", default-features = false }
-wasmtime = { version = "30.0.2", default-features = false, features = [
+wasmtime = { git = "https://github.com/bytecodealliance/wasmtime", default-features = false, features = [
   "cranelift",
   "gc-drc",
   "parallel-compilation",
   "runtime",
 ] }
-wasmtime-wasi = { version = "30.0.2", default-features = false, features = [
+wasmtime-wasi = { git = "https://github.com/bytecodealliance/wasmtime", default-features = false, features = [
   "preview1",
 ] }
 
