@@ -9,12 +9,12 @@ mod run_files;
 mod tests_helper;
 
 use livesplit_core::{
+    Run, Segment, TimeSpan, Timer, TimingMethod,
     component::{self, timer},
     layout::{self, Component, ComponentState, Layout, LayoutDirection, LayoutState},
     rendering,
     run::parser::{livesplit, llanfair, wsplit},
     settings::ImageCache,
-    Run, Segment, TimeSpan, Timer, TimingMethod,
 };
 use std::{fs, path::PathBuf};
 

@@ -3,7 +3,7 @@
 use super::{Component, Layout, LayoutDirection};
 use crate::{
     component::{separator, timer::DeltaGradient},
-    platform::{math::f32::powf, prelude::*},
+    platform::{math::f32::stable_powf, prelude::*},
     settings::{
         Alignment, BackgroundImage, Color, Font, FontStretch, FontStyle, FontWeight, Gradient,
         Image, LayoutBackground, ListGradient,
@@ -321,8 +321,8 @@ where
         // black. Because of that, we use 1.75 as the exponent denominator for
         // the white on black case instead of the usual 2.2 for sRGB.
         let lightness = (r + g + b) * (1.0 / 3.0);
-        color.alpha =
-            (1.0 - lightness) * (1.0 - powf(1.0 - a, 1.0 / 2.2)) + lightness * powf(a, 1.0 / 1.75);
+        color.alpha = (1.0 - lightness) * (1.0 - stable_powf(1.0 - a, 1.0 / 2.2))
+            + lightness * stable_powf(a, 1.0 / 1.75);
 
         func(color);
         Ok(())
@@ -779,9 +779,7 @@ fn parse_general_settings(layout: &mut Layout, reader: &mut Reader<'_>) -> Resul
         }),
         "ImageOpacity" => percentage(reader, |v| image_opacity = v),
         "ImageBlur" => percentage(reader, |v| image_blur = v),
-        "DropShadows" => {
-            parse_bool(reader, |b| settings.drop_shadow = b)
-        }
+        "DropShadows" => parse_bool(reader, |b| settings.drop_shadow = b),
         "ShadowsColor" => color(reader, |color| {
             settings.shadow_color = color;
         }),
