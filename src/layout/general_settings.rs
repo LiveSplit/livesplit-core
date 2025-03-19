@@ -25,7 +25,7 @@ pub struct GeneralSettings {
     /// The background to show behind the layout.
     pub background: LayoutBackground,
     /// The color to use for drawn shadows.
-    pub shadow_color: Color,
+    pub shadow_color: Option<Color>,
     /// Draw drop shadow
     pub drop_shadow: bool,
     /// The color to use for when the runner achieved a best segment.
@@ -66,7 +66,7 @@ impl Default for GeneralSettings {
             background: LayoutBackground::Gradient(Gradient::Plain(Color::hsla(
                 0.0, 0.0, 0.06, 1.0,
             ))),
-            shadow_color: Color::hsla(0.0, 0.0, 0.0, 0.5),
+            shadow_color: Some(Color::hsla(0.0, 0.0, 0.0, 0.5)),
             drop_shadow: false,
             best_segment_color: Color::hsla(50.0, 1.0, 0.5, 1.0),
             ahead_gaining_time_color: Color::hsla(136.0, 1.0, 0.4, 1.0),

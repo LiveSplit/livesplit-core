@@ -781,7 +781,7 @@ fn parse_general_settings(layout: &mut Layout, reader: &mut Reader<'_>) -> Resul
         "ImageBlur" => percentage(reader, |v| image_blur = v),
         "DropShadows" => parse_bool(reader, |b| settings.drop_shadow = b),
         "ShadowsColor" => color(reader, |color| {
-            settings.shadow_color = color;
+            settings.shadow_color = Some(color);
         }),
         _ => end_tag(reader),
     })?;
