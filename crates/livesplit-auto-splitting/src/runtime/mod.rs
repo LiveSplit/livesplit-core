@@ -344,6 +344,8 @@ impl Runtime {
             } else {
                 WasmBacktraceDetails::Disable
             })
+            .wasm_function_references(true)
+            .wasm_gc(true)
             .epoch_interruption(true);
 
         let engine = Engine::new(&engine_config)
