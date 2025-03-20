@@ -16,6 +16,7 @@ pub const SEPARATOR_THICKNESS: f32 = 0.1;
 pub const THIN_SEPARATOR_THICKNESS: f32 = SEPARATOR_THICKNESS / 2.0;
 pub const PSEUDO_PIXELS: f32 = 1.0 / 24.0;
 pub const DEFAULT_VERTICAL_WIDTH: f32 = 11.5;
+pub const SHADOW_OFFSET: f32 = 0.05;
 
 pub fn vertical_padding(height: f32) -> f32 {
     (ICON_MIN_VERTICAL_PADDING * height).min(PADDING)

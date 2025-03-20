@@ -2,10 +2,11 @@ use crate::{
     component::text::{State, TextState},
     layout::{LayoutDirection, LayoutState},
     rendering::{
+        RenderContext,
         consts::{DEFAULT_TEXT_SIZE, PADDING, TEXT_ALIGN_TOP},
         font::{AbbreviatedLabel, CachedLabel},
         resource::ResourceAllocator,
-        solid, RenderContext,
+        solid,
     },
 };
 
@@ -31,6 +32,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     layout_state: &LayoutState,
 ) {
     context.render_background([width, height], &component.background);
+
     match &component.text {
         TextState::Center(text) => context.render_text_centered(
             text,

@@ -22,6 +22,8 @@ pub struct LayoutState {
     /// The font to use for regular text. `None` means a default font should be
     /// used.
     pub text_font: Option<Font>,
+    /// An optional text shadow color.
+    pub text_shadow: Option<Color>,
     /// The background to show behind the layout.
     pub background: LayoutBackground<ImageId>,
     /// The color of thin separators.

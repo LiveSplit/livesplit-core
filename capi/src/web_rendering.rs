@@ -41,6 +41,9 @@ impl WebRenderer {
         state: *const LayoutState,
         image_cache: *const ImageCache,
     ) -> Option<Box<[f32]>> {
-        self.inner.render(&*state, &*image_cache).map(Box::from)
+        // SAFETY: The caller must ensure that the pointers are valid.
+        unsafe {
+            self.inner.render(&*state, &*image_cache).map(Box::from)
+        }
     }
 }
