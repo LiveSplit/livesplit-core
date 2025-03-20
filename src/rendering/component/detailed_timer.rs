@@ -2,12 +2,13 @@ use crate::{
     component::detailed_timer::State,
     layout::LayoutState,
     rendering::{
+        RenderContext,
         component::timer,
-        consts::{vertical_padding, BOTH_PADDINGS, PADDING},
+        consts::{BOTH_PADDINGS, PADDING, vertical_padding},
         font::CachedLabel,
         resource::ResourceAllocator,
         scene::Layer,
-        solid, RenderContext,
+        solid,
     },
 };
 
@@ -43,9 +44,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     layout_state: &LayoutState,
 ) {
     context.render_background([width, height], &component.background);
-    
-    let shadow_offset = [0.05, 0.05];
-    let shadow_color = solid(&layout_state.shadow_color.unwrap_or_default());
 
     let vertical_padding = vertical_padding(height);
     let icon_size = height - 2.0 * vertical_padding;
@@ -81,8 +79,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
             [left_side, 0.6 * top_height],
             0.5 * top_height,
             segment_name_color,
-            shadow_offset,
-            shadow_color,
             timer_end,
         );
     }
@@ -117,8 +113,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                 [left_side, comparison2_y],
                 comparison_text_scale,
                 comparison_names_color,
-                shadow_offset,
-                shadow_color,
                 segment_timer_end,
             )
             .max(name_end);
@@ -144,8 +138,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                 [left_side, comparison1_y],
                 comparison_text_scale,
                 comparison_names_color,
-                shadow_offset,
-                shadow_color,
                 segment_timer_end,
             )
             .max(name_end);
@@ -174,8 +166,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
             [time_x, comparison2_y],
             comparison_text_scale,
             comparison_times_color,
-            shadow_offset,
-            shadow_color,
         );
     }
     if let Some(comparison) = &component.comparison1 {
@@ -186,8 +176,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
             [time_x, comparison1_y],
             comparison_text_scale,
             comparison_times_color,
-            shadow_offset,
-            shadow_color,
         );
     }
 }

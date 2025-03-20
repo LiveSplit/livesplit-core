@@ -2,10 +2,11 @@ use crate::{
     component::text::{State, TextState},
     layout::{LayoutDirection, LayoutState},
     rendering::{
+        RenderContext,
         consts::{DEFAULT_TEXT_SIZE, PADDING, TEXT_ALIGN_TOP},
         font::{AbbreviatedLabel, CachedLabel},
         resource::ResourceAllocator,
-        solid, RenderContext,
+        solid,
     },
 };
 
@@ -31,8 +32,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     layout_state: &LayoutState,
 ) {
     context.render_background([width, height], &component.background);
-    let shadow_offset = [0.05, 0.05];
-    let shadow_color = layout_state.shadow_color;
 
     match &component.text {
         TextState::Center(text) => context.render_text_centered(
@@ -47,8 +46,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                     .left_center_color
                     .unwrap_or(layout_state.text_color),
             ),
-            shadow_offset,
-            solid(&shadow_color.unwrap_or_default()),
         ),
         TextState::Split(left, right) => context.render_key_value_component(
             left,
@@ -58,10 +55,9 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
             &mut cache.label2,
             false,
             [width, height],
-            shadow_offset,
-            shadow_color.unwrap_or_default(),
-            shadow_color.unwrap_or_default(),
-            component.left_center_color.unwrap_or(layout_state.text_color),
+            component
+                .left_center_color
+                .unwrap_or(layout_state.text_color),
             component.right_color.unwrap_or(layout_state.text_color),
             component.display_two_rows || layout_state.direction == LayoutDirection::Horizontal,
         ),

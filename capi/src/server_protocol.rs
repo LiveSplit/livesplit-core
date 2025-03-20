@@ -19,7 +19,8 @@ pub struct ServerProtocol {}
 impl ServerProtocol {
     /// Handles an incoming command and returns the response to be sent.
     pub async unsafe fn handleCommand(command: &str, commandSink: *const CommandSink) -> String {
-        server_protocol::handle_command(command, &*commandSink).await
+        // SAFETY: The caller must ensure that the pointer is valid.
+        server_protocol::handle_command(command, unsafe { &*commandSink }).await
     }
 
     /// Encodes an event that happened to be sent.

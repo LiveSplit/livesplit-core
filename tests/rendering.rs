@@ -44,8 +44,8 @@ fn default() {
     check(
         &state,
         &image_cache,
-        "e32259a84233e364",
-        "0520a7a32958470a",
+        "c0ad948aed86074f",
+        "b48906628d71c0aa",
         "default",
     );
 }
@@ -167,8 +167,8 @@ fn font_fallback() {
         &state,
         &image_cache,
         [320, 750],
-        "a0bc9c666c55d82c",
-        "ba3897221844a4ca",
+        "8ebc585aec6909e2",
+        "4371062136f5eb3b",
         "font_fallback",
     );
 }
@@ -183,8 +183,8 @@ fn actual_split_file() {
     check(
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
-        "c1e9e757c15a35ae",
-        "4fe65a630b531c54",
+        "5b731b527871c67d",
+        "e43f5bf67ada675c",
         "actual_split_file",
     );
 }
@@ -293,8 +293,8 @@ fn score_split() {
         &state,
         &image_cache,
         [300, 400],
-        "f5dadfe58e621e7b",
-        "c7fec6cb25b993bc",
+        "c39b32c0e13ced4c",
+        "73de0c5abaa29100",
         "score_split",
     );
 }
@@ -385,8 +385,8 @@ fn display_two_rows() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [200, 100],
-        "d174c2f9a0c54d66",
-        "12b6ab31502b1baa",
+        "029a6bfd857f3820",
+        "aa626e5a8b7c5997",
         "display_two_rows",
     );
 }
@@ -412,8 +412,8 @@ fn single_line_title() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [300, 60],
-        "db305e29ec814f33",
-        "1848cdb01676cfec",
+        "d4a0f104cc3b83c1",
+        "a57d9897ebecbc2c",
         "single_line_title",
     );
 }
@@ -450,8 +450,8 @@ fn horizontal() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [1500, 40],
-        "4a9c12d00233f3c1",
-        "9353fac22b4cfde4",
+        "25cf654aa17999af",
+        "af5ed8ad60fd9b22",
         "horizontal",
     );
 }

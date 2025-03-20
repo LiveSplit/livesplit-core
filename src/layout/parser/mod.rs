@@ -708,6 +708,8 @@ fn parse_general_settings(layout: &mut Layout, reader: &mut Reader<'_>) -> Resul
     let mut background_image = None;
     let mut image_opacity = 1.0;
     let mut image_blur = 0.0;
+    let mut has_text_shadow = false;
+    let mut text_shadow_color = Color::transparent();
 
     parse_children(reader, |reader, tag, _| match tag.name() {
         "TextColor" => color(reader, |color| {
@@ -779,12 +781,12 @@ fn parse_general_settings(layout: &mut Layout, reader: &mut Reader<'_>) -> Resul
         }),
         "ImageOpacity" => percentage(reader, |v| image_opacity = v),
         "ImageBlur" => percentage(reader, |v| image_blur = v),
-        "DropShadows" => parse_bool(reader, |b| settings.drop_shadow = b),
-        "ShadowsColor" => color(reader, |color| {
-            settings.shadow_color = Some(color);
-        }),
+        "DropShadows" => parse_bool(reader, |b| has_text_shadow = b),
+        "ShadowsColor" => color(reader, |color| text_shadow_color = color),
         _ => end_tag(reader),
     })?;
+
+    settings.text_shadow = has_text_shadow.then_some(text_shadow_color);
 
     settings.background = match background_builder.build() {
         Some(gradient) => LayoutBackground::Gradient(gradient),

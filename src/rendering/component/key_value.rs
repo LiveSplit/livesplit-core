@@ -2,9 +2,9 @@ use crate::{
     component::key_value::State,
     layout::{LayoutDirection, LayoutState},
     rendering::{
+        RenderContext,
         font::{AbbreviatedLabel, CachedLabel},
         resource::ResourceAllocator,
-        RenderContext,
     },
 };
 
@@ -31,8 +31,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
 ) {
     context.render_background(dim, &component.background);
 
-    let shadow_offset = [0.05, 0.05];
-    let shadow_color = layout_state.shadow_color;
     context.render_key_value_component(
         &component.key,
         &component.key_abbreviations,
@@ -41,9 +39,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         &mut cache.value,
         component.updates_frequently,
         dim,
-        shadow_offset,
-        shadow_color.unwrap_or_default(),
-        shadow_color.unwrap_or_default(),
         component.key_color.unwrap_or(layout_state.text_color),
         component.value_color.unwrap_or(layout_state.text_color),
         component.display_two_rows || layout_state.direction == LayoutDirection::Horizontal,

@@ -5,13 +5,14 @@ use crate::{
     layout::LayoutState,
     platform::prelude::*,
     rendering::{
+        Layer, RenderContext,
         consts::{
-            vertical_padding, BOTH_PADDINGS, DEFAULT_TEXT_SIZE, PADDING, TEXT_ALIGN_BOTTOM,
-            TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP,
+            BOTH_PADDINGS, DEFAULT_TEXT_SIZE, PADDING, TEXT_ALIGN_BOTTOM, TEXT_ALIGN_CENTER,
+            TEXT_ALIGN_TOP, vertical_padding,
         },
         font::{AbbreviatedLabel, CachedLabel},
         resource::ResourceAllocator,
-        solid, Layer, RenderContext,
+        solid,
     },
 };
 
@@ -41,8 +42,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     layout_state: &LayoutState,
 ) {
     context.render_background([width, height], &component.background);
-    let shadow_offset = [0.05, 0.05];
-    let shadow_color = solid(&layout_state.shadow_color.unwrap_or_default());
+
     let text_color = component.text_color.unwrap_or(layout_state.text_color);
     let text_color = solid(&text_color);
 
@@ -82,8 +82,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         [width - PADDING, height + TEXT_ALIGN_BOTTOM],
         DEFAULT_TEXT_SIZE,
         text_color,
-        shadow_offset,
-        shadow_color,
     ) - PADDING;
 
     let (line1_y, line1_end_x) = if !component.line2.is_empty() {
@@ -95,8 +93,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
             [line_x, height + TEXT_ALIGN_BOTTOM],
             DEFAULT_TEXT_SIZE,
             component.is_centered,
-            shadow_offset,
-            shadow_color,
             text_color,
         );
         (TEXT_ALIGN_TOP, width - PADDING)
@@ -112,8 +108,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         [line_x, line1_y],
         DEFAULT_TEXT_SIZE,
         component.is_centered,
-        shadow_offset,
-        shadow_color,
         text_color,
     );
 }

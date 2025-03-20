@@ -1,8 +1,8 @@
 use crate::{
     component::timer::State,
     rendering::{
-        consts::PADDING, font::CachedLabel, resource::ResourceAllocator, scene::Layer, FillShader,
-        RenderContext, solid,
+        FillShader, RenderContext, consts::PADDING, font::CachedLabel, resource::ResourceAllocator,
+        scene::Layer,
     },
 };
 
@@ -27,13 +27,14 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     component: &State,
 ) -> f32 {
     context.render_background([width, height], &component.background);
-    let shadow_offset = [0.05, 0.05];
-    let shadow_color = solid(&context.state.shadow_color.unwrap_or_default());
+
     let shader = FillShader::VerticalGradient(
         component.top_color.to_array(),
         component.bottom_color.to_array(),
     );
+
     let render_target = Layer::from_updates_frequently(component.updates_frequently);
+
     let x = context.render_timer(
         &component.fraction,
         &mut cache.fraction,
@@ -41,9 +42,8 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         [width - PADDING, 0.85 * height],
         0.7 * height,
         shader,
-        shadow_offset,
-        shadow_color,
     );
+
     context.render_timer(
         &component.time,
         &mut cache.time,
@@ -51,7 +51,5 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         [x, 0.85 * height],
         height,
         shader,
-        shadow_offset,
-        shadow_color,
     )
 }

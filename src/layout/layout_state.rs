@@ -22,6 +22,8 @@ pub struct LayoutState {
     /// The font to use for regular text. `None` means a default font should be
     /// used.
     pub text_font: Option<Font>,
+    /// An optional text shadow color.
+    pub text_shadow: Option<Color>,
     /// The background to show behind the layout.
     pub background: LayoutBackground<ImageId>,
     /// The color of thin separators.
@@ -30,10 +32,6 @@ pub struct LayoutState {
     pub separators_color: Color,
     /// The text color to use for text that doesn't specify its own color.
     pub text_color: Color,
-    /// Draws drop shadow
-    pub drop_shadow: bool,
-    /// The color to use for drawn shadows.
-    pub shadow_color: Option<Color>,
 }
 
 #[cfg(feature = "std")]

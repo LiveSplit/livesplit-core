@@ -185,8 +185,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     let transform = context.transform;
     let text_color = solid(&layout_state.text_color);
 
-    let shadow_offset = [0.05, 0.05];
-    let shadow_color = solid(&layout_state.shadow_color.unwrap_or_default());
     if let Some(column_labels) = &component.column_labels {
         if layout_state.direction == LayoutDirection::Vertical {
             cache
@@ -206,8 +204,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                     [right_x, TEXT_ALIGN_TOP],
                     DEFAULT_TEXT_SIZE,
                     text_color,
-                    shadow_offset,
-                    shadow_color,
                 );
                 let label_width = right_x - left_x;
                 if label_width > *max_width {
@@ -281,8 +277,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                         [right_x, split_height + TEXT_ALIGN_BOTTOM],
                         DEFAULT_TEXT_SIZE,
                         solid(&column.visual_color),
-                        shadow_offset,
-                        shadow_color,
                     );
                 }
                 right_x -= max_width + PADDING;
@@ -298,8 +292,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                 [icon_right, TEXT_ALIGN_TOP],
                 DEFAULT_TEXT_SIZE,
                 text_color,
-                shadow_offset,
-                shadow_color,
                 left_x - PADDING,
             );
         }
