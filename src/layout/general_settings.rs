@@ -22,6 +22,8 @@ pub struct GeneralSettings {
     /// The font to use for regular text. `None` means a default font should be
     /// used.
     pub text_font: Option<Font>,
+    /// The color to use for drawn shadows.
+    pub text_shadow: Option<Color>,
     /// The background to show behind the layout.
     pub background: LayoutBackground,
     /// The color to use for when the runner achieved a best segment.
@@ -59,6 +61,7 @@ impl Default for GeneralSettings {
             timer_font: None,
             times_font: None,
             text_font: None,
+            text_shadow: Some(Color::hsla(0.0, 0.0, 0.0, 0.5)),
             background: LayoutBackground::Gradient(Gradient::Plain(Color::hsla(
                 0.0, 0.0, 0.06, 1.0,
             ))),
@@ -108,6 +111,11 @@ impl GeneralSettings {
                 "Allows you to specify a custom font for the text. If this is not set, the default font is used."
                     .into(),
                 self.text_font.clone().into(),
+            ),
+            Field::new(
+                "Text Shadow".into(),
+                "Allows you to optionally specify a color for text shadows.".into(),
+                self.text_shadow.into(),
             ),
             Field::new(
                 "Background".into(),
@@ -189,18 +197,19 @@ impl GeneralSettings {
             1 => self.timer_font = value.into(),
             2 => self.times_font = value.into(),
             3 => self.text_font = value.into(),
-            4 => self.background = LayoutBackground::from(value).from_cache(image_cache),
-            5 => self.best_segment_color = value.into(),
-            6 => self.ahead_gaining_time_color = value.into(),
-            7 => self.ahead_losing_time_color = value.into(),
-            8 => self.behind_gaining_time_color = value.into(),
-            9 => self.behind_losing_time_color = value.into(),
-            10 => self.not_running_color = value.into(),
-            11 => self.personal_best_color = value.into(),
-            12 => self.paused_color = value.into(),
-            13 => self.thin_separators_color = value.into(),
-            14 => self.separators_color = value.into(),
-            15 => self.text_color = value.into(),
+            4 => self.text_shadow = value.into(),
+            5 => self.background = LayoutBackground::from(value).from_cache(image_cache),
+            6 => self.best_segment_color = value.into(),
+            7 => self.ahead_gaining_time_color = value.into(),
+            8 => self.ahead_losing_time_color = value.into(),
+            9 => self.behind_gaining_time_color = value.into(),
+            10 => self.behind_losing_time_color = value.into(),
+            11 => self.not_running_color = value.into(),
+            12 => self.personal_best_color = value.into(),
+            13 => self.paused_color = value.into(),
+            14 => self.thin_separators_color = value.into(),
+            15 => self.separators_color = value.into(),
+            16 => self.text_color = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
     }

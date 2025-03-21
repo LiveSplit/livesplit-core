@@ -2,12 +2,13 @@ use crate::{
     component::detailed_timer::State,
     layout::LayoutState,
     rendering::{
+        RenderContext,
         component::timer,
-        consts::{vertical_padding, BOTH_PADDINGS, PADDING},
+        consts::{BOTH_PADDINGS, PADDING, vertical_padding},
         font::CachedLabel,
         resource::ResourceAllocator,
         scene::Layer,
-        solid, RenderContext,
+        solid,
     },
 };
 

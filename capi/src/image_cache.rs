@@ -16,13 +16,13 @@ pub type OwnedImageCache = Box<ImageCache>;
 pub type NullableOwnedImageCache = Option<OwnedImageCache>;
 
 /// Creates a new image cache.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn ImageCache_new() -> OwnedImageCache {
     Box::new(ImageCache::new())
 }
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn ImageCache_drop(this: OwnedImageCache) {
     drop(this);
 }
@@ -32,12 +32,13 @@ pub extern "C" fn ImageCache_drop(this: OwnedImageCache) {
 /// file format. The format is not specified and can be any image format. The
 /// data may not even represent a valid image at all. If the image is not in the
 /// cache, <NULL> is returned. This does not mark the image as visited.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn ImageCache_lookup_data_ptr(
     this: &ImageCache,
     key: *const c_char,
 ) -> *const u8 {
-    ImageId::from_str(str(key))
+    // SAFETY: The caller guarantees that `key` is valid.
+    ImageId::from_str(unsafe { str(key) })
         .ok()
         .and_then(|key| this.lookup(&key))
         .filter(|image| !image.is_empty())
@@ -48,12 +49,13 @@ pub unsafe extern "C" fn ImageCache_lookup_data_ptr(
 /// Looks up an image in the cache based on its image ID and returns its byte
 /// length. If the image is not in the cache, 0 is returned. This does not mark
 /// the image as visited.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn ImageCache_lookup_data_len(
     this: &ImageCache,
     key: *const c_char,
 ) -> usize {
-    ImageId::from_str(str(key))
+    // SAFETY: The caller guarantees that `key` is valid.
+    ImageId::from_str(unsafe { str(key) })
         .ok()
         .and_then(|key| this.lookup(&key))
         .map(|image| image.data().len())
@@ -66,15 +68,16 @@ pub unsafe extern "C" fn ImageCache_lookup_data_len(
 /// specify that the image is large, it gets considered a large image that may
 /// be used as a background image. Otherwise it gets considered an icon. The
 /// image is resized according to this information.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn ImageCache_cache(
     this: &mut ImageCache,
     data: *const u8,
     len: usize,
     is_large: bool,
 ) -> *const c_char {
+    // SAFETY: The caller guarantees that `data` is valid.
     let image = Image::new(
-        slice(data, len).into(),
+        unsafe { slice(data, len).into() },
         if is_large { Image::LARGE } else { Image::ICON },
     );
     let image_id = *image.image_id();
@@ -88,7 +91,7 @@ pub unsafe extern "C" fn ImageCache_cache(
 /// image that has not been visited is removed. There is a heuristic that keeps
 /// a certain amount of images in the cache regardless of whether they have been
 /// visited or not. Returns the amount of images that got collected.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn ImageCache_collect(this: &mut ImageCache) -> usize {
     this.collect()
 }

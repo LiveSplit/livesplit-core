@@ -90,8 +90,8 @@ pub mod web;
 
 use self::{
     consts::{
-        DEFAULT_TEXT_SIZE, DEFAULT_VERTICAL_WIDTH, PADDING, TEXT_ALIGN_BOTTOM, TEXT_ALIGN_TOP,
-        TWO_ROW_HEIGHT,
+        DEFAULT_TEXT_SIZE, DEFAULT_VERTICAL_WIDTH, PADDING, SHADOW_OFFSET, TEXT_ALIGN_BOTTOM,
+        TEXT_ALIGN_TOP, TWO_ROW_HEIGHT,
     },
     font::{AbbreviatedLabel, CachedLabel, FontCache},
     icon::{CachedImage, ImageHandle},
@@ -284,6 +284,7 @@ impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager
             fonts: &mut self.fonts,
             images: &mut self.images,
             image_cache,
+            state,
         };
 
         let background = context.decode_layout_background(&state.background, resolution);
@@ -357,6 +358,7 @@ impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager
             fonts: &mut self.fonts,
             images: &mut self.images,
             image_cache,
+            state,
         };
 
         let background = context.decode_layout_background(&state.background, resolution);
@@ -404,6 +406,7 @@ struct RenderContext<'b, A: ResourceAllocator> {
     fonts: &'b mut FontCache<A::Font>,
     images: &'b mut ImageCache<CachedImage<A::Image>>,
     image_cache: &'b ImageCache,
+    state: &'b LayoutState,
 }
 
 impl<A: ResourceAllocator> RenderContext<'_, A> {
@@ -603,6 +606,18 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
             (max_x - x) / scale,
         );
 
+        if let Some(text_shadow) = &self.state.text_shadow {
+            self.scene.bottom_layer_mut().push(Entity::Label(
+                label.share(),
+                solid(text_shadow),
+                font::left_aligned(
+                    &self.transform.pre_translate(SHADOW_OFFSET, SHADOW_OFFSET),
+                    pos,
+                    scale,
+                ),
+            ));
+        }
+
         self.scene.bottom_layer_mut().push(Entity::Label(
             label.share(),
             shader,
@@ -627,6 +642,18 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
             &mut self.fonts.text.font,
             Some((max_x - x) / scale),
         );
+
+        if let Some(text_shadow) = &self.state.text_shadow {
+            self.scene.bottom_layer_mut().push(Entity::Label(
+                label.share(),
+                solid(text_shadow),
+                font::left_aligned(
+                    &self.transform.pre_translate(SHADOW_OFFSET, SHADOW_OFFSET),
+                    pos,
+                    scale,
+                ),
+            ));
+        }
 
         self.scene.bottom_layer_mut().push(Entity::Label(
             label.share(),
@@ -653,6 +680,21 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
             &mut self.fonts.text.font,
             Some((max_x - min_x) / scale),
         );
+
+        if let Some(text_shadow) = &self.state.text_shadow {
+            self.scene.bottom_layer_mut().push(Entity::Label(
+                label.share(),
+                solid(text_shadow),
+                font::centered(
+                    &self.transform.pre_translate(SHADOW_OFFSET, SHADOW_OFFSET),
+                    pos,
+                    scale,
+                    label.width(scale),
+                    min_x,
+                    max_x,
+                ),
+            ));
+        }
 
         self.scene.bottom_layer_mut().push(Entity::Label(
             label.share(),
@@ -685,6 +727,21 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
             (max_x - min_x) / scale,
         );
 
+        if let Some(text_shadow) = &self.state.text_shadow {
+            self.scene.bottom_layer_mut().push(Entity::Label(
+                label.share(),
+                solid(text_shadow),
+                font::centered(
+                    &self.transform.pre_translate(SHADOW_OFFSET, SHADOW_OFFSET),
+                    pos,
+                    scale,
+                    label.width(scale),
+                    min_x,
+                    max_x,
+                ),
+            ));
+        }
+
         self.scene.bottom_layer_mut().push(Entity::Label(
             label.share(),
             shader,
@@ -710,6 +767,18 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
     ) -> f32 {
         let label = label.update(text, &mut self.handles, &mut self.fonts.text.font, None);
         let width = label.width(scale);
+
+        if let Some(text_shadow) = &self.state.text_shadow {
+            self.scene.layer_mut(layer).push(Entity::Label(
+                label.share(),
+                solid(text_shadow),
+                font::left_aligned(
+                    &self.transform.pre_translate(SHADOW_OFFSET, SHADOW_OFFSET),
+                    pos,
+                    scale,
+                ),
+            ));
+        }
 
         self.scene.layer_mut(layer).push(Entity::Label(
             label.share(),
@@ -758,6 +827,18 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         let label = label.update(text, &mut self.handles, &mut self.fonts.times.font, None);
         let width = label.width(scale);
 
+        if let Some(text_shadow) = &self.state.text_shadow {
+            self.scene.layer_mut(layer).push(Entity::Label(
+                label.share(),
+                solid(text_shadow),
+                font::right_aligned(
+                    &self.transform.pre_translate(SHADOW_OFFSET, SHADOW_OFFSET),
+                    pos,
+                    scale,
+                    width,
+                ),
+            ));
+        }
         self.scene.layer_mut(layer).push(Entity::Label(
             label.share(),
             shader,
@@ -778,6 +859,19 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
     ) -> f32 {
         let label = label.update(text, &mut self.handles, &mut self.fonts.timer.font, None);
         let width = label.width(scale);
+
+        if let Some(text_shadow) = &self.state.text_shadow {
+            self.scene.layer_mut(layer).push(Entity::Label(
+                label.share(),
+                solid(text_shadow),
+                font::right_aligned(
+                    &self.transform.pre_translate(SHADOW_OFFSET, SHADOW_OFFSET),
+                    pos,
+                    scale,
+                    width,
+                ),
+            ));
+        }
 
         self.scene.layer_mut(layer).push(Entity::Label(
             label.share(),

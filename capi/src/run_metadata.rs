@@ -14,35 +14,35 @@ pub type OwnedRunMetadata = Box<RunMetadata>;
 /// Record on speedrun.com this run is associated with. This should be
 /// changed once the Personal Best doesn't match up with that record
 /// anymore. This may be empty if there's no association.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn RunMetadata_run_id(this: &RunMetadata) -> *const c_char {
     output_str(this.run_id())
 }
 
 /// Accesses the name of the platform this game is run on. This may be empty
 /// if it's not specified.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn RunMetadata_platform_name(this: &RunMetadata) -> *const c_char {
     output_str(this.platform_name())
 }
 
 /// Returns <TRUE> if this speedrun is done on an emulator. However <FALSE>
 /// may also indicate that this information is simply not known.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn RunMetadata_uses_emulator(this: &RunMetadata) -> bool {
     this.uses_emulator()
 }
 
 /// Accesses the name of the region this game is from. This may be empty if
 /// it's not specified.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn RunMetadata_region_name(this: &RunMetadata) -> *const c_char {
     output_str(this.region_name())
 }
 
 /// Returns an iterator iterating over all the speedrun.com variables and their
 /// values that have been specified.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn RunMetadata_speedrun_com_variables(
     this: &'static RunMetadata,
 ) -> OwnedRunMetadataSpeedrunComVariablesIter {
@@ -51,7 +51,7 @@ pub extern "C" fn RunMetadata_speedrun_com_variables(
 
 /// Returns an iterator iterating over all the custom variables and their
 /// values. This includes both temporary and permanent variables.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn RunMetadata_custom_variables(
     this: &'static RunMetadata,
 ) -> OwnedRunMetadataCustomVariablesIter {

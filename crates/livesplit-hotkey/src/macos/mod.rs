@@ -6,14 +6,14 @@ mod permission;
 
 use self::{
     carbon::{
-        kTISPropertyUnicodeKeyLayoutData, LMGetKbdType, TISCopyCurrentKeyboardInputSource,
-        TISCopyCurrentKeyboardLayoutInputSource, TISGetInputSourceProperty, UCKeyAction,
-        UCKeyTranslate, UCKeyTranslateBits,
+        LMGetKbdType, TISCopyCurrentKeyboardInputSource, TISCopyCurrentKeyboardLayoutInputSource,
+        TISGetInputSourceProperty, UCKeyAction, UCKeyTranslate, UCKeyTranslateBits,
+        kTISPropertyUnicodeKeyLayoutData,
     },
     cf::{
-        kCFAllocatorDefault, kCFRunLoopDefaultMode, CFDataGetBytePtr,
-        CFMachPortCreateRunLoopSource, CFRelease, CFRunLoopAddSource, CFRunLoopContainsSource,
-        CFRunLoopGetCurrent, CFRunLoopRemoveSource, CFRunLoopRun,
+        CFDataGetBytePtr, CFMachPortCreateRunLoopSource, CFRelease, CFRunLoopAddSource,
+        CFRunLoopContainsSource, CFRunLoopGetCurrent, CFRunLoopRemoveSource, CFRunLoopRun,
+        kCFAllocatorDefault, kCFRunLoopDefaultMode,
     },
     cg::{
         CGEventGetFlags, CGEventTapCreate, CGEventTapEnable, EventField, EventFlags, EventMask,
@@ -23,10 +23,10 @@ use self::{
 use crate::{ConsumePreference, Hotkey, KeyCode, Modifiers, Result};
 use core::ptr::null_mut;
 use std::{
-    collections::{hash_map::Entry, HashMap},
+    collections::{HashMap, hash_map::Entry},
     ffi::c_void,
     fmt,
-    sync::{mpsc::channel, Arc, Mutex},
+    sync::{Arc, Mutex, mpsc::channel},
     thread,
 };
 
@@ -316,12 +316,13 @@ unsafe extern "C" fn callback(
     // }
 
     let is_repeating =
-        cg::CGEventGetIntegerValueField(event, EventField::KEYBOARD_EVENT_AUTOREPEAT);
+        unsafe { cg::CGEventGetIntegerValueField(event, EventField::KEYBOARD_EVENT_AUTOREPEAT) };
     if is_repeating != 0 {
         return event;
     }
 
-    let key_code = cg::CGEventGetIntegerValueField(event, EventField::KEYBOARD_EVENT_KEYCODE);
+    let key_code =
+        unsafe { cg::CGEventGetIntegerValueField(event, EventField::KEYBOARD_EVENT_KEYCODE) };
     let key_code = match key_code {
         0x00 => KeyCode::KeyA,
         0x01 => KeyCode::KeyS,
@@ -450,9 +451,9 @@ unsafe extern "C" fn callback(
     };
 
     let state = user_info as *const State;
-    let state = &*state;
+    let state = unsafe { &*state };
 
-    let modifier_flags = CGEventGetFlags(event);
+    let modifier_flags = unsafe { CGEventGetFlags(event) };
     let mut modifiers = Modifiers::empty();
 
     if modifier_flags.contains(EventFlags::SHIFT)

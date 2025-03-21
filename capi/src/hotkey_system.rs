@@ -17,14 +17,14 @@ pub type OwnedHotkeySystem = Box<HotkeySystem>;
 pub type NullableOwnedHotkeySystem = Option<OwnedHotkeySystem>;
 
 /// Creates a new Hotkey System for a Timer with the default hotkeys.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn HotkeySystem_new(command_sink: &CommandSink) -> NullableOwnedHotkeySystem {
     HotkeySystem::new(command_sink.clone()).ok().map(Box::new)
 }
 
 /// Creates a new Hotkey System for a Timer with a custom configuration for the
 /// hotkeys.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn HotkeySystem_with_config(
     command_sink: &CommandSink,
     config: OwnedHotkeyConfig,
@@ -35,27 +35,27 @@ pub extern "C" fn HotkeySystem_with_config(
 }
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn HotkeySystem_drop(this: OwnedHotkeySystem) {
     drop(this);
 }
 
 /// Deactivates the Hotkey System. No hotkeys will go through until it gets
 /// activated again. If it's already deactivated, nothing happens.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn HotkeySystem_deactivate(this: &mut HotkeySystem) -> bool {
     this.deactivate().is_ok()
 }
 
 /// Activates a previously deactivated Hotkey System. If it's already
 /// active, nothing happens.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn HotkeySystem_activate(this: &mut HotkeySystem) -> bool {
     this.activate().is_ok()
 }
 
 /// Returns the hotkey configuration currently in use by the Hotkey System.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn HotkeySystem_config(this: &HotkeySystem) -> OwnedHotkeyConfig {
     Box::new(this.config())
 }
@@ -64,7 +64,7 @@ pub extern "C" fn HotkeySystem_config(this: &HotkeySystem) -> OwnedHotkeyConfig 
 /// changed to the one specified in the configuration. This operation may fail
 /// if you provide a hotkey configuration where a hotkey is used for multiple
 /// operations. Returns <FALSE> if the operation failed.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn HotkeySystem_set_config(
     this: &mut HotkeySystem,
     config: OwnedHotkeyConfig,
@@ -73,12 +73,13 @@ pub extern "C" fn HotkeySystem_set_config(
 }
 
 /// Resolves the key according to the current keyboard layout.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn HotkeySystem_resolve(
     this: &HotkeySystem,
     key_code: *const c_char,
 ) -> *const c_char {
-    let name = str(key_code);
+    // SAFETY: The caller guarantees that `key_code` is valid.
+    let name = unsafe { str(key_code) };
     match KeyCode::from_str(name) {
         Ok(key_code) => output_str(this.resolve(key_code)),
         _ => output_str(name),

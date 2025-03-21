@@ -11,13 +11,13 @@ pub type TimerReadLock = RwLockReadGuard<'static, Timer>;
 pub type OwnedTimerReadLock = Box<TimerReadLock>;
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn TimerReadLock_drop(this: OwnedTimerReadLock) {
     drop(this);
 }
 
 /// Accesses the timer.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn TimerReadLock_timer(this: &TimerReadLock) -> &Timer {
     this
 }

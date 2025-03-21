@@ -12,53 +12,54 @@ pub type OwnedTimeSpan = Box<TimeSpan>;
 pub type NullableOwnedTimeSpan = Option<OwnedTimeSpan>;
 
 /// Clones the Time Span.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn TimeSpan_clone(this: &TimeSpan) -> OwnedTimeSpan {
     Box::new(*this)
 }
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn TimeSpan_drop(this: OwnedTimeSpan) {
     drop(this);
 }
 
 /// Creates a new Time Span from a given amount of seconds.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn TimeSpan_from_seconds(seconds: f64) -> OwnedTimeSpan {
     Box::new(TimeSpan::from_seconds(seconds))
 }
 
 /// Parses a Time Span from a string. Returns <NULL> if the time can't be
 /// parsed.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub unsafe extern "C" fn TimeSpan_parse(text: *const c_char) -> NullableOwnedTimeSpan {
-    str(text).parse().ok().map(Box::new)
+    // SAFETY: The caller guarantees that `text` is valid.
+    unsafe { str(text).parse().ok().map(Box::new) }
 }
 
 /// Returns the total amount of seconds (including decimals) this Time Span
 /// represents.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn TimeSpan_total_seconds(this: &TimeSpan) -> f64 {
     this.total_seconds()
 }
 
 /// Returns the total amount of whole seconds (excluding decimals) this Time
 /// Span represents.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn TimeSpan_whole_seconds(this: &TimeSpan) -> i64 {
     this.to_seconds_and_subsec_nanoseconds().0
 }
 
 /// Returns the number of nanoseconds past the last full second that makes up
 /// the Time Span.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn TimeSpan_subsec_nanoseconds(this: &TimeSpan) -> i32 {
     this.to_seconds_and_subsec_nanoseconds().1
 }
 
 /// Changes a Time Span by adding a Time Span onto it.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn TimeSpan_add_assign(this: &mut TimeSpan, other: &TimeSpan) {
     *this += *other;
 }

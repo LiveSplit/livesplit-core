@@ -16,20 +16,20 @@ use livesplit_core::{
 pub type OwnedDetailedTimerComponent = Box<DetailedTimerComponent>;
 
 /// Creates a new Detailed Timer Component.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn DetailedTimerComponent_new() -> OwnedDetailedTimerComponent {
     Box::new(DetailedTimerComponent::new())
 }
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn DetailedTimerComponent_drop(this: OwnedDetailedTimerComponent) {
     drop(this);
 }
 
 /// Converts the component into a generic component suitable for using with a
 /// layout.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn DetailedTimerComponent_into_generic(
     this: OwnedDetailedTimerComponent,
 ) -> OwnedComponent {
@@ -37,7 +37,7 @@ pub extern "C" fn DetailedTimerComponent_into_generic(
 }
 
 /// Encodes the component's state information as JSON.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn DetailedTimerComponent_state_as_json(
     this: &mut DetailedTimerComponent,
     image_cache: &mut ImageCache,
@@ -53,7 +53,7 @@ pub extern "C" fn DetailedTimerComponent_state_as_json(
 
 /// Calculates the component's state based on the timer and layout settings
 /// provided.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn DetailedTimerComponent_state(
     this: &mut DetailedTimerComponent,
     image_cache: &mut ImageCache,

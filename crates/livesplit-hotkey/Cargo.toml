@@ -7,8 +7,8 @@ repository = "https://github.com/LiveSplit/livesplit-core/tree/master/crates/liv
 license = "MIT OR Apache-2.0"
 description = "livesplit-hotkey provides cross-platform global hotkey hooks."
 keywords = ["speedrun", "timer", "livesplit", "hotkey", "keyboard"]
-edition = "2021"
-rust-version = "1.73"
+edition = "2024"
+rust-version = "1.85"
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.59.0", features = [

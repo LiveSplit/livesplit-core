@@ -2,7 +2,7 @@
 name = "livesplit-core-capi"
 version = "0.11.0"
 authors = ["Christopher Serr <christopher.serr@gmail.com>"]
-edition = "2021"
+edition = "2024"
 
 [lib]
 name = "livesplit_core"

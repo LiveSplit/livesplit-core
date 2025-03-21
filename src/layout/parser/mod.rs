@@ -3,21 +3,21 @@
 use super::{Component, Layout, LayoutDirection};
 use crate::{
     component::{separator, timer::DeltaGradient},
-    platform::{math::f32::powf, prelude::*},
+    platform::{math::f32::stable_powf, prelude::*},
     settings::{
         Alignment, BackgroundImage, Color, Font, FontStretch, FontStyle, FontWeight, Gradient,
         Image, LayoutBackground, ListGradient,
     },
     timing::{
-        formatter::{Accuracy, DigitsFormat},
         TimingMethod,
+        formatter::{Accuracy, DigitsFormat},
     },
     util::xml::{
-        helper::{
-            end_tag, image, parse_base, parse_children, text, text_as_escaped_string_err,
-            text_parsed, Error as XmlError,
-        },
         Reader,
+        helper::{
+            Error as XmlError, end_tag, image, parse_base, parse_children, text,
+            text_as_escaped_string_err, text_parsed,
+        },
     },
 };
 use core::{mem::MaybeUninit, num::ParseIntError, str};
@@ -321,8 +321,8 @@ where
         // black. Because of that, we use 1.75 as the exponent denominator for
         // the white on black case instead of the usual 2.2 for sRGB.
         let lightness = (r + g + b) * (1.0 / 3.0);
-        color.alpha =
-            (1.0 - lightness) * (1.0 - powf(1.0 - a, 1.0 / 2.2)) + lightness * powf(a, 1.0 / 1.75);
+        color.alpha = (1.0 - lightness) * (1.0 - stable_powf(1.0 - a, 1.0 / 2.2))
+            + lightness * stable_powf(a, 1.0 / 1.75);
 
         func(color);
         Ok(())
@@ -381,7 +381,7 @@ where
         let mut len = 0;
         for _ in 0..5 {
             let byte = *cursor.next().ok_or(Error::ParseFont)?;
-            len = len << 7 | (byte & 0b0111_1111) as usize;
+            len = (len << 7) | (byte & 0b0111_1111) as usize;
             if byte <= 0b0111_1111 {
                 break;
             }
@@ -708,6 +708,8 @@ fn parse_general_settings(layout: &mut Layout, reader: &mut Reader<'_>) -> Resul
     let mut background_image = None;
     let mut image_opacity = 1.0;
     let mut image_blur = 0.0;
+    let mut has_text_shadow = false;
+    let mut text_shadow_color = Color::transparent();
 
     parse_children(reader, |reader, tag, _| match tag.name() {
         "TextColor" => color(reader, |color| {
@@ -779,8 +781,12 @@ fn parse_general_settings(layout: &mut Layout, reader: &mut Reader<'_>) -> Resul
         }),
         "ImageOpacity" => percentage(reader, |v| image_opacity = v),
         "ImageBlur" => percentage(reader, |v| image_blur = v),
+        "DropShadows" => parse_bool(reader, |b| has_text_shadow = b),
+        "ShadowsColor" => color(reader, |color| text_shadow_color = color),
         _ => end_tag(reader),
     })?;
+
+    settings.text_shadow = has_text_shadow.then_some(text_shadow_color);
 
     settings.background = match background_builder.build() {
         Some(gradient) => LayoutBackground::Gradient(gradient),

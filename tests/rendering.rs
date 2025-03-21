@@ -9,12 +9,12 @@ mod run_files;
 mod tests_helper;
 
 use livesplit_core::{
+    Run, Segment, TimeSpan, Timer, TimingMethod,
     component::{self, timer},
     layout::{self, Component, ComponentState, Layout, LayoutDirection, LayoutState},
     rendering,
     run::parser::{livesplit, llanfair, wsplit},
     settings::ImageCache,
-    Run, Segment, TimeSpan, Timer, TimingMethod,
 };
 use std::{fs, path::PathBuf};
 
@@ -44,8 +44,8 @@ fn default() {
     check(
         &state,
         &image_cache,
-        "e32259a84233e364",
-        "0520a7a32958470a",
+        "c0ad948aed86074f",
+        "b48906628d71c0aa",
         "default",
     );
 }
@@ -68,8 +68,8 @@ fn font_fallback() {
     let build_number: u64 = build_number.parse().unwrap();
     let revision: u32 = cur_ver.get_value("UBR").unwrap();
 
-    if (build_number, revision) < (22631, 3672) {
-        // The hash is different before Windows 11 23H2 (end of May 2024 update).
+    if (build_number, revision) < (26100, 2605) {
+        // The hash is different before Windows 11 24H2.
         println!(
             "Skipping font fallback test on Windows with build number {build_number}.{revision}.",
         );
@@ -167,8 +167,8 @@ fn font_fallback() {
         &state,
         &image_cache,
         [320, 750],
-        "0379ab7ed4cad84f",
-        "fea17ece738ce1be",
+        "8ebc585aec6909e2",
+        "4371062136f5eb3b",
         "font_fallback",
     );
 }
@@ -183,8 +183,8 @@ fn actual_split_file() {
     check(
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
-        "c1e9e757c15a35ae",
-        "4fe65a630b531c54",
+        "5b731b527871c67d",
+        "e43f5bf67ada675c",
         "actual_split_file",
     );
 }
@@ -256,8 +256,8 @@ fn all_components() {
         &state,
         &image_cache,
         [300, 800],
-        "7e7aa83a3b80e1da",
-        "fa3c0357219389d8",
+        "cb6ddee1b2cb296e",
+        "3935895199fbf883",
         "all_components",
     );
 
@@ -265,8 +265,8 @@ fn all_components() {
         &state,
         &image_cache,
         [150, 800],
-        "97afa51bfd8a8597",
-        "eda169eec3995eeb",
+        "70c4e38cea684e91",
+        "33b14971943c049c",
         "all_components_thin",
     );
 }
@@ -293,8 +293,8 @@ fn score_split() {
         &state,
         &image_cache,
         [300, 400],
-        "f5dadfe58e621e7b",
-        "c7fec6cb25b993bc",
+        "c39b32c0e13ced4c",
+        "73de0c5abaa29100",
         "score_split",
     );
 }
@@ -311,7 +311,7 @@ fn dark_layout() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         "a47c590792c1bab5",
-        "91a89f563eb4f43d",
+        "3a3a4f53c146d472",
         "dark_layout",
     );
 }
@@ -334,8 +334,8 @@ fn subsplits_layout() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [300, 800],
-        "39ab965781d0ceee",
-        "405baac87e52acc5",
+        "620825a1f684554a",
+        "355e302202735dbe",
         "subsplits_layout",
     );
 }
@@ -358,8 +358,8 @@ fn background_image() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [300, 300],
-        "b5238ec57ba70c3a",
-        "e4df7276b1603cd5",
+        "044e60eab4dc7faf",
+        "0ba24da5eb4cd8a6",
         "background_image",
     );
 }
@@ -385,8 +385,8 @@ fn display_two_rows() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [200, 100],
-        "d174c2f9a0c54d66",
-        "12b6ab31502b1baa",
+        "029a6bfd857f3820",
+        "aa626e5a8b7c5997",
         "display_two_rows",
     );
 }
@@ -412,8 +412,8 @@ fn single_line_title() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [300, 60],
-        "db305e29ec814f33",
-        "1848cdb01676cfec",
+        "d4a0f104cc3b83c1",
+        "a57d9897ebecbc2c",
         "single_line_title",
     );
 }
@@ -450,8 +450,8 @@ fn horizontal() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [1500, 40],
-        "4a9c12d00233f3c1",
-        "9353fac22b4cfde4",
+        "25cf654aa17999af",
+        "af5ed8ad60fd9b22",
         "horizontal",
     );
 }

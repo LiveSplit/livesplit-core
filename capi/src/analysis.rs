@@ -3,8 +3,8 @@
 
 use super::time_span::{NullableOwnedTimeSpan, OwnedTimeSpan};
 use livesplit_core::{
-    analysis::{sum_of_segments::calculate_best, total_playtime::calculate},
     Run, Timer, TimingMethod,
+    analysis::{sum_of_segments::calculate_best, total_playtime::calculate},
 };
 
 /// Calculates the Sum of Best Segments for the timing method provided. This is
@@ -17,7 +17,7 @@ use livesplit_core::{
 /// can choose to do a simple calculation instead, which excludes the Segment
 /// History from the calculation process. If there's an active attempt, you can
 /// choose to take it into account as well. Can return <NULL>.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Analysis_calculate_sum_of_best(
     run: &Run,
     simple_calculation: bool,
@@ -28,13 +28,13 @@ pub extern "C" fn Analysis_calculate_sum_of_best(
 }
 
 /// Calculates the total playtime of the passed Run.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Analysis_calculate_total_playtime_for_run(run: &Run) -> OwnedTimeSpan {
     Box::new(calculate(run))
 }
 
 /// Calculates the total playtime of the passed Timer.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn Analysis_calculate_total_playtime_for_timer(timer: &Timer) -> OwnedTimeSpan {
     Box::new(calculate(timer))
 }

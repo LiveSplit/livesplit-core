@@ -1,12 +1,12 @@
 use crate::{
+    AtomicDateTime, Run, Segment, Time, TimeSpan, TimeStamp,
+    TimerPhase::{self, *},
+    TimingMethod,
     analysis::check_best_segment,
     comparison::personal_best,
     event::{Error, Event},
     platform::prelude::*,
     util::PopulateString,
-    AtomicDateTime, Run, Segment, Time, TimeSpan, TimeStamp,
-    TimerPhase::{self, *},
-    TimingMethod,
 };
 use core::{mem, ops::Deref};
 

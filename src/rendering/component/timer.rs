@@ -1,8 +1,8 @@
 use crate::{
     component::timer::State,
     rendering::{
-        consts::PADDING, font::CachedLabel, resource::ResourceAllocator, scene::Layer, FillShader,
-        RenderContext,
+        FillShader, RenderContext, consts::PADDING, font::CachedLabel, resource::ResourceAllocator,
+        scene::Layer,
     },
 };
 
@@ -27,11 +27,14 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     component: &State,
 ) -> f32 {
     context.render_background([width, height], &component.background);
+
     let shader = FillShader::VerticalGradient(
         component.top_color.to_array(),
         component.bottom_color.to_array(),
     );
+
     let render_target = Layer::from_updates_frequently(component.updates_frequently);
+
     let x = context.render_timer(
         &component.fraction,
         &mut cache.fraction,
@@ -40,6 +43,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         0.7 * height,
         shader,
     );
+
     context.render_timer(
         &component.time,
         &mut cache.time,

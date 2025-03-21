@@ -1,4 +1,4 @@
-#![allow(dead_code)]
+#![allow(dead_code, missing_docs)]
 
 use crate::{Run, Segment, TimeSpan, Timer, TimingMethod};
 

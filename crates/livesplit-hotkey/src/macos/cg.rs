@@ -208,7 +208,7 @@ bitflags::bitflags! {
 }
 
 #[link(name = "CoreGraphics", kind = "framework")]
-extern "C" {
+unsafe extern "C" {
     pub fn CGEventGetFlags(event: EventRef) -> EventFlags;
 
     pub fn CGEventTapCreate(

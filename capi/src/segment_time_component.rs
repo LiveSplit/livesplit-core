@@ -12,20 +12,20 @@ use livesplit_core::Timer;
 pub type OwnedSegmentTimeComponent = Box<SegmentTimeComponent>;
 
 /// Creates a new Segment Time Component.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SegmentTimeComponent_new() -> OwnedSegmentTimeComponent {
     Box::new(SegmentTimeComponent::new())
 }
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SegmentTimeComponent_drop(this: OwnedSegmentTimeComponent) {
     drop(this);
 }
 
 /// Converts the component into a generic component suitable for using with a
 /// layout.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SegmentTimeComponent_into_generic(
     this: OwnedSegmentTimeComponent,
 ) -> OwnedComponent {
@@ -33,7 +33,7 @@ pub extern "C" fn SegmentTimeComponent_into_generic(
 }
 
 /// Encodes the component's state information as JSON.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SegmentTimeComponent_state_as_json(
     this: &SegmentTimeComponent,
     timer: &Timer,
@@ -44,7 +44,7 @@ pub extern "C" fn SegmentTimeComponent_state_as_json(
 }
 
 /// Calculates the component's state based on the timer provided.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SegmentTimeComponent_state(
     this: &SegmentTimeComponent,
     timer: &Timer,

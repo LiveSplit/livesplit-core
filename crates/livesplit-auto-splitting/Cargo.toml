@@ -7,8 +7,8 @@ repository = "https://github.com/LiveSplit/livesplit-core/tree/master/crates/liv
 license = "MIT OR Apache-2.0"
 description = "livesplit-auto-splitting is a library that provides a runtime for running auto splitters that can control a speedrun timer. These auto splitters are provided as WebAssembly modules."
 keywords = ["speedrun", "timer", "livesplit", "auto-splitting"]
-edition = "2021"
-rust-version = "1.82"
+edition = "2024"
+rust-version = "1.85"
 
 [dependencies]
 anyhow = { version = "1.0.45", default-features = false }
@@ -22,18 +22,18 @@ proc-maps = { version = "0.4.0", default-features = false }
 read-process-memory = { version = "0.1.4", default-features = false }
 slotmap = { version = "1.0.2", default-features = false }
 snafu = "0.8.0"
-sysinfo = { version = "0.32.0", default-features = false, features = [
+sysinfo = { version = "0.33.1", default-features = false, features = [
   "multithread",
   "system",
 ] }
 time = { version = "0.3.3", default-features = false }
-wasmtime = { version = "26.0.0", default-features = false, features = [
+wasmtime = { git = "https://github.com/bytecodealliance/wasmtime", rev = "ead1c7417284d1230d210cf13a6fcd26484aa5b1", default-features = false, features = [
   "cranelift",
-  "gc",
+  "gc-drc",
   "parallel-compilation",
   "runtime",
 ] }
-wasmtime-wasi = { version = "26.0.0", default-features = false, features = [
+wasmtime-wasi = { git = "https://github.com/bytecodealliance/wasmtime", rev = "ead1c7417284d1230d210cf13a6fcd26484aa5b1", default-features = false, features = [
   "preview1",
 ] }
 

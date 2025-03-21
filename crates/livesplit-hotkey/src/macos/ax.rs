@@ -3,7 +3,7 @@
 use super::cf::{DictionaryRef, StringRef};
 
 #[link(name = "ApplicationServices", kind = "framework")]
-extern "C" {
+unsafe extern "C" {
     pub static kAXTrustedCheckOptionPrompt: StringRef;
 
     pub fn AXIsProcessTrustedWithOptions(options: DictionaryRef) -> bool;

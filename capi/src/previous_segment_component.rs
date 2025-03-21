@@ -14,20 +14,20 @@ use livesplit_core::{GeneralLayoutSettings, Timer};
 pub type OwnedPreviousSegmentComponent = Box<PreviousSegmentComponent>;
 
 /// Creates a new Previous Segment Component.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn PreviousSegmentComponent_new() -> OwnedPreviousSegmentComponent {
     Box::new(PreviousSegmentComponent::new())
 }
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn PreviousSegmentComponent_drop(this: OwnedPreviousSegmentComponent) {
     drop(this);
 }
 
 /// Converts the component into a generic component suitable for using with a
 /// layout.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn PreviousSegmentComponent_into_generic(
     this: OwnedPreviousSegmentComponent,
 ) -> OwnedComponent {
@@ -35,7 +35,7 @@ pub extern "C" fn PreviousSegmentComponent_into_generic(
 }
 
 /// Encodes the component's state information as JSON.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn PreviousSegmentComponent_state_as_json(
     this: &PreviousSegmentComponent,
     timer: &Timer,
@@ -50,7 +50,7 @@ pub extern "C" fn PreviousSegmentComponent_state_as_json(
 
 /// Calculates the component's state based on the timer and the layout
 /// settings provided.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn PreviousSegmentComponent_state(
     this: &PreviousSegmentComponent,
     timer: &Timer,

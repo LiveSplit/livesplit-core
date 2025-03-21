@@ -11,20 +11,20 @@ use livesplit_core::component::blank_space::Component as BlankSpaceComponent;
 pub type OwnedBlankSpaceComponent = Box<BlankSpaceComponent>;
 
 /// Creates a new Blank Space Component.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn BlankSpaceComponent_new() -> OwnedBlankSpaceComponent {
     Box::new(BlankSpaceComponent::new())
 }
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn BlankSpaceComponent_drop(this: OwnedBlankSpaceComponent) {
     drop(this);
 }
 
 /// Converts the component into a generic component suitable for using with a
 /// layout.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn BlankSpaceComponent_into_generic(
     this: OwnedBlankSpaceComponent,
 ) -> OwnedComponent {
@@ -32,7 +32,7 @@ pub extern "C" fn BlankSpaceComponent_into_generic(
 }
 
 /// Encodes the component's state information as JSON.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn BlankSpaceComponent_state_as_json(this: &mut BlankSpaceComponent) -> Json {
     output_vec(|o| {
         this.state().write_json(o).unwrap();
@@ -40,7 +40,7 @@ pub extern "C" fn BlankSpaceComponent_state_as_json(this: &mut BlankSpaceCompone
 }
 
 /// Calculates the component's state.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn BlankSpaceComponent_state(
     this: &mut BlankSpaceComponent,
 ) -> OwnedBlankSpaceComponentState {

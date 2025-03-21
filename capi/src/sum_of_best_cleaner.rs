@@ -12,14 +12,14 @@ use livesplit_core::run::editor::cleaning::SumOfBestCleaner;
 pub type OwnedSumOfBestCleaner = Box<SumOfBestCleaner<'static>>;
 
 /// drop
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SumOfBestCleaner_drop(this: OwnedSumOfBestCleaner) {
     drop(this);
 }
 
 /// Returns the next potential clean up. If there are no more potential
 /// clean ups, <NULL> is returned.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SumOfBestCleaner_next_potential_clean_up(
     this: &'static mut SumOfBestCleaner<'static>,
 ) -> NullableOwnedPotentialCleanUp {
@@ -27,7 +27,7 @@ pub extern "C" fn SumOfBestCleaner_next_potential_clean_up(
 }
 
 /// Applies a clean up to the Run.
-#[no_mangle]
+#[unsafe(no_mangle)]
 pub extern "C" fn SumOfBestCleaner_apply(
     this: &'static mut SumOfBestCleaner<'static>,
     clean_up: OwnedPotentialCleanUp,
