@@ -14,9 +14,10 @@ main() {
         features="$features,auto-splitting"
     fi
 
-    if [ "$SKIP_NETWORKING" != "skip" ]; then
-        features="$features,networking"
-    fi
+    # FIXME: Comment back in once we have API bindings again.
+    # if [ "$SKIP_NETWORKING" != "skip" ]; then
+    #     features="$features,networking"
+    # fi
 
     if [ "$SKIP_SOFTWARE_RENDERING" != "skip" ]; then
         features="$features,software-rendering"

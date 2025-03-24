@@ -38,7 +38,6 @@ pub mod portal2_live_timer;
 pub mod shit_split;
 pub mod source_live_timer;
 pub mod speedrun_igt;
-pub mod splits_io;
 pub mod splitterino;
 pub mod splitterz;
 pub mod splitty;

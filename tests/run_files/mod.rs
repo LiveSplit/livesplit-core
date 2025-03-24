@@ -2,7 +2,6 @@
 
 pub const CELESTE: &str = include_str!("Celeste - Any% (1.2.1.5).lss");
 pub const FLITTER: &str = include_str!("flitter.json");
-pub const GENERIC_SPLITS_IO: &str = include_str!("generic_splits_io.json");
 pub const LIVESPLIT_1_0: &str = include_str!("livesplit1.0.lss");
 pub const LIVESPLIT_1_4: &str = include_str!("livesplit1.4.lss");
 pub const LIVESPLIT_1_5: &str = include_str!("livesplit1.5.lss");
