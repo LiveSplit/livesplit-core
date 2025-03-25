@@ -26,6 +26,10 @@ fn lsl(data: &str) -> Layout {
     layout::parser::parse(data).unwrap()
 }
 
+fn ls1l(data: &str) -> Layout {
+    Layout::from_settings(serde_json::from_str(data).unwrap())
+}
+
 #[test]
 fn default() {
     let mut run = tests_helper::create_run(&["A", "B", "C", "D"]);
@@ -44,8 +48,8 @@ fn default() {
     check(
         &state,
         &image_cache,
-        "c0ad948aed86074f",
-        "b48906628d71c0aa",
+        "40afc8d9b921c018",
+        "29bf0ddd39a138e7",
         "default",
     );
 }
@@ -167,8 +171,8 @@ fn font_fallback() {
         &state,
         &image_cache,
         [320, 750],
-        "8ebc585aec6909e2",
-        "4371062136f5eb3b",
+        "d21ee9034ca0baed",
+        "e339132ee6cf8e94",
         "font_fallback",
     );
 }
@@ -183,8 +187,8 @@ fn actual_split_file() {
     check(
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
-        "5b731b527871c67d",
-        "e43f5bf67ada675c",
+        "0bd8b41b95ae974c",
+        "0a4b3f4cb44ffbbb",
         "actual_split_file",
     );
 }
@@ -256,8 +260,8 @@ fn all_components() {
         &state,
         &image_cache,
         [300, 800],
-        "cb6ddee1b2cb296e",
-        "3935895199fbf883",
+        "ca9b92ae7357d0cd",
+        "5e74113e4352d0b9",
         "all_components",
     );
 
@@ -265,8 +269,8 @@ fn all_components() {
         &state,
         &image_cache,
         [150, 800],
-        "70c4e38cea684e91",
-        "33b14971943c049c",
+        "ccbcbb6285133a58",
+        "aef452d4bff2f3bd",
         "all_components_thin",
     );
 }
@@ -293,8 +297,8 @@ fn score_split() {
         &state,
         &image_cache,
         [300, 400],
-        "c39b32c0e13ced4c",
-        "73de0c5abaa29100",
+        "6385959af93932cb",
+        "ebbe996276cd8dd0",
         "score_split",
     );
 }
@@ -311,7 +315,7 @@ fn dark_layout() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         "a47c590792c1bab5",
-        "3a3a4f53c146d472",
+        "4ad7d528b3dc653d",
         "dark_layout",
     );
 }
@@ -334,8 +338,8 @@ fn subsplits_layout() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [300, 800],
-        "620825a1f684554a",
-        "355e302202735dbe",
+        "fc9658d65e0e0511",
+        "e54f03f006192781",
         "subsplits_layout",
     );
 }
@@ -358,8 +362,8 @@ fn background_image() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [300, 300],
-        "044e60eab4dc7faf",
-        "0ba24da5eb4cd8a6",
+        "81f6d2122b32065f",
+        "57f284ed4a717a0d",
         "background_image",
     );
 }
@@ -385,8 +389,8 @@ fn display_two_rows() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [200, 100],
-        "029a6bfd857f3820",
-        "aa626e5a8b7c5997",
+        "0541122a81430490",
+        "c5f95ed36a74130e",
         "display_two_rows",
     );
 }
@@ -412,8 +416,8 @@ fn single_line_title() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [300, 60],
-        "d4a0f104cc3b83c1",
-        "a57d9897ebecbc2c",
+        "12d4b767f55e5545",
+        "13bc0a3729c5df16",
         "single_line_title",
     );
 }
@@ -450,9 +454,29 @@ fn horizontal() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [1500, 40],
-        "25cf654aa17999af",
-        "af5ed8ad60fd9b22",
+        "81d12a01d1b00092",
+        "c22903674f3b0767",
         "horizontal",
+    );
+}
+
+#[test]
+fn text_shadow() {
+    let run = lss(run_files::CELESTE);
+    let mut timer = Timer::new(run).unwrap();
+    let mut layout = ls1l(layout_files::TEXT_SHADOW);
+    let mut image_cache = ImageCache::new();
+
+    tests_helper::start_run(&mut timer);
+    tests_helper::make_progress_run_with_splits_opt(&mut timer, &[Some(12.34)]);
+
+    check_dims(
+        &layout.state(&mut image_cache, &timer.snapshot()),
+        &image_cache,
+        [400, 400],
+        "ee437905156e2d64",
+        "d21a7fdd462f99fb",
+        "text_shadow",
     );
 }
 

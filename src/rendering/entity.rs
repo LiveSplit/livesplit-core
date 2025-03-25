@@ -6,8 +6,8 @@ use core::{
 use crate::settings::BackgroundImage;
 
 use super::{
-    resource::{Handle, LabelHandle},
     Background, FillShader, Rgba, Transform,
+    resource::{Handle, LabelHandle},
 };
 
 struct FxHasher(u64);
@@ -80,8 +80,9 @@ pub enum Entity<P, I, L> {
     StrokePath(Handle<P>, f32, Rgba, Transform),
     /// An image.
     Image(Handle<I>, Transform),
-    /// A text label.
-    Label(LabelHandle<L>, FillShader, Transform),
+    /// A text label with a [`FillShader`] that describes the text color and an
+    /// optional text shadow.
+    Label(LabelHandle<L>, FillShader, Option<Rgba>, Transform),
 }
 
 pub fn calculate_hash<P, I, L>(
@@ -153,9 +154,13 @@ impl<P, I, L> Hash for Entity<P, I, L> {
                 image.hash(state);
                 hash_transform(transform, state);
             }
-            Entity::Label(label, shader, transform) => {
+            Entity::Label(label, shader, text_shadow, transform) => {
                 label.hash(state);
                 hash_shader(shader, state);
+                mem::discriminant(text_shadow).hash(state);
+                if let Some(text_shadow) = text_shadow {
+                    hash_floats(text_shadow, state);
+                }
                 hash_transform(transform, state);
             }
         }
