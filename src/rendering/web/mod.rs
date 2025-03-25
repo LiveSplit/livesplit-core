@@ -18,14 +18,16 @@ use web_sys::{Blob, Element, HtmlCanvasElement, ImageBitmap, Path2d, Window};
 
 use crate::{
     layout::LayoutState,
-    settings::{Font, FontStretch, FontStyle, FontWeight, ImageCache, BLUR_FACTOR},
+    settings::{
+        BLUR_FACTOR, BackgroundImage, Font, FontStretch, FontStyle, FontWeight, ImageCache,
+    },
 };
 
 use self::bindings::CanvasRenderingContext2d;
 
 use super::{
-    Background, Entity, FillShader, FontKind, Label, PathBuilder, ResourceAllocator, SceneManager,
-    SharedOwnership, Transform,
+    Background, Entity, FillShader, FontKind, Handle, Label, PathBuilder, ResourceAllocator,
+    SceneManager, SharedOwnership, Transform, consts::SHADOW_OFFSET,
 };
 
 mod bindings;
@@ -75,7 +77,7 @@ struct CanvasAllocator {
     force_redraw_all: Rc<Cell<bool>>,
     ctx_bottom: CanvasRenderingContext2d,
     ctx_top: CanvasRenderingContext2d,
-    digits: [JsString; 10],
+    cache: JsValueCache,
 }
 
 #[derive(Clone)]
@@ -296,10 +298,14 @@ impl ResourceAllocator for CanvasAllocator {
         }
 
         let is_monospaced = kind.is_monospaced();
-        let font_kerning = JsString::from(if is_monospaced { "none" } else { "auto" });
+        let font_kerning = if is_monospaced {
+            &self.cache.none
+        } else {
+            &self.cache.auto
+        };
         let descriptor = JsString::from(descriptor);
         self.ctx_top.set_font(&descriptor);
-        self.ctx_top.set_font_kerning(&font_kerning);
+        self.ctx_top.set_font_kerning(font_kerning);
 
         // FIXME: We query this to position a gradient from the top to the
         // bottom of the font. Is the ascent and descent what we want here?
@@ -313,7 +319,10 @@ impl ResourceAllocator for CanvasAllocator {
             let mut digit_width = 0.0;
 
             for (digit, glyph) in digit_offsets.iter_mut().enumerate() {
-                let metrics = self.ctx_top.measure_text(&self.digits[digit]).unwrap();
+                let metrics = self
+                    .ctx_top
+                    .measure_text(&self.cache.digits[digit])
+                    .unwrap();
                 let width = metrics.width() as f32;
                 *glyph = width;
                 if width > digit_width {
@@ -340,7 +349,7 @@ impl ResourceAllocator for CanvasAllocator {
 
         Rc::new(CanvasFont {
             descriptor,
-            font_kerning,
+            font_kerning: font_kerning.clone(),
             font_handling,
             top,
             bottom,
@@ -473,9 +482,128 @@ pub struct Renderer {
     allocator: CanvasAllocator,
     canvas_bottom: HtmlCanvasElement,
     canvas_top: HtmlCanvasElement,
-    str_buf: String,
     top_layer_is_cleared: bool,
-    cache: HashMap<HashShader, JsValue>,
+}
+
+struct JsValueCache {
+    str_buf: String,
+    shaders: HashMap<HashShader, JsValue>,
+    colors: HashMap<[u8; 16], JsString>,
+    filters: HashMap<HashFilter, JsString>,
+    digits: [JsString; 10],
+    transparent: JsString,
+    none: JsString,
+    auto: JsString,
+}
+
+impl JsValueCache {
+    fn raw_color<'b>(buf: &'b mut String, &[r, g, b, a]: &[f32; 4]) -> &'b str {
+        use core::fmt::Write;
+
+        buf.clear();
+        let _ = write!(
+            buf,
+            "rgba({}, {}, {}, {})",
+            255.0 * r,
+            255.0 * g,
+            255.0 * b,
+            a
+        );
+        buf
+    }
+
+    fn color(&mut self, rgba: &[f32; 4]) -> &JsString {
+        self.colors
+            .entry(cast(*rgba))
+            .or_insert_with(|| JsString::from(Self::raw_color(&mut self.str_buf, rgba)))
+    }
+
+    fn shader(
+        &mut self,
+        shader: &FillShader,
+        ctx: &CanvasRenderingContext2d,
+        handle: &impl HasBounds,
+    ) -> &JsValue {
+        let hash_shader = match shader {
+            FillShader::SolidColor(c) => {
+                return self.color(c);
+            }
+            FillShader::VerticalGradient(t, b) => {
+                HashShader::VerticalGradient(cast(*t), cast(*b), cast(handle.bounds_y()))
+            }
+            FillShader::HorizontalGradient(l, r) => {
+                HashShader::HorizontalGradient(cast(*l), cast(*r), cast(handle.bounds_x()))
+            }
+        };
+
+        self.shaders
+            .entry(hash_shader)
+            .or_insert_with(|| match shader {
+                FillShader::SolidColor(_) => unreachable!(),
+                FillShader::VerticalGradient(t, b) => {
+                    let [min_y, max_y] = handle.bounds_y();
+                    let gradient = ctx.create_linear_gradient(0.0, min_y as _, 0.0, max_y as _);
+                    let _ = gradient.add_color_stop(0.0, Self::raw_color(&mut self.str_buf, t));
+                    let _ = gradient.add_color_stop(1.0, Self::raw_color(&mut self.str_buf, b));
+                    gradient.unchecked_into()
+                }
+                FillShader::HorizontalGradient(l, r) => {
+                    let [min_x, max_x] = handle.bounds_x();
+                    let gradient = ctx.create_linear_gradient(min_x as _, 0.0, max_x as _, 0.0);
+                    let _ = gradient.add_color_stop(0.0, Self::raw_color(&mut self.str_buf, l));
+                    let _ = gradient.add_color_stop(1.0, Self::raw_color(&mut self.str_buf, r));
+                    gradient.unchecked_into()
+                }
+            })
+    }
+
+    fn filter(
+        &mut self,
+        image: &BackgroundImage<Handle<Image>>,
+        width: f64,
+        height: f64,
+    ) -> Option<&JsString> {
+        if image.brightness == 1.0 && image.opacity == 1.0 && image.blur == 0.0 {
+            return None;
+        }
+
+        Some(
+            self.filters
+                .entry(HashFilter {
+                    brightness: image.brightness.to_bits(),
+                    opacity: image.opacity.to_bits(),
+                    blur: image.blur.to_bits(),
+                })
+                .or_insert_with(|| {
+                    use std::fmt::Write;
+
+                    let str_buf = &mut self.str_buf;
+                    str_buf.clear();
+
+                    if image.brightness != 1.0 {
+                        let _ = write!(str_buf, "brightness({}%)", 100.0 * image.brightness);
+                    }
+                    if image.opacity != 1.0 {
+                        if !str_buf.is_empty() {
+                            str_buf.push(' ');
+                        }
+                        let _ = write!(str_buf, "opacity({}%)", 100.0 * image.opacity);
+                    }
+                    if image.blur != 0.0 {
+                        if !str_buf.is_empty() {
+                            str_buf.push(' ');
+                        }
+                        let _ = write!(
+                            str_buf,
+                            "blur({}px)",
+                            (BLUR_FACTOR as f64) * image.blur as f64 * width.max(height)
+                        );
+                    }
+
+                    JsString::from(&**str_buf)
+                }),
+        )
+    }
 }
 
 impl Default for Renderer {
@@ -537,7 +665,16 @@ impl Renderer {
             force_redraw_all,
             ctx_bottom,
             ctx_top,
-            digits: array::from_fn(|digit| JsString::from((digit as u8 + b'0') as char)),
+            cache: JsValueCache {
+                str_buf: String::new(),
+                shaders: HashMap::new(),
+                colors: HashMap::new(),
+                filters: HashMap::new(),
+                digits: array::from_fn(|digit| JsString::from((digit as u8 + b'0') as char)),
+                transparent: JsString::from("transparent"),
+                none: JsString::from("none"),
+                auto: JsString::from("auto"),
+            },
         };
 
         Self {
@@ -546,9 +683,7 @@ impl Renderer {
             allocator,
             canvas_bottom,
             canvas_top,
-            str_buf: String::new(),
             top_layer_is_cleared: true,
-            cache: HashMap::new(),
         }
     }
 
@@ -601,7 +736,6 @@ impl Renderer {
         );
 
         let scene = self.manager.scene();
-        let str_buf = &mut self.str_buf;
 
         if scene.bottom_layer_changed() || self.allocator.force_redraw_all.take() {
             let ctx = &mut self.allocator.ctx_bottom;
@@ -610,7 +744,11 @@ impl Renderer {
             if let Some(background) = scene.background() {
                 match background {
                     Background::Shader(shader) => {
-                        set_fill_style(shader, ctx, &mut self.cache, str_buf, &*scene.rectangle());
+                        ctx.set_fill_style(self.allocator.cache.shader(
+                            shader,
+                            ctx,
+                            &*scene.rectangle(),
+                        ));
                         // Instead of scaling the rectangle we need to use a
                         // transform so that the gradient's endpoints are
                         // correct.
@@ -628,41 +766,13 @@ impl Renderer {
                     Background::Image(background_image, transform) => {
                         let image = background_image.image.0.borrow();
                         if let Some((image, _)) = &*image {
-                            str_buf.clear();
-                            use std::fmt::Write;
-                            if background_image.brightness != 1.0 {
-                                let _ = write!(
-                                    str_buf,
-                                    "brightness({}%)",
-                                    100.0 * background_image.brightness
-                                );
+                            let filter =
+                                self.allocator.cache.filter(background_image, width, height);
+
+                            if let Some(filter) = filter {
+                                ctx.set_filter(filter);
                             }
-                            if background_image.opacity != 1.0 {
-                                if !str_buf.is_empty() {
-                                    str_buf.push(' ');
-                                }
-                                let _ = write!(
-                                    str_buf,
-                                    "opacity({}%)",
-                                    100.0 * background_image.opacity
-                                );
-                            }
-                            if background_image.blur != 0.0 {
-                                if !str_buf.is_empty() {
-                                    str_buf.push(' ');
-                                }
-                                let _ = write!(
-                                    str_buf,
-                                    "blur({}px)",
-                                    (BLUR_FACTOR as f64)
-                                        * background_image.blur as f64
-                                        * width.max(height)
-                                );
-                            }
-                            if !str_buf.is_empty() {
-                                // FIXME: Cache the string (and below for the none).
-                                ctx.set_filter(&JsString::from(str_buf.as_str()));
-                            }
+
                             let _ = ctx.draw_image_with_image_bitmap_and_dw_and_dh(
                                 image,
                                 transform.x as _,
@@ -670,21 +780,16 @@ impl Renderer {
                                 transform.scale_x as _,
                                 transform.scale_y as _,
                             );
-                            if !str_buf.is_empty() {
-                                ctx.set_filter(&JsString::from("none"));
+
+                            if filter.is_some() {
+                                ctx.set_filter(&self.allocator.cache.none);
                             }
                         }
                     }
                 }
             }
 
-            render_layer(
-                ctx,
-                &mut self.cache,
-                str_buf,
-                scene.bottom_layer(),
-                &self.allocator.digits,
-            );
+            render_layer(ctx, &mut self.allocator.cache, scene.bottom_layer());
         }
 
         let layer = scene.top_layer();
@@ -695,7 +800,7 @@ impl Renderer {
             ctx.clear_rect(0.0, 0.0, width, height);
         }
         self.top_layer_is_cleared = layer.is_empty();
-        render_layer(ctx, &mut self.cache, str_buf, layer, &self.allocator.digits);
+        render_layer(ctx, &mut self.allocator.cache, layer);
 
         new_dims.map(|[width, height]| {
             let ratio = (1.0 / ratio) as f32;
@@ -706,9 +811,15 @@ impl Renderer {
 
 #[derive(PartialEq, Eq, Hash)]
 enum HashShader {
-    SolidColor([u32; 4]),
     VerticalGradient([u32; 4], [u32; 4], [u32; 2]),
     HorizontalGradient([u32; 4], [u32; 4], [u32; 2]),
+}
+
+#[derive(PartialEq, Eq, Hash)]
+struct HashFilter {
+    brightness: u32,
+    opacity: u32,
+    blur: u32,
 }
 
 trait HasBounds {
@@ -738,85 +849,28 @@ impl HasBounds for CanvasLabel {
     }
 }
 
-fn set_stroke_style(
-    c: &[f32; 4],
-    ctx: &CanvasRenderingContext2d,
-    str_buf: &mut String,
-    cache: &mut HashMap<HashShader, JsValue>,
-) {
-    let hash_shader = HashShader::SolidColor(cast(*c));
-    let style = cache
-        .entry(hash_shader)
-        .or_insert_with(|| JsValue::from_str(color(str_buf, c)));
-    ctx.set_stroke_style(style);
-}
-
-fn set_fill_style(
-    shader: &FillShader,
-    ctx: &CanvasRenderingContext2d,
-    cache: &mut HashMap<HashShader, JsValue>,
-    str_buf: &mut String,
-    handle: &impl HasBounds,
-) {
-    let hash_shader = match *shader {
-        FillShader::SolidColor(c) => HashShader::SolidColor(cast(c)),
-        FillShader::VerticalGradient(t, b) => {
-            HashShader::VerticalGradient(cast(t), cast(b), cast(handle.bounds_y()))
-        }
-        FillShader::HorizontalGradient(l, r) => {
-            HashShader::HorizontalGradient(cast(l), cast(r), cast(handle.bounds_x()))
-        }
-    };
-    let style = cache.entry(hash_shader).or_insert_with(|| match shader {
-        FillShader::SolidColor(c) => JsValue::from_str(color(str_buf, c)),
-        FillShader::VerticalGradient(t, b) => {
-            let [min_y, max_y] = handle.bounds_y();
-            let gradient = ctx.create_linear_gradient(0.0, min_y as _, 0.0, max_y as _);
-            let _ = gradient.add_color_stop(0.0, color(str_buf, t));
-            let _ = gradient.add_color_stop(1.0, color(str_buf, b));
-            gradient.unchecked_into()
-        }
-        FillShader::HorizontalGradient(l, r) => {
-            let [min_x, max_x] = handle.bounds_x();
-            let gradient = ctx.create_linear_gradient(min_x as _, 0.0, max_x as _, 0.0);
-            let _ = gradient.add_color_stop(0.0, color(str_buf, l));
-            let _ = gradient.add_color_stop(1.0, color(str_buf, r));
-            gradient.unchecked_into()
-        }
-    });
-    ctx.set_fill_style(style);
-}
-
 fn render_layer(
     ctx: &CanvasRenderingContext2d,
-    cache: &mut HashMap<HashShader, JsValue>,
-    str_buf: &mut String,
+    cache: &mut JsValueCache,
     layer: &[Entity<Path, Image, CanvasLabel>],
-    digits: &[JsString; 10],
 ) {
     for entity in layer {
         match entity {
             Entity::FillPath(path, shader, transform) => {
-                set_fill_style(shader, ctx, cache, str_buf, &**path);
+                ctx.set_fill_style(cache.shader(shader, ctx, &**path));
                 set_transform(ctx, transform);
                 ctx.fill_with_path_2d(&path.path);
             }
             Entity::StrokePath(path, stroke_width, color, transform) => {
-                set_fill_style(
-                    &FillShader::SolidColor([0.0; 4]),
-                    ctx,
-                    cache,
-                    str_buf,
-                    &**path,
-                );
+                ctx.set_fill_style(&cache.transparent);
                 ctx.set_line_width(*stroke_width as f64);
-                set_stroke_style(color, ctx, str_buf, cache);
+                ctx.set_stroke_style(cache.color(color));
                 set_transform(ctx, transform);
                 ctx.stroke_with_path(&path.path);
             }
             Entity::Image(image, transform) => {
-                let image = image.0.borrow();
-                if let Some((image, _)) = &*image {
+                let image = &*image.0.borrow();
+                if let Some((image, _)) = image {
                     let _ = ctx.reset_transform();
                     let _ = ctx.draw_image_with_image_bitmap_and_dw_and_dh(
                         image,
@@ -827,11 +881,19 @@ fn render_layer(
                     );
                 }
             }
-            Entity::Label(label, shader, transform) => {
-                set_fill_style(shader, ctx, cache, str_buf, &**label);
-                let label = label.0.borrow();
-                let label = &*label;
+            Entity::Label(label, shader, text_shadow, transform) => {
+                ctx.set_fill_style(cache.shader(shader, ctx, &**label));
+                let label = &*label.0.borrow();
                 set_font(ctx, &label.font);
+
+                if let Some(text_shadow) = text_shadow {
+                    ctx.set_shadow_color(cache.color(text_shadow));
+                    ctx.set_shadow_blur(
+                        (SHADOW_OFFSET * 0.5 * (transform.scale_x + transform.scale_y)) as f64,
+                    );
+                    ctx.set_shadow_offset_x((SHADOW_OFFSET * transform.scale_x) as f64);
+                    ctx.set_shadow_offset_y((SHADOW_OFFSET * transform.scale_y) as f64);
+                }
 
                 set_transform(
                     ctx,
@@ -847,7 +909,7 @@ fn render_layer(
                             match piece {
                                 MonospacePiece::Digit { digit, offset } => {
                                     let _ = ctx.fill_text(
-                                        &digits[*digit as usize],
+                                        &cache.digits[*digit as usize],
                                         *offset as f64,
                                         0.0,
                                     );
@@ -858,6 +920,10 @@ fn render_layer(
                             }
                         }
                     }
+                }
+
+                if text_shadow.is_some() {
+                    ctx.set_shadow_color(&cache.transparent);
                 }
             }
         }
@@ -880,21 +946,6 @@ fn set_transform(ctx: &CanvasRenderingContext2d, transform: &Transform) {
     );
 
     let _ = ctx.set_transform(sx, ky, kx, sy, tx, ty);
-}
-
-fn color<'b>(buf: &'b mut String, &[r, g, b, a]: &[f32; 4]) -> &'b str {
-    use core::fmt::Write;
-
-    buf.clear();
-    let _ = write!(
-        buf,
-        "rgba({}, {}, {}, {})",
-        255.0 * r,
-        255.0 * g,
-        255.0 * b,
-        a
-    );
-    buf
 }
 
 const fn weight_as_css_str(weight: FontWeight) -> &'static str {

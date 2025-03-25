@@ -28,11 +28,11 @@
 //! ```
 
 use super::{
-    face_split, flitter, livesplit, llanfair, llanfair_gered, portal2_live_timer, shit_split,
-    source_live_timer, speedrun_igt, splits_io, splitterino, splitterz, splitty,
-    time_split_tracker, urn, wsplit, TimerKind,
+    TimerKind, face_split, flitter, livesplit, llanfair, llanfair_gered, portal2_live_timer,
+    shit_split, source_live_timer, speedrun_igt, splitterino, splitterz, splitty,
+    time_split_tracker, urn, wsplit,
 };
-use crate::{platform::path::Path, Run};
+use crate::{Run, platform::path::Path};
 use core::{result::Result as StdResult, str};
 
 /// The Error type for splits files that couldn't be parsed by the Composite
@@ -133,10 +133,6 @@ pub fn parse<'source>(
         // LiveSplit files with the current implementation.
         if let Ok(run) = llanfair_gered::parse(source) {
             return Ok(parsed(run, TimerKind::LlanfairGered));
-        }
-
-        if let Ok((run, timer)) = splits_io::parse(source) {
-            return Ok(parsed(run, TimerKind::Generic(timer)));
         }
 
         // Splitterino, SourceLiveTimer, Flitter, and SpeedRunIGT need to be

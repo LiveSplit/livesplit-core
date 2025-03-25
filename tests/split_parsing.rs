@@ -3,13 +3,13 @@ mod run_files;
 mod parse {
     use crate::run_files;
     use livesplit_core::{
+        Run, TimeSpan,
         analysis::total_playtime,
         run::parser::{
-            composite, flitter, livesplit, llanfair, llanfair_gered, portal2_live_timer,
-            source_live_timer, speedrun_igt, splits_io, splitterino, splitterz, time_split_tracker,
-            urn, wsplit, TimerKind,
+            TimerKind, composite, flitter, livesplit, llanfair, llanfair_gered, portal2_live_timer,
+            source_live_timer, speedrun_igt, splitterino, splitterz, time_split_tracker, urn,
+            wsplit,
         },
-        Run, TimeSpan,
     };
 
     #[track_caller]
@@ -166,11 +166,6 @@ mod parse {
     }
 
     #[test]
-    fn splits_io() {
-        splits_io::parse(run_files::GENERIC_SPLITS_IO).unwrap();
-    }
-
-    #[test]
     fn speedrun_igt() {
         speedrun_igt::parse(run_files::SPEEDRUN_IGT).unwrap();
     }
@@ -179,12 +174,6 @@ mod parse {
     fn speedrun_igt_prefers_parsing_as_itself() {
         let run = composite::parse(run_files::SPEEDRUN_IGT.as_bytes(), None).unwrap();
         assert!(matches!(run.kind, TimerKind::SpeedRunIGT));
-    }
-
-    #[test]
-    fn splits_io_prefers_parsing_as_itself() {
-        let run = composite::parse(run_files::GENERIC_SPLITS_IO.as_bytes(), None).unwrap();
-        assert!(matches!(run.kind, TimerKind::Generic(_)));
     }
 
     #[test]

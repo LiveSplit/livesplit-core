@@ -16,9 +16,17 @@ extern "C" {
     #[wasm_bindgen(structural, method, setter, js_class = "CanvasRenderingContext2D", js_name = lineWidth)]
     pub fn set_line_width(this: &CanvasRenderingContext2d, value: f64);
     #[wasm_bindgen(structural, method, setter, js_class = "CanvasRenderingContext2D", js_name = font)]
-    pub fn set_font(this: &CanvasRenderingContext2d, value: &js_sys::JsString);
+    pub fn set_font(this: &CanvasRenderingContext2d, value: &JsString);
     #[wasm_bindgen(structural, method, setter, js_class = "CanvasRenderingContext2D", js_name = fontKerning)]
     pub fn set_font_kerning(this: &CanvasRenderingContext2d, value: &JsString);
+    #[wasm_bindgen(structural, method, setter, js_class = "CanvasRenderingContext2D", js_name = shadowColor)]
+    pub fn set_shadow_color(this: &CanvasRenderingContext2d, value: &JsString);
+    #[wasm_bindgen(structural, method, setter, js_class = "CanvasRenderingContext2D", js_name = shadowBlur)]
+    pub fn set_shadow_blur(this: &CanvasRenderingContext2d, value: f64);
+    #[wasm_bindgen(structural, method, setter, js_class = "CanvasRenderingContext2D", js_name = shadowOffsetX)]
+    pub fn set_shadow_offset_x(this: &CanvasRenderingContext2d, value: f64);
+    #[wasm_bindgen(structural, method, setter, js_class = "CanvasRenderingContext2D", js_name = shadowOffsetY)]
+    pub fn set_shadow_offset_y(this: &CanvasRenderingContext2d, value: f64);
     #[wasm_bindgen(catch, method, structural, js_class = "CanvasRenderingContext2D", js_name = drawImage)]
     pub fn draw_image_with_image_bitmap_and_dw_and_dh(
         this: &CanvasRenderingContext2d,
