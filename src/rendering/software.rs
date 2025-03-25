@@ -2,10 +2,11 @@
 //! surprisingly fast and can be considered the default rendering backend.
 
 use super::{
+    FillShader, FontKind, Scene, SceneManager, SharedOwnership, Transform,
+    consts::SHADOW_OFFSET,
     default_text_engine::{Font, Label, TextEngine},
     entity::Entity,
     resource::{self, ResourceAllocator},
-    FillShader, FontKind, Scene, SceneManager, SharedOwnership, Transform,
 };
 use crate::{
     layout::LayoutState, platform::prelude::*, rendering::Background, settings,
@@ -20,9 +21,9 @@ use tiny_skia::{
 use tiny_skia_path::NormalizedF32;
 
 #[cfg(feature = "image")]
-use crate::settings::{BackgroundImage, BLUR_FACTOR};
+use crate::settings::{BLUR_FACTOR, BackgroundImage};
 #[cfg(feature = "image")]
-use image::{imageops::FilterType, ImageBuffer};
+use image::{ImageBuffer, imageops::FilterType};
 #[cfg(feature = "image")]
 use tiny_skia_path::IntSize;
 
@@ -486,9 +487,8 @@ fn render_layer(
                     None,
                 );
             }
-            Entity::Label(label, shader, transform) => {
-                let label = label.read().unwrap();
-                let label = &*label;
+            Entity::Label(label, shader, text_shadow, transform) => {
+                let label = &*label.read().unwrap();
 
                 let paint = convert_shader(
                     shader,
@@ -524,6 +524,36 @@ fn render_layer(
                         }
                     },
                 );
+
+                if let Some(text_shadow) = text_shadow {
+                    let mut color = convert_color(text_shadow);
+                    let alpha = match shader {
+                        FillShader::SolidColor([.., a]) => *a,
+                        FillShader::VerticalGradient([.., a1], [.., a2])
+                        | FillShader::HorizontalGradient([.., a1], [.., a2]) => 0.5 * (a1 + a2),
+                    };
+                    color.apply_opacity(alpha);
+                    let transform = transform.pre_translate(SHADOW_OFFSET, SHADOW_OFFSET);
+
+                    for glyph in label.glyphs() {
+                        if let Some(path) = &glyph.path {
+                            let transform = transform
+                                .pre_translate(glyph.x, glyph.y)
+                                .pre_scale(glyph.scale, glyph.scale);
+
+                            canvas.fill_path(
+                                path,
+                                &Paint {
+                                    shader: Shader::SolidColor(color),
+                                    ..paint
+                                },
+                                FillRule::Winding,
+                                convert_transform(&transform),
+                                None,
+                            );
+                        }
+                    }
+                }
 
                 for glyph in label.glyphs() {
                     if let Some(path) = &glyph.path {
@@ -828,8 +858,29 @@ fn calculate_bounds(layer: &[Entity<SkiaPath, SkiaImage, SkiaLabel>]) -> [f32; 2
                     max_y = max_y.max(transformed_y);
                 }
             }
-            Entity::Label(label, _, transform) => {
-                for glyph in label.read().unwrap().glyphs() {
+            Entity::Label(label, _, text_shadow, transform) => {
+                let label = &*label.read().unwrap();
+
+                if text_shadow.is_some() {
+                    let transform = transform.pre_translate(SHADOW_OFFSET, SHADOW_OFFSET);
+
+                    for glyph in label.glyphs() {
+                        if let Some(path) = &glyph.path {
+                            let transform = transform
+                                .pre_translate(glyph.x, glyph.y)
+                                .pre_scale(glyph.scale, glyph.scale);
+
+                            let bounds = path.bounds();
+                            for y in [bounds.top(), bounds.bottom()] {
+                                let transformed_y = transform.transform_y(y);
+                                min_y = min_y.min(transformed_y);
+                                max_y = max_y.max(transformed_y);
+                            }
+                        }
+                    }
+                }
+
+                for glyph in label.glyphs() {
                     if let Some(path) = &glyph.path {
                         let transform = transform
                             .pre_translate(glyph.x, glyph.y)

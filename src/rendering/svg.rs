@@ -12,14 +12,16 @@ use hashbrown::{HashSet, HashTable};
 use crate::{
     layout::LayoutState,
     platform::prelude::*,
-    settings::{Font, ImageCache, BLUR_FACTOR},
+    settings::{BLUR_FACTOR, Font, ImageCache},
     util::xml::{AttributeWriter, DisplayAlreadyEscaped, Text, Value, Writer},
 };
 
 use super::{
+    Background, Entity, FillShader, FontKind, ResourceAllocator, SceneManager, SharedOwnership,
+    Transform,
+    consts::SHADOW_OFFSET,
     default_text_engine::{self, TextEngine},
-    resource, Background, Entity, FillShader, FontKind, ResourceAllocator, SceneManager,
-    SharedOwnership, Transform,
+    resource,
 };
 
 type SvgImage = Rc<Image>;
@@ -175,7 +177,7 @@ impl Renderer {
                 }
                 Entity::StrokePath(path, _, _, _) => visit_path(current_id, defs, writer, path)?,
                 Entity::Image(image, _) => visit_image(current_id, defs, writer, image)?,
-                Entity::Label(label, shader, _) => {
+                Entity::Label(label, shader, _, _) => {
                     for glyph in label.read().unwrap().glyphs() {
                         if glyph.color.is_none() {
                             visit_shader(current_id, defs, writer, shader)?;
@@ -288,8 +290,44 @@ impl Renderer {
                         ],
                     )?;
                 }
-                Entity::Label(label, shader, transform) => {
-                    for glyph in label.read().unwrap().glyphs() {
+                Entity::Label(label, shader, text_shadow, transform) => {
+                    let label = &*label.read().unwrap();
+
+                    if let Some((color, opacity)) = text_shadow.as_ref().and_then(convert_color) {
+                        // This implementation of text shadows simply adds a
+                        // second version of the label as the text shadow. We
+                        // tried `feDropShadow`, but it seems to be cut off in
+                        // Chrome and weirdly enough SEGFAULTS Firefox.
+                        // https://x.com/CryZe107/status/1903132316358082813
+
+                        let opacity = opacity.map(|o| {
+                            let alpha = match shader {
+                                FillShader::SolidColor([.., a]) => *a,
+                                FillShader::VerticalGradient([.., a1], [.., a2])
+                                | FillShader::HorizontalGradient([.., a1], [.., a2]) => {
+                                    0.5 * (a1 + a2)
+                                }
+                            };
+                            o * alpha
+                        });
+
+                        let transform = transform.pre_translate(SHADOW_OFFSET, SHADOW_OFFSET);
+                        for glyph in label.glyphs() {
+                            path_with_transform(
+                                writer,
+                                &glyph.path,
+                                &transform
+                                    .pre_translate(glyph.x, glyph.y)
+                                    .pre_scale(glyph.scale, glyph.scale),
+                                [
+                                    ("fill", Fill::Rgb(color).into()),
+                                    ("fill-opacity", opacity.into()),
+                                ],
+                            )?;
+                        }
+                    }
+
+                    for glyph in label.glyphs() {
                         let (fill, opacity) = if let Some(color) = &glyph.color {
                             let Some((color, opacity)) = convert_color(color) else {
                                 continue;
@@ -939,6 +977,7 @@ fn convert_color_or_transparent(&[r, g, b, a]: &[f32; 4]) -> (Rgb, Option<f32>) 
     ))
 }
 
+#[derive(Copy, Clone)]
 struct Rgb {
     r: u8,
     g: u8,
