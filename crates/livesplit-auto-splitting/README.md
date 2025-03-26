@@ -110,6 +110,12 @@ unsafe extern "C" {
     pub safe fn timer_undo_split();
     /// Resets the timer.
     pub safe fn timer_reset();
+    /// Accesses the index of the split the attempt is currently on. If there's
+    /// no attempt in progress, `-1` is returned instead. This returns an
+    /// index that is equal to the amount of segments when the attempt is
+    /// finished, but has not been reset. So you need to be careful when using
+    /// this value for indexing.
+    pub safe fn timer_current_split_index() -> i32;
     /// Sets a custom key value pair. This may be arbitrary information that the
     /// auto splitter wants to provide for visualization. The pointers need to
     /// point to valid UTF-8 encoded text with the respective given length.

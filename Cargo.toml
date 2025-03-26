@@ -92,10 +92,10 @@ log = { version = "0.4.14", default-features = false, optional = true }
 
 [target.'cfg(all(target_family = "wasm", target_os = "unknown"))'.dependencies]
 # WebAssembly in the Web
-js-sys = { version = "0.3.55", optional = true }
+js-sys = { version = "0.3.65", optional = true }
 wasm-bindgen = { version = "0.2.78", optional = true }
 wasm-bindgen-futures = { version = "0.4.28", optional = true }
-web-sys = { version = "0.3.28", default-features = false, features = [
+web-sys = { version = "0.3.65", default-features = false, features = [
     "Document",
     "Performance",
     "VisibilityState",
