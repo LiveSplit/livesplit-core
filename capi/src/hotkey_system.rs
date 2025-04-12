@@ -85,3 +85,18 @@ pub unsafe extern "C" fn HotkeySystem_resolve(
         _ => output_str(name),
     }
 }
+
+#[cfg(all(target_family = "wasm", feature = "wasm-web"))]
+use wasm_bindgen::prelude::*;
+
+/// On the web you can use this to listen to keyboard events on an additional
+/// child window as well.
+#[cfg(all(target_family = "wasm", feature = "wasm-web"))]
+#[wasm_bindgen]
+pub unsafe fn HotkeySystem_add_window(
+    hotkey_system: *const HotkeySystem,
+    window: web_sys::Window,
+) -> bool {
+    // SAFETY: The caller guarantees that `hotkey_system` is valid.
+    unsafe { (*hotkey_system).add_window(window).is_ok() }
+}
