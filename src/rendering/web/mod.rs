@@ -14,7 +14,7 @@ use std::{
 };
 use wasm_bindgen::{JsCast, JsValue};
 use wasm_bindgen_futures::JsFuture;
-use web_sys::{Blob, Element, HtmlCanvasElement, ImageBitmap, Path2d, Window};
+use web_sys::{Blob, HtmlCanvasElement, HtmlElement, ImageBitmap, Path2d, Window};
 
 use crate::{
     layout::LayoutState,
@@ -478,7 +478,7 @@ impl FontHandling {
 /// attached anywhere in the DOM with any desired positioning and size.
 pub struct Renderer {
     manager: SceneManager<Path, Image, Rc<CanvasFont>, CanvasLabel>,
-    div: Element,
+    div: HtmlElement,
     allocator: CanvasAllocator,
     canvas_bottom: HtmlCanvasElement,
     canvas_top: HtmlCanvasElement,
@@ -623,7 +623,9 @@ impl Renderer {
         let window = web_sys::window().unwrap();
         let document = window.document().unwrap();
 
-        let div = document.create_element("div").unwrap();
+        let div: HtmlElement = document.create_element("div").unwrap().unchecked_into();
+
+        div.set_attribute("style", "position: relative;").unwrap();
 
         let canvas_bottom: HtmlCanvasElement =
             document.create_element("canvas").unwrap().unchecked_into();
@@ -689,7 +691,7 @@ impl Renderer {
 
     /// Returns the HTML element. This can be attached anywhere in the DOM with
     /// any desired positioning and size.
-    pub const fn element(&self) -> &Element {
+    pub const fn element(&self) -> &HtmlElement {
         &self.div
     }
 

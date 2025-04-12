@@ -3,7 +3,7 @@
 
 use livesplit_core::{layout::LayoutState, rendering::web, settings::ImageCache};
 use wasm_bindgen::prelude::*;
-use web_sys::Element;
+use web_sys::HtmlElement;
 
 /// The web renderer renders into a canvas element. The element can then be
 /// attached anywhere in the DOM with any desired positioning and size.
@@ -30,7 +30,7 @@ impl WebRenderer {
 
     /// Returns the HTML element. This can be attached anywhere in the DOM with
     /// any desired positioning and size.
-    pub fn element(&self) -> Element {
+    pub fn element(&self) -> HtmlElement {
         self.inner.element().clone()
     }
 
@@ -42,8 +42,6 @@ impl WebRenderer {
         image_cache: *const ImageCache,
     ) -> Option<Box<[f32]>> {
         // SAFETY: The caller must ensure that the pointers are valid.
-        unsafe {
-            self.inner.render(&*state, &*image_cache).map(Box::from)
-        }
+        unsafe { self.inner.render(&*state, &*image_cache).map(Box::from) }
     }
 }

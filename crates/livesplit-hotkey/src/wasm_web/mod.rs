@@ -1,7 +1,7 @@
 use crate::{ConsumePreference, Hotkey, KeyCode, Modifiers, Result};
 use js_sys::{Function, Promise, Reflect};
-use wasm_bindgen::{prelude::*, JsCast};
-use web_sys::{window, Event, Gamepad, GamepadButton, KeyboardEvent};
+use wasm_bindgen::{JsCast, prelude::*};
+use web_sys::{Event, Gamepad, GamepadButton, KeyboardEvent, window};
 
 use std::{
     cell::{Cell, RefCell},
@@ -27,7 +27,7 @@ impl fmt::Display for Error {
 
 pub struct Hook {
     hotkeys: Arc<Mutex<HashMap<Hotkey, Box<dyn FnMut() + Send + 'static>>>>,
-    keyboard_callback: Closure<dyn FnMut(Event)>,
+    keyboard_callback: Closure<dyn FnMut(MaybeKeyboardEvent)>,
     gamepad_callback: Closure<dyn FnMut()>,
     interval_id: Cell<Option<i32>>,
     keyboard_layout_resolver: Rc<RefCell<Option<(JsValue, Function)>>>,
@@ -87,49 +87,53 @@ impl Hook {
         let window = window().ok_or(crate::Error::Platform(Error::FailedToCreateHook))?;
 
         let hotkey_map = hotkeys.clone();
-        let keyboard_callback = Closure::wrap(Box::new(move |event: Event| {
+        let keyboard_callback = Closure::wrap(Box::new(move |event: MaybeKeyboardEvent| {
             // Despite all sorts of documentation claiming that `keydown` events
             // pass you a `KeyboardEvent`, this is not actually always the case
             // in browsers. At least in Chrome selecting an element of an
-            // `input` sends a `keydown` event that is not a `KeyboardEvent`.
-            if let Ok(event) = event.dyn_into::<KeyboardEvent>() {
-                if !event.repeat() {
-                    if let Ok(code) = event.code().parse::<KeyCode>() {
-                        let mut modifiers = Modifiers::empty();
-                        if event.shift_key()
-                            && !matches!(code, KeyCode::ShiftLeft | KeyCode::ShiftRight)
-                        {
-                            modifiers.insert(Modifiers::SHIFT);
-                        }
-                        if event.ctrl_key()
-                            && !matches!(code, KeyCode::ControlLeft | KeyCode::ControlRight)
-                        {
-                            modifiers.insert(Modifiers::CONTROL);
-                        }
-                        if event.alt_key() && !matches!(code, KeyCode::AltLeft | KeyCode::AltRight)
-                        {
-                            modifiers.insert(Modifiers::ALT);
-                        }
-                        if event.meta_key()
-                            && !matches!(code, KeyCode::MetaLeft | KeyCode::MetaRight)
-                        {
-                            modifiers.insert(Modifiers::META);
-                        }
+            // `input` sends a `keydown` event that is not a `KeyboardEvent` and
+            // instead just an `Event`. On top of that, child windows all have
+            // their own `KeyboardEvent` class that is not the same as the
+            // `KeyboardEvent` class of the parent window. So we can't use
+            // `dyn_into` and instead define our own `MaybeKeyboardEvent` type
+            // that optionally supports the `repeat` method, allowing us to both
+            // check if the event even looks like a `KeyboardEvent` and then we
+            // proceed based on that.
+            if event.repeat() == Some(false) {
+                let event = event.unchecked_into::<KeyboardEvent>();
 
-                        if let Some(callback) = hotkey_map
-                            .lock()
-                            .unwrap()
-                            .get_mut(&code.with_modifiers(modifiers))
-                        {
-                            callback();
-                            if prevent_default {
-                                event.prevent_default();
-                            }
+                if let Ok(code) = event.code().parse::<KeyCode>() {
+                    let mut modifiers = Modifiers::empty();
+                    if event.shift_key()
+                        && !matches!(code, KeyCode::ShiftLeft | KeyCode::ShiftRight)
+                    {
+                        modifiers.insert(Modifiers::SHIFT);
+                    }
+                    if event.ctrl_key()
+                        && !matches!(code, KeyCode::ControlLeft | KeyCode::ControlRight)
+                    {
+                        modifiers.insert(Modifiers::CONTROL);
+                    }
+                    if event.alt_key() && !matches!(code, KeyCode::AltLeft | KeyCode::AltRight) {
+                        modifiers.insert(Modifiers::ALT);
+                    }
+                    if event.meta_key() && !matches!(code, KeyCode::MetaLeft | KeyCode::MetaRight) {
+                        modifiers.insert(Modifiers::META);
+                    }
+
+                    if let Some(callback) = hotkey_map
+                        .lock()
+                        .unwrap()
+                        .get_mut(&code.with_modifiers(modifiers))
+                    {
+                        callback();
+                        if prevent_default {
+                            event.prevent_default();
                         }
                     }
                 }
             }
-        }) as Box<dyn FnMut(Event)>);
+        }) as Box<dyn FnMut(MaybeKeyboardEvent)>);
 
         window
             .add_event_listener_with_callback("keydown", keyboard_callback.as_ref().unchecked_ref())
@@ -250,4 +254,22 @@ impl Hook {
             .ok()?
             .as_string()
     }
+
+    pub fn add_window(&self, window: web_sys::Window) -> Result<()> {
+        window
+            .add_event_listener_with_callback(
+                "keydown",
+                self.keyboard_callback.as_ref().unchecked_ref(),
+            )
+            .map_err(|_| crate::Error::Platform(Error::FailedToCreateHook))
+    }
+}
+
+#[wasm_bindgen]
+extern "C" {
+    # [wasm_bindgen (extends = Event , extends = :: js_sys :: Object , js_name = KeyboardEvent , typescript_type = "KeyboardEvent")]
+    #[derive(Debug, Clone, PartialEq, Eq)]
+    pub type MaybeKeyboardEvent;
+    # [wasm_bindgen (structural , method , getter , js_class = "KeyboardEvent" , js_name = repeat)]
+    pub fn repeat(this: &MaybeKeyboardEvent) -> Option<bool>;
 }
