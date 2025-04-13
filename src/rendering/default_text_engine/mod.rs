@@ -10,7 +10,8 @@ use crate::{
 };
 
 use cosmic_text::{
-    Attrs, AttrsList, Family, FontSystem, ShapeLine, Shaping, Stretch, Style, Weight,
+    Attrs, AttrsList, Family, FeatureTag, FontFeatures, FontSystem, ShapeLine, Shaping, Stretch,
+    Style, Weight,
     fontdb::{Database, ID, Query, Source},
     rustybuzz::ttf_parser::{GlyphId, OutlineBuilder},
 };
@@ -27,7 +28,6 @@ mod color_font;
 struct CachedGlyph<P> {
     scale: f32,
     paths: Vec<(Option<Rgba>, P)>,
-    unkerned_x_advance: f32,
 }
 
 /// The text engine allows you to create fonts and manage text labels. That way
@@ -126,13 +126,22 @@ impl<P: SharedOwnership> TextEngine<P> {
             }
         }
 
-        let attrs_list = AttrsList::new(
-            Attrs::new()
-                .family(Family::Name(family))
-                .stretch(stretch)
-                .style(style)
-                .weight(weight),
-        );
+        let mut attrs = Attrs::new()
+            .family(Family::Name(family))
+            .stretch(stretch)
+            .style(style)
+            .weight(weight);
+
+        if kind.is_monospaced() {
+            let mut features = FontFeatures::new();
+            features.disable(FeatureTag::KERNING);
+            features.disable(FeatureTag::STANDARD_LIGATURES);
+            features.disable(FeatureTag::CONTEXTUAL_LIGATURES);
+            features.enable(FeatureTag::new(b"tnum"));
+            attrs = attrs.font_features(features);
+        }
+
+        let attrs_list = AttrsList::new(&attrs);
 
         let monotonic = kind.is_monospaced().then(|| {
             let mut digit_glyphs = [(ID::dummy(), 0); 10];
@@ -248,26 +257,17 @@ impl<P: SharedOwnership> TextEngine<P> {
                                 &mut path_builder,
                             );
 
-                            // FIXME: We use the x advance of the individual
-                            // glyph to remove any kerning that happened during
-                            // shaping. This is a workaround for the fact that
-                            // cosmic-text doesn't provide a way to turn off
-                            // kerning (and / or enable tabular nums) at the
-                            // moment.
-                            // https://github.com/pop-os/cosmic-text/issues/229
-                            let unkerned_x_advance = cached_glyph.unkerned_x_advance;
-
                             let (x_advance, x_offset) = if monotonic
                                 .digit_glyphs
                                 .contains(&(glyph.font_id, glyph.glyph_id))
                             {
                                 (
                                     monotonic.digit_width,
-                                    0.5 * (monotonic.digit_width - unkerned_x_advance)
+                                    0.5 * (monotonic.digit_width - glyph.x_advance)
                                         + glyph.x_offset,
                                 )
                             } else {
-                                (unkerned_x_advance, glyph.x_offset)
+                                (glyph.x_advance, glyph.x_offset)
                             };
 
                             label
@@ -392,14 +392,7 @@ fn cache_glyph<'gc, P, PB: PathBuilder<Path = P>>(
             paths.push((color.map(|c| c.to_array()), path));
         });
         let scale = f32::recip(font.units_per_em() as _);
-        CachedGlyph {
-            scale,
-            paths,
-            unkerned_x_advance: font
-                .glyph_hor_advance(glyph)
-                .map(|v| v as f32 * scale)
-                .unwrap_or_default(),
-        }
+        CachedGlyph { scale, paths }
     })
 }
 
