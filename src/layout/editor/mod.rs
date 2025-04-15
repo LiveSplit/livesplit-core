@@ -52,7 +52,6 @@ impl Editor {
     /// Closes the Layout Editor and gives back access to the modified Layout.
     /// In case you want to implement a Cancel Button, just drop the Layout
     /// object you get here.
-    #[allow(clippy::missing_const_for_fn)] // FIXME: Drop unsupported.
     pub fn close(self) -> Layout {
         self.layout
     }
@@ -131,6 +130,7 @@ impl Editor {
     }
 
     /// Moves the selected component up, unless the first component is selected.
+    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     pub fn move_component_up(&mut self) {
         if self.can_move_component_up() {
             self.layout

@@ -5,15 +5,15 @@
 
 use super::key_value;
 use crate::{
+    TimerPhase,
     analysis::current_pace,
     comparison,
     platform::prelude::*,
     settings::{Color, Field, Gradient, SettingsDescription, Value},
     timing::{
-        formatter::{Accuracy, Regular, TimeFormatter},
         Snapshot,
+        formatter::{Accuracy, Regular, TimeFormatter},
     },
-    TimerPhase,
 };
 use alloc::borrow::Cow;
 use core::fmt::Write;
@@ -79,7 +79,7 @@ impl Component {
     }
 
     /// Grants mutable access to the settings of the component.
-    pub fn settings_mut(&mut self) -> &mut Settings {
+    pub const fn settings_mut(&mut self) -> &mut Settings {
         &mut self.settings
     }
 

@@ -11,11 +11,10 @@
 // edge. "Content" is the rest (the area inside).
 
 use crate::{
-    analysis, comparison,
+    GeneralLayoutSettings, TimeSpan, Timer, TimerPhase, analysis, comparison,
     platform::prelude::*,
     settings::{Color, Field, SettingsDescription, Value},
     timing::Snapshot,
-    GeneralLayoutSettings, TimeSpan, Timer, TimerPhase,
 };
 use alloc::borrow::Cow;
 use serde_derive::{Deserialize, Serialize};
@@ -206,7 +205,7 @@ impl Component {
     }
 
     /// Grants mutable access to the settings of the component.
-    pub fn settings_mut(&mut self) -> &mut Settings {
+    pub const fn settings_mut(&mut self) -> &mut Settings {
         &mut self.settings
     }
 
@@ -388,7 +387,7 @@ impl Component {
         Some(x_axis)
     }
 
-    fn copy_settings_to_state(&self, state: &mut State) {
+    const fn copy_settings_to_state(&self, state: &mut State) {
         let settings = &self.settings;
         (state.top_background_color, state.bottom_background_color) = if settings.flip_graph {
             (

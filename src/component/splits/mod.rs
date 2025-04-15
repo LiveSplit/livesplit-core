@@ -6,13 +6,13 @@
 //! [`Segment`](crate::run::Segment) needs to be shown all the time.
 
 use crate::{
+    GeneralLayoutSettings,
     platform::prelude::*,
     settings::{
         self, Color, Field, Gradient, ImageCache, ImageId, ListGradient, SettingsDescription, Value,
     },
-    timing::{formatter::Accuracy, Snapshot},
+    timing::{Snapshot, formatter::Accuracy},
     util::{Clear, ClearVec},
-    GeneralLayoutSettings,
 };
 use core::cmp::{max, min};
 use serde_derive::{Deserialize, Serialize};
@@ -242,19 +242,19 @@ impl Component {
     }
 
     /// Grants mutable access to the settings of the component.
-    pub fn settings_mut(&mut self) -> &mut Settings {
+    pub const fn settings_mut(&mut self) -> &mut Settings {
         &mut self.settings
     }
 
     /// Scrolls up the window of the segments that are shown. Doesn't move the
     /// scroll window if it reaches the top of the segments.
-    pub fn scroll_up(&mut self) {
+    pub const fn scroll_up(&mut self) {
         self.scroll_offset = self.scroll_offset.saturating_sub(1);
     }
 
     /// Scrolls down the window of the segments that are shown. Doesn't move the
     /// scroll window if it reaches the bottom of the segments.
-    pub fn scroll_down(&mut self) {
+    pub const fn scroll_down(&mut self) {
         self.scroll_offset = self.scroll_offset.saturating_add(1);
     }
 

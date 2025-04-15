@@ -76,7 +76,7 @@ impl Layout {
 
     /// Grants mutable access to the general settings of the layout that apply
     /// to all components.
-    pub fn general_settings_mut(&mut self) -> &mut GeneralSettings {
+    pub const fn general_settings_mut(&mut self) -> &mut GeneralSettings {
         &mut self.settings
     }
 

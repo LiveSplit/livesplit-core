@@ -38,7 +38,7 @@ impl Component {
     }
 
     /// Updates the component's state.
-    pub fn update_state(&self, _state: &mut State) {}
+    pub const fn update_state(&self, _state: &mut State) {}
 
     /// Calculates the component's state.
     pub const fn state(&self) -> State {
