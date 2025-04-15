@@ -24,7 +24,6 @@ impl<A> Handles<A> {
     }
 
     /// Get the handles's next ID.
-    #[allow(clippy::missing_const_for_fn)] // FIXME: Drop is unsupported.
     pub fn into_next_id(self) -> usize {
         self.next_id
     }

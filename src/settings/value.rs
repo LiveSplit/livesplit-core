@@ -1,4 +1,5 @@
 use crate::{
+    TimingMethod,
     component::{
         splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith},
         timer::DeltaGradient,
@@ -8,7 +9,6 @@ use crate::{
     platform::prelude::*,
     settings::{Alignment, Color, Font, Gradient, ImageId, LayoutBackground, ListGradient},
     timing::formatter::{Accuracy, DigitsFormat},
-    TimingMethod,
 };
 use core::result::Result as StdResult;
 use serde_derive::{Deserialize, Serialize};
@@ -220,7 +220,6 @@ pub enum Error {
 /// The Result type for conversions from Values to other types.
 pub type Result<T> = StdResult<T, Error>;
 
-#[allow(clippy::missing_const_for_fn)] // FIXME: Drop is unsupported.
 impl Value {
     /// Tries to convert the value into a boolean.
     pub fn into_bool(self) -> Result<bool> {

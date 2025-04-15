@@ -1,7 +1,7 @@
 use core::borrow::Borrow;
 
-use super::{parse_positive, Editor, ParseError};
-use crate::{settings::Image, util::PopulateString, TimeSpan};
+use super::{Editor, ParseError, parse_positive};
+use crate::{TimeSpan, settings::Image, util::PopulateString};
 
 /// A Segment Row describes the segment in the Run Editor actively selected for
 /// editing.
@@ -59,7 +59,7 @@ impl<'a> SegmentRow<&'a Editor> {
 }
 
 impl<'a> SegmentRow<&'a mut Editor> {
-    pub(super) fn new_mut(index: usize, editor: &'a mut Editor) -> Self {
+    pub(super) const fn new_mut(index: usize, editor: &'a mut Editor) -> Self {
         SegmentRow { index, editor }
     }
 

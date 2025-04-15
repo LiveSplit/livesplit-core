@@ -73,7 +73,7 @@ impl Component {
     }
 
     /// Grants mutable access to the settings of the component.
-    pub fn settings_mut(&mut self) -> &mut Settings {
+    pub const fn settings_mut(&mut self) -> &mut Settings {
         &mut self.settings
     }
 
@@ -83,7 +83,7 @@ impl Component {
     }
 
     /// Updates the component's state.
-    pub fn update_state(&self, state: &mut State) {
+    pub const fn update_state(&self, state: &mut State) {
         state.background = self.settings.background;
         state.size = self.settings.size;
     }

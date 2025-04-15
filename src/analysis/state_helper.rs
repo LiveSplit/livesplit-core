@@ -1,8 +1,8 @@
 //! Provides different helper functions.
 
 use crate::{
-    comparison::best_segments, settings::SemanticColor, timing::Snapshot, Run, Segment, TimeSpan,
-    Timer, TimerPhase, TimingMethod,
+    Run, Segment, TimeSpan, Timer, TimerPhase, TimingMethod, comparison::best_segments,
+    settings::SemanticColor, timing::Snapshot,
 };
 
 /// Gets the last non-live delta in the [`Run`] starting from `segment_index`.
@@ -254,7 +254,7 @@ pub fn live_segment_delta(
 ///
 /// - `timer`: The current [`Timer`].
 /// - `split_delta`: Specifies whether to return a split delta rather than a
-///    segment delta and to start showing the live segment once you are behind.
+///   segment delta and to start showing the live segment once you are behind.
 /// - `comparison`: The comparison that you are comparing with.
 /// - `method`: The [`TimingMethod`] that you are using.
 ///
@@ -300,7 +300,7 @@ pub fn check_live_delta(
 /// - `time_difference`: The delta that you want to find a color for.
 /// - `segment_index`: The split number that is associated with this delta.
 /// - `show_segment_deltas`: Can show ahead gaining and behind losing colors if
-///    true.
+///   true.
 /// - `show_best_segments`: Can show the best segment color if true.
 /// - `comparison`: The comparison that you are comparing this delta to.
 /// - `method`: The [`TimingMethod`] of this delta.

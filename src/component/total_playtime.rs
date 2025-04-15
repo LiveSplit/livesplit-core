@@ -4,11 +4,11 @@
 
 use super::key_value;
 use crate::{
+    Timer, TimingMethod,
     analysis::total_playtime,
     platform::prelude::*,
     settings::{Color, Field, Gradient, SettingsDescription, Value},
     timing::formatter::{Days, Regular, TimeFormatter},
-    Timer, TimingMethod,
 };
 use core::fmt::Write;
 use serde_derive::{Deserialize, Serialize};
@@ -69,7 +69,7 @@ impl Component {
     }
 
     /// Grants mutable access to the settings of the component.
-    pub fn settings_mut(&mut self) -> &mut Settings {
+    pub const fn settings_mut(&mut self) -> &mut Settings {
         &mut self.settings
     }
 

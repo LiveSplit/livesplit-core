@@ -1,8 +1,8 @@
 use crate::{
     platform::prelude::*,
     util::{
-        ordered_map::{Iter, Map},
         PopulateString,
+        ordered_map::{Iter, Map},
     },
 };
 use serde_derive::{Deserialize, Serialize};
@@ -27,7 +27,7 @@ pub struct CustomVariable {
 impl CustomVariable {
     /// Turns the custom variable into a permanent one. If it already is
     /// permanent variable, nothing happens.
-    pub fn permanent(&mut self) -> &mut Self {
+    pub const fn permanent(&mut self) -> &mut Self {
         self.is_permanent = true;
         self
     }
@@ -91,6 +91,7 @@ impl RunMetadata {
     /// changed once the Personal Best doesn't match up with that record
     /// anymore. This may be empty if there's no association.
     #[inline]
+    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     pub fn run_id(&self) -> &str {
         &self.run_id
     }
@@ -109,6 +110,7 @@ impl RunMetadata {
     /// Accesses the name of the platform this game is run on. This may be empty
     /// if it's not specified.
     #[inline]
+    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     pub fn platform_name(&self) -> &str {
         &self.platform_name
     }
@@ -133,13 +135,14 @@ impl RunMetadata {
     /// Specifies whether this speedrun is done on an emulator. Keep in mind
     /// that `false` may also mean that this information is simply not known.
     #[inline]
-    pub fn set_emulator_usage(&mut self, uses_emulator: bool) {
+    pub const fn set_emulator_usage(&mut self, uses_emulator: bool) {
         self.uses_emulator = uses_emulator;
     }
 
     /// Accesses the name of the region this game is from. This may be empty if
     /// it's not specified.
     #[inline]
+    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     pub fn region_name(&self) -> &str {
         &self.region_name
     }

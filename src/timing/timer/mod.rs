@@ -171,7 +171,7 @@ impl Timer {
     /// Marks the Run as unmodified, so that it is known that all the changes
     /// have been saved.
     #[inline]
-    pub fn mark_as_unmodified(&mut self) {
+    pub const fn mark_as_unmodified(&mut self) {
         self.run.mark_as_unmodified();
     }
 
@@ -220,13 +220,13 @@ impl Timer {
 
     /// Sets the current timing method to the timing method provided.
     #[inline]
-    pub fn set_current_timing_method(&mut self, method: TimingMethod) {
+    pub const fn set_current_timing_method(&mut self, method: TimingMethod) {
         self.current_timing_method = method;
     }
 
     /// Toggles between the `Real Time` and `Game Time` timing methods.
     #[inline]
-    pub fn toggle_timing_method(&mut self) {
+    pub const fn toggle_timing_method(&mut self) {
         self.current_timing_method = match self.current_timing_method {
             TimingMethod::RealTime => TimingMethod::GameTime,
             TimingMethod::GameTime => TimingMethod::RealTime,
@@ -236,6 +236,7 @@ impl Timer {
     /// Returns the current comparison that is being compared against. This may
     /// be a custom comparison or one of the Comparison Generators.
     #[inline]
+    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     pub fn current_comparison(&self) -> &str {
         &self.current_comparison
     }
@@ -669,7 +670,7 @@ impl Timer {
 
     /// Deinitializes Game Time for the current attempt.
     #[inline]
-    pub fn deinitialize_game_time(&mut self) {
+    pub const fn deinitialize_game_time(&mut self) {
         if let Some(active_attempt) = &mut self.active_attempt {
             active_attempt.loading_times = None;
         }

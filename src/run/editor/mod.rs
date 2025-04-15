@@ -106,7 +106,6 @@ impl Editor {
     /// Closes the Run Editor and gives back access to the modified Run object.
     /// In case you want to implement a Cancel Button, just drop the Run object
     /// you get here.
-    #[allow(clippy::missing_const_for_fn)] // FIXME: Drop is unsupported.
     pub fn close(self) -> Run {
         self.run
     }
@@ -129,6 +128,7 @@ impl Editor {
         self.update_segment_list();
     }
 
+    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     fn active_segment_index(&self) -> usize {
         *self.selected_segments.last().unwrap()
     }
@@ -203,7 +203,7 @@ impl Editor {
         self.selected_segments.push(index);
     }
 
-    fn raise_run_edited(&mut self) {
+    const fn raise_run_edited(&mut self) {
         self.run.mark_as_modified();
     }
 
@@ -245,7 +245,7 @@ impl Editor {
 
     /// Sets the timer offset. The timer offset specifies the time, the timer
     /// starts at when starting a new attempt.
-    pub fn set_offset(&mut self, offset: TimeSpan) {
+    pub const fn set_offset(&mut self, offset: TimeSpan) {
         self.run.set_offset(offset);
         self.raise_run_edited();
     }
@@ -266,7 +266,7 @@ impl Editor {
     /// Sets the attempt count. Changing this has no affect on the attempt
     /// history or the segment history. This number is mostly just a visual
     /// number for the runner.
-    pub fn set_attempt_count(&mut self, attempts: u32) {
+    pub const fn set_attempt_count(&mut self, attempts: u32) {
         self.run.set_attempt_count(attempts);
         self.raise_run_edited();
     }

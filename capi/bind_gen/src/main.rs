@@ -15,14 +15,14 @@ mod wasm_bindgen;
 use clap::Parser;
 use std::{
     collections::BTreeMap,
-    fs::{self, create_dir_all, remove_dir_all, File},
+    fs::{self, File, create_dir_all, remove_dir_all},
     io::{BufWriter, Read, Result},
     path::PathBuf,
     rc::Rc,
 };
 use syn::{
-    parse_file, Expr, ExprLit, FnArg, Item, ItemFn, Lit, Meta, MetaList, Pat, ReturnType,
-    Signature, Type as SynType, Visibility,
+    Expr, ExprLit, FnArg, Item, ItemFn, Lit, Meta, MetaList, Pat, ReturnType, Signature,
+    Type as SynType, Visibility, parse_file,
 };
 
 #[derive(clap::Parser)]
@@ -106,7 +106,7 @@ fn get_type(ty: &SynType) -> Type {
             ty
         }
         SynType::Path(path) => {
-            let segment = path.path.segments.iter().last().expect("Weird path");
+            let segment = path.path.segments.iter().next_back().expect("Weird path");
             let mut name = segment.ident.to_string();
             let is_nullable = if let Some(rest) = name.strip_prefix("Nullable") {
                 name = rest.to_string();
