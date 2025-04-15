@@ -9,10 +9,10 @@
 use time::UtcOffset;
 
 use crate::{
-    analysis::sum_of_segments::{best, track_branch, Prediction},
+    Attempt, Run, Segment, TimeSpan, TimingMethod,
+    analysis::sum_of_segments::{Prediction, best, track_branch},
     platform::{prelude::*, to_local},
     timing::formatter::{SegmentTime, TimeFormatter},
-    Attempt, Run, Segment, TimeSpan, TimingMethod,
 };
 use core::{fmt, mem::replace};
 
@@ -56,7 +56,7 @@ pub struct PotentialCleanUp<'r> {
     ending_segment: &'r Segment,
     time_between: TimeSpan,
     combined_sum_of_best: Option<TimeSpan>,
-    attempt: &'r Attempt,
+    attempt: Option<&'r Attempt>,
     method: TimingMethod,
     clean_up: CleanUp,
 }
@@ -98,7 +98,7 @@ impl fmt::Display for PotentialCleanUp<'_> {
             )?;
         }
 
-        if let Some(started) = self.attempt.started() {
+        if let Some(started) = self.attempt.and_then(|a| a.started()) {
             let local = to_local(started.time);
             // We want to show the time zone in case it can't be resolved and
             // defaults to UTC.
@@ -260,11 +260,12 @@ fn check_prediction<'a>(
                                 .expect("Start time must not be empty")
                                 .time
                     }),
+                    // The attempt may not exist, as we have all sorts of weird
+                    // malformed files.
                     attempt: run
                         .attempt_history()
                         .iter()
-                        .find(|attempt| attempt.index() == run_index)
-                        .expect("The attempt has to exist"),
+                        .find(|attempt| attempt.index() == run_index),
                     method,
                     clean_up: CleanUp {
                         ending_index,
