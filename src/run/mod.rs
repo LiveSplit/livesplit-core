@@ -136,6 +136,7 @@ impl Run {
 
     /// Accesses the name of the game this Run is for.
     #[inline]
+    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     pub fn game_name(&self) -> &str {
         &self.game_name
     }
@@ -163,6 +164,7 @@ impl Run {
 
     /// Accesses the name of the category this Run is for.
     #[inline]
+    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     pub fn category_name(&self) -> &str {
         &self.category_name
     }
@@ -199,7 +201,7 @@ impl Run {
 
     /// Sets the amount of runs that have been attempted with these splits.
     #[inline]
-    pub fn set_attempt_count(&mut self, attempts: u32) {
+    pub const fn set_attempt_count(&mut self, attempts: u32) {
         self.attempt_count = attempts;
     }
 
@@ -213,13 +215,13 @@ impl Run {
     /// Grants mutable access to the additional metadata of this Run, like the
     /// platform and region of the game.
     #[inline]
-    pub fn metadata_mut(&mut self) -> &mut RunMetadata {
+    pub const fn metadata_mut(&mut self) -> &mut RunMetadata {
         &mut self.metadata
     }
 
     /// Sets the time an attempt of this Run should start at.
     #[inline]
-    pub fn set_offset(&mut self, offset: TimeSpan) {
+    pub const fn set_offset(&mut self, offset: TimeSpan) {
         self.offset = offset;
     }
 
@@ -231,20 +233,21 @@ impl Run {
 
     /// Marks a Run that a new Attempt has started. If you use it with a Timer,
     /// this is done automatically.
-    pub fn start_next_run(&mut self) {
+    pub const fn start_next_run(&mut self) {
         self.attempt_count += 1;
         self.has_been_modified = true;
     }
 
     /// Accesses the Segments of this Run object.
     #[inline]
+    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     pub fn segments(&self) -> &[Segment] {
         &self.segments
     }
 
     /// Grants mutable access to the Segments of this Run object.
     #[inline]
-    pub fn segments_mut(&mut self) -> &mut Vec<Segment> {
+    pub const fn segments_mut(&mut self) -> &mut Vec<Segment> {
         &mut self.segments
     }
 
@@ -279,6 +282,7 @@ impl Run {
     /// information. Information about the individual segments is stored within
     /// each segment.
     #[inline]
+    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     pub fn attempt_history(&self) -> &[Attempt] {
         &self.attempt_history
     }
@@ -287,6 +291,7 @@ impl Run {
     /// includes `Personal Best` but excludes all the other Comparison
     /// Generators.
     #[inline]
+    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     pub fn custom_comparisons(&self) -> &[String] {
         &self.custom_comparisons
     }
@@ -299,7 +304,7 @@ impl Run {
     ///
     /// You may not delete the `Personal Best` comparison.
     #[inline]
-    pub fn custom_comparisons_mut(&mut self) -> &mut Vec<String> {
+    pub const fn custom_comparisons_mut(&mut self) -> &mut Vec<String> {
         &mut self.custom_comparisons
     }
 
@@ -328,6 +333,7 @@ impl Run {
 
     /// Accesses the Auto Splitter Settings that are encoded as XML.
     #[inline]
+    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     pub fn auto_splitter_settings(&self) -> &str {
         &self.auto_splitter_settings
     }
@@ -339,6 +345,7 @@ impl Run {
     /// You need to ensure that the Auto Splitter Settings are encoded as data
     /// that would be valid as an interior of an XML element.
     #[inline]
+    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     pub fn auto_splitter_settings_mut(&mut self) -> &mut String {
         &mut self.auto_splitter_settings
     }
@@ -402,14 +409,14 @@ impl Run {
     /// Marks the Run as modified, so that it is known that there are changes
     /// that should be saved.
     #[inline]
-    pub fn mark_as_modified(&mut self) {
+    pub const fn mark_as_modified(&mut self) {
         self.has_been_modified = true;
     }
 
     /// Marks the Run as unmodified, so that it is known that all the changes
     /// have been saved.
     #[inline]
-    pub fn mark_as_unmodified(&mut self) {
+    pub const fn mark_as_unmodified(&mut self) {
         self.has_been_modified = false;
     }
 

@@ -48,8 +48,8 @@ fn default() {
     check(
         &state,
         &image_cache,
-        "40afc8d9b921c018",
-        "29bf0ddd39a138e7",
+        "613e94c31d4d76c3",
+        "c2ae6252eec1d1b5",
         "default",
     );
 }
@@ -187,8 +187,8 @@ fn actual_split_file() {
     check(
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
-        "0bd8b41b95ae974c",
-        "0a4b3f4cb44ffbbb",
+        "ef12a76febd34908",
+        "a261fbed384d6d51",
         "actual_split_file",
     );
 }
@@ -204,8 +204,8 @@ fn wsplit() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [250, 300],
-        "be70116db88c23c1",
-        "cf399969d8ac9baf",
+        "445f85286cd8a439",
+        "e198b005bb113d39",
         "wsplit",
     );
 }
@@ -224,8 +224,8 @@ fn timer_delta_background() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [250, 300],
-        "4d9c5c580b0c435f",
-        "bf8e5c596684688d",
+        "e8c90ede5b64cad9",
+        "951c1624fdd5b555",
         "timer_delta_background_ahead",
     );
 
@@ -235,8 +235,8 @@ fn timer_delta_background() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [250, 300],
-        "748fa26a41a8d5a3",
-        "8bae1351d0dd52d7",
+        "be5c85a9a5e3e4a5",
+        "1f0cefb6b7cdc5ab",
         "timer_delta_background_stopped",
     );
 }
@@ -260,8 +260,8 @@ fn all_components() {
         &state,
         &image_cache,
         [300, 800],
-        "ca9b92ae7357d0cd",
-        "5e74113e4352d0b9",
+        "ac1120ceabe1cf2f",
+        "5ee085b9bd7d2551",
         "all_components",
     );
 
@@ -269,8 +269,8 @@ fn all_components() {
         &state,
         &image_cache,
         [150, 800],
-        "ccbcbb6285133a58",
-        "aef452d4bff2f3bd",
+        "817568e8740f9b53",
+        "f47d3dcaf69ecd66",
         "all_components_thin",
     );
 }
@@ -297,8 +297,8 @@ fn score_split() {
         &state,
         &image_cache,
         [300, 400],
-        "6385959af93932cb",
-        "ebbe996276cd8dd0",
+        "cdf1b9e7ebc09f42",
+        "96bcb8fcc09597cd",
         "score_split",
     );
 }
@@ -314,8 +314,8 @@ fn dark_layout() {
     check(
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
-        "a47c590792c1bab5",
-        "4ad7d528b3dc653d",
+        "540515e778133820",
+        "5ca393d8b84cb704",
         "dark_layout",
     );
 }
@@ -338,8 +338,8 @@ fn subsplits_layout() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [300, 800],
-        "fc9658d65e0e0511",
-        "e54f03f006192781",
+        "de8412439f6ac04a",
+        "a5e0f59de02a3f5f",
         "subsplits_layout",
     );
 }
@@ -362,8 +362,8 @@ fn background_image() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [300, 300],
-        "81f6d2122b32065f",
-        "57f284ed4a717a0d",
+        "b48ae9755f316d47",
+        "721485d08ac431f5",
         "background_image",
     );
 }
@@ -390,7 +390,7 @@ fn display_two_rows() {
         &image_cache,
         [200, 100],
         "0541122a81430490",
-        "c5f95ed36a74130e",
+        "e1eb912e295db230",
         "display_two_rows",
     );
 }
@@ -416,8 +416,8 @@ fn single_line_title() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [300, 60],
-        "12d4b767f55e5545",
-        "13bc0a3729c5df16",
+        "b66b1db78eb324a4",
+        "0a3977bc56c7b0ff",
         "single_line_title",
     );
 }
@@ -454,8 +454,8 @@ fn horizontal() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [1500, 40],
-        "81d12a01d1b00092",
-        "c22903674f3b0767",
+        "45492bbd1df15cfa",
+        "a56638d106e08232",
         "horizontal",
     );
 }

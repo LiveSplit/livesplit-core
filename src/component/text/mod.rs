@@ -5,11 +5,11 @@
 
 use super::key_value;
 use crate::{
+    Timer,
     platform::prelude::*,
     settings::{Color, Field, Gradient, SettingsDescription, Value},
     timing::formatter,
     util::PopulateString,
-    Timer,
 };
 use alloc::borrow::Cow;
 use core::mem;
@@ -178,7 +178,7 @@ impl Component {
     }
 
     /// Grants mutable access to the settings of the component.
-    pub fn settings_mut(&mut self) -> &mut Settings {
+    pub const fn settings_mut(&mut self) -> &mut Settings {
         &mut self.settings
     }
 

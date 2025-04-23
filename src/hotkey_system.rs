@@ -1,9 +1,8 @@
 use alloc::borrow::Cow;
 
 use crate::{
-    event,
+    HotkeyConfig, event,
     hotkey::{ConsumePreference, Hook, Hotkey, KeyCode},
-    HotkeyConfig,
 };
 
 pub use crate::hotkey::Result;
@@ -33,7 +32,7 @@ enum Action {
 }
 
 impl Action {
-    fn set_hotkey(self, config: &mut HotkeyConfig, hotkey: Option<Hotkey>) {
+    const fn set_hotkey(self, config: &mut HotkeyConfig, hotkey: Option<Hotkey>) {
         match self {
             Action::Split => config.split = hotkey,
             Action::Reset => config.reset = hotkey,
@@ -287,5 +286,12 @@ impl<S: event::CommandSink + Clone + Send + 'static> HotkeySystem<S> {
     /// Resolves the key according to the current keyboard layout.
     pub fn resolve(&self, key_code: KeyCode) -> Cow<'static, str> {
         key_code.resolve(&self.hook)
+    }
+
+    /// On the web you can use this to listen to keyboard events on an
+    /// additional child window as well.
+    #[cfg(all(target_family = "wasm", feature = "wasm-web"))]
+    pub fn add_window(&self, window: web_sys::Window) -> Result<()> {
+        self.hook.add_window(window)
     }
 }

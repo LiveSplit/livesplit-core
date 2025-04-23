@@ -177,6 +177,7 @@ impl Image {
     /// Accesses the image's data. If the image's data is empty, this returns an
     /// empty slice.
     #[inline]
+    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     pub fn data(&self) -> &[u8] {
         self
     }

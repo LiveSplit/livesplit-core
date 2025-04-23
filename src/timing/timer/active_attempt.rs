@@ -1,6 +1,6 @@
 use crate::{
-    event::{Error, Event, Result},
     AtomicDateTime, Run, Time, TimeSpan, TimeStamp, TimingMethod,
+    event::{Error, Event, Result},
 };
 
 #[derive(Debug, Clone)]
@@ -149,7 +149,7 @@ impl ActiveAttempt {
         }
     }
 
-    pub fn current_split_index_mut(&mut self) -> Option<&mut usize> {
+    pub const fn current_split_index_mut(&mut self) -> Option<&mut usize> {
         match &mut self.state {
             State::NotEnded {
                 current_split_index,

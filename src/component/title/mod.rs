@@ -4,11 +4,11 @@
 //! total number of finished runs can be shown.
 
 use crate::{
+    Timer, TimerPhase,
     platform::prelude::*,
     settings::{
         Alignment, Color, Field, Gradient, Image, ImageCache, ImageId, SettingsDescription, Value,
     },
-    Timer, TimerPhase,
 };
 use core::fmt::Write;
 use livesplit_title_abbreviations::{abbreviate as abbreviate_title, abbreviate_category};
@@ -152,7 +152,7 @@ impl Component {
     }
 
     /// Grants mutable access to the settings of the component.
-    pub fn settings_mut(&mut self) -> &mut Settings {
+    pub const fn settings_mut(&mut self) -> &mut Settings {
         &mut self.settings
     }
 

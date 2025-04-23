@@ -4,14 +4,14 @@
 //! current attempt is doing compared to the chosen comparison.
 
 use crate::{
+    GeneralLayoutSettings, TimeSpan, TimerPhase, TimingMethod,
     analysis::split_color,
     platform::prelude::*,
     settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value},
     timing::{
-        formatter::{timer as formatter, Accuracy, DigitsFormat, TimeFormatter},
         Snapshot,
+        formatter::{Accuracy, DigitsFormat, TimeFormatter, timer as formatter},
     },
-    GeneralLayoutSettings, TimeSpan, TimerPhase, TimingMethod,
 };
 use core::fmt::Write;
 use serde_derive::{Deserialize, Serialize};
@@ -174,7 +174,7 @@ impl Component {
     }
 
     /// Grants mutable access to the settings of the component.
-    pub fn settings_mut(&mut self) -> &mut Settings {
+    pub const fn settings_mut(&mut self) -> &mut Settings {
         &mut self.settings
     }
 

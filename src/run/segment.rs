@@ -2,8 +2,8 @@ use hashbrown::HashMap;
 
 use super::Comparisons;
 use crate::{
-    comparison::personal_best, platform::prelude::*, settings::Image, util::PopulateString,
-    SegmentHistory, Time, TimeSpan, TimingMethod,
+    SegmentHistory, Time, TimeSpan, TimingMethod, comparison::personal_best, platform::prelude::*,
+    settings::Image, util::PopulateString,
 };
 
 /// A `Segment` describes a point in a speedrun that is suitable for storing a
@@ -45,6 +45,7 @@ impl Segment {
 
     /// Accesses the name of the segment.
     #[inline]
+    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     pub fn name(&self) -> &str {
         &self.name
     }
@@ -73,7 +74,7 @@ impl Segment {
     /// Grants mutable access to the comparison times stored in the Segment.
     /// This includes both the custom comparisons and the generated ones.
     #[inline]
-    pub fn comparisons_mut(&mut self) -> &mut Comparisons {
+    pub const fn comparisons_mut(&mut self) -> &mut Comparisons {
         &mut self.comparisons
     }
 
@@ -134,13 +135,13 @@ impl Segment {
 
     /// Grants mutable access to the Best Segment Time.
     #[inline]
-    pub fn best_segment_time_mut(&mut self) -> &mut Time {
+    pub const fn best_segment_time_mut(&mut self) -> &mut Time {
         &mut self.best_segment_time
     }
 
     /// Sets the Best Segment Time.
     #[inline]
-    pub fn set_best_segment_time(&mut self, time: Time) {
+    pub const fn set_best_segment_time(&mut self, time: Time) {
         self.best_segment_time = time;
     }
 
@@ -152,13 +153,13 @@ impl Segment {
 
     /// Grants mutable access to the split time of the current attempt.
     #[inline]
-    pub fn split_time_mut(&mut self) -> &mut Time {
+    pub const fn split_time_mut(&mut self) -> &mut Time {
         &mut self.split_time
     }
 
     /// Sets the split time of the current attempt.
     #[inline]
-    pub fn set_split_time(&mut self, time: Time) {
+    pub const fn set_split_time(&mut self, time: Time) {
         self.split_time = time;
     }
 
@@ -176,7 +177,7 @@ impl Segment {
 
     /// Grants mutable access to the Segment History of this segment.
     #[inline]
-    pub fn segment_history_mut(&mut self) -> &mut SegmentHistory {
+    pub const fn segment_history_mut(&mut self) -> &mut SegmentHistory {
         &mut self.segment_history
     }
 
@@ -187,7 +188,7 @@ impl Segment {
 
     /// Grants mutable access to the segment's variables for the current
     /// attempt.
-    pub fn variables_mut(&mut self) -> &mut HashMap<String, String> {
+    pub const fn variables_mut(&mut self) -> &mut HashMap<String, String> {
         &mut self.variables
     }
 

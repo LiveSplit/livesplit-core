@@ -4,15 +4,15 @@
 
 use super::key_value;
 use crate::{
+    GeneralLayoutSettings,
     analysis::{delta, state_helper},
     comparison,
     platform::prelude::*,
     settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value},
     timing::{
-        formatter::{Accuracy, Delta, TimeFormatter},
         Snapshot,
+        formatter::{Accuracy, Delta, TimeFormatter},
     },
-    GeneralLayoutSettings,
 };
 use alloc::borrow::Cow;
 use core::fmt::Write;
@@ -80,7 +80,7 @@ impl Component {
     }
 
     /// Grants mutable access to the settings of the component.
-    pub fn settings_mut(&mut self) -> &mut Settings {
+    pub const fn settings_mut(&mut self) -> &mut Settings {
         &mut self.settings
     }
 

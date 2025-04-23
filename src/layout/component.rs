@@ -348,7 +348,7 @@ impl Component {
 
     /// Tells the component to scroll up. This may be interpreted differently
     /// based on the kind of component. Most components will ignore this.
-    pub fn scroll_up(&mut self) {
+    pub const fn scroll_up(&mut self) {
         if let Component::Splits(component) = self {
             component.scroll_up();
         }
@@ -356,7 +356,7 @@ impl Component {
 
     /// Tells the component to scroll down. This may be interpreted differently
     /// based on the kind of component. Most components will ignore this.
-    pub fn scroll_down(&mut self) {
+    pub const fn scroll_down(&mut self) {
         if let Component::Splits(component) = self {
             component.scroll_down();
         }

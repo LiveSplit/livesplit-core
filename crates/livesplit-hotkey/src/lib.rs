@@ -93,6 +93,13 @@ impl Hook {
     pub fn unregister(&self, hotkey: Hotkey) -> Result<()> {
         self.0.unregister(hotkey)
     }
+
+    /// On the web you can use this to listen to keyboard events on an
+    /// additional child window as well.
+    #[cfg(all(target_family = "wasm", feature = "wasm-web"))]
+    pub fn add_window(&self, window: web_sys::Window) -> Result<()> {
+        self.0.add_window(window)
+    }
 }
 
 /// The result type for this crate.
