@@ -1,13 +1,13 @@
 use std::str;
 
-use anyhow::{format_err, Context as _, Result};
+use anyhow::{Context as _, Result, format_err};
 use slotmap::{Key, KeyData};
 use wasmtime::{Caller, Linker};
 
 use crate::{
+    CreationError, Process, Timer,
     runtime::{Context, ProcessKey},
     timer::LogLevel,
-    CreationError, Process, Timer,
 };
 
 use super::{get_arr_mut, get_slice_mut, get_str, get_two_slice_mut, memory_and_context};
@@ -214,6 +214,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 if let Ok(path) = path {
                     let path_len = u32::from_le_bytes(*path_len_bytes) as usize;
                     *path_len_bytes = (path.len() as u32).to_le_bytes();
+
                     if path_len < path.len() {
                         return Ok(0u32);
                     }
@@ -241,9 +242,9 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
 
                 let len_bytes = get_arr_mut(memory, len_ptr)?;
                 if let Some(path) = path {
+                    let len = u32::from_le_bytes(*len_bytes) as usize;
                     *len_bytes = (path.len() as u32).to_le_bytes();
 
-                    let len = u32::from_le_bytes(*len_bytes) as usize;
                     if len < path.len() {
                         return Ok(0u32);
                     }

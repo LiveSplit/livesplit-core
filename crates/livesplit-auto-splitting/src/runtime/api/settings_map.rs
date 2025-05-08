@@ -1,10 +1,11 @@
-use anyhow::{format_err, Result};
+use anyhow::{Result, format_err};
 use slotmap::{Key, KeyData};
 use wasmtime::{Caller, Linker};
 
 use crate::{
+    CreationError, Timer,
     runtime::{Context, SettingValueKey, SettingsMapKey},
-    settings, CreationError, Timer,
+    settings,
 };
 
 use super::{get_arr_mut, get_slice_mut, get_str, memory_and_context};
@@ -202,9 +203,9 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let slot = settings_map.get_by_index(index.try_into().unwrap_or(usize::MAX));
 
                 if let Some((key, _)) = slot {
+                    let len = u32::from_le_bytes(*len_bytes) as usize;
                     *len_bytes = (key.len() as u32).to_le_bytes();
 
-                    let len = u32::from_le_bytes(*len_bytes) as usize;
                     if len < key.len() {
                         return Ok(0u32);
                     }

@@ -3,10 +3,10 @@ use std::{
     sync::atomic,
 };
 
-use anyhow::{ensure, Result};
+use anyhow::{Result, ensure};
 use wasmtime::{Caller, Linker};
 
-use crate::{runtime::Context, timer::LogLevel, CreationError, Timer};
+use crate::{CreationError, Timer, runtime::Context, timer::LogLevel};
 
 use super::{get_arr_mut, get_slice_mut, get_str, memory_and_context};
 
@@ -56,9 +56,11 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
         .func_wrap("env", "runtime_get_os", {
             |mut caller: Caller<'_, Context<T>>, ptr: u32, len_ptr: u32| {
                 let (memory, _) = memory_and_context(&mut caller);
+
                 let len_bytes = get_arr_mut(memory, len_ptr)?;
                 let len = u32::from_le_bytes(*len_bytes) as usize;
                 *len_bytes = (OS.len() as u32).to_le_bytes();
+
                 if len < OS.len() {
                     return Ok(0u32);
                 }
@@ -74,9 +76,11 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
         .func_wrap("env", "runtime_get_arch", {
             |mut caller: Caller<'_, Context<T>>, ptr: u32, len_ptr: u32| {
                 let (memory, _) = memory_and_context(&mut caller);
+
                 let len_bytes = get_arr_mut(memory, len_ptr)?;
                 let len = u32::from_le_bytes(*len_bytes) as usize;
                 *len_bytes = (ARCH.len() as u32).to_le_bytes();
+
                 if len < ARCH.len() {
                     return Ok(0u32);
                 }
