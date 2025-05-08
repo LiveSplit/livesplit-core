@@ -303,6 +303,9 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let len_bytes = get_arr_mut(memory, buf_len_ptr)?;
 
                 if let settings::Value::String(value) = setting_value {
+                    // Store the original length before updating the pointer.
+                    // This ensures the original value is used for error handling logic
+                    // to determine if the buffer is large enough to hold the string.
                     let len = u32::from_le_bytes(*len_bytes) as usize;
                     *len_bytes = (value.len() as u32).to_le_bytes();
 

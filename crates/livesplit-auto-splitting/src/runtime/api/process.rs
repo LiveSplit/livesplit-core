@@ -242,6 +242,9 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
 
                 let len_bytes = get_arr_mut(memory, len_ptr)?;
                 if let Some(path) = path {
+                    // Record the previous length to check if the provided buffer is large enough
+                    // to hold the path. This ensures error handling works as intended and prevents
+                    // potential buffer overflows.
                     let len = u32::from_le_bytes(*len_bytes) as usize;
                     *len_bytes = (path.len() as u32).to_le_bytes();
 

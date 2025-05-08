@@ -203,6 +203,8 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let slot = settings_map.get_by_index(index.try_into().unwrap_or(usize::MAX));
 
                 if let Some((key, _)) = slot {
+                    // Capture the original length before overwriting it, as it is used
+                    // to check if the buffer is large enough to hold the key.
                     let len = u32::from_le_bytes(*len_bytes) as usize;
                     *len_bytes = (key.len() as u32).to_le_bytes();
 
