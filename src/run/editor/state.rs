@@ -20,6 +20,8 @@ pub struct State {
     pub game: String,
     /// The name of the category the Run is for.
     pub category: String,
+    /// The name of the level of the Run.
+    pub level: String,
     /// The timer offset specifies the time that the timer starts at when
     /// starting a new attempt.
     pub offset: String,
@@ -125,6 +127,7 @@ impl Editor {
 
         let game = self.game_name().to_string();
         let category = self.category_name().to_string();
+        let level = self.level_name().to_string();
         let offset = formatter.format(self.offset()).to_string();
         let attempts = self.attempt_count();
         let timing_method = self.selected_timing_method();
@@ -182,6 +185,7 @@ impl Editor {
             icon,
             game,
             category,
+            level,
             offset,
             attempts,
             timing_method,
