@@ -41,6 +41,19 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             source,
             name: "runtime_set_tick_rate",
         })?
+        .func_wrap("env", "runtime_get_current_tick", {
+            |caller: Caller<'_, Context<T>>| -> u64 {
+                caller
+                    .data()
+                    .shared_data
+                    .current_tick
+                    .load(atomic::Ordering::Relaxed)
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "runtime_get_current_tick",
+        })?
         .func_wrap("env", "runtime_print_message", {
             |mut caller: Caller<'_, Context<T>>, ptr: u32, len: u32| {
                 let (memory, context) = memory_and_context(&mut caller);
