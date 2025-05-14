@@ -1,4 +1,4 @@
-use super::{color, end_tag, parse_bool, parse_children, text, GradientBuilder, Result};
+use super::{GradientBuilder, Result, color, end_tag, parse_bool, parse_children, text};
 use crate::{component::text::Text, platform::prelude::*, util::xml::Reader};
 
 pub use crate::component::text::Component;
@@ -8,6 +8,7 @@ pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()
     let mut background_builder = GradientBuilder::new();
     let (mut override_label, mut override_value) = (false, false);
     let (mut left_center, mut right) = (String::new(), String::new());
+    let mut custom_variable = false;
 
     parse_children(reader, |reader, tag, _| {
         if !background_builder.parse_background(reader, tag.name())? {
@@ -19,6 +20,7 @@ pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()
                 "Text1" => text(reader, |v| left_center = v.into_owned()),
                 "Text2" => text(reader, |v| right = v.into_owned()),
                 "Display2Rows" => parse_bool(reader, |b| settings.display_two_rows = b),
+                "CustomVariable" => parse_bool(reader, |b| custom_variable = b),
                 _ => {
                     // FIXME:
                     // Font1
@@ -39,10 +41,11 @@ pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()
     if !override_value {
         settings.right_color = None;
     }
-    settings.text = match (left_center.is_empty(), right.is_empty()) {
-        (false, false) => Text::Split(left_center, right),
-        (false, true) => Text::Center(left_center),
-        _ => Text::Center(right),
+    settings.text = match (custom_variable, left_center.is_empty(), right.is_empty()) {
+        (true, lc_empty, _) => Text::Variable(right, !lc_empty),
+        (false, false, false) => Text::Split(left_center, right),
+        (false, false, true) => Text::Center(left_center),
+        (false, true, _) => Text::Center(right),
     };
     settings.background = background_builder.build();
 

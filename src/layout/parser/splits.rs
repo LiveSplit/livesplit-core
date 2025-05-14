@@ -1,14 +1,14 @@
 use super::{
-    accuracy, comparison_override, end_tag, parse_bool, parse_children, text, text_parsed,
-    timing_method_override, Error, GradientBuilder, GradientKind, ListGradientKind, Result,
+    Error, GradientBuilder, GradientKind, ListGradientKind, Result, accuracy, comparison_override,
+    end_tag, parse_bool, parse_children, text, text_parsed, timing_method_override,
 };
 use crate::{
     component::splits::{
         self, ColumnKind, ColumnSettings, ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith,
-        TimeColumn,
+        TimeColumn, VariableColumn,
     },
     platform::prelude::*,
-    util::xml::{helper::text_as_escaped_string_err, Reader},
+    util::xml::{Reader, helper::text_as_escaped_string_err},
 };
 
 pub use crate::component::splits::Component;
@@ -49,6 +49,7 @@ pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()
                         parse_children(reader, |reader, _, _| {
                             let mut column_name = String::new();
                             let mut column = TimeColumn::default();
+                            let mut custom_variable = false;
                             parse_children(reader, |reader, tag, _| match tag.name() {
                                 "Name" => text(reader, |v| column_name = v.into_owned()),
                                 "Comparison" => {
@@ -58,41 +59,44 @@ pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()
                                     timing_method_override(reader, |v| column.timing_method = v)
                                 }
                                 "Type" => text_as_escaped_string_err(reader, |v| {
-                                    (
-                                        column.start_with,
-                                        column.update_with,
-                                        column.update_trigger,
-                                    ) = match v {
-                                        "Delta" => (
-                                            ColumnStartWith::Empty,
-                                            ColumnUpdateWith::Delta,
-                                            ColumnUpdateTrigger::Contextual,
-                                        ),
-                                        "SplitTime" => (
-                                            ColumnStartWith::ComparisonTime,
-                                            ColumnUpdateWith::SplitTime,
-                                            ColumnUpdateTrigger::OnEndingSegment,
-                                        ),
-                                        "DeltaorSplitTime" => (
-                                            ColumnStartWith::ComparisonTime,
-                                            ColumnUpdateWith::DeltaWithFallback,
-                                            ColumnUpdateTrigger::Contextual,
-                                        ),
-                                        "SegmentDelta" => (
-                                            ColumnStartWith::Empty,
-                                            ColumnUpdateWith::SegmentDelta,
-                                            ColumnUpdateTrigger::Contextual,
-                                        ),
-                                        "SegmentTime" => (
-                                            ColumnStartWith::ComparisonSegmentTime,
-                                            ColumnUpdateWith::SegmentTime,
-                                            ColumnUpdateTrigger::OnEndingSegment,
-                                        ),
-                                        "SegmentDeltaorSegmentTime" => (
-                                            ColumnStartWith::ComparisonSegmentTime,
-                                            ColumnUpdateWith::SegmentDeltaWithFallback,
-                                            ColumnUpdateTrigger::Contextual,
-                                        ),
+                                    match v {
+                                        "Delta" => {
+                                            column.start_with = ColumnStartWith::Empty;
+                                            column.update_with = ColumnUpdateWith::Delta;
+                                            column.update_trigger = ColumnUpdateTrigger::Contextual;
+                                        }
+                                        "SplitTime" => {
+                                            column.start_with = ColumnStartWith::ComparisonTime;
+                                            column.update_with = ColumnUpdateWith::SplitTime;
+                                            column.update_trigger =
+                                                ColumnUpdateTrigger::OnEndingSegment;
+                                        }
+                                        "DeltaorSplitTime" => {
+                                            column.start_with = ColumnStartWith::ComparisonTime;
+                                            column.update_with =
+                                                ColumnUpdateWith::DeltaWithFallback;
+                                            column.update_trigger = ColumnUpdateTrigger::Contextual;
+                                        }
+                                        "SegmentDelta" => {
+                                            column.start_with = ColumnStartWith::Empty;
+                                            column.update_with = ColumnUpdateWith::SegmentDelta;
+                                            column.update_trigger = ColumnUpdateTrigger::Contextual;
+                                        }
+                                        "SegmentTime" => {
+                                            column.start_with =
+                                                ColumnStartWith::ComparisonSegmentTime;
+                                            column.update_with = ColumnUpdateWith::SegmentTime;
+                                            column.update_trigger =
+                                                ColumnUpdateTrigger::OnEndingSegment;
+                                        }
+                                        "SegmentDeltaorSegmentTime" => {
+                                            column.start_with =
+                                                ColumnStartWith::ComparisonSegmentTime;
+                                            column.update_with =
+                                                ColumnUpdateWith::SegmentDeltaWithFallback;
+                                            column.update_trigger = ColumnUpdateTrigger::Contextual;
+                                        }
+                                        "CustomVariable" => custom_variable = true,
                                         _ => return Err(Error::ParseColumnType),
                                     };
 
@@ -103,8 +107,14 @@ pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()
                             settings.columns.insert(
                                 0,
                                 splits::ColumnSettings {
+                                    kind: if custom_variable {
+                                        ColumnKind::Variable(VariableColumn {
+                                            variable_name: column_name.clone(),
+                                        })
+                                    } else {
+                                        ColumnKind::Time(column)
+                                    },
                                     name: column_name,
-                                    kind: ColumnKind::Time(column),
                                 },
                             );
                             Ok(())
