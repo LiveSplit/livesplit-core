@@ -13,6 +13,11 @@ mod parse {
         parse(data).unwrap()
     }
 
+    #[track_caller]
+    fn ls1l(data: &str) -> Layout {
+        Layout::from_settings(serde_json::from_str(data).unwrap())
+    }
+
     #[test]
     fn all() {
         livesplit(layout_files::ALL);
@@ -85,6 +90,8 @@ mod parse {
             assert_eq!(variable_name, "pb hits");
             assert_eq!(is_split, true);
         }
+        let l1 = ls1l(layout_files::CUSTOM_VARIABLE_LS1L);
+        assert_eq!(serde_json::to_string(&l.settings()).ok(), serde_json::to_string(&l1.settings()).ok());
     }
 
     #[test]
@@ -134,6 +141,8 @@ mod parse {
             assert_eq!(variable_name, "pb hits");
             assert_eq!(is_split, true);
         }
+        let l1 = ls1l(layout_files::CUSTOM_VARIABLE_LS1L);
+        assert_eq!(serde_json::to_string(&l.settings()).ok(), serde_json::to_string(&l1.settings()).ok());
     }
 
     #[test]

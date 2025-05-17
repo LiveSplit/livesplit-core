@@ -81,7 +81,7 @@
         <SplitPreviewCount>1</SplitPreviewCount>
         <MinimumMajorSplits>0</MinimumMajorSplits>
         <DisplayIcons>True</DisplayIcons>
-        <ShowThinSeparators>False</ShowThinSeparators>
+        <ShowThinSeparators>True</ShowThinSeparators>
         <AlwaysShowLastSplit>True</AlwaysShowLastSplit>
         <SplitWidth>20</SplitWidth>
         <SplitTimesAccuracy>Seconds</SplitTimesAccuracy>
