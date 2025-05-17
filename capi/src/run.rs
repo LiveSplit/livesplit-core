@@ -146,6 +146,18 @@ pub unsafe extern "C" fn Run_set_category_name(this: &mut Run, category: *const 
     this.set_category_name(unsafe { str(category) });
 }
 
+/// Accesses the name of the level of this Run.
+#[no_mangle]
+pub extern "C" fn Run_level_name(this: &Run) -> *const c_char {
+    output_str(this.level_name())
+}
+
+/// Sets the name of the level of this Run.
+#[no_mangle]
+pub unsafe extern "C" fn Run_set_level_name(this: &mut Run, level: *const c_char) {
+    this.set_level_name(str(level));
+}
+
 /// Returns a file name (without the extension) suitable for this Run that
 /// is built the following way:
 ///
