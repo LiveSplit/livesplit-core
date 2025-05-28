@@ -8,6 +8,13 @@ pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()
     let mut background_builder = GradientBuilder::new();
     let (mut override_label, mut override_value) = (false, false);
     let (mut left_center, mut right) = (String::new(), String::new());
+    // - Normally, when `custom_variable` is false,
+    //   `Text2`/`right` is interpreted as text to be displayed as-is,
+    //   through `Text::Split` or `Text::Center`.
+    // - But when `custom_variable` is true,
+    //   `Text2`/`right` is interpreted as the custom variable name,
+    //   and the value of the custom variable is displayed instead,
+    //   through `Text::Variable`.
     let mut custom_variable = false;
 
     parse_children(reader, |reader, tag, _| {
