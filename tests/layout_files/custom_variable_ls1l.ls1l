@@ -1,0 +1,306 @@
+{
+    "components": [
+        {
+            "Title": {
+                "background": {
+                    "Vertical": [
+                        [
+                            0.16470589,
+                            0.16470589,
+                            0.16470589,
+                            1.0
+                        ],
+                        [
+                            0.07450981,
+                            0.07450981,
+                            0.07450981,
+                            1.0
+                        ]
+                    ]
+                },
+                "text_color": null,
+                "show_game_name": true,
+                "show_category_name": true,
+                "show_finished_runs_count": false,
+                "show_attempt_count": true,
+                "text_alignment": "Auto",
+                "display_as_single_line": false,
+                "display_game_icon": true,
+                "show_region": false,
+                "show_platform": false,
+                "show_variables": true
+            }
+        },
+        {
+            "Splits": {
+                "background": {
+                    "Alternating": [
+                        [
+                            1.0,
+                            1.0,
+                            1.0,
+                            0.0
+                        ],
+                        [
+                            1.0,
+                            1.0,
+                            1.0,
+                            0.04215355
+                        ]
+                    ]
+                },
+                "visual_split_count": 8,
+                "split_preview_count": 1,
+                "show_thin_separators": true,
+                "separator_last_split": true,
+                "always_show_last_split": true,
+                "fill_with_blank_space": true,
+                "display_two_rows": false,
+                "current_split_gradient": {
+                    "Vertical": [
+                        [
+                            0.20000002,
+                            0.45098042,
+                            0.9568628,
+                            1.0
+                        ],
+                        [
+                            0.08235294,
+                            0.20784315,
+                            0.454902,
+                            1.0
+                        ]
+                    ]
+                },
+                "split_time_accuracy": "Seconds",
+                "segment_time_accuracy": "Seconds",
+                "delta_time_accuracy": "Tenths",
+                "delta_drop_decimals": true,
+                "show_column_labels": false,
+                "columns": [
+                    {
+                        "name": "Time",
+                        "start_with": "ComparisonTime",
+                        "update_with": "SplitTime",
+                        "update_trigger": "OnEndingSegment",
+                        "comparison_override": null,
+                        "timing_method": null
+                    },
+                    {
+                        "name": "+/-",
+                        "start_with": "Empty",
+                        "update_with": "Delta",
+                        "update_trigger": "Contextual",
+                        "comparison_override": null,
+                        "timing_method": null
+                    },
+                    {
+                        "name": "delta hits",
+                        "variable_name": "delta hits"
+                    },
+                    {
+                        "name": "segment hits",
+                        "variable_name": "segment hits"
+                    }
+                ]
+            }
+        },
+        {
+            "Text": {
+                "background": "Transparent",
+                "display_two_rows": false,
+                "left_center_color": null,
+                "right_color": null,
+                "text": {
+                    "Variable": [
+                        "hits",
+                        true
+                    ]
+                }
+            }
+        },
+        {
+            "Text": {
+                "background": "Transparent",
+                "display_two_rows": false,
+                "left_center_color": null,
+                "right_color": null,
+                "text": {
+                    "Variable": [
+                        "pb hits",
+                        true
+                    ]
+                }
+            }
+        },
+        {
+            "Timer": {
+                "background": "Transparent",
+                "timing_method": "GameTime",
+                "height": 54,
+                "color_override": null,
+                "show_gradient": true,
+                "digits_format": "SingleDigitSeconds",
+                "accuracy": "Hundredths",
+                "is_segment_timer": false
+            }
+        },
+        {
+            "Timer": {
+                "background": "Transparent",
+                "timing_method": "RealTime",
+                "height": 39,
+                "color_override": null,
+                "show_gradient": true,
+                "digits_format": "SingleDigitSeconds",
+                "accuracy": "Hundredths",
+                "is_segment_timer": false
+            }
+        },
+        {
+            "PreviousSegment": {
+                "background": {
+                    "Vertical": [
+                        [
+                            0.10980393,
+                            0.10980393,
+                            0.10980393,
+                            1.0
+                        ],
+                        [
+                            0.050980397,
+                            0.050980397,
+                            0.050980397,
+                            1.0
+                        ]
+                    ]
+                },
+                "comparison_override": null,
+                "display_two_rows": false,
+                "label_color": null,
+                "drop_decimals": true,
+                "accuracy": "Tenths",
+                "show_possible_time_save": false
+            }
+        },
+        {
+            "CurrentPace": {
+                "background": "Transparent",
+                "comparison_override": "Best Segments",
+                "display_two_rows": false,
+                "label_color": null,
+                "value_color": null,
+                "accuracy": "Hundredths"
+            }
+        },
+        {
+            "CurrentComparison": {
+                "background": {
+                    "Vertical": [
+                        [
+                            0.10980393,
+                            0.10980393,
+                            0.10980393,
+                            1.0
+                        ],
+                        [
+                            0.050980397,
+                            0.050980397,
+                            0.050980397,
+                            1.0
+                        ]
+                    ]
+                },
+                "display_two_rows": false,
+                "label_color": null,
+                "value_color": null
+            }
+        }
+    ],
+    "general": {
+        "direction": "Vertical",
+        "timer_font": null,
+        "times_font": null,
+        "text_font": null,
+        "text_shadow": [
+            0.0,
+            0.0,
+            0.0,
+            0.27156216
+        ],
+        "background": {
+            "Plain": [
+                0.058823533,
+                0.058823533,
+                0.058823533,
+                1.0
+            ]
+        },
+        "best_segment_color": [
+            0.8470589,
+            0.6862745,
+            0.121568635,
+            1.0
+        ],
+        "ahead_gaining_time_color": [
+            0.0,
+            0.8000001,
+            0.21176472,
+            1.0
+        ],
+        "ahead_losing_time_color": [
+            0.32156864,
+            0.8000001,
+            0.45098042,
+            1.0
+        ],
+        "behind_gaining_time_color": [
+            0.8000001,
+            0.36078432,
+            0.32156864,
+            1.0
+        ],
+        "behind_losing_time_color": [
+            0.8000001,
+            0.07058824,
+            0.0,
+            1.0
+        ],
+        "not_running_color": [
+            0.6745098,
+            0.6745098,
+            0.6745098,
+            1.0
+        ],
+        "personal_best_color": [
+            0.08627451,
+            0.6509804,
+            1.0,
+            1.0
+        ],
+        "paused_color": [
+            0.4784314,
+            0.4784314,
+            0.4784314,
+            1.0
+        ],
+        "thin_separators_color": [
+            1.0,
+            1.0,
+            1.0,
+            0.07897232
+        ],
+        "separators_color": [
+            1.0,
+            1.0,
+            1.0,
+            0.32670057
+        ],
+        "text_color": [
+            1.0,
+            1.0,
+            1.0,
+            1.0
+        ]
+    }
+}
