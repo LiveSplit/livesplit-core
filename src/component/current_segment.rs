@@ -7,13 +7,9 @@
 
 use super::key_value;
 use crate::{
-    GeneralLayoutSettings, TimerPhase, analysis, comparison,
-    platform::prelude::*,
-    settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value},
-    timing::{
-        Snapshot,
-        formatter::{Accuracy, Delta, SegmentTime, TimeFormatter},
-    },
+    analysis, comparison, platform::prelude::*, settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value}, timing::{
+        formatter::{Accuracy, Delta, SegmentTime, TimeFormatter}, Snapshot
+    }, GeneralLayoutSettings
 };
 use alloc::borrow::Cow;
 use core::fmt::Write as FmtWrite;
@@ -117,34 +113,40 @@ impl Component {
         timer: &Snapshot<'_>,
         layout_settings: &GeneralLayoutSettings,
     ) {
-        let mut possible_save = None;
         let resolved_comparison = comparison::resolve(&self.settings.comparison_override, timer);
         let comparison = comparison::or_current(resolved_comparison, timer);
         let method = timer.current_timing_method();
-        let split_index = timer.current_split_index().unwrap();
         let phase = timer.current_phase();
-        let time_change = analysis::live_segment_delta(timer, split_index, comparison, method);
-        let semantic_color = if phase == TimerPhase::NotRunning {
-            SemanticColor::Default
-        } else {
-            if self.settings.show_possible_time_save {
-                possible_save = analysis::possible_time_save::calculate(
+        let mut time_change = None;
+        let mut possible_save = None;
+        let mut semantic_color = SemanticColor::Default;
+        if phase.is_running() || phase.is_paused() {
+            if let Some(split_index) = timer.current_split_index() {
+                time_change = analysis::live_segment_delta(
                     timer,
                     split_index,
                     comparison,
+                    method
+                );
+                if self.settings.show_possible_time_save {
+                    possible_save = analysis::possible_time_save::calculate(
+                        timer,
+                        split_index,
+                        comparison,
+                        false,
+                    )
+                    .0
+                };
+                semantic_color = analysis::split_color(
+                    timer,
+                    time_change,
+                    split_index,
                     false,
-                )
-                .0;
+                    false,
+                    comparison,
+                    method,
+                );
             };
-            analysis::split_color(
-                timer,
-                time_change,
-                split_index,
-                false,
-                false,
-                comparison,
-                method,
-            )
         };
 
         let value_color = Some(semantic_color.visualize(layout_settings));
