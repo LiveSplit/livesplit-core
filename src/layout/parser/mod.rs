@@ -25,6 +25,7 @@ use core::{mem::MaybeUninit, num::ParseIntError, str};
 mod blank_space;
 mod current_comparison;
 mod current_pace;
+mod current_segment;
 mod delta;
 mod detailed_timer;
 mod graph;
@@ -648,6 +649,7 @@ where
                     "PBChance.dll" => pb_chance::Component::new().into(),
                     "LiveSplit.PossibleTimeSave.dll" => possible_time_save::Component::new().into(),
                     "LiveSplit.PreviousSegment.dll" => previous_segment::Component::new().into(),
+                    "LiveSplit.CurrentSegment.dll" => current_segment::Component::new().into(),
                     "" => separator::Component::new().into(),
                     "LiveSplit.Splits.dll" | "LiveSplit.Subsplits.dll" => {
                         splits::Component::new().into()
@@ -669,6 +671,7 @@ where
                         Component::BlankSpace(c) => blank_space::settings(reader, c),
                         Component::CurrentComparison(c) => current_comparison::settings(reader, c),
                         Component::CurrentPace(c) => current_pace::settings(reader, c),
+                        Component::CurrentSegment(c) => current_segment::settings(reader, c),
                         Component::Delta(c) => delta::settings(reader, c),
                         Component::DetailedTimer(c) => detailed_timer::settings(reader, c),
                         Component::Graph(c) => graph::settings(reader, c),
