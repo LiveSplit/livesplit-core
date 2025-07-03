@@ -42,6 +42,13 @@ fn when_changing_category_name() {
 }
 
 #[test]
+fn when_changing_level_name() {
+    let mut editor = base();
+    editor.set_level_name("Hello");
+    assert_eq!(editor.run().metadata().run_id, "");
+}
+
+#[test]
 fn not_when_changing_attempt_count() {
     let mut editor = base();
     editor.set_attempt_count(123);
