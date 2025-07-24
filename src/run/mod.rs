@@ -15,6 +15,9 @@
 //! ```
 
 mod attempt;
+
+#[cfg(feature = "auto-splitting")]
+mod auto_splitter_settings;
 mod comparisons;
 pub mod editor;
 mod linked_layout;
@@ -35,6 +38,8 @@ pub use run_metadata::{CustomVariable, RunMetadata};
 pub use segment::Segment;
 pub use segment_history::SegmentHistory;
 
+#[cfg(feature = "auto-splitting")]
+use crate::run::auto_splitter_settings::AutoSplitterSettings;
 use crate::{
     AtomicDateTime, Time, TimeSpan, TimingMethod,
     comparison::{ComparisonGenerator, RACE_COMPARISON_PREFIX, default_generators, personal_best},
@@ -75,6 +80,8 @@ pub struct Run {
     custom_comparisons: Vec<String>,
     comparison_generators: ComparisonGenerators,
     auto_splitter_settings: String,
+    #[cfg(feature = "auto-splitting")]
+    parsed_auto_splitter_settings: Option<AutoSplitterSettings>,
     linked_layout: Option<LinkedLayout>,
 }
 
@@ -128,6 +135,8 @@ impl Run {
             custom_comparisons: vec![personal_best::NAME.to_string()],
             comparison_generators: ComparisonGenerators(default_generators()),
             auto_splitter_settings: String::new(),
+            #[cfg(feature = "auto-splitting")]
+            parsed_auto_splitter_settings: None,
             linked_layout: None,
         }
     }
@@ -331,6 +340,40 @@ impl Run {
     #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     pub fn auto_splitter_settings_mut(&mut self) -> &mut String {
         &mut self.auto_splitter_settings
+    }
+
+    /// Loads a copy of the Auto Splitter Settings as a settings map.
+    #[inline]
+    #[cfg(feature = "auto-splitting")]
+    pub fn auto_splitter_settings_map_load(
+        &self,
+    ) -> Option<livesplit_auto_splitting::settings::Map> {
+        if let Some(p) = &self.parsed_auto_splitter_settings {
+            return Some(p.custom_settings.clone());
+        }
+        None
+    }
+
+    /// Stores a settings map into the parsed auto splitter settings.
+    #[cfg(feature = "auto-splitting")]
+    pub fn auto_splitter_settings_map_store(
+        &mut self,
+        settings_map: livesplit_auto_splitting::settings::Map,
+    ) {
+        let p = &mut self.parsed_auto_splitter_settings;
+        match p {
+            None => {
+                if settings_map.is_empty() {
+                    return;
+                }
+                let mut a = AutoSplitterSettings::default();
+                a.set_custom_settings(settings_map);
+                *p = Some(a);
+            }
+            Some(a) => {
+                a.set_custom_settings(settings_map);
+            }
+        }
     }
 
     /// Accesses the [`LinkedLayout`] of this `Run`. If a
