@@ -209,6 +209,40 @@ impl Display for FractionInner {
     }
 }
 
+/// `TimeWithFraction` combines both the `Time` and `Fraction` structs into one,
+/// allowing both to be accessed from a single struct.
+pub struct TimeWithFraction {
+    time: Time,
+    fraction: Fraction,
+}
+
+impl TimeFormatter<'_> for TimeWithFraction {
+    type Inner = TimeWithFractionInner;
+
+    fn format<T>(&'_ self, time: T) -> Self::Inner where T: Into<Option<TimeSpan>> {
+        let time = time.into();
+        TimeWithFractionInner {
+            time: self.time.format(time.clone()),
+            fraction: self.fraction.format(time),
+        }
+    }
+}
+
+impl Display for TimeWithFractionInner {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+        Display::fmt(&self.time, f)?;
+        Display::fmt(&self.fraction, f)?;
+        Ok(())
+    }
+}
+
+/// A `TimeInner`/`FractionInner` to be formatted as the combined parts of the Time Formatter
+/// Pair.
+pub struct TimeWithFractionInner {
+    time: TimeInner,
+    fraction: FractionInner,
+}
+
 #[cfg(test)]
 mod tests {
     use core::str::FromStr;
