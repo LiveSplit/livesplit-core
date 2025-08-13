@@ -9,8 +9,8 @@ use crate::{
         xml::{
             helper::{
                 attribute, attribute_escaped_err, end_tag, image, optional_attribute_escaped_err,
-                parse_attributes, parse_base, parse_children, reencode_children, text,
-                text_as_escaped_string_err, text_parsed, Error as XmlError,
+                parse_attributes, parse_base, parse_children, text, text_as_escaped_string_err,
+                text_parsed, Error as XmlError,
             },
             Reader,
         },
@@ -18,8 +18,14 @@ use crate::{
     AtomicDateTime, DateTime, Run, RunMetadata, Segment, Time, TimeSpan,
 };
 use alloc::borrow::Cow;
+use core::fmt::{Display, Formatter};
 use core::{mem::MaybeUninit, str};
 use time::{Date, Duration, PrimitiveDateTime};
+#[cfg(feature = "auto-splitting")]
+use {
+    crate::run::auto_splitter_settings::AutoSplitterSettings, crate::util::xml::Attributes,
+    livesplit_auto_splitting::settings,
+};
 
 /// The Error type for splits files that couldn't be parsed by the LiveSplit
 /// Parser.
@@ -97,8 +103,21 @@ const fn type_hint<T>(v: Result<T>) -> Result<T> {
     v
 }
 
-#[derive(Copy, Clone, PartialOrd, PartialEq, Ord, Eq)]
-struct Version(u32, u32, u32, u32);
+/// The version type for the LiveSplit parser
+#[derive(Debug, Copy, Clone, PartialOrd, PartialEq, Ord, Eq)]
+pub struct Version(pub u32, pub u32, pub u32, pub u32);
+
+impl Default for Version {
+    fn default() -> Self {
+        Version(1, 0, 0, 0)
+    }
+}
+
+impl Display for Version {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{}.{}.{}.{}", self.0, self.1, self.2, self.3)
+    }
+}
 
 fn parse_version(version: &str) -> Result<Version> {
     let splits = version.split('.');
@@ -419,6 +438,142 @@ fn parse_attempt_history(version: Version, reader: &mut Reader<'_>, run: &mut Ru
     }
 }
 
+fn parse_auto_splitter_settings(
+    _version: Version,
+    reader: &mut Reader<'_>,
+    run: &mut Run,
+) -> Result<()> {
+    crate::util::xml::helper::reencode_children(reader, run.auto_splitter_settings_mut())
+        .map_err(Into::<Error>::into)?;
+
+    #[cfg(feature = "auto-splitting")]
+    let mut reader = Reader::new(run.auto_splitter_settings());
+
+    #[cfg(feature = "auto-splitting")]
+    let mut any_parsed = false;
+    #[cfg(feature = "auto-splitting")]
+    let mut settings = AutoSplitterSettings::default();
+
+    #[cfg(feature = "auto-splitting")]
+    // The compiler seems to throw a warning that 'attributes' isn't used by default, it actually is though
+    #[allow(unused_variables)]
+    parse_children(&mut reader, |reader, tag, attributes| match tag.name() {
+        "Version" => type_hint(text(reader, |t| {
+            any_parsed = true;
+            settings.set_version(parse_version(t.as_ref()).unwrap_or_default())
+        })),
+        "ScriptPath" => type_hint(text(reader, |t| {
+            any_parsed = true;
+            settings.set_script_path(t.to_string())
+        })),
+        "CustomSettings" => {
+            any_parsed = true;
+            settings.set_custom_settings(parse_settings_map(reader));
+            Ok(())
+        }
+        _ => Ok(()),
+    })
+    .ok();
+
+    #[cfg(feature = "auto-splitting")]
+    if any_parsed {
+        run.parsed_auto_splitter_settings = Some(settings);
+    }
+
+    Ok(())
+}
+
+#[cfg(feature = "auto-splitting")]
+fn parse_settings_map(reader: &mut Reader<'_>) -> settings::Map {
+    let mut settings_map = settings::Map::new();
+
+    parse_children(reader, |reader, _tag, attributes| {
+        if let (Some(id), Some(value)) = parse_settings_entry(reader, attributes) {
+            settings_map.insert(id.into(), value);
+        }
+        Ok::<(), Error>(())
+    })
+    .ok();
+
+    settings_map
+}
+
+#[cfg(feature = "auto-splitting")]
+fn parse_settings_list(reader: &mut Reader<'_>) -> settings::List {
+    let mut settings_list = settings::List::new();
+
+    parse_children(reader, |reader, _tag, attributes| {
+        if let (_, Some(value)) = parse_settings_entry(reader, attributes) {
+            settings_list.push(value);
+        }
+        Ok::<(), Error>(())
+    })
+    .ok();
+
+    settings_list
+}
+
+#[cfg(feature = "auto-splitting")]
+fn parse_settings_entry(
+    reader: &mut Reader<'_>,
+    attributes: Attributes<'_>,
+) -> (Option<String>, Option<settings::Value>) {
+    let mut id = None;
+    let mut setting_type = None;
+    let mut string_value = None;
+    type_hint(parse_attributes(attributes, |k, v| {
+        match k {
+            "id" => id = Some(v.unescape_str()),
+            "type" => setting_type = Some(v.unescape_str()),
+            "value" => string_value = Some(v.unescape_str()),
+            _ => {}
+        }
+        Ok(true)
+    }))
+    .ok();
+    let Some(setting_type) = setting_type else {
+        return (id, None);
+    };
+    let value = match setting_type.as_str() {
+        "bool" => {
+            let mut b = bool::default();
+            type_hint(text(reader, |t| {
+                b = parse_bool(t.as_ref()).unwrap_or_default();
+            }))
+            .ok();
+            Some(settings::Value::Bool(b))
+        }
+        "i64" => {
+            let mut i = i64::default();
+            type_hint(text(reader, |t| {
+                i = t.as_ref().parse().unwrap_or_default();
+            }))
+            .ok();
+            Some(settings::Value::I64(i))
+        }
+        "f64" => {
+            let mut f = f64::default();
+            type_hint(text(reader, |t| {
+                f = t.as_ref().parse().unwrap_or_default();
+            }))
+            .ok();
+            Some(settings::Value::F64(f))
+        }
+        "string" => {
+            let mut s = String::default();
+            type_hint(text(reader, |t| {
+                s = t.to_string();
+            }))
+            .ok();
+            Some(settings::Value::String(string_value.unwrap_or(s).into()))
+        }
+        "map" => Some(settings::Value::Map(parse_settings_map(reader))),
+        "list" => Some(settings::Value::List(parse_settings_list(reader))),
+        _ => None,
+    };
+    (id, value)
+}
+
 /// Attempts to parse a LiveSplit splits file.
 pub fn parse(source: &str) -> Result<Run> {
     let mut reader = Reader::new(source);
@@ -474,10 +629,7 @@ pub fn parse(source: &str) -> Result<Run> {
                     }
                 })
             }
-            "AutoSplitterSettings" => {
-                let settings = run.auto_splitter_settings_mut();
-                reencode_children(reader, settings).map_err(Into::into)
-            }
+            "AutoSplitterSettings" => parse_auto_splitter_settings(version, reader, &mut run),
             "LayoutPath" => text(reader, |t| {
                 run.set_linked_layout(if t == "?default" {
                     Some(LinkedLayout::Default)
@@ -503,6 +655,8 @@ pub fn parse(source: &str) -> Result<Run> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[cfg(feature = "auto-splitting")]
+    use livesplit_auto_splitting::settings;
 
     #[test]
     fn time_span_parsing() {
@@ -523,5 +677,161 @@ mod tests {
         parse_time_span("-123.45.23:34:56.789").unwrap_err();
         parse_time_span("NaN.23:34:56.789").unwrap_err();
         parse_time_span("Inf.23:34:56.789").unwrap_err();
+    }
+
+    #[cfg(feature = "auto-splitting")]
+    #[test]
+    fn test_parse_settings() {
+        assert_eq!(
+            parse_settings_map(&mut Reader::new(
+                r#"
+                <Setting id="start" type="bool">True</Setting>
+                <Setting id="split" type="bool">True</Setting>
+                <Setting id="remove_loads" type="bool">True</Setting>
+            "#
+            )),
+            {
+                let mut m = settings::Map::new();
+                m.insert("start".into(), settings::Value::Bool(true));
+                m.insert("split".into(), settings::Value::Bool(true));
+                m.insert("remove_loads".into(), settings::Value::Bool(true));
+                m
+            },
+        );
+
+        assert_eq!(
+            parse_settings_list(&mut Reader::new(
+                r#"<Setting type="string" value="KingsPass" />"#
+            )),
+            {
+                let mut l = settings::List::new();
+                l.push(settings::Value::String("KingsPass".into()));
+                l
+            },
+        );
+
+        assert_eq!(
+            parse_settings_map(&mut Reader::new(
+                r#"<Setting id="splits_0_item" type="string" value="KingsPass" />"#
+            )),
+            {
+                let mut m = settings::Map::new();
+                m.insert(
+                    "splits_0_item".into(),
+                    settings::Value::String("KingsPass".into()),
+                );
+                m
+            },
+        );
+
+        assert_eq!(
+            parse_settings_map(&mut Reader::new(
+                r#"
+                <Setting id="inner_map" type="map">
+                    <Setting id="first" type="bool">True</Setting>
+                    <Setting id="second" type="string" value="bar" />
+                </Setting>
+            "#
+            )),
+            {
+                let mut map = settings::Map::new();
+
+                let mut inner_map = settings::Map::new();
+                inner_map.insert("first".into(), settings::Value::Bool(true));
+                inner_map.insert("second".into(), settings::Value::String("bar".into()));
+
+                map.insert("inner_map".into(), settings::Value::Map(inner_map));
+                map
+            },
+        );
+
+        assert_eq!(
+            parse_settings_map(&mut Reader::new(
+                r#"
+                <Setting id="lolol" type="map">
+                    <Setting id="first" type="bool">True</Setting>
+                    <Setting id="second" type="string" value="bar"></Setting>
+                    <Setting id="recursive" type="map">
+                        <Setting id="first" type="bool">True</Setting>
+                        <Setting id="second" type="string" value="bar"></Setting>
+                    </Setting>
+                </Setting>
+            "#
+            )),
+            {
+                let mut map = settings::Map::new();
+
+                let mut inner_map = settings::Map::new();
+                inner_map.insert("first".into(), settings::Value::Bool(true));
+                inner_map.insert("second".into(), settings::Value::String("bar".into()));
+                inner_map.insert("recursive".into(), settings::Value::Map(inner_map.clone()));
+
+                map.insert("lolol".into(), settings::Value::Map(inner_map));
+                map
+            },
+        );
+
+        assert_eq!(
+            parse_settings_map(&mut Reader::new(
+                r#"
+                <Setting id="lolol" type="map">
+                    <Setting id="first" type="bool">True</Setting>
+                    <Setting id="second" type="string" value="bar" />
+                    <Setting id="recursive" type="map">
+                        <Setting id="first" type="bool">True</Setting>
+                        <Setting id="second" type="string" value="bar" />
+                    </Setting>
+                </Setting>
+            "#
+            )),
+            {
+                let mut map = settings::Map::new();
+
+                let mut inner_map = settings::Map::new();
+                inner_map.insert("first".into(), settings::Value::Bool(true));
+                inner_map.insert("second".into(), settings::Value::String("bar".into()));
+                inner_map.insert("recursive".into(), settings::Value::Map(inner_map.clone()));
+
+                map.insert("lolol".into(), settings::Value::Map(inner_map));
+                map
+            },
+        );
+
+        assert_eq!(
+            parse_settings_map(&mut Reader::new(
+                r#"
+                <Setting id="level32_bool" type="bool">True</Setting>
+                <Setting id="other_setting" type="bool">True</Setting>
+                <Setting id="level12_bool" type="bool">True</Setting>
+                <Setting id="lolol" type="map">
+                    <Setting id="first" type="bool">True</Setting>
+                    <Setting id="second" type="string" value="bar" />
+                    <Setting id="recursive" type="map">
+                        <Setting id="first" type="bool">True</Setting>
+                        <Setting id="second" type="string" value="bar" />
+                    </Setting>
+                </Setting>
+                <Setting id="okok" type="string" value="hello, you seem to like true!" />
+            "#
+            )),
+            {
+                let mut map = settings::Map::new();
+                map.insert("level32_bool".into(), settings::Value::Bool(true));
+                map.insert("other_setting".into(), settings::Value::Bool(true));
+                map.insert("level12_bool".into(), settings::Value::Bool(true));
+
+                let mut inner_map = settings::Map::new();
+                inner_map.insert("first".into(), settings::Value::Bool(true));
+                inner_map.insert("second".into(), settings::Value::String("bar".into()));
+                inner_map.insert("recursive".into(), settings::Value::Map(inner_map.clone()));
+
+                map.insert("lolol".into(), settings::Value::Map(inner_map));
+                map.insert(
+                    "okok".into(),
+                    settings::Value::String("hello, you seem to like true!".into()),
+                );
+                map
+            },
+        );
     }
 }
