@@ -43,7 +43,7 @@ enum Message {
         Box<dyn FnMut() + Send + 'static>,
         Promise<Result<()>>,
     ),
-    // Tracks both press and release
+    #[cfg(feature = "press_and_release")]
     RegisterSpecific(
         Hotkey,
         Box<dyn FnMut(bool) + Send + 'static>,
@@ -111,6 +111,7 @@ impl Hook {
         future.value().ok_or(Error::ThreadStopped)?
     }
 
+    #[cfg(feature = "press_and_release")]
     pub fn register_specific<F>(&self, hotkey: Hotkey, callback: F) -> Result<()>
     where
         F: FnMut(bool) + Send + 'static,

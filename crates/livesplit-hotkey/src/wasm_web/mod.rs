@@ -27,6 +27,7 @@ impl fmt::Display for Error {
 
 pub struct Hook {
     hotkeys: Arc<Mutex<HashMap<Hotkey, Box<dyn FnMut() + Send + 'static>>>>,
+    #[cfg(feature = "press_and_release")]
     specific_hotkeys: Arc<Mutex<HashMap<(KeyCode, Modifiers), Box<dyn FnMut(bool) + Send + 'static>>>>,
     keyboard_callback: Closure<dyn FnMut(MaybeKeyboardEvent)>,
     gamepad_callback: Closure<dyn FnMut()>,
@@ -42,6 +43,7 @@ impl Drop for Hook {
                 "keydown",
                 self.keyboard_callback.as_ref().unchecked_ref(),
             );
+            #[cfg(feature = "press_and_release")]
             let _ = window.remove_event_listener_with_callback(
                 "keyup",
                 self.keyboard_callback.as_ref().unchecked_ref(),
@@ -88,10 +90,17 @@ impl Hook {
             Hotkey,
             Box<dyn FnMut() + Send + 'static>,
         >::new()));
+        #[cfg(feature = "press_and_release")]
+        let specific_hotkeys = Arc::new(Mutex::new(HashMap::<
+            (KeyCode, Modifiers),
+            Box<dyn FnMut(bool) + Send + 'static>,
+        >::new()));
 
         let window = window().ok_or(crate::Error::Platform(Error::FailedToCreateHook))?;
 
         let hotkey_map = hotkeys.clone();
+        #[cfg(feature = "press_and_release")]
+        let specific_hotkey_map = specific_hotkeys.clone();
         let keyboard_callback = Closure::wrap(Box::new(move |event: MaybeKeyboardEvent| {
             // Despite all sorts of documentation claiming that `keydown` events
             // pass you a `KeyboardEvent`, this is not actually always the case
@@ -137,8 +146,8 @@ impl Hook {
                         }
                     }
 
-                    if let Some(callback) = self
-                        .specific_hotkeys
+                    #[cfg(feature = "press_and_release")]
+                    if let Some(callback) = specific_hotkey_map
                         .lock()
                         .unwrap()
                         .get_mut(&(code, modifiers))
@@ -156,11 +165,14 @@ impl Hook {
             .add_event_listener_with_callback("keydown", keyboard_callback.as_ref().unchecked_ref())
             .map_err(|_| crate::Error::Platform(Error::FailedToCreateHook))?;
 
+        #[cfg(feature = "press_and_release")]
         window
             .add_event_listener_with_callback("keyup", keyboard_callback.as_ref().unchecked_ref())
             .map_err(|_| crate::Error::Platform(Error::FailedToCreateHook))?;
 
         let hotkey_map = hotkeys.clone();
+        #[cfg(feature = "press_and_release")]
+        let specific_hotkey_map = specific_hotkeys.clone();
 
         let mut states = Vec::new();
         let navigator = window.navigator();
@@ -217,6 +229,15 @@ impl Hook {
                                     {
                                         callback();
                                     }
+                                } else if !pressed && *state {
+                                    #[cfg(feature = "press_and_release")]
+                                    if let Some(callback) = specific_hotkey_map
+                                        .lock()
+                                        .unwrap()
+                                        .get_mut(&(code, Modifiers::empty()))
+                                    {
+                                        callback(false);
+                                    }
                                 }
                                 *state = pressed;
                             }
@@ -258,6 +279,7 @@ impl Hook {
         }
     }
 
+    #[cfg(feature = "press_and_release")]
     pub fn register_specific<F>(&self, hotkey: Hotkey, callback: F) -> Result<()>
     where
         F: FnMut(bool) + Send + 'static,

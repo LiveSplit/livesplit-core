@@ -51,6 +51,7 @@ type PressReleaseCallback = Box<dyn FnMut(bool) + Send + 'static>;
 pub struct Hook {
     thread_id: u32,
     hotkeys: Arc<Mutex<HashMap<Hotkey, Callback>>>,
+    #[cfg(feature = "press_and_release")]
     specific_hotkeys: Arc<Mutex<HashMap<(KeyCode, Modifiers), PressReleaseCallback>>>,
 }
 
@@ -400,6 +401,7 @@ impl Hook {
             Hotkey,
             Box<dyn FnMut() + Send + 'static>,
         >::new()));
+        #[cfg(feature = "press_and_release")]
         let specific_hotkeys = Arc::new(Mutex::new(HashMap::<
             (KeyCode, Modifiers),
             Box<dyn FnMut(bool) + Send + 'static>,
@@ -460,6 +462,7 @@ impl Hook {
         });
 
         let hotkey_map = hotkeys.clone();
+        #[cfg(feature = "press_and_release")]
         let specific_hotkey_map = specific_hotkeys.clone();
 
         thread::spawn(move || {
@@ -470,6 +473,7 @@ impl Hook {
                       callback();
                   }
                 }
+                #[cfg(feature = "press_and_release")]
                 if let Some(callback) = specific_hotkey_map.lock().unwrap().get_mut(&(key.key_code, key.modifiers)) {
                     callback(is_press);
                 }
@@ -480,7 +484,12 @@ impl Hook {
             .recv()
             .map_err(|_| crate::Error::Platform(Error::ThreadStopped))??;
 
-        Ok(Hook { thread_id, hotkeys, specific_hotkeys })
+        Ok(Hook {
+          thread_id,
+          hotkeys,
+          #[cfg(feature = "press_and_release")]
+          specific_hotkeys
+        })
     }
 
     pub fn register<F>(&self, hotkey: Hotkey, callback: F) -> Result<()>
@@ -495,6 +504,7 @@ impl Hook {
         }
     }
 
+    #[cfg(feature = "press_and_release")]
     pub fn register_specific<F>(&self, hotkey: Hotkey, callback: F) -> Result<()>
     where
         F: FnMut(bool) + Send + 'static,

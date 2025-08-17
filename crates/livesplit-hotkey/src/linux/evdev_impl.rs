@@ -255,6 +255,7 @@ pub fn new() -> Result<Hook> {
     let mut result = Ok(());
     let mut events = Events::with_capacity(1024);
     let mut hotkeys: HashMap<(Key, Modifiers), Box<dyn FnMut() + Send>> = HashMap::new();
+    #[cfg(feature = "press_and_release")]
     let mut specific_hotkeys: HashMap<(Key, Modifiers), Box<dyn FnMut(bool) + Send>> = HashMap::new();
     let mut modifiers = Modifiers::empty();
 
@@ -275,6 +276,7 @@ pub fn new() -> Result<Hook> {
                             const PRESSED: i32 = 1;
                             match ev.value() {
                                 PRESSED => {
+                                    #[cfg(feature = "press_and_release")]
                                     if let Some(callback) = specific_hotkeys.get_mut(&(k, modifiers)) {
                                         callback(true);
                                     }
@@ -298,6 +300,7 @@ pub fn new() -> Result<Hook> {
                                     }
                                 }
                                 RELEASED => {
+                                    #[cfg(feature = "press_and_release")]
                                     if let Some(callback) = specific_hotkeys.get_mut(&(k, modifiers)) {
                                         callback(false);
                                     }
@@ -336,6 +339,7 @@ pub fn new() -> Result<Hook> {
                                     },
                                 );
                             }
+                            #[cfg(feature = "press_and_release")]
                             Message::RegisterSpecific(key, callback, promise) => {
                                 promise.set(
                                     if code_for(key.key_code)

@@ -59,4 +59,5 @@ std = [
     "windows-sys",
     "x11-dl",
 ]
+press_and_release = []
 wasm-web = ["wasm-bindgen", "web-sys", "js-sys"]

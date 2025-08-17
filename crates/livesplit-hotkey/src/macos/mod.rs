@@ -76,6 +76,7 @@ unsafe impl Sync for RunLoop {}
 
 struct State {
     hotkeys: Mutex<HashMap<Hotkey, Box<dyn FnMut() + Send + 'static>>>,
+    #[cfg(feature = "press_and_release")]
     specific_hotkeys: Mutex<HashMap<Hotkey, Box<dyn FnMut(bool) + Send + 'static>>>,
 }
 
@@ -106,6 +107,7 @@ impl Hook {
 
         let state = Arc::new(State {
             hotkeys: Mutex::new(HashMap::new()),
+            #[cfg(feature = "press_and_release")]
             specific_hotkeys: Mutex::new(HashMap::new()),
         });
         let thread_state = state.clone();
@@ -187,6 +189,7 @@ impl Hook {
         }
     }
 
+    #[cfg(feature = "press_and_release")]
     pub fn register_specific<F>(&self, hotkey: Hotkey, callback: F) -> Result<()>
     where
         F: FnMut(bool) + Send + 'static,
@@ -508,6 +511,7 @@ unsafe extern "C" fn callback(
         return null_mut();
     }
     
+    #[cfg(feature = "press_and_release")]
     if let Some(callback) = state
         .specific_hotkeys
         .lock()

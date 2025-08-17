@@ -150,6 +150,7 @@ pub fn new() -> Result<Hook> {
             let mut result = Ok(());
             let mut events = Events::with_capacity(1024);
             let mut hotkeys = HashMap::new();
+            #[cfg(feature = "press_and_release")]
             let mut specific_hotkeys = HashMap::new();
 
             // For some reason we need to call this once for any KeyGrabs to
@@ -179,6 +180,7 @@ pub fn new() -> Result<Hook> {
                                         Ok(())
                                     });
                                 }
+                                #[cfg(feature = "press_and_release")]
                                 Message::RegisterSpecific(key, callback, promise) => {
                                     promise.set(if let Some(code) = code_for(key.key_code) {
                                         if specific_hotkeys.insert((code, key.modifiers), callback).is_some() {
@@ -240,6 +242,7 @@ pub fn new() -> Result<Hook> {
 
                                     let is_press = event_type == KeyPress;
 
+                                    #[cfg(feature = "press_and_release")]
                                     if let Some(callback) = specific_hotkeys.get_mut(&(event.keycode, modifiers)) {
                                         callback(is_press);
                                     }
