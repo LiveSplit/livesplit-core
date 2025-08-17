@@ -46,6 +46,7 @@ impl fmt::Display for Error {
 }
 
 type Callback = Box<dyn FnMut() + Send + 'static>;
+#[cfg(feature = "press_and_release")]
 type PressReleaseCallback = Box<dyn FnMut(bool) + Send + 'static>;
 
 pub struct Hook {
