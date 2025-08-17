@@ -252,12 +252,13 @@ pub fn new() -> Result<Hook> {
     }
 
     let join_handle = thread::spawn(move || -> Result<()> {
-        let mut result = Ok(());
-        let mut events = Events::with_capacity(1024);
-        let mut hotkeys: HashMap<(Key, Modifiers), Box<dyn FnMut() + Send>> = HashMap::new();
-        let mut modifiers = Modifiers::empty();
+    let mut result = Ok(());
+    let mut events = Events::with_capacity(1024);
+    let mut hotkeys: HashMap<(Key, Modifiers), Box<dyn FnMut() + Send>> = HashMap::new();
+    let mut specific_hotkeys: HashMap<(Key, Modifiers), Box<dyn FnMut(bool) + Send>> = HashMap::new();
+    let mut modifiers = Modifiers::empty();
 
-        let (mut xlib, mut display) = (None, None);
+    let (mut xlib, mut display) = (None, None);
 
         'event_loop: loop {
             if poll.poll(&mut events, None).is_err() {
@@ -274,6 +275,9 @@ pub fn new() -> Result<Hook> {
                             const PRESSED: i32 = 1;
                             match ev.value() {
                                 PRESSED => {
+                                    if let Some(callback) = specific_hotkeys.get_mut(&(k, modifiers)) {
+                                        callback(true);
+                                    }
                                     if let Some(callback) = hotkeys.get_mut(&(k, modifiers)) {
                                         callback();
                                     }
@@ -293,21 +297,26 @@ pub fn new() -> Result<Hook> {
                                         _ => {}
                                     }
                                 }
-                                RELEASED => match k {
-                                    Key::KEY_LEFTALT | Key::KEY_RIGHTALT => {
-                                        modifiers.remove(Modifiers::ALT);
+                                RELEASED => {
+                                    if let Some(callback) = specific_hotkeys.get_mut(&(k, modifiers)) {
+                                        callback(false);
                                     }
-                                    Key::KEY_LEFTCTRL | Key::KEY_RIGHTCTRL => {
-                                        modifiers.remove(Modifiers::CONTROL);
+                                    match k {
+                                        Key::KEY_LEFTALT | Key::KEY_RIGHTALT => {
+                                            modifiers.remove(Modifiers::ALT);
+                                        }
+                                        Key::KEY_LEFTCTRL | Key::KEY_RIGHTCTRL => {
+                                            modifiers.remove(Modifiers::CONTROL);
+                                        }
+                                        Key::KEY_LEFTMETA | Key::KEY_RIGHTMETA => {
+                                            modifiers.remove(Modifiers::META);
+                                        }
+                                        Key::KEY_LEFTSHIFT | Key::KEY_RIGHTSHIFT => {
+                                            modifiers.remove(Modifiers::SHIFT);
+                                        }
+                                        _ => {}
                                     }
-                                    Key::KEY_LEFTMETA | Key::KEY_RIGHTMETA => {
-                                        modifiers.remove(Modifiers::META);
-                                    }
-                                    Key::KEY_LEFTSHIFT | Key::KEY_RIGHTSHIFT => {
-                                        modifiers.remove(Modifiers::SHIFT);
-                                    }
-                                    _ => {}
-                                },
+                                }
                                 _ => {} // Ignore repeating
                             }
                         }
@@ -319,6 +328,18 @@ pub fn new() -> Result<Hook> {
                                 promise.set(
                                     if code_for(key.key_code)
                                         .and_then(|k| hotkeys.insert((k, key.modifiers), callback))
+                                        .is_some()
+                                    {
+                                        Err(crate::Error::AlreadyRegistered)
+                                    } else {
+                                        Ok(())
+                                    },
+                                );
+                            }
+                            Message::RegisterSpecific(key, callback, promise) => {
+                                promise.set(
+                                    if code_for(key.key_code)
+                                        .and_then(|k| specific_hotkeys.insert((k, key.modifiers), callback))
                                         .is_some()
                                     {
                                         Err(crate::Error::AlreadyRegistered)

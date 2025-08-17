@@ -43,6 +43,12 @@ enum Message {
         Box<dyn FnMut() + Send + 'static>,
         Promise<Result<()>>,
     ),
+    // Tracks both press and release
+    RegisterSpecific(
+        Hotkey,
+        Box<dyn FnMut(bool) + Send + 'static>,
+        Promise<Result<()>>,
+    ),
     Unregister(Hotkey, Promise<Result<()>>),
     Resolve(KeyCode, Promise<Option<char>>),
     End,
@@ -98,6 +104,21 @@ impl Hook {
 
         self.sender
             .send(Message::Register(hotkey, Box::new(callback), promise))
+            .map_err(|_| Error::ThreadStopped)?;
+
+        self.waker.wake().map_err(|_| Error::ThreadStopped)?;
+
+        future.value().ok_or(Error::ThreadStopped)?
+    }
+
+    pub fn register_specific<F>(&self, hotkey: Hotkey, callback: F) -> Result<()>
+    where
+        F: FnMut(bool) + Send + 'static,
+    {
+        let (future, promise) = future_promise();
+
+        self.sender
+            .send(Message::RegisterSpecific(hotkey, Box::new(callback), promise))
             .map_err(|_| Error::ThreadStopped)?;
 
         self.waker.wake().map_err(|_| Error::ThreadStopped)?;

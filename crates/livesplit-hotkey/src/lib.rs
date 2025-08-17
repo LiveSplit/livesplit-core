@@ -89,6 +89,15 @@ impl Hook {
         self.0.register(hotkey, callback)
     }
 
+    /// Registers a specific hotkey to listen to, which allows you to
+    /// differentiate between key presses and releases.
+    pub fn register_specific<F>(&self, hotkey: Hotkey, callback: F) -> Result<()>
+    where
+        F: FnMut(bool) + Send + 'static,
+    {
+        self.0.register_specific(hotkey, callback)
+    }
+
     /// Unregisters a previously registered hotkey.
     pub fn unregister(&self, hotkey: Hotkey) -> Result<()> {
         self.0.unregister(hotkey)

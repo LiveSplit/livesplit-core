@@ -7,8 +7,7 @@ use std::{
 
 use mio::{Events, Interest, Poll, Token, Waker, unix::SourceFd};
 use x11_dl::xlib::{
-    _XDisplay, AnyKey, AnyModifier, ControlMask, Display, GrabModeAsync, KeyPress, LockMask,
-    Mod1Mask, Mod2Mask, Mod3Mask, Mod4Mask, ShiftMask, XErrorEvent, XKeyEvent, Xlib,
+    AnyKey, AnyModifier, ControlMask, Display, GrabModeAsync, KeyPress, KeyRelease, LockMask, Mod1Mask, Mod2Mask, Mod3Mask, Mod4Mask, ShiftMask, XErrorEvent, XKeyEvent, Xlib, _XDisplay
 };
 
 use super::{Error, Hook, Message};
@@ -151,6 +150,7 @@ pub fn new() -> Result<Hook> {
             let mut result = Ok(());
             let mut events = Events::with_capacity(1024);
             let mut hotkeys = HashMap::new();
+            let mut specific_hotkeys = HashMap::new();
 
             // For some reason we need to call this once for any KeyGrabs to
             // actually do anything.
@@ -170,6 +170,18 @@ pub fn new() -> Result<Hook> {
                                     promise.set(if let Some(code) = code_for(key.key_code) {
                                         if hotkeys.insert((code, key.modifiers), callback).is_some()
                                         {
+                                            Err(crate::Error::AlreadyRegistered)
+                                        } else {
+                                            grab_key(&xlib, display, code, key.modifiers, false);
+                                            Ok(())
+                                        }
+                                    } else {
+                                        Ok(())
+                                    });
+                                }
+                                Message::RegisterSpecific(key, callback, promise) => {
+                                    promise.set(if let Some(code) = code_for(key.key_code) {
+                                        if specific_hotkeys.insert((code, key.modifiers), callback).is_some() {
                                             Err(crate::Error::AlreadyRegistered)
                                         } else {
                                             grab_key(&xlib, display, code, key.modifiers, false);
@@ -208,7 +220,8 @@ pub fn new() -> Result<Hook> {
                             let err_code = (xlib.XNextEvent)(display, event.as_mut_ptr());
                             if err_code == 0 {
                                 let event = event.assume_init();
-                                if event.get_type() == KeyPress {
+                                let event_type = event.get_type();
+                                if event_type == KeyPress || event_type == KeyRelease {
                                     let event: &XKeyEvent = event.as_ref();
 
                                     let mut modifiers = Modifiers::empty();
@@ -225,10 +238,17 @@ pub fn new() -> Result<Hook> {
                                         modifiers.insert(Modifiers::META);
                                     }
 
-                                    if let Some(callback) =
-                                        hotkeys.get_mut(&(event.keycode, modifiers))
-                                    {
-                                        callback();
+                                    let is_press = event_type == KeyPress;
+
+                                    if let Some(callback) = specific_hotkeys.get_mut(&(event.keycode, modifiers)) {
+                                        callback(is_press);
+                                    }
+
+                                    // Existing hotkeys (press only)
+                                    if is_press {
+                                        if let Some(callback) = hotkeys.get_mut(&(event.keycode, modifiers)) {
+                                            callback();
+                                        }
                                     }
                                 }
                             }
