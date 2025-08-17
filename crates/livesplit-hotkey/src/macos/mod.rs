@@ -522,8 +522,8 @@ unsafe extern "C" fn callback(
         let is_key_up = unsafe { cg::CGEventGetType(event) } == cg::EventType::KEY_UP;
 
         callback(!is_key_up);
-        null_mut()
-    } else {
-        event
+        return null_mut();
     }
+
+    event
 }
