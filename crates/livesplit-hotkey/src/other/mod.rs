@@ -29,6 +29,14 @@ impl Hook {
     }
 
     #[inline]
+    pub fn register_specific<F>(&self, _: Hotkey, _: F) -> Result<()>
+    where
+        F: FnMut(bool) + Send + 'static,
+    {
+        Ok(())
+    }
+
+    #[inline]
     pub fn unregister(&self, _: Hotkey) -> Result<()> {
         Ok(())
     }
