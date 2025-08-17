@@ -223,4 +223,6 @@ unsafe extern "C" {
     pub fn CGEventTapEnable(tap: MachPortRef, enable: bool);
 
     pub fn CGEventGetIntegerValueField(event: EventRef, field: EventField) -> i64;
+
+    pub fn CGEventGetType(event: EventRef) -> EventType;
 }

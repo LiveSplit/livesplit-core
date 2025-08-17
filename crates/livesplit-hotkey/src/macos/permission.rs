@@ -1,10 +1,10 @@
 use super::{
-    ax::{kAXTrustedCheckOptionPrompt, AXIsProcessTrustedWithOptions},
-    cf::{
-        kCFAllocatorDefault, kCFBooleanTrue, kCFTypeDictionaryKeyCallBacks,
-        kCFTypeDictionaryValueCallBacks, CFDictionaryCreate,
-    },
     Owned,
+    ax::{AXIsProcessTrustedWithOptions, kAXTrustedCheckOptionPrompt},
+    cf::{
+        CFDictionaryCreate, kCFAllocatorDefault, kCFBooleanTrue, kCFTypeDictionaryKeyCallBacks,
+        kCFTypeDictionaryValueCallBacks,
+    },
 };
 use std::ffi::c_void;
 
