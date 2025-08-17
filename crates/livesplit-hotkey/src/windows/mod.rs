@@ -460,12 +460,15 @@ impl Hook {
         });
 
         let hotkey_map = hotkeys.clone();
-        let specific_hotkeys = specific_hotkeys.clone();
+        let specific_hotkey_map = specific_hotkeys.clone();
 
         thread::spawn(move || {
             while let Ok((key, is_press)) = events_rx.recv() {
-                if let Some(callback) = hotkey_map.lock().unwrap().get_mut(&key) && is_press {
-                    callback();
+                // TODO make single expression once this is stable
+                if is_press {
+                  if let Some(callback) = hotkey_map.lock().unwrap().get_mut(&key) {
+                      callback();
+                  }
                 }
                 if let Some(callback) = specific_hotkey_map.lock().unwrap().get_mut(&(key.key_code, key.modifiers)) {
                     callback(is_press);
