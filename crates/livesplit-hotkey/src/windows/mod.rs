@@ -298,10 +298,13 @@ unsafe extern "system" fn callback_proc(code: i32, wparam: WPARAM, lparam: LPARA
 
                         state
                             .events
-                            .send((Hotkey {
-                                key_code,
-                                modifiers: state.modifiers,
-                            }, true))
+                            .send((
+                                Hotkey {
+                                    key_code,
+                                    modifiers: state.modifiers,
+                                },
+                                true,
+                            ))
                             .expect("Callback Thread disconnected");
 
                         match key_code {
@@ -353,10 +356,13 @@ unsafe extern "system" fn callback_proc(code: i32, wparam: WPARAM, lparam: LPARA
 
                     state
                         .events
-                        .send((Hotkey {
-                            key_code,
-                            modifiers: state.modifiers,
-                        }, false))
+                        .send((
+                            Hotkey {
+                                key_code,
+                                modifiers: state.modifiers,
+                            },
+                            false,
+                        ))
                         .expect("Callback Thread disconnected");
 
                     match key_code {
@@ -470,12 +476,16 @@ impl Hook {
             while let Ok((key, is_press)) = events_rx.recv() {
                 // TODO make single expression once this is stable
                 if is_press {
-                  if let Some(callback) = hotkey_map.lock().unwrap().get_mut(&key) {
-                      callback();
-                  }
+                    if let Some(callback) = hotkey_map.lock().unwrap().get_mut(&key) {
+                        callback();
+                    }
                 }
                 #[cfg(feature = "press_and_release")]
-                if let Some(callback) = specific_hotkey_map.lock().unwrap().get_mut(&(key.key_code, key.modifiers)) {
+                if let Some(callback) = specific_hotkey_map
+                    .lock()
+                    .unwrap()
+                    .get_mut(&(key.key_code, key.modifiers))
+                {
                     callback(is_press);
                 }
             }
@@ -486,10 +496,10 @@ impl Hook {
             .map_err(|_| crate::Error::Platform(Error::ThreadStopped))??;
 
         Ok(Hook {
-          thread_id,
-          hotkeys,
-          #[cfg(feature = "press_and_release")]
-          specific_hotkeys
+            thread_id,
+            hotkeys,
+            #[cfg(feature = "press_and_release")]
+            specific_hotkeys,
         })
     }
 
@@ -510,7 +520,12 @@ impl Hook {
     where
         F: FnMut(bool) + Send + 'static,
     {
-      if let Entry::Vacant(vacant) = self.specific_hotkeys.lock().unwrap().entry((hotkey.key_code, hotkey.modifiers)) {
+        if let Entry::Vacant(vacant) = self
+            .specific_hotkeys
+            .lock()
+            .unwrap()
+            .entry((hotkey.key_code, hotkey.modifiers))
+        {
             vacant.insert(Box::new(callback));
             Ok(())
         } else {

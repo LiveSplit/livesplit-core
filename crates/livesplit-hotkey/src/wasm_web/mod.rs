@@ -28,7 +28,8 @@ impl fmt::Display for Error {
 pub struct Hook {
     hotkeys: Arc<Mutex<HashMap<Hotkey, Box<dyn FnMut() + Send + 'static>>>>,
     #[cfg(feature = "press_and_release")]
-    specific_hotkeys: Arc<Mutex<HashMap<(KeyCode, Modifiers), Box<dyn FnMut(bool) + Send + 'static>>>>,
+    specific_hotkeys:
+        Arc<Mutex<HashMap<(KeyCode, Modifiers), Box<dyn FnMut(bool) + Send + 'static>>>>,
     keyboard_callback: Closure<dyn FnMut(MaybeKeyboardEvent)>,
     gamepad_callback: Closure<dyn FnMut()>,
     interval_id: Cell<Option<i32>>,
@@ -284,10 +285,12 @@ impl Hook {
     where
         F: FnMut(bool) + Send + 'static,
     {
-        if let Entry::Vacant(vacant) = self.specific_hotkeys.lock().unwrap().entry((
-            hotkey.key_code,
-            hotkey.modifiers,
-        )) {
+        if let Entry::Vacant(vacant) = self
+            .specific_hotkeys
+            .lock()
+            .unwrap()
+            .entry((hotkey.key_code, hotkey.modifiers))
+        {
             vacant.insert(Box::new(callback));
             Ok(())
         } else {

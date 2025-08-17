@@ -91,7 +91,7 @@ impl Hook {
 
     /// Registers a hotkey to listen to, but with specific handling for
     /// press and release events.
-    /// 
+    ///
     /// Requires the `press_and_release` feature to be enabled.
     #[cfg(feature = "press_and_release")]
     pub fn register_specific<F>(&self, hotkey: Hotkey, callback: F) -> Result<()>

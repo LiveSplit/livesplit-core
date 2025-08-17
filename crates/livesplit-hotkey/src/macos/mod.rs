@@ -510,7 +510,7 @@ unsafe extern "C" fn callback(
         // the return value will be ignored, so return null anyway.
         return null_mut();
     }
-    
+
     #[cfg(feature = "press_and_release")]
     if let Some(callback) = state
         .specific_hotkeys

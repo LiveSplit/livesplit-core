@@ -1,10 +1,10 @@
 use std::{collections::hash_map::HashMap, os::unix::prelude::AsRawFd, ptr, thread};
 
 use evdev::{Device, EventType, InputEventKind, Key};
-use mio::{unix::SourceFd, Events, Interest, Poll, Token, Waker};
-use x11_dl::xlib::{Xlib, _XDisplay};
+use mio::{Events, Interest, Poll, Token, Waker, unix::SourceFd};
+use x11_dl::xlib::{_XDisplay, Xlib};
 
-use super::{x11_impl, Error, Hook, Message};
+use super::{Error, Hook, Message, x11_impl};
 use crate::{KeyCode, Modifiers, Result};
 
 // Low numbered tokens are allocated to devices.
@@ -252,14 +252,15 @@ pub fn new() -> Result<Hook> {
     }
 
     let join_handle = thread::spawn(move || -> Result<()> {
-    let mut result = Ok(());
-    let mut events = Events::with_capacity(1024);
-    let mut hotkeys: HashMap<(Key, Modifiers), Box<dyn FnMut() + Send>> = HashMap::new();
-    #[cfg(feature = "press_and_release")]
-    let mut specific_hotkeys: HashMap<(Key, Modifiers), Box<dyn FnMut(bool) + Send>> = HashMap::new();
-    let mut modifiers = Modifiers::empty();
+        let mut result = Ok(());
+        let mut events = Events::with_capacity(1024);
+        let mut hotkeys: HashMap<(Key, Modifiers), Box<dyn FnMut() + Send>> = HashMap::new();
+        #[cfg(feature = "press_and_release")]
+        let mut specific_hotkeys: HashMap<(Key, Modifiers), Box<dyn FnMut(bool) + Send>> =
+            HashMap::new();
+        let mut modifiers = Modifiers::empty();
 
-    let (mut xlib, mut display) = (None, None);
+        let (mut xlib, mut display) = (None, None);
 
         'event_loop: loop {
             if poll.poll(&mut events, None).is_err() {
@@ -277,7 +278,9 @@ pub fn new() -> Result<Hook> {
                             match ev.value() {
                                 PRESSED => {
                                     #[cfg(feature = "press_and_release")]
-                                    if let Some(callback) = specific_hotkeys.get_mut(&(k, modifiers)) {
+                                    if let Some(callback) =
+                                        specific_hotkeys.get_mut(&(k, modifiers))
+                                    {
                                         callback(true);
                                     }
                                     if let Some(callback) = hotkeys.get_mut(&(k, modifiers)) {
@@ -301,7 +304,9 @@ pub fn new() -> Result<Hook> {
                                 }
                                 RELEASED => {
                                     #[cfg(feature = "press_and_release")]
-                                    if let Some(callback) = specific_hotkeys.get_mut(&(k, modifiers)) {
+                                    if let Some(callback) =
+                                        specific_hotkeys.get_mut(&(k, modifiers))
+                                    {
                                         callback(false);
                                     }
                                     match k {
@@ -343,7 +348,9 @@ pub fn new() -> Result<Hook> {
                             Message::RegisterSpecific(key, callback, promise) => {
                                 promise.set(
                                     if code_for(key.key_code)
-                                        .and_then(|k| specific_hotkeys.insert((k, key.modifiers), callback))
+                                        .and_then(|k| {
+                                            specific_hotkeys.insert((k, key.modifiers), callback)
+                                        })
                                         .is_some()
                                     {
                                         Err(crate::Error::AlreadyRegistered)

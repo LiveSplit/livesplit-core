@@ -3,8 +3,8 @@ use std::{fmt, thread::JoinHandle};
 use crate::{ConsumePreference, Hotkey, KeyCode, Result};
 use crossbeam_channel::Sender;
 use mio::Waker;
-use nix::unistd::{getgroups, Group};
-use promising_future::{future_promise, Promise};
+use nix::unistd::{Group, getgroups};
+use promising_future::{Promise, future_promise};
 
 mod evdev_impl;
 mod x11_impl;
@@ -119,7 +119,11 @@ impl Hook {
         let (future, promise) = future_promise();
 
         self.sender
-            .send(Message::RegisterSpecific(hotkey, Box::new(callback), promise))
+            .send(Message::RegisterSpecific(
+                hotkey,
+                Box::new(callback),
+                promise,
+            ))
             .map_err(|_| Error::ThreadStopped)?;
 
         self.waker.wake().map_err(|_| Error::ThreadStopped)?;
