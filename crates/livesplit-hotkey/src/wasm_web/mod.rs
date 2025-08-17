@@ -27,6 +27,7 @@ impl fmt::Display for Error {
 
 pub struct Hook {
     hotkeys: Arc<Mutex<HashMap<Hotkey, Box<dyn FnMut() + Send + 'static>>>>,
+    specific_hotkeys: Arc<Mutex<HashMap<(KeyCode, Modifiers), Box<dyn FnMut(bool) + Send + 'static>>>>,
     keyboard_callback: Closure<dyn FnMut(MaybeKeyboardEvent)>,
     gamepad_callback: Closure<dyn FnMut()>,
     interval_id: Cell<Option<i32>>,
@@ -39,6 +40,10 @@ impl Drop for Hook {
         if let Some(window) = window() {
             let _ = window.remove_event_listener_with_callback(
                 "keydown",
+                self.keyboard_callback.as_ref().unchecked_ref(),
+            );
+            let _ = window.remove_event_listener_with_callback(
+                "keyup",
                 self.keyboard_callback.as_ref().unchecked_ref(),
             );
             if let Some(interval_id) = self.interval_id.get() {
@@ -131,12 +136,28 @@ impl Hook {
                             event.prevent_default();
                         }
                     }
+
+                    if let Some(callback) = self
+                        .specific_hotkeys
+                        .lock()
+                        .unwrap()
+                        .get_mut(&(code, modifiers))
+                    {
+                        callback(event.type_() == "keydown");
+                        if prevent_default {
+                            event.prevent_default();
+                        }
+                    }
                 }
             }
         }) as Box<dyn FnMut(MaybeKeyboardEvent)>);
 
         window
             .add_event_listener_with_callback("keydown", keyboard_callback.as_ref().unchecked_ref())
+            .map_err(|_| crate::Error::Platform(Error::FailedToCreateHook))?;
+
+        window
+            .add_event_listener_with_callback("keyup", keyboard_callback.as_ref().unchecked_ref())
             .map_err(|_| crate::Error::Platform(Error::FailedToCreateHook))?;
 
         let hotkey_map = hotkeys.clone();
@@ -230,6 +251,21 @@ impl Hook {
                     .map_err(|_| crate::Error::Platform(Error::FailedToCreateHook))?;
                 self.interval_id.set(Some(interval_id));
             }
+            vacant.insert(Box::new(callback));
+            Ok(())
+        } else {
+            Err(crate::Error::AlreadyRegistered)
+        }
+    }
+
+    pub fn register_specific<F>(&self, hotkey: Hotkey, callback: F) -> Result<()>
+    where
+        F: FnMut(bool) + Send + 'static,
+    {
+        if let Entry::Vacant(vacant) = self.specific_hotkeys.lock().unwrap().entry((
+            hotkey.key_code,
+            hotkey.modifiers,
+        )) {
             vacant.insert(Box::new(callback));
             Ok(())
         } else {
