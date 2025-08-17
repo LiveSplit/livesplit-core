@@ -76,6 +76,7 @@ unsafe impl Sync for RunLoop {}
 
 struct State {
     hotkeys: Mutex<HashMap<Hotkey, Box<dyn FnMut() + Send + 'static>>>,
+    specific_hotkeys: Mutex<HashMap<Hotkey, Box<dyn FnMut(bool) + Send + 'static>>>,
 }
 
 /// A hook allows you to listen to hotkeys.
@@ -105,6 +106,7 @@ impl Hook {
 
         let state = Arc::new(State {
             hotkeys: Mutex::new(HashMap::new()),
+            specific_hotkeys: Mutex::new(HashMap::new()),
         });
         let thread_state = state.clone();
 
@@ -131,7 +133,7 @@ impl Hook {
                 } else {
                     EventTapOptions::LISTEN_ONLY
                 },
-                EventMask::KEY_DOWN,
+                EventMask::KEY_DOWN | EventMask::KEY_UP,
                 Some(callback),
                 state_ptr as *mut c_void,
             );
@@ -178,6 +180,18 @@ impl Hook {
         F: FnMut() + Send + 'static,
     {
         if let Entry::Vacant(vacant) = self.state.hotkeys.lock().unwrap().entry(hotkey) {
+            vacant.insert(Box::new(callback));
+            Ok(())
+        } else {
+            Err(crate::Error::AlreadyRegistered)
+        }
+    }
+
+    pub fn register_specific<F>(&self, hotkey: Hotkey, callback: F) -> Result<()>
+    where
+        F: FnMut(bool) + Send + 'static,
+    {
+        if let Entry::Vacant(vacant) = self.state.specific_hotkeys.lock().unwrap().entry(hotkey) {
             vacant.insert(Box::new(callback));
             Ok(())
         } else {
@@ -491,6 +505,19 @@ unsafe extern "C" fn callback(
         // If we handled the event and the hook is consuming, we should return
         // null so the system deletes the event. If the hook is not consuming
         // the return value will be ignored, so return null anyway.
+        return null_mut();
+    }
+    
+    if let Some(callback) = state
+        .specific_hotkeys
+        .lock()
+        .unwrap()
+        .get_mut(&key_code.with_modifiers(modifiers))
+    {
+        // Determine if this is a key down or key up event
+        let is_key_up = unsafe { cg::CGEventGetType(event) } == cg::EventType::KEY_UP;
+
+        callback(!is_key_up);
         null_mut()
     } else {
         event
