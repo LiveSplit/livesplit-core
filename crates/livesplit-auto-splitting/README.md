@@ -99,6 +99,14 @@ impl MemoryRangeFlags {
 unsafe extern "C" {
     /// Gets the state that the timer currently is in.
     pub safe fn timer_get_state() -> TimerState;
+    /// Lists segments splitted or skipped in the current attempt.
+    /// Returns `false` if the buffer is too small.
+    /// After this call, no matter whether it was successful or not,
+    /// the `buf_len_ptr` will be set to the required buffer size.
+    pub fn timer_current_attempt_segments_splitted(
+        buf_ptr: *mut bool,
+        buf_len_ptr: *mut usize,
+    ) -> bool;
 
     /// Starts the timer.
     pub safe fn timer_start();

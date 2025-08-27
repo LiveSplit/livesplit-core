@@ -3,7 +3,7 @@ use wasmtime::{Caller, Linker};
 
 use crate::{runtime::Context, CreationError, Timer};
 
-use super::{get_str, memory_and_context};
+use super::{get_arr_mut, get_slice_mut, get_str, memory_and_context};
 
 pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationError> {
     linker
@@ -13,6 +13,32 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
         .map_err(|source| CreationError::LinkFunction {
             source,
             name: "timer_get_state",
+        })?
+        .func_wrap("env", "timer_current_attempt_segments_splitted", {
+            |mut caller: Caller<'_, Context<T>>, buf_ptr: u32, buf_len_ptr: u32| {
+                let (memory, context) = memory_and_context(&mut caller);
+                let len_bytes = get_arr_mut(memory, buf_len_ptr)?;
+                let value = context.timer.current_attempt_segments_splitted();
+
+                // Store the original length before updating the pointer.
+                // This ensures the original value is used for error handling logic
+                // to determine if the buffer is large enough to hold the value.
+                let len = u32::from_le_bytes(*len_bytes) as usize;
+                *len_bytes = (value.len() as u32).to_le_bytes();
+
+                if len < value.len() {
+                    return Ok(0u32);
+                }
+                let buf = get_slice_mut(memory, buf_ptr, value.len() as _)?;
+                for (i, &b) in value.iter().enumerate() {
+                    buf[i] = b.into();
+                }
+                Ok(1u32)
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "timer_current_attempt_segments_splitted",
         })?
         .func_wrap(
             "env",
