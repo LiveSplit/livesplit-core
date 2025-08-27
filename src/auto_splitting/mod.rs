@@ -99,6 +99,14 @@
 //! unsafe extern "C" {
 //!     /// Gets the state that the timer currently is in.
 //!     pub safe fn timer_get_state() -> TimerState;
+//!     /// Lists segments splitted or skipped in the current attempt.
+//!     /// Returns `false` if the buffer is too small.
+//!     /// After this call, no matter whether it was successful or not,
+//!     /// the `buf_len_ptr` will be set to the required buffer size.
+//!     pub fn timer_current_attempt_segments_splitted(
+//!         buf_ptr: *mut bool,
+//!         buf_len_ptr: *mut usize,
+//!     ) -> bool;
 //!
 //!     /// Starts the timer.
 //!     pub safe fn timer_start();
@@ -785,6 +793,12 @@ impl<E: event::CommandSink + TimerQuery + Send> AutoSplitTimer for Timer<E> {
             TimerPhase::Paused => TimerState::Paused,
             TimerPhase::Ended => TimerState::Ended,
         }
+    }
+
+    fn current_attempt_segments_splitted(&self) -> Vec<bool> {
+        let t = self.0.get_timer();
+        let i = t.current_split_index().unwrap_or_default();
+        t.run().segments().iter().take(i).map(|s| s.split_time().real_time.is_some()).collect()
     }
 
     fn start(&mut self) {

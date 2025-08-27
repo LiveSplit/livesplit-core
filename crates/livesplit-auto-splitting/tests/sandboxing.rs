@@ -14,6 +14,9 @@ impl Timer for DummyTimer {
     fn state(&self) -> TimerState {
         TimerState::NotRunning
     }
+    fn current_attempt_segments_splitted(&self) -> Vec<bool> {
+        Vec::new()
+    }
     fn start(&mut self) {}
     fn split(&mut self) {}
     fn skip_split(&mut self) {}

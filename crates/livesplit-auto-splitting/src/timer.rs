@@ -35,6 +35,8 @@ pub enum LogLevel {
 pub trait Timer: Send {
     /// Returns the current state of the timer.
     fn state(&self) -> TimerState;
+    /// Lists segments splitted or skipped in the current attempt.
+    fn current_attempt_segments_splitted(&self) -> Vec<bool>;
     /// Starts the timer.
     fn start(&mut self);
     /// Splits the current segment.
