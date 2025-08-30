@@ -1,8 +1,10 @@
 mod time;
 pub use self::time::*;
 
+#[allow(unused)]
 pub struct RwLock<T>(core::cell::RefCell<T>);
 
+#[allow(unused)]
 impl<T> RwLock<T> {
     pub fn new(value: T) -> Self {
         Self(core::cell::RefCell::new(value))
