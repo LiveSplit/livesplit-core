@@ -362,7 +362,7 @@ fn background_image() {
         &layout.state(&mut image_cache, &timer.snapshot()),
         &image_cache,
         [300, 300],
-        "b48ae9755f316d47",
+        "ffcfc4aa51a13d69",
         "721485d08ac431f5",
         "background_image",
     );
