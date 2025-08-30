@@ -106,6 +106,8 @@
 //!     /// So you need to be careful when using this value for indexing.
 //!     /// Same index does not imply same split on undo and then split.
 //!     pub safe fn timer_current_split_index() -> i32;
+//!     /// Whether the segment given by `idx` was splitted this attempt.
+//!     pub safe fn timer_segment_splitted(idx: i32) -> bool;
 //!
 //!     /// Starts the timer.
 //!     pub safe fn timer_start();
@@ -796,6 +798,15 @@ impl<E: event::CommandSink + TimerQuery + Send> AutoSplitTimer for Timer<E> {
 
     fn current_split_index(&self) -> Option<usize> {
         self.0.get_timer().current_split_index()
+    }
+
+    fn segment_splitted(&self, idx: usize) -> bool {
+        self.0
+            .get_timer()
+            .run()
+            .segments()
+            .get(idx)
+            .is_some_and(|segment| segment.split_time().real_time.is_some())
     }
 
     fn start(&mut self) {

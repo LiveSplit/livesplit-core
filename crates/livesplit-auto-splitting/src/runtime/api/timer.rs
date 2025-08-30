@@ -1,7 +1,7 @@
 use anyhow::Result;
 use wasmtime::{Caller, Linker};
 
-use crate::{runtime::Context, CreationError, Timer};
+use crate::{CreationError, Timer, runtime::Context};
 
 use super::{get_str, memory_and_context};
 
@@ -26,6 +26,18 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
         .map_err(|source| CreationError::LinkFunction {
             source,
             name: "timer_current_split_index",
+        })?
+        .func_wrap("env", "timer_segment_splitted", {
+            |caller: Caller<'_, Context<T>>, index: i32| {
+                let Ok(idx) = usize::try_from(index) else {
+                    return Ok(0u32);
+                };
+                Ok(caller.data().timer.segment_splitted(idx) as u32)
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "timer_segment_splitted",
         })?
         .func_wrap(
             "env",

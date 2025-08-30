@@ -42,6 +42,8 @@ pub trait Timer: Send {
     /// So you need to be careful when using this value for indexing.
     /// Same index does not imply same split on undo and then split.
     fn current_split_index(&self) -> Option<usize>;
+    /// Whether the segment at `idx` was splitted this attempt.
+    fn segment_splitted(&self, idx: usize) -> bool;
     /// Starts the timer.
     fn start(&mut self);
     /// Splits the current segment.

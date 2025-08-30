@@ -106,6 +106,8 @@
 //!     /// So you need to be careful when using this value for indexing.
 //!     /// Same index does not imply same split on undo and then split.
 //!     pub safe fn timer_current_split_index() -> i32;
+//!     /// Whether the segment at `idx` was splitted this attempt.
+//!     pub safe fn timer_segment_splitted(idx: i32) -> bool;
 //!
 //!     /// Starts the timer.
 //!     pub safe fn timer_start();
