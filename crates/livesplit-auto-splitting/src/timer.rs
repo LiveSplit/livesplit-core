@@ -35,6 +35,13 @@ pub enum LogLevel {
 pub trait Timer: Send {
     /// Returns the current state of the timer.
     fn state(&self) -> TimerState;
+    /// Accesses the index of the split the attempt is currently on.
+    /// If there's no attempt in progress, `None` is returned instead.
+    /// This returns an index that is equal to the amount of segments
+    /// when the attempt is finished, but has not been reset.
+    /// So you need to be careful when using this value for indexing.
+    /// Same index does not imply same split on undo and then split.
+    fn current_split_index(&self) -> Option<usize>;
     /// Starts the timer.
     fn start(&mut self);
     /// Splits the current segment.

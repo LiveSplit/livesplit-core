@@ -99,6 +99,13 @@
 //! unsafe extern "C" {
 //!     /// Gets the state that the timer currently is in.
 //!     pub safe fn timer_get_state() -> TimerState;
+//!     /// Accesses the index of the split the attempt is currently on.
+//!     /// If there's no attempt in progress, `-1` is returned instead.
+//!     /// This returns an index that is equal to the amount of segments
+//!     /// when the attempt is finished, but has not been reset.
+//!     /// So you need to be careful when using this value for indexing.
+//!     /// Same index does not imply same split on undo and then split.
+//!     pub safe fn timer_current_split_index() -> i32;
 //!
 //!     /// Starts the timer.
 //!     pub safe fn timer_start();
