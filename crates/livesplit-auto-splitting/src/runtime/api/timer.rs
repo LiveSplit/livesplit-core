@@ -14,6 +14,19 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             source,
             name: "timer_get_state",
         })?
+        .func_wrap("env", "timer_current_split_index", {
+            |caller: Caller<'_, Context<T>>| {
+                caller
+                    .data()
+                    .timer
+                    .current_split_index()
+                    .map_or(-1, |i| i as i32)
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "timer_current_split_index",
+        })?
         .func_wrap(
             "env",
             "timer_start",
