@@ -89,6 +89,18 @@ impl Hook {
         self.0.register(hotkey, callback)
     }
 
+    /// Registers a hotkey to listen to, but with specific handling for
+    /// press and release events.
+    ///
+    /// Requires the `press_and_release` feature to be enabled.
+    #[cfg(feature = "press_and_release")]
+    pub fn register_specific<F>(&self, hotkey: Hotkey, callback: F) -> Result<()>
+    where
+        F: FnMut(bool) + Send + 'static,
+    {
+        self.0.register_specific(hotkey, callback)
+    }
+
     /// Unregisters a previously registered hotkey.
     pub fn unregister(&self, hotkey: Hotkey) -> Result<()> {
         self.0.unregister(hotkey)

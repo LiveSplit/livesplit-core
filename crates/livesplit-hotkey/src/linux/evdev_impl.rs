@@ -1,10 +1,10 @@
 use std::{collections::hash_map::HashMap, os::unix::prelude::AsRawFd, ptr, thread};
 
 use evdev::{Device, EventType, InputEventKind, Key};
-use mio::{unix::SourceFd, Events, Interest, Poll, Token, Waker};
-use x11_dl::xlib::{Xlib, _XDisplay};
+use mio::{Events, Interest, Poll, Token, Waker, unix::SourceFd};
+use x11_dl::xlib::{_XDisplay, Xlib};
 
-use super::{x11_impl, Error, Hook, Message};
+use super::{Error, Hook, Message, x11_impl};
 use crate::{KeyCode, Modifiers, Result};
 
 // Low numbered tokens are allocated to devices.
@@ -255,6 +255,9 @@ pub fn new() -> Result<Hook> {
         let mut result = Ok(());
         let mut events = Events::with_capacity(1024);
         let mut hotkeys: HashMap<(Key, Modifiers), Box<dyn FnMut() + Send>> = HashMap::new();
+        #[cfg(feature = "press_and_release")]
+        let mut specific_hotkeys: HashMap<(Key, Modifiers), Box<dyn FnMut(bool) + Send>> =
+            HashMap::new();
         let mut modifiers = Modifiers::empty();
 
         let (mut xlib, mut display) = (None, None);
@@ -274,6 +277,12 @@ pub fn new() -> Result<Hook> {
                             const PRESSED: i32 = 1;
                             match ev.value() {
                                 PRESSED => {
+                                    #[cfg(feature = "press_and_release")]
+                                    if let Some(callback) =
+                                        specific_hotkeys.get_mut(&(k, modifiers))
+                                    {
+                                        callback(true);
+                                    }
                                     if let Some(callback) = hotkeys.get_mut(&(k, modifiers)) {
                                         callback();
                                     }
@@ -293,21 +302,29 @@ pub fn new() -> Result<Hook> {
                                         _ => {}
                                     }
                                 }
-                                RELEASED => match k {
-                                    Key::KEY_LEFTALT | Key::KEY_RIGHTALT => {
-                                        modifiers.remove(Modifiers::ALT);
+                                RELEASED => {
+                                    #[cfg(feature = "press_and_release")]
+                                    if let Some(callback) =
+                                        specific_hotkeys.get_mut(&(k, modifiers))
+                                    {
+                                        callback(false);
                                     }
-                                    Key::KEY_LEFTCTRL | Key::KEY_RIGHTCTRL => {
-                                        modifiers.remove(Modifiers::CONTROL);
+                                    match k {
+                                        Key::KEY_LEFTALT | Key::KEY_RIGHTALT => {
+                                            modifiers.remove(Modifiers::ALT);
+                                        }
+                                        Key::KEY_LEFTCTRL | Key::KEY_RIGHTCTRL => {
+                                            modifiers.remove(Modifiers::CONTROL);
+                                        }
+                                        Key::KEY_LEFTMETA | Key::KEY_RIGHTMETA => {
+                                            modifiers.remove(Modifiers::META);
+                                        }
+                                        Key::KEY_LEFTSHIFT | Key::KEY_RIGHTSHIFT => {
+                                            modifiers.remove(Modifiers::SHIFT);
+                                        }
+                                        _ => {}
                                     }
-                                    Key::KEY_LEFTMETA | Key::KEY_RIGHTMETA => {
-                                        modifiers.remove(Modifiers::META);
-                                    }
-                                    Key::KEY_LEFTSHIFT | Key::KEY_RIGHTSHIFT => {
-                                        modifiers.remove(Modifiers::SHIFT);
-                                    }
-                                    _ => {}
-                                },
+                                }
                                 _ => {} // Ignore repeating
                             }
                         }
@@ -319,6 +336,21 @@ pub fn new() -> Result<Hook> {
                                 promise.set(
                                     if code_for(key.key_code)
                                         .and_then(|k| hotkeys.insert((k, key.modifiers), callback))
+                                        .is_some()
+                                    {
+                                        Err(crate::Error::AlreadyRegistered)
+                                    } else {
+                                        Ok(())
+                                    },
+                                );
+                            }
+                            #[cfg(feature = "press_and_release")]
+                            Message::RegisterSpecific(key, callback, promise) => {
+                                promise.set(
+                                    if code_for(key.key_code)
+                                        .and_then(|k| {
+                                            specific_hotkeys.insert((k, key.modifiers), callback)
+                                        })
                                         .is_some()
                                     {
                                         Err(crate::Error::AlreadyRegistered)

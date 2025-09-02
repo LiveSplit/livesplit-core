@@ -46,10 +46,14 @@ impl fmt::Display for Error {
 }
 
 type Callback = Box<dyn FnMut() + Send + 'static>;
+#[cfg(feature = "press_and_release")]
+type PressReleaseCallback = Box<dyn FnMut(bool) + Send + 'static>;
 
 pub struct Hook {
     thread_id: u32,
     hotkeys: Arc<Mutex<HashMap<Hotkey, Callback>>>,
+    #[cfg(feature = "press_and_release")]
+    specific_hotkeys: Arc<Mutex<HashMap<(KeyCode, Modifiers), PressReleaseCallback>>>,
 }
 
 impl Drop for Hook {
@@ -62,7 +66,7 @@ impl Drop for Hook {
 
 struct State {
     hook: HHOOK,
-    events: Sender<Hotkey>,
+    events: Sender<(Hotkey, bool)>,
     modifiers: Modifiers,
     // FIXME: Use variant count when it's stable.
     // https://github.com/rust-lang/rust/issues/73662
@@ -294,10 +298,13 @@ unsafe extern "system" fn callback_proc(code: i32, wparam: WPARAM, lparam: LPARA
 
                         state
                             .events
-                            .send(Hotkey {
-                                key_code,
-                                modifiers: state.modifiers,
-                            })
+                            .send((
+                                Hotkey {
+                                    key_code,
+                                    modifiers: state.modifiers,
+                                },
+                                true,
+                            ))
                             .expect("Callback Thread disconnected");
 
                         match key_code {
@@ -347,6 +354,17 @@ unsafe extern "system" fn callback_proc(code: i32, wparam: WPARAM, lparam: LPARA
                     let (idx, bit) = key_idx(key_code);
                     state.key_state[idx as usize] &= !bit;
 
+                    state
+                        .events
+                        .send((
+                            Hotkey {
+                                key_code,
+                                modifiers: state.modifiers,
+                            },
+                            false,
+                        ))
+                        .expect("Callback Thread disconnected");
+
                     match key_code {
                         KeyCode::AltLeft | KeyCode::AltRight => {
                             state.modifiers.remove(Modifiers::ALT);
@@ -389,6 +407,11 @@ impl Hook {
         let hotkeys = Arc::new(Mutex::new(HashMap::<
             Hotkey,
             Box<dyn FnMut() + Send + 'static>,
+        >::new()));
+        #[cfg(feature = "press_and_release")]
+        let specific_hotkeys = Arc::new(Mutex::new(HashMap::<
+            (KeyCode, Modifiers),
+            Box<dyn FnMut(bool) + Send + 'static>,
         >::new()));
 
         let (initialized_tx, initialized_rx) = channel();
@@ -446,11 +469,24 @@ impl Hook {
         });
 
         let hotkey_map = hotkeys.clone();
+        #[cfg(feature = "press_and_release")]
+        let specific_hotkey_map = specific_hotkeys.clone();
 
         thread::spawn(move || {
-            while let Ok(key) = events_rx.recv() {
-                if let Some(callback) = hotkey_map.lock().unwrap().get_mut(&key) {
-                    callback();
+            while let Ok((key, is_press)) = events_rx.recv() {
+                // TODO make single expression once this is stable
+                if is_press {
+                    if let Some(callback) = hotkey_map.lock().unwrap().get_mut(&key) {
+                        callback();
+                    }
+                }
+                #[cfg(feature = "press_and_release")]
+                if let Some(callback) = specific_hotkey_map
+                    .lock()
+                    .unwrap()
+                    .get_mut(&(key.key_code, key.modifiers))
+                {
+                    callback(is_press);
                 }
             }
         });
@@ -459,7 +495,12 @@ impl Hook {
             .recv()
             .map_err(|_| crate::Error::Platform(Error::ThreadStopped))??;
 
-        Ok(Hook { thread_id, hotkeys })
+        Ok(Hook {
+            thread_id,
+            hotkeys,
+            #[cfg(feature = "press_and_release")]
+            specific_hotkeys,
+        })
     }
 
     pub fn register<F>(&self, hotkey: Hotkey, callback: F) -> Result<()>
@@ -467,6 +508,24 @@ impl Hook {
         F: FnMut() + Send + 'static,
     {
         if let Entry::Vacant(vacant) = self.hotkeys.lock().unwrap().entry(hotkey) {
+            vacant.insert(Box::new(callback));
+            Ok(())
+        } else {
+            Err(crate::Error::AlreadyRegistered)
+        }
+    }
+
+    #[cfg(feature = "press_and_release")]
+    pub fn register_specific<F>(&self, hotkey: Hotkey, callback: F) -> Result<()>
+    where
+        F: FnMut(bool) + Send + 'static,
+    {
+        if let Entry::Vacant(vacant) = self
+            .specific_hotkeys
+            .lock()
+            .unwrap()
+            .entry((hotkey.key_code, hotkey.modifiers))
+        {
             vacant.insert(Box::new(callback));
             Ok(())
         } else {
