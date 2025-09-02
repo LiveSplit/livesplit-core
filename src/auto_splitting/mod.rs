@@ -105,9 +105,12 @@
 //!     /// when the attempt is finished, but has not been reset.
 //!     /// So you need to be careful when using this value for indexing.
 //!     /// Same index does not imply same split on undo and then split.
-//!     pub safe fn timer_current_split_index() -> i32;
-//!     /// Whether the segment given by `idx` was splitted this attempt.
-//!     pub safe fn timer_segment_splitted(idx: i32) -> bool;
+//!     pub safe fn timer_current_split_index() -> i64;
+//!     /// Whether the segment at `idx` was splitted this attempt.
+//!     /// Returns `1` if the segment was splitted, or `0` if skipped.
+//!     /// If `idx` is greater than or equal to the current split index,
+//!     /// `-1` is returned instead.
+//!     pub safe fn timer_segment_splitted(idx: u64) -> i32;
 //!
 //!     /// Starts the timer.
 //!     pub safe fn timer_start();
@@ -800,13 +803,19 @@ impl<E: event::CommandSink + TimerQuery + Send> AutoSplitTimer for Timer<E> {
         self.0.get_timer().current_split_index()
     }
 
-    fn segment_splitted(&self, idx: usize) -> bool {
-        self.0
-            .get_timer()
-            .run()
-            .segments()
-            .get(idx)
-            .is_some_and(|segment| segment.split_time().real_time.is_some())
+    fn segment_splitted(&self, idx: usize) -> Option<bool> {
+        let t = self.0.get_timer();
+        if !(idx < t.current_split_index()?) {
+            return None;
+        }
+        Some(
+            t.run()
+                .segments()
+                .get(idx)?
+                .split_time()
+                .real_time
+                .is_some(),
+        )
     }
 
     fn start(&mut self) {

@@ -17,8 +17,8 @@ impl Timer for DummyTimer {
     fn current_split_index(&self) -> Option<usize> {
         None
     }
-    fn segment_splitted(&self, _idx: usize) -> bool {
-        false
+    fn segment_splitted(&self, _idx: usize) -> Option<bool> {
+        None
     }
     fn start(&mut self) {}
     fn split(&mut self) {}

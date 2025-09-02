@@ -20,7 +20,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                     .data()
                     .timer
                     .current_split_index()
-                    .map_or(-1, |i| i as i32)
+                    .map_or(-1, |i| i as i64)
             }
         })
         .map_err(|source| CreationError::LinkFunction {
@@ -28,11 +28,12 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "timer_current_split_index",
         })?
         .func_wrap("env", "timer_segment_splitted", {
-            |caller: Caller<'_, Context<T>>, index: i32| {
-                let Ok(idx) = usize::try_from(index) else {
-                    return Ok(0u32);
-                };
-                Ok(caller.data().timer.segment_splitted(idx) as u32)
+            |caller: Caller<'_, Context<T>>, index: u64| {
+                Ok(caller
+                    .data()
+                    .timer
+                    .segment_splitted(index as usize)
+                    .map_or(-1, |b| b as i32))
             }
         })
         .map_err(|source| CreationError::LinkFunction {
