@@ -14,6 +14,12 @@ impl Timer for DummyTimer {
     fn state(&self) -> TimerState {
         TimerState::NotRunning
     }
+    fn current_split_index(&self) -> Option<usize> {
+        None
+    }
+    fn segment_splitted(&self, _idx: usize) -> Option<bool> {
+        None
+    }
     fn start(&mut self) {}
     fn split(&mut self) {}
     fn skip_split(&mut self) {}
