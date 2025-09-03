@@ -1,7 +1,7 @@
 use super::{ComponentSettings, ComponentState, GeneralSettings};
 use crate::{
     component::{
-        blank_space, current_comparison, current_pace, delta, detailed_timer, graph, pb_chance,
+        blank_space, current_comparison, current_pace, current_segment, delta, detailed_timer, graph, pb_chance,
         possible_time_save, previous_segment, segment_time, separator, splits, sum_of_best, text,
         timer, title, total_playtime,
     },
@@ -21,6 +21,8 @@ pub enum Component {
     CurrentComparison(current_comparison::Component),
     /// The Current Pace Component.
     CurrentPace(current_pace::Component),
+    /// The Current Segment Componenet
+    CurrentSegment(current_segment::Component),
     /// The Delta Component.
     Delta(delta::Component),
     /// The Detailed Timer Component.
@@ -66,6 +68,12 @@ impl From<current_comparison::Component> for Component {
 impl From<current_pace::Component> for Component {
     fn from(component: current_pace::Component) -> Self {
         Self::CurrentPace(component)
+    }
+}
+
+impl From<current_segment::Component> for Component {
+    fn from(component: current_segment::Component) -> Self {
+        Self::CurrentSegment(component)
     }
 }
 
@@ -178,6 +186,9 @@ impl Component {
             (ComponentState::KeyValue(state), Component::CurrentPace(component)) => {
                 component.update_state(state, timer)
             }
+            (ComponentState::KeyValue(state), Component::CurrentSegment(component)) => {
+                component.update_state(state, timer, layout_settings)
+            }
             (ComponentState::KeyValue(state), Component::Delta(component)) => {
                 component.update_state(state, timer, layout_settings)
             }
@@ -247,6 +258,9 @@ impl Component {
             Component::Delta(component) => {
                 ComponentState::KeyValue(component.state(timer, layout_settings))
             }
+            Component::CurrentSegment(component) => {
+                ComponentState::KeyValue(component.state(timer, layout_settings))
+            }
             Component::DetailedTimer(component) => ComponentState::DetailedTimer(Box::new(
                 component.state(image_cache, timer, layout_settings),
             )),
@@ -292,6 +306,9 @@ impl Component {
             Component::CurrentPace(component) => {
                 ComponentSettings::CurrentPace(component.settings().clone())
             }
+            Component::CurrentSegment(component) => {
+                ComponentSettings::CurrentSegment(component.settings().clone())
+            }
             Component::Delta(component) => ComponentSettings::Delta(component.settings().clone()),
             Component::DetailedTimer(component) => {
                 ComponentSettings::DetailedTimer(Box::new(component.settings().clone()))
@@ -329,6 +346,7 @@ impl Component {
             Component::BlankSpace(component) => component.name().into(),
             Component::CurrentComparison(component) => component.name().into(),
             Component::CurrentPace(component) => component.name(),
+            Component::CurrentSegment(component) => component.name(),
             Component::Delta(component) => component.name(),
             Component::DetailedTimer(component) => component.name().into(),
             Component::Graph(component) => component.name(),
@@ -371,6 +389,7 @@ impl Component {
             Component::BlankSpace(component) => component.settings_description(),
             Component::CurrentComparison(component) => component.settings_description(),
             Component::CurrentPace(component) => component.settings_description(),
+            Component::CurrentSegment(component) => component.settings_description(),
             Component::Delta(component) => component.settings_description(),
             Component::DetailedTimer(component) => component.settings_description(),
             Component::Graph(component) => component.settings_description(),
@@ -401,6 +420,7 @@ impl Component {
             Component::BlankSpace(component) => component.set_value(index, value),
             Component::CurrentComparison(component) => component.set_value(index, value),
             Component::CurrentPace(component) => component.set_value(index, value),
+            Component::CurrentSegment(component) => component.set_value(index, value),
             Component::Delta(component) => component.set_value(index, value),
             Component::DetailedTimer(component) => component.set_value(index, value),
             Component::Graph(component) => component.set_value(index, value),
