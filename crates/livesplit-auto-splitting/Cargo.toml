@@ -22,23 +22,24 @@ proc-maps = { version = "0.4.0", default-features = false }
 read-process-memory = { version = "0.1.4", default-features = false }
 slotmap = { version = "1.0.2", default-features = false }
 snafu = "0.8.0"
-sysinfo = { version = "0.33.1", default-features = false, features = [
+sysinfo = { version = "0.37.0", default-features = false, features = [
   "multithread",
   "system",
 ] }
 time = { version = "0.3.3", default-features = false }
-wasmtime = { version = "32.0.0", default-features = false, features = [
+tokio = "1.47.1"
+wasmtime = { version = "36.0.2", default-features = false, features = [
   "cranelift",
   "gc-drc",
   "parallel-compilation",
   "runtime",
 ] }
-wasmtime-wasi = { version = "32.0.0", default-features = false, features = [
+wasmtime-wasi = { version = "36.0.2", default-features = false, features = [
   "preview1",
 ] }
 
 [target.'cfg(windows)'.dependencies]
-windows-sys = { version = "0.59.0", features = ["Win32_Storage_FileSystem"] }
+windows-sys = { version = "0.61.0", features = ["Win32_Storage_FileSystem"] }
 
 [features]
 default = ["enhanced-backtrace"]

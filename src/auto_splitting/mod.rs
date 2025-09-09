@@ -616,7 +616,7 @@ pub struct Runtime<T: event::CommandSink + TimerQuery + Send + 'static> {
     runtime: livesplit_auto_splitting::Runtime,
 }
 
-struct SharedState<T> {
+struct SharedState<T: 'static> {
     auto_splitter: ArcSwapOption<AutoSplitter<Timer<T>>>,
     watchdog_state: Mutex<WatchdogState>,
     watchdog_state_update: Condvar,
@@ -789,7 +789,7 @@ impl<T: event::CommandSink + TimerQuery + Send + 'static> Runtime<T> {
 // is an Arc<RwLock<T>>, so we can't implement the trait directly on it.
 struct Timer<E>(E);
 
-impl<E: event::CommandSink + TimerQuery + Send> AutoSplitTimer for Timer<E> {
+impl<E: event::CommandSink + TimerQuery + Send + 'static> AutoSplitTimer for Timer<E> {
     fn state(&self) -> TimerState {
         match self.0.get_timer().current_phase() {
             TimerPhase::NotRunning => TimerState::NotRunning,

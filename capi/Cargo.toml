@@ -3,6 +3,7 @@ name = "livesplit-core-capi"
 version = "0.11.0"
 authors = ["Christopher Serr <christopher.serr@gmail.com>"]
 edition = "2024"
+publish = false
 
 [lib]
 name = "livesplit_core"
@@ -12,7 +13,7 @@ crate-type = ["staticlib", "cdylib"]
 livesplit-core = { path = "..", default-features = false, features = ["std"] }
 serde_json = { version = "1.0.8", default-features = false }
 time = { version = "0.3.4", default-features = false, features = ["formatting"] }
-simdutf8 = { git = "https://github.com/CryZe/simdutf8", branch = "wasm-ub-panic", default-features = false }
+simdutf8 = { version = "0.1.5", default-features = false }
 
 wasm-bindgen = { version = "0.2.78", optional = true }
 wasm-bindgen-futures = { version = "0.4.28", optional = true }

@@ -15,8 +15,8 @@ use snafu::Snafu;
 use std::{
     path::Path,
     sync::{
-        atomic::{self, AtomicU64},
         Arc, Mutex, MutexGuard,
+        atomic::{self, AtomicU64},
     },
     time::{Duration, Instant},
 };
@@ -218,7 +218,7 @@ struct SharedData {
     tick_rate: AtomicU64,
 }
 
-struct ExclusiveData<T> {
+struct ExclusiveData<T: 'static> {
     trapped: bool,
     store: Store<Context<T>>,
     update: TypedFunc<(), ()>,
@@ -232,7 +232,7 @@ struct ExclusiveData<T> {
 /// available on the auto splitter are generally thread-safe and don't block.
 /// This allows other threads to access and modify information such as settings
 /// without needing to worry that those threads get blocked.
-pub struct AutoSplitter<T> {
+pub struct AutoSplitter<T: 'static> {
     exclusive_data: Mutex<ExclusiveData<T>>,
     engine: Engine,
     settings_widgets: ArcSwap<Vec<settings::Widget>>,
