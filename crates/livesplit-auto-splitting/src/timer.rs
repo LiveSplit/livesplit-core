@@ -32,7 +32,7 @@ pub enum LogLevel {
 }
 
 /// A timer that can be controlled by an auto splitter.
-pub trait Timer: Send {
+pub trait Timer: Send + 'static {
     /// Returns the current state of the timer.
     fn state(&self) -> TimerState;
     /// Accesses the index of the split the attempt is currently on.

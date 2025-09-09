@@ -1,15 +1,20 @@
 use std::{
     collections::VecDeque,
     path::Path,
+    pin::Pin,
     sync::{
         Arc, Mutex,
         atomic::{self, AtomicUsize},
     },
+    task::{Context, Poll},
 };
 
 use bstr::ByteSlice;
+use tokio::io::{self, AsyncWrite};
 use wasmtime_wasi::{
-    DirPerms, FilePerms, OutputStream, Pollable, StdoutStream, StreamError, WasiCtxBuilder,
+    DirPerms, FilePerms, WasiCtxBuilder,
+    cli::{IsTerminal, StdoutStream},
+    p2::{OutputStream, Pollable, StreamError},
     preview1::WasiP1Ctx,
 };
 
@@ -28,11 +33,17 @@ struct Buf {
 }
 
 impl StdoutStream for StdErr {
-    fn stream(&self) -> Box<dyn OutputStream> {
+    fn async_stream(&self) -> Box<dyn AsyncWrite + Send + Sync> {
         Box::new(self.clone())
     }
 
-    fn isatty(&self) -> bool {
+    fn p2_stream(&self) -> Box<dyn OutputStream> {
+        Box::new(self.clone())
+    }
+}
+
+impl IsTerminal for StdErr {
+    fn is_terminal(&self) -> bool {
         false
     }
 }
@@ -61,10 +72,8 @@ impl StdErr {
         timer.log_auto_splitter(format_args!("{}", to_print.trim().as_bstr()));
         buf.drain(..flush_idx);
     }
-}
 
-impl OutputStream for StdErr {
-    fn write(&mut self, bytes: bytes::Bytes) -> Result<(), StreamError> {
+    fn write(&mut self, bytes: &[u8]) -> Result<(), StreamError> {
         let buffer = &mut *self.buffer.buf.lock().unwrap();
         if bytes.len() > ERR_CAPACITY - buffer.len() {
             return Err(StreamError::Trap(anyhow::format_err!(
@@ -77,8 +86,14 @@ impl OutputStream for StdErr {
             atomic::Ordering::Relaxed,
         );
 
-        buffer.extend(bytes.as_ref());
+        buffer.extend(bytes);
         Ok(())
+    }
+}
+
+impl OutputStream for StdErr {
+    fn write(&mut self, bytes: bytes::Bytes) -> Result<(), StreamError> {
+        self.write(&bytes)
     }
 
     fn flush(&mut self) -> Result<(), StreamError> {
@@ -90,6 +105,25 @@ impl OutputStream for StdErr {
     fn check_write(&mut self) -> Result<usize, StreamError> {
         let consumed = self.buffer.buf.lock().unwrap().len();
         Ok(ERR_CAPACITY.saturating_sub(consumed))
+    }
+}
+
+impl AsyncWrite for StdErr {
+    fn poll_write(
+        mut self: Pin<&mut Self>,
+        _cx: &mut Context,
+        buf: &[u8],
+    ) -> Poll<io::Result<usize>> {
+        match self.as_mut().write(buf) {
+            Ok(()) => Poll::Ready(Ok(buf.len())),
+            Err(e) => Poll::Ready(Err(io::Error::other(e))),
+        }
+    }
+    fn poll_flush(mut self: Pin<&mut Self>, _cx: &mut Context) -> Poll<io::Result<()>> {
+        Poll::Ready(self.as_mut().flush().map_err(io::Error::other))
+    }
+    fn poll_shutdown(self: Pin<&mut Self>, _cx: &mut Context) -> Poll<io::Result<()>> {
+        Poll::Ready(Ok(()))
     }
 }
 

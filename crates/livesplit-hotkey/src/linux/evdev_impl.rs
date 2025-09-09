@@ -1,6 +1,6 @@
 use std::{collections::hash_map::HashMap, os::unix::prelude::AsRawFd, ptr, thread};
 
-use evdev::{Device, EventType, InputEventKind, Key};
+use evdev::{Device, EventType, KeyCode as Key};
 use mio::{Events, Interest, Poll, Token, Waker, unix::SourceFd};
 use x11_dl::xlib::{_XDisplay, Xlib};
 
@@ -269,7 +269,8 @@ pub fn new() -> Result<Hook> {
                 if mio_event.token().0 < devices.len() {
                     let idx = mio_event.token().0;
                     for ev in devices[idx].fetch_events().map_err(|_| Error::EvDev)? {
-                        if let InputEventKind::Key(k) = ev.kind() {
+                        if ev.event_type() == EventType::KEY {
+                            let k = Key::new(ev.code());
                             const RELEASED: i32 = 0;
                             const PRESSED: i32 = 1;
                             match ev.value() {
