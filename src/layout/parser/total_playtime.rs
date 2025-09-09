@@ -1,9 +1,9 @@
-use super::{color, end_tag, parse_bool, parse_children, GradientBuilder, Result};
+use super::{GradientBuilder, Result, color, end_tag, parse_bool, parse_children};
 
 pub use crate::component::total_playtime::Component;
 use crate::util::xml::Reader;
 
-pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()> {
+pub fn settings(reader: &mut Reader, component: &mut Component) -> Result<()> {
     let settings = component.settings_mut();
     let mut background_builder = GradientBuilder::new();
     let (mut override_label, mut override_value) = (false, false);

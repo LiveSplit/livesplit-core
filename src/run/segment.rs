@@ -45,7 +45,6 @@ impl Segment {
 
     /// Accesses the name of the segment.
     #[inline]
-    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     pub fn name(&self) -> &str {
         &self.name
     }

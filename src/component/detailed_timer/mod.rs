@@ -6,15 +6,15 @@
 
 use super::timer;
 use crate::{
+    GeneralLayoutSettings, TimeSpan, TimerPhase,
     analysis::comparison_single_segment_time,
     comparison::{self, best_segments, none},
     platform::prelude::*,
     settings::{Color, Field, Gradient, Image, ImageCache, ImageId, SettingsDescription, Value},
     timing::{
-        formatter::{Accuracy, DigitsFormat, SegmentTime, TimeFormatter},
         Snapshot,
+        formatter::{Accuracy, DigitsFormat, SegmentTime, TimeFormatter},
     },
-    GeneralLayoutSettings, TimeSpan, TimerPhase,
 };
 use core::fmt::Write;
 use serde_derive::{Deserialize, Serialize};
@@ -217,7 +217,7 @@ impl Component {
         &self,
         state: &mut State,
         image_cache: &mut ImageCache,
-        timer: &Snapshot<'_>,
+        timer: &Snapshot,
         layout_settings: &GeneralLayoutSettings,
     ) {
         let current_phase = timer.current_phase();
@@ -342,7 +342,7 @@ impl Component {
     pub fn state(
         &self,
         image_cache: &mut ImageCache,
-        timer: &Snapshot<'_>,
+        timer: &Snapshot,
         layout_settings: &GeneralLayoutSettings,
     ) -> State {
         let mut state = Default::default();

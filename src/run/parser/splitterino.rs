@@ -1,6 +1,6 @@
 //! Provides the parser for Splitterino splits files.
 
-use crate::{platform::prelude::*, Run, Segment, Time, TimeSpan};
+use crate::{Run, Segment, Time, TimeSpan, platform::prelude::*};
 use alloc::borrow::Cow;
 use core::result::Result as StdResult;
 use serde_derive::Deserialize;
@@ -184,14 +184,14 @@ pub fn parse(source: &str) -> Result<Run> {
         .extend(splits.segments.into_iter().map(|split| {
             let mut segment = Segment::new(split.name);
 
-            if !split.skipped {
-                if let Some(personal_best) = split.personal_best {
-                    segment.set_personal_best_split_time(parse_split_time(
-                        &mut total_rta,
-                        &mut total_igt,
-                        personal_best,
-                    ));
-                }
+            if !split.skipped
+                && let Some(personal_best) = split.personal_best
+            {
+                segment.set_personal_best_split_time(parse_split_time(
+                    &mut total_rta,
+                    &mut total_igt,
+                    personal_best,
+                ));
             }
 
             if let Some(overall_best) = split.overall_best {

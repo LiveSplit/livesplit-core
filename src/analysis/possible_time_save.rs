@@ -4,7 +4,7 @@
 //! theoretically perfect segment times, this information is only an
 //! approximation of how much time can actually be saved.
 
-use crate::{analysis, timing::Snapshot, TimeSpan};
+use crate::{TimeSpan, analysis, timing::Snapshot};
 
 /// Calculates how much time could be saved on the given segment with the given
 /// comparison. This information is based on the best segments. Considering the
@@ -17,7 +17,7 @@ use crate::{analysis, timing::Snapshot, TimeSpan};
 /// never be below zero. Additionally a boolean is returned that indicates if
 /// the value is currently actively changing as time is being lost.
 pub fn calculate(
-    timer: &Snapshot<'_>,
+    timer: &Snapshot,
     segment_index: usize,
     comparison: &str,
     live: bool,
@@ -42,18 +42,15 @@ pub fn calculate(
         let mut time = segment.comparison(comparison)[method]? - best_segments - prev_time;
         let mut updates_frequently = false;
 
-        if live && timer.current_split_index() == Some(segment_index) {
-            if let Some(segment_delta) = analysis::live_segment_delta(
-                timer,
-                segment_index,
-                comparison,
-                method,
-            ) {
-                let segment_delta = TimeSpan::zero() - segment_delta;
-                if segment_delta < time {
-                    time = segment_delta;
-                    updates_frequently = timer.current_phase().updates_frequently(method);
-                }
+        if live
+            && timer.current_split_index() == Some(segment_index)
+            && let Some(segment_delta) =
+                analysis::live_segment_delta(timer, segment_index, comparison, method)
+        {
+            let segment_delta = TimeSpan::zero() - segment_delta;
+            if segment_delta < time {
+                time = segment_delta;
+                updates_frequently = timer.current_phase().updates_frequently(method);
             }
         }
 
@@ -76,7 +73,7 @@ pub fn calculate(
 /// Additionally a boolean is returned that indicates if the value is currently
 /// actively changing as time is being lost.
 pub fn calculate_total(
-    timer: &Snapshot<'_>,
+    timer: &Snapshot,
     segment_index: usize,
     comparison: &str,
 ) -> (TimeSpan, bool) {

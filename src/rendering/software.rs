@@ -417,7 +417,7 @@ impl Renderer {
 }
 
 fn render_layer(
-    canvas: &mut PixmapMut<'_>,
+    canvas: &mut PixmapMut,
     layer: &[Entity<SkiaPath, SkiaImage, SkiaLabel>],
     rectangle: &Path,
 ) {
@@ -635,7 +635,7 @@ fn fill_background(
         BackgroundImage<usize>,
         Pixmap,
     )>,
-    background_layer: &mut PixmapMut<'_>,
+    background_layer: &mut PixmapMut,
     width: u32,
     height: u32,
     rectangle: &Path,

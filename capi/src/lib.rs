@@ -4,8 +4,7 @@
     clippy::perf,
     clippy::style,
     clippy::needless_pass_by_ref_mut,
-    missing_docs,
-    rust_2018_idioms
+    missing_docs
 )]
 #![allow(clippy::missing_safety_doc, non_camel_case_types, non_snake_case)]
 
@@ -101,7 +100,7 @@ use livesplit_core::{Time, TimeSpan};
 /// type
 pub type Json = *const c_char;
 /// type
-#[allow(non_camel_case_types)]
+#[expect(non_camel_case_types)]
 pub type Nullablec_char = c_char;
 
 thread_local! {

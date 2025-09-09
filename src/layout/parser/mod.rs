@@ -280,7 +280,7 @@ impl<T: GradientType> GradientBuilder<T> {
         }
     }
 
-    fn parse_background(&mut self, reader: &mut Reader<'_>, tag_name: &str) -> Result<bool> {
+    fn parse_background(&mut self, reader: &mut Reader, tag_name: &str) -> Result<bool> {
         if tag_name == self.tag_color1 {
             color(reader, |c| self.first = c)?;
         } else if tag_name == self.tag_color2 {
@@ -301,7 +301,7 @@ impl<T: GradientType> GradientBuilder<T> {
     }
 }
 
-fn color<F>(reader: &mut Reader<'_>, func: F) -> Result<()>
+fn color<F>(reader: &mut Reader, func: F) -> Result<()>
 where
     F: FnOnce(Color),
 {
@@ -329,7 +329,7 @@ where
     })
 }
 
-fn percentage<F>(reader: &mut Reader<'_>, func: F) -> Result<()>
+fn percentage<F>(reader: &mut Reader, func: F) -> Result<()>
 where
     F: FnOnce(f32),
 {
@@ -344,7 +344,7 @@ where
     })
 }
 
-fn font<F>(reader: &mut Reader<'_>, font_buf: &mut Vec<MaybeUninit<u8>>, f: F) -> Result<()>
+fn font<F>(reader: &mut Reader, font_buf: &mut Vec<MaybeUninit<u8>>, f: F) -> Result<()>
 where
     F: FnOnce(Font),
 {
@@ -541,7 +541,7 @@ where
     })
 }
 
-fn parse_bool<F>(reader: &mut Reader<'_>, f: F) -> Result<()>
+fn parse_bool<F>(reader: &mut Reader, f: F) -> Result<()>
 where
     F: FnOnce(bool),
 {
@@ -558,7 +558,7 @@ where
     })
 }
 
-fn comparison_override<F>(reader: &mut Reader<'_>, f: F) -> Result<()>
+fn comparison_override<F>(reader: &mut Reader, f: F) -> Result<()>
 where
     F: FnOnce(Option<String>),
 {
@@ -571,7 +571,7 @@ where
     })
 }
 
-fn timing_method_override<F>(reader: &mut Reader<'_>, f: F) -> Result<()>
+fn timing_method_override<F>(reader: &mut Reader, f: F) -> Result<()>
 where
     F: FnOnce(Option<TimingMethod>),
 {
@@ -586,7 +586,7 @@ where
     })
 }
 
-fn accuracy<F>(reader: &mut Reader<'_>, f: F) -> Result<()>
+fn accuracy<F>(reader: &mut Reader, f: F) -> Result<()>
 where
     F: FnOnce(Accuracy),
 {
@@ -601,7 +601,7 @@ where
     })
 }
 
-fn timer_format<F>(reader: &mut Reader<'_>, f: F) -> Result<()>
+fn timer_format<F>(reader: &mut Reader, f: F) -> Result<()>
 where
     F: FnOnce(DigitsFormat, Accuracy),
 {
@@ -625,7 +625,7 @@ where
     })
 }
 
-fn component<F>(reader: &mut Reader<'_>, f: F) -> Result<()>
+fn component<F>(reader: &mut Reader, f: F) -> Result<()>
 where
     F: FnOnce(Component),
 {
@@ -699,7 +699,7 @@ where
     Ok(())
 }
 
-fn parse_general_settings(layout: &mut Layout, reader: &mut Reader<'_>) -> Result<()> {
+fn parse_general_settings(layout: &mut Layout, reader: &mut Reader) -> Result<()> {
     let settings = layout.general_settings_mut();
     let mut background_builder = GradientBuilder::<LayoutBackgroundKind>::new_gradient_type();
 

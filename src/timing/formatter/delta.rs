@@ -1,5 +1,5 @@
 use super::{
-    format_padded, Accuracy, TimeFormatter, DASH, MINUS, PLUS, SECONDS_PER_HOUR, SECONDS_PER_MINUTE,
+    Accuracy, DASH, MINUS, PLUS, SECONDS_PER_HOUR, SECONDS_PER_MINUTE, TimeFormatter, format_padded,
 };
 use crate::TimeSpan;
 use core::fmt::{Display, Formatter, Result};
@@ -78,7 +78,7 @@ impl TimeFormatter<'_> for Delta {
 }
 
 impl Display for Inner {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    fn fmt(&self, f: &mut Formatter) -> Result {
         if let Some(time) = self.time {
             let (total_seconds, nanoseconds) = time.to_seconds_and_subsec_nanoseconds();
             let bit_or = total_seconds | nanoseconds as i64;

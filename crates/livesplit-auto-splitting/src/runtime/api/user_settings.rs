@@ -1,16 +1,16 @@
 use std::sync::Arc;
 
-use anyhow::{bail, Context as _, Result};
+use anyhow::{Context as _, Result, bail};
 use wasmtime::{Caller, Linker};
 
-use crate::{runtime::Context, settings, CreationError, Timer};
+use crate::{CreationError, Timer, runtime::Context, settings};
 
 use super::{get_str, memory_and_context};
 
 pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationError> {
     linker
         .func_wrap("env", "user_settings_add_bool", {
-            |mut caller: Caller<'_, Context<T>>,
+            |mut caller: Caller<Context<T>>,
              key_ptr: u32,
              key_len: u32,
              description_ptr: u32,
@@ -38,7 +38,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "user_settings_add_bool",
         })?
         .func_wrap("env", "user_settings_add_title", {
-            |mut caller: Caller<'_, Context<T>>,
+            |mut caller: Caller<Context<T>>,
              key_ptr: u32,
              key_len: u32,
              description_ptr: u32,
@@ -61,7 +61,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "user_settings_add_title",
         })?
         .func_wrap("env", "user_settings_add_choice", {
-            |mut caller: Caller<'_, Context<T>>,
+            |mut caller: Caller<Context<T>>,
              key_ptr: u32,
              key_len: u32,
              description_ptr: u32,
@@ -90,7 +90,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "user_settings_add_choice",
         })?
         .func_wrap("env", "user_settings_add_choice_option", {
-            |mut caller: Caller<'_, Context<T>>,
+            |mut caller: Caller<Context<T>>,
              key_ptr: u32,
              key_len: u32,
              option_key_ptr: u32,
@@ -125,7 +125,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "user_settings_add_choice_option",
         })?
         .func_wrap("env", "user_settings_add_file_select", {
-            |mut caller: Caller<'_, Context<T>>,
+            |mut caller: Caller<Context<T>>,
              key_ptr: u32,
              key_len: u32,
              description_ptr: u32,
@@ -149,7 +149,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "user_settings_add_file_select",
         })?
         .func_wrap("env", "user_settings_add_file_select_name_filter", {
-            |mut caller: Caller<'_, Context<T>>,
+            |mut caller: Caller<Context<T>>,
              key_ptr: u32,
              key_len: u32,
              description_ptr: u32,
@@ -183,7 +183,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "user_settings_add_file_select_name_filter",
         })?
         .func_wrap("env", "user_settings_add_file_select_mime_filter", {
-            |mut caller: Caller<'_, Context<T>>,
+            |mut caller: Caller<Context<T>>,
              key_ptr: u32,
              key_len: u32,
              mime_ptr: u32,
@@ -207,7 +207,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "user_settings_add_file_select_mime_filter",
         })?
         .func_wrap("env", "user_settings_set_tooltip", {
-            |mut caller: Caller<'_, Context<T>>,
+            |mut caller: Caller<Context<T>>,
              key_ptr: u32,
              key_len: u32,
              tooltip_ptr: u32,

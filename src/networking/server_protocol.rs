@@ -53,9 +53,9 @@ use alloc::borrow::Cow;
 use serde::Serializer;
 
 use crate::{
-    event::{self, Event},
-    timing::formatter::{self, TimeFormatter, ASCII_MINUS},
     TimeSpan, Timer, TimerPhase, TimingMethod,
+    event::{self, Event},
+    timing::formatter::{self, ASCII_MINUS, TimeFormatter},
 };
 
 /// Handles an incoming command and returns the response to be sent.
@@ -63,7 +63,7 @@ pub async fn handle_command<S: event::CommandSink + event::TimerQuery>(
     command: &str,
     command_sink: &S,
 ) -> String {
-    let response = match serde_json::from_str::<Command<'_>>(command) {
+    let response = match serde_json::from_str::<Command>(command) {
         Ok(command) => command.handle(command_sink).await.into(),
         Err(e) => CommandResult::Error(Error::InvalidCommand {
             message: e.to_string(),

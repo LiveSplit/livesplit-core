@@ -7,15 +7,15 @@ use crate::util::byte_parsing::big_endian::strip_u32;
 #[cfg(feature = "std")]
 use crate::util::xml::helper::text_as_str_err;
 use crate::{
+    RealTime, Run, Segment, Time, TimeSpan,
     platform::prelude::*,
     util::xml::{
-        helper::{
-            end_tag, optional_attribute_escaped_err, parse_base, parse_children, single_child,
-            text, text_err, text_parsed, Error as XmlError,
-        },
         Reader,
+        helper::{
+            Error as XmlError, end_tag, optional_attribute_escaped_err, parse_base, parse_children,
+            single_child, text, text_err, text_parsed,
+        },
     },
-    RealTime, Run, Segment, Time, TimeSpan,
 };
 #[cfg(feature = "std")]
 use image::{ExtendedColorType, ImageEncoder};
@@ -64,7 +64,7 @@ const fn type_hint<T>(v: Result<T>) -> Result<T> {
     v
 }
 
-fn time_span<F>(reader: &mut Reader<'_>, f: F) -> Result<()>
+fn time_span<F>(reader: &mut Reader, f: F) -> Result<()>
 where
     F: FnOnce(TimeSpan),
 {
@@ -75,7 +75,7 @@ where
     })
 }
 
-fn time<F>(reader: &mut Reader<'_>, f: F) -> Result<()>
+fn time<F>(reader: &mut Reader, f: F) -> Result<()>
 where
     F: FnOnce(Time),
 {
@@ -84,7 +84,7 @@ where
 
 #[cfg(feature = "std")]
 fn image<F>(
-    reader: &mut Reader<'_>,
+    reader: &mut Reader,
     raw_buf: &mut Vec<MaybeUninit<u8>>,
     png_buf: &mut Vec<u8>,
     mut f: F,
@@ -135,7 +135,7 @@ where
 
 fn parse_segment(
     total_time: &mut TimeSpan,
-    reader: &mut Reader<'_>,
+    reader: &mut Reader,
     _raw_buf: &mut Vec<MaybeUninit<u8>>,
     _png_buf: &mut Vec<u8>,
 ) -> Result<Segment> {

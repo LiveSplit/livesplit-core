@@ -14,13 +14,13 @@ pub struct Hotkey {
 }
 
 impl fmt::Debug for Hotkey {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Display::fmt(self, f)
     }
 }
 
 impl fmt::Display for Hotkey {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         if self.modifiers.is_empty() {
             f.write_str(self.key_code.name())
         } else {
@@ -77,7 +77,7 @@ struct HotkeyVisitor;
 impl serde::de::Visitor<'_> for HotkeyVisitor {
     type Value = Hotkey;
 
-    fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         formatter.write_str("a valid hotkey")
     }
 

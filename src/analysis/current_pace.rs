@@ -2,12 +2,12 @@
 //! provided. If there's no active attempt, the final time of the comparison is
 //! returned instead.
 
-use crate::{analysis, timing::Snapshot, TimeSpan, TimerPhase};
+use crate::{TimeSpan, TimerPhase, analysis, timing::Snapshot};
 
 /// Calculates the current pace of the active attempt based on the comparison
 /// provided. If there's no active attempt, the final time of the comparison is
 /// returned instead.
-pub fn calculate(timer: &Snapshot<'_>, comparison: &str) -> (Option<TimeSpan>, bool) {
+pub fn calculate(timer: &Snapshot, comparison: &str) -> (Option<TimeSpan>, bool) {
     let timing_method = timer.current_timing_method();
     let last_segment = timer.run().segments().last().unwrap();
     let phase = timer.current_phase();

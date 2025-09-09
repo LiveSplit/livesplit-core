@@ -241,7 +241,7 @@ pub trait CommandSink {
     /// comparison doesn't exist an error is returned.
     fn set_current_comparison(
         &self,
-        comparison: Cow<'_, str>,
+        comparison: Cow<str>,
     ) -> impl Future<Output = Result> + 'static;
     /// Toggles between the `Real Time` and `Game Time` timing methods.
     fn toggle_timing_method(&self) -> impl Future<Output = Result> + 'static;
@@ -273,8 +273,8 @@ pub trait CommandSink {
     /// be stored in the splits file.
     fn set_custom_variable(
         &self,
-        name: Cow<'_, str>,
-        value: Cow<'_, str>,
+        name: Cow<str>,
+        value: Cow<str>,
     ) -> impl Future<Output = Result> + 'static;
 }
 
@@ -353,7 +353,7 @@ impl CommandSink for crate::SharedTimer {
 
     fn set_current_comparison(
         &self,
-        comparison: Cow<'_, str>,
+        comparison: Cow<str>,
     ) -> impl Future<Output = Result> + 'static {
         let result = self.write().unwrap().set_current_comparison(comparison);
         async move { result }
@@ -399,8 +399,8 @@ impl CommandSink for crate::SharedTimer {
 
     fn set_custom_variable(
         &self,
-        name: Cow<'_, str>,
-        value: Cow<'_, str>,
+        name: Cow<str>,
+        value: Cow<str>,
     ) -> impl Future<Output = Result> + 'static {
         self.write().unwrap().set_custom_variable(name, value);
         async { Ok(Event::CustomVariableSet) }
@@ -466,7 +466,7 @@ impl<T: CommandSink + ?Sized> CommandSink for Arc<T> {
 
     fn set_current_comparison(
         &self,
-        comparison: Cow<'_, str>,
+        comparison: Cow<str>,
     ) -> impl Future<Output = Result> + 'static {
         CommandSink::set_current_comparison(&**self, comparison)
     }
@@ -504,15 +504,18 @@ impl<T: CommandSink + ?Sized> CommandSink for Arc<T> {
 
     fn set_custom_variable(
         &self,
-        name: Cow<'_, str>,
-        value: Cow<'_, str>,
+        name: Cow<str>,
+        value: Cow<str>,
     ) -> impl Future<Output = Result> + 'static {
         CommandSink::set_custom_variable(&**self, name, value)
     }
 }
 
 impl<T: TimerQuery + ?Sized> TimerQuery for Arc<T> {
-    type Guard<'a> = T::Guard<'a> where T: 'a;
+    type Guard<'a>
+        = T::Guard<'a>
+    where
+        T: 'a;
     fn get_timer(&self) -> Self::Guard<'_> {
         TimerQuery::get_timer(&**self)
     }

@@ -2,7 +2,7 @@ use super::{Gradient, Image, ImageCache, ImageId};
 use serde_derive::{Deserialize, Serialize};
 
 /// The background of a layout.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(untagged)]
 pub enum LayoutBackground<I = Image> {
     /// A gradient that describes the background coloration.
@@ -15,7 +15,7 @@ pub enum LayoutBackground<I = Image> {
 
 /// An image that is stretched to fill the background. The stretch is meant to
 /// preserve the aspect ratio of the image, but always fill the full background.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq)]
 pub struct BackgroundImage<I> {
     /// The image itself.
     pub image: I,
@@ -36,6 +36,17 @@ pub struct BackgroundImage<I> {
     /// sigma = BLUR_FACTOR * blur * max(width, height)
     /// ```
     pub blur: f32,
+}
+
+impl<I: Default> Default for BackgroundImage<I> {
+    fn default() -> Self {
+        Self {
+            image: I::default(),
+            brightness: 1.0,
+            opacity: 1.0,
+            blur: 0.0,
+        }
+    }
 }
 
 /// A constant that is part of the formula to calculate the sigma of a gaussian

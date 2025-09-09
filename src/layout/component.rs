@@ -165,7 +165,7 @@ impl Component {
         &mut self,
         state: &mut ComponentState,
         image_cache: &mut ImageCache,
-        timer: &Snapshot<'_>,
+        timer: &Snapshot,
         layout_settings: &GeneralSettings,
     ) {
         match (state, self) {
@@ -235,7 +235,7 @@ impl Component {
     pub fn state(
         &mut self,
         image_cache: &mut ImageCache,
-        timer: &Snapshot<'_>,
+        timer: &Snapshot,
         layout_settings: &GeneralSettings,
     ) -> ComponentState {
         match self {

@@ -91,7 +91,6 @@ impl RunMetadata {
     /// changed once the Personal Best doesn't match up with that record
     /// anymore. This may be empty if there's no association.
     #[inline]
-    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     pub fn run_id(&self) -> &str {
         &self.run_id
     }
@@ -110,7 +109,6 @@ impl RunMetadata {
     /// Accesses the name of the platform this game is run on. This may be empty
     /// if it's not specified.
     #[inline]
-    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     pub fn platform_name(&self) -> &str {
         &self.platform_name
     }
@@ -142,7 +140,6 @@ impl RunMetadata {
     /// Accesses the name of the region this game is from. This may be empty if
     /// it's not specified.
     #[inline]
-    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     pub fn region_name(&self) -> &str {
         &self.region_name
     }

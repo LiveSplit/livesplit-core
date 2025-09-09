@@ -570,8 +570,7 @@
     clippy::style,
     clippy::missing_const_for_fn,
     clippy::undocumented_unsafe_blocks,
-    missing_docs,
-    rust_2018_idioms
+    missing_docs
 )]
 #![forbid(clippy::incompatible_msrv)]
 
@@ -595,6 +594,7 @@ const _: () = {
     assert_send_sync::<Process>();
     assert_send_sync::<Runtime>();
     assert_send_sync::<CompiledAutoSplitter>();
+    #[expect(dead_code)] // Not actually dead, as we use it for the assertion inside.
     const fn with_timer<T: Send + Sync + Timer>() {
         assert_send_sync::<AutoSplitter<T>>();
     }

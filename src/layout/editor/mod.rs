@@ -63,11 +63,7 @@ impl Editor {
     /// visited in the [`ImageCache`]. You still need to manually run
     /// [`ImageCache::collect`] to ensure unused images are removed from the
     /// cache.
-    pub fn layout_state(
-        &mut self,
-        image_cache: &mut ImageCache,
-        timer: &Snapshot<'_>,
-    ) -> LayoutState {
+    pub fn layout_state(&mut self, image_cache: &mut ImageCache, timer: &Snapshot) -> LayoutState {
         self.layout.state(image_cache, timer)
     }
 
@@ -82,7 +78,7 @@ impl Editor {
         &mut self,
         state: &mut LayoutState,
         image_cache: &mut ImageCache,
-        timer: &Snapshot<'_>,
+        timer: &Snapshot,
     ) {
         self.layout.update_state(state, image_cache, timer)
     }
@@ -90,7 +86,7 @@ impl Editor {
     /// Selects the component with the given index in order to modify its
     /// settings. Only a single component is selected at any given time. You may
     /// not provide an invalid index.
-    pub fn select(&mut self, index: usize) {
+    pub const fn select(&mut self, index: usize) {
         if index < self.layout.components.len() {
             self.selected_component = index;
         }
@@ -105,7 +101,7 @@ impl Editor {
 
     /// Checks if the currently selected component can be removed. If there's
     /// only one component in the layout, it can't be removed.
-    pub fn can_remove_component(&self) -> bool {
+    pub const fn can_remove_component(&self) -> bool {
         // We need to ensure there's always at least one component.
         self.layout.components.len() > 1
     }
@@ -130,7 +126,6 @@ impl Editor {
     }
 
     /// Moves the selected component up, unless the first component is selected.
-    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     pub fn move_component_up(&mut self) {
         if self.can_move_component_up() {
             self.layout
@@ -142,7 +137,7 @@ impl Editor {
 
     /// Checks if the currently selected component can be moved down. If the
     /// last component is selected, it can't be moved down.
-    pub fn can_move_component_down(&self) -> bool {
+    pub const fn can_move_component_down(&self) -> bool {
         self.selected_component < self.layout.components.len() - 1
     }
 

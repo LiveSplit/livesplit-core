@@ -6,7 +6,7 @@ use crate::{
 };
 
 pub(in crate::rendering) fn render(
-    context: &mut RenderContext<'_, impl ResourceAllocator>,
+    context: &mut RenderContext<impl ResourceAllocator>,
     [width, height]: [f32; 2],
     component: &State,
     _layout_state: &LayoutState,

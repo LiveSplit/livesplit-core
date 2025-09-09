@@ -6,8 +6,7 @@
     clippy::missing_const_for_fn,
     clippy::undocumented_unsafe_blocks,
     clippy::needless_pass_by_ref_mut,
-    missing_docs,
-    rust_2018_idioms
+    missing_docs
 )]
 #![forbid(clippy::incompatible_msrv)]
 // Clippy false positives
@@ -92,7 +91,7 @@ pub use crate::{
 pub use livesplit_hotkey as hotkey;
 
 #[cfg(not(feature = "std"))]
-pub use crate::platform::{register_clock, Clock, Duration};
+pub use crate::platform::{Clock, Duration, register_clock};
 
 #[cfg(feature = "std")]
 pub use crate::{hotkey_config::HotkeyConfig, hotkey_system::HotkeySystem, timing::SharedTimer};

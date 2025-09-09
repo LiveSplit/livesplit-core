@@ -1,16 +1,17 @@
-use anyhow::{format_err, Result};
+use anyhow::{Result, format_err};
 use slotmap::{Key, KeyData};
 use wasmtime::{Caller, Linker};
 
 use crate::{
+    CreationError, Timer,
     runtime::{Context, SettingValueKey, SettingsListKey},
-    settings, CreationError, Timer,
+    settings,
 };
 
 pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationError> {
     linker
         .func_wrap("env", "settings_list_new", {
-            |mut caller: Caller<'_, Context<T>>| {
+            |mut caller: Caller<Context<T>>| {
                 let ctx = caller.data_mut();
                 ctx.settings_lists
                     .insert(settings::List::new())
@@ -23,7 +24,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "settings_list_new",
         })?
         .func_wrap("env", "settings_list_free", {
-            |mut caller: Caller<'_, Context<T>>, settings_list: u64| {
+            |mut caller: Caller<Context<T>>, settings_list: u64| {
                 caller
                     .data_mut()
                     .settings_lists
@@ -37,7 +38,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "settings_list_free",
         })?
         .func_wrap("env", "settings_list_copy", {
-            |mut caller: Caller<'_, Context<T>>, settings_list: u64| {
+            |mut caller: Caller<Context<T>>, settings_list: u64| {
                 let ctx = caller.data_mut();
 
                 let settings_list = ctx
@@ -54,7 +55,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "settings_list_copy",
         })?
         .func_wrap("env", "settings_list_len", {
-            |caller: Caller<'_, Context<T>>, settings_list: u64| {
+            |caller: Caller<Context<T>>, settings_list: u64| {
                 let ctx = caller.data();
 
                 let len = ctx
@@ -73,7 +74,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "settings_list_len",
         })?
         .func_wrap("env", "settings_list_get", {
-            |mut caller: Caller<'_, Context<T>>, settings_list: u64, index: u64| {
+            |mut caller: Caller<Context<T>>, settings_list: u64, index: u64| {
                 let ctx = caller.data_mut();
 
                 let maybe_value = if let Ok(index) = index.try_into() {
@@ -99,7 +100,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "settings_list_get",
         })?
         .func_wrap("env", "settings_list_push", {
-            |mut caller: Caller<'_, Context<T>>, settings_list: u64, setting_value: u64| {
+            |mut caller: Caller<Context<T>>, settings_list: u64, setting_value: u64| {
                 let context = caller.data_mut();
 
                 let settings_list = context
@@ -122,10 +123,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "settings_list_push",
         })?
         .func_wrap("env", "settings_list_insert", {
-            |mut caller: Caller<'_, Context<T>>,
-             settings_list: u64,
-             index: u64,
-             setting_value: u64| {
+            |mut caller: Caller<Context<T>>, settings_list: u64, index: u64, setting_value: u64| {
                 let context = caller.data_mut();
 
                 let settings_list = context

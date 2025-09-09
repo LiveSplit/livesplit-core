@@ -7,7 +7,6 @@
     clippy::undocumented_unsafe_blocks,
     // TODO: Write documentation
     // missing_docs,
-    rust_2018_idioms
 )]
 #![forbid(clippy::incompatible_msrv)]
 #![no_std]
@@ -223,39 +222,39 @@ pub fn abbreviate(name: &str) -> Vec<Box<str>> {
 pub fn abbreviate_category(category: &str) -> Vec<Box<str>> {
     let mut abbrevs = Vec::new();
 
-    if let Some((before, rest)) = category.split_once('(') {
-        if let Some((inside, after)) = rest.split_once(')') {
-            let before = before.trim();
-            let after = after.trim_end();
+    if let Some((before, rest)) = category.split_once('(')
+        && let Some((inside, after)) = rest.split_once(')')
+    {
+        let before = before.trim();
+        let after = after.trim_end();
 
-            let mut buf = String::with_capacity(category.len());
-            buf.push_str(before);
-            buf.push_str(" (");
+        let mut buf = String::with_capacity(category.len());
+        buf.push_str(before);
+        buf.push_str(" (");
 
-            let mut splits = inside.split(',');
-            let mut variable = splits.next().unwrap();
-            for next_variable in splits {
-                buf.push_str(variable);
-                let old_len = buf.len();
+        let mut splits = inside.split(',');
+        let mut variable = splits.next().unwrap();
+        for next_variable in splits {
+            buf.push_str(variable);
+            let old_len = buf.len();
 
-                buf.push(')');
-                buf.push_str(after);
-                abbrevs.push(buf.as_str().into());
+            buf.push(')');
+            buf.push_str(after);
+            abbrevs.push(buf.as_str().into());
 
-                buf.drain(old_len..);
-                buf.push(',');
-                variable = next_variable;
-            }
-
-            if after.trim_start().is_empty() {
-                buf.drain(before.len()..);
-            } else {
-                buf.drain(before.len() + 1..);
-                buf.push_str(after);
-            }
-
-            abbrevs.push(buf.into());
+            buf.drain(old_len..);
+            buf.push(',');
+            variable = next_variable;
         }
+
+        if after.trim_start().is_empty() {
+            buf.drain(before.len()..);
+        } else {
+            buf.drain(before.len() + 1..);
+            buf.push_str(after);
+        }
+
+        abbrevs.push(buf.into());
     }
 
     abbrevs.push(category.into());

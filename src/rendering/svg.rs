@@ -293,7 +293,9 @@ impl Renderer {
                 Entity::Label(label, shader, text_shadow, transform) => {
                     let label = &*label.read().unwrap();
 
-                    if let Some((color, opacity)) = text_shadow.as_ref().and_then(convert_color) {
+                    if let Some(color) = text_shadow
+                        && let Some((color, opacity)) = convert_color(color)
+                    {
                         // This implementation of text shadows simply adds a
                         // second version of the label as the text shadow. We
                         // tried `feDropShadow`, but it seems to be cut off in
@@ -365,28 +367,28 @@ fn visit_path<W: Write>(
     writer: &mut Writer<W>,
     path: &SvgPath,
 ) -> fmt::Result {
-    if let SvgPath::Path(path) = path {
-        if defs.ptr_lookup.insert(Rc::as_ptr(path) as usize) {
-            path.id.set(*current_id);
-            *current_id += 1;
+    if let SvgPath::Path(path) = path
+        && defs.ptr_lookup.insert(Rc::as_ptr(path) as usize)
+    {
+        path.id.set(*current_id);
+        *current_id += 1;
 
-            let (tag, attr) = match path.kind {
-                PathKind::Polygon => ("polygon", "points"),
-                PathKind::Polyline => ("polyline", "points"),
-                PathKind::Path => ("path", "d"),
-            };
+        let (tag, attr) = match path.kind {
+            PathKind::Polygon => ("polygon", "points"),
+            PathKind::Polyline => ("polyline", "points"),
+            PathKind::Path => ("path", "d"),
+        };
 
-            writer.empty_tag(
-                tag,
-                [
-                    (
-                        "id",
-                        DisplayAlreadyEscaped(format_args!("{}", path.id.get())),
-                    ),
-                    (attr, DisplayAlreadyEscaped(format_args!("{}", path.data))),
-                ],
-            )?;
-        }
+        writer.empty_tag(
+            tag,
+            [
+                (
+                    "id",
+                    DisplayAlreadyEscaped(format_args!("{}", path.id.get())),
+                ),
+                (attr, DisplayAlreadyEscaped(format_args!("{}", path.data))),
+            ],
+        )?;
     }
     Ok(())
 }
@@ -626,31 +628,29 @@ impl super::PathBuilder for PathBuilder {
     }
 
     fn finish(self) -> Self::Path {
-        if let [outer_rem @ .., PathSegment::Close] = &*self.segments {
-            if let [PathSegment::MoveTo(_), rem @ ..] = outer_rem {
-                if rem
-                    .iter()
-                    .all(|segment| matches!(segment, PathSegment::LineTo(_)))
-                {
-                    let point_iter = outer_rem.iter().map(|segment| match segment {
-                        PathSegment::MoveTo(point) | PathSegment::LineTo(point) => *point,
-                        _ => unreachable!(),
-                    });
+        if let [outer_rem @ .., PathSegment::Close] = &*self.segments
+            && let [PathSegment::MoveTo(_), rem @ ..] = outer_rem
+            && rem
+                .iter()
+                .all(|segment| matches!(segment, PathSegment::LineTo(_)))
+        {
+            let point_iter = outer_rem.iter().map(|segment| match segment {
+                PathSegment::MoveTo(point) | PathSegment::LineTo(point) => *point,
+                _ => unreachable!(),
+            });
 
-                    let mut data = String::new();
-                    for point in point_iter {
-                        if !data.is_empty() {
-                            data.push(' ');
-                        }
-                        let _ = write!(data, "{},{}", point.x, point.y);
-                    }
-                    return SvgPath::Path(Rc::new(PathData {
-                        id: Cell::new(0),
-                        kind: PathKind::Polygon,
-                        data,
-                    }));
+            let mut data = String::new();
+            for point in point_iter {
+                if !data.is_empty() {
+                    data.push(' ');
                 }
+                let _ = write!(data, "{},{}", point.x, point.y);
             }
+            return SvgPath::Path(Rc::new(PathData {
+                id: Cell::new(0),
+                kind: PathKind::Polygon,
+                data,
+            }));
         }
         if let [PathSegment::MoveTo(start), rem @ ..] = &*self.segments {
             if let [PathSegment::LineTo(end)] = rem {
@@ -850,7 +850,7 @@ fn path_with_transform<'a, W: fmt::Write>(
     transform: &Transform,
     attrs: impl IntoIterator<Item = (&'a str, AttrValue)>,
 ) -> fmt::Result {
-    let add_attrs = |mut writer: AttributeWriter<'_, W>| {
+    let add_attrs = |mut writer: AttributeWriter<W>| {
         for (key, value) in attrs {
             match value {
                 AttrValue::Fill(fill) => writer.attribute(key, fill)?,
@@ -1019,7 +1019,7 @@ fn convert_color(&[r, g, b, a]: &[f32; 4]) -> Option<(Rgb, Option<f32>)> {
 struct TransformValue<'a>(&'a Transform);
 
 impl fmt::Display for TransformValue<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.write_escaped(f)
     }
 }

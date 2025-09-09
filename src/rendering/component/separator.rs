@@ -1,12 +1,12 @@
 use crate::{
     component::separator::State,
     layout::LayoutState,
-    rendering::{resource::ResourceAllocator, RenderContext},
+    rendering::{RenderContext, resource::ResourceAllocator},
     settings::Gradient,
 };
 
 pub(in crate::rendering) fn render(
-    context: &mut RenderContext<'_, impl ResourceAllocator>,
+    context: &mut RenderContext<impl ResourceAllocator>,
     dim: [f32; 2],
     _component: &State,
     layout_state: &LayoutState,

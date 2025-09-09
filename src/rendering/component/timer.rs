@@ -22,7 +22,7 @@ impl<L> Cache<L> {
 
 pub(in crate::rendering) fn render<A: ResourceAllocator>(
     cache: &mut Cache<A::Label>,
-    context: &mut RenderContext<'_, A>,
+    context: &mut RenderContext<A>,
     [width, height]: [f32; 2],
     component: &State,
 ) -> f32 {

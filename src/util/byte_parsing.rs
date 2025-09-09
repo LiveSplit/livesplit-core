@@ -12,7 +12,7 @@ pub mod big_endian {
     pub struct U16(pub [u8; 2]);
 
     impl fmt::Debug for U16 {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             fmt::Debug::fmt(&self.get(), f)
         }
     }
@@ -33,7 +33,7 @@ pub mod big_endian {
     pub struct U32(pub [u8; 4]);
 
     impl fmt::Debug for U32 {
-        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
             fmt::Debug::fmt(&self.get(), f)
         }
     }

@@ -222,7 +222,7 @@ impl CommandSink for WebCommandSink {
 
     fn set_current_comparison(
         &self,
-        comparison: Cow<'_, str>,
+        comparison: Cow<str>,
     ) -> impl Future<Output = Result> + 'static {
         debug_assert!(!self.locked.get());
         handle_action_value(
@@ -303,8 +303,8 @@ impl CommandSink for WebCommandSink {
 
     fn set_custom_variable(
         &self,
-        name: Cow<'_, str>,
-        value: Cow<'_, str>,
+        name: Cow<str>,
+        value: Cow<str>,
     ) -> impl Future<Output = Result> + 'static {
         debug_assert!(!self.locked.get());
         handle_action_value(self.set_custom_variable.as_ref().and_then(|f| {

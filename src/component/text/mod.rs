@@ -376,10 +376,10 @@ impl Component {
     /// the type of the setting's value. A panic can also occur if the index of
     /// the setting provided is out of bounds.
     pub fn set_value(&mut self, mut index: usize, value: Value) {
-        if index >= 5 {
-            if let Text::Variable(_, _) = &self.settings.text {
-                index += 1;
-            }
+        if index >= 5
+            && let Text::Variable(_, _) = &self.settings.text
+        {
+            index += 1;
         }
 
         match index {

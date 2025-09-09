@@ -10,13 +10,13 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
 pub struct ImageId(pub(crate) [u8; 32]);
 
 impl fmt::Display for ImageId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Display::fmt(self.format_str(&mut [0; 64]), f)
     }
 }
 
 impl fmt::Debug for ImageId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Debug::fmt(self.format_str(&mut [0; 64]), f)
     }
 }
@@ -119,7 +119,7 @@ impl serde::de::Visitor<'_> for ImageIdVisitor {
         ImageId::from_str(v).map_err(|_| E::custom("invalid 64 char hex string"))
     }
 
-    fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         formatter.write_str("a SHA-256 hash")
     }
 }

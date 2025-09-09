@@ -104,7 +104,7 @@ impl Value {
 }
 
 impl fmt::Debug for Value {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::Map(v) => fmt::Debug::fmt(v, f),
             Self::List(v) => fmt::Debug::fmt(v, f),

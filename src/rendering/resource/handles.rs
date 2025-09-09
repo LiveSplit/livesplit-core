@@ -17,7 +17,7 @@ impl<A> Handles<A> {
         Self { next_id, allocator }
     }
 
-    pub fn next<T>(&mut self, element: T) -> Handle<T> {
+    pub const fn next<T>(&mut self, element: T) -> Handle<T> {
         let id = self.next_id;
         self.next_id = self.next_id.wrapping_add(1);
         Handle { id, inner: element }

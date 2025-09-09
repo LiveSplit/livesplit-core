@@ -65,7 +65,7 @@ impl TimerKind<'_> {
 }
 
 impl fmt::Display for TimerKind<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str(match self {
             TimerKind::LiveSplit => "LiveSplit",
             TimerKind::WSplit => "WSplit",

@@ -1,5 +1,5 @@
 use super::{
-    format_padded, TimeFormatter, MINUS, SECONDS_PER_DAY, SECONDS_PER_HOUR, SECONDS_PER_MINUTE,
+    MINUS, SECONDS_PER_DAY, SECONDS_PER_HOUR, SECONDS_PER_MINUTE, TimeFormatter, format_padded,
 };
 use crate::TimeSpan;
 use core::fmt::{Display, Formatter, Result};
@@ -43,7 +43,7 @@ impl TimeFormatter<'_> for Days {
 }
 
 impl Display for Inner {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    fn fmt(&self, f: &mut Formatter) -> Result {
         if let Some(time) = self.time {
             let (total_seconds, nanoseconds) = time.to_seconds_and_subsec_nanoseconds();
             let total_seconds = if (total_seconds | nanoseconds as i64) < 0 {

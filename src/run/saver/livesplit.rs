@@ -25,12 +25,12 @@
 //! ```
 
 use crate::{
+    DateTime, Run, Time, Timer, TimerPhase,
     platform::prelude::*,
     run::LinkedLayout,
     settings::Image,
     timing::formatter::{Complete, TimeFormatter},
-    util::xml::{AttributeWriter, DisplayAlreadyEscaped, Text, Writer, NO_ATTRIBUTES},
-    DateTime, Run, Time, Timer, TimerPhase,
+    util::xml::{AttributeWriter, DisplayAlreadyEscaped, NO_ATTRIBUTES, Text, Writer},
 };
 use alloc::borrow::Cow;
 use core::{fmt, mem::MaybeUninit};
@@ -67,7 +67,7 @@ fn image<W: fmt::Write>(
     tag: &str,
     image: &Image,
     base64_buf: &mut Vec<MaybeUninit<u8>>,
-    image_buf: &mut Cow<'_, [u8]>,
+    image_buf: &mut Cow<[u8]>,
 ) -> fmt::Result {
     writer.tag(tag, |tag| {
         let image_data = image.data();
@@ -96,11 +96,7 @@ fn image<W: fmt::Write>(
     })
 }
 
-fn date<W: fmt::Write>(
-    writer: &mut AttributeWriter<'_, W>,
-    key: &str,
-    date: DateTime,
-) -> fmt::Result {
+fn date<W: fmt::Write>(writer: &mut AttributeWriter<W>, key: &str, date: DateTime) -> fmt::Result {
     let date = date.to_offset(UtcOffset::UTC);
     let (year, month, day) = date.to_calendar_date();
     let month = month as u8;
@@ -134,7 +130,7 @@ fn time_inner<W: fmt::Write>(writer: &mut Writer<W>, time: Time) -> fmt::Result 
     Ok(())
 }
 
-fn time<W: fmt::Write>(writer: AttributeWriter<'_, W>, time: Time) -> fmt::Result {
+fn time<W: fmt::Write>(writer: AttributeWriter<W>, time: Time) -> fmt::Result {
     if time.real_time.is_some() || time.game_time.is_some() {
         writer.content(|writer| time_inner(writer, time))
     } else {

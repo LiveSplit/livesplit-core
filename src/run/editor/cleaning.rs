@@ -68,7 +68,7 @@ pub struct CleanUp {
 }
 
 impl fmt::Display for PotentialCleanUp<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let short = SegmentTime::new();
 
         let method = match self.method {
@@ -98,7 +98,9 @@ impl fmt::Display for PotentialCleanUp<'_> {
             )?;
         }
 
-        if let Some(started) = self.attempt.and_then(|a| a.started()) {
+        if let Some(a) = self.attempt
+            && let Some(started) = a.started()
+        {
             let local = to_local(started.time);
             // We want to show the time zone in case it can't be resolved and
             // defaults to UTC.
@@ -129,7 +131,7 @@ impl fmt::Display for PotentialCleanUp<'_> {
 }
 
 impl From<PotentialCleanUp<'_>> for CleanUp {
-    fn from(potential: PotentialCleanUp<'_>) -> Self {
+    fn from(potential: PotentialCleanUp) -> Self {
         potential.clean_up
     }
 }
@@ -146,7 +148,7 @@ impl<'r> SumOfBestCleaner<'r> {
     }
 
     /// Applies a clean up to the Run.
-    #[allow(clippy::needless_pass_by_value)]
+    #[expect(clippy::needless_pass_by_value)]
     pub fn apply(&mut self, clean_up: CleanUp) {
         self.run
             .segment_mut(clean_up.ending_index)
@@ -202,8 +204,8 @@ impl<'r> SumOfBestCleaner<'r> {
                                 run_index,
                                 state.parent.method,
                             );
-                            if prediction_index > 0 {
-                                if let Some(question) = check_prediction(
+                            if prediction_index > 0
+                                && let Some(question) = check_prediction(
                                     self.run,
                                     &self.predictions,
                                     prediction_time[state.parent.method],
@@ -211,13 +213,13 @@ impl<'r> SumOfBestCleaner<'r> {
                                     prediction_index - 1,
                                     run_index,
                                     state.parent.method,
-                                ) {
-                                    self.state = State::IteratingHistory(IteratingHistoryState {
-                                        skip_count: skip_count + 1,
-                                        ..state
-                                    });
-                                    return Some(question);
-                                }
+                                )
+                            {
+                                self.state = State::IteratingHistory(IteratingHistoryState {
+                                    skip_count: skip_count + 1,
+                                    ..state
+                                });
+                                return Some(question);
                             }
                         }
                     }
@@ -240,42 +242,41 @@ fn check_prediction<'a>(
     run_index: i32,
     method: TimingMethod,
 ) -> Option<PotentialCleanUp<'a>> {
-    if let Some(predicted_time) = predicted_time {
-        if predictions[ending_index + 1].is_none_or(|p| predicted_time < p.time) {
-            if let Some(segment_history_element) =
-                run.segment(ending_index).segment_history().get(run_index)
-            {
-                return Some(PotentialCleanUp {
-                    starting_segment: if starting_index >= 0 {
-                        Some(run.segment(starting_index as usize))
-                    } else {
-                        None
-                    },
-                    ending_segment: run.segment(ending_index),
-                    time_between: segment_history_element[method]
-                        .expect("Cleanup path is shorter but doesn't have a time"),
-                    combined_sum_of_best: predictions[ending_index + 1].map(|p| {
-                        p.time
-                            - predictions[(starting_index + 1) as usize]
-                                .expect("Start time must not be empty")
-                                .time
-                    }),
-                    // The attempt may not exist, as we have all sorts of weird
-                    // malformed files.
-                    attempt: run
-                        .attempt_history()
-                        .iter()
-                        .find(|attempt| attempt.index() == run_index),
-                    method,
-                    clean_up: CleanUp {
-                        ending_index,
-                        run_index,
-                    },
-                });
-            }
-        }
+    if let Some(predicted_time) = predicted_time
+        && predictions[ending_index + 1].is_none_or(|p| predicted_time < p.time)
+        && let Some(segment_history_element) =
+            run.segment(ending_index).segment_history().get(run_index)
+    {
+        Some(PotentialCleanUp {
+            starting_segment: if starting_index >= 0 {
+                Some(run.segment(starting_index as usize))
+            } else {
+                None
+            },
+            ending_segment: run.segment(ending_index),
+            time_between: segment_history_element[method]
+                .expect("Cleanup path is shorter but doesn't have a time"),
+            combined_sum_of_best: predictions[ending_index + 1].map(|p| {
+                p.time
+                    - predictions[(starting_index + 1) as usize]
+                        .expect("Start time must not be empty")
+                        .time
+            }),
+            // The attempt may not exist, as we have all sorts of weird
+            // malformed files.
+            attempt: run
+                .attempt_history()
+                .iter()
+                .find(|attempt| attempt.index() == run_index),
+            method,
+            clean_up: CleanUp {
+                ending_index,
+                run_index,
+            },
+        })
+    } else {
+        None
     }
-    None
 }
 
 fn next_timing_method(run: &Run, predictions: &mut Vec<Option<Prediction>>, method: TimingMethod) {

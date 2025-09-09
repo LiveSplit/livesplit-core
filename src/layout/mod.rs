@@ -95,7 +95,7 @@ impl Layout {
         &mut self,
         state: &mut LayoutState,
         image_cache: &mut ImageCache,
-        timer: &Snapshot<'_>,
+        timer: &Snapshot,
     ) {
         let settings = &self.settings;
 
@@ -128,7 +128,7 @@ impl Layout {
     /// are marked as visited in the [`ImageCache`]. You still need to manually
     /// run [`ImageCache::collect`] to ensure unused images are removed from the
     /// cache.
-    pub fn state(&mut self, image_cache: &mut ImageCache, timer: &Snapshot<'_>) -> LayoutState {
+    pub fn state(&mut self, image_cache: &mut ImageCache, timer: &Snapshot) -> LayoutState {
         let mut state = Default::default();
         self.update_state(&mut state, image_cache, timer);
         state

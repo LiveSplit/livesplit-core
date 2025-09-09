@@ -70,7 +70,7 @@ pub trait Timer: Send {
     /// auto splitter wants to provide for visualization.
     fn set_variable(&mut self, key: &str, value: &str);
     /// Logs a message from the auto splitter.
-    fn log_auto_splitter(&mut self, message: fmt::Arguments<'_>);
+    fn log_auto_splitter(&mut self, message: fmt::Arguments);
     /// Logs a message from the runtime.
-    fn log_runtime(&mut self, message: fmt::Arguments<'_>, log_level: LogLevel);
+    fn log_runtime(&mut self, message: fmt::Arguments, log_level: LogLevel);
 }

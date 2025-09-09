@@ -3,8 +3,8 @@ use std::{fmt, thread::JoinHandle};
 use crate::{ConsumePreference, Hotkey, KeyCode, Result};
 use crossbeam_channel::Sender;
 use mio::Waker;
-use nix::unistd::{getgroups, Group};
-use promising_future::{future_promise, Promise};
+use nix::unistd::{Group, getgroups};
+use promising_future::{Promise, future_promise};
 
 mod evdev_impl;
 mod x11_impl;
@@ -26,7 +26,7 @@ impl From<Error> for crate::Error {
 }
 
 impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str(match self {
             Self::EvDev => "Failed fetching events from evdev.",
             Self::EPoll => "Failed polling the event file descriptors.",
@@ -72,10 +72,10 @@ fn can_use_evdev() -> Option<()> {
 
 impl Hook {
     pub fn new(consume: ConsumePreference) -> Result<Self> {
-        if matches!(consume, ConsumePreference::PreferConsume) {
-            if let Ok(x11) = x11_impl::new() {
-                return Ok(x11);
-            }
+        if matches!(consume, ConsumePreference::PreferConsume)
+            && let Ok(x11) = x11_impl::new()
+        {
+            return Ok(x11);
         }
 
         if !matches!(consume, ConsumePreference::MustConsume) && can_use_evdev().is_some() {

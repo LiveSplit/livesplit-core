@@ -3,8 +3,7 @@
     clippy::correctness,
     clippy::perf,
     clippy::style,
-    missing_docs,
-    rust_2018_idioms
+    missing_docs
 )]
 #![forbid(clippy::incompatible_msrv)]
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -124,7 +123,7 @@ pub enum Error {
 impl std::error::Error for Error {}
 
 impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str(match self {
             Self::UnmatchedPreference => {
                 "The consume preference could not be met on the current platform."
@@ -138,7 +137,6 @@ impl fmt::Display for Error {
 
 #[cfg(not(all(target_family = "wasm", target_os = "unknown", feature = "wasm-web")))]
 const _: () = {
-    #[allow(unused)]
     const fn assert_thread_safe<T: Send + Sync>() {}
     assert_thread_safe::<Hook>();
 };

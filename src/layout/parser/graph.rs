@@ -1,12 +1,12 @@
 use super::{
-    color, comparison_override, end_tag, parse_bool, parse_children, text_parsed, translate_size,
-    Result,
+    Result, color, comparison_override, end_tag, parse_bool, parse_children, text_parsed,
+    translate_size,
 };
 
 pub use crate::component::graph::Component;
 use crate::util::xml::Reader;
 
-pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()> {
+pub fn settings(reader: &mut Reader, component: &mut Component) -> Result<()> {
     let settings = component.settings_mut();
 
     parse_children(reader, |reader, tag, _| {

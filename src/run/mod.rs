@@ -134,7 +134,6 @@ impl Run {
 
     /// Accesses the name of the game this Run is for.
     #[inline]
-    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     pub fn game_name(&self) -> &str {
         &self.game_name
     }
@@ -162,7 +161,6 @@ impl Run {
 
     /// Accesses the name of the category this Run is for.
     #[inline]
-    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     pub fn category_name(&self) -> &str {
         &self.category_name
     }
@@ -223,7 +221,6 @@ impl Run {
 
     /// Accesses the Segments of this Run object.
     #[inline]
-    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     pub fn segments(&self) -> &[Segment] {
         &self.segments
     }
@@ -265,7 +262,6 @@ impl Run {
     /// information. Information about the individual segments is stored within
     /// each segment.
     #[inline]
-    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     pub fn attempt_history(&self) -> &[Attempt] {
         &self.attempt_history
     }
@@ -274,7 +270,6 @@ impl Run {
     /// includes `Personal Best` but excludes all the other Comparison
     /// Generators.
     #[inline]
-    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     pub fn custom_comparisons(&self) -> &[String] {
         &self.custom_comparisons
     }
@@ -316,7 +311,6 @@ impl Run {
 
     /// Accesses the Auto Splitter Settings that are encoded as XML.
     #[inline]
-    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     pub fn auto_splitter_settings(&self) -> &str {
         &self.auto_splitter_settings
     }
@@ -328,8 +322,7 @@ impl Run {
     /// You need to ensure that the Auto Splitter Settings are encoded as data
     /// that would be valid as an interior of an XML element.
     #[inline]
-    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
-    pub fn auto_splitter_settings_mut(&mut self) -> &mut String {
+    pub const fn auto_splitter_settings_mut(&mut self) -> &mut String {
         &mut self.auto_splitter_settings
     }
 
@@ -379,13 +372,13 @@ impl Run {
 
     /// Returns the amount of segments stored in this Run.
     #[inline]
-    pub fn len(&self) -> usize {
+    pub const fn len(&self) -> usize {
         self.segments.len()
     }
 
     /// Returns `true` if there's no segments stored in this Run.
     #[inline]
-    pub fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {
         self.segments.is_empty()
     }
 
@@ -826,10 +819,10 @@ fn fix_history_from_best_segment_times(segment: &mut Segment, method: TimingMeth
     if let Some(best_segment) = segment.best_segment_time()[method] {
         for (_, time) in segment.segment_history_mut().iter_mut() {
             // Make sure no times in the history are lower than the Best Segment
-            if let Some(time) = &mut time[method] {
-                if *time < best_segment {
-                    *time = best_segment;
-                }
+            if let Some(time) = &mut time[method]
+                && *time < best_segment
+            {
+                *time = best_segment;
             }
         }
     }
@@ -879,7 +872,7 @@ pub struct ExtendedCategoryName<'run> {
 }
 
 impl fmt::Display for ExtendedCategoryName<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let category_name = self.run.category_name.as_str();
 
         if category_name.is_empty() {
@@ -889,14 +882,13 @@ impl fmt::Display for ExtendedCategoryName<'_> {
         let mut is_empty = true;
         let mut has_pushed = false;
 
-        let (before, after_parenthesis) = if let Some((i, u)) = self
-            .run
-            .category_name
-            .find('(')
-            .and_then(|i| category_name[i..].find(')').map(|u| (i, i + u)))
+        let (before, after_parenthesis) = if let Some((_, rem)) = category_name.split_once('(')
+            && let Some((between, after)) = rem.split_once(')')
         {
-            is_empty = u == i + 1;
-            category_name.split_at(u)
+            is_empty = between.is_empty();
+            // Split before the closing parenthesis so we can insert stuff
+            // before it.
+            category_name.split_at(category_name.len() - after.len() - 1)
         } else {
             (category_name, "")
         };

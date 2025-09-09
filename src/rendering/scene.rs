@@ -1,7 +1,7 @@
 use super::{
-    entity::{calculate_hash, Entity},
-    resource::{Handle, SharedOwnership},
     Background,
+    entity::{Entity, calculate_hash},
+    resource::{Handle, SharedOwnership},
 };
 use crate::platform::prelude::*;
 
@@ -96,12 +96,12 @@ impl<P: SharedOwnership, I: SharedOwnership, L: SharedOwnership> Scene<P, I, L> 
     }
 
     /// Get a mutable reference to the scene's bottom [`Layer`].
-    pub fn bottom_layer_mut(&mut self) -> &mut Vec<Entity<P, I, L>> {
+    pub const fn bottom_layer_mut(&mut self) -> &mut Vec<Entity<P, I, L>> {
         &mut self.bottom_layer
     }
 
     /// Get a mutable reference to the scene's top [`Layer`].
-    pub fn top_layer_mut(&mut self) -> &mut Vec<Entity<P, I, L>> {
+    pub const fn top_layer_mut(&mut self) -> &mut Vec<Entity<P, I, L>> {
         &mut self.top_layer
     }
 
@@ -122,7 +122,7 @@ impl<P: SharedOwnership, I: SharedOwnership, L: SharedOwnership> Scene<P, I, L> 
     }
 
     /// Accesses the [`Layer`] specified mutably.
-    pub fn layer_mut(&mut self, layer: Layer) -> &mut Vec<Entity<P, I, L>> {
+    pub const fn layer_mut(&mut self, layer: Layer) -> &mut Vec<Entity<P, I, L>> {
         match layer {
             Layer::Bottom => &mut self.bottom_layer,
             Layer::Top => &mut self.top_layer,

@@ -42,14 +42,13 @@ impl<'f> ColorTables<'f> {
 }
 
 pub fn iter_colored_glyphs(
-    color_tables: &Option<ColorTables<'_>>,
+    color_tables: &Option<ColorTables>,
     palette: usize,
     glyph: GlyphId,
     mut f: impl FnMut(GlyphId, Option<Color>),
 ) {
-    if let Some(iter) = color_tables
-        .as_ref()
-        .and_then(|c| c.look_up(palette, glyph.0))
+    if let Some(c) = color_tables
+        && let Some(iter) = c.look_up(palette, glyph.0)
     {
         for (glyph, color) in iter {
             f(GlyphId(glyph), color);

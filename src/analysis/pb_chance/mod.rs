@@ -12,7 +12,7 @@
 //! source its split times.
 
 use super::SkillCurve;
-use crate::{comparison, timing::Snapshot, Run, Segment, TimeSpan, TimingMethod};
+use crate::{Run, Segment, TimeSpan, TimingMethod, comparison, timing::Snapshot};
 
 #[cfg(test)]
 mod tests;
@@ -44,7 +44,7 @@ pub fn for_run(run: &Run, method: TimingMethod) -> f64 {
 /// The value is being reported as a floating point number in the range
 /// from 0 (0%) to 1 (100%). Additionally a boolean is returned that
 /// indicates if the value is currently actively changing as time is being lost.
-pub fn for_timer(timer: &Snapshot<'_>) -> (f64, bool) {
+pub fn for_timer(timer: &Snapshot) -> (f64, bool) {
     let method = timer.current_timing_method();
     let all_segments = timer.run().segments();
 
@@ -81,11 +81,7 @@ pub fn for_timer(timer: &Snapshot<'_>) -> (f64, bool) {
             .last()
             .and_then(|s| s.personal_best_split_time()[method])
             .is_none_or(|pb| current_time < pb);
-        if beat_pb {
-            1.0
-        } else {
-            0.0
-        }
+        if beat_pb { 1.0 } else { 0.0 }
     } else {
         calculate(segments, method, current_time)
     };

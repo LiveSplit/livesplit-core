@@ -3,7 +3,7 @@ use crate::{component::text::Text, platform::prelude::*, util::xml::Reader};
 
 pub use crate::component::text::Component;
 
-pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()> {
+pub fn settings(reader: &mut Reader, component: &mut Component) -> Result<()> {
     let settings = component.settings_mut();
     let mut background_builder = GradientBuilder::new();
     let (mut override_label, mut override_value) = (false, false);
