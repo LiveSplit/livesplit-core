@@ -1,21 +1,21 @@
 //! Provides the parser for LiveSplit splits files.
 
 use crate::{
+    AtomicDateTime, DateTime, Run, RunMetadata, Segment, Time, TimeSpan,
     platform::prelude::*,
     run::{AddComparisonError, LinkedLayout},
     settings::Image,
     util::{
         ascii_char::AsciiChar,
         xml::{
-            helper::{
-                attribute, attribute_escaped_err, end_tag, image, optional_attribute_escaped_err,
-                parse_attributes, parse_base, parse_children, reencode_children, text,
-                text_as_escaped_string_err, text_parsed, Error as XmlError,
-            },
             Reader,
+            helper::{
+                Error as XmlError, attribute, attribute_escaped_err, end_tag, image,
+                optional_attribute_escaped_err, parse_attributes, parse_base, parse_children,
+                reencode_children, text, text_as_escaped_string_err, text_parsed,
+            },
         },
     },
-    AtomicDateTime, DateTime, Run, RunMetadata, Segment, Time, TimeSpan,
 };
 use alloc::borrow::Cow;
 use core::{mem::MaybeUninit, str};
@@ -139,7 +139,7 @@ fn parse_date_time(text: &str) -> Result<DateTime> {
     .ok_or(Error::ParseDate)
 }
 
-fn time_span<F>(reader: &mut Reader<'_>, f: F) -> Result<()>
+fn time_span<F>(reader: &mut Reader, f: F) -> Result<()>
 where
     F: FnOnce(TimeSpan),
 {
@@ -149,7 +149,7 @@ where
     })
 }
 
-fn time_span_opt<F>(reader: &mut Reader<'_>, f: F) -> Result<()>
+fn time_span_opt<F>(reader: &mut Reader, f: F) -> Result<()>
 where
     F: FnOnce(Option<TimeSpan>),
 {
@@ -164,35 +164,35 @@ where
 }
 
 fn parse_time_span(text: &str) -> Result<TimeSpan> {
-    if let Some((before_dot, after_dot)) = AsciiChar::DOT.split_once(text) {
-        if AsciiChar::COLON.contains(after_dot) {
-            const SECS_PER_DAY: i64 = 24 * 60 * 60;
+    if let Some((before_dot, after_dot)) = AsciiChar::DOT.split_once(text)
+        && AsciiChar::COLON.contains(after_dot)
+    {
+        const SECS_PER_DAY: i64 = 24 * 60 * 60;
 
-            let days_secs = before_dot
-                .parse::<i64>()
-                .ok()
-                .and_then(|s| s.checked_mul(SECS_PER_DAY))
-                .ok_or(Error::ParseExtendedTime)?;
+        let days_secs = before_dot
+            .parse::<i64>()
+            .ok()
+            .and_then(|s| s.checked_mul(SECS_PER_DAY))
+            .ok_or(Error::ParseExtendedTime)?;
 
-            let days: TimeSpan = Duration::seconds(days_secs).into();
+        let days: TimeSpan = Duration::seconds(days_secs).into();
 
-            let time: TimeSpan = after_dot.parse()?;
+        let time: TimeSpan = after_dot.parse()?;
 
-            if time < TimeSpan::zero() {
-                return Err(Error::ParseExtendedTime);
-            }
-
-            return Ok(if days < TimeSpan::zero() {
-                days - time
-            } else {
-                days + time
-            });
+        if time < TimeSpan::zero() {
+            return Err(Error::ParseExtendedTime);
         }
+
+        return Ok(if days < TimeSpan::zero() {
+            days - time
+        } else {
+            days + time
+        });
     }
     text.parse().map_err(Into::into)
 }
 
-fn time<F>(reader: &mut Reader<'_>, f: F) -> Result<()>
+fn time<F>(reader: &mut Reader, f: F) -> Result<()>
 where
     F: FnOnce(Time),
 {
@@ -213,7 +213,7 @@ where
     Ok(())
 }
 
-fn time_old<F>(reader: &mut Reader<'_>, f: F) -> Result<()>
+fn time_old<F>(reader: &mut Reader, f: F) -> Result<()>
 where
     F: FnOnce(Time),
 {
@@ -228,11 +228,7 @@ fn parse_bool(value: &str) -> Result<bool> {
     }
 }
 
-fn parse_metadata(
-    version: Version,
-    reader: &mut Reader<'_>,
-    metadata: &mut RunMetadata,
-) -> Result<()> {
+fn parse_metadata(version: Version, reader: &mut Reader, metadata: &mut RunMetadata) -> Result<()> {
     if version >= Version(1, 6, 0, 0) {
         parse_children(reader, |reader, tag, attributes| match tag.name() {
             "Run" => {
@@ -273,7 +269,7 @@ fn parse_metadata(
 
 fn parse_segment(
     version: Version,
-    reader: &mut Reader<'_>,
+    reader: &mut Reader,
     image_buf: &mut Vec<MaybeUninit<u8>>,
     run: &mut Run,
 ) -> Result<Segment> {
@@ -341,7 +337,7 @@ fn parse_segment(
     Ok(segment)
 }
 
-fn parse_run_history(version: Version, reader: &mut Reader<'_>, run: &mut Run) -> Result<()> {
+fn parse_run_history(version: Version, reader: &mut Reader, run: &mut Run) -> Result<()> {
     if version >= Version(1, 5, 0, 0) {
         end_tag(reader)
     } else if version >= Version(1, 4, 1, 0) {
@@ -369,7 +365,7 @@ fn parse_run_history(version: Version, reader: &mut Reader<'_>, run: &mut Run) -
     }
 }
 
-fn parse_attempt_history(version: Version, reader: &mut Reader<'_>, run: &mut Run) -> Result<()> {
+fn parse_attempt_history(version: Version, reader: &mut Reader, run: &mut Run) -> Result<()> {
     if version >= Version(1, 5, 0, 0) {
         parse_children(reader, |reader, _, attributes| {
             let mut time = Time::new();

@@ -1,12 +1,12 @@
-use super::{translate_size, Error, GradientBuilder, Result};
+use super::{Error, GradientBuilder, Result, translate_size};
 use crate::util::xml::{
-    helper::{end_tag, parse_children, text_parsed},
     Reader,
+    helper::{end_tag, parse_children, text_parsed},
 };
 
 pub use crate::component::blank_space::Component;
 
-pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()> {
+pub fn settings(reader: &mut Reader, component: &mut Component) -> Result<()> {
     let settings = component.settings_mut();
     let mut background_builder = GradientBuilder::new();
 

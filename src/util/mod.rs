@@ -2,6 +2,7 @@
 
 pub(crate) mod ascii_char;
 pub(crate) mod ascii_set;
+#[allow(unused)]
 pub(crate) mod byte_parsing;
 pub(crate) mod caseless;
 mod clear_vec;

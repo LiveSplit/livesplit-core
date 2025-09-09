@@ -805,7 +805,7 @@ impl<E: event::CommandSink + TimerQuery + Send> AutoSplitTimer for Timer<E> {
 
     fn segment_splitted(&self, idx: usize) -> Option<bool> {
         let t = self.0.get_timer();
-        if !(idx < t.current_split_index()?) {
+        if idx >= t.current_split_index()? {
             return None;
         }
         Some(
@@ -854,11 +854,11 @@ impl<E: event::CommandSink + TimerQuery + Send> AutoSplitTimer for Timer<E> {
         drop(self.0.set_custom_variable(name.into(), value.into()));
     }
 
-    fn log_auto_splitter(&mut self, message: fmt::Arguments<'_>) {
+    fn log_auto_splitter(&mut self, message: fmt::Arguments) {
         log::info!(target: "Auto Splitter", "{message}");
     }
 
-    fn log_runtime(&mut self, message: fmt::Arguments<'_>, log_level: LogLevel) {
+    fn log_runtime(&mut self, message: fmt::Arguments, log_level: LogLevel) {
         let level = match log_level {
             LogLevel::Trace => log::Level::Trace,
             LogLevel::Debug => log::Level::Debug,

@@ -556,7 +556,7 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
     fn render_key_value_component(
         &mut self,
         key: &str,
-        abbreviations: &[Cow<'_, str>],
+        abbreviations: &[Cow<str>],
         key_label: &mut AbbreviatedLabel<A::Label>,
         value: &str,
         value_label: &mut CachedLabel<A::Label>,

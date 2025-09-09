@@ -13,7 +13,7 @@ use crate::{
 
 pub use crate::component::splits::Component;
 
-pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()> {
+pub fn settings(reader: &mut Reader, component: &mut Component) -> Result<()> {
     let settings = component.settings_mut();
     let mut split_gradient_builder = GradientBuilder::<GradientKind>::with_tags(
         "CurrentSplitTopColor",

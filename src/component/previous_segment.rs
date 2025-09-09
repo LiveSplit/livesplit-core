@@ -120,7 +120,7 @@ impl Component {
     pub fn update_state(
         &self,
         state: &mut key_value::State,
-        timer: &Snapshot<'_>,
+        timer: &Snapshot,
         layout_settings: &GeneralLayoutSettings,
     ) {
         let mut time_change = None;
@@ -245,7 +245,7 @@ impl Component {
     /// settings provided.
     pub fn state(
         &self,
-        timer: &Snapshot<'_>,
+        timer: &Snapshot,
         layout_settings: &GeneralLayoutSettings,
     ) -> key_value::State {
         let mut state = Default::default();

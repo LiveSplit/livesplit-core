@@ -16,7 +16,7 @@ pub struct Map {
 
 impl fmt::Debug for Map {
     #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         fmt::Debug::fmt(&self.values, f)
     }
 }

@@ -7,7 +7,7 @@ use std::{
     io::{Result, Write},
 };
 
-fn get_hl_type(ty: &Type) -> Cow<str> {
+fn get_hl_type(ty: &Type) -> Cow<'_, str> {
     if ty.is_custom {
         match ty.kind {
             TypeKind::Ref => Cow::Owned(format!("{}Ref", ty.name)),
@@ -46,7 +46,7 @@ fn get_ll_type(ty: &Type) -> &str {
     }
 }
 
-fn get_input_name(name: &str) -> Cow<str> {
+fn get_input_name(name: &str) -> Cow<'_, str> {
     if name == "this" {
         Cow::Borrowed("self")
     } else {

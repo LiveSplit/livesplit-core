@@ -4,7 +4,7 @@ use crate::{
     platform::prelude::*,
     run::RunMetadata,
     settings::{ImageCache, ImageId},
-    timing::formatter::{none_wrapper::EmptyWrapper, Accuracy, SegmentTime, TimeFormatter},
+    timing::formatter::{Accuracy, SegmentTime, TimeFormatter, none_wrapper::EmptyWrapper},
 };
 use serde_derive::{Deserialize, Serialize};
 
@@ -59,7 +59,7 @@ pub struct Buttons {
 }
 
 /// Describes the current state of a segment.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Segment {
     /// The icon of the segment. The associated image can be looked up in the
     /// image cache. The image may be the empty image. This indicates that there
@@ -82,7 +82,7 @@ pub struct Segment {
 }
 
 /// Describes a segment's selection state.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum SelectionState {
     /// The segment is not selected.
     NotSelected,

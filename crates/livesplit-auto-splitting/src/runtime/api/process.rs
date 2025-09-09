@@ -15,7 +15,7 @@ use super::{get_arr_mut, get_slice_mut, get_str, get_two_slice_mut, memory_and_c
 pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationError> {
     linker
         .func_wrap("env", "process_attach", {
-            |mut caller: Caller<'_, Context<T>>, ptr: u32, len: u32| {
+            |mut caller: Caller<Context<T>>, ptr: u32, len: u32| {
                 let (memory, context) = memory_and_context(&mut caller);
                 let process_name = get_str(memory, ptr, len)?;
                 Ok(
@@ -39,13 +39,11 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "process_attach",
         })?
         .func_wrap("env", "process_attach_by_pid", {
-            |mut caller: Caller<'_, Context<T>>, pid: u64| {
+            |mut caller: Caller<Context<T>>, pid: u64| {
                 let (_, context) = memory_and_context(&mut caller);
                 Ok(
-                    if let Some(p) = pid
-                        .try_into()
-                        .ok()
-                        .and_then(|pid| Process::with_pid(pid, &mut context.process_list).ok())
+                    if let Ok(pid) = pid.try_into()
+                        && let Ok(p) = Process::with_pid(pid, &mut context.process_list)
                     {
                         context.timer.log_runtime(
                             format_args!(
@@ -66,7 +64,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "process_attach_by_pid",
         })?
         .func_wrap("env", "process_detach", {
-            |mut caller: Caller<'_, Context<T>>, process: u64| {
+            |mut caller: Caller<Context<T>>, process: u64| {
                 caller
                     .data_mut()
                     .processes
@@ -84,7 +82,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "process_detach",
         })?
         .func_wrap("env", "process_list_by_name", {
-            |mut caller: Caller<'_, Context<T>>,
+            |mut caller: Caller<Context<T>>,
              name_ptr: u32,
              name_len: u32,
              list_ptr: u32,
@@ -131,7 +129,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "process_list_by_name",
         })?
         .func_wrap("env", "process_is_open", {
-            |mut caller: Caller<'_, Context<T>>, process: u64| {
+            |mut caller: Caller<Context<T>>, process: u64| {
                 let ctx = caller.data_mut();
                 let proc = ctx
                     .processes
@@ -145,7 +143,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "process_is_open",
         })?
         .func_wrap("env", "process_read", {
-            |mut caller: Caller<'_, Context<T>>,
+            |mut caller: Caller<Context<T>>,
              process: u64,
              address: u64,
              buf_ptr: u32,
@@ -164,7 +162,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "process_read",
         })?
         .func_wrap("env", "process_get_module_address", {
-            |mut caller: Caller<'_, Context<T>>, process: u64, ptr: u32, len: u32| {
+            |mut caller: Caller<Context<T>>, process: u64, ptr: u32, len: u32| {
                 let (memory, context) = memory_and_context(&mut caller);
                 let module_name = get_str(memory, ptr, len)?;
                 Ok(context
@@ -180,7 +178,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "process_get_module_address",
         })?
         .func_wrap("env", "process_get_module_size", {
-            |mut caller: Caller<'_, Context<T>>, process: u64, ptr: u32, len: u32| {
+            |mut caller: Caller<Context<T>>, process: u64, ptr: u32, len: u32| {
                 let (memory, context) = memory_and_context(&mut caller);
                 let module_name = get_str(memory, ptr, len)?;
                 Ok(context
@@ -196,7 +194,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "process_get_module_size",
         })?
         .func_wrap("env", "process_get_module_path", {
-            |mut caller: Caller<'_, Context<T>>,
+            |mut caller: Caller<Context<T>>,
              process: u64,
              name_ptr: u32,
              name_len: u32,
@@ -232,7 +230,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "process_get_module_path",
         })?
         .func_wrap("env", "process_get_path", {
-            |mut caller: Caller<'_, Context<T>>, process: u64, ptr: u32, len_ptr: u32| {
+            |mut caller: Caller<Context<T>>, process: u64, ptr: u32, len_ptr: u32| {
                 let (memory, context) = memory_and_context(&mut caller);
                 let path = context
                     .processes
@@ -265,7 +263,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "process_get_path",
         })?
         .func_wrap("env", "process_get_memory_range_count", {
-            |mut caller: Caller<'_, Context<T>>, process: u64| {
+            |mut caller: Caller<Context<T>>, process: u64| {
                 let ctx = caller.data_mut();
                 Ok(ctx
                     .processes
@@ -280,7 +278,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "process_get_memory_range_count",
         })?
         .func_wrap("env", "process_get_memory_range_address", {
-            |mut caller: Caller<'_, Context<T>>, process: u64, idx: u64| {
+            |mut caller: Caller<Context<T>>, process: u64, idx: u64| {
                 let ctx = caller.data_mut();
                 Ok(ctx
                     .processes
@@ -295,7 +293,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "process_get_memory_range_address",
         })?
         .func_wrap("env", "process_get_memory_range_size", {
-            |mut caller: Caller<'_, Context<T>>, process: u64, idx: u64| {
+            |mut caller: Caller<Context<T>>, process: u64, idx: u64| {
                 let ctx = caller.data_mut();
                 Ok(ctx
                     .processes
@@ -310,7 +308,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "process_get_memory_range_size",
         })?
         .func_wrap("env", "process_get_memory_range_flags", {
-            |mut caller: Caller<'_, Context<T>>, process: u64, idx: u64| {
+            |mut caller: Caller<Context<T>>, process: u64, idx: u64| {
                 let ctx = caller.data_mut();
                 Ok(ctx
                     .processes

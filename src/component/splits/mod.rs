@@ -272,7 +272,7 @@ impl Component {
         &mut self,
         state: &mut State,
         image_cache: &mut ImageCache,
-        timer: &Snapshot<'_>,
+        timer: &Snapshot,
         layout_settings: &GeneralLayoutSettings,
     ) {
         // Reset Scroll Offset when any movement of the split index is observed.
@@ -413,7 +413,7 @@ impl Component {
     pub fn state(
         &mut self,
         image_cache: &mut ImageCache,
-        timer: &Snapshot<'_>,
+        timer: &Snapshot,
         layout_settings: &GeneralLayoutSettings,
     ) -> State {
         let mut state = Default::default();

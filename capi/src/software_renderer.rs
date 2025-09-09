@@ -17,7 +17,7 @@ impl SoftwareRenderer {
         panic!("The software renderer is not compiled in.")
     }
 
-    #[allow(warnings)]
+    #[expect(warnings)]
     fn render(
         &mut self,
         _: &LayoutState,

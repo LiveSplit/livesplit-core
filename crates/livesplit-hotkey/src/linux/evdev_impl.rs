@@ -1,10 +1,10 @@
 use std::{collections::hash_map::HashMap, os::unix::prelude::AsRawFd, ptr, thread};
 
 use evdev::{Device, EventType, InputEventKind, Key};
-use mio::{unix::SourceFd, Events, Interest, Poll, Token, Waker};
-use x11_dl::xlib::{Xlib, _XDisplay};
+use mio::{Events, Interest, Poll, Token, Waker, unix::SourceFd};
+use x11_dl::xlib::{_XDisplay, Xlib};
 
-use super::{x11_impl, Error, Hook, Message};
+use super::{Error, Hook, Message, x11_impl};
 use crate::{KeyCode, Modifiers, Result};
 
 // Low numbered tokens are allocated to devices.
@@ -344,7 +344,9 @@ pub fn new() -> Result<Hook> {
             }
         }
 
-        if let (Some(xlib), Some(display)) = (xlib, display) {
+        if let Some(xlib) = xlib
+            && let Some(display) = display
+        {
             unsafe { (xlib.XCloseDisplay)(display) };
         }
 

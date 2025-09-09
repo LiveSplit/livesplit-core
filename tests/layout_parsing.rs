@@ -81,17 +81,20 @@ mod parse {
                 panic!("expected Text::Variable");
             };
             assert_eq!(variable_name, "hits");
-            assert_eq!(is_split, true);
+            assert!(is_split);
         }
         {
             let text::Text::Variable(ref variable_name, is_split) = texts[1].settings().text else {
                 panic!("expected Text::Variable");
             };
             assert_eq!(variable_name, "pb hits");
-            assert_eq!(is_split, true);
+            assert!(is_split);
         }
         let l1 = ls1l(layout_files::CUSTOM_VARIABLE_LS1L);
-        assert_eq!(serde_json::to_string(&l.settings()).ok(), serde_json::to_string(&l1.settings()).ok());
+        assert_eq!(
+            serde_json::to_string(&l.settings()).ok(),
+            serde_json::to_string(&l1.settings()).ok()
+        );
     }
 
     #[test]
@@ -132,17 +135,20 @@ mod parse {
                 panic!("expected Text::Variable");
             };
             assert_eq!(variable_name, "hits");
-            assert_eq!(is_split, true);
+            assert!(is_split);
         }
         {
             let text::Text::Variable(ref variable_name, is_split) = texts[1].settings().text else {
                 panic!("expected Text::Variable");
             };
             assert_eq!(variable_name, "pb hits");
-            assert_eq!(is_split, true);
+            assert!(is_split);
         }
         let l1 = ls1l(layout_files::CUSTOM_VARIABLE_LS1L);
-        assert_eq!(serde_json::to_string(&l.settings()).ok(), serde_json::to_string(&l1.settings()).ok());
+        assert_eq!(
+            serde_json::to_string(&l.settings()).ok(),
+            serde_json::to_string(&l1.settings()).ok()
+        );
     }
 
     #[test]

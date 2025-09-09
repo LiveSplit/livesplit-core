@@ -1,6 +1,6 @@
 use std::str;
 
-use anyhow::{format_err, Context as _, Result};
+use anyhow::{Context as _, Result, format_err};
 use wasmtime::{Caller, Linker};
 
 use crate::{CreationError, Timer};
@@ -29,7 +29,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
 }
 
 fn memory_and_context<'a, T: Timer>(
-    caller: &'a mut Caller<'_, Context<T>>,
+    caller: &'a mut Caller<Context<T>>,
 ) -> (&'a mut [u8], &'a mut Context<T>) {
     caller.data().memory.unwrap().data_and_store_mut(caller)
 }

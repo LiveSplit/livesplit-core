@@ -384,21 +384,21 @@ impl ResourceAllocator for CanvasAllocator {
         label.shape = shape;
 
         // FIXME: Pop from the existing shape instead.
-        if let Some(max_width) = max_width {
-            if label.width > max_width {
-                let mut text = text.to_owned();
-                while let Some((drain_index, _)) = text.char_indices().next_back() {
-                    text.drain(drain_index..);
-                    text.push('…');
-                    let (shape, width) = font.font_handling.shape(&text, &self.ctx_top);
-                    label.shape = shape;
-                    label.width = width;
-                    if label.width <= max_width {
-                        break;
-                    } else {
-                        const ELLIPSIS_LEN: usize = '…'.len_utf8();
-                        text.drain(text.len() - ELLIPSIS_LEN..);
-                    }
+        if let Some(max_width) = max_width
+            && label.width > max_width
+        {
+            let mut text = text.to_owned();
+            while let Some((drain_index, _)) = text.char_indices().next_back() {
+                text.drain(drain_index..);
+                text.push('…');
+                let (shape, width) = font.font_handling.shape(&text, &self.ctx_top);
+                label.shape = shape;
+                label.width = width;
+                if label.width <= max_width {
+                    break;
+                } else {
+                    const ELLIPSIS_LEN: usize = '…'.len_utf8();
+                    text.drain(text.len() - ELLIPSIS_LEN..);
                 }
             }
         }

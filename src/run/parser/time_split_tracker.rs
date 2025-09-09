@@ -1,13 +1,14 @@
 //! Provides the parser for Time Split Tracker splits files.
 
 use super::super::AddComparisonError;
+#[cfg(feature = "std")]
+use crate::{AtomicDateTime, settings::Image};
 use crate::{
+    RealTime, Run, Segment, Time, TimeSpan,
     comparison::RACE_COMPARISON_PREFIX,
     platform::{path::Path, prelude::*},
-    timing, RealTime, Run, Segment, Time, TimeSpan,
+    timing,
 };
-#[cfg(feature = "std")]
-use crate::{settings::Image, AtomicDateTime};
 use alloc::borrow::Cow;
 use core::{fmt::Write, num::ParseIntError, result::Result as StdResult};
 use snafu::{OptionExt, ResultExt};

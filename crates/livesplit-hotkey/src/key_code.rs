@@ -1160,7 +1160,7 @@ pub enum KeyCode {
 }
 
 impl fmt::Debug for KeyCode {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str(self.name())
     }
 }
@@ -1188,7 +1188,7 @@ struct KeyCodeVisitor;
 impl serde::de::Visitor<'_> for KeyCodeVisitor {
     type Value = KeyCode;
 
-    fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         formatter.write_str("a valid key code")
     }
 
@@ -1308,7 +1308,7 @@ struct KeyCodeClassVisitor;
 impl serde::de::Visitor<'_> for KeyCodeClassVisitor {
     type Value = KeyCodeClass;
 
-    fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         formatter.write_str("a valid key code class")
     }
 
@@ -1844,17 +1844,18 @@ impl KeyCode {
     /// Resolves the key according to the current keyboard layout.
     pub fn resolve(self, hook: &Hook) -> Cow<'static, str> {
         let class = self.classify();
-        if class == KeyCodeClass::WritingSystem {
-            if let Some(resolved) = hook.0.try_resolve(self) {
-                let uppercase = if resolved != "ß" {
-                    resolved.to_uppercase()
-                } else {
-                    resolved
-                };
-                return uppercase.into();
-            }
+        if class == KeyCodeClass::WritingSystem
+            && let Some(resolved) = hook.0.try_resolve(self)
+        {
+            let uppercase = if resolved != "ß" {
+                resolved.to_uppercase()
+            } else {
+                resolved
+            };
+            uppercase.into()
+        } else {
+            self.resolve_en_us().into()
         }
-        self.resolve_en_us().into()
     }
 }
 

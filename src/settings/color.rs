@@ -231,7 +231,7 @@ impl<'de> Deserialize<'de> for Color {
 mod tests {
     use super::*;
 
-    #[allow(clippy::float_cmp)]
+    #[expect(clippy::float_cmp)]
     #[test]
     fn to_hsva() {
         assert_eq!(

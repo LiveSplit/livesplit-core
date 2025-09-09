@@ -13,7 +13,7 @@ use super::{get_arr_mut, get_slice_mut, get_str, memory_and_context};
 pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationError> {
     linker
         .func_wrap("env", "setting_value_new_map", {
-            |mut caller: Caller<'_, Context<T>>, settings_map: u64| {
+            |mut caller: Caller<Context<T>>, settings_map: u64| {
                 let context = caller.data_mut();
 
                 let settings_map = context
@@ -33,7 +33,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "setting_value_new_map",
         })?
         .func_wrap("env", "setting_value_new_list", {
-            |mut caller: Caller<'_, Context<T>>, settings_list: u64| {
+            |mut caller: Caller<Context<T>>, settings_list: u64| {
                 let context = caller.data_mut();
 
                 let settings_list = context
@@ -53,7 +53,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "setting_value_new_list",
         })?
         .func_wrap("env", "setting_value_new_bool", {
-            |mut caller: Caller<'_, Context<T>>, value: u32| {
+            |mut caller: Caller<Context<T>>, value: u32| {
                 Ok(caller
                     .data_mut()
                     .setting_values
@@ -67,7 +67,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "setting_value_new_bool",
         })?
         .func_wrap("env", "setting_value_new_i64", {
-            |mut caller: Caller<'_, Context<T>>, value: i64| {
+            |mut caller: Caller<Context<T>>, value: i64| {
                 Ok(caller
                     .data_mut()
                     .setting_values
@@ -81,7 +81,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "setting_value_new_i64",
         })?
         .func_wrap("env", "setting_value_new_f64", {
-            |mut caller: Caller<'_, Context<T>>, value: f64| {
+            |mut caller: Caller<Context<T>>, value: f64| {
                 Ok(caller
                     .data_mut()
                     .setting_values
@@ -95,7 +95,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "setting_value_new_f64",
         })?
         .func_wrap("env", "setting_value_new_string", {
-            |mut caller: Caller<'_, Context<T>>, ptr: u32, len: u32| {
+            |mut caller: Caller<Context<T>>, ptr: u32, len: u32| {
                 let (memory, context) = memory_and_context(&mut caller);
                 let value = get_str(memory, ptr, len)?;
                 Ok(context
@@ -110,7 +110,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "setting_value_new_string",
         })?
         .func_wrap("env", "setting_value_free", {
-            |mut caller: Caller<'_, Context<T>>, setting_value: u64| {
+            |mut caller: Caller<Context<T>>, setting_value: u64| {
                 caller
                     .data_mut()
                     .setting_values
@@ -124,7 +124,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "setting_value_free",
         })?
         .func_wrap("env", "setting_value_copy", {
-            |mut caller: Caller<'_, Context<T>>, setting_value: u64| {
+            |mut caller: Caller<Context<T>>, setting_value: u64| {
                 let ctx = caller.data_mut();
 
                 let setting_value = ctx
@@ -141,7 +141,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "setting_value_copy",
         })?
         .func_wrap("env", "setting_value_get_type", {
-            |mut caller: Caller<'_, Context<T>>, setting_value: u64| -> Result<u32> {
+            |mut caller: Caller<Context<T>>, setting_value: u64| -> Result<u32> {
                 let (_, context) = memory_and_context(&mut caller);
 
                 let setting_value = context
@@ -164,7 +164,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "setting_value_get_type",
         })?
         .func_wrap("env", "setting_value_get_map", {
-            |mut caller: Caller<'_, Context<T>>, setting_value: u64, value_ptr: u32| {
+            |mut caller: Caller<Context<T>>, setting_value: u64, value_ptr: u32| {
                 let (memory, context) = memory_and_context(&mut caller);
 
                 let setting_value = context
@@ -192,7 +192,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "setting_value_get_map",
         })?
         .func_wrap("env", "setting_value_get_list", {
-            |mut caller: Caller<'_, Context<T>>, setting_value: u64, value_ptr: u32| {
+            |mut caller: Caller<Context<T>>, setting_value: u64, value_ptr: u32| {
                 let (memory, context) = memory_and_context(&mut caller);
 
                 let setting_value = context
@@ -220,7 +220,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "setting_value_get_list",
         })?
         .func_wrap("env", "setting_value_get_bool", {
-            |mut caller: Caller<'_, Context<T>>, setting_value: u64, value_ptr: u32| {
+            |mut caller: Caller<Context<T>>, setting_value: u64, value_ptr: u32| {
                 let (memory, context) = memory_and_context(&mut caller);
 
                 let setting_value = context
@@ -243,7 +243,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "setting_value_get_bool",
         })?
         .func_wrap("env", "setting_value_get_i64", {
-            |mut caller: Caller<'_, Context<T>>, setting_value: u64, value_ptr: u32| {
+            |mut caller: Caller<Context<T>>, setting_value: u64, value_ptr: u32| {
                 let (memory, context) = memory_and_context(&mut caller);
 
                 let setting_value = context
@@ -266,7 +266,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "setting_value_get_i64",
         })?
         .func_wrap("env", "setting_value_get_f64", {
-            |mut caller: Caller<'_, Context<T>>, setting_value: u64, value_ptr: u32| {
+            |mut caller: Caller<Context<T>>, setting_value: u64, value_ptr: u32| {
                 let (memory, context) = memory_and_context(&mut caller);
 
                 let setting_value = context
@@ -289,10 +289,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "setting_value_get_f64",
         })?
         .func_wrap("env", "setting_value_get_string", {
-            |mut caller: Caller<'_, Context<T>>,
-             setting_value: u64,
-             buf_ptr: u32,
-             buf_len_ptr: u32| {
+            |mut caller: Caller<Context<T>>, setting_value: u64, buf_ptr: u32, buf_len_ptr: u32| {
                 let (memory, context) = memory_and_context(&mut caller);
 
                 let setting_value = context

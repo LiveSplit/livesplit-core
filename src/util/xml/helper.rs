@@ -21,7 +21,7 @@ pub enum Error {
     ElementNotFound,
 }
 
-pub fn text_parsed<F, T, E>(reader: &mut Reader<'_>, f: F) -> Result<(), E>
+pub fn text_parsed<F, T, E>(reader: &mut Reader, f: F) -> Result<(), E>
 where
     F: FnOnce(T),
     T: str::FromStr,
@@ -52,7 +52,7 @@ where
     text_as_str_err(reader, f)
 }
 
-pub fn text_as_escaped_string_err<F, T, E>(reader: &mut Reader<'_>, f: F) -> Result<T, E>
+pub fn text_as_escaped_string_err<F, T, E>(reader: &mut Reader, f: F) -> Result<T, E>
 where
     F: FnOnce(&str) -> Result<T, E>,
     E: From<Error>,
@@ -103,7 +103,7 @@ where
     }
 }
 
-fn end_tag_immediately<E>(reader: &mut Reader<'_>) -> Result<(), E>
+fn end_tag_immediately<E>(reader: &mut Reader) -> Result<(), E>
 where
     E: From<Error>,
 {
@@ -117,7 +117,7 @@ where
     }
 }
 
-pub fn reencode_children(reader: &mut Reader<'_>, target_buf: &mut String) -> Result<(), Error> {
+pub fn reencode_children(reader: &mut Reader, target_buf: &mut String) -> Result<(), Error> {
     let mut writer = Writer::new_skip_header(target_buf);
     let mut depth = 0usize;
     loop {
@@ -166,7 +166,7 @@ pub fn reencode_children(reader: &mut Reader<'_>, target_buf: &mut String) -> Re
     }
 }
 
-pub fn end_tag<E>(reader: &mut Reader<'_>) -> Result<(), E>
+pub fn end_tag<E>(reader: &mut Reader) -> Result<(), E>
 where
     E: From<Error>,
 {
@@ -188,9 +188,9 @@ where
     }
 }
 
-pub fn single_child<F, T, E>(reader: &mut Reader<'_>, tag: &str, mut f: F) -> Result<T, E>
+pub fn single_child<F, T, E>(reader: &mut Reader, tag: &str, mut f: F) -> Result<T, E>
 where
-    F: FnMut(&mut Reader<'_>, Attributes<'_>) -> Result<T, E>,
+    F: FnMut(&mut Reader, Attributes) -> Result<T, E>,
     E: From<Error>,
 {
     let mut val = None;
@@ -205,9 +205,9 @@ where
     val.ok_or(Error::ElementNotFound.into())
 }
 
-pub fn parse_children<F, E>(reader: &mut Reader<'_>, mut f: F) -> Result<(), E>
+pub fn parse_children<F, E>(reader: &mut Reader, mut f: F) -> Result<(), E>
 where
-    F: FnMut(&mut Reader<'_>, TagName<'_>, Attributes<'_>) -> Result<(), E>,
+    F: FnMut(&mut Reader, TagName, Attributes) -> Result<(), E>,
     E: From<Error>,
 {
     loop {
@@ -223,9 +223,9 @@ where
     }
 }
 
-pub fn parse_base<F, E>(reader: &mut Reader<'_>, tag: &str, mut f: F) -> Result<(), E>
+pub fn parse_base<F, E>(reader: &mut Reader, tag: &str, mut f: F) -> Result<(), E>
 where
-    F: FnMut(&mut Reader<'_>, Attributes<'_>) -> Result<(), E>,
+    F: FnMut(&mut Reader, Attributes) -> Result<(), E>,
     E: From<Error>,
 {
     loop {
@@ -258,7 +258,7 @@ where
 }
 
 pub fn optional_attribute_escaped_err<F, E>(
-    attributes: Attributes<'_>,
+    attributes: Attributes,
     key: &str,
     mut f: F,
 ) -> Result<(), E>
@@ -276,7 +276,7 @@ where
     })
 }
 
-pub fn attribute_escaped_err<F, E>(attributes: Attributes<'_>, key: &str, mut f: F) -> Result<(), E>
+pub fn attribute_escaped_err<F, E>(attributes: Attributes, key: &str, mut f: F) -> Result<(), E>
 where
     F: FnMut(&str) -> Result<(), E>,
     E: From<Error>,
@@ -331,11 +331,7 @@ where
     })
 }
 
-pub fn image<F, E>(
-    reader: &mut Reader<'_>,
-    image_buf: &mut Vec<MaybeUninit<u8>>,
-    f: F,
-) -> Result<(), E>
+pub fn image<F, E>(reader: &mut Reader, image_buf: &mut Vec<MaybeUninit<u8>>, f: F) -> Result<(), E>
 where
     F: FnOnce(&[u8]),
     E: From<Error>,

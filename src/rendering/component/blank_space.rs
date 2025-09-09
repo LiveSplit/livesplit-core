@@ -1,10 +1,10 @@
 use crate::{
     component::blank_space::State,
-    rendering::{resource::ResourceAllocator, RenderContext},
+    rendering::{RenderContext, resource::ResourceAllocator},
 };
 
 pub(in crate::rendering) fn render(
-    context: &mut RenderContext<'_, impl ResourceAllocator>,
+    context: &mut RenderContext<impl ResourceAllocator>,
     dim: [f32; 2],
     component: &State,
 ) {

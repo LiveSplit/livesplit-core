@@ -22,7 +22,7 @@ impl<T: fmt::Write> Writer<T> {
         text.write_escaped(&mut self.sink)
     }
 
-    pub fn tag<O, E: From<fmt::Error>, F: FnOnce(AttributeWriter<'_, T>) -> Result<O, E>>(
+    pub fn tag<O, E: From<fmt::Error>, F: FnOnce(AttributeWriter<T>) -> Result<O, E>>(
         &mut self,
         tag: &str,
         f: F,
@@ -112,7 +112,7 @@ impl<T: fmt::Write> Writer<T> {
     pub fn just_start_tag<
         O,
         E: From<fmt::Error>,
-        F: FnOnce(&mut AttributeWriter<'_, T>) -> Result<O, E>,
+        F: FnOnce(&mut AttributeWriter<T>) -> Result<O, E>,
     >(
         &mut self,
         tag: &str,

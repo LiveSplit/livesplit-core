@@ -18,7 +18,7 @@ bitflags::bitflags! {
 }
 
 impl fmt::Display for Modifiers {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let mut first = true;
         if self.contains(Modifiers::CONTROL) {
             first = false;
@@ -89,7 +89,7 @@ struct ModifiersVisitor;
 impl serde::de::Visitor<'_> for ModifiersVisitor {
     type Value = Modifiers;
 
-    fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         formatter.write_str("valid modifiers")
     }
 

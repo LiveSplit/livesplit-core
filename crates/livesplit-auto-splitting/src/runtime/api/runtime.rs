@@ -13,7 +13,7 @@ use super::{get_arr_mut, get_slice_mut, get_str, memory_and_context};
 pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationError> {
     linker
         .func_wrap("env", "runtime_set_tick_rate", {
-            |mut caller: Caller<'_, Context<T>>, ticks_per_sec: f64| -> Result<()> {
+            |mut caller: Caller<Context<T>>, ticks_per_sec: f64| -> Result<()> {
                 caller.data_mut().timer.log_runtime(
                     format_args!("New Tick Rate: {ticks_per_sec}"),
                     LogLevel::Debug,
@@ -42,7 +42,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "runtime_set_tick_rate",
         })?
         .func_wrap("env", "runtime_print_message", {
-            |mut caller: Caller<'_, Context<T>>, ptr: u32, len: u32| {
+            |mut caller: Caller<Context<T>>, ptr: u32, len: u32| {
                 let (memory, context) = memory_and_context(&mut caller);
                 let message = get_str(memory, ptr, len)?;
                 context.timer.log_auto_splitter(format_args!("{message}"));
@@ -54,7 +54,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "runtime_print_message",
         })?
         .func_wrap("env", "runtime_get_os", {
-            |mut caller: Caller<'_, Context<T>>, ptr: u32, len_ptr: u32| {
+            |mut caller: Caller<Context<T>>, ptr: u32, len_ptr: u32| {
                 let (memory, _) = memory_and_context(&mut caller);
 
                 let len_bytes = get_arr_mut(memory, len_ptr)?;
@@ -74,7 +74,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "runtime_get_os",
         })?
         .func_wrap("env", "runtime_get_arch", {
-            |mut caller: Caller<'_, Context<T>>, ptr: u32, len_ptr: u32| {
+            |mut caller: Caller<Context<T>>, ptr: u32, len_ptr: u32| {
                 let (memory, _) = memory_and_context(&mut caller);
 
                 let len_bytes = get_arr_mut(memory, len_ptr)?;

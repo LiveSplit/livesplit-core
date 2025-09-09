@@ -1,6 +1,6 @@
 //! Provides the parser for SplitterZ splits files.
 
-use crate::{timing, RealTime, Run, Segment, TimeSpan};
+use crate::{RealTime, Run, Segment, TimeSpan, timing};
 use alloc::borrow::Cow;
 use core::{num::ParseIntError, result::Result as StdResult};
 use snafu::ResultExt;
@@ -101,18 +101,16 @@ pub fn parse(source: &str, #[allow(unused)] load_icons: bool) -> Result<Run> {
         }
 
         #[cfg(feature = "std")]
-        if load_icons {
-            if let Some(icon_path) = splits.next() {
-                if !icon_path.is_empty() {
-                    if let Ok(image) = crate::settings::Image::from_file(
-                        unescape(icon_path).as_ref(),
-                        &mut icon_buf,
-                        crate::settings::Image::ICON,
-                    ) {
-                        segment.set_icon(image);
-                    }
-                }
-            }
+        if load_icons
+            && let Some(icon_path) = splits.next()
+            && !icon_path.is_empty()
+            && let Ok(image) = crate::settings::Image::from_file(
+                unescape(icon_path).as_ref(),
+                &mut icon_buf,
+                crate::settings::Image::ICON,
+            )
+        {
+            segment.set_icon(image);
         }
 
         run.push_segment(segment);

@@ -27,7 +27,7 @@ pub struct Image {
 }
 
 impl fmt::Debug for Image {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.debug_struct("Image")
             .field("is_empty", &self.is_empty())
             .field("id", &self.id)
@@ -79,7 +79,7 @@ struct ImageVisitor;
 impl Visitor<'_> for ImageVisitor {
     type Value = Image;
 
-    fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         formatter.write_str("a base64 encoded image or its bytes")
     }
 
@@ -177,7 +177,6 @@ impl Image {
     /// Accesses the image's data. If the image's data is empty, this returns an
     /// empty slice.
     #[inline]
-    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     pub fn data(&self) -> &[u8] {
         self
     }

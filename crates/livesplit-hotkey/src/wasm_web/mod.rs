@@ -18,7 +18,7 @@ pub enum Error {
 }
 
 impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str(match self {
             Self::FailedToCreateHook => "Failed creating the hook.",
         })
@@ -162,10 +162,10 @@ impl Hook {
             let keyboard_layout_resolver = keyboard_layout_resolver.clone();
 
             let closure = Closure::wrap(Box::new(move |layout_map| {
-                if let Ok(get_fn) = Reflect::get(&layout_map, &JsValue::from_str("get")) {
-                    if let Ok(get_fn) = get_fn.dyn_into::<Function>() {
-                        *keyboard_layout_resolver.borrow_mut() = Some((layout_map, get_fn));
-                    }
+                if let Ok(get_fn) = Reflect::get(&layout_map, &JsValue::from_str("get"))
+                    && let Ok(get_fn) = get_fn.dyn_into::<Function>()
+                {
+                    *keyboard_layout_resolver.borrow_mut() = Some((layout_map, get_fn));
                 }
             }) as Box<dyn FnMut(JsValue)>);
 
@@ -190,12 +190,12 @@ impl Hook {
                         {
                             if let Ok(button) = button.dyn_into::<GamepadButton>() {
                                 let pressed = button.pressed();
-                                if pressed && !*state {
-                                    if let Some(callback) =
+                                if pressed
+                                    && !*state
+                                    && let Some(callback) =
                                         hotkey_map.lock().unwrap().get_mut(&code.into())
-                                    {
-                                        callback();
-                                    }
+                                {
+                                    callback();
                                 }
                                 *state = pressed;
                             }

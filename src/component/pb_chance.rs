@@ -78,7 +78,7 @@ impl Component {
     }
 
     /// Updates the component's state based on the timer provided.
-    pub fn update_state(&self, state: &mut key_value::State, timer: &Snapshot<'_>) {
+    pub fn update_state(&self, state: &mut key_value::State, timer: &Snapshot) {
         let (chance, is_live) = pb_chance::for_timer(timer);
 
         state.background = self.settings.background;
@@ -98,7 +98,7 @@ impl Component {
     }
 
     /// Calculates the component's state based on the timer provided.
-    pub fn state(&self, timer: &Snapshot<'_>) -> key_value::State {
+    pub fn state(&self, timer: &Snapshot) -> key_value::State {
         let mut state = Default::default();
         self.update_state(&mut state, timer);
         state

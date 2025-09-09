@@ -22,7 +22,7 @@ pub enum Error {
 /// The Result type for the SourceLiveTimer parser.
 pub type Result<T> = StdResult<T, Error>;
 
-#[allow(non_snake_case)]
+#[expect(non_snake_case)]
 #[derive(Deserialize)]
 struct Splits<'a> {
     #[serde(borrow)]
@@ -32,7 +32,7 @@ struct Splits<'a> {
     Splits: Option<Vec<Split<'a>>>,
 }
 
-#[allow(non_snake_case)]
+#[expect(non_snake_case)]
 #[derive(Deserialize)]
 struct Split<'a> {
     #[serde(borrow)]

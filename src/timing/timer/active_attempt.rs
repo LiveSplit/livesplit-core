@@ -159,7 +159,7 @@ impl ActiveAttempt {
         }
     }
 
-    pub fn current_split_index_overflowing(&self, run: &Run) -> usize {
+    pub const fn current_split_index_overflowing(&self, run: &Run) -> usize {
         match self.state {
             State::NotEnded {
                 current_split_index,

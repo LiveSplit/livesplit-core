@@ -128,7 +128,6 @@ impl Editor {
         self.update_segment_list();
     }
 
-    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     fn active_segment_index(&self) -> usize {
         *self.selected_segments.last().unwrap()
     }
@@ -405,11 +404,11 @@ impl Editor {
     /// variable does not exist, or is not a permanent variable, nothing
     /// happens.
     pub fn remove_custom_variable(&mut self, name: &str) {
-        if let Some(variable) = self.run.metadata().custom_variable(name) {
-            if variable.is_permanent {
-                self.run.metadata_mut().remove_custom_variable(name);
-                self.raise_run_edited();
-            }
+        if let Some(variable) = self.run.metadata().custom_variable(name)
+            && variable.is_permanent
+        {
+            self.run.metadata_mut().remove_custom_variable(name);
+            self.raise_run_edited();
         }
     }
 
@@ -597,7 +596,7 @@ impl Editor {
 
     /// Checks if the currently selected segments can be removed. If all
     /// segments are selected, they can't be removed.
-    pub fn can_remove_segments(&self) -> bool {
+    pub const fn can_remove_segments(&self) -> bool {
         self.run.len() > self.selected_segments.len()
     }
 
@@ -655,13 +654,13 @@ impl Editor {
             // time and the other has has a non None time
             let first_history = first.segment_history().get(run_index);
             let second_history = second.segment_history().get(run_index);
-            if let (Some(first_history), Some(second_history)) = (first_history, second_history) {
-                if first_history.real_time.is_some() != second_history.real_time.is_some()
-                    || first_history.game_time.is_some() != second_history.game_time.is_some()
-                {
-                    first.segment_history_mut().remove(run_index);
-                    second.segment_history_mut().remove(run_index);
-                }
+            if let Some(first_history) = first_history
+                && let Some(second_history) = second_history
+                && (first_history.real_time.is_some() != second_history.real_time.is_some()
+                    || first_history.game_time.is_some() != second_history.game_time.is_some())
+            {
+                first.segment_history_mut().remove(run_index);
+                second.segment_history_mut().remove(run_index);
             }
         }
 
@@ -685,7 +684,7 @@ impl Editor {
     /// Checks if the currently selected segments can be moved up. If any one of
     /// the selected segments is the first segment, then they can't be moved.
     pub fn can_move_segments_up(&self) -> bool {
-        !self.selected_segments.iter().any(|&s| s == 0)
+        !self.selected_segments.contains(&0)
     }
 
     /// Moves all the selected segments up, unless the first segment is
@@ -714,7 +713,7 @@ impl Editor {
     /// of the selected segments is the last segment, then they can't be moved.
     pub fn can_move_segments_down(&self) -> bool {
         let last_index = self.run.len() - 1;
-        !self.selected_segments.iter().any(|&s| s == last_index)
+        !self.selected_segments.contains(&last_index)
     }
 
     /// Moves all the selected segments down, unless the last segment is
@@ -775,8 +774,8 @@ impl Editor {
             }
         }
 
-        if let (Some(my_segment), Some(segment)) =
-            (self.run.segments_mut().last_mut(), run.segments().last())
+        if let [.., my_segment] = &mut self.run.segments_mut()[..]
+            && let [.., segment] = run.segments()
         {
             *my_segment.comparison_mut(comparison) = segment.personal_best_split_time();
         }

@@ -1,15 +1,15 @@
 use crate::{
+    GeneralLayoutSettings, Segment, TimeSpan, TimingMethod,
     analysis::{self, possible_time_save, split_color},
     comparison,
     component::splits::Settings as SplitsSettings,
     platform::prelude::*,
     settings::{Color, SemanticColor},
     timing::{
-        formatter::{Delta, Regular, SegmentTime, TimeFormatter},
         Snapshot,
+        formatter::{Delta, Regular, SegmentTime, TimeFormatter},
     },
     util::Clear,
-    GeneralLayoutSettings, Segment, TimeSpan, TimingMethod,
 };
 use core::fmt::Write;
 use serde_derive::{Deserialize, Serialize};
@@ -180,7 +180,7 @@ enum ColumnFormatter {
 pub fn update_state(
     state: &mut ColumnState,
     column_settings: &ColumnSettings,
-    timer: &Snapshot<'_>,
+    timer: &Snapshot,
     splits_settings: &SplitsSettings,
     layout_settings: &GeneralLayoutSettings,
     segment: &Segment,
@@ -193,20 +193,19 @@ pub fn update_state(
             state.value.clear();
             if let Some(value) = segment.variables().get(column.variable_name.as_str()) {
                 state.value.push_str(value);
-            } else if Some(segment_index) == current_split {
-                if let Some(value) = timer
+            } else if Some(segment_index) == current_split
+                && let Some(value) = timer
                     .run()
                     .metadata()
                     .custom_variable_value(column.variable_name.as_str())
-                {
-                    // FIXME: We show the live value of the variable, which means it
-                    // might update frequently. So we possibly should mark it as
-                    // such. However it's currently impossible to tell if it
-                    // actually does update frequently. On top of that, the text
-                    // component would need to support this as well, as it also
-                    // shows the live value of the variable.
-                    state.value.push_str(value);
-                }
+            {
+                // FIXME: We show the live value of the variable, which means it
+                // might update frequently. So we possibly should mark it as
+                // such. However it's currently impossible to tell if it
+                // actually does update frequently. On top of that, the text
+                // component would need to support this as well, as it also
+                // shows the live value of the variable.
+                state.value.push_str(value);
             }
             state.semantic_color = SemanticColor::Default;
             state.visual_color = layout_settings.text_color;
@@ -231,7 +230,7 @@ pub fn update_state(
 fn update_time_column(
     state: &mut ColumnState,
     column_settings: &TimeColumn,
-    timer: &Snapshot<'_>,
+    timer: &Snapshot,
     splits_settings: &SplitsSettings,
     layout_settings: &GeneralLayoutSettings,
     segment: &Segment,
@@ -320,7 +319,7 @@ fn update_time_column(
 
 fn time_column_update_value(
     column: &TimeColumn,
-    timer: &Snapshot<'_>,
+    timer: &Snapshot,
     segment: &Segment,
     segment_index: usize,
     current_split: Option<usize>,

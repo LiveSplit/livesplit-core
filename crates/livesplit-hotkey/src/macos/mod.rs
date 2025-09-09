@@ -46,7 +46,7 @@ impl From<Error> for crate::Error {
 }
 
 impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str(match self {
             Self::CouldntCreateEventTap => "Failed creating the event tap.",
             Self::CouldntCreateRunLoopSource => "Failed creating the run loop source.",

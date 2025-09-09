@@ -1,12 +1,12 @@
 use super::{
-    accuracy, color, comparison_override, end_tag, parse_bool, parse_children, GradientBuilder,
-    Result,
+    GradientBuilder, Result, accuracy, color, comparison_override, end_tag, parse_bool,
+    parse_children,
 };
 use crate::util::xml::Reader;
 
 pub use crate::component::previous_segment::Component;
 
-pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()> {
+pub fn settings(reader: &mut Reader, component: &mut Component) -> Result<()> {
     let settings = component.settings_mut();
     let mut background_builder = GradientBuilder::new();
     let mut override_label = false;

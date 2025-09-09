@@ -13,7 +13,7 @@ use super::{get_arr_mut, get_slice_mut, get_str, memory_and_context};
 pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationError> {
     linker
         .func_wrap("env", "settings_map_new", {
-            |mut caller: Caller<'_, Context<T>>| {
+            |mut caller: Caller<Context<T>>| {
                 let ctx = caller.data_mut();
                 ctx.settings_maps
                     .insert(settings::Map::new())
@@ -26,7 +26,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "settings_map_new",
         })?
         .func_wrap("env", "settings_map_free", {
-            |mut caller: Caller<'_, Context<T>>, settings_map: u64| {
+            |mut caller: Caller<Context<T>>, settings_map: u64| {
                 caller
                     .data_mut()
                     .settings_maps
@@ -40,7 +40,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "settings_map_free",
         })?
         .func_wrap("env", "settings_map_load", {
-            |mut caller: Caller<'_, Context<T>>| {
+            |mut caller: Caller<Context<T>>| {
                 let ctx = caller.data_mut();
                 let settings_map = ctx.shared_data.get_settings_map();
                 ctx.settings_maps.insert(settings_map).data().as_ffi()
@@ -51,7 +51,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "settings_map_load",
         })?
         .func_wrap("env", "settings_map_store", {
-            |mut caller: Caller<'_, Context<T>>, settings_map: u64| {
+            |mut caller: Caller<Context<T>>, settings_map: u64| {
                 let ctx = caller.data_mut();
 
                 let settings_map = ctx
@@ -70,7 +70,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "settings_map_store",
         })?
         .func_wrap("env", "settings_map_store_if_unchanged", {
-            |mut caller: Caller<'_, Context<T>>, old_settings_map: u64, new_settings_map: u64| {
+            |mut caller: Caller<Context<T>>, old_settings_map: u64, new_settings_map: u64| {
                 let ctx = caller.data_mut();
 
                 let old_settings_map = ctx
@@ -100,7 +100,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "settings_map_store_if_unchanged",
         })?
         .func_wrap("env", "settings_map_copy", {
-            |mut caller: Caller<'_, Context<T>>, settings_map: u64| {
+            |mut caller: Caller<Context<T>>, settings_map: u64| {
                 let ctx = caller.data_mut();
 
                 let settings_map = ctx
@@ -117,7 +117,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "settings_map_copy",
         })?
         .func_wrap("env", "settings_map_insert", {
-            |mut caller: Caller<'_, Context<T>>,
+            |mut caller: Caller<Context<T>>,
              settings_map: u64,
              key_ptr: u32,
              key_len: u32,
@@ -146,7 +146,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "settings_map_insert",
         })?
         .func_wrap("env", "settings_map_get", {
-            |mut caller: Caller<'_, Context<T>>, settings_map: u64, key_ptr: u32, key_len: u32| {
+            |mut caller: Caller<Context<T>>, settings_map: u64, key_ptr: u32, key_len: u32| {
                 let (memory, context) = memory_and_context(&mut caller);
 
                 let settings_map = context
@@ -167,7 +167,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "settings_map_get",
         })?
         .func_wrap("env", "settings_map_len", {
-            |mut caller: Caller<'_, Context<T>>, settings_map: u64| {
+            |mut caller: Caller<Context<T>>, settings_map: u64| {
                 let ctx = caller.data_mut();
 
                 let len = ctx
@@ -186,7 +186,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "settings_map_len",
         })?
         .func_wrap("env", "settings_map_get_key_by_index", {
-            |mut caller: Caller<'_, Context<T>>,
+            |mut caller: Caller<Context<T>>,
              settings_map: u64,
              index: u64,
              buf_ptr: u32,
@@ -225,7 +225,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             name: "settings_map_get_key_by_index",
         })?
         .func_wrap("env", "settings_map_get_value_by_index", {
-            |mut caller: Caller<'_, Context<T>>, settings_map: u64, index: u64| {
+            |mut caller: Caller<Context<T>>, settings_map: u64, index: u64| {
                 let ctx = caller.data_mut();
 
                 let maybe_slot = if let Ok(index) = index.try_into() {

@@ -1,5 +1,5 @@
 use crate::{
-    platform::{prelude::*, Duration},
+    platform::{Duration, prelude::*},
     util::ascii_char::AsciiChar,
 };
 use core::{
@@ -103,7 +103,6 @@ impl CustomParser for DefaultParser {}
 pub(crate) fn parse_custom<T: CustomParser>(mut text: &str) -> Result<TimeSpan, ParseError> {
     // It's faster to use `strip_prefix` with char literals if it's an ASCII
     // char, otherwise prefer using string literals.
-    #[allow(clippy::single_char_pattern)]
     let negate = if T::ALLOW_NEGATIVE {
         if let Some(remainder) = text.strip_prefix('-').or_else(|| {
             if T::ASCII_ONLY {
@@ -136,13 +135,7 @@ pub(crate) fn parse_custom<T: CustomParser>(mut text: &str) -> Result<TimeSpan, 
     let mut seconds = 0u64;
 
     let mut factor = 1;
-    let max_pieces = const {
-        if T::WITH_DAYS {
-            4
-        } else {
-            3
-        }
-    };
+    let max_pieces = const { if T::WITH_DAYS { 4 } else { 3 } };
     for i in 0.. {
         if i == max_pieces {
             return Err(ParseError::TooManyColons);
@@ -264,7 +257,7 @@ struct TimeSpanVisitor;
 impl Visitor<'_> for TimeSpanVisitor {
     type Value = TimeSpan;
 
-    fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         formatter.write_str("a string containing a time")
     }
 

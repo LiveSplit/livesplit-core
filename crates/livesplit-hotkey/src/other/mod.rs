@@ -7,7 +7,7 @@ pub enum Error {}
 
 impl fmt::Display for Error {
     #[inline]
-    fn fmt(&self, _: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, _: &mut fmt::Formatter) -> fmt::Result {
         Ok(())
     }
 }

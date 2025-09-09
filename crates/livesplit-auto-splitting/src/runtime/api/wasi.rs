@@ -2,18 +2,18 @@ use std::{
     collections::VecDeque,
     path::Path,
     sync::{
-        atomic::{self, AtomicUsize},
         Arc, Mutex,
+        atomic::{self, AtomicUsize},
     },
 };
 
 use bstr::ByteSlice;
 use wasmtime_wasi::{
-    preview1::WasiP1Ctx, DirPerms, FilePerms, OutputStream, Pollable, StdoutStream, StreamError,
-    WasiCtxBuilder,
+    DirPerms, FilePerms, OutputStream, Pollable, StdoutStream, StreamError, WasiCtxBuilder,
+    preview1::WasiP1Ctx,
 };
 
-use crate::{wasi_path, Timer};
+use crate::{Timer, wasi_path};
 
 const ERR_CAPACITY: usize = 1 << 20;
 
@@ -103,10 +103,10 @@ pub fn build(script_path: Option<&Path>) -> (WasiP1Ctx, StdErr) {
     let stderr = StdErr::new();
     wasi.stderr(stderr.clone());
 
-    if let Some(script_path) = script_path {
-        if let Some(path) = wasi_path::from_native(script_path) {
-            wasi.env("SCRIPT_PATH", &path);
-        }
+    if let Some(script_path) = script_path
+        && let Some(path) = wasi_path::from_native(script_path)
+    {
+        wasi.env("SCRIPT_PATH", &path);
     }
 
     #[cfg(windows)]

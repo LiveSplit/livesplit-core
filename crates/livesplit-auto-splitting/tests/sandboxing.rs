@@ -29,8 +29,8 @@ impl Timer for DummyTimer {
     fn pause_game_time(&mut self) {}
     fn resume_game_time(&mut self) {}
     fn set_variable(&mut self, _key: &str, _value: &str) {}
-    fn log_auto_splitter(&mut self, _message: fmt::Arguments<'_>) {}
-    fn log_runtime(&mut self, _message: fmt::Arguments<'_>, _log_level: LogLevel) {}
+    fn log_auto_splitter(&mut self, _message: fmt::Arguments) {}
+    fn log_runtime(&mut self, _message: fmt::Arguments, _log_level: LogLevel) {}
 }
 
 #[track_caller]

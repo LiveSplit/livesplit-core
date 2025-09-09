@@ -3,8 +3,8 @@
 //! is the Time Formatter pair used by the Timer Component.
 
 use super::{
-    format_padded, format_unpadded, Accuracy, DigitsFormat, TimeFormatter, DASH, MINUS,
-    SECONDS_PER_HOUR, SECONDS_PER_MINUTE,
+    Accuracy, DASH, DigitsFormat, MINUS, SECONDS_PER_HOUR, SECONDS_PER_MINUTE, TimeFormatter,
+    format_padded, format_unpadded,
 };
 use crate::TimeSpan;
 use core::fmt::{Display, Formatter, Result};
@@ -67,7 +67,7 @@ impl TimeFormatter<'_> for Time {
 }
 
 impl Display for TimeInner {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    fn fmt(&self, f: &mut Formatter) -> Result {
         if let Some(time) = self.time {
             let (total_seconds, nanoseconds) = time.to_seconds_and_subsec_nanoseconds();
             let total_seconds = if (total_seconds | nanoseconds as i64) < 0 {
@@ -179,7 +179,7 @@ impl TimeFormatter<'_> for Fraction {
 }
 
 impl Display for FractionInner {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    fn fmt(&self, f: &mut Formatter) -> Result {
         if let Some(time) = self.time {
             let nanoseconds = time.to_duration().subsec_nanoseconds().unsigned_abs();
             self.accuracy.format_nanoseconds(nanoseconds).fmt(f)

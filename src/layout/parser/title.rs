@@ -1,12 +1,12 @@
 use super::{
-    color, end_tag, parse_bool, parse_children, text_as_escaped_string_err, Alignment, Error,
-    GradientBuilder, Result,
+    Alignment, Error, GradientBuilder, Result, color, end_tag, parse_bool, parse_children,
+    text_as_escaped_string_err,
 };
 
 pub use crate::component::title::Component;
 use crate::util::xml::Reader;
 
-pub fn settings(reader: &mut Reader<'_>, component: &mut Component) -> Result<()> {
+pub fn settings(reader: &mut Reader, component: &mut Component) -> Result<()> {
     let settings = component.settings_mut();
     let mut background_builder = GradientBuilder::new();
     let mut override_title_color = false;

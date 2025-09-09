@@ -136,7 +136,7 @@ impl Timer {
     /// that was in use by the Timer is being returned. Before the Run is
     /// returned, the current attempt is reset and the splits are being updated
     /// depending on the `update_splits` parameter.
-    #[allow(clippy::result_large_err)]
+    #[expect(clippy::result_large_err)]
     pub fn replace_run(&mut self, mut run: Run, update_splits: bool) -> Result<Run, Run> {
         if run.is_empty() {
             return Err(run);
@@ -157,7 +157,7 @@ impl Timer {
     /// the Run provided contains no segments, it can't be used for timing and
     /// is returned as the Err case of the Result. The Run object in use by the
     /// Timer is dropped by this method.
-    #[allow(clippy::result_large_err)]
+    #[expect(clippy::result_large_err)]
     pub fn set_run(&mut self, run: Run) -> Result<(), Run> {
         self.replace_run(run, false).map(drop)
     }
@@ -236,7 +236,6 @@ impl Timer {
     /// Returns the current comparison that is being compared against. This may
     /// be a custom comparison or one of the Comparison Generators.
     #[inline]
-    #[allow(clippy::missing_const_for_fn)] // FIXME: Can't reason about Deref
     pub fn current_comparison(&self) -> &str {
         &self.current_comparison
     }
@@ -404,12 +403,11 @@ impl Timer {
 
         let last_segment = self.run.segments().last().unwrap();
 
-        if let Some(final_time) = last_segment.split_time()[timing_method] {
-            if last_segment.personal_best_split_time()[timing_method]
+        if let Some(final_time) = last_segment.split_time()[timing_method]
+            && last_segment.personal_best_split_time()[timing_method]
                 .is_none_or(|pb| final_time < pb)
-            {
-                return true;
-            }
+        {
+            return true;
         }
 
         false

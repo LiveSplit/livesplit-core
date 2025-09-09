@@ -1,4 +1,4 @@
-use crate::{platform::prelude::*, Segment, TimeSpan, TimingMethod};
+use crate::{Segment, TimeSpan, TimingMethod, platform::prelude::*};
 use core::cmp::Ordering;
 
 const WEIGHT: f64 = 0.75;
@@ -35,12 +35,12 @@ impl SkillCurve {
     }
 
     /// Returns the number of segments this skill curve is comprised of.
-    pub fn len(&self) -> usize {
+    pub const fn len(&self) -> usize {
         self.all_weighted_segment_times.len()
     }
 
     /// Returns `true` if there are no segments in this skill curve.
-    pub fn is_empty(&self) -> bool {
+    pub const fn is_empty(&self) -> bool {
         self.all_weighted_segment_times.is_empty()
     }
 

@@ -20,7 +20,7 @@ impl WebRenderer {
     /// default fonts. They are called "timer" and "fira". Make sure they are
     /// fully loaded before creating the renderer as otherwise information about
     /// a fallback font is cached instead.
-    #[allow(clippy::new_without_default)]
+    #[expect(clippy::new_without_default)]
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
         Self {

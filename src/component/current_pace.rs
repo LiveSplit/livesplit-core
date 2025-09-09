@@ -103,7 +103,7 @@ impl Component {
     }
 
     /// Updates the component's state based on the timer provided.
-    pub fn update_state(&self, state: &mut key_value::State, timer: &Snapshot<'_>) {
+    pub fn update_state(&self, state: &mut key_value::State, timer: &Snapshot) {
         let comparison = comparison::resolve(&self.settings.comparison_override, timer);
         let comparison = comparison::or_current(comparison, timer);
         let key = self.text(Some(comparison));
@@ -161,7 +161,7 @@ impl Component {
     }
 
     /// Calculates the component's state based on the timer provided.
-    pub fn state(&self, timer: &Snapshot<'_>) -> key_value::State {
+    pub fn state(&self, timer: &Snapshot) -> key_value::State {
         let mut state = Default::default();
         self.update_state(&mut state, timer);
         state

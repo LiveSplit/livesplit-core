@@ -1,6 +1,6 @@
 use super::{
-    format_padded, TimeFormatter, ASCII_MINUS, SECONDS_PER_DAY, SECONDS_PER_HOUR,
-    SECONDS_PER_MINUTE,
+    ASCII_MINUS, SECONDS_PER_DAY, SECONDS_PER_HOUR, SECONDS_PER_MINUTE, TimeFormatter,
+    format_padded,
 };
 use crate::TimeSpan;
 use core::fmt::{Display, Formatter, Result};
@@ -45,7 +45,7 @@ impl TimeFormatter<'_> for Complete {
 }
 
 impl Display for Inner {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    fn fmt(&self, f: &mut Formatter) -> Result {
         if let Some(time) = self.0 {
             let (total_seconds, nanoseconds) = time.to_seconds_and_subsec_nanoseconds();
             let (total_seconds, nanoseconds) = if (total_seconds | nanoseconds as i64) < 0 {

@@ -1,9 +1,9 @@
 use crate::layout::{ComponentState, LayoutState};
 
 use super::{
+    RenderContext,
     consts::{DEFAULT_COMPONENT_HEIGHT, PSEUDO_PIXELS, SEPARATOR_THICKNESS, TWO_ROW_HEIGHT},
     resource::ResourceAllocator,
-    RenderContext,
 };
 
 pub mod blank_space;
@@ -138,7 +138,7 @@ pub fn height(component: &ComponentState) -> f32 {
 
 pub(super) fn render<A: ResourceAllocator>(
     cache: &mut Cache<A::Label>,
-    context: &mut RenderContext<'_, A>,
+    context: &mut RenderContext<A>,
     component: &ComponentState,
     state: &LayoutState,
     dim: [f32; 2],

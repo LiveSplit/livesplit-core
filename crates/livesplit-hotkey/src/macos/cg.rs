@@ -188,7 +188,7 @@ pub type EventTapCallBack = Option<
         proxy: EventTapProxy,
         ty: EventType,
         event: EventRef,
-        userInfo: *mut c_void,
+        user_info: *mut c_void,
     ) -> EventRef,
 >;
 
@@ -217,7 +217,7 @@ unsafe extern "C" {
         options: EventTapOptions,
         events_of_interest: EventMask,
         callback: EventTapCallBack,
-        userInfo: *mut c_void,
+        user_info: *mut c_void,
     ) -> MachPortRef;
 
     pub fn CGEventTapEnable(tap: MachPortRef, enable: bool);

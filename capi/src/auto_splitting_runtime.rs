@@ -12,10 +12,10 @@ type AutoSplittingRuntime = livesplit_core::auto_splitting::Runtime<livesplit_co
 use livesplit_core::SharedTimer;
 
 #[cfg(not(feature = "auto-splitting"))]
-#[allow(missing_docs)]
+#[expect(missing_docs)]
 pub struct AutoSplittingRuntime;
 
-#[allow(warnings)]
+#[expect(warnings)]
 #[cfg(not(feature = "auto-splitting"))]
 impl AutoSplittingRuntime {
     pub fn new() -> Self {

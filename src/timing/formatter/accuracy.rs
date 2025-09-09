@@ -1,4 +1,4 @@
-use super::{format_padded, NANOS_PER_HUNDREDTH, NANOS_PER_MILLI, NANOS_PER_TENTH};
+use super::{NANOS_PER_HUNDREDTH, NANOS_PER_MILLI, NANOS_PER_TENTH, format_padded};
 use core::{
     fmt::{Display, Formatter, Result},
     str,
@@ -36,7 +36,7 @@ pub struct FractionalPart {
 }
 
 impl Display for FractionalPart {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    fn fmt(&self, f: &mut Formatter) -> Result {
         match self.accuracy {
             Accuracy::Seconds => Ok(()),
             Accuracy::Tenths => {

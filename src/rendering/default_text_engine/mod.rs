@@ -115,14 +115,13 @@ impl<P: SharedOwnership> TextEngine<P> {
             weight,
             stretch,
             style,
-        }) {
-            if let Some(info) = self.font_system.db().face(found_id) {
-                stretch = info.stretch;
-                style = info.style;
-                weight = info.weight;
-                if let [(info_family, _), ..] = &*info.families {
-                    family = info_family;
-                }
+        }) && let Some(info) = self.font_system.db().face(found_id)
+        {
+            stretch = info.stretch;
+            style = info.style;
+            weight = info.weight;
+            if let [(info_family, _), ..] = &*info.families {
+                family = info_family;
             }
         }
 
@@ -185,14 +184,15 @@ impl<P: SharedOwnership> TextEngine<P> {
             Shaping::Advanced,
             4,
         );
-        if let [span] = &*shape_line.spans {
-            if let [word] = &*span.words {
-                if let [glyph] = &*word.glyphs {
-                    return Some((glyph.font_id, glyph.glyph_id, glyph.x_advance));
-                }
-            }
+
+        if let [span] = &*shape_line.spans
+            && let [word] = &*span.words
+            && let [glyph] = &*word.glyphs
+        {
+            Some((glyph.font_id, glyph.glyph_id, glyph.x_advance))
+        } else {
+            None
         }
-        None
     }
 
     /// Creates a new text label. You can call this directly from a
@@ -328,44 +328,44 @@ impl<P: SharedOwnership> TextEngine<P> {
 
         label.width_without_max_width = x;
 
-        if let Some(max_width) = max_width {
-            if x > max_width {
-                let x_to_look_for = max_width - font.ellipsis_width;
+        if let Some(max_width) = max_width
+            && x > max_width
+        {
+            let x_to_look_for = max_width - font.ellipsis_width;
 
-                let last_index = label
-                    .glyphs
-                    .iter()
-                    .enumerate()
-                    .rfind(|(_, g)| {
-                        x = g.x;
-                        y = g.y;
-                        g.x <= x_to_look_for
-                    })
-                    .map(|(i, _)| i)
-                    .unwrap_or_default();
-                label.glyphs.drain(last_index..);
+            let last_index = label
+                .glyphs
+                .iter()
+                .enumerate()
+                .rfind(|(_, g)| {
+                    x = g.x;
+                    y = g.y;
+                    g.x <= x_to_look_for
+                })
+                .map(|(i, _)| i)
+                .unwrap_or_default();
+            label.glyphs.drain(last_index..);
 
-                // FIXME: Test RTL text.
+            // FIXME: Test RTL text.
 
-                let cached_glyph = cache_glyph(
-                    &mut self.glyph_cache,
-                    &mut self.font_system,
-                    font.ellipsis_font_id,
-                    font.ellipsis_glyph_id,
-                    &mut path_builder,
-                );
+            let cached_glyph = cache_glyph(
+                &mut self.glyph_cache,
+                &mut self.font_system,
+                font.ellipsis_font_id,
+                font.ellipsis_glyph_id,
+                &mut path_builder,
+            );
 
-                label
-                    .glyphs
-                    .extend(cached_glyph.paths.iter().map(|(color, path)| Glyph {
-                        color: *color,
-                        x,
-                        y,
-                        path: path.share(),
-                        scale: cached_glyph.scale,
-                    }));
-                x += font.ellipsis_width;
-            }
+            label
+                .glyphs
+                .extend(cached_glyph.paths.iter().map(|(color, path)| Glyph {
+                    color: *color,
+                    x,
+                    y,
+                    path: path.share(),
+                    scale: cached_glyph.scale,
+                }));
+            x += font.ellipsis_width;
         }
 
         label.width = x;

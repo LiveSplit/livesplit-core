@@ -86,7 +86,7 @@ impl<L> Cache<L> {
 
 pub(in crate::rendering) fn render<A: ResourceAllocator>(
     cache: &mut Cache<A::Label>,
-    context: &mut RenderContext<'_, A>,
+    context: &mut RenderContext<A>,
     [width, height]: [f32; 2],
     component: &State,
     layout_state: &LayoutState,
@@ -185,40 +185,40 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     let transform = context.transform;
     let text_color = solid(&layout_state.text_color);
 
-    if let Some(column_labels) = &component.column_labels {
-        if layout_state.direction == LayoutDirection::Vertical {
-            cache
-                .column_labels
-                .resize_with(column_labels.len(), CachedLabel::new);
+    if let Some(column_labels) = &component.column_labels
+        && layout_state.direction == LayoutDirection::Vertical
+    {
+        cache
+            .column_labels
+            .resize_with(column_labels.len(), CachedLabel::new);
 
-            let mut right_x = width - PADDING;
-            for ((label, column_cache), (max_width, _)) in column_labels
-                .iter()
-                .zip(&mut cache.column_labels)
-                .zip(&mut cache.column_width_labels)
-            {
-                let left_x = context.render_text_right_align(
-                    label,
-                    column_cache,
-                    Layer::Bottom,
-                    [right_x, TEXT_ALIGN_TOP],
-                    DEFAULT_TEXT_SIZE,
-                    text_color,
-                );
-                let label_width = right_x - left_x;
-                if label_width > *max_width {
-                    *max_width = label_width;
-                }
-                right_x -= *max_width + PADDING;
-            }
-
-            context.translate(0.0, DEFAULT_COMPONENT_HEIGHT);
-            context.render_rectangle(
-                [0.0, -THIN_SEPARATOR_THICKNESS],
-                [width, THIN_SEPARATOR_THICKNESS],
-                &Gradient::Plain(layout_state.separators_color),
+        let mut right_x = width - PADDING;
+        for ((label, column_cache), (max_width, _)) in column_labels
+            .iter()
+            .zip(&mut cache.column_labels)
+            .zip(&mut cache.column_width_labels)
+        {
+            let left_x = context.render_text_right_align(
+                label,
+                column_cache,
+                Layer::Bottom,
+                [right_x, TEXT_ALIGN_TOP],
+                DEFAULT_TEXT_SIZE,
+                text_color,
             );
+            let label_width = right_x - left_x;
+            if label_width > *max_width {
+                *max_width = label_width;
+            }
+            right_x -= *max_width + PADDING;
         }
+
+        context.translate(0.0, DEFAULT_COMPONENT_HEIGHT);
+        context.render_rectangle(
+            [0.0, -THIN_SEPARATOR_THICKNESS],
+            [width, THIN_SEPARATOR_THICKNESS],
+            &Gradient::Plain(layout_state.separators_color),
+        );
     }
 
     let icon_size = split_height - 2.0 * vertical_padding;

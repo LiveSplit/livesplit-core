@@ -2,7 +2,7 @@
 //! allows you to create a new Time Formatter by wrapping another one and
 //! changing its behavior when formatting empty times.
 
-use super::{TimeFormatter, DASH};
+use super::{DASH, TimeFormatter};
 use crate::TimeSpan;
 use core::fmt::{Display, Formatter, Result};
 
@@ -63,7 +63,7 @@ impl<'a, F: 'a + TimeFormatter<'a>, S: 'a + AsRef<str>> TimeFormatter<'a> for No
 }
 
 impl<'a, F: TimeFormatter<'a>, S: 'a + AsRef<str>> Display for Inner<'a, F, S> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
+    fn fmt(&self, f: &mut Formatter) -> Result {
         if self.time.is_none() {
             self.wrapper.1.as_ref().fmt(f)
         } else {

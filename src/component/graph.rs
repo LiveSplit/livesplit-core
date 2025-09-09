@@ -232,7 +232,7 @@ impl Component {
     pub fn update_state(
         &self,
         state: &mut State,
-        timer: &Snapshot<'_>,
+        timer: &Snapshot,
         layout_settings: &GeneralLayoutSettings,
     ) {
         let mut draw_info = DrawInfo {
@@ -266,7 +266,7 @@ impl Component {
 
     /// Calculates the component's state based on the timer and layout settings
     /// provided.
-    pub fn state(&self, timer: &Snapshot<'_>, layout_settings: &GeneralLayoutSettings) -> State {
+    pub fn state(&self, timer: &Snapshot, layout_settings: &GeneralLayoutSettings) -> State {
         let mut state = State::default();
         self.update_state(&mut state, timer, layout_settings);
         state
@@ -358,7 +358,7 @@ impl Component {
         }
     }
 
-    fn calculate_graph(&self, timer: &Snapshot<'_>, draw_info: &mut DrawInfo) -> Option<f32> {
+    fn calculate_graph(&self, timer: &Snapshot, draw_info: &mut DrawInfo) -> Option<f32> {
         let settings = &self.settings;
         draw_info.split_index = timer.current_split_index()?;
         let comparison = comparison::resolve(&self.settings.comparison_override, timer);
@@ -410,7 +410,7 @@ impl Component {
     }
 }
 
-fn calculate_horizontal_scaling(timer: &Snapshot<'_>, draw_info: &mut DrawInfo, live_graph: bool) {
+fn calculate_horizontal_scaling(timer: &Snapshot, draw_info: &mut DrawInfo, live_graph: bool) {
     let timing_method = timer.current_timing_method();
 
     // final_split is the split time of a theoretical point on the right edge of
@@ -479,7 +479,7 @@ fn calculate_split_points(
     }
 }
 
-fn calculate_live_delta_point(timer: &Snapshot<'_>, draw_info: &mut DrawInfo, comparison: &str) {
+fn calculate_live_delta_point(timer: &Snapshot, draw_info: &mut DrawInfo, comparison: &str) {
     if timer.current_phase() == TimerPhase::Ended {
         return;
     }
@@ -492,8 +492,9 @@ fn calculate_live_delta_point(timer: &Snapshot<'_>, draw_info: &mut DrawInfo, co
         .segment(draw_info.split_index)
         .comparison(comparison)[timing_method];
 
-    if let (Some(current_time), Some(current_split_comparison), None) =
-        (current_time, current_split_comparison, live_delta)
+    if let Some(current_time) = current_time
+        && let Some(current_split_comparison) = current_split_comparison
+        && let None = live_delta
     {
         // Live delta should be shown despite what analysis::check_live_delta says.
         let delta = current_time - current_split_comparison;

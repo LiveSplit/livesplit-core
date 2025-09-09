@@ -192,7 +192,7 @@ impl Component {
     pub fn update_state(
         &self,
         state: &mut State,
-        timer: &Snapshot<'_>,
+        timer: &Snapshot,
         layout_settings: &GeneralLayoutSettings,
     ) {
         let method = self
@@ -303,7 +303,7 @@ impl Component {
 
     /// Calculates the component's state based on the timer and the layout
     /// settings provided.
-    pub fn state(&self, timer: &Snapshot<'_>, layout_settings: &GeneralLayoutSettings) -> State {
+    pub fn state(&self, timer: &Snapshot, layout_settings: &GeneralLayoutSettings) -> State {
         let mut state = Default::default();
         self.update_state(&mut state, timer, layout_settings);
         state
@@ -390,7 +390,7 @@ pub fn top_and_bottom_color(color: Color) -> (Color, Color) {
 }
 
 fn calculate_live_segment_time(
-    timer: &Snapshot<'_>,
+    timer: &Snapshot,
     timing_method: TimingMethod,
     last_split_index: usize,
 ) -> Option<TimeSpan> {
@@ -417,7 +417,7 @@ mod serialize {
     }
 
     #[derive(serde_derive::Serialize, serde_derive::Deserialize)]
-    #[allow(clippy::enum_variant_names)]
+    #[expect(clippy::enum_variant_names)]
     pub enum Delta {
         DeltaPlain,
         DeltaVertical,

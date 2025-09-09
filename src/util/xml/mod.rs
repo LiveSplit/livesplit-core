@@ -11,7 +11,7 @@ mod writer;
 
 pub use self::{
     reader::{Event, Reader},
-    writer::{AttributeWriter, DisplayAlreadyEscaped, Value, Writer, NO_ATTRIBUTES},
+    writer::{AttributeWriter, DisplayAlreadyEscaped, NO_ATTRIBUTES, Value, Writer},
 };
 
 use super::{ascii_char::AsciiChar, ascii_set::AsciiSet};
@@ -20,7 +20,7 @@ use super::{ascii_char::AsciiChar, ascii_set::AsciiSet};
 pub struct Tag<'a>(&'a str);
 
 impl Debug for Tag<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str("<")?;
         Display::fmt(self.0, f)?;
         f.write_str(" />")
@@ -46,7 +46,7 @@ impl<'a> TagName<'a> {
 }
 
 impl Debug for TagName<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str("<")?;
         Display::fmt(self.0, f)?;
         f.write_str("/>")
@@ -95,13 +95,13 @@ impl<'a> Attributes<'a> {
 pub struct Text<'a>(&'a str);
 
 impl Display for Text<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         self.try_unescape_with_fn(|chunk| Display::fmt(chunk, f))
     }
 }
 
 impl Debug for Text<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         Debug::fmt(self.0, f)
     }
 }
