@@ -174,6 +174,7 @@ pub fn save_run<W: fmt::Write>(run: &Run, writer: W) -> fmt::Result {
         image(writer, "GameIcon", run.game_icon(), base64_buf, image_buf)?;
         writer.tag_with_text_content("GameName", NO_ATTRIBUTES, run.game_name())?;
         writer.tag_with_text_content("CategoryName", NO_ATTRIBUTES, run.category_name())?;
+        writer.tag_with_text_content("LevelName", NO_ATTRIBUTES, run.level_name())?;
 
         writer.tag_with_content("Metadata", NO_ATTRIBUTES, |writer| {
             let metadata = run.metadata();
