@@ -1,4 +1,4 @@
-use crate::{typescript, Class, Function, Type, TypeKind};
+use crate::{Class, Function, Type, TypeKind, typescript};
 use heck::ToLowerCamelCase;
 use std::{
     collections::BTreeMap,
@@ -420,13 +420,13 @@ function allocString(str: string): Slice {
     return { ptr, len: stats.written, cap };
 }
 
-function decodeSlice(ptr: number): Uint8Array {
+function decodeSlice(ptr: number): Uint8Array<ArrayBuffer> {
     const memory = new Uint8Array(wasm.memory.buffer);
     const len = wasm.get_buf_len();
     return memory.slice(ptr, ptr + len);
 }
 
-function decodePtrLen(ptr: number, len: number): Uint8Array {
+function decodePtrLen(ptr: number, len: number): Uint8Array<ArrayBuffer> {
     const memory = new Uint8Array(wasm.memory.buffer);
     return memory.slice(ptr, ptr + len);
 }
@@ -574,7 +574,7 @@ export class {class_name_ref} {{"#,
                     writer,
                     "{}",
                     r#"
-    saveAsLssBytes(): Uint8Array {
+    saveAsLssBytes(): Uint8Array<ArrayBuffer> {
         if (this.ptr == 0) {
             throw "this is disposed";
         }
@@ -588,7 +588,7 @@ export class {class_name_ref} {{"#,
                     "{}",
                     r#"
     /**
-     * @return {Uint8Array}
+     * @return {Uint8Array<ArrayBuffer>}
      */
     saveAsLssBytes() {
         if (this.ptr == 0) {
@@ -605,7 +605,7 @@ export class {class_name_ref} {{"#,
                     writer,
                     "{}",
                     r#"
-    saveAsLssBytes(): Uint8Array {
+    saveAsLssBytes(): Uint8Array<ArrayBuffer> {
         if (this.ptr == 0) {
             throw "this is disposed";
         }
@@ -619,7 +619,7 @@ export class {class_name_ref} {{"#,
                     "{}",
                     r#"
     /**
-     * @return {Uint8Array}
+     * @return {Uint8Array<ArrayBuffer>}
      */
     saveAsLssBytes() {
         if (this.ptr == 0) {
@@ -642,7 +642,7 @@ export class {class_name_ref} {{"#,
      * data may not even represent a valid image at all. If the image is not in the
      * cache, null is returned. This does not mark the image as visited.
      */
-    lookupData(key: string): Uint8Array | undefined {
+    lookupData(key: string): Uint8Array<ArrayBuffer> | undefined {
         if (this.ptr == 0) {
             throw "this is disposed";
         }
@@ -668,7 +668,7 @@ export class {class_name_ref} {{"#,
      * cache, null is returned. This does not mark the image as visited.
      *
      * @param {string} key
-     * @return {Uint8Array | undefined}
+     * @return {Uint8Array<ArrayBuffer> | undefined}
      */
     lookupData(key) {
         if (this.ptr == 0) {

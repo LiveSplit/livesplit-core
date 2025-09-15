@@ -165,25 +165,24 @@ struct CanvasLabelInner {
     width_without_max_width: f32,
 }
 
-impl Default for CanvasLabelInner {
-    fn default() -> Self {
-        Self {
+struct CanvasLabel(Rc<RefCell<CanvasLabelInner>>);
+
+impl CanvasLabel {
+    fn new(empty_string: &JsString) -> Self {
+        Self(Rc::new(RefCell::new(CanvasLabelInner {
             font: Rc::new(CanvasFont {
-                descriptor: "".into(),
+                descriptor: empty_string.clone(),
                 font_handling: FontHandling::Normal,
-                font_kerning: "".into(),
+                font_kerning: empty_string.clone(),
                 top: 0.0,
                 bottom: 0.0,
             }),
-            shape: LabelShape::Normal("".into()),
+            shape: LabelShape::Normal(empty_string.clone()),
             width: 0.0,
             width_without_max_width: 0.0,
-        }
+        })))
     }
 }
-
-#[derive(Default)]
-struct CanvasLabel(Rc<RefCell<CanvasLabelInner>>);
 
 impl SharedOwnership for CanvasLabel {
     fn share(&self) -> Self {
@@ -310,7 +309,7 @@ impl ResourceAllocator for CanvasAllocator {
         // FIXME: We query this to position a gradient from the top to the
         // bottom of the font. Is the ascent and descent what we want here?
         // That's not what we do in our default text engine.
-        let metrics = self.ctx_top.measure_text(&JsString::from("")).unwrap();
+        let metrics = self.ctx_top.measure_text(&self.cache.empty_string).unwrap();
         let top = -metrics.font_bounding_box_ascent() as f32;
         let bottom = metrics.font_bounding_box_descent() as f32;
 
@@ -362,7 +361,7 @@ impl ResourceAllocator for CanvasAllocator {
         font: &mut Self::Font,
         max_width: Option<f32>,
     ) -> Self::Label {
-        let mut label = CanvasLabel::default();
+        let mut label = CanvasLabel::new(&self.cache.empty_string);
         self.update_label(&mut label, text, font, max_width);
         label
     }
@@ -491,6 +490,7 @@ struct JsValueCache {
     colors: HashMap<[u8; 16], JsString>,
     filters: HashMap<HashFilter, JsString>,
     digits: [JsString; 10],
+    empty_string: JsString,
     transparent: JsString,
     none: JsString,
     auto: JsString,
@@ -673,6 +673,7 @@ impl Renderer {
                 colors: HashMap::new(),
                 filters: HashMap::new(),
                 digits: array::from_fn(|digit| JsString::from((digit as u8 + b'0') as char)),
+                empty_string: JsString::from(""),
                 transparent: JsString::from("transparent"),
                 none: JsString::from("none"),
                 auto: JsString::from("auto"),
