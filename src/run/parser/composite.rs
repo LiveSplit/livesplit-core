@@ -28,9 +28,9 @@
 //! ```
 
 use super::{
-    TimerKind, face_split, flitter, livesplit, llanfair, llanfair_gered, portal2_live_timer,
-    shit_split, source_live_timer, speedrun_igt, splitterino, splitterz, splitty,
-    time_split_tracker, urn, wsplit,
+    TimerKind, face_split, flitter, livesplit, llanfair, llanfair_gered, opensplit,
+    portal2_live_timer, shit_split, source_live_timer, speedrun_igt, splitterino, splitterz,
+    splitty, time_split_tracker, urn, wsplit,
 };
 use crate::{Run, platform::path::Path};
 use core::{result::Result as StdResult, str};
@@ -152,6 +152,10 @@ pub fn parse<'source>(
 
         if let Ok(run) = speedrun_igt::parse(source) {
             return Ok(parsed(run, TimerKind::SpeedRunIGT));
+        }
+
+        if let Ok(run) = opensplit::parse(source) {
+            return Ok(parsed(run, TimerKind::OpenSplit));
         }
 
         // Urn accepts entirely empty JSON files.

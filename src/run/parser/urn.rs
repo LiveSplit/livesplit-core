@@ -1,6 +1,6 @@
 //! Provides the parser for Urn splits files.
 
-use crate::{platform::prelude::*, Run, Segment, Time, TimeSpan};
+use crate::{Run, Segment, Time, TimeSpan, platform::prelude::*};
 use alloc::borrow::Cow;
 use core::result::Result as StdResult;
 use serde_derive::Deserialize;
