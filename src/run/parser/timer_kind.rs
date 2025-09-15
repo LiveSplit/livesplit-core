@@ -27,6 +27,8 @@ pub enum TimerKind<'a> {
     Llanfair,
     /// Gered's fork of Llanfair
     LlanfairGered,
+    /// OpenSplit
+    OpenSplit,
     /// Urn
     Urn,
     /// SourceLiveTimer
@@ -55,6 +57,7 @@ impl TimerKind<'_> {
             TimerKind::Flitter => TimerKind::Flitter,
             TimerKind::Llanfair => TimerKind::Llanfair,
             TimerKind::LlanfairGered => TimerKind::LlanfairGered,
+            TimerKind::OpenSplit => TimerKind::OpenSplit,
             TimerKind::Urn => TimerKind::Urn,
             TimerKind::SourceLiveTimer => TimerKind::SourceLiveTimer,
             TimerKind::Splitterino => TimerKind::Splitterino,
@@ -78,6 +81,7 @@ impl fmt::Display for TimerKind<'_> {
             TimerKind::Flitter => "Flitter",
             TimerKind::Llanfair => "Llanfair",
             TimerKind::LlanfairGered => "Llanfair (Gered's fork)",
+            TimerKind::OpenSplit => "OpenSplit",
             TimerKind::Urn => "Urn",
             TimerKind::SourceLiveTimer => "SourceLiveTimer",
             TimerKind::Splitterino => "Splitterino",

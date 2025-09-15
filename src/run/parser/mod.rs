@@ -34,6 +34,7 @@ pub mod flitter;
 pub mod livesplit;
 pub mod llanfair;
 pub mod llanfair_gered;
+pub mod opensplit;
 pub mod portal2_live_timer;
 pub mod shit_split;
 pub mod source_live_timer;

@@ -14,6 +14,7 @@ pub const LLANFAIR_GERED_ICONS: &str = include_str!("llanfair_gered_icons.lfs");
 pub const LLANFAIR_GERED_WITH_REFS: &str = include_str!("llanfair_gered_with_refs.lfs");
 pub const LLANFAIR_GERED: &str = include_str!("llanfair_gered.lfs");
 pub const LLANFAIR: &[u8] = include_bytes!("llanfair");
+pub const OPENSPLIT: &str = include_str!("OpenSplit.osf");
 pub const PORTAL2_LIVE_TIMER1: &str = include_str!("portal2_live_timer1.csv");
 pub const PORTAL2_LIVE_TIMER2: &str = include_str!("portal2_live_timer2.csv");
 pub const SOURCE_LIVE_TIMER: &str = include_str!("source_live_timer.json");
