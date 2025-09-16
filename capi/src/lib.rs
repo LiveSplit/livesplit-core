@@ -29,6 +29,7 @@ pub mod command_sink;
 pub mod component;
 pub mod current_comparison_component;
 pub mod current_pace_component;
+pub mod current_segment_component;
 pub mod delta_component;
 pub mod detailed_timer_component;
 pub mod detailed_timer_component_state;

@@ -6,6 +6,7 @@
 pub mod blank_space;
 pub mod current_comparison;
 pub mod current_pace;
+pub mod current_segment;
 pub mod delta;
 pub mod detailed_timer;
 pub mod graph;
@@ -26,6 +27,7 @@ pub mod key_value;
 pub use blank_space::Component as BlankSpace;
 pub use current_comparison::Component as CurrentComparison;
 pub use current_pace::Component as CurrentPace;
+pub use current_segment::Component as CurrentSegment;
 pub use delta::Component as Delta;
 pub use detailed_timer::Component as DetailedTimer;
 pub use graph::Component as Graph;
