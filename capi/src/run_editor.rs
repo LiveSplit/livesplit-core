@@ -3,14 +3,14 @@
 //! are being applied to the Run. It provides the current state of the editor as
 //! state objects that can be visualized by any kind of User Interface.
 
-use super::{Json, output_vec, str};
+use super::{output_vec, str, Json};
 use crate::{
     linked_layout::OwnedLinkedLayout, run::OwnedRun, slice,
     sum_of_best_cleaner::OwnedSumOfBestCleaner,
 };
 use livesplit_core::{
-    Run, RunEditor, TimingMethod,
     settings::{Image, ImageCache},
+    Run, RunEditor, TimingMethod,
 };
 use std::os::raw::c_char;
 
@@ -399,6 +399,23 @@ pub unsafe extern "C" fn RunEditor_import_comparison(
     // SAFETY: The caller guarantees that `comparison` is valid.
     this.import_comparison(run, unsafe { str(comparison) })
         .is_ok()
+}
+
+/// Imports a named comparison from the provided run as a comparison. The
+/// comparison can't be added if its name starts with `[Race]` or it already
+/// exists.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn RunEditor_import_comparison_as_comparison(
+    this: &mut RunEditor,
+    run: &Run,
+    comparison: *const c_char,
+    run_comparison: *const c_char,
+) -> bool {
+    // SAFETY: The caller guarantees that `comparison` is valid.
+    this.import_comparison_as_comparison(run, unsafe { str(comparison) }, unsafe {
+        str(run_comparison)
+    })
+    .is_ok()
 }
 
 /// Removes the chosen custom comparison. You can't remove a Comparison

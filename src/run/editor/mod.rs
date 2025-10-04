@@ -6,11 +6,13 @@
 
 use super::{AddComparisonError, CopyComparisonError, LinkedLayout};
 use crate::{
-    Run, Segment, Time, TimeSpan, TimingMethod, comparison,
+    comparison,
+    comparison::personal_best,
     platform::prelude::*,
     settings::Image,
     timing::ParseError as ParseTimeSpanError,
-    util::{PopulateString, caseless},
+    util::{caseless, PopulateString},
+    Run, Segment, Time, TimeSpan, TimingMethod,
 };
 use core::{mem::swap, num::ParseIntError};
 use snafu::{OptionExt, ResultExt};
@@ -759,6 +761,18 @@ impl Editor {
         run: &Run,
         comparison: &str,
     ) -> Result<(), AddComparisonError> {
+        self.import_comparison_as_comparison(run, comparison, personal_best::NAME)
+    }
+
+    /// Imports a named comparison from the provided run as a comparison. The
+    /// comparison can't be added if its name starts with `[Race]` or it already
+    /// exists.
+    pub fn import_comparison_as_comparison(
+        &mut self,
+        run: &Run,
+        comparison: &str,
+        run_comparison: &str,
+    ) -> Result<(), AddComparisonError> {
         self.run.add_custom_comparison(comparison)?;
 
         let mut remaining_segments = self.run.segments_mut().as_mut_slice();
@@ -769,7 +783,7 @@ impl Editor {
                 .enumerate()
                 .find(|(_, s)| caseless::eq(segment.name(), s.name()))
             {
-                *my_segment.comparison_mut(comparison) = segment.personal_best_split_time();
+                *my_segment.comparison_mut(comparison) = segment.comparison(run_comparison);
                 remaining_segments = &mut remaining_segments[segment_index + 1..];
             }
         }
@@ -777,7 +791,7 @@ impl Editor {
         if let [.., my_segment] = &mut self.run.segments_mut()[..]
             && let [.., segment] = run.segments()
         {
-            *my_segment.comparison_mut(comparison) = segment.personal_best_split_time();
+            *my_segment.comparison_mut(comparison) = segment.comparison(run_comparison);
         }
 
         self.fix();
