@@ -39,7 +39,11 @@ wasmtime-wasi = { version = "36.0.2", default-features = false, features = [
 ] }
 
 [target.'cfg(windows)'.dependencies]
-windows-sys = { version = "0.61.0", features = ["Win32_Storage_FileSystem"] }
+windows-sys = { version = "0.61.0", features = [
+  "Win32_NetworkManagement_WNet",
+  "Win32_Storage_FileSystem",
+  "Win32_System_WindowsProgramming",
+] }
 
 [features]
 default = ["enhanced-backtrace"]

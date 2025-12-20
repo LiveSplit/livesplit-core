@@ -55,6 +55,10 @@ use std::path::{Component, Path, PathBuf};
 /// `/mnt/c/foo/bar.exe`. The original path should be canonicalized or at least
 /// absolute.
 pub fn from_native(original_path: &Path) -> Option<Box<str>> {
+    if original_path.as_os_str().is_empty() {
+        return None;
+    }
+
     const BASE: &str = "/mnt";
     let mut path = String::from(BASE);
 
@@ -178,6 +182,11 @@ pub fn to_native(wasi_path_str: &str, supports_device_path: bool) -> Option<Path
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_empty() {
+        assert_eq!(from_native(Path::new("")), None);
+    }
 
     #[cfg(windows)]
     #[test]

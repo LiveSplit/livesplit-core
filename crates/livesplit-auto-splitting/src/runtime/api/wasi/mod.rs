@@ -12,13 +12,16 @@ use std::{
 use bstr::ByteSlice;
 use tokio::io::{self, AsyncWrite};
 use wasmtime_wasi::{
-    DirPerms, FilePerms, WasiCtxBuilder,
+    WasiCtxBuilder,
     cli::{IsTerminal, StdoutStream},
     p2::{OutputStream, Pollable, StreamError},
     preview1::WasiP1Ctx,
 };
 
 use crate::{Timer, wasi_path};
+
+#[cfg(windows)]
+mod windows;
 
 const ERR_CAPACITY: usize = 1 << 20;
 
@@ -144,35 +147,17 @@ pub fn build(script_path: Option<&Path>) -> (WasiP1Ctx, StdErr) {
     }
 
     #[cfg(windows)]
-    {
-        // SAFETY: This is always safe to call.
-        let mut drives = unsafe { windows_sys::Win32::Storage::FileSystem::GetLogicalDrives() };
-        loop {
-            let drive_idx = drives.trailing_zeros();
-            if drive_idx >= 26 {
-                break;
-            }
-            drives &= !(1 << drive_idx);
-            let drive = drive_idx as u8 + b'a';
-            // Unfortunate if this fails, but we should still continue.
-            let _ = wasi.preopened_dir(
-                std::str::from_utf8(&[b'\\', b'\\', b'?', b'\\', drive, b':', b'\\']).unwrap(),
-                std::str::from_utf8(&[b'/', b'm', b'n', b't', b'/', drive]).unwrap(),
-                DirPerms::READ,
-                FilePerms::READ,
-            );
-        }
+    windows::add_drives(&mut wasi);
 
-        // FIXME: Unfortunately wasmtime doesn't support us defining our own
-        // file system logic anymore.
-
-        // wasi.push_dir(Box::new(DeviceDir), PathBuf::from("/mnt/device"))
-        //     .unwrap();
-    }
     #[cfg(not(windows))]
     {
         // Unfortunate if this fails, but we should still continue.
-        let _ = wasi.preopened_dir("/", "/mnt", DirPerms::READ, FilePerms::READ);
+        let _ = wasi.preopened_dir(
+            "/",
+            "/mnt",
+            wasmtime_wasi::DirPerms::READ,
+            wasmtime_wasi::FilePerms::READ,
+        );
     }
     (wasi.build_p1(), stderr)
 }
