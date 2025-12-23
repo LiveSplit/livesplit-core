@@ -97,6 +97,15 @@ pub unsafe extern "C" fn RunEditor_set_category_name(
     this.set_category_name(unsafe { str(category) });
 }
 
+/// Sets the name of the level.
+#[no_mangle]
+pub unsafe extern "C" fn RunEditor_set_level_name(
+    this: &mut RunEditor,
+    level: *const c_char,
+) {
+    this.set_level_name(str(level));
+}
+
 /// Parses and sets the timer offset from the string provided. The timer
 /// offset specifies the time, the timer starts at when starting a new
 /// attempt.
