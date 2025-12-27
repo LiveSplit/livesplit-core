@@ -272,6 +272,17 @@ fn when_importing_comparison() {
 }
 
 #[test]
+fn when_importing_comparison_as_comparison() {
+    let mut editor = base();
+    let mut run = Run::new();
+    run.push_segment(Segment::new(""));
+    editor
+        .import_comparison_as_comparison(&run, "New Comparison", "Personal Best")
+        .unwrap();
+    assert!(editor.run().has_been_modified());
+}
+
+#[test]
 fn when_removing_comparison() {
     let mut editor = base();
     editor.remove_comparison("Some Comparison");
