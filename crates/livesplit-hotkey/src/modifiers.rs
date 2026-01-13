@@ -57,6 +57,8 @@ impl FromStr for Modifiers {
             match modifier {
                 "Ctrl" => modifiers.insert(Modifiers::CONTROL),
                 "Alt" => modifiers.insert(Modifiers::ALT),
+                /// Option as alias for Alt used on MacOS
+                "Option" => modifiers.insert(Modifiers::ALT),
                 "Meta" => modifiers.insert(Modifiers::META),
                 "Shift" => modifiers.insert(Modifiers::SHIFT),
                 _ => return Err(()),
