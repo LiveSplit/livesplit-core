@@ -1,4 +1,3 @@
-use crate::run::parser::livesplit::Version;
 use core::fmt::{self, Write};
 
 use crate::util::{ascii_char::AsciiChar, ascii_set::AsciiSet};
@@ -202,16 +201,6 @@ impl Value for Text<'_> {
 
     fn is_empty(&self) -> bool {
         self.0.is_empty()
-    }
-}
-
-impl Value for Version {
-    fn write_escaped<T: fmt::Write>(self, sink: &mut T) -> fmt::Result {
-        write!(sink, "{}.{}.{}.{}", self.0, self.1, self.2, self.3)
-    }
-
-    fn is_empty(&self) -> bool {
-        self.0 == 0 && self.1 == 0 && self.2 == 0 && self.3 == 0
     }
 }
 

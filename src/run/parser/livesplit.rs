@@ -18,7 +18,6 @@ use crate::{
     },
 };
 use alloc::borrow::Cow;
-use core::fmt::{Display, Formatter};
 use core::{mem::MaybeUninit, str};
 use time::{Date, Duration, PrimitiveDateTime};
 #[cfg(feature = "auto-splitting")]
@@ -103,21 +102,8 @@ const fn type_hint<T>(v: Result<T>) -> Result<T> {
     v
 }
 
-/// The version type for the LiveSplit parser
-#[derive(Debug, Copy, Clone, PartialOrd, PartialEq, Ord, Eq)]
-pub struct Version(pub u32, pub u32, pub u32, pub u32);
-
-impl Default for Version {
-    fn default() -> Self {
-        Version(1, 0, 0, 0)
-    }
-}
-
-impl Display for Version {
-    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{}.{}.{}.{}", self.0, self.1, self.2, self.3)
-    }
-}
+#[derive(Copy, Clone, PartialOrd, PartialEq, Ord, Eq)]
+struct Version(u32, u32, u32, u32);
 
 fn parse_version(version: &str) -> Result<Version> {
     let splits = version.split('.');
@@ -439,8 +425,7 @@ fn parse_auto_splitter_settings(
     reader: &mut Reader<'_>,
     run: &mut Run,
 ) -> Result<()> {
-    reencode_children(reader, run.auto_splitter_settings_mut())
-        .map_err(Into::<Error>::into)?;
+    reencode_children(reader, run.auto_splitter_settings_mut()).map_err(Into::<Error>::into)?;
 
     #[cfg(feature = "auto-splitting")]
     let mut reader = Reader::new(run.auto_splitter_settings());
@@ -453,17 +438,15 @@ fn parse_auto_splitter_settings(
     #[cfg(feature = "auto-splitting")]
     // The compiler seems to throw a warning that 'attributes' isn't used by default, it actually is though
     #[allow(unused_variables)]
-    parse_children(&mut reader, |reader, tag, attributes| match tag.name() {
-        "Version" => type_hint(text(reader, |t| {
-            any_parsed = true;
-            settings.set_version(parse_version(t.as_ref()).unwrap_or_default())
-        })),
-        "CustomSettings" => {
-            any_parsed = true;
-            settings.set_custom_settings(parse_settings_map(reader));
-            Ok(())
+    parse_children(&mut reader, |reader, tag, attributes| -> Result<()> {
+        match tag.name() {
+            "CustomSettings" => {
+                any_parsed = true;
+                settings.set_custom_settings(parse_settings_map(reader));
+                Ok(())
+            }
+            _ => Ok(()),
         }
-        _ => Ok(()),
     })
     .ok();
 
