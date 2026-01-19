@@ -317,7 +317,6 @@ fn write_run_auto_splitter_settings<W: fmt::Write>(
     #[cfg(feature = "auto-splitting")]
     if let Some(AutoSplitterSettings {
         version,
-        script_path,
         custom_settings,
     }) = &run.parsed_auto_splitter_settings
     {
@@ -326,11 +325,6 @@ fn write_run_auto_splitter_settings<W: fmt::Write>(
                 "Version",
                 NO_ATTRIBUTES,
                 DisplayAlreadyEscaped(version),
-            )?;
-            writer.tag_with_text_content(
-                "ScriptPath",
-                NO_ATTRIBUTES,
-                DisplayAlreadyEscaped(script_path),
             )?;
 
             write_settings_map(writer, "CustomSettings", vec![], custom_settings)?;

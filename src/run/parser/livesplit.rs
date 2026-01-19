@@ -458,10 +458,6 @@ fn parse_auto_splitter_settings(
             any_parsed = true;
             settings.set_version(parse_version(t.as_ref()).unwrap_or_default())
         })),
-        "ScriptPath" => type_hint(text(reader, |t| {
-            any_parsed = true;
-            settings.set_script_path(t.to_string())
-        })),
         "CustomSettings" => {
             any_parsed = true;
             settings.set_custom_settings(parse_settings_map(reader));
