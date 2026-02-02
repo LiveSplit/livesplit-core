@@ -1,9 +1,9 @@
 use crate::{
+    Run, Segment, TimeSpan, Timer, TimerPhase, TimingMethod,
     run::Editor,
     util::tests_helper::{
         make_progress_run_with_splits_opt, run_with_splits, run_with_splits_opt, start_run,
     },
-    Run, Segment, TimeSpan, Timer, TimerPhase, TimingMethod,
 };
 
 mod events;

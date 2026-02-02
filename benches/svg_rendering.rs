@@ -7,7 +7,7 @@ cfg_if::cfg_if! {
                 rendering::svg::Renderer,
                 run::parser::livesplit,
                 settings::ImageCache,
-                Run, Segment, TimeSpan, Timer, TimingMethod,
+                Lang, Run, Segment, TimeSpan, Timer, TimingMethod,
             },
             std::fs,
         };
@@ -27,7 +27,7 @@ cfg_if::cfg_if! {
             start_run(&mut timer);
             make_progress_run_with_splits_opt(&mut timer, &[Some(5.0), None, Some(10.0)]);
 
-            let state = layout.state(&mut image_cache, &timer.snapshot());
+            let state = layout.state(&mut image_cache, &timer.snapshot(), Lang::English);
             let mut renderer = Renderer::new();
             let mut buf = String::new();
 
@@ -48,7 +48,7 @@ cfg_if::cfg_if! {
             start_run(&mut timer);
             make_progress_run_with_splits_opt(&mut timer, &[Some(10.0), None, Some(20.0), Some(55.0)]);
 
-            let state = layout.state(&mut image_cache, &timer.snapshot());
+            let state = layout.state(&mut image_cache, &timer.snapshot(), Lang::English);
             let mut renderer = Renderer::new();
             let mut buf = String::new();
 

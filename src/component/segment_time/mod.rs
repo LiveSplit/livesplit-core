@@ -8,6 +8,7 @@ use crate::{
     Timer, TimerPhase,
     analysis::state_helper::comparison_single_segment_time,
     comparison,
+    localization::{Lang, Text},
     platform::prelude::*,
     settings::{Color, Field, Gradient, SettingsDescription, Value},
     timing::formatter::{Accuracy, SegmentTime, TimeFormatter},
@@ -83,31 +84,46 @@ impl Component {
         &mut self.settings
     }
 
-    /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<'static, str> {
-        self.text(self.settings.comparison_override.as_deref())
+    /// Accesses the name of the component for the specified language.
+    pub fn name(&self, lang: Lang) -> Cow<'static, str> {
+        self.localized_text(lang, self.settings.comparison_override.as_deref())
     }
 
-    fn text(&self, comparison: Option<&str>) -> Cow<'static, str> {
+    fn localized_text(&self, lang: Lang, comparison: Option<&str>) -> Cow<'static, str> {
         if let Some(comparison) = comparison {
             match comparison {
-                comparison::best_segments::NAME => "Best Segment Time".into(),
-                comparison::worst_segments::NAME => "Worst Segment Time".into(),
-                comparison::average_segments::NAME => "Average Segment Time".into(),
-                comparison::median_segments::NAME => "Median Segment Time".into(),
-                comparison::latest_run::NAME => "Latest Segment Time".into(),
-                comparison => format!("Segment Time ({})", comparison::shorten(comparison)).into(),
+                comparison::best_segments::NAME => {
+                    Text::ComponentSegmentTimeBest.resolve(lang).into()
+                }
+                comparison::worst_segments::NAME => {
+                    Text::ComponentSegmentTimeWorst.resolve(lang).into()
+                }
+                comparison::average_segments::NAME => {
+                    Text::ComponentSegmentTimeAverage.resolve(lang).into()
+                }
+                comparison::median_segments::NAME => {
+                    Text::ComponentSegmentTimeMedian.resolve(lang).into()
+                }
+                comparison::latest_run::NAME => {
+                    Text::ComponentSegmentTimeLatest.resolve(lang).into()
+                }
+                comparison => format!(
+                    "{} ({})",
+                    Text::ComponentSegmentTime.resolve(lang),
+                    comparison::shorten(comparison)
+                )
+                .into(),
             }
         } else {
-            "Segment Time".into()
+            Text::ComponentSegmentTime.resolve(lang).into()
         }
     }
 
     /// Updates the component's state based on the timer provided.
-    pub fn update_state(&self, state: &mut key_value::State, timer: &Timer) {
+    pub fn update_state(&self, state: &mut key_value::State, timer: &Timer, lang: Lang) {
         let resolved_comparison = comparison::resolve(&self.settings.comparison_override, timer);
         let comparison = comparison::or_current(resolved_comparison, timer);
-        let key = self.text(resolved_comparison); // FIXME: Uncow
+        let key = self.localized_text(lang, resolved_comparison); // FIXME: Uncow
 
         let time = catch! {
             // FIXME: We shouldn't need to manually do this "bounds check".
@@ -135,83 +151,109 @@ impl Component {
         let _ = write!(
             state.value,
             "{}",
-            SegmentTime::with_accuracy(self.settings.accuracy).format(time),
+            SegmentTime::with_accuracy(self.settings.accuracy).format(time, lang),
         );
 
         state.key_abbreviations.clear();
-        match &*key {
-            "Best Segment Time" => {
-                state.key_abbreviations.push("Best Seg. Time".into());
-                state.key_abbreviations.push("Best Segment".into());
+        match resolved_comparison {
+            Some(comparison) if comparison == comparison::best_segments::NAME => {
+                state
+                    .key_abbreviations
+                    .push(Text::BestSegmentTimeShort.resolve(lang).into());
+                state
+                    .key_abbreviations
+                    .push(Text::BestSegmentShort.resolve(lang).into());
             }
-            "Worst Segment Time" => {
-                state.key_abbreviations.push("Worst Seg. Time".into());
-                state.key_abbreviations.push("Worst Segment".into());
+            Some(comparison) if comparison == comparison::worst_segments::NAME => {
+                state
+                    .key_abbreviations
+                    .push(Text::WorstSegmentTimeShort.resolve(lang).into());
+                state
+                    .key_abbreviations
+                    .push(Text::WorstSegmentShort.resolve(lang).into());
             }
-            "Average Segment Time" => {
-                state.key_abbreviations.push("Average Seg. Time".into());
-                state.key_abbreviations.push("Average Segment".into());
+            Some(comparison) if comparison == comparison::average_segments::NAME => {
+                state
+                    .key_abbreviations
+                    .push(Text::AverageSegmentTimeShort.resolve(lang).into());
+                state
+                    .key_abbreviations
+                    .push(Text::AverageSegmentShort.resolve(lang).into());
             }
-            "Median Segment Time" => {
-                state.key_abbreviations.push("Median Seg. Time".into());
-                state.key_abbreviations.push("Median Segment".into());
+            Some(comparison) if comparison == comparison::median_segments::NAME => {
+                state
+                    .key_abbreviations
+                    .push(Text::MedianSegmentTimeShort.resolve(lang).into());
+                state
+                    .key_abbreviations
+                    .push(Text::MedianSegmentShort.resolve(lang).into());
             }
-            "Latest Segment Time" => {
-                state.key_abbreviations.push("Latest Seg. Time".into());
-                state.key_abbreviations.push("Latest Segment".into());
+            Some(comparison) if comparison == comparison::latest_run::NAME => {
+                state
+                    .key_abbreviations
+                    .push(Text::LatestSegmentTimeShort.resolve(lang).into());
+                state
+                    .key_abbreviations
+                    .push(Text::LatestSegmentShort.resolve(lang).into());
             }
-            "Segment Time" => state.key_abbreviations.push("Seg. Time".into()),
+            None => state
+                .key_abbreviations
+                .push(Text::SegmentTimeShort.resolve(lang).into()),
             _ => {
-                state.key_abbreviations.push("Segment Time".into());
-                state.key_abbreviations.push("Seg. Time".into());
+                state
+                    .key_abbreviations
+                    .push(Text::ComponentSegmentTime.resolve(lang).into());
+                state
+                    .key_abbreviations
+                    .push(Text::SegmentTimeShort.resolve(lang).into());
             }
-        };
+        }
 
         state.display_two_rows = self.settings.display_two_rows;
         state.updates_frequently = false;
     }
 
     /// Calculates the component's state based on the timer provided.
-    pub fn state(&self, timer: &Timer) -> key_value::State {
+    pub fn state(&self, timer: &Timer, lang: Lang) -> key_value::State {
         let mut state = Default::default();
-        self.update_state(&mut state, timer);
+        self.update_state(&mut state, timer, lang);
         state
     }
 
     /// Accesses a generic description of the settings available for this
-    /// component and their current values.
-    pub fn settings_description(&self) -> SettingsDescription {
+    /// component and their current values for the specified language.
+    pub fn settings_description(&self, lang: Lang) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new(
-                "Background".into(),
-                "The background shown behind the component.".into(),
+                Text::SegmentTimeBackground.resolve(lang).into(),
+                Text::SegmentTimeBackgroundDescription.resolve(lang).into(),
                 self.settings.background.into(),
             ),
             Field::new(
-                "Comparison".into(),
-                "The comparison for the segment time. If not specified, the current comparison is used."
-                    .into(),
+                Text::SegmentTimeComparison.resolve(lang).into(),
+                Text::SegmentTimeComparisonDescription.resolve(lang).into(),
                 self.settings.comparison_override.clone().into(),
             ),
             Field::new(
-                "Display 2 Rows".into(),
-                "Specifies whether to display the name of the component and the segment time in two separate rows."
+                Text::SegmentTimeDisplayTwoRows.resolve(lang).into(),
+                Text::SegmentTimeDisplayTwoRowsDescription
+                    .resolve(lang)
                     .into(),
                 self.settings.display_two_rows.into(),
             ),
             Field::new(
-                "Label Color".into(),
-                "The color of the component's name. If not specified, the color is taken from the layout."
-                    .into(),
-                self.settings.label_color.into()),
+                Text::SegmentTimeLabelColor.resolve(lang).into(),
+                Text::SegmentTimeLabelColorDescription.resolve(lang).into(),
+                self.settings.label_color.into(),
+            ),
             Field::new(
-                "Value Color".into(),
-                "The color of the segment time. If not specified, the color is taken from the layout."
-                    .into(),
-                self.settings.value_color.into()),
+                Text::SegmentTimeValueColor.resolve(lang).into(),
+                Text::SegmentTimeValueColorDescription.resolve(lang).into(),
+                self.settings.value_color.into(),
+            ),
             Field::new(
-                "Accuracy".into(),
-                "The accuracy of the segment time shown.".into(),
+                Text::SegmentTimeAccuracy.resolve(lang).into(),
+                Text::SegmentTimeAccuracyDescription.resolve(lang).into(),
                 self.settings.accuracy.into(),
             ),
         ])

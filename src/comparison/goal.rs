@@ -5,10 +5,7 @@
 //! Balanced PB comparison however is based on this, which uses the Personal
 //! Best as a goal time to balance the mistakes that happened in the Personal Best.
 
-use crate::{analysis::SkillCurve, Segment, Time, TimeSpan, TimingMethod};
-
-/// The default name of the goal comparison.
-pub const NAME: &str = "Goal";
+use crate::{Segment, Time, TimeSpan, TimingMethod, analysis::SkillCurve};
 
 // FIXME: Possibly move this into the analysis module.
 pub(crate) fn determine_percentile(

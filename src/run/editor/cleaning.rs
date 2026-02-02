@@ -9,8 +9,9 @@
 use time::UtcOffset;
 
 use crate::{
-    Attempt, Run, Segment, TimeSpan, TimingMethod,
+    Attempt, Lang, Run, Segment, TimeSpan, TimingMethod,
     analysis::sum_of_segments::{Prediction, best, track_branch},
+    localization::{PlaceholderText, Text, localize_date, localize_time_of_day},
     platform::{prelude::*, to_local},
     timing::formatter::{SegmentTime, TimeFormatter},
 };
@@ -26,6 +27,7 @@ pub struct SumOfBestCleaner<'r> {
     run: &'r mut Run,
     predictions: Vec<Option<Prediction>>,
     state: State,
+    lang: Lang,
 }
 
 enum State {
@@ -52,6 +54,7 @@ struct IteratingHistoryState {
 /// A potential clean up can then be turned into an actual clean up in order to
 /// apply it to the Run.
 pub struct PotentialCleanUp<'r> {
+    lang: Lang,
     starting_segment: Option<&'r Segment>,
     ending_segment: &'r Segment,
     time_between: TimeSpan,
@@ -69,32 +72,35 @@ pub struct CleanUp {
 
 impl fmt::Display for PotentialCleanUp<'_> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let lang = self.lang;
         let short = SegmentTime::new();
 
         let method = match self.method {
-            TimingMethod::RealTime => "Real Time",
-            TimingMethod::GameTime => "Game Time",
+            TimingMethod::RealTime => Text::RealTime.resolve(lang),
+            TimingMethod::GameTime => Text::GameTime.resolve(lang),
         };
+
+        let start = self
+            .starting_segment
+            .map(Segment::name)
+            .unwrap_or(Text::SumOfBestCleanerStartOfRun.resolve(lang));
+
+        let time_between = short.format(self.time_between, lang);
+        let end = self.ending_segment.name();
 
         write!(
             f,
-            "You had a {method} segment time of {} between ",
-            short.format(self.time_between)
+            "{}",
+            PlaceholderText::SumOfBestCleanerSegmentTimeBetween
+                .resolve(lang, &[&method, &time_between, &start, &end])
         )?;
 
-        if let Some(starting_segment) = self.starting_segment {
-            write!(f, "{}", starting_segment.name())?;
-        } else {
-            write!(f, "the start of the run")?;
-        }
-
-        write!(f, " and {}", self.ending_segment.name())?;
-
         if let Some(combined) = self.combined_sum_of_best {
+            let combined = short.format(combined, lang);
             write!(
                 f,
-                ", which is faster than the combined best segments of {}",
-                short.format(combined)
+                "{}",
+                PlaceholderText::SumOfBestCleanerFasterThanCombined.resolve(lang, &[&combined])
             )?;
         }
 
@@ -111,22 +117,16 @@ impl fmt::Display for PotentialCleanUp<'_> {
             };
             let (year, month, day) = local.to_calendar_date();
             let (hour, minute, _) = local.to_hms();
-            let (hour, am_pm) = if hour >= 12 {
-                (hour - 12, "pm")
-            } else {
-                (hour, "am")
-            };
-            let hour = if hour == 0 { 12 } else { hour };
+            let date = localize_date(lang, year, month as u8, day);
+            let time = localize_time_of_day(lang, hour, minute, time_zone);
             write!(
                 f,
-                " in a run on {month} {day}, {year} that started at {hour}:{minute:02} {am_pm}{time_zone}",
+                "{}",
+                PlaceholderText::SumOfBestCleanerRunOn.resolve(lang, &[&date, &time])
             )?;
         }
 
-        write!(
-            f,
-            ". Do you think that this segment time is inaccurate and should be removed?"
-        )
+        f.write_str(Text::SumOfBestCleanerShouldRemove.resolve(lang))
     }
 }
 
@@ -138,12 +138,13 @@ impl From<PotentialCleanUp<'_>> for CleanUp {
 
 impl<'r> SumOfBestCleaner<'r> {
     /// Creates a new Sum of Best Cleaner for the provided Run object.
-    pub fn new(run: &'r mut Run) -> Self {
+    pub fn new(run: &'r mut Run, lang: Lang) -> Self {
         let predictions = Vec::with_capacity(run.len() + 1);
         Self {
             run,
             predictions,
             state: State::WithTimingMethod(TimingMethod::RealTime),
+            lang,
         }
     }
 
@@ -213,6 +214,7 @@ impl<'r> SumOfBestCleaner<'r> {
                                     prediction_index - 1,
                                     run_index,
                                     state.parent.method,
+                                    self.lang,
                                 )
                             {
                                 self.state = State::IteratingHistory(IteratingHistoryState {
@@ -233,6 +235,7 @@ impl<'r> SumOfBestCleaner<'r> {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn check_prediction<'a>(
     run: &'a Run,
     predictions: &[Option<Prediction>],
@@ -241,6 +244,7 @@ fn check_prediction<'a>(
     ending_index: usize,
     run_index: i32,
     method: TimingMethod,
+    lang: Lang,
 ) -> Option<PotentialCleanUp<'a>> {
     if let Some(predicted_time) = predicted_time
         && predictions[ending_index + 1].is_none_or(|p| predicted_time < p.time)
@@ -248,6 +252,7 @@ fn check_prediction<'a>(
             run.segment(ending_index).segment_history().get(run_index)
     {
         Some(PotentialCleanUp {
+            lang,
             starting_segment: if starting_index >= 0 {
                 Some(run.segment(starting_index as usize))
             } else {

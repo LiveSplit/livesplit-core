@@ -1,7 +1,7 @@
 use crate::jni_cpp;
 use crate::{Class, Result};
 use std::collections::BTreeMap;
-use std::fs::{create_dir_all, File};
+use std::fs::{File, create_dir_all};
 use std::io::{BufWriter, Write};
 use std::path::Path;
 

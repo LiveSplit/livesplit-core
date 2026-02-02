@@ -9,6 +9,7 @@ use crate::{
     GeneralLayoutSettings, TimeSpan, TimerPhase,
     analysis::comparison_single_segment_time,
     comparison::{self, best_segments, none},
+    localization::{Lang, Text},
     platform::prelude::*,
     settings::{Color, Field, Gradient, Image, ImageCache, ImageId, SettingsDescription, Value},
     timing::{
@@ -113,6 +114,7 @@ fn update_comparison(
     state: &mut Option<ComparisonState>,
     new_state: Option<(&str, Option<TimeSpan>)>,
     accuracy: Accuracy,
+    lang: Lang,
 ) {
     if let Some((name, time)) = new_state {
         let state = state.get_or_insert_with(|| ComparisonState {
@@ -127,7 +129,7 @@ fn update_comparison(
         let _ = write!(
             state.time,
             "{}",
-            SegmentTime::with_accuracy(accuracy).format(time)
+            SegmentTime::with_accuracy(accuracy).format(time, lang)
         );
     } else {
         *state = None;
@@ -203,9 +205,9 @@ impl Component {
         *self.segment_timer.settings_mut() = self.settings.segment_timer.clone();
     }
 
-    /// Accesses the name of the component.
-    pub const fn name(&self) -> &'static str {
-        "Detailed Timer"
+    /// Accesses the name of the component for the specified language.
+    pub const fn name(&self, lang: Lang) -> &'static str {
+        Text::ComponentDetailedTimer.resolve(lang)
     }
 
     /// Updates the component's state based on the timer and layout settings
@@ -219,6 +221,7 @@ impl Component {
         image_cache: &mut ImageCache,
         timer: &Snapshot,
         layout_settings: &GeneralLayoutSettings,
+        lang: Lang,
     ) {
         let current_phase = timer.current_phase();
         let timing_method = self
@@ -299,10 +302,10 @@ impl Component {
         state.icon = *image_cache.cache(icon.id(), || icon.clone()).id();
 
         self.timer
-            .update_state(&mut state.timer, timer, layout_settings);
+            .update_state(&mut state.timer, timer, layout_settings, lang);
 
         self.segment_timer
-            .update_state(&mut state.segment_timer, timer, layout_settings);
+            .update_state(&mut state.segment_timer, timer, layout_settings, lang);
 
         state.background = self
             .settings
@@ -313,11 +316,13 @@ impl Component {
             &mut state.comparison1,
             comparison1,
             self.settings.comparison_times_accuracy,
+            lang,
         );
         update_comparison(
             &mut state.comparison2,
             comparison2,
             self.settings.comparison_times_accuracy,
+            lang,
         );
 
         match current_split.filter(|_| self.settings.show_segment_name) {
@@ -344,74 +349,99 @@ impl Component {
         image_cache: &mut ImageCache,
         timer: &Snapshot,
         layout_settings: &GeneralLayoutSettings,
+        lang: Lang,
     ) -> State {
         let mut state = Default::default();
-        self.update_state(&mut state, image_cache, timer, layout_settings);
+        self.update_state(&mut state, image_cache, timer, layout_settings, lang);
         state
     }
 
     /// Accesses a generic description of the settings available for this
-    /// component and their current values.
-    pub fn settings_description(&self) -> SettingsDescription {
+    /// component and their current values for the specified language.
+    pub fn settings_description(&self, lang: Lang) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new(
-                "Background".into(),
-                "The background shown behind the component.".into(),
+                Text::DetailedTimerBackground.resolve(lang).into(),
+                Text::DetailedTimerBackgroundDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.background.into(),
             ),
             Field::new(
-                "Timing Method".into(),
-                "Specifies the timing method to use. If not specified, the current timing method is used.".into(),
+                Text::DetailedTimerTimingMethod.resolve(lang).into(),
+                Text::DetailedTimerTimingMethodDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.timer.timing_method.into(),
             ),
             Field::new(
-                "Comparison 1".into(),
-                "The first comparison to show the segment time of. If not specified, the current comparison is used.".into(),
+                Text::DetailedTimerComparison1.resolve(lang).into(),
+                Text::DetailedTimerComparison1Description
+                    .resolve(lang)
+                    .into(),
                 self.settings.comparison1.clone().into(),
             ),
             Field::new(
-                "Comparison 2".into(),
-                "The second comparison to show the segment time of. If not specified, the current comparison is used, unless the first comparison is also None. This is not shown if the second comparison is hidden.".into(),
+                Text::DetailedTimerComparison2.resolve(lang).into(),
+                Text::DetailedTimerComparison2Description
+                    .resolve(lang)
+                    .into(),
                 self.settings.comparison2.clone().into(),
             ),
             Field::new(
-                "Hide Second Comparison".into(),
-                "Specifies whether to only show a single comparison.".into(),
+                Text::DetailedTimerHideSecondComparison.resolve(lang).into(),
+                Text::DetailedTimerHideSecondComparisonDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.hide_second_comparison.into(),
             ),
             Field::new(
-                "Timer Height".into(),
-                "The height of the run timer.".into(),
+                Text::DetailedTimerTimerHeight.resolve(lang).into(),
+                Text::DetailedTimerTimerHeightDescription
+                    .resolve(lang)
+                    .into(),
                 u64::from(self.settings.timer.height).into(),
             ),
             Field::new(
-                "Segment Timer Height".into(),
-                "The height of the segment timer.".into(),
+                Text::DetailedTimerSegmentTimerHeight.resolve(lang).into(),
+                Text::DetailedTimerSegmentTimerHeightDescription
+                    .resolve(lang)
+                    .into(),
                 u64::from(self.settings.segment_timer.height).into(),
             ),
             Field::new(
-                "Timer Color".into(),
-                "Instead of automatically determining the color for the main timer based on a how well the current attempt is doing, a specific color to always be used can be provided instead.".into(),
+                Text::DetailedTimerTimerColor.resolve(lang).into(),
+                Text::DetailedTimerTimerColorDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.timer.color_override.into(),
             ),
             Field::new(
-                "Show Timer Gradient".into(),
-                "The main timer automatically turns its color into a vertical gradient if this setting is activated. Otherwise, the actual color is used instead of a gradient.".into(),
+                Text::DetailedTimerShowTimerGradient.resolve(lang).into(),
+                Text::DetailedTimerShowTimerGradientDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.timer.show_gradient.into(),
             ),
             Field::new(
-                "Timer Digits Format".into(),
-                "Specifies how many digits to show for the main timer. If the duration is lower than the digits to be shown, zeros are shown instead.".into(),
+                Text::DetailedTimerTimerDigitsFormat.resolve(lang).into(),
+                Text::DetailedTimerTimerDigitsFormatDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.timer.digits_format.into(),
             ),
             Field::new(
-                "Timer Accuracy".into(),
-                "The accuracy of the time shown for the main timer.".into(),
+                Text::DetailedTimerTimerAccuracy.resolve(lang).into(),
+                Text::DetailedTimerTimerAccuracyDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.timer.accuracy.into(),
             ),
             Field::new(
-                "Segment Timer Color".into(),
-                "Changes the color of the segment timer to a color different from the default color.".into(),
+                Text::DetailedTimerSegmentTimerColor.resolve(lang).into(),
+                Text::DetailedTimerSegmentTimerColorDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings
                     .segment_timer
                     .color_override
@@ -419,48 +449,72 @@ impl Component {
                     .into(),
             ),
             Field::new(
-                "Show Segment Timer Gradient".into(),
-                "The segment timer automatically turns its color into a vertical gradient if this setting is activated. Otherwise, the actual color is used instead of a gradient.".into(),
+                Text::DetailedTimerShowSegmentTimerGradient
+                    .resolve(lang)
+                    .into(),
+                Text::DetailedTimerShowSegmentTimerGradientDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.segment_timer.show_gradient.into(),
             ),
             Field::new(
-                "Segment Timer Digits Format".into(),
-                "Specifies how many digits to show for the segment timer. If the duration is lower than the digits to be shown, zeros are shown instead.".into(),
+                Text::DetailedTimerSegmentTimerDigitsFormat
+                    .resolve(lang)
+                    .into(),
+                Text::DetailedTimerSegmentTimerDigitsFormatDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.segment_timer.digits_format.into(),
             ),
             Field::new(
-                "Segment Timer Accuracy".into(),
-                "The accuracy of the time shown for the segment timer.".into(),
+                Text::DetailedTimerSegmentTimerAccuracy.resolve(lang).into(),
+                Text::DetailedTimerSegmentTimerAccuracyDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.segment_timer.accuracy.into(),
             ),
             Field::new(
-                "Comparison Names Color".into(),
-                "The color of the comparison names if they are shown. If no color is specified, the color is taken from the layout.".into(),
+                Text::DetailedTimerComparisonNamesColor.resolve(lang).into(),
+                Text::DetailedTimerComparisonNamesColorDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.comparison_names_color.into(),
             ),
             Field::new(
-                "Comparison Times Color".into(),
-                "The color of the comparison times if they are shown. If no color is specified, the color is taken from the layout.".into(),
+                Text::DetailedTimerComparisonTimesColor.resolve(lang).into(),
+                Text::DetailedTimerComparisonTimesColorDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.comparison_times_color.into(),
             ),
             Field::new(
-                "Comparison Times Accuracy".into(),
-                "The accuracy of the comparison times.".into(),
+                Text::DetailedTimerComparisonTimesAccuracy
+                    .resolve(lang)
+                    .into(),
+                Text::DetailedTimerComparisonTimesAccuracyDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.comparison_times_accuracy.into(),
             ),
             Field::new(
-                "Show Segment Name".into(),
-                "Specifies whether the segment name should be shown.".into(),
+                Text::DetailedTimerShowSegmentName.resolve(lang).into(),
+                Text::DetailedTimerShowSegmentNameDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.show_segment_name.into(),
             ),
             Field::new(
-                "Segment Name Color".into(),
-                "The color of the segment name if it's shown. If no color is specified, the color is taken from the layout.".into(),
+                Text::DetailedTimerSegmentNameColor.resolve(lang).into(),
+                Text::DetailedTimerSegmentNameColorDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.segment_name_color.into(),
             ),
             Field::new(
-                "Display Icon".into(),
-                "Specifies whether the segment icon should be shown.".into(),
+                Text::DetailedTimerDisplayIcon.resolve(lang).into(),
+                Text::DetailedTimerDisplayIconDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.display_icon.into(),
             ),
         ])

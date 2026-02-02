@@ -71,6 +71,7 @@ mod hotkey_config;
 #[cfg(feature = "std")]
 mod hotkey_system;
 pub mod layout;
+mod localization;
 pub mod networking;
 #[cfg(feature = "rendering")]
 pub mod rendering;
@@ -81,6 +82,7 @@ pub mod util;
 
 pub use crate::{
     layout::{Component, Editor as LayoutEditor, GeneralSettings as GeneralLayoutSettings, Layout},
+    localization::Lang,
     platform::DateTime,
     run::{Attempt, Editor as RunEditor, Run, RunMetadata, Segment, SegmentHistory},
     timing::{

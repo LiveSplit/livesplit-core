@@ -1,9 +1,11 @@
 //! The Delta Component is a component that shows how far ahead or behind the
 //! current attempt is compared to the chosen comparison.
 
-use super::{output_vec, Json};
+use super::{Json, output_vec};
 use crate::{component::OwnedComponent, key_value_component_state::OwnedKeyValueComponentState};
-use livesplit_core::{component::delta::Component as DeltaComponent, GeneralLayoutSettings, Timer};
+use livesplit_core::{
+    GeneralLayoutSettings, Lang, Timer, component::delta::Component as DeltaComponent,
+};
 
 /// type
 pub type OwnedDeltaComponent = Box<DeltaComponent>;
@@ -33,9 +35,10 @@ pub extern "C" fn DeltaComponent_state_as_json(
     this: &mut DeltaComponent,
     timer: &Timer,
     layout_settings: &GeneralLayoutSettings,
+    lang: Lang,
 ) -> Json {
     output_vec(|o| {
-        this.state(&timer.snapshot(), layout_settings)
+        this.state(&timer.snapshot(), layout_settings, lang)
             .write_json(o)
             .unwrap();
     })
@@ -48,6 +51,7 @@ pub extern "C" fn DeltaComponent_state(
     this: &mut DeltaComponent,
     timer: &Timer,
     layout_settings: &GeneralLayoutSettings,
+    lang: Lang,
 ) -> OwnedKeyValueComponentState {
-    Box::new(this.state(&timer.snapshot(), layout_settings))
+    Box::new(this.state(&timer.snapshot(), layout_settings, lang))
 }

@@ -20,7 +20,8 @@ wasm-bindgen-futures = { version = "0.4.28", optional = true }
 web-sys = { version = "0.3.28", optional = true }
 
 [features]
-default = ["image-shrinking"]
+default = ["localization", "image-shrinking"]
+localization = ["livesplit-core/localization"]
 image-shrinking = ["livesplit-core/image-shrinking"]
 software-rendering = ["livesplit-core/software-rendering"]
 wasm-web = ["livesplit-core/wasm-web", "wasm-bindgen", "wasm-bindgen-futures", "web-sys"]

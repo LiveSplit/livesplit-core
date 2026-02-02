@@ -3,11 +3,11 @@
 //! Segments. This component also allows showing the Total Possible Time Save
 //! for the remainder of the current attempt.
 
-use super::{output_vec, Json};
-use crate::component::OwnedComponent;
-use crate::key_value_component_state::OwnedKeyValueComponentState;
-use livesplit_core::component::possible_time_save::Component as PossibleTimeSaveComponent;
-use livesplit_core::Timer;
+use super::{Json, output_vec};
+use crate::{component::OwnedComponent, key_value_component_state::OwnedKeyValueComponentState};
+use livesplit_core::{
+    Lang, Timer, component::possible_time_save::Component as PossibleTimeSaveComponent,
+};
 
 /// type
 pub type OwnedPossibleTimeSaveComponent = Box<PossibleTimeSaveComponent>;
@@ -38,9 +38,10 @@ pub extern "C" fn PossibleTimeSaveComponent_into_generic(
 pub extern "C" fn PossibleTimeSaveComponent_state_as_json(
     this: &PossibleTimeSaveComponent,
     timer: &Timer,
+    lang: Lang,
 ) -> Json {
     output_vec(|o| {
-        this.state(&timer.snapshot()).write_json(o).unwrap();
+        this.state(&timer.snapshot(), lang).write_json(o).unwrap();
     })
 }
 
@@ -49,6 +50,7 @@ pub extern "C" fn PossibleTimeSaveComponent_state_as_json(
 pub extern "C" fn PossibleTimeSaveComponent_state(
     this: &PossibleTimeSaveComponent,
     timer: &Timer,
+    lang: Lang,
 ) -> OwnedKeyValueComponentState {
-    Box::new(this.state(&timer.snapshot()))
+    Box::new(this.state(&timer.snapshot(), lang))
 }

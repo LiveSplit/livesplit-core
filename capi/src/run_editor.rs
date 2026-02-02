@@ -9,7 +9,7 @@ use crate::{
     sum_of_best_cleaner::OwnedSumOfBestCleaner,
 };
 use livesplit_core::{
-    Run, RunEditor, TimingMethod,
+    Lang, Run, RunEditor, TimingMethod,
     settings::{Image, ImageCache},
 };
 use std::os::raw::c_char;
@@ -39,9 +39,13 @@ pub extern "C" fn RunEditor_close(this: OwnedRunEditor) -> OwnedRun {
 /// Calculates the Run Editor's state and encodes it as
 /// JSON in order to visualize it.
 #[unsafe(no_mangle)]
-pub extern "C" fn RunEditor_state_as_json(this: &RunEditor, image_cache: &mut ImageCache) -> Json {
+pub extern "C" fn RunEditor_state_as_json(
+    this: &RunEditor,
+    image_cache: &mut ImageCache,
+    lang: Lang,
+) -> Json {
     output_vec(|o| {
-        this.state(image_cache).write_json(o).unwrap();
+        this.state(image_cache, lang).write_json(o).unwrap();
     })
 }
 
@@ -104,9 +108,11 @@ pub unsafe extern "C" fn RunEditor_set_category_name(
 pub unsafe extern "C" fn RunEditor_parse_and_set_offset(
     this: &mut RunEditor,
     offset: *const c_char,
+    lang: Lang,
 ) -> bool {
     // SAFETY: The caller guarantees that `offset` is valid.
-    this.parse_and_set_offset(unsafe { str(offset) }).is_ok()
+    this.parse_and_set_offset(unsafe { str(offset) }, lang)
+        .is_ok()
 }
 
 /// Parses and sets the attempt count from the string provided. Changing
@@ -329,10 +335,11 @@ pub unsafe extern "C" fn RunEditor_active_set_name(this: &mut RunEditor, name: *
 pub unsafe extern "C" fn RunEditor_active_parse_and_set_split_time(
     this: &mut RunEditor,
     time: *const c_char,
+    lang: Lang,
 ) -> bool {
     // SAFETY: The caller guarantees that `time` is valid.
     this.active_segment()
-        .parse_and_set_split_time(unsafe { str(time) })
+        .parse_and_set_split_time(unsafe { str(time) }, lang)
         .is_ok()
 }
 
@@ -342,10 +349,11 @@ pub unsafe extern "C" fn RunEditor_active_parse_and_set_split_time(
 pub unsafe extern "C" fn RunEditor_active_parse_and_set_segment_time(
     this: &mut RunEditor,
     time: *const c_char,
+    lang: Lang,
 ) -> bool {
     // SAFETY: The caller guarantees that `time` is valid.
     this.active_segment()
-        .parse_and_set_segment_time(unsafe { str(time) })
+        .parse_and_set_segment_time(unsafe { str(time) }, lang)
         .is_ok()
 }
 
@@ -355,10 +363,11 @@ pub unsafe extern "C" fn RunEditor_active_parse_and_set_segment_time(
 pub unsafe extern "C" fn RunEditor_active_parse_and_set_best_segment_time(
     this: &mut RunEditor,
     time: *const c_char,
+    lang: Lang,
 ) -> bool {
     // SAFETY: The caller guarantees that `time` is valid.
     this.active_segment()
-        .parse_and_set_best_segment_time(unsafe { str(time) })
+        .parse_and_set_best_segment_time(unsafe { str(time) }, lang)
         .is_ok()
 }
 
@@ -369,10 +378,11 @@ pub unsafe extern "C" fn RunEditor_active_parse_and_set_comparison_time(
     this: &mut RunEditor,
     comparison: *const c_char,
     time: *const c_char,
+    lang: Lang,
 ) -> bool {
     // SAFETY: The caller guarantees that `comparison` and `time` are valid.
     this.active_segment()
-        .parse_and_set_comparison_time(unsafe { str(comparison) }, unsafe { str(time) })
+        .parse_and_set_comparison_time(unsafe { str(comparison) }, unsafe { str(time) }, lang)
         .is_ok()
 }
 
@@ -452,9 +462,10 @@ pub extern "C" fn RunEditor_move_comparison(
 pub unsafe extern "C" fn RunEditor_parse_and_generate_goal_comparison(
     this: &mut RunEditor,
     time: *const c_char,
+    lang: Lang,
 ) -> bool {
     // SAFETY: The caller guarantees that `time` is valid.
-    this.parse_and_generate_goal_comparison(unsafe { str(time) })
+    this.parse_and_generate_goal_comparison(unsafe { str(time) }, lang)
         .is_ok()
 }
 
@@ -497,6 +508,7 @@ pub extern "C" fn RunEditor_clear_times(this: &mut RunEditor) {
 #[unsafe(no_mangle)]
 pub extern "C" fn RunEditor_clean_sum_of_best(
     this: &'static mut RunEditor,
+    lang: Lang,
 ) -> OwnedSumOfBestCleaner {
-    Box::new(this.clean_sum_of_best())
+    Box::new(this.clean_sum_of_best(lang))
 }

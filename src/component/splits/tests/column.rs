@@ -3,6 +3,7 @@ use super::{
     State,
 };
 use crate::{
+    Lang, Run, Segment, TimeSpan, Timer,
     component::splits::{ColumnKind, TimeColumn},
     settings::{
         ImageCache,
@@ -12,7 +13,6 @@ use crate::{
         },
     },
     util::tests_helper::{make_progress_run_with_splits_opt, run_with_splits_opt, start_run},
-    Run, Segment, TimeSpan, Timer,
 };
 
 type Values = &'static [([&'static str; 6], [SemanticColor; 6])];
@@ -507,41 +507,76 @@ fn check_columns(
 
     let mut image_cache = ImageCache::new();
 
-    let state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     check_column_state(&state, 0, expected_values);
 
     timer.set_game_time(TimeSpan::from_seconds(8.5)).unwrap();
     timer.split().unwrap();
 
-    let state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     check_column_state(&state, 1, expected_values);
 
     timer.skip_split().unwrap();
 
-    let state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     check_column_state(&state, 2, expected_values);
 
     timer.set_game_time(TimeSpan::from_seconds(10.0)).unwrap();
     timer.split().unwrap();
 
-    let state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     check_column_state(&state, 3, expected_values);
 
     timer.set_game_time(TimeSpan::from_seconds(17.5)).unwrap();
     timer.split().unwrap();
 
-    let state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     check_column_state(&state, 4, expected_values);
 
     timer.skip_split().unwrap();
 
-    let state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     check_column_state(&state, 5, expected_values);
 
     timer.set_game_time(TimeSpan::from_seconds(25.0)).unwrap();
     timer.split().unwrap();
 
-    let state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     check_column_state(&state, 6, expected_values);
 }
 
@@ -1102,25 +1137,45 @@ fn check_columns_update_trigger(
 
     let mut image_cache = ImageCache::new();
 
-    let state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     // Timer at 0, contextual shouldn't show live times yet
     check_column_state(&state, 0, expected_values);
 
     timer.set_game_time(TimeSpan::from_seconds(2.0)).unwrap();
 
-    let state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     // Shorter than the best segment, contextual shouldn't show live times yet
     check_column_state(&state, 1, expected_values);
 
     timer.set_game_time(TimeSpan::from_seconds(3.5)).unwrap();
 
-    let state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     // Longer than the best segment, contextual should show live times
     check_column_state(&state, 2, expected_values);
 
     timer.set_game_time(TimeSpan::from_seconds(5.5)).unwrap();
 
-    let state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     // Behind the personal best, contextual should show live times
     check_column_state(&state, 3, expected_values);
 
@@ -1128,14 +1183,24 @@ fn check_columns_update_trigger(
     timer.skip_split().unwrap();
     timer.set_game_time(TimeSpan::from_seconds(11.0)).unwrap();
 
-    let state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     // Shorter than the combined best segment, contextual shouldn't show live
     // times yet
     check_column_state(&state, 4, expected_values);
 
     timer.set_game_time(TimeSpan::from_seconds(13.0)).unwrap();
 
-    let state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     // Longer than the combined best segment, contextual should show live times
     check_column_state(&state, 5, expected_values);
 
@@ -1144,13 +1209,23 @@ fn check_columns_update_trigger(
     timer.skip_split().unwrap();
     timer.set_game_time(TimeSpan::from_seconds(29.0)).unwrap();
 
-    let state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     // Not behind the personal best, contextual should not show live times yet
     check_column_state(&state, 6, expected_values);
 
     timer.set_game_time(TimeSpan::from_seconds(31.0)).unwrap();
 
-    let state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     // Behind the personal best, contextual should show live times only if a
     // split time or delta column
     check_column_state(&state, 7, expected_values);
@@ -1184,13 +1259,23 @@ fn column_delta_best_segment_colors() {
 
     let mut image_cache = ImageCache::new();
 
-    let state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     check_column_color(&state, 0, Text);
 
     timer.set_game_time(TimeSpan::from_seconds(5.1)).unwrap();
     timer.split().unwrap();
 
-    let state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     // 5.1 is longer than the best segment of 5.0, so this isn't a best segment
     check_column_color(&state, 0, Text);
 
@@ -1198,13 +1283,23 @@ fn column_delta_best_segment_colors() {
     timer.set_game_time(TimeSpan::from_seconds(4.9)).unwrap();
     timer.split().unwrap();
 
-    let state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     // 4.9 is shorter than the best segment of 5.0, so this is a best segment
     check_column_color(&state, 0, Best);
 
     timer.skip_split().unwrap();
 
-    let state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     // After skipping a split, the first best segment should stay
     check_column_color(&state, 0, Best);
     // The skipped split is not a best segment
@@ -1213,7 +1308,12 @@ fn column_delta_best_segment_colors() {
     timer.set_game_time(TimeSpan::from_seconds(12.0)).unwrap();
     timer.split().unwrap();
 
-    let state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     // The first best segment should stay
     check_column_color(&state, 0, Best);
     // The second split is still skipped, so still not a best segment
@@ -1226,7 +1326,12 @@ fn column_delta_best_segment_colors() {
     timer.set_game_time(TimeSpan::from_seconds(11.8)).unwrap();
     timer.split().unwrap();
 
-    let state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     // The first best segment should stay
     check_column_color(&state, 0, Best);
     // The second split is still skipped, so still not a best segment
@@ -1238,14 +1343,24 @@ fn column_delta_best_segment_colors() {
     timer.set_game_time(TimeSpan::from_seconds(21.0)).unwrap();
     timer.split().unwrap();
 
-    let state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     // The best segment is empty, so the segment of 9.2 is a best segment
     check_column_color(&state, 3, Best);
 
     timer.set_game_time(TimeSpan::from_seconds(28.9)).unwrap();
     timer.split().unwrap();
 
-    let state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     // The segment of 7.9 is shorter than the best segment of 8.0, so this is a best segment
     check_column_color(&state, 4, Best);
 
@@ -1253,7 +1368,12 @@ fn column_delta_best_segment_colors() {
     timer.set_game_time(TimeSpan::from_seconds(29.1)).unwrap();
     timer.split().unwrap();
 
-    let state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     // The segment of 8.1 is longer than the best segment of 8.0, so this is not a best segment
     check_column_color(&state, 4, Text);
 }
@@ -1296,7 +1416,12 @@ fn delta_or_split_time() {
         ],
     );
     check_column_state(
-        &component.state(&mut image_cache, &timer.snapshot(), &layout_settings),
+        &component.state(
+            &mut image_cache,
+            &timer.snapshot(),
+            &layout_settings,
+            Lang::English,
+        ),
         0,
         &[(
             ["0:05", "0:06", "0:15", "0:20", "0:25", "0:30"],
@@ -1313,7 +1438,12 @@ fn delta_or_split_time() {
         &[Some(4.0), None, Some(8.0), Some(12.0), None, Some(20.0)],
     );
     check_column_state(
-        &component.state(&mut image_cache, &timer.snapshot(), &layout_settings),
+        &component.state(
+            &mut image_cache,
+            &timer.snapshot(),
+            &layout_settings,
+            Lang::English,
+        ),
         0,
         &[(
             ["−1.0", "—", "−7.0", "−8.0", "—", "−10.0"],
@@ -1338,7 +1468,12 @@ fn delta_or_split_time() {
         ],
     );
     check_column_state(
-        &component.state(&mut image_cache, &timer.snapshot(), &layout_settings),
+        &component.state(
+            &mut image_cache,
+            &timer.snapshot(),
+            &layout_settings,
+            Lang::English,
+        ),
         0,
         &[(
             ["−2.0", "0:04", "−2.0", "−4.0", "0:12", "−6.0"],

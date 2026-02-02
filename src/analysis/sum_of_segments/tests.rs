@@ -1,8 +1,8 @@
-use super::{best, Prediction};
+use super::{Prediction, best};
 use crate::{
+    Timer, TimingMethod,
     comparison::best_segments,
     util::tests_helper::{create_timer, run_with_splits_opt, span},
-    Timer, TimingMethod,
 };
 
 fn assert(timer: &Timer, got: [Option<Prediction>; 4], [a, b, c]: [(f64, usize, bool); 3]) {

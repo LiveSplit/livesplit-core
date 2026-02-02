@@ -1,6 +1,6 @@
 //! Provides the parser for SplitterZ splits files.
 
-use crate::{RealTime, Run, Segment, TimeSpan, timing};
+use crate::{Lang, RealTime, Run, Segment, TimeSpan, timing};
 use alloc::borrow::Cow;
 use core::{num::ParseIntError, result::Result as StdResult};
 use snafu::ResultExt;
@@ -82,20 +82,20 @@ pub fn parse(source: &str, #[allow(unused)] load_icons: bool) -> Result<Run> {
 
         let mut segment = Segment::new(unescape(splits.next().ok_or(Error::ExpectedSegmentName)?));
 
-        let time: TimeSpan = splits
-            .next()
-            .ok_or(Error::ExpectedSplitTime)?
-            .parse()
-            .context(ParseSplitTime)?;
+        let time = TimeSpan::parse(
+            splits.next().ok_or(Error::ExpectedSplitTime)?,
+            Lang::English,
+        )
+        .context(ParseSplitTime)?;
         if time != TimeSpan::zero() {
             segment.set_personal_best_split_time(RealTime(Some(time)).into());
         }
 
-        let time: TimeSpan = splits
-            .next()
-            .ok_or(Error::ExpectedBestSegment)?
-            .parse()
-            .context(ParseBestSegment)?;
+        let time = TimeSpan::parse(
+            splits.next().ok_or(Error::ExpectedBestSegment)?,
+            Lang::English,
+        )
+        .context(ParseBestSegment)?;
         if time != TimeSpan::zero() {
             segment.set_best_segment_time(RealTime(Some(time)).into());
         }

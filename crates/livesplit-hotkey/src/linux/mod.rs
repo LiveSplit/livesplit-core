@@ -79,12 +79,12 @@ impl Hook {
         }
 
         if !matches!(consume, ConsumePreference::MustConsume) && can_use_evdev().is_some() {
-            evdev_impl::new().map_err(Into::into)
+            evdev_impl::new()
         } else if !matches!(
             consume,
             ConsumePreference::MustNotConsume | ConsumePreference::PreferConsume
         ) {
-            x11_impl::new().map_err(Into::into)
+            x11_impl::new()
         } else {
             Err(crate::Error::UnmatchedPreference)
         }

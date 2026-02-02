@@ -1,5 +1,6 @@
 use super::Editor;
 use crate::{
+    localization::Lang,
     platform::prelude::*,
     settings::{ImageCache, SettingsDescription},
 };
@@ -56,12 +57,12 @@ impl Editor {
     /// state. The images are marked as visited in the [`ImageCache`]. You still
     /// need to manually run [`ImageCache::collect`] to ensure unused images are
     /// removed from the cache.
-    pub fn state(&self, image_cache: &mut ImageCache) -> State {
+    pub fn state(&self, image_cache: &mut ImageCache, lang: Lang) -> State {
         let components = self
             .layout
             .components
             .iter()
-            .map(|c| c.name().into_owned())
+            .map(|c| c.name(lang).into_owned())
             .collect();
 
         let buttons = Buttons {
@@ -75,11 +76,11 @@ impl Editor {
             buttons,
             selected_component: self.selected_component as u32,
             component_settings: self.layout.components[self.selected_component]
-                .settings_description(),
+                .settings_description(lang),
             general_settings: self
                 .layout
                 .general_settings()
-                .settings_description(image_cache),
+                .settings_description(image_cache, lang),
         }
     }
 }

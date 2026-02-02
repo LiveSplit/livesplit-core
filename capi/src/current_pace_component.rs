@@ -2,11 +2,9 @@
 //! current attempt's final time, if the current attempt's pace matches the
 //! chosen comparison for the remainder of the run.
 
-use super::{output_vec, Json};
-use crate::component::OwnedComponent;
-use crate::key_value_component_state::OwnedKeyValueComponentState;
-use livesplit_core::component::current_pace::Component as CurrentPaceComponent;
-use livesplit_core::Timer;
+use super::{Json, output_vec};
+use crate::{component::OwnedComponent, key_value_component_state::OwnedKeyValueComponentState};
+use livesplit_core::{Lang, Timer, component::current_pace::Component as CurrentPaceComponent};
 
 /// type
 pub type OwnedCurrentPaceComponent = Box<CurrentPaceComponent>;
@@ -37,9 +35,10 @@ pub extern "C" fn CurrentPaceComponent_into_generic(
 pub extern "C" fn CurrentPaceComponent_state_as_json(
     this: &mut CurrentPaceComponent,
     timer: &Timer,
+    lang: Lang,
 ) -> Json {
     output_vec(|o| {
-        this.state(&timer.snapshot()).write_json(o).unwrap();
+        this.state(&timer.snapshot(), lang).write_json(o).unwrap();
     })
 }
 
@@ -48,6 +47,7 @@ pub extern "C" fn CurrentPaceComponent_state_as_json(
 pub extern "C" fn CurrentPaceComponent_state(
     this: &mut CurrentPaceComponent,
     timer: &Timer,
+    lang: Lang,
 ) -> OwnedKeyValueComponentState {
-    Box::new(this.state(&timer.snapshot()))
+    Box::new(this.state(&timer.snapshot(), lang))
 }

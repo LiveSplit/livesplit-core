@@ -6,7 +6,7 @@
 //! - Using out of bounds indices.
 //! - Using the wrong getter function on the wrong type of component.
 
-use crate::{output_vec, Json};
+use crate::{Json, output_vec};
 use livesplit_core::{
     component::{
         blank_space::State as BlankSpaceComponentState,

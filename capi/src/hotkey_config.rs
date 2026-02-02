@@ -3,7 +3,7 @@
 
 use super::{Json, get_file, output_vec, str};
 use crate::setting_value::OwnedSettingValue;
-use livesplit_core::HotkeyConfig;
+use livesplit_core::{HotkeyConfig, Lang};
 use std::io::{BufReader, Cursor};
 
 /// type
@@ -26,9 +26,12 @@ pub extern "C" fn HotkeyConfig_new() -> OwnedHotkeyConfig {
 /// Encodes generic description of the settings available for the hotkey
 /// configuration and their current values as JSON.
 #[unsafe(no_mangle)]
-pub extern "C" fn HotkeyConfig_settings_description_as_json(this: &HotkeyConfig) -> Json {
+pub extern "C" fn HotkeyConfig_settings_description_as_json(
+    this: &HotkeyConfig,
+    lang: Lang,
+) -> Json {
     output_vec(|o| {
-        serde_json::to_writer(o, &this.settings_description()).unwrap();
+        serde_json::to_writer(o, &this.settings_description(lang)).unwrap();
     })
 }
 

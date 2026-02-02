@@ -5,6 +5,7 @@
 use super::key_value;
 use crate::{
     Timer,
+    localization::{Lang, Text},
     platform::prelude::*,
     settings::{Color, Field, Gradient, SettingsDescription, Value},
 };
@@ -66,60 +67,70 @@ impl Component {
         &mut self.settings
     }
 
-    /// Accesses the name of the component.
-    pub const fn name(&self) -> &'static str {
-        "Current Comparison"
+    /// Accesses the name of the component for the specified language.
+    pub const fn name(&self, lang: Lang) -> &'static str {
+        Text::ComponentCurrentComparison.resolve(lang)
     }
 
     /// Updates the component's state based on the timer provided.
-    pub fn update_state(&self, state: &mut key_value::State, timer: &Timer) {
+    pub fn update_state(&self, state: &mut key_value::State, timer: &Timer, lang: Lang) {
         state.background = self.settings.background;
         state.key_color = self.settings.label_color;
         state.value_color = self.settings.value_color;
         state.semantic_color = Default::default();
 
         state.key.clear();
-        state.key.push_str("Comparing Against");
+        state.key.push_str(Text::ComparingAgainst.resolve(lang));
 
         state.value.clear();
         state.value.push_str(timer.current_comparison());
 
         state.key_abbreviations.clear();
-        state.key_abbreviations.push("Comparison".into());
+        state
+            .key_abbreviations
+            .push(Text::ComparisonShort.resolve(lang).into());
 
         state.display_two_rows = self.settings.display_two_rows;
         state.updates_frequently = false;
     }
 
     /// Calculates the component's state based on the timer provided.
-    pub fn state(&self, timer: &Timer) -> key_value::State {
+    pub fn state(&self, timer: &Timer, lang: Lang) -> key_value::State {
         let mut state = Default::default();
-        self.update_state(&mut state, timer);
+        self.update_state(&mut state, timer, lang);
         state
     }
 
     /// Accesses a generic description of the settings available for this
-    /// component and their current values.
-    pub fn settings_description(&self) -> SettingsDescription {
+    /// component and their current values for the specified language.
+    pub fn settings_description(&self, lang: Lang) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new(
-                "Background".into(),
-                "The background shown behind the component.".into(),
+                Text::CurrentComparisonBackground.resolve(lang).into(),
+                Text::CurrentComparisonBackgroundDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.background.into(),
             ),
             Field::new(
-                "Display 2 Rows".into(),
-                "Specifies whether to display the name of the component and the comparison in two separate rows.".into(),
+                Text::CurrentComparisonDisplayTwoRows.resolve(lang).into(),
+                Text::CurrentComparisonDisplayTwoRowsDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.display_two_rows.into(),
             ),
             Field::new(
-                "Label Color".into(),
-                "The color of the component's name. If not specified, the color is taken from the layout.".into(),
+                Text::CurrentComparisonLabelColor.resolve(lang).into(),
+                Text::CurrentComparisonLabelColorDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.label_color.into(),
             ),
             Field::new(
-                "Value Color".into(),
-                "The color of the comparison's name. If not specified, the color is taken from the layout.".into(),
+                Text::CurrentComparisonValueColor.resolve(lang).into(),
+                Text::CurrentComparisonValueColorDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.value_color.into(),
             ),
         ])

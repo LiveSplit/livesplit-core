@@ -1,5 +1,5 @@
 use super::super::Editor;
-use crate::{Run, Segment, TimeSpan};
+use crate::{Lang, Run, Segment, TimeSpan};
 
 fn base() -> Editor {
     let mut run = Run::new();
@@ -15,12 +15,12 @@ fn base() -> Editor {
     editor.select_only(0);
     editor
         .active_segment()
-        .parse_and_set_split_time("1")
+        .parse_and_set_split_time("1", Lang::English)
         .unwrap();
     editor.select_only(1);
     editor
         .active_segment()
-        .parse_and_set_split_time("2")
+        .parse_and_set_split_time("2", Lang::English)
         .unwrap();
     editor.set_run_id("somerunid");
 
@@ -51,7 +51,7 @@ fn not_when_changing_attempt_count() {
 #[test]
 fn not_when_changing_offset() {
     let mut editor = base();
-    editor.parse_and_set_offset("1:23").unwrap();
+    editor.parse_and_set_offset("1:23", Lang::English).unwrap();
     assert_ne!(editor.run().metadata().run_id, "");
 }
 
@@ -61,7 +61,7 @@ fn not_when_changing_first_segment() {
     editor.select_only(0);
     editor
         .active_segment()
-        .parse_and_set_split_time("1:23")
+        .parse_and_set_split_time("1:23", Lang::English)
         .unwrap();
     assert_ne!(editor.run().metadata().run_id, "");
 }
@@ -72,7 +72,7 @@ fn when_changing_last_segment() {
     editor.select_only(1);
     editor
         .active_segment()
-        .parse_and_set_split_time("1:23")
+        .parse_and_set_split_time("1:23", Lang::English)
         .unwrap();
     assert_eq!(editor.run().metadata().run_id, "");
 }
@@ -184,7 +184,7 @@ fn when_clearing_metadata() {
 #[test]
 fn not_when_generating_goal_comparison() {
     let mut editor = base();
-    editor.generate_goal_comparison(TimeSpan::from_seconds(30.0));
+    editor.generate_goal_comparison(TimeSpan::from_seconds(30.0), Lang::English);
     assert_ne!(editor.run().metadata().run_id, "");
 }
 

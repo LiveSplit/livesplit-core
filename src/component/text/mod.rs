@@ -6,6 +6,7 @@
 use super::key_value;
 use crate::{
     Timer,
+    localization::{Lang, Text as LText},
     platform::prelude::*,
     settings::{Color, Field, Gradient, SettingsDescription, Value},
     timing::formatter,
@@ -182,8 +183,8 @@ impl Component {
         &mut self.settings
     }
 
-    /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<'_, str> {
+    /// Accesses the name of the component for the specified language.
+    pub fn name(&self, lang: Lang) -> Cow<'_, str> {
         let name: Cow<'_, str> = match &self.settings.text {
             Text::Center(text) => text.as_str().into(),
             Text::Split(left, right) => {
@@ -199,7 +200,7 @@ impl Component {
         };
 
         if name.trim().is_empty() {
-            "Text".into()
+            LText::ComponentText.resolve(lang).into()
         } else {
             name
         }
@@ -268,8 +269,8 @@ impl Component {
     }
 
     /// Accesses a generic description of the settings available for this
-    /// component and their current values.
-    pub fn settings_description(&self) -> SettingsDescription {
+    /// component and their current values for the specified language.
+    pub fn settings_description(&self, lang: Lang) -> SettingsDescription {
         let (
             first,
             second,
@@ -280,64 +281,86 @@ impl Component {
         ) = match &self.settings.text {
             Text::Center(text) => (
                 Field::new(
-                    "Text".into(),
-                    "Specifies the text to display in the center.".into(),
+                    LText::TextComponentText.resolve(lang).into(),
+                    LText::TextComponentTextDescription.resolve(lang).into(),
                     text.to_string().into(),
                 ),
                 None,
                 false,
                 false,
-                ("Text Color", "The color of the text."),
+                (
+                    LText::TextComponentTextColor.resolve(lang),
+                    LText::TextComponentTextColorDescription.resolve(lang),
+                ),
                 ("", ""),
             ),
             Text::Split(left, right) => (
                 Field::new(
-                    "Left".into(),
-                    "Specifies the text to display on the left.".into(),
+                    LText::TextComponentLeft.resolve(lang).into(),
+                    LText::TextComponentLeftDescription.resolve(lang).into(),
                     left.to_string().into(),
                 ),
                 Some(Field::new(
-                    "Right".into(),
-                    "Specifies the text to display on the right.".into(),
+                    LText::TextComponentRight.resolve(lang).into(),
+                    LText::TextComponentRightDescription.resolve(lang).into(),
                     right.to_string().into(),
                 )),
                 false,
                 true,
-                ("Left Color", "The color of the text on the left."),
-                ("Right Color", "The color of the text on the right."),
+                (
+                    LText::TextComponentLeftColor.resolve(lang),
+                    LText::TextComponentLeftColorDescription.resolve(lang),
+                ),
+                (
+                    LText::TextComponentRightColor.resolve(lang),
+                    LText::TextComponentRightColorDescription.resolve(lang),
+                ),
             ),
             Text::Variable(var_name, is_split) => (
                 Field::new(
-                    "Variable".into(),
-                    "Specifies the name of the custom variable to display.".into(),
+                    LText::TextComponentVariable.resolve(lang).into(),
+                    LText::TextComponentVariableDescription.resolve(lang).into(),
                     var_name.to_string().into(),
                 ),
                 None,
                 true,
                 *is_split,
                 if *is_split {
-                    ("Name Color", "The color of the variable name.")
+                    (
+                        LText::TextComponentNameColor.resolve(lang),
+                        LText::TextComponentNameColorDescription.resolve(lang),
+                    )
                 } else {
-                    ("Value Color", "The color of the variable value.")
+                    (
+                        LText::TextComponentValueColor.resolve(lang),
+                        LText::TextComponentValueColorDescription.resolve(lang),
+                    )
                 },
-                ("Value Color", "The color of the variable value."),
+                (
+                    LText::TextComponentValueColor.resolve(lang),
+                    LText::TextComponentValueColorDescription.resolve(lang),
+                ),
             ),
         };
 
         let mut fields = vec![
             Field::new(
-                "Background".into(),
-                "The background shown behind the component.".into(),
+                LText::TextComponentBackground.resolve(lang).into(),
+                LText::TextComponentBackgroundDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.background.into(),
             ),
             Field::new(
-                "Use Variable".into(),
-                "Specifies whether to use a custom variable to display a dynamic value. Custom variables can be specified in the splits editor and provided automatically by auto splitters.".into(),
+                LText::TextComponentUseVariable.resolve(lang).into(),
+                LText::TextComponentUseVariableDescription
+                    .resolve(lang)
+                    .into(),
                 is_variable.into(),
             ),
             Field::new(
-                "Split".into(),
-                "Specifies whether to split the text into a left and right part. If this is not the case then only a single centered text is displayed.".into(),
+                LText::TextComponentSplit.resolve(lang).into(),
+                LText::TextComponentSplitDescription.resolve(lang).into(),
                 is_split.into(),
             ),
             first,
@@ -359,8 +382,10 @@ impl Component {
                 self.settings.right_color.into(),
             ));
             fields.push(Field::new(
-                "Display 2 Rows".into(),
-                "Specifies whether to display the left and right text in two separate rows.".into(),
+                LText::TextComponentDisplayTwoRows.resolve(lang).into(),
+                LText::TextComponentDisplayTwoRowsDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.display_two_rows.into(),
             ));
         }

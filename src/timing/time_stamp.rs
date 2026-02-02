@@ -1,4 +1,4 @@
-use crate::{platform::Instant, TimeSpan};
+use crate::{TimeSpan, platform::Instant};
 use core::ops::Sub;
 
 /// A `TimeStamp` stores a point in time that can be used to calculate a

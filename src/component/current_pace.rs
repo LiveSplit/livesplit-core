@@ -8,6 +8,7 @@ use crate::{
     TimerPhase,
     analysis::current_pace,
     comparison,
+    localization::{Lang, Text},
     platform::prelude::*,
     settings::{Color, Field, Gradient, SettingsDescription, Value},
     timing::{
@@ -83,37 +84,49 @@ impl Component {
         &mut self.settings
     }
 
-    /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<'static, str> {
-        self.text(self.settings.comparison_override.as_deref())
+    /// Accesses the name of the component for the specified language.
+    pub fn name(&self, lang: Lang) -> Cow<'static, str> {
+        self.localized_text(lang, self.settings.comparison_override.as_deref())
     }
 
-    fn text(&self, comparison: Option<&str>) -> Cow<'static, str> {
+    fn localized_text(&self, lang: Lang, comparison: Option<&str>) -> Cow<'static, str> {
         if let Some(comparison) = comparison {
             match comparison {
-                comparison::personal_best::NAME => "Current Pace".into(),
-                comparison::best_segments::NAME => "Best Possible Time".into(),
-                comparison::worst_segments::NAME => "Worst Possible Time".into(),
-                comparison::average_segments::NAME => "Predicted Time".into(),
-                comparison => format!("Current Pace ({})", comparison::shorten(comparison)).into(),
+                comparison::personal_best::NAME => Text::ComponentCurrentPace.resolve(lang).into(),
+                comparison::best_segments::NAME => Text::ComponentCurrentPaceBestPossibleTime
+                    .resolve(lang)
+                    .into(),
+                comparison::worst_segments::NAME => Text::ComponentCurrentPaceWorstPossibleTime
+                    .resolve(lang)
+                    .into(),
+                comparison::average_segments::NAME => {
+                    Text::ComponentCurrentPacePredictedTime.resolve(lang).into()
+                }
+                comparison => format!(
+                    "{} ({})",
+                    Text::ComponentCurrentPace.resolve(lang),
+                    comparison::shorten(comparison)
+                )
+                .into(),
             }
         } else {
-            "Current Pace".into()
+            Text::ComponentCurrentPace.resolve(lang).into()
         }
     }
 
     /// Updates the component's state based on the timer provided.
-    pub fn update_state(&self, state: &mut key_value::State, timer: &Snapshot) {
+    pub fn update_state(&self, state: &mut key_value::State, timer: &Snapshot, lang: Lang) {
         let comparison = comparison::resolve(&self.settings.comparison_override, timer);
         let comparison = comparison::or_current(comparison, timer);
-        let key = self.text(Some(comparison));
+        let key = self.localized_text(lang, Some(comparison));
 
-        let (current_pace, updates_frequently) =
-            if timer.current_phase() == TimerPhase::NotRunning && key.starts_with("Current Pace") {
-                (None, false)
-            } else {
-                current_pace::calculate(timer, comparison)
-            };
+        let (current_pace, updates_frequently) = if timer.current_phase() == TimerPhase::NotRunning
+            && key.starts_with(Text::ComponentCurrentPace.resolve(lang))
+        {
+            (None, false)
+        } else {
+            current_pace::calculate(timer, comparison)
+        };
 
         state.background = self.settings.background;
         state.key_color = self.settings.label_color;
@@ -127,32 +140,47 @@ impl Component {
         let _ = write!(
             state.value,
             "{}",
-            Regular::with_accuracy(self.settings.accuracy).format(current_pace)
+            Regular::with_accuracy(self.settings.accuracy).format(current_pace, lang)
         );
 
         state.key_abbreviations.clear();
-        // FIXME: This &* probably is different when key is uncowed
-        match &*key {
-            "Best Possible Time" => {
-                state.key_abbreviations.push("Best Poss. Time".into());
-                state.key_abbreviations.push("Best Time".into());
-                state.key_abbreviations.push("BPT".into());
+        match comparison {
+            comparison::best_segments::NAME => {
+                state
+                    .key_abbreviations
+                    .push(Text::CurrentPaceBestPossibleTimeShort.resolve(lang).into());
+                state
+                    .key_abbreviations
+                    .push(Text::CurrentPaceBestTimeShort.resolve(lang).into());
+                state.key_abbreviations.push(
+                    Text::CurrentPaceBestPossibleTimeAbbreviation
+                        .resolve(lang)
+                        .into(),
+                );
             }
-            "Worst Possible Time" => {
-                state.key_abbreviations.push("Worst Poss. Time".into());
-                state.key_abbreviations.push("Worst Time".into());
+            comparison::worst_segments::NAME => {
+                state
+                    .key_abbreviations
+                    .push(Text::CurrentPaceWorstPossibleTimeShort.resolve(lang).into());
+                state
+                    .key_abbreviations
+                    .push(Text::CurrentPaceWorstTimeShort.resolve(lang).into());
             }
-            "Predicted Time" => {
-                state.key_abbreviations.push("Pred. Time".into());
-            }
-            "Current Pace" => {
-                state.key_abbreviations.push("Cur. Pace".into());
-                state.key_abbreviations.push("Pace".into());
+            comparison::average_segments::NAME => {
+                state
+                    .key_abbreviations
+                    .push(Text::CurrentPacePredictedTimeShort.resolve(lang).into());
             }
             _ => {
-                state.key_abbreviations.push("Current Pace".into());
-                state.key_abbreviations.push("Cur. Pace".into());
-                state.key_abbreviations.push("Pace".into());
+                state
+                    .key_abbreviations
+                    .push(Text::ComponentCurrentPace.resolve(lang).into());
+                state
+                    .key_abbreviations
+                    .push(Text::CurrentPaceShort.resolve(lang).into());
+                state
+                    .key_abbreviations
+                    .push(Text::CurrentPaceAbbreviation.resolve(lang).into());
             }
         }
 
@@ -161,44 +189,46 @@ impl Component {
     }
 
     /// Calculates the component's state based on the timer provided.
-    pub fn state(&self, timer: &Snapshot) -> key_value::State {
+    pub fn state(&self, timer: &Snapshot, lang: Lang) -> key_value::State {
         let mut state = Default::default();
-        self.update_state(&mut state, timer);
+        self.update_state(&mut state, timer, lang);
         state
     }
 
     /// Accesses a generic description of the settings available for this
-    /// component and their current values.
-    pub fn settings_description(&self) -> SettingsDescription {
+    /// component and their current values for the specified language.
+    pub fn settings_description(&self, lang: Lang) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new(
-                "Background".into(),
-                "The background shown behind the component.".into(),
+                Text::CurrentPaceBackground.resolve(lang).into(),
+                Text::CurrentPaceBackgroundDescription.resolve(lang).into(),
                 self.settings.background.into(),
             ),
             Field::new(
-                "Comparison".into(),
-                "The comparison to predict the final time from. If not specified, the current comparison is used.".into(),
+                Text::CurrentPaceComparison.resolve(lang).into(),
+                Text::CurrentPaceComparisonDescription.resolve(lang).into(),
                 self.settings.comparison_override.clone().into(),
             ),
             Field::new(
-                "Display 2 Rows".into(),
-                "Specifies whether to display the name of the component and the predicted time in two separate rows.".into(),
+                Text::CurrentPaceDisplayTwoRows.resolve(lang).into(),
+                Text::CurrentPaceDisplayTwoRowsDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.display_two_rows.into(),
             ),
             Field::new(
-                "Label Color".into(),
-                "The color of the component's name. If not specified, the color is taken from the layout.".into(),
+                Text::CurrentPaceLabelColor.resolve(lang).into(),
+                Text::CurrentPaceLabelColorDescription.resolve(lang).into(),
                 self.settings.label_color.into(),
             ),
             Field::new(
-                "Value Color".into(),
-                "The color of the predicted time. If not specified, the color is taken from the layout.".into(),
+                Text::CurrentPaceValueColor.resolve(lang).into(),
+                Text::CurrentPaceValueColorDescription.resolve(lang).into(),
                 self.settings.value_color.into(),
             ),
             Field::new(
-                "Accuracy".into(),
-                "The accuracy of the predicted time shown.".into(),
+                Text::CurrentPaceAccuracy.resolve(lang).into(),
+                Text::CurrentPaceAccuracyDescription.resolve(lang).into(),
                 self.settings.accuracy.into(),
             ),
         ])

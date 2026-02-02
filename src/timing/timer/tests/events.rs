@@ -1,7 +1,6 @@
 use crate::{
-    comparison,
+    TimeSpan, Timer, comparison,
     event::{Error, Event},
-    TimeSpan, Timer,
 };
 
 use super::{run, timer};

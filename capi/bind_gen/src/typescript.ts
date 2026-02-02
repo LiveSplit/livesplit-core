@@ -775,7 +775,7 @@ export type LayoutDirection = "Vertical" | "Horizontal";
  */
 export interface CustomCombobox {
     value: string,
-    list: string[],
+    list: string[] | [string, string][],
     mandatory: boolean,
 }
 
@@ -1005,3 +1005,24 @@ export type SemanticColor = "Default" |
     "NotRunning" |
     "Paused" |
     "PersonalBest";
+
+/**
+ * The Language enum describes all the languages that are supported for
+ * localization.
+ */
+export enum Language {
+    English = 0,
+    Dutch = 1,
+    French = 2,
+    German = 3,
+    Italian = 4,
+    Portuguese = 5,
+    Polish = 6,
+    Russian = 7,
+    Spanish = 8,
+    BrazilianPortuguese = 9,
+    ChineseSimplified = 10,
+    ChineseTraditional = 11,
+    Japanese = 12,
+    Korean = 13,
+}

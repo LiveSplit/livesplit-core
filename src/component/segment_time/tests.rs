@@ -1,7 +1,8 @@
 use super::Component;
 use crate::{
-    util::tests_helper::{self, make_progress_run_with_splits_opt, run_with_splits, start_run},
     Timer,
+    localization::Lang,
+    util::tests_helper::{self, make_progress_run_with_splits_opt, run_with_splits, start_run},
 };
 
 fn create_timer() -> Timer {
@@ -14,7 +15,7 @@ fn create_timer() -> Timer {
 fn is_empty_when_no_attempt_is_started() {
     let component = Component::new();
     let timer = create_timer();
-    let state = component.state(&timer);
+    let state = component.state(&timer, Lang::English);
     assert_eq!(&*state.value, "—");
 }
 
@@ -24,7 +25,7 @@ fn is_not_empty_when_attempt_is_started() {
     let mut timer = create_timer();
     start_run(&mut timer);
     make_progress_run_with_splits_opt(&mut timer, &[Some(467.23)]);
-    let state = component.state(&timer);
+    let state = component.state(&timer, Lang::English);
     assert_eq!(&*state.value, "33.30");
 }
 
@@ -35,7 +36,7 @@ fn is_not_empty_when_attempt_is_paused() {
     start_run(&mut timer);
     make_progress_run_with_splits_opt(&mut timer, &[Some(467.23)]);
     timer.pause().unwrap();
-    let state = component.state(&timer);
+    let state = component.state(&timer, Lang::English);
     assert_eq!(&*state.value, "33.30");
 }
 
@@ -45,6 +46,6 @@ fn is_empty_when_attempt_is_finished() {
     let mut timer = create_timer();
     start_run(&mut timer);
     make_progress_run_with_splits_opt(&mut timer, &[Some(467.23), Some(742.65)]);
-    let state = component.state(&timer);
+    let state = component.state(&timer, Lang::English);
     assert_eq!(&*state.value, "—");
 }

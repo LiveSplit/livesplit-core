@@ -3,7 +3,7 @@
 
 use super::{Json, output_vec};
 use crate::{component::OwnedComponent, key_value_component_state::OwnedKeyValueComponentState};
-use livesplit_core::{Timer, component::total_playtime::Component as TotalPlaytimeComponent};
+use livesplit_core::{Lang, Timer, component::total_playtime::Component as TotalPlaytimeComponent};
 
 /// type
 pub type OwnedTotalPlaytimeComponent = Box<TotalPlaytimeComponent>;
@@ -34,9 +34,10 @@ pub extern "C" fn TotalPlaytimeComponent_into_generic(
 pub extern "C" fn TotalPlaytimeComponent_state_as_json(
     this: &mut TotalPlaytimeComponent,
     timer: &Timer,
+    lang: Lang,
 ) -> Json {
     output_vec(|o| {
-        this.state(timer).write_json(o).unwrap();
+        this.state(timer, lang).write_json(o).unwrap();
     })
 }
 
@@ -45,6 +46,7 @@ pub extern "C" fn TotalPlaytimeComponent_state_as_json(
 pub extern "C" fn TotalPlaytimeComponent_state(
     this: &mut TotalPlaytimeComponent,
     timer: &Timer,
+    lang: Lang,
 ) -> OwnedKeyValueComponentState {
-    Box::new(this.state(timer))
+    Box::new(this.state(timer, lang))
 }

@@ -6,6 +6,7 @@ use super::key_value;
 use crate::{
     Timer, TimingMethod,
     analysis::total_playtime,
+    localization::{Lang, Text},
     platform::prelude::*,
     settings::{Color, Field, Gradient, SettingsDescription, Value},
     timing::formatter::{Days, Regular, TimeFormatter},
@@ -73,13 +74,13 @@ impl Component {
         &mut self.settings
     }
 
-    /// Accesses the name of the component.
-    pub const fn name(&self) -> &'static str {
-        "Total Playtime"
+    /// Accesses the name of the component for the specified language.
+    pub const fn name(&self, lang: Lang) -> &'static str {
+        Text::ComponentTotalPlaytime.resolve(lang)
     }
 
     /// Updates the component's state based on the timer provided.
-    pub fn update_state(&self, state: &mut key_value::State, timer: &Timer) {
+    pub fn update_state(&self, state: &mut key_value::State, timer: &Timer, lang: Lang) {
         let total_playtime = total_playtime::calculate(timer);
 
         state.background = self.settings.background;
@@ -88,17 +89,25 @@ impl Component {
         state.semantic_color = Default::default();
 
         state.key.clear();
-        state.key.push_str("Total Playtime");
+        state
+            .key
+            .push_str(Text::ComponentTotalPlaytime.resolve(lang));
 
         state.value.clear();
         if self.settings.show_days {
-            let _ = write!(state.value, "{}", Days::new().format(total_playtime));
+            let _ = write!(state.value, "{}", Days::new().format(total_playtime, lang));
         } else {
-            let _ = write!(state.value, "{}", Regular::new().format(total_playtime));
+            let _ = write!(
+                state.value,
+                "{}",
+                Regular::new().format(total_playtime, lang)
+            );
         }
 
         state.key_abbreviations.clear();
-        state.key_abbreviations.push("Playtime".into());
+        state
+            .key_abbreviations
+            .push(Text::PlaytimeShort.resolve(lang).into());
 
         state.display_two_rows = self.settings.display_two_rows;
         state.updates_frequently = timer
@@ -107,39 +116,41 @@ impl Component {
     }
 
     /// Calculates the component's state based on the timer provided.
-    pub fn state(&self, timer: &Timer) -> key_value::State {
+    pub fn state(&self, timer: &Timer, lang: Lang) -> key_value::State {
         let mut state = Default::default();
-        self.update_state(&mut state, timer);
+        self.update_state(&mut state, timer, lang);
         state
     }
 
     /// Accesses a generic description of the settings available for this
-    /// component and their current values.
-    pub fn settings_description(&self) -> SettingsDescription {
+    /// component and their current values for the specified language.
+    pub fn settings_description(&self, lang: Lang) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new(
-                "Background".into(),
-                "The background shown behind the component.".into(),
+                Text::TotalPlaytimeBackground.resolve(lang).into(),
+                Text::TotalPlaytimeBackgroundDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.background.into(),
             ),
             Field::new(
-                "Display 2 Rows".into(),
-                "Specifies whether to display the name of the component and the total playtime in two separate rows.".into(),
+                Text::DisplayTwoRows.resolve(lang).into(),
+                Text::DisplayTwoRowsDescription.resolve(lang).into(),
                 self.settings.display_two_rows.into(),
             ),
             Field::new(
-                "Show Days (>24h)".into(),
-                "Specifies whether to show the number of days, when the total playtime reaches 24 hours or more.".into(),
+                Text::ShowDays.resolve(lang).into(),
+                Text::ShowDaysDescription.resolve(lang).into(),
                 self.settings.show_days.into(),
             ),
             Field::new(
-                "Label Color".into(),
-                "The color of the component's name. If not specified, the color is taken from the layout.".into(),
+                Text::LabelColor.resolve(lang).into(),
+                Text::LabelColorDescription.resolve(lang).into(),
                 self.settings.label_color.into(),
             ),
             Field::new(
-                "Value Color".into(),
-                "The color of the total playtime. If not specified, the color is taken from the layout.".into(),
+                Text::ValueColor.resolve(lang).into(),
+                Text::ValueColorDescription.resolve(lang).into(),
                 self.settings.value_color.into(),
             ),
         ])

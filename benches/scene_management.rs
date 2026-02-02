@@ -9,7 +9,7 @@ cfg_if::cfg_if! {
             },
             run::parser::livesplit,
             settings::{Font, ImageCache},
-            Run, Segment, TimeSpan, Timer, TimingMethod,
+            Lang, Run, Segment, TimeSpan, Timer, TimingMethod,
         };
         use std::fs;
 
@@ -93,7 +93,7 @@ cfg_if::cfg_if! {
             start_run(&mut timer);
             make_progress_run_with_splits_opt(&mut timer, &[Some(5.0), None, Some(10.0)]);
 
-            let state = layout.state(&mut image_cache, &timer.snapshot());
+            let state = layout.state(&mut image_cache, &timer.snapshot(), Lang::English);
 
             let mut manager = SceneManager::new(Dummy);
 
@@ -115,7 +115,7 @@ cfg_if::cfg_if! {
             );
 
             let snapshot = timer.snapshot();
-            let state = layout.state(&mut image_cache, &snapshot);
+            let state = layout.state(&mut image_cache, &snapshot, Lang::English);
 
             let mut manager = SceneManager::new(Dummy);
 

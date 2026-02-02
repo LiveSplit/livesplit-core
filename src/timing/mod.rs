@@ -22,4 +22,4 @@ pub use self::{
     timing_method::TimingMethod,
 };
 
-pub(crate) use self::time_span::{parse_custom, CustomParser};
+pub(crate) use self::time_span::{CustomParser, parse_custom};

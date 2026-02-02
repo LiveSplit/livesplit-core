@@ -3,7 +3,7 @@
 
 use super::output_vec;
 use crate::run::OwnedRun;
-use livesplit_core::run::parser::{composite::ParsedRun, TimerKind};
+use livesplit_core::run::parser::{TimerKind, composite::ParsedRun};
 use std::{io::Write, os::raw::c_char};
 
 /// type

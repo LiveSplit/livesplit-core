@@ -1,9 +1,9 @@
 //! Provides the parser for Flitter splits files.
 
 use crate::{
+    Lang, Run, Segment, Time,
     platform::prelude::*,
-    timing::{parse_custom, CustomParser},
-    Run, Segment, Time,
+    timing::{CustomParser, parse_custom},
 };
 use alloc::borrow::Cow;
 use core::result::Result as StdResult;
@@ -83,7 +83,7 @@ impl CustomParser for FlitterParser {
 }
 
 fn parse_time(real_time: &str) -> Option<Time> {
-    let time = parse_custom::<FlitterParser>(real_time).ok()?;
+    let time = parse_custom::<FlitterParser>(real_time, Lang::English).ok()?;
     Some(Time::new().with_real_time(Some(time)))
 }
 

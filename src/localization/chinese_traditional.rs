@@ -1,0 +1,87 @@
+use super::{Piece, PlaceholderText, Text};
+
+pub const fn resolve(text: Text) -> &'static str {
+    match text {
+        Text::StartSplit => "開始 / 分段",
+        Text::StartSplitDescription => "用於分段並開始新嘗試的快捷鍵。",
+        Text::Reset => "重設",
+        Text::ResetDescription => "用於重設目前嘗試的快捷鍵。",
+        Text::UndoSplit => "撤銷分段",
+        Text::UndoSplitDescription => "用於撤銷上一個分段的快捷鍵。",
+        Text::SkipSplit => "跳過分段",
+        Text::SkipSplitDescription => "用於跳過目前分段的快捷鍵。",
+        Text::Pause => "暫停",
+        Text::PauseDescription => "用於暫停目前嘗試的快捷鍵。也可用於開始新嘗試。",
+        Text::UndoAllPauses => "撤銷全部暫停",
+        Text::UndoAllPausesDescription => {
+            "用於從目前時間中移除所有暫停時間的快捷鍵。適用於誤暫停的情況。"
+        }
+        Text::PreviousComparison => "上一個比較",
+        Text::PreviousComparisonDescription => "用於切換到上一個比較的快捷鍵。",
+        Text::NextComparison => "下一個比較",
+        Text::NextComparisonDescription => "用於切換到下一個比較的快捷鍵。",
+        Text::ToggleTimingMethod => "切換計時方式",
+        Text::ToggleTimingMethodDescription => "用於在「實時時間」和「遊戲時間」之間切換的快捷鍵。",
+        Text::TimerBackground => "背景",
+        Text::TimerBackgroundDescription => {
+            "元件背後的背景。也可以將領先/落後對應的顏色套用為背景色。"
+        }
+        Text::SegmentTimer => "分段計時器",
+        Text::SegmentTimerDescription => "指定顯示自目前分段開始的時間，還是自目前嘗試開始的時間。",
+        Text::TimingMethod => "計時方式",
+        Text::TimingMethodDescription => "指定計時方式為「實時時間」或「遊戲時間」。",
+        Text::Height => "高度",
+        Text::HeightDescription => "指定元件的高度。",
+        Text::TimerTextColor => "文字顏色",
+        Text::TimerTextColorDescription => "指定計時器文字顏色。",
+        Text::ShowGradient => "顯示漸層",
+        Text::ShowGradientDescription => "指定是否顯示漸層。",
+        Text::DigitsFormat => "數字格式",
+        Text::DigitsFormatDescription => "指定是否顯示毫秒或十分之一秒。",
+        Text::Accuracy => "精確度",
+        Text::AccuracyDescription => "顯示的時間精確度。",
+        Text::TitleBackground => "標題背景",
+        Text::TitleBackgroundDescription => "標題元件背景。",
+        Text::TitleTextColor => "標題文字顏色",
+        Text::TitleTextColorDescription => "標題文字顏色。",
+        Text::ShowGameName => "顯示遊戲名稱",
+        Text::ShowGameNameDescription => "指定是否顯示遊戲名稱。",
+        Text::ShowCategoryName => "顯示分類名稱",
+        Text::ShowCategoryNameDescription => "指定是否顯示分類名稱。",
+        Text::ShowFinishedRunsCount => "顯示完成次數",
+        Text::ShowFinishedRunsCountDescription => "指定是否顯示完成次數。",
+        Text::ShowAttemptCount => "顯示嘗試次數",
+        Text::ShowAttemptCountDescription => "指定是否顯示嘗試次數。",
+        Text::TextAlignment => "文字對齊",
+        Text::TextAlignmentDescription => "文字對齊方式。",
+        Text::DisplayTextAsSingleLine => "單行顯示",
+        Text::DisplayTextAsSingleLineDescription => "指定是否單行顯示文字。",
+        Text::DisplayGameIcon => "顯示遊戲圖示",
+        Text::DisplayGameIconDescription => "指定是否顯示遊戲圖示。",
+        Text::ShowRegion => "顯示地區",
+        Text::ShowRegionDescription => "指定是否顯示地區。",
+        Text::ShowPlatform => "顯示平台",
+        Text::ShowPlatformDescription => "指定是否顯示平台。",
+        Text::ShowVariables => "顯示變數",
+        Text::ShowVariablesDescription => "指定是否顯示變數。",
+        Text::TotalPlaytimeBackground => "總遊玩時間背景",
+        Text::TotalPlaytimeBackgroundDescription => "總遊玩時間元件背景。",
+        Text::DisplayTwoRows => "顯示兩行",
+        Text::DisplayTwoRowsDescription => "指定是否顯示兩行。",
+        Text::ShowDays => "顯示天數",
+        Text::ShowDaysDescription => "指定是否顯示天數。",
+        Text::LabelColor => "標籤顏色",
+        Text::LabelColorDescription => "標籤顏色。",
+        Text::ValueColor => "數值顏色",
+        Text::ValueColorDescription => "數值顏色。",
+        Text::BlankSpaceBackground => "空白背景",
+        Text::BlankSpaceBackgroundDescription => "空白元件背景。",
+        Text::BlankSpaceSize => "空白大小",
+        Text::BlankSpaceSizeDescription => "空白元件大小。",
+        _ => super::chinese_simplified::resolve(text),
+    }
+}
+
+pub const fn resolve_placeholder(text: PlaceholderText) -> &'static [Piece] {
+    super::chinese_simplified::resolve_placeholder(text)
+}

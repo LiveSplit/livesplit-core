@@ -1,6 +1,6 @@
 //! Provides the parser for FaceSplit splits files.
 
-use crate::{RealTime, Run, Segment, Time, TimeSpan, timing};
+use crate::{Lang, RealTime, Run, Segment, Time, TimeSpan, timing};
 use alloc::borrow::Cow;
 use core::{num::ParseIntError, result::Result as StdResult};
 use snafu::{OptionExt, ResultExt};
@@ -44,7 +44,7 @@ pub type Result<T> = StdResult<T, Error>;
 
 fn parse_time(time: &str) -> StdResult<Time, timing::ParseError> {
     // Replace "," by "." as "," wouldn't parse
-    let time: TimeSpan = replace(time, ",", ".").parse()?;
+    let time = TimeSpan::parse(&replace(time, ",", "."), Lang::English)?;
     // Skipped is stored as a zero time in FaceSplit Splits
     if time == TimeSpan::zero() {
         Ok(Time::default())

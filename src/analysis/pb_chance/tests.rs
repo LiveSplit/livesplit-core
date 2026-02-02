@@ -1,9 +1,9 @@
 use super::for_timer;
 use crate::{
+    Timer, TimerPhase,
     util::tests_helper::{
         create_timer, make_progress_run_with_splits_opt, run_with_splits, span, start_run,
     },
-    Timer, TimerPhase,
 };
 
 fn chance(timer: &Timer) -> u32 {

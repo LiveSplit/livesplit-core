@@ -1,7 +1,7 @@
 use js_sys::{Date, Reflect};
 use std::{cell::Cell, ops::Sub};
 use time::UtcOffset;
-use wasm_bindgen::{prelude::*, JsCast};
+use wasm_bindgen::{JsCast, prelude::*};
 use web_sys::{Performance, VisibilityState};
 
 pub use time::{Duration, OffsetDateTime as DateTime};

@@ -4,7 +4,10 @@
 
 use serde_derive::{Deserialize, Serialize};
 
-use crate::settings::{SettingsDescription, Value};
+use crate::{
+    localization::{Lang, Text},
+    settings::{SettingsDescription, Value},
+};
 
 /// The Separator Component is a simple component that only serves to render
 /// separators between components.
@@ -32,9 +35,9 @@ impl Component {
         Default::default()
     }
 
-    /// Accesses the name of the component.
-    pub const fn name(&self) -> &'static str {
-        "Separator"
+    /// Accesses the name of the component for the specified language.
+    pub const fn name(&self, lang: Lang) -> &'static str {
+        Text::ComponentSeparator.resolve(lang)
     }
 
     /// Updates the component's state.
@@ -46,8 +49,8 @@ impl Component {
     }
 
     /// Accesses a generic description of the settings available for this
-    /// component and their current values.
-    pub fn settings_description(&self) -> SettingsDescription {
+    /// component and their current values for the specified language.
+    pub fn settings_description(&self, _lang: Lang) -> SettingsDescription {
         SettingsDescription::default()
     }
 

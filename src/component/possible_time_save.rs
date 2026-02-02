@@ -9,6 +9,7 @@ use crate::{
     TimerPhase,
     analysis::possible_time_save,
     comparison,
+    localization::{Lang, Text},
     platform::prelude::*,
     settings::{Color, Field, Gradient, SettingsDescription, Value},
     timing::{
@@ -90,9 +91,10 @@ impl Component {
         &mut self.settings
     }
 
-    /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<'static, str> {
-        self.text(
+    /// Accesses the name of the component for the specified language.
+    pub fn name(&self, lang: Lang) -> Cow<'static, str> {
+        self.localized_text(
+            lang,
             self.settings
                 .comparison_override
                 .as_ref()
@@ -100,11 +102,11 @@ impl Component {
         )
     }
 
-    fn text(&self, comparison: Option<&str>) -> Cow<'static, str> {
+    fn localized_text(&self, lang: Lang, comparison: Option<&str>) -> Cow<'static, str> {
         let text = if self.settings.total_possible_time_save {
-            "Total Possible Time Save"
+            Text::ComponentPossibleTimeSaveTotal.resolve(lang)
         } else {
-            "Possible Time Save"
+            Text::ComponentPossibleTimeSave.resolve(lang)
         };
         let mut text = Cow::from(text);
         if let Some(comparison) = comparison {
@@ -114,11 +116,11 @@ impl Component {
     }
 
     /// Updates the component's state based on the timer provided.
-    pub fn update_state(&self, state: &mut key_value::State, timer: &Snapshot) {
+    pub fn update_state(&self, state: &mut key_value::State, timer: &Snapshot, lang: Lang) {
         let segment_index = timer.current_split_index();
         let current_phase = timer.current_phase();
         let comparison = comparison::resolve(&self.settings.comparison_override, timer);
-        let text = self.text(comparison);
+        let text = self.localized_text(lang, comparison);
         let comparison = comparison::or_current(comparison, timer);
 
         let (time, updates_frequently) = if self.settings.total_possible_time_save {
@@ -143,67 +145,87 @@ impl Component {
         let _ = write!(
             state.value,
             "{}",
-            SegmentTime::with_accuracy(self.settings.accuracy).format(time)
+            SegmentTime::with_accuracy(self.settings.accuracy).format(time, lang)
         );
 
         state.key_abbreviations.clear();
         if self.settings.total_possible_time_save {
             state
                 .key_abbreviations
-                .push("Total Possible Time Save".into());
+                .push(Text::ComponentPossibleTimeSaveTotal.resolve(lang).into());
         }
-        state.key_abbreviations.push("Possible Time Save".into());
-        state.key_abbreviations.push("Poss. Time Save".into());
-        state.key_abbreviations.push("Time Save".into());
+        state
+            .key_abbreviations
+            .push(Text::PossibleTimeSaveShort.resolve(lang).into());
+        state
+            .key_abbreviations
+            .push(Text::PossibleTimeSaveAbbreviation.resolve(lang).into());
+        state
+            .key_abbreviations
+            .push(Text::TimeSaveShort.resolve(lang).into());
 
         state.display_two_rows = self.settings.display_two_rows;
         state.updates_frequently = updates_frequently;
     }
 
     /// Calculates the component's state based on the timer provided.
-    pub fn state(&self, timer: &Snapshot) -> key_value::State {
+    pub fn state(&self, timer: &Snapshot, lang: Lang) -> key_value::State {
         let mut state = Default::default();
-        self.update_state(&mut state, timer);
+        self.update_state(&mut state, timer, lang);
         state
     }
 
     /// Accesses a generic description of the settings available for this
-    /// component and their current values.
-    pub fn settings_description(&self) -> SettingsDescription {
+    /// component and their current values for the specified language.
+    pub fn settings_description(&self, lang: Lang) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new(
-                "Background".into(),
-                "The background shown behind the component.".into(),
+                Text::PossibleTimeSaveBackground.resolve(lang).into(),
+                Text::PossibleTimeSaveBackgroundDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.background.into(),
             ),
             Field::new(
-                "Comparison".into(),
-                "The comparison to calculate the possible time save for. If not specified, the current comparison is used.".into(),
+                Text::PossibleTimeSaveComparison.resolve(lang).into(),
+                Text::PossibleTimeSaveComparisonDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.comparison_override.clone().into(),
             ),
             Field::new(
-                "Display 2 Rows".into(),
-                "Specifies whether to display the name of the component and the possible time save in two separate rows.".into(),
+                Text::PossibleTimeSaveDisplayTwoRows.resolve(lang).into(),
+                Text::PossibleTimeSaveDisplayTwoRowsDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.display_two_rows.into(),
             ),
             Field::new(
-                "Show Total Possible Time Save".into(),
-                "Specifies whether to show the total possible time save for the remainder of the current attempt, instead of the possible time save for the current segment.".into(),
+                Text::PossibleTimeSaveShowTotal.resolve(lang).into(),
+                Text::PossibleTimeSaveShowTotalDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.total_possible_time_save.into(),
             ),
             Field::new(
-                "Label Color".into(),
-                "The color of the component's name. If not specified, the color is taken from the layout.".into(),
+                Text::PossibleTimeSaveLabelColor.resolve(lang).into(),
+                Text::PossibleTimeSaveLabelColorDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.label_color.into(),
             ),
             Field::new(
-                "Value Color".into(),
-                "The color of the possible time save. If not specified, the color is taken from the layout.".into(),
+                Text::PossibleTimeSaveValueColor.resolve(lang).into(),
+                Text::PossibleTimeSaveValueColorDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.value_color.into(),
             ),
             Field::new(
-                "Accuracy".into(),
-                "The accuracy of the possible time save shown.".into(),
+                Text::PossibleTimeSaveAccuracy.resolve(lang).into(),
+                Text::PossibleTimeSaveAccuracyDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.accuracy.into(),
             ),
         ])

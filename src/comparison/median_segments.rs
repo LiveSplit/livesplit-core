@@ -4,7 +4,7 @@
 //! Median Segments are more suited to represent the current performance of a runner.
 
 use super::ComparisonGenerator;
-use crate::{platform::prelude::*, Attempt, Segment, TimeSpan, TimingMethod};
+use crate::{Attempt, Segment, TimeSpan, TimingMethod, platform::prelude::*};
 
 /// Defines the Comparison Generator for calculating the Median Segments of a
 /// [`Run`](crate::Run). The Median Segments are calculated through a weighted

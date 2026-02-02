@@ -4,7 +4,7 @@
 use super::{Json, get_file, output_vec, str};
 use crate::{component::OwnedComponent, layout_state::OwnedLayoutState, slice};
 use livesplit_core::{
-    Layout, Timer,
+    Lang, Layout, Timer,
     layout::{LayoutSettings, LayoutState, parser},
     settings::ImageCache,
 };
@@ -90,8 +90,9 @@ pub extern "C" fn Layout_state(
     this: &mut Layout,
     image_cache: &mut ImageCache,
     timer: &Timer,
+    lang: Lang,
 ) -> OwnedLayoutState {
-    Box::new(this.state(image_cache, &timer.snapshot()))
+    Box::new(this.state(image_cache, &timer.snapshot(), lang))
 }
 
 /// Updates the layout's state based on the timer provided.
@@ -101,8 +102,9 @@ pub extern "C" fn Layout_update_state(
     state: &mut LayoutState,
     image_cache: &mut ImageCache,
     timer: &Timer,
+    lang: Lang,
 ) {
-    this.update_state(state, image_cache, &timer.snapshot())
+    this.update_state(state, image_cache, &timer.snapshot(), lang)
 }
 
 /// Updates the layout's state based on the timer provided and encodes it as
@@ -113,8 +115,9 @@ pub extern "C" fn Layout_update_state_as_json(
     state: &mut LayoutState,
     image_cache: &mut ImageCache,
     timer: &Timer,
+    lang: Lang,
 ) -> Json {
-    this.update_state(state, image_cache, &timer.snapshot());
+    this.update_state(state, image_cache, &timer.snapshot(), lang);
     output_vec(|o| {
         state.write_json(o).unwrap();
     })
@@ -127,9 +130,10 @@ pub extern "C" fn Layout_state_as_json(
     this: &mut Layout,
     image_cache: &mut ImageCache,
     timer: &Timer,
+    lang: Lang,
 ) -> Json {
     output_vec(|o| {
-        this.state(image_cache, &timer.snapshot())
+        this.state(image_cache, &timer.snapshot(), lang)
             .write_json(o)
             .unwrap();
     })

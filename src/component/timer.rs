@@ -6,6 +6,7 @@
 use crate::{
     GeneralLayoutSettings, TimeSpan, TimerPhase, TimingMethod,
     analysis::split_color,
+    localization::{Lang, Text},
     platform::prelude::*,
     settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value},
     timing::{
@@ -178,12 +179,12 @@ impl Component {
         &mut self.settings
     }
 
-    /// Accesses the name of the component.
-    pub const fn name(&self) -> &'static str {
+    /// Accesses the name of the component for the specified language.
+    pub const fn name(&self, lang: Lang) -> &'static str {
         if self.settings.is_segment_timer {
-            "Segment Timer"
+            Text::ComponentSegmentTimer.resolve(lang)
         } else {
-            "Timer"
+            Text::ComponentTimer.resolve(lang)
         }
     }
 
@@ -194,6 +195,7 @@ impl Component {
         state: &mut State,
         timer: &Snapshot,
         layout_settings: &GeneralLayoutSettings,
+        lang: Lang,
     ) {
         let method = self
             .settings
@@ -286,14 +288,14 @@ impl Component {
         let _ = write!(
             state.time,
             "{}",
-            formatter::Time::with_digits_format(self.settings.digits_format).format(time),
+            formatter::Time::with_digits_format(self.settings.digits_format).format(time, lang),
         );
 
         state.fraction.clear();
         let _ = write!(
             state.fraction,
             "{}",
-            formatter::Fraction::with_accuracy(self.settings.accuracy).format(time),
+            formatter::Fraction::with_accuracy(self.settings.accuracy).format(time, lang),
         );
 
         state.updates_frequently = phase.updates_frequently(method) && time.is_some();
@@ -303,54 +305,59 @@ impl Component {
 
     /// Calculates the component's state based on the timer and the layout
     /// settings provided.
-    pub fn state(&self, timer: &Snapshot, layout_settings: &GeneralLayoutSettings) -> State {
+    pub fn state(
+        &self,
+        timer: &Snapshot,
+        layout_settings: &GeneralLayoutSettings,
+        lang: Lang,
+    ) -> State {
         let mut state = Default::default();
-        self.update_state(&mut state, timer, layout_settings);
+        self.update_state(&mut state, timer, layout_settings, lang);
         state
     }
 
     /// Accesses a generic description of the settings available for this
-    /// component and their current values.
-    pub fn settings_description(&self) -> SettingsDescription {
+    /// component and their current values for the specified language.
+    pub fn settings_description(&self, lang: Lang) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new(
-                "Background".into(),
-                "The background shown behind the component. It is also possible to apply the color associated with the time ahead or behind as the background color.".into(),
+                Text::TimerBackground.resolve(lang).into(),
+                Text::TimerBackgroundDescription.resolve(lang).into(),
                 self.settings.background.into(),
             ),
             Field::new(
-                "Segment Timer".into(),
-                "Specifies whether to show how much time has passed since the start of the current segment, rather than how much time has passed since the start of the current attempt.".into(),
+                Text::SegmentTimer.resolve(lang).into(),
+                Text::SegmentTimerDescription.resolve(lang).into(),
                 self.settings.is_segment_timer.into(),
             ),
             Field::new(
-                "Timing Method".into(),
-                "Specifies the timing method to use. If not specified, the current timing method is used.".into(),
+                Text::TimingMethod.resolve(lang).into(),
+                Text::TimingMethodDescription.resolve(lang).into(),
                 self.settings.timing_method.into(),
             ),
             Field::new(
-                "Height".into(),
-                "The height of the timer.".into(),
+                Text::Height.resolve(lang).into(),
+                Text::HeightDescription.resolve(lang).into(),
                 u64::from(self.settings.height).into(),
             ),
             Field::new(
-                "Text Color".into(),
-                "The color of the time shown. If not specified, the color is automatically chosen based on how well the current attempt is going. Those colors can be specified in the general settings for the layout.".into(),
+                Text::TimerTextColor.resolve(lang).into(),
+                Text::TimerTextColorDescription.resolve(lang).into(),
                 self.settings.color_override.into(),
             ),
             Field::new(
-                "Show Gradient".into(),
-                "Determines whether to display the timer's color as a gradient.".into(),
+                Text::ShowGradient.resolve(lang).into(),
+                Text::ShowGradientDescription.resolve(lang).into(),
                 self.settings.show_gradient.into(),
             ),
             Field::new(
-                "Digits Format".into(),
-                "Specifies how many digits to show. If the duration is lower than the digits to be shown, zeros are shown instead.".into(),
+                Text::DigitsFormat.resolve(lang).into(),
+                Text::DigitsFormatDescription.resolve(lang).into(),
                 self.settings.digits_format.into(),
             ),
             Field::new(
-                "Accuracy".into(),
-                "The accuracy of the time shown.".into(),
+                Text::Accuracy.resolve(lang).into(),
+                Text::AccuracyDescription.resolve(lang).into(),
                 self.settings.accuracy.into(),
             ),
         ])

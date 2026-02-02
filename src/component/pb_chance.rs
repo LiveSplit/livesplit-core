@@ -7,6 +7,7 @@
 use super::key_value;
 use crate::{
     analysis::pb_chance,
+    localization::{Lang, Text},
     platform::prelude::*,
     settings::{Color, Field, Gradient, SettingsDescription, Value},
     timing::Snapshot,
@@ -72,13 +73,13 @@ impl Component {
         &mut self.settings
     }
 
-    /// Accesses the name of the component.
-    pub const fn name(&self) -> &'static str {
-        "PB Chance"
+    /// Accesses the name of the component for the specified language.
+    pub const fn name(&self, lang: Lang) -> &'static str {
+        Text::ComponentPbChance.resolve(lang)
     }
 
     /// Updates the component's state based on the timer provided.
-    pub fn update_state(&self, state: &mut key_value::State, timer: &Snapshot) {
+    pub fn update_state(&self, state: &mut key_value::State, timer: &Snapshot, lang: Lang) {
         let (chance, is_live) = pb_chance::for_timer(timer);
 
         state.background = self.settings.background;
@@ -87,10 +88,18 @@ impl Component {
         state.semantic_color = Default::default();
 
         state.key.clear();
-        state.key.push_str(self.name());
+        state.key.push_str(Text::ComponentPbChance.resolve(lang));
 
         state.value.clear();
-        let _ = write!(state.value, "{:.1}%", 100.0 * chance);
+
+        let chance_permille = (chance * 1000.0 + 0.5) as u32;
+        let integer_part = chance_permille / 10;
+        let fractional_part = chance_permille % 10;
+        let decimal_separator = lang.decimal_separator();
+        let _ = write!(
+            state.value,
+            "{integer_part}{decimal_separator}{fractional_part}%"
+        );
 
         state.key_abbreviations.clear();
         state.display_two_rows = self.settings.display_two_rows;
@@ -98,37 +107,34 @@ impl Component {
     }
 
     /// Calculates the component's state based on the timer provided.
-    pub fn state(&self, timer: &Snapshot) -> key_value::State {
+    pub fn state(&self, timer: &Snapshot, lang: Lang) -> key_value::State {
         let mut state = Default::default();
-        self.update_state(&mut state, timer);
+        self.update_state(&mut state, timer, lang);
         state
     }
 
     /// Accesses a generic description of the settings available for this
-    /// component and their current values.
-    pub fn settings_description(&self) -> SettingsDescription {
+    /// component and their current values for the specified language.
+    pub fn settings_description(&self, lang: Lang) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new(
-                "Background".into(),
-                "The background shown behind the component.".into(),
+                Text::PbChanceBackground.resolve(lang).into(),
+                Text::PbChanceBackgroundDescription.resolve(lang).into(),
                 self.settings.background.into(),
             ),
             Field::new(
-                "Display 2 Rows".into(),
-                "Specifies whether to display the name of the component and the PB chance in two separate rows."
-                    .into(),
+                Text::PbChanceDisplayTwoRows.resolve(lang).into(),
+                Text::PbChanceDisplayTwoRowsDescription.resolve(lang).into(),
                 self.settings.display_two_rows.into(),
             ),
             Field::new(
-                "Label Color".into(),
-                "The color of the component's name. If not specified, the color is taken from the layout."
-                    .into(),
+                Text::PbChanceLabelColor.resolve(lang).into(),
+                Text::PbChanceLabelColorDescription.resolve(lang).into(),
                 self.settings.label_color.into(),
             ),
             Field::new(
-                "Value Color".into(),
-                "The color of the PB chance. If not specified, the color is taken from the layout."
-                    .into(),
+                Text::PbChanceValueColor.resolve(lang).into(),
+                Text::PbChanceValueColorDescription.resolve(lang).into(),
                 self.settings.value_color.into(),
             ),
         ])

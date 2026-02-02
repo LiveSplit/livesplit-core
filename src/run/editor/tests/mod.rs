@@ -1,7 +1,7 @@
 use super::Editor;
 use crate::{
+    Lang, Run, Segment, TimeSpan,
     util::tests_helper::{create_timer, run_with_splits},
-    Run, Segment,
 };
 
 mod comparison;
@@ -19,53 +19,53 @@ fn new_best_segment() {
 
     editor
         .active_segment()
-        .parse_and_set_split_time("1:00")
+        .parse_and_set_split_time("1:00", Lang::English)
         .unwrap();
 
     editor.select_only(1);
 
     editor
         .active_segment()
-        .parse_and_set_split_time("3:00")
+        .parse_and_set_split_time("3:00", Lang::English)
         .unwrap();
 
     editor.insert_segment_above();
 
     editor
         .active_segment()
-        .parse_and_set_split_time("2:30")
+        .parse_and_set_split_time("2:30", Lang::English)
         .unwrap();
 
     editor
         .active_segment()
-        .parse_and_set_split_time("2:00")
+        .parse_and_set_split_time("2:00", Lang::English)
         .unwrap();
 
     let run = editor.close();
 
     assert_eq!(
         run.segment(0).personal_best_split_time().real_time,
-        Some("1:00".parse().unwrap())
+        Some(TimeSpan::parse("1:00", Lang::English).unwrap())
     );
     assert_eq!(
         run.segment(0).best_segment_time().real_time,
-        Some("1:00".parse().unwrap())
+        Some(TimeSpan::parse("1:00", Lang::English).unwrap())
     );
     assert_eq!(
         run.segment(1).personal_best_split_time().real_time,
-        Some("2:00".parse().unwrap())
+        Some(TimeSpan::parse("2:00", Lang::English).unwrap())
     );
     assert_eq!(
         run.segment(1).best_segment_time().real_time,
-        Some("1:00".parse().unwrap())
+        Some(TimeSpan::parse("1:00", Lang::English).unwrap())
     );
     assert_eq!(
         run.segment(2).personal_best_split_time().real_time,
-        Some("3:00".parse().unwrap())
+        Some(TimeSpan::parse("3:00", Lang::English).unwrap())
     );
     assert_eq!(
         run.segment(2).best_segment_time().real_time,
-        Some("0:30".parse().unwrap())
+        Some(TimeSpan::parse("0:30", Lang::English).unwrap())
     );
 }
 

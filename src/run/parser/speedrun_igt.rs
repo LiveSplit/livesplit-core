@@ -5,8 +5,8 @@ use serde_derive::Deserialize;
 use time::Duration;
 
 use crate::{
-    platform::{prelude::*, DateTime},
     AtomicDateTime, Run, Segment, Time,
+    platform::{DateTime, prelude::*},
 };
 
 /// The Error type for splits files that couldn't be parsed by the SpeedRunIGT

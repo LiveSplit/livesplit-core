@@ -1,7 +1,8 @@
 use super::{
-    MINUS, SECONDS_PER_DAY, SECONDS_PER_HOUR, SECONDS_PER_MINUTE, TimeFormatter, format_padded,
+    MINUS, SECONDS_PER_DAY, SECONDS_PER_HOUR, SECONDS_PER_MINUTE, TIME_SEPARATOR, TimeFormatter,
+    format_padded,
 };
-use crate::TimeSpan;
+use crate::{TimeSpan, localization::Lang};
 use core::fmt::{Display, Formatter, Result};
 
 pub struct Inner {
@@ -34,7 +35,7 @@ impl Days {
 impl TimeFormatter<'_> for Days {
     type Inner = Inner;
 
-    fn format<T>(&self, time: T) -> Self::Inner
+    fn format<T>(&self, time: T, _: Lang) -> Self::Inner
     where
         T: Into<Option<TimeSpan>>,
     {
@@ -70,12 +71,12 @@ impl Display for Inner {
 
             if days > 0 || hours > 0 {
                 f.write_str(buffer.format(hours))?;
-                f.write_str(":")?;
+                f.write_str(TIME_SEPARATOR)?;
                 f.write_str(format_padded(minutes))?;
             } else {
                 f.write_str(buffer.format(minutes))?;
             }
-            f.write_str(":")?;
+            f.write_str(TIME_SEPARATOR)?;
             f.write_str(format_padded(seconds))
         } else {
             f.write_str("0:00")
@@ -85,8 +86,6 @@ impl Display for Inner {
 
 #[cfg(test)]
 mod tests {
-    use core::str::FromStr;
-
     use super::*;
 
     #[test]
@@ -94,95 +93,105 @@ mod tests {
         // This verifies that flipping the sign of the minimum value doesn't
         // cause a panic.
         let time = TimeSpan::from(crate::platform::Duration::MIN);
-        let inner = Days.format(Some(time));
+        let inner = Days.format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "−106751991167300d 15:30:08");
     }
 
     #[test]
     fn max() {
         let time = TimeSpan::from(crate::platform::Duration::MAX);
-        let inner = Days.format(Some(time));
+        let inner = Days.format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "106751991167300d 15:30:07");
     }
 
     #[test]
     fn zero() {
         let time = TimeSpan::zero();
-        let inner = Days.format(Some(time));
+        let inner = Days.format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "0:00");
     }
 
     #[test]
     fn empty() {
-        let inner = Days.format(None);
+        let inner = Days.format(None, Lang::English);
         assert_eq!(inner.to_string(), "0:00");
     }
 
     #[test]
     fn slightly_positive() {
-        let time = TimeSpan::from_str("0.000000001").unwrap();
-        let inner = Days.format(Some(time));
+        let time = TimeSpan::parse("0.000000001", Lang::English).unwrap();
+        let inner = Days.format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "0:00");
 
-        assert_eq!(Days.format(TimeSpan::from_seconds(0.5)).to_string(), "0:00");
-        assert_eq!(Days.format(TimeSpan::from_seconds(1.5)).to_string(), "0:01");
+        assert_eq!(
+            Days.format(TimeSpan::from_seconds(0.5), Lang::English)
+                .to_string(),
+            "0:00"
+        );
+        assert_eq!(
+            Days.format(TimeSpan::from_seconds(1.5), Lang::English)
+                .to_string(),
+            "0:01"
+        );
     }
 
     #[test]
     fn slightly_negative() {
-        let time = TimeSpan::from_str("-0.000000001").unwrap();
-        let inner = Days.format(Some(time));
+        let time = TimeSpan::parse("-0.000000001", Lang::English).unwrap();
+        let inner = Days.format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "−0:00");
 
         assert_eq!(
-            Days.format(TimeSpan::from_seconds(-1.5)).to_string(),
+            Days.format(TimeSpan::from_seconds(-1.5), Lang::English)
+                .to_string(),
             "−0:01"
         );
         assert_eq!(
-            Days.format(TimeSpan::from_seconds(-0.5)).to_string(),
+            Days.format(TimeSpan::from_seconds(-0.5), Lang::English)
+                .to_string(),
             "−0:00"
         );
     }
 
     #[test]
     fn seconds() {
-        let time = TimeSpan::from_str("23.1234").unwrap();
-        let inner = Days.format(Some(time));
+        let time = TimeSpan::parse("23.1234", Lang::English).unwrap();
+        let inner = Days.format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "0:23");
     }
 
     #[test]
     fn minutes() {
-        let time = TimeSpan::from_str("12:34.987654321").unwrap();
-        let inner = Days.format(Some(time));
+        let time = TimeSpan::parse("12:34.987654321", Lang::English).unwrap();
+        let inner = Days.format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "12:34");
     }
 
     #[test]
     fn hours() {
-        let time = TimeSpan::from_str("12:34:56.123456789").unwrap();
-        let inner = Days.format(Some(time));
+        let time = TimeSpan::parse("12:34:56.123456789", Lang::English).unwrap();
+        let inner = Days.format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "12:34:56");
     }
 
     #[test]
     fn negative() {
-        let time = TimeSpan::from_str("-12:34:56.123456789").unwrap();
-        let inner = Days.format(Some(time));
+        let time = TimeSpan::parse("-12:34:56.123456789", Lang::English).unwrap();
+        let inner = Days.format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "−12:34:56");
     }
 
     #[test]
     fn days() {
-        let time = TimeSpan::from_str("2148:34:56.123456789").unwrap();
-        let inner = Days.format(Some(time));
+        let time = TimeSpan::parse("2148:34:56.123456789", Lang::English).unwrap();
+        let inner = Days.format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "89d 12:34:56");
     }
 
     #[test]
     fn negative_days() {
-        let time = TimeSpan::from_str("-2148:34:56.123456789").unwrap();
-        let inner = Days.format(Some(time));
+        let time = TimeSpan::parse("-2148:34:56.123456789", Lang::English).unwrap();
+        let inner = Days.format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "−89d 12:34:56");
     }
 }

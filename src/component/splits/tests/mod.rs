@@ -3,9 +3,9 @@ use super::{
     State,
 };
 use crate::{
+    Lang, Run, Segment, TimeSpan, Timer, TimingMethod,
     component::splits::{ColumnKind, TimeColumn},
     settings::ImageCache,
-    Run, Segment, TimeSpan, Timer, TimingMethod,
 };
 
 pub mod column;
@@ -25,19 +25,39 @@ fn zero_visual_split_count_always_shows_all_splits() {
 
     let mut image_cache = ImageCache::new();
 
-    let mut state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    let mut state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     assert_eq!(state.splits.len(), 32);
 
     component.scroll_down();
-    state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     assert_eq!(state.splits.len(), 32);
 
     component.scroll_down();
-    state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     assert_eq!(state.splits.len(), 32);
 
     component.scroll_up();
-    state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     assert_eq!(state.splits.len(), 32);
 }
 
@@ -60,27 +80,52 @@ fn one_visual_split() {
 
     let mut image_cache = ImageCache::new();
 
-    let mut state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    let mut state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     assert_eq!(state.splits[0].name, "A");
     assert_eq!(state.splits.len(), 1);
 
     timer.start().unwrap();
-    state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     assert_eq!(state.splits[0].name, "A");
     assert_eq!(state.splits.len(), 1);
 
     timer.split().unwrap();
-    state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     assert_eq!(state.splits[0].name, "B");
     assert_eq!(state.splits.len(), 1);
 
     timer.split().unwrap();
-    state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     assert_eq!(state.splits[0].name, "C");
     assert_eq!(state.splits.len(), 1);
 
     timer.split().unwrap();
-    state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     assert_eq!(state.splits[0].name, "C");
     assert_eq!(state.splits.len(), 1);
 }
@@ -114,7 +159,12 @@ fn negative_segment_times() {
 
     let mut image_cache = ImageCache::new();
 
-    let state = component.state(&mut image_cache, &timer.snapshot(), &layout_settings);
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &layout_settings,
+        Lang::English,
+    );
     assert_eq!(state.splits[0].columns[0].value, "−1.00");
 }
 
@@ -134,7 +184,12 @@ fn unique_split_indices() {
 
     let mut image_cache = ImageCache::new();
 
-    let state = component.state(&mut image_cache, &timer.snapshot(), &Default::default());
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &Default::default(),
+        Lang::English,
+    );
 
     let mut indices = state
         .splits

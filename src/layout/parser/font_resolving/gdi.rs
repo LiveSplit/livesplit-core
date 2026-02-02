@@ -3,8 +3,8 @@ use core::{mem::MaybeUninit, ptr, str};
 use windows_sys::Win32::{
     Foundation::HANDLE,
     Graphics::Gdi::{
-        CreateCompatibleDC, CreateFontW, DeleteDC, DeleteObject, GetFontData, GetTextMetricsW,
-        SelectObject, DEFAULT_PITCH, DEFAULT_QUALITY, GDI_ERROR, HDC, HFONT, TEXTMETRICW,
+        CreateCompatibleDC, CreateFontW, DEFAULT_PITCH, DEFAULT_QUALITY, DeleteDC, DeleteObject,
+        GDI_ERROR, GetFontData, GetTextMetricsW, HDC, HFONT, SelectObject, TEXTMETRICW,
     },
 };
 

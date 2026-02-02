@@ -1,7 +1,7 @@
 //! A Time Span represents a certain span of time.
 
 use super::str;
-use livesplit_core::TimeSpan;
+use livesplit_core::{Lang, TimeSpan};
 use std::os::raw::c_char;
 
 /// type
@@ -32,9 +32,9 @@ pub extern "C" fn TimeSpan_from_seconds(seconds: f64) -> OwnedTimeSpan {
 /// Parses a Time Span from a string. Returns <NULL> if the time can't be
 /// parsed.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn TimeSpan_parse(text: *const c_char) -> NullableOwnedTimeSpan {
+pub unsafe extern "C" fn TimeSpan_parse(text: *const c_char, lang: Lang) -> NullableOwnedTimeSpan {
     // SAFETY: The caller guarantees that `text` is valid.
-    unsafe { str(text).parse().ok().map(Box::new) }
+    unsafe { TimeSpan::parse(str(text), lang).ok().map(Box::new) }
 }
 
 /// Returns the total amount of seconds (including decimals) this Time Span

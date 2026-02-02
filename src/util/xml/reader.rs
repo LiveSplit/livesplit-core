@@ -1,6 +1,6 @@
 use crate::util::ascii_char::AsciiChar;
 
-use super::{trim, Tag, TagName, Text};
+use super::{Tag, TagName, Text, trim};
 
 enum TagState<'a> {
     Closed,

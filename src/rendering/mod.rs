@@ -553,6 +553,7 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
             .push(Entity::Image(image.handle.share(), transform));
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn render_key_value_component(
         &mut self,
         key: &str,
@@ -642,6 +643,7 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         x + label.width(scale)
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn render_text_centered(
         &mut self,
         text: &str,
@@ -674,6 +676,7 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         ));
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn render_abbreviated_text_centered<'a>(
         &mut self,
         abbreviations: impl IntoIterator<Item = &'a str> + Clone,
@@ -728,6 +731,7 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         x - width
     }
 
+    #[allow(clippy::too_many_arguments)]
     fn render_abbreviated_text_align<'a>(
         &mut self,
         abbreviations: impl IntoIterator<Item = &'a str> + Clone,

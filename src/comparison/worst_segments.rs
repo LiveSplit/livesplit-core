@@ -3,8 +3,8 @@
 
 use super::ComparisonGenerator;
 use crate::{
-    analysis::sum_of_segments::worst::calculate, platform::prelude::*, Attempt, Segment, Time,
-    TimingMethod,
+    Attempt, Segment, Time, TimingMethod, analysis::sum_of_segments::worst::calculate,
+    platform::prelude::*,
 };
 
 /// The Comparison Generator for calculating the Worst Segments of a [`Run`](crate::Run).

@@ -22,7 +22,7 @@ pub use self::{
     none::None, worst_segments::WorstSegments,
 };
 
-use crate::{platform::prelude::*, Attempt, Segment, Timer};
+use crate::{Attempt, Segment, Timer, platform::prelude::*};
 use core::fmt::Debug;
 
 /// Race comparisons are prefixed by `[Race]`.

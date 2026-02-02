@@ -2,7 +2,7 @@
 //! behind the chosen comparison throughout the whole attempt. All the
 //! individual deltas are shown as points in a graph.
 
-use super::{output_vec, Json};
+use super::{Json, output_vec};
 use crate::component::OwnedComponent;
 use crate::graph_component_state::OwnedGraphComponentState;
 use livesplit_core::component::graph::Component as GraphComponent;

@@ -1,7 +1,7 @@
 use crate::{
+    Run, Segment,
     comparison::{best_segments, personal_best},
     run::{AddComparisonError, CopyComparisonError, Editor, RenameError},
-    Run, Segment,
 };
 
 #[test]

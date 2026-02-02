@@ -1,3 +1,5 @@
+use crate::util::ascii_char::AsciiChar;
+
 use super::{NANOS_PER_HUNDREDTH, NANOS_PER_MILLI, NANOS_PER_TENTH, format_padded};
 use core::{
     fmt::{Display, Formatter, Result},
@@ -20,11 +22,17 @@ pub enum Accuracy {
 }
 
 impl Accuracy {
-    /// Formats the nanoseconds provided with the chosen accuracy.
-    pub const fn format_nanoseconds(self, nanoseconds: u32) -> FractionalPart {
+    /// Formats the nanoseconds provided with the chosen accuracy and decimal
+    /// separator.
+    pub const fn format_nanoseconds(
+        self,
+        nanoseconds: u32,
+        decimal_separator: AsciiChar,
+    ) -> FractionalPart {
         FractionalPart {
             accuracy: self,
             nanoseconds,
+            decimal_separator,
         }
     }
 }
@@ -33,6 +41,7 @@ impl Accuracy {
 pub struct FractionalPart {
     accuracy: Accuracy,
     nanoseconds: u32,
+    decimal_separator: AsciiChar,
 }
 
 impl Display for FractionalPart {
@@ -40,7 +49,7 @@ impl Display for FractionalPart {
         match self.accuracy {
             Accuracy::Seconds => Ok(()),
             Accuracy::Tenths => {
-                f.write_str(".")?;
+                f.write_str(self.decimal_separator.as_str())?;
                 let v = (self.nanoseconds / NANOS_PER_TENTH) as u8;
                 assert!(v < 10);
                 // SAFETY: We ensured the value is between 0 and 10, so adding
@@ -49,13 +58,13 @@ impl Display for FractionalPart {
                 unsafe { f.write_str(str::from_utf8_unchecked(&[v + b'0'])) }
             }
             Accuracy::Hundredths => {
-                f.write_str(".")?;
+                f.write_str(self.decimal_separator.as_str())?;
                 f.write_str(format_padded(
                     (self.nanoseconds / NANOS_PER_HUNDREDTH) as u8,
                 ))
             }
             Accuracy::Milliseconds => {
-                f.write_str(".")?;
+                f.write_str(self.decimal_separator.as_str())?;
                 let first = (self.nanoseconds / NANOS_PER_TENTH) as u8;
                 let second_and_third =
                     ((self.nanoseconds % NANOS_PER_TENTH) / NANOS_PER_MILLI) as u8;
@@ -79,52 +88,154 @@ mod tests {
     #[test]
     fn format_seconds() {
         let acc = Accuracy::Seconds;
-        assert_eq!(acc.format_nanoseconds(0).to_string(), "");
-        assert_eq!(acc.format_nanoseconds(1).to_string(), "");
-        assert_eq!(acc.format_nanoseconds(789_654_321).to_string(), "");
-        assert_eq!(acc.format_nanoseconds(7_654_321).to_string(), "");
-        assert_eq!(acc.format_nanoseconds(70_654_321).to_string(), "");
-        assert_eq!(acc.format_nanoseconds(700_654_321).to_string(), "");
-        assert_eq!(acc.format_nanoseconds(109_654_321).to_string(), "");
-        assert_eq!(acc.format_nanoseconds(999_999_999).to_string(), "");
+        assert_eq!(acc.format_nanoseconds(0, AsciiChar::DOT).to_string(), "");
+        assert_eq!(acc.format_nanoseconds(1, AsciiChar::DOT).to_string(), "");
+        assert_eq!(
+            acc.format_nanoseconds(789_654_321, AsciiChar::DOT)
+                .to_string(),
+            ""
+        );
+        assert_eq!(
+            acc.format_nanoseconds(7_654_321, AsciiChar::DOT)
+                .to_string(),
+            ""
+        );
+        assert_eq!(
+            acc.format_nanoseconds(70_654_321, AsciiChar::DOT)
+                .to_string(),
+            ""
+        );
+        assert_eq!(
+            acc.format_nanoseconds(700_654_321, AsciiChar::DOT)
+                .to_string(),
+            ""
+        );
+        assert_eq!(
+            acc.format_nanoseconds(109_654_321, AsciiChar::DOT)
+                .to_string(),
+            ""
+        );
+        assert_eq!(
+            acc.format_nanoseconds(999_999_999, AsciiChar::DOT)
+                .to_string(),
+            ""
+        );
     }
 
     #[test]
     fn format_tenths() {
         let acc = Accuracy::Tenths;
-        assert_eq!(acc.format_nanoseconds(0).to_string(), ".0");
-        assert_eq!(acc.format_nanoseconds(1).to_string(), ".0");
-        assert_eq!(acc.format_nanoseconds(789_654_321).to_string(), ".7");
-        assert_eq!(acc.format_nanoseconds(7_654_321).to_string(), ".0");
-        assert_eq!(acc.format_nanoseconds(70_654_321).to_string(), ".0");
-        assert_eq!(acc.format_nanoseconds(700_654_321).to_string(), ".7");
-        assert_eq!(acc.format_nanoseconds(109_654_321).to_string(), ".1");
-        assert_eq!(acc.format_nanoseconds(999_999_999).to_string(), ".9");
+        assert_eq!(acc.format_nanoseconds(0, AsciiChar::DOT).to_string(), ".0");
+        assert_eq!(acc.format_nanoseconds(1, AsciiChar::DOT).to_string(), ".0");
+        assert_eq!(
+            acc.format_nanoseconds(789_654_321, AsciiChar::DOT)
+                .to_string(),
+            ".7"
+        );
+        assert_eq!(
+            acc.format_nanoseconds(7_654_321, AsciiChar::DOT)
+                .to_string(),
+            ".0"
+        );
+        assert_eq!(
+            acc.format_nanoseconds(70_654_321, AsciiChar::DOT)
+                .to_string(),
+            ".0"
+        );
+        assert_eq!(
+            acc.format_nanoseconds(700_654_321, AsciiChar::DOT)
+                .to_string(),
+            ".7"
+        );
+        assert_eq!(
+            acc.format_nanoseconds(109_654_321, AsciiChar::DOT)
+                .to_string(),
+            ".1"
+        );
+        assert_eq!(
+            acc.format_nanoseconds(999_999_999, AsciiChar::DOT)
+                .to_string(),
+            ".9"
+        );
     }
 
     #[test]
     fn format_hundredths() {
         let acc = Accuracy::Hundredths;
-        assert_eq!(acc.format_nanoseconds(0).to_string(), ".00");
-        assert_eq!(acc.format_nanoseconds(1).to_string(), ".00");
-        assert_eq!(acc.format_nanoseconds(789_654_321).to_string(), ".78");
-        assert_eq!(acc.format_nanoseconds(7_654_321).to_string(), ".00");
-        assert_eq!(acc.format_nanoseconds(70_654_321).to_string(), ".07");
-        assert_eq!(acc.format_nanoseconds(700_654_321).to_string(), ".70");
-        assert_eq!(acc.format_nanoseconds(109_654_321).to_string(), ".10");
-        assert_eq!(acc.format_nanoseconds(999_999_999).to_string(), ".99");
+        assert_eq!(acc.format_nanoseconds(0, AsciiChar::DOT).to_string(), ".00");
+        assert_eq!(acc.format_nanoseconds(1, AsciiChar::DOT).to_string(), ".00");
+        assert_eq!(
+            acc.format_nanoseconds(789_654_321, AsciiChar::DOT)
+                .to_string(),
+            ".78"
+        );
+        assert_eq!(
+            acc.format_nanoseconds(7_654_321, AsciiChar::DOT)
+                .to_string(),
+            ".00"
+        );
+        assert_eq!(
+            acc.format_nanoseconds(70_654_321, AsciiChar::DOT)
+                .to_string(),
+            ".07"
+        );
+        assert_eq!(
+            acc.format_nanoseconds(700_654_321, AsciiChar::DOT)
+                .to_string(),
+            ".70"
+        );
+        assert_eq!(
+            acc.format_nanoseconds(109_654_321, AsciiChar::DOT)
+                .to_string(),
+            ".10"
+        );
+        assert_eq!(
+            acc.format_nanoseconds(999_999_999, AsciiChar::DOT)
+                .to_string(),
+            ".99"
+        );
     }
 
     #[test]
     fn format_milliseconds() {
         let acc = Accuracy::Milliseconds;
-        assert_eq!(acc.format_nanoseconds(0).to_string(), ".000");
-        assert_eq!(acc.format_nanoseconds(1).to_string(), ".000");
-        assert_eq!(acc.format_nanoseconds(789_654_321).to_string(), ".789");
-        assert_eq!(acc.format_nanoseconds(7_654_321).to_string(), ".007");
-        assert_eq!(acc.format_nanoseconds(70_654_321).to_string(), ".070");
-        assert_eq!(acc.format_nanoseconds(700_654_321).to_string(), ".700");
-        assert_eq!(acc.format_nanoseconds(109_654_321).to_string(), ".109");
-        assert_eq!(acc.format_nanoseconds(999_999_999).to_string(), ".999");
+        assert_eq!(
+            acc.format_nanoseconds(0, AsciiChar::DOT).to_string(),
+            ".000"
+        );
+        assert_eq!(
+            acc.format_nanoseconds(1, AsciiChar::DOT).to_string(),
+            ".000"
+        );
+        assert_eq!(
+            acc.format_nanoseconds(789_654_321, AsciiChar::DOT)
+                .to_string(),
+            ".789"
+        );
+        assert_eq!(
+            acc.format_nanoseconds(7_654_321, AsciiChar::DOT)
+                .to_string(),
+            ".007"
+        );
+        assert_eq!(
+            acc.format_nanoseconds(70_654_321, AsciiChar::DOT)
+                .to_string(),
+            ".070"
+        );
+        assert_eq!(
+            acc.format_nanoseconds(700_654_321, AsciiChar::DOT)
+                .to_string(),
+            ".700"
+        );
+        assert_eq!(
+            acc.format_nanoseconds(109_654_321, AsciiChar::DOT)
+                .to_string(),
+            ".109"
+        );
+        assert_eq!(
+            acc.format_nanoseconds(999_999_999, AsciiChar::DOT)
+                .to_string(),
+            ".999"
+        );
     }
 }

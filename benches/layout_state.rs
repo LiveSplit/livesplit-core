@@ -1,5 +1,7 @@
-use criterion::{criterion_group, criterion_main, Criterion};
-use livesplit_core::{run::parser::livesplit, settings::ImageCache, Layout, Run, Segment, Timer};
+use criterion::{Criterion, criterion_group, criterion_main};
+use livesplit_core::{
+    Lang, Layout, Run, Segment, Timer, run::parser::livesplit, settings::ImageCache,
+};
 use std::fs;
 
 criterion_main!(benches);
@@ -37,17 +39,24 @@ fn no_reuse_real(c: &mut Criterion) {
     let (timer, mut layout, mut image_cache) = real();
 
     c.bench_function("No Reuse (Real)", move |b| {
-        b.iter(|| layout.state(&mut image_cache, &timer.snapshot()))
+        b.iter(|| layout.state(&mut image_cache, &timer.snapshot(), Lang::English))
     });
 }
 
 fn reuse_real(c: &mut Criterion) {
     let (timer, mut layout, mut image_cache) = real();
 
-    let mut state = layout.state(&mut image_cache, &timer.snapshot());
+    let mut state = layout.state(&mut image_cache, &timer.snapshot(), Lang::English);
 
     c.bench_function("Reuse (Real)", move |b| {
-        b.iter(|| layout.update_state(&mut state, &mut image_cache, &timer.snapshot()))
+        b.iter(|| {
+            layout.update_state(
+                &mut state,
+                &mut image_cache,
+                &timer.snapshot(),
+                Lang::English,
+            )
+        })
     });
 }
 
@@ -55,16 +64,23 @@ fn no_reuse_artificial(c: &mut Criterion) {
     let (timer, mut layout, mut image_cache) = artificial();
 
     c.bench_function("No Reuse (Artificial)", move |b| {
-        b.iter(|| layout.state(&mut image_cache, &timer.snapshot()))
+        b.iter(|| layout.state(&mut image_cache, &timer.snapshot(), Lang::English))
     });
 }
 
 fn reuse_artificial(c: &mut Criterion) {
     let (timer, mut layout, mut image_cache) = artificial();
 
-    let mut state = layout.state(&mut image_cache, &timer.snapshot());
+    let mut state = layout.state(&mut image_cache, &timer.snapshot(), Lang::English);
 
     c.bench_function("Reuse (Artificial)", move |b| {
-        b.iter(|| layout.update_state(&mut state, &mut image_cache, &timer.snapshot()))
+        b.iter(|| {
+            layout.update_state(
+                &mut state,
+                &mut image_cache,
+                &timer.snapshot(),
+                Lang::English,
+            )
+        })
     });
 }

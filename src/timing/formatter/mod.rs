@@ -7,7 +7,7 @@
 //!
 //! ```
 //! use livesplit_core::timing::formatter::{SegmentTime, TimeFormatter};
-//! use livesplit_core::TimeSpan;
+//! use livesplit_core::{Lang, TimeSpan};
 //!
 //! // Create the SegmentTime TimeFormatter.
 //! let formatter = SegmentTime::new();
@@ -16,7 +16,7 @@
 //! let time = TimeSpan::from_seconds(-(4.0 * 60.0 + 23.5));
 //!
 //! // Format it with the formatter.
-//! let formatted = formatter.format(Some(time)).to_string();
+//! let formatted = formatter.format(Some(time), Lang::English).to_string();
 //! assert_eq!(formatted, "−4:23.50");
 //! ```
 
@@ -35,7 +35,7 @@ pub use self::{
     regular::Regular, segment_time::SegmentTime,
 };
 
-use crate::TimeSpan;
+use crate::{TimeSpan, localization::Lang};
 use core::{fmt::Display, str};
 
 /// Time Formatters can be used to format optional Time Spans in various ways.
@@ -45,7 +45,7 @@ pub trait TimeFormatter<'a> {
 
     /// Constructs an object that displays the provided time span in a certain
     /// way.
-    fn format<T>(&'a self, time: T) -> Self::Inner
+    fn format<T>(&'a self, time: T, lang: Lang) -> Self::Inner
     where
         T: Into<Option<TimeSpan>>;
 }
@@ -59,6 +59,8 @@ pub const MINUS: &str = "−";
 pub const ASCII_MINUS: &str = "-";
 /// The plus symbol to use for positive numbers.
 pub const PLUS: &str = "+";
+/// The time separator symbol to use between hours, minutes, and seconds.
+pub const TIME_SEPARATOR: &str = ":";
 
 const SECONDS_PER_MINUTE: u64 = 60;
 const SECONDS_PER_HOUR: u64 = 60 * SECONDS_PER_MINUTE;

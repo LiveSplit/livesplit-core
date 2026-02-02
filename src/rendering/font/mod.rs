@@ -1,8 +1,8 @@
 mod cache;
 
 use super::{
-    resource::{LabelHandle, ResourceAllocator},
     Handle, Label, Pos, Transform,
+    resource::{LabelHandle, ResourceAllocator},
 };
 use crate::{platform::prelude::*, util::ClearVec};
 
@@ -40,10 +40,7 @@ impl<L> AbbreviatedLabel<L> {
     where
         L: Label,
     {
-        if self
-            .abbreviations
-            .iter()
-            .ne(abbreviations.clone().into_iter())
+        if self.abbreviations.iter().ne(abbreviations.clone())
             || self.max_width.to_bits() != max_width.to_bits()
         {
             self.max_width = max_width;

@@ -3,13 +3,13 @@
 //! current segment. Other information, like segment times of up to two
 //! comparisons, the segment icon, and the segment's name, can also be shown.
 
-use super::{output_vec, Json};
+use super::{Json, output_vec};
 use crate::{
     component::OwnedComponent, detailed_timer_component_state::OwnedDetailedTimerComponentState,
 };
 use livesplit_core::{
+    GeneralLayoutSettings, Lang, Timer,
     component::detailed_timer::Component as DetailedTimerComponent, settings::ImageCache,
-    GeneralLayoutSettings, Timer,
 };
 
 /// type
@@ -43,9 +43,10 @@ pub extern "C" fn DetailedTimerComponent_state_as_json(
     image_cache: &mut ImageCache,
     timer: &Timer,
     layout_settings: &GeneralLayoutSettings,
+    lang: Lang,
 ) -> Json {
     output_vec(|o| {
-        this.state(image_cache, &timer.snapshot(), layout_settings)
+        this.state(image_cache, &timer.snapshot(), layout_settings, lang)
             .write_json(o)
             .unwrap();
     })
@@ -59,6 +60,7 @@ pub extern "C" fn DetailedTimerComponent_state(
     image_cache: &mut ImageCache,
     timer: &Timer,
     layout_settings: &GeneralLayoutSettings,
+    lang: Lang,
 ) -> OwnedDetailedTimerComponentState {
-    Box::new(this.state(image_cache, &timer.snapshot(), layout_settings))
+    Box::new(this.state(image_cache, &timer.snapshot(), layout_settings, lang))
 }
