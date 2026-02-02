@@ -112,7 +112,7 @@ struct DetailedTime {
     pause_time: u64,
 }
 
-fn parse_segment_time(SegmentTime { igt, rta }: SegmentTime) -> [TimeSpan; 2] {
+const fn parse_segment_time(SegmentTime { igt, rta }: SegmentTime) -> [TimeSpan; 2] {
     [
         TimeSpan::from_milliseconds((rta.raw_time - rta.pause_time) as _),
         TimeSpan::from_milliseconds((igt.raw_time - igt.pause_time) as _),

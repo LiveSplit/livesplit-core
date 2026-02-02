@@ -4,7 +4,9 @@
 
 use super::{Json, output_vec};
 use crate::{component::OwnedComponent, timer_component_state::OwnedTimerComponentState};
-use livesplit_core::{GeneralLayoutSettings, Timer, component::timer::Component as TimerComponent};
+use livesplit_core::{
+    GeneralLayoutSettings, Lang, Timer, component::timer::Component as TimerComponent,
+};
 
 /// type
 pub type OwnedTimerComponent = Box<TimerComponent>;
@@ -34,9 +36,10 @@ pub extern "C" fn TimerComponent_state_as_json(
     this: &TimerComponent,
     timer: &Timer,
     layout_settings: &GeneralLayoutSettings,
+    lang: Lang,
 ) -> Json {
     output_vec(|o| {
-        this.state(&timer.snapshot(), layout_settings)
+        this.state(&timer.snapshot(), layout_settings, lang)
             .write_json(o)
             .unwrap();
     })
@@ -49,6 +52,7 @@ pub extern "C" fn TimerComponent_state(
     this: &TimerComponent,
     timer: &Timer,
     layout_settings: &GeneralLayoutSettings,
+    lang: Lang,
 ) -> OwnedTimerComponentState {
-    Box::new(this.state(&timer.snapshot(), layout_settings))
+    Box::new(this.state(&timer.snapshot(), layout_settings, lang))
 }

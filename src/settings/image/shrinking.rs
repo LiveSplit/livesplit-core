@@ -1,5 +1,5 @@
 use alloc::borrow::Cow;
-use image::{guess_format, load_from_memory_with_format, ImageEncoder, ImageFormat};
+use image::{ImageEncoder, ImageFormat, guess_format, load_from_memory_with_format};
 
 use crate::util::image::{create_reencoder, get_dimensions};
 

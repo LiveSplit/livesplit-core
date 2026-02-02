@@ -1,7 +1,7 @@
 use core::mem;
 
 use crate::platform::prelude::*;
-use hashbrown::{hash_table::Entry, HashTable};
+use hashbrown::{HashTable, hash_table::Entry};
 use slab::Slab;
 
 use super::{Image, ImageId};

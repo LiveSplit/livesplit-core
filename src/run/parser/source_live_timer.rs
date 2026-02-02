@@ -1,6 +1,6 @@
 //! Provides the parser for the SourceLiveTimer splits files.
 
-use crate::{platform::prelude::*, GameTime, Run, Segment, TimeSpan};
+use crate::{GameTime, Run, Segment, TimeSpan, platform::prelude::*};
 use alloc::borrow::Cow;
 use core::result::Result as StdResult;
 use serde_derive::Deserialize;

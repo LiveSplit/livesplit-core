@@ -1,6 +1,6 @@
 use crate::{
-    platform::{utc_now, DateTime},
     TimeSpan,
+    platform::{DateTime, utc_now},
 };
 use core::ops::Sub;
 

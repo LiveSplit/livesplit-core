@@ -1,7 +1,7 @@
 use livesplit_core::{
+    Lang, Time, TimeSpan,
     comparison::balanced_pb::{BalancedPB, NAME},
     run::parser::livesplit,
-    Time, TimeSpan,
 };
 
 mod run_files;
@@ -20,8 +20,8 @@ fn r(t: Time) -> Time {
 
 fn t(r: &str, g: &str) -> Time {
     Time::new()
-        .with_real_time(r.parse().ok())
-        .with_game_time(g.parse().ok())
+        .with_real_time(TimeSpan::parse(r, Lang::English).ok())
+        .with_game_time(TimeSpan::parse(g, Lang::English).ok())
 }
 
 #[test]

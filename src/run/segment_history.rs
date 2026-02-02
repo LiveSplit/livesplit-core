@@ -1,4 +1,4 @@
-use crate::{platform::prelude::*, Time};
+use crate::{Time, platform::prelude::*};
 use core::{
     cmp::min,
     slice::{Iter, IterMut},

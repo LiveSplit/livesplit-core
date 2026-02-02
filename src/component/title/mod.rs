@@ -5,6 +5,7 @@
 
 use crate::{
     Timer, TimerPhase,
+    localization::{Lang, Text},
     platform::prelude::*,
     settings::{
         Alignment, Color, Field, Gradient, Image, ImageCache, ImageId, SettingsDescription, Value,
@@ -156,9 +157,9 @@ impl Component {
         &mut self.settings
     }
 
-    /// Accesses the name of the component.
-    pub const fn name(&self) -> &'static str {
-        "Title"
+    /// Accesses the name of the component for the specified language.
+    pub const fn name(&self, lang: Lang) -> &'static str {
+        Text::ComponentTitle.resolve(lang)
     }
 
     /// Updates the component's state based on the timer provided. The
@@ -351,76 +352,69 @@ impl Component {
     }
 
     /// Accesses a generic description of the settings available for this
-    /// component and their current values.
-    pub fn settings_description(&self) -> SettingsDescription {
+    /// component and their current values for the specified language.
+    pub fn settings_description(&self, lang: Lang) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new(
-                "Background".into(),
-                "The background shown behind the component.".into(),
+                Text::TitleBackground.resolve(lang).into(),
+                Text::TitleBackgroundDescription.resolve(lang).into(),
                 self.settings.background.into(),
             ),
             Field::new(
-                "Text Color".into(),
-                "The color of the title text. If no color is specified, the color is taken from the layout."
-                    .into(),
+                Text::TitleTextColor.resolve(lang).into(),
+                Text::TitleTextColorDescription.resolve(lang).into(),
                 self.settings.text_color.into(),
             ),
             Field::new(
-                "Show Game Name".into(),
-                "Specifies whether the game name should be part of the title that is being shown."
-                    .into(),
+                Text::ShowGameName.resolve(lang).into(),
+                Text::ShowGameNameDescription.resolve(lang).into(),
                 self.settings.show_game_name.into(),
             ),
             Field::new(
-                "Show Category Name".into(),
-                "Specifies whether the category name should be part of the title that is being shown."
-                    .into(),
+                Text::ShowCategoryName.resolve(lang).into(),
+                Text::ShowCategoryNameDescription.resolve(lang).into(),
                 self.settings.show_category_name.into(),
             ),
             Field::new(
-                "Show Finished Runs Count".into(),
-                "Specifies whether the number of successfully finished attempts should be shown."
-                    .into(),
+                Text::ShowFinishedRunsCount.resolve(lang).into(),
+                Text::ShowFinishedRunsCountDescription.resolve(lang).into(),
                 self.settings.show_finished_runs_count.into(),
             ),
             Field::new(
-                "Show Attempt Count".into(),
-                "Specifies whether the total number of attempts should be shown.".into(),
+                Text::ShowAttemptCount.resolve(lang).into(),
+                Text::ShowAttemptCountDescription.resolve(lang).into(),
                 self.settings.show_attempt_count.into(),
             ),
             Field::new(
-                "Text Alignment".into(),
-                "Specifies the alignment of the title.".into(),
+                Text::TextAlignment.resolve(lang).into(),
+                Text::TextAlignmentDescription.resolve(lang).into(),
                 self.settings.text_alignment.into(),
             ),
             Field::new(
-                "Display Text as Single Line".into(),
-                "Specifies if the title should be shown as a single line, instead of being separated into one line for the game name and one for the category name."
+                Text::DisplayTextAsSingleLine.resolve(lang).into(),
+                Text::DisplayTextAsSingleLineDescription
+                    .resolve(lang)
                     .into(),
                 self.settings.display_as_single_line.into(),
             ),
             Field::new(
-                "Display Game Icon".into(),
-                "Specifies whether the game's icon should be shown, if there is a game icon stored in the splits."
-                    .into(),
+                Text::DisplayGameIcon.resolve(lang).into(),
+                Text::DisplayGameIconDescription.resolve(lang).into(),
                 self.settings.display_game_icon.into(),
             ),
             Field::new(
-                "Show Region".into(),
-                "The category name can be extended with additional information. This extends it with the game's region, if it is provided in the variables tab of the splits editor."
-                    .into(),
+                Text::ShowRegion.resolve(lang).into(),
+                Text::ShowRegionDescription.resolve(lang).into(),
                 self.settings.show_region.into(),
             ),
             Field::new(
-                "Show Platform".into(),
-                "The category name can be extended with additional information. This extends it with the platform the game is being played on, if it is provided in the variables tab of the splits editor."
-                    .into(),
+                Text::ShowPlatform.resolve(lang).into(),
+                Text::ShowPlatformDescription.resolve(lang).into(),
                 self.settings.show_platform.into(),
             ),
             Field::new(
-                "Show Variables".into(),
-                "The category name can be extended with additional information. This extends it with additional variables provided in the variables tab of the splits editor. This refers to speedrun.com variables, not custom variables."
-                    .into(),
+                Text::ShowVariables.resolve(lang).into(),
+                Text::ShowVariablesDescription.resolve(lang).into(),
                 self.settings.show_variables.into(),
             ),
         ])

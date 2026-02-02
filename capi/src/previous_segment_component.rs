@@ -4,11 +4,12 @@
 //! displayed. This component switches to a `Live Segment` view that shows
 //! active time loss whenever the runner is losing time on the current segment.
 
-use super::{output_vec, Json};
-use crate::component::OwnedComponent;
-use crate::key_value_component_state::OwnedKeyValueComponentState;
-use livesplit_core::component::previous_segment::Component as PreviousSegmentComponent;
-use livesplit_core::{GeneralLayoutSettings, Timer};
+use super::{Json, output_vec};
+use crate::{component::OwnedComponent, key_value_component_state::OwnedKeyValueComponentState};
+use livesplit_core::{
+    GeneralLayoutSettings, Lang, Timer,
+    component::previous_segment::Component as PreviousSegmentComponent,
+};
 
 /// type
 pub type OwnedPreviousSegmentComponent = Box<PreviousSegmentComponent>;
@@ -40,9 +41,10 @@ pub extern "C" fn PreviousSegmentComponent_state_as_json(
     this: &PreviousSegmentComponent,
     timer: &Timer,
     layout_settings: &GeneralLayoutSettings,
+    lang: Lang,
 ) -> Json {
     output_vec(|o| {
-        this.state(&timer.snapshot(), layout_settings)
+        this.state(&timer.snapshot(), layout_settings, lang)
             .write_json(o)
             .unwrap();
     })
@@ -55,6 +57,7 @@ pub extern "C" fn PreviousSegmentComponent_state(
     this: &PreviousSegmentComponent,
     timer: &Timer,
     layout_settings: &GeneralLayoutSettings,
+    lang: Lang,
 ) -> OwnedKeyValueComponentState {
-    Box::new(this.state(&timer.snapshot(), layout_settings))
+    Box::new(this.state(&timer.snapshot(), layout_settings, lang))
 }

@@ -40,6 +40,7 @@ pub mod hotkey_config;
 pub mod hotkey_system;
 pub mod image_cache;
 pub mod key_value_component_state;
+pub mod lang;
 pub mod layout;
 pub mod layout_editor;
 pub mod layout_editor_state;

@@ -1,8 +1,8 @@
 use crate::{
+    Lang, Run, Segment, TimeSpan, Timer,
     comparison::balanced_pb::{BalancedPB, NAME},
     timing::formatter::{SegmentTime, TimeFormatter},
     util::tests_helper::{run_with_splits, run_with_splits_opt},
-    Run, Segment, TimeSpan, Timer,
 };
 
 #[test]
@@ -44,13 +44,13 @@ fn test() {
         let run = timer.run();
         assert_eq!(
             SegmentTime::new()
-                .format(run.segment(0).comparison(NAME).game_time)
+                .format(run.segment(0).comparison(NAME).game_time, Lang::English)
                 .to_string(),
             "0.46"
         );
         assert_eq!(
             SegmentTime::new()
-                .format(run.segment(1).comparison(NAME).game_time)
+                .format(run.segment(1).comparison(NAME).game_time, Lang::English)
                 .to_string(),
             "2.53"
         );

@@ -1,11 +1,11 @@
 use crate::{
+    Timer, TimingMethod,
     analysis::split_color,
     comparison,
     settings::SemanticColor,
     util::tests_helper::{
         create_timer, make_progress_run_with_splits_opt, run_with_splits, span, start_run,
     },
-    Timer, TimingMethod,
 };
 
 #[test]

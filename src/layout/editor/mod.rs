@@ -6,6 +6,7 @@
 
 use super::{Component, Layout, LayoutState};
 use crate::{
+    localization::Lang,
     settings::{ImageCache, Value},
     timing::Snapshot,
 };
@@ -63,8 +64,13 @@ impl Editor {
     /// visited in the [`ImageCache`]. You still need to manually run
     /// [`ImageCache::collect`] to ensure unused images are removed from the
     /// cache.
-    pub fn layout_state(&mut self, image_cache: &mut ImageCache, timer: &Snapshot) -> LayoutState {
-        self.layout.state(image_cache, timer)
+    pub fn layout_state(
+        &mut self,
+        image_cache: &mut ImageCache,
+        timer: &Snapshot,
+        lang: Lang,
+    ) -> LayoutState {
+        self.layout.state(image_cache, timer, lang)
     }
 
     /// Updates the layout's state based on the timer provided. You can use this
@@ -79,8 +85,9 @@ impl Editor {
         state: &mut LayoutState,
         image_cache: &mut ImageCache,
         timer: &Snapshot,
+        lang: Lang,
     ) {
-        self.layout.update_state(state, image_cache, timer)
+        self.layout.update_state(state, image_cache, timer, lang)
     }
 
     /// Selects the component with the given index in order to modify its

@@ -118,7 +118,7 @@ fn get_type(ty: &SynType) -> Type {
             if let Some(rest) = name.strip_prefix("Owned") {
                 name = rest.to_string();
             }
-            if name == "TimingMethod" || name == "TimerPhase" {
+            if name == "TimingMethod" || name == "TimerPhase" || name == "Lang" {
                 name.clear();
                 name += "u8";
             }

@@ -4,11 +4,11 @@
 //! time. The list provides scrolling functionality, so not every segment needs
 //! to be shown all the time.
 
-use super::{output_vec, Json};
+use super::{Json, output_vec};
 use crate::{component::OwnedComponent, splits_component_state::OwnedSplitsComponentState};
 use livesplit_core::{
-    component::splits::Component as SplitsComponent, settings::ImageCache, GeneralLayoutSettings,
-    Timer,
+    GeneralLayoutSettings, Lang, Timer, component::splits::Component as SplitsComponent,
+    settings::ImageCache,
 };
 
 /// type
@@ -40,9 +40,10 @@ pub extern "C" fn SplitsComponent_state_as_json(
     image_cache: &mut ImageCache,
     timer: &Timer,
     layout_settings: &GeneralLayoutSettings,
+    lang: Lang,
 ) -> Json {
     output_vec(|o| {
-        this.state(image_cache, &timer.snapshot(), layout_settings)
+        this.state(image_cache, &timer.snapshot(), layout_settings, lang)
             .write_json(o)
             .unwrap();
     })
@@ -56,8 +57,9 @@ pub extern "C" fn SplitsComponent_state(
     image_cache: &mut ImageCache,
     timer: &Timer,
     layout_settings: &GeneralLayoutSettings,
+    lang: Lang,
 ) -> OwnedSplitsComponentState {
-    Box::new(this.state(image_cache, &timer.snapshot(), layout_settings))
+    Box::new(this.state(image_cache, &timer.snapshot(), layout_settings, lang))
 }
 
 /// Scrolls up the window of the segments that are shown. Doesn't move the

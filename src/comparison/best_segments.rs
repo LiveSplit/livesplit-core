@@ -3,8 +3,8 @@
 
 use super::ComparisonGenerator;
 use crate::{
-    analysis::sum_of_segments::best::calculate, platform::prelude::*, Attempt, Segment, Time,
-    TimingMethod,
+    Attempt, Segment, Time, TimingMethod, analysis::sum_of_segments::best::calculate,
+    platform::prelude::*,
 };
 
 /// Defines the Comparison Generator for calculating the Best Segments of a

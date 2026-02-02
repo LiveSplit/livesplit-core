@@ -6,7 +6,8 @@
 
 use super::{AddComparisonError, CopyComparisonError, LinkedLayout};
 use crate::{
-    Run, Segment, Time, TimeSpan, TimingMethod, comparison,
+    Lang, Run, Segment, Time, TimeSpan, TimingMethod, comparison,
+    localization::Text,
     platform::prelude::*,
     settings::Image,
     timing::ParseError as ParseTimeSpanError,
@@ -78,6 +79,7 @@ pub struct Editor {
     segment_times: Vec<Option<TimeSpan>>,
 }
 
+#[allow(clippy::result_unit_err)]
 impl Editor {
     /// Creates a new Run Editor that modifies the Run provided. Creation of the
     /// Run Editor fails when a Run with no segments is provided.
@@ -252,8 +254,8 @@ impl Editor {
     /// Parses and sets the timer offset from the string provided. The timer
     /// offset specifies the time, the timer starts at when starting a new
     /// attempt.
-    pub fn parse_and_set_offset(&mut self, offset: &str) -> Result<(), ParseError> {
-        self.set_offset(offset.parse().context(ParseTime)?);
+    pub fn parse_and_set_offset(&mut self, offset: &str, lang: Lang) -> Result<(), ParseError> {
+        self.set_offset(TimeSpan::parse(offset, lang).context(ParseTime)?);
         Ok(())
     }
 
@@ -844,6 +846,7 @@ impl Editor {
     /// `src_index` specified to the `dst_index` specified. Returns `Err(())` if
     /// one of the indices is invalid. The indices are based on the
     /// `comparison_names` field of the Run Editor's `State`.
+    #[allow(clippy::result_unit_err)]
     pub fn move_comparison(&mut self, src_index: usize, dst_index: usize) -> Result<(), ()> {
         let comparisons = self.run.custom_comparisons_mut();
         let (src_index, dst_index) = (src_index + 1, dst_index + 1);
@@ -874,23 +877,18 @@ impl Editor {
     /// timing method. The other timing method's comparison times are not
     /// modified by this, so you can call this again with the other timing
     /// method to generate the comparison times for both timing methods.
-    pub fn generate_goal_comparison(&mut self, time: TimeSpan) {
-        if !self
-            .run
-            .custom_comparisons()
-            .iter()
-            .any(|c| c == comparison::goal::NAME)
-        {
-            self.run
-                .custom_comparisons_mut()
-                .push(String::from(comparison::goal::NAME));
+    pub fn generate_goal_comparison(&mut self, time: TimeSpan, lang: Lang) {
+        let name = Text::Goal.resolve(lang);
+
+        if !self.run.custom_comparisons().iter().any(|c| c == name) {
+            self.run.custom_comparisons_mut().push(String::from(name));
         }
 
         comparison::goal::generate_for_timing_method(
             self.run.segments_mut(),
             self.selected_method,
             time,
-            comparison::goal::NAME,
+            name,
         );
 
         self.raise_run_edited();
@@ -906,9 +904,14 @@ impl Editor {
     /// the selected timing method. The other timing method's comparison times
     /// are not modified by this, so you can call this again with the other
     /// timing method to generate the comparison times for both timing methods.
-    pub fn parse_and_generate_goal_comparison(&mut self, time: &str) -> Result<(), ParseError> {
+    pub fn parse_and_generate_goal_comparison(
+        &mut self,
+        time: &str,
+        lang: Lang,
+    ) -> Result<(), ParseError> {
         self.generate_goal_comparison(
-            parse_positive(time)?.ok_or(ParseError::EmptyTimeNotAllowed)?,
+            parse_positive(time, lang)?.ok_or(ParseError::EmptyTimeNotAllowed)?,
+            lang,
         );
         Ok(())
     }
@@ -960,13 +963,13 @@ impl Editor {
     /// combined segment time might be faster than the sum of the individual
     /// best segments. The Sum of Best Cleaner will point out all of these and
     /// allows you to delete them individually if any of them seem wrong.
-    pub fn clean_sum_of_best(&mut self) -> SumOfBestCleaner<'_> {
-        SumOfBestCleaner::new(&mut self.run)
+    pub fn clean_sum_of_best(&mut self, lang: Lang) -> SumOfBestCleaner<'_> {
+        SumOfBestCleaner::new(&mut self.run, lang)
     }
 }
 
-fn parse_positive(time: &str) -> Result<Option<TimeSpan>, ParseError> {
-    let time = TimeSpan::parse_opt(time).context(ParseTime)?;
+fn parse_positive(time: &str, lang: Lang) -> Result<Option<TimeSpan>, ParseError> {
+    let time = TimeSpan::parse_opt_with_lang(time, lang).context(ParseTime)?;
     if time.is_some_and(|t| t < TimeSpan::zero()) {
         Err(ParseError::NegativeTimeNotAllowed)
     } else {

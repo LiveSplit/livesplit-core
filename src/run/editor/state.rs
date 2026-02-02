@@ -1,6 +1,7 @@
 use super::{Editor, SegmentRow, TimingMethod};
 use crate::{
     comparison::personal_best,
+    localization::Lang,
     platform::prelude::*,
     run::RunMetadata,
     settings::{ImageCache, ImageId},
@@ -117,7 +118,7 @@ impl Editor {
     /// state. The images are marked as visited in the [`ImageCache`]. You still
     /// need to manually run [`ImageCache::collect`] to ensure unused images are
     /// removed from the cache.
-    pub fn state(&self, image_cache: &mut ImageCache) -> State {
+    pub fn state(&self, image_cache: &mut ImageCache, lang: Lang) -> State {
         let formatter = EmptyWrapper::new(SegmentTime::with_accuracy(Accuracy::Hundredths));
 
         let icon = self.run.game_icon();
@@ -125,7 +126,7 @@ impl Editor {
 
         let game = self.game_name().to_string();
         let category = self.category_name().to_string();
-        let offset = formatter.format(self.offset()).to_string();
+        let offset = formatter.format(self.offset(), lang).to_string();
         let attempts = self.attempt_count();
         let timing_method = self.selected_timing_method();
         let comparison_names = self
@@ -147,12 +148,12 @@ impl Editor {
             {
                 let row = SegmentRow::new(segment_index, self);
                 name = row.name().to_string();
-                split_time = formatter.format(row.split_time()).to_string();
-                segment_time = formatter.format(row.segment_time()).to_string();
-                best_segment_time = formatter.format(row.best_segment_time()).to_string();
+                split_time = formatter.format(row.split_time(), lang).to_string();
+                segment_time = formatter.format(row.segment_time(), lang).to_string();
+                best_segment_time = formatter.format(row.best_segment_time(), lang).to_string();
                 comparison_times = comparison_names
                     .iter()
-                    .map(|c| formatter.format(row.comparison_time(c)).to_string())
+                    .map(|c| formatter.format(row.comparison_time(c), lang).to_string())
                     .collect();
             }
 

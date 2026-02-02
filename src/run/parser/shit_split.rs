@@ -1,6 +1,6 @@
 //! Provides the parser for ShitSplit splits files.
 
-use crate::{timing, GameTime, Run, Segment, TimeSpan};
+use crate::{GameTime, Lang, Run, Segment, TimeSpan, timing};
 use core::{num::ParseIntError, result::Result as StdResult};
 use snafu::{OptionExt, ResultExt};
 
@@ -65,10 +65,7 @@ pub fn parse(source: &str) -> Result<Run> {
         }
         let mut splits = line.split('|');
         let world_name = splits.next().context(ExpectedWorldName)?;
-        total_time += splits
-            .next()
-            .context(ExpectedWorldTime)?
-            .parse()
+        total_time += TimeSpan::parse(splits.next().context(ExpectedWorldTime)?, Lang::English)
             .context(ParseWorldTime)?;
         next_line = lines.next();
         let mut has_acts = false;

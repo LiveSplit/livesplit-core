@@ -6,11 +6,9 @@
 //! sum of their best segment times. The name is therefore a bit misleading, but
 //! sticks around for historical reasons.
 
-use super::{output_vec, Json};
-use crate::component::OwnedComponent;
-use crate::key_value_component_state::OwnedKeyValueComponentState;
-use livesplit_core::component::sum_of_best::Component as SumOfBestComponent;
-use livesplit_core::Timer;
+use super::{Json, output_vec};
+use crate::{component::OwnedComponent, key_value_component_state::OwnedKeyValueComponentState};
+use livesplit_core::{Lang, Timer, component::sum_of_best::Component as SumOfBestComponent};
 
 /// type
 pub type OwnedSumOfBestComponent = Box<SumOfBestComponent>;
@@ -39,9 +37,10 @@ pub extern "C" fn SumOfBestComponent_into_generic(this: OwnedSumOfBestComponent)
 pub extern "C" fn SumOfBestComponent_state_as_json(
     this: &SumOfBestComponent,
     timer: &Timer,
+    lang: Lang,
 ) -> Json {
     output_vec(|o| {
-        this.state(timer).write_json(o).unwrap();
+        this.state(timer, lang).write_json(o).unwrap();
     })
 }
 
@@ -50,6 +49,7 @@ pub extern "C" fn SumOfBestComponent_state_as_json(
 pub extern "C" fn SumOfBestComponent_state(
     this: &SumOfBestComponent,
     timer: &Timer,
+    lang: Lang,
 ) -> OwnedKeyValueComponentState {
-    Box::new(this.state(timer))
+    Box::new(this.state(timer, lang))
 }

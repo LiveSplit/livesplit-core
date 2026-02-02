@@ -10,8 +10,8 @@ pub fn get_dimensions(format: image::ImageFormat, data: &[u8]) -> Option<(u32, u
 
     use bytemuck_derive::{Pod, Zeroable};
     use image::{
-        codecs::{bmp, farbfeld, hdr, ico, jpeg, pnm, tga, tiff, webp},
         ImageDecoder, ImageFormat,
+        codecs::{bmp, farbfeld, hdr, ico, jpeg, pnm, tga, tiff, webp},
     };
 
     use crate::util::byte_parsing::{big_endian::U32, strip_pod};

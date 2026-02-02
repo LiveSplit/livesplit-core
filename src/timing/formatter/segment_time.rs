@@ -1,12 +1,14 @@
 use super::{
-    Accuracy, DASH, MINUS, SECONDS_PER_HOUR, SECONDS_PER_MINUTE, TimeFormatter, format_padded,
+    Accuracy, DASH, MINUS, SECONDS_PER_HOUR, SECONDS_PER_MINUTE, TIME_SEPARATOR, TimeFormatter,
+    format_padded,
 };
-use crate::TimeSpan;
+use crate::{TimeSpan, localization::Lang, util::ascii_char::AsciiChar};
 use core::fmt::{Display, Formatter, Result};
 
 pub struct Inner {
     time: Option<TimeSpan>,
     accuracy: Accuracy,
+    decimal_separator: AsciiChar,
 }
 
 /// The Segment Time Formatter formats a [`TimeSpan`] for them to be shown as
@@ -54,13 +56,14 @@ impl Default for SegmentTime {
 impl TimeFormatter<'_> for SegmentTime {
     type Inner = Inner;
 
-    fn format<T>(&self, time: T) -> Self::Inner
+    fn format<T>(&self, time: T, lang: Lang) -> Self::Inner
     where
         T: Into<Option<TimeSpan>>,
     {
         Inner {
             time: time.into(),
             accuracy: self.accuracy,
+            decimal_separator: lang.decimal_separator(),
         }
     }
 }
@@ -87,18 +90,20 @@ impl Display for Inner {
 
             if hours > 0 {
                 f.write_str(buffer.format(hours))?;
-                f.write_str(":")?;
+                f.write_str(TIME_SEPARATOR)?;
                 f.write_str(format_padded(minutes))?;
-                f.write_str(":")?;
+                f.write_str(TIME_SEPARATOR)?;
                 f.write_str(format_padded(seconds))?;
             } else if minutes > 0 {
                 f.write_str(buffer.format(minutes))?;
-                f.write_str(":")?;
+                f.write_str(TIME_SEPARATOR)?;
                 f.write_str(format_padded(seconds))?;
             } else {
                 f.write_str(buffer.format(seconds))?;
             }
-            self.accuracy.format_nanoseconds(nanoseconds).fmt(f)
+            self.accuracy
+                .format_nanoseconds(nanoseconds, self.decimal_separator)
+                .fmt(f)
         } else {
             f.write_str(DASH)
         }
@@ -107,8 +112,6 @@ impl Display for Inner {
 
 #[cfg(test)]
 mod tests {
-    use core::str::FromStr;
-
     use super::*;
 
     #[test]
@@ -116,45 +119,45 @@ mod tests {
         // This verifies that flipping the sign of the minimum value doesn't
         // cause a panic.
         let time = TimeSpan::from(crate::platform::Duration::MIN);
-        let inner = SegmentTime::new().format(Some(time));
+        let inner = SegmentTime::new().format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "−2562047788015215:30:08.99");
     }
 
     #[test]
     fn max() {
         let time = TimeSpan::from(crate::platform::Duration::MAX);
-        let inner = SegmentTime::new().format(Some(time));
+        let inner = SegmentTime::new().format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "2562047788015215:30:07.99");
     }
 
     #[test]
     fn zero() {
         let time = TimeSpan::zero();
-        let inner = SegmentTime::new().format(Some(time));
+        let inner = SegmentTime::new().format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "0.00");
     }
 
     #[test]
     fn empty() {
-        let inner = SegmentTime::new().format(None);
+        let inner = SegmentTime::new().format(None, Lang::English);
         assert_eq!(inner.to_string(), "—");
     }
 
     #[test]
     fn slightly_positive() {
-        let time = TimeSpan::from_str("0.000000001").unwrap();
-        let inner = SegmentTime::new().format(Some(time));
+        let time = TimeSpan::parse("0.000000001", Lang::English).unwrap();
+        let inner = SegmentTime::new().format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "0.00");
 
         assert_eq!(
             SegmentTime::new()
-                .format(TimeSpan::from_seconds(0.5))
+                .format(TimeSpan::from_seconds(0.5), Lang::English)
                 .to_string(),
             "0.50"
         );
         assert_eq!(
             SegmentTime::new()
-                .format(TimeSpan::from_seconds(1.5))
+                .format(TimeSpan::from_seconds(1.5), Lang::English)
                 .to_string(),
             "1.50"
         );
@@ -162,19 +165,19 @@ mod tests {
 
     #[test]
     fn slightly_negative() {
-        let time = TimeSpan::from_str("-0.000000001").unwrap();
-        let inner = SegmentTime::new().format(Some(time));
+        let time = TimeSpan::parse("-0.000000001", Lang::English).unwrap();
+        let inner = SegmentTime::new().format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "−0.00");
 
         assert_eq!(
             SegmentTime::new()
-                .format(TimeSpan::from_seconds(-1.5))
+                .format(TimeSpan::from_seconds(-1.5), Lang::English)
                 .to_string(),
             "−1.50"
         );
         assert_eq!(
             SegmentTime::new()
-                .format(TimeSpan::from_seconds(-0.5))
+                .format(TimeSpan::from_seconds(-0.5), Lang::English)
                 .to_string(),
             "−0.50"
         );
@@ -182,43 +185,43 @@ mod tests {
 
     #[test]
     fn seconds() {
-        let time = TimeSpan::from_str("23.1234").unwrap();
-        let inner = SegmentTime::new().format(Some(time));
+        let time = TimeSpan::parse("23.1234", Lang::English).unwrap();
+        let inner = SegmentTime::new().format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "23.12");
     }
 
     #[test]
     fn minutes() {
-        let time = TimeSpan::from_str("12:34.987654321").unwrap();
-        let inner = SegmentTime::new().format(Some(time));
+        let time = TimeSpan::parse("12:34.987654321", Lang::English).unwrap();
+        let inner = SegmentTime::new().format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "12:34.98");
     }
 
     #[test]
     fn hours() {
-        let time = TimeSpan::from_str("12:34:56.123456789").unwrap();
-        let inner = SegmentTime::new().format(Some(time));
+        let time = TimeSpan::parse("12:34:56.123456789", Lang::English).unwrap();
+        let inner = SegmentTime::new().format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "12:34:56.12");
     }
 
     #[test]
     fn negative() {
-        let time = TimeSpan::from_str("-12:34:56.123456789").unwrap();
-        let inner = SegmentTime::new().format(Some(time));
+        let time = TimeSpan::parse("-12:34:56.123456789", Lang::English).unwrap();
+        let inner = SegmentTime::new().format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "−12:34:56.12");
     }
 
     #[test]
     fn days() {
-        let time = TimeSpan::from_str("2148:34:56.123456789").unwrap();
-        let inner = SegmentTime::new().format(Some(time));
+        let time = TimeSpan::parse("2148:34:56.123456789", Lang::English).unwrap();
+        let inner = SegmentTime::new().format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "2148:34:56.12");
     }
 
     #[test]
     fn negative_days() {
-        let time = TimeSpan::from_str("-2148:34:56.123456789").unwrap();
-        let inner = SegmentTime::new().format(Some(time));
+        let time = TimeSpan::parse("-2148:34:56.123456789", Lang::English).unwrap();
+        let inner = SegmentTime::new().format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "−2148:34:56.12");
     }
 }

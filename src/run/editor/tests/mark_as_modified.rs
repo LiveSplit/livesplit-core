@@ -1,5 +1,5 @@
 use super::super::Editor;
-use crate::{settings::Image, Run, Segment, TimeSpan, TimingMethod};
+use crate::{Lang, Run, Segment, TimeSpan, TimingMethod, settings::Image};
 
 fn base() -> Editor {
     let mut run = Run::new();
@@ -15,12 +15,12 @@ fn base() -> Editor {
     editor.select_only(0);
     editor
         .active_segment()
-        .parse_and_set_split_time("1")
+        .parse_and_set_split_time("1", Lang::English)
         .unwrap();
     editor.select_only(1);
     editor
         .active_segment()
-        .parse_and_set_split_time("2")
+        .parse_and_set_split_time("2", Lang::English)
         .unwrap();
 
     editor.add_comparison("Some Comparison").unwrap();
@@ -83,7 +83,7 @@ fn when_changing_split_time() {
     let mut editor = base();
     editor
         .active_segment()
-        .parse_and_set_split_time("1.23")
+        .parse_and_set_split_time("1.23", Lang::English)
         .unwrap();
     assert!(editor.run().has_been_modified());
 }
@@ -93,7 +93,7 @@ fn when_changing_segment_time() {
     let mut editor = base();
     editor
         .active_segment()
-        .parse_and_set_segment_time("1.23")
+        .parse_and_set_segment_time("1.23", Lang::English)
         .unwrap();
     assert!(editor.run().has_been_modified());
 }
@@ -103,7 +103,7 @@ fn when_changing_best_segment_time() {
     let mut editor = base();
     editor
         .active_segment()
-        .parse_and_set_best_segment_time("1.23")
+        .parse_and_set_best_segment_time("1.23", Lang::English)
         .unwrap();
     assert!(editor.run().has_been_modified());
 }
@@ -113,7 +113,7 @@ fn when_changing_comparison_time() {
     let mut editor = base();
     editor
         .active_segment()
-        .parse_and_set_comparison_time("Some Comparison", "1.23")
+        .parse_and_set_comparison_time("Some Comparison", "1.23", Lang::English)
         .unwrap();
     assert!(editor.run().has_been_modified());
 }
@@ -144,7 +144,7 @@ fn when_changing_category_name() {
 #[test]
 fn when_changing_offset() {
     let mut editor = base();
-    editor.parse_and_set_offset("1.23").unwrap();
+    editor.parse_and_set_offset("1.23", Lang::English).unwrap();
     assert!(editor.run().has_been_modified());
 }
 
@@ -311,14 +311,16 @@ fn when_clearing_times() {
 #[test]
 fn not_when_cleaning_sum_of_best_without_applying_a_fix() {
     let mut editor = base();
-    editor.clean_sum_of_best().next_potential_clean_up();
+    editor
+        .clean_sum_of_best(Lang::English)
+        .next_potential_clean_up();
     assert!(!editor.run().has_been_modified());
 }
 
 #[test]
 fn when_generating_goal_comparison() {
     let mut editor = base();
-    editor.generate_goal_comparison(TimeSpan::from_seconds(30.0));
+    editor.generate_goal_comparison(TimeSpan::from_seconds(30.0), Lang::English);
     assert!(editor.run().has_been_modified());
 }
 

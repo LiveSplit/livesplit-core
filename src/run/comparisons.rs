@@ -1,4 +1,4 @@
-use crate::{platform::prelude::*, Time};
+use crate::{Time, platform::prelude::*};
 
 // We use a Vec here because a HashMap would require hashing the comparison and
 // then comparing the comparison with the string at the index calculated from

@@ -1,11 +1,11 @@
 use crate::{
+    localization::Lang,
     platform::{Duration, prelude::*},
     util::ascii_char::AsciiChar,
 };
 use core::{
     num::ParseIntError,
     ops::{Add, AddAssign, Neg, Sub, SubAssign},
-    str::FromStr,
 };
 use snafu::{OptionExt, ResultExt};
 
@@ -21,12 +21,12 @@ impl TimeSpan {
     }
 
     /// Creates a new `TimeSpan` from a given amount of seconds.
-    pub fn from_seconds(seconds: f64) -> Self {
+    pub const fn from_seconds(seconds: f64) -> Self {
         Self(Duration::seconds_f64(seconds))
     }
 
     /// Creates a new `TimeSpan` from a given amount of milliseconds.
-    pub fn from_milliseconds(milliseconds: f64) -> Self {
+    pub const fn from_milliseconds(milliseconds: f64) -> Self {
         Self(Duration::seconds_f64(0.001 * milliseconds))
     }
 
@@ -44,25 +44,31 @@ impl TimeSpan {
 
     /// Returns the total amount of seconds (including decimals) this `TimeSpan`
     /// represents.
-    pub fn total_seconds(&self) -> f64 {
+    pub const fn total_seconds(&self) -> f64 {
         self.0.as_seconds_f64()
     }
 
     /// Returns the total amount of milliseconds (including decimals) this
     /// `TimeSpan` represents.
-    pub fn total_milliseconds(&self) -> f64 {
+    pub const fn total_milliseconds(&self) -> f64 {
         1_000.0 * self.total_seconds()
     }
 
     /// Parses an optional `TimeSpan` from a given textual representation of the
-    /// `TimeSpan`. If the given text consists entirely of whitespace or is
-    /// empty, `None` is returned.
-    pub fn parse_opt(text: &str) -> Result<Option<TimeSpan>, ParseError> {
+    /// `TimeSpan` using the specified language. If the given text consists
+    /// entirely of whitespace or is empty, `None` is returned.
+    pub fn parse_opt_with_lang(text: &str, lang: Lang) -> Result<Option<TimeSpan>, ParseError> {
         if text.trim().is_empty() {
             Ok(None)
         } else {
-            Ok(Some(text.parse()?))
+            Ok(Some(TimeSpan::parse(text, lang)?))
         }
+    }
+
+    /// Parses a `TimeSpan` from a given textual representation using the
+    /// specified language.
+    pub fn parse(text: &str, lang: Lang) -> Result<TimeSpan, ParseError> {
+        parse_custom::<DefaultParser>(text, lang)
     }
 }
 
@@ -100,7 +106,18 @@ struct DefaultParser;
 
 impl CustomParser for DefaultParser {}
 
-pub(crate) fn parse_custom<T: CustomParser>(mut text: &str) -> Result<TimeSpan, ParseError> {
+pub(crate) fn parse_custom<T: CustomParser>(
+    text: &str,
+    lang: Lang,
+) -> Result<TimeSpan, ParseError> {
+    let separator = lang.decimal_separator();
+    parse_custom_with_decimal::<T>(text, separator)
+}
+
+fn parse_custom_with_decimal<T: CustomParser>(
+    mut text: &str,
+    decimal_separator: AsciiChar,
+) -> Result<TimeSpan, ParseError> {
     // It's faster to use `strip_prefix` with char literals if it's an ASCII
     // char, otherwise prefer using string literals.
     let negate = if T::ALLOW_NEGATIVE {
@@ -120,7 +137,7 @@ pub(crate) fn parse_custom<T: CustomParser>(mut text: &str) -> Result<TimeSpan, 
         false
     };
 
-    let (mut rem, nanos) = if let Some((seconds, mut nanos)) = AsciiChar::DOT.split_once(text) {
+    let (mut rem, nanos) = if let Some((seconds, mut nanos)) = decimal_separator.split_once(text) {
         if nanos.len() > 9 {
             nanos = nanos.get(..9).context(FractionDigits)?;
         }
@@ -178,15 +195,6 @@ pub(crate) fn parse_custom<T: CustomParser>(mut text: &str) -> Result<TimeSpan, 
     }
 
     Ok(Duration::new(seconds, nanos).into())
-}
-
-impl FromStr for TimeSpan {
-    type Err = ParseError;
-
-    #[inline]
-    fn from_str(text: &str) -> Result<Self, ParseError> {
-        parse_custom::<DefaultParser>(text)
-    }
 }
 
 impl Default for TimeSpan {
@@ -265,7 +273,7 @@ impl Visitor<'_> for TimeSpanVisitor {
     where
         E: de::Error,
     {
-        v.parse()
+        TimeSpan::parse(v, Lang::English)
             .map_err(|_| E::custom(format!("Not a valid time string: {v:?}")))
     }
 }
@@ -276,72 +284,75 @@ mod tests {
 
     #[test]
     fn parsing() {
-        TimeSpan::from_str("-12:37:30.12").unwrap();
-        TimeSpan::from_str("-37:30.12").unwrap();
-        TimeSpan::from_str("-30.12").unwrap();
-        TimeSpan::from_str("-10:30").unwrap();
-        TimeSpan::from_str("-30").unwrap();
-        TimeSpan::from_str("-100").unwrap();
-        TimeSpan::from_str("--30").unwrap_err();
-        TimeSpan::from_str("-").unwrap_err();
-        TimeSpan::from_str("-10:-30").unwrap_err();
-        TimeSpan::from_str("10:-30").unwrap_err();
-        TimeSpan::from_str("10.5:30.5").unwrap_err();
-        TimeSpan::from_str("NaN").unwrap_err();
-        TimeSpan::from_str("Inf").unwrap_err();
+        TimeSpan::parse("-12:37:30.12", Lang::English).unwrap();
+        TimeSpan::parse("-37:30.12", Lang::English).unwrap();
+        TimeSpan::parse("-30.12", Lang::English).unwrap();
+        TimeSpan::parse("-10:30", Lang::English).unwrap();
+        TimeSpan::parse("-30", Lang::English).unwrap();
+        TimeSpan::parse("-100", Lang::English).unwrap();
+        TimeSpan::parse("--30", Lang::English).unwrap_err();
+        TimeSpan::parse("-", Lang::English).unwrap_err();
+        TimeSpan::parse("-10:-30", Lang::English).unwrap_err();
+        TimeSpan::parse("10:-30", Lang::English).unwrap_err();
+        TimeSpan::parse("10.5:30.5", Lang::English).unwrap_err();
+        TimeSpan::parse("NaN", Lang::English).unwrap_err();
+        TimeSpan::parse("Inf", Lang::English).unwrap_err();
         assert!(matches!(
-            TimeSpan::from_str(""),
+            TimeSpan::parse("", Lang::English),
             Err(ParseError::Piece {
                 source: ParseIntError { .. }
             })
         ));
         assert_eq!(
-            TimeSpan::from_str("60")
+            TimeSpan::parse("60", Lang::English)
                 .unwrap()
                 .to_seconds_and_subsec_nanoseconds(),
             (60, 0)
         );
-        assert_eq!(TimeSpan::from_str("0:60"), Err(ParseError::PieceOverflow));
         assert_eq!(
-            TimeSpan::from_str("60:00")
+            TimeSpan::parse("0:60", Lang::English),
+            Err(ParseError::PieceOverflow)
+        );
+        assert_eq!(
+            TimeSpan::parse("60:00", Lang::English)
                 .unwrap()
                 .to_seconds_and_subsec_nanoseconds(),
             (3600, 0)
         );
         assert_eq!(
-            TimeSpan::from_str("0:60:00"),
+            TimeSpan::parse("0:60:00", Lang::English),
             Err(ParseError::PieceOverflow)
         );
         assert_eq!(
-            TimeSpan::from_str("24:00:00")
+            TimeSpan::parse("24:00:00", Lang::English)
                 .unwrap()
                 .to_seconds_and_subsec_nanoseconds(),
             (86400, 0)
         );
         assert_eq!(
-            TimeSpan::from_str("0:24:00:00"),
+            TimeSpan::parse("0:24:00:00", Lang::English),
             Err(ParseError::TooManyColons),
         );
         assert_eq!(
-            TimeSpan::from_str("10.123456789")
+            TimeSpan::parse("10.123456789", Lang::English)
                 .unwrap()
                 .to_seconds_and_subsec_nanoseconds(),
             (10, 123456789)
         );
         assert_eq!(
-            TimeSpan::from_str("10.0987654321987654321")
+            TimeSpan::parse("10.0987654321987654321", Lang::English)
                 .unwrap()
                 .to_seconds_and_subsec_nanoseconds(),
             (10, 98765432)
         );
         assert_eq!(
-            TimeSpan::from_str("10.000000000")
+            TimeSpan::parse("10.000000000", Lang::English)
                 .unwrap()
                 .to_seconds_and_subsec_nanoseconds(),
             (10, 0)
         );
         assert_eq!(
-            TimeSpan::from_str("10")
+            TimeSpan::parse("10", Lang::English)
                 .unwrap()
                 .to_seconds_and_subsec_nanoseconds(),
             (10, 0)

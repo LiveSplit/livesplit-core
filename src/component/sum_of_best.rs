@@ -11,6 +11,7 @@ use super::key_value;
 use crate::{
     Timer,
     analysis::sum_of_segments::calculate_best,
+    localization::{Lang, Text},
     platform::prelude::*,
     settings::{Color, Field, Gradient, SettingsDescription, Value},
     timing::formatter::{Accuracy, Regular, TimeFormatter},
@@ -82,13 +83,13 @@ impl Component {
         &mut self.settings
     }
 
-    /// Accesses the name of the component.
-    pub const fn name(&self) -> &'static str {
-        "Sum of Best Segments"
+    /// Accesses the name of the component for the specified language.
+    pub const fn name(&self, lang: Lang) -> &'static str {
+        Text::ComponentSumOfBest.resolve(lang)
     }
 
     /// Updates the component's state based on the timer provided.
-    pub fn update_state(&self, state: &mut key_value::State, timer: &Timer) {
+    pub fn update_state(&self, state: &mut key_value::State, timer: &Timer, lang: Lang) {
         let time = calculate_best(
             timer.run().segments(),
             false,
@@ -102,57 +103,63 @@ impl Component {
         state.semantic_color = Default::default();
 
         state.key.clear();
-        state.key.push_str("Sum of Best Segments");
+        state.key.push_str(Text::SumOfBestSegments.resolve(lang));
 
         state.value.clear();
         let _ = write!(
             state.value,
             "{}",
-            Regular::with_accuracy(self.settings.accuracy).format(time),
+            Regular::with_accuracy(self.settings.accuracy).format(time, lang),
         );
 
         state.key_abbreviations.clear();
-        state.key_abbreviations.push("Sum of Best".into());
-        state.key_abbreviations.push("SoB".into());
+        state
+            .key_abbreviations
+            .push(Text::SumOfBestShort.resolve(lang).into());
+        state
+            .key_abbreviations
+            .push(Text::SumOfBestAbbreviation.resolve(lang).into());
 
         state.display_two_rows = self.settings.display_two_rows;
         state.updates_frequently = false;
     }
 
     /// Calculates the component's state based on the timer provided.
-    pub fn state(&self, timer: &Timer) -> key_value::State {
+    pub fn state(&self, timer: &Timer, lang: Lang) -> key_value::State {
         let mut state = Default::default();
-        self.update_state(&mut state, timer);
+        self.update_state(&mut state, timer, lang);
         state
     }
 
     /// Accesses a generic description of the settings available for this
-    /// component and their current values.
-    pub fn settings_description(&self) -> SettingsDescription {
+    /// component and their current values for the specified language.
+    pub fn settings_description(&self, lang: Lang) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new(
-                "Background".into(),
-                "The background shown behind the component.".into(),
+                Text::SumOfBestBackground.resolve(lang).into(),
+                Text::SumOfBestBackgroundDescription.resolve(lang).into(),
                 self.settings.background.into(),
             ),
             Field::new(
-                "Display 2 Rows".into(),
-                "Specifies whether to display the name of the component and the sum of best segments in two separate rows.".into(),
+                Text::SumOfBestDisplayTwoRows.resolve(lang).into(),
+                Text::SumOfBestDisplayTwoRowsDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.display_two_rows.into(),
             ),
             Field::new(
-                "Label Color".into(),
-                "The color of the component's name. If not specified, the color is taken from the layout.".into(),
+                Text::SumOfBestLabelColor.resolve(lang).into(),
+                Text::SumOfBestLabelColorDescription.resolve(lang).into(),
                 self.settings.label_color.into(),
             ),
             Field::new(
-                "Value Color".into(),
-                "The color of the sum of best segments. If not specified, the color is taken from the layout.".into(),
+                Text::SumOfBestValueColor.resolve(lang).into(),
+                Text::SumOfBestValueColorDescription.resolve(lang).into(),
                 self.settings.value_color.into(),
             ),
             Field::new(
-                "Accuracy".into(),
-                "The accuracy of the sum of best segments shown.".into(),
+                Text::SumOfBestAccuracy.resolve(lang).into(),
+                Text::SumOfBestAccuracyDescription.resolve(lang).into(),
                 self.settings.accuracy.into(),
             ),
         ])

@@ -1,5 +1,5 @@
 use super::{Component, Settings};
-use crate::{settings::ImageCache, Run, Segment, Timer};
+use crate::{Run, Segment, Timer, settings::ImageCache};
 
 #[test]
 fn finished_runs_and_attempt_count() {

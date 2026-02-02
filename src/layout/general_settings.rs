@@ -1,5 +1,6 @@
 use super::LayoutDirection;
 use crate::{
+    localization::{Lang, Text},
     platform::prelude::*,
     settings::{
         Color, Field, Font, Gradient, ImageCache, LayoutBackground, SettingsDescription, Value,
@@ -82,103 +83,100 @@ impl Default for GeneralSettings {
 
 impl GeneralSettings {
     /// Accesses a generic description of the general settings available for the
-    /// layout and their current values. The [`ImageCache`] is updated with all
-    /// the images that are part of the state. The images are marked as visited
-    /// in the [`ImageCache`]. You still need to manually run
-    /// [`ImageCache::collect`] to ensure unused images are removed from the
-    /// cache.
-    pub fn settings_description(&self, image_cache: &mut ImageCache) -> SettingsDescription {
+    /// layout and their current values for the specified language. The
+    /// [`ImageCache`] is updated with all the images that are part of the state.
+    /// The images are marked as visited in the [`ImageCache`]. You still need to
+    /// manually run [`ImageCache::collect`] to ensure unused images are removed
+    /// from the cache.
+    pub fn settings_description(
+        &self,
+        image_cache: &mut ImageCache,
+        lang: Lang,
+    ) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new(
-                "Layout Direction".into(),
-                "The direction in which the components are laid out.".into(),
+                Text::LayoutDirection.resolve(lang).into(),
+                Text::LayoutDirectionDescription.resolve(lang).into(),
                 self.direction.into(),
             ),
             Field::new(
-                "Custom Timer Font".into(),
-                "Allows you to specify a custom font for the timer. If this is not set, the default font is used."
-                    .into(),
+                Text::CustomTimerFont.resolve(lang).into(),
+                Text::CustomTimerFontDescription.resolve(lang).into(),
                 self.timer_font.clone().into(),
             ),
             Field::new(
-                "Custom Times Font".into(),
-                "Allows you to specify a custom font for the times. If this is not set, the default font is used."
-                    .into(),
+                Text::CustomTimesFont.resolve(lang).into(),
+                Text::CustomTimesFontDescription.resolve(lang).into(),
                 self.times_font.clone().into(),
             ),
             Field::new(
-                "Custom Text Font".into(),
-                "Allows you to specify a custom font for the text. If this is not set, the default font is used."
-                    .into(),
+                Text::CustomTextFont.resolve(lang).into(),
+                Text::CustomTextFontDescription.resolve(lang).into(),
                 self.text_font.clone().into(),
             ),
             Field::new(
-                "Text Shadow".into(),
-                "Allows you to optionally specify a color for text shadows.".into(),
+                Text::TextShadow.resolve(lang).into(),
+                Text::TextShadowDescription.resolve(lang).into(),
                 self.text_shadow.into(),
             ),
             Field::new(
-                "Background".into(),
-                "The background shown behind the entire layout.".into(),
+                Text::Background.resolve(lang).into(),
+                Text::BackgroundDescription.resolve(lang).into(),
                 self.background.cache(image_cache).into(),
             ),
             Field::new(
-                "Best Segment".into(),
-                "The color to use for when you achieve a new best segment.".into(),
+                Text::BestSegment.resolve(lang).into(),
+                Text::BestSegmentDescription.resolve(lang).into(),
                 self.best_segment_color.into(),
             ),
             Field::new(
-                "Ahead (Gaining Time)".into(),
-                "The color to use for when you are ahead of the comparison and are gaining even more time."
-                    .into(),
+                Text::AheadGainingTime.resolve(lang).into(),
+                Text::AheadGainingTimeDescription.resolve(lang).into(),
                 self.ahead_gaining_time_color.into(),
             ),
             Field::new(
-                "Ahead (Losing Time)".into(),
-                "The color to use for when you are ahead of the comparison, but are losing time."
-                    .into(),
+                Text::AheadLosingTime.resolve(lang).into(),
+                Text::AheadLosingTimeDescription.resolve(lang).into(),
                 self.ahead_losing_time_color.into(),
             ),
             Field::new(
-                "Behind (Gaining Time)".into(),
-                "The color to use for when you are behind the comparison, but are gaining back time."
-                    .into(),
+                Text::BehindGainingTime.resolve(lang).into(),
+                Text::BehindGainingTimeDescription.resolve(lang).into(),
                 self.behind_gaining_time_color.into(),
             ),
             Field::new(
-                "Behind (Losing Time)".into(),
-                "The color to use for when you are behind the comparison and are losing even more time."
-                    .into(),
+                Text::BehindLosingTime.resolve(lang).into(),
+                Text::BehindLosingTimeDescription.resolve(lang).into(),
                 self.behind_losing_time_color.into(),
             ),
             Field::new(
-                "Not Running".into(),
-                "The color to use for when there is no active attempt.".into(),
+                Text::NotRunning.resolve(lang).into(),
+                Text::NotRunningDescription.resolve(lang).into(),
                 self.not_running_color.into(),
             ),
             Field::new(
-                "Personal Best".into(),
-                "The color to use for when you achieve a new Personal Best.".into(),
+                Text::PersonalBest.resolve(lang).into(),
+                Text::PersonalBestDescription.resolve(lang).into(),
                 self.personal_best_color.into(),
             ),
             Field::new(
-                "Paused".into(),
-                "The color to use for when the timer is paused.".into(),
+                Text::Paused.resolve(lang).into(),
+                Text::PausedDescription.resolve(lang).into(),
                 self.paused_color.into(),
             ),
             Field::new(
-                "Thin Separators".into(),
-                "The color of thin separators.".into(),
+                Text::ThinSeparators.resolve(lang).into(),
+                Text::ThinSeparatorsDescription.resolve(lang).into(),
                 self.thin_separators_color.into(),
             ),
             Field::new(
-                "Separators".into(),
-                "The color of normal separators.".into(),
+                Text::Separators.resolve(lang).into(),
+                Text::SeparatorsDescription.resolve(lang).into(),
                 self.separators_color.into(),
             ),
             Field::new(
-                "Text".into(),
-                "The color to use for text that doesn't specify its own color.".into(),
+                Text::TextColor.resolve(lang).into(),
+                Text::TextColorDescription.resolve(lang).into(),
                 self.text_color.into(),
             ),
         ])

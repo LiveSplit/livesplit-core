@@ -19,7 +19,7 @@ pub use self::{
     font::{Font, Stretch as FontStretch, Style as FontStyle, Weight as FontWeight},
     gradient::{Gradient, ListGradient},
     image::{HasImageId, Image, ImageCache, ImageId},
-    layout_background::{BackgroundImage, LayoutBackground, BLUR_FACTOR},
+    layout_background::{BLUR_FACTOR, BackgroundImage, LayoutBackground},
     semantic_color::SemanticColor,
     settings_description::SettingsDescription,
     value::{ColumnKind, Error as ValueError, Result as ValueResult, Value},

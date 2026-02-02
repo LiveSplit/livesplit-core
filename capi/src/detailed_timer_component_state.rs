@@ -1,6 +1,6 @@
 //! The state object describes the information to visualize for this component.
 
-use super::{output_str, output_vec, Nullablec_char};
+use super::{Nullablec_char, output_str, output_vec};
 use livesplit_core::component::detailed_timer::State as DetailedTimerComponentState;
 use std::{io::Write, os::raw::c_char, ptr};
 

@@ -1,7 +1,7 @@
 use core::borrow::Borrow;
 
 use super::{Editor, ParseError, parse_positive};
-use crate::{TimeSpan, settings::Image, util::PopulateString};
+use crate::{Lang, TimeSpan, settings::Image, util::PopulateString};
 
 /// A Segment Row describes the segment in the Run Editor actively selected for
 /// editing.
@@ -100,8 +100,8 @@ impl<'a> SegmentRow<&'a mut Editor> {
 
     /// Parses a split time from a string and sets it for the active timing
     /// method.
-    pub fn parse_and_set_split_time(&mut self, time: &str) -> Result<(), ParseError> {
-        self.set_split_time(parse_positive(time)?);
+    pub fn parse_and_set_split_time(&mut self, time: &str, lang: Lang) -> Result<(), ParseError> {
+        self.set_split_time(parse_positive(time, lang)?);
         Ok(())
     }
 
@@ -115,8 +115,8 @@ impl<'a> SegmentRow<&'a mut Editor> {
 
     /// Parses a segment time from a string and sets it for the active timing
     /// method.
-    pub fn parse_and_set_segment_time(&mut self, time: &str) -> Result<(), ParseError> {
-        self.set_segment_time(parse_positive(time)?);
+    pub fn parse_and_set_segment_time(&mut self, time: &str, lang: Lang) -> Result<(), ParseError> {
+        self.set_segment_time(parse_positive(time, lang)?);
         Ok(())
     }
 
@@ -133,8 +133,12 @@ impl<'a> SegmentRow<&'a mut Editor> {
 
     /// Parses a best segment time from a string and sets it for the active
     /// timing method.
-    pub fn parse_and_set_best_segment_time(&mut self, time: &str) -> Result<(), ParseError> {
-        self.set_best_segment_time(parse_positive(time)?);
+    pub fn parse_and_set_best_segment_time(
+        &mut self,
+        time: &str,
+        lang: Lang,
+    ) -> Result<(), ParseError> {
+        self.set_best_segment_time(parse_positive(time, lang)?);
         Ok(())
     }
 
@@ -155,8 +159,9 @@ impl<'a> SegmentRow<&'a mut Editor> {
         &mut self,
         comparison: &str,
         time: &str,
+        lang: Lang,
     ) -> Result<(), ParseError> {
-        self.set_comparison_time(comparison, parse_positive(time)?);
+        self.set_comparison_time(comparison, parse_positive(time, lang)?);
         Ok(())
     }
 }

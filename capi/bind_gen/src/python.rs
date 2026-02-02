@@ -44,11 +44,7 @@ fn get_ll_type(ty: &Type) -> &str {
 }
 
 fn map_var(var: &str) -> &str {
-    if var == "this" {
-        "self"
-    } else {
-        var
-    }
+    if var == "this" { "self" } else { var }
 }
 
 fn write_class_comments<W: Write>(mut writer: W, comments: &[String]) -> Result<()> {

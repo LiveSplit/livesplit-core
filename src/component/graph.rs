@@ -12,6 +12,7 @@
 
 use crate::{
     GeneralLayoutSettings, TimeSpan, Timer, TimerPhase, analysis, comparison,
+    localization::{Lang, Text},
     platform::prelude::*,
     settings::{Color, Field, SettingsDescription, Value},
     timing::Snapshot,
@@ -209,9 +210,10 @@ impl Component {
         &mut self.settings
     }
 
-    /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<'static, str> {
-        self.text(
+    /// Accesses the name of the component for the specified language.
+    pub fn name(&self, lang: Lang) -> Cow<'static, str> {
+        self.localized_text(
+            lang,
             self.settings
                 .comparison_override
                 .as_ref()
@@ -219,11 +221,16 @@ impl Component {
         )
     }
 
-    fn text(&self, comparison: Option<&str>) -> Cow<'static, str> {
+    fn localized_text(&self, lang: Lang, comparison: Option<&str>) -> Cow<'static, str> {
         if let Some(comparison) = comparison {
-            format!("Graph ({})", comparison::shorten(comparison)).into()
+            format!(
+                "{} ({})",
+                Text::ComponentGraph.resolve(lang),
+                comparison::shorten(comparison)
+            )
+            .into()
         } else {
-            "Graph".into()
+            Text::ComponentGraph.resolve(lang).into()
         }
     }
 
@@ -273,62 +280,66 @@ impl Component {
     }
 
     /// Accesses a generic description of the settings available for this
-    /// component and their current values.
-    pub fn settings_description(&self) -> SettingsDescription {
+    /// component and their current values for the specified language.
+    pub fn settings_description(&self, lang: Lang) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new(
-                "Comparison".into(),
-                "The comparison to use for the graph. If not specified, the current comparison is used.".into(),
+                Text::GraphComparison.resolve(lang).into(),
+                Text::GraphComparisonDescription.resolve(lang).into(),
                 self.settings.comparison_override.clone().into(),
             ),
             Field::new(
-                "Height".into(),
-                "The height of the chart.".into(),
+                Text::GraphHeight.resolve(lang).into(),
+                Text::GraphHeightDescription.resolve(lang).into(),
                 u64::from(self.settings.height).into(),
             ),
             Field::new(
-                "Show Best Segments".into(),
-                "Specifies whether to color the best segments with the layout's best segment color.".into(),
+                Text::GraphShowBestSegments.resolve(lang).into(),
+                Text::GraphShowBestSegmentsDescription.resolve(lang).into(),
                 self.settings.show_best_segments.into(),
             ),
             Field::new(
-                "Live Graph".into(),
-                "Specifies whether the graph should automatically refresh all the time. If this is deactivated, changes to the graph only happen whenever the current segment changes.".into(),
+                Text::GraphLiveGraph.resolve(lang).into(),
+                Text::GraphLiveGraphDescription.resolve(lang).into(),
                 self.settings.live_graph.into(),
             ),
             Field::new(
-                "Flip Graph".into(),
-                "Specifies whether the chart should be flipped vertically. If not enabled, split times which are ahead of the comparison are displayed below the x-axis and times which are behind are above it. Enabling this settings flips it.".into(),
+                Text::GraphFlipGraph.resolve(lang).into(),
+                Text::GraphFlipGraphDescription.resolve(lang).into(),
                 self.settings.flip_graph.into(),
             ),
             Field::new(
-                "Behind Background Color".into(),
-                "The background color for the chart region containing the times that are behind the comparison.".into(),
+                Text::GraphBehindBackgroundColor.resolve(lang).into(),
+                Text::GraphBehindBackgroundColorDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.behind_background_color.into(),
             ),
             Field::new(
-                "Ahead Background Color".into(),
-                "The background color for the chart region containing the times that are ahead of the comparison.".into(),
+                Text::GraphAheadBackgroundColor.resolve(lang).into(),
+                Text::GraphAheadBackgroundColorDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.ahead_background_color.into(),
             ),
             Field::new(
-                "Grid Lines Color".into(),
-                "The color of the chart's grid lines.".into(),
+                Text::GraphGridLinesColor.resolve(lang).into(),
+                Text::GraphGridLinesColorDescription.resolve(lang).into(),
                 self.settings.grid_lines_color.into(),
             ),
             Field::new(
-                "Graph Lines Color".into(),
-                "The color of the lines connecting the graph's points.".into(),
+                Text::GraphLinesColor.resolve(lang).into(),
+                Text::GraphLinesColorDescription.resolve(lang).into(),
                 self.settings.graph_lines_color.into(),
             ),
             Field::new(
-                "Partial Fill Color".into(),
-                "The color of the region enclosed by the x-axis and the graph. The partial fill color is only used for live changes. More specifically, this color is used in the interval from the last split time to the current time.".into(),
+                Text::GraphPartialFillColor.resolve(lang).into(),
+                Text::GraphPartialFillColorDescription.resolve(lang).into(),
                 self.settings.partial_fill_color.into(),
             ),
             Field::new(
-                "Complete Fill Color".into(),
-                "The color of the region enclosed by the x-axis and the graph, excluding the graph segment with live changes.".into(),
+                Text::GraphCompleteFillColor.resolve(lang).into(),
+                Text::GraphCompleteFillColorDescription.resolve(lang).into(),
                 self.settings.complete_fill_color.into(),
             ),
         ])

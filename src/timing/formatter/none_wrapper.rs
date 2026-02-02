@@ -3,12 +3,13 @@
 //! changing its behavior when formatting empty times.
 
 use super::{DASH, TimeFormatter};
-use crate::TimeSpan;
+use crate::{TimeSpan, localization::Lang};
 use core::fmt::{Display, Formatter, Result};
 
 /// A Time Span to be formatted by a None Wrapper.
 pub struct Inner<'a, F, S> {
     time: Option<TimeSpan>,
+    lang: Lang,
     wrapper: &'a NoneWrapper<F, S>,
 }
 
@@ -51,12 +52,13 @@ impl EmptyWrapper {
 impl<'a, F: 'a + TimeFormatter<'a>, S: 'a + AsRef<str>> TimeFormatter<'a> for NoneWrapper<F, S> {
     type Inner = Inner<'a, F, S>;
 
-    fn format<T>(&'a self, time: T) -> Self::Inner
+    fn format<T>(&'a self, time: T, lang: Lang) -> Self::Inner
     where
         T: Into<Option<TimeSpan>>,
     {
         Inner {
             time: time.into(),
+            lang,
             wrapper: self,
         }
     }
@@ -67,7 +69,7 @@ impl<'a, F: TimeFormatter<'a>, S: 'a + AsRef<str>> Display for Inner<'a, F, S> {
         if self.time.is_none() {
             self.wrapper.1.as_ref().fmt(f)
         } else {
-            self.wrapper.0.format(self.time).fmt(f)
+            self.wrapper.0.format(self.time, self.lang).fmt(f)
         }
     }
 }

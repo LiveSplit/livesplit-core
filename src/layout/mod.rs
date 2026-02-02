@@ -20,6 +20,7 @@ pub use self::{
 
 use crate::{
     component::{previous_segment, splits, timer, title},
+    localization::Lang,
     platform::prelude::*,
     settings::ImageCache,
     timing::Snapshot,
@@ -96,6 +97,7 @@ impl Layout {
         state: &mut LayoutState,
         image_cache: &mut ImageCache,
         timer: &Snapshot,
+        lang: Lang,
     ) {
         let settings = &self.settings;
 
@@ -103,12 +105,12 @@ impl Layout {
         let mut components = self.components.iter_mut();
         // First update all the states that we have.
         for (state, component) in state.components.iter_mut().zip(components.by_ref()) {
-            component.update_state(state, image_cache, timer, settings);
+            component.update_state(state, image_cache, timer, settings, lang);
         }
         // Then add states for all the components that don't have states yet.
         state
             .components
-            .extend(components.map(|c| c.state(image_cache, timer, settings)));
+            .extend(components.map(|c| c.state(image_cache, timer, settings, lang)));
 
         state.timer_font.clone_from(&settings.timer_font);
         state.times_font.clone_from(&settings.times_font);
@@ -128,9 +130,14 @@ impl Layout {
     /// are marked as visited in the [`ImageCache`]. You still need to manually
     /// run [`ImageCache::collect`] to ensure unused images are removed from the
     /// cache.
-    pub fn state(&mut self, image_cache: &mut ImageCache, timer: &Snapshot) -> LayoutState {
+    pub fn state(
+        &mut self,
+        image_cache: &mut ImageCache,
+        timer: &Snapshot,
+        lang: Lang,
+    ) -> LayoutState {
         let mut state = Default::default();
-        self.update_state(&mut state, image_cache, timer);
+        self.update_state(&mut state, image_cache, timer, lang);
         state
     }
 

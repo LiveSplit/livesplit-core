@@ -1,6 +1,6 @@
 use crate::settings::{HasImageId, ImageId};
 
-use super::{resource::Handle, SharedOwnership};
+use super::{SharedOwnership, resource::Handle};
 
 pub struct CachedImage<T> {
     pub id: ImageId,

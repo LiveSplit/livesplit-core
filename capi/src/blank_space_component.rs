@@ -2,7 +2,7 @@
 //! anything other than a background. It mostly serves as padding between other
 //! components.
 
-use super::{output_vec, Json};
+use super::{Json, output_vec};
 use crate::blank_space_component_state::OwnedBlankSpaceComponentState;
 use crate::component::OwnedComponent;
 use livesplit_core::component::blank_space::Component as BlankSpaceComponent;

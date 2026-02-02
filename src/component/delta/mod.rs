@@ -7,6 +7,7 @@ use crate::{
     GeneralLayoutSettings,
     analysis::{delta, state_helper},
     comparison,
+    localization::{Lang, Text},
     platform::prelude::*,
     settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value},
     timing::{
@@ -84,12 +85,17 @@ impl Component {
         &mut self.settings
     }
 
-    /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<'static, str> {
+    /// Accesses the name of the component for the specified language.
+    pub fn name(&self, lang: Lang) -> Cow<'static, str> {
         if let Some(comparison) = &self.settings.comparison_override {
-            format!("Delta ({comparison})").into()
+            format!(
+                "{} ({})",
+                Text::ComponentDelta.resolve(lang),
+                comparison::shorten(comparison)
+            )
+            .into()
         } else {
-            "Delta".into()
+            Text::ComponentDelta.resolve(lang).into()
         }
     }
 
@@ -100,6 +106,7 @@ impl Component {
         state: &mut key_value::State,
         timer: &Snapshot,
         layout_settings: &GeneralLayoutSettings,
+        lang: Lang,
     ) {
         let comparison = comparison::resolve(&self.settings.comparison_override, timer);
         let text = comparison.unwrap_or_else(|| timer.current_comparison());
@@ -139,7 +146,7 @@ impl Component {
         let _ = write!(
             state.value,
             "{}",
-            Delta::custom(self.settings.drop_decimals, self.settings.accuracy).format(delta),
+            Delta::custom(self.settings.drop_decimals, self.settings.accuracy).format(delta, lang),
         );
 
         state.key_abbreviations.clear();
@@ -157,45 +164,46 @@ impl Component {
         &self,
         timer: &Snapshot,
         layout_settings: &GeneralLayoutSettings,
+        lang: Lang,
     ) -> key_value::State {
         let mut state = Default::default();
-        self.update_state(&mut state, timer, layout_settings);
+        self.update_state(&mut state, timer, layout_settings, lang);
         state
     }
 
     /// Accesses a generic description of the settings available for this
-    /// component and their current values.
-    pub fn settings_description(&self) -> SettingsDescription {
+    /// component and their current values for the specified language.
+    pub fn settings_description(&self, lang: Lang) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new(
-                "Background".into(),
-                "The background shown behind the component.".into(),
+                Text::DeltaBackground.resolve(lang).into(),
+                Text::DeltaBackgroundDescription.resolve(lang).into(),
                 self.settings.background.into(),
             ),
             Field::new(
-                "Comparison".into(),
-                "The comparison to use for calculating how far ahead or behind the current attempt is. If not specified, the current comparison is used.".into(),
+                Text::DeltaComparison.resolve(lang).into(),
+                Text::DeltaComparisonDescription.resolve(lang).into(),
                 self.settings.comparison_override.clone().into(),
             ),
             Field::new(
-                "Display 2 Rows".into(),
-                "Specifies whether to display the name of the comparison and the delta in two separate rows.".into(),
+                Text::DeltaDisplayTwoRows.resolve(lang).into(),
+                Text::DeltaDisplayTwoRowsDescription.resolve(lang).into(),
                 self.settings.display_two_rows.into(),
             ),
             Field::new(
-                "Label Color".into(),
-                "The color of the comparison name. If not specified, the color is taken from the layout.".into(),
-                self.settings.label_color.into()
+                Text::DeltaLabelColor.resolve(lang).into(),
+                Text::DeltaLabelColorDescription.resolve(lang).into(),
+                self.settings.label_color.into(),
             ),
             Field::new(
-                "Drop Decimals".into(),
-                "Specifies if the decimals should not be shown anymore when the visualized delta is over a minute.".into(),
+                Text::DeltaDropDecimals.resolve(lang).into(),
+                Text::DeltaDropDecimalsDescription.resolve(lang).into(),
                 self.settings.drop_decimals.into(),
             ),
             Field::new(
-                "Accuracy".into(),
-                "The accuracy of the delta shown.".into(),
-                self.settings.accuracy.into()
+                Text::DeltaAccuracy.resolve(lang).into(),
+                Text::DeltaAccuracyDescription.resolve(lang).into(),
+                self.settings.accuracy.into(),
             ),
         ])
     }

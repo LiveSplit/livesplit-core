@@ -1,6 +1,6 @@
 //! Provides the parser for Portal 2 Live Timer splits files.
 
-use crate::{platform::prelude::*, GameTime, Run, Segment, TimeSpan};
+use crate::{GameTime, Run, Segment, TimeSpan, platform::prelude::*};
 use core::{num::ParseFloatError, result::Result as StdResult};
 use snafu::{OptionExt, ResultExt};
 

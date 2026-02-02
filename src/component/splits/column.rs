@@ -3,6 +3,7 @@ use crate::{
     analysis::{self, possible_time_save, split_color},
     comparison,
     component::splits::Settings as SplitsSettings,
+    localization::Lang,
     platform::prelude::*,
     settings::{Color, SemanticColor},
     timing::{
@@ -177,6 +178,7 @@ enum ColumnFormatter {
     SegmentTime,
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn update_state(
     state: &mut ColumnState,
     column_settings: &ColumnSettings,
@@ -187,6 +189,7 @@ pub fn update_state(
     segment_index: usize,
     current_split: Option<usize>,
     method: TimingMethod,
+    lang: Lang,
 ) {
     match &column_settings.kind {
         ColumnKind::Variable(column) => {
@@ -222,11 +225,13 @@ pub fn update_state(
                 segment_index,
                 current_split,
                 method,
+                lang,
             );
         }
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn update_time_column(
     state: &mut ColumnState,
     column_settings: &TimeColumn,
@@ -237,6 +242,7 @@ fn update_time_column(
     segment_index: usize,
     current_split: Option<usize>,
     method: TimingMethod,
+    lang: Lang,
 ) {
     let method = column_settings.timing_method.unwrap_or(method);
     let resolved_comparison = comparison::resolve(&column_settings.comparison_override, timer);
@@ -292,7 +298,8 @@ fn update_time_column(
             ColumnFormatter::Time => write!(
                 state.value,
                 "{}",
-                Regular::with_accuracy(splits_settings.split_time_accuracy).format(column_value)
+                Regular::with_accuracy(splits_settings.split_time_accuracy)
+                    .format(column_value, lang)
             ),
             ColumnFormatter::Delta => write!(
                 state.value,
@@ -301,14 +308,14 @@ fn update_time_column(
                     splits_settings.delta_drop_decimals,
                     splits_settings.delta_time_accuracy,
                 )
-                .format(column_value)
+                .format(column_value, lang)
             ),
             ColumnFormatter::SegmentTime => {
                 write!(
                     state.value,
                     "{}",
                     SegmentTime::with_accuracy(splits_settings.segment_time_accuracy)
-                        .format(column_value)
+                        .format(column_value, lang)
                 )
             }
         };
@@ -317,6 +324,7 @@ fn update_time_column(
     state.visual_color = semantic_color.visualize(layout_settings);
 }
 
+#[allow(clippy::type_complexity)]
 fn time_column_update_value(
     column: &TimeColumn,
     timer: &Snapshot,

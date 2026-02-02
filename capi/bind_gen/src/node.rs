@@ -1,4 +1,4 @@
-use crate::{typescript, Class, Function, Type, TypeKind};
+use crate::{Class, Function, Type, TypeKind, typescript};
 use heck::ToLowerCamelCase;
 use std::{
     collections::BTreeMap,

@@ -1,13 +1,15 @@
 use super::{
-    Accuracy, DASH, MINUS, PLUS, SECONDS_PER_HOUR, SECONDS_PER_MINUTE, TimeFormatter, format_padded,
+    Accuracy, DASH, MINUS, PLUS, SECONDS_PER_HOUR, SECONDS_PER_MINUTE, TIME_SEPARATOR,
+    TimeFormatter, format_padded,
 };
-use crate::TimeSpan;
+use crate::{TimeSpan, localization::Lang, util::ascii_char::AsciiChar};
 use core::fmt::{Display, Formatter, Result};
 
 pub struct Inner {
     time: Option<TimeSpan>,
     drop_decimals: bool,
     accuracy: Accuracy,
+    decimal_separator: AsciiChar,
 }
 
 /// The Delta Time Formatter formats a [`TimeSpan`] as a comparison of two
@@ -65,7 +67,7 @@ impl Default for Delta {
 impl TimeFormatter<'_> for Delta {
     type Inner = Inner;
 
-    fn format<T>(&self, time: T) -> Self::Inner
+    fn format<T>(&self, time: T, lang: Lang) -> Self::Inner
     where
         T: Into<Option<TimeSpan>>,
     {
@@ -73,6 +75,7 @@ impl TimeFormatter<'_> for Delta {
             time: time.into(),
             drop_decimals: self.0,
             accuracy: self.1,
+            decimal_separator: lang.decimal_separator(),
         }
     }
 }
@@ -103,20 +106,25 @@ impl Display for Inner {
 
             if hours > 0 {
                 f.write_str(buffer.format(hours))?;
-                f.write_str(":")?;
+                f.write_str(TIME_SEPARATOR)?;
                 f.write_str(format_padded(minutes))?;
-                f.write_str(":")?;
+                f.write_str(TIME_SEPARATOR)?;
                 f.write_str(format_padded(seconds))?;
             } else if minutes > 0 {
                 f.write_str(buffer.format(minutes))?;
-                f.write_str(":")?;
+                f.write_str(TIME_SEPARATOR)?;
                 f.write_str(format_padded(seconds))?;
             } else {
                 f.write_str(buffer.format(seconds))?;
-                return self.accuracy.format_nanoseconds(nanoseconds).fmt(f);
+                return self
+                    .accuracy
+                    .format_nanoseconds(nanoseconds, self.decimal_separator)
+                    .fmt(f);
             }
             if !self.drop_decimals {
-                self.accuracy.format_nanoseconds(nanoseconds).fmt(f)
+                self.accuracy
+                    .format_nanoseconds(nanoseconds, self.decimal_separator)
+                    .fmt(f)
             } else {
                 Ok(())
             }
@@ -128,8 +136,6 @@ impl Display for Inner {
 
 #[cfg(test)]
 mod tests {
-    use core::str::FromStr;
-
     use super::*;
 
     #[test]
@@ -137,61 +143,65 @@ mod tests {
         // This verifies that flipping the sign of the minimum value doesn't
         // cause a panic.
         let time = TimeSpan::from(crate::platform::Duration::MIN);
-        let inner = Delta::new().format(Some(time));
+        let inner = Delta::new().format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "−2562047788015215:30:08");
     }
 
     #[test]
     fn max() {
         let time = TimeSpan::from(crate::platform::Duration::MAX);
-        let inner = Delta::new().format(Some(time));
+        let inner = Delta::new().format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "+2562047788015215:30:07");
     }
 
     #[test]
     fn zero() {
         let time = TimeSpan::zero();
-        let inner = Delta::new().format(Some(time));
+        let inner = Delta::new().format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "0.0");
     }
 
     #[test]
     fn empty() {
-        let inner = Delta::new().format(None);
+        let inner = Delta::new().format(None, Lang::English);
         assert_eq!(inner.to_string(), "—");
     }
 
     #[test]
     fn slightly_positive() {
-        let time = TimeSpan::from_str("0.000000001").unwrap();
-        let inner = Delta::new().format(Some(time));
+        let time = TimeSpan::parse("0.000000001", Lang::English).unwrap();
+        let inner = Delta::new().format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "+0.0");
 
         assert_eq!(
-            Delta::new().format(TimeSpan::from_seconds(0.5)).to_string(),
+            Delta::new()
+                .format(TimeSpan::from_seconds(0.5), Lang::English)
+                .to_string(),
             "+0.5"
         );
         assert_eq!(
-            Delta::new().format(TimeSpan::from_seconds(1.5)).to_string(),
+            Delta::new()
+                .format(TimeSpan::from_seconds(1.5), Lang::English)
+                .to_string(),
             "+1.5"
         );
     }
 
     #[test]
     fn slightly_negative() {
-        let time = TimeSpan::from_str("-0.000000001").unwrap();
-        let inner = Delta::new().format(Some(time));
+        let time = TimeSpan::parse("-0.000000001", Lang::English).unwrap();
+        let inner = Delta::new().format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "−0.0");
 
         assert_eq!(
             Delta::new()
-                .format(TimeSpan::from_seconds(-1.5))
+                .format(TimeSpan::from_seconds(-1.5), Lang::English)
                 .to_string(),
             "−1.5"
         );
         assert_eq!(
             Delta::new()
-                .format(TimeSpan::from_seconds(-0.5))
+                .format(TimeSpan::from_seconds(-0.5), Lang::English)
                 .to_string(),
             "−0.5"
         );
@@ -199,57 +209,57 @@ mod tests {
 
     #[test]
     fn seconds() {
-        let time = TimeSpan::from_str("23.1234").unwrap();
-        let inner = Delta::new().format(Some(time));
+        let time = TimeSpan::parse("23.1234", Lang::English).unwrap();
+        let inner = Delta::new().format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "+23.1");
     }
 
     #[test]
     fn minutes_with_decimal_dropping() {
-        let time = TimeSpan::from_str("12:34.987654321").unwrap();
-        let inner = Delta::with_decimal_dropping().format(Some(time));
+        let time = TimeSpan::parse("12:34.987654321", Lang::English).unwrap();
+        let inner = Delta::with_decimal_dropping().format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "+12:34");
     }
 
     #[test]
     fn minutes_without_decimal_dropping() {
-        let time = TimeSpan::from_str("12:34.987654321").unwrap();
-        let inner = Delta::without_decimal_dropping().format(Some(time));
+        let time = TimeSpan::parse("12:34.987654321", Lang::English).unwrap();
+        let inner = Delta::without_decimal_dropping().format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "+12:34.9");
     }
 
     #[test]
     fn hours_with_decimal_dropping() {
-        let time = TimeSpan::from_str("12:34:56.123456789").unwrap();
-        let inner = Delta::with_decimal_dropping().format(Some(time));
+        let time = TimeSpan::parse("12:34:56.123456789", Lang::English).unwrap();
+        let inner = Delta::with_decimal_dropping().format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "+12:34:56");
     }
 
     #[test]
     fn hours_without_decimal_dropping() {
-        let time = TimeSpan::from_str("12:34:56.123456789").unwrap();
-        let inner = Delta::without_decimal_dropping().format(Some(time));
+        let time = TimeSpan::parse("12:34:56.123456789", Lang::English).unwrap();
+        let inner = Delta::without_decimal_dropping().format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "+12:34:56.1");
     }
 
     #[test]
     fn negative() {
-        let time = TimeSpan::from_str("-12:34:56.123456789").unwrap();
-        let inner = Delta::new().format(Some(time));
+        let time = TimeSpan::parse("-12:34:56.123456789", Lang::English).unwrap();
+        let inner = Delta::new().format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "−12:34:56");
     }
 
     #[test]
     fn days() {
-        let time = TimeSpan::from_str("2148:34:56.123456789").unwrap();
-        let inner = Delta::new().format(Some(time));
+        let time = TimeSpan::parse("2148:34:56.123456789", Lang::English).unwrap();
+        let inner = Delta::new().format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "+2148:34:56");
     }
 
     #[test]
     fn negative_days() {
-        let time = TimeSpan::from_str("-2148:34:56.123456789").unwrap();
-        let inner = Delta::new().format(Some(time));
+        let time = TimeSpan::parse("-2148:34:56.123456789", Lang::English).unwrap();
+        let inner = Delta::new().format(Some(time), Lang::English);
         assert_eq!(inner.to_string(), "−2148:34:56");
     }
 }

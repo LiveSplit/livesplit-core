@@ -4,7 +4,7 @@ use super::super::AddComparisonError;
 #[cfg(feature = "std")]
 use crate::{AtomicDateTime, settings::Image};
 use crate::{
-    RealTime, Run, Segment, Time, TimeSpan,
+    Lang, RealTime, Run, Segment, Time, TimeSpan,
     comparison::RACE_COMPARISON_PREFIX,
     platform::{path::Path, prelude::*},
     timing,
@@ -62,7 +62,7 @@ pub enum Error {
 pub type Result<T> = StdResult<T, Error>;
 
 fn parse_time_optional(time: &str) -> StdResult<Option<TimeSpan>, timing::ParseError> {
-    let time: TimeSpan = time.parse()?;
+    let time = TimeSpan::parse(time, Lang::English)?;
     if time == TimeSpan::zero() {
         Ok(None)
     } else {
@@ -94,10 +94,7 @@ pub fn parse(
     }
 
     run.set_offset(
-        splits
-            .next()
-            .context(ExpectedOffset)?
-            .parse()
+        TimeSpan::parse(splits.next().context(ExpectedOffset)?, Lang::English)
             .context(ParseOffset)?,
     );
 

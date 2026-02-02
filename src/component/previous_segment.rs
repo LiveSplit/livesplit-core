@@ -9,6 +9,7 @@
 use super::key_value;
 use crate::{
     GeneralLayoutSettings, TimerPhase, analysis, comparison,
+    localization::{Lang, Text},
     platform::prelude::*,
     settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value},
     timing::{
@@ -91,9 +92,10 @@ impl Component {
         &mut self.settings
     }
 
-    /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<'static, str> {
-        self.text(
+    /// Accesses the name of the component for the specified language.
+    pub fn name(&self, lang: Lang) -> Cow<'static, str> {
+        self.localized_text(
+            lang,
             false,
             self.settings
                 .comparison_override
@@ -102,11 +104,16 @@ impl Component {
         )
     }
 
-    fn text(&self, live: bool, comparison: Option<&str>) -> Cow<'static, str> {
+    fn localized_text(
+        &self,
+        lang: Lang,
+        live: bool,
+        comparison: Option<&str>,
+    ) -> Cow<'static, str> {
         let text = if live {
-            "Live Segment"
+            Text::LiveSegment.resolve(lang)
         } else {
-            "Previous Segment"
+            Text::ComponentPreviousSegment.resolve(lang)
         };
         let mut text = Cow::from(text);
         if let Some(comparison) = comparison {
@@ -122,6 +129,7 @@ impl Component {
         state: &mut key_value::State,
         timer: &Snapshot,
         layout_settings: &GeneralLayoutSettings,
+        lang: Lang,
     ) {
         let mut time_change = None;
         let mut previous_possible = None;
@@ -202,7 +210,7 @@ impl Component {
 
         let value_color = Some(semantic_color.visualize(layout_settings));
 
-        let text = self.text(live_segment.is_some(), resolved_comparison);
+        let text = self.localized_text(lang, live_segment.is_some(), resolved_comparison);
 
         state.background = self.settings.background;
         state.key_color = self.settings.label_color;
@@ -216,25 +224,36 @@ impl Component {
         let _ = write!(
             state.value,
             "{}",
-            Delta::custom(self.settings.drop_decimals, self.settings.accuracy).format(time_change),
+            Delta::custom(self.settings.drop_decimals, self.settings.accuracy)
+                .format(time_change, lang),
         );
 
         if self.settings.show_possible_time_save {
             let _ = write!(
                 state.value,
                 " / {}",
-                SegmentTime::with_accuracy(self.settings.accuracy).format(previous_possible),
+                SegmentTime::with_accuracy(self.settings.accuracy).format(previous_possible, lang),
             );
         }
 
         state.key_abbreviations.clear();
         if live_segment.is_some() {
-            state.key_abbreviations.push("Live Segment".into());
-            state.key_abbreviations.push("Live Seg.".into());
+            state
+                .key_abbreviations
+                .push(Text::LiveSegment.resolve(lang).into());
+            state
+                .key_abbreviations
+                .push(Text::LiveSegmentShort.resolve(lang).into());
         } else {
-            state.key_abbreviations.push("Previous Segment".into());
-            state.key_abbreviations.push("Prev. Segment".into());
-            state.key_abbreviations.push("Prev. Seg.".into());
+            state
+                .key_abbreviations
+                .push(Text::ComponentPreviousSegment.resolve(lang).into());
+            state
+                .key_abbreviations
+                .push(Text::PreviousSegmentShort.resolve(lang).into());
+            state
+                .key_abbreviations
+                .push(Text::PreviousSegmentAbbreviation.resolve(lang).into());
         }
 
         state.display_two_rows = self.settings.display_two_rows;
@@ -247,49 +266,66 @@ impl Component {
         &self,
         timer: &Snapshot,
         layout_settings: &GeneralLayoutSettings,
+        lang: Lang,
     ) -> key_value::State {
         let mut state = Default::default();
-        self.update_state(&mut state, timer, layout_settings);
+        self.update_state(&mut state, timer, layout_settings, lang);
         state
     }
 
     /// Accesses a generic description of the settings available for this
-    /// component and their current values.
-    pub fn settings_description(&self) -> SettingsDescription {
+    /// component and their current values for the specified language.
+    pub fn settings_description(&self, lang: Lang) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new(
-                "Background".into(),
-                "The background shown behind the component.".into(),
+                Text::PreviousSegmentBackground.resolve(lang).into(),
+                Text::PreviousSegmentBackgroundDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.background.into(),
             ),
             Field::new(
-                "Comparison".into(),
-                "The comparison used for calculating how much time was saved or lost. If not specified, the current comparison is used.".into(),
+                Text::PreviousSegmentComparison.resolve(lang).into(),
+                Text::PreviousSegmentComparisonDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.comparison_override.clone().into(),
             ),
             Field::new(
-                "Display 2 Rows".into(),
-                "Specifies whether to display the name of the component and how much time was saved or lost in two separate rows.".into(),
+                Text::PreviousSegmentDisplayTwoRows.resolve(lang).into(),
+                Text::PreviousSegmentDisplayTwoRowsDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.display_two_rows.into(),
             ),
             Field::new(
-                "Label Color".into(),
-                "The color of the component's name. If not specified, the color is taken from the layout.".into(),
+                Text::PreviousSegmentLabelColor.resolve(lang).into(),
+                Text::PreviousSegmentLabelColorDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.label_color.into(),
             ),
             Field::new(
-                "Drop Decimals".into(),
-                "Specifies whether to drop the decimals from the time when the time shown is over a minute.".into(),
+                Text::PreviousSegmentDropDecimals.resolve(lang).into(),
+                Text::PreviousSegmentDropDecimalsDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.drop_decimals.into(),
             ),
             Field::new(
-                "Accuracy".into(),
-                "The accuracy of the time shown.".into(),
+                Text::PreviousSegmentAccuracy.resolve(lang).into(),
+                Text::PreviousSegmentAccuracyDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.accuracy.into(),
             ),
             Field::new(
-                "Show Possible Time Save".into(),
-                "Specifies whether to show how much time could've been saved for the previous segment in addition to the time saved or lost.".into(),
+                Text::PreviousSegmentShowPossibleTimeSave
+                    .resolve(lang)
+                    .into(),
+                Text::PreviousSegmentShowPossibleTimeSaveDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.show_possible_time_save.into(),
             ),
         ])

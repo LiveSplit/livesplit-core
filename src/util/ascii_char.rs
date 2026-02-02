@@ -1,6 +1,20 @@
+use core::fmt;
+
 #[derive(Copy, Clone, PartialEq, Eq)]
 #[repr(transparent)]
 pub struct AsciiChar(u8);
+
+impl fmt::Debug for AsciiChar {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Debug::fmt(&(self.get() as char), f)
+    }
+}
+
+impl fmt::Display for AsciiChar {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fmt::Display::fmt(self.as_str(), f)
+    }
+}
 
 impl AsciiChar {
     pub const LESS_THAN: Self = Self::new(b'<');
@@ -16,6 +30,7 @@ impl AsciiChar {
     pub const EQUALITY_SIGN: Self = Self::new(b'=');
     pub const COLON: Self = Self::new(b':');
     pub const DOT: Self = Self::new(b'.');
+    pub const COMMA: Self = Self::new(b',');
 
     pub const fn new(c: u8) -> Self {
         if c > 127 {
@@ -50,5 +65,10 @@ impl AsciiChar {
         // are looking for ASCII bytes, splitting at the position is guaranteed
         // to be valid UTF-8.
         unsafe { Some((text.get_unchecked(..pos), text.get_unchecked(pos + 1..))) }
+    }
+
+    pub const fn as_str(&self) -> &str {
+        // SAFETY: ASCII characters are valid UTF-8.
+        unsafe { core::str::from_utf8_unchecked(core::slice::from_ref(&self.0)) }
     }
 }

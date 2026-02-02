@@ -5,6 +5,7 @@ use crate::{
         possible_time_save, previous_segment, segment_time, separator, splits, sum_of_best, text,
         timer, title, total_playtime,
     },
+    localization::Lang,
     platform::prelude::*,
     settings::{ImageCache, SettingsDescription, Value},
     timing::Snapshot,
@@ -167,60 +168,63 @@ impl Component {
         image_cache: &mut ImageCache,
         timer: &Snapshot,
         layout_settings: &GeneralSettings,
+        lang: Lang,
     ) {
         match (state, self) {
             (ComponentState::BlankSpace(state), Component::BlankSpace(component)) => {
                 component.update_state(state)
             }
             (ComponentState::KeyValue(state), Component::CurrentComparison(component)) => {
-                component.update_state(state, timer)
+                component.update_state(state, timer, lang)
             }
             (ComponentState::KeyValue(state), Component::CurrentPace(component)) => {
-                component.update_state(state, timer)
+                component.update_state(state, timer, lang)
             }
             (ComponentState::KeyValue(state), Component::Delta(component)) => {
-                component.update_state(state, timer, layout_settings)
+                component.update_state(state, timer, layout_settings, lang)
             }
             (ComponentState::DetailedTimer(state), Component::DetailedTimer(component)) => {
-                component.update_state(state, image_cache, timer, layout_settings)
+                component.update_state(state, image_cache, timer, layout_settings, lang)
             }
             (ComponentState::Graph(state), Component::Graph(component)) => {
                 component.update_state(state, timer, layout_settings)
             }
             (ComponentState::KeyValue(state), Component::PbChance(component)) => {
-                component.update_state(state, timer)
+                component.update_state(state, timer, lang)
             }
             (ComponentState::KeyValue(state), Component::PossibleTimeSave(component)) => {
-                component.update_state(state, timer)
+                component.update_state(state, timer, lang)
             }
             (ComponentState::KeyValue(state), Component::PreviousSegment(component)) => {
-                component.update_state(state, timer, layout_settings)
+                component.update_state(state, timer, layout_settings, lang)
             }
             (ComponentState::KeyValue(state), Component::SegmentTime(component)) => {
-                component.update_state(state, timer)
+                component.update_state(state, timer, lang)
             }
             (ComponentState::Separator(state), Component::Separator(component)) => {
                 component.update_state(state)
             }
             (ComponentState::Splits(state), Component::Splits(component)) => {
-                component.update_state(state, image_cache, timer, layout_settings)
+                component.update_state(state, image_cache, timer, layout_settings, lang)
             }
             (ComponentState::KeyValue(state), Component::SumOfBest(component)) => {
-                component.update_state(state, timer)
+                component.update_state(state, timer, lang)
             }
             (ComponentState::Text(state), Component::Text(component)) => {
                 component.update_state(state, timer)
             }
             (ComponentState::Timer(state), Component::Timer(component)) => {
-                component.update_state(state, timer, layout_settings)
+                component.update_state(state, timer, layout_settings, lang)
             }
             (ComponentState::Title(state), Component::Title(component)) => {
                 component.update_state(state, image_cache, timer)
             }
             (ComponentState::KeyValue(state), Component::TotalPlaytime(component)) => {
-                component.update_state(state, timer)
+                component.update_state(state, timer, lang)
             }
-            (state, component) => *state = component.state(image_cache, timer, layout_settings),
+            (state, component) => {
+                *state = component.state(image_cache, timer, layout_settings, lang)
+            }
         }
     }
 
@@ -237,43 +241,54 @@ impl Component {
         image_cache: &mut ImageCache,
         timer: &Snapshot,
         layout_settings: &GeneralSettings,
+        lang: Lang,
     ) -> ComponentState {
         match self {
             Component::BlankSpace(component) => ComponentState::BlankSpace(component.state()),
             Component::CurrentComparison(component) => {
-                ComponentState::KeyValue(component.state(timer))
+                ComponentState::KeyValue(component.state(timer, lang))
             }
-            Component::CurrentPace(component) => ComponentState::KeyValue(component.state(timer)),
+            Component::CurrentPace(component) => {
+                ComponentState::KeyValue(component.state(timer, lang))
+            }
             Component::Delta(component) => {
-                ComponentState::KeyValue(component.state(timer, layout_settings))
+                ComponentState::KeyValue(component.state(timer, layout_settings, lang))
             }
             Component::DetailedTimer(component) => ComponentState::DetailedTimer(Box::new(
-                component.state(image_cache, timer, layout_settings),
+                component.state(image_cache, timer, layout_settings, lang),
             )),
             Component::Graph(component) => {
                 ComponentState::Graph(component.state(timer, layout_settings))
             }
-            Component::PbChance(component) => ComponentState::KeyValue(component.state(timer)),
+            Component::PbChance(component) => {
+                ComponentState::KeyValue(component.state(timer, lang))
+            }
             Component::PossibleTimeSave(component) => {
-                ComponentState::KeyValue(component.state(timer))
+                ComponentState::KeyValue(component.state(timer, lang))
             }
             Component::PreviousSegment(component) => {
-                ComponentState::KeyValue(component.state(timer, layout_settings))
+                ComponentState::KeyValue(component.state(timer, layout_settings, lang))
             }
-            Component::SegmentTime(component) => ComponentState::KeyValue(component.state(timer)),
+            Component::SegmentTime(component) => {
+                ComponentState::KeyValue(component.state(timer, lang))
+            }
             Component::Separator(component) => ComponentState::Separator(component.state()),
             Component::Splits(component) => {
-                ComponentState::Splits(component.state(image_cache, timer, layout_settings))
+                ComponentState::Splits(component.state(image_cache, timer, layout_settings, lang))
             }
-            Component::SumOfBest(component) => ComponentState::KeyValue(component.state(timer)),
+            Component::SumOfBest(component) => {
+                ComponentState::KeyValue(component.state(timer, lang))
+            }
             Component::Text(component) => ComponentState::Text(component.state(timer)),
             Component::Timer(component) => {
-                ComponentState::Timer(component.state(timer, layout_settings))
+                ComponentState::Timer(component.state(timer, layout_settings, lang))
             }
             Component::Title(component) => {
                 ComponentState::Title(component.state(image_cache, timer))
             }
-            Component::TotalPlaytime(component) => ComponentState::KeyValue(component.state(timer)),
+            Component::TotalPlaytime(component) => {
+                ComponentState::KeyValue(component.state(timer, lang))
+            }
         }
     }
 
@@ -323,26 +338,26 @@ impl Component {
         }
     }
 
-    /// Accesses the name of the component.
-    pub fn name(&self) -> Cow<'_, str> {
+    /// Accesses the name of the component for the specified language.
+    pub fn name(&self, lang: Lang) -> Cow<'_, str> {
         match self {
-            Component::BlankSpace(component) => component.name().into(),
-            Component::CurrentComparison(component) => component.name().into(),
-            Component::CurrentPace(component) => component.name(),
-            Component::Delta(component) => component.name(),
-            Component::DetailedTimer(component) => component.name().into(),
-            Component::Graph(component) => component.name(),
-            Component::PbChance(component) => component.name().into(),
-            Component::PossibleTimeSave(component) => component.name(),
-            Component::PreviousSegment(component) => component.name(),
-            Component::SegmentTime(component) => component.name(),
-            Component::Separator(component) => component.name().into(),
-            Component::Splits(component) => component.name().into(),
-            Component::SumOfBest(component) => component.name().into(),
-            Component::Text(component) => component.name(),
-            Component::Timer(component) => component.name().into(),
-            Component::Title(component) => component.name().into(),
-            Component::TotalPlaytime(component) => component.name().into(),
+            Component::BlankSpace(component) => Cow::Borrowed(component.name(lang)),
+            Component::CurrentComparison(component) => Cow::Borrowed(component.name(lang)),
+            Component::CurrentPace(component) => component.name(lang),
+            Component::Delta(component) => component.name(lang),
+            Component::DetailedTimer(component) => Cow::Borrowed(component.name(lang)),
+            Component::Graph(component) => component.name(lang),
+            Component::PbChance(component) => Cow::Borrowed(component.name(lang)),
+            Component::PossibleTimeSave(component) => component.name(lang),
+            Component::PreviousSegment(component) => component.name(lang),
+            Component::SegmentTime(component) => component.name(lang),
+            Component::Separator(component) => Cow::Borrowed(component.name(lang)),
+            Component::Splits(component) => Cow::Borrowed(component.name(lang)),
+            Component::SumOfBest(component) => Cow::Borrowed(component.name(lang)),
+            Component::Text(component) => component.name(lang),
+            Component::Timer(component) => Cow::Borrowed(component.name(lang)),
+            Component::Title(component) => Cow::Borrowed(component.name(lang)),
+            Component::TotalPlaytime(component) => Cow::Borrowed(component.name(lang)),
         }
     }
 
@@ -366,25 +381,25 @@ impl Component {
     /// Description entirely describes all the settings that are available, what
     /// type they are and what value they currently have. This provides a user
     /// interface independent way of changing the settings.
-    pub fn settings_description(&self) -> SettingsDescription {
+    pub fn settings_description(&self, lang: Lang) -> SettingsDescription {
         match self {
-            Component::BlankSpace(component) => component.settings_description(),
-            Component::CurrentComparison(component) => component.settings_description(),
-            Component::CurrentPace(component) => component.settings_description(),
-            Component::Delta(component) => component.settings_description(),
-            Component::DetailedTimer(component) => component.settings_description(),
-            Component::Graph(component) => component.settings_description(),
-            Component::PbChance(component) => component.settings_description(),
-            Component::PossibleTimeSave(component) => component.settings_description(),
-            Component::PreviousSegment(component) => component.settings_description(),
-            Component::SegmentTime(component) => component.settings_description(),
-            Component::Separator(component) => component.settings_description(),
-            Component::Splits(component) => component.settings_description(),
-            Component::SumOfBest(component) => component.settings_description(),
-            Component::Text(component) => component.settings_description(),
-            Component::Timer(component) => component.settings_description(),
-            Component::Title(component) => component.settings_description(),
-            Component::TotalPlaytime(component) => component.settings_description(),
+            Component::BlankSpace(component) => component.settings_description(lang),
+            Component::CurrentComparison(component) => component.settings_description(lang),
+            Component::CurrentPace(component) => component.settings_description(lang),
+            Component::Delta(component) => component.settings_description(lang),
+            Component::DetailedTimer(component) => component.settings_description(lang),
+            Component::Graph(component) => component.settings_description(lang),
+            Component::PbChance(component) => component.settings_description(lang),
+            Component::PossibleTimeSave(component) => component.settings_description(lang),
+            Component::PreviousSegment(component) => component.settings_description(lang),
+            Component::SegmentTime(component) => component.settings_description(lang),
+            Component::Separator(component) => component.settings_description(lang),
+            Component::Splits(component) => component.settings_description(lang),
+            Component::SumOfBest(component) => component.settings_description(lang),
+            Component::Text(component) => component.settings_description(lang),
+            Component::Timer(component) => component.settings_description(lang),
+            Component::Title(component) => component.settings_description(lang),
+            Component::TotalPlaytime(component) => component.settings_description(lang),
         }
     }
 

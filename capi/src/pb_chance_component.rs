@@ -3,11 +3,9 @@
 //! of beating the Personal Best. During an attempt it actively changes based on
 //! how well the attempt is going.
 
-use super::{output_vec, Json};
-use crate::component::OwnedComponent;
-use crate::key_value_component_state::OwnedKeyValueComponentState;
-use livesplit_core::component::pb_chance::Component as PbChanceComponent;
-use livesplit_core::Timer;
+use super::{Json, output_vec};
+use crate::{component::OwnedComponent, key_value_component_state::OwnedKeyValueComponentState};
+use livesplit_core::{Lang, Timer, component::pb_chance::Component as PbChanceComponent};
 
 /// type
 pub type OwnedPbChanceComponent = Box<PbChanceComponent>;
@@ -33,9 +31,13 @@ pub extern "C" fn PbChanceComponent_into_generic(this: OwnedPbChanceComponent) -
 
 /// Encodes the component's state information as JSON.
 #[unsafe(no_mangle)]
-pub extern "C" fn PbChanceComponent_state_as_json(this: &PbChanceComponent, timer: &Timer) -> Json {
+pub extern "C" fn PbChanceComponent_state_as_json(
+    this: &PbChanceComponent,
+    timer: &Timer,
+    lang: Lang,
+) -> Json {
     output_vec(|o| {
-        this.state(&timer.snapshot()).write_json(o).unwrap();
+        this.state(&timer.snapshot(), lang).write_json(o).unwrap();
     })
 }
 
@@ -44,6 +46,7 @@ pub extern "C" fn PbChanceComponent_state_as_json(this: &PbChanceComponent, time
 pub extern "C" fn PbChanceComponent_state(
     this: &PbChanceComponent,
     timer: &Timer,
+    lang: Lang,
 ) -> OwnedKeyValueComponentState {
-    Box::new(this.state(&timer.snapshot()))
+    Box::new(this.state(&timer.snapshot(), lang))
 }

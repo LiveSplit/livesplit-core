@@ -14,8 +14,8 @@
 //! The algorithm is sampling the split times on the skill curve where the
 //! Personal Best is located.
 
-use super::{goal, ComparisonGenerator};
-use crate::{analysis::SkillCurve, Attempt, Segment, TimingMethod};
+use super::{ComparisonGenerator, goal};
+use crate::{Attempt, Segment, TimingMethod, analysis::SkillCurve};
 
 /// The Comparison Generator for calculating a comparison which has the same
 /// final time as the runner's Personal Best. Unlike the Personal Best however,

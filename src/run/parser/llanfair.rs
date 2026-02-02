@@ -1,11 +1,11 @@
 //! Provides the parser for Llanfair splits files.
 
 use crate::{
+    RealTime, Run, Segment, Time, TimeSpan,
     util::byte_parsing::{
         big_endian::{strip_u16, strip_u32, strip_u64},
         strip_slice, strip_u8,
     },
-    RealTime, Run, Segment, Time, TimeSpan,
 };
 use core::{result::Result as StdResult, str};
 #[cfg(feature = "std")]

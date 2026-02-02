@@ -1,7 +1,7 @@
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, criterion_group, criterion_main};
 
 use livesplit_core::{
-    comparison::balanced_pb::BalancedPB, run::parser::livesplit, Run, Segment, TimeSpan, Timer,
+    Run, Segment, TimeSpan, Timer, comparison::balanced_pb::BalancedPB, run::parser::livesplit,
 };
 use std::fs;
 

@@ -1,7 +1,7 @@
 //! Provides the parser for LiveSplit splits files.
 
 use crate::{
-    AtomicDateTime, DateTime, Run, RunMetadata, Segment, Time, TimeSpan,
+    AtomicDateTime, DateTime, Lang, Run, RunMetadata, Segment, Time, TimeSpan,
     platform::prelude::*,
     run::{AddComparisonError, LinkedLayout},
     settings::Image,
@@ -177,7 +177,7 @@ fn parse_time_span(text: &str) -> Result<TimeSpan> {
 
         let days: TimeSpan = Duration::seconds(days_secs).into();
 
-        let time: TimeSpan = after_dot.parse()?;
+        let time = TimeSpan::parse(after_dot, Lang::English)?;
 
         if time < TimeSpan::zero() {
             return Err(Error::ParseExtendedTime);
@@ -189,7 +189,7 @@ fn parse_time_span(text: &str) -> Result<TimeSpan> {
             days + time
         });
     }
-    text.parse().map_err(Into::into)
+    TimeSpan::parse(text, Lang::English).map_err(Into::into)
 }
 
 fn time<F>(reader: &mut Reader, f: F) -> Result<()>

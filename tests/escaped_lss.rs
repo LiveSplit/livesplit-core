@@ -1,6 +1,6 @@
 use livesplit_core::{
-    run::{parser, saver},
     Run, Segment,
+    run::{parser, saver},
 };
 
 #[test]

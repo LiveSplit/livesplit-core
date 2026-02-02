@@ -2,6 +2,7 @@
 
 use crate::{
     hotkey::Hotkey,
+    localization::{Lang, Text},
     platform::prelude::*,
     settings::{Field, SettingsDescription, Value},
 };
@@ -52,52 +53,52 @@ impl Default for HotkeyConfig {
 
 impl HotkeyConfig {
     /// Accesses a generic description of the settings available for the hotkey
-    /// configuration and their current values.
-    pub fn settings_description(&self) -> SettingsDescription {
+    /// configuration and their current values for the specified language.
+    pub fn settings_description(&self, lang: Lang) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new(
-                "Start / Split".into(),
-                "The hotkey to use for splitting and starting a new attempt.".into(),
+                Text::StartSplit.resolve(lang).into(),
+                Text::StartSplitDescription.resolve(lang).into(),
                 self.split.into(),
             ),
             Field::new(
-                "Reset".into(),
-                "The hotkey to use for resetting the current attempt.".into(),
+                Text::Reset.resolve(lang).into(),
+                Text::ResetDescription.resolve(lang).into(),
                 self.reset.into(),
             ),
             Field::new(
-                "Undo Split".into(),
-                "The hotkey to use for undoing the last split.".into(),
+                Text::UndoSplit.resolve(lang).into(),
+                Text::UndoSplitDescription.resolve(lang).into(),
                 self.undo.into(),
             ),
             Field::new(
-                "Skip Split".into(),
-                "The hotkey to use for skipping the current split.".into(),
+                Text::SkipSplit.resolve(lang).into(),
+                Text::SkipSplitDescription.resolve(lang).into(),
                 self.skip.into(),
             ),
             Field::new(
-                "Pause".into(),
-                "The hotkey to use for pausing the current attempt. It can also be used for starting a new attempt.".into(),
+                Text::Pause.resolve(lang).into(),
+                Text::PauseDescription.resolve(lang).into(),
                 self.pause.into(),
             ),
             Field::new(
-                "Undo All Pauses".into(),
-                "The hotkey to use for removing all the pause times from the current time. This is useful in case you accidentally paused and want to undo it.".into(),
+                Text::UndoAllPauses.resolve(lang).into(),
+                Text::UndoAllPausesDescription.resolve(lang).into(),
                 self.undo_all_pauses.into(),
             ),
             Field::new(
-                "Previous Comparison".into(),
-                "The hotkey to use for switching to the previous comparison.".into(),
+                Text::PreviousComparison.resolve(lang).into(),
+                Text::PreviousComparisonDescription.resolve(lang).into(),
                 self.previous_comparison.into(),
             ),
             Field::new(
-                "Next Comparison".into(),
-                "The hotkey to use for switching to the next comparison.".into(),
+                Text::NextComparison.resolve(lang).into(),
+                Text::NextComparisonDescription.resolve(lang).into(),
                 self.next_comparison.into(),
             ),
             Field::new(
-                "Toggle Timing Method".into(),
-                r#"The hotkey to use for toggling between the "Real Time" and "Game Time" timing methods."#.into(),
+                Text::ToggleTimingMethod.resolve(lang).into(),
+                Text::ToggleTimingMethodDescription.resolve(lang).into(),
                 self.toggle_timing_method.into(),
             ),
         ])
@@ -115,6 +116,7 @@ impl HotkeyConfig {
     /// This panics if the type of the value to be set is not compatible with
     /// the type of the setting's value. A panic can also occur if the index of
     /// the setting provided is out of bounds.
+    #[allow(clippy::result_unit_err)]
     pub fn set_value(&mut self, index: usize, value: Value) -> Result<(), ()> {
         let value: Option<Hotkey> = value.into();
 

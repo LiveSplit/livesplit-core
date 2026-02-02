@@ -9,7 +9,7 @@ mod run_files;
 mod tests_helper;
 
 use livesplit_core::{
-    Run, Segment, TimeSpan, Timer, TimingMethod,
+    Lang, Run, Segment, TimeSpan, Timer, TimingMethod,
     component::{self, timer},
     layout::{self, Component, ComponentState, Layout, LayoutDirection, LayoutState},
     rendering,
@@ -43,7 +43,7 @@ fn default() {
     tests_helper::make_progress_run_with_splits_opt(&mut timer, &[Some(5.0), None, Some(10.0)]);
 
     let mut image_cache = ImageCache::new();
-    let state = layout.state(&mut image_cache, &timer.snapshot());
+    let state = layout.state(&mut image_cache, &timer.snapshot(), Lang::English);
 
     check(
         &state,
@@ -165,7 +165,7 @@ fn font_fallback() {
     layout.push(splits);
 
     let mut image_cache = ImageCache::new();
-    let state = layout.state(&mut image_cache, &timer.snapshot());
+    let state = layout.state(&mut image_cache, &timer.snapshot(), Lang::English);
 
     check_dims(
         &state,
@@ -185,7 +185,7 @@ fn actual_split_file() {
 
     let mut image_cache = ImageCache::new();
     check(
-        &layout.state(&mut image_cache, &timer.snapshot()),
+        &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
         &image_cache,
         "ef12a76febd34908",
         "a261fbed384d6d51",
@@ -201,7 +201,7 @@ fn wsplit() {
 
     let mut image_cache = ImageCache::new();
     check_dims(
-        &layout.state(&mut image_cache, &timer.snapshot()),
+        &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
         &image_cache,
         [250, 300],
         "445f85286cd8a439",
@@ -221,7 +221,7 @@ fn timer_delta_background() {
     let mut image_cache = ImageCache::new();
 
     check_dims(
-        &layout.state(&mut image_cache, &timer.snapshot()),
+        &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
         &image_cache,
         [250, 300],
         "e8c90ede5b64cad9",
@@ -232,7 +232,7 @@ fn timer_delta_background() {
     timer.reset(true).unwrap();
 
     check_dims(
-        &layout.state(&mut image_cache, &timer.snapshot()),
+        &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
         &image_cache,
         [250, 300],
         "be5c85a9a5e3e4a5",
@@ -254,7 +254,7 @@ fn all_components() {
 
     let mut image_cache = ImageCache::new();
 
-    let state = layout.state(&mut image_cache, &timer.snapshot());
+    let state = layout.state(&mut image_cache, &timer.snapshot(), Lang::English);
 
     check_dims(
         &state,
@@ -283,11 +283,11 @@ fn score_split() {
 
     let mut image_cache = ImageCache::new();
 
-    let mut state = layout.state(&mut image_cache, &timer.snapshot());
+    let mut state = layout.state(&mut image_cache, &timer.snapshot(), Lang::English);
     let prev_seg = state.components.pop().unwrap();
     state.components.pop();
     let mut timer_state =
-        timer::Component::new().state(&timer.snapshot(), layout.general_settings());
+        timer::Component::new().state(&timer.snapshot(), layout.general_settings(), Lang::English);
     timer_state.time = "50346".into();
     timer_state.fraction = "PTS".into();
     state.components.push(ComponentState::Timer(timer_state));
@@ -312,7 +312,7 @@ fn dark_layout() {
     let mut image_cache = ImageCache::new();
 
     check(
-        &layout.state(&mut image_cache, &timer.snapshot()),
+        &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
         &image_cache,
         "540515e778133820",
         "5ca393d8b84cb704",
@@ -335,7 +335,7 @@ fn subsplits_layout() {
     let mut image_cache = ImageCache::new();
 
     check_dims(
-        &layout.state(&mut image_cache, &timer.snapshot()),
+        &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
         &image_cache,
         [300, 800],
         "de8412439f6ac04a",
@@ -359,7 +359,7 @@ fn background_image() {
     let mut image_cache = ImageCache::new();
 
     check_dims(
-        &layout.state(&mut image_cache, &timer.snapshot()),
+        &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
         &image_cache,
         [300, 300],
         "84ec75e9cb50bab5",
@@ -386,7 +386,7 @@ fn display_two_rows() {
     let mut image_cache = ImageCache::new();
 
     check_dims(
-        &layout.state(&mut image_cache, &timer.snapshot()),
+        &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
         &image_cache,
         [200, 100],
         "0541122a81430490",
@@ -413,7 +413,7 @@ fn single_line_title() {
     let mut image_cache = ImageCache::new();
 
     check_dims(
-        &layout.state(&mut image_cache, &timer.snapshot()),
+        &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
         &image_cache,
         [300, 60],
         "b66b1db78eb324a4",
@@ -451,7 +451,7 @@ fn horizontal() {
     let mut image_cache = ImageCache::new();
 
     check_dims(
-        &layout.state(&mut image_cache, &timer.snapshot()),
+        &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
         &image_cache,
         [1500, 40],
         "45492bbd1df15cfa",
@@ -471,7 +471,7 @@ fn text_shadow() {
     tests_helper::make_progress_run_with_splits_opt(&mut timer, &[Some(12.34)]);
 
     check_dims(
-        &layout.state(&mut image_cache, &timer.snapshot()),
+        &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
         &image_cache,
         [400, 400],
         "ee437905156e2d64",

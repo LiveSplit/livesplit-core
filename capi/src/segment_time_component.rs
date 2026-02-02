@@ -2,11 +2,9 @@
 //! segment in a comparison of your choosing. If no comparison is specified it
 //! uses the timer's current comparison.
 
-use super::{output_vec, Json};
-use crate::component::OwnedComponent;
-use crate::key_value_component_state::OwnedKeyValueComponentState;
-use livesplit_core::component::segment_time::Component as SegmentTimeComponent;
-use livesplit_core::Timer;
+use super::{Json, output_vec};
+use crate::{component::OwnedComponent, key_value_component_state::OwnedKeyValueComponentState};
+use livesplit_core::{Lang, Timer, component::segment_time::Component as SegmentTimeComponent};
 
 /// type
 pub type OwnedSegmentTimeComponent = Box<SegmentTimeComponent>;
@@ -37,9 +35,10 @@ pub extern "C" fn SegmentTimeComponent_into_generic(
 pub extern "C" fn SegmentTimeComponent_state_as_json(
     this: &SegmentTimeComponent,
     timer: &Timer,
+    lang: Lang,
 ) -> Json {
     output_vec(|o| {
-        this.state(timer).write_json(o).unwrap();
+        this.state(timer, lang).write_json(o).unwrap();
     })
 }
 
@@ -48,6 +47,7 @@ pub extern "C" fn SegmentTimeComponent_state_as_json(
 pub extern "C" fn SegmentTimeComponent_state(
     this: &SegmentTimeComponent,
     timer: &Timer,
+    lang: Lang,
 ) -> OwnedKeyValueComponentState {
-    Box::new(this.state(timer))
+    Box::new(this.state(timer, lang))
 }

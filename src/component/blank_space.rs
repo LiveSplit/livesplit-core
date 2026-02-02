@@ -4,6 +4,7 @@
 //! components.
 
 use crate::{
+    localization::{Lang, Text},
     platform::prelude::*,
     settings::{Field, Gradient, SettingsDescription, Value},
 };
@@ -77,9 +78,9 @@ impl Component {
         &mut self.settings
     }
 
-    /// Accesses the name of the component.
-    pub const fn name(&self) -> &'static str {
-        "Blank Space"
+    /// Accesses the name of the component for the specified language.
+    pub const fn name(&self, lang: Lang) -> &'static str {
+        Text::ComponentBlankSpace.resolve(lang)
     }
 
     /// Updates the component's state.
@@ -97,17 +98,17 @@ impl Component {
     }
 
     /// Accesses a generic description of the settings available for this
-    /// component and their current values.
-    pub fn settings_description(&self) -> SettingsDescription {
+    /// component and their current values for the specified language.
+    pub fn settings_description(&self, lang: Lang) -> SettingsDescription {
         SettingsDescription::with_fields(vec![
             Field::new(
-                "Background".into(),
-                "The background shown behind the component.".into(),
+                Text::BlankSpaceBackground.resolve(lang).into(),
+                Text::BlankSpaceBackgroundDescription.resolve(lang).into(),
                 self.settings.background.into(),
             ),
             Field::new(
-                "Size".into(),
-                "The size of the component.".into(),
+                Text::BlankSpaceSize.resolve(lang).into(),
+                Text::BlankSpaceSizeDescription.resolve(lang).into(),
                 u64::from(self.settings.size).into(),
             ),
         ])

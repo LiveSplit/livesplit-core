@@ -1,4 +1,4 @@
-use crate::{run::LinkedLayout, Run};
+use crate::{Run, run::LinkedLayout};
 
 #[test]
 fn changing_does_nothing_when_run_doesnt_have_a_linked_layout() {

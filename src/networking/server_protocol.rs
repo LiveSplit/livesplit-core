@@ -55,6 +55,7 @@ use serde::Serializer;
 use crate::{
     TimeSpan, Timer, TimerPhase, TimingMethod,
     event::{self, Event},
+    localization::Lang,
     timing::formatter::{self, ASCII_MINUS, TimeFormatter},
 };
 
@@ -551,6 +552,6 @@ fn format_time(time: TimeSpan) -> String {
     // FIXME: I don't think we can parse it again if days are included. Let's not
     // use this formatter.
     formatter::none_wrapper::NoneWrapper::new(formatter::Complete::new(), ASCII_MINUS)
-        .format(time)
+        .format(time, Lang::English)
         .to_string()
 }

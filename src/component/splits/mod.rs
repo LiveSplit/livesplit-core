@@ -7,6 +7,7 @@
 
 use crate::{
     GeneralLayoutSettings,
+    localization::{Lang, Text},
     platform::prelude::*,
     settings::{
         self, Color, Field, Gradient, ImageCache, ImageId, ListGradient, SettingsDescription, Value,
@@ -258,9 +259,9 @@ impl Component {
         self.scroll_offset = self.scroll_offset.saturating_add(1);
     }
 
-    /// Accesses the name of the component.
-    pub const fn name(&self) -> &'static str {
-        "Splits"
+    /// Accesses the name of the component for the specified language.
+    pub const fn name(&self, lang: Lang) -> &'static str {
+        Text::ComponentSplits.resolve(lang)
     }
 
     /// Updates the component's state based on the timer and layout settings
@@ -274,6 +275,7 @@ impl Component {
         image_cache: &mut ImageCache,
         timer: &Snapshot,
         layout_settings: &GeneralLayoutSettings,
+        lang: Lang,
     ) {
         // Reset Scroll Offset when any movement of the split index is observed.
         if self.current_split_index != timer.current_split_index() {
@@ -376,6 +378,7 @@ impl Component {
                     i,
                     current_split,
                     method,
+                    lang,
                 );
             }
 
@@ -415,89 +418,112 @@ impl Component {
         image_cache: &mut ImageCache,
         timer: &Snapshot,
         layout_settings: &GeneralLayoutSettings,
+        lang: Lang,
     ) -> State {
         let mut state = Default::default();
-        self.update_state(&mut state, image_cache, timer, layout_settings);
+        self.update_state(&mut state, image_cache, timer, layout_settings, lang);
         state
     }
 
     /// Accesses a generic description of the settings available for this
-    /// component and their current values.
-    pub fn settings_description(&self) -> SettingsDescription {
+    /// component and their current values for the specified language.
+    pub fn settings_description(&self, lang: Lang) -> SettingsDescription {
         let mut settings = SettingsDescription::with_fields(vec![
             Field::new(
-                "Background".into(),
-                "The background shown behind the component. You can choose for the colors to be alternating. In that case each row alternates between the two colors chosen.".into(),
+                Text::SplitsBackground.resolve(lang).into(),
+                Text::SplitsBackgroundDescription.resolve(lang).into(),
                 self.settings.background.into(),
             ),
             Field::new(
-                "Total Rows".into(),
-                "The total number of rows of segments to show in the list. If set to 0, all the segments are shown. If set to a number lower than the total number of segments, only a certain window of all the segments is shown. This window can scroll up or down.".into(),
+                Text::SplitsTotalRows.resolve(lang).into(),
+                Text::SplitsTotalRowsDescription.resolve(lang).into(),
                 Value::UInt(self.settings.visual_split_count as _),
             ),
             Field::new(
-                "Upcoming Segments".into(),
-                "If there's more segments than rows that are shown, the window showing the segments automatically scrolls up and down when the current segment changes. This number determines the minimum number of future segments to be shown in this scrolling window.".into(),
+                Text::SplitsUpcomingSegments.resolve(lang).into(),
+                Text::SplitsUpcomingSegmentsDescription.resolve(lang).into(),
                 Value::UInt(self.settings.split_preview_count as _),
             ),
             Field::new(
-                "Show Thin Separators".into(),
-                "Specifies whether thin separators should be shown between the individual segment rows.".into(),
+                Text::SplitsShowThinSeparators.resolve(lang).into(),
+                Text::SplitsShowThinSeparatorsDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.show_thin_separators.into(),
             ),
             Field::new(
-                "Show Separator Before Last Split".into(),
-                "If the last segment is to always be shown, this determines whether to show a more pronounced separator in front of the last segment, if it is not directly adjacent to the segment shown right before it in the scrolling window.".into(),
+                Text::SplitsShowSeparatorBeforeLastSplit
+                    .resolve(lang)
+                    .into(),
+                Text::SplitsShowSeparatorBeforeLastSplitDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.separator_last_split.into(),
             ),
             Field::new(
-                "Always Show Last Split".into(),
-                "If not every segment is shown in the scrolling window of segments, then this option determines whether the final segment should always be shown, as it contains the total duration of the chosen comparison. This can be valuable information, as it is often the runner's Personal Best.".into(),
+                Text::SplitsAlwaysShowLastSplit.resolve(lang).into(),
+                Text::SplitsAlwaysShowLastSplitDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.always_show_last_split.into(),
             ),
             Field::new(
-                "Fill with Blank Space".into(),
-                "If there's not enough segments to fill the list, this option allows filling the remaining rows with blank space in order to always show the number of total rows specified in the settings. Otherwise, the number of total rows shown is reduced to the actual number of segments.".into(),
+                Text::SplitsFillWithBlankSpace.resolve(lang).into(),
+                Text::SplitsFillWithBlankSpaceDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.fill_with_blank_space.into(),
             ),
             Field::new(
-                "Show Times Below Segment Name".into(),
-                "Specifies whether to show the times below the segment name. Otherwise the times are shown next to the segment name.".into(),
+                Text::SplitsShowTimesBelowSegmentName.resolve(lang).into(),
+                Text::SplitsShowTimesBelowSegmentNameDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.display_two_rows.into(),
             ),
             Field::new(
-                "Current Segment Gradient".into(),
-                "The gradient to show behind the current segment as an indicator of it being the current segment.".into(),
+                Text::SplitsCurrentSegmentGradient.resolve(lang).into(),
+                Text::SplitsCurrentSegmentGradientDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.current_split_gradient.into(),
             ),
             Field::new(
-                "Split Time Accuracy".into(),
-                "Specifies the accuracy to use for visualizing columns that contain split times.".into(),
+                Text::SplitsSplitTimeAccuracy.resolve(lang).into(),
+                Text::SplitsSplitTimeAccuracyDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.split_time_accuracy.into(),
             ),
             Field::new(
-                "Segment Time Accuracy".into(),
-                "Specifies the accuracy to use for visualizing columns that contain segment times.".into(),
+                Text::SplitsSegmentTimeAccuracy.resolve(lang).into(),
+                Text::SplitsSegmentTimeAccuracyDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.segment_time_accuracy.into(),
             ),
             Field::new(
-                "Delta Time Accuracy".into(),
-                "Specifies the accuracy to use for visualizing columns that contain the amount of time you are ahead or behind.".into(),
+                Text::SplitsDeltaTimeAccuracy.resolve(lang).into(),
+                Text::SplitsDeltaTimeAccuracyDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.delta_time_accuracy.into(),
             ),
             Field::new(
-                "Drop Delta Decimals When Showing Minutes".into(),
-                "Specifies if the decimals should not be shown anymore when a column that contains the amount of time you are ahead or behind is over a minute.".into(),
+                Text::SplitsDropDeltaDecimals.resolve(lang).into(),
+                Text::SplitsDropDeltaDecimalsDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.delta_drop_decimals.into(),
             ),
             Field::new(
-                "Show Column Labels".into(),
-                "Specifies whether to show the names of the columns at the top of the list.".into(),
+                Text::SplitsShowColumnLabels.resolve(lang).into(),
+                Text::SplitsShowColumnLabelsDescription.resolve(lang).into(),
                 self.settings.show_column_labels.into(),
             ),
             Field::new(
-                "Columns".into(),
-                "The number of columns to show in each row. Each column can be configured to show different information. The columns are defined from right to left.".into(),
+                Text::SplitsColumns.resolve(lang).into(),
+                Text::SplitsColumnsDescription.resolve(lang).into(),
                 Value::UInt(self.settings.columns.len() as _),
             ),
         ]);
@@ -514,60 +540,56 @@ impl Component {
         );
 
         for column in &self.settings.columns {
-            settings
-                .fields
-                .push(Field::new(
-                    "Column Name".into(),
-                    "The name of the column. This is shown at the top of the list if the option to show column labels is enabled.".into(),
-                    column.name.clone().into(),
-                ));
+            settings.fields.push(Field::new(
+                Text::SplitsColumnName.resolve(lang).into(),
+                Text::SplitsColumnNameDescription.resolve(lang).into(),
+                column.name.clone().into(),
+            ));
 
             match &column.kind {
                 ColumnKind::Variable(column) => {
                     settings.fields.push(Field::new(
-                        "Column Type".into(),
-                        "The type of information this column displays. This can be a time or a custom variable that you have stored in your splits.".into(),
+                        Text::SplitsColumnType.resolve(lang).into(),
+                        Text::SplitsColumnTypeDescription.resolve(lang).into(),
                         settings::ColumnKind::Variable.into(),
                     ));
                     settings.fields.push(Field::new(
-                        "Variable Name".into(),
-                        "The name of the custom variable that this column displays.".into(),
+                        Text::SplitsVariableName.resolve(lang).into(),
+                        Text::SplitsVariableNameDescription.resolve(lang).into(),
                         column.variable_name.clone().into(),
                     ));
                 }
                 ColumnKind::Time(column) => {
                     settings.fields.push(Field::new(
-                        "Column Type".into(),
-                        "The type of information this column displays. This can be a time or a custom variable that you have stored in your splits.".into(),
+                        Text::SplitsColumnType.resolve(lang).into(),
+                        Text::SplitsColumnTypeDescription.resolve(lang).into(),
                         settings::ColumnKind::Time.into(),
                     ));
-                    settings
-                        .fields
-                        .push(Field::new(
-                            "Start With".into(),
-                            "The value that this column starts with for each segment. The Update Trigger determines when this time is replaced.".into(),
-                            column.start_with.into(),
-                        ));
-                    settings
-                        .fields
-                        .push(Field::new(
-                            "Update With".into(),
-                            "Once a certain condition is met, which is usually being on the segment or having already completed the segment, the time gets updated with the value specified here.".into(),
-                            column.update_with.into(),
+                    settings.fields.push(Field::new(
+                        Text::SplitsStartWith.resolve(lang).into(),
+                        Text::SplitsStartWithDescription.resolve(lang).into(),
+                        column.start_with.into(),
                     ));
                     settings.fields.push(Field::new(
-                        "Update Trigger".into(),
-                        "The condition that needs to be met for the time to get updated with the value specified in the Update With field. Before this condition is met, the time is the value specified in the Start With field.".into(),
+                        Text::SplitsUpdateWith.resolve(lang).into(),
+                        Text::SplitsUpdateWithDescription.resolve(lang).into(),
+                        column.update_with.into(),
+                    ));
+                    settings.fields.push(Field::new(
+                        Text::SplitsUpdateTrigger.resolve(lang).into(),
+                        Text::SplitsUpdateTriggerDescription.resolve(lang).into(),
                         column.update_trigger.into(),
                     ));
                     settings.fields.push(Field::new(
-                        "Comparison".into(),
-                        "The comparison that is being compared against for this column. If not specified, the current comparison is used.".into(),
+                        Text::SplitsColumnComparison.resolve(lang).into(),
+                        Text::SplitsColumnComparisonDescription.resolve(lang).into(),
                         column.comparison_override.clone().into(),
                     ));
                     settings.fields.push(Field::new(
-                        "Timing Method".into(),
-                        "Specifies the timing method to use for this column. If not specified, the current timing method is used.".into(),
+                        Text::SplitsColumnTimingMethod.resolve(lang).into(),
+                        Text::SplitsColumnTimingMethodDescription
+                            .resolve(lang)
+                            .into(),
                         column.timing_method.into(),
                     ));
                 }

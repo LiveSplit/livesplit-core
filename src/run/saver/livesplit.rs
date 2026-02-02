@@ -26,6 +26,7 @@
 
 use crate::{
     DateTime, Run, Time, Timer, TimerPhase,
+    localization::Lang,
     platform::prelude::*,
     run::LinkedLayout,
     settings::Image,
@@ -115,7 +116,7 @@ fn time_inner<W: fmt::Write>(writer: &mut Writer<W>, time: Time) -> fmt::Result 
         writer.tag_with_text_content(
             "RealTime",
             NO_ATTRIBUTES,
-            DisplayAlreadyEscaped(Complete.format(time)),
+            DisplayAlreadyEscaped(Complete.format(time, Lang::English)),
         )?;
     }
 
@@ -123,7 +124,7 @@ fn time_inner<W: fmt::Write>(writer: &mut Writer<W>, time: Time) -> fmt::Result 
         writer.tag_with_text_content(
             "GameTime",
             NO_ATTRIBUTES,
-            DisplayAlreadyEscaped(Complete.format(time)),
+            DisplayAlreadyEscaped(Complete.format(time, Lang::English)),
         )?;
     }
 
@@ -217,7 +218,7 @@ pub fn save_run<W: fmt::Write>(run: &Run, writer: W) -> fmt::Result {
         writer.tag_with_text_content(
             "Offset",
             NO_ATTRIBUTES,
-            DisplayAlreadyEscaped(Complete.format(run.offset())),
+            DisplayAlreadyEscaped(Complete.format(run.offset(), Lang::English)),
         )?;
         writer.tag_with_text_content(
             "AttemptCount",
@@ -254,7 +255,9 @@ pub fn save_run<W: fmt::Write>(run: &Run, writer: W) -> fmt::Result {
                                 writer.tag_with_text_content(
                                     "PauseTime",
                                     NO_ATTRIBUTES,
-                                    DisplayAlreadyEscaped(Complete.format(pause_time)),
+                                    DisplayAlreadyEscaped(
+                                        Complete.format(pause_time, Lang::English),
+                                    ),
                                 )?;
                             }
 

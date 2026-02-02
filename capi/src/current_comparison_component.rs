@@ -1,11 +1,11 @@
 //! The Current Comparison Component is a component that shows the name of the
 //! comparison that is currently selected to be compared against.
 
-use super::{output_vec, Json};
-use crate::component::OwnedComponent;
-use crate::key_value_component_state::OwnedKeyValueComponentState;
-use livesplit_core::component::current_comparison::Component as CurrentComparisonComponent;
-use livesplit_core::Timer;
+use super::{Json, output_vec};
+use crate::{component::OwnedComponent, key_value_component_state::OwnedKeyValueComponentState};
+use livesplit_core::{
+    Lang, Timer, component::current_comparison::Component as CurrentComparisonComponent,
+};
 
 /// type
 pub type OwnedCurrentComparisonComponent = Box<CurrentComparisonComponent>;
@@ -36,9 +36,10 @@ pub extern "C" fn CurrentComparisonComponent_into_generic(
 pub extern "C" fn CurrentComparisonComponent_state_as_json(
     this: &mut CurrentComparisonComponent,
     timer: &Timer,
+    lang: Lang,
 ) -> Json {
     output_vec(|o| {
-        this.state(timer).write_json(o).unwrap();
+        this.state(timer, lang).write_json(o).unwrap();
     })
 }
 
@@ -47,6 +48,7 @@ pub extern "C" fn CurrentComparisonComponent_state_as_json(
 pub extern "C" fn CurrentComparisonComponent_state(
     this: &mut CurrentComparisonComponent,
     timer: &Timer,
+    lang: Lang,
 ) -> OwnedKeyValueComponentState {
-    Box::new(this.state(timer))
+    Box::new(this.state(timer, lang))
 }
