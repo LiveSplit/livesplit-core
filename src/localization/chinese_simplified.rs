@@ -473,11 +473,13 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::LatestSegmentTimeShort => "最新分段时间",
         Text::LatestSegmentShort => "最新分段",
         Text::SegmentTimeShort => "分段时间",
+        Text::SplitTime => "分段时间",
         Text::PossibleTimeSaveShort => "可节省时间",
         Text::PossibleTimeSaveAbbreviation => "可节省",
         Text::TimeSaveShort => "节省时间",
         Text::RealTime => "实时时间",
         Text::GameTime => "游戏时间",
+        Text::Untitled => "未命名",
         Text::SumOfBestCleanerStartOfRun => "本次跑开始",
         Text::SumOfBestCleanerShouldRemove => "你觉得这个分段时间不准确、需要删除吗？",
     }

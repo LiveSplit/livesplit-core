@@ -8,7 +8,7 @@ use crate::{
     Timer,
     localization::{Lang, Text as LText},
     platform::prelude::*,
-    settings::{Color, Field, Gradient, SettingsDescription, Value},
+    settings::{Color, Field, FieldHint, Gradient, SettingsDescription, Value},
     timing::formatter,
     util::PopulateString,
 };
@@ -321,7 +321,8 @@ impl Component {
                     LText::TextComponentVariable.resolve(lang).into(),
                     LText::TextComponentVariableDescription.resolve(lang).into(),
                     var_name.to_string().into(),
-                ),
+                )
+                .with_hint(FieldHint::CustomVariable),
                 None,
                 true,
                 *is_split,

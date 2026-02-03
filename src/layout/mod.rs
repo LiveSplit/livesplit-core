@@ -45,11 +45,11 @@ impl Layout {
     /// in order to provide a good default layout for runners. Which components
     /// are provided by this and how they are configured may change in the
     /// future.
-    pub fn default_layout() -> Self {
+    pub fn default_layout(lang: Lang) -> Self {
         Self {
             components: vec![
                 title::Component::new().into(),
-                splits::Component::new().into(),
+                splits::Component::new(lang).into(),
                 timer::Component::new().into(),
                 previous_segment::Component::new().into(),
             ],

@@ -10,7 +10,7 @@ use crate::{
     comparison,
     localization::{Lang, Text},
     platform::prelude::*,
-    settings::{Color, Field, Gradient, SettingsDescription, Value},
+    settings::{Color, Field, FieldHint, Gradient, SettingsDescription, Value},
     timing::formatter::{Accuracy, SegmentTime, TimeFormatter},
 };
 use alloc::borrow::Cow;
@@ -233,7 +233,8 @@ impl Component {
                 Text::SegmentTimeComparison.resolve(lang).into(),
                 Text::SegmentTimeComparisonDescription.resolve(lang).into(),
                 self.settings.comparison_override.clone().into(),
-            ),
+            )
+            .with_hint(FieldHint::Comparison),
             Field::new(
                 Text::SegmentTimeDisplayTwoRows.resolve(lang).into(),
                 Text::SegmentTimeDisplayTwoRowsDescription

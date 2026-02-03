@@ -21,7 +21,7 @@ cfg_if::cfg_if! {
             run.set_category_name("Some Category Name");
             run.set_attempt_count(1337);
             let mut timer = Timer::new(run).unwrap();
-            let mut layout = Layout::default_layout();
+            let mut layout = Layout::default_layout(Lang::English);
             let mut image_cache = ImageCache::new();
 
             start_run(&mut timer);

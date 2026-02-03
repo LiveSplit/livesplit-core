@@ -4,7 +4,7 @@ use super::{
 };
 use crate::{
     Lang, Run, Segment, TimeSpan, Timer,
-    component::splits::{ColumnKind, TimeColumn},
+    component::splits::{ColumnKind, TimeColumn, english_settings},
     settings::{
         ImageCache,
         SemanticColor::{
@@ -502,7 +502,7 @@ fn check_columns(
             ..Default::default()
         }],
         fill_with_blank_space: false,
-        ..Default::default()
+        ..english_settings()
     });
 
     let mut image_cache = ImageCache::new();
@@ -1132,7 +1132,7 @@ fn check_columns_update_trigger(
             ..Default::default()
         }],
         fill_with_blank_space: false,
-        ..Default::default()
+        ..english_settings()
     });
 
     let mut image_cache = ImageCache::new();
@@ -1254,7 +1254,7 @@ fn column_delta_best_segment_colors() {
             ..Default::default()
         }],
         fill_with_blank_space: false,
-        ..Default::default()
+        ..english_settings()
     });
 
     let mut image_cache = ImageCache::new();
@@ -1396,7 +1396,7 @@ fn delta_or_split_time() {
             ..Default::default()
         }],
         fill_with_blank_space: false,
-        ..Default::default()
+        ..english_settings()
     });
 
     let mut image_cache = ImageCache::new();

@@ -78,6 +78,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::BlankSpaceBackgroundDescription => "空白元件背景。",
         Text::BlankSpaceSize => "空白大小",
         Text::BlankSpaceSizeDescription => "空白元件大小。",
+        Text::SplitTime => "分段時間",
         _ => super::chinese_simplified::resolve(text),
     }
 }

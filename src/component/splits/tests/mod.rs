@@ -4,7 +4,7 @@ use super::{
 };
 use crate::{
     Lang, Run, Segment, TimeSpan, Timer, TimingMethod,
-    component::splits::{ColumnKind, TimeColumn},
+    component::splits::{ColumnKind, TimeColumn, english_settings},
     settings::ImageCache,
 };
 
@@ -20,7 +20,7 @@ fn zero_visual_split_count_always_shows_all_splits() {
     let layout_settings = Default::default();
     let mut component = Component::with_settings(Settings {
         visual_split_count: 0,
-        ..Default::default()
+        ..english_settings()
     });
 
     let mut image_cache = ImageCache::new();
@@ -75,7 +75,7 @@ fn one_visual_split() {
         always_show_last_split: false,
         split_preview_count: 0,
         visual_split_count: 1,
-        ..Default::default()
+        ..english_settings()
     });
 
     let mut image_cache = ImageCache::new();
@@ -146,7 +146,7 @@ fn negative_segment_times() {
             }),
             ..Default::default()
         }],
-        ..Default::default()
+        ..english_settings()
     });
 
     timer.start().unwrap();
@@ -179,7 +179,7 @@ fn unique_split_indices() {
     let mut component = Component::with_settings(Settings {
         visual_split_count: 20,
         fill_with_blank_space: true,
-        ..Default::default()
+        ..english_settings()
     });
 
     let mut image_cache = ImageCache::new();

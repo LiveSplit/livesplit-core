@@ -9,7 +9,7 @@ use crate::{
     comparison,
     localization::{Lang, Text},
     platform::prelude::*,
-    settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value},
+    settings::{Color, Field, FieldHint, Gradient, SemanticColor, SettingsDescription, Value},
     timing::{
         Snapshot,
         formatter::{Accuracy, Delta, TimeFormatter},
@@ -184,7 +184,8 @@ impl Component {
                 Text::DeltaComparison.resolve(lang).into(),
                 Text::DeltaComparisonDescription.resolve(lang).into(),
                 self.settings.comparison_override.clone().into(),
-            ),
+            )
+            .with_hint(FieldHint::Comparison),
             Field::new(
                 Text::DeltaDisplayTwoRows.resolve(lang).into(),
                 Text::DeltaDisplayTwoRowsDescription.resolve(lang).into(),

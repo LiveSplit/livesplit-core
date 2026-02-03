@@ -982,11 +982,13 @@ pub(crate) enum Text {
     LatestSegmentTimeShort,
     LatestSegmentShort,
     SegmentTimeShort,
+    SplitTime,
     PossibleTimeSaveShort,
     PossibleTimeSaveAbbreviation,
     TimeSaveShort,
     RealTime,
     GameTime,
+    Untitled,
     SumOfBestCleanerStartOfRun,
     SumOfBestCleanerShouldRemove,
 }

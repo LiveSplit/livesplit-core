@@ -14,7 +14,7 @@ use crate::{
     GeneralLayoutSettings, TimeSpan, Timer, TimerPhase, analysis, comparison,
     localization::{Lang, Text},
     platform::prelude::*,
-    settings::{Color, Field, SettingsDescription, Value},
+    settings::{Color, Field, FieldHint, SettingsDescription, Value},
     timing::Snapshot,
 };
 use alloc::borrow::Cow;
@@ -287,7 +287,8 @@ impl Component {
                 Text::GraphComparison.resolve(lang).into(),
                 Text::GraphComparisonDescription.resolve(lang).into(),
                 self.settings.comparison_override.clone().into(),
-            ),
+            )
+            .with_hint(FieldHint::Comparison),
             Field::new(
                 Text::GraphHeight.resolve(lang).into(),
                 Text::GraphHeightDescription.resolve(lang).into(),

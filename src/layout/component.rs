@@ -217,7 +217,7 @@ impl Component {
                 component.update_state(state, timer, layout_settings, lang)
             }
             (ComponentState::Title(state), Component::Title(component)) => {
-                component.update_state(state, image_cache, timer)
+                component.update_state(state, image_cache, timer, lang)
             }
             (ComponentState::KeyValue(state), Component::TotalPlaytime(component)) => {
                 component.update_state(state, timer, lang)
@@ -284,7 +284,7 @@ impl Component {
                 ComponentState::Timer(component.state(timer, layout_settings, lang))
             }
             Component::Title(component) => {
-                ComponentState::Title(component.state(image_cache, timer))
+                ComponentState::Title(component.state(image_cache, timer, lang))
             }
             Component::TotalPlaytime(component) => {
                 ComponentState::KeyValue(component.state(timer, lang))

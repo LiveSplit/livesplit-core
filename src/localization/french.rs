@@ -651,11 +651,13 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::LatestSegmentTimeShort => "Dern. tps seg.",
         Text::LatestSegmentShort => "Dernier segment",
         Text::SegmentTimeShort => "Tps seg.",
+        Text::SplitTime => "Temps",
         Text::PossibleTimeSaveShort => "Temps potentiellement gagné",
         Text::PossibleTimeSaveAbbreviation => "Tps pot. gagné",
         Text::TimeSaveShort => "Temps gagné",
         Text::RealTime => "Temps réel",
         Text::GameTime => "Temps de jeu",
+        Text::Untitled => "Sans titre",
         Text::SumOfBestCleanerStartOfRun => "le début du run",
         Text::SumOfBestCleanerShouldRemove => {
             ". Pensez-vous que ce temps de segment est inexact et devrait être supprimé ?"

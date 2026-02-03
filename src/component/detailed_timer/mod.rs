@@ -11,7 +11,9 @@ use crate::{
     comparison::{self, best_segments, none},
     localization::{Lang, Text},
     platform::prelude::*,
-    settings::{Color, Field, Gradient, Image, ImageCache, ImageId, SettingsDescription, Value},
+    settings::{
+        Color, Field, FieldHint, Gradient, Image, ImageCache, ImageId, SettingsDescription, Value,
+    },
     timing::{
         Snapshot,
         formatter::{Accuracy, DigitsFormat, SegmentTime, TimeFormatter},
@@ -380,14 +382,16 @@ impl Component {
                     .resolve(lang)
                     .into(),
                 self.settings.comparison1.clone().into(),
-            ),
+            )
+            .with_hint(FieldHint::Comparison),
             Field::new(
                 Text::DetailedTimerComparison2.resolve(lang).into(),
                 Text::DetailedTimerComparison2Description
                     .resolve(lang)
                     .into(),
                 self.settings.comparison2.clone().into(),
-            ),
+            )
+            .with_hint(FieldHint::Comparison),
             Field::new(
                 Text::DetailedTimerHideSecondComparison.resolve(lang).into(),
                 Text::DetailedTimerHideSecondComparisonDescription

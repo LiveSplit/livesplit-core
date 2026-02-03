@@ -10,7 +10,8 @@ use crate::{
     localization::{Lang, Text},
     platform::prelude::*,
     settings::{
-        self, Color, Field, Gradient, ImageCache, ImageId, ListGradient, SettingsDescription, Value,
+        self, Color, Field, FieldHint, Gradient, ImageCache, ImageId, ListGradient,
+        SettingsDescription, Value,
     },
     timing::{Snapshot, formatter::Accuracy},
     util::{Clear, ClearVec},
@@ -38,16 +39,22 @@ const SETTINGS_PER_VARIABLE_COLUMN: usize = 2;
 /// comparison, and the split time.
 /// The list provides scrolling functionality, so not every segment needs
 /// to be shown all the time.
-#[derive(Default, Clone)]
+#[derive(Clone)]
 pub struct Component {
     settings: Settings,
     current_split_index: Option<usize>,
     scroll_offset: isize,
 }
 
+// FIXME: This is needed for serde's default attribute. Ideally, we could pass
+// the locale through to serde.
+fn english_settings() -> Settings {
+    Settings::new(Lang::English)
+}
+
 /// The Settings for this component.
 #[derive(Clone, Serialize, Deserialize)]
-#[serde(default)]
+#[serde(default = "english_settings")]
 pub struct Settings {
     /// The background shown behind the splits.
     pub background: ListGradient,
@@ -163,8 +170,9 @@ pub struct State {
     pub current_split_gradient: Gradient,
 }
 
-impl Default for Settings {
-    fn default() -> Self {
+impl Settings {
+    /// Creates a new set of default settings.
+    pub fn new(lang: Lang) -> Self {
         Settings {
             background: ListGradient::Alternating(
                 Color::transparent(),
@@ -188,7 +196,7 @@ impl Default for Settings {
             show_column_labels: false,
             columns: vec![
                 ColumnSettings {
-                    name: String::from("Time"),
+                    name: Text::SplitTime.resolve(lang).into(),
                     kind: ColumnKind::Time(TimeColumn {
                         start_with: ColumnStartWith::ComparisonTime,
                         update_with: ColumnUpdateWith::SplitTime,
@@ -225,15 +233,16 @@ impl State {
 
 impl Component {
     /// Creates a new Splits Component.
-    pub fn new() -> Self {
-        Default::default()
+    pub fn new(lang: Lang) -> Self {
+        Self::with_settings(Settings::new(lang))
     }
 
     /// Creates a new Splits Component with the given settings.
-    pub fn with_settings(settings: Settings) -> Self {
+    pub const fn with_settings(settings: Settings) -> Self {
         Self {
             settings,
-            ..Default::default()
+            current_split_index: None,
+            scroll_offset: 0,
         }
     }
 
@@ -553,11 +562,14 @@ impl Component {
                         Text::SplitsColumnTypeDescription.resolve(lang).into(),
                         settings::ColumnKind::Variable.into(),
                     ));
-                    settings.fields.push(Field::new(
-                        Text::SplitsVariableName.resolve(lang).into(),
-                        Text::SplitsVariableNameDescription.resolve(lang).into(),
-                        column.variable_name.clone().into(),
-                    ));
+                    settings.fields.push(
+                        Field::new(
+                            Text::SplitsVariableName.resolve(lang).into(),
+                            Text::SplitsVariableNameDescription.resolve(lang).into(),
+                            column.variable_name.clone().into(),
+                        )
+                        .with_hint(FieldHint::CustomVariable),
+                    );
                 }
                 ColumnKind::Time(column) => {
                     settings.fields.push(Field::new(
@@ -580,11 +592,14 @@ impl Component {
                         Text::SplitsUpdateTriggerDescription.resolve(lang).into(),
                         column.update_trigger.into(),
                     ));
-                    settings.fields.push(Field::new(
-                        Text::SplitsColumnComparison.resolve(lang).into(),
-                        Text::SplitsColumnComparisonDescription.resolve(lang).into(),
-                        column.comparison_override.clone().into(),
-                    ));
+                    settings.fields.push(
+                        Field::new(
+                            Text::SplitsColumnComparison.resolve(lang).into(),
+                            Text::SplitsColumnComparisonDescription.resolve(lang).into(),
+                            column.comparison_override.clone().into(),
+                        )
+                        .with_hint(FieldHint::Comparison),
+                    );
                     settings.fields.push(Field::new(
                         Text::SplitsColumnTimingMethod.resolve(lang).into(),
                         Text::SplitsColumnTimingMethodDescription

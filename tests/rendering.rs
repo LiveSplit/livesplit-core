@@ -37,7 +37,7 @@ fn default() {
     run.set_category_name("Some Category Name");
     run.set_attempt_count(1337);
     let mut timer = Timer::new(run).unwrap();
-    let mut layout = Layout::default_layout();
+    let mut layout = Layout::default_layout(Lang::English);
 
     tests_helper::start_run(&mut timer);
     tests_helper::make_progress_run_with_splits_opt(&mut timer, &[Some(5.0), None, Some(10.0)]);
@@ -160,7 +160,7 @@ fn font_fallback() {
     ]);
     let timer = Timer::new(run).unwrap();
     let mut layout = Layout::new();
-    let mut splits = component::splits::Component::new();
+    let mut splits = component::splits::Component::new(Lang::English);
     splits.settings_mut().visual_split_count = 0;
     layout.push(splits);
 
@@ -181,7 +181,7 @@ fn font_fallback() {
 fn actual_split_file() {
     let run = lss(run_files::LIVESPLIT_1_0);
     let timer = Timer::new(run).unwrap();
-    let mut layout = Layout::default_layout();
+    let mut layout = Layout::default_layout(Lang::English);
 
     let mut image_cache = ImageCache::new();
     check(
@@ -279,7 +279,7 @@ fn all_components() {
 fn score_split() {
     let run = lss(run_files::LIVESPLIT_1_0);
     let timer = Timer::new(run).unwrap();
-    let mut layout = Layout::default_layout();
+    let mut layout = Layout::default_layout(Lang::English);
 
     let mut image_cache = ImageCache::new();
 
@@ -426,7 +426,7 @@ fn single_line_title() {
 fn horizontal() {
     let run = lss(run_files::CELESTE);
     let mut timer = Timer::new(run).unwrap();
-    let mut layout = Layout::default_layout();
+    let mut layout = Layout::default_layout(Lang::English);
     layout.general_settings_mut().direction = LayoutDirection::Horizontal;
     match &mut layout.components[1] {
         Component::Splits(splits) => splits.settings_mut().visual_split_count = 4,

@@ -26,8 +26,8 @@ pub extern "C" fn Layout_new() -> OwnedLayout {
 /// are provided by this and how they are configured may change in the
 /// future.
 #[unsafe(no_mangle)]
-pub extern "C" fn Layout_default_layout() -> OwnedLayout {
-    Box::new(Layout::default_layout())
+pub extern "C" fn Layout_default_layout(lang: Lang) -> OwnedLayout {
+    Box::new(Layout::default_layout(lang))
 }
 
 /// drop

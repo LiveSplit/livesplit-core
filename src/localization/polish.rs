@@ -2,17 +2,17 @@ use super::{Piece, PlaceholderText, Text};
 
 pub const fn resolve(text: Text) -> &'static str {
     match text {
-        Text::StartSplit => "Start / Podział",
-        Text::StartSplitDescription => "Skrót klawiszowy do dzielenia i rozpoczęcia nowej próby.",
+        Text::StartSplit => "Start / Split",
+        Text::StartSplitDescription => "Skrót klawiszowy do dzielenia i rozpoczęcia nowego biegu.",
         Text::Reset => "Reset",
-        Text::ResetDescription => "Skrót klawiszowy do resetowania bieżącej próby.",
+        Text::ResetDescription => "Skrót klawiszowy do resetowania bieżącego biegu.",
         Text::UndoSplit => "Cofnij split",
         Text::UndoSplitDescription => "Skrót klawiszowy do cofnięcia ostatniego splitu.",
         Text::SkipSplit => "Pomiń split",
         Text::SkipSplitDescription => "Skrót klawiszowy do pominięcia bieżącego splitu.",
         Text::Pause => "Pauza",
         Text::PauseDescription => {
-            "Skrót klawiszowy do wstrzymania bieżącej próby. Może też służyć do rozpoczęcia nowej próby."
+            "Skrót klawiszowy do wstrzymania bieżącego biegu. Może też służyć do rozpoczęcia nowego biegu."
         }
         Text::UndoAllPauses => "Cofnij wszystkie pauzy",
         Text::UndoAllPausesDescription => {
@@ -36,7 +36,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SegmentTimer => "Timer segmentu",
         Text::SegmentTimerDescription => {
-            "Określa, czy wyświetlać czas od rozpoczęcia bieżącego segmentu zamiast czasu od rozpoczęcia bieżącej próby."
+            "Określa, czy wyświetlać czas od rozpoczęcia bieżącego segmentu zamiast czasu od rozpoczęcia bieżącego biegu."
         }
         Text::TimingMethod => "Metoda pomiaru czasu",
         Text::TimingMethodDescription => {
@@ -46,7 +46,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::HeightDescription => "Wysokość timera.",
         Text::TimerTextColor => "Kolor tekstu",
         Text::TimerTextColorDescription => {
-            "Kolor wyświetlanego czasu. Jeśli nie określono, kolor jest automatycznie dobierany na podstawie tego, jak dobrze idzie bieżąca próba. Te kolory można ustawić w ogólnych ustawieniach układu."
+            "Kolor wyświetlanego czasu. Jeśli nie określono, kolor jest automatycznie dobierany na podstawie tego, jak dobrze idzie bieżący bieg. Te kolory można ustawić w ogólnych ustawieniach układu."
         }
         Text::ShowGradient => "Pokaż gradient",
         Text::ShowGradientDescription => {
@@ -72,9 +72,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ShowCategoryNameDescription => {
             "Określa, czy nazwa kategorii ma być częścią wyświetlanego tytułu."
         }
-        Text::ShowFinishedRunsCount => "Pokaż liczbę ukończonych prób",
+        Text::ShowFinishedRunsCount => "Pokaż liczbę ukończonych biegów",
         Text::ShowFinishedRunsCountDescription => {
-            "Określa, czy ma być wyświetlana liczba pomyślnie ukończonych prób."
+            "Określa, czy ma być wyświetlana liczba pomyślnie ukończonych biegów."
         }
         Text::ShowAttemptCount => "Pokaż liczbę prób",
         Text::ShowAttemptCountDescription => "Określa, czy ma być wyświetlana łączna liczba prób.",
@@ -160,7 +160,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::DeltaBackgroundDescription => "Tło wyświetlane za komponentem.",
         Text::DeltaComparison => "Porównanie",
         Text::DeltaComparisonDescription => {
-            "Porównanie używane do obliczania, o ile bieżąca próba jest do przodu lub do tyłu. Jeśli nie określono, używane jest bieżące porównanie."
+            "Porównanie używane do obliczania, o ile bieżący bieg jest do przodu lub do tyłu. Jeśli nie określono, używane jest bieżące porównanie."
         }
         Text::DeltaDisplayTwoRows => "Wyświetl 2 wiersze",
         Text::DeltaDisplayTwoRowsDescription => {
@@ -218,7 +218,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::PossibleTimeSaveShowTotal => "Pokaż łączną możliwą oszczędność czasu",
         Text::PossibleTimeSaveShowTotalDescription => {
-            "Określa, czy wyświetlać łączną możliwą oszczędność czasu dla reszty bieżącej próby zamiast możliwej oszczędności czasu dla bieżącego segmentu."
+            "Określa, czy wyświetlać łączną możliwą oszczędność czasu dla reszty bieżącego biegu zamiast możliwej oszczędności czasu dla bieżącego segmentu."
         }
         Text::PossibleTimeSaveLabelColor => "Kolor etykiety",
         Text::PossibleTimeSaveLabelColorDescription => {
@@ -338,7 +338,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::DetailedTimerSegmentTimerHeightDescription => "Wysokość timera segmentu.",
         Text::DetailedTimerTimerColor => "Kolor timera",
         Text::DetailedTimerTimerColorDescription => {
-            "Zamiast automatycznie dobierać kolor głównego timera na podstawie tego, jak dobrze idzie bieżąca próba, można podać stały kolor."
+            "Zamiast automatycznie dobierać kolor głównego timera na podstawie tego, jak dobrze idzie bieżący bieg, można podać stały kolor."
         }
         Text::DetailedTimerShowTimerGradient => "Pokaż gradient timera",
         Text::DetailedTimerShowTimerGradientDescription => {
@@ -484,7 +484,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::TextComponentUseVariableDescription => {
             "Określa, czy używać niestandardowej zmiennej do wyświetlania dynamicznej wartości. Zmienne niestandardowe można określić w edytorze splitów i mogą być dostarczane automatycznie przez auto splittery."
         }
-        Text::TextComponentSplit => "Podział",
+        Text::TextComponentSplit => "Split",
         Text::TextComponentSplitDescription => {
             "Określa, czy podzielić tekst na lewą i prawą część. W przeciwnym razie wyświetlany jest tylko jeden wyśrodkowany tekst."
         }
@@ -549,7 +549,7 @@ pub const fn resolve(text: Text) -> &'static str {
             "Kolor używany, gdy jesteś za porównaniem i tracisz jeszcze więcej czasu."
         }
         Text::NotRunning => "Nie uruchomiono",
-        Text::NotRunningDescription => "Kolor używany, gdy nie ma aktywnej próby.",
+        Text::NotRunningDescription => "Kolor używany, gdy nie ma aktywnego biegu.",
         Text::PersonalBest => "Rekord osobisty",
         Text::PersonalBestDescription => "Kolor używany po uzyskaniu nowego rekordu osobistego.",
         Text::Paused => "Wstrzymano",
@@ -619,11 +619,13 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::LatestSegmentTimeShort => "Ost. czas seg.",
         Text::LatestSegmentShort => "Ostatni segment",
         Text::SegmentTimeShort => "Czas seg.",
+        Text::SplitTime => "Czas",
         Text::PossibleTimeSaveShort => "Możl. oszcz. czasu",
         Text::PossibleTimeSaveAbbreviation => "Możl. oszcz.",
         Text::TimeSaveShort => "Oszczędność",
         Text::RealTime => "Czas rzeczywisty",
         Text::GameTime => "Czas gry",
+        Text::Untitled => "Bez tytułu",
         Text::SumOfBestCleanerStartOfRun => "początek biegu",
         Text::SumOfBestCleanerShouldRemove => {
             ". Czy uważasz, że ten czas segmentu jest nieprawidłowy i powinien zostać usunięty?"

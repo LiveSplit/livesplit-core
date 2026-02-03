@@ -669,11 +669,13 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::LatestSegmentTimeShort => "Letzte Seg.-Zeit",
         Text::LatestSegmentShort => "Letztes Segment",
         Text::SegmentTimeShort => "Seg.-Zeit",
+        Text::SplitTime => "Zeit",
         Text::PossibleTimeSaveShort => "Mögliche Zeitersparnis",
         Text::PossibleTimeSaveAbbreviation => "Mögl. Zeitersp.",
         Text::TimeSaveShort => "Zeitersparnis",
         Text::RealTime => "Echtzeit",
         Text::GameTime => "Spielzeit",
+        Text::Untitled => "Unbenannt",
         Text::SumOfBestCleanerStartOfRun => "dem Start des Runs",
         Text::SumOfBestCleanerShouldRemove => {
             ". Glaubst du, dass diese Segmentzeit ungenau ist und entfernt werden sollte?"

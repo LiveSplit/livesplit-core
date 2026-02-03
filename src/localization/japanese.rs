@@ -575,11 +575,13 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::LatestSegmentTimeShort => "最新セグ時間",
         Text::LatestSegmentShort => "最新セグ",
         Text::SegmentTimeShort => "セグ時間",
+        Text::SplitTime => "時間",
         Text::PossibleTimeSaveShort => "短縮可能時間",
         Text::PossibleTimeSaveAbbreviation => "短縮可能",
         Text::TimeSaveShort => "短縮",
         Text::RealTime => "リアルタイム",
         Text::GameTime => "ゲームタイム",
+        Text::Untitled => "無題",
         Text::SumOfBestCleanerStartOfRun => "ラン開始",
         Text::SumOfBestCleanerShouldRemove => {
             " この区間タイムは不正確だと思いますか？ もしそうなら、削除したほうがいいでしょうか？"

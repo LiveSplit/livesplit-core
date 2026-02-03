@@ -11,7 +11,7 @@ use crate::{
     GeneralLayoutSettings, TimerPhase, analysis, comparison,
     localization::{Lang, Text},
     platform::prelude::*,
-    settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value},
+    settings::{Color, Field, FieldHint, Gradient, SemanticColor, SettingsDescription, Value},
     timing::{
         Snapshot,
         formatter::{Accuracy, Delta, SegmentTime, TimeFormatter},
@@ -290,7 +290,8 @@ impl Component {
                     .resolve(lang)
                     .into(),
                 self.settings.comparison_override.clone().into(),
-            ),
+            )
+            .with_hint(FieldHint::Comparison),
             Field::new(
                 Text::PreviousSegmentDisplayTwoRows.resolve(lang).into(),
                 Text::PreviousSegmentDisplayTwoRowsDescription

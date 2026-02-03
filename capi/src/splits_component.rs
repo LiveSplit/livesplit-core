@@ -16,8 +16,8 @@ pub type OwnedSplitsComponent = Box<SplitsComponent>;
 
 /// Creates a new Splits Component.
 #[unsafe(no_mangle)]
-pub extern "C" fn SplitsComponent_new() -> OwnedSplitsComponent {
-    Box::new(SplitsComponent::new())
+pub extern "C" fn SplitsComponent_new(lang: Lang) -> OwnedSplitsComponent {
+    Box::new(SplitsComponent::new(lang))
 }
 
 /// drop

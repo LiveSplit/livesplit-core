@@ -167,7 +167,13 @@ impl Component {
     /// state. The images are marked as visited in the [`ImageCache`]. You still
     /// need to manually run [`ImageCache::collect`] to ensure unused images are
     /// removed from the cache.
-    pub fn update_state(&self, state: &mut State, image_cache: &mut ImageCache, timer: &Timer) {
+    pub fn update_state(
+        &self,
+        state: &mut State,
+        image_cache: &mut ImageCache,
+        timer: &Timer,
+        lang: Lang,
+    ) {
         let run = timer.run();
 
         let finished_runs = if self.settings.show_finished_runs_count {
@@ -328,7 +334,7 @@ impl Component {
             }
             (false, false) => {
                 state.line1.clear();
-                state.line1.push("Untitled".into());
+                state.line1.push(Text::Untitled.resolve(lang).into());
                 state.line2.clear();
             }
         }
@@ -345,9 +351,9 @@ impl Component {
     /// state. The images are marked as visited in the [`ImageCache`]. You still
     /// need to manually run [`ImageCache::collect`] to ensure unused images are
     /// removed from the cache.
-    pub fn state(&self, image_cache: &mut ImageCache, timer: &Timer) -> State {
+    pub fn state(&self, image_cache: &mut ImageCache, timer: &Timer, lang: Lang) -> State {
         let mut state = Default::default();
-        self.update_state(&mut state, image_cache, timer);
+        self.update_state(&mut state, image_cache, timer, lang);
         state
     }
 

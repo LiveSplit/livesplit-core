@@ -635,11 +635,13 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::LatestSegmentTimeShort => "Últ. t. seg.",
         Text::LatestSegmentShort => "Último segmento",
         Text::SegmentTimeShort => "T. seg.",
+        Text::SplitTime => "Tempo",
         Text::PossibleTimeSaveShort => "Tempo possível a poupar",
         Text::PossibleTimeSaveAbbreviation => "T. poss. a poupar",
         Text::TimeSaveShort => "Tempo a poupar",
         Text::RealTime => "Tempo real",
         Text::GameTime => "Tempo de jogo",
+        Text::Untitled => "Sem título",
         Text::SumOfBestCleanerStartOfRun => "o início da corrida",
         Text::SumOfBestCleanerShouldRemove => {
             ". Achas que este tempo de segmento é impreciso e deve ser removido?"

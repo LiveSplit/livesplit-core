@@ -4,7 +4,9 @@
 
 use super::{Json, output_vec};
 use crate::{component::OwnedComponent, title_component_state::OwnedTitleComponentState};
-use livesplit_core::{Timer, component::title::Component as TitleComponent, settings::ImageCache};
+use livesplit_core::{
+    Lang, Timer, component::title::Component as TitleComponent, settings::ImageCache,
+};
 
 /// type
 pub type OwnedTitleComponent = Box<TitleComponent>;
@@ -34,9 +36,10 @@ pub extern "C" fn TitleComponent_state_as_json(
     this: &mut TitleComponent,
     image_cache: &mut ImageCache,
     timer: &Timer,
+    lang: Lang,
 ) -> Json {
     output_vec(|o| {
-        this.state(image_cache, timer).write_json(o).unwrap();
+        this.state(image_cache, timer, lang).write_json(o).unwrap();
     })
 }
 
@@ -46,6 +49,7 @@ pub extern "C" fn TitleComponent_state(
     this: &mut TitleComponent,
     image_cache: &mut ImageCache,
     timer: &Timer,
+    lang: Lang,
 ) -> OwnedTitleComponentState {
-    Box::new(this.state(image_cache, timer))
+    Box::new(this.state(image_cache, timer, lang))
 }
