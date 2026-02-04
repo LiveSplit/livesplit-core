@@ -3,7 +3,7 @@ mod layout_files;
 mod parse {
     use crate::layout_files;
     use livesplit_core::{
-        Component,
+        Component, Lang,
         component::{splits, text},
         layout::{Layout, parser::parse},
     };
@@ -157,7 +157,7 @@ mod parse {
 
         // The layout parser assumes that the order is from right to left. If it
         // changes, the layout parser needs to be adjusted as well.
-        let component = splits::Component::default();
+        let component = splits::Component::new(Lang::English);
         let columns = &component.settings().columns;
         assert_eq!(columns[0].name, "Time");
         assert_eq!(columns[1].name, "+/−");

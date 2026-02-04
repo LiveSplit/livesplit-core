@@ -583,11 +583,13 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::LatestSegmentTimeShort => "최신 세그 시간",
         Text::LatestSegmentShort => "최신 세그먼트",
         Text::SegmentTimeShort => "세그 시간",
+        Text::SplitTime => "시간",
         Text::PossibleTimeSaveShort => "절약 가능 시간",
         Text::PossibleTimeSaveAbbreviation => "절약 가능",
         Text::TimeSaveShort => "절약",
         Text::RealTime => "실시간",
         Text::GameTime => "게임 시간",
+        Text::Untitled => "제목 없음",
         Text::SumOfBestCleanerStartOfRun => "런 시작",
         Text::SumOfBestCleanerShouldRemove => {
             " 이 세그먼트 시간이 부정확하다고 보시나요? 그렇다면 삭제하는 게 좋을까요?"

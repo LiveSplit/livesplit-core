@@ -4,33 +4,39 @@ pub const fn resolve(text: Text) -> &'static str {
     match text {
         Text::StartSplit => "Avvia / Split",
         Text::StartSplitDescription => {
-            "Il tasto rapido da usare per splittare e avviare un nuovo tentativo."
+            "Il tasto ad azione rapida da usare per splittare e avviare un nuovo tentativo."
         }
         Text::Reset => "Reimposta",
-        Text::ResetDescription => "Il tasto rapido da usare per reimpostare il tentativo corrente.",
+        Text::ResetDescription => {
+            "Il tasto ad azione rapida da usare per reimpostare il tentativo corrente."
+        }
         Text::UndoSplit => "Annulla split",
-        Text::UndoSplitDescription => "Il tasto rapido da usare per annullare l’ultimo split.",
+        Text::UndoSplitDescription => {
+            "Il tasto ad azione rapida da usare per annullare l’ultimo split."
+        }
         Text::SkipSplit => "Salta split",
-        Text::SkipSplitDescription => "Il tasto rapido da usare per saltare lo split corrente.",
+        Text::SkipSplitDescription => {
+            "Il tasto ad azione rapida da usare per saltare lo split corrente."
+        }
         Text::Pause => "Pausa",
         Text::PauseDescription => {
-            "Il tasto rapido da usare per mettere in pausa il tentativo corrente. Può anche essere usato per avviare un nuovo tentativo."
+            "Il tasto ad azione rapida da usare per mettere in pausa il tentativo corrente. Può anche essere usato per avviare un nuovo tentativo."
         }
         Text::UndoAllPauses => "Annulla tutte le pause",
         Text::UndoAllPausesDescription => {
-            "Il tasto rapido da usare per rimuovere tutti i tempi di pausa dal tempo corrente. Utile se hai messo in pausa per errore."
+            "Il tasto ad azione rapida da usare per rimuovere tutti i tempi di pausa dal tempo corrente. Utile se hai messo in pausa per errore."
         }
         Text::PreviousComparison => "Confronto precedente",
         Text::PreviousComparisonDescription => {
-            "Il tasto rapido da usare per passare al confronto precedente."
+            "Il tasto ad azione rapida da usare per passare al confronto precedente."
         }
         Text::NextComparison => "Confronto successivo",
         Text::NextComparisonDescription => {
-            "Il tasto rapido da usare per passare al confronto successivo."
+            "Il tasto ad azione rapida da usare per passare al confronto successivo."
         }
         Text::ToggleTimingMethod => "Cambia metodo di cronometraggio",
         Text::ToggleTimingMethodDescription => {
-            "Il tasto rapido da usare per alternare tra «Tempo reale» e «Tempo di gioco»."
+            "Il tasto ad azione rapida da usare per alternare tra «Tempo reale» e «Tempo di gioco»."
         }
         Text::TimerBackground => "Sfondo",
         Text::TimerBackgroundDescription => {
@@ -633,11 +639,13 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::LatestSegmentTimeShort => "Ult. t. seg.",
         Text::LatestSegmentShort => "Ultimo segmento",
         Text::SegmentTimeShort => "T. seg.",
+        Text::SplitTime => "Tempo",
         Text::PossibleTimeSaveShort => "Tempo possibile da risparmiare",
         Text::PossibleTimeSaveAbbreviation => "T. poss. da risp.",
         Text::TimeSaveShort => "Tempo da risp.",
         Text::RealTime => "Tempo reale",
         Text::GameTime => "Tempo di gioco",
+        Text::Untitled => "Senza titolo",
         Text::SumOfBestCleanerStartOfRun => "l'inizio della run",
         Text::SumOfBestCleanerShouldRemove => {
             ". Pensi che questo tempo di segmento sia impreciso e debba essere rimosso?"

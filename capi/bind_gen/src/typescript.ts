@@ -727,6 +727,8 @@ export interface SettingsDescriptionFieldJson {
     text: string,
     /** The tooltip to show for the setting. */
     tooltip: string,
+    /** An optional hint about how to display the setting. */
+    hint?: "Comparison" | "CustomVariable",
     /** The current value of the setting. */
     value: SettingsDescriptionValueJson,
 }

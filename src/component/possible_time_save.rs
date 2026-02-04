@@ -11,7 +11,7 @@ use crate::{
     comparison,
     localization::{Lang, Text},
     platform::prelude::*,
-    settings::{Color, Field, Gradient, SettingsDescription, Value},
+    settings::{Color, Field, FieldHint, Gradient, SettingsDescription, Value},
     timing::{
         Snapshot,
         formatter::{Accuracy, SegmentTime, TimeFormatter},
@@ -192,7 +192,8 @@ impl Component {
                     .resolve(lang)
                     .into(),
                 self.settings.comparison_override.clone().into(),
-            ),
+            )
+            .with_hint(FieldHint::Comparison),
             Field::new(
                 Text::PossibleTimeSaveDisplayTwoRows.resolve(lang).into(),
                 Text::PossibleTimeSaveDisplayTwoRowsDescription

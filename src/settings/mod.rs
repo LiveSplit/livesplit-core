@@ -15,7 +15,7 @@ mod value;
 pub use self::{
     alignment::Alignment,
     color::Color,
-    field::Field,
+    field::{Field, Hint as FieldHint},
     font::{Font, Stretch as FontStretch, Style as FontStyle, Weight as FontWeight},
     gradient::{Gradient, ListGradient},
     image::{HasImageId, Image, ImageCache, ImageId},

@@ -10,7 +10,7 @@ use crate::{
     comparison,
     localization::{Lang, Text},
     platform::prelude::*,
-    settings::{Color, Field, Gradient, SettingsDescription, Value},
+    settings::{Color, Field, FieldHint, Gradient, SettingsDescription, Value},
     timing::{
         Snapshot,
         formatter::{Accuracy, Regular, TimeFormatter},
@@ -208,7 +208,8 @@ impl Component {
                 Text::CurrentPaceComparison.resolve(lang).into(),
                 Text::CurrentPaceComparisonDescription.resolve(lang).into(),
                 self.settings.comparison_override.clone().into(),
-            ),
+            )
+            .with_hint(FieldHint::Comparison),
             Field::new(
                 Text::CurrentPaceDisplayTwoRows.resolve(lang).into(),
                 Text::CurrentPaceDisplayTwoRowsDescription

@@ -2,6 +2,7 @@
 
 use super::{Component, Layout, LayoutDirection};
 use crate::{
+    Lang,
     component::{separator, timer::DeltaGradient},
     platform::{math::f32::stable_powf, prelude::*},
     settings::{
@@ -650,7 +651,7 @@ where
                     "LiveSplit.PreviousSegment.dll" => previous_segment::Component::new().into(),
                     "" => separator::Component::new().into(),
                     "LiveSplit.Splits.dll" | "LiveSplit.Subsplits.dll" => {
-                        splits::Component::new().into()
+                        splits::Component::new(Lang::English).into()
                     }
                     "LiveSplit.SumOfBest.dll" => sum_of_best::Component::new().into(),
                     "LiveSplit.Text.dll" => text::Component::new().into(),

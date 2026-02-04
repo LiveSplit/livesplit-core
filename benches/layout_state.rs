@@ -22,7 +22,11 @@ fn artificial() -> (Timer, Layout, ImageCache) {
     let mut timer = Timer::new(run).unwrap();
     timer.start().unwrap();
 
-    (timer, Layout::default_layout(), ImageCache::new())
+    (
+        timer,
+        Layout::default_layout(Lang::English),
+        ImageCache::new(),
+    )
 }
 
 fn real() -> (Timer, Layout, ImageCache) {
@@ -32,7 +36,11 @@ fn real() -> (Timer, Layout, ImageCache) {
     let mut timer = Timer::new(run).unwrap();
     timer.start().unwrap();
 
-    (timer, Layout::default_layout(), ImageCache::new())
+    (
+        timer,
+        Layout::default_layout(Lang::English),
+        ImageCache::new(),
+    )
 }
 
 fn no_reuse_real(c: &mut Criterion) {

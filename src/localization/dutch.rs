@@ -641,11 +641,13 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::LatestSegmentTimeShort => "Laatste seg. tijd",
         Text::LatestSegmentShort => "Laatste segment",
         Text::SegmentTimeShort => "Seg. tijd",
+        Text::SplitTime => "Tijd",
         Text::PossibleTimeSaveShort => "Mogelijke tijdswinst",
         Text::PossibleTimeSaveAbbreviation => "Mogl. tijdswinst",
         Text::TimeSaveShort => "Tijdswinst",
         Text::RealTime => "Echte tijd",
         Text::GameTime => "Speltijd",
+        Text::Untitled => "Naamloos",
         Text::SumOfBestCleanerStartOfRun => "het begin van de run",
         Text::SumOfBestCleanerShouldRemove => {
             ". Denk je dat deze segmenttijd onnauwkeurig is en verwijderd moet worden?"

@@ -615,11 +615,13 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::LatestSegmentTimeShort => "Последн. вр. сег.",
         Text::LatestSegmentShort => "Последний сегмент",
         Text::SegmentTimeShort => "Вр. сег.",
+        Text::SplitTime => "Время",
         Text::PossibleTimeSaveShort => "Возможная экономия времени",
         Text::PossibleTimeSaveAbbreviation => "Возможн. экономия",
         Text::TimeSaveShort => "Экономия времени",
         Text::RealTime => "Реальное время",
         Text::GameTime => "Игровое время",
+        Text::Untitled => "Без названия",
         Text::SumOfBestCleanerStartOfRun => "началом забега",
         Text::SumOfBestCleanerShouldRemove => {
             ". Считаете ли вы, что это время сегмента неточно и должно быть удалено?"
