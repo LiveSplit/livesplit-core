@@ -445,7 +445,7 @@ fn parse_auto_splitter_settings(
                 settings.set_custom_settings(parse_settings_map(reader));
                 Ok(())
             }
-            _ => Ok(()),
+            _ => end_tag(reader),
         }
     })
     .ok();
