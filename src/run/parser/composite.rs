@@ -28,9 +28,9 @@
 //! ```
 
 use super::{
-    TimerKind, face_split, flitter, livesplit, llanfair, llanfair_gered, opensplit,
+    TimerKind, face_split, flitter, libresplit, livesplit, llanfair, llanfair_gered, opensplit,
     portal2_live_timer, shit_split, source_live_timer, speedrun_igt, splitterino, splitterz,
-    splitty, time_split_tracker, urn, wsplit,
+    splitty, time_split_tracker, wsplit,
 };
 use crate::{Run, platform::path::Path};
 use core::{result::Result as StdResult, str};
@@ -74,7 +74,7 @@ const fn parsed(run: Run, kind: TimerKind<'_>) -> ParsedRun<'_> {
 /// Attempts to parse and fix a splits file by invoking the corresponding parser
 /// for the file format detected. Additionally you can provide the path of the
 /// splits file so additional files, like external images, can be loaded. If you
-/// are using livesplit-core in a server-like environment, set this to `None`.
+/// are using livesplit-core in a server-like environment, set this to [`None`].
 /// Only client-side applications should provide a path here. Unlike the normal
 /// parsing function, it also fixes problems in the Run, such as decreasing
 /// times and missing information.
@@ -90,8 +90,8 @@ pub fn parse_and_fix<'source>(
 /// Attempts to parse a splits file by invoking the corresponding parser for the
 /// file format detected. Additionally you can provide the path of the splits
 /// file so additional files, like external images, can be loaded. If you are
-/// using livesplit-core in a server-like environment, set this to `None`. Only
-/// client-side applications should provide a path here.
+/// using livesplit-core in a server-like environment, set this to [`None`].
+/// Only client-side applications should provide a path here.
 pub fn parse<'source>(
     source: &'source [u8],
     load_files_path: Option<&Path>,
@@ -101,11 +101,11 @@ pub fn parse<'source>(
             return Ok(parsed(run, TimerKind::LiveSplit));
         }
 
-        if let Ok(run) = wsplit::parse(source, load_files_path.is_some()) {
+        if let Ok(run) = wsplit::parse(source, load_files_path) {
             return Ok(parsed(run, TimerKind::WSplit));
         }
 
-        if let Ok(run) = splitterz::parse(source, load_files_path.is_some()) {
+        if let Ok(run) = splitterz::parse(source, load_files_path) {
             return Ok(parsed(run, TimerKind::SplitterZ));
         }
 
@@ -125,7 +125,7 @@ pub fn parse<'source>(
             return Ok(parsed(run, TimerKind::Portal2LiveTimer));
         }
 
-        if let Ok(run) = face_split::parse(source, load_files_path.is_some()) {
+        if let Ok(run) = face_split::parse(source, load_files_path) {
             return Ok(parsed(run, TimerKind::FaceSplit));
         }
 
@@ -136,7 +136,7 @@ pub fn parse<'source>(
         }
 
         // Splitterino, SourceLiveTimer, Flitter, and SpeedRunIGT need to be
-        // before Urn because of a false positive due to the nature of parsing
+        // before LibreSplit because of a false positive due to the nature of parsing
         // JSON files.
         if let Ok(run) = splitterino::parse(source) {
             return Ok(parsed(run, TimerKind::Splitterino));
@@ -158,9 +158,9 @@ pub fn parse<'source>(
             return Ok(parsed(run, TimerKind::OpenSplit));
         }
 
-        // Urn accepts entirely empty JSON files.
-        if let Ok(run) = urn::parse(source) {
-            return Ok(parsed(run, TimerKind::Urn));
+        // LibreSplit accepts entirely empty JSON files.
+        if let Ok(run) = libresplit::parse(source, load_files_path) {
+            return Ok(parsed(run, TimerKind::LibreSplit));
         }
     }
 

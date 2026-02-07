@@ -25,16 +25,7 @@ pub use alloc::rc::Rc as Arc;
 pub use alloc::sync::Arc;
 
 pub mod math;
-
-#[cfg(feature = "std")]
-pub use std::path;
-
-#[cfg(not(feature = "std"))]
-#[allow(unused)]
-pub mod path {
-    pub use alloc::string::String as PathBuf;
-    pub use str as Path;
-}
+pub mod path;
 
 pub(crate) mod prelude {
     pub use alloc::{

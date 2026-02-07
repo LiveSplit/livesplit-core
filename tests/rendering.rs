@@ -195,7 +195,7 @@ fn actual_split_file() {
 
 #[test]
 fn wsplit() {
-    let run = wsplit::parse(run_files::WSPLIT, false).unwrap();
+    let run = wsplit::parse(run_files::WSPLIT, None).unwrap();
     let timer = Timer::new(run).unwrap();
     let mut layout = lsl(layout_files::WSPLIT);
 

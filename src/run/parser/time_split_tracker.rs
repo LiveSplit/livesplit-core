@@ -74,7 +74,8 @@ fn parse_time_optional(time: &str) -> StdResult<Option<TimeSpan>, timing::ParseE
 /// source to parse, you can specify the path of the splits file, which is then
 /// use to load the run log file from the file system. This is entirely
 /// optional. If you are using livesplit-core in a server-like environment, set
-/// this to `None`. Only client-side applications should provide the path here.
+/// this to [`None`]. Only client-side applications should provide the path
+/// here.
 pub fn parse(
     source: &str,
     #[allow(unused)] path_for_loading_other_files: Option<&Path>,
@@ -99,15 +100,19 @@ pub fn parse(
     );
 
     #[cfg(feature = "std")]
-    let mut path = path_for_loading_other_files.map(Path::to_path_buf);
+    let mut path_buf = Default::default();
 
     #[cfg(feature = "std")]
-    catch! {
-        let path = path.as_mut()?;
-        path.set_file_name(splits.next()?);
-        let image = Image::from_file(path, &mut buf, Image::ICON).ok()?;
+    if let Some(path) = path_for_loading_other_files
+        && let Some(name) = splits.next()
+        && let Ok(image) = Image::from_file(
+            crate::platform::path::relative_to(&mut path_buf, path, Path::new(name)),
+            &mut buf,
+            Image::ICON,
+        )
+    {
         run.set_game_icon(image);
-    };
+    }
 
     let line = lines.next().context(ExpectedTitleLine)?;
     let mut splits = line.split('\t');
@@ -165,21 +170,31 @@ pub fn parse(
         let _line = lines.next().context(ExpectedIconLine)?;
 
         #[cfg(feature = "std")]
-        catch! {
+        {
             let file = _line.trim_end();
-            if !file.is_empty() {
-                let path = path.as_mut()?;
-                path.set_file_name(file);
-                let image = Image::from_file(path, &mut buf, Image::ICON).ok()?;
+            if !file.is_empty()
+                && let Some(path) = path_for_loading_other_files
+                && let Ok(image) = Image::from_file(
+                    crate::platform::path::relative_to(&mut path_buf, path, Path::new(file)),
+                    &mut buf,
+                    Image::ICON,
+                )
+            {
                 segment.set_icon(image);
             }
-        };
+        }
 
         run.push_segment(segment);
     }
 
     #[cfg(feature = "std")]
-    parse_history(&mut run, path).ok();
+    {
+        let path = path_for_loading_other_files.map(|p| {
+            p.clone_into(&mut path_buf);
+            path_buf
+        });
+        parse_history(&mut run, path).ok();
+    }
 
     Ok(run)
 }
