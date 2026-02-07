@@ -1,6 +1,6 @@
 //! Provides the parser for SplitterZ splits files.
 
-use crate::{Lang, RealTime, Run, Segment, TimeSpan, timing};
+use crate::{Lang, RealTime, Run, Segment, TimeSpan, platform::path::Path, timing};
 use alloc::borrow::Cow;
 use core::{num::ParseIntError, result::Result as StdResult};
 use snafu::ResultExt;
@@ -51,15 +51,16 @@ fn unescape(text: &str) -> Cow<'_, str> {
 }
 
 /// Attempts to parse a SplitterZ splits file. In addition to the source to
-/// parse, you need to specify if additional files for the icons should be
-/// loaded from the file system. If you are using livesplit-core in a
-/// server-like environment, set this to `false`. Only client-side applications
-/// should set this to `true`.
-pub fn parse(source: &str, #[allow(unused)] load_icons: bool) -> Result<Run> {
+/// parse, you can specify the path to load additional files from the file
+/// system. If you are using livesplit-core in a server-like environment, set
+/// this to [`None`]. Only client-side applications should provide a path here.
+pub fn parse(source: &str, #[allow(unused)] load_files_path: Option<&Path>) -> Result<Run> {
     let mut run = Run::new();
 
     #[cfg(feature = "std")]
     let mut icon_buf = Vec::new();
+    #[cfg(feature = "std")]
+    let mut path_buf = Default::default();
 
     let mut lines = source.lines();
     let line = lines.next().ok_or(Error::Empty)?;
@@ -101,11 +102,15 @@ pub fn parse(source: &str, #[allow(unused)] load_icons: bool) -> Result<Run> {
         }
 
         #[cfg(feature = "std")]
-        if load_icons
+        if let Some(load_files_path) = load_files_path
             && let Some(icon_path) = splits.next()
             && !icon_path.is_empty()
             && let Ok(image) = crate::settings::Image::from_file(
-                unescape(icon_path).as_ref(),
+                crate::platform::path::relative_to(
+                    &mut path_buf,
+                    load_files_path,
+                    Path::new(unescape(icon_path).as_ref()),
+                ),
                 &mut icon_buf,
                 crate::settings::Image::ICON,
             )
@@ -146,7 +151,7 @@ Counter,1,True
 Counter2,1,True
 "#;
 
-        let run = parse(RUN, false).unwrap();
+        let run = parse(RUN, None).unwrap();
         assert_eq!(run.len(), 3);
         assert_eq!(run.metadata.custom_variable_value("Counter"), Some("0"));
         assert_eq!(run.metadata.custom_variable_value("Counter2"), Some("0"));

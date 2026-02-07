@@ -1,6 +1,6 @@
 //! Provides the parser for WSplit splits files.
 
-use crate::{RealTime, Run, Segment, TimeSpan};
+use crate::{RealTime, Run, Segment, TimeSpan, platform::path::Path};
 use core::{
     num::{ParseFloatError, ParseIntError},
     result::Result as StdResult,
@@ -51,14 +51,15 @@ pub enum Error {
 pub type Result<T> = StdResult<T, Error>;
 
 /// Attempts to parse a WSplit splits file. In addition to the source to parse,
-/// you need to specify if additional files for the icons should be loaded from
-/// the file system. If you are using livesplit-core in a server-like
-/// environment, set this to `false`. Only client-side applications should set
-/// this to `true`.
-pub fn parse(source: &str, #[allow(unused)] load_icons: bool) -> Result<Run> {
+/// you can specify the path to load additional files from the file system. If
+/// you are using livesplit-core in a server-like environment, set this to
+/// `None`. Only client-side applications should provide a path here.
+pub fn parse(source: &str, #[allow(unused)] load_files_path: Option<&Path>) -> Result<Run> {
     let mut run = Run::new();
     #[cfg(feature = "std")]
     let mut icon_buf = Vec::new();
+    #[cfg(feature = "std")]
+    let mut path_buf = Default::default();
     #[cfg(feature = "std")]
     let mut icons_list = Vec::new();
     let mut old_run_exists = false;
@@ -83,21 +84,27 @@ pub fn parse(source: &str, #[allow(unused)] load_icons: bool) -> Result<Run> {
             // Ignore
         } else if let Some(_icons) = line.strip_prefix("Icons=") {
             #[cfg(feature = "std")]
-            if load_icons {
+            if let Some(load_files_path) = load_files_path {
                 icons_list.clear();
                 for path in _icons.split(',') {
-                    if path.len() >= 2 {
-                        let path = &path[1..path.len() - 1];
-                        if let Ok(image) = crate::settings::Image::from_file(
-                            path,
-                            &mut icon_buf,
-                            crate::settings::Image::ICON,
-                        ) {
-                            icons_list.push(image);
-                            continue;
-                        }
-                    }
-                    icons_list.push(Default::default());
+                    icons_list.push(
+                        if let Some(path) = path.strip_prefix('"')
+                            && let Some(path) = path.strip_suffix('"')
+                            && let Ok(image) = crate::settings::Image::from_file(
+                                crate::platform::path::relative_to(
+                                    &mut path_buf,
+                                    load_files_path,
+                                    Path::new(path),
+                                ),
+                                &mut icon_buf,
+                                crate::settings::Image::ICON,
+                            )
+                        {
+                            image
+                        } else {
+                            Default::default()
+                        },
+                    );
                 }
             }
         } else if let Some(goal_value) = line.strip_prefix("Goal=") {
@@ -172,7 +179,7 @@ Introduction,0,85.48,85.48
 Jimmy,0,219.68,134.2
 "#;
 
-        let run = parse(RUN, false).unwrap();
+        let run = parse(RUN, None).unwrap();
         assert_eq!(run.category_name(), "WarioWare, Inc");
         assert_eq!(run.metadata().custom_variable_value("Goal"), Some("sub 2h"));
         assert_eq!(run.len(), 2);
@@ -189,7 +196,7 @@ Introduction,0,85.48,85.48
 Jimmy,0,219.68,134.2
 "#;
 
-        let run = parse(RUN, false).unwrap();
+        let run = parse(RUN, None).unwrap();
         assert_eq!(run.category_name(), "WarioWare, Inc");
         assert_eq!(run.len(), 2);
     }

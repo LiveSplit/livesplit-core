@@ -1,12 +1,17 @@
-//! Provides the parser for Urn splits files.
+//! Provides the parser for LibreSplit (formerly Urn) splits files.
 
-use crate::{Run, Segment, Time, TimeSpan, platform::prelude::*};
+use crate::{
+    Lang, Run, Segment, Time, TimeSpan,
+    comparison::world_record,
+    platform::{path::Path, prelude::*},
+    timing::formatter::{self, TimeFormatter},
+};
 use alloc::borrow::Cow;
 use core::result::Result as StdResult;
 use serde_derive::Deserialize;
 use serde_json::Error as JsonError;
 
-/// The Error type for splits files that couldn't be parsed by the Urn
+/// The Error type for splits files that couldn't be parsed by the LibreSplit
 /// Parser.
 #[derive(Debug, snafu::Snafu)]
 #[snafu(context(suffix(false)))]
@@ -19,7 +24,7 @@ pub enum Error {
     },
 }
 
-/// The Result type for the Urn Parser.
+/// The Result type for the LibreSplit Parser.
 pub type Result<T> = StdResult<T, Error>;
 
 #[derive(Deserialize)]
@@ -28,6 +33,7 @@ struct Splits<'a> {
     title: Option<Cow<'a, str>>,
     attempt_count: Option<u32>,
     start_delay: Option<TimeSpan>,
+    world_record: Option<TimeSpan>,
     splits: Option<Vec<Split<'a>>>,
 }
 
@@ -35,6 +41,11 @@ struct Splits<'a> {
 struct Split<'a> {
     #[serde(borrow)]
     title: Option<Cow<'a, str>>,
+    /// The icon can either be a file path or a URL. We don't currently support
+    /// URLs.
+    #[cfg(feature = "std")]
+    #[serde(borrow)]
+    icon: Option<Cow<'a, str>>,
     time: Option<TimeSpan>,
     best_time: Option<TimeSpan>,
     best_segment: Option<TimeSpan>,
@@ -51,12 +62,21 @@ fn parse_time(real_time: TimeSpan) -> Time {
     Time::new().with_real_time(real_time)
 }
 
-/// Attempts to parse an Urn splits file.
-pub fn parse(source: &str) -> Result<Run> {
+/// Attempts to parse an LibreSplit (formerly Urn) splits file. In addition to
+/// the source to parse, you can specify the path to load additional files from
+/// the file system. If you are using livesplit-core in a server-like
+/// environment, set this to [`None`]. Only client-side applications should
+/// provide a path here.
+pub fn parse(source: &str, #[allow(unused)] load_files_path: Option<&Path>) -> Result<Run> {
     let splits: Splits<'_> =
         serde_json::from_str(source).map_err(|source| Error::Json { source })?;
 
     let mut run = Run::new();
+
+    #[cfg(feature = "std")]
+    let mut icon_buf = Vec::new();
+    #[cfg(feature = "std")]
+    let mut path_buf = Default::default();
 
     if let Some(title) = splits.title {
         run.set_category_name(title);
@@ -66,6 +86,18 @@ pub fn parse(source: &str) -> Result<Run> {
     }
     if let Some(start_delay) = splits.start_delay {
         run.set_offset(-start_delay);
+    }
+    if let Some(world_record) = splits.world_record {
+        run.metadata_mut()
+            .custom_variable_mut(world_record::NAME)
+            .permanent()
+            // FIXME: This should probably depend on the locale or:
+            // FIXME: Custom variables should support TimeSpans directly.
+            .set_value(
+                formatter::Regular::new()
+                    .format(Some(world_record), Lang::English)
+                    .to_string(),
+            );
     }
 
     // Best Split Times can be used for the Segment History Every single best
@@ -108,6 +140,23 @@ pub fn parse(source: &str) -> Result<Run> {
 
                     attempt_history_index += 1;
                 }
+            }
+
+            #[cfg(feature = "std")]
+            if let Some(load_files_path) = load_files_path
+                && let Some(icon_path) = split.icon
+                && !icon_path.is_empty()
+                && let Ok(image) = crate::settings::Image::from_file(
+                    crate::platform::path::relative_to(
+                        &mut path_buf,
+                        load_files_path,
+                        Path::new(icon_path.as_ref()),
+                    ),
+                    &mut icon_buf,
+                    crate::settings::Image::ICON,
+                )
+            {
+                segment.set_icon(image);
             }
 
             run.push_segment(segment);

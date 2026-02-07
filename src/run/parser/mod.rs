@@ -31,6 +31,7 @@
 pub mod composite;
 pub mod face_split;
 pub mod flitter;
+pub mod libresplit;
 pub mod livesplit;
 pub mod llanfair;
 pub mod llanfair_gered;
@@ -43,7 +44,6 @@ pub mod splitterino;
 pub mod splitterz;
 pub mod splitty;
 pub mod time_split_tracker;
-pub mod urn;
 pub mod wsplit;
 
 mod timer_kind;

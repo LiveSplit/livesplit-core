@@ -1,6 +1,6 @@
 //! Provides the parser for FaceSplit splits files.
 
-use crate::{Lang, RealTime, Run, Segment, Time, TimeSpan, timing};
+use crate::{Lang, RealTime, Run, Segment, Time, TimeSpan, platform::path::Path, timing};
 use alloc::borrow::Cow;
 use core::{num::ParseIntError, result::Result as StdResult};
 use snafu::{OptionExt, ResultExt};
@@ -62,11 +62,10 @@ fn replace<'text>(text: &'text str, a: &str, b: &str) -> Cow<'text, str> {
 }
 
 /// Attempts to parse a FaceSplit splits file. In addition to the source to
-/// parse, you need to specify if additional files for the icons should be
-/// loaded from the file system. If you are using livesplit-core in a
-/// server-like environment, set this to `false`. Only client-side applications
-/// should set this to `true`.
-pub fn parse(source: &str, #[allow(unused)] load_icons: bool) -> Result<Run> {
+/// parse, you can specify the path to load additional files from the file
+/// system. If you are using livesplit-core in a server-like environment, set
+/// this to [`None`]. Only client-side applications should provide a path here.
+pub fn parse(source: &str, #[allow(unused)] load_files_path: Option<&Path>) -> Result<Run> {
     let mut run = Run::new();
     #[cfg(feature = "std")]
     let mut icon_buf = Vec::new();
@@ -91,6 +90,9 @@ pub fn parse(source: &str, #[allow(unused)] load_icons: bool) -> Result<Run> {
     );
     lines.next(); // FIXME: Store runs completed somehow
 
+    #[cfg(feature = "std")]
+    let mut path_buf = Default::default();
+
     for line in lines {
         let mut splits = line.splitn(5, '-');
 
@@ -108,11 +110,15 @@ pub fn parse(source: &str, #[allow(unused)] load_icons: bool) -> Result<Run> {
         splits.next(); // Skip Segment Time
 
         #[cfg(feature = "std")]
-        if load_icons
+        if let Some(load_files_path) = load_files_path
             && let Some(icon_path) = splits.next()
             && !icon_path.is_empty()
             && let Ok(image) = crate::settings::Image::from_file(
-                icon_path,
+                crate::platform::path::relative_to(
+                    &mut path_buf,
+                    load_files_path,
+                    Path::new(icon_path),
+                ),
                 &mut icon_buf,
                 crate::settings::Image::ICON,
             )

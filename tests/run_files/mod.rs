@@ -24,6 +24,6 @@ pub const SPLITTERINO: &str = include_str!("splitterino.splits");
 pub const SPLITTERZ: &str = include_str!("splitterz");
 pub const TIME_SPLIT_TRACKER_WITHOUT_ATTEMPT_COUNT: &str = include_str!("1734.timesplittracker");
 pub const TIME_SPLIT_TRACKER: &str = include_str!("timesplittracker.txt");
-pub const URN: &str = include_str!("urn.json");
+pub const LIBRESPLIT: &str = include_str!("libresplit.json");
 pub const WSPLIT: &str = include_str!("wsplit");
 pub const CLEAN_SUM_OF_BEST: &str = include_str!("clean_sum_of_best.lss");

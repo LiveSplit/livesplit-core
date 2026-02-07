@@ -6,9 +6,9 @@ mod parse {
         Run, TimeSpan,
         analysis::total_playtime,
         run::parser::{
-            TimerKind, composite, flitter, livesplit, llanfair, llanfair_gered, opensplit,
-            portal2_live_timer, source_live_timer, speedrun_igt, splitterino, splitterz,
-            time_split_tracker, urn, wsplit,
+            TimerKind, composite, flitter, libresplit, livesplit, llanfair, llanfair_gered,
+            opensplit, portal2_live_timer, source_live_timer, speedrun_igt, splitterino, splitterz,
+            time_split_tracker, wsplit,
         },
     };
 
@@ -122,12 +122,12 @@ mod parse {
 
     #[test]
     fn splitterz() {
-        splitterz::parse(run_files::SPLITTERZ, false).unwrap();
+        splitterz::parse(run_files::SPLITTERZ, None).unwrap();
     }
 
     #[test]
     fn wsplit() {
-        wsplit::parse(run_files::WSPLIT, false).unwrap();
+        wsplit::parse(run_files::WSPLIT, None).unwrap();
     }
 
     #[test]
@@ -136,8 +136,8 @@ mod parse {
     }
 
     #[test]
-    fn urn() {
-        urn::parse(run_files::URN).unwrap();
+    fn libresplit() {
+        libresplit::parse(run_files::LIBRESPLIT, None).unwrap();
     }
 
     #[test]
@@ -194,9 +194,9 @@ mod parse {
     }
 
     #[test]
-    fn urn_prefers_parsing_as_itself() {
-        let run = composite::parse(run_files::URN.as_bytes(), None).unwrap();
-        assert_eq!(run.kind, TimerKind::Urn);
+    fn libresplit_prefers_parsing_as_itself() {
+        let run = composite::parse(run_files::LIBRESPLIT.as_bytes(), None).unwrap();
+        assert_eq!(run.kind, TimerKind::LibreSplit);
     }
 
     #[test]
