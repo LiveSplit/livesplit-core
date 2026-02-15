@@ -23,9 +23,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::NextComparison => "次の比較対象",
         Text::NextComparisonDescription => "次の比較対象に切り替えるホットキー。",
         Text::ToggleTimingMethod => "計測方法を切り替え",
-        Text::ToggleTimingMethodDescription => {
-            "「実時間」と「ゲーム時間」を切り替えるホットキー。"
-        }
+        Text::ToggleTimingMethodDescription => "「実時間」と「ゲーム時間」を切り替えるホットキー。",
         Text::TimerBackground => "背景",
         Text::TimerBackgroundDescription => {
             "コンポーネントの背景。リード/遅れの色を背景色として適用することもできます。"
@@ -313,7 +311,9 @@ pub const fn resolve(text: Text) -> &'static str {
             "区間タイムを表示する 2 つ目の比較対象。指定しない場合は現在の比較対象を使用します（比較対象 1 も None の場合を除く）。2 つ目の比較対象が非表示の場合は表示されません。"
         }
         Text::DetailedTimerHideSecondComparison => "第 2 比較対象を非表示",
-        Text::DetailedTimerHideSecondComparisonDescription => "比較対象を 1 つだけ表示するかどうか。",
+        Text::DetailedTimerHideSecondComparisonDescription => {
+            "比較対象を 1 つだけ表示するかどうか。"
+        }
         Text::DetailedTimerTimerHeight => "タイマーの高さ",
         Text::DetailedTimerTimerHeightDescription => "タイマーの高さ。",
         Text::DetailedTimerSegmentTimerHeight => "区間タイマーの高さ",
@@ -379,9 +379,7 @@ pub const fn resolve(text: Text) -> &'static str {
             "表示行数より区間が多い場合、現在の区間が変わるとウィンドウが自動的にスクロールします。この値は表示する将来区間の最小数を決めます。"
         }
         Text::SplitsShowThinSeparators => "細い区切り線を表示",
-        Text::SplitsShowThinSeparatorsDescription => {
-            "区間の間に細い区切り線を表示するかどうか。"
-        }
+        Text::SplitsShowThinSeparatorsDescription => "区間の間に細い区切り線を表示するかどうか。",
         Text::SplitsShowSeparatorBeforeLastSplit => "最後のスプリット前の区切り線を表示",
         Text::SplitsShowSeparatorBeforeLastSplitDescription => {
             "最後の区間を常に表示する場合、スクロール窓で直前の区間と隣接しないときに強調区切り線を表示するかどうかを指定します。"
@@ -501,11 +499,17 @@ pub const fn resolve(text: Text) -> &'static str {
             "比較対象よりリードしていて、さらにタイムを短縮しているときの色。"
         }
         Text::AheadLosingTime => "リード（タイムをロスしている）",
-        Text::AheadLosingTimeDescription => "比較対象よりリードしているがタイムをロスしているときの色。",
+        Text::AheadLosingTimeDescription => {
+            "比較対象よりリードしているがタイムをロスしているときの色。"
+        }
         Text::BehindGainingTime => "遅れ（タイムを取り戻している）",
-        Text::BehindGainingTimeDescription => "比較対象より遅れているがタイムを取り戻しているときの色。",
+        Text::BehindGainingTimeDescription => {
+            "比較対象より遅れているがタイムを取り戻しているときの色。"
+        }
         Text::BehindLosingTime => "遅れ（タイムをロスしている）",
-        Text::BehindLosingTimeDescription => "比較対象より遅れていて、さらにタイムをロスしているときの色。",
+        Text::BehindLosingTimeDescription => {
+            "比較対象より遅れていて、さらにタイムをロスしているときの色。"
+        }
         Text::NotRunning => "未走行",
         Text::NotRunningDescription => "アクティブな思考がないときの色。",
         Text::PersonalBest => "自己ベスト",
@@ -584,7 +588,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::Untitled => "無題",
         Text::SumOfBestCleanerStartOfRun => "ラン開始",
         Text::SumOfBestCleanerShouldRemove => {
-            " この区間タイムは不正確だと思いますか？　もしそうなら、削除したほうがいいでしょうか？"
+            "この区間タイムは不正確だと思いますか？　もしそうなら、削除したほうがいいでしょうか？"
         }
     }
 }
