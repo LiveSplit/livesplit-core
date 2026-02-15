@@ -261,7 +261,7 @@ fn all_components() {
         &image_cache,
         [300, 800],
         "ac1120ceabe1cf2f",
-        "5ee085b9bd7d2551",
+        "cc6cd2c025ecac2d",
         "all_components",
     );
 
@@ -270,7 +270,7 @@ fn all_components() {
         &image_cache,
         [150, 800],
         "817568e8740f9b53",
-        "f47d3dcaf69ecd66",
+        "8a21844849246afb",
         "all_components_thin",
     );
 }
