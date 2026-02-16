@@ -3,7 +3,7 @@ use super::{Piece, PlaceholderText, Text};
 pub const fn resolve(text: Text) -> &'static str {
     match text {
         Text::StartSplit => "開始 / スプリット",
-        Text::StartSplitDescription => "スプリットと新しい試行開始に使用するホットキー。",
+        Text::StartSplitDescription => "スプリットと新しいタイマースタートに使用するホットキー。",
         Text::Reset => "リセット",
         Text::ResetDescription => "現在の試行をリセットするホットキー。",
         Text::UndoSplit => "スプリットを取り消す",
@@ -315,7 +315,7 @@ pub const fn resolve(text: Text) -> &'static str {
             "比較対象を 1 つだけ表示するかどうか。"
         }
         Text::DetailedTimerTimerHeight => "タイマーの高さ",
-        Text::DetailedTimerTimerHeightDescription => "タイマーの高さ。",
+        Text::DetailedTimerTimerHeightDescription => "タイマースタートからのタイマーの高さ。",
         Text::DetailedTimerSegmentTimerHeight => "区間タイマーの高さ",
         Text::DetailedTimerSegmentTimerHeightDescription => "区間タイマーの高さ。",
         Text::DetailedTimerTimerColor => "タイマー色",
@@ -386,11 +386,11 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsAlwaysShowLastSplit => "最後のスプリットを常に表示",
         Text::SplitsAlwaysShowLastSplitDescription => {
-            "スクロール窓で全区間を表示しない場合、最後の区間を常に表示するかどうか。最後の区間には比較対象のゴールタイムが含まれるため有用です。"
+            "スクロール窓で全区間を表示しない場合、最後の区間を常に表示するかどうか。最後の区間には比較対象の合計タイムが含まれるため有用です。"
         }
-        Text::SplitsFillWithBlankSpace => "空白で埋める",
+        Text::SplitsFillWithBlankSpace => "余白で埋める",
         Text::SplitsFillWithBlankSpaceDescription => {
-            "表示行数に対して区間が少ない場合、空白で埋めて常に表示行数分のスペースを表示するかどうか。"
+            "表示行数に対して区間が少ない場合、余白で埋めて常に表示行数分の空間を表示するかどうか。"
         }
         Text::SplitsShowTimesBelowSegmentName => "区間名の下にタイムを表示",
         Text::SplitsShowTimesBelowSegmentNameDescription => {
@@ -522,7 +522,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SeparatorsDescription => "通常の区切り線の色。",
         Text::TextColor => "テキスト",
         Text::TextColorDescription => "独自の色が指定されていないテキストに使用する色。",
-        Text::ComponentBlankSpace => "スペース",
+        Text::ComponentBlankSpace => "余白",
         Text::ComponentCurrentComparison => "現在の比較対象",
         Text::ComponentCurrentPace => "現在のペース",
         Text::ComponentDelta => "タイム差",
@@ -588,7 +588,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::Untitled => "無題",
         Text::SumOfBestCleanerStartOfRun => "ラン開始",
         Text::SumOfBestCleanerShouldRemove => {
-            "この区間タイムは不正確だと思いますか？　もしそうなら、削除したほうがいいでしょうか？"
+            "この区間タイムは不正確だと思いますか？もしそうなら、削除したほうがいいでしょうか？"
         }
     }
 }
