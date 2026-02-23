@@ -338,22 +338,34 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
 
 pub fn write_preload<W: Write>(mut writer: W, type_script: bool) -> Result<()> {
     let content = if type_script {
-        r#"import init, { InitOutput } from "./livesplit_core.js";
+        r#"import init, { type InitOutput } from "./livesplit_core.js";
 
 let promise: Promise<InitOutput> | null = null;
 export async function preloadWasm(): Promise<InitOutput> {
     if (!promise) {
-        promise = init();
+        const precompiled = (globalThis as any).__lscPreload;
+        if (precompiled) {
+            delete (globalThis as any).__lscPreload;
+            promise = init({ module_or_path: precompiled });
+        } else {
+            promise = init();
+        }
     }
     return await promise;
 }"#
     } else {
-        r#"import init from "./livesplit_core.js
+        r#"import init from "./livesplit_core.js";
 
 let promise = null;
 export async function preloadWasm() {
     if (!promise) {
-        promise = init();
+        const precompiled = (globalThis).__lscPreload;
+        if (precompiled) {
+            delete (globalThis).__lscPreload;
+            promise = init({ module_or_path: precompiled });
+        } else {
+            promise = init();
+        }
     }
     return await promise;
 }"#
