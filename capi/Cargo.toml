@@ -28,3 +28,4 @@ wasm-web = ["livesplit-core/wasm-web", "wasm-bindgen", "wasm-bindgen-futures", "
 auto-splitting = ["livesplit-core/auto-splitting"]
 assume-str-parameters-are-utf8 = []
 web-rendering = ["wasm-web", "livesplit-core/web-rendering"]
+therun-gg = ["wasm-web", "livesplit-core/therun-gg"]

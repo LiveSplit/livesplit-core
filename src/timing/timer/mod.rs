@@ -642,6 +642,41 @@ impl Timer {
         self.active_attempt.as_ref()?.get_pause_time()
     }
 
+    /// Returns the date time when the current attempt started. Returns
+    /// [`None`] if there is no attempt in progress.
+    #[cfg(feature = "therun-gg")]
+    pub(crate) fn attempt_started(&self) -> Option<AtomicDateTime> {
+        self.active_attempt.as_ref().map(|a| a.attempt_started)
+    }
+
+    /// Returns the date time when the current attempt ended. Returns
+    /// [`None`] if the attempt has not ended yet or there is no attempt in
+    /// progress.
+    #[cfg(feature = "therun-gg")]
+    pub(crate) fn attempt_ended(&self) -> Option<AtomicDateTime> {
+        match self.active_attempt.as_ref()?.state {
+            State::Ended { attempt_ended } => Some(attempt_ended),
+            _ => None,
+        }
+    }
+
+    /// Returns the Game Time the Game Timer is paused at. Returns [`None`]
+    /// if the Game Timer is not paused or Game Time is not initialized.
+    #[cfg(feature = "therun-gg")]
+    pub(crate) fn game_time_paused_at(&self) -> Option<TimeSpan> {
+        self.active_attempt.as_ref()?.game_time_paused_at
+    }
+
+    /// Returns the Real Time the timer is paused at. Returns [`None`] if the
+    /// timer is not paused or there is no attempt in progress.
+    #[cfg(feature = "therun-gg")]
+    pub(crate) fn time_paused_at(&self) -> Option<TimeSpan> {
+        match self.active_attempt.as_ref()?.state {
+            State::NotEnded { time_paused_at, .. } => time_paused_at,
+            _ => None,
+        }
+    }
+
     /// Returns whether Game Time is currently initialized. Game Time
     /// automatically gets uninitialized for each new attempt.
     #[inline]

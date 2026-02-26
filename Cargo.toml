@@ -90,6 +90,9 @@ livesplit-auto-splitting = { path = "crates/livesplit-auto-splitting", version =
 arc-swap = { version = "1.7.1", optional = true }
 log = { version = "0.4.14", default-features = false, optional = true }
 
+# therun.gg
+reqwest = { version = "0.13.2", default-features = false, features = ["json", "rustls"], optional = true }
+
 [target.'cfg(all(target_family = "wasm", target_os = "unknown"))'.dependencies]
 # WebAssembly in the Web
 js-sys = { version = "0.3.55", optional = true }
@@ -184,6 +187,7 @@ wasm-web = [
     "web-sys",
 ]
 auto-splitting = ["std", "livesplit-auto-splitting", "arc-swap", "log"]
+therun-gg = ["std", "reqwest", "time/formatting"]
 
 [lib]
 bench = false
