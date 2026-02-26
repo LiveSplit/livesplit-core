@@ -90,6 +90,8 @@ pub mod total_playtime_component;
 pub mod web_command_sink;
 #[cfg(all(target_family = "wasm", feature = "web-rendering"))]
 pub mod web_rendering;
+#[cfg(all(target_family = "wasm", feature = "therun-gg"))]
+pub mod web_therun_gg;
 
 use crate::{
     run_metadata_custom_variable::RunMetadataCustomVariable,
