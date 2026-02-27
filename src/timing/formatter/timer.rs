@@ -44,6 +44,16 @@ impl Time {
     pub const fn with_digits_format(digits_format: DigitsFormat) -> Self {
         Time { digits_format }
     }
+
+    /// Gets the current DigitsFormat in use by the instance of Time.
+    pub const fn get_digits_format(&self) -> DigitsFormat {
+        self.digits_format
+    }
+
+    /// Sets the current DigitsFormat in use by the instance of Time.
+    pub fn set_digits_format(&mut self, digits_format: DigitsFormat) {
+        self.digits_format = digits_format;
+    }
 }
 
 impl Default for Time {
@@ -156,6 +166,16 @@ impl Fraction {
     /// the fractional part.
     pub const fn with_accuracy(accuracy: Accuracy) -> Self {
         Fraction { accuracy }
+    }
+
+    /// Gets the current Accuracy in use by the instance of Time.
+    pub const fn get_accuracy(&self) -> Accuracy {
+        self.accuracy
+    }
+
+    /// Sets the current Accuracy in use by the instance of Time.
+    pub fn set_accuracy(&mut self, accuracy: Accuracy) {
+        self.accuracy = accuracy;
     }
 }
 
