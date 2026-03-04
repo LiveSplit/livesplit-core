@@ -526,6 +526,14 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::LayoutDirection => "Layout Direction",
         Text::LayoutDirectionDescription => "The direction in which the components are laid out.",
+        Text::GroupFixedWidth => "Fixed Width",
+        Text::GroupFixedWidthDescription => {
+            "An optional fixed width for this column of components. If not specified, the width is determined automatically."
+        }
+        Text::GroupFixedHeight => "Fixed Height",
+        Text::GroupFixedHeightDescription => {
+            "An optional fixed height for this row of components. If not specified, the height is determined automatically."
+        }
         Text::CustomTimerFont => "Custom Timer Font",
         Text::CustomTimerFontDescription => {
             "Allows you to specify a custom font for the timer. If this is not set, the default font is used."
@@ -594,6 +602,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentSegmentTimer => "Segment Timer",
         Text::ComponentTitle => "Title",
         Text::ComponentTotalPlaytime => "Total Playtime",
+        Text::Row => "Row",
+        Text::Column => "Column",
+        Text::EmptyGroup => "Empty",
         Text::ComponentCurrentPaceBestPossibleTime => "Best Possible Time",
         Text::ComponentCurrentPaceWorstPossibleTime => "Worst Possible Time",
         Text::ComponentCurrentPacePredictedTime => "Predicted Time",

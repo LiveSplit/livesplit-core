@@ -44,7 +44,7 @@ pub struct Settings {
     /// Specifies whether to display the name of the component and its value in
     /// two separate rows.
     pub display_two_rows: bool,
-    /// The color of the label. If `None` is specified, the color is taken from
+    /// The color of the label. If [`None`] is specified, the color is taken from
     /// the layout.
     pub label_color: Option<Color>,
     /// Specifies if the decimals should not be shown anymore when the

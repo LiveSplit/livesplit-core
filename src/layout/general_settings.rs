@@ -14,13 +14,13 @@ use serde_derive::{Deserialize, Serialize};
 pub struct GeneralSettings {
     /// The direction which the components are laid out in.
     pub direction: LayoutDirection,
-    /// The font to use for the timer text. `None` means a default font should
+    /// The font to use for the timer text. [`None`] means a default font should
     /// be used.
     pub timer_font: Option<Font>,
-    /// The font to use for the times and other values. `None` means a default
+    /// The font to use for the times and other values. [`None`] means a default
     /// font should be used.
     pub times_font: Option<Font>,
-    /// The font to use for regular text. `None` means a default font should be
+    /// The font to use for regular text. [`None`] means a default font should be
     /// used.
     pub text_font: Option<Font>,
     /// The color to use for drawn shadows.

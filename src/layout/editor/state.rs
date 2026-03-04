@@ -1,6 +1,7 @@
 use super::Editor;
 use crate::{
-    localization::Lang,
+    layout::LayoutDirection,
+    localization::{Lang, Text},
     platform::prelude::*,
     settings::{ImageCache, SettingsDescription},
 };
@@ -10,12 +11,27 @@ use serde_derive::{Deserialize, Serialize};
 /// properly.
 #[derive(Serialize, Deserialize)]
 pub struct State {
-    /// The name of all the components in the layout.
+    /// The name of each component in the flattened view of the layout,
+    /// including components nested inside groups.
     pub components: Vec<String>,
+    /// The indentation level of each component (0 = top level, 1 = inside a
+    /// group, 2 = inside a nested group, etc.). Has the same length as
+    /// `components`.
+    pub indent_levels: Vec<u32>,
+    /// Whether each component entry is a placeholder for an empty group
+    /// rather than an actual component. Has the same length as `components`.
+    pub is_placeholder: Vec<bool>,
     /// Describes which actions are currently available.
     pub buttons: Buttons,
-    /// The index of the currently selected component.
+    /// The flat index of the currently selected component.
     pub selected_component: u32,
+    /// The layout direction at the selected component's position. This is the
+    /// direction of the container that the selected component belongs to. A
+    /// component added at this position would be laid out in this direction.
+    /// For example, in a vertical root layout this is [`LayoutDirection::Vertical`]
+    /// at the top level. Adding a group here creates a row (horizontal), adding
+    /// a row's placeholder creates a column (vertical), and so on.
+    pub layout_direction: LayoutDirection,
     /// A generic description of the settings available for the selected
     /// component and their current values.
     pub component_settings: SettingsDescription,
@@ -33,11 +49,14 @@ pub struct Buttons {
     /// there's only one component in the layout, it can't be removed.
     pub can_remove: bool,
     /// Describes whether the currently selected component can be moved up. If
-    /// the first component is selected, it can't be moved.
+    /// the first sibling is selected, it can't be moved.
     pub can_move_up: bool,
     /// Describes whether the currently selected component can be moved down. If
-    /// the last component is selected, it can't be moved.
+    /// the last sibling is selected, it can't be moved.
     pub can_move_down: bool,
+    /// Describes whether the currently selected component can be duplicated.
+    /// Placeholders can't be duplicated.
+    pub can_duplicate: bool,
 }
 
 #[cfg(feature = "std")]
@@ -58,29 +77,69 @@ impl Editor {
     /// need to manually run [`ImageCache::collect`] to ensure unused images are
     /// removed from the cache.
     pub fn state(&self, image_cache: &mut ImageCache, lang: Lang) -> State {
-        let components = self
-            .layout
-            .components
+        let root_direction = self.layout.general_settings().direction;
+        let components: Vec<String> = self
+            .flat
             .iter()
-            .map(|c| c.name(lang).into_owned())
+            .map(|entry| {
+                if entry.is_placeholder {
+                    Text::EmptyGroup.resolve(lang).to_owned()
+                } else {
+                    let parent_direction =
+                        Self::direction_at_depth(root_direction, entry.path.len() - 1);
+                    self.component_at_path(&entry.path)
+                        .name(lang, parent_direction)
+                        .into_owned()
+                }
+            })
             .collect();
+
+        let indent_levels: Vec<u32> = self.flat.iter().map(|entry| entry.indent).collect();
+
+        let is_placeholder: Vec<bool> =
+            self.flat.iter().map(|entry| entry.is_placeholder).collect();
 
         let buttons = Buttons {
             can_remove: self.can_remove_component(),
             can_move_up: self.can_move_component_up(),
             can_move_down: self.can_move_component_down(),
+            can_duplicate: self.can_duplicate_component(),
         };
+
+        let component_settings = if self.flat[self.selected].is_placeholder {
+            SettingsDescription::default()
+        } else {
+            let parent_direction =
+                Self::direction_at_depth(root_direction, self.flat[self.selected].path.len() - 1);
+            self.component_at_path(&self.flat[self.selected].path)
+                .settings_description(lang, parent_direction)
+        };
+
+        let layout_direction =
+            Self::direction_at_depth(root_direction, self.flat[self.selected].indent as usize);
 
         State {
             components,
+            indent_levels,
+            is_placeholder,
             buttons,
-            selected_component: self.selected_component as u32,
-            component_settings: self.layout.components[self.selected_component]
-                .settings_description(lang),
+            selected_component: self.selected as u32,
+            layout_direction,
+            component_settings,
             general_settings: self
                 .layout
                 .general_settings()
                 .settings_description(image_cache, lang),
+        }
+    }
+
+    /// Returns the layout direction at a given nesting depth. Depth 0 is the
+    /// root direction, each subsequent depth flips the direction.
+    const fn direction_at_depth(root: LayoutDirection, depth: usize) -> LayoutDirection {
+        if depth.is_multiple_of(2) {
+            root
+        } else {
+            root.opposite()
         }
     }
 }

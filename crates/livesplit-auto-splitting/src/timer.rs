@@ -36,7 +36,7 @@ pub trait Timer: Send + 'static {
     /// Returns the current state of the timer.
     fn state(&self) -> TimerState;
     /// Accesses the index of the split the attempt is currently on.
-    /// If there's no attempt in progress, `None` is returned instead.
+    /// If there's no attempt in progress, [`None`] is returned instead.
     /// This returns an index that is equal to the amount of segments
     /// when the attempt is finished, but has not been reset.
     /// So you need to be careful when using this value for indexing.
@@ -46,7 +46,7 @@ pub trait Timer: Send + 'static {
     /// Returns `Some(true)` if the segment was splitted,
     /// or `Some(false)` if skipped.
     /// If `idx` is greater than or equal to the current split index,
-    /// `None` is returned instead.
+    /// [`None`] is returned instead.
     fn segment_splitted(&self, idx: usize) -> Option<bool>;
     /// Starts the timer.
     fn start(&mut self);

@@ -16,10 +16,10 @@ use serde_derive::{Deserialize, Serialize};
 pub struct State {
     /// The background shown behind the component.
     pub background: Gradient,
-    /// The color of the key. If `None` is specified, the color is taken from
+    /// The color of the key. If [`None`] is specified, the color is taken from
     /// the layout.
     pub key_color: Option<Color>,
-    /// The color of the value. If `None` is specified, the color is taken from
+    /// The color of the value. If [`None`] is specified, the color is taken from
     /// the layout.
     pub value_color: Option<Color>,
     /// The semantic coloring information the value carries.

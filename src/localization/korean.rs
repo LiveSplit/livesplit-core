@@ -482,6 +482,14 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::LayoutDirection => "레이아웃 방향",
         Text::LayoutDirectionDescription => "컴포넌트를 배치하는 방향입니다.",
+        Text::GroupFixedWidth => "고정 너비",
+        Text::GroupFixedWidthDescription => {
+            "이 컴포넌트 열의 선택적 고정 너비입니다. 지정하지 않으면 너비가 자동으로 결정됩니다."
+        }
+        Text::GroupFixedHeight => "고정 높이",
+        Text::GroupFixedHeightDescription => {
+            "이 컴포넌트 행의 선택적 고정 높이입니다. 지정하지 않으면 높이가 자동으로 결정됩니다."
+        }
         Text::CustomTimerFont => "타이머 사용자 지정 글꼴",
         Text::CustomTimerFontDescription => {
             "타이머에 사용자 지정 글꼴을 지정할 수 있습니다. 지정하지 않으면 기본 글꼴이 사용됩니다."
@@ -544,6 +552,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentSegmentTimer => "세그먼트 타이머",
         Text::ComponentTitle => "제목",
         Text::ComponentTotalPlaytime => "총 플레이 시간",
+        Text::Row => "행",
+        Text::Column => "열",
+        Text::EmptyGroup => "비어 있음",
         Text::ComponentCurrentPaceBestPossibleTime => "최적 가능 시간",
         Text::ComponentCurrentPaceWorstPossibleTime => "최악 가능 시간",
         Text::ComponentCurrentPacePredictedTime => "예측 시간",

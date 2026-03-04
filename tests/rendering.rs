@@ -10,7 +10,7 @@ mod tests_helper;
 
 use livesplit_core::{
     Lang, Run, Segment, TimeSpan, Timer, TimingMethod,
-    component::{self, timer},
+    component::{self, group, timer},
     layout::{self, Component, ComponentState, Layout, LayoutDirection, LayoutState},
     rendering,
     run::parser::{livesplit, llanfair, wsplit},
@@ -477,6 +477,76 @@ fn text_shadow() {
         "ee437905156e2d64",
         "d21a7fdd462f99fb",
         "text_shadow",
+    );
+}
+
+#[test]
+fn horizontal_group_in_vertical_layout() {
+    let mut run = tests_helper::create_run(&["A", "B", "C"]);
+    run.set_game_name("Group Test");
+    run.set_category_name("Any%");
+    let timer = Timer::new(run).unwrap();
+
+    let mut layout = Layout::new();
+    layout.push(component::title::Component::new());
+
+    // Create a horizontal group containing a timer and a text component.
+    let mut group = group::Component::new();
+    group
+        .components
+        .push(Component::from(component::timer::Component::new()));
+    let mut txt = component::text::Component::new();
+    txt.settings_mut().text =
+        component::text::Text::Split(String::from("Delta"), String::from("+1.23"));
+    group.components.push(Component::from(txt));
+    layout.push(group);
+
+    layout.push(component::splits::Component::new(Lang::English));
+
+    let mut image_cache = ImageCache::new();
+    check_dims(
+        &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
+        &image_cache,
+        [300, 400],
+        "c1982ba1120c8928",
+        "923c604ef702cb1c",
+        "horizontal_group_in_vertical_layout",
+    );
+}
+
+#[test]
+fn nested_groups() {
+    let timer = tests_helper::create_timer(&["A", "B"]);
+
+    let mut layout = Layout::new();
+    layout.push(component::title::Component::new());
+
+    // Outer horizontal group containing a timer and an inner vertical group.
+    let mut inner = group::Component::new();
+    let mut txt1 = component::text::Component::new();
+    txt1.settings_mut().text =
+        component::text::Text::Split(String::from("Split"), String::from("0:00"));
+    inner.components.push(Component::from(txt1));
+    let mut txt2 = component::text::Component::new();
+    txt2.settings_mut().text =
+        component::text::Text::Split(String::from("Best"), String::from("0:00"));
+    inner.components.push(Component::from(txt2));
+
+    let mut outer = group::Component::new();
+    outer
+        .components
+        .push(Component::from(component::timer::Component::new()));
+    outer.components.push(Component::Group(inner));
+    layout.push(outer);
+
+    let mut image_cache = ImageCache::new();
+    check_dims(
+        &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
+        &image_cache,
+        [400, 200],
+        "6426d21783560265",
+        "67eb98505a5c540e",
+        "nested_groups",
     );
 }
 

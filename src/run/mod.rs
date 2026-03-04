@@ -683,7 +683,7 @@ impl Run {
         }
     }
 
-    /// Returns the minimum index in use by all the Segment Histories. `None` is
+    /// Returns the minimum index in use by all the Segment Histories. [`None`] is
     /// returned if the Run has no segments.
     pub fn min_segment_history_index(&self) -> Option<i32> {
         self.segments

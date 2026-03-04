@@ -135,7 +135,7 @@ pub fn or_current<'a>(comparison: Option<&'a str>, timer: &'a Timer) -> &'a str 
 }
 
 /// Tries to resolve the given comparison based on a Timer object. If either
-/// `None` is given or the comparison doesn't exist, `None` is returned.
+/// [`None`] is given or the comparison doesn't exist, [`None`] is returned.
 /// Otherwise the comparison name stored in the Timer is returned by reference.
 pub fn resolve<'a>(comparison: &Option<String>, timer: &'a Timer) -> Option<&'a str> {
     let comparison = comparison.as_ref()?;

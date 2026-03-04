@@ -22,7 +22,7 @@ impl Time {
     }
 
     /// Creates a new Time where Real Time and Game Time are zero. Keep in mind
-    /// that a zero Time Span is not the same as a `None` Time Span as created
+    /// that a zero Time Span is not the same as a [`None`] Time Span as created
     /// by `Time::new()`.
     #[inline]
     pub const fn zero() -> Self {

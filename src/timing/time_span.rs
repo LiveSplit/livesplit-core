@@ -56,7 +56,7 @@ impl TimeSpan {
 
     /// Parses an optional `TimeSpan` from a given textual representation of the
     /// `TimeSpan` using the specified language. If the given text consists
-    /// entirely of whitespace or is empty, `None` is returned.
+    /// entirely of whitespace or is empty, [`None`] is returned.
     pub fn parse_opt_with_lang(text: &str, lang: Lang) -> Result<Option<TimeSpan>, ParseError> {
         if text.trim().is_empty() {
             Ok(None)

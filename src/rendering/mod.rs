@@ -285,6 +285,7 @@ impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager
             images: &mut self.images,
             image_cache,
             state,
+            direction: LayoutDirection::Vertical,
         };
 
         let background = context.decode_layout_background(&state.background, resolution);
@@ -305,10 +306,19 @@ impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager
         // mode, all the components have the same width.
         let width = aspect_ratio * total_height;
 
+        let mut flat_index = 0usize;
         for (component, cache) in state.components.iter().zip(&mut self.components) {
-            let height = component::height(component);
+            let height = component::height(component, LayoutDirection::Vertical);
             let dim = [width, height];
-            component::render(cache, &mut context, component, state, dim);
+            component::render(
+                cache,
+                &mut context,
+                component,
+                state,
+                dim,
+                state.selected_component,
+                &mut flat_index,
+            );
             // We translate the coordinate space to the Component Coordinate
             // Space of the next component by shifting by the height of the
             // current component in the Component Coordinate Space.
@@ -359,6 +369,7 @@ impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager
             images: &mut self.images,
             image_cache,
             state,
+            direction: LayoutDirection::Horizontal,
         };
 
         let background = context.decode_layout_background(&state.background, resolution);
@@ -382,11 +393,20 @@ impl<P: SharedOwnership, I: SharedOwnership, F, L: SharedOwnership> SceneManager
         // distribute to each of the components. This factor is this adjustment.
         let width_scaling = TWO_ROW_HEIGHT * aspect_ratio / total_width;
 
+        let mut flat_index = 0usize;
         for (component, cache) in state.components.iter().zip(&mut self.components) {
-            let width = component::width(component) * width_scaling;
+            let width = component::width(component, LayoutDirection::Horizontal) * width_scaling;
             let height = TWO_ROW_HEIGHT;
             let dim = [width, height];
-            component::render(cache, &mut context, component, state, dim);
+            component::render(
+                cache,
+                &mut context,
+                component,
+                state,
+                dim,
+                state.selected_component,
+                &mut flat_index,
+            );
             // We translate the coordinate space to the Component Coordinate
             // Space of the next component by shifting by the width of the
             // current component in the Component Coordinate Space.
@@ -407,6 +427,10 @@ struct RenderContext<'b, A: ResourceAllocator> {
     images: &'b mut ImageCache<CachedImage<A::Image>>,
     image_cache: &'b ImageCache,
     state: &'b LayoutState,
+    /// The effective layout direction for the current rendering scope.
+    /// This is the layout's top-level direction at the root, but inside a
+    /// group it reflects the group's direction.
+    direction: LayoutDirection,
 }
 
 impl<A: ResourceAllocator> RenderContext<'_, A> {
@@ -475,6 +499,45 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
             stroke_width,
             color.to_array(),
             self.transform,
+        ));
+    }
+
+    /// Draws a selection outline around a component with the given
+    /// dimensions. The outline is rendered as four thin filled rectangles so
+    /// that the stroke thickness is uniform regardless of non-uniform scaling.
+    fn render_selection_outline(&mut self, [w, h]: Pos) {
+        const COLOR: FillShader =
+            FillShader::SolidColor([50.0 / 255.0, 114.0 / 255.0, 241.0 / 255.0, 1.0]);
+        const THICKNESS: f32 = 0.08;
+        let rectangle = self.rectangle();
+        let layer = self.scene.layer_mut(Layer::Top);
+        // Top edge
+        layer.push(Entity::FillPath(
+            rectangle.share(),
+            COLOR,
+            self.transform.pre_scale(w, THICKNESS),
+        ));
+        // Bottom edge
+        layer.push(Entity::FillPath(
+            rectangle.share(),
+            COLOR,
+            self.transform
+                .pre_translate(0.0, h - THICKNESS)
+                .pre_scale(w, THICKNESS),
+        ));
+        // Left edge
+        layer.push(Entity::FillPath(
+            rectangle.share(),
+            COLOR,
+            self.transform.pre_scale(THICKNESS, h),
+        ));
+        // Right edge
+        layer.push(Entity::FillPath(
+            rectangle,
+            COLOR,
+            self.transform
+                .pre_translate(w - THICKNESS, 0.0)
+                .pre_scale(THICKNESS, h),
         ));
     }
 
