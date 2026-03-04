@@ -37,11 +37,11 @@ pub struct Settings {
     /// displayed as two rows.
     pub display_two_rows: bool,
     /// The color of the left part of the split up text or the whole text if
-    /// it's not split up. If `None` is specified, the color is taken from the
+    /// it's not split up. If [`None`] is specified, the color is taken from the
     /// layout.
     pub left_center_color: Option<Color>,
     /// The color of the right part of the split up text. This can be ignored if
-    /// the text is not split up. If `None` is specified, the color is taken
+    /// the text is not split up. If [`None`] is specified, the color is taken
     /// from the layout.
     pub right_color: Option<Color>,
     /// The text to be shown.
@@ -128,11 +128,11 @@ pub struct State {
     /// displayed as two rows.
     pub display_two_rows: bool,
     /// The color of the left part of the split up text or the whole text if
-    /// it's not split up. If `None` is specified, the color is taken from the
+    /// it's not split up. If [`None`] is specified, the color is taken from the
     /// layout.
     pub left_center_color: Option<Color>,
     /// The color of the right part of the split up text. This can be ignored if
-    /// the text is not split up. If `None` is specified, the color is taken
+    /// the text is not split up. If [`None`] is specified, the color is taken
     /// from the layout.
     pub right_color: Option<Color>,
     /// The text to show for the component.

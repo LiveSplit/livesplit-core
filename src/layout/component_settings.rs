@@ -1,9 +1,9 @@
 use super::Component;
 use crate::{
     component::{
-        blank_space, current_comparison, current_pace, delta, detailed_timer, graph, pb_chance,
-        possible_time_save, previous_segment, segment_time, separator, splits, sum_of_best, text,
-        timer, title, total_playtime,
+        blank_space, current_comparison, current_pace, delta, detailed_timer, graph, group,
+        pb_chance, possible_time_save, previous_segment, segment_time, separator, splits,
+        sum_of_best, text, timer, title, total_playtime,
     },
     platform::prelude::*,
 };
@@ -46,6 +46,8 @@ pub enum ComponentSettings {
     Title(title::Settings),
     /// The Settings for the Total Playtime Component.
     TotalPlaytime(total_playtime::Settings),
+    /// The Settings for a Component Group.
+    Group(group::Settings),
 }
 
 impl From<ComponentSettings> for Component {
@@ -99,6 +101,9 @@ impl From<ComponentSettings> for Component {
             }
             ComponentSettings::TotalPlaytime(settings) => {
                 Component::TotalPlaytime(total_playtime::Component::with_settings(settings))
+            }
+            ComponentSettings::Group(settings) => {
+                Component::Group(group::Component::with_settings(settings))
             }
         }
     }

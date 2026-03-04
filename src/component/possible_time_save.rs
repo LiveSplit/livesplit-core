@@ -46,10 +46,10 @@ pub struct Settings {
     /// save for the current attempt is shown, instead of the time save for the
     /// current segment.
     pub total_possible_time_save: bool,
-    /// The color of the label. If `None` is specified, the color is taken from
+    /// The color of the label. If [`None`] is specified, the color is taken from
     /// the layout.
     pub label_color: Option<Color>,
-    /// The color of the value. If `None` is specified, the color is taken from
+    /// The color of the value. If [`None`] is specified, the color is taken from
     /// the layout.
     pub value_color: Option<Color>,
     /// The accuracy of the time shown.

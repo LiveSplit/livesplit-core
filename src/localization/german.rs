@@ -554,6 +554,14 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::LayoutDirection => "Layout-Richtung",
         Text::LayoutDirectionDescription => "Die Richtung, in der die Komponenten angeordnet sind.",
+        Text::GroupFixedWidth => "Feste Breite",
+        Text::GroupFixedWidthDescription => {
+            "Eine optionale feste Breite für diese Spalte von Komponenten. Wenn nicht angegeben, wird die Breite automatisch bestimmt."
+        }
+        Text::GroupFixedHeight => "Feste Höhe",
+        Text::GroupFixedHeightDescription => {
+            "Eine optionale feste Höhe für diese Zeile von Komponenten. Wenn nicht angegeben, wird die Höhe automatisch bestimmt."
+        }
         Text::CustomTimerFont => "Benutzerdefinierte Timer-Schriftart",
         Text::CustomTimerFontDescription => {
             "Ermöglicht das Festlegen einer benutzerdefinierten Schriftart für den Timer. Wenn dies nicht gesetzt ist, wird die Standardschriftart verwendet."
@@ -630,6 +638,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentSegmentTimer => "Segment-Timer",
         Text::ComponentTitle => "Titel",
         Text::ComponentTotalPlaytime => "Gesamtspielzeit",
+        Text::Row => "Zeile",
+        Text::Column => "Spalte",
+        Text::EmptyGroup => "Leer",
         Text::ComponentCurrentPaceBestPossibleTime => "Bestmögliche Zeit",
         Text::ComponentCurrentPaceWorstPossibleTime => "Schlechtestmögliche Zeit",
         Text::ComponentCurrentPacePredictedTime => "Vorhergesagte Zeit",
@@ -671,7 +682,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SegmentTimeShort => "Seg.-Zeit",
         Text::SplitTime => "Zeit",
         Text::PossibleTimeSaveShort => "Mögliche Zeitersparnis",
-        Text::PossibleTimeSaveAbbreviation => "Mögl. Zeitersp.",
+        Text::PossibleTimeSaveAbbreviation => "Mögl. Zeitersparnis",
         Text::TimeSaveShort => "Zeitersparnis",
         Text::RealTime => "Echtzeit",
         Text::GameTime => "Spielzeit",

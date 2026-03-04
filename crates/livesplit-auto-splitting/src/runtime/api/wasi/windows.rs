@@ -92,7 +92,7 @@ fn resolve_network_drive_path(drive: u8, remote_buffer: &mut Vec<u16>) -> Option
             // least up until the nul-terminator.
             unsafe {
                 // There should always be a nul-terminator, but if there isn't,
-                // it's better if we return `None` than read out of bounds /
+                // it's better if we return [`None`] than read out of bounds /
                 // uninitialized bytes.
                 let len = remote_buffer
                     .spare_capacity_mut()

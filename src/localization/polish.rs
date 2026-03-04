@@ -514,6 +514,14 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::LayoutDirection => "Kierunek układu",
         Text::LayoutDirectionDescription => "Kierunek, w którym rozmieszczone są komponenty.",
+        Text::GroupFixedWidth => "Stała szerokość",
+        Text::GroupFixedWidthDescription => {
+            "Opcjonalna stała szerokość tej kolumny komponentów. Jeśli nie określono, szerokość jest ustalana automatycznie."
+        }
+        Text::GroupFixedHeight => "Stała wysokość",
+        Text::GroupFixedHeightDescription => {
+            "Opcjonalna stała wysokość tego wiersza komponentów. Jeśli nie określono, wysokość jest ustalana automatycznie."
+        }
         Text::CustomTimerFont => "Własna czcionka timera",
         Text::CustomTimerFontDescription => {
             "Pozwala określić niestandardową czcionkę dla timera. Jeśli nie ustawiono, używana jest domyślna czcionka."
@@ -580,6 +588,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentSegmentTimer => "Timer segmentu",
         Text::ComponentTitle => "Tytuł",
         Text::ComponentTotalPlaytime => "Łączny czas gry",
+        Text::Row => "Wiersz",
+        Text::Column => "Kolumna",
+        Text::EmptyGroup => "Pusty",
         Text::ComponentCurrentPaceBestPossibleTime => "Najlepszy możliwy czas",
         Text::ComponentCurrentPaceWorstPossibleTime => "Najgorszy możliwy czas",
         Text::ComponentCurrentPacePredictedTime => "Przewidywany czas",

@@ -538,6 +538,14 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::LayoutDirectionDescription => {
             "La direction dans laquelle les composants sont disposés."
         }
+        Text::GroupFixedWidth => "Largeur fixe",
+        Text::GroupFixedWidthDescription => {
+            "Une largeur fixe optionnelle pour cette colonne de composants. Si non spécifiée, la largeur est déterminée automatiquement."
+        }
+        Text::GroupFixedHeight => "Hauteur fixe",
+        Text::GroupFixedHeightDescription => {
+            "Une hauteur fixe optionnelle pour cette ligne de composants. Si non spécifiée, la hauteur est déterminée automatiquement."
+        }
         Text::CustomTimerFont => "Police personnalisée du timer",
         Text::CustomTimerFontDescription => {
             "Permet de spécifier une police personnalisée pour le timer. Si non définie, la police par défaut est utilisée."
@@ -612,6 +620,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentSegmentTimer => "Minuteur de segment",
         Text::ComponentTitle => "Titre",
         Text::ComponentTotalPlaytime => "Temps de jeu total",
+        Text::Row => "Ligne",
+        Text::Column => "Colonne",
+        Text::EmptyGroup => "Vide",
         Text::ComponentCurrentPaceBestPossibleTime => "Meilleur temps possible",
         Text::ComponentCurrentPaceWorstPossibleTime => "Pire temps possible",
         Text::ComponentCurrentPacePredictedTime => "Temps prédit",

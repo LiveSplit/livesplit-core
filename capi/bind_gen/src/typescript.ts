@@ -599,16 +599,16 @@ export interface TextComponentStateJson {
     display_two_rows: boolean,
     /**
      * The color of the left part of the split up text or the whole text if
-     * it's not split up. If `None` is specified, the color is taken from the
+     * it's not split up. If null is specified, the color is taken from the
      * layout.
      */
-    left_center_color: Color,
+    left_center_color: Color | null,
     /**
      * The color of the right part of the split up text. This can be ignored if
-     * the text is not split up. If `None` is specified, the color is taken
+     * the text is not split up. If `null` is specified, the color is taken
      * from the layout.
      */
-    right_color: Color,
+    right_color: Color | null,
     /** The text to show for the component. */
     text: TextComponentStateText,
 }
@@ -671,12 +671,27 @@ export interface DetailedTimerComponentComparisonStateJson {
  * properly.
  */
 export interface LayoutEditorStateJson {
-    /** The name of all the components in the layout. */
+    /** The name of all the components in the layout, including those nested
+     * inside groups. */
     components: string[],
+    /** The indentation level of each component (0 = top level, 1 = inside a
+     * group, etc.). */
+    indent_levels: number[],
+    /** Whether each component is an empty group placeholder. */
+    is_placeholder: boolean[],
     /** Describes which actions are currently available. */
     buttons: LayoutEditorButtonsJson,
-    /** The index of the currently selected component. */
+    /** The flat index of the currently selected component. */
     selected_component: number,
+    /**
+     * The layout direction at the selected component's position. This is the
+     * direction of the container that the selected component belongs to. A
+     * component added at this position would be laid out in this direction. For
+     * example, in a vertical root layout this is "Vertical" at the top level.
+     * Adding a group here creates a row (horizontal), adding a row's
+     * placeholder creates a column (vertical), and so on.
+     */
+    layout_direction: LayoutDirection,
     /**
      * A generic description of the settings available for the selected
      * component and their current values.
@@ -710,6 +725,11 @@ export interface LayoutEditorButtonsJson {
      * the last component is selected, it can't be moved.
      */
     can_move_down: boolean,
+    /**
+     * Describes whether the currently selected component can be duplicated.
+     * Placeholders can't be duplicated.
+     */
+    can_duplicate: boolean,
 }
 
 /** A generic description of the settings available and their current values. */
@@ -740,6 +760,7 @@ export interface SettingsDescriptionFieldJson {
 export type SettingsDescriptionValueJson =
     { Bool: boolean } |
     { UInt: number } |
+    { OptionalUInt: number | null } |
     { Int: number } |
     { String: string } |
     { OptionalString: string | null } |

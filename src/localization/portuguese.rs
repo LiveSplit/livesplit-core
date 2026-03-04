@@ -528,6 +528,14 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::LayoutDirection => "Direção do layout",
         Text::LayoutDirectionDescription => "A direção em que os componentes são dispostos.",
+        Text::GroupFixedWidth => "Largura fixa",
+        Text::GroupFixedWidthDescription => {
+            "Uma largura fixa opcional para esta coluna de componentes. Se não for especificada, a largura é determinada automaticamente."
+        }
+        Text::GroupFixedHeight => "Altura fixa",
+        Text::GroupFixedHeightDescription => {
+            "Uma altura fixa opcional para esta linha de componentes. Se não for especificada, a altura é determinada automaticamente."
+        }
         Text::CustomTimerFont => "Fonte personalizada do cronômetro",
         Text::CustomTimerFontDescription => {
             "Permite especificar uma fonte personalizada para o cronômetro. Se não for definida, usa-se a fonte padrão."
@@ -596,6 +604,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentSegmentTimer => "Cronômetro do segmento",
         Text::ComponentTitle => "Título",
         Text::ComponentTotalPlaytime => "Tempo total de jogo",
+        Text::Row => "Linha",
+        Text::Column => "Coluna",
+        Text::EmptyGroup => "Vazio",
         Text::ComponentCurrentPaceBestPossibleTime => "Melhor tempo possível",
         Text::ComponentCurrentPaceWorstPossibleTime => "Pior tempo possível",
         Text::ComponentCurrentPacePredictedTime => "Tempo previsto",

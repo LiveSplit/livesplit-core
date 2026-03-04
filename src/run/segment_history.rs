@@ -13,7 +13,7 @@ use core::{
 pub struct SegmentHistory(Vec<(i32, Time)>);
 
 impl SegmentHistory {
-    /// Returns the minimum index of all the segment times. Returns `None` if
+    /// Returns the minimum index of all the segment times. Returns [`None`] if
     /// there's no segment times in this history.
     pub fn try_get_min_index(&self) -> Option<i32> {
         // This assumes that the first element is the minimum,
@@ -28,7 +28,7 @@ impl SegmentHistory {
         self.try_get_min_index().map_or(1, |m| min(m, 1))
     }
 
-    /// Returns the maximum index of all the segment times. Returns `None` if
+    /// Returns the maximum index of all the segment times. Returns [`None`] if
     /// there's no segment times in this history.
     pub fn try_get_max_index(&self) -> Option<i32> {
         // This assumes that the last element is the maximum,
@@ -51,7 +51,7 @@ impl SegmentHistory {
     }
 
     /// Accesses the segment time with the given index. If there's no segment
-    /// time with that index, `None` is returned instead.
+    /// time with that index, [`None`] is returned instead.
     #[inline]
     pub fn get(&self, index: i32) -> Option<Time> {
         let pos = self.get_pos(index).ok()?;
@@ -59,7 +59,7 @@ impl SegmentHistory {
     }
 
     /// Grants mutable access to the segment time with the given index. If
-    /// there's no segment time with that index, `None` is returned instead.
+    /// there's no segment time with that index, [`None`] is returned instead.
     #[inline]
     pub fn get_mut(&mut self, index: i32) -> Option<&mut Time> {
         let pos = self.get_pos(index).ok()?;

@@ -32,12 +32,14 @@ pub extern "C" fn LayoutEditorState_component_text(
 ///
 /// The bits are as follows:
 ///
+/// * `0x08` - Can duplicate the current component
 /// * `0x04` - Can remove the current component
 /// * `0x02` - Can move the current component up
 /// * `0x01` - Can move the current component down
 #[unsafe(no_mangle)]
 pub extern "C" fn LayoutEditorState_buttons(this: &LayoutEditorState) -> u8 {
-    ((this.buttons.can_remove as u8) << 2)
+    ((this.buttons.can_duplicate as u8) << 3)
+        | ((this.buttons.can_remove as u8) << 2)
         | ((this.buttons.can_move_up as u8) << 1)
         | this.buttons.can_move_down as u8
 }
@@ -93,4 +95,32 @@ pub extern "C" fn LayoutEditorState_field_value(
     } else {
         &this.general_settings.fields[index].value
     }
+}
+
+/// Returns the indentation level of the component at the specified index.
+/// 0 means top level, 1 means inside a group, etc.
+#[unsafe(no_mangle)]
+pub extern "C" fn LayoutEditorState_component_indent_level(
+    this: &LayoutEditorState,
+    index: usize,
+) -> u32 {
+    this.indent_levels[index]
+}
+
+/// Returns whether the component at the specified index is a placeholder for
+/// an empty group rather than an actual component.
+#[unsafe(no_mangle)]
+pub extern "C" fn LayoutEditorState_component_is_placeholder(
+    this: &LayoutEditorState,
+    index: usize,
+) -> bool {
+    this.is_placeholder[index]
+}
+
+/// Returns the layout direction of the selected component's container. This
+/// indicates whether a new group added at this position would become a row or
+/// column.
+#[unsafe(no_mangle)]
+pub extern "C" fn LayoutEditorState_layout_direction(this: &LayoutEditorState) -> u8 {
+    this.layout_direction as u8
 }

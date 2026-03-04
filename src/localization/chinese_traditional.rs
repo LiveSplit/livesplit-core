@@ -78,6 +78,10 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::BlankSpaceBackgroundDescription => "空白元件背景。",
         Text::BlankSpaceSize => "空白大小",
         Text::BlankSpaceSizeDescription => "空白元件大小。",
+        Text::GroupFixedWidth => "固定寬度",
+        Text::GroupFixedWidthDescription => "此元件列的可選固定寬度。若未指定，寬度會自動確定。",
+        Text::GroupFixedHeight => "固定高度",
+        Text::GroupFixedHeightDescription => "此元件行的可選固定高度。若未指定，高度會自動確定。",
         Text::SplitTime => "分段時間",
         _ => super::chinese_simplified::resolve(text),
     }

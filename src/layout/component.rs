@@ -1,9 +1,9 @@
-use super::{ComponentSettings, ComponentState, GeneralSettings};
+use super::{ComponentSettings, ComponentState, GeneralSettings, LayoutDirection};
 use crate::{
     component::{
-        blank_space, current_comparison, current_pace, delta, detailed_timer, graph, pb_chance,
-        possible_time_save, previous_segment, segment_time, separator, splits, sum_of_best, text,
-        timer, title, total_playtime,
+        blank_space, current_comparison, current_pace, delta, detailed_timer, graph, group,
+        pb_chance, possible_time_save, previous_segment, segment_time, separator, splits,
+        sum_of_best, text, timer, title, total_playtime,
     },
     localization::Lang,
     platform::prelude::*,
@@ -50,6 +50,9 @@ pub enum Component {
     Title(title::Component),
     /// The Total Playtime Component.
     TotalPlaytime(total_playtime::Component),
+    /// A group of components that are laid out together in the opposite
+    /// direction to their parent.
+    Group(group::Component),
 }
 
 impl From<blank_space::Component> for Component {
@@ -154,6 +157,12 @@ impl From<total_playtime::Component> for Component {
     }
 }
 
+impl From<group::Component> for Component {
+    fn from(group: group::Component) -> Self {
+        Self::Group(group)
+    }
+}
+
 impl Component {
     /// Updates the component's state based on the timer and settings provided.
     /// The timer provides the information to visualize and the layout settings
@@ -222,6 +231,9 @@ impl Component {
             (ComponentState::KeyValue(state), Component::TotalPlaytime(component)) => {
                 component.update_state(state, timer, lang)
             }
+            (ComponentState::Group(state), Component::Group(group)) => {
+                group.update_state(state, image_cache, timer, layout_settings, lang)
+            }
             (state, component) => {
                 *state = component.state(image_cache, timer, layout_settings, lang)
             }
@@ -289,6 +301,9 @@ impl Component {
             Component::TotalPlaytime(component) => {
                 ComponentState::KeyValue(component.state(timer, lang))
             }
+            Component::Group(group) => {
+                ComponentState::Group(group.state(image_cache, timer, layout_settings, lang))
+            }
         }
     }
 
@@ -335,11 +350,15 @@ impl Component {
             Component::TotalPlaytime(component) => {
                 ComponentSettings::TotalPlaytime(component.settings().clone())
             }
+            Component::Group(group) => ComponentSettings::Group(group.settings()),
         }
     }
 
     /// Accesses the name of the component for the specified language.
-    pub fn name(&self, lang: Lang) -> Cow<'_, str> {
+    /// `parent_direction` is the layout direction of the container holding this
+    /// component. It is used by groups to determine their display name ("Row"
+    /// for horizontal, "Column" for vertical).
+    pub fn name(&self, lang: Lang, parent_direction: LayoutDirection) -> Cow<'_, str> {
         match self {
             Component::BlankSpace(component) => Cow::Borrowed(component.name(lang)),
             Component::CurrentComparison(component) => Cow::Borrowed(component.name(lang)),
@@ -358,22 +377,27 @@ impl Component {
             Component::Timer(component) => Cow::Borrowed(component.name(lang)),
             Component::Title(component) => Cow::Borrowed(component.name(lang)),
             Component::TotalPlaytime(component) => Cow::Borrowed(component.name(lang)),
+            Component::Group(group) => Cow::Borrowed(group.name(lang, parent_direction.opposite())),
         }
     }
 
     /// Tells the component to scroll up. This may be interpreted differently
     /// based on the kind of component. Most components will ignore this.
-    pub const fn scroll_up(&mut self) {
-        if let Component::Splits(component) = self {
-            component.scroll_up();
+    pub fn scroll_up(&mut self) {
+        match self {
+            Component::Splits(component) => component.scroll_up(),
+            Component::Group(group) => group.scroll_up(),
+            _ => {}
         }
     }
 
     /// Tells the component to scroll down. This may be interpreted differently
     /// based on the kind of component. Most components will ignore this.
-    pub const fn scroll_down(&mut self) {
-        if let Component::Splits(component) = self {
-            component.scroll_down();
+    pub fn scroll_down(&mut self) {
+        match self {
+            Component::Splits(component) => component.scroll_down(),
+            Component::Group(group) => group.scroll_down(),
+            _ => {}
         }
     }
 
@@ -381,7 +405,11 @@ impl Component {
     /// Description entirely describes all the settings that are available, what
     /// type they are and what value they currently have. This provides a user
     /// interface independent way of changing the settings.
-    pub fn settings_description(&self, lang: Lang) -> SettingsDescription {
+    pub fn settings_description(
+        &self,
+        lang: Lang,
+        parent_direction: LayoutDirection,
+    ) -> SettingsDescription {
         match self {
             Component::BlankSpace(component) => component.settings_description(lang),
             Component::CurrentComparison(component) => component.settings_description(lang),
@@ -400,6 +428,9 @@ impl Component {
             Component::Timer(component) => component.settings_description(lang),
             Component::Title(component) => component.settings_description(lang),
             Component::TotalPlaytime(component) => component.settings_description(lang),
+            Component::Group(group) => {
+                group.settings_description(lang, parent_direction.opposite())
+            }
         }
     }
 
@@ -430,6 +461,7 @@ impl Component {
             Component::Timer(component) => component.set_value(index, value),
             Component::Title(component) => component.set_value(index, value),
             Component::TotalPlaytime(component) => component.set_value(index, value),
+            Component::Group(group) => group.set_value(index, value),
         }
     }
 }

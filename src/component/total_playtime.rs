@@ -33,10 +33,10 @@ pub struct Settings {
     /// Specifies whether the component should show the amount of days, when the
     /// total duration reaches 24 hours or more.
     pub show_days: bool,
-    /// The color of the label. If `None` is specified, the color is taken from
+    /// The color of the label. If [`None`] is specified, the color is taken from
     /// the layout.
     pub label_color: Option<Color>,
-    /// The color of the value. If `None` is specified, the color is taken from
+    /// The color of the value. If [`None`] is specified, the color is taken from
     /// the layout.
     pub value_color: Option<Color>,
 }

@@ -13,13 +13,17 @@ pub struct LayoutState {
     pub components: Vec<ComponentState>,
     /// The direction which the components are laid out in.
     pub direction: LayoutDirection,
-    /// The font to use for the timer text. `None` means a default font should
+    /// The flat pre-order index of the currently selected component in the
+    /// layout editor. When set, the renderer draws a selection outline around
+    /// the component at this index. [`None`] means no component is selected.
+    pub selected_component: Option<usize>,
+    /// The font to use for the timer text. [`None`] means a default font should
     /// be used.
     pub timer_font: Option<Font>,
-    /// The font to use for the times and other values. `None` means a default
+    /// The font to use for the times and other values. [`None`] means a default
     /// font should be used.
     pub times_font: Option<Font>,
-    /// The font to use for regular text. `None` means a default font should be
+    /// The font to use for regular text. [`None`] means a default font should be
     /// used.
     pub text_font: Option<Font>,
     /// An optional text shadow color.

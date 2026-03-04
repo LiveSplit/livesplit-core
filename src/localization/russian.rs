@@ -514,6 +514,14 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::LayoutDirection => "Направление макета",
         Text::LayoutDirectionDescription => "Направление расположения компонентов.",
+        Text::GroupFixedWidth => "Фиксированная ширина",
+        Text::GroupFixedWidthDescription => {
+            "Необязательная фиксированная ширина этого столбца компонентов. Если не указана, ширина определяется автоматически."
+        }
+        Text::GroupFixedHeight => "Фиксированная высота",
+        Text::GroupFixedHeightDescription => {
+            "Необязательная фиксированная высота этой строки компонентов. Если не указана, высота определяется автоматически."
+        }
         Text::CustomTimerFont => "Пользовательский шрифт таймера",
         Text::CustomTimerFontDescription => {
             "Позволяет указать пользовательский шрифт для таймера. Если не задан, используется шрифт по умолчанию."
@@ -576,6 +584,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentSegmentTimer => "Таймер сегмента",
         Text::ComponentTitle => "Заголовок",
         Text::ComponentTotalPlaytime => "Общее время игры",
+        Text::Row => "Строка",
+        Text::Column => "Столбец",
+        Text::EmptyGroup => "Пусто",
         Text::ComponentCurrentPaceBestPossibleTime => "Лучшее возможное время",
         Text::ComponentCurrentPaceWorstPossibleTime => "Худшее возможное время",
         Text::ComponentCurrentPacePredictedTime => "Прогнозируемое время",
