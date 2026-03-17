@@ -2,7 +2,8 @@ use serde_derive::{Deserialize, Serialize};
 
 use crate::{
     component::{
-        blank_space, detailed_timer, graph, key_value, separator, splits, text, timer, title,
+        blank_space, detailed_timer, graph, group, key_value, separator, splits, text, timer,
+        title,
     },
     platform::prelude::*,
 };
@@ -28,4 +29,6 @@ pub enum ComponentState {
     Timer(timer::State),
     /// The state object for the Title Component.
     Title(title::State),
+    /// The state object for a Component Group.
+    Group(group::State),
 }

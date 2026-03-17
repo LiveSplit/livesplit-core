@@ -528,6 +528,14 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::LayoutDirection => "Dirección del layout",
         Text::LayoutDirectionDescription => "La dirección en la que se disponen los componentes.",
+        Text::GroupFixedWidth => "Ancho fijo",
+        Text::GroupFixedWidthDescription => {
+            "Un ancho fijo opcional para esta columna de componentes. Si no se especifica, el ancho se determina automáticamente."
+        }
+        Text::GroupFixedHeight => "Alto fijo",
+        Text::GroupFixedHeightDescription => {
+            "Un alto fijo opcional para esta fila de componentes. Si no se especifica, el alto se determina automáticamente."
+        }
         Text::CustomTimerFont => "Fuente personalizada del temporizador",
         Text::CustomTimerFontDescription => {
             "Permite especificar una fuente personalizada para el temporizador. Si no se configura, se usa la fuente predeterminada."
@@ -598,6 +606,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentSegmentTimer => "Temporizador de segmento",
         Text::ComponentTitle => "Título",
         Text::ComponentTotalPlaytime => "Tiempo total de juego",
+        Text::Row => "Fila",
+        Text::Column => "Columna",
+        Text::EmptyGroup => "Vacío",
         Text::ComponentCurrentPaceBestPossibleTime => "Mejor tiempo posible",
         Text::ComponentCurrentPaceWorstPossibleTime => "Peor tiempo posible",
         Text::ComponentCurrentPacePredictedTime => "Tiempo previsto",

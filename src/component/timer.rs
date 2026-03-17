@@ -85,7 +85,7 @@ impl DeltaGradient {
 pub struct Settings {
     /// The background shown behind the component.
     pub background: DeltaGradient,
-    /// Specifies the Timing Method to use. If set to `None` the Timing Method
+    /// Specifies the Timing Method to use. If set to [`None`] the Timing Method
     /// of the Timer is used for showing the time. Otherwise the Timing Method
     /// provided is used.
     pub timing_method: Option<TimingMethod>,

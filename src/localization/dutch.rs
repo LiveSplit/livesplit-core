@@ -528,6 +528,14 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::LayoutDirection => "Lay-out richting",
         Text::LayoutDirectionDescription => "De richting waarin de componenten worden uitgelijnd.",
+        Text::GroupFixedWidth => "Vaste breedte",
+        Text::GroupFixedWidthDescription => {
+            "Een optionele vaste breedte voor deze kolom van componenten. Indien niet opgegeven, wordt de breedte automatisch bepaald."
+        }
+        Text::GroupFixedHeight => "Vaste hoogte",
+        Text::GroupFixedHeightDescription => {
+            "Een optionele vaste hoogte voor deze rij van componenten. Indien niet opgegeven, wordt de hoogte automatisch bepaald."
+        }
         Text::CustomTimerFont => "Aangepast timerlettertype",
         Text::CustomTimerFontDescription => {
             "Hiermee kun je een aangepast lettertype voor de timer instellen. Als dit niet is ingesteld, wordt het standaardlettertype gebruikt."
@@ -602,6 +610,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentSegmentTimer => "Segmenttimer",
         Text::ComponentTitle => "Titel",
         Text::ComponentTotalPlaytime => "Totale speeltijd",
+        Text::Row => "Rij",
+        Text::Column => "Kolom",
+        Text::EmptyGroup => "Leeg",
         Text::ComponentCurrentPaceBestPossibleTime => "Best mogelijke tijd",
         Text::ComponentCurrentPaceWorstPossibleTime => "Slechtst mogelijke tijd",
         Text::ComponentCurrentPacePredictedTime => "Voorspelde tijd",

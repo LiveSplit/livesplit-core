@@ -152,9 +152,13 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     };
 
     let display_two_rows =
-        component.display_two_rows || layout_state.direction == LayoutDirection::Horizontal;
+        component.display_two_rows || context.direction == LayoutDirection::Horizontal;
 
-    let split_height = if display_two_rows {
+    let split_height = if context.direction == LayoutDirection::Horizontal {
+        // In horizontal mode, use the full available height so the splits
+        // fill the space allocated by the parent (e.g. a group).
+        height
+    } else if display_two_rows {
         TWO_ROW_HEIGHT
     } else {
         DEFAULT_COMPONENT_HEIGHT
@@ -163,7 +167,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     let vertical_padding = vertical_padding(split_height);
 
     let (split_width, (delta_x, delta_y), separator_pos, split_background_bottom_right, icon_y) =
-        if layout_state.direction == LayoutDirection::Horizontal {
+        if context.direction == LayoutDirection::Horizontal {
             let split_width = width / component.splits.len() as f32;
             (
                 split_width,
@@ -186,7 +190,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     let text_color = solid(&layout_state.text_color);
 
     if let Some(column_labels) = &component.column_labels
-        && layout_state.direction == LayoutDirection::Vertical
+        && context.direction == LayoutDirection::Vertical
     {
         cache
             .column_labels
@@ -299,7 +303,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     }
 
     if component.show_final_separator {
-        let (pos, end) = if layout_state.direction == LayoutDirection::Horizontal {
+        let (pos, end) = if context.direction == LayoutDirection::Horizontal {
             (
                 [-split_width - THIN_SEPARATOR_THICKNESS, 0.0],
                 [-split_width + THIN_SEPARATOR_THICKNESS, split_height],

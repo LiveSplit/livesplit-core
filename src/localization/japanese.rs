@@ -476,6 +476,14 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::TextComponentDisplayTwoRowsDescription => "左右のテキストを 2 行で表示するかどうか。",
         Text::LayoutDirection => "レイアウト方向",
         Text::LayoutDirectionDescription => "コンポーネントを配置する方向。",
+        Text::GroupFixedWidth => "固定幅",
+        Text::GroupFixedWidthDescription => {
+            "このコンポーネント列のオプションの固定幅です。指定しない場合、幅は自動的に決定されます。"
+        }
+        Text::GroupFixedHeight => "固定高さ",
+        Text::GroupFixedHeightDescription => {
+            "このコンポーネント行のオプションの固定高さです。指定しない場合、高さは自動的に決定されます。"
+        }
         Text::CustomTimerFont => "カスタムタイマーフォント",
         Text::CustomTimerFontDescription => {
             "タイマーのフォントをカスタム指定できます。指定しない場合はデフォルトフォントを使用します。"
@@ -540,6 +548,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentSegmentTimer => "区間タイマー",
         Text::ComponentTitle => "タイトル",
         Text::ComponentTotalPlaytime => "総プレイタイム",
+        Text::Row => "行",
+        Text::Column => "列",
+        Text::EmptyGroup => "空",
         Text::ComponentCurrentPaceBestPossibleTime => "最速予想タイム",
         Text::ComponentCurrentPaceWorstPossibleTime => "最悪予想タイム",
         Text::ComponentCurrentPacePredictedTime => "予測タイム",

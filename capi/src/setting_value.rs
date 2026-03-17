@@ -48,6 +48,24 @@ pub extern "C" fn SettingValue_from_uint(value: u32) -> OwnedSettingValue {
     Box::new((value as u64).into())
 }
 
+/// Creates a new setting value from an optional unsigned integer. A value of
+/// 0xFFFFFFFF means that the value is empty and has no unsigned integer.
+#[unsafe(no_mangle)]
+pub extern "C" fn SettingValue_from_optional_uint(value: u32) -> OwnedSettingValue {
+    let v = if value == u32::MAX {
+        None
+    } else {
+        Some(value as u64)
+    };
+    Box::new(v.into())
+}
+
+/// Creates a new empty setting value that has the type `optional uint`.
+#[unsafe(no_mangle)]
+pub extern "C" fn SettingValue_from_optional_empty_uint() -> OwnedSettingValue {
+    Box::new(None::<u64>.into())
+}
+
 /// Creates a new setting value from a signed integer.
 #[unsafe(no_mangle)]
 pub extern "C" fn SettingValue_from_int(value: i32) -> OwnedSettingValue {

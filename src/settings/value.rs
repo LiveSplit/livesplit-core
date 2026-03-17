@@ -30,6 +30,8 @@ pub enum Value {
     Bool(bool),
     /// An unsigned integer.
     UInt(u64),
+    /// An optional unsigned integer.
+    OptionalUInt(Option<u64>),
     /// An integer.
     Int(i64),
     /// A string.
@@ -87,6 +89,12 @@ impl From<bool> for Value {
 impl From<u64> for Value {
     fn from(x: u64) -> Self {
         Value::UInt(x)
+    }
+}
+
+impl From<Option<u64>> for Value {
+    fn from(x: Option<u64>) -> Self {
+        Value::OptionalUInt(x)
     }
 }
 
@@ -233,6 +241,14 @@ impl Value {
     pub fn into_uint(self) -> Result<u64> {
         match self {
             Value::UInt(v) => Ok(v),
+            _ => Err(Error::WrongType),
+        }
+    }
+
+    /// Tries to convert the value into an optional unsigned integer.
+    pub fn into_optional_uint(self) -> Result<Option<u64>> {
+        match self {
+            Value::OptionalUInt(v) => Ok(v),
             _ => Err(Error::WrongType),
         }
     }
@@ -420,6 +436,12 @@ impl From<Value> for bool {
 impl From<Value> for u64 {
     fn from(value: Value) -> Self {
         value.into_uint().unwrap()
+    }
+}
+
+impl From<Value> for Option<u64> {
+    fn from(value: Value) -> Self {
+        value.into_optional_uint().unwrap()
     }
 }
 

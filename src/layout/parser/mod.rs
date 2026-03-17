@@ -684,6 +684,8 @@ where
                         Component::Timer(c) => timer::settings(reader, c),
                         Component::Title(c) => title::settings(reader, c),
                         Component::TotalPlaytime(c) => total_playtime::settings(reader, c),
+                        // Groups are not part of original LiveSplit format.
+                        Component::Group(_) => end_tag(reader),
                     }
                 } else {
                     end_tag(reader)

@@ -33,7 +33,7 @@ pub struct Component {
 pub struct Settings {
     /// The background shown behind the component.
     pub background: Gradient,
-    /// The color of the title text. If `None` is specified, the color is taken
+    /// The color of the title text. If [`None`] is specified, the color is taken
     /// from the layout.
     pub text_color: Option<Color>,
     /// Specifies whether the game name should be part of the title that is
@@ -74,7 +74,7 @@ pub struct Settings {
 pub struct State {
     /// The background shown behind the component.
     pub background: Gradient,
-    /// The color of the text. If `None` is specified, the color is taken from
+    /// The color of the text. If [`None`] is specified, the color is taken from
     /// the layout.
     pub text_color: Option<Color>,
     /// The game icon to show. The associated image can be looked up in the
@@ -95,10 +95,10 @@ pub struct State {
     /// Specifies whether the title should centered or aligned to the left
     /// instead.
     pub is_centered: bool,
-    /// The amount of successfully finished attempts. If `None` is specified,
+    /// The amount of successfully finished attempts. If [`None`] is specified,
     /// the amount of successfully finished attempts isn't supposed to be shown.
     pub finished_runs: Option<u32>,
-    /// The amount of total attempts. If `None` is specified, the amount of
+    /// The amount of total attempts. If [`None`] is specified, the amount of
     /// total attempts isn't supposed to be shown.
     pub attempts: Option<u32>,
 }

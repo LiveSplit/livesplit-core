@@ -528,6 +528,14 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::LayoutDirection => "Direzione del layout",
         Text::LayoutDirectionDescription => "La direzione in cui i componenti sono disposti.",
+        Text::GroupFixedWidth => "Larghezza fissa",
+        Text::GroupFixedWidthDescription => {
+            "Una larghezza fissa opzionale per questa colonna di componenti. Se non specificata, la larghezza viene determinata automaticamente."
+        }
+        Text::GroupFixedHeight => "Altezza fissa",
+        Text::GroupFixedHeightDescription => {
+            "Un'altezza fissa opzionale per questa riga di componenti. Se non specificata, l'altezza viene determinata automaticamente."
+        }
         Text::CustomTimerFont => "Font personalizzato del timer",
         Text::CustomTimerFontDescription => {
             "Consente di specificare un font personalizzato per il timer. Se non impostato, viene usato il font predefinito."
@@ -600,6 +608,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentSegmentTimer => "Timer del segmento",
         Text::ComponentTitle => "Titolo",
         Text::ComponentTotalPlaytime => "Tempo di gioco totale",
+        Text::Row => "Riga",
+        Text::Column => "Colonna",
+        Text::EmptyGroup => "Vuoto",
         Text::ComponentCurrentPaceBestPossibleTime => "Miglior tempo possibile",
         Text::ComponentCurrentPaceWorstPossibleTime => "Peggior tempo possibile",
         Text::ComponentCurrentPacePredictedTime => "Tempo previsto",

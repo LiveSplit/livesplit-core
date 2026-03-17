@@ -54,7 +54,7 @@ pub struct TimeColumn {
     /// The comparison chosen. Uses the Timer's current comparison if set to
     /// `None`.
     pub comparison_override: Option<String>,
-    /// Specifies the Timing Method to use. If set to `None` the Timing Method
+    /// Specifies the Timing Method to use. If set to [`None`] the Timing Method
     /// of the Timer is used for showing the time. Otherwise the Timing Method
     /// provided is used.
     pub timing_method: Option<TimingMethod>,
