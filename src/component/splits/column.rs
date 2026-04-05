@@ -12,7 +12,10 @@ use crate::{
     },
     util::Clear,
 };
-use core::fmt::Write;
+use core::{
+    fmt::Write,
+    hash::{Hash, Hasher},
+};
 use serde_derive::{Deserialize, Serialize};
 
 /// The settings of an individual column showing timing information on each
@@ -164,6 +167,16 @@ pub struct ColumnState {
     /// This value indicates whether the column is currently frequently being
     /// updated. This can be used for rendering optimizations.
     pub updates_frequently: bool,
+}
+
+impl ColumnState {
+    pub(crate) fn has_same_content(&self, other: &Self) -> bool {
+        self.value == other.value
+    }
+
+    pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
+        self.value.hash(state);
+    }
 }
 
 impl Clear for ColumnState {

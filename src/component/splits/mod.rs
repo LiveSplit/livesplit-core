@@ -16,7 +16,10 @@ use crate::{
     timing::{Snapshot, formatter::Accuracy},
     util::{Clear, ClearVec},
 };
-use core::cmp::{max, min};
+use core::{
+    cmp::{max, min},
+    hash::{Hash, Hasher},
+};
 use serde_derive::{Deserialize, Serialize};
 
 #[cfg(test)]
@@ -168,6 +171,54 @@ pub struct State {
     /// The gradient to show behind the current segment as an indicator of it
     /// being the current segment.
     pub current_split_gradient: Gradient,
+}
+
+impl SplitState {
+    pub(crate) fn has_same_content(&self, other: &Self) -> bool {
+        self.icon == other.icon
+            && self.name == other.name
+            && self.is_current_split == other.is_current_split
+            && self.index == other.index
+            && self.columns.len() == other.columns.len()
+            && self
+                .columns
+                .iter()
+                .zip(other.columns.iter())
+                .all(|(a, b)| a.has_same_content(b))
+    }
+
+    pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
+        self.icon.hash(state);
+        self.name.hash(state);
+        self.is_current_split.hash(state);
+        self.index.hash(state);
+        self.columns.len().hash(state);
+        for column in self.columns.iter() {
+            column.content_fingerprint(state);
+        }
+    }
+}
+
+impl State {
+    pub(crate) fn has_same_content(&self, other: &Self) -> bool {
+        self.has_icons == other.has_icons
+            && self.column_labels.as_deref() == other.column_labels.as_deref()
+            && self.splits.len() == other.splits.len()
+            && self
+                .splits
+                .iter()
+                .zip(other.splits.iter())
+                .all(|(a, b)| a.has_same_content(b))
+    }
+
+    pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
+        self.has_icons.hash(state);
+        self.column_labels.as_deref().hash(state);
+        self.splits.len().hash(state);
+        for split in self.splits.iter() {
+            split.content_fingerprint(state);
+        }
+    }
 }
 
 impl Settings {

@@ -554,7 +554,20 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentTotalPlaytime => "총 플레이 시간",
         Text::Row => "행",
         Text::Column => "열",
-        Text::EmptyGroup => "비어 있음",
+        Text::EmptyContainer => "비어 있음",
+        Text::Carousel => "캐러셀",
+        Text::CarouselFixedSize => "고정 크기",
+        Text::CarouselFixedSizeDescription => {
+            "캐러셀의 크기를 재정의합니다. 설정하지 않으면 가장 큰 하위 구성 요소를 기준으로 크기가 자동으로 결정됩니다."
+        }
+        Text::CarouselInterval => "간격(초)",
+        Text::CarouselIntervalDescription => {
+            "다음 하위 구성 요소로 전환하기 전에 하나의 하위 구성 요소를 표시하는 최대 초 수입니다. 다른 하위 구성 요소의 내용이 의미 있게 변경되면 캐러셀이 더 일찍 전환될 수 있습니다."
+        }
+        Text::CarouselMinDisplay => "최소 표시 시간(초)",
+        Text::CarouselMinDisplayDescription => {
+            "다른 하위 구성 요소로 전환하기 전에 현재 하위 구성 요소를 표시할 최소 초 수입니다."
+        }
         Text::ComponentCurrentPaceBestPossibleTime => "최적 가능 시간",
         Text::ComponentCurrentPaceWorstPossibleTime => "최악 가능 시간",
         Text::ComponentCurrentPacePredictedTime => "예측 시간",

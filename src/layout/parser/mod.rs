@@ -686,6 +686,8 @@ where
                         Component::TotalPlaytime(c) => total_playtime::settings(reader, c),
                         // Groups are not part of original LiveSplit format.
                         Component::Group(_) => end_tag(reader),
+                        // Carousels are not part of original LiveSplit format.
+                        Component::Carousel(_) => end_tag(reader),
                     }
                 } else {
                     end_tag(reader)

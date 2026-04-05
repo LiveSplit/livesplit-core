@@ -2,6 +2,8 @@
 //! Separator Component is a simple component that only serves to render
 //! separators between components.
 
+use core::hash::Hasher;
+
 use serde_derive::{Deserialize, Serialize};
 
 use crate::{
@@ -27,6 +29,14 @@ impl State {
     {
         serde_json::to_writer(writer, self)
     }
+}
+
+impl State {
+    pub(crate) const fn has_same_content(&self, _other: &Self) -> bool {
+        true
+    }
+
+    pub(crate) const fn content_fingerprint(&self, _state: &mut impl Hasher) {}
 }
 
 impl Component {

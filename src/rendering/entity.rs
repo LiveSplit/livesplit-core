@@ -3,68 +3,12 @@ use core::{
     mem,
 };
 
-use crate::settings::BackgroundImage;
+use crate::{settings::BackgroundImage, util::FxHasher};
 
 use super::{
     Background, FillShader, Rgba, Transform,
     resource::{Handle, LabelHandle},
 };
-
-struct FxHasher(u64);
-
-impl Hasher for FxHasher {
-    #[inline]
-    fn write_u8(&mut self, i: u8) {
-        self.write_u64(i as u64);
-    }
-
-    #[inline]
-    fn write_u16(&mut self, i: u16) {
-        self.write_u64(i as u64);
-    }
-
-    #[inline]
-    fn write_u32(&mut self, i: u32) {
-        self.write_u64(i as u64);
-    }
-
-    #[inline]
-    fn write_u64(&mut self, i: u64) {
-        self.0 = (self.0.rotate_left(5) ^ i).wrapping_mul(0x517cc1b727220a95);
-    }
-
-    #[inline]
-    fn write_u128(&mut self, i: u128) {
-        let [a, b]: [u64; 2] = bytemuck::cast(i);
-        self.write_u64(a);
-        self.write_u64(b);
-    }
-
-    #[inline]
-    fn write_usize(&mut self, i: usize) {
-        self.write(bytemuck::bytes_of(&i))
-    }
-
-    #[inline]
-    fn finish(&self) -> u64 {
-        self.0
-    }
-
-    #[inline]
-    fn write(&mut self, bytes: &[u8]) {
-        let (_, chunks, rem) = bytemuck::pod_align_to::<_, [u8; 8]>(bytes);
-        for chunk in chunks {
-            self.write_u64(bytemuck::cast(*chunk));
-        }
-        let (_, chunks, rem) = bytemuck::pod_align_to::<_, [u8; 4]>(rem);
-        for chunk in chunks {
-            self.write_u32(bytemuck::cast(*chunk));
-        }
-        for byte in rem {
-            self.write_u8(*byte);
-        }
-    }
-}
 
 /// An entity describes an element positioned on a [`Scene's`](super::Scene)
 /// [`Layer`](super::Layer) that is meant to be visualized.
@@ -89,7 +33,7 @@ pub fn calculate_hash<P, I, L>(
     background: &Option<Background<I>>,
     entities: &[Entity<P, I, L>],
 ) -> u64 {
-    let mut hasher = FxHasher(0x517cc1b727220a95);
+    let mut hasher = FxHasher::new();
     mem::discriminant(background).hash(&mut hasher);
     if let Some(background) = background {
         background.hash(&mut hasher);

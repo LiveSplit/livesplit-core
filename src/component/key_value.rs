@@ -3,6 +3,8 @@
 //! components. They all share the same visual appearance and thus use the same
 //! state object representation.
 
+use core::hash::{Hash, Hasher};
+
 use crate::{
     platform::prelude::*,
     settings::{Color, Gradient, SemanticColor},
@@ -46,6 +48,23 @@ impl State {
         W: std::io::Write,
     {
         serde_json::to_writer(writer, self)
+    }
+}
+
+impl State {
+    pub(crate) fn has_same_content(&self, other: &Self) -> bool {
+        self.key == other.key
+            && self.value == other.value
+            && self.key_abbreviations == other.key_abbreviations
+    }
+
+    pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
+        self.key.hash(state);
+        self.value.hash(state);
+        self.key_abbreviations.len().hash(state);
+        for abbreviation in &self.key_abbreviations {
+            abbreviation.hash(state);
+        }
     }
 }
 

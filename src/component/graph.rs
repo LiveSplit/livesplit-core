@@ -18,6 +18,7 @@ use crate::{
     timing::Snapshot,
 };
 use alloc::borrow::Cow;
+use core::hash::{Hash, Hasher};
 use serde_derive::{Deserialize, Serialize};
 
 const WIDTH: f32 = 1.0;
@@ -135,6 +136,50 @@ pub struct Point {
     /// Describes whether the segment this point is visualizing achieved a new
     /// best segment time. Use the best segment color for it, in that case.
     pub is_best_segment: bool,
+}
+
+impl State {
+    pub(crate) fn has_same_content(&self, other: &Self) -> bool {
+        self.points.len() == other.points.len()
+            && self
+                .points
+                .iter()
+                .zip(other.points.iter())
+                .all(|(a, b)| a.has_same_content(b))
+            && self.horizontal_grid_lines == other.horizontal_grid_lines
+            && self.vertical_grid_lines == other.vertical_grid_lines
+            && self.middle == other.middle
+            && self.is_live_delta_active == other.is_live_delta_active
+    }
+
+    pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
+        self.points.len().hash(state);
+        for point in &self.points {
+            point.content_fingerprint(state);
+        }
+        self.horizontal_grid_lines.len().hash(state);
+        for &value in &self.horizontal_grid_lines {
+            value.to_bits().hash(state);
+        }
+        self.vertical_grid_lines.len().hash(state);
+        for &value in &self.vertical_grid_lines {
+            value.to_bits().hash(state);
+        }
+        self.middle.to_bits().hash(state);
+        self.is_live_delta_active.hash(state);
+    }
+}
+
+impl Point {
+    pub(crate) fn has_same_content(&self, other: &Self) -> bool {
+        self.x == other.x && self.y == other.y && self.is_best_segment == other.is_best_segment
+    }
+
+    pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
+        self.x.to_bits().hash(state);
+        self.y.to_bits().hash(state);
+        self.is_best_segment.hash(state);
+    }
 }
 
 impl Default for Settings {
