@@ -13,7 +13,10 @@ use crate::{
     util::PopulateString,
 };
 use alloc::borrow::Cow;
-use core::mem;
+use core::{
+    hash::{Hash, Hasher},
+    mem,
+};
 use serde_derive::{Deserialize, Serialize};
 
 #[cfg(test)]
@@ -75,6 +78,29 @@ pub enum TextState {
 impl Default for TextState {
     fn default() -> Self {
         TextState::Center(String::new())
+    }
+}
+
+impl State {
+    pub(crate) fn has_same_content(&self, other: &Self) -> bool {
+        self.text == other.text
+    }
+
+    pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
+        self.text.content_fingerprint(state);
+    }
+}
+
+impl TextState {
+    pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
+        mem::discriminant(self).hash(state);
+        match self {
+            Self::Center(text) => text.hash(state),
+            Self::Split(left, right) => {
+                left.hash(state);
+                right.hash(state);
+            }
+        }
     }
 }
 

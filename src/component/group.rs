@@ -2,6 +2,8 @@
 //! Group allows nesting components in a layout direction opposite to its
 //! parent, enabling horizontal groups inside vertical layouts and vice versa.
 
+use core::hash::{Hash, Hasher};
+
 use crate::{
     layout::{self, LayoutDirection},
     localization::{Lang, Text},
@@ -39,6 +41,24 @@ pub struct State {
     pub size: Option<u32>,
     /// The state objects for the components in this group.
     pub components: Vec<layout::ComponentState>,
+}
+
+impl State {
+    pub(crate) fn has_same_content(&self, other: &Self) -> bool {
+        self.components.len() == other.components.len()
+            && self
+                .components
+                .iter()
+                .zip(other.components.iter())
+                .all(|(a, b)| a.has_same_content(b))
+    }
+
+    pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
+        self.components.len().hash(state);
+        for component in &self.components {
+            component.content_fingerprint().hash(state);
+        }
+    }
 }
 
 /// The serializable settings for a component group.

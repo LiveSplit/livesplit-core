@@ -606,7 +606,20 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentTotalPlaytime => "Tempo total de jogo",
         Text::Row => "Linha",
         Text::Column => "Coluna",
-        Text::EmptyGroup => "Vazio",
+        Text::EmptyContainer => "Vazio",
+        Text::Carousel => "Carrossel",
+        Text::CarouselFixedSize => "Tamanho fixo",
+        Text::CarouselFixedSizeDescription => {
+            "Substitui o tamanho do carrossel. Se não for definido, o tamanho é determinado automaticamente com base no maior componente filho."
+        }
+        Text::CarouselInterval => "Intervalo (segundos)",
+        Text::CarouselIntervalDescription => {
+            "O número máximo de segundos durante os quais um componente filho é mostrado antes de passar ao seguinte. O carrossel pode mudar mais cedo se o conteúdo de outro componente filho tiver mudado de forma significativa."
+        }
+        Text::CarouselMinDisplay => "Exibição mínima (segundos)",
+        Text::CarouselMinDisplayDescription => {
+            "O número mínimo de segundos para mostrar um componente filho antes de mudar para outro."
+        }
         Text::ComponentCurrentPaceBestPossibleTime => "Melhor tempo possível",
         Text::ComponentCurrentPaceWorstPossibleTime => "Pior tempo possível",
         Text::ComponentCurrentPacePredictedTime => "Tempo previsto",

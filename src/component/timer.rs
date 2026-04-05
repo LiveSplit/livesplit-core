@@ -14,7 +14,10 @@ use crate::{
         formatter::{Accuracy, DigitsFormat, TimeFormatter, timer as formatter},
     },
 };
-use core::fmt::Write;
+use core::{
+    fmt::Write,
+    hash::{Hash, Hasher},
+};
 use serde_derive::{Deserialize, Serialize};
 
 /// The `Timer` Component is a component that shows the total time of the current
@@ -155,6 +158,17 @@ impl State {
         W: std::io::Write,
     {
         serde_json::to_writer(writer, self)
+    }
+}
+
+impl State {
+    pub(crate) fn has_same_content(&self, other: &Self) -> bool {
+        self.time == other.time && self.fraction == other.fraction
+    }
+
+    pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
+        self.time.hash(state);
+        self.fraction.hash(state);
     }
 }
 

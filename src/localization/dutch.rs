@@ -612,7 +612,20 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentTotalPlaytime => "Totale speeltijd",
         Text::Row => "Rij",
         Text::Column => "Kolom",
-        Text::EmptyGroup => "Leeg",
+        Text::EmptyContainer => "Leeg",
+        Text::Carousel => "Carrousel",
+        Text::CarouselFixedSize => "Vaste grootte",
+        Text::CarouselFixedSizeDescription => {
+            "Overschrijft de grootte van de carrousel. Als dit niet is ingesteld, wordt de grootte automatisch bepaald op basis van het grootste onderliggende onderdeel."
+        }
+        Text::CarouselInterval => "Interval (seconden)",
+        Text::CarouselIntervalDescription => {
+            "Het maximale aantal seconden dat een onderdeel wordt weergegeven voordat naar het volgende wordt gewisseld. De carrousel kan eerder wisselen als de inhoud van een ander onderliggend onderdeel wezenlijk is veranderd."
+        }
+        Text::CarouselMinDisplay => "Minimale weergave (seconden)",
+        Text::CarouselMinDisplayDescription => {
+            "Het minimum aantal seconden dat een onderdeel zichtbaar blijft voordat naar een ander onderdeel wordt gewisseld."
+        }
         Text::ComponentCurrentPaceBestPossibleTime => "Best mogelijke tijd",
         Text::ComponentCurrentPaceWorstPossibleTime => "Slechtst mogelijke tijd",
         Text::ComponentCurrentPacePredictedTime => "Voorspelde tijd",

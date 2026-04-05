@@ -6,6 +6,7 @@
 
 use super::{Component, Layout, LayoutState};
 use crate::{
+    layout::ComponentState,
     localization::Lang,
     platform::prelude::*,
     settings::{ImageCache, Value},
@@ -99,16 +100,16 @@ impl Editor {
                 indent,
                 is_placeholder: false,
             });
-            if let Component::Group(group) = component {
-                if group.components.is_empty() {
-                    // Emit a placeholder "Empty" entry for the empty group.
+            if let Some(children) = component.children() {
+                if children.is_empty() {
+                    // Emit a placeholder "Empty" entry for the empty container.
                     out.push(FlatEntry {
                         path: path_prefix.clone(),
                         indent: indent + 1,
                         is_placeholder: true,
                     });
                 } else {
-                    Self::flatten_recursive(&group.components, path_prefix, indent + 1, out);
+                    Self::flatten_recursive(children, path_prefix, indent + 1, out);
                 }
             }
             path_prefix.pop();
@@ -122,11 +123,9 @@ impl Editor {
             unreachable!("Path must have at least one index");
         };
         for &idx in parents {
-            if let Component::Group(group) = &components[idx] {
-                components = &group.components;
-            } else {
-                unreachable!("Path navigated into non-group component");
-            }
+            components = components[idx]
+                .children()
+                .expect("Path navigated into non-container component");
         }
         &components[*leaf]
     }
@@ -138,28 +137,24 @@ impl Editor {
             unreachable!("Path must have at least one index");
         };
         for &idx in parents {
-            if let Component::Group(group) = &mut components[idx] {
-                components = &mut group.components;
-            } else {
-                unreachable!("Path navigated into non-group component");
-            }
+            components = components[idx]
+                .children_mut()
+                .expect("Path navigated into non-container component");
         }
         &mut components[*leaf]
     }
 
     /// Returns a reference to the component list that contains the component
     /// described by the given path (i.e. the parent container).
-    fn parent_components(&self, path: &[usize]) -> &Vec<Component> {
-        let mut components = &self.layout.components;
+    fn parent_components(&self, path: &[usize]) -> &[Component] {
+        let mut components: &[Component] = &self.layout.components;
         let [parents @ .., _] = path else {
             unreachable!("Path must have at least one index");
         };
         for &idx in parents {
-            if let Component::Group(group) = &components[idx] {
-                components = &group.components;
-            } else {
-                unreachable!("Path navigated into non-group component");
-            }
+            components = components[idx]
+                .children()
+                .expect("Path navigated into non-container component");
         }
         components
     }
@@ -172,11 +167,9 @@ impl Editor {
             unreachable!("Path must have at least one index");
         };
         for &idx in parents {
-            if let Component::Group(group) = &mut components[idx] {
-                components = &mut group.components;
-            } else {
-                unreachable!("Path navigated into non-group component");
-            }
+            components = components[idx]
+                .children_mut()
+                .expect("Path navigated into non-container component");
         }
         components
     }
@@ -189,7 +182,7 @@ impl Editor {
     /// Computes the flat pre-order index of a component in the
     /// [`ComponentState`] tree from a tree path. This is different from the
     /// editor's own flat index which includes placeholder entries.
-    fn flat_index_of_path(components: &[crate::layout::ComponentState], path: &[usize]) -> usize {
+    fn flat_index_of_path(components: &[ComponentState], path: &[usize]) -> usize {
         let mut index = 0;
         let mut components = components;
         for (depth, &child_idx) in path.iter().enumerate() {
@@ -197,11 +190,11 @@ impl Editor {
                 index += Self::subtree_size_of_state(c);
             }
             if depth + 1 < path.len() {
-                // Descend into the group's children; count 1 for the group
-                // node itself.
+                // Descend into the container's children; count 1 for the
+                // container node itself.
                 index += 1;
-                if let crate::layout::ComponentState::Group(g) = &components[child_idx] {
-                    components = &g.components;
+                if let Some(children) = components[child_idx].children() {
+                    components = children;
                 }
             }
         }
@@ -210,16 +203,15 @@ impl Editor {
 
     /// Returns the total number of nodes in the subtree rooted at `component`
     /// (including the component itself).
-    fn subtree_size_of_state(component: &crate::layout::ComponentState) -> usize {
-        match component {
-            crate::layout::ComponentState::Group(g) => {
-                1 + g
-                    .components
+    fn subtree_size_of_state(component: &ComponentState) -> usize {
+        match component.children() {
+            Some(children) => {
+                1 + children
                     .iter()
                     .map(Self::subtree_size_of_state)
                     .sum::<usize>()
             }
-            _ => 1,
+            None => 1,
         }
     }
 
@@ -267,6 +259,7 @@ impl Editor {
         lang: Lang,
     ) -> LayoutState {
         let mut state = self.layout.state(image_cache, timer, lang);
+        Self::force_carousel_selection(&mut state.components, &self.selected_entry().path);
         state.selected_component = Some(Self::flat_index_of_path(
             &state.components,
             &self.selected_entry().path,
@@ -289,10 +282,36 @@ impl Editor {
         lang: Lang,
     ) {
         self.layout.update_state(state, image_cache, timer, lang);
+        Self::force_carousel_selection(&mut state.components, &self.selected_entry().path);
         state.selected_component = Some(Self::flat_index_of_path(
             &state.components,
             &self.selected_entry().path,
         ));
+    }
+
+    /// Forces all carousel states along `path` to show the child that contains
+    /// the selected component. This keeps selected descendants visible in the
+    /// layout editor preview, even when the carousel would otherwise choose a
+    /// different child on its own.
+    fn force_carousel_selection(components: &mut [ComponentState], path: &[usize]) {
+        let Some((&index, rest)) = path.split_first() else {
+            return;
+        };
+
+        let Some(component) = components.get_mut(index) else {
+            return;
+        };
+
+        if let ComponentState::Carousel(carousel) = component
+            && let Some((&child_index, _)) = rest.split_first()
+            && child_index < carousel.components.len()
+        {
+            carousel.current_index = child_index;
+        }
+
+        if let Some(children) = component.children_mut() {
+            Self::force_carousel_selection(children, rest);
+        }
     }
 
     /// Selects the component at the given flat index in order to modify its
@@ -314,12 +333,12 @@ impl Editor {
         let entry = self.selected_entry();
 
         if entry.is_placeholder {
-            // Placeholder or group is selected – add as first child.
-            let group_path = entry.path.clone();
-            if let Component::Group(group) = self.component_at_path_mut(&group_path) {
-                group.components.insert(0, component.into());
+            // Placeholder is selected – add as first child of the container.
+            let container_path = entry.path.clone();
+            if let Some(children) = self.component_at_path_mut(&container_path).children_mut() {
+                children.insert(0, component.into());
             }
-            let mut new_path = group_path;
+            let mut new_path = container_path;
             new_path.push(0);
             self.select_path(&new_path);
         } else {
@@ -335,13 +354,14 @@ impl Editor {
             self.selected = subtree_end;
         }
 
-        // If we just added a group, automatically select its empty placeholder
-        // so the user can immediately start adding components inside it.
+        // If we just added a group or carousel, automatically select its
+        // empty placeholder so the user can immediately start adding
+        // components inside it.
         if !self.flat[self.selected].is_placeholder
-            && matches!(
-                self.component_at_path(&self.flat[self.selected].path),
-                Component::Group(_)
-            )
+            && self
+                .component_at_path(&self.flat[self.selected].path)
+                .children()
+                .is_some()
         {
             self.selected += 1;
         }
@@ -480,9 +500,9 @@ impl Editor {
         let adjusted = Self::adjust_path_after_removal(&dst_path, &src_path);
 
         if dst_is_placeholder {
-            // The placeholder's path points to the empty group – insert as first child.
-            if let Component::Group(group) = self.component_at_path_mut(&adjusted) {
-                group.components.insert(0, component);
+            // The placeholder's path points to the empty container – insert as first child.
+            if let Some(children) = self.component_at_path_mut(&adjusted).children_mut() {
+                children.insert(0, component);
             }
             let mut new_path = adjusted;
             new_path.push(0);

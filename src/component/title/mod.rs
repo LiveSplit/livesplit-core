@@ -11,7 +11,10 @@ use crate::{
         Alignment, Color, Field, Gradient, Image, ImageCache, ImageId, SettingsDescription, Value,
     },
 };
-use core::fmt::Write;
+use core::{
+    fmt::Write,
+    hash::{Hash, Hasher},
+};
 use livesplit_title_abbreviations::{abbreviate as abbreviate_title, abbreviate_category};
 use serde_derive::{Deserialize, Serialize};
 use smallstr::SmallString;
@@ -101,6 +104,30 @@ pub struct State {
     /// The amount of total attempts. If [`None`] is specified, the amount of
     /// total attempts isn't supposed to be shown.
     pub attempts: Option<u32>,
+}
+
+impl State {
+    pub(crate) fn has_same_content(&self, other: &Self) -> bool {
+        self.icon == other.icon
+            && self.line1 == other.line1
+            && self.line2 == other.line2
+            && self.finished_runs == other.finished_runs
+            && self.attempts == other.attempts
+    }
+
+    pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
+        self.icon.hash(state);
+        self.line1.len().hash(state);
+        for part in &self.line1 {
+            part.hash(state);
+        }
+        self.line2.len().hash(state);
+        for part in &self.line2 {
+            part.hash(state);
+        }
+        self.finished_runs.hash(state);
+        self.attempts.hash(state);
+    }
 }
 
 impl Default for Settings {

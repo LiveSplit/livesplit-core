@@ -586,7 +586,20 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentTotalPlaytime => "Общее время игры",
         Text::Row => "Строка",
         Text::Column => "Столбец",
-        Text::EmptyGroup => "Пусто",
+        Text::EmptyContainer => "Пусто",
+        Text::Carousel => "Карусель",
+        Text::CarouselFixedSize => "Фиксированный размер",
+        Text::CarouselFixedSizeDescription => {
+            "Переопределяет размер карусели. Если не задан, размер определяется автоматически по самому большому дочернему компоненту."
+        }
+        Text::CarouselInterval => "Интервал (секунды)",
+        Text::CarouselIntervalDescription => {
+            "Максимальное количество секунд, в течение которых дочерний компонент показывается перед переключением к следующему. Карусель может переключиться раньше, если содержимое другого дочернего компонента существенно изменилось."
+        }
+        Text::CarouselMinDisplay => "Минимальный показ (секунды)",
+        Text::CarouselMinDisplayDescription => {
+            "Минимальное количество секунд, в течение которых дочерний компонент должен отображаться перед переключением на другой."
+        }
         Text::ComponentCurrentPaceBestPossibleTime => "Лучшее возможное время",
         Text::ComponentCurrentPaceWorstPossibleTime => "Худшее возможное время",
         Text::ComponentCurrentPacePredictedTime => "Прогнозируемое время",

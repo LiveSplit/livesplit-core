@@ -604,7 +604,20 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentTotalPlaytime => "Total Playtime",
         Text::Row => "Row",
         Text::Column => "Column",
-        Text::EmptyGroup => "Empty",
+        Text::EmptyContainer => "Empty",
+        Text::Carousel => "Carousel",
+        Text::CarouselFixedSize => "Fixed Size",
+        Text::CarouselFixedSizeDescription => {
+            "Overrides the size of the carousel. If not set, the size is determined automatically from the largest child component."
+        }
+        Text::CarouselInterval => "Interval (seconds)",
+        Text::CarouselIntervalDescription => {
+            "The maximum number of seconds to show a child before rotating to the next one. The carousel may switch sooner if another child's content has meaningfully changed."
+        }
+        Text::CarouselMinDisplay => "Minimum Display (seconds)",
+        Text::CarouselMinDisplayDescription => {
+            "The minimum number of seconds to show a child before switching to a different one."
+        }
         Text::ComponentCurrentPaceBestPossibleTime => "Best Possible Time",
         Text::ComponentCurrentPaceWorstPossibleTime => "Worst Possible Time",
         Text::ComponentCurrentPacePredictedTime => "Predicted Time",

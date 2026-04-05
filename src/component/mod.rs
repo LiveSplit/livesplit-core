@@ -4,6 +4,7 @@
 //! visualized by any kind of User Interface.
 
 pub mod blank_space;
+pub mod carousel;
 pub mod current_comparison;
 pub mod current_pace;
 pub mod delta;
@@ -25,6 +26,7 @@ pub mod total_playtime;
 pub mod key_value;
 
 pub use blank_space::Component as BlankSpace;
+pub use carousel::Component as Carousel;
 pub use current_comparison::Component as CurrentComparison;
 pub use current_pace::Component as CurrentPace;
 pub use delta::Component as Delta;
