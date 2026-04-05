@@ -60,11 +60,11 @@ impl State {
 }
 
 impl State {
-    pub(crate) const fn has_same_content(&self, _other: &Self) -> bool {
-        true
-    }
-
     pub(crate) const fn content_fingerprint(&self, _state: &mut impl Hasher) {}
+
+    pub(crate) const fn updates_frequently(&self) -> bool {
+        false
+    }
 }
 
 impl Component {

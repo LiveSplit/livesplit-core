@@ -9,8 +9,7 @@
 use crate::{Json, output_vec};
 use livesplit_core::{
     component::{
-        blank_space::State as BlankSpaceComponentState,
-        carousel::State as CarouselComponentState,
+        blank_space::State as BlankSpaceComponentState, carousel::State as CarouselComponentState,
         detailed_timer::State as DetailedTimerComponentState, graph::State as GraphComponentState,
         group::State as GroupComponentState, key_value::State as KeyValueComponentState,
         separator::State as SeparatorComponentState, splits::State as SplitsComponentState,

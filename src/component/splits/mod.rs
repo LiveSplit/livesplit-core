@@ -174,19 +174,6 @@ pub struct State {
 }
 
 impl SplitState {
-    pub(crate) fn has_same_content(&self, other: &Self) -> bool {
-        self.icon == other.icon
-            && self.name == other.name
-            && self.is_current_split == other.is_current_split
-            && self.index == other.index
-            && self.columns.len() == other.columns.len()
-            && self
-                .columns
-                .iter()
-                .zip(other.columns.iter())
-                .all(|(a, b)| a.has_same_content(b))
-    }
-
     pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
         self.icon.hash(state);
         self.name.hash(state);
@@ -197,20 +184,13 @@ impl SplitState {
             column.content_fingerprint(state);
         }
     }
+
+    pub(crate) fn updates_frequently(&self) -> bool {
+        self.columns.iter().any(ColumnState::updates_frequently)
+    }
 }
 
 impl State {
-    pub(crate) fn has_same_content(&self, other: &Self) -> bool {
-        self.has_icons == other.has_icons
-            && self.column_labels.as_deref() == other.column_labels.as_deref()
-            && self.splits.len() == other.splits.len()
-            && self
-                .splits
-                .iter()
-                .zip(other.splits.iter())
-                .all(|(a, b)| a.has_same_content(b))
-    }
-
     pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
         self.has_icons.hash(state);
         self.column_labels.as_deref().hash(state);
@@ -218,6 +198,10 @@ impl State {
         for split in self.splits.iter() {
             split.content_fingerprint(state);
         }
+    }
+
+    pub(crate) fn updates_frequently(&self) -> bool {
+        self.splits.iter().any(SplitState::updates_frequently)
     }
 }
 

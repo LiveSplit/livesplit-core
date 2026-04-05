@@ -82,12 +82,12 @@ impl Default for TextState {
 }
 
 impl State {
-    pub(crate) fn has_same_content(&self, other: &Self) -> bool {
-        self.text == other.text
-    }
-
     pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
         self.text.content_fingerprint(state);
+    }
+
+    pub(crate) const fn updates_frequently(&self) -> bool {
+        false
     }
 }
 

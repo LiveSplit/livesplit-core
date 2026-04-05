@@ -78,22 +78,18 @@ pub struct State {
 }
 
 impl State {
-    pub(crate) fn has_same_content(&self, other: &Self) -> bool {
-        self.current_index == other.current_index
-            && self.components.len() == other.components.len()
-            && self
-                .components
-                .iter()
-                .zip(other.components.iter())
-                .all(|(a, b)| a.has_same_content(b))
-    }
-
     pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
         self.current_index.hash(state);
         self.components.len().hash(state);
         for component in &self.components {
             component.content_fingerprint().hash(state);
         }
+    }
+
+    pub(crate) fn updates_frequently(&self) -> bool {
+        self.components
+            .iter()
+            .any(layout::ComponentState::updates_frequently)
     }
 }
 
@@ -169,12 +165,10 @@ impl Component {
     /// Ensures the per-child tracking vectors are correctly sized for the
     /// current number of children.
     fn ensure_tracking(&mut self, len: usize, now: Instant) {
-        while self.baseline_fingerprints.len() < len {
-            self.baseline_fingerprints.push(None);
-        }
-        while self.last_shown.len() < len {
-            self.last_shown.push(now);
-        }
+        self.baseline_fingerprints
+            .extend((self.baseline_fingerprints.len()..len).map(|_| None));
+        self.last_shown
+            .extend((self.last_shown.len()..len).map(|_| now));
         self.baseline_fingerprints.truncate(len);
         self.last_shown.truncate(len);
         if self.current_index >= len && len > 0 {
@@ -235,10 +229,9 @@ impl Component {
             if i == self.current_index {
                 continue;
             }
-            let fp = state.content_fingerprint();
-            if let Some(baseline) = self.baseline_fingerprints[i]
-                && fp != baseline
-                && !state.updates_frequently()
+            if !state.updates_frequently()
+                && let Some(baseline) = self.baseline_fingerprints[i]
+                && state.content_fingerprint() != baseline
             {
                 let last = self.last_shown[i];
                 if best_candidate.is_none_or(|(_, t)| last < t) {

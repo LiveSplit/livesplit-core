@@ -39,7 +39,7 @@ pub fn render_carousel<A: ResourceAllocator>(
         if let Some(child_cache) = caches.get_mut(carousel.current_index) {
             // Skip flat indices for all children before the current one.
             for earlier in &carousel.components[..carousel.current_index] {
-                *flat_index += subtree_count(earlier);
+                *flat_index += earlier.subtree_size();
             }
 
             render(
@@ -54,22 +54,8 @@ pub fn render_carousel<A: ResourceAllocator>(
 
             // Skip flat indices for all children after the current one.
             for later in &carousel.components[carousel.current_index + 1..] {
-                *flat_index += subtree_count(later);
+                *flat_index += later.subtree_size();
             }
         }
-    }
-}
-
-/// Counts the total number of state nodes in the subtree of a component
-/// (including the component itself).
-fn subtree_count(component: &crate::layout::ComponentState) -> usize {
-    match component {
-        crate::layout::ComponentState::Group(g) => {
-            1 + g.components.iter().map(|c| subtree_count(c)).sum::<usize>()
-        }
-        crate::layout::ComponentState::Carousel(c) => {
-            1 + c.components.iter().map(|c| subtree_count(c)).sum::<usize>()
-        }
-        _ => 1,
     }
 }

@@ -162,13 +162,13 @@ impl State {
 }
 
 impl State {
-    pub(crate) fn has_same_content(&self, other: &Self) -> bool {
-        self.time == other.time && self.fraction == other.fraction
-    }
-
     pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
         self.time.hash(state);
         self.fraction.hash(state);
+    }
+
+    pub(crate) const fn updates_frequently(&self) -> bool {
+        self.updates_frequently
     }
 }
 

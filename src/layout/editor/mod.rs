@@ -187,7 +187,7 @@ impl Editor {
         let mut components = components;
         for (depth, &child_idx) in path.iter().enumerate() {
             for c in &components[..child_idx] {
-                index += Self::subtree_size_of_state(c);
+                index += c.subtree_size();
             }
             if depth + 1 < path.len() {
                 // Descend into the container's children; count 1 for the
@@ -199,20 +199,6 @@ impl Editor {
             }
         }
         index
-    }
-
-    /// Returns the total number of nodes in the subtree rooted at `component`
-    /// (including the component itself).
-    fn subtree_size_of_state(component: &ComponentState) -> usize {
-        match component.children() {
-            Some(children) => {
-                1 + children
-                    .iter()
-                    .map(Self::subtree_size_of_state)
-                    .sum::<usize>()
-            }
-            None => 1,
-        }
     }
 
     /// Returns the flat index one past the last item in the subtree rooted at

@@ -44,20 +44,17 @@ pub struct State {
 }
 
 impl State {
-    pub(crate) fn has_same_content(&self, other: &Self) -> bool {
-        self.components.len() == other.components.len()
-            && self
-                .components
-                .iter()
-                .zip(other.components.iter())
-                .all(|(a, b)| a.has_same_content(b))
-    }
-
     pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
         self.components.len().hash(state);
         for component in &self.components {
             component.content_fingerprint().hash(state);
         }
+    }
+
+    pub(crate) fn updates_frequently(&self) -> bool {
+        self.components
+            .iter()
+            .any(layout::ComponentState::updates_frequently)
     }
 }
 

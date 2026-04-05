@@ -52,12 +52,6 @@ impl State {
 }
 
 impl State {
-    pub(crate) fn has_same_content(&self, other: &Self) -> bool {
-        self.key == other.key
-            && self.value == other.value
-            && self.key_abbreviations == other.key_abbreviations
-    }
-
     pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
         self.key.hash(state);
         self.value.hash(state);
@@ -65,6 +59,10 @@ impl State {
         for abbreviation in &self.key_abbreviations {
             abbreviation.hash(state);
         }
+    }
+
+    pub(crate) const fn updates_frequently(&self) -> bool {
+        self.updates_frequently
     }
 }
 

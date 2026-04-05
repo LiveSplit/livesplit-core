@@ -107,14 +107,6 @@ pub struct State {
 }
 
 impl State {
-    pub(crate) fn has_same_content(&self, other: &Self) -> bool {
-        self.icon == other.icon
-            && self.line1 == other.line1
-            && self.line2 == other.line2
-            && self.finished_runs == other.finished_runs
-            && self.attempts == other.attempts
-    }
-
     pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
         self.icon.hash(state);
         self.line1.len().hash(state);
@@ -127,6 +119,10 @@ impl State {
         }
         self.finished_runs.hash(state);
         self.attempts.hash(state);
+    }
+
+    pub(crate) const fn updates_frequently(&self) -> bool {
+        false
     }
 }
 

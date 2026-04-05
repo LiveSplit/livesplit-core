@@ -116,15 +116,6 @@ pub struct ComparisonState {
 }
 
 impl State {
-    pub(crate) fn has_same_content(&self, other: &Self) -> bool {
-        self.timer.has_same_content(&other.timer)
-            && self.segment_timer.has_same_content(&other.segment_timer)
-            && comparison_same_content(&self.comparison1, &other.comparison1)
-            && comparison_same_content(&self.comparison2, &other.comparison2)
-            && self.segment_name == other.segment_name
-            && self.icon == other.icon
-    }
-
     pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
         self.timer.content_fingerprint(state);
         self.segment_timer.content_fingerprint(state);
@@ -133,24 +124,16 @@ impl State {
         self.segment_name.hash(state);
         self.icon.hash(state);
     }
+
+    pub(crate) const fn updates_frequently(&self) -> bool {
+        self.timer.updates_frequently() || self.segment_timer.updates_frequently()
+    }
 }
 
 impl ComparisonState {
-    pub(crate) fn has_same_content(&self, other: &Self) -> bool {
-        self.name == other.name && self.time == other.time
-    }
-
     pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
         self.name.hash(state);
         self.time.hash(state);
-    }
-}
-
-fn comparison_same_content(a: &Option<ComparisonState>, b: &Option<ComparisonState>) -> bool {
-    match (a, b) {
-        (Some(a), Some(b)) => a.has_same_content(b),
-        (None, None) => true,
-        _ => false,
     }
 }
 
