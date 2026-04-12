@@ -7,6 +7,7 @@ use super::{
 };
 
 pub mod blank_space;
+pub mod carousel;
 pub mod detailed_timer;
 pub mod graph;
 pub mod group;
@@ -26,6 +27,7 @@ pub enum Cache<L> {
     Timer(timer::Cache<L>),
     Title(title::Cache<L>),
     Group(group::Cache<L>),
+    Carousel(carousel::Cache<L>),
 }
 
 macro_rules! accessors {
@@ -54,6 +56,7 @@ impl<L> Cache<L> {
             ComponentState::Timer(_) => Self::Timer(timer::Cache::new()),
             ComponentState::Title(_) => Self::Title(title::Cache::new()),
             ComponentState::Group(_) => Self::Group(group::Cache::new()),
+            ComponentState::Carousel(_) => Self::Carousel(carousel::Cache::new()),
             ComponentState::BlankSpace(_)
             | ComponentState::Graph(_)
             | ComponentState::Separator(_) => Self::Empty,
@@ -71,7 +74,8 @@ impl<L> Cache<L> {
         Text text,
         Timer timer,
         Title title,
-        Group group
+        Group group,
+        Carousel carousel
     }
 }
 
@@ -139,6 +143,18 @@ pub fn width(component: &ComponentState, direction: LayoutDirection) -> f32 {
                 }
             }
         },
+        ComponentState::Carousel(carousel) => {
+            if let Some(size) = carousel.size {
+                size as f32 * PSEUDO_PIXELS
+            } else {
+                carousel
+                    .components
+                    .iter()
+                    .map(|c| width(c, direction))
+                    .max_by(|a, b| a.partial_cmp(b).unwrap_or(core::cmp::Ordering::Equal))
+                    .unwrap_or(0.0)
+            }
+        }
     }
 }
 
@@ -210,6 +226,18 @@ pub fn height(component: &ComponentState, direction: LayoutDirection) -> f32 {
                 }
             }
         },
+        ComponentState::Carousel(carousel) => {
+            if let Some(size) = carousel.size {
+                size as f32 * PSEUDO_PIXELS
+            } else {
+                carousel
+                    .components
+                    .iter()
+                    .map(|c| height(c, direction))
+                    .max_by(|a, b| a.partial_cmp(b).unwrap_or(core::cmp::Ordering::Equal))
+                    .unwrap_or(0.0)
+            }
+        }
     }
 }
 
@@ -258,6 +286,15 @@ pub(super) fn render<A: ResourceAllocator>(
         }
         ComponentState::Group(component) => group::render_group(
             cache.group(),
+            context,
+            component,
+            state,
+            dim,
+            selected,
+            flat_index,
+        ),
+        ComponentState::Carousel(component) => carousel::render_carousel(
+            cache.carousel(),
             context,
             component,
             state,

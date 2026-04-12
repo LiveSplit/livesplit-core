@@ -1,6 +1,6 @@
 use super::Editor;
 use crate::{
-    layout::LayoutDirection,
+    layout::{Component, LayoutDirection},
     localization::{Lang, Text},
     platform::prelude::*,
     settings::{ImageCache, SettingsDescription},
@@ -83,10 +83,10 @@ impl Editor {
             .iter()
             .map(|entry| {
                 if entry.is_placeholder {
-                    Text::EmptyGroup.resolve(lang).to_owned()
+                    Text::EmptyContainer.resolve(lang).to_owned()
                 } else {
                     let parent_direction =
-                        Self::direction_at_depth(root_direction, entry.path.len() - 1);
+                        self.direction_at_path(root_direction, &entry.path[..entry.path.len() - 1]);
                     self.component_at_path(&entry.path)
                         .name(lang, parent_direction)
                         .into_owned()
@@ -109,14 +109,16 @@ impl Editor {
         let component_settings = if self.flat[self.selected].is_placeholder {
             SettingsDescription::default()
         } else {
-            let parent_direction =
-                Self::direction_at_depth(root_direction, self.flat[self.selected].path.len() - 1);
+            let parent_direction = self.direction_at_path(
+                root_direction,
+                &self.flat[self.selected].path[..self.flat[self.selected].path.len() - 1],
+            );
             self.component_at_path(&self.flat[self.selected].path)
                 .settings_description(lang, parent_direction)
         };
 
         let layout_direction =
-            Self::direction_at_depth(root_direction, self.flat[self.selected].indent as usize);
+            self.direction_at_path(root_direction, &self.flat[self.selected].path);
 
         State {
             components,
@@ -133,13 +135,24 @@ impl Editor {
         }
     }
 
-    /// Returns the layout direction at a given nesting depth. Depth 0 is the
-    /// root direction, each subsequent depth flips the direction.
-    const fn direction_at_depth(root: LayoutDirection, depth: usize) -> LayoutDirection {
-        if depth.is_multiple_of(2) {
-            root
-        } else {
-            root.opposite()
+    /// Returns the layout direction at a given path in the component tree.
+    /// Groups flip the direction at each nesting level, while carousels
+    /// preserve the parent direction.
+    fn direction_at_path(&self, root: LayoutDirection, path: &[usize]) -> LayoutDirection {
+        let mut direction = root;
+        let mut components: &[Component] = &self.layout.components;
+        for &idx in path {
+            let component = &components[idx];
+            match component {
+                Component::Group(_) => {
+                    direction = direction.opposite();
+                }
+                _ => break,
+            }
+            components = component
+                .children()
+                .expect("Path navigated into non-container component");
         }
+        direction
     }
 }

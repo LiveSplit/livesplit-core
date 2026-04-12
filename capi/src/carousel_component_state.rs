@@ -1,19 +1,21 @@
 //! The state object describes the information to visualize for this component.
 
-use livesplit_core::{component::group::State as GroupComponentState, layout::ComponentState};
+use livesplit_core::{
+    component::carousel::State as CarouselComponentState, layout::ComponentState,
+};
 use std::os::raw::c_char;
 
-/// Returns the number of components in a Group State.
+/// Returns the number of components in a Carousel State.
 #[unsafe(no_mangle)]
-pub extern "C" fn GroupComponentState_len(this: &GroupComponentState) -> usize {
+pub extern "C" fn CarouselComponentState_len(this: &CarouselComponentState) -> usize {
     this.components.len()
 }
 
 /// Returns a string describing the type of the component at the specified
-/// index within a Group State.
+/// index within a Carousel State.
 #[unsafe(no_mangle)]
-pub extern "C" fn GroupComponentState_component_type(
-    this: &GroupComponentState,
+pub extern "C" fn CarouselComponentState_component_type(
+    this: &CarouselComponentState,
     index: usize,
 ) -> *const c_char {
     (match this.components[index] {
@@ -33,10 +35,15 @@ pub extern "C" fn GroupComponentState_component_type(
     .cast()
 }
 
-/// Returns the size override of a Group State. In horizontal mode this is the
-/// height, in vertical mode it is the width. 0xFFFFFFFF means automatic
+/// Returns the size override of a Carousel State. 0xFFFFFFFF means automatic
 /// sizing.
 #[unsafe(no_mangle)]
-pub extern "C" fn GroupComponentState_size(this: &GroupComponentState) -> u32 {
+pub extern "C" fn CarouselComponentState_size(this: &CarouselComponentState) -> u32 {
     this.size.unwrap_or(u32::MAX)
+}
+
+/// Returns the index of the currently visible component.
+#[unsafe(no_mangle)]
+pub extern "C" fn CarouselComponentState_current_index(this: &CarouselComponentState) -> usize {
+    this.current_index
 }

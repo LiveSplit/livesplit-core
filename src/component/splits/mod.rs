@@ -16,7 +16,10 @@ use crate::{
     timing::{Snapshot, formatter::Accuracy},
     util::{Clear, ClearVec},
 };
-use core::cmp::{max, min};
+use core::{
+    cmp::{max, min},
+    hash::{Hash, Hasher},
+};
 use serde_derive::{Deserialize, Serialize};
 
 #[cfg(test)]
@@ -168,6 +171,38 @@ pub struct State {
     /// The gradient to show behind the current segment as an indicator of it
     /// being the current segment.
     pub current_split_gradient: Gradient,
+}
+
+impl SplitState {
+    pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
+        self.icon.hash(state);
+        self.name.hash(state);
+        self.is_current_split.hash(state);
+        self.index.hash(state);
+        self.columns.len().hash(state);
+        for column in self.columns.iter() {
+            column.content_fingerprint(state);
+        }
+    }
+
+    pub(crate) fn updates_frequently(&self) -> bool {
+        self.columns.iter().any(ColumnState::updates_frequently)
+    }
+}
+
+impl State {
+    pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
+        self.has_icons.hash(state);
+        self.column_labels.as_deref().hash(state);
+        self.splits.len().hash(state);
+        for split in self.splits.iter() {
+            split.content_fingerprint(state);
+        }
+    }
+
+    pub(crate) fn updates_frequently(&self) -> bool {
+        self.splits.iter().any(SplitState::updates_frequently)
+    }
 }
 
 impl Settings {

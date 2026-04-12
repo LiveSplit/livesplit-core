@@ -25,6 +25,8 @@ pub mod attempt;
 pub mod auto_splitting_runtime;
 pub mod blank_space_component;
 pub mod blank_space_component_state;
+pub mod carousel_component;
+pub mod carousel_component_state;
 pub mod command_sink;
 pub mod component;
 pub mod current_comparison_component;

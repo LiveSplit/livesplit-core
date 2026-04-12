@@ -6,6 +6,7 @@ pub(crate) mod ascii_set;
 pub(crate) mod byte_parsing;
 pub(crate) mod caseless;
 mod clear_vec;
+pub(crate) mod hash;
 #[cfg(feature = "std")]
 pub(crate) mod image;
 pub(crate) mod not_nan;
@@ -19,3 +20,5 @@ pub use self::{
     clear_vec::{Clear, ClearVec},
     populate_string::PopulateString,
 };
+
+pub(crate) use self::hash::FxHasher;

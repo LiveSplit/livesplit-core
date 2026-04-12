@@ -1,8 +1,8 @@
 use super::{ComponentSettings, ComponentState, GeneralSettings, LayoutDirection};
 use crate::{
     component::{
-        blank_space, current_comparison, current_pace, delta, detailed_timer, graph, group,
-        pb_chance, possible_time_save, previous_segment, segment_time, separator, splits,
+        blank_space, carousel, current_comparison, current_pace, delta, detailed_timer, graph,
+        group, pb_chance, possible_time_save, previous_segment, segment_time, separator, splits,
         sum_of_best, text, timer, title, total_playtime,
     },
     localization::Lang,
@@ -53,6 +53,9 @@ pub enum Component {
     /// A group of components that are laid out together in the opposite
     /// direction to their parent.
     Group(group::Component),
+    /// A carousel of components that cycles through its children, showing
+    /// one at a time.
+    Carousel(carousel::Component),
 }
 
 impl From<blank_space::Component> for Component {
@@ -163,7 +166,31 @@ impl From<group::Component> for Component {
     }
 }
 
+impl From<carousel::Component> for Component {
+    fn from(carousel: carousel::Component) -> Self {
+        Self::Carousel(carousel)
+    }
+}
+
 impl Component {
+    /// Returns the child components if this is a container component.
+    pub fn children(&self) -> Option<&[Component]> {
+        match self {
+            Component::Group(group) => Some(&group.components),
+            Component::Carousel(carousel) => Some(&carousel.components),
+            _ => None,
+        }
+    }
+
+    /// Returns the child components if this is a container component.
+    pub const fn children_mut(&mut self) -> Option<&mut Vec<Component>> {
+        match self {
+            Component::Group(group) => Some(&mut group.components),
+            Component::Carousel(carousel) => Some(&mut carousel.components),
+            _ => None,
+        }
+    }
+
     /// Updates the component's state based on the timer and settings provided.
     /// The timer provides the information to visualize and the layout settings
     /// provide general information about how to expose that information in the
@@ -233,6 +260,9 @@ impl Component {
             }
             (ComponentState::Group(state), Component::Group(group)) => {
                 group.update_state(state, image_cache, timer, layout_settings, lang)
+            }
+            (ComponentState::Carousel(state), Component::Carousel(carousel)) => {
+                carousel.update_state(state, image_cache, timer, layout_settings, lang)
             }
             (state, component) => {
                 *state = component.state(image_cache, timer, layout_settings, lang)
@@ -304,6 +334,9 @@ impl Component {
             Component::Group(group) => {
                 ComponentState::Group(group.state(image_cache, timer, layout_settings, lang))
             }
+            Component::Carousel(carousel) => {
+                ComponentState::Carousel(carousel.state(image_cache, timer, layout_settings, lang))
+            }
         }
     }
 
@@ -351,6 +384,7 @@ impl Component {
                 ComponentSettings::TotalPlaytime(component.settings().clone())
             }
             Component::Group(group) => ComponentSettings::Group(group.settings()),
+            Component::Carousel(carousel) => ComponentSettings::Carousel(carousel.settings()),
         }
     }
 
@@ -378,6 +412,7 @@ impl Component {
             Component::Title(component) => Cow::Borrowed(component.name(lang)),
             Component::TotalPlaytime(component) => Cow::Borrowed(component.name(lang)),
             Component::Group(group) => Cow::Borrowed(group.name(lang, parent_direction.opposite())),
+            Component::Carousel(carousel) => Cow::Borrowed(carousel.name(lang)),
         }
     }
 
@@ -387,6 +422,7 @@ impl Component {
         match self {
             Component::Splits(component) => component.scroll_up(),
             Component::Group(group) => group.scroll_up(),
+            Component::Carousel(carousel) => carousel.scroll_up(),
             _ => {}
         }
     }
@@ -397,6 +433,7 @@ impl Component {
         match self {
             Component::Splits(component) => component.scroll_down(),
             Component::Group(group) => group.scroll_down(),
+            Component::Carousel(carousel) => carousel.scroll_down(),
             _ => {}
         }
     }
@@ -431,6 +468,7 @@ impl Component {
             Component::Group(group) => {
                 group.settings_description(lang, parent_direction.opposite())
             }
+            Component::Carousel(carousel) => carousel.settings_description(lang),
         }
     }
 
@@ -462,6 +500,7 @@ impl Component {
             Component::Title(component) => component.set_value(index, value),
             Component::TotalPlaytime(component) => component.set_value(index, value),
             Component::Group(group) => group.set_value(index, value),
+            Component::Carousel(carousel) => carousel.set_value(index, value),
         }
     }
 }

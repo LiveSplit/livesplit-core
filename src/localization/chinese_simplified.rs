@@ -440,7 +440,18 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentTotalPlaytime => "总游玩时间",
         Text::Row => "行",
         Text::Column => "列",
-        Text::EmptyGroup => "空",
+        Text::EmptyContainer => "空",
+        Text::Carousel => "轮播",
+        Text::CarouselFixedSize => "固定大小",
+        Text::CarouselFixedSizeDescription => {
+            "覆盖轮播组件的大小。若未设置，则大小会根据最大的子组件自动确定。"
+        }
+        Text::CarouselInterval => "间隔（秒）",
+        Text::CarouselIntervalDescription => {
+            "在轮播切换到下一个子组件前，当前子组件最多显示的秒数。如果另一个子组件的内容发生了明显变化，轮播也可能更早切换。"
+        }
+        Text::CarouselMinDisplay => "最短显示时间（秒）",
+        Text::CarouselMinDisplayDescription => "切换到其他子组件之前，当前子组件至少要显示的秒数。",
         Text::ComponentCurrentPaceBestPossibleTime => "最佳可能时间",
         Text::ComponentCurrentPaceWorstPossibleTime => "最差可能时间",
         Text::ComponentCurrentPacePredictedTime => "预测时间",

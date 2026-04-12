@@ -1,6 +1,6 @@
 use crate::{
-    Lang,
-    component::{group, separator, text, timer},
+    Lang, Run, Segment,
+    component::{carousel, group, separator, text, timer},
     layout::{Component, Layout, LayoutDirection, editor::Editor},
     settings::ImageCache,
 };
@@ -24,6 +24,40 @@ fn layout_with_group() -> Layout {
         .push(Component::from(separator::Component::new()));
     layout.push(group);
     layout.push(text::Component::new());
+    layout
+}
+
+fn layout_with_carousel() -> Layout {
+    let mut layout = Layout::new();
+    let mut carousel = carousel::Component::new();
+    carousel
+        .components
+        .push(Component::from(timer::Component::new()));
+    carousel
+        .components
+        .push(Component::from(text::Component::new()));
+    layout.push(carousel);
+    layout
+}
+
+fn layout_with_nested_carousels() -> Layout {
+    let mut layout = Layout::new();
+
+    let mut inner = carousel::Component::new();
+    inner
+        .components
+        .push(Component::from(timer::Component::new()));
+    inner
+        .components
+        .push(Component::from(text::Component::new()));
+
+    let mut outer = carousel::Component::new();
+    outer
+        .components
+        .push(Component::from(timer::Component::new()));
+    outer.components.push(Component::from(inner));
+
+    layout.push(outer);
     layout
 }
 
@@ -61,6 +95,54 @@ fn state_shows_flat_view_with_indentation() {
     assert_eq!(state.indent_levels[4], 0); // Text
     // None of these are placeholders.
     assert!(state.is_placeholder.iter().all(|&p| !p));
+}
+
+#[test]
+fn layout_preview_forces_selected_carousel_child_visible() {
+    let layout = layout_with_carousel();
+    let mut editor = Editor::new(layout).unwrap();
+    let mut image_cache = ImageCache::new();
+    let mut run = Run::new();
+    run.push_segment(Segment::new("Segment"));
+    let timer = crate::timing::Timer::new(run).unwrap();
+    let timer = timer.snapshot();
+
+    // Flat: Carousel(0), Timer(1), Text(1)
+    editor.select(2);
+
+    let state = editor.layout_state(&mut image_cache, &timer, Lang::English);
+    let crate::layout::ComponentState::Carousel(carousel) = &state.components[0] else {
+        panic!("Expected carousel at top level");
+    };
+
+    assert_eq!(carousel.current_index, 1);
+    assert_eq!(state.selected_component, Some(2));
+}
+
+#[test]
+fn layout_preview_forces_nested_carousel_children_visible() {
+    let layout = layout_with_nested_carousels();
+    let mut editor = Editor::new(layout).unwrap();
+    let mut image_cache = ImageCache::new();
+    let mut run = Run::new();
+    run.push_segment(Segment::new("Segment"));
+    let timer = crate::timing::Timer::new(run).unwrap();
+    let timer = timer.snapshot();
+
+    // Flat: Outer Carousel(0), Timer(1), Inner Carousel(1), Timer(2), Text(2)
+    editor.select(4);
+
+    let state = editor.layout_state(&mut image_cache, &timer, Lang::English);
+    let crate::layout::ComponentState::Carousel(outer) = &state.components[0] else {
+        panic!("Expected outer carousel at top level");
+    };
+    assert_eq!(outer.current_index, 1);
+
+    let crate::layout::ComponentState::Carousel(inner) = &outer.components[1] else {
+        panic!("Expected inner carousel as selected outer child");
+    };
+    assert_eq!(inner.current_index, 1);
+    assert_eq!(state.selected_component, Some(4));
 }
 
 // ---- Add component ----

@@ -3,6 +3,8 @@
 //! anything other than a background. It mostly serves as padding between other
 //! components.
 
+use core::hash::Hasher;
+
 use crate::{
     localization::{Lang, Text},
     platform::prelude::*,
@@ -54,6 +56,14 @@ impl State {
         W: std::io::Write,
     {
         serde_json::to_writer(writer, self)
+    }
+}
+
+impl State {
+    pub(crate) const fn content_fingerprint(&self, _state: &mut impl Hasher) {}
+
+    pub(crate) const fn updates_frequently(&self) -> bool {
+        false
     }
 }
 

@@ -1,8 +1,8 @@
 use super::Component;
 use crate::{
     component::{
-        blank_space, current_comparison, current_pace, delta, detailed_timer, graph, group,
-        pb_chance, possible_time_save, previous_segment, segment_time, separator, splits,
+        blank_space, carousel, current_comparison, current_pace, delta, detailed_timer, graph,
+        group, pb_chance, possible_time_save, previous_segment, segment_time, separator, splits,
         sum_of_best, text, timer, title, total_playtime,
     },
     platform::prelude::*,
@@ -48,6 +48,8 @@ pub enum ComponentSettings {
     TotalPlaytime(total_playtime::Settings),
     /// The Settings for a Component Group.
     Group(group::Settings),
+    /// The Settings for a Carousel Component.
+    Carousel(carousel::Settings),
 }
 
 impl From<ComponentSettings> for Component {
@@ -104,6 +106,9 @@ impl From<ComponentSettings> for Component {
             }
             ComponentSettings::Group(settings) => {
                 Component::Group(group::Component::with_settings(settings))
+            }
+            ComponentSettings::Carousel(settings) => {
+                Component::Carousel(carousel::Component::with_settings(settings))
             }
         }
     }

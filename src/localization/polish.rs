@@ -590,7 +590,20 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentTotalPlaytime => "Łączny czas gry",
         Text::Row => "Wiersz",
         Text::Column => "Kolumna",
-        Text::EmptyGroup => "Pusty",
+        Text::EmptyContainer => "Puste",
+        Text::Carousel => "Karuzela",
+        Text::CarouselFixedSize => "Stały rozmiar",
+        Text::CarouselFixedSizeDescription => {
+            "Nadpisuje rozmiar karuzeli. Jeśli nie jest ustawiony, rozmiar jest określany automatycznie na podstawie największego komponentu potomnego."
+        }
+        Text::CarouselInterval => "Interwał (sekundy)",
+        Text::CarouselIntervalDescription => {
+            "Maksymalna liczba sekund, przez które komponent potomny jest wyświetlany przed przejściem do następnego. Karuzela może przełączyć się wcześniej, jeśli zawartość innego komponentu potomnego znacząco się zmieniła."
+        }
+        Text::CarouselMinDisplay => "Minimalny czas wyświetlania (sekundy)",
+        Text::CarouselMinDisplayDescription => {
+            "Minimalna liczba sekund, przez które komponent potomny ma być wyświetlany przed przełączeniem na inny."
+        }
         Text::ComponentCurrentPaceBestPossibleTime => "Najlepszy możliwy czas",
         Text::ComponentCurrentPaceWorstPossibleTime => "Najgorszy możliwy czas",
         Text::ComponentCurrentPacePredictedTime => "Przewidywany czas",

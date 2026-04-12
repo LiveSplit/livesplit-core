@@ -550,7 +550,20 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentTotalPlaytime => "総プレイタイム",
         Text::Row => "行",
         Text::Column => "列",
-        Text::EmptyGroup => "空",
+        Text::EmptyContainer => "空",
+        Text::Carousel => "カルーセル",
+        Text::CarouselFixedSize => "固定サイズ",
+        Text::CarouselFixedSizeDescription => {
+            "カルーセルのサイズを上書きします。設定されていない場合、サイズは最も大きい子コンポーネントに基づいて自動的に決定されます。"
+        }
+        Text::CarouselInterval => "間隔（秒）",
+        Text::CarouselIntervalDescription => {
+            "次の子コンポーネントへ切り替わるまでに 1 つの子コンポーネントを表示する最大秒数です。別の子コンポーネントの内容が意味のある形で変化した場合は、カルーセルはそれより早く切り替わることがあります。"
+        }
+        Text::CarouselMinDisplay => "最小表示時間（秒）",
+        Text::CarouselMinDisplayDescription => {
+            "別の子コンポーネントに切り替える前に、子コンポーネントを表示する最小秒数です。"
+        }
         Text::ComponentCurrentPaceBestPossibleTime => "最速予想タイム",
         Text::ComponentCurrentPaceWorstPossibleTime => "最悪予想タイム",
         Text::ComponentCurrentPacePredictedTime => "予測タイム",
