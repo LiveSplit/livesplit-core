@@ -1,6 +1,7 @@
-use super::Editor;
+use super::{Editor, SelectionState};
 use crate::{
     Lang, Run, Segment, TimeSpan,
+    settings::ImageCache,
     util::tests_helper::{create_timer, run_with_splits},
 };
 
@@ -89,6 +90,60 @@ fn select_additionally_oob() {
     let mut editor = Editor::new(run).unwrap();
 
     editor.select_additionally(1);
+}
+
+#[test]
+#[should_panic(expected = "Index out of bounds for segment selection.")]
+fn select_range_oob() {
+    let mut run = Run::new();
+    run.push_segment(Segment::new(""));
+
+    let mut editor = Editor::new(run).unwrap();
+
+    editor.select_range(1);
+}
+
+#[test]
+fn select_range_keeps_existing_selection_and_updates_active_segment() {
+    let mut run = Run::new();
+    for name in ["A", "B", "C", "D"] {
+        run.push_segment(Segment::new(name));
+    }
+
+    let mut editor = Editor::new(run).unwrap();
+    editor.select_additionally(3);
+    editor.select_range(1);
+
+    let mut image_cache = ImageCache::new();
+    let state = editor.state(&mut image_cache, Lang::English);
+
+    assert_eq!(state.segments[0].selected, SelectionState::Selected);
+    assert_eq!(state.segments[1].selected, SelectionState::Active);
+    assert_eq!(state.segments[2].selected, SelectionState::Selected);
+    assert_eq!(state.segments[3].selected, SelectionState::Selected);
+}
+
+#[test]
+fn select_range_preserves_selected_segments_outside_of_the_range() {
+    let mut run = Run::new();
+    for name in ["A", "B", "C", "D", "E", "F"] {
+        run.push_segment(Segment::new(name));
+    }
+
+    let mut editor = Editor::new(run).unwrap();
+    editor.select_additionally(5);
+    editor.select_additionally(2);
+    editor.select_range(4);
+
+    let mut image_cache = ImageCache::new();
+    let state = editor.state(&mut image_cache, Lang::English);
+
+    assert_eq!(state.segments[0].selected, SelectionState::Selected);
+    assert_eq!(state.segments[1].selected, SelectionState::NotSelected);
+    assert_eq!(state.segments[2].selected, SelectionState::Selected);
+    assert_eq!(state.segments[3].selected, SelectionState::Selected);
+    assert_eq!(state.segments[4].selected, SelectionState::Active);
+    assert_eq!(state.segments[5].selected, SelectionState::Selected);
 }
 
 #[test]

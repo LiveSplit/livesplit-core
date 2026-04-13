@@ -75,6 +75,16 @@ pub extern "C" fn RunEditor_select_additionally(this: &mut RunEditor, index: usi
     this.select_additionally(index);
 }
 
+/// Selects all segments from the currently active segment to the segment with
+/// the given index. The segment with the given index becomes the new active
+/// segment.
+///
+/// This panics if the index of the segment provided is out of bounds.
+#[unsafe(no_mangle)]
+pub extern "C" fn RunEditor_select_range(this: &mut RunEditor, index: usize) {
+    this.select_range(index);
+}
+
 /// Selects the segment with the given index. All other segments are
 /// unselected. The segment chosen also becomes the active segment.
 ///
