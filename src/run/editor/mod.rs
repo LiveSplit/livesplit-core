@@ -176,6 +176,10 @@ impl Editor {
     ///
     /// This panics if the index of the segment provided is out of bounds.
     pub fn select_range(&mut self, index: usize) {
+        if index >= self.run.len() {
+            panic!("Index out of bounds for segment selection.");
+        }
+
         let active = self.active_segment_index();
         let range = if index < active {
             index + 1..active
