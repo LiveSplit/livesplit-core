@@ -123,7 +123,7 @@ seahash = "4.1.0"
 winreg = "0.55.0"
 
 [target.'cfg(not(target_family = "wasm"))'.dev-dependencies]
-criterion = "0.7.0"
+criterion = "0.8.2"
 
 [features]
 default = ["image-shrinking", "localization", "std"]
