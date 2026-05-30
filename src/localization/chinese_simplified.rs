@@ -186,6 +186,24 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::CurrentComparisonLabelColorDescription => "组件名称颜色。如未指定则使用布局颜色。",
         Text::CurrentComparisonValueColor => "数值颜色",
         Text::CurrentComparisonValueColorDescription => "比较名称颜色。如未指定则使用布局颜色。",
+        Text::AlternateTimingMethodBackground => "背景",
+        Text::AlternateTimingMethodBackgroundDescription => "组件背后的背景。",
+        Text::AlternateTimingMethodDisplayTwoRows => "显示为两行",
+        Text::AlternateTimingMethodDisplayTwoRowsDescription => {
+            "指定是否将组件名称与时间显示为两行。"
+        }
+        Text::AlternateTimingMethodLabelColor => "标签颜色",
+        Text::AlternateTimingMethodLabelColorDescription => {
+            "组件名称颜色。如未指定则使用布局颜色。"
+        }
+        Text::AlternateTimingMethodValueColor => "数值颜色",
+        Text::AlternateTimingMethodValueColorDescription => "时间颜色。如未指定则使用布局颜色。",
+        Text::AlternateTimingMethodDigitsFormat => "位数格式",
+        Text::AlternateTimingMethodDigitsFormatDescription => {
+            "指定显示多少位。如果时长小于位数，则用 0 填充。"
+        }
+        Text::AlternateTimingMethodAccuracy => "精度",
+        Text::AlternateTimingMethodAccuracyDescription => "显示时间的精度。",
         Text::CurrentPaceBackground => "背景",
         Text::CurrentPaceBackgroundDescription => "组件背后的背景。",
         Text::CurrentPaceComparison => "比较",
@@ -514,6 +532,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SeparatorsDescription => "普通分隔线的颜色。",
         Text::TextColor => "文本",
         Text::TextColorDescription => "用于未指定自身颜色的文本的颜色。",
+        Text::ComponentAlternateTimingMethod => "备用计时方式",
         Text::ComponentBlankSpace => "空白",
         Text::ComponentCurrentComparison => "当前比较",
         Text::ComponentCurrentPace => "当前配速",

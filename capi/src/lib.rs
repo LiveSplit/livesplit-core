@@ -25,6 +25,8 @@ use std::{cell::RefCell, ffi::CStr, os::raw::c_char, slice};
 #[cfg(any(feature = "hotkey-config", feature = "layout", feature = "parsing"))]
 use std::{fs::File, mem::ManuallyDrop};
 
+#[cfg(feature = "alternate-timing-method-component")]
+pub mod alternate_timing_method_component;
 #[cfg(feature = "analysis")]
 pub mod analysis;
 #[cfg(feature = "atomic-date-time")]
