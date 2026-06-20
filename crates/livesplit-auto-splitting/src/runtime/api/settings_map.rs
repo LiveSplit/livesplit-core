@@ -1,6 +1,5 @@
-use anyhow::{Result, format_err};
 use slotmap::{Key, KeyData};
-use wasmtime::{Caller, Linker};
+use wasmtime::{Caller, Error, Linker};
 
 use crate::{
     CreationError, Timer,
@@ -31,7 +30,9 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                     .data_mut()
                     .settings_maps
                     .remove(SettingsMapKey::from(KeyData::from_ffi(settings_map)))
-                    .ok_or_else(|| format_err!("Invalid settings map handle: {settings_map}"))?;
+                    .ok_or_else(|| {
+                        Error::msg(format!("Invalid settings map handle: {settings_map}"))
+                    })?;
                 Ok(())
             }
         })
@@ -57,7 +58,9 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let settings_map = ctx
                     .settings_maps
                     .get(SettingsMapKey::from(KeyData::from_ffi(settings_map)))
-                    .ok_or_else(|| format_err!("Invalid settings map handle: {settings_map}"))?
+                    .ok_or_else(|| {
+                        Error::msg(format!("Invalid settings map handle: {settings_map}"))
+                    })?
                     .clone();
 
                 ctx.shared_data.set_settings_map(settings_map);
@@ -77,14 +80,18 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                     .settings_maps
                     .get(SettingsMapKey::from(KeyData::from_ffi(old_settings_map)))
                     .ok_or_else(|| {
-                        format_err!("Invalid old settings map handle: {old_settings_map}")
+                        Error::msg(format!(
+                            "Invalid old settings map handle: {old_settings_map}"
+                        ))
                     })?;
 
                 let new_settings_map = ctx
                     .settings_maps
                     .get(SettingsMapKey::from(KeyData::from_ffi(new_settings_map)))
                     .ok_or_else(|| {
-                        format_err!("Invalid new settings map handle: {new_settings_map}")
+                        Error::msg(format!(
+                            "Invalid new settings map handle: {new_settings_map}"
+                        ))
                     })?
                     .clone();
 
@@ -106,7 +113,9 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let settings_map = ctx
                     .settings_maps
                     .get(SettingsMapKey::from(KeyData::from_ffi(settings_map)))
-                    .ok_or_else(|| format_err!("Invalid settings map handle: {settings_map}"))?
+                    .ok_or_else(|| {
+                        Error::msg(format!("Invalid settings map handle: {settings_map}"))
+                    })?
                     .clone();
 
                 Ok(ctx.settings_maps.insert(settings_map).data().as_ffi())
@@ -127,12 +136,16 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let settings_map = context
                     .settings_maps
                     .get_mut(SettingsMapKey::from(KeyData::from_ffi(settings_map)))
-                    .ok_or_else(|| format_err!("Invalid settings map handle: {settings_map}"))?;
+                    .ok_or_else(|| {
+                        Error::msg(format!("Invalid settings map handle: {settings_map}"))
+                    })?;
 
                 let setting_value = context
                     .setting_values
                     .get(SettingValueKey::from(KeyData::from_ffi(setting_value)))
-                    .ok_or_else(|| format_err!("Invalid setting value handle: {setting_value}"))?;
+                    .ok_or_else(|| {
+                        Error::msg(format!("Invalid setting value handle: {setting_value}"))
+                    })?;
 
                 let key = get_str(memory, key_ptr, key_len)?;
 
@@ -152,7 +165,9 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let settings_map = context
                     .settings_maps
                     .get(SettingsMapKey::from(KeyData::from_ffi(settings_map)))
-                    .ok_or_else(|| format_err!("Invalid settings map handle: {settings_map}"))?;
+                    .ok_or_else(|| {
+                        Error::msg(format!("Invalid settings map handle: {settings_map}"))
+                    })?;
 
                 let key = get_str(memory, key_ptr, key_len)?;
 
@@ -173,7 +188,9 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let len = ctx
                     .settings_maps
                     .get(SettingsMapKey::from(KeyData::from_ffi(settings_map)))
-                    .ok_or_else(|| format_err!("Invalid settings map handle: {settings_map}"))?
+                    .ok_or_else(|| {
+                        Error::msg(format!("Invalid settings map handle: {settings_map}"))
+                    })?
                     .len()
                     .try_into()
                     .unwrap_or(u64::MAX);
@@ -196,7 +213,9 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let settings_map = context
                     .settings_maps
                     .get(SettingsMapKey::from(KeyData::from_ffi(settings_map)))
-                    .ok_or_else(|| format_err!("Invalid settings map handle: {settings_map}"))?;
+                    .ok_or_else(|| {
+                        Error::msg(format!("Invalid settings map handle: {settings_map}"))
+                    })?;
 
                 let len_bytes = get_arr_mut(memory, buf_len_ptr)?;
 
@@ -231,7 +250,9 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let maybe_slot = if let Ok(index) = index.try_into() {
                     ctx.settings_maps
                         .get(SettingsMapKey::from(KeyData::from_ffi(settings_map)))
-                        .ok_or_else(|| format_err!("Invalid settings map handle: {settings_map}"))?
+                        .ok_or_else(|| {
+                            Error::msg(format!("Invalid settings map handle: {settings_map}"))
+                        })?
                         .get_by_index(index)
                 } else {
                     None

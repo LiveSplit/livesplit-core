@@ -34,7 +34,7 @@ impl Timer for DummyTimer {
 }
 
 #[track_caller]
-fn compile(crate_name: &str) -> anyhow::Result<AutoSplitter<DummyTimer>> {
+fn compile(crate_name: &str) -> wasmtime::Result<AutoSplitter<DummyTimer>> {
     let mut path = PathBuf::from("tests");
     path.push("test-cases");
     path.push(crate_name);
@@ -75,7 +75,7 @@ fn compile(crate_name: &str) -> anyhow::Result<AutoSplitter<DummyTimer>> {
 }
 
 #[track_caller]
-fn run(crate_name: &str) -> anyhow::Result<()> {
+fn run(crate_name: &str) -> wasmtime::Result<()> {
     let runtime = compile(crate_name)?;
     runtime.lock().update()?;
     Ok(())

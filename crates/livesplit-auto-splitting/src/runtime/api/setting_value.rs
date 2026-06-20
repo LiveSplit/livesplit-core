@@ -1,6 +1,5 @@
-use anyhow::{Result, format_err};
 use slotmap::{Key, KeyData};
-use wasmtime::{Caller, Linker};
+use wasmtime::{Caller, Error, Linker, Result};
 
 use crate::{
     CreationError, Timer,
@@ -19,7 +18,9 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let settings_map = context
                     .settings_maps
                     .get(SettingsMapKey::from(KeyData::from_ffi(settings_map)))
-                    .ok_or_else(|| format_err!("Invalid settings map handle: {settings_map}"))?;
+                    .ok_or_else(|| {
+                        Error::msg(format!("Invalid settings map handle: {settings_map}"))
+                    })?;
 
                 Ok(context
                     .setting_values
@@ -39,7 +40,9 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let settings_list = context
                     .settings_lists
                     .get(SettingsListKey::from(KeyData::from_ffi(settings_list)))
-                    .ok_or_else(|| format_err!("Invalid settings list handle: {settings_list}"))?;
+                    .ok_or_else(|| {
+                        Error::msg(format!("Invalid settings list handle: {settings_list}"))
+                    })?;
 
                 Ok(context
                     .setting_values
@@ -115,7 +118,9 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                     .data_mut()
                     .setting_values
                     .remove(SettingValueKey::from(KeyData::from_ffi(setting_value)))
-                    .ok_or_else(|| format_err!("Invalid setting value handle: {setting_value}"))?;
+                    .ok_or_else(|| {
+                        Error::msg(format!("Invalid settings value handle: {setting_value}"))
+                    })?;
                 Ok(())
             }
         })
@@ -130,7 +135,9 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let setting_value = ctx
                     .setting_values
                     .get(SettingValueKey::from(KeyData::from_ffi(setting_value)))
-                    .ok_or_else(|| format_err!("Invalid settings value handle: {setting_value}"))?
+                    .ok_or_else(|| {
+                        Error::msg(format!("Invalid settings value handle: {setting_value}"))
+                    })?
                     .clone();
 
                 Ok(ctx.setting_values.insert(setting_value).data().as_ffi())
@@ -147,7 +154,9 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let setting_value = context
                     .setting_values
                     .get(SettingValueKey::from(KeyData::from_ffi(setting_value)))
-                    .ok_or_else(|| format_err!("Invalid setting value handle: {setting_value}"))?;
+                    .ok_or_else(|| {
+                        Error::msg(format!("Invalid setting value handle: {setting_value}"))
+                    })?;
 
                 Ok(match setting_value {
                     settings::Value::Map(_) => 1,
@@ -170,7 +179,9 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let setting_value = context
                     .setting_values
                     .get(SettingValueKey::from(KeyData::from_ffi(setting_value)))
-                    .ok_or_else(|| format_err!("Invalid setting value handle: {setting_value}"))?;
+                    .ok_or_else(|| {
+                        Error::msg(format!("Invalid setting value handle: {setting_value}"))
+                    })?;
 
                 let value_ptr = get_arr_mut(memory, value_ptr)?;
 
@@ -198,7 +209,9 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let setting_value = context
                     .setting_values
                     .get(SettingValueKey::from(KeyData::from_ffi(setting_value)))
-                    .ok_or_else(|| format_err!("Invalid setting value handle: {setting_value}"))?;
+                    .ok_or_else(|| {
+                        Error::msg(format!("Invalid setting value handle: {setting_value}"))
+                    })?;
 
                 let value_ptr = get_arr_mut(memory, value_ptr)?;
 
@@ -226,7 +239,9 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let setting_value = context
                     .setting_values
                     .get(SettingValueKey::from(KeyData::from_ffi(setting_value)))
-                    .ok_or_else(|| format_err!("Invalid setting value handle: {setting_value}"))?;
+                    .ok_or_else(|| {
+                        Error::msg(format!("Invalid setting value handle: {setting_value}"))
+                    })?;
 
                 let [out] = get_arr_mut(memory, value_ptr)?;
 
@@ -249,7 +264,9 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let setting_value = context
                     .setting_values
                     .get(SettingValueKey::from(KeyData::from_ffi(setting_value)))
-                    .ok_or_else(|| format_err!("Invalid setting value handle: {setting_value}"))?;
+                    .ok_or_else(|| {
+                        Error::msg(format!("Invalid setting value handle: {setting_value}"))
+                    })?;
 
                 let arr = get_arr_mut(memory, value_ptr)?;
 
@@ -272,7 +289,9 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let setting_value = context
                     .setting_values
                     .get(SettingValueKey::from(KeyData::from_ffi(setting_value)))
-                    .ok_or_else(|| format_err!("Invalid setting value handle: {setting_value}"))?;
+                    .ok_or_else(|| {
+                        Error::msg(format!("Invalid setting value handle: {setting_value}"))
+                    })?;
 
                 let arr = get_arr_mut(memory, value_ptr)?;
 
@@ -295,7 +314,9 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let setting_value = context
                     .setting_values
                     .get(SettingValueKey::from(KeyData::from_ffi(setting_value)))
-                    .ok_or_else(|| format_err!("Invalid setting value handle: {setting_value}"))?;
+                    .ok_or_else(|| {
+                        Error::msg(format!("Invalid setting value handle: {setting_value}"))
+                    })?;
 
                 let len_bytes = get_arr_mut(memory, buf_len_ptr)?;
 
