@@ -35,27 +35,27 @@ pub fn render_carousel<A: ResourceAllocator>(
     }
 
     // Render only the currently visible child.
-    if let Some(child) = carousel.components.get(carousel.current_index) {
-        if let Some(child_cache) = caches.get_mut(carousel.current_index) {
-            // Skip flat indices for all children before the current one.
-            for earlier in &carousel.components[..carousel.current_index] {
-                *flat_index += earlier.subtree_size();
-            }
+    if let Some(child) = carousel.components.get(carousel.current_index)
+        && let Some(child_cache) = caches.get_mut(carousel.current_index)
+    {
+        // Skip flat indices for all children before the current one.
+        for earlier in &carousel.components[..carousel.current_index] {
+            *flat_index += earlier.subtree_size();
+        }
 
-            render(
-                child_cache,
-                context,
-                child,
-                state,
-                dim,
-                selected,
-                flat_index,
-            );
+        render(
+            child_cache,
+            context,
+            child,
+            state,
+            dim,
+            selected,
+            flat_index,
+        );
 
-            // Skip flat indices for all children after the current one.
-            for later in &carousel.components[carousel.current_index + 1..] {
-                *flat_index += later.subtree_size();
-            }
+        // Skip flat indices for all children after the current one.
+        for later in &carousel.components[carousel.current_index + 1..] {
+            *flat_index += later.subtree_size();
         }
     }
 }
