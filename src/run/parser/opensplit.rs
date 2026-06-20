@@ -136,9 +136,7 @@ pub fn parse(source: &str) -> Result<Run> {
         run.push_segment(segment);
     }
 
-    let mut attempt_history_index = 1;
-
-    for run_payload in splits.runs {
+    for (attempt_history_index, run_payload) in (1..).zip(splits.runs) {
         run.add_attempt_with_index(
             Time::new().with_real_time(if run_payload.completed {
                 Some(integer_time(run_payload.total_time))
@@ -166,8 +164,6 @@ pub fn parse(source: &str) -> Result<Run> {
                 .segment_history_mut()
                 .insert(attempt_history_index, time);
         }
-
-        attempt_history_index += 1;
     }
 
     Ok(run)

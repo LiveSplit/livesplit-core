@@ -23,7 +23,7 @@ include = [
     "/README.md",
 ]
 edition = "2024"
-rust-version = "1.92"
+rust-version = "1.95"
 
 [package.metadata.docs.rs]
 all-features = true
@@ -41,7 +41,7 @@ bytemuck_derive = { version = "1.4.1", default-features = false }
 cfg-if = "1.0.0"
 itoa = { version = "1.0.3", default-features = false }
 time = { version = "0.3.47", default-features = false }
-hashbrown = "0.16.0"
+hashbrown = "0.17.1"
 libm = "0.2.1"
 livesplit-hotkey = { path = "crates/livesplit-hotkey", version = "0.8.0", default-features = false }
 livesplit-title-abbreviations = { path = "crates/livesplit-title-abbreviations", version = "0.3.0" }
@@ -54,10 +54,10 @@ serde_derive = { version = "1.0.186", default-features = false }
 serde_json = { version = "1.0.60", default-features = false, features = [
     "alloc",
 ] }
-sha2 = { version = "0.10.8", default-features = false }
+sha2 = { version = "0.11.0", default-features = false }
 slab = { version = "0.4.9", default-features = false }
 smallstr = { version = "0.3.0", default-features = false }
-snafu = { version = "0.8.0", default-features = false }
+snafu = { version = "0.9.1", default-features = false }
 
 # std
 image = { version = "0.25.0", features = [
@@ -120,10 +120,10 @@ libc = { version = "0.2.101", optional = true }
 seahash = "4.1.0"
 
 [target.'cfg(windows)'.dev-dependencies]
-winreg = "0.55.0"
+winreg = "0.56.0"
 
 [target.'cfg(not(target_family = "wasm"))'.dev-dependencies]
-criterion = "0.7.0"
+criterion = "0.8.2"
 
 [features]
 default = ["image-shrinking", "localization", "std"]
@@ -138,7 +138,6 @@ std = [
     "cosmic-text?/std",
     "serde_json/std",
     "serde/std",
-    "sha2/std",
     "slab/std",
     "simdutf8/std",
     "snafu/std",

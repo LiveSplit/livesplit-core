@@ -8,7 +8,7 @@ license = "MIT OR Apache-2.0"
 description = "livesplit-auto-splitting is a library that provides a runtime for running auto splitters that can control a speedrun timer. These auto splitters are provided as WebAssembly modules."
 keywords = ["speedrun", "timer", "livesplit", "auto-splitting"]
 edition = "2024"
-rust-version = "1.92"
+rust-version = "1.95"
 
 [dependencies]
 arc-swap = "1.6.0"
@@ -20,8 +20,8 @@ indexmap = "2.0.2"
 proc-maps = { version = "0.4.0", default-features = false }
 read-process-memory = { version = "0.1.4", default-features = false }
 slotmap = { version = "1.0.2", default-features = false }
-snafu = "0.8.0"
-sysinfo = { version = "0.37.0", default-features = false, features = [
+snafu = "0.9.1"
+sysinfo = { version = "0.39.3", default-features = false, features = [
   "multithread",
   "system",
 ] }

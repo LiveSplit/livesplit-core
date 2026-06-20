@@ -102,13 +102,13 @@ impl Client {
 
     /// Sets whether live tracking is enabled. When enabled, live split data is
     /// sent to therun.gg after every split action.
-    pub fn set_live_tracking_enabled(&mut self, enabled: bool) {
+    pub const fn set_live_tracking_enabled(&mut self, enabled: bool) {
         self.is_live_tracking_enabled = enabled;
     }
 
     /// Sets whether stats uploading is enabled. When enabled, the `.lss` file
     /// is uploaded to therun.gg after every reset or finished run.
-    pub fn set_stats_uploading_enabled(&mut self, enabled: bool) {
+    pub const fn set_stats_uploading_enabled(&mut self, enabled: bool) {
         self.is_stats_uploading_enabled = enabled;
     }
 
