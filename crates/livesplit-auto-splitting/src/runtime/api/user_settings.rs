@@ -1,7 +1,6 @@
 use std::sync::Arc;
 
-use anyhow::{Context as _, Result, bail};
-use wasmtime::{Caller, Linker};
+use wasmtime::{Caller, Error, Linker};
 
 use crate::{CreationError, Timer, runtime::Context, settings};
 
@@ -105,13 +104,15 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let setting = Arc::make_mut(&mut context.settings_widgets)
                     .iter_mut()
                     .find(|s| s.key == key)
-                    .context("There is no setting with the provided key.")?;
+                    .ok_or_else(|| Error::msg("There is no setting with the provided key."))?;
                 let (options, is_chosen) = match &mut setting.kind {
                     settings::WidgetKind::Choice {
                         options,
                         default_option_key,
                     } => (options, *default_option_key == option_key),
-                    _ => bail!("The setting is not a choice."),
+                    _ => {
+                        return Err(Error::msg("The setting is not a choice."));
+                    }
                 };
                 Arc::make_mut(options).push(settings::ChoiceOption {
                     key: option_key,
@@ -167,9 +168,9 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let setting = Arc::make_mut(&mut context.settings_widgets)
                     .iter_mut()
                     .find(|s| s.key == key)
-                    .context("There is no setting with the provided key.")?;
+                    .ok_or_else(|| Error::msg("There is no setting with the provided key."))?;
                 let settings::WidgetKind::FileSelect { filters } = &mut setting.kind else {
-                    bail!("The setting is not a file select.");
+                    return Err(Error::msg("The setting is not a file select."));
                 };
                 Arc::make_mut(filters).push(settings::FileFilter::Name {
                     description,
@@ -194,9 +195,9 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let setting = Arc::make_mut(&mut context.settings_widgets)
                     .iter_mut()
                     .find(|s| s.key == key)
-                    .context("There is no setting with the provided key.")?;
+                    .ok_or_else(|| Error::msg("There is no setting with the provided key."))?;
                 let settings::WidgetKind::FileSelect { filters } = &mut setting.kind else {
-                    bail!("The setting is not a file select.");
+                    return Err(Error::msg("The setting is not a file select."));
                 };
                 Arc::make_mut(filters).push(settings::FileFilter::MimeType(mime));
                 Ok(())
@@ -218,7 +219,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 Arc::make_mut(&mut context.settings_widgets)
                     .iter_mut()
                     .find(|s| s.key == key)
-                    .context("There is no setting with the provided key.")?
+                    .ok_or_else(|| Error::msg("There is no setting with the provided key."))?
                     .tooltip = Some(tooltip);
                 Ok(())
             }

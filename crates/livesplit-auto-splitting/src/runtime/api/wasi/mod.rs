@@ -11,11 +11,12 @@ use std::{
 
 use bstr::ByteSlice;
 use tokio::io::{self, AsyncWrite};
+use wasmtime::Error;
 use wasmtime_wasi::{
     WasiCtxBuilder,
     cli::{IsTerminal, StdoutStream},
+    p1::WasiP1Ctx,
     p2::{OutputStream, Pollable, StreamError},
-    preview1::WasiP1Ctx,
 };
 
 use crate::{Timer, wasi_path};
@@ -79,8 +80,8 @@ impl StdErr {
     fn write(&mut self, bytes: &[u8]) -> Result<(), StreamError> {
         let buffer = &mut *self.buffer.buf.lock().unwrap();
         if bytes.len() > ERR_CAPACITY - buffer.len() {
-            return Err(StreamError::Trap(anyhow::format_err!(
-                "write beyond capacity of StdErr"
+            return Err(StreamError::Trap(Error::msg(
+                "write beyond capacity of StdErr",
             )));
         }
 

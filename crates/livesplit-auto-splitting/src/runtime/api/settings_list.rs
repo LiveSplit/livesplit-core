@@ -1,6 +1,5 @@
-use anyhow::{Result, format_err};
 use slotmap::{Key, KeyData};
-use wasmtime::{Caller, Linker};
+use wasmtime::{Caller, Error, Linker};
 
 use crate::{
     CreationError, Timer,
@@ -29,7 +28,9 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                     .data_mut()
                     .settings_lists
                     .remove(SettingsListKey::from(KeyData::from_ffi(settings_list)))
-                    .ok_or_else(|| format_err!("Invalid settings list handle: {settings_list}"))?;
+                    .ok_or_else(|| {
+                        Error::msg(format!("Invalid settings list handle: {settings_list}"))
+                    })?;
                 Ok(())
             }
         })
@@ -44,7 +45,9 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let settings_list = ctx
                     .settings_lists
                     .get(SettingsListKey::from(KeyData::from_ffi(settings_list)))
-                    .ok_or_else(|| format_err!("Invalid settings list handle: {settings_list}"))?
+                    .ok_or_else(|| {
+                        Error::msg(format!("Invalid settings list handle: {settings_list}"))
+                    })?
                     .clone();
 
                 Ok(ctx.settings_lists.insert(settings_list).data().as_ffi())
@@ -61,7 +64,9 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let len = ctx
                     .settings_lists
                     .get(SettingsListKey::from(KeyData::from_ffi(settings_list)))
-                    .ok_or_else(|| format_err!("Invalid settings list handle: {settings_list}"))?
+                    .ok_or_else(|| {
+                        Error::msg(format!("Invalid settings list handle: {settings_list}"))
+                    })?
                     .len()
                     .try_into()
                     .unwrap_or(u64::MAX);
@@ -81,7 +86,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                     ctx.settings_lists
                         .get(SettingsListKey::from(KeyData::from_ffi(settings_list)))
                         .ok_or_else(|| {
-                            format_err!("Invalid settings list handle: {settings_list}")
+                            Error::msg(format!("Invalid settings list handle: {settings_list}"))
                         })?
                         .get(index)
                 } else {
@@ -106,12 +111,16 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let settings_list = context
                     .settings_lists
                     .get_mut(SettingsListKey::from(KeyData::from_ffi(settings_list)))
-                    .ok_or_else(|| format_err!("Invalid settings list handle: {settings_list}"))?;
+                    .ok_or_else(|| {
+                        Error::msg(format!("Invalid settings list handle: {settings_list}"))
+                    })?;
 
                 let setting_value = context
                     .setting_values
                     .get(SettingValueKey::from(KeyData::from_ffi(setting_value)))
-                    .ok_or_else(|| format_err!("Invalid setting value handle: {setting_value}"))?;
+                    .ok_or_else(|| {
+                        Error::msg(format!("Invalid setting value handle: {setting_value}"))
+                    })?;
 
                 settings_list.push(setting_value.clone());
 
@@ -129,12 +138,16 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let settings_list = context
                     .settings_lists
                     .get_mut(SettingsListKey::from(KeyData::from_ffi(settings_list)))
-                    .ok_or_else(|| format_err!("Invalid settings list handle: {settings_list}"))?;
+                    .ok_or_else(|| {
+                        Error::msg(format!("Invalid settings list handle: {settings_list}"))
+                    })?;
 
                 let setting_value = context
                     .setting_values
                     .get(SettingValueKey::from(KeyData::from_ffi(setting_value)))
-                    .ok_or_else(|| format_err!("Invalid setting value handle: {setting_value}"))?;
+                    .ok_or_else(|| {
+                        Error::msg(format!("Invalid setting value handle: {setting_value}"))
+                    })?;
 
                 Ok(settings_list
                     .insert(

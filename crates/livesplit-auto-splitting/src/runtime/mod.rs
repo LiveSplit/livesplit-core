@@ -6,7 +6,6 @@ use crate::{
     timer::{LogLevel, Timer},
 };
 
-use anyhow::Result;
 use api::wasi::StdErr;
 use arc_swap::ArcSwap;
 use indexmap::IndexMap;
@@ -22,9 +21,10 @@ use std::{
 };
 use sysinfo::{ProcessRefreshKind, ProcessesToUpdate, RefreshKind, System, UpdateKind};
 use wasmtime::{
-    Engine, Extern, Linker, Memory, Module, OptLevel, Store, TypedFunc, WasmBacktraceDetails,
+    Engine, Extern, Linker, Memory, Module, OptLevel, Result, Store, TypedFunc,
+    WasmBacktraceDetails,
 };
-use wasmtime_wasi::preview1::WasiP1Ctx;
+use wasmtime_wasi::p1::WasiP1Ctx;
 
 mod api;
 
@@ -35,12 +35,12 @@ pub enum CreationError {
     /// Failed creating the WebAssembly engine.
     EngineCreation {
         /// The underlying error.
-        source: anyhow::Error,
+        source: wasmtime::Error,
     },
     /// Failed loading the WebAssembly module.
     ModuleLoading {
         /// The underlying error.
-        source: anyhow::Error,
+        source: wasmtime::Error,
     },
     /// Failed linking the WebAssembly module.
     #[snafu(display("Failed linking the function `{name}` to the WebAssembly module."))]
@@ -48,18 +48,18 @@ pub enum CreationError {
         /// The name of the function that failed to link.
         name: &'static str,
         /// The underlying error.
-        source: anyhow::Error,
+        source: wasmtime::Error,
     },
     /// Failed instantiating the WebAssembly module.
     ModuleInstantiation {
         /// The underlying error.
-        source: anyhow::Error,
+        source: wasmtime::Error,
     },
     /// The WebAssembly module has no exported function called `update`, which is
     /// a required function.
     MissingUpdateFunction {
         /// The underlying error.
-        source: anyhow::Error,
+        source: wasmtime::Error,
     },
     /// The WebAssembly module has no exported memory called `memory`, which is
     /// a requirement.
@@ -68,12 +68,12 @@ pub enum CreationError {
     /// Failed linking the WebAssembly System Interface (WASI).
     Wasi {
         /// The underlying error.
-        source: anyhow::Error,
+        source: wasmtime::Error,
     },
     /// Failed running the WebAssembly System Interface (WASI) `_start` function.
     WasiStart {
         /// The underlying error.
-        source: anyhow::Error,
+        source: wasmtime::Error,
     },
 }
 
@@ -411,7 +411,7 @@ impl CompiledAutoSplitter {
             .any(|import| import.module() == "wasi_snapshot_preview1");
 
         if uses_wasi {
-            wasmtime_wasi::preview1::add_to_linker_sync(&mut linker, |ctx| &mut ctx.wasi)
+            wasmtime_wasi::p1::add_to_linker_sync(&mut linker, |ctx| &mut ctx.wasi)
                 .map_err(|source| CreationError::Wasi { source })?;
         }
 
