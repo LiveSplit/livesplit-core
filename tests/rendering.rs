@@ -585,6 +585,19 @@ fn check_software(
     expected_hash: &str,
     name: &str,
 ) {
+    #[cfg(feature = "parley-text-engine")]
+    let expected_hash = match name {
+        "all_components" => "1f147738b363a247",
+        "all_components_thin" => "dfd95beabf03944b",
+        "background_image" => "5862864e12de0df6",
+        "display_two_rows" => "54b1ef6f9cda7a75",
+        "font_fallback" => "a57ba5a7cb5d24f7",
+        "horizontal" => "7b9707510ca0e82e",
+        "subsplits_layout" => "4fa87b9eb6bf61c9",
+        "wsplit" => "7541683a20506603",
+        _ => expected_hash,
+    };
+
     let mut renderer = rendering::software::Renderer::new();
     renderer.render(state, image_cache, dims);
 
@@ -648,6 +661,28 @@ fn check_svg(
     expected_hash: &str,
     name: &str,
 ) {
+    #[cfg(feature = "parley-text-engine")]
+    let expected_hash = match name {
+        "actual_split_file" => "322019bb7ed9b327",
+        "all_components" => "abc70ccf97dcdef2",
+        "all_components_thin" => "7c5de9c76dc68eec",
+        "background_image" => "4d4c467c344b1111",
+        "dark_layout" => "ac948b47d76723e3",
+        "default" => "8e100a9201da6fb8",
+        "display_two_rows" => "3552074ee27271d5",
+        "horizontal" => "fb38e621c3e1ea2c",
+        "horizontal_group_in_vertical_layout" => "bf9752892a833a24",
+        "nested_groups" => "0a36ce9dc0231c09",
+        "score_split" => "597d938ba688a480",
+        "single_line_title" => "a4ac9a6d1f32bad0",
+        "subsplits_layout" => "a965e0e0423ca0cc",
+        "text_shadow" => "c6c97dd1ec742843",
+        "timer_delta_background_ahead" => "3cff650d54595723",
+        "timer_delta_background_stopped" => "d920fe0087390e24",
+        "wsplit" => "e565ad4546691fe0",
+        _ => expected_hash,
+    };
+
     let mut hash_image = String::new();
     let mut renderer = rendering::svg::Renderer::new();
     renderer
