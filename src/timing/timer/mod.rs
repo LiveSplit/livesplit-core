@@ -162,6 +162,39 @@ impl Timer {
         self.replace_run(run, false).map(drop)
     }
 
+    /// Replaces the Run object used by the Timer with the Run object provided,
+    /// while preserving the active attempt state. The split times of all
+    /// completed segments are copied from the current Run to the new Run. The
+    /// new Run must have at least as many segments as the current split index.
+    /// If there is no attempt in progress, if the attempt has already ended, or
+    /// if the Run provided contains no segments or too few segments, it can't be
+    /// used and is returned as the `Err` case of the `Result`.
+    #[expect(clippy::result_large_err)]
+    pub fn swap_run_mid_attempt(&mut self, mut run: Run) -> Result<(), Run> {
+        let Some(active) = &self.active_attempt else {
+            return Err(run);
+        };
+
+        let State::NotEnded { current_split_index, .. } = active.state else {
+            return Err(run);
+        };
+
+        if run.is_empty() || run.len() < current_split_index {
+            return Err(run);
+        }
+
+        for i in 0..current_split_index {
+            *run.segment_mut(i).split_time_mut() = self.run.segment(i).split_time();
+        }
+
+        if !run.comparisons().any(|c| c == self.current_comparison) {
+            self.current_comparison = personal_best::NAME.to_string();
+        }
+
+        self.run = run;
+        Ok(())
+    }
+
     /// Accesses the Run in use by the Timer.
     #[inline]
     pub const fn run(&self) -> &Run {
