@@ -74,6 +74,7 @@ cosmic-text = { version = "0.14.1", default-features = false, features = [
 parley = { version = "0.10.0", default-features = false, features = [
     "libm",
 ], optional = true }
+fontique = { version = "0.10.0", default-features = false, optional = true }
 skrifa = { version = "0.42.1", default-features = false, features = [
     "libm",
 ], optional = true }
@@ -168,7 +169,12 @@ more-image-formats = [
 image-shrinking = ["std", "more-image-formats"]
 rendering = ["more-image-formats", "image?/gif"]
 default-text-engine = ["rendering", "cosmic-text"]
-parley-text-engine = ["rendering", "parley", "skrifa"]
+parley-text-engine = [
+    "rendering",
+    "parley",
+    "fontique/fontconfig-dlopen",
+    "skrifa",
+]
 font-loading = ["std", "default-text-engine", "parley?/system"]
 software-rendering = ["default-text-engine", "tiny-skia", "tiny-skia-path"]
 svg-rendering = ["default-text-engine", "foldhash"]
