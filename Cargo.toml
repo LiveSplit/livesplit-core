@@ -71,6 +71,12 @@ image = { version = "0.25.0", features = [
 cosmic-text = { version = "0.14.1", default-features = false, features = [
     "no_std",
 ], optional = true }
+parley = { version = "0.10.0", default-features = false, features = [
+    "libm",
+], optional = true }
+skrifa = { version = "0.42.1", default-features = false, features = [
+    "libm",
+], optional = true }
 
 # Font Loading
 # Currently doesn't require any additional dependencies.
@@ -136,6 +142,8 @@ std = [
     "livesplit-hotkey/std",
     "memchr/std",
     "cosmic-text?/std",
+    "parley?/std",
+    "skrifa?/std",
     "serde_json/std",
     "serde/std",
     "slab/std",
@@ -160,7 +168,8 @@ more-image-formats = [
 image-shrinking = ["std", "more-image-formats"]
 rendering = ["more-image-formats", "image?/gif"]
 default-text-engine = ["rendering", "cosmic-text"]
-font-loading = ["std", "default-text-engine"]
+parley-text-engine = ["rendering", "parley", "skrifa"]
+font-loading = ["std", "default-text-engine", "parley?/system"]
 software-rendering = ["default-text-engine", "tiny-skia", "tiny-skia-path"]
 svg-rendering = ["default-text-engine", "foldhash"]
 web-rendering = [
