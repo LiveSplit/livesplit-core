@@ -27,14 +27,14 @@ sysinfo = { version = "0.39.3", default-features = false, features = [
 ] }
 time = { version = "0.3.3", default-features = false }
 tokio = "1.47.1"
-wasmtime = { version = "45.0.0", default-features = false, features = [
+wasmtime = { version = "46.0.0", default-features = false, features = [
   "anyhow",
   "cranelift",
   "gc-drc",
   "parallel-compilation",
   "runtime",
 ] }
-wasmtime-wasi = { version = "45.0.0", default-features = false, features = [
+wasmtime-wasi = { version = "46.0.0", default-features = false, features = [
   "p1",
 ] }
 
