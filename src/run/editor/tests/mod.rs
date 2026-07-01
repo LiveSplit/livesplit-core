@@ -168,3 +168,55 @@ fn fix_run_upon_creation() {
     assert_eq!(segments[1].segment_history().try_get_min_index(), Some(0));
     assert_eq!(segments[1].segment_history().try_get_max_index(), Some(1));
 }
+
+#[test]
+fn creates_renames_and_removes_segment_groups() {
+    let mut run = Run::new();
+    for name in ["A", "B", "C"] {
+        run.push_segment(Segment::new(name));
+    }
+
+    let mut editor = Editor::new(run).unwrap();
+    editor.select_range(2);
+    assert!(editor.create_segment_group_from_selection(Some("Group")));
+    assert!(editor.rename_active_segment_group(Some("Renamed")));
+
+    let mut image_cache = ImageCache::new();
+    let state = editor.state(&mut image_cache, Lang::English);
+    assert_eq!(state.segments[0].segment_group.group_index, Some(0));
+    assert!(state.segments[0].segment_group.is_subsplit);
+    assert!(state.segments[2].segment_group.is_major_split);
+    assert_eq!(
+        state.segments[2].segment_group.name.as_deref(),
+        Some("Renamed")
+    );
+
+    assert!(editor.remove_active_segment_group());
+    assert!(editor.close().segment_groups().groups().is_empty());
+}
+
+#[test]
+fn insertion_and_deletion_repair_segment_groups() {
+    let mut run = Run::new();
+    for name in ["A", "B", "C"] {
+        run.push_segment(Segment::new(name));
+    }
+
+    let mut editor = Editor::new(run).unwrap();
+    editor.select_range(2);
+    assert!(editor.create_segment_group_from_selection::<String>(None));
+
+    editor.select_only(1);
+    editor.insert_segment_below();
+    assert_eq!(editor.run().segment_groups().groups()[0].end(), 4);
+
+    editor.remove_segments();
+    let run = editor.close();
+    assert_eq!(
+        (
+            run.segment_groups().groups()[0].start(),
+            run.segment_groups().groups()[0].end()
+        ),
+        (0, 3)
+    );
+}

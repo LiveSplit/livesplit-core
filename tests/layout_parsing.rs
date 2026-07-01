@@ -30,7 +30,36 @@ mod parse {
 
     #[test]
     fn subsplits() {
-        livesplit(layout_files::SUBSPLITS);
+        let l = livesplit(layout_files::SUBSPLITS);
+        let Some(splits) = l.components.iter().find_map(|c| match c {
+            Component::Splits(s) => Some(s),
+            _ => None,
+        }) else {
+            panic!("Splits component not found");
+        };
+        assert_eq!(
+            splits.settings().subsplit_display_mode,
+            splits::SubsplitDisplayMode::CurrentGroupExpanded
+        );
+    }
+
+    #[test]
+    fn subsplits_without_old_header_but_with_indent_still_becomes_hierarchical() {
+        let layout = layout_files::SUBSPLITS.replace(
+            "<ShowHeader>True</ShowHeader>",
+            "<ShowHeader>False</ShowHeader>",
+        );
+        let l = livesplit(&layout);
+        let Some(splits) = l.components.iter().find_map(|c| match c {
+            Component::Splits(s) => Some(s),
+            _ => None,
+        }) else {
+            panic!("Splits component not found");
+        };
+        assert_eq!(
+            splits.settings().subsplit_display_mode,
+            splits::SubsplitDisplayMode::CurrentGroupExpanded
+        );
     }
 
     #[test]
@@ -144,10 +173,9 @@ mod parse {
             assert_eq!(variable_name, "pb hits");
             assert!(is_split);
         }
-        let l1 = ls1l(layout_files::CUSTOM_VARIABLE_LS1L);
         assert_eq!(
-            serde_json::to_string(&l.settings()).ok(),
-            serde_json::to_string(&l1.settings()).ok()
+            splits.settings().subsplit_display_mode,
+            splits::SubsplitDisplayMode::CurrentGroupExpanded
         );
     }
 

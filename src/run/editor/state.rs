@@ -80,6 +80,22 @@ pub struct Segment {
     pub comparison_times: Vec<String>,
     /// Describes the segment's selection state.
     pub selected: SelectionState,
+    /// Describes how this segment participates in a native segment group.
+    pub segment_group: SegmentGroupState,
+}
+
+/// Describes a segment's role in a native segment group.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct SegmentGroupState {
+    /// The index of the group this segment belongs to, if any.
+    pub group_index: Option<usize>,
+    /// Whether this segment is a subsplit inside the group.
+    pub is_subsplit: bool,
+    /// Whether this segment is the major split ending the group.
+    pub is_major_split: bool,
+    /// The explicit group name. If this is `None`, the major split name is the
+    /// display name of the group.
+    pub name: Option<String>,
 }
 
 /// Describes a segment's selection state.
@@ -168,6 +184,26 @@ impl Editor {
                 SelectionState::NotSelected
             };
 
+            let segment_group = self
+                .run
+                .segment_groups()
+                .group_index_for_segment(segment_index)
+                .map(|group_index| {
+                    let group = &self.run.segment_groups().groups()[group_index];
+                    SegmentGroupState {
+                        group_index: Some(group_index),
+                        is_subsplit: segment_index < group.major_index(),
+                        is_major_split: segment_index == group.major_index(),
+                        name: group.name().map(str::to_owned),
+                    }
+                })
+                .unwrap_or(SegmentGroupState {
+                    group_index: None,
+                    is_subsplit: false,
+                    is_major_split: false,
+                    name: None,
+                });
+
             segments.push(Segment {
                 icon,
                 name,
@@ -176,6 +212,7 @@ impl Editor {
                 best_segment_time,
                 comparison_times,
                 selected,
+                segment_group,
             });
         }
 

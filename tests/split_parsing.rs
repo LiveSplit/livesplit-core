@@ -10,11 +10,26 @@ mod parse {
             opensplit, portal2_live_timer, source_live_timer, speedrun_igt, splitterino, splitterz,
             time_split_tracker, wsplit,
         },
+        run::saver,
     };
 
     #[track_caller]
     fn livesplit(data: &str) -> Run {
         livesplit::parse(data).unwrap()
+    }
+
+    fn minimal_lss(version: &str, segment_names: &[&str], extra: &str) -> String {
+        let segments = segment_names
+            .iter()
+            .map(|name| {
+                format!(
+                    "<Segment><Name>{name}</Name><Icon/><SplitTimes/><BestSegmentTime/><SegmentHistory/></Segment>"
+                )
+            })
+            .collect::<String>();
+        format!(
+            r#"<?xml version="1.0" encoding="UTF-8"?><Run version="{version}"><GameIcon/><GameName>Game</GameName><CategoryName>Any%</CategoryName><Offset>00:00:00</Offset><AttemptCount>0</AttemptCount><Segments>{segments}</Segments>{extra}<AutoSplitterSettings/></Run>"#
+        )
     }
 
     #[track_caller]
@@ -60,6 +75,44 @@ mod parse {
     #[test]
     fn livesplit_celeste() {
         livesplit(run_files::CELESTE);
+    }
+
+    #[test]
+    fn livesplit_native_segment_groups() {
+        let run = livesplit(&minimal_lss(
+            "1.8.1",
+            &["Intro", "A1", "A2", "A End", "-Literal"],
+            r#"<SegmentGroups><SegmentGroup start="1" end="4"><Name>Chapter A</Name></SegmentGroup></SegmentGroups>"#,
+        ));
+
+        assert_eq!(run.segment_groups().groups().len(), 1);
+        let group = &run.segment_groups().groups()[0];
+        assert_eq!((group.start(), group.end()), (1, 4));
+        assert_eq!(group.name(), Some("Chapter A"));
+        assert_eq!(run.segment(4).name(), "-Literal");
+
+        let mut saved = String::new();
+        saver::livesplit::save_run(&run, &mut saved).unwrap();
+        assert!(saved.contains(r#"<Run version="1.8.1">"#));
+        assert!(saved.contains(r#"<SegmentGroup start="1" end="4">"#));
+        assert!(saved.contains("<Name>Chapter A</Name>"));
+    }
+
+    #[test]
+    fn livesplit_legacy_subsplits_are_upgraded() {
+        let run = livesplit(&minimal_lss(
+            "1.8.0",
+            &["Intro", "-A1", "-A2", "{Chapter A} A End", "-Final"],
+            "",
+        ));
+
+        assert_eq!(run.segment_groups().groups().len(), 1);
+        let group = &run.segment_groups().groups()[0];
+        assert_eq!((group.start(), group.end()), (1, 4));
+        assert_eq!(group.name(), Some("Chapter A"));
+        assert_eq!(run.segment(1).name(), "A1");
+        assert_eq!(run.segment(3).name(), "A End");
+        assert_eq!(run.segment(4).name(), "-Final");
     }
 
     #[test]
@@ -173,6 +226,53 @@ mod parse {
     #[test]
     fn opensplit() {
         opensplit::parse(run_files::OPENSPLIT).unwrap();
+    }
+
+    #[test]
+    fn opensplit_segment_children_become_segment_groups() {
+        let run = opensplit::parse(
+            r#"{
+                "game_name": "Game",
+                "game_category": "Any%",
+                "attempts": 0,
+                "segments": [
+                    { "id": "intro", "name": "Intro", "gold": 0, "pb": 0 },
+                    {
+                        "id": "chapter",
+                        "name": "Chapter",
+                        "gold": 0,
+                        "pb": 0,
+                        "children": [
+                            { "id": "a", "name": "A", "gold": 0, "pb": 0 },
+                            {
+                                "id": "nested",
+                                "name": "Nested",
+                                "gold": 0,
+                                "pb": 0,
+                                "children": [
+                                    { "id": "b", "name": "B", "gold": 0, "pb": 0 },
+                                    { "id": "c", "name": "C", "gold": 0, "pb": 0 }
+                                ]
+                            }
+                        ]
+                    },
+                    { "id": "outro", "name": "Outro", "gold": 0, "pb": 0 }
+                ]
+            }"#,
+        )
+        .unwrap();
+
+        assert_eq!(
+            run.segments()
+                .iter()
+                .map(|segment| segment.name())
+                .collect::<Vec<_>>(),
+            ["Intro", "A", "B", "C", "Outro"]
+        );
+        assert_eq!(run.segment_groups().groups().len(), 1);
+        let group = &run.segment_groups().groups()[0];
+        assert_eq!((group.start(), group.end()), (1, 4));
+        assert_eq!(group.name(), Some("Chapter"));
     }
 
     #[test]

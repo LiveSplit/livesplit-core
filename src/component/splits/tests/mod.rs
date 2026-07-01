@@ -1,6 +1,6 @@
 use super::{
     ColumnSettings, ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith, Component, Settings,
-    State,
+    State, SubsplitDisplayMode,
 };
 use crate::{
     Lang, Run, Segment, TimeSpan, Timer, TimingMethod,
@@ -200,4 +200,261 @@ fn unique_split_indices() {
     indices.sort_unstable();
 
     assert!(indices.windows(2).all(|pair| pair[0] != pair[1]));
+}
+
+#[test]
+fn flat_subsplit_state() {
+    let mut run = Run::new();
+    for name in ["Intro", "A1", "A2", "A End", "Outro"] {
+        run.push_segment(Segment::new(name));
+    }
+    run.segment_groups_mut()
+        .push_lossy(1, 4, Some("Chapter A".into()), 5);
+
+    let timer = Timer::new(run).unwrap();
+    let mut component = Component::with_settings(Settings {
+        visual_split_count: 0,
+        subsplit_display_mode: SubsplitDisplayMode::Flat,
+        ..english_settings()
+    });
+    let mut image_cache = ImageCache::new();
+
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &Default::default(),
+        Lang::English,
+    );
+    assert_eq!(
+        state
+            .splits
+            .iter()
+            .map(|s| s.name.as_str())
+            .collect::<Vec<_>>(),
+        ["Intro", "A1", "A2", "A End", "Outro"]
+    );
+    assert!(state.splits.iter().all(|s| !s.is_subsplit));
+    assert!(state.splits.iter().all(|s| !s.is_group_header));
+    assert!(state.splits.iter().all(|s| !s.is_section_end));
+    assert!(state.splits.iter().all(|s| s.group_index.is_none()));
+    assert_eq!(
+        state
+            .splits
+            .iter()
+            .map(|s| s.section_index)
+            .collect::<Vec<_>>(),
+        [0, 1, 2, 3, 4]
+    );
+}
+
+#[test]
+fn current_group_expanded_subsplit_state() {
+    let mut run = Run::new();
+    for name in ["Intro", "A1", "A2", "A End", "Outro"] {
+        run.push_segment(Segment::new(name));
+    }
+    run.segment_groups_mut()
+        .push_lossy(1, 4, Some("Chapter A".into()), 5);
+
+    let mut timer = Timer::new(run).unwrap();
+    let mut component = Component::with_settings(Settings {
+        visual_split_count: 0,
+        subsplit_display_mode: SubsplitDisplayMode::CurrentGroupExpanded,
+        ..english_settings()
+    });
+    let mut image_cache = ImageCache::new();
+
+    timer.start().unwrap();
+    timer.split().unwrap();
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &Default::default(),
+        Lang::English,
+    );
+    assert_eq!(
+        state
+            .splits
+            .iter()
+            .map(|s| s.name.as_str())
+            .collect::<Vec<_>>(),
+        ["Intro", "Chapter A", "A1", "A2", "A End", "Outro"]
+    );
+    assert!(state.splits[1].is_group_header);
+    assert_eq!(state.splits[1].display_name, "Chapter A");
+    assert_eq!(state.splits[1].segment_index, Some(3));
+    assert!(state.splits[1].columns.is_empty());
+    assert!(state.splits[2].is_subsplit);
+    assert_eq!(state.splits[2].segment_index, Some(1));
+    assert_eq!(state.splits[4].group_index, Some(0));
+    assert_eq!(state.splits[4].display_name, "A End");
+    assert!(state.splits[4].is_section_end);
+    assert_eq!(
+        state
+            .splits
+            .iter()
+            .map(|s| s.section_index)
+            .collect::<Vec<_>>(),
+        [0, 1, 1, 1, 1, 2]
+    );
+}
+
+#[test]
+fn all_groups_expanded_subsplit_state() {
+    let mut run = Run::new();
+    for name in ["Intro", "A1", "A2", "A End", "Outro"] {
+        run.push_segment(Segment::new(name));
+    }
+    run.segment_groups_mut()
+        .push_lossy(1, 4, Some("Chapter A".into()), 5);
+
+    let timer = Timer::new(run).unwrap();
+    let mut component = Component::with_settings(Settings {
+        visual_split_count: 0,
+        subsplit_display_mode: SubsplitDisplayMode::AllGroupsExpanded,
+        ..english_settings()
+    });
+    let mut image_cache = ImageCache::new();
+
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &Default::default(),
+        Lang::English,
+    );
+
+    assert_eq!(
+        state
+            .splits
+            .iter()
+            .map(|s| s.name.as_str())
+            .collect::<Vec<_>>(),
+        ["Intro", "Chapter A", "A1", "A2", "A End", "Outro"]
+    );
+    assert!(state.splits[1].is_group_header);
+    assert_eq!(state.splits[1].display_name, "Chapter A");
+    assert_eq!(state.splits[1].segment_index, Some(3));
+    assert!(state.splits[1].columns.is_empty());
+    assert!(state.splits[2].is_subsplit);
+    assert!(state.splits[3].is_subsplit);
+    assert_eq!(state.splits[4].display_name, "A End");
+    assert_eq!(state.splits[4].segment_index, Some(3));
+    assert!(state.splits[4].is_section_end);
+}
+
+#[test]
+fn current_group_expanded_closes_other_groups() {
+    let mut run = Run::new();
+    for name in ["Intro", "A1", "A2", "A End", "Outro"] {
+        run.push_segment(Segment::new(name));
+    }
+    run.segment_groups_mut()
+        .push_lossy(1, 4, Some("Chapter A".into()), 5);
+
+    let mut timer = Timer::new(run).unwrap();
+    let mut component = Component::with_settings(Settings {
+        visual_split_count: 0,
+        subsplit_display_mode: SubsplitDisplayMode::CurrentGroupExpanded,
+        ..english_settings()
+    });
+    let mut image_cache = ImageCache::new();
+
+    timer.start().unwrap();
+    timer.split().unwrap();
+    timer.split().unwrap();
+    timer.split().unwrap();
+    timer.split().unwrap();
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &Default::default(),
+        Lang::English,
+    );
+
+    assert_eq!(
+        state
+            .splits
+            .iter()
+            .map(|s| s.name.as_str())
+            .collect::<Vec<_>>(),
+        ["Intro", "Chapter A", "Outro"]
+    );
+    assert!(state.splits[1].is_group_header);
+    assert!(!state.splits[1].is_current_split);
+    assert_eq!(state.splits[1].segment_index, Some(3));
+    assert_eq!(state.splits[1].display_name, "Chapter A");
+    assert_eq!(state.splits[1].columns.len(), 2);
+    assert!(state.splits[1].columns.iter().any(|c| !c.value.is_empty()));
+    assert!(state.splits[2].is_current_split);
+    assert_eq!(state.splits[2].segment_index, Some(4));
+}
+
+#[test]
+fn closed_group_header_segment_columns_summarize_the_whole_group() {
+    let mut run = Run::new();
+    for name in ["Intro", "A1", "A2", "A End", "Outro"] {
+        run.push_segment(Segment::new(name));
+    }
+    for (segment, time) in run
+        .segments_mut()
+        .iter_mut()
+        .zip([10.0, 15.0, 20.0, 30.0, 40.0])
+    {
+        segment.personal_best_split_time_mut()[TimingMethod::GameTime] =
+            Some(TimeSpan::from_seconds(time));
+    }
+    run.segment_groups_mut()
+        .push_lossy(1, 4, Some("Chapter A".into()), 5);
+
+    let mut timer = Timer::new(run).unwrap();
+    timer.set_current_timing_method(TimingMethod::GameTime);
+    timer.start().unwrap();
+    timer.initialize_game_time().unwrap();
+    timer.pause_game_time().unwrap();
+    for time in [10.0, 17.0, 24.0, 36.0] {
+        timer.set_game_time(TimeSpan::from_seconds(time)).unwrap();
+        timer.split().unwrap();
+    }
+
+    let mut component = Component::with_settings(Settings {
+        visual_split_count: 0,
+        subsplit_display_mode: SubsplitDisplayMode::CurrentGroupExpanded,
+        columns: vec![
+            ColumnSettings {
+                kind: ColumnKind::Time(TimeColumn {
+                    update_with: ColumnUpdateWith::SegmentTime,
+                    ..Default::default()
+                }),
+                ..Default::default()
+            },
+            ColumnSettings {
+                kind: ColumnKind::Time(TimeColumn {
+                    update_with: ColumnUpdateWith::SegmentDelta,
+                    ..Default::default()
+                }),
+                ..Default::default()
+            },
+        ],
+        ..english_settings()
+    });
+    let mut image_cache = ImageCache::new();
+
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &Default::default(),
+        Lang::English,
+    );
+
+    assert_eq!(
+        state
+            .splits
+            .iter()
+            .map(|s| s.name.as_str())
+            .collect::<Vec<_>>(),
+        ["Intro", "Chapter A", "Outro"]
+    );
+    assert!(state.splits[1].is_group_header);
+    assert_eq!(state.splits[1].columns[0].value, "26.00");
+    assert_eq!(state.splits[1].columns[1].value, "+6.0");
 }

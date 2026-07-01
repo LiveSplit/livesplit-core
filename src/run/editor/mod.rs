@@ -4,7 +4,7 @@
 //! current state of the editor as state objects that can be visualized by any
 //! kind of User Interface.
 
-use super::{AddComparisonError, CopyComparisonError, LinkedLayout};
+use super::{AddComparisonError, CopyComparisonError, LinkedLayout, SegmentGroup};
 use crate::{
     Lang, Run, Segment, Time, TimeSpan, TimingMethod, comparison,
     localization::Text,
@@ -498,6 +498,10 @@ impl Editor {
             segment.segment_history_mut().insert(x, Default::default());
         }
         self.run.segments_mut().insert(active_segment, segment);
+        let len = self.run.len();
+        self.run
+            .segment_groups_mut()
+            .segment_inserted(active_segment, len);
 
         self.select_only(active_segment);
 
@@ -523,6 +527,10 @@ impl Editor {
             segment.segment_history_mut().insert(x, Default::default());
         }
         self.run.segments_mut().insert(next_segment, segment);
+        let len = self.run.len();
+        self.run
+            .segment_groups_mut()
+            .segment_inserted(next_segment, len);
 
         self.select_only(next_segment);
 
@@ -622,6 +630,10 @@ impl Editor {
                 let segment_index = i - removed;
                 self.fix_after_deletion(segment_index);
                 self.run.segments_mut().remove(segment_index);
+                let len = self.run.len();
+                self.run
+                    .segment_groups_mut()
+                    .segment_removed(segment_index, len);
                 removed += 1;
             }
         }
@@ -685,6 +697,10 @@ impl Editor {
         }
 
         swap(first, second);
+        let len = self.run.len();
+        self.run
+            .segment_groups_mut()
+            .adjacent_segments_swapped(index, len);
     }
 
     /// Checks if the currently selected segments can be moved up. If any one of
@@ -744,6 +760,111 @@ impl Editor {
 
         self.times_modified();
         self.fix();
+    }
+
+    fn selected_segment_range(&self) -> Option<(usize, usize)> {
+        let (&start, &end) = (
+            self.selected_segments.iter().min()?,
+            self.selected_segments.iter().max()?,
+        );
+        let len = end - start + 1;
+        (len == self.selected_segments.len()).then_some((start, end + 1))
+    }
+
+    /// Creates a segment group from the currently selected contiguous segment
+    /// rows. A group needs at least two segments.
+    pub fn create_segment_group_from_selection<S>(&mut self, name: Option<S>) -> bool
+    where
+        S: PopulateString,
+    {
+        let Some((start, end)) = self.selected_segment_range() else {
+            return false;
+        };
+        let name = name.map(PopulateString::into_string);
+        let Some(group) = SegmentGroup::new(start, end, name) else {
+            return false;
+        };
+        self.run.segment_groups_mut().groups_mut().push(group);
+        let len = self.run.len();
+        self.run.segment_groups_mut().repair(len);
+        self.raise_run_edited();
+        true
+    }
+
+    /// Removes the group containing the active segment, while keeping all
+    /// segments.
+    pub fn remove_active_segment_group(&mut self) -> bool {
+        let active = self.active_segment_index();
+        let Some(group_index) = self.run.segment_groups().group_index_for_segment(active) else {
+            return false;
+        };
+        self.run
+            .segment_groups_mut()
+            .groups_mut()
+            .remove(group_index);
+        self.raise_run_edited();
+        true
+    }
+
+    /// Renames the group containing the active segment.
+    pub fn rename_active_segment_group<S>(&mut self, name: Option<S>) -> bool
+    where
+        S: PopulateString,
+    {
+        let active = self.active_segment_index();
+        let Some(group_index) = self.run.segment_groups().group_index_for_segment(active) else {
+            return false;
+        };
+        let name = name.map(PopulateString::into_string);
+        self.run.segment_groups_mut().groups_mut()[group_index].set_name(name);
+        self.raise_run_edited();
+        true
+    }
+
+    /// Marks the active row as a major split by ending the surrounding group at
+    /// the active segment. If no group contains the active segment, a group is
+    /// created from the previous segment through the active segment.
+    pub fn mark_active_segment_as_major_split(&mut self) -> bool {
+        let active = self.active_segment_index();
+        if active == 0 {
+            return false;
+        }
+
+        if let Some(group_index) = self.run.segment_groups().group_index_for_segment(active) {
+            let group = &mut self.run.segment_groups_mut().groups_mut()[group_index];
+            if active < group.start() {
+                return false;
+            }
+            let name = group.name().map(str::to_owned);
+            *group = match SegmentGroup::new(group.start(), active + 1, name) {
+                Some(group) => group,
+                None => {
+                    self.run
+                        .segment_groups_mut()
+                        .groups_mut()
+                        .remove(group_index);
+                    self.raise_run_edited();
+                    return true;
+                }
+            };
+        } else {
+            let start = active - 1;
+            let Some(group) = SegmentGroup::new(start, active + 1, None) else {
+                return false;
+            };
+            self.run.segment_groups_mut().groups_mut().push(group);
+        }
+
+        let len = self.run.len();
+        self.run.segment_groups_mut().repair(len);
+        self.raise_run_edited();
+        true
+    }
+
+    /// Clears all segment groups.
+    pub fn clear_segment_groups(&mut self) {
+        self.run.segment_groups_mut().clear();
+        self.raise_run_edited();
     }
 
     /// Adds a new custom comparison. It can't be added if it starts with

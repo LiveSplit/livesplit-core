@@ -338,9 +338,40 @@ fn subsplits_layout() {
         &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
         &image_cache,
         [300, 800],
-        "de8412439f6ac04a",
-        "a5e0f59de02a3f5f",
+        "7a7662f8e7c73e80",
+        "165b2051ef19f18d",
         "subsplits_layout",
+    );
+}
+
+#[test]
+fn native_subsplits_layout() {
+    let mut run = tests_helper::create_run(&["Intro", "A1", "A2", "A End", "Outro"]);
+    run.segment_groups_mut()
+        .push_lossy(1, 4, Some("Chapter A".into()), 5);
+    let mut timer = Timer::new(run).unwrap();
+    let mut layout = Layout::default_layout(Lang::English);
+
+    for component in &mut layout.components {
+        if let Component::Splits(splits) = component {
+            splits.settings_mut().visual_split_count = 0;
+            splits.settings_mut().subsplit_display_mode =
+                component::splits::SubsplitDisplayMode::AllGroupsExpanded;
+        }
+    }
+
+    tests_helper::start_run(&mut timer);
+    timer.split().unwrap();
+
+    let mut image_cache = ImageCache::new();
+
+    check_dims(
+        &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
+        &image_cache,
+        [300, 300],
+        "a6c612401803a03a",
+        "35f288fb4bdde1ff",
+        "native_subsplits_layout",
     );
 }
 

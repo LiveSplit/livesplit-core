@@ -22,6 +22,7 @@ pub mod parser;
 mod run_metadata;
 pub mod saver;
 mod segment;
+mod segment_groups;
 mod segment_history;
 
 #[cfg(test)]
@@ -33,6 +34,7 @@ pub use editor::{Editor, RenameError};
 pub use linked_layout::LinkedLayout;
 pub use run_metadata::{CustomVariable, RunMetadata};
 pub use segment::Segment;
+pub use segment_groups::{SegmentGroup, SegmentGroupView, SegmentGroups, SegmentGroupsIter};
 pub use segment_history::SegmentHistory;
 
 use crate::{
@@ -72,6 +74,7 @@ pub struct Run {
     metadata: RunMetadata,
     has_been_modified: bool,
     segments: Vec<Segment>,
+    segment_groups: SegmentGroups,
     custom_comparisons: Vec<String>,
     comparison_generators: ComparisonGenerators,
     auto_splitter_settings: String,
@@ -125,6 +128,7 @@ impl Run {
             metadata: RunMetadata::new(),
             has_been_modified: false,
             segments: Vec::new(),
+            segment_groups: SegmentGroups::new(),
             custom_comparisons: vec![personal_best::NAME.to_string()],
             comparison_generators: ComparisonGenerators(default_generators()),
             auto_splitter_settings: String::new(),
@@ -231,10 +235,29 @@ impl Run {
         &mut self.segments
     }
 
+    /// Accesses the Segment Groups of this Run object.
+    #[inline]
+    pub const fn segment_groups(&self) -> &SegmentGroups {
+        &self.segment_groups
+    }
+
+    /// Grants mutable access to the Segment Groups of this Run object.
+    #[inline]
+    pub const fn segment_groups_mut(&mut self) -> &mut SegmentGroups {
+        &mut self.segment_groups
+    }
+
+    /// Accesses an iterator over grouped and ungrouped segment views.
+    #[inline]
+    pub fn segment_groups_iter(&self) -> SegmentGroupsIter<'_, '_> {
+        self.segment_groups.iter_with(&self.segments)
+    }
+
     /// Pushes the segment provided to the end of the list of segments of this Run.
     #[inline]
     pub fn push_segment(&mut self, segment: Segment) {
         self.segments.push(segment);
+        self.segment_groups.repair(self.segments.len());
     }
 
     /// Accesses a certain segment of this Run.

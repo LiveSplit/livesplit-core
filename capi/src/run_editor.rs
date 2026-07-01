@@ -312,6 +312,55 @@ pub extern "C" fn RunEditor_move_segments_down(this: &mut RunEditor) {
     this.move_segments_down();
 }
 
+/// Creates a native segment group from the currently selected contiguous
+/// segment rows. Returns <FALSE> if the selection is not contiguous or has
+/// fewer than two segments.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn RunEditor_create_segment_group_from_selection(
+    this: &mut RunEditor,
+    name: *const c_char,
+) -> bool {
+    if name.is_null() {
+        this.create_segment_group_from_selection::<String>(None)
+    } else {
+        // SAFETY: The caller guarantees that `name` is valid when non-null.
+        this.create_segment_group_from_selection(Some(unsafe { str(name) }))
+    }
+}
+
+/// Removes the native segment group containing the active segment, while
+/// keeping all segments.
+#[unsafe(no_mangle)]
+pub extern "C" fn RunEditor_remove_active_segment_group(this: &mut RunEditor) -> bool {
+    this.remove_active_segment_group()
+}
+
+/// Renames the native segment group containing the active segment.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn RunEditor_rename_active_segment_group(
+    this: &mut RunEditor,
+    name: *const c_char,
+) -> bool {
+    if name.is_null() {
+        this.rename_active_segment_group::<String>(None)
+    } else {
+        // SAFETY: The caller guarantees that `name` is valid when non-null.
+        this.rename_active_segment_group(Some(unsafe { str(name) }))
+    }
+}
+
+/// Marks the active segment as a major split.
+#[unsafe(no_mangle)]
+pub extern "C" fn RunEditor_mark_active_segment_as_major_split(this: &mut RunEditor) -> bool {
+    this.mark_active_segment_as_major_split()
+}
+
+/// Clears all native segment groups.
+#[unsafe(no_mangle)]
+pub extern "C" fn RunEditor_clear_segment_groups(this: &mut RunEditor) {
+    this.clear_segment_groups();
+}
+
 /// Sets the icon of the active segment.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn RunEditor_active_set_icon(

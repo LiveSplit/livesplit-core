@@ -16,6 +16,7 @@ use crate::{
     timing::{Snapshot, formatter::Accuracy},
     util::{Clear, ClearVec},
 };
+use alloc::borrow::Cow;
 use core::{
     cmp::{max, min},
     hash::{Hash, Hasher},
@@ -32,7 +33,7 @@ pub use column::{
     ColumnUpdateWith, TimeColumn, VariableColumn,
 };
 
-const SETTINGS_BEFORE_COLUMNS: usize = 15;
+const SETTINGS_BEFORE_COLUMNS: usize = 16;
 const SETTINGS_PER_TIME_COLUMN: usize = 6;
 const SETTINGS_PER_VARIABLE_COLUMN: usize = 2;
 
@@ -107,10 +108,25 @@ pub struct Settings {
     pub delta_drop_decimals: bool,
     /// Specifies whether to show the names of the columns above the splits.
     pub show_column_labels: bool,
+    /// Specifies how native subsplits are displayed.
+    pub subsplit_display_mode: SubsplitDisplayMode,
     /// The columns to show on the splits. These can be configured in various
     /// way to show split times, segment times, deltas and so on. The columns
     /// are defined from right to left.
     pub columns: Vec<ColumnSettings>,
+}
+
+/// Describes how native subsplits are displayed.
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SubsplitDisplayMode {
+    /// Every segment is shown as part of the flat list without group hierarchy.
+    #[default]
+    Flat,
+    /// Groups are shown with header rows and all group contents expanded.
+    AllGroupsExpanded,
+    /// Groups are shown with header rows, but only the current group has its
+    /// contents expanded.
+    CurrentGroupExpanded,
 }
 
 /// The state object that describes a single segment's information to visualize.
@@ -128,6 +144,22 @@ pub struct SplitState {
     /// Describes if this segment is the segment the active attempt is currently
     /// on.
     pub is_current_split: bool,
+    /// Describes whether this row is a subsplit inside a group.
+    pub is_subsplit: bool,
+    /// Describes whether this row is a group header.
+    pub is_group_header: bool,
+    /// Describes whether this row is the ending segment of an expanded group.
+    pub is_section_end: bool,
+    /// The native group index this row belongs to, if any.
+    pub group_index: Option<usize>,
+    /// The index of the segment this row visualizes. Blank rows use `None`.
+    pub segment_index: Option<usize>,
+    /// The name intended for display. This mirrors `name` for segment rows and
+    /// contains the group name for header rows.
+    pub display_name: String,
+    /// The visual section this row belongs to. This is used for alternating
+    /// backgrounds when multiple flat segments collapse into a single section.
+    pub section_index: usize,
     /// The index of the segment based on all the segments of the run. This may
     /// differ from the index of this `SplitState` in the `State` object, as
     /// there can be a scrolling window, showing only a subset of segments. Each
@@ -139,6 +171,7 @@ impl Clear for SplitState {
     fn clear(&mut self) {
         self.icon = *ImageId::EMPTY;
         self.name.clear();
+        self.display_name.clear();
         self.columns.clear();
     }
 }
@@ -178,6 +211,13 @@ impl SplitState {
         self.icon.hash(state);
         self.name.hash(state);
         self.is_current_split.hash(state);
+        self.is_subsplit.hash(state);
+        self.is_group_header.hash(state);
+        self.is_section_end.hash(state);
+        self.group_index.hash(state);
+        self.segment_index.hash(state);
+        self.display_name.hash(state);
+        self.section_index.hash(state);
         self.index.hash(state);
         self.columns.len().hash(state);
         for column in self.columns.iter() {
@@ -229,6 +269,7 @@ impl Settings {
             delta_time_accuracy: Accuracy::Tenths,
             delta_drop_decimals: true,
             show_column_labels: false,
+            subsplit_display_mode: SubsplitDisplayMode::Flat,
             columns: vec![
                 ColumnSettings {
                     name: Text::SplitTime.resolve(lang).into(),
@@ -328,18 +369,25 @@ impl Component {
         }
 
         let run = timer.run();
+        let current_split = timer.current_split_index();
+        let displayed = displayed_splits(run, current_split, self.settings.subsplit_display_mode);
 
         let mut visual_split_count = self.settings.visual_split_count;
         if visual_split_count == 0 {
-            visual_split_count = run.len();
+            visual_split_count = displayed.len();
         }
 
-        let current_split = timer.current_split_index();
         let method = timer.current_timing_method();
+        let current_display_index = current_split.and_then(|current_split| {
+            displayed
+                .iter()
+                .position(|split| !split.is_group_header && split.segment_index == current_split)
+                .or_else(|| (current_split >= run.len()).then(|| displayed.len().saturating_sub(1)))
+        });
 
         let locked_last_split = isize::from(self.settings.always_show_last_split);
         let skip_count = min(
-            current_split.map_or(0, |current_split| {
+            current_display_index.map_or(0, |current_split| {
                 max(
                     0,
                     current_split as isize
@@ -349,11 +397,11 @@ impl Component {
                         - visual_split_count as isize,
                 )
             }),
-            run.len() as isize - visual_split_count as isize,
+            displayed.len() as isize - visual_split_count as isize,
         );
         self.scroll_offset = min(
             max(self.scroll_offset, -skip_count),
-            run.len() as isize - skip_count - visual_split_count as isize,
+            displayed.len() as isize - skip_count - visual_split_count as isize,
         );
         let skip_count = max(0, skip_count + self.scroll_offset) as usize;
         let take_count = visual_split_count - locked_last_split as usize;
@@ -361,7 +409,7 @@ impl Component {
 
         let show_final_separator = self.settings.separator_last_split
             && always_show_last_split
-            && skip_count + take_count + 1 < run.len();
+            && skip_count + take_count + 1 < displayed.len();
 
         let Settings {
             show_thin_separators,
@@ -384,50 +432,69 @@ impl Component {
         }
 
         state.splits.clear();
-        for (i, segment) in run
-            .segments()
+        for (_i, split) in displayed
             .iter()
             .enumerate()
             .skip(skip_count)
             .filter(|&(i, _)| {
-                i - skip_count < take_count || (always_show_last_split && i + 1 == run.len())
+                i - skip_count < take_count || (always_show_last_split && i + 1 == displayed.len())
             })
         {
             let state = state.splits.push_with(|| SplitState {
                 icon: *ImageId::EMPTY,
                 name: String::new(),
+                display_name: String::new(),
                 columns: ClearVec::new(),
                 is_current_split: false,
+                is_subsplit: false,
+                is_group_header: false,
+                is_section_end: false,
+                group_index: None,
+                segment_index: None,
+                section_index: 0,
                 index: 0,
             });
 
-            let icon = segment.icon();
-            state.icon = *image_cache.cache(icon.id(), || icon.clone()).id();
+            let segment = split.segment;
+            state.icon = *image_cache
+                .cache(segment.icon().id(), || segment.icon().clone())
+                .id();
 
-            state.name.push_str(segment.name());
+            state.name.push_str(&split.name);
+            state.display_name.push_str(&split.name);
 
-            for column in columns {
-                column::update_state(
-                    state.columns.push_with(|| ColumnState {
-                        value: String::new(),
-                        semantic_color: Default::default(),
-                        visual_color: Color::transparent(),
-                        updates_frequently: false,
-                    }),
-                    column,
-                    timer,
-                    &self.settings,
-                    layout_settings,
-                    segment,
-                    i,
-                    current_split,
-                    method,
-                    lang,
-                );
+            if split.show_columns {
+                for column in columns {
+                    column::update_state(
+                        state.columns.push_with(|| ColumnState {
+                            value: String::new(),
+                            semantic_color: Default::default(),
+                            visual_color: Color::transparent(),
+                            updates_frequently: false,
+                        }),
+                        column,
+                        timer,
+                        &self.settings,
+                        layout_settings,
+                        segment,
+                        split.segment_index,
+                        split.column_start_index,
+                        current_split,
+                        method,
+                        lang,
+                    );
+                }
             }
 
-            state.is_current_split = Some(i) == current_split;
-            state.index = i;
+            state.is_current_split =
+                !split.is_group_header && Some(split.segment_index) == current_split;
+            state.is_subsplit = split.is_subsplit;
+            state.is_group_header = split.is_group_header;
+            state.is_section_end = split.is_section_end;
+            state.group_index = split.group_index;
+            state.segment_index = Some(split.segment_index);
+            state.section_index = split.section_index;
+            state.index = split.segment_index;
         }
 
         if fill_with_blank_space && state.splits.len() < visual_split_count {
@@ -436,8 +503,15 @@ impl Component {
                 let state = state.splits.push_with(|| SplitState {
                     icon: *ImageId::EMPTY,
                     name: String::new(),
+                    display_name: String::new(),
                     columns: ClearVec::new(),
                     is_current_split: false,
+                    is_subsplit: false,
+                    is_group_header: false,
+                    is_section_end: false,
+                    group_index: None,
+                    segment_index: None,
+                    section_index: 0,
                     index: 0,
                 });
                 state.is_current_split = false;
@@ -566,6 +640,11 @@ impl Component {
                 self.settings.show_column_labels.into(),
             ),
             Field::new(
+                "Subsplit Display Mode".into(),
+                "0 = flat list, 1 = all groups expanded, 2 = current group expanded".into(),
+                Value::UInt(self.settings.subsplit_display_mode as u64),
+            ),
+            Field::new(
                 Text::SplitsColumns.resolve(lang).into(),
                 Text::SplitsColumnsDescription.resolve(lang).into(),
                 Value::UInt(self.settings.columns.len() as _),
@@ -673,6 +752,13 @@ impl Component {
             12 => self.settings.delta_drop_decimals = value.into(),
             13 => self.settings.show_column_labels = value.into(),
             14 => {
+                self.settings.subsplit_display_mode = match value.into_uint().unwrap() {
+                    0 => SubsplitDisplayMode::Flat,
+                    1 => SubsplitDisplayMode::AllGroupsExpanded,
+                    _ => SubsplitDisplayMode::CurrentGroupExpanded,
+                }
+            }
+            15 => {
                 let new_len = value.into_uint().unwrap() as usize;
                 self.settings.columns.resize(new_len, Default::default());
             }
@@ -723,4 +809,79 @@ impl Component {
             }
         }
     }
+}
+
+struct DisplayedSplit<'a> {
+    segment_index: usize,
+    column_start_index: usize,
+    segment: &'a crate::Segment,
+    name: Cow<'a, str>,
+    is_subsplit: bool,
+    is_group_header: bool,
+    show_columns: bool,
+    is_section_end: bool,
+    group_index: Option<usize>,
+    section_index: usize,
+}
+
+fn displayed_splits<'a>(
+    run: &'a crate::Run,
+    current_split: Option<usize>,
+    mode: SubsplitDisplayMode,
+) -> Vec<DisplayedSplit<'a>> {
+    let current_group =
+        current_split.and_then(|index| run.segment_groups().group_index_for_segment(index));
+
+    let mut displayed = Vec::with_capacity(run.len());
+    for (section_index, view) in run.segment_groups_iter().enumerate() {
+        let group_index = view.group_index();
+        let is_group = group_index.is_some();
+        let show_hierarchy = mode != SubsplitDisplayMode::Flat;
+        let expand = match mode {
+            SubsplitDisplayMode::Flat => true,
+            SubsplitDisplayMode::AllGroupsExpanded => true,
+            SubsplitDisplayMode::CurrentGroupExpanded => !is_group || group_index == current_group,
+        };
+
+        if is_group && show_hierarchy {
+            displayed.push(DisplayedSplit {
+                segment_index: view.major_index(),
+                column_start_index: view.start_index(),
+                segment: view.ending_segment(),
+                name: Cow::Owned(view.name_or_default().to_owned()),
+                is_subsplit: false,
+                is_group_header: true,
+                show_columns: !expand,
+                is_section_end: false,
+                group_index,
+                section_index,
+            });
+        }
+
+        if !expand {
+            continue;
+        }
+
+        for (offset, segment) in view.segments().iter().enumerate() {
+            let segment_index = view.start_index() + offset;
+            displayed.push(DisplayedSplit {
+                segment_index,
+                column_start_index: segment_index,
+                segment,
+                name: Cow::Borrowed(segment.name()),
+                is_subsplit: show_hierarchy && is_group && segment_index < view.major_index(),
+                is_group_header: false,
+                show_columns: true,
+                is_section_end: show_hierarchy && is_group && segment_index == view.major_index(),
+                group_index: show_hierarchy.then_some(group_index).flatten(),
+                section_index: if show_hierarchy {
+                    section_index
+                } else {
+                    segment_index
+                },
+            });
+        }
+    }
+
+    displayed
 }

@@ -251,13 +251,29 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                 &component.current_split_gradient,
             );
         } else if let Some((even, odd)) = &split_background {
-            let color = if split.index % 2 == 0 { even } else { odd };
+            let alternating_index =
+                split.section_index + usize::from(component.column_labels.is_some());
+            let color = if alternating_index % 2 == 0 {
+                even
+            } else {
+                odd
+            };
             context.render_background(split_background_bottom_right, color);
         }
 
         {
+            let subsplit_indent = if split.is_subsplit || split.is_section_end {
+                DEFAULT_TEXT_SIZE
+            } else {
+                0.0
+            };
+
             if let Some(icon) = context.create_image(&split.icon) {
-                context.render_image([PADDING, icon_y], [icon_size, icon_size], icon);
+                context.render_image(
+                    [PADDING + subsplit_indent, icon_y],
+                    [icon_size, icon_size],
+                    icon,
+                );
             }
 
             let mut left_x = split_width - PADDING;
@@ -290,13 +306,14 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                 left_x = split_width;
             }
 
+            let name_x = icon_right + subsplit_indent;
             context.render_text_ellipsis(
                 &split.name,
                 &mut split_cache.name,
-                [icon_right, TEXT_ALIGN_TOP],
+                [name_x, TEXT_ALIGN_TOP],
                 DEFAULT_TEXT_SIZE,
                 text_color,
-                left_x - PADDING,
+                left_x - PADDING - name_x + icon_right,
             );
         }
         context.translate(delta_x, delta_y);
