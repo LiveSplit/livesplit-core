@@ -1,7 +1,7 @@
 use crate::{
     TimingMethod,
     component::{
-        splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith},
+        splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith, SubsplitDisplayMode},
         timer::DeltaGradient,
     },
     hotkey::Hotkey,
@@ -66,6 +66,8 @@ pub enum Value {
     ColumnUpdateWith(ColumnUpdateWith),
     /// A value describing when to update a column of the Splits Component.
     ColumnUpdateTrigger(ColumnUpdateTrigger),
+    /// A value describing how native subsplits are displayed.
+    SubsplitDisplayMode(SubsplitDisplayMode),
     /// A value describing what hotkey to press to trigger a certain action.
     Hotkey(Option<Hotkey>),
     /// A value describing the direction of a layout.
@@ -179,6 +181,12 @@ impl From<ColumnUpdateWith> for Value {
 impl From<ColumnUpdateTrigger> for Value {
     fn from(x: ColumnUpdateTrigger) -> Self {
         Value::ColumnUpdateTrigger(x)
+    }
+}
+
+impl From<SubsplitDisplayMode> for Value {
+    fn from(x: SubsplitDisplayMode) -> Self {
+        Value::SubsplitDisplayMode(x)
     }
 }
 
@@ -370,6 +378,14 @@ impl Value {
         }
     }
 
+    /// Tries to convert the value into a Subsplit Display Mode.
+    pub fn into_subsplit_display_mode(self) -> Result<SubsplitDisplayMode> {
+        match self {
+            Value::SubsplitDisplayMode(v) => Ok(v),
+            _ => Err(Error::WrongType),
+        }
+    }
+
     /// Tries to convert the value into a hotkey.
     pub fn into_hotkey(self) -> Result<Option<Hotkey>> {
         match self {
@@ -526,6 +542,12 @@ impl From<Value> for ColumnUpdateWith {
 impl From<Value> for ColumnUpdateTrigger {
     fn from(value: Value) -> Self {
         value.into_column_update_trigger().unwrap()
+    }
+}
+
+impl From<Value> for SubsplitDisplayMode {
+    fn from(value: Value) -> Self {
+        value.into_subsplit_display_mode().unwrap()
     }
 }
 

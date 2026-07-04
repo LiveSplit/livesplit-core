@@ -5,7 +5,7 @@ use super::{
 use crate::{
     Lang, Run, Segment, TimeSpan, Timer, TimingMethod,
     component::splits::{ColumnKind, TimeColumn, english_settings},
-    settings::ImageCache,
+    settings::{ImageCache, Value},
 };
 
 pub mod column;
@@ -200,6 +200,67 @@ fn unique_split_indices() {
     indices.sort_unstable();
 
     assert!(indices.windows(2).all(|pair| pair[0] != pair[1]));
+}
+
+#[test]
+fn default_subsplit_display_mode_shows_hierarchy() {
+    let mut run = Run::new();
+    for name in ["Intro", "A1", "A End", "Outro"] {
+        run.push_segment(Segment::new(name));
+    }
+    run.segment_groups_mut()
+        .push_lossy(1, 3, Some("Chapter A".into()), 4);
+
+    let timer = Timer::new(run).unwrap();
+    let mut component = Component::with_settings(Settings {
+        visual_split_count: 0,
+        ..english_settings()
+    });
+    let mut image_cache = ImageCache::new();
+
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &Default::default(),
+        Lang::English,
+    );
+
+    assert_eq!(
+        state
+            .splits
+            .iter()
+            .map(|s| s.name.as_str())
+            .collect::<Vec<_>>(),
+        ["Intro", "Chapter A", "Outro"]
+    );
+}
+
+#[test]
+fn subsplit_display_mode_setting_uses_typed_value() {
+    let mut component = Component::with_settings(Settings {
+        subsplit_display_mode: SubsplitDisplayMode::AllGroupsExpanded,
+        ..english_settings()
+    });
+
+    let description = component.settings_description(Lang::English);
+    assert!(description.fields.iter().any(|field| {
+        matches!(
+            &field.value,
+            Value::SubsplitDisplayMode(SubsplitDisplayMode::AllGroupsExpanded)
+        )
+    }));
+
+    component.set_value(
+        14,
+        Value::SubsplitDisplayMode(SubsplitDisplayMode::CurrentGroupExpanded),
+    );
+    let description = component.settings_description(Lang::English);
+    assert!(description.fields.iter().any(|field| {
+        matches!(
+            &field.value,
+            Value::SubsplitDisplayMode(SubsplitDisplayMode::CurrentGroupExpanded)
+        )
+    }));
 }
 
 #[test]

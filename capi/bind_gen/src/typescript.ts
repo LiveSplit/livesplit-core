@@ -776,6 +776,7 @@ export type SettingsDescriptionValueJson =
     { ColumnStartWith: ColumnStartWith } |
     { ColumnUpdateWith: ColumnUpdateWith } |
     { ColumnUpdateTrigger: ColumnUpdateTrigger } |
+    { SubsplitDisplayMode: SubsplitDisplayMode } |
     { Hotkey: string } |
     { LayoutDirection: LayoutDirection } |
     { Font: Font | null } |
@@ -831,6 +832,12 @@ export type ColumnUpdateTrigger =
     "OnStartingSegment" |
     "Contextual" |
     "OnEndingSegment";
+
+/** Describes how native subsplits are displayed. */
+export type SubsplitDisplayMode =
+    "Flat" |
+    "AllGroupsExpanded" |
+    "CurrentGroupExpanded";
 
 /**
  * The Accuracy describes how many digits to show for the fractional part of a

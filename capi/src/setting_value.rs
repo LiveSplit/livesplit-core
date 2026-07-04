@@ -5,7 +5,7 @@ use crate::{Json, output_vec, str};
 use livesplit_core::{
     TimingMethod,
     component::{
-        splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith},
+        splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith, SubsplitDisplayMode},
         timer::DeltaGradient,
     },
     layout::LayoutDirection,
@@ -325,6 +325,23 @@ pub unsafe extern "C" fn SettingValue_from_column_update_trigger(
         "OnStartingSegment" => ColumnUpdateTrigger::OnStartingSegment,
         "Contextual" => ColumnUpdateTrigger::Contextual,
         "OnEndingSegment" => ColumnUpdateTrigger::OnEndingSegment,
+        _ => return None,
+    };
+    Some(Box::new(value.into()))
+}
+
+/// Creates a new setting value from the subsplit display mode. If it doesn't
+/// match a known subsplit display mode, <NULL> is returned.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn SettingValue_from_subsplit_display_mode(
+    value: *const c_char,
+) -> NullableOwnedSettingValue {
+    // SAFETY: The caller guarantees that `value` is valid.
+    let value = unsafe { str(value) };
+    let value = match value {
+        "Flat" => SubsplitDisplayMode::Flat,
+        "AllGroupsExpanded" => SubsplitDisplayMode::AllGroupsExpanded,
+        "CurrentGroupExpanded" => SubsplitDisplayMode::CurrentGroupExpanded,
         _ => return None,
     };
     Some(Box::new(value.into()))

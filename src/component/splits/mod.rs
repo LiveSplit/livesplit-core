@@ -120,12 +120,12 @@ pub struct Settings {
 #[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum SubsplitDisplayMode {
     /// Every segment is shown as part of the flat list without group hierarchy.
-    #[default]
     Flat,
     /// Groups are shown with header rows and all group contents expanded.
     AllGroupsExpanded,
     /// Groups are shown with header rows, but only the current group has its
     /// contents expanded.
+    #[default]
     CurrentGroupExpanded,
 }
 
@@ -256,7 +256,7 @@ impl Settings {
             delta_time_accuracy: Accuracy::Tenths,
             delta_drop_decimals: true,
             show_column_labels: false,
-            subsplit_display_mode: SubsplitDisplayMode::Flat,
+            subsplit_display_mode: SubsplitDisplayMode::CurrentGroupExpanded,
             columns: vec![
                 ColumnSettings {
                     name: Text::SplitTime.resolve(lang).into(),
@@ -618,8 +618,8 @@ impl Component {
             ),
             Field::new(
                 "Subsplit Display Mode".into(),
-                "0 = flat list, 1 = all groups expanded, 2 = current group expanded".into(),
-                Value::UInt(self.settings.subsplit_display_mode as u64),
+                "Controls how native subsplits are shown.".into(),
+                self.settings.subsplit_display_mode.into(),
             ),
             Field::new(
                 Text::SplitsColumns.resolve(lang).into(),
@@ -729,11 +729,7 @@ impl Component {
             12 => self.settings.delta_drop_decimals = value.into(),
             13 => self.settings.show_column_labels = value.into(),
             14 => {
-                self.settings.subsplit_display_mode = match value.into_uint().unwrap() {
-                    0 => SubsplitDisplayMode::Flat,
-                    1 => SubsplitDisplayMode::AllGroupsExpanded,
-                    _ => SubsplitDisplayMode::CurrentGroupExpanded,
-                }
+                self.settings.subsplit_display_mode = value.into();
             }
             15 => {
                 let new_len = value.into_uint().unwrap() as usize;
