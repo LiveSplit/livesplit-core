@@ -144,6 +144,9 @@ pub struct SplitState {
     /// Describes if this segment is the segment the active attempt is currently
     /// on.
     pub is_current_split: bool,
+    /// Describes if this segment is the segment selected by manually scrolling
+    /// through subsplit groups.
+    pub is_scrolled_to_split: bool,
     /// Specifies whether this row should be indented.
     pub is_indented: bool,
     /// The visual section this row belongs to. This is used for alternating
@@ -162,6 +165,7 @@ impl Clear for SplitState {
         self.name.clear();
         self.columns.clear();
         self.is_current_split = false;
+        self.is_scrolled_to_split = false;
         self.is_indented = false;
         self.section_index = 0;
         self.index = 0;
@@ -203,6 +207,7 @@ impl SplitState {
         self.icon.hash(state);
         self.name.hash(state);
         self.is_current_split.hash(state);
+        self.is_scrolled_to_split.hash(state);
         self.is_indented.hash(state);
         self.section_index.hash(state);
         self.index.hash(state);
@@ -357,7 +362,30 @@ impl Component {
 
         let run = timer.run();
         let current_split = timer.current_split_index();
-        let displayed = displayed_splits(run, current_split, self.settings.subsplit_display_mode);
+        let mut scrolled_to_split = None;
+        let display_current_split = if self.settings.subsplit_display_mode
+            == SubsplitDisplayMode::CurrentGroupExpanded
+            && !run.is_empty()
+            && let Some(current_split) = current_split
+        {
+            let running_split = min(current_split, run.len() - 1);
+            self.scroll_offset = min(
+                max(self.scroll_offset, -(running_split as isize)),
+                run.len() as isize - running_split as isize - 1,
+            );
+            let split = (running_split as isize + self.scroll_offset) as usize;
+            if self.scroll_offset != 0 {
+                scrolled_to_split = Some(split);
+            }
+            Some(split)
+        } else {
+            current_split
+        };
+        let displayed = displayed_splits(
+            run,
+            display_current_split,
+            self.settings.subsplit_display_mode,
+        );
 
         let mut visual_split_count = self.settings.visual_split_count;
         if visual_split_count == 0 {
@@ -365,7 +393,7 @@ impl Component {
         }
 
         let method = timer.current_timing_method();
-        let current_display_index = current_split.and_then(|current_split| {
+        let current_display_index = display_current_split.and_then(|current_split| {
             displayed
                 .iter()
                 .position(|split| !split.is_group_header && split.segment_index == current_split)
@@ -386,11 +414,17 @@ impl Component {
             }),
             displayed.len() as isize - visual_split_count as isize,
         );
-        self.scroll_offset = min(
-            max(self.scroll_offset, -skip_count),
-            displayed.len() as isize - skip_count - visual_split_count as isize,
-        );
-        let skip_count = max(0, skip_count + self.scroll_offset) as usize;
+        let scroll_offset =
+            if self.settings.subsplit_display_mode == SubsplitDisplayMode::CurrentGroupExpanded {
+                0
+            } else {
+                self.scroll_offset = min(
+                    max(self.scroll_offset, -skip_count),
+                    displayed.len() as isize - skip_count - visual_split_count as isize,
+                );
+                self.scroll_offset
+            };
+        let skip_count = max(0, skip_count + scroll_offset) as usize;
         let take_count = visual_split_count - locked_last_split as usize;
         let always_show_last_split = self.settings.always_show_last_split;
 
@@ -432,6 +466,7 @@ impl Component {
                 name: String::new(),
                 columns: ClearVec::new(),
                 is_current_split: false,
+                is_scrolled_to_split: false,
                 is_indented: false,
                 section_index: 0,
                 index: 0,
@@ -467,8 +502,19 @@ impl Component {
                 }
             }
 
-            state.is_current_split =
-                !split.is_group_header && Some(split.segment_index) == current_split;
+            state.is_current_split = if !split.is_group_header {
+                Some(split.segment_index) == current_split
+            } else {
+                split.show_columns
+                    && current_split.is_some_and(|current_split| {
+                        run.segment_groups().group_index_for_segment(current_split)
+                            == run
+                                .segment_groups()
+                                .group_index_for_segment(split.segment_index)
+                    })
+            };
+            state.is_scrolled_to_split =
+                !split.is_group_header && Some(split.segment_index) == scrolled_to_split;
             state.is_indented = split.is_indented;
             state.section_index = split.section_index;
             state.index = split.segment_index;
@@ -486,11 +532,13 @@ impl Component {
                     name: String::new(),
                     columns: ClearVec::new(),
                     is_current_split: false,
+                    is_scrolled_to_split: false,
                     is_indented: false,
                     section_index: 0,
                     index: 0,
                 });
                 state.is_current_split = false;
+                state.is_scrolled_to_split = false;
                 state.section_index = first_blank_section_index + i;
                 state.index = (usize::MAX ^ 1) - 2 * i;
             }

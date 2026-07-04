@@ -100,6 +100,16 @@ pub extern "C" fn SplitsComponentState_is_current_split(
     this.splits[index].is_current_split
 }
 
+/// Describes if the segment with the specified index is the segment selected
+/// by manually scrolling through subsplit groups.
+#[unsafe(no_mangle)]
+pub extern "C" fn SplitsComponentState_is_scrolled_to_split(
+    this: &SplitsComponentState,
+    index: usize,
+) -> bool {
+    this.splits[index].is_scrolled_to_split
+}
+
 /// Describes if the columns have labels that are meant to be shown. If this is
 /// `false`, no labels are supposed to be visualized.
 #[unsafe(no_mangle)]

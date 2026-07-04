@@ -3,7 +3,7 @@ use crate::{
     layout::{LayoutDirection, LayoutState},
     platform::prelude::*,
     rendering::{
-        RenderContext,
+        FillShader, RenderContext,
         consts::{
             BOTH_PADDINGS, DEFAULT_COMPONENT_HEIGHT, DEFAULT_TEXT_SIZE, PADDING, TEXT_ALIGN_BOTTOM,
             TEXT_ALIGN_TOP, THIN_SEPARATOR_THICKNESS, TWO_ROW_HEIGHT, vertical_padding,
@@ -259,6 +259,26 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                 odd
             };
             context.render_background(split_background_bottom_right, color);
+        }
+
+        // Draw a border around the scrolled-to split (the split selected by
+        // manually scrolling through subsplit groups in CurrentGroupExpanded
+        // mode). The border uses the same color as the current split gradient
+        // so it visually relates to the active segment highlight. If the
+        // gradient is transparent (no color set), fall back to the default
+        // blue selection outline so the border remains visible. This is only
+        // shown when the scrolled-to split is different from the current split,
+        // providing a visual indicator of which subsplit the user has navigated to.
+        if split.is_scrolled_to_split {
+            let border_color = component.current_split_gradient.average_color();
+            if border_color.alpha > 0.0 {
+                context.render_selection_outline_with_color(
+                    [split_width, split_height],
+                    FillShader::SolidColor(border_color.to_array()),
+                );
+            } else {
+                context.render_selection_outline([split_width, split_height]);
+            }
         }
 
         {
