@@ -196,6 +196,51 @@ fn creates_renames_and_removes_segment_groups() {
 }
 
 #[test]
+fn mixed_selection_cannot_create_or_remove_segment_group() {
+    let mut run = Run::new();
+    for name in ["A", "B", "C", "D"] {
+        run.push_segment(Segment::new(name));
+    }
+
+    let mut editor = Editor::new(run).unwrap();
+    editor.select_range(2);
+    assert!(editor.create_segment_group_from_selection(Some("Group")));
+
+    editor.select_only(2);
+    editor.select_range(3);
+    assert!(!editor.can_create_segment_group_from_selection());
+    assert!(!editor.can_remove_active_segment_group());
+    assert!(!editor.create_segment_group_from_selection::<String>(None));
+    assert!(!editor.remove_active_segment_group());
+
+    editor.select_only(0);
+    editor.select_range(2);
+    assert!(editor.can_remove_active_segment_group());
+    assert!(editor.remove_active_segment_group());
+}
+
+#[test]
+fn ungrouped_selection_before_group_can_create_segment_group() {
+    let mut run = Run::new();
+    for name in ["A", "B", "C", "D"] {
+        run.push_segment(Segment::new(name));
+    }
+
+    let mut editor = Editor::new(run).unwrap();
+    editor.select_only(1);
+    editor.select_range(3);
+    assert!(editor.create_segment_group_from_selection(Some("Group")));
+
+    editor.select_only(1);
+    editor.move_segments_up();
+
+    editor.select_only(0);
+    editor.select_range(1);
+    assert!(editor.can_create_segment_group_from_selection());
+    assert!(editor.create_segment_group_from_selection(Some("New Group")));
+}
+
+#[test]
 fn insertion_and_deletion_repair_segment_groups() {
     let mut run = Run::new();
     for name in ["A", "B", "C"] {
@@ -218,5 +263,194 @@ fn insertion_and_deletion_repair_segment_groups() {
             run.segment_groups().groups()[0].end()
         ),
         (0, 3)
+    );
+}
+
+#[test]
+fn moving_segments_inside_group_keeps_segment_group() {
+    let mut run = Run::new();
+    for name in ["A", "B", "C", "D"] {
+        run.push_segment(Segment::new(name));
+    }
+
+    let mut editor = Editor::new(run).unwrap();
+    editor.select_range(2);
+    assert!(editor.create_segment_group_from_selection(Some("Group")));
+
+    editor.select_only(1);
+    editor.move_segments_down();
+
+    assert_eq!(editor.run().segments()[1].name(), "C");
+    assert_eq!(editor.run().segments()[2].name(), "B");
+    assert_eq!(
+        (
+            editor.run().segment_groups().groups()[0].start(),
+            editor.run().segment_groups().groups()[0].end(),
+            editor.run().segment_groups().groups()[0].name()
+        ),
+        (0, 3, Some("Group"))
+    );
+
+    editor.move_segments_up();
+
+    let run = editor.close();
+    assert_eq!(run.segments()[1].name(), "B");
+    assert_eq!(run.segments()[2].name(), "C");
+    assert_eq!(
+        (
+            run.segment_groups().groups()[0].start(),
+            run.segment_groups().groups()[0].end(),
+            run.segment_groups().groups()[0].name()
+        ),
+        (0, 3, Some("Group"))
+    );
+}
+
+#[test]
+fn moving_segments_across_group_boundary_keeps_segment_group() {
+    let mut run = Run::new();
+    for name in ["A", "B", "C", "D", "E", "F"] {
+        run.push_segment(Segment::new(name));
+    }
+
+    let mut editor = Editor::new(run).unwrap();
+    editor.select_range(2);
+    assert!(editor.create_segment_group_from_selection(Some("Group 1")));
+    editor.select_only(3);
+    editor.select_range(5);
+    assert!(editor.create_segment_group_from_selection(Some("Group 2")));
+
+    editor.select_only(2);
+    editor.move_segments_down();
+
+    assert_eq!(editor.run().segments()[0].name(), "A");
+    assert_eq!(editor.run().segments()[1].name(), "B");
+    assert_eq!(editor.run().segments()[2].name(), "C");
+    assert_eq!(editor.run().segments()[3].name(), "D");
+    assert_eq!(editor.run().segments()[4].name(), "E");
+    assert_eq!(editor.run().segments()[5].name(), "F");
+    assert_eq!(
+        (
+            editor.run().segment_groups().groups()[0].start(),
+            editor.run().segment_groups().groups()[0].end(),
+            editor.run().segment_groups().groups()[0].name()
+        ),
+        (0, 2, Some("Group 1"))
+    );
+    assert_eq!(
+        (
+            editor.run().segment_groups().groups()[1].start(),
+            editor.run().segment_groups().groups()[1].end(),
+            editor.run().segment_groups().groups()[1].name()
+        ),
+        (3, 6, Some("Group 2"))
+    );
+
+    editor.move_segments_down();
+
+    assert_eq!(editor.run().segments()[0].name(), "A");
+    assert_eq!(editor.run().segments()[1].name(), "B");
+    assert_eq!(editor.run().segments()[2].name(), "C");
+    assert_eq!(editor.run().segments()[3].name(), "D");
+    assert_eq!(editor.run().segments()[4].name(), "E");
+    assert_eq!(editor.run().segments()[5].name(), "F");
+    assert_eq!(
+        (
+            editor.run().segment_groups().groups()[0].start(),
+            editor.run().segment_groups().groups()[0].end(),
+            editor.run().segment_groups().groups()[0].name()
+        ),
+        (0, 2, Some("Group 1"))
+    );
+    assert_eq!(
+        (
+            editor.run().segment_groups().groups()[1].start(),
+            editor.run().segment_groups().groups()[1].end(),
+            editor.run().segment_groups().groups()[1].name()
+        ),
+        (2, 6, Some("Group 2"))
+    );
+
+    editor.move_segments_down();
+
+    assert_eq!(editor.run().segments()[0].name(), "A");
+    assert_eq!(editor.run().segments()[1].name(), "B");
+    assert_eq!(editor.run().segments()[2].name(), "D");
+    assert_eq!(editor.run().segments()[3].name(), "C");
+    assert_eq!(editor.run().segments()[4].name(), "E");
+    assert_eq!(editor.run().segments()[5].name(), "F");
+    assert_eq!(
+        (
+            editor.run().segment_groups().groups()[0].start(),
+            editor.run().segment_groups().groups()[0].end(),
+            editor.run().segment_groups().groups()[0].name()
+        ),
+        (0, 2, Some("Group 1"))
+    );
+    assert_eq!(
+        (
+            editor.run().segment_groups().groups()[1].start(),
+            editor.run().segment_groups().groups()[1].end(),
+            editor.run().segment_groups().groups()[1].name()
+        ),
+        (2, 6, Some("Group 2"))
+    );
+}
+
+#[test]
+fn moving_last_segment_down_can_move_it_out_of_final_group() {
+    let mut run = Run::new();
+    for name in ["A", "B", "C"] {
+        run.push_segment(Segment::new(name));
+    }
+
+    let mut editor = Editor::new(run).unwrap();
+    editor.select_range(2);
+    assert!(editor.create_segment_group_from_selection(Some("Group")));
+    editor.select_only(2);
+    assert!(editor.can_move_segments_down());
+
+    editor.move_segments_down();
+
+    let run = editor.close();
+    assert_eq!(run.segments()[0].name(), "A");
+    assert_eq!(run.segments()[1].name(), "B");
+    assert_eq!(run.segments()[2].name(), "C");
+    assert_eq!(
+        (
+            run.segment_groups().groups()[0].start(),
+            run.segment_groups().groups()[0].end(),
+            run.segment_groups().groups()[0].name()
+        ),
+        (0, 2, Some("Group"))
+    );
+}
+
+#[test]
+fn moving_first_segment_up_can_move_it_out_of_first_group() {
+    let mut run = Run::new();
+    for name in ["A", "B", "C"] {
+        run.push_segment(Segment::new(name));
+    }
+
+    let mut editor = Editor::new(run).unwrap();
+    editor.select_range(2);
+    assert!(editor.create_segment_group_from_selection(Some("Group")));
+    editor.select_only(0);
+    assert!(editor.can_move_segments_up());
+
+    editor.move_segments_up();
+
+    let run = editor.close();
+    assert_eq!(run.segments()[0].name(), "A");
+    assert_eq!(run.segments()[1].name(), "B");
+    assert_eq!(run.segments()[2].name(), "C");
+    assert_eq!(
+        (
+            run.segment_groups().groups()[0].start(),
+            run.segment_groups().groups()[0].end(),
+            run.segment_groups().groups()[0].name()
+        ),
+        (1, 3, Some("Group"))
     );
 }

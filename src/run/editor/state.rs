@@ -57,6 +57,12 @@ pub struct Buttons {
     /// any one of the selected segments is the last segment, then they can't be
     /// moved.
     pub can_move_down: bool,
+    /// Describes whether the currently selected segments can be turned into a
+    /// segment group.
+    pub can_create_segment_group: bool,
+    /// Describes whether the currently selected segments are exactly one
+    /// segment group that can be removed.
+    pub can_remove_segment_group: bool,
 }
 
 /// Describes the current state of a segment.
@@ -156,6 +162,8 @@ impl Editor {
             can_remove: self.can_remove_segments(),
             can_move_up: self.can_move_segments_up(),
             can_move_down: self.can_move_segments_down(),
+            can_create_segment_group: self.can_create_segment_group_from_selection(),
+            can_remove_segment_group: self.can_remove_active_segment_group(),
         };
         let mut segments = Vec::with_capacity(self.run.len());
 

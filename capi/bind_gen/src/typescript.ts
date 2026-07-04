@@ -993,6 +993,16 @@ export interface RunEditorButtonsJson {
      * moved.
      */
     can_move_down: boolean,
+    /**
+     * Describes whether the currently selected segments can be turned into a
+     * segment group.
+     */
+    can_create_segment_group: boolean,
+    /**
+     * Describes whether the currently selected segments are exactly one
+     * segment group that can be removed.
+     */
+    can_remove_segment_group: boolean,
 }
 
 /** Describes the current state of a segment. */
@@ -1019,6 +1029,23 @@ export interface RunEditorRowJson {
     comparison_times: string[],
     /** Describes the segment's selection state. */
     selected: "NotSelected" | "Selected" | "Active",
+    /** Describes how this segment participates in a segment group. */
+    segment_group: RunEditorSegmentGroupStateJson,
+}
+
+/** Describes a segment's role in a segment group. */
+export interface RunEditorSegmentGroupStateJson {
+    /** The index of the group this segment belongs to, if any. */
+    group_index: number | null,
+    /** Whether this segment is a subsplit inside the group. */
+    is_subsplit: boolean,
+    /** Whether this segment is the major split ending the group. */
+    is_major_split: boolean,
+    /**
+     * The explicit group name. If this is `null`, the major split name is the
+     * display name of the group.
+     */
+    name: string | null,
 }
 
 /**

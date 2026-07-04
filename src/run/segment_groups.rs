@@ -154,14 +154,11 @@ impl SegmentGroups {
         self.repair(segment_count);
     }
 
-    /// Conservatively removes group metadata affected by swapping two adjacent
-    /// segments. This preserves timing data while avoiding discontiguous groups.
-    pub fn adjacent_segments_swapped(&mut self, first_index: usize, segment_count: usize) {
-        self.groups.retain(|group| {
-            let second_index = first_index + 1;
-            !(first_index >= group.start && first_index < group.end
-                || second_index >= group.start && second_index < group.end)
-        });
+    /// Updates groups after swapping two adjacent segments. Groups are ranges
+    /// over the segment list, so swapping segments keeps the ranges intact.
+    /// This lets segments move into and out of groups without deleting group
+    /// metadata.
+    pub fn adjacent_segments_swapped(&mut self, _first_index: usize, segment_count: usize) {
         self.repair(segment_count);
     }
 

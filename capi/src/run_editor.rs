@@ -349,18 +349,6 @@ pub unsafe extern "C" fn RunEditor_rename_active_segment_group(
     }
 }
 
-/// Marks the active segment as a major split.
-#[unsafe(no_mangle)]
-pub extern "C" fn RunEditor_mark_active_segment_as_major_split(this: &mut RunEditor) -> bool {
-    this.mark_active_segment_as_major_split()
-}
-
-/// Clears all native segment groups.
-#[unsafe(no_mangle)]
-pub extern "C" fn RunEditor_clear_segment_groups(this: &mut RunEditor) {
-    this.clear_segment_groups();
-}
-
 /// Sets the icon of the active segment.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn RunEditor_active_set_icon(
