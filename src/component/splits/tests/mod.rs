@@ -1,6 +1,6 @@
 use super::{
     ColumnSettings, ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith, Component, Settings,
-    SplitRole, State, SubsplitDisplayMode,
+    State, SubsplitDisplayMode,
 };
 use crate::{
     Lang, Run, Segment, TimeSpan, Timer, TimingMethod,
@@ -233,7 +233,7 @@ fn flat_subsplit_state() {
             .collect::<Vec<_>>(),
         ["Intro", "A1", "A2", "A End", "Outro"]
     );
-    assert!(state.splits.iter().all(|s| s.role == SplitRole::Segment));
+    assert!(state.splits.iter().all(|s| !s.is_indented));
     assert_eq!(
         state
             .splits
@@ -277,12 +277,12 @@ fn current_group_expanded_subsplit_state() {
             .collect::<Vec<_>>(),
         ["Intro", "Chapter A", "A1", "A2", "A End", "Outro"]
     );
-    assert_eq!(state.splits[1].role, SplitRole::GroupHeader);
+    assert!(!state.splits[1].is_indented);
     assert_eq!(state.splits[1].index, 3);
     assert!(state.splits[1].columns.is_empty());
-    assert_eq!(state.splits[2].role, SplitRole::Subsplit);
+    assert!(state.splits[2].is_indented);
     assert_eq!(state.splits[2].index, 1);
-    assert_eq!(state.splits[4].role, SplitRole::SectionEnd);
+    assert!(state.splits[4].is_indented);
     assert_eq!(
         state
             .splits
@@ -325,13 +325,13 @@ fn all_groups_expanded_subsplit_state() {
             .collect::<Vec<_>>(),
         ["Intro", "Chapter A", "A1", "A2", "A End", "Outro"]
     );
-    assert_eq!(state.splits[1].role, SplitRole::GroupHeader);
+    assert!(!state.splits[1].is_indented);
     assert_eq!(state.splits[1].index, 3);
     assert!(state.splits[1].columns.is_empty());
-    assert_eq!(state.splits[2].role, SplitRole::Subsplit);
-    assert_eq!(state.splits[3].role, SplitRole::Subsplit);
+    assert!(state.splits[2].is_indented);
+    assert!(state.splits[3].is_indented);
     assert_eq!(state.splits[4].index, 3);
-    assert_eq!(state.splits[4].role, SplitRole::SectionEnd);
+    assert!(state.splits[4].is_indented);
 }
 
 #[test]
@@ -371,7 +371,7 @@ fn current_group_expanded_closes_other_groups() {
             .collect::<Vec<_>>(),
         ["Intro", "Chapter A", "Outro"]
     );
-    assert_eq!(state.splits[1].role, SplitRole::GroupHeader);
+    assert!(!state.splits[1].is_indented);
     assert!(!state.splits[1].is_current_split);
     assert_eq!(state.splits[1].index, 3);
     assert_eq!(state.splits[1].columns.len(), 2);
@@ -445,7 +445,7 @@ fn closed_group_header_segment_columns_summarize_the_whole_group() {
             .collect::<Vec<_>>(),
         ["Intro", "Chapter A", "Outro"]
     );
-    assert_eq!(state.splits[1].role, SplitRole::GroupHeader);
+    assert!(!state.splits[1].is_indented);
     assert_eq!(state.splits[1].columns[0].value, "26.00");
     assert_eq!(state.splits[1].columns[1].value, "+6.0");
 }
@@ -479,16 +479,12 @@ fn blank_rows_reset_after_groups_collapse() {
         Lang::English,
     );
     assert_eq!(
-        state.splits.iter().map(|s| s.role).collect::<Vec<_>>(),
-        [
-            SplitRole::Segment,
-            SplitRole::GroupHeader,
-            SplitRole::Subsplit,
-            SplitRole::Subsplit,
-            SplitRole::SectionEnd,
-            SplitRole::Segment,
-            SplitRole::Blank,
-        ]
+        state
+            .splits
+            .iter()
+            .map(|s| s.is_indented)
+            .collect::<Vec<_>>(),
+        [false, false, true, true, true, false, false]
     );
     assert_eq!(
         state
@@ -511,16 +507,12 @@ fn blank_rows_reset_after_groups_collapse() {
     );
 
     assert_eq!(
-        state.splits.iter().map(|s| s.role).collect::<Vec<_>>(),
-        [
-            SplitRole::Segment,
-            SplitRole::GroupHeader,
-            SplitRole::Segment,
-            SplitRole::Blank,
-            SplitRole::Blank,
-            SplitRole::Blank,
-            SplitRole::Blank,
-        ]
+        state
+            .splits
+            .iter()
+            .map(|s| s.is_indented)
+            .collect::<Vec<_>>(),
+        [false; 7]
     );
     assert_eq!(
         state
@@ -531,6 +523,6 @@ fn blank_rows_reset_after_groups_collapse() {
         [0, 1, 2, 3, 4, 5, 6]
     );
     for split in state.splits.iter().skip(3) {
-        assert_eq!(split.role, SplitRole::Blank);
+        assert!(!split.is_indented);
     }
 }

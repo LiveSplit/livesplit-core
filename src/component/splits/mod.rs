@@ -129,28 +129,6 @@ pub enum SubsplitDisplayMode {
     CurrentGroupExpanded,
 }
 
-/// Describes what kind of row a split state represents.
-#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub enum SplitRole {
-    /// A blank filler row.
-    #[default]
-    Blank,
-    /// A normal segment row.
-    Segment,
-    /// A segment inside an expanded group.
-    Subsplit,
-    /// A group header row.
-    GroupHeader,
-    /// The ending segment of an expanded group.
-    SectionEnd,
-}
-
-impl SplitRole {
-    const fn is_group_header(self) -> bool {
-        matches!(self, Self::GroupHeader)
-    }
-}
-
 /// The state object that describes a single segment's information to visualize.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SplitState {
@@ -166,8 +144,8 @@ pub struct SplitState {
     /// Describes if this segment is the segment the active attempt is currently
     /// on.
     pub is_current_split: bool,
-    /// Describes what kind of row this is.
-    pub role: SplitRole,
+    /// Specifies whether this row should be indented.
+    pub is_indented: bool,
     /// The visual section this row belongs to. This is used for alternating
     /// backgrounds when multiple flat segments collapse into a single section.
     pub section_index: usize,
@@ -184,7 +162,7 @@ impl Clear for SplitState {
         self.name.clear();
         self.columns.clear();
         self.is_current_split = false;
-        self.role = SplitRole::Blank;
+        self.is_indented = false;
         self.section_index = 0;
         self.index = 0;
     }
@@ -225,7 +203,7 @@ impl SplitState {
         self.icon.hash(state);
         self.name.hash(state);
         self.is_current_split.hash(state);
-        self.role.hash(state);
+        self.is_indented.hash(state);
         self.section_index.hash(state);
         self.index.hash(state);
         self.columns.len().hash(state);
@@ -390,9 +368,7 @@ impl Component {
         let current_display_index = current_split.and_then(|current_split| {
             displayed
                 .iter()
-                .position(|split| {
-                    !split.role.is_group_header() && split.segment_index == current_split
-                })
+                .position(|split| !split.is_group_header && split.segment_index == current_split)
                 .or_else(|| (current_split >= run.len()).then(|| displayed.len().saturating_sub(1)))
         });
 
@@ -456,7 +432,7 @@ impl Component {
                 name: String::new(),
                 columns: ClearVec::new(),
                 is_current_split: false,
-                role: SplitRole::Blank,
+                is_indented: false,
                 section_index: 0,
                 index: 0,
             });
@@ -492,8 +468,8 @@ impl Component {
             }
 
             state.is_current_split =
-                !split.role.is_group_header() && Some(split.segment_index) == current_split;
-            state.role = split.role;
+                !split.is_group_header && Some(split.segment_index) == current_split;
+            state.is_indented = split.is_indented;
             state.section_index = split.section_index;
             state.index = split.segment_index;
         }
@@ -510,7 +486,7 @@ impl Component {
                     name: String::new(),
                     columns: ClearVec::new(),
                     is_current_split: false,
-                    role: SplitRole::Blank,
+                    is_indented: false,
                     section_index: 0,
                     index: 0,
                 });
@@ -817,7 +793,8 @@ struct DisplayedSplit<'a> {
     column_start_index: usize,
     segment: &'a crate::Segment,
     name: Cow<'a, str>,
-    role: SplitRole,
+    is_group_header: bool,
+    is_indented: bool,
     show_columns: bool,
     section_index: usize,
 }
@@ -847,7 +824,8 @@ fn displayed_splits<'a>(
                 column_start_index: view.start_index(),
                 segment: view.ending_segment(),
                 name: Cow::Owned(view.name_or_default().to_owned()),
-                role: SplitRole::GroupHeader,
+                is_group_header: true,
+                is_indented: false,
                 show_columns: !expand,
                 section_index,
             });
@@ -864,13 +842,8 @@ fn displayed_splits<'a>(
                 column_start_index: segment_index,
                 segment,
                 name: Cow::Borrowed(segment.name()),
-                role: if show_hierarchy && is_group && segment_index < view.major_index() {
-                    SplitRole::Subsplit
-                } else if show_hierarchy && is_group && segment_index == view.major_index() {
-                    SplitRole::SectionEnd
-                } else {
-                    SplitRole::Segment
-                },
+                is_group_header: false,
+                is_indented: show_hierarchy && is_group,
                 show_columns: true,
                 section_index: if show_hierarchy {
                     section_index
