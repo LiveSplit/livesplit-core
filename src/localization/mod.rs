@@ -847,6 +847,8 @@ pub(crate) enum Text {
     SplitsDropDeltaDecimalsDescription,
     SplitsShowColumnLabels,
     SplitsShowColumnLabelsDescription,
+    SplitsSubsplitDisplayMode,
+    SplitsSubsplitDisplayModeDescription,
     SplitsColumns,
     SplitsColumnsDescription,
     SplitsColumnName,

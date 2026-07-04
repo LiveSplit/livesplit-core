@@ -456,6 +456,8 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowColumnLabelsDescription => {
             "Geeft aan of de namen van de kolommen bovenaan de lijst worden getoond."
         }
+        Text::SplitsSubsplitDisplayMode => "Weergavemodus voor subsplits",
+        Text::SplitsSubsplitDisplayModeDescription => "Bepaalt hoe subsplits worden weergegeven.",
         Text::SplitsColumns => "Kolommen",
         Text::SplitsColumnsDescription => {
             "Het aantal kolommen per rij. Elke kolom kan verschillende informatie tonen. Kolommen worden van rechts naar links gedefinieerd."

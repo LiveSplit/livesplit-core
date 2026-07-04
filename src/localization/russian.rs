@@ -442,6 +442,8 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowColumnLabelsDescription => {
             "Определяет, следует ли показывать названия колонок вверху списка."
         }
+        Text::SplitsSubsplitDisplayMode => "Режим отображения подсегментов",
+        Text::SplitsSubsplitDisplayModeDescription => "Определяет, как отображаются подсегменты.",
         Text::SplitsColumns => "Колонки",
         Text::SplitsColumnsDescription => {
             "Количество колонок на строку. Каждая колонка может отображать разные данные. Колонки определяются справа налево."

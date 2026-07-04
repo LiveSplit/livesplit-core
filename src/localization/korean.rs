@@ -414,6 +414,8 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsShowColumnLabels => "열 라벨 표시",
         Text::SplitsShowColumnLabelsDescription => "목록 상단에 열 이름을 표시할지 지정합니다.",
+        Text::SplitsSubsplitDisplayMode => "하위 스플릿 표시 모드",
+        Text::SplitsSubsplitDisplayModeDescription => "하위 스플릿을 표시하는 방식을 설정합니다.",
         Text::SplitsColumns => "열",
         Text::SplitsColumnsDescription => {
             "각 행에 표시할 열 수입니다. 각 열은 서로 다른 정보를 표시할 수 있으며, 열은 오른쪽에서 왼쪽 순으로 정의됩니다."

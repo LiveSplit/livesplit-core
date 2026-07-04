@@ -617,8 +617,10 @@ impl Component {
                 self.settings.show_column_labels.into(),
             ),
             Field::new(
-                "Subsplit Display Mode".into(),
-                "Controls how native subsplits are shown.".into(),
+                Text::SplitsSubsplitDisplayMode.resolve(lang).into(),
+                Text::SplitsSubsplitDisplayModeDescription
+                    .resolve(lang)
+                    .into(),
                 self.settings.subsplit_display_mode.into(),
             ),
             Field::new(

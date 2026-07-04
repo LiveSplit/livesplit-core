@@ -456,6 +456,10 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowColumnLabelsDescription => {
             "Indica se mostrare i nomi delle colonne in cima alla lista."
         }
+        Text::SplitsSubsplitDisplayMode => "Modalità di visualizzazione dei subsplit",
+        Text::SplitsSubsplitDisplayModeDescription => {
+            "Controlla come vengono visualizzati i subsplit."
+        }
         Text::SplitsColumns => "Colonne",
         Text::SplitsColumnsDescription => {
             "Il numero di colonne da mostrare in ogni riga. Ogni colonna può mostrare informazioni diverse. Le colonne sono definite da destra a sinistra."

@@ -480,6 +480,8 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowColumnLabelsDescription => {
             "Legt fest, ob die Namen der Spalten oben in der Liste angezeigt werden."
         }
+        Text::SplitsSubsplitDisplayMode => "Subsplit-Anzeigemodus",
+        Text::SplitsSubsplitDisplayModeDescription => "Legt fest, wie Subsplits angezeigt werden.",
         Text::SplitsColumns => "Spalten",
         Text::SplitsColumnsDescription => {
             "Die Anzahl der Spalten pro Zeile. Jede Spalte kann unterschiedliche Informationen anzeigen. Die Spalten sind von rechts nach links definiert."
