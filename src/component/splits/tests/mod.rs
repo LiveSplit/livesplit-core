@@ -495,6 +495,14 @@ fn blank_rows_reset_after_groups_collapse() {
             .collect::<Vec<_>>(),
         [Some(0), Some(3), Some(1), Some(2), Some(3), Some(4), None]
     );
+    assert_eq!(
+        state
+            .splits
+            .iter()
+            .map(|s| s.section_index)
+            .collect::<Vec<_>>(),
+        [0, 1, 1, 1, 1, 2, 3]
+    );
 
     timer.split().unwrap();
     timer.split().unwrap();

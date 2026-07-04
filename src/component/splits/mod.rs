@@ -507,6 +507,10 @@ impl Component {
 
         if fill_with_blank_space && state.splits.len() < visual_split_count {
             let blank_split_count = visual_split_count - state.splits.len();
+            let first_blank_section_index = state
+                .splits
+                .last()
+                .map_or(0, |split| split.section_index + 1);
             for i in 0..blank_split_count {
                 let state = state.splits.push_with(|| SplitState {
                     icon: *ImageId::EMPTY,
@@ -523,7 +527,7 @@ impl Component {
                     index: 0,
                 });
                 state.is_current_split = false;
-                state.section_index = displayed.len() + i;
+                state.section_index = first_blank_section_index + i;
                 state.index = (usize::MAX ^ 1) - 2 * i;
             }
         }
