@@ -458,3 +458,75 @@ fn closed_group_header_segment_columns_summarize_the_whole_group() {
     assert_eq!(state.splits[1].columns[0].value, "26.00");
     assert_eq!(state.splits[1].columns[1].value, "+6.0");
 }
+
+#[test]
+fn blank_rows_reset_after_groups_collapse() {
+    let mut run = Run::new();
+    for name in ["Intro", "A1", "A2", "A End", "Outro"] {
+        run.push_segment(Segment::new(name));
+    }
+    run.segment_groups_mut()
+        .push_lossy(1, 4, Some("Chapter A".into()), 5);
+
+    let mut timer = Timer::new(run).unwrap();
+    let mut component = Component::with_settings(Settings {
+        visual_split_count: 7,
+        fill_with_blank_space: true,
+        subsplit_display_mode: SubsplitDisplayMode::CurrentGroupExpanded,
+        ..english_settings()
+    });
+    let mut image_cache = ImageCache::new();
+    let mut state = State::default();
+
+    timer.start().unwrap();
+    timer.split().unwrap();
+    component.update_state(
+        &mut state,
+        &mut image_cache,
+        &timer.snapshot(),
+        &Default::default(),
+        Lang::English,
+    );
+    assert_eq!(
+        state
+            .splits
+            .iter()
+            .map(|s| s.segment_index)
+            .collect::<Vec<_>>(),
+        [Some(0), Some(3), Some(1), Some(2), Some(3), Some(4), None]
+    );
+
+    timer.split().unwrap();
+    timer.split().unwrap();
+    timer.split().unwrap();
+    component.update_state(
+        &mut state,
+        &mut image_cache,
+        &timer.snapshot(),
+        &Default::default(),
+        Lang::English,
+    );
+
+    assert_eq!(
+        state
+            .splits
+            .iter()
+            .map(|s| s.segment_index)
+            .collect::<Vec<_>>(),
+        [Some(0), Some(3), Some(4), None, None, None, None]
+    );
+    assert_eq!(
+        state
+            .splits
+            .iter()
+            .map(|s| s.section_index)
+            .collect::<Vec<_>>(),
+        [0, 1, 2, 3, 4, 5, 6]
+    );
+    for split in state.splits.iter().skip(3) {
+        assert!(!split.is_subsplit);
+        assert!(!split.is_group_header);
+        assert!(!split.is_section_end);
+        assert!(split.group_index.is_none());
+    }
+}

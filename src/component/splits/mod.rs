@@ -173,6 +173,14 @@ impl Clear for SplitState {
         self.name.clear();
         self.display_name.clear();
         self.columns.clear();
+        self.is_current_split = false;
+        self.is_subsplit = false;
+        self.is_group_header = false;
+        self.is_section_end = false;
+        self.group_index = None;
+        self.segment_index = None;
+        self.section_index = 0;
+        self.index = 0;
     }
 }
 
@@ -515,6 +523,7 @@ impl Component {
                     index: 0,
                 });
                 state.is_current_split = false;
+                state.section_index = displayed.len() + i;
                 state.index = (usize::MAX ^ 1) - 2 * i;
             }
         }
