@@ -129,6 +129,28 @@ pub enum SubsplitDisplayMode {
     CurrentGroupExpanded,
 }
 
+/// Describes what kind of row a split state represents.
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum SplitRole {
+    /// A blank filler row.
+    #[default]
+    Blank,
+    /// A normal segment row.
+    Segment,
+    /// A segment inside an expanded group.
+    Subsplit,
+    /// A group header row.
+    GroupHeader,
+    /// The ending segment of an expanded group.
+    SectionEnd,
+}
+
+impl SplitRole {
+    const fn is_group_header(self) -> bool {
+        matches!(self, Self::GroupHeader)
+    }
+}
+
 /// The state object that describes a single segment's information to visualize.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SplitState {
@@ -144,19 +166,8 @@ pub struct SplitState {
     /// Describes if this segment is the segment the active attempt is currently
     /// on.
     pub is_current_split: bool,
-    /// Describes whether this row is a subsplit inside a group.
-    pub is_subsplit: bool,
-    /// Describes whether this row is a group header.
-    pub is_group_header: bool,
-    /// Describes whether this row is the ending segment of an expanded group.
-    pub is_section_end: bool,
-    /// The native group index this row belongs to, if any.
-    pub group_index: Option<usize>,
-    /// The index of the segment this row visualizes. Blank rows use `None`.
-    pub segment_index: Option<usize>,
-    /// The name intended for display. This mirrors `name` for segment rows and
-    /// contains the group name for header rows.
-    pub display_name: String,
+    /// Describes what kind of row this is.
+    pub role: SplitRole,
     /// The visual section this row belongs to. This is used for alternating
     /// backgrounds when multiple flat segments collapse into a single section.
     pub section_index: usize,
@@ -171,14 +182,9 @@ impl Clear for SplitState {
     fn clear(&mut self) {
         self.icon = *ImageId::EMPTY;
         self.name.clear();
-        self.display_name.clear();
         self.columns.clear();
         self.is_current_split = false;
-        self.is_subsplit = false;
-        self.is_group_header = false;
-        self.is_section_end = false;
-        self.group_index = None;
-        self.segment_index = None;
+        self.role = SplitRole::Blank;
         self.section_index = 0;
         self.index = 0;
     }
@@ -219,12 +225,7 @@ impl SplitState {
         self.icon.hash(state);
         self.name.hash(state);
         self.is_current_split.hash(state);
-        self.is_subsplit.hash(state);
-        self.is_group_header.hash(state);
-        self.is_section_end.hash(state);
-        self.group_index.hash(state);
-        self.segment_index.hash(state);
-        self.display_name.hash(state);
+        self.role.hash(state);
         self.section_index.hash(state);
         self.index.hash(state);
         self.columns.len().hash(state);
@@ -389,7 +390,9 @@ impl Component {
         let current_display_index = current_split.and_then(|current_split| {
             displayed
                 .iter()
-                .position(|split| !split.is_group_header && split.segment_index == current_split)
+                .position(|split| {
+                    !split.role.is_group_header() && split.segment_index == current_split
+                })
                 .or_else(|| (current_split >= run.len()).then(|| displayed.len().saturating_sub(1)))
         });
 
@@ -451,14 +454,9 @@ impl Component {
             let state = state.splits.push_with(|| SplitState {
                 icon: *ImageId::EMPTY,
                 name: String::new(),
-                display_name: String::new(),
                 columns: ClearVec::new(),
                 is_current_split: false,
-                is_subsplit: false,
-                is_group_header: false,
-                is_section_end: false,
-                group_index: None,
-                segment_index: None,
+                role: SplitRole::Blank,
                 section_index: 0,
                 index: 0,
             });
@@ -469,7 +467,6 @@ impl Component {
                 .id();
 
             state.name.push_str(&split.name);
-            state.display_name.push_str(&split.name);
 
             if split.show_columns {
                 for column in columns {
@@ -495,12 +492,8 @@ impl Component {
             }
 
             state.is_current_split =
-                !split.is_group_header && Some(split.segment_index) == current_split;
-            state.is_subsplit = split.is_subsplit;
-            state.is_group_header = split.is_group_header;
-            state.is_section_end = split.is_section_end;
-            state.group_index = split.group_index;
-            state.segment_index = Some(split.segment_index);
+                !split.role.is_group_header() && Some(split.segment_index) == current_split;
+            state.role = split.role;
             state.section_index = split.section_index;
             state.index = split.segment_index;
         }
@@ -515,14 +508,9 @@ impl Component {
                 let state = state.splits.push_with(|| SplitState {
                     icon: *ImageId::EMPTY,
                     name: String::new(),
-                    display_name: String::new(),
                     columns: ClearVec::new(),
                     is_current_split: false,
-                    is_subsplit: false,
-                    is_group_header: false,
-                    is_section_end: false,
-                    group_index: None,
-                    segment_index: None,
+                    role: SplitRole::Blank,
                     section_index: 0,
                     index: 0,
                 });
@@ -829,11 +817,8 @@ struct DisplayedSplit<'a> {
     column_start_index: usize,
     segment: &'a crate::Segment,
     name: Cow<'a, str>,
-    is_subsplit: bool,
-    is_group_header: bool,
+    role: SplitRole,
     show_columns: bool,
-    is_section_end: bool,
-    group_index: Option<usize>,
     section_index: usize,
 }
 
@@ -862,11 +847,8 @@ fn displayed_splits<'a>(
                 column_start_index: view.start_index(),
                 segment: view.ending_segment(),
                 name: Cow::Owned(view.name_or_default().to_owned()),
-                is_subsplit: false,
-                is_group_header: true,
+                role: SplitRole::GroupHeader,
                 show_columns: !expand,
-                is_section_end: false,
-                group_index,
                 section_index,
             });
         }
@@ -882,11 +864,14 @@ fn displayed_splits<'a>(
                 column_start_index: segment_index,
                 segment,
                 name: Cow::Borrowed(segment.name()),
-                is_subsplit: show_hierarchy && is_group && segment_index < view.major_index(),
-                is_group_header: false,
+                role: if show_hierarchy && is_group && segment_index < view.major_index() {
+                    SplitRole::Subsplit
+                } else if show_hierarchy && is_group && segment_index == view.major_index() {
+                    SplitRole::SectionEnd
+                } else {
+                    SplitRole::Segment
+                },
                 show_columns: true,
-                is_section_end: show_hierarchy && is_group && segment_index == view.major_index(),
-                group_index: show_hierarchy.then_some(group_index).flatten(),
                 section_index: if show_hierarchy {
                     section_index
                 } else {

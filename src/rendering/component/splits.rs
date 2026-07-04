@@ -1,5 +1,5 @@
 use crate::{
-    component::splits::State,
+    component::splits::{SplitRole, State},
     layout::{LayoutDirection, LayoutState},
     platform::prelude::*,
     rendering::{
@@ -262,11 +262,12 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         }
 
         {
-            let subsplit_indent = if split.is_subsplit || split.is_section_end {
-                DEFAULT_TEXT_SIZE
-            } else {
-                0.0
-            };
+            let subsplit_indent =
+                if matches!(split.role, SplitRole::Subsplit | SplitRole::SectionEnd) {
+                    DEFAULT_TEXT_SIZE
+                } else {
+                    0.0
+                };
 
             if let Some(icon) = context.create_image(&split.icon) {
                 context.render_image(

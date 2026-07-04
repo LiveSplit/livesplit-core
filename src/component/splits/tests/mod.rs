@@ -1,6 +1,6 @@
 use super::{
     ColumnSettings, ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith, Component, Settings,
-    State, SubsplitDisplayMode,
+    SplitRole, State, SubsplitDisplayMode,
 };
 use crate::{
     Lang, Run, Segment, TimeSpan, Timer, TimingMethod,
@@ -233,10 +233,7 @@ fn flat_subsplit_state() {
             .collect::<Vec<_>>(),
         ["Intro", "A1", "A2", "A End", "Outro"]
     );
-    assert!(state.splits.iter().all(|s| !s.is_subsplit));
-    assert!(state.splits.iter().all(|s| !s.is_group_header));
-    assert!(state.splits.iter().all(|s| !s.is_section_end));
-    assert!(state.splits.iter().all(|s| s.group_index.is_none()));
+    assert!(state.splits.iter().all(|s| s.role == SplitRole::Segment));
     assert_eq!(
         state
             .splits
@@ -280,15 +277,12 @@ fn current_group_expanded_subsplit_state() {
             .collect::<Vec<_>>(),
         ["Intro", "Chapter A", "A1", "A2", "A End", "Outro"]
     );
-    assert!(state.splits[1].is_group_header);
-    assert_eq!(state.splits[1].display_name, "Chapter A");
-    assert_eq!(state.splits[1].segment_index, Some(3));
+    assert_eq!(state.splits[1].role, SplitRole::GroupHeader);
+    assert_eq!(state.splits[1].index, 3);
     assert!(state.splits[1].columns.is_empty());
-    assert!(state.splits[2].is_subsplit);
-    assert_eq!(state.splits[2].segment_index, Some(1));
-    assert_eq!(state.splits[4].group_index, Some(0));
-    assert_eq!(state.splits[4].display_name, "A End");
-    assert!(state.splits[4].is_section_end);
+    assert_eq!(state.splits[2].role, SplitRole::Subsplit);
+    assert_eq!(state.splits[2].index, 1);
+    assert_eq!(state.splits[4].role, SplitRole::SectionEnd);
     assert_eq!(
         state
             .splits
@@ -331,15 +325,13 @@ fn all_groups_expanded_subsplit_state() {
             .collect::<Vec<_>>(),
         ["Intro", "Chapter A", "A1", "A2", "A End", "Outro"]
     );
-    assert!(state.splits[1].is_group_header);
-    assert_eq!(state.splits[1].display_name, "Chapter A");
-    assert_eq!(state.splits[1].segment_index, Some(3));
+    assert_eq!(state.splits[1].role, SplitRole::GroupHeader);
+    assert_eq!(state.splits[1].index, 3);
     assert!(state.splits[1].columns.is_empty());
-    assert!(state.splits[2].is_subsplit);
-    assert!(state.splits[3].is_subsplit);
-    assert_eq!(state.splits[4].display_name, "A End");
-    assert_eq!(state.splits[4].segment_index, Some(3));
-    assert!(state.splits[4].is_section_end);
+    assert_eq!(state.splits[2].role, SplitRole::Subsplit);
+    assert_eq!(state.splits[3].role, SplitRole::Subsplit);
+    assert_eq!(state.splits[4].index, 3);
+    assert_eq!(state.splits[4].role, SplitRole::SectionEnd);
 }
 
 #[test]
@@ -379,14 +371,13 @@ fn current_group_expanded_closes_other_groups() {
             .collect::<Vec<_>>(),
         ["Intro", "Chapter A", "Outro"]
     );
-    assert!(state.splits[1].is_group_header);
+    assert_eq!(state.splits[1].role, SplitRole::GroupHeader);
     assert!(!state.splits[1].is_current_split);
-    assert_eq!(state.splits[1].segment_index, Some(3));
-    assert_eq!(state.splits[1].display_name, "Chapter A");
+    assert_eq!(state.splits[1].index, 3);
     assert_eq!(state.splits[1].columns.len(), 2);
     assert!(state.splits[1].columns.iter().any(|c| !c.value.is_empty()));
     assert!(state.splits[2].is_current_split);
-    assert_eq!(state.splits[2].segment_index, Some(4));
+    assert_eq!(state.splits[2].index, 4);
 }
 
 #[test]
@@ -454,7 +445,7 @@ fn closed_group_header_segment_columns_summarize_the_whole_group() {
             .collect::<Vec<_>>(),
         ["Intro", "Chapter A", "Outro"]
     );
-    assert!(state.splits[1].is_group_header);
+    assert_eq!(state.splits[1].role, SplitRole::GroupHeader);
     assert_eq!(state.splits[1].columns[0].value, "26.00");
     assert_eq!(state.splits[1].columns[1].value, "+6.0");
 }
@@ -488,12 +479,16 @@ fn blank_rows_reset_after_groups_collapse() {
         Lang::English,
     );
     assert_eq!(
-        state
-            .splits
-            .iter()
-            .map(|s| s.segment_index)
-            .collect::<Vec<_>>(),
-        [Some(0), Some(3), Some(1), Some(2), Some(3), Some(4), None]
+        state.splits.iter().map(|s| s.role).collect::<Vec<_>>(),
+        [
+            SplitRole::Segment,
+            SplitRole::GroupHeader,
+            SplitRole::Subsplit,
+            SplitRole::Subsplit,
+            SplitRole::SectionEnd,
+            SplitRole::Segment,
+            SplitRole::Blank,
+        ]
     );
     assert_eq!(
         state
@@ -516,12 +511,16 @@ fn blank_rows_reset_after_groups_collapse() {
     );
 
     assert_eq!(
-        state
-            .splits
-            .iter()
-            .map(|s| s.segment_index)
-            .collect::<Vec<_>>(),
-        [Some(0), Some(3), Some(4), None, None, None, None]
+        state.splits.iter().map(|s| s.role).collect::<Vec<_>>(),
+        [
+            SplitRole::Segment,
+            SplitRole::GroupHeader,
+            SplitRole::Segment,
+            SplitRole::Blank,
+            SplitRole::Blank,
+            SplitRole::Blank,
+            SplitRole::Blank,
+        ]
     );
     assert_eq!(
         state
@@ -532,9 +531,6 @@ fn blank_rows_reset_after_groups_collapse() {
         [0, 1, 2, 3, 4, 5, 6]
     );
     for split in state.splits.iter().skip(3) {
-        assert!(!split.is_subsplit);
-        assert!(!split.is_group_header);
-        assert!(!split.is_section_end);
-        assert!(split.group_index.is_none());
+        assert_eq!(split.role, SplitRole::Blank);
     }
 }
