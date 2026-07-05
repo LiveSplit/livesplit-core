@@ -48,27 +48,6 @@ fn get_hl_type_without_null(ty: &Type) -> String {
     }
 }
 
-fn is_nullable_run_editor_group_name(function: &Function, name: &str, ty: &Type) -> bool {
-    name == "name"
-        && matches!(
-            function.name.as_str(),
-            "RunEditor_create_segment_group_from_selection"
-                | "RunEditor_rename_active_segment_group"
-        )
-        && matches!(
-            (ty.kind, ty.is_custom, ty.name.as_str()),
-            (TypeKind::Ref, false, "c_char")
-        )
-}
-
-fn get_input_hl_type(function: &Function, name: &str, ty: &Type) -> String {
-    let mut formatted = get_hl_type_with_null(ty);
-    if is_nullable_run_editor_group_name(function, name, ty) && !formatted.ends_with(" | null") {
-        formatted.push_str(" | null");
-    }
-    formatted
-}
-
 fn write_class_comments<W: Write>(mut writer: W, comments: &[String]) -> Result<()> {
     write!(
         writer,
@@ -185,7 +164,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
         }
         write!(writer, "{}", name.to_lower_camel_case())?;
         if type_script {
-            write!(writer, ": {}", get_input_hl_type(function, name, ty))?;
+            write!(writer, ": {}", get_hl_type_with_null(ty))?;
         }
     }
 
@@ -219,21 +198,12 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
     for (name, typ) in function.inputs.iter() {
         let hl_type = get_hl_type_without_null(typ);
         if hl_type == "string" {
-            if is_nullable_run_editor_group_name(function, name, typ) {
-                write!(
-                    writer,
-                    r#"const {0}_allocated = {0} === null ? null : allocString({0});
+            write!(
+                writer,
+                r#"const {0}_allocated = allocString({0});
         "#,
-                    name.to_lower_camel_case()
-                )?;
-            } else {
-                write!(
-                    writer,
-                    r#"const {0}_allocated = allocString({0});
-        "#,
-                    name.to_lower_camel_case()
-                )?;
-            }
+                name.to_lower_camel_case()
+            )?;
         } else if typ.name == "Json" {
             write!(
                 writer,
@@ -264,11 +234,6 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
             "{}",
             if name == "this" {
                 "this.ptr".to_string()
-            } else if is_nullable_run_editor_group_name(function, name, typ) {
-                format!(
-                    "{0} === null ? 0 : {0}_allocated.ptr",
-                    name.to_lower_camel_case()
-                )
             } else if type_name == "string" || typ.name == "Json" {
                 format!("{}_allocated.ptr", name.to_lower_camel_case())
             } else if typ.is_custom {
@@ -301,23 +266,12 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
     for (name, typ) in function.inputs.iter() {
         let hl_type = get_hl_type_without_null(typ);
         if hl_type == "string" || typ.name == "Json" {
-            if is_nullable_run_editor_group_name(function, name, typ) {
-                write!(
-                    writer,
-                    r#"
-        if ({0}_allocated !== null) {{
-            dealloc({0}_allocated);
-        }}"#,
-                    name.to_lower_camel_case()
-                )?;
-            } else {
-                write!(
-                    writer,
-                    r#"
+            write!(
+                writer,
+                r#"
         dealloc({}_allocated);"#,
-                    name.to_lower_camel_case()
-                )?;
-            }
+                name.to_lower_camel_case()
+            )?;
         }
     }
 

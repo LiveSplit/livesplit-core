@@ -320,11 +320,12 @@ pub unsafe extern "C" fn RunEditor_create_segment_group_from_selection(
     this: &mut RunEditor,
     name: *const c_char,
 ) -> bool {
-    if name.is_null() {
+    // SAFETY: The caller guarantees that `name` is valid.
+    let name = unsafe { str(name) };
+    if name.is_empty() {
         this.create_segment_group_from_selection::<String>(None)
     } else {
-        // SAFETY: The caller guarantees that `name` is valid when non-null.
-        this.create_segment_group_from_selection(Some(unsafe { str(name) }))
+        this.create_segment_group_from_selection(Some(name))
     }
 }
 
@@ -341,11 +342,12 @@ pub unsafe extern "C" fn RunEditor_rename_active_segment_group(
     this: &mut RunEditor,
     name: *const c_char,
 ) -> bool {
-    if name.is_null() {
+    // SAFETY: The caller guarantees that `name` is valid.
+    let name = unsafe { str(name) };
+    if name.is_empty() {
         this.rename_active_segment_group::<String>(None)
     } else {
-        // SAFETY: The caller guarantees that `name` is valid when non-null.
-        this.rename_active_segment_group(Some(unsafe { str(name) }))
+        this.rename_active_segment_group(Some(name))
     }
 }
 
