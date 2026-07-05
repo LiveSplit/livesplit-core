@@ -15,7 +15,7 @@ fn segment_groups_repair_invalid_ranges() {
         7,
     );
 
-    assert_eq!(groups.groups().len(), 2);
+    assert_eq!(groups.groups().len(), 3);
     assert_eq!(
         (groups.groups()[0].start(), groups.groups()[0].end()),
         (1, 4)
@@ -23,6 +23,10 @@ fn segment_groups_repair_invalid_ranges() {
     assert_eq!(
         (groups.groups()[1].start(), groups.groups()[1].end()),
         (4, 6)
+    );
+    assert_eq!(
+        (groups.groups()[2].start(), groups.groups()[2].end()),
+        (6, 7)
     );
 }
 

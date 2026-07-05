@@ -708,7 +708,7 @@ impl Editor {
             .segment_groups()
             .groups()
             .iter()
-            .any(|group| group.start() == index && group.end() > group.start() + 2)
+            .any(|group| group.start() == index)
     }
 
     fn can_move_segment_down_out_of_group(&self, index: usize) -> bool {
@@ -716,7 +716,7 @@ impl Editor {
             .segment_groups()
             .groups()
             .iter()
-            .any(|group| group.major_index() == index && group.end() > group.start() + 2)
+            .any(|group| group.major_index() == index)
     }
 
     fn can_move_segment_up_into_group(&self, index: usize) -> bool {
@@ -743,17 +743,24 @@ impl Editor {
             .segment_groups()
             .groups()
             .iter()
-            .position(|group| group.start() == index && group.end() > group.start() + 2)
+            .position(|group| group.start() == index)
         else {
             return false;
         };
 
         let group = &self.run.segment_groups().groups()[group_index];
-        let name = group.name().map(str::to_owned);
-        let Some(group) = SegmentGroup::new(group.start() + 1, group.end(), name) else {
-            return false;
-        };
-        self.run.segment_groups_mut().groups_mut()[group_index] = group;
+        if group.end() == group.start() + 1 {
+            self.run
+                .segment_groups_mut()
+                .groups_mut()
+                .remove(group_index);
+        } else {
+            let name = group.name().map(str::to_owned);
+            let Some(group) = SegmentGroup::new(group.start() + 1, group.end(), name) else {
+                return false;
+            };
+            self.run.segment_groups_mut().groups_mut()[group_index] = group;
+        }
         self.raise_run_edited();
         true
     }
@@ -764,17 +771,24 @@ impl Editor {
             .segment_groups()
             .groups()
             .iter()
-            .position(|group| group.major_index() == index && group.end() > group.start() + 2)
+            .position(|group| group.major_index() == index)
         else {
             return false;
         };
 
         let group = &self.run.segment_groups().groups()[group_index];
-        let name = group.name().map(str::to_owned);
-        let Some(group) = SegmentGroup::new(group.start(), group.end() - 1, name) else {
-            return false;
-        };
-        self.run.segment_groups_mut().groups_mut()[group_index] = group;
+        if group.end() == group.start() + 1 {
+            self.run
+                .segment_groups_mut()
+                .groups_mut()
+                .remove(group_index);
+        } else {
+            let name = group.name().map(str::to_owned);
+            let Some(group) = SegmentGroup::new(group.start(), group.end() - 1, name) else {
+                return false;
+            };
+            self.run.segment_groups_mut().groups_mut()[group_index] = group;
+        }
         self.raise_run_edited();
         true
     }
@@ -1068,7 +1082,7 @@ impl Editor {
     }
 
     /// Checks if the currently selected segments can be turned into a group.
-    /// A group needs at least two contiguous, currently ungrouped segments.
+    /// A group needs at least one contiguous, currently ungrouped segment.
     pub fn can_create_segment_group_from_selection(&self) -> bool {
         let Some((start, end)) = self.selected_segment_range() else {
             return false;
@@ -1090,7 +1104,7 @@ impl Editor {
     }
 
     /// Creates a segment group from the currently selected contiguous segment
-    /// rows. A group needs at least two segments.
+    /// rows. A group needs at least one segment.
     pub fn create_segment_group_from_selection<S>(&mut self, name: Option<S>) -> bool
     where
         S: PopulateString,

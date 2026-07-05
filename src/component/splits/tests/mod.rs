@@ -355,6 +355,46 @@ fn current_group_expanded_subsplit_state() {
 }
 
 #[test]
+fn single_segment_group_subsplit_state() {
+    let mut run = Run::new();
+    for name in ["Intro", "A", "Outro"] {
+        run.push_segment(Segment::new(name));
+    }
+    run.segment_groups_mut()
+        .push_lossy(1, 2, Some("Chapter A".into()), 3);
+
+    let mut timer = Timer::new(run).unwrap();
+    let mut component = Component::with_settings(Settings {
+        visual_split_count: 0,
+        subsplit_display_mode: SubsplitDisplayMode::CurrentGroupExpanded,
+        ..english_settings()
+    });
+    let mut image_cache = ImageCache::new();
+
+    timer.start().unwrap();
+    timer.split().unwrap();
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &Default::default(),
+        Lang::English,
+    );
+
+    assert_eq!(
+        state
+            .splits
+            .iter()
+            .map(|s| s.name.as_str())
+            .collect::<Vec<_>>(),
+        ["Intro", "Chapter A", "A", "Outro"]
+    );
+    assert!(!state.splits[1].is_indented);
+    assert!(state.splits[2].is_indented);
+    assert_eq!(state.splits[1].index, 1);
+    assert_eq!(state.splits[2].index, 1);
+}
+
+#[test]
 fn all_groups_expanded_subsplit_state() {
     let mut run = Run::new();
     for name in ["Intro", "A1", "A2", "A End", "Outro"] {
@@ -452,6 +492,84 @@ fn current_group_expanded_scrolls_between_groups() {
     assert_eq!(state.splits[1].name, "Chapter A");
 }
 
+#[test]
+fn current_group_expanded_scrolls_without_current_split() {
+    let mut run = Run::new();
+    for name in ["Intro", "A1", "A End", "B1", "B End", "Outro"] {
+        run.push_segment(Segment::new(name));
+    }
+    run.segment_groups_mut()
+        .push_lossy(1, 3, Some("Chapter A".into()), 6);
+    run.segment_groups_mut()
+        .push_lossy(3, 5, Some("Chapter B".into()), 6);
+
+    let timer = Timer::new(run).unwrap();
+    let mut component = Component::with_settings(Settings {
+        visual_split_count: 0,
+        subsplit_display_mode: SubsplitDisplayMode::CurrentGroupExpanded,
+        ..english_settings()
+    });
+    let mut image_cache = ImageCache::new();
+
+    component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &Default::default(),
+        Lang::English,
+    );
+    component.scroll_down();
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &Default::default(),
+        Lang::English,
+    );
+
+    assert_eq!(
+        state
+            .splits
+            .iter()
+            .map(|s| s.name.as_str())
+            .collect::<Vec<_>>(),
+        ["Intro", "Chapter A", "A1", "A End", "Chapter B", "Outro"]
+    );
+    assert_eq!(
+        state
+            .splits
+            .iter()
+            .map(|s| s.is_scrolled_to_split)
+            .collect::<Vec<_>>(),
+        [false, false, true, false, false, false]
+    );
+    assert!(!state.splits.iter().any(|s| s.is_current_split));
+
+    component.scroll_down();
+    component.scroll_down();
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &Default::default(),
+        Lang::English,
+    );
+
+    assert_eq!(
+        state
+            .splits
+            .iter()
+            .map(|s| s.name.as_str())
+            .collect::<Vec<_>>(),
+        ["Intro", "Chapter A", "Chapter B", "B1", "B End", "Outro"]
+    );
+    assert_eq!(
+        state
+            .splits
+            .iter()
+            .map(|s| s.is_scrolled_to_split)
+            .collect::<Vec<_>>(),
+        [false, false, false, true, false, false]
+    );
+    assert!(!state.splits.iter().any(|s| s.is_current_split));
+}
 #[test]
 fn subsplit_scroll_cursor_resets_when_current_split_changes() {
     let mut run = Run::new();

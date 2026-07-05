@@ -13,10 +13,10 @@ pub struct SegmentGroup {
 }
 
 impl SegmentGroup {
-    /// Creates a new segment group if the provided range contains at least two
-    /// segments. Single segment groups are not meaningful for subsplits.
+    /// Creates a new segment group if the provided range contains at least one
+    /// segment.
     pub fn new(start: usize, end: usize, name: Option<String>) -> Option<Self> {
-        (end > start + 1).then_some(Self { start, end, name })
+        (end > start).then_some(Self { start, end, name })
     }
 
     /// Creates a group without validating the range. Call
@@ -120,7 +120,7 @@ impl SegmentGroups {
         self.groups.retain_mut(|group| {
             group.start = group.start.max(min_start).min(segment_count);
             group.end = group.end.max(group.start).min(segment_count);
-            let valid = group.end > group.start + 1;
+            let valid = group.end > group.start;
             if valid {
                 min_start = group.end;
             }

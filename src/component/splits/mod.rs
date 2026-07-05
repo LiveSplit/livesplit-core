@@ -366,14 +366,13 @@ impl Component {
         let display_current_split = if self.settings.subsplit_display_mode
             == SubsplitDisplayMode::CurrentGroupExpanded
             && !run.is_empty()
-            && let Some(current_split) = current_split
         {
-            let running_split = min(current_split, run.len() - 1);
+            let base_split = min(current_split.unwrap_or(0), run.len() - 1);
             self.scroll_offset = min(
-                max(self.scroll_offset, -(running_split as isize)),
-                run.len() as isize - running_split as isize - 1,
+                max(self.scroll_offset, -(base_split as isize)),
+                run.len() as isize - base_split as isize - 1,
             );
-            let split = (running_split as isize + self.scroll_offset) as usize;
+            let split = (base_split as isize + self.scroll_offset) as usize;
             if self.scroll_offset != 0 {
                 scrolled_to_split = Some(split);
             }
