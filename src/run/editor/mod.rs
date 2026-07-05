@@ -821,16 +821,134 @@ impl Editor {
         true
     }
 
+    fn visual_range_after(&self, index: usize) -> Option<(usize, usize, Option<usize>)> {
+        if index >= self.run.len() {
+            return None;
+        }
+
+        self.run
+            .segment_groups()
+            .groups()
+            .iter()
+            .enumerate()
+            .find(|(_, group)| group.start() == index)
+            .map_or(Some((index, index + 1, None)), |(group_index, group)| {
+                Some((group.start(), group.end(), Some(group_index)))
+            })
+    }
+
+    fn visual_range_before(&self, index: usize) -> Option<(usize, usize, Option<usize>)> {
+        if index == 0 {
+            return None;
+        }
+
+        self.run
+            .segment_groups()
+            .groups()
+            .iter()
+            .enumerate()
+            .find(|(_, group)| group.end() == index)
+            .map_or(Some((index - 1, index, None)), |(group_index, group)| {
+                Some((group.start(), group.end(), Some(group_index)))
+            })
+    }
+
+    fn select_segment_range(&mut self, start: usize, end: usize) {
+        self.selected_segments.clear();
+        self.selected_segments.extend(start..end);
+    }
+
+    fn move_selected_segment_group_up(&mut self) -> bool {
+        let Some(group_index) = self.selected_segment_group_index() else {
+            return false;
+        };
+        let group = self.run.segment_groups().groups()[group_index].clone();
+        let Some((previous_start, previous_end, previous_group_index)) =
+            self.visual_range_before(group.start())
+        else {
+            return false;
+        };
+
+        let group_len = group.end() - group.start();
+        for offset in 0..group_len {
+            for index in (previous_start + offset..group.start() + offset).rev() {
+                self.switch_segments(index);
+            }
+        }
+
+        let previous_name = previous_group_index
+            .and_then(|group_index| self.run.segment_groups().groups()[group_index].name())
+            .map(str::to_owned);
+        if let Some(previous_group_index) = previous_group_index {
+            self.run.segment_groups_mut().groups_mut()[previous_group_index] =
+                SegmentGroup::new_unchecked(
+                    previous_start + group_len,
+                    previous_end + group_len,
+                    previous_name,
+                );
+        }
+        self.run.segment_groups_mut().groups_mut()[group_index] = SegmentGroup::new_unchecked(
+            previous_start,
+            previous_start + group_len,
+            group.name().map(str::to_owned),
+        );
+        let len = self.run.len();
+        self.run.segment_groups_mut().repair(len);
+        self.select_segment_range(previous_start, previous_start + group_len);
+        self.times_modified();
+        self.fix();
+        true
+    }
+
+    fn move_selected_segment_group_down(&mut self) -> bool {
+        let Some(group_index) = self.selected_segment_group_index() else {
+            return false;
+        };
+        let group = self.run.segment_groups().groups()[group_index].clone();
+        let Some((next_start, next_end, next_group_index)) = self.visual_range_after(group.end())
+        else {
+            return false;
+        };
+
+        let next_len = next_end - next_start;
+        for offset in 0..next_len {
+            for index in (group.start() + offset..group.end() + offset).rev() {
+                self.switch_segments(index);
+            }
+        }
+
+        let next_name = next_group_index
+            .and_then(|group_index| self.run.segment_groups().groups()[group_index].name())
+            .map(str::to_owned);
+        if let Some(next_group_index) = next_group_index {
+            self.run.segment_groups_mut().groups_mut()[next_group_index] =
+                SegmentGroup::new_unchecked(group.start(), group.start() + next_len, next_name);
+        }
+        self.run.segment_groups_mut().groups_mut()[group_index] = SegmentGroup::new_unchecked(
+            group.start() + next_len,
+            group.end() + next_len,
+            group.name().map(str::to_owned),
+        );
+        let len = self.run.len();
+        self.run.segment_groups_mut().repair(len);
+        self.select_segment_range(group.start() + next_len, group.end() + next_len);
+        self.times_modified();
+        self.fix();
+        true
+    }
+
     /// Checks if the currently selected segments can be moved up. If any one of
     /// the selected segments is the first segment, then they can't be moved.
     pub fn can_move_segments_up(&self) -> bool {
-        self.selected_segments
-            .iter()
-            .all(|&index| {
-                index != 0
-                    || self.can_move_segment_up_out_of_group(index)
-                    || self.can_move_segment_up_into_group(index)
-            })
+        if let Some(group_index) = self.selected_segment_group_index() {
+            return self.run.segment_groups().groups()[group_index].start() != 0;
+        }
+
+        self.selected_segments.iter().all(|&index| {
+            index != 0
+                || self.can_move_segment_up_out_of_group(index)
+                || self.can_move_segment_up_into_group(index)
+        })
     }
 
     /// Moves all the selected segments up, unless the first segment is
@@ -838,6 +956,9 @@ impl Editor {
     /// active segment stays the active segment.
     pub fn move_segments_up(&mut self) {
         if !self.can_move_segments_up() {
+            return;
+        }
+        if self.move_selected_segment_group_up() {
             return;
         }
 
@@ -875,14 +996,16 @@ impl Editor {
     /// Checks if the currently selected segments can be moved down. If any one
     /// of the selected segments is the last segment, then they can't be moved.
     pub fn can_move_segments_down(&self) -> bool {
+        if let Some(group_index) = self.selected_segment_group_index() {
+            return self.run.segment_groups().groups()[group_index].end() != self.run.len();
+        }
+
         let last_index = self.run.len() - 1;
-        self.selected_segments
-            .iter()
-            .all(|&index| {
-                index != last_index
-                    || self.can_move_segment_down_out_of_group(index)
-                    || self.can_move_segment_down_into_group(index)
-            })
+        self.selected_segments.iter().all(|&index| {
+            index != last_index
+                || self.can_move_segment_down_out_of_group(index)
+                || self.can_move_segment_down_into_group(index)
+        })
     }
 
     /// Moves all the selected segments down, unless the last segment is
@@ -890,6 +1013,9 @@ impl Editor {
     /// active segment stays the active segment.
     pub fn move_segments_down(&mut self) {
         if !self.can_move_segments_down() {
+            return;
+        }
+        if self.move_selected_segment_group_down() {
             return;
         }
 
