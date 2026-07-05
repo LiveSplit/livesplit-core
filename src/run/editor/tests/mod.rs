@@ -196,6 +196,26 @@ fn creates_renames_and_removes_segment_groups() {
 }
 
 #[test]
+fn renaming_segment_group_keeps_whole_group_selected() {
+    let mut run = Run::new();
+    for name in ["A", "B", "C"] {
+        run.push_segment(Segment::new(name));
+    }
+
+    let mut editor = Editor::new(run).unwrap();
+    editor.select_range(2);
+    assert!(editor.create_segment_group_from_selection(Some("Group")));
+    assert!(editor.rename_active_segment_group(Some("Renamed")));
+
+    let mut image_cache = ImageCache::new();
+    let state = editor.state(&mut image_cache, Lang::English);
+
+    assert_eq!(state.segments[0].selected, SelectionState::Selected);
+    assert_eq!(state.segments[1].selected, SelectionState::Selected);
+    assert_eq!(state.segments[2].selected, SelectionState::Active);
+}
+
+#[test]
 fn creates_single_segment_group() {
     let mut run = Run::new();
     for name in ["A", "B", "C"] {
