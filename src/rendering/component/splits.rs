@@ -333,7 +333,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                 [name_x, TEXT_ALIGN_TOP],
                 DEFAULT_TEXT_SIZE,
                 text_color,
-                left_x - PADDING - name_x + icon_right,
+                left_x - PADDING,
             );
         }
         context.translate(delta_x, delta_y);

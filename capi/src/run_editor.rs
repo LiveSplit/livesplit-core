@@ -313,8 +313,7 @@ pub extern "C" fn RunEditor_move_segments_down(this: &mut RunEditor) {
 }
 
 /// Creates a native segment group from the currently selected contiguous
-/// segment rows. Returns <FALSE> if the selection is not contiguous or has
-/// fewer than two segments.
+/// segment rows. Returns <FALSE> if the selection is not contiguous or empty.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn RunEditor_create_segment_group_from_selection(
     this: &mut RunEditor,
