@@ -11,6 +11,7 @@ mod parse {
             time_split_tracker, wsplit,
         },
         run::saver,
+        settings::Image,
     };
 
     #[track_caller]
@@ -79,7 +80,7 @@ mod parse {
 
     #[test]
     fn livesplit_native_segment_groups() {
-        let run = livesplit(&minimal_lss(
+        let mut run = livesplit(&minimal_lss(
             "1.8.1",
             &["Intro", "A1", "A2", "A End", "-Literal"],
             r#"<SegmentGroups><SegmentGroup start="1" end="4"><Name>Chapter A</Name></SegmentGroup></SegmentGroups>"#,
@@ -91,11 +92,19 @@ mod parse {
         assert_eq!(group.name(), Some("Chapter A"));
         assert_eq!(run.segment(4).name(), "-Literal");
 
+        let group_icon = Image::new([1, 2, 3].as_slice().into(), Image::ICON);
+        run.segment_groups_mut().groups_mut()[0].set_icon(group_icon.clone());
+
         let mut saved = String::new();
         saver::livesplit::save_run(&run, &mut saved).unwrap();
         assert!(saved.contains(r#"<Run version="1.8.1">"#));
         assert!(saved.contains(r#"<SegmentGroup start="1" end="4">"#));
         assert!(saved.contains("<Name>Chapter A</Name>"));
+        assert!(saved.contains("<Icon>"));
+
+        let saved = livesplit::parse(&saved).unwrap();
+        let group = &saved.segment_groups().groups()[0];
+        assert_eq!(group.icon().unwrap().id(), group_icon.id());
     }
 
     #[test]

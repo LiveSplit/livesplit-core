@@ -313,9 +313,15 @@ pub fn save_run<W: fmt::Write>(run: &Run, writer: W) -> fmt::Result {
                 writer.tag("SegmentGroup", |mut tag| {
                     tag.attribute("start", DisplayAlreadyEscaped(group.start()))?;
                     tag.attribute("end", DisplayAlreadyEscaped(group.end()))?;
-                    if let Some(name) = group.name() {
+                    if group.name().is_some() || group.icon().is_some() {
                         tag.content(|writer| {
-                            writer.tag_with_text_content("Name", NO_ATTRIBUTES, name)
+                            if let Some(name) = group.name() {
+                                writer.tag_with_text_content("Name", NO_ATTRIBUTES, name)?;
+                            }
+                            if let Some(icon) = group.icon() {
+                                image(writer, "Icon", icon, base64_buf, image_buf)?;
+                            }
+                            Ok(())
                         })?;
                     }
                     Ok(())

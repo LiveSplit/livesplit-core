@@ -102,6 +102,12 @@ pub struct SegmentGroupState {
     /// The explicit group name. If this is `None`, the major split name is the
     /// display name of the group.
     pub name: Option<String>,
+    /// The group display icon. This falls back to the major split icon if no
+    /// explicit group icon is set.
+    pub icon: ImageId,
+    /// Whether the group icon is explicitly set instead of inherited from the
+    /// major split.
+    pub has_explicit_icon: bool,
 }
 
 /// Describes a segment's selection state.
@@ -198,11 +204,20 @@ impl Editor {
                 .group_index_for_segment(segment_index)
                 .map(|group_index| {
                     let group = &self.run.segment_groups().groups()[group_index];
+                    let (group_icon, has_explicit_icon) = group.icon().map_or(
+                        (self.run.segment(group.major_index()).icon(), false),
+                        |icon| (icon, true),
+                    );
+                    let icon = *image_cache
+                        .cache(group_icon.id(), || group_icon.clone())
+                        .id();
                     SegmentGroupState {
                         group_index: Some(group_index),
                         is_subsplit: segment_index < group.major_index(),
                         is_major_split: segment_index == group.major_index(),
                         name: group.name().map(str::to_owned),
+                        icon,
+                        has_explicit_icon,
                     }
                 })
                 .unwrap_or(SegmentGroupState {
@@ -210,6 +225,8 @@ impl Editor {
                     is_subsplit: false,
                     is_major_split: false,
                     name: None,
+                    icon: *ImageId::EMPTY,
+                    has_explicit_icon: false,
                 });
 
             segments.push(Segment {

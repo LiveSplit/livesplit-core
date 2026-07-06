@@ -10,10 +10,10 @@ use crate::{
     localization::{Lang, Text},
     platform::prelude::*,
     settings::{
-        self, Color, Field, FieldHint, Gradient, ImageCache, ImageId, ListGradient,
+        self, Color, Field, FieldHint, Gradient, Image, ImageCache, ImageId, ListGradient,
         SettingsDescription, Value,
     },
-    timing::{Snapshot, formatter::Accuracy},
+    timing::{Snapshot, TimerPhase, formatter::Accuracy},
     util::{Clear, ClearVec},
 };
 use alloc::borrow::Cow;
@@ -366,17 +366,37 @@ impl Component {
         let display_current_split = if self.settings.subsplit_display_mode
             == SubsplitDisplayMode::CurrentGroupExpanded
             && !run.is_empty()
+            && !run.segment_groups().groups().is_empty()
         {
-            let base_split = min(current_split.unwrap_or(0), run.len() - 1);
+            let (base_split, min_split, max_split) = match timer.current_phase() {
+                TimerPhase::NotRunning => (-1, -1, run.len() as isize - 1),
+                TimerPhase::Ended => (run.len() as isize, 0, run.len() as isize),
+                TimerPhase::Running | TimerPhase::Paused => {
+                    let current_split = min(current_split.unwrap_or(0), run.len() - 1) as isize;
+                    (current_split, 0, run.len() as isize - 1)
+                }
+            };
             self.scroll_offset = min(
-                max(self.scroll_offset, -(base_split as isize)),
-                run.len() as isize - base_split as isize - 1,
+                max(self.scroll_offset, min_split - base_split),
+                max_split - base_split,
             );
-            let split = (base_split as isize + self.scroll_offset) as usize;
+            let split = base_split + self.scroll_offset;
+            let split = (0..run.len() as isize)
+                .contains(&split)
+                .then_some(split as usize);
             if self.scroll_offset != 0 {
-                scrolled_to_split = Some(split);
+                scrolled_to_split = split;
             }
-            Some(split)
+            if self.scroll_offset != 0
+                || matches!(
+                    timer.current_phase(),
+                    TimerPhase::Running | TimerPhase::Paused
+                )
+            {
+                split
+            } else {
+                None
+            }
         } else {
             current_split
         };
@@ -471,11 +491,11 @@ impl Component {
                 index: 0,
             });
 
-            let segment = split.segment;
             state.icon = *image_cache
-                .cache(segment.icon().id(), || segment.icon().clone())
+                .cache(split.icon.id(), || split.icon.clone())
                 .id();
 
+            let segment = split.segment;
             state.name.push_str(&split.name);
 
             if split.show_columns {
@@ -837,6 +857,7 @@ struct DisplayedSplit<'a> {
     segment_index: usize,
     column_start_index: usize,
     segment: &'a crate::Segment,
+    icon: Image,
     name: Cow<'a, str>,
     is_group_header: bool,
     is_indented: bool,
@@ -868,6 +889,7 @@ fn displayed_splits<'a>(
                 segment_index: view.major_index(),
                 column_start_index: view.start_index(),
                 segment: view.ending_segment(),
+                icon: view.icon_or_default().clone(),
                 name: Cow::Owned(view.name_or_default().to_owned()),
                 is_group_header: true,
                 is_indented: false,
@@ -886,6 +908,7 @@ fn displayed_splits<'a>(
                 segment_index,
                 column_start_index: segment_index,
                 segment,
+                icon: segment.icon().clone(),
                 name: Cow::Borrowed(segment.name()),
                 is_group_header: false,
                 is_indented: show_hierarchy && is_group,

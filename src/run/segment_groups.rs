@@ -1,31 +1,49 @@
-use crate::{Segment, platform::prelude::*};
+use crate::{Segment, platform::prelude::*, settings::Image};
 use core::{iter::FusedIterator, slice};
 
 /// A contiguous, non-overlapping group of segments.
 ///
 /// The range is half-open: `start` is inclusive and `end` is exclusive. The
 /// final segment in the range acts as the major split for the group.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SegmentGroup {
     start: usize,
     end: usize,
     name: Option<String>,
+    icon: Image,
 }
 
 impl SegmentGroup {
     /// Creates a new segment group if the provided range contains at least one
     /// segment.
     pub fn new(start: usize, end: usize, name: Option<String>) -> Option<Self> {
-        (end > start).then_some(Self { start, end, name })
+        (end > start).then_some(Self {
+            start,
+            end,
+            name: name.filter(|n| !n.is_empty()),
+            icon: Image::EMPTY.clone(),
+        })
     }
 
     /// Creates a group without validating the range. Call
     /// [`SegmentGroups::repair`] before exposing it.
     pub fn new_unchecked(start: usize, end: usize, name: Option<String>) -> Self {
+        Self::new_unchecked_with_icon(start, end, name, Image::EMPTY.clone())
+    }
+
+    /// Creates a group without validating the range. Call
+    /// [`SegmentGroups::repair`] before exposing it.
+    pub fn new_unchecked_with_icon(
+        start: usize,
+        end: usize,
+        name: Option<String>,
+        icon: Image,
+    ) -> Self {
         Self {
             start,
             end,
             name: name.filter(|n| !n.is_empty()),
+            icon,
         }
     }
 
@@ -53,10 +71,25 @@ impl SegmentGroup {
     pub fn set_name(&mut self, name: Option<String>) {
         self.name = name.filter(|n| !n.is_empty());
     }
+
+    /// Accesses the explicit icon of the group, if there is one.
+    pub fn icon(&self) -> Option<&Image> {
+        (!self.icon.is_empty()).then_some(&self.icon)
+    }
+
+    /// Sets the explicit icon of the group.
+    pub fn set_icon(&mut self, icon: Image) {
+        self.icon = icon;
+    }
+
+    /// Removes the explicit icon of the group.
+    pub fn remove_icon(&mut self) {
+        self.icon = Image::EMPTY.clone();
+    }
 }
 
 /// A validated list of segment groups over a flat segment list.
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct SegmentGroups {
     groups: Vec<SegmentGroup>,
 }
@@ -181,6 +214,7 @@ impl SegmentGroups {
 pub struct SegmentGroupView<'groups, 'segments> {
     group_index: Option<usize>,
     name: Option<&'groups str>,
+    icon: Option<&'groups Image>,
     segments: &'segments [Segment],
     start_index: usize,
 }
@@ -196,9 +230,19 @@ impl<'groups, 'segments> SegmentGroupView<'groups, 'segments> {
         self.name
     }
 
+    /// The explicit group icon, if one exists.
+    pub const fn icon(&self) -> Option<&'groups Image> {
+        self.icon
+    }
+
     /// The group display name, falling back to the major segment name.
     pub fn name_or_default(&self) -> &str {
         self.name.unwrap_or_else(|| self.ending_segment().name())
+    }
+
+    /// The group display icon, falling back to the major segment icon.
+    pub fn icon_or_default(&self) -> &Image {
+        self.icon.unwrap_or_else(|| self.ending_segment().icon())
     }
 
     /// The segments included in this view.
@@ -256,6 +300,7 @@ impl<'groups, 'segments> Iterator for SegmentGroupsIter<'groups, 'segments> {
             return Some(SegmentGroupView {
                 group_index: Some(self.group_index - 1),
                 name: group.name(),
+                icon: group.icon(),
                 segments: &self.segments[group.start..group.end],
                 start_index: group.start,
             });
@@ -266,6 +311,7 @@ impl<'groups, 'segments> Iterator for SegmentGroupsIter<'groups, 'segments> {
         Some(SegmentGroupView {
             group_index: None,
             name: None,
+            icon: None,
             segments: slice::from_ref(&self.segments[start_index]),
             start_index,
         })

@@ -481,6 +481,7 @@ pub fn parse(source: &str) -> Result<Run> {
                         let mut start = 0;
                         let mut end = 0;
                         let mut name = String::new();
+                        let mut icon = Image::EMPTY.clone();
                         type_hint(attribute_escaped_err(attributes, "start", |t| {
                             start = t.parse()?;
                             Ok(())
@@ -492,11 +493,20 @@ pub fn parse(source: &str) -> Result<Run> {
                         parse_children(reader, |reader, tag, _| -> Result<()> {
                             if tag.name() == "Name" {
                                 text(reader, |t| name = t.into_owned())
+                            } else if tag.name() == "Icon" {
+                                image(reader, &mut image_buf, |i| {
+                                    icon = Image::new(i.into(), Image::ICON);
+                                })
                             } else {
                                 end_tag(reader)
                             }
                         })?;
-                        groups.push(SegmentGroup::new_unchecked(start, end, Some(name)));
+                        groups.push(SegmentGroup::new_unchecked_with_icon(
+                            start,
+                            end,
+                            Some(name),
+                            icon,
+                        ));
                         Ok(())
                     } else {
                         end_tag::<Error>(reader)

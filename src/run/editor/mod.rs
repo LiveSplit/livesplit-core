@@ -756,7 +756,13 @@ impl Editor {
                 .remove(group_index);
         } else {
             let name = group.name().map(str::to_owned);
-            let Some(group) = SegmentGroup::new(group.start() + 1, group.end(), name) else {
+            let icon = group
+                .icon()
+                .cloned()
+                .unwrap_or_else(|| Image::EMPTY.clone());
+            let group =
+                SegmentGroup::new_unchecked_with_icon(group.start() + 1, group.end(), name, icon);
+            if group.end() <= group.start() {
                 return false;
             };
             self.run.segment_groups_mut().groups_mut()[group_index] = group;
@@ -784,7 +790,13 @@ impl Editor {
                 .remove(group_index);
         } else {
             let name = group.name().map(str::to_owned);
-            let Some(group) = SegmentGroup::new(group.start(), group.end() - 1, name) else {
+            let icon = group
+                .icon()
+                .cloned()
+                .unwrap_or_else(|| Image::EMPTY.clone());
+            let group =
+                SegmentGroup::new_unchecked_with_icon(group.start(), group.end() - 1, name, icon);
+            if group.end() <= group.start() {
                 return false;
             };
             self.run.segment_groups_mut().groups_mut()[group_index] = group;
@@ -806,7 +818,12 @@ impl Editor {
 
         let group = &self.run.segment_groups().groups()[group_index];
         let name = group.name().map(str::to_owned);
-        let Some(group) = SegmentGroup::new(group.start(), index + 1, name) else {
+        let icon = group
+            .icon()
+            .cloned()
+            .unwrap_or_else(|| Image::EMPTY.clone());
+        let group = SegmentGroup::new_unchecked_with_icon(group.start(), index + 1, name, icon);
+        if group.end() <= group.start() {
             return false;
         };
         self.run.segment_groups_mut().groups_mut()[group_index] = group;
@@ -827,7 +844,12 @@ impl Editor {
 
         let group = &self.run.segment_groups().groups()[group_index];
         let name = group.name().map(str::to_owned);
-        let Some(group) = SegmentGroup::new(index, group.end(), name) else {
+        let icon = group
+            .icon()
+            .cloned()
+            .unwrap_or_else(|| Image::EMPTY.clone());
+        let group = SegmentGroup::new_unchecked_with_icon(index, group.end(), name, icon);
+        if group.end() <= group.start() {
             return false;
         };
         self.run.segment_groups_mut().groups_mut()[group_index] = group;
@@ -893,19 +915,29 @@ impl Editor {
         let previous_name = previous_group_index
             .and_then(|group_index| self.run.segment_groups().groups()[group_index].name())
             .map(str::to_owned);
+        let previous_icon = previous_group_index
+            .and_then(|group_index| self.run.segment_groups().groups()[group_index].icon())
+            .cloned()
+            .unwrap_or_else(|| Image::EMPTY.clone());
         if let Some(previous_group_index) = previous_group_index {
             self.run.segment_groups_mut().groups_mut()[previous_group_index] =
-                SegmentGroup::new_unchecked(
+                SegmentGroup::new_unchecked_with_icon(
                     previous_start + group_len,
                     previous_end + group_len,
                     previous_name,
+                    previous_icon,
                 );
         }
-        self.run.segment_groups_mut().groups_mut()[group_index] = SegmentGroup::new_unchecked(
-            previous_start,
-            previous_start + group_len,
-            group.name().map(str::to_owned),
-        );
+        self.run.segment_groups_mut().groups_mut()[group_index] =
+            SegmentGroup::new_unchecked_with_icon(
+                previous_start,
+                previous_start + group_len,
+                group.name().map(str::to_owned),
+                group
+                    .icon()
+                    .cloned()
+                    .unwrap_or_else(|| Image::EMPTY.clone()),
+            );
         let len = self.run.len();
         self.run.segment_groups_mut().repair(len);
         self.select_segment_range(previous_start, previous_start + group_len);
@@ -934,15 +966,29 @@ impl Editor {
         let next_name = next_group_index
             .and_then(|group_index| self.run.segment_groups().groups()[group_index].name())
             .map(str::to_owned);
+        let next_icon = next_group_index
+            .and_then(|group_index| self.run.segment_groups().groups()[group_index].icon())
+            .cloned()
+            .unwrap_or_else(|| Image::EMPTY.clone());
         if let Some(next_group_index) = next_group_index {
             self.run.segment_groups_mut().groups_mut()[next_group_index] =
-                SegmentGroup::new_unchecked(group.start(), group.start() + next_len, next_name);
+                SegmentGroup::new_unchecked_with_icon(
+                    group.start(),
+                    group.start() + next_len,
+                    next_name,
+                    next_icon,
+                );
         }
-        self.run.segment_groups_mut().groups_mut()[group_index] = SegmentGroup::new_unchecked(
-            group.start() + next_len,
-            group.end() + next_len,
-            group.name().map(str::to_owned),
-        );
+        self.run.segment_groups_mut().groups_mut()[group_index] =
+            SegmentGroup::new_unchecked_with_icon(
+                group.start() + next_len,
+                group.end() + next_len,
+                group.name().map(str::to_owned),
+                group
+                    .icon()
+                    .cloned()
+                    .unwrap_or_else(|| Image::EMPTY.clone()),
+            );
         let len = self.run.len();
         self.run.segment_groups_mut().repair(len);
         self.select_segment_range(group.start() + next_len, group.end() + next_len);
@@ -1149,6 +1195,28 @@ impl Editor {
         };
         let name = name.map(PopulateString::into_string);
         self.run.segment_groups_mut().groups_mut()[group_index].set_name(name);
+        self.raise_run_edited();
+        true
+    }
+
+    /// Sets the icon of the group containing the active segment.
+    pub fn set_active_segment_group_icon(&mut self, icon: Image) -> bool {
+        let active = self.active_segment_index();
+        let Some(group_index) = self.run.segment_groups().group_index_for_segment(active) else {
+            return false;
+        };
+        self.run.segment_groups_mut().groups_mut()[group_index].set_icon(icon);
+        self.raise_run_edited();
+        true
+    }
+
+    /// Removes the explicit icon of the group containing the active segment.
+    pub fn remove_active_segment_group_icon(&mut self) -> bool {
+        let active = self.active_segment_index();
+        let Some(group_index) = self.run.segment_groups().group_index_for_segment(active) else {
+            return false;
+        };
+        self.run.segment_groups_mut().groups_mut()[group_index].remove_icon();
         self.raise_run_edited();
         true
     }

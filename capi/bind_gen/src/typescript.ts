@@ -1046,6 +1046,13 @@ export interface RunEditorSegmentGroupStateJson {
      * display name of the group.
      */
     name: string | null,
+    /**
+     * The group display icon. This falls back to the major split icon if no
+     * explicit group icon is set.
+     */
+    icon: ImageId,
+    /** Whether the group icon is explicitly set instead of inherited. */
+    has_explicit_icon: boolean,
 }
 
 /**

@@ -351,6 +351,27 @@ pub unsafe extern "C" fn RunEditor_rename_active_segment_group(
     }
 }
 
+/// Sets the icon of the native segment group containing the active segment.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn RunEditor_active_set_segment_group_icon(
+    this: &mut RunEditor,
+    data: *const u8,
+    length: usize,
+) -> bool {
+    // SAFETY: The caller guarantees that `data` is valid for `length`.
+    this.set_active_segment_group_icon(Image::new(
+        unsafe { slice(data, length).into() },
+        Image::ICON,
+    ))
+}
+
+/// Removes the explicit icon of the native segment group containing the active
+/// segment.
+#[unsafe(no_mangle)]
+pub extern "C" fn RunEditor_active_remove_segment_group_icon(this: &mut RunEditor) -> bool {
+    this.remove_active_segment_group_icon()
+}
+
 /// Sets the icon of the active segment.
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn RunEditor_active_set_icon(

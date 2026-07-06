@@ -1,7 +1,7 @@
 use super::{Editor, SelectionState};
 use crate::{
     Lang, Run, Segment, TimeSpan,
-    settings::ImageCache,
+    settings::{Image, ImageCache},
     util::tests_helper::{create_timer, run_with_splits},
 };
 
@@ -216,6 +216,38 @@ fn renaming_segment_group_keeps_whole_group_selected() {
 }
 
 #[test]
+fn segment_group_icons_can_be_explicit_or_inherited() {
+    let mut run = Run::new();
+    for name in ["A", "B", "C"] {
+        run.push_segment(Segment::new(name));
+    }
+    let major_icon = Image::new([1, 2, 3].as_slice().into(), Image::ICON);
+    run.segment_mut(2).set_icon(major_icon.clone());
+
+    let mut editor = Editor::new(run).unwrap();
+    editor.select_range(2);
+    assert!(editor.create_segment_group_from_selection(Some("Group")));
+
+    let mut image_cache = ImageCache::new();
+    let state = editor.state(&mut image_cache, Lang::English);
+    assert_eq!(state.segments[0].segment_group.icon, *major_icon.id());
+    assert!(!state.segments[0].segment_group.has_explicit_icon);
+
+    let group_icon = Image::new([4, 5, 6].as_slice().into(), Image::ICON);
+    assert!(editor.set_active_segment_group_icon(group_icon.clone()));
+
+    let state = editor.state(&mut image_cache, Lang::English);
+    assert_eq!(state.segments[0].segment_group.icon, *group_icon.id());
+    assert!(state.segments[0].segment_group.has_explicit_icon);
+
+    assert!(editor.remove_active_segment_group_icon());
+
+    let state = editor.state(&mut image_cache, Lang::English);
+    assert_eq!(state.segments[0].segment_group.icon, *major_icon.id());
+    assert!(!state.segments[0].segment_group.has_explicit_icon);
+}
+
+#[test]
 fn creates_single_segment_group() {
     let mut run = Run::new();
     for name in ["A", "B", "C"] {
@@ -225,7 +257,12 @@ fn creates_single_segment_group() {
     let mut editor = Editor::new(run).unwrap();
     assert!(editor.can_create_segment_group_from_selection());
     let mut image_cache = ImageCache::new();
-    assert!(editor.state(&mut image_cache, Lang::English).buttons.can_create_segment_group);
+    assert!(
+        editor
+            .state(&mut image_cache, Lang::English)
+            .buttons
+            .can_create_segment_group
+    );
     assert!(editor.create_segment_group_from_selection(Some("Group")));
 
     let run = editor.close();
