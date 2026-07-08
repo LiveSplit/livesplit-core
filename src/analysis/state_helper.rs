@@ -2,7 +2,7 @@
 
 use crate::{
     Run, Segment, TimeSpan, Timer, TimerPhase, TimingMethod, comparison::best_segments,
-    settings::SemanticColor, timing::Snapshot,
+    platform::prelude::*, settings::SemanticColor, timing::Snapshot,
 };
 
 /// Gets the last non-live delta in the [`Run`] starting from `segment_index`.
