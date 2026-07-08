@@ -475,12 +475,12 @@ fn time_column_update_value(
             };
             (
                 value,
-                split_color(
+                analysis::split_color_for_range(
                     timer,
                     delta,
-                    column_start_index,
+                    column_start_index..=segment_index,
                     false,
-                    column_start_index == segment_index,
+                    true,
                     comparison,
                     method,
                 ),

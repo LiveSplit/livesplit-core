@@ -6,7 +6,7 @@ use crate::{
         previous_segment_time_for_range,
     },
     comparison::{best_segments, personal_best},
-    util::tests_helper::{create_run, span, start_run},
+    util::tests_helper::{create_run, create_timer, run_with_splits_opt, span, start_run},
 };
 
 #[test]
@@ -76,5 +76,24 @@ fn segment_ranges_use_the_split_before_the_range() {
     assert_eq!(
         live_segment_delta_for_range(&snapshot, 1, 2, personal_best::NAME, TimingMethod::GameTime,),
         Some(span(8.0)),
+    );
+}
+
+#[test]
+fn best_segments_range_uses_the_fastest_path() {
+    let mut timer = create_timer(&["A", "B", "C"]);
+
+    run_with_splits_opt(&mut timer, &[Some(10.0), Some(30.0), Some(50.0)]);
+    run_with_splits_opt(&mut timer, &[Some(10.0), None, Some(25.0)]);
+
+    assert_eq!(
+        comparison_segment_time_for_range(
+            timer.run(),
+            1,
+            2,
+            best_segments::NAME,
+            TimingMethod::GameTime,
+        ),
+        Some(span(15.0)),
     );
 }

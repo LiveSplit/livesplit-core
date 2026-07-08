@@ -110,10 +110,16 @@ pub fn comparison_segment_time_for_range(
     }
 
     if comparison == best_segments::NAME {
-        return run.segments()[start_index..=end_index]
-            .iter()
-            .map(|segment| segment.best_segment_time()[method])
-            .try_fold(TimeSpan::zero(), |sum, time| Some(sum + time?));
+        let mut predictions = vec![None; run.len() + 1];
+        return super::sum_of_segments::best::calculate_segment_range(
+            run.segments(),
+            start_index,
+            end_index + 1,
+            &mut predictions,
+            false,
+            false,
+            method,
+        );
     }
 
     let current_comparison_time = run.segment(end_index).comparison(comparison)[method]?;
@@ -161,6 +167,19 @@ fn segment_delta(
     comparison: &str,
     method: TimingMethod,
 ) -> Option<TimeSpan> {
+    if start_index != end_index && comparison == best_segments::NAME {
+        return Some(
+            segment_time(run, start_index, current_time, method)
+                - comparison_segment_time_for_range(
+                    run,
+                    start_index,
+                    end_index,
+                    comparison,
+                    method,
+                )?,
+        );
+    }
+
     let segment_index_comparison = run.segment(end_index).comparison(comparison)[method]?;
 
     Some(
@@ -424,10 +443,34 @@ pub fn split_color(
     comparison: &str,
     method: TimingMethod,
 ) -> SemanticColor {
-    if show_best_segments && check_best_segment(timer, segment_index, method) {
+    split_color_for_range(
+        timer,
+        time_difference,
+        segment_index..=segment_index,
+        show_segment_deltas,
+        show_best_segments,
+        comparison,
+        method,
+    )
+}
+
+/// Chooses a split color for an inclusive segment range from the
+/// [`LayoutSettings`](crate::layout::LayoutSettings) based on the current run.
+pub fn split_color_for_range(
+    timer: &Timer,
+    time_difference: Option<TimeSpan>,
+    segment_range: core::ops::RangeInclusive<usize>,
+    show_segment_deltas: bool,
+    show_best_segments: bool,
+    comparison: &str,
+    method: TimingMethod,
+) -> SemanticColor {
+    let start_index = *segment_range.start();
+    let end_index = *segment_range.end();
+    if show_best_segments && check_best_segment_for_range(timer, start_index, end_index, method) {
         SemanticColor::BestSegment
     } else if let Some(time_difference) = time_difference.filter(|t| t != &TimeSpan::zero()) {
-        let last_delta = segment_index
+        let last_delta = start_index
             .checked_sub(1)
             .and_then(|n| last_delta(timer.run(), n, comparison, method));
         if time_difference < TimeSpan::zero() {
@@ -455,14 +498,41 @@ pub fn split_color(
 ///
 /// Returns whether or not the indicated split is a Best Segment.
 pub fn check_best_segment(timer: &Timer, segment_index: usize, method: TimingMethod) -> bool {
-    if timer.run().segment(segment_index).split_time()[method].is_none() {
+    check_best_segment_for_range(timer, segment_index, segment_index, method)
+}
+
+/// Calculates whether or not the Split Times for the indicated inclusive range
+/// qualify as a Best Segment.
+pub fn check_best_segment_for_range(
+    timer: &Timer,
+    start_index: usize,
+    end_index: usize,
+    method: TimingMethod,
+) -> bool {
+    if start_index == end_index {
+        if timer.run().segment(end_index).split_time()[method].is_none() {
+            return false;
+        }
+
+        let delta = previous_segment_delta(timer, end_index, best_segments::NAME, method);
+        let current_segment = previous_segment_time(timer, end_index, method);
+        let best_segment = timer.run().segment(end_index).best_segment_time()[method];
+        return best_segment.is_none_or(|b| {
+            current_segment.is_some_and(|c| c < b) || delta.is_some_and(|d| d < TimeSpan::zero())
+        });
+    }
+
+    if timer.run().segment(end_index).split_time()[method].is_none() {
         return false;
     }
 
-    let delta = previous_segment_delta(timer, segment_index, best_segments::NAME, method);
-    let current_segment = previous_segment_time(timer, segment_index, method);
-    let best_segment = timer.run().segment(segment_index).best_segment_time()[method];
-    best_segment.is_none_or(|b| {
-        current_segment.is_some_and(|c| c < b) || delta.is_some_and(|d| d < TimeSpan::zero())
-    })
+    let current_segment = previous_segment_time_for_range(timer, start_index, end_index, method);
+    let best_segment = comparison_segment_time_for_range(
+        timer.run(),
+        start_index,
+        end_index,
+        best_segments::NAME,
+        method,
+    );
+    best_segment.is_none_or(|b| current_segment.is_some_and(|c| c < b))
 }

@@ -109,9 +109,32 @@ pub fn calculate(
     use_current_run: bool,
     method: TimingMethod,
 ) -> Option<TimeSpan> {
-    predictions[0] = Some(Prediction::default());
-    let end_index = segments.len();
-    for segment_index in 0..end_index {
+    calculate_segment_range(
+        segments,
+        0,
+        segments.len(),
+        predictions,
+        simple_calculation,
+        use_current_run,
+        method,
+    )
+}
+
+/// Calculates the Sum of Best Segments for the provided segment range. The
+/// range uses split boundary indices, with `start_index` describing the first
+/// segment in the range and `end_index` describing the boundary after the last
+/// segment in the range.
+pub fn calculate_segment_range(
+    segments: &[Segment],
+    start_index: usize,
+    end_index: usize,
+    predictions: &mut [Option<Prediction>],
+    simple_calculation: bool,
+    use_current_run: bool,
+    method: TimingMethod,
+) -> Option<TimeSpan> {
+    predictions[start_index] = Some(Prediction::default());
+    for segment_index in start_index..end_index {
         populate_predictions(
             segments,
             predictions[segment_index],
