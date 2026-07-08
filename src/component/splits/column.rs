@@ -1,7 +1,7 @@
 use crate::{
     GeneralLayoutSettings, Segment, TimeSpan, TimingMethod,
     analysis::{self, possible_time_save, split_color},
-    comparison::{self, best_segments},
+    comparison,
     component::splits::Settings as SplitsSettings,
     localization::Lang,
     platform::prelude::*,
@@ -293,7 +293,7 @@ fn update_time_column(
                     ColumnFormatter::Time,
                 ),
                 ColumnStartWith::ComparisonSegmentTime => (
-                    comparison_segment_time(
+                    analysis::comparison_segment_time_for_range(
                         timer.run(),
                         column_start_index,
                         segment_index,
@@ -437,18 +437,23 @@ fn time_column_update_value(
         ),
 
         (SegmentTime, false) => (
-            previous_segment_time(timer, column_start_index, segment_index, method),
+            analysis::previous_segment_time_for_range(
+                timer,
+                column_start_index,
+                segment_index,
+                method,
+            ),
             SemanticColor::Default,
             ColumnFormatter::SegmentTime,
         ),
         (SegmentTime, true) => (
-            live_segment_time(timer, column_start_index, method),
+            analysis::live_segment_time_for_range(timer, column_start_index, method),
             SemanticColor::Default,
             ColumnFormatter::SegmentTime,
         ),
 
         (SegmentDelta | SegmentDeltaWithFallback, false) => {
-            let delta = previous_segment_delta(
+            let delta = analysis::previous_segment_delta_for_range(
                 timer,
                 column_start_index,
                 segment_index,
@@ -457,7 +462,12 @@ fn time_column_update_value(
             );
             let (value, formatter) = if delta.is_none() && column.update_with.has_fallback() {
                 (
-                    previous_segment_time(timer, column_start_index, segment_index, method),
+                    analysis::previous_segment_time_for_range(
+                        timer,
+                        column_start_index,
+                        segment_index,
+                        method,
+                    ),
                     ColumnFormatter::SegmentTime,
                 )
             } else {
@@ -478,181 +488,19 @@ fn time_column_update_value(
             )
         }
         (SegmentDelta | SegmentDeltaWithFallback, true) => (
-            live_segment_delta(timer, column_start_index, segment_index, comparison, method),
+            analysis::live_segment_delta_for_range(
+                timer,
+                column_start_index,
+                segment_index,
+                comparison,
+                method,
+            ),
             SemanticColor::Default,
             ColumnFormatter::Delta,
         ),
     };
 
     Some((value, is_live))
-}
-
-fn previous_split_time(
-    segments: &[Segment],
-    end_index: usize,
-    method: TimingMethod,
-) -> Option<TimeSpan> {
-    segments[..end_index]
-        .iter()
-        .rev()
-        .find_map(|segment| segment.split_time()[method])
-}
-
-fn previous_comparison_time(
-    segments: &[Segment],
-    end_index: usize,
-    comparison: &str,
-    method: TimingMethod,
-) -> Option<TimeSpan> {
-    segments[..end_index]
-        .iter()
-        .rev()
-        .find_map(|segment| segment.comparison(comparison)[method])
-}
-
-fn previous_split_and_comparison_time(
-    segments: &[Segment],
-    end_index: usize,
-    comparison: &str,
-    method: TimingMethod,
-) -> Option<(TimeSpan, TimeSpan)> {
-    segments[..end_index].iter().rev().find_map(|segment| {
-        catch! {
-            (
-                segment.split_time()[method]?,
-                segment.comparison(comparison)[method]?,
-            )
-        }
-    })
-}
-
-fn comparison_segment_time(
-    run: &crate::Run,
-    start_index: usize,
-    end_index: usize,
-    comparison: &str,
-    method: TimingMethod,
-) -> Option<TimeSpan> {
-    if start_index == end_index {
-        return analysis::comparison_combined_segment_time(run, end_index, comparison, method);
-    }
-
-    if comparison == best_segments::NAME {
-        return run.segments()[start_index..=end_index]
-            .iter()
-            .map(|segment| segment.best_segment_time()[method])
-            .try_fold(TimeSpan::zero(), |sum, time| Some(sum + time?));
-    }
-
-    let end_time = run.segment(end_index).comparison(comparison)[method]?;
-    Some(
-        previous_comparison_time(run.segments(), start_index, comparison, method)
-            .map_or(end_time, |previous_time| end_time - previous_time),
-    )
-}
-
-fn segment_time(
-    run: &crate::Run,
-    start_index: usize,
-    end_time: TimeSpan,
-    method: TimingMethod,
-) -> TimeSpan {
-    previous_split_time(run.segments(), start_index, method)
-        .map_or(end_time, |previous_time| end_time - previous_time)
-}
-
-fn previous_segment_time(
-    timer: &Snapshot,
-    start_index: usize,
-    end_index: usize,
-    method: TimingMethod,
-) -> Option<TimeSpan> {
-    if start_index == end_index {
-        return analysis::previous_segment_time(timer, end_index, method);
-    }
-
-    Some(segment_time(
-        timer.run(),
-        start_index,
-        timer.run().segment(end_index).split_time()[method]?,
-        method,
-    ))
-}
-
-fn live_segment_time(
-    timer: &Snapshot,
-    start_index: usize,
-    method: TimingMethod,
-) -> Option<TimeSpan> {
-    Some(segment_time(
-        timer.run(),
-        start_index,
-        timer.current_time()[method]?,
-        method,
-    ))
-}
-
-fn segment_delta(
-    run: &crate::Run,
-    start_index: usize,
-    end_index: usize,
-    current_time: TimeSpan,
-    comparison: &str,
-    method: TimingMethod,
-) -> Option<TimeSpan> {
-    let end_comparison_time = run.segment(end_index).comparison(comparison)[method]?;
-    let previous_delta =
-        previous_split_and_comparison_time(run.segments(), start_index, comparison, method);
-
-    Some(
-        previous_delta
-            .map(|(split_time, comparison_time)| {
-                (current_time - end_comparison_time) - (split_time - comparison_time)
-            })
-            .unwrap_or_else(|| current_time - end_comparison_time),
-    )
-}
-
-fn previous_segment_delta(
-    timer: &Snapshot,
-    start_index: usize,
-    end_index: usize,
-    comparison: &str,
-    method: TimingMethod,
-) -> Option<TimeSpan> {
-    if start_index == end_index {
-        return analysis::previous_segment_delta(timer, end_index, comparison, method);
-    }
-
-    segment_delta(
-        timer.run(),
-        start_index,
-        end_index,
-        timer.run().segment(end_index).split_time()[method]?,
-        comparison,
-        method,
-    )
-}
-
-fn live_segment_delta(
-    timer: &Snapshot,
-    start_index: usize,
-    end_index: usize,
-    comparison: &str,
-    method: TimingMethod,
-) -> Option<TimeSpan> {
-    if start_index == end_index {
-        return analysis::live_segment_delta(timer, end_index, comparison, method);
-    }
-
-    segment_delta(
-        timer.run(),
-        start_index,
-        end_index,
-        timer.current_time()[method]?,
-        comparison,
-        method,
-    )
 }
 
 impl ColumnUpdateWith {
