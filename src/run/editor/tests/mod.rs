@@ -183,13 +183,11 @@ fn creates_renames_and_removes_segment_groups() {
 
     let mut image_cache = ImageCache::new();
     let state = editor.state(&mut image_cache, Lang::English);
-    assert_eq!(state.segments[0].segment_group.group_index, Some(0));
-    assert!(state.segments[0].segment_group.is_subsplit);
-    assert!(state.segments[2].segment_group.is_major_split);
-    assert_eq!(
-        state.segments[2].segment_group.name.as_deref(),
-        Some("Renamed")
-    );
+    assert_eq!(state.segments[0].segment_group_index, Some(0));
+    assert_eq!(state.segments[2].segment_group_index, Some(0));
+    assert_eq!(state.segment_groups[0].start, 0);
+    assert_eq!(state.segment_groups[0].end, 3);
+    assert_eq!(state.segment_groups[0].name.as_deref(), Some("Renamed"));
 
     assert!(editor.remove_active_segment_group());
     assert!(editor.close().segment_groups().groups().is_empty());
@@ -230,21 +228,21 @@ fn segment_group_icons_can_be_explicit_or_inherited() {
 
     let mut image_cache = ImageCache::new();
     let state = editor.state(&mut image_cache, Lang::English);
-    assert_eq!(state.segments[0].segment_group.icon, *major_icon.id());
-    assert!(!state.segments[0].segment_group.has_explicit_icon);
+    assert_eq!(state.segment_groups[0].icon, *major_icon.id());
+    assert!(!state.segment_groups[0].has_explicit_icon);
 
     let group_icon = Image::new([4, 5, 6].as_slice().into(), Image::ICON);
     assert!(editor.set_active_segment_group_icon(group_icon.clone()));
 
     let state = editor.state(&mut image_cache, Lang::English);
-    assert_eq!(state.segments[0].segment_group.icon, *group_icon.id());
-    assert!(state.segments[0].segment_group.has_explicit_icon);
+    assert_eq!(state.segment_groups[0].icon, *group_icon.id());
+    assert!(state.segment_groups[0].has_explicit_icon);
 
     assert!(editor.remove_active_segment_group_icon());
 
     let state = editor.state(&mut image_cache, Lang::English);
-    assert_eq!(state.segments[0].segment_group.icon, *major_icon.id());
-    assert!(!state.segments[0].segment_group.has_explicit_icon);
+    assert_eq!(state.segment_groups[0].icon, *major_icon.id());
+    assert!(!state.segment_groups[0].has_explicit_icon);
 }
 
 #[test]
@@ -298,6 +296,30 @@ fn mixed_selection_cannot_create_or_remove_segment_group() {
     editor.select_range(2);
     assert!(editor.can_remove_active_segment_group());
     assert!(editor.remove_active_segment_group());
+}
+
+#[test]
+fn removes_multiple_selected_segment_groups() {
+    let mut run = Run::new();
+    for name in ["A", "B", "C", "D", "E", "F"] {
+        run.push_segment(Segment::new(name));
+    }
+
+    let mut editor = Editor::new(run).unwrap();
+    editor.select_range(1);
+    assert!(editor.create_segment_group_from_selection(Some("Group A")));
+    editor.select_only(2);
+    editor.select_range(4);
+    assert!(editor.create_segment_group_from_selection(Some("Group B")));
+
+    editor.select_only(0);
+    editor.select_additionally(1);
+    editor.select_additionally(2);
+    editor.select_additionally(3);
+    editor.select_additionally(4);
+    assert!(editor.can_remove_active_segment_group());
+    assert!(editor.remove_active_segment_group());
+    assert!(editor.run().segment_groups().groups().is_empty());
 }
 
 #[test]

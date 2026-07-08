@@ -895,6 +895,8 @@ export interface RunEditorStateJson {
     timing_method: TimingMethodJson,
     /** The state of all the segments. */
     segments: RunEditorRowJson[],
+    /** The segment groups of the run. */
+    segment_groups: RunEditorSegmentGroupJson[],
     /** The names of all the custom comparisons that exist for this Run. */
     comparison_names: string[],
     /** Describes which actions are currently available. */
@@ -999,8 +1001,8 @@ export interface RunEditorButtonsJson {
      */
     can_create_segment_group: boolean,
     /**
-     * Describes whether the currently selected segments are exactly one
-     * segment group that can be removed.
+     * Describes whether the currently selected segments are exactly one or more
+     * segment groups that can be removed.
      */
     can_remove_segment_group: boolean,
 }
@@ -1029,18 +1031,16 @@ export interface RunEditorRowJson {
     comparison_times: string[],
     /** Describes the segment's selection state. */
     selected: "NotSelected" | "Selected" | "Active",
-    /** Describes how this segment participates in a segment group. */
-    segment_group: RunEditorSegmentGroupStateJson,
+    /** The index of the group this segment belongs to, if any. */
+    segment_group_index: number | null,
 }
 
-/** Describes a segment's role in a segment group. */
-export interface RunEditorSegmentGroupStateJson {
-    /** The index of the group this segment belongs to, if any. */
-    group_index: number | null,
-    /** Whether this segment is a subsplit inside the group. */
-    is_subsplit: boolean,
-    /** Whether this segment is the major split ending the group. */
-    is_major_split: boolean,
+/** Describes a segment group. */
+export interface RunEditorSegmentGroupJson {
+    /** The first segment in the group. */
+    start: number,
+    /** The segment after the last segment in the group. */
+    end: number,
     /**
      * The explicit group name. If this is `null`, the major split name is the
      * display name of the group.

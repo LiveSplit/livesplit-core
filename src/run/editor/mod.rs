@@ -1119,12 +1119,30 @@ impl Editor {
     }
 
     fn selected_segment_group_index(&self) -> Option<usize> {
-        let (start, end) = self.selected_segment_range()?;
-        self.run
-            .segment_groups()
-            .groups()
-            .iter()
-            .position(|group| group.start() == start && group.end() == end)
+        let indices = self.selected_segment_group_indices()?;
+        (indices.len() == 1).then_some(indices[0])
+    }
+
+    fn selected_segment_group_indices(&self) -> Option<Vec<usize>> {
+        let mut group_indices = Vec::new();
+        let mut grouped_segment_count = 0;
+
+        for (group_index, group) in self.run.segment_groups().groups().iter().enumerate() {
+            let selected_in_group = (group.start()..group.end())
+                .filter(|index| self.selected_segments.contains(index))
+                .count();
+            if selected_in_group == 0 {
+                continue;
+            }
+            if selected_in_group != group.end() - group.start() {
+                return None;
+            }
+            group_indices.push(group_index);
+            grouped_segment_count += selected_in_group;
+        }
+
+        (!group_indices.is_empty() && grouped_segment_count == self.selected_segments.len())
+            .then_some(group_indices)
     }
 
     /// Checks if the currently selected segments can be turned into a group.
@@ -1144,9 +1162,10 @@ impl Editor {
             .any(|group| start < group.end() && end > group.start())
     }
 
-    /// Checks if the currently selected segments are exactly one whole group.
+    /// Checks if the currently selected segments are exactly one or more whole
+    /// groups.
     pub fn can_remove_active_segment_group(&self) -> bool {
-        self.selected_segment_group_index().is_some()
+        self.selected_segment_group_indices().is_some()
     }
 
     /// Creates a segment group from the currently selected contiguous segment
@@ -1170,16 +1189,18 @@ impl Editor {
         true
     }
 
-    /// Removes the group containing the active segment, while keeping all
-    /// segments.
+    /// Removes the selected segment groups, while keeping all segments.
     pub fn remove_active_segment_group(&mut self) -> bool {
-        let Some(group_index) = self.selected_segment_group_index() else {
+        let Some(mut group_indices) = self.selected_segment_group_indices() else {
             return false;
         };
-        self.run
-            .segment_groups_mut()
-            .groups_mut()
-            .remove(group_index);
+        group_indices.sort_unstable();
+        for group_index in group_indices.into_iter().rev() {
+            self.run
+                .segment_groups_mut()
+                .groups_mut()
+                .remove(group_index);
+        }
         self.raise_run_edited();
         true
     }

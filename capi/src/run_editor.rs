@@ -328,8 +328,7 @@ pub unsafe extern "C" fn RunEditor_create_segment_group_from_selection(
     }
 }
 
-/// Removes the native segment group containing the active segment, while
-/// keeping all segments.
+/// Removes the selected native segment groups, while keeping all segments.
 #[unsafe(no_mangle)]
 pub extern "C" fn RunEditor_remove_active_segment_group(this: &mut RunEditor) -> bool {
     this.remove_active_segment_group()

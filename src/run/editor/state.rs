@@ -32,6 +32,8 @@ pub struct State {
     pub timing_method: TimingMethod,
     /// The state of all the segments.
     pub segments: Vec<Segment>,
+    /// The native segment groups of the run.
+    pub segment_groups: Vec<SegmentGroup>,
     /// The names of all the custom comparisons that exist for this Run.
     pub comparison_names: Vec<String>,
     /// Describes which actions are currently available.
@@ -86,19 +88,17 @@ pub struct Segment {
     pub comparison_times: Vec<String>,
     /// Describes the segment's selection state.
     pub selected: SelectionState,
-    /// Describes how this segment participates in a native segment group.
-    pub segment_group: SegmentGroupState,
+    /// The index of the group this segment belongs to, if any.
+    pub segment_group_index: Option<usize>,
 }
 
-/// Describes a segment's role in a native segment group.
+/// Describes a native segment group.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct SegmentGroupState {
-    /// The index of the group this segment belongs to, if any.
-    pub group_index: Option<usize>,
-    /// Whether this segment is a subsplit inside the group.
-    pub is_subsplit: bool,
-    /// Whether this segment is the major split ending the group.
-    pub is_major_split: bool,
+pub struct SegmentGroup {
+    /// The first segment in the group.
+    pub start: usize,
+    /// The segment after the last segment in the group.
+    pub end: usize,
     /// The explicit group name. If this is `None`, the major split name is the
     /// display name of the group.
     pub name: Option<String>,
@@ -171,6 +171,24 @@ impl Editor {
             can_create_segment_group: self.can_create_segment_group_from_selection(),
             can_remove_segment_group: self.can_remove_active_segment_group(),
         };
+        let mut segment_groups = Vec::with_capacity(self.run.segment_groups().groups().len());
+        for group in self.run.segment_groups().groups() {
+            let (group_icon, has_explicit_icon) = group.icon().map_or(
+                (self.run.segment(group.major_index()).icon(), false),
+                |icon| (icon, true),
+            );
+            let icon = *image_cache
+                .cache(group_icon.id(), || group_icon.clone())
+                .id();
+            segment_groups.push(SegmentGroup {
+                start: group.start(),
+                end: group.end(),
+                name: group.name().map(str::to_owned),
+                icon,
+                has_explicit_icon,
+            });
+        }
+
         let mut segments = Vec::with_capacity(self.run.len());
 
         for segment_index in 0..self.run.len() {
@@ -198,36 +216,10 @@ impl Editor {
                 SelectionState::NotSelected
             };
 
-            let segment_group = self
+            let segment_group_index = self
                 .run
                 .segment_groups()
-                .group_index_for_segment(segment_index)
-                .map(|group_index| {
-                    let group = &self.run.segment_groups().groups()[group_index];
-                    let (group_icon, has_explicit_icon) = group.icon().map_or(
-                        (self.run.segment(group.major_index()).icon(), false),
-                        |icon| (icon, true),
-                    );
-                    let icon = *image_cache
-                        .cache(group_icon.id(), || group_icon.clone())
-                        .id();
-                    SegmentGroupState {
-                        group_index: Some(group_index),
-                        is_subsplit: segment_index < group.major_index(),
-                        is_major_split: segment_index == group.major_index(),
-                        name: group.name().map(str::to_owned),
-                        icon,
-                        has_explicit_icon,
-                    }
-                })
-                .unwrap_or(SegmentGroupState {
-                    group_index: None,
-                    is_subsplit: false,
-                    is_major_split: false,
-                    name: None,
-                    icon: *ImageId::EMPTY,
-                    has_explicit_icon: false,
-                });
+                .group_index_for_segment(segment_index);
 
             segments.push(Segment {
                 icon,
@@ -237,7 +229,7 @@ impl Editor {
                 best_segment_time,
                 comparison_times,
                 selected,
-                segment_group,
+                segment_group_index,
             });
         }
 
@@ -249,6 +241,7 @@ impl Editor {
             attempts,
             timing_method,
             segments,
+            segment_groups,
             comparison_names,
             buttons,
             metadata: self.run.metadata().clone(),

@@ -456,25 +456,29 @@ unsafe extern "C" fn callback(
     let modifier_flags = unsafe { CGEventGetFlags(event) };
     let mut modifiers = Modifiers::empty();
 
-    if modifier_flags.intersects(EventFlags::SHIFT | EventFlags::LEFT_SHIFT | EventFlags::RIGHT_SHIFT)
+    if modifier_flags
+        .intersects(EventFlags::SHIFT | EventFlags::LEFT_SHIFT | EventFlags::RIGHT_SHIFT)
         && !matches!(key_code, KeyCode::ShiftLeft | KeyCode::ShiftRight)
     {
         modifiers.insert(Modifiers::SHIFT);
     }
 
-    if modifier_flags.intersects(EventFlags::CONTROL | EventFlags::LEFT_CONTROL | EventFlags::RIGHT_CONTROL)
+    if modifier_flags
+        .intersects(EventFlags::CONTROL | EventFlags::LEFT_CONTROL | EventFlags::RIGHT_CONTROL)
         && !matches!(key_code, KeyCode::ControlLeft | KeyCode::ControlRight)
     {
         modifiers.insert(Modifiers::CONTROL);
     }
 
-    if modifier_flags.intersects(EventFlags::OPTION | EventFlags::LEFT_OPTION | EventFlags::RIGHT_OPTION)
+    if modifier_flags
+        .intersects(EventFlags::OPTION | EventFlags::LEFT_OPTION | EventFlags::RIGHT_OPTION)
         && !matches!(key_code, KeyCode::AltLeft | KeyCode::AltRight)
     {
         modifiers.insert(Modifiers::ALT);
     }
 
-    if modifier_flags.intersects(EventFlags::COMMAND | EventFlags::LEFT_COMMAND | EventFlags::RIGHT_COMMAND)
+    if modifier_flags
+        .intersects(EventFlags::COMMAND | EventFlags::LEFT_COMMAND | EventFlags::RIGHT_COMMAND)
         && !matches!(key_code, KeyCode::MetaLeft | KeyCode::MetaRight)
     {
         modifiers.insert(Modifiers::META);
