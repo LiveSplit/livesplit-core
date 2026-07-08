@@ -1,9 +1,10 @@
 //! Provides different helper functions.
 
 use crate::{
-    Run, Segment, TimeSpan, Timer, TimerPhase, TimingMethod, comparison::best_segments,
-    platform::prelude::*, settings::SemanticColor, timing::Snapshot,
+    Run, Segment, TimeSpan, Timer, TimerPhase, TimingMethod, analysis::sum_of_segments::Prediction,
+    comparison::best_segments, settings::SemanticColor, timing::Snapshot,
 };
+use smallvec::{SmallVec, smallvec};
 
 /// Gets the last non-live delta in the [`Run`] starting from `segment_index`.
 ///
@@ -110,7 +111,7 @@ pub fn comparison_segment_time_for_range(
     }
 
     if comparison == best_segments::NAME {
-        let mut predictions = vec![None; run.len() + 1];
+        let mut predictions: SmallVec<[Option<Prediction>; 64]> = smallvec![None; run.len() + 1];
         return super::sum_of_segments::best::calculate_segment_range(
             run.segments(),
             start_index,
