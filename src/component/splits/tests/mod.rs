@@ -4,6 +4,7 @@ use super::{
 };
 use crate::{
     Lang, Run, Segment, TimeSpan, Timer, TimingMethod,
+    comparison::best_segments,
     component::splits::{ColumnKind, TimeColumn, english_settings},
     settings::{Image, ImageCache, SemanticColor, Value},
 };
@@ -1028,6 +1029,65 @@ fn closed_group_header_segment_delta_can_be_a_best_segment() {
         SemanticColor::BestSegment
     );
 }
+
+#[test]
+fn closed_group_header_split_delta_is_not_best_if_only_the_major_split_is_best() {
+    let mut run = Run::new();
+    for name in ["Intro", "A1", "A2", "A End", "Chapter B", "Outro"] {
+        run.push_segment(Segment::new(name));
+    }
+    for (segment, best_segment_time) in run
+        .segments_mut()
+        .iter_mut()
+        .zip([1.0, 1.0, 2.0, 3.0, 3.0, 1.0])
+    {
+        segment.best_segment_time_mut()[TimingMethod::GameTime] =
+            Some(TimeSpan::from_seconds(best_segment_time));
+    }
+    run.regenerate_comparisons();
+    run.segment_groups_mut()
+        .push_lossy(1, 4, Some("Chapter A".into()), 6);
+
+    let mut timer = Timer::new(run).unwrap();
+    timer.set_current_timing_method(TimingMethod::GameTime);
+    timer.start().unwrap();
+    timer.initialize_game_time().unwrap();
+    timer.pause_game_time().unwrap();
+    for time in [0.0, 5.0, 18.0, 19.0] {
+        timer.set_game_time(TimeSpan::from_seconds(time)).unwrap();
+        timer.split().unwrap();
+    }
+
+    let mut component = Component::with_settings(Settings {
+        visual_split_count: 0,
+        subsplit_display_mode: SubsplitDisplayMode::CurrentGroupExpanded,
+        columns: vec![ColumnSettings {
+            kind: ColumnKind::Time(TimeColumn {
+                update_with: ColumnUpdateWith::Delta,
+                comparison_override: Some(best_segments::NAME.into()),
+                ..Default::default()
+            }),
+            ..Default::default()
+        }],
+        ..english_settings()
+    });
+    let mut image_cache = ImageCache::new();
+
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &Default::default(),
+        Lang::English,
+    );
+
+    assert_eq!(state.splits[1].name, "Chapter A");
+    assert_eq!(state.splits[1].columns[0].value, "+12.0");
+    assert_eq!(
+        state.splits[1].columns[0].semantic_color,
+        SemanticColor::BehindLosingTime
+    );
+}
+
 #[test]
 fn blank_rows_reset_after_groups_collapse() {
     let mut run = Run::new();

@@ -338,8 +338,8 @@ fn subsplits_layout() {
         &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
         &image_cache,
         [300, 800],
-        "7a7662f8e7c73e80",
-        "165b2051ef19f18d",
+        "85d2ac8702abc205",
+        "577b2b51aed1830a",
         "subsplits_layout",
     );
 }

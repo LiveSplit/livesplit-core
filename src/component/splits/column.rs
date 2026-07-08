@@ -1,6 +1,6 @@
 use crate::{
     GeneralLayoutSettings, Segment, TimeSpan, TimingMethod,
-    analysis::{self, possible_time_save, split_color},
+    analysis::{self, possible_time_save},
     comparison,
     component::splits::Settings as SplitsSettings,
     localization::Lang,
@@ -395,6 +395,7 @@ fn time_column_update_value(
     }
 
     let is_live = is_current_split;
+    let segment_range = column_start_index..=segment_index;
 
     let value = match (column.update_with, is_live) {
         (DontUpdate, _) => return None,
@@ -423,7 +424,15 @@ fn time_column_update_value(
             };
             (
                 value,
-                split_color(timer, delta, segment_index, true, true, comparison, method),
+                analysis::split_color_for_range(
+                    timer,
+                    delta,
+                    segment_range,
+                    true,
+                    true,
+                    comparison,
+                    method,
+                ),
                 formatter,
             )
         }
@@ -478,7 +487,7 @@ fn time_column_update_value(
                 analysis::split_color_for_range(
                     timer,
                     delta,
-                    column_start_index..=segment_index,
+                    segment_range,
                     false,
                     true,
                     comparison,
