@@ -66,7 +66,7 @@ fn segment_group_icons_default_to_major_segment_icon() {
     assert_eq!(views[1].icon_or_default().id(), major_icon.id());
 
     let group_icon = Image::new([4, 5, 6].as_slice().into(), Image::ICON);
-    run.segment_groups_mut().groups_mut()[0].set_icon(group_icon.clone());
+    run.segment_groups_mut().set_icon(0, group_icon.clone());
 
     let views = run.segment_groups_iter().collect::<Vec<_>>();
     assert_eq!(views[1].icon().unwrap().id(), group_icon.id());

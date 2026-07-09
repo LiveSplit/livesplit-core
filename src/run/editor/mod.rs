@@ -67,6 +67,18 @@ pub enum RenameError {
     },
 }
 
+/// Describes why creating a segment group from the current selection failed.
+#[derive(PartialEq, Eq, Debug, snafu::Snafu)]
+#[snafu(context(suffix(false)))]
+pub enum CreateSegmentGroupError {
+    /// The selected segments are not one contiguous range.
+    SelectionNotContiguous,
+    /// The selected range is empty.
+    EmptySelection,
+    /// At least one selected segment already belongs to a segment group.
+    SelectionOverlapsExistingGroup,
+}
+
 /// The Run Editor allows modifying Runs while ensuring that all the different
 /// invariants of the Run objects are upheld no matter what kind of operations
 /// are being applied to the Run. It provides the current state of the editor as
@@ -750,10 +762,7 @@ impl Editor {
 
         let group = &self.run.segment_groups().groups()[group_index];
         if group.end() == group.start() + 1 {
-            self.run
-                .segment_groups_mut()
-                .groups_mut()
-                .remove(group_index);
+            self.run.segment_groups_mut().remove(group_index);
         } else {
             let name = group.name().map(str::to_owned);
             let icon = group
@@ -765,7 +774,10 @@ impl Editor {
             if group.end() <= group.start() {
                 return false;
             };
-            self.run.segment_groups_mut().groups_mut()[group_index] = group;
+            let len = self.run.len();
+            self.run
+                .segment_groups_mut()
+                .replace_lossy(group_index, group, len);
         }
         self.raise_run_edited();
         true
@@ -784,10 +796,7 @@ impl Editor {
 
         let group = &self.run.segment_groups().groups()[group_index];
         if group.end() == group.start() + 1 {
-            self.run
-                .segment_groups_mut()
-                .groups_mut()
-                .remove(group_index);
+            self.run.segment_groups_mut().remove(group_index);
         } else {
             let name = group.name().map(str::to_owned);
             let icon = group
@@ -799,7 +808,10 @@ impl Editor {
             if group.end() <= group.start() {
                 return false;
             };
-            self.run.segment_groups_mut().groups_mut()[group_index] = group;
+            let len = self.run.len();
+            self.run
+                .segment_groups_mut()
+                .replace_lossy(group_index, group, len);
         }
         self.raise_run_edited();
         true
@@ -826,7 +838,10 @@ impl Editor {
         if group.end() <= group.start() {
             return false;
         };
-        self.run.segment_groups_mut().groups_mut()[group_index] = group;
+        let len = self.run.len();
+        self.run
+            .segment_groups_mut()
+            .replace_lossy(group_index, group, len);
         self.raise_run_edited();
         true
     }
@@ -852,7 +867,10 @@ impl Editor {
         if group.end() <= group.start() {
             return false;
         };
-        self.run.segment_groups_mut().groups_mut()[group_index] = group;
+        let len = self.run.len();
+        self.run
+            .segment_groups_mut()
+            .replace_lossy(group_index, group, len);
         self.raise_run_edited();
         true
     }
@@ -919,16 +937,22 @@ impl Editor {
             .and_then(|group_index| self.run.segment_groups().groups()[group_index].icon())
             .cloned()
             .unwrap_or_else(|| Image::EMPTY.clone());
+        let mut replacements = [None, None];
+        let mut replacement_index = 0;
         if let Some(previous_group_index) = previous_group_index {
-            self.run.segment_groups_mut().groups_mut()[previous_group_index] =
+            replacements[replacement_index] = Some((
+                previous_group_index,
                 SegmentGroup::new_unchecked_with_icon(
                     previous_start + group_len,
                     previous_end + group_len,
                     previous_name,
                     previous_icon,
-                );
+                ),
+            ));
+            replacement_index += 1;
         }
-        self.run.segment_groups_mut().groups_mut()[group_index] =
+        replacements[replacement_index] = Some((
+            group_index,
             SegmentGroup::new_unchecked_with_icon(
                 previous_start,
                 previous_start + group_len,
@@ -937,9 +961,12 @@ impl Editor {
                     .icon()
                     .cloned()
                     .unwrap_or_else(|| Image::EMPTY.clone()),
-            );
+            ),
+        ));
         let len = self.run.len();
-        self.run.segment_groups_mut().repair(len);
+        self.run
+            .segment_groups_mut()
+            .replace_many_lossy(replacements.into_iter().flatten(), len);
         self.select_segment_range(previous_start, previous_start + group_len);
         self.times_modified();
         self.fix();
@@ -970,16 +997,22 @@ impl Editor {
             .and_then(|group_index| self.run.segment_groups().groups()[group_index].icon())
             .cloned()
             .unwrap_or_else(|| Image::EMPTY.clone());
+        let mut replacements = [None, None];
+        let mut replacement_index = 0;
         if let Some(next_group_index) = next_group_index {
-            self.run.segment_groups_mut().groups_mut()[next_group_index] =
+            replacements[replacement_index] = Some((
+                next_group_index,
                 SegmentGroup::new_unchecked_with_icon(
                     group.start(),
                     group.start() + next_len,
                     next_name,
                     next_icon,
-                );
+                ),
+            ));
+            replacement_index += 1;
         }
-        self.run.segment_groups_mut().groups_mut()[group_index] =
+        replacements[replacement_index] = Some((
+            group_index,
             SegmentGroup::new_unchecked_with_icon(
                 group.start() + next_len,
                 group.end() + next_len,
@@ -988,9 +1021,12 @@ impl Editor {
                     .icon()
                     .cloned()
                     .unwrap_or_else(|| Image::EMPTY.clone()),
-            );
+            ),
+        ));
         let len = self.run.len();
-        self.run.segment_groups_mut().repair(len);
+        self.run
+            .segment_groups_mut()
+            .replace_many_lossy(replacements.into_iter().flatten(), len);
         self.select_segment_range(group.start() + next_len, group.end() + next_len);
         self.times_modified();
         self.fix();
@@ -1148,18 +1184,28 @@ impl Editor {
     /// Checks if the currently selected segments can be turned into a group.
     /// A group needs at least one contiguous, currently ungrouped segment.
     pub fn can_create_segment_group_from_selection(&self) -> bool {
+        self.validate_create_segment_group_from_selection().is_ok()
+    }
+
+    fn validate_create_segment_group_from_selection(
+        &self,
+    ) -> Result<(usize, usize), CreateSegmentGroupError> {
         let Some((start, end)) = self.selected_segment_range() else {
-            return false;
+            return Err(CreateSegmentGroupError::SelectionNotContiguous);
         };
         if SegmentGroup::new(start, end, None).is_none() {
-            return false;
+            return Err(CreateSegmentGroupError::EmptySelection);
         }
-        !self
+        if self
             .run
             .segment_groups()
             .groups()
             .iter()
             .any(|group| start < group.end() && end > group.start())
+        {
+            return Err(CreateSegmentGroupError::SelectionOverlapsExistingGroup);
+        }
+        Ok((start, end))
     }
 
     /// Checks if the currently selected segments are exactly one or more whole
@@ -1174,19 +1220,27 @@ impl Editor {
     where
         S: PopulateString,
     {
-        if !self.can_create_segment_group_from_selection() {
-            return false;
-        }
-        let (start, end) = self.selected_segment_range().unwrap();
+        self.try_create_segment_group_from_selection(name).is_ok()
+    }
+
+    /// Creates a segment group from the currently selected contiguous segment
+    /// rows and reports why creation failed.
+    pub fn try_create_segment_group_from_selection<S>(
+        &mut self,
+        name: Option<S>,
+    ) -> Result<(), CreateSegmentGroupError>
+    where
+        S: PopulateString,
+    {
+        let (start, end) = self.validate_create_segment_group_from_selection()?;
         let name = name.map(PopulateString::into_string);
         let Some(group) = SegmentGroup::new(start, end, name) else {
-            return false;
+            return Err(CreateSegmentGroupError::EmptySelection);
         };
-        self.run.segment_groups_mut().groups_mut().push(group);
         let len = self.run.len();
-        self.run.segment_groups_mut().repair(len);
+        self.run.segment_groups_mut().push_group_lossy(group, len);
         self.raise_run_edited();
-        true
+        Ok(())
     }
 
     /// Removes the selected segment groups, while keeping all segments.
@@ -1196,10 +1250,7 @@ impl Editor {
         };
         group_indices.sort_unstable();
         for group_index in group_indices.into_iter().rev() {
-            self.run
-                .segment_groups_mut()
-                .groups_mut()
-                .remove(group_index);
+            self.run.segment_groups_mut().remove(group_index);
         }
         self.raise_run_edited();
         true
@@ -1215,7 +1266,7 @@ impl Editor {
             return false;
         };
         let name = name.map(PopulateString::into_string);
-        self.run.segment_groups_mut().groups_mut()[group_index].set_name(name);
+        self.run.segment_groups_mut().set_name(group_index, name);
         self.raise_run_edited();
         true
     }
@@ -1226,7 +1277,7 @@ impl Editor {
         let Some(group_index) = self.run.segment_groups().group_index_for_segment(active) else {
             return false;
         };
-        self.run.segment_groups_mut().groups_mut()[group_index].set_icon(icon);
+        self.run.segment_groups_mut().set_icon(group_index, icon);
         self.raise_run_edited();
         true
     }
@@ -1237,7 +1288,7 @@ impl Editor {
         let Some(group_index) = self.run.segment_groups().group_index_for_segment(active) else {
             return false;
         };
-        self.run.segment_groups_mut().groups_mut()[group_index].remove_icon();
+        self.run.segment_groups_mut().remove_icon(group_index);
         self.raise_run_edited();
         true
     }

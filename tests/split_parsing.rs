@@ -93,7 +93,7 @@ mod parse {
         assert_eq!(run.segment(4).name(), "-Literal");
 
         let group_icon = Image::new([1, 2, 3].as_slice().into(), Image::ICON);
-        run.segment_groups_mut().groups_mut()[0].set_icon(group_icon.clone());
+        run.segment_groups_mut().set_icon(0, group_icon.clone());
 
         let mut saved = String::new();
         saver::livesplit::save_run(&run, &mut saved).unwrap();

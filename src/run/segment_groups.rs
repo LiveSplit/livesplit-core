@@ -5,6 +5,8 @@ use core::{iter::FusedIterator, slice};
 ///
 /// The range is half-open: `start` is inclusive and `end` is exclusive. The
 /// final segment in the range acts as the major split for the group.
+/// Segment groups are intentionally one level deep. Nested groups are not
+/// represented.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SegmentGroup {
     start: usize,
@@ -27,13 +29,13 @@ impl SegmentGroup {
 
     /// Creates a group without validating the range. Call
     /// [`SegmentGroups::repair`] before exposing it.
-    pub fn new_unchecked(start: usize, end: usize, name: Option<String>) -> Self {
+    pub(crate) fn new_unchecked(start: usize, end: usize, name: Option<String>) -> Self {
         Self::new_unchecked_with_icon(start, end, name, Image::EMPTY.clone())
     }
 
     /// Creates a group without validating the range. Call
     /// [`SegmentGroups::repair`] before exposing it.
-    pub fn new_unchecked_with_icon(
+    pub(crate) fn new_unchecked_with_icon(
         start: usize,
         end: usize,
         name: Option<String>,
@@ -88,7 +90,7 @@ impl SegmentGroup {
     }
 }
 
-/// A validated list of segment groups over a flat segment list.
+/// A validated list of one-level segment groups over a flat segment list.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct SegmentGroups {
     groups: Vec<SegmentGroup>,
@@ -114,11 +116,6 @@ impl SegmentGroups {
         &self.groups
     }
 
-    /// Mutably accesses all groups.
-    pub const fn groups_mut(&mut self) -> &mut Vec<SegmentGroup> {
-        &mut self.groups
-    }
-
     /// Clears all groups.
     pub fn clear(&mut self) {
         self.groups.clear();
@@ -136,6 +133,72 @@ impl SegmentGroups {
             self.groups.push(group);
             self.repair(segment_count);
         }
+    }
+
+    /// Adds a group and repairs the group list.
+    pub fn push_group_lossy(&mut self, group: SegmentGroup, segment_count: usize) {
+        self.groups.push(group);
+        self.repair(segment_count);
+    }
+
+    /// Replaces a group and repairs the group list.
+    pub fn replace_lossy(
+        &mut self,
+        index: usize,
+        group: SegmentGroup,
+        segment_count: usize,
+    ) -> bool {
+        let Some(existing_group) = self.groups.get_mut(index) else {
+            return false;
+        };
+        *existing_group = group;
+        self.repair(segment_count);
+        true
+    }
+
+    /// Replaces multiple groups and repairs the group list once afterwards.
+    pub fn replace_many_lossy<I>(&mut self, groups: I, segment_count: usize)
+    where
+        I: IntoIterator<Item = (usize, SegmentGroup)>,
+    {
+        for (index, group) in groups {
+            if let Some(existing_group) = self.groups.get_mut(index) {
+                *existing_group = group;
+            }
+        }
+        self.repair(segment_count);
+    }
+
+    /// Removes a group.
+    pub fn remove(&mut self, index: usize) -> Option<SegmentGroup> {
+        (index < self.groups.len()).then(|| self.groups.remove(index))
+    }
+
+    /// Sets the explicit name of a group.
+    pub fn set_name(&mut self, index: usize, name: Option<String>) -> bool {
+        let Some(group) = self.groups.get_mut(index) else {
+            return false;
+        };
+        group.set_name(name);
+        true
+    }
+
+    /// Sets the explicit icon of a group.
+    pub fn set_icon(&mut self, index: usize, icon: Image) -> bool {
+        let Some(group) = self.groups.get_mut(index) else {
+            return false;
+        };
+        group.set_icon(icon);
+        true
+    }
+
+    /// Removes the explicit icon of a group.
+    pub fn remove_icon(&mut self, index: usize) -> bool {
+        let Some(group) = self.groups.get_mut(index) else {
+            return false;
+        };
+        group.remove_icon();
+        true
     }
 
     /// Finds the group containing the provided segment index.

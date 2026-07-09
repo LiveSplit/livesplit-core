@@ -315,7 +315,7 @@ fn current_group_expanded_subsplit_state() {
     let group_icon = Image::new([1, 2, 3].as_slice().into(), Image::ICON);
     run.segment_groups_mut()
         .push_lossy(1, 4, Some("Chapter A".into()), 5);
-    run.segment_groups_mut().groups_mut()[0].set_icon(group_icon.clone());
+    run.segment_groups_mut().set_icon(0, group_icon.clone());
 
     let mut timer = Timer::new(run).unwrap();
     let mut component = Component::with_settings(Settings {
