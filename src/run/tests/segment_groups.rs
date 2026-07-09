@@ -72,3 +72,42 @@ fn segment_group_icons_default_to_major_segment_icon() {
     assert_eq!(views[1].icon().unwrap().id(), group_icon.id());
     assert_eq!(views[1].icon_or_default().id(), group_icon.id());
 }
+
+#[test]
+fn structural_segment_mutations_keep_group_ranges_valid() {
+    let mut run = Run::new();
+    for name in ["Intro", "A1", "A End", "Outro"] {
+        run.push_segment(Segment::new(name));
+    }
+    let segment_count = run.len();
+    run.segment_groups_mut()
+        .push_lossy(1, 3, Some("Chapter A".into()), segment_count);
+
+    // Inserting directly before a group must shift the whole group rather than
+    // making the new segment its first member.
+    run.insert_segment(0, Segment::new("Prologue"));
+    assert_eq!(
+        (
+            run.segment_groups().groups()[0].start(),
+            run.segment_groups().groups()[0].end(),
+        ),
+        (2, 4),
+    );
+
+    // Removing that ungrouped segment restores the original range. Iterating
+    // afterwards exercises the invariant that every group range is in bounds.
+    run.remove_segment(0);
+    assert_eq!(
+        (
+            run.segment_groups().groups()[0].start(),
+            run.segment_groups().groups()[0].end(),
+        ),
+        (1, 3),
+    );
+    assert_eq!(
+        run.segment_groups_iter()
+            .map(|view| view.name_or_default().to_owned())
+            .collect::<Vec<_>>(),
+        ["Intro", "Chapter A", "Outro"],
+    );
+}

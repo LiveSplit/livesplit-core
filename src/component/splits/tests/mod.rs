@@ -344,6 +344,9 @@ fn current_group_expanded_subsplit_state() {
     assert!(!state.splits[1].is_indented);
     assert_eq!(state.splits[1].index, 3);
     assert_eq!(state.splits[1].icon, *group_icon.id());
+    // No segment has an icon. The group-header icon must still reserve the
+    // icon column so the renderer does not overlap it with the header name.
+    assert!(state.has_icons);
     assert!(state.splits[1].columns.is_empty());
     assert!(state.splits[2].is_indented);
     assert_eq!(state.splits[2].index, 1);

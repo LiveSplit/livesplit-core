@@ -563,7 +563,11 @@ impl Component {
             }
         }
 
-        state.has_icons = run.segments().iter().any(|s| !s.icon().is_empty());
+        // Group headers may have an explicit icon even when every underlying
+        // segment has none. Base the icon-column reservation on the rows that
+        // are actually displayed so the renderer never draws such a header
+        // icon on top of its name.
+        state.has_icons = displayed.iter().any(|split| !split.icon.is_empty());
         state.show_thin_separators = show_thin_separators;
         state.show_final_separator = show_final_separator;
         state.display_two_rows = display_two_rows;

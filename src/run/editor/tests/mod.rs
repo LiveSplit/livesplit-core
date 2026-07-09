@@ -323,6 +323,47 @@ fn removes_multiple_selected_segment_groups() {
 }
 
 #[test]
+fn moving_multiple_selected_segment_groups_is_disabled() {
+    let mut run = Run::new();
+    for name in ["Intro", "A1", "A End", "B1", "B End", "Outro"] {
+        run.push_segment(Segment::new(name));
+    }
+
+    let mut editor = Editor::new(run).unwrap();
+    editor.select_only(1);
+    editor.select_range(2);
+    assert!(editor.create_segment_group_from_selection(Some("Group A")));
+    editor.select_only(3);
+    editor.select_range(4);
+    assert!(editor.create_segment_group_from_selection(Some("Group B")));
+
+    // This matches a Shift selection of the two complete groups in the Run
+    // Editor. It must not take the per-segment movement path, which would
+    // otherwise peel the selected boundary segments out of both groups.
+    editor.select_only(1);
+    editor.select_range(4);
+    assert!(!editor.can_move_segments_up());
+    assert!(!editor.can_move_segments_down());
+
+    editor.move_segments_up();
+    editor.move_segments_down();
+
+    let run = editor.close();
+    assert_eq!(
+        run.segments().iter().map(Segment::name).collect::<Vec<_>>(),
+        ["Intro", "A1", "A End", "B1", "B End", "Outro"],
+    );
+    assert_eq!(
+        run.segment_groups()
+            .groups()
+            .iter()
+            .map(|group| (group.start(), group.end(), group.name()))
+            .collect::<Vec<_>>(),
+        [(1, 3, Some("Group A")), (3, 5, Some("Group B"))],
+    );
+}
+
+#[test]
 fn ungrouped_selection_before_group_can_create_segment_group() {
     let mut run = Run::new();
     for name in ["A", "B", "C", "D"] {

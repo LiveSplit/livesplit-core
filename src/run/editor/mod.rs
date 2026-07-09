@@ -509,11 +509,7 @@ impl Editor {
         for x in min_index..=max_index {
             segment.segment_history_mut().insert(x, Default::default());
         }
-        self.run.segments_mut().insert(active_segment, segment);
-        let len = self.run.len();
-        self.run
-            .segment_groups_mut()
-            .segment_inserted(active_segment, len);
+        self.run.insert_segment(active_segment, segment);
 
         self.select_only(active_segment);
 
@@ -538,11 +534,7 @@ impl Editor {
         for x in min_index..=max_index {
             segment.segment_history_mut().insert(x, Default::default());
         }
-        self.run.segments_mut().insert(next_segment, segment);
-        let len = self.run.len();
-        self.run
-            .segment_groups_mut()
-            .segment_inserted(next_segment, len);
+        self.run.insert_segment(next_segment, segment);
 
         self.select_only(next_segment);
 
@@ -641,11 +633,7 @@ impl Editor {
             if self.selected_segments.contains(&i) {
                 let segment_index = i - removed;
                 self.fix_after_deletion(segment_index);
-                self.run.segments_mut().remove(segment_index);
-                let len = self.run.len();
-                self.run
-                    .segment_groups_mut()
-                    .segment_removed(segment_index, len);
+                self.run.remove_segment(segment_index);
                 removed += 1;
             }
         }
@@ -1036,6 +1024,19 @@ impl Editor {
     /// Checks if the currently selected segments can be moved up. If any one of
     /// the selected segments is the first segment, then they can't be moved.
     pub fn can_move_segments_up(&self) -> bool {
+        if self
+            .selected_segment_group_indices()
+            .is_some_and(|indices| indices.len() > 1)
+        {
+            // Moving multiple whole groups through the generic per-segment
+            // path treats each group's outer segments as attempts to leave the
+            // group. That silently shrinks or removes the group metadata. A
+            // block movement model for multiple groups has not been defined,
+            // so keep this action unavailable until it can preserve every
+            // selected group's identity and order atomically.
+            return false;
+        }
+
         if let Some(group_index) = self.selected_segment_group_index() {
             return self.run.segment_groups().groups()[group_index].start() != 0;
         }
@@ -1092,6 +1093,16 @@ impl Editor {
     /// Checks if the currently selected segments can be moved down. If any one
     /// of the selected segments is the last segment, then they can't be moved.
     pub fn can_move_segments_down(&self) -> bool {
+        if self
+            .selected_segment_group_indices()
+            .is_some_and(|indices| indices.len() > 1)
+        {
+            // See `can_move_segments_up`: a multi-group selection must not
+            // enter the per-segment movement path, as it would alter the
+            // selected groups instead of moving them as stable units.
+            return false;
+        }
+
         if let Some(group_index) = self.selected_segment_group_index() {
             return self.run.segment_groups().groups()[group_index].end() != self.run.len();
         }
@@ -1314,7 +1325,7 @@ impl Editor {
     ) -> Result<(), AddComparisonError> {
         self.run.add_custom_comparison(comparison)?;
 
-        let mut remaining_segments = self.run.segments_mut().as_mut_slice();
+        let mut remaining_segments = self.run.segments_mut();
 
         for segment in run.segments().iter().take(run.len().saturating_sub(1)) {
             if let Some((segment_index, my_segment)) = remaining_segments
