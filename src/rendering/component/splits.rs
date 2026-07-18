@@ -322,7 +322,11 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                 right_x -= max_width + PADDING;
             }
 
-            if display_two_rows {
+            // `render_text_ellipsis` receives the right edge of the name. The
+            // padding subtracted below normally separates the name from the
+            // first column. A row without columns, such as an expanded group
+            // header, only needs the outer padding at the edge of the component.
+            if display_two_rows || split.columns.is_empty() {
                 left_x = split_width;
             }
 
