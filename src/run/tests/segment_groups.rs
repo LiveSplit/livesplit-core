@@ -45,25 +45,25 @@ fn segment_groups_iterates_grouped_and_ungrouped_segments() {
     assert_eq!(views.len(), 3);
     assert_eq!(views[0].name_or_default(), "Intro");
     assert_eq!(views[1].name_or_default(), "Chapter A");
-    assert_eq!(views[1].major_index(), 3);
+    assert_eq!(views[1].last_segment_index(), 3);
     assert_eq!(views[2].name_or_default(), "Outro");
 }
 
 #[test]
-fn segment_group_icons_default_to_major_segment_icon() {
+fn segment_group_icons_default_to_last_segment_icon() {
     let mut run = Run::new();
     for name in ["Intro", "A1", "A End"] {
         run.push_segment(Segment::new(name));
     }
 
-    let major_icon = Image::new([1, 2, 3].as_slice().into(), Image::ICON);
-    run.segment_mut(2).set_icon(major_icon.clone());
+    let last_segment_icon = Image::new([1, 2, 3].as_slice().into(), Image::ICON);
+    run.segment_mut(2).set_icon(last_segment_icon.clone());
     run.segment_groups_mut()
         .push_lossy(1, 3, Some("Chapter A".into()), 3);
 
     let views = run.segment_groups_iter().collect::<Vec<_>>();
     assert_eq!(views[1].icon(), None);
-    assert_eq!(views[1].icon_or_default().id(), major_icon.id());
+    assert_eq!(views[1].icon_or_default().id(), last_segment_icon.id());
 
     let group_icon = Image::new([4, 5, 6].as_slice().into(), Image::ICON);
     run.segment_groups_mut().set_icon(0, group_icon.clone());

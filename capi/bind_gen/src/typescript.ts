@@ -1061,8 +1061,6 @@ export interface RunEditorSegmentRowJson {
     selected: "NotSelected" | "Selected" | "Active",
     /** Whether the segment is visually nested beneath a group header. */
     is_indented: boolean,
-    /** Whether this segment is the major, final segment of its group. */
-    is_major_segment: boolean,
     /** Whether a visual section boundary starts immediately before this row. */
     starts_new_section: boolean,
 }
@@ -1073,7 +1071,7 @@ export interface RunEditorSegmentGroupRowJson {
     kind: "SegmentGroup",
     /** The index of the group in the run. */
     group_index: number,
-    /** The resolved display name, falling back to the major segment's name. */
+    /** The resolved display name, falling back to the final segment's name. */
     name: string,
     /**
      * The explicitly configured group name. This remains separate from `name`
@@ -1081,7 +1079,7 @@ export interface RunEditorSegmentGroupRowJson {
      */
     explicit_name: string | null,
     /**
-     * The group display icon. This falls back to the major split icon if no
+     * The group display icon. This falls back to the final segment's icon if no
      * explicit group icon is set.
      */
     icon: ImageId,

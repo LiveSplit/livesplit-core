@@ -896,13 +896,13 @@ fn displayed_splits<'a>(
             displayed.push(DisplayedSplit {
                 // Segment indices remain the stable identity for actual split
                 // rows. Group headers need a different identity because the
-                // major segment is also present while a group is expanded.
+                // final segment is also present while a group is expanded.
                 // Odd indices descending from `usize::MAX` are reserved for
                 // headers, while blank rows use the adjacent even indices.
                 state_index: usize::MAX - 2 * group_index,
-                segment_index: view.major_index(),
+                segment_index: view.last_segment_index(),
                 column_start_index: view.start_index(),
-                segment: view.ending_segment(),
+                segment: view.last_segment(),
                 icon: view.icon_or_default().clone(),
                 name: Cow::Owned(view.name_or_default().to_owned()),
                 is_group_header: true,

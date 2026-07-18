@@ -289,9 +289,9 @@ impl Run {
     /// Removes and returns the segment at the specified index while updating
     /// native segment groups to keep their ranges valid.
     ///
-    /// If the final segment of a group is removed, the preceding remaining
-    /// segment naturally becomes that group's major split. A group that loses
-    /// all of its segments is removed.
+    /// If the final segment of a group is removed, the preceding segment
+    /// becomes the group's new final segment. A group that loses all of its
+    /// segments is removed.
     ///
     /// # Panics
     ///

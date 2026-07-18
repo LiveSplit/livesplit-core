@@ -214,7 +214,6 @@ fn creates_renames_and_removes_segment_groups() {
     );
     assert!(segment_group(&state, 0).selected);
     assert!(segment(&state, 0).is_indented);
-    assert!(segment(&state, 2).is_major_segment);
 
     assert!(editor.remove_selected_segment_groups());
     assert!(editor.close().segment_groups().groups().is_empty());
@@ -248,8 +247,6 @@ fn state_presents_segment_groups_as_unified_rows() {
 
     assert!(!segment(&state, 0).is_indented);
     assert!(segment(&state, 1).is_indented);
-    assert!(!segment(&state, 1).is_major_segment);
-    assert!(segment(&state, 2).is_major_segment);
     assert!(segment(&state, 3).starts_new_section);
 
     // The tagged representation lets dynamically typed frontends switch on a
@@ -309,8 +306,8 @@ fn segment_group_icons_can_be_explicit_or_inherited() {
     for name in ["A", "B", "C"] {
         run.push_segment(Segment::new(name));
     }
-    let major_icon = Image::new([1, 2, 3].as_slice().into(), Image::ICON);
-    run.segment_mut(2).set_icon(major_icon.clone());
+    let last_segment_icon = Image::new([1, 2, 3].as_slice().into(), Image::ICON);
+    run.segment_mut(2).set_icon(last_segment_icon.clone());
 
     let mut editor = Editor::new(run).unwrap();
     editor.select_range(2);
@@ -318,7 +315,7 @@ fn segment_group_icons_can_be_explicit_or_inherited() {
 
     let mut image_cache = ImageCache::new();
     let state = editor.state(&mut image_cache, Lang::English);
-    assert_eq!(segment_group(&state, 0).icon, *major_icon.id());
+    assert_eq!(segment_group(&state, 0).icon, *last_segment_icon.id());
     assert!(!segment_group(&state, 0).has_explicit_icon);
 
     let group_icon = Image::new([4, 5, 6].as_slice().into(), Image::ICON);
@@ -331,7 +328,7 @@ fn segment_group_icons_can_be_explicit_or_inherited() {
     assert!(editor.remove_segment_group_icon(0));
 
     let state = editor.state(&mut image_cache, Lang::English);
-    assert_eq!(segment_group(&state, 0).icon, *major_icon.id());
+    assert_eq!(segment_group(&state, 0).icon, *last_segment_icon.id());
     assert!(!segment_group(&state, 0).has_explicit_icon);
 }
 

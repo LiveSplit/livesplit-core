@@ -104,8 +104,6 @@ pub struct Segment {
     pub selected: SelectionState,
     /// Whether the segment is visually nested beneath a group header.
     pub is_indented: bool,
-    /// Whether this segment is the major, final segment of its group.
-    pub is_major_segment: bool,
     /// Whether a visual section boundary starts immediately before this row.
     /// This lets frontends present transitions out of a segment group without
     /// inspecting neighboring rows.
@@ -118,16 +116,16 @@ pub struct SegmentGroup {
     /// The index of the group in the run. Presentation row indices differ from
     /// group indices, so group mutations must use this index.
     pub group_index: usize,
-    /// The resolved display name, falling back to the major segment's name.
+    /// The resolved display name, falling back to the final segment's name.
     pub name: String,
     /// The explicitly configured group name. This remains separate from
     /// `name` so an editor can present the inherited name as a placeholder.
     pub explicit_name: Option<String>,
-    /// The group display icon. This falls back to the major split icon if no
+    /// The group display icon. This falls back to the final segment's icon if no
     /// explicit group icon is set.
     pub icon: ImageId,
     /// Whether the group icon is explicitly set instead of inherited from the
-    /// major split.
+    /// final segment.
     pub has_explicit_icon: bool,
     /// Whether every segment in the group is currently selected.
     pub selected: bool,
@@ -261,7 +259,6 @@ impl Editor {
                     comparison_times,
                     selected,
                     is_indented: group_index.is_some(),
-                    is_major_segment: group_index.is_some() && segment_index == view.major_index(),
                     starts_new_section: group_index.is_none() && previous_section_was_group,
                 }));
             }

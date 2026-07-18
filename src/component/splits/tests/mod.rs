@@ -181,7 +181,7 @@ fn unique_split_indices() {
     let mut component = Component::with_settings(Settings {
         visual_split_count: 20,
         fill_with_blank_space: true,
-        // Expanded groups contain both a header and their major segment. This
+        // Expanded groups contain both a header and their final segment. This
         // is the case that requires a dedicated visual-row identity.
         subsplit_display_mode: SubsplitDisplayMode::AllGroupsExpanded,
         ..english_settings()
@@ -1026,7 +1026,7 @@ fn closed_group_header_possible_time_save_summarizes_the_whole_group() {
     );
 
     // Each of the three grouped segments can save five seconds. The collapsed
-    // header must report their combined value, not only the major segment's
+    // header must report their combined value, not only the final segment's
     // five-second value.
     assert_eq!(state.splits[1].name, "Chapter A");
     assert_eq!(state.splits[1].columns[0].value, "15.00");
@@ -1091,7 +1091,7 @@ fn closed_group_header_segment_delta_can_be_a_best_segment() {
 }
 
 #[test]
-fn closed_group_header_split_delta_is_not_best_if_only_the_major_split_is_best() {
+fn closed_group_header_split_delta_is_not_best_if_only_the_final_split_is_best() {
     let mut run = Run::new();
     for name in ["Intro", "A1", "A2", "A End", "Chapter B", "Outro"] {
         run.push_segment(Segment::new(name));

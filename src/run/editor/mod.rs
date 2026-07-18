@@ -719,7 +719,7 @@ impl Editor {
             .segment_groups()
             .groups()
             .iter()
-            .any(|group| group.major_index() == index)
+            .any(|group| group.last_segment_index() == index)
     }
 
     fn can_move_segment_up_into_group(&self, index: usize) -> bool {
@@ -729,7 +729,7 @@ impl Editor {
                 .segment_groups()
                 .groups()
                 .iter()
-                .any(|group| group.major_index() + 1 == index)
+                .any(|group| group.last_segment_index() + 1 == index)
     }
 
     fn can_move_segment_down_into_group(&self, index: usize) -> bool {
@@ -780,7 +780,7 @@ impl Editor {
             .segment_groups()
             .groups()
             .iter()
-            .position(|group| group.major_index() == index)
+            .position(|group| group.last_segment_index() == index)
         else {
             return false;
         };
@@ -814,7 +814,7 @@ impl Editor {
             .segment_groups()
             .groups()
             .iter()
-            .position(|group| group.major_index() + 1 == index)
+            .position(|group| group.last_segment_index() + 1 == index)
         else {
             return false;
         };
@@ -1236,9 +1236,9 @@ impl Editor {
         let Some(group) = self.run.segment_groups().groups().get(group_index) else {
             return false;
         };
-        let (start, major) = (group.start(), group.major_index());
+        let (start, last) = (group.start(), group.last_segment_index());
         self.select_only(start);
-        self.select_range(major);
+        self.select_range(last);
         true
     }
 

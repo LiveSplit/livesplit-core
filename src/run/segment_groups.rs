@@ -4,9 +4,9 @@ use core::{iter::FusedIterator, slice};
 /// A contiguous, non-overlapping group of segments.
 ///
 /// The range is half-open: `start` is inclusive and `end` is exclusive. The
-/// final segment in the range acts as the major split for the group.
-/// Segment groups are intentionally one level deep. Nested groups are not
-/// represented.
+/// final segment provides the group's default display name and icon when they
+/// are not configured explicitly. Segment groups are intentionally one level
+/// deep. Nested groups are not represented.
 #[derive(Clone, Debug, PartialEq)]
 pub struct SegmentGroup {
     start: usize,
@@ -59,8 +59,8 @@ impl SegmentGroup {
         self.end
     }
 
-    /// Accesses the index of the group's major split.
-    pub const fn major_index(&self) -> usize {
+    /// Accesses the index of the final segment in the group.
+    pub const fn last_segment_index(&self) -> usize {
         self.end - 1
     }
 
@@ -298,14 +298,14 @@ impl<'groups, 'segments> SegmentGroupView<'groups, 'segments> {
         self.icon
     }
 
-    /// The group display name, falling back to the major segment name.
+    /// The group display name, falling back to the final segment's name.
     pub fn name_or_default(&self) -> &str {
-        self.name.unwrap_or_else(|| self.ending_segment().name())
+        self.name.unwrap_or_else(|| self.last_segment().name())
     }
 
-    /// The group display icon, falling back to the major segment icon.
+    /// The group display icon, falling back to the final segment's icon.
     pub fn icon_or_default(&self) -> &Image {
-        self.icon.unwrap_or_else(|| self.ending_segment().icon())
+        self.icon.unwrap_or_else(|| self.last_segment().icon())
     }
 
     /// The segments included in this view.
@@ -313,8 +313,8 @@ impl<'groups, 'segments> SegmentGroupView<'groups, 'segments> {
         self.segments
     }
 
-    /// The segment that acts as the major split.
-    pub const fn ending_segment(&self) -> &'segments Segment {
+    /// The final segment included in this view.
+    pub const fn last_segment(&self) -> &'segments Segment {
         self.segments.last().unwrap()
     }
 
@@ -328,8 +328,8 @@ impl<'groups, 'segments> SegmentGroupView<'groups, 'segments> {
         self.start_index + self.segments.len()
     }
 
-    /// The flat index of the major split.
-    pub const fn major_index(&self) -> usize {
+    /// The flat index of the final segment included in this view.
+    pub const fn last_segment_index(&self) -> usize {
         self.end_index() - 1
     }
 
