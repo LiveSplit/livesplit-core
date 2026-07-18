@@ -304,7 +304,14 @@ fn update_time_column(
                     ColumnFormatter::SegmentTime,
                 ),
                 ColumnStartWith::PossibleTimeSave => (
-                    possible_time_save::calculate(timer, segment_index, comparison, false).0,
+                    possible_time_save::calculate_range(
+                        timer,
+                        column_start_index,
+                        segment_index,
+                        comparison,
+                        false,
+                    )
+                    .0,
                     SemanticColor::Default,
                     ColumnFormatter::SegmentTime,
                 ),

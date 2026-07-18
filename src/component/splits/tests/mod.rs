@@ -980,6 +980,59 @@ fn closed_group_header_segment_columns_summarize_the_whole_group() {
 }
 
 #[test]
+fn closed_group_header_possible_time_save_summarizes_the_whole_group() {
+    let mut run = Run::new();
+    for name in ["Intro", "A1", "A2", "A End", "Outro"] {
+        run.push_segment(Segment::new(name));
+    }
+    for (segment, (pb_time, best_segment_time)) in run.segments_mut().iter_mut().zip([
+        (10.0, 10.0),
+        (20.0, 5.0),
+        (30.0, 5.0),
+        (40.0, 5.0),
+        (50.0, 10.0),
+    ]) {
+        segment.personal_best_split_time_mut()[TimingMethod::GameTime] =
+            Some(TimeSpan::from_seconds(pb_time));
+        segment.best_segment_time_mut()[TimingMethod::GameTime] =
+            Some(TimeSpan::from_seconds(best_segment_time));
+    }
+    run.segment_groups_mut()
+        .push_lossy(1, 4, Some("Chapter A".into()), 5);
+
+    let mut timer = Timer::new(run).unwrap();
+    timer.set_current_timing_method(TimingMethod::GameTime);
+
+    let mut component = Component::with_settings(Settings {
+        visual_split_count: 0,
+        subsplit_display_mode: SubsplitDisplayMode::CurrentGroupExpanded,
+        columns: vec![ColumnSettings {
+            kind: ColumnKind::Time(TimeColumn {
+                start_with: ColumnStartWith::PossibleTimeSave,
+                update_with: ColumnUpdateWith::DontUpdate,
+                ..Default::default()
+            }),
+            ..Default::default()
+        }],
+        ..english_settings()
+    });
+    let mut image_cache = ImageCache::new();
+
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &Default::default(),
+        Lang::English,
+    );
+
+    // Each of the three grouped segments can save five seconds. The collapsed
+    // header must report their combined value, not only the major segment's
+    // five-second value.
+    assert_eq!(state.splits[1].name, "Chapter A");
+    assert_eq!(state.splits[1].columns[0].value, "15.00");
+}
+
+#[test]
 fn closed_group_header_segment_delta_can_be_a_best_segment() {
     let mut run = Run::new();
     for name in ["Intro", "A1", "A2", "A End", "Outro"] {

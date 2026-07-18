@@ -63,6 +63,33 @@ pub fn calculate(
     .unwrap_or_default()
 }
 
+/// Calculates how much time could be saved across the inclusive range of
+/// segments with the given comparison. Missing comparison times are handled by
+/// [`calculate`], which associates their best segment times with the next split
+/// that has a comparison time. Therefore, summing the available per-split
+/// values preserves the same skipped-split semantics as the rest of the
+/// possible-time-save analysis.
+pub fn calculate_range(
+    timer: &Snapshot,
+    start_index: usize,
+    end_index: usize,
+    comparison: &str,
+    live: bool,
+) -> (Option<TimeSpan>, bool) {
+    let mut total = None;
+    let mut updates_frequently = false;
+
+    for index in start_index..=end_index {
+        let (time_save, changing) = calculate(timer, index, comparison, live);
+        updates_frequently |= changing;
+        if let Some(time_save) = time_save {
+            *total.get_or_insert(TimeSpan::zero()) += time_save;
+        }
+    }
+
+    (total, updates_frequently)
+}
+
 /// Calculates how much time could be saved on the remainder of the run with the
 /// given comparison. This information is based on the best segments.
 /// Considering the best segments don't represent theoretically perfect segment
