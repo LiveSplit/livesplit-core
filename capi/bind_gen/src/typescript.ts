@@ -1020,7 +1020,7 @@ export interface RunEditorButtonsJson {
      * Describes whether the currently selected segments are exactly one or more
      * segment groups that can be removed.
      */
-    can_remove_segment_group: boolean,
+    can_remove_segment_groups: boolean,
 }
 
 /** Describes a row in the Run Editor's unified presentation model. */

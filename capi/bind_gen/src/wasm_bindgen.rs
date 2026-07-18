@@ -757,9 +757,9 @@ export class {class_name_ref_mut} extends {class_name_ref} {{"#,
         this.activeSetIcon(slice.ptr, slice.len);
         dealloc(slice);
     }
-    activeSetSegmentGroupIconFromArray(data: Uint8Array): boolean {
+    setSegmentGroupIconFromArray(groupIndex: number, data: Uint8Array): boolean {
         const slice = allocUint8Array(data);
-        const result = this.activeSetSegmentGroupIcon(slice.ptr, slice.len);
+        const result = this.setSegmentGroupIcon(groupIndex, slice.ptr, slice.len);
         dealloc(slice);
         return result;
     }"#
@@ -786,12 +786,13 @@ export class {class_name_ref_mut} extends {class_name_ref} {{"#,
         dealloc(slice);
     }
     /**
+     * @param {number} groupIndex
      * @param {Uint8Array} data
      * @returns {boolean}
      */
-    activeSetSegmentGroupIconFromArray(data) {
+    setSegmentGroupIconFromArray(groupIndex, data) {
         const slice = allocUint8Array(data);
-        const result = this.activeSetSegmentGroupIcon(slice.ptr, slice.len);
+        const result = this.setSegmentGroupIcon(groupIndex, slice.ptr, slice.len);
         dealloc(slice);
         return result;
     }"#

@@ -201,7 +201,7 @@ fn creates_renames_and_removes_segment_groups() {
     let mut editor = Editor::new(run).unwrap();
     editor.select_range(2);
     assert!(editor.create_segment_group_from_selection(Some("Group")));
-    assert!(editor.rename_active_segment_group(Some("Renamed")));
+    assert!(editor.rename_segment_group(0, Some("Renamed")));
 
     let mut image_cache = ImageCache::new();
     let state = editor.state(&mut image_cache, Lang::English);
@@ -216,7 +216,7 @@ fn creates_renames_and_removes_segment_groups() {
     assert!(segment(&state, 0).is_indented);
     assert!(segment(&state, 2).is_major_segment);
 
-    assert!(editor.remove_active_segment_group());
+    assert!(editor.remove_selected_segment_groups());
     assert!(editor.close().segment_groups().groups().is_empty());
 }
 
@@ -269,7 +269,7 @@ fn renaming_segment_group_keeps_whole_group_selected() {
     let mut editor = Editor::new(run).unwrap();
     editor.select_range(2);
     assert!(editor.create_segment_group_from_selection(Some("Group")));
-    assert!(editor.rename_active_segment_group(Some("Renamed")));
+    assert!(editor.rename_segment_group(0, Some("Renamed")));
 
     let mut image_cache = ImageCache::new();
     let state = editor.state(&mut image_cache, Lang::English);
@@ -277,6 +277,30 @@ fn renaming_segment_group_keeps_whole_group_selected() {
     assert_eq!(segment(&state, 0).selected, SelectionState::Selected);
     assert_eq!(segment(&state, 1).selected, SelectionState::Selected);
     assert_eq!(segment(&state, 2).selected, SelectionState::Active);
+}
+
+#[test]
+fn selecting_segment_group_uses_its_state_identity() {
+    let mut run = Run::new();
+    for name in ["Intro", "A1", "A End", "Outro"] {
+        run.push_segment(Segment::new(name));
+    }
+
+    let mut editor = Editor::new(run).unwrap();
+    editor.select_only(1);
+    editor.select_range(2);
+    assert!(editor.create_segment_group_from_selection(Some("Group")));
+    editor.select_only(0);
+
+    assert!(editor.select_segment_group(0));
+    assert!(!editor.select_segment_group(1));
+
+    let mut image_cache = ImageCache::new();
+    let state = editor.state(&mut image_cache, Lang::English);
+    assert_eq!(segment(&state, 0).selected, SelectionState::NotSelected);
+    assert_eq!(segment(&state, 1).selected, SelectionState::Selected);
+    assert_eq!(segment(&state, 2).selected, SelectionState::Active);
+    assert!(segment_group(&state, 0).selected);
 }
 
 #[test]
@@ -298,13 +322,13 @@ fn segment_group_icons_can_be_explicit_or_inherited() {
     assert!(!segment_group(&state, 0).has_explicit_icon);
 
     let group_icon = Image::new([4, 5, 6].as_slice().into(), Image::ICON);
-    assert!(editor.set_active_segment_group_icon(group_icon.clone()));
+    assert!(editor.set_segment_group_icon(0, group_icon.clone()));
 
     let state = editor.state(&mut image_cache, Lang::English);
     assert_eq!(segment_group(&state, 0).icon, *group_icon.id());
     assert!(segment_group(&state, 0).has_explicit_icon);
 
-    assert!(editor.remove_active_segment_group_icon());
+    assert!(editor.remove_segment_group_icon(0));
 
     let state = editor.state(&mut image_cache, Lang::English);
     assert_eq!(segment_group(&state, 0).icon, *major_icon.id());
@@ -354,14 +378,14 @@ fn mixed_selection_cannot_create_or_remove_segment_group() {
     editor.select_only(2);
     editor.select_range(3);
     assert!(!editor.can_create_segment_group_from_selection());
-    assert!(!editor.can_remove_active_segment_group());
+    assert!(!editor.can_remove_selected_segment_groups());
     assert!(!editor.create_segment_group_from_selection::<String>(None));
-    assert!(!editor.remove_active_segment_group());
+    assert!(!editor.remove_selected_segment_groups());
 
     editor.select_only(0);
     editor.select_range(2);
-    assert!(editor.can_remove_active_segment_group());
-    assert!(editor.remove_active_segment_group());
+    assert!(editor.can_remove_selected_segment_groups());
+    assert!(editor.remove_selected_segment_groups());
 }
 
 #[test]
@@ -383,8 +407,8 @@ fn removes_multiple_selected_segment_groups() {
     editor.select_additionally(2);
     editor.select_additionally(3);
     editor.select_additionally(4);
-    assert!(editor.can_remove_active_segment_group());
-    assert!(editor.remove_active_segment_group());
+    assert!(editor.can_remove_selected_segment_groups());
+    assert!(editor.remove_selected_segment_groups());
     assert!(editor.run().segment_groups().groups().is_empty());
 }
 

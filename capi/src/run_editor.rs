@@ -328,46 +328,59 @@ pub unsafe extern "C" fn RunEditor_create_segment_group_from_selection(
     }
 }
 
-/// Removes the selected native segment groups, while keeping all segments.
+/// Selects every segment in the native segment group with the provided index
+/// and unselects all other segments. Returns <FALSE> if the group doesn't
+/// exist.
 #[unsafe(no_mangle)]
-pub extern "C" fn RunEditor_remove_active_segment_group(this: &mut RunEditor) -> bool {
-    this.remove_active_segment_group()
+pub extern "C" fn RunEditor_select_segment_group(this: &mut RunEditor, group_index: usize) -> bool {
+    this.select_segment_group(group_index)
 }
 
-/// Renames the native segment group containing the active segment.
+/// Removes the selected native segment groups, while keeping all segments.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn RunEditor_rename_active_segment_group(
+pub extern "C" fn RunEditor_remove_selected_segment_groups(this: &mut RunEditor) -> bool {
+    this.remove_selected_segment_groups()
+}
+
+/// Renames the native segment group with the provided index.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn RunEditor_rename_segment_group(
     this: &mut RunEditor,
+    group_index: usize,
     name: *const c_char,
 ) -> bool {
     // SAFETY: The caller guarantees that `name` is valid.
     let name = unsafe { str(name) };
     if name.is_empty() {
-        this.rename_active_segment_group::<String>(None)
+        this.rename_segment_group::<String>(group_index, None)
     } else {
-        this.rename_active_segment_group(Some(name))
+        this.rename_segment_group(group_index, Some(name))
     }
 }
 
-/// Sets the icon of the native segment group containing the active segment.
+/// Sets the icon of the native segment group with the provided index.
 #[unsafe(no_mangle)]
-pub unsafe extern "C" fn RunEditor_active_set_segment_group_icon(
+pub unsafe extern "C" fn RunEditor_set_segment_group_icon(
     this: &mut RunEditor,
+    group_index: usize,
     data: *const u8,
     length: usize,
 ) -> bool {
     // SAFETY: The caller guarantees that `data` is valid for `length`.
-    this.set_active_segment_group_icon(Image::new(
-        unsafe { slice(data, length).into() },
-        Image::ICON,
-    ))
+    this.set_segment_group_icon(
+        group_index,
+        Image::new(unsafe { slice(data, length).into() }, Image::ICON),
+    )
 }
 
-/// Removes the explicit icon of the native segment group containing the active
-/// segment.
+/// Removes the explicit icon of the native segment group with the provided
+/// index.
 #[unsafe(no_mangle)]
-pub extern "C" fn RunEditor_active_remove_segment_group_icon(this: &mut RunEditor) -> bool {
-    this.remove_active_segment_group_icon()
+pub extern "C" fn RunEditor_remove_segment_group_icon(
+    this: &mut RunEditor,
+    group_index: usize,
+) -> bool {
+    this.remove_segment_group_icon(group_index)
 }
 
 /// Sets the icon of the active segment.

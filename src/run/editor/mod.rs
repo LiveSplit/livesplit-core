@@ -1224,8 +1224,22 @@ impl Editor {
 
     /// Checks if the currently selected segments are exactly one or more whole
     /// groups.
-    pub fn can_remove_active_segment_group(&self) -> bool {
+    pub fn can_remove_selected_segment_groups(&self) -> bool {
         self.selected_segment_group_indices().is_some()
+    }
+
+    /// Selects every segment in the group with the provided index and
+    /// unselects all other segments. Returns `false` if the group doesn't
+    /// exist. Frontends can use the group identity from the editor state
+    /// directly instead of reconstructing and selecting its segment range.
+    pub fn select_segment_group(&mut self, group_index: usize) -> bool {
+        let Some(group) = self.run.segment_groups().groups().get(group_index) else {
+            return false;
+        };
+        let (start, major) = (group.start(), group.major_index());
+        self.select_only(start);
+        self.select_range(major);
+        true
     }
 
     /// Creates a segment group from the currently selected contiguous segment
@@ -1258,7 +1272,7 @@ impl Editor {
     }
 
     /// Removes the selected segment groups, while keeping all segments.
-    pub fn remove_active_segment_group(&mut self) -> bool {
+    pub fn remove_selected_segment_groups(&mut self) -> bool {
         let Some(mut group_indices) = self.selected_segment_group_indices() else {
             return false;
         };
@@ -1270,39 +1284,33 @@ impl Editor {
         true
     }
 
-    /// Renames the group containing the active segment.
-    pub fn rename_active_segment_group<S>(&mut self, name: Option<S>) -> bool
+    /// Renames the group with the provided index.
+    pub fn rename_segment_group<S>(&mut self, group_index: usize, name: Option<S>) -> bool
     where
         S: PopulateString,
     {
-        let active = self.active_segment_index();
-        let Some(group_index) = self.run.segment_groups().group_index_for_segment(active) else {
-            return false;
-        };
         let name = name.map(PopulateString::into_string);
-        self.run.segment_groups_mut().set_name(group_index, name);
+        if !self.run.segment_groups_mut().set_name(group_index, name) {
+            return false;
+        }
         self.raise_run_edited();
         true
     }
 
-    /// Sets the icon of the group containing the active segment.
-    pub fn set_active_segment_group_icon(&mut self, icon: Image) -> bool {
-        let active = self.active_segment_index();
-        let Some(group_index) = self.run.segment_groups().group_index_for_segment(active) else {
+    /// Sets the icon of the group with the provided index.
+    pub fn set_segment_group_icon(&mut self, group_index: usize, icon: Image) -> bool {
+        if !self.run.segment_groups_mut().set_icon(group_index, icon) {
             return false;
-        };
-        self.run.segment_groups_mut().set_icon(group_index, icon);
+        }
         self.raise_run_edited();
         true
     }
 
-    /// Removes the explicit icon of the group containing the active segment.
-    pub fn remove_active_segment_group_icon(&mut self) -> bool {
-        let active = self.active_segment_index();
-        let Some(group_index) = self.run.segment_groups().group_index_for_segment(active) else {
+    /// Removes the explicit icon of the group with the provided index.
+    pub fn remove_segment_group_icon(&mut self, group_index: usize) -> bool {
+        if !self.run.segment_groups_mut().remove_icon(group_index) {
             return false;
-        };
-        self.run.segment_groups_mut().remove_icon(group_index);
+        }
         self.raise_run_edited();
         true
     }

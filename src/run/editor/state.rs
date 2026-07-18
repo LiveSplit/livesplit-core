@@ -63,9 +63,9 @@ pub struct Buttons {
     /// Describes whether the currently selected segments can be turned into a
     /// segment group.
     pub can_create_segment_group: bool,
-    /// Describes whether the currently selected segments are exactly one
-    /// segment group that can be removed.
-    pub can_remove_segment_group: bool,
+    /// Describes whether the currently selected segments are exactly one or
+    /// more segment groups that can be removed.
+    pub can_remove_segment_groups: bool,
 }
 
 /// Describes a row in the Run Editor's unified presentation model.
@@ -192,7 +192,7 @@ impl Editor {
             can_move_up: self.can_move_segments_up(),
             can_move_down: self.can_move_segments_down(),
             can_create_segment_group: self.can_create_segment_group_from_selection(),
-            can_remove_segment_group: self.can_remove_active_segment_group(),
+            can_remove_segment_groups: self.can_remove_selected_segment_groups(),
         };
         let mut rows =
             Vec::with_capacity(self.run.len() + self.run.segment_groups().groups().len());
