@@ -30,10 +30,11 @@ pub struct State {
     /// The timing method that is currently selected to be visualized and
     /// edited.
     pub timing_method: TimingMethod,
-    /// The state of all the segments.
-    pub segments: Vec<Segment>,
-    /// The native segment groups of the run.
-    pub segment_groups: Vec<SegmentGroup>,
+    /// The rows of the editor in presentation order. Segment group headers are
+    /// included directly before their segments so consumers don't need to
+    /// reconstruct the visual hierarchy from the run's canonical group
+    /// ranges.
+    pub rows: Vec<Row>,
     /// The names of all the custom comparisons that exist for this Run.
     pub comparison_names: Vec<String>,
     /// Describes which actions are currently available.
@@ -67,9 +68,22 @@ pub struct Buttons {
     pub can_remove_segment_group: bool,
 }
 
-/// Describes the current state of a segment.
+/// Describes a row in the Run Editor's unified presentation model.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(tag = "kind")]
+pub enum Row {
+    /// A row for editing an individual segment.
+    Segment(Segment),
+    /// A header row for editing a segment group.
+    SegmentGroup(SegmentGroup),
+}
+
+/// Describes the current state of a segment row.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct Segment {
+    /// The index of the segment in the run. Presentation row indices differ
+    /// whenever group headers are present, so mutations must use this index.
+    pub segment_index: usize,
     /// The icon of the segment. The associated image can be looked up in the
     /// image cache. The image may be the empty image. This indicates that there
     /// is no icon.
@@ -88,26 +102,35 @@ pub struct Segment {
     pub comparison_times: Vec<String>,
     /// Describes the segment's selection state.
     pub selected: SelectionState,
-    /// The index of the group this segment belongs to, if any.
-    pub segment_group_index: Option<usize>,
+    /// Whether the segment is visually nested beneath a group header.
+    pub is_indented: bool,
+    /// Whether this segment is the major, final segment of its group.
+    pub is_major_segment: bool,
+    /// Whether a visual section boundary starts immediately before this row.
+    /// This lets frontends present transitions out of a segment group without
+    /// inspecting neighboring rows.
+    pub starts_new_section: bool,
 }
 
-/// Describes a native segment group.
+/// Describes a segment group header row.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct SegmentGroup {
-    /// The first segment in the group.
-    pub start: usize,
-    /// The segment after the last segment in the group.
-    pub end: usize,
-    /// The explicit group name. If this is `None`, the major split name is the
-    /// display name of the group.
-    pub name: Option<String>,
+    /// The index of the group in the run. Presentation row indices differ from
+    /// group indices, so group mutations must use this index.
+    pub group_index: usize,
+    /// The resolved display name, falling back to the major segment's name.
+    pub name: String,
+    /// The explicitly configured group name. This remains separate from
+    /// `name` so an editor can present the inherited name as a placeholder.
+    pub explicit_name: Option<String>,
     /// The group display icon. This falls back to the major split icon if no
     /// explicit group icon is set.
     pub icon: ImageId,
     /// Whether the group icon is explicitly set instead of inherited from the
     /// major split.
     pub has_explicit_icon: bool,
+    /// Whether every segment in the group is currently selected.
+    pub selected: bool,
 }
 
 /// Describes a segment's selection state.
@@ -171,66 +194,79 @@ impl Editor {
             can_create_segment_group: self.can_create_segment_group_from_selection(),
             can_remove_segment_group: self.can_remove_active_segment_group(),
         };
-        let mut segment_groups = Vec::with_capacity(self.run.segment_groups().groups().len());
-        for group in self.run.segment_groups().groups() {
-            let (group_icon, has_explicit_icon) = group.icon().map_or(
-                (self.run.segment(group.major_index()).icon(), false),
-                |icon| (icon, true),
-            );
-            let icon = *image_cache
-                .cache(group_icon.id(), || group_icon.clone())
-                .id();
-            segment_groups.push(SegmentGroup {
-                start: group.start(),
-                end: group.end(),
-                name: group.name().map(str::to_owned),
-                icon,
-                has_explicit_icon,
-            });
-        }
+        let mut rows =
+            Vec::with_capacity(self.run.len() + self.run.segment_groups().groups().len());
+        let mut previous_section_was_group = false;
 
-        let mut segments = Vec::with_capacity(self.run.len());
+        for view in self.run.segment_groups_iter() {
+            let group_index = view.group_index();
 
-        for segment_index in 0..self.run.len() {
-            let (name, split_time, segment_time, best_segment_time, comparison_times);
-            {
-                let row = SegmentRow::new(segment_index, self);
-                name = row.name().to_string();
-                split_time = formatter.format(row.split_time(), lang).to_string();
-                segment_time = formatter.format(row.segment_time(), lang).to_string();
-                best_segment_time = formatter.format(row.best_segment_time(), lang).to_string();
-                comparison_times = comparison_names
-                    .iter()
-                    .map(|c| formatter.format(row.comparison_time(c), lang).to_string())
-                    .collect();
+            if let Some(group_index) = group_index {
+                let group = &self.run.segment_groups().groups()[group_index];
+                let group_icon = view.icon_or_default();
+                let icon = *image_cache
+                    .cache(group_icon.id(), || group_icon.clone())
+                    .id();
+                let selected = (view.start_index()..view.end_index())
+                    .all(|index| self.selected_segments.contains(&index));
+
+                rows.push(Row::SegmentGroup(SegmentGroup {
+                    group_index,
+                    name: view.name_or_default().to_owned(),
+                    explicit_name: group.name().map(str::to_owned),
+                    icon,
+                    has_explicit_icon: group.icon().is_some(),
+                    selected,
+                }));
             }
 
-            let icon = self.run.segment(segment_index).icon();
-            let icon = *image_cache.cache(icon.id(), || icon.clone()).id();
+            for (offset, segment) in view.segments().iter().enumerate() {
+                let segment_index = view.start_index() + offset;
+                let segment_row = SegmentRow::new(segment_index, self);
+                let name = segment_row.name().to_string();
+                let split_time = formatter.format(segment_row.split_time(), lang).to_string();
+                let segment_time = formatter
+                    .format(segment_row.segment_time(), lang)
+                    .to_string();
+                let best_segment_time = formatter
+                    .format(segment_row.best_segment_time(), lang)
+                    .to_string();
+                let comparison_times = comparison_names
+                    .iter()
+                    .map(|comparison| {
+                        formatter
+                            .format(segment_row.comparison_time(comparison), lang)
+                            .to_string()
+                    })
+                    .collect();
 
-            let selected = if self.active_segment_index() == segment_index {
-                SelectionState::Active
-            } else if self.selected_segments.contains(&segment_index) {
-                SelectionState::Selected
-            } else {
-                SelectionState::NotSelected
-            };
+                let icon = *image_cache
+                    .cache(segment.icon().id(), || segment.icon().clone())
+                    .id();
+                let selected = if self.active_segment_index() == segment_index {
+                    SelectionState::Active
+                } else if self.selected_segments.contains(&segment_index) {
+                    SelectionState::Selected
+                } else {
+                    SelectionState::NotSelected
+                };
 
-            let segment_group_index = self
-                .run
-                .segment_groups()
-                .group_index_for_segment(segment_index);
+                rows.push(Row::Segment(Segment {
+                    segment_index,
+                    icon,
+                    name,
+                    split_time,
+                    segment_time,
+                    best_segment_time,
+                    comparison_times,
+                    selected,
+                    is_indented: group_index.is_some(),
+                    is_major_segment: group_index.is_some() && segment_index == view.major_index(),
+                    starts_new_section: group_index.is_none() && previous_section_was_group,
+                }));
+            }
 
-            segments.push(Segment {
-                icon,
-                name,
-                split_time,
-                segment_time,
-                best_segment_time,
-                comparison_times,
-                selected,
-                segment_group_index,
-            });
+            previous_section_was_group = group_index.is_some();
         }
 
         State {
@@ -240,8 +276,7 @@ impl Editor {
             offset,
             attempts,
             timing_method,
-            segments,
-            segment_groups,
+            rows,
             comparison_names,
             buttons,
             metadata: self.run.metadata().clone(),

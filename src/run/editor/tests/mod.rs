@@ -1,4 +1,4 @@
-use super::{Editor, SelectionState};
+use super::{Editor, RowState, SegmentGroupState, SegmentState, SelectionState, State};
 use crate::{
     Lang, Run, Segment, TimeSpan,
     settings::{Image, ImageCache},
@@ -9,6 +9,28 @@ mod comparison;
 mod custom_variables;
 mod dissociate_run;
 mod mark_as_modified;
+
+fn segment(state: &State, segment_index: usize) -> &SegmentState {
+    state
+        .rows
+        .iter()
+        .find_map(|row| match row {
+            RowState::Segment(segment) if segment.segment_index == segment_index => Some(segment),
+            _ => None,
+        })
+        .unwrap()
+}
+
+fn segment_group(state: &State, group_index: usize) -> &SegmentGroupState {
+    state
+        .rows
+        .iter()
+        .find_map(|row| match row {
+            RowState::SegmentGroup(group) if group.group_index == group_index => Some(group),
+            _ => None,
+        })
+        .unwrap()
+}
 
 #[test]
 fn new_best_segment() {
@@ -117,10 +139,10 @@ fn select_range_keeps_existing_selection_and_updates_active_segment() {
     let mut image_cache = ImageCache::new();
     let state = editor.state(&mut image_cache, Lang::English);
 
-    assert_eq!(state.segments[0].selected, SelectionState::Selected);
-    assert_eq!(state.segments[1].selected, SelectionState::Active);
-    assert_eq!(state.segments[2].selected, SelectionState::Selected);
-    assert_eq!(state.segments[3].selected, SelectionState::Selected);
+    assert_eq!(segment(&state, 0).selected, SelectionState::Selected);
+    assert_eq!(segment(&state, 1).selected, SelectionState::Active);
+    assert_eq!(segment(&state, 2).selected, SelectionState::Selected);
+    assert_eq!(segment(&state, 3).selected, SelectionState::Selected);
 }
 
 #[test]
@@ -138,12 +160,12 @@ fn select_range_preserves_selected_segments_outside_of_the_range() {
     let mut image_cache = ImageCache::new();
     let state = editor.state(&mut image_cache, Lang::English);
 
-    assert_eq!(state.segments[0].selected, SelectionState::Selected);
-    assert_eq!(state.segments[1].selected, SelectionState::NotSelected);
-    assert_eq!(state.segments[2].selected, SelectionState::Selected);
-    assert_eq!(state.segments[3].selected, SelectionState::Selected);
-    assert_eq!(state.segments[4].selected, SelectionState::Active);
-    assert_eq!(state.segments[5].selected, SelectionState::Selected);
+    assert_eq!(segment(&state, 0).selected, SelectionState::Selected);
+    assert_eq!(segment(&state, 1).selected, SelectionState::NotSelected);
+    assert_eq!(segment(&state, 2).selected, SelectionState::Selected);
+    assert_eq!(segment(&state, 3).selected, SelectionState::Selected);
+    assert_eq!(segment(&state, 4).selected, SelectionState::Active);
+    assert_eq!(segment(&state, 5).selected, SelectionState::Selected);
 }
 
 #[test]
@@ -183,14 +205,58 @@ fn creates_renames_and_removes_segment_groups() {
 
     let mut image_cache = ImageCache::new();
     let state = editor.state(&mut image_cache, Lang::English);
-    assert_eq!(state.segments[0].segment_group_index, Some(0));
-    assert_eq!(state.segments[2].segment_group_index, Some(0));
-    assert_eq!(state.segment_groups[0].start, 0);
-    assert_eq!(state.segment_groups[0].end, 3);
-    assert_eq!(state.segment_groups[0].name.as_deref(), Some("Renamed"));
+    assert_eq!(state.rows.len(), 4);
+    assert!(matches!(state.rows[0], RowState::SegmentGroup(_)));
+    assert_eq!(segment_group(&state, 0).name, "Renamed");
+    assert_eq!(
+        segment_group(&state, 0).explicit_name.as_deref(),
+        Some("Renamed")
+    );
+    assert!(segment_group(&state, 0).selected);
+    assert!(segment(&state, 0).is_indented);
+    assert!(segment(&state, 2).is_major_segment);
 
     assert!(editor.remove_active_segment_group());
     assert!(editor.close().segment_groups().groups().is_empty());
+}
+
+#[test]
+fn state_presents_segment_groups_as_unified_rows() {
+    let mut run = Run::new();
+    for name in ["Intro", "A1", "A End", "Outro"] {
+        run.push_segment(Segment::new(name));
+    }
+
+    let mut editor = Editor::new(run).unwrap();
+    editor.select_only(1);
+    editor.select_range(2);
+    assert!(editor.create_segment_group_from_selection::<String>(None));
+
+    let mut image_cache = ImageCache::new();
+    let state = editor.state(&mut image_cache, Lang::English);
+
+    assert!(matches!(state.rows[0], RowState::Segment(_)));
+    assert!(matches!(state.rows[1], RowState::SegmentGroup(_)));
+    assert!(matches!(state.rows[2], RowState::Segment(_)));
+    assert!(matches!(state.rows[3], RowState::Segment(_)));
+    assert!(matches!(state.rows[4], RowState::Segment(_)));
+
+    let group = segment_group(&state, 0);
+    assert_eq!(group.name, "A End");
+    assert_eq!(group.explicit_name, None);
+    assert!(group.selected);
+
+    assert!(!segment(&state, 0).is_indented);
+    assert!(segment(&state, 1).is_indented);
+    assert!(!segment(&state, 1).is_major_segment);
+    assert!(segment(&state, 2).is_major_segment);
+    assert!(segment(&state, 3).starts_new_section);
+
+    // The tagged representation lets dynamically typed frontends switch on a
+    // row's kind without correlating multiple arrays or inferring headers from
+    // their position.
+    let json = serde_json::to_value(state).unwrap();
+    assert_eq!(json["rows"][1]["kind"], "SegmentGroup");
 }
 
 #[test]
@@ -208,9 +274,9 @@ fn renaming_segment_group_keeps_whole_group_selected() {
     let mut image_cache = ImageCache::new();
     let state = editor.state(&mut image_cache, Lang::English);
 
-    assert_eq!(state.segments[0].selected, SelectionState::Selected);
-    assert_eq!(state.segments[1].selected, SelectionState::Selected);
-    assert_eq!(state.segments[2].selected, SelectionState::Active);
+    assert_eq!(segment(&state, 0).selected, SelectionState::Selected);
+    assert_eq!(segment(&state, 1).selected, SelectionState::Selected);
+    assert_eq!(segment(&state, 2).selected, SelectionState::Active);
 }
 
 #[test]
@@ -228,21 +294,21 @@ fn segment_group_icons_can_be_explicit_or_inherited() {
 
     let mut image_cache = ImageCache::new();
     let state = editor.state(&mut image_cache, Lang::English);
-    assert_eq!(state.segment_groups[0].icon, *major_icon.id());
-    assert!(!state.segment_groups[0].has_explicit_icon);
+    assert_eq!(segment_group(&state, 0).icon, *major_icon.id());
+    assert!(!segment_group(&state, 0).has_explicit_icon);
 
     let group_icon = Image::new([4, 5, 6].as_slice().into(), Image::ICON);
     assert!(editor.set_active_segment_group_icon(group_icon.clone()));
 
     let state = editor.state(&mut image_cache, Lang::English);
-    assert_eq!(state.segment_groups[0].icon, *group_icon.id());
-    assert!(state.segment_groups[0].has_explicit_icon);
+    assert_eq!(segment_group(&state, 0).icon, *group_icon.id());
+    assert!(segment_group(&state, 0).has_explicit_icon);
 
     assert!(editor.remove_active_segment_group_icon());
 
     let state = editor.state(&mut image_cache, Lang::English);
-    assert_eq!(state.segment_groups[0].icon, *major_icon.id());
-    assert!(!state.segment_groups[0].has_explicit_icon);
+    assert_eq!(segment_group(&state, 0).icon, *major_icon.id());
+    assert!(!segment_group(&state, 0).has_explicit_icon);
 }
 
 #[test]

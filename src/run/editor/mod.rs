@@ -27,7 +27,10 @@ pub use self::{
     cleaning::SumOfBestCleaner,
     fuzzy_list::FuzzyList,
     segment_row::SegmentRow,
-    state::{Buttons as ButtonsState, Segment as SegmentState, SelectionState, State},
+    state::{
+        Buttons as ButtonsState, Row as RowState, Segment as SegmentState,
+        SegmentGroup as SegmentGroupState, SelectionState, State,
+    },
 };
 
 /// Describes an Error that occurred while parsing a time.

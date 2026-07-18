@@ -907,10 +907,12 @@ export interface RunEditorStateJson {
      * edited.
      */
     timing_method: TimingMethodJson,
-    /** The state of all the segments. */
-    segments: RunEditorRowJson[],
-    /** The segment groups of the run. */
-    segment_groups: RunEditorSegmentGroupJson[],
+    /**
+     * The rows of the editor in presentation order. Segment group headers are
+     * included directly before their segments so consumers don't need to
+     * reconstruct the visual hierarchy from the run's canonical group ranges.
+     */
+    rows: RunEditorRowJson[],
     /** The names of all the custom comparisons that exist for this Run. */
     comparison_names: string[],
     /** Describes which actions are currently available. */
@@ -1021,8 +1023,20 @@ export interface RunEditorButtonsJson {
     can_remove_segment_group: boolean,
 }
 
-/** Describes the current state of a segment. */
-export interface RunEditorRowJson {
+/** Describes a row in the Run Editor's unified presentation model. */
+export type RunEditorRowJson =
+    RunEditorSegmentRowJson |
+    RunEditorSegmentGroupRowJson;
+
+/** Describes the current state of a segment row. */
+export interface RunEditorSegmentRowJson {
+    /** Identifies this row as an individual segment. */
+    kind: "Segment",
+    /**
+     * The index of the segment in the run. Presentation row indices differ
+     * whenever group headers are present, so mutations must use this index.
+     */
+    segment_index: number,
     /**
      * The icon of the segment. The associated image can be looked up in the
      * image cache. The image may be the empty image. This indicates that there
@@ -1045,21 +1059,27 @@ export interface RunEditorRowJson {
     comparison_times: string[],
     /** Describes the segment's selection state. */
     selected: "NotSelected" | "Selected" | "Active",
-    /** The index of the group this segment belongs to, if any. */
-    segment_group_index: number | null,
+    /** Whether the segment is visually nested beneath a group header. */
+    is_indented: boolean,
+    /** Whether this segment is the major, final segment of its group. */
+    is_major_segment: boolean,
+    /** Whether a visual section boundary starts immediately before this row. */
+    starts_new_section: boolean,
 }
 
-/** Describes a segment group. */
-export interface RunEditorSegmentGroupJson {
-    /** The first segment in the group. */
-    start: number,
-    /** The segment after the last segment in the group. */
-    end: number,
+/** Describes a segment group header row. */
+export interface RunEditorSegmentGroupRowJson {
+    /** Identifies this row as a segment group header. */
+    kind: "SegmentGroup",
+    /** The index of the group in the run. */
+    group_index: number,
+    /** The resolved display name, falling back to the major segment's name. */
+    name: string,
     /**
-     * The explicit group name. If this is `null`, the major split name is the
-     * display name of the group.
+     * The explicitly configured group name. This remains separate from `name`
+     * so an editor can present the inherited name as a placeholder.
      */
-    name: string | null,
+    explicit_name: string | null,
     /**
      * The group display icon. This falls back to the major split icon if no
      * explicit group icon is set.
@@ -1067,6 +1087,8 @@ export interface RunEditorSegmentGroupJson {
     icon: ImageId,
     /** Whether the group icon is explicitly set instead of inherited. */
     has_explicit_icon: boolean,
+    /** Whether every segment in the group is currently selected. */
+    selected: boolean,
 }
 
 /**
