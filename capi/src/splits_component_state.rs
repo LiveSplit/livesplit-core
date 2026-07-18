@@ -110,6 +110,28 @@ pub extern "C" fn SplitsComponentState_is_scrolled_to_split(
     this.splits[index].is_scrolled_to_split
 }
 
+/// Specifies whether the row with the specified index should be indented. You
+/// may not provide an out of bounds index.
+#[unsafe(no_mangle)]
+pub extern "C" fn SplitsComponentState_is_indented(
+    this: &SplitsComponentState,
+    index: usize,
+) -> bool {
+    this.splits[index].is_indented
+}
+
+/// Returns the visual section that the row with the specified index belongs
+/// to. Renderers can use this to alternate backgrounds when multiple flat
+/// segments collapse into a single section. You may not provide an out of
+/// bounds index.
+#[unsafe(no_mangle)]
+pub extern "C" fn SplitsComponentState_section_index(
+    this: &SplitsComponentState,
+    index: usize,
+) -> usize {
+    this.splits[index].section_index
+}
+
 /// Describes if the columns have labels that are meant to be shown. If this is
 /// `false`, no labels are supposed to be visualized.
 #[unsafe(no_mangle)]
