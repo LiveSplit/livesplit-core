@@ -16,8 +16,8 @@ pub struct SegmentGroup {
 }
 
 impl SegmentGroup {
-    /// Creates a new segment group if the provided range contains at least one
-    /// segment.
+    /// Creates a new segment group if the provided range contains one or more
+    /// segments.
     pub fn new(start: usize, end: usize, name: Option<String>) -> Option<Self> {
         (end > start).then_some(Self {
             start,
