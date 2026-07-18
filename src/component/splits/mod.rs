@@ -152,10 +152,11 @@ pub struct SplitState {
     /// The visual section this row belongs to. This is used for alternating
     /// backgrounds when multiple flat segments collapse into a single section.
     pub section_index: usize,
-    /// The index of the segment based on all the segments of the run. This may
-    /// differ from the index of this `SplitState` in the `State` object, as
-    /// there can be a scrolling window, showing only a subset of segments. Each
-    /// index is guaranteed to be unique.
+    /// The stable identity of this visual row. For segment rows this is the
+    /// index of the segment in the run. Synthetic group headers and blank rows
+    /// use reserved values instead. This may differ from the index of this
+    /// `SplitState` in the `State` object, as there can be a scrolling window
+    /// showing only a subset of rows. Each index is guaranteed to be unique.
     pub index: usize,
 }
 
@@ -536,7 +537,7 @@ impl Component {
                 !split.is_group_header && Some(split.segment_index) == scrolled_to_split;
             state.is_indented = split.is_indented;
             state.section_index = split.section_index;
-            state.index = split.segment_index;
+            state.index = split.state_index;
         }
 
         if fill_with_blank_space && state.splits.len() < visual_split_count {
@@ -858,6 +859,7 @@ impl Component {
 }
 
 struct DisplayedSplit<'a> {
+    state_index: usize,
     segment_index: usize,
     column_start_index: usize,
     segment: &'a crate::Segment,
@@ -888,8 +890,16 @@ fn displayed_splits<'a>(
             SubsplitDisplayMode::CurrentGroupExpanded => !is_group || group_index == current_group,
         };
 
-        if is_group && show_hierarchy {
+        if let Some(group_index) = group_index
+            && show_hierarchy
+        {
             displayed.push(DisplayedSplit {
+                // Segment indices remain the stable identity for actual split
+                // rows. Group headers need a different identity because the
+                // major segment is also present while a group is expanded.
+                // Odd indices descending from `usize::MAX` are reserved for
+                // headers, while blank rows use the adjacent even indices.
+                state_index: usize::MAX - 2 * group_index,
                 segment_index: view.major_index(),
                 column_start_index: view.start_index(),
                 segment: view.ending_segment(),
@@ -909,6 +919,7 @@ fn displayed_splits<'a>(
         for (offset, segment) in view.segments().iter().enumerate() {
             let segment_index = view.start_index() + offset;
             displayed.push(DisplayedSplit {
+                state_index: segment_index,
                 segment_index,
                 column_start_index: segment_index,
                 segment,

@@ -175,11 +175,15 @@ fn unique_split_indices() {
     run.push_segment(Segment::new(""));
     run.push_segment(Segment::new(""));
     run.push_segment(Segment::new(""));
+    run.segment_groups_mut().push_lossy(0, 2, None, 3);
     let timer = Timer::new(run).unwrap();
 
     let mut component = Component::with_settings(Settings {
         visual_split_count: 20,
         fill_with_blank_space: true,
+        // Expanded groups contain both a header and their major segment. This
+        // is the case that requires a dedicated visual-row identity.
+        subsplit_display_mode: SubsplitDisplayMode::AllGroupsExpanded,
         ..english_settings()
     });
 
@@ -342,7 +346,7 @@ fn current_group_expanded_subsplit_state() {
         ["Intro", "Chapter A", "A1", "A2", "A End", "Outro"]
     );
     assert!(!state.splits[1].is_indented);
-    assert_eq!(state.splits[1].index, 3);
+    assert_eq!(state.splits[1].index, usize::MAX);
     assert_eq!(state.splits[1].icon, *group_icon.id());
     // No segment has an icon. The group-header icon must still reserve the
     // icon column so the renderer does not overlap it with the header name.
@@ -397,7 +401,7 @@ fn single_segment_group_subsplit_state() {
     );
     assert!(!state.splits[1].is_indented);
     assert!(state.splits[2].is_indented);
-    assert_eq!(state.splits[1].index, 1);
+    assert_eq!(state.splits[1].index, usize::MAX);
     assert_eq!(state.splits[2].index, 1);
 }
 
@@ -434,7 +438,7 @@ fn all_groups_expanded_subsplit_state() {
         ["Intro", "Chapter A", "A1", "A2", "A End", "Outro"]
     );
     assert!(!state.splits[1].is_indented);
-    assert_eq!(state.splits[1].index, 3);
+    assert_eq!(state.splits[1].index, usize::MAX);
     assert!(state.splits[1].columns.is_empty());
     assert!(state.splits[2].is_indented);
     assert!(state.splits[3].is_indented);
@@ -898,7 +902,7 @@ fn current_group_expanded_closes_other_groups() {
     );
     assert!(!state.splits[1].is_indented);
     assert!(!state.splits[1].is_current_split);
-    assert_eq!(state.splits[1].index, 3);
+    assert_eq!(state.splits[1].index, usize::MAX);
     assert_eq!(state.splits[1].columns.len(), 2);
     assert!(state.splits[1].columns.iter().any(|c| !c.value.is_empty()));
     assert!(state.splits[2].is_current_split);
