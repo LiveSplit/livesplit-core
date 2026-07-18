@@ -1,5 +1,5 @@
 use crate::{Segment, platform::prelude::*, settings::Image};
-use core::{iter::FusedIterator, slice};
+use core::{iter::FusedIterator, ops::Range, slice};
 
 /// A contiguous, non-overlapping group of segments.
 ///
@@ -141,32 +141,51 @@ impl SegmentGroups {
         self.repair(segment_count);
     }
 
-    /// Replaces a group and repairs the group list.
-    pub fn replace_lossy(
+    /// Changes one group's range if doing so preserves every group invariant.
+    /// The update is rejected without modifying the list otherwise.
+    pub(crate) fn try_set_range(
         &mut self,
         index: usize,
-        group: SegmentGroup,
+        range: Range<usize>,
         segment_count: usize,
     ) -> bool {
-        let Some(existing_group) = self.groups.get_mut(index) else {
-            return false;
-        };
-        *existing_group = group;
-        self.repair(segment_count);
-        true
+        self.try_set_ranges([(index, range)], segment_count)
     }
 
-    /// Replaces multiple groups and repairs the group list once afterwards.
-    pub fn replace_many_lossy<I>(&mut self, groups: I, segment_count: usize)
+    /// Changes multiple group ranges atomically if the resulting list is
+    /// valid. The updates refer to group indices before the operation.
+    ///
+    /// Unlike the lossy repair path used when importing files, an editor
+    /// operation must never silently clamp, shrink, or discard a group. A
+    /// clone is deliberately validated before committing it so that even an
+    /// invalid set of simultaneous updates leaves every group, including its
+    /// name and icon, exactly as it was.
+    pub(crate) fn try_set_ranges<I>(&mut self, ranges: I, segment_count: usize) -> bool
     where
-        I: IntoIterator<Item = (usize, SegmentGroup)>,
+        I: IntoIterator<Item = (usize, Range<usize>)>,
     {
-        for (index, group) in groups {
-            if let Some(existing_group) = self.groups.get_mut(index) {
-                *existing_group = group;
-            }
+        let mut groups = self.groups.clone();
+        for (index, range) in ranges {
+            let Some(group) = groups.get_mut(index) else {
+                return false;
+            };
+            group.start = range.start;
+            group.end = range.end;
         }
-        self.repair(segment_count);
+
+        groups.sort_unstable_by_key(|group| group.start);
+        let ranges_are_valid = groups
+            .iter()
+            .all(|group| group.start < group.end && group.end <= segment_count)
+            && groups
+                .windows(2)
+                .all(|groups| groups[0].end <= groups[1].start);
+        if !ranges_are_valid {
+            return false;
+        }
+
+        self.groups = groups;
+        true
     }
 
     /// Removes a group.

@@ -767,20 +767,13 @@ impl Editor {
         if group.end() == group.start() + 1 {
             self.run.segment_groups_mut().remove(group_index);
         } else {
-            let name = group.name().map(str::to_owned);
-            let icon = group
-                .icon()
-                .cloned()
-                .unwrap_or_else(|| Image::EMPTY.clone());
-            let group =
-                SegmentGroup::new_unchecked_with_icon(group.start() + 1, group.end(), name, icon);
-            if group.end() <= group.start() {
-                return false;
-            };
+            let range = group.start() + 1..group.end();
             let len = self.run.len();
-            self.run
+            let updated = self
+                .run
                 .segment_groups_mut()
-                .replace_lossy(group_index, group, len);
+                .try_set_range(group_index, range, len);
+            assert!(updated, "shrinking a valid segment group must remain valid");
         }
         self.raise_run_edited();
         true
@@ -801,20 +794,13 @@ impl Editor {
         if group.end() == group.start() + 1 {
             self.run.segment_groups_mut().remove(group_index);
         } else {
-            let name = group.name().map(str::to_owned);
-            let icon = group
-                .icon()
-                .cloned()
-                .unwrap_or_else(|| Image::EMPTY.clone());
-            let group =
-                SegmentGroup::new_unchecked_with_icon(group.start(), group.end() - 1, name, icon);
-            if group.end() <= group.start() {
-                return false;
-            };
+            let range = group.start()..group.end() - 1;
             let len = self.run.len();
-            self.run
+            let updated = self
+                .run
                 .segment_groups_mut()
-                .replace_lossy(group_index, group, len);
+                .try_set_range(group_index, range, len);
+            assert!(updated, "shrinking a valid segment group must remain valid");
         }
         self.raise_run_edited();
         true
@@ -832,19 +818,16 @@ impl Editor {
         };
 
         let group = &self.run.segment_groups().groups()[group_index];
-        let name = group.name().map(str::to_owned);
-        let icon = group
-            .icon()
-            .cloned()
-            .unwrap_or_else(|| Image::EMPTY.clone());
-        let group = SegmentGroup::new_unchecked_with_icon(group.start(), index + 1, name, icon);
-        if group.end() <= group.start() {
-            return false;
-        };
+        let range = group.start()..index + 1;
         let len = self.run.len();
-        self.run
+        let updated = self
+            .run
             .segment_groups_mut()
-            .replace_lossy(group_index, group, len);
+            .try_set_range(group_index, range, len);
+        assert!(
+            updated,
+            "growing a group into an adjacent segment must remain valid"
+        );
         self.raise_run_edited();
         true
     }
@@ -861,19 +844,16 @@ impl Editor {
         };
 
         let group = &self.run.segment_groups().groups()[group_index];
-        let name = group.name().map(str::to_owned);
-        let icon = group
-            .icon()
-            .cloned()
-            .unwrap_or_else(|| Image::EMPTY.clone());
-        let group = SegmentGroup::new_unchecked_with_icon(index, group.end(), name, icon);
-        if group.end() <= group.start() {
-            return false;
-        };
+        let range = index..group.end();
         let len = self.run.len();
-        self.run
+        let updated = self
+            .run
             .segment_groups_mut()
-            .replace_lossy(group_index, group, len);
+            .try_set_range(group_index, range, len);
+        assert!(
+            updated,
+            "growing a group into an adjacent segment must remain valid"
+        );
         self.raise_run_edited();
         true
     }
@@ -933,43 +913,26 @@ impl Editor {
             }
         }
 
-        let previous_name = previous_group_index
-            .and_then(|group_index| self.run.segment_groups().groups()[group_index].name())
-            .map(str::to_owned);
-        let previous_icon = previous_group_index
-            .and_then(|group_index| self.run.segment_groups().groups()[group_index].icon())
-            .cloned()
-            .unwrap_or_else(|| Image::EMPTY.clone());
-        let mut replacements = [None, None];
-        let mut replacement_index = 0;
+        // Both identities need new ranges at the same time when two groups
+        // cross. Applying either range first would temporarily overlap the
+        // other group, even though the final pair of ranges is valid.
+        let mut replacements = Vec::with_capacity(2);
         if let Some(previous_group_index) = previous_group_index {
-            replacements[replacement_index] = Some((
+            replacements.push((
                 previous_group_index,
-                SegmentGroup::new_unchecked_with_icon(
-                    previous_start + group_len,
-                    previous_end + group_len,
-                    previous_name,
-                    previous_icon,
-                ),
+                previous_start + group_len..previous_end + group_len,
             ));
-            replacement_index += 1;
         }
-        replacements[replacement_index] = Some((
-            group_index,
-            SegmentGroup::new_unchecked_with_icon(
-                previous_start,
-                previous_start + group_len,
-                group.name().map(str::to_owned),
-                group
-                    .icon()
-                    .cloned()
-                    .unwrap_or_else(|| Image::EMPTY.clone()),
-            ),
-        ));
+        replacements.push((group_index, previous_start..previous_start + group_len));
         let len = self.run.len();
-        self.run
+        let updated = self
+            .run
             .segment_groups_mut()
-            .replace_many_lossy(replacements.into_iter().flatten(), len);
+            .try_set_ranges(replacements, len);
+        assert!(
+            updated,
+            "moving adjacent visual rows must produce valid groups"
+        );
         self.select_segment_range(previous_start, previous_start + group_len);
         self.times_modified();
         self.fix();
@@ -993,43 +956,25 @@ impl Editor {
             }
         }
 
-        let next_name = next_group_index
-            .and_then(|group_index| self.run.segment_groups().groups()[group_index].name())
-            .map(str::to_owned);
-        let next_icon = next_group_index
-            .and_then(|group_index| self.run.segment_groups().groups()[group_index].icon())
-            .cloned()
-            .unwrap_or_else(|| Image::EMPTY.clone());
-        let mut replacements = [None, None];
-        let mut replacement_index = 0;
+        // Update both group identities atomically for the same reason as in
+        // the upward movement: neither intermediate overlap is a valid state.
+        let mut replacements = Vec::with_capacity(2);
         if let Some(next_group_index) = next_group_index {
-            replacements[replacement_index] = Some((
-                next_group_index,
-                SegmentGroup::new_unchecked_with_icon(
-                    group.start(),
-                    group.start() + next_len,
-                    next_name,
-                    next_icon,
-                ),
-            ));
-            replacement_index += 1;
+            replacements.push((next_group_index, group.start()..group.start() + next_len));
         }
-        replacements[replacement_index] = Some((
+        replacements.push((
             group_index,
-            SegmentGroup::new_unchecked_with_icon(
-                group.start() + next_len,
-                group.end() + next_len,
-                group.name().map(str::to_owned),
-                group
-                    .icon()
-                    .cloned()
-                    .unwrap_or_else(|| Image::EMPTY.clone()),
-            ),
+            group.start() + next_len..group.end() + next_len,
         ));
         let len = self.run.len();
-        self.run
+        let updated = self
+            .run
             .segment_groups_mut()
-            .replace_many_lossy(replacements.into_iter().flatten(), len);
+            .try_set_ranges(replacements, len);
+        assert!(
+            updated,
+            "moving adjacent visual rows must produce valid groups"
+        );
         self.select_segment_range(group.start() + next_len, group.end() + next_len);
         self.times_modified();
         self.fix();

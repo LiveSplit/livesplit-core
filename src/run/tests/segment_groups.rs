@@ -32,6 +32,28 @@ fn segment_groups_repair_invalid_ranges() {
 }
 
 #[test]
+fn segment_group_range_updates_are_exact_and_atomic() {
+    let mut groups = SegmentGroups::from_vec_lossy(
+        vec![
+            SegmentGroup::new(0, 2, Some("A".into())).unwrap(),
+            SegmentGroup::new(2, 5, Some("B".into())).unwrap(),
+        ],
+        5,
+    );
+
+    // Swapping two adjacent groups requires changing both ranges at once. The
+    // group metadata follows its identity, while the collection restores its
+    // range ordering only after validating the complete update.
+    assert!(groups.try_set_ranges([(0, 3..5), (1, 0..3)], 5));
+    assert_eq!(groups.groups()[0].name(), Some("B"));
+    assert_eq!(groups.groups()[1].name(), Some("A"));
+
+    let unchanged = groups.clone();
+    assert!(!groups.try_set_range(0, 0..4, 5));
+    assert_eq!(groups, unchanged);
+}
+
+#[test]
 fn segment_groups_iterates_grouped_and_ungrouped_segments() {
     let mut run = Run::new();
     for name in ["Intro", "A1", "A2", "A End", "Outro"] {
