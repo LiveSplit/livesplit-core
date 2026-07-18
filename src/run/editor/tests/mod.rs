@@ -498,6 +498,59 @@ fn insertion_and_deletion_repair_segment_groups() {
 }
 
 #[test]
+fn inserting_above_selected_group_places_segment_before_group() {
+    let mut run = Run::new();
+    for name in ["Intro", "A1", "A End", "Outro"] {
+        run.push_segment(Segment::new(name));
+    }
+
+    let mut editor = Editor::new(run).unwrap();
+    editor.select_only(1);
+    editor.select_range(2);
+    assert!(editor.create_segment_group_from_selection(Some("Chapter A")));
+    editor.select_only(0);
+    assert!(editor.select_segment_group(0));
+
+    editor.insert_segment_above();
+
+    assert_eq!(
+        editor
+            .run()
+            .segments()
+            .iter()
+            .map(Segment::name)
+            .collect::<Vec<_>>(),
+        ["Intro", "", "A1", "A End", "Outro"]
+    );
+    let group = &editor.run().segment_groups().groups()[0];
+    assert_eq!((group.start(), group.end()), (2, 4));
+}
+
+#[test]
+fn inserting_below_reversed_selection_places_segment_after_selection() {
+    let mut run = Run::new();
+    for name in ["A", "B", "C", "D"] {
+        run.push_segment(Segment::new(name));
+    }
+
+    let mut editor = Editor::new(run).unwrap();
+    editor.select_only(2);
+    editor.select_range(1);
+
+    editor.insert_segment_below();
+
+    assert_eq!(
+        editor
+            .run()
+            .segments()
+            .iter()
+            .map(Segment::name)
+            .collect::<Vec<_>>(),
+        ["A", "B", "C", "", "D"]
+    );
+}
+
+#[test]
 fn moving_segments_inside_group_keeps_segment_group() {
     let mut run = Run::new();
     for name in ["A", "B", "C", "D"] {

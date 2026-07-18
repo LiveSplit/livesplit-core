@@ -149,6 +149,18 @@ impl Editor {
         *self.selected_segments.last().unwrap()
     }
 
+    /// Returns the outer indices of the current selection. Selection order is
+    /// significant because the most recently selected row is active, but it
+    /// must not affect block operations such as inserting immediately before
+    /// or after all selected rows. The editor always keeps at least one segment
+    /// selected, so both bounds are guaranteed to exist.
+    fn selected_segment_bounds(&self) -> (usize, usize) {
+        (
+            *self.selected_segments.iter().min().unwrap(),
+            *self.selected_segments.iter().max().unwrap(),
+        )
+    }
+
     /// Grants mutable access to the actively selected segment row. You can
     /// select multiple segment rows at the same time, but only the one that is
     /// most recently selected is the active segment.
@@ -498,34 +510,34 @@ impl Editor {
         }
     }
 
-    /// Inserts a new empty segment above the active segment and adjusts the
+    /// Inserts a new empty segment above all selected segments and adjusts the
     /// Run's history information accordingly. The newly created segment is then
     /// the only selected segment and also the active segment.
     pub fn insert_segment_above(&mut self) {
-        let active_segment = self.active_segment_index();
+        let (first_selected_segment, _) = self.selected_segment_bounds();
 
         let mut segment = Segment::new("");
-        self.run.import_best_segment(active_segment);
+        self.run.import_best_segment(first_selected_segment);
 
         let max_index = self.run.max_attempt_history_index().unwrap_or(0);
         let min_index = self.run.min_segment_history_index().unwrap();
         for x in min_index..=max_index {
             segment.segment_history_mut().insert(x, Default::default());
         }
-        self.run.insert_segment(active_segment, segment);
+        self.run.insert_segment(first_selected_segment, segment);
 
-        self.select_only(active_segment);
+        self.select_only(first_selected_segment);
 
         self.times_modified();
         self.fix();
     }
 
-    /// Inserts a new empty segment below the active segment and adjusts the
+    /// Inserts a new empty segment below all selected segments and adjusts the
     /// Run's history information accordingly. The newly created segment is then
     /// the only selected segment and also the active segment.
     pub fn insert_segment_below(&mut self) {
-        let active_segment = self.active_segment_index();
-        let next_segment = active_segment + 1;
+        let (_, last_selected_segment) = self.selected_segment_bounds();
+        let next_segment = last_selected_segment + 1;
 
         let mut segment = Segment::new("");
         if next_segment < self.run.len() {
@@ -1160,10 +1172,7 @@ impl Editor {
     }
 
     fn selected_segment_range(&self) -> Option<(usize, usize)> {
-        let (&start, &end) = (
-            self.selected_segments.iter().min()?,
-            self.selected_segments.iter().max()?,
-        );
+        let (start, end) = self.selected_segment_bounds();
         let len = end - start + 1;
         (len == self.selected_segments.len()).then_some((start, end + 1))
     }

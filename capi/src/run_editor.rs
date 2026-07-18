@@ -270,7 +270,7 @@ pub extern "C" fn RunEditor_clear_metadata(this: &mut RunEditor) {
     this.clear_metadata();
 }
 
-/// Inserts a new empty segment above the active segment and adjusts the
+/// Inserts a new empty segment above all selected segments and adjusts the
 /// Run's history information accordingly. The newly created segment is then
 /// the only selected segment and also the active segment.
 #[unsafe(no_mangle)]
@@ -278,7 +278,7 @@ pub extern "C" fn RunEditor_insert_segment_above(this: &mut RunEditor) {
     this.insert_segment_above();
 }
 
-/// Inserts a new empty segment below the active segment and adjusts the
+/// Inserts a new empty segment below all selected segments and adjusts the
 /// Run's history information accordingly. The newly created segment is then
 /// the only selected segment and also the active segment.
 #[unsafe(no_mangle)]
