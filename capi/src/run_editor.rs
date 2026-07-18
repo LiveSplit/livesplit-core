@@ -323,8 +323,9 @@ pub unsafe extern "C" fn RunEditor_create_segment_group_from_selection(
     let name = unsafe { str(name) };
     if name.is_empty() {
         this.create_segment_group_from_selection::<String>(None)
+            .is_ok()
     } else {
-        this.create_segment_group_from_selection(Some(name))
+        this.create_segment_group_from_selection(Some(name)).is_ok()
     }
 }
 
@@ -333,13 +334,13 @@ pub unsafe extern "C" fn RunEditor_create_segment_group_from_selection(
 /// exist.
 #[unsafe(no_mangle)]
 pub extern "C" fn RunEditor_select_segment_group(this: &mut RunEditor, group_index: usize) -> bool {
-    this.select_segment_group(group_index)
+    this.select_segment_group(group_index).is_ok()
 }
 
 /// Removes the selected native segment groups, while keeping all segments.
 #[unsafe(no_mangle)]
 pub extern "C" fn RunEditor_remove_selected_segment_groups(this: &mut RunEditor) -> bool {
-    this.remove_selected_segment_groups()
+    this.remove_selected_segment_groups().is_ok()
 }
 
 /// Renames the native segment group with the provided index.
@@ -353,8 +354,9 @@ pub unsafe extern "C" fn RunEditor_rename_segment_group(
     let name = unsafe { str(name) };
     if name.is_empty() {
         this.rename_segment_group::<String>(group_index, None)
+            .is_ok()
     } else {
-        this.rename_segment_group(group_index, Some(name))
+        this.rename_segment_group(group_index, Some(name)).is_ok()
     }
 }
 
@@ -371,6 +373,7 @@ pub unsafe extern "C" fn RunEditor_set_segment_group_icon(
         group_index,
         Image::new(unsafe { slice(data, length).into() }, Image::ICON),
     )
+    .is_ok()
 }
 
 /// Removes the explicit icon of the native segment group with the provided
@@ -380,7 +383,7 @@ pub extern "C" fn RunEditor_remove_segment_group_icon(
     this: &mut RunEditor,
     group_index: usize,
 ) -> bool {
-    this.remove_segment_group_icon(group_index)
+    this.remove_segment_group_icon(group_index).is_ok()
 }
 
 /// Sets the icon of the active segment.

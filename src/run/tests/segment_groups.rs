@@ -1,6 +1,6 @@
 use crate::{
     Run, Segment,
-    run::{SegmentGroup, SegmentGroups},
+    run::{SegmentGroup, SegmentGroupError, SegmentGroups},
     settings::Image,
 };
 
@@ -44,13 +44,36 @@ fn segment_group_range_updates_are_exact_and_atomic() {
     // Swapping two adjacent groups requires changing both ranges at once. The
     // group metadata follows its identity, while the collection restores its
     // range ordering only after validating the complete update.
-    assert!(groups.try_set_ranges([(0, 3..5), (1, 0..3)], 5));
+    groups.set_ranges([(0, 3..5), (1, 0..3)], 5).unwrap();
     assert_eq!(groups.groups()[0].name(), Some("B"));
     assert_eq!(groups.groups()[1].name(), Some("A"));
 
     let unchanged = groups.clone();
-    assert!(!groups.try_set_range(0, 0..4, 5));
+    assert_eq!(
+        groups.set_range(0, 0..4, 5),
+        Err(SegmentGroupError::OverlappingRanges)
+    );
+    assert_eq!(
+        groups.set_range(0, 1..1, 5),
+        Err(SegmentGroupError::EmptyRange)
+    );
+    assert_eq!(
+        groups.set_range(0, 0..6, 5),
+        Err(SegmentGroupError::RangeOutOfBounds)
+    );
+    assert_eq!(
+        groups.set_range(2, 0..1, 5),
+        Err(SegmentGroupError::InvalidIndex)
+    );
     assert_eq!(groups, unchanged);
+}
+
+#[test]
+fn empty_segment_group_range_is_reported() {
+    assert_eq!(
+        SegmentGroup::new(2, 2, None),
+        Err(SegmentGroupError::EmptyRange)
+    );
 }
 
 #[test]
@@ -88,7 +111,9 @@ fn segment_group_icons_default_to_last_segment_icon() {
     assert_eq!(views[1].icon_or_default().id(), last_segment_icon.id());
 
     let group_icon = Image::new([4, 5, 6].as_slice().into(), Image::ICON);
-    run.segment_groups_mut().set_icon(0, group_icon.clone());
+    run.segment_groups_mut()
+        .set_icon(0, group_icon.clone())
+        .unwrap();
 
     let views = run.segment_groups_iter().collect::<Vec<_>>();
     assert_eq!(views[1].icon().unwrap().id(), group_icon.id());

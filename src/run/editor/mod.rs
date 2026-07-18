@@ -4,7 +4,9 @@
 //! current state of the editor as state objects that can be visualized by any
 //! kind of User Interface.
 
-use super::{AddComparisonError, CopyComparisonError, LinkedLayout, SegmentGroup};
+use super::{
+    AddComparisonError, CopyComparisonError, LinkedLayout, SegmentGroup, SegmentGroupError,
+};
 use crate::{
     Lang, Run, Segment, Time, TimeSpan, TimingMethod, comparison,
     localization::Text,
@@ -80,6 +82,14 @@ pub enum CreateSegmentGroupError {
     EmptySelection,
     /// At least one selected segment already belongs to a segment group.
     SelectionOverlapsExistingGroup,
+}
+
+/// Describes why removing the selected segment groups failed.
+#[derive(PartialEq, Eq, Debug, snafu::Snafu)]
+pub enum RemoveSegmentGroupsError {
+    /// The selection is not made up exclusively of one or more whole segment
+    /// groups.
+    InvalidSelection,
 }
 
 /// The Run Editor allows modifying Runs while ensuring that all the different
@@ -752,16 +762,20 @@ impl Editor {
             .any(|group| group.start() == index + 1)
     }
 
-    fn move_segment_up_out_of_group(&mut self, index: usize) -> bool {
-        let Some(group_index) = self
+    // These helpers participate in movement dispatch: `Err(())` means that the
+    // requested movement does not cross this particular group boundary. A
+    // `Result` is used even though callers do not need a detailed error because
+    // movement is a mutating operation whose outcome must not be accidentally
+    // ignored. Once a helper is applicable, all range changes are required to
+    // preserve the editor's invariants and are therefore asserted below.
+    fn move_segment_up_out_of_group(&mut self, index: usize) -> Result<(), ()> {
+        let group_index = self
             .run
             .segment_groups()
             .groups()
             .iter()
             .position(|group| group.start() == index)
-        else {
-            return false;
-        };
+            .ok_or(())?;
 
         let group = &self.run.segment_groups().groups()[group_index];
         if group.end() == group.start() + 1 {
@@ -769,26 +783,23 @@ impl Editor {
         } else {
             let range = group.start() + 1..group.end();
             let len = self.run.len();
-            let updated = self
-                .run
+            self.run
                 .segment_groups_mut()
-                .try_set_range(group_index, range, len);
-            assert!(updated, "shrinking a valid segment group must remain valid");
+                .set_range(group_index, range, len)
+                .expect("shrinking a valid segment group must remain valid");
         }
         self.raise_run_edited();
-        true
+        Ok(())
     }
 
-    fn move_segment_down_out_of_group(&mut self, index: usize) -> bool {
-        let Some(group_index) = self
+    fn move_segment_down_out_of_group(&mut self, index: usize) -> Result<(), ()> {
+        let group_index = self
             .run
             .segment_groups()
             .groups()
             .iter()
             .position(|group| group.last_segment_index() == index)
-        else {
-            return false;
-        };
+            .ok_or(())?;
 
         let group = &self.run.segment_groups().groups()[group_index];
         if group.end() == group.start() + 1 {
@@ -796,66 +807,53 @@ impl Editor {
         } else {
             let range = group.start()..group.end() - 1;
             let len = self.run.len();
-            let updated = self
-                .run
+            self.run
                 .segment_groups_mut()
-                .try_set_range(group_index, range, len);
-            assert!(updated, "shrinking a valid segment group must remain valid");
+                .set_range(group_index, range, len)
+                .expect("shrinking a valid segment group must remain valid");
         }
         self.raise_run_edited();
-        true
+        Ok(())
     }
 
-    fn move_segment_up_into_group(&mut self, index: usize) -> bool {
-        let Some(group_index) = self
+    fn move_segment_up_into_group(&mut self, index: usize) -> Result<(), ()> {
+        let group_index = self
             .run
             .segment_groups()
             .groups()
             .iter()
             .position(|group| group.last_segment_index() + 1 == index)
-        else {
-            return false;
-        };
+            .ok_or(())?;
 
         let group = &self.run.segment_groups().groups()[group_index];
         let range = group.start()..index + 1;
         let len = self.run.len();
-        let updated = self
-            .run
+        self.run
             .segment_groups_mut()
-            .try_set_range(group_index, range, len);
-        assert!(
-            updated,
-            "growing a group into an adjacent segment must remain valid"
-        );
+            .set_range(group_index, range, len)
+            .expect("growing a group into an adjacent segment must remain valid");
         self.raise_run_edited();
-        true
+        Ok(())
     }
 
-    fn move_segment_down_into_group(&mut self, index: usize) -> bool {
-        let Some(group_index) = self
+    fn move_segment_down_into_group(&mut self, index: usize) -> Result<(), ()> {
+        let group_index = self
             .run
             .segment_groups()
             .groups()
             .iter()
             .position(|group| group.start() == index + 1)
-        else {
-            return false;
-        };
+            .ok_or(())?;
 
         let group = &self.run.segment_groups().groups()[group_index];
         let range = index..group.end();
         let len = self.run.len();
-        let updated = self
-            .run
+        self.run
             .segment_groups_mut()
-            .try_set_range(group_index, range, len);
-        assert!(
-            updated,
-            "growing a group into an adjacent segment must remain valid"
-        );
+            .set_range(group_index, range, len)
+            .expect("growing a group into an adjacent segment must remain valid");
         self.raise_run_edited();
-        true
+        Ok(())
     }
 
     fn visual_range_after(&self, index: usize) -> Option<(usize, usize, Option<usize>)> {
@@ -895,16 +893,14 @@ impl Editor {
         self.selected_segments.extend(start..end);
     }
 
-    fn move_selected_segment_group_up(&mut self) -> bool {
-        let Some(group_index) = self.selected_segment_group_index() else {
-            return false;
-        };
+    // `Err(())` is a dispatch outcome here as well: either the selection is not
+    // exactly one group or there is no visual row in that direction. It lets
+    // the caller continue with ordinary segment movement when appropriate.
+    fn move_selected_segment_group_up(&mut self) -> Result<(), ()> {
+        let group_index = self.selected_segment_group_index().ok_or(())?;
         let group = self.run.segment_groups().groups()[group_index].clone();
-        let Some((previous_start, previous_end, previous_group_index)) =
-            self.visual_range_before(group.start())
-        else {
-            return false;
-        };
+        let (previous_start, previous_end, previous_group_index) =
+            self.visual_range_before(group.start()).ok_or(())?;
 
         let group_len = group.end() - group.start();
         for offset in 0..group_len {
@@ -925,29 +921,21 @@ impl Editor {
         }
         replacements.push((group_index, previous_start..previous_start + group_len));
         let len = self.run.len();
-        let updated = self
-            .run
+        self.run
             .segment_groups_mut()
-            .try_set_ranges(replacements, len);
-        assert!(
-            updated,
-            "moving adjacent visual rows must produce valid groups"
-        );
+            .set_ranges(replacements, len)
+            .expect("moving adjacent visual rows must produce valid groups");
         self.select_segment_range(previous_start, previous_start + group_len);
         self.times_modified();
         self.fix();
-        true
+        Ok(())
     }
 
-    fn move_selected_segment_group_down(&mut self) -> bool {
-        let Some(group_index) = self.selected_segment_group_index() else {
-            return false;
-        };
+    fn move_selected_segment_group_down(&mut self) -> Result<(), ()> {
+        let group_index = self.selected_segment_group_index().ok_or(())?;
         let group = self.run.segment_groups().groups()[group_index].clone();
-        let Some((next_start, next_end, next_group_index)) = self.visual_range_after(group.end())
-        else {
-            return false;
-        };
+        let (next_start, next_end, next_group_index) =
+            self.visual_range_after(group.end()).ok_or(())?;
 
         let next_len = next_end - next_start;
         for offset in 0..next_len {
@@ -967,18 +955,14 @@ impl Editor {
             group.start() + next_len..group.end() + next_len,
         ));
         let len = self.run.len();
-        let updated = self
-            .run
+        self.run
             .segment_groups_mut()
-            .try_set_ranges(replacements, len);
-        assert!(
-            updated,
-            "moving adjacent visual rows must produce valid groups"
-        );
+            .set_ranges(replacements, len)
+            .expect("moving adjacent visual rows must produce valid groups");
         self.select_segment_range(group.start() + next_len, group.end() + next_len);
         self.times_modified();
         self.fix();
-        true
+        Ok(())
     }
 
     /// Checks if the currently selected segments can be moved up. If any one of
@@ -1015,14 +999,16 @@ impl Editor {
         if !self.can_move_segments_up() {
             return;
         }
-        if self.move_selected_segment_group_up() {
+        if self.move_selected_segment_group_up().is_ok() {
             return;
         }
 
         let mut metadata_only_segments = Vec::new();
         let selected_segments = self.selected_segments.clone();
         for index in selected_segments {
-            if self.move_segment_up_out_of_group(index) || self.move_segment_up_into_group(index) {
+            if self.move_segment_up_out_of_group(index).is_ok()
+                || self.move_segment_up_into_group(index).is_ok()
+            {
                 metadata_only_segments.push(index);
             }
         }
@@ -1082,15 +1068,15 @@ impl Editor {
         if !self.can_move_segments_down() {
             return;
         }
-        if self.move_selected_segment_group_down() {
+        if self.move_selected_segment_group_down().is_ok() {
             return;
         }
 
         let mut metadata_only_segments = Vec::new();
         let selected_segments = self.selected_segments.clone();
         for index in selected_segments {
-            if self.move_segment_down_out_of_group(index)
-                || self.move_segment_down_into_group(index)
+            if self.move_segment_down_out_of_group(index).is_ok()
+                || self.move_segment_down_into_group(index).is_ok()
             {
                 metadata_only_segments.push(index);
             }
@@ -1161,7 +1147,7 @@ impl Editor {
         let Some((start, end)) = self.selected_segment_range() else {
             return Err(CreateSegmentGroupError::SelectionNotContiguous);
         };
-        if SegmentGroup::new(start, end, None).is_none() {
+        if SegmentGroup::new(start, end, None).is_err() {
             return Err(CreateSegmentGroupError::EmptySelection);
         }
         if self
@@ -1183,31 +1169,23 @@ impl Editor {
     }
 
     /// Selects every segment in the group with the provided index and
-    /// unselects all other segments. Returns `false` if the group doesn't
-    /// exist. Frontends can use the group identity from the editor state
-    /// directly instead of reconstructing and selecting its segment range.
-    pub fn select_segment_group(&mut self, group_index: usize) -> bool {
+    /// unselects all other segments. Frontends can use the group identity from
+    /// the editor state directly instead of reconstructing and selecting its
+    /// segment range.
+    pub fn select_segment_group(&mut self, group_index: usize) -> Result<(), SegmentGroupError> {
         let Some(group) = self.run.segment_groups().groups().get(group_index) else {
-            return false;
+            return Err(SegmentGroupError::InvalidIndex);
         };
         let (start, last) = (group.start(), group.last_segment_index());
         self.select_only(start);
         self.select_range(last);
-        true
+        Ok(())
     }
 
     /// Creates a segment group from the currently selected contiguous segment
-    /// rows. A group needs at least one segment.
-    pub fn create_segment_group_from_selection<S>(&mut self, name: Option<S>) -> bool
-    where
-        S: PopulateString,
-    {
-        self.try_create_segment_group_from_selection(name).is_ok()
-    }
-
-    /// Creates a segment group from the currently selected contiguous segment
-    /// rows and reports why creation failed.
-    pub fn try_create_segment_group_from_selection<S>(
+    /// rows and reports why creation failed. A group needs at least one
+    /// segment.
+    pub fn create_segment_group_from_selection<S>(
         &mut self,
         name: Option<S>,
     ) -> Result<(), CreateSegmentGroupError>
@@ -1216,9 +1194,8 @@ impl Editor {
     {
         let (start, end) = self.validate_create_segment_group_from_selection()?;
         let name = name.map(PopulateString::into_string);
-        let Some(group) = SegmentGroup::new(start, end, name) else {
-            return Err(CreateSegmentGroupError::EmptySelection);
-        };
+        let group = SegmentGroup::new(start, end, name)
+            .map_err(|_| CreateSegmentGroupError::EmptySelection)?;
         let len = self.run.len();
         self.run.segment_groups_mut().push_group_lossy(group, len);
         self.raise_run_edited();
@@ -1226,47 +1203,52 @@ impl Editor {
     }
 
     /// Removes the selected segment groups, while keeping all segments.
-    pub fn remove_selected_segment_groups(&mut self) -> bool {
+    pub fn remove_selected_segment_groups(&mut self) -> Result<(), RemoveSegmentGroupsError> {
         let Some(mut group_indices) = self.selected_segment_group_indices() else {
-            return false;
+            return Err(RemoveSegmentGroupsError::InvalidSelection);
         };
         group_indices.sort_unstable();
         for group_index in group_indices.into_iter().rev() {
             self.run.segment_groups_mut().remove(group_index);
         }
         self.raise_run_edited();
-        true
+        Ok(())
     }
 
     /// Renames the group with the provided index.
-    pub fn rename_segment_group<S>(&mut self, group_index: usize, name: Option<S>) -> bool
+    pub fn rename_segment_group<S>(
+        &mut self,
+        group_index: usize,
+        name: Option<S>,
+    ) -> Result<(), SegmentGroupError>
     where
         S: PopulateString,
     {
         let name = name.map(PopulateString::into_string);
-        if !self.run.segment_groups_mut().set_name(group_index, name) {
-            return false;
-        }
+        self.run.segment_groups_mut().set_name(group_index, name)?;
         self.raise_run_edited();
-        true
+        Ok(())
     }
 
     /// Sets the icon of the group with the provided index.
-    pub fn set_segment_group_icon(&mut self, group_index: usize, icon: Image) -> bool {
-        if !self.run.segment_groups_mut().set_icon(group_index, icon) {
-            return false;
-        }
+    pub fn set_segment_group_icon(
+        &mut self,
+        group_index: usize,
+        icon: Image,
+    ) -> Result<(), SegmentGroupError> {
+        self.run.segment_groups_mut().set_icon(group_index, icon)?;
         self.raise_run_edited();
-        true
+        Ok(())
     }
 
     /// Removes the explicit icon of the group with the provided index.
-    pub fn remove_segment_group_icon(&mut self, group_index: usize) -> bool {
-        if !self.run.segment_groups_mut().remove_icon(group_index) {
-            return false;
-        }
+    pub fn remove_segment_group_icon(
+        &mut self,
+        group_index: usize,
+    ) -> Result<(), SegmentGroupError> {
+        self.run.segment_groups_mut().remove_icon(group_index)?;
         self.raise_run_edited();
-        true
+        Ok(())
     }
 
     /// Adds a new custom comparison. It can't be added if it starts with

@@ -1,6 +1,10 @@
-use super::{Editor, RowState, SegmentGroupState, SegmentState, SelectionState, State};
+use super::{
+    CreateSegmentGroupError, Editor, RemoveSegmentGroupsError, RowState, SegmentGroupState,
+    SegmentState, SelectionState, State,
+};
 use crate::{
     Lang, Run, Segment, TimeSpan,
+    run::SegmentGroupError,
     settings::{Image, ImageCache},
     util::tests_helper::{create_timer, run_with_splits},
 };
@@ -200,8 +204,10 @@ fn creates_renames_and_removes_segment_groups() {
 
     let mut editor = Editor::new(run).unwrap();
     editor.select_range(2);
-    assert!(editor.create_segment_group_from_selection(Some("Group")));
-    assert!(editor.rename_segment_group(0, Some("Renamed")));
+    editor
+        .create_segment_group_from_selection(Some("Group"))
+        .unwrap();
+    editor.rename_segment_group(0, Some("Renamed")).unwrap();
 
     let mut image_cache = ImageCache::new();
     let state = editor.state(&mut image_cache, Lang::English);
@@ -215,7 +221,7 @@ fn creates_renames_and_removes_segment_groups() {
     assert!(segment_group(&state, 0).selected);
     assert!(segment(&state, 0).is_indented);
 
-    assert!(editor.remove_selected_segment_groups());
+    editor.remove_selected_segment_groups().unwrap();
     assert!(editor.close().segment_groups().groups().is_empty());
 }
 
@@ -229,7 +235,9 @@ fn state_presents_segment_groups_as_unified_rows() {
     let mut editor = Editor::new(run).unwrap();
     editor.select_only(1);
     editor.select_range(2);
-    assert!(editor.create_segment_group_from_selection::<String>(None));
+    editor
+        .create_segment_group_from_selection::<String>(None)
+        .unwrap();
 
     let mut image_cache = ImageCache::new();
     let state = editor.state(&mut image_cache, Lang::English);
@@ -265,8 +273,10 @@ fn renaming_segment_group_keeps_whole_group_selected() {
 
     let mut editor = Editor::new(run).unwrap();
     editor.select_range(2);
-    assert!(editor.create_segment_group_from_selection(Some("Group")));
-    assert!(editor.rename_segment_group(0, Some("Renamed")));
+    editor
+        .create_segment_group_from_selection(Some("Group"))
+        .unwrap();
+    editor.rename_segment_group(0, Some("Renamed")).unwrap();
 
     let mut image_cache = ImageCache::new();
     let state = editor.state(&mut image_cache, Lang::English);
@@ -286,11 +296,16 @@ fn selecting_segment_group_uses_its_state_identity() {
     let mut editor = Editor::new(run).unwrap();
     editor.select_only(1);
     editor.select_range(2);
-    assert!(editor.create_segment_group_from_selection(Some("Group")));
+    editor
+        .create_segment_group_from_selection(Some("Group"))
+        .unwrap();
     editor.select_only(0);
 
-    assert!(editor.select_segment_group(0));
-    assert!(!editor.select_segment_group(1));
+    editor.select_segment_group(0).unwrap();
+    assert_eq!(
+        editor.select_segment_group(1),
+        Err(SegmentGroupError::InvalidIndex)
+    );
 
     let mut image_cache = ImageCache::new();
     let state = editor.state(&mut image_cache, Lang::English);
@@ -311,7 +326,9 @@ fn segment_group_icons_can_be_explicit_or_inherited() {
 
     let mut editor = Editor::new(run).unwrap();
     editor.select_range(2);
-    assert!(editor.create_segment_group_from_selection(Some("Group")));
+    editor
+        .create_segment_group_from_selection(Some("Group"))
+        .unwrap();
 
     let mut image_cache = ImageCache::new();
     let state = editor.state(&mut image_cache, Lang::English);
@@ -319,13 +336,15 @@ fn segment_group_icons_can_be_explicit_or_inherited() {
     assert!(!segment_group(&state, 0).has_explicit_icon);
 
     let group_icon = Image::new([4, 5, 6].as_slice().into(), Image::ICON);
-    assert!(editor.set_segment_group_icon(0, group_icon.clone()));
+    editor
+        .set_segment_group_icon(0, group_icon.clone())
+        .unwrap();
 
     let state = editor.state(&mut image_cache, Lang::English);
     assert_eq!(segment_group(&state, 0).icon, *group_icon.id());
     assert!(segment_group(&state, 0).has_explicit_icon);
 
-    assert!(editor.remove_segment_group_icon(0));
+    editor.remove_segment_group_icon(0).unwrap();
 
     let state = editor.state(&mut image_cache, Lang::English);
     assert_eq!(segment_group(&state, 0).icon, *last_segment_icon.id());
@@ -348,7 +367,9 @@ fn creates_single_segment_group() {
             .buttons
             .can_create_segment_group
     );
-    assert!(editor.create_segment_group_from_selection(Some("Group")));
+    editor
+        .create_segment_group_from_selection(Some("Group"))
+        .unwrap();
 
     let run = editor.close();
     assert_eq!(run.segment_groups().groups().len(), 1);
@@ -370,19 +391,27 @@ fn mixed_selection_cannot_create_or_remove_segment_group() {
 
     let mut editor = Editor::new(run).unwrap();
     editor.select_range(2);
-    assert!(editor.create_segment_group_from_selection(Some("Group")));
+    editor
+        .create_segment_group_from_selection(Some("Group"))
+        .unwrap();
 
     editor.select_only(2);
     editor.select_range(3);
     assert!(!editor.can_create_segment_group_from_selection());
     assert!(!editor.can_remove_selected_segment_groups());
-    assert!(!editor.create_segment_group_from_selection::<String>(None));
-    assert!(!editor.remove_selected_segment_groups());
+    assert_eq!(
+        editor.create_segment_group_from_selection::<String>(None),
+        Err(CreateSegmentGroupError::SelectionOverlapsExistingGroup)
+    );
+    assert_eq!(
+        editor.remove_selected_segment_groups(),
+        Err(RemoveSegmentGroupsError::InvalidSelection)
+    );
 
     editor.select_only(0);
     editor.select_range(2);
     assert!(editor.can_remove_selected_segment_groups());
-    assert!(editor.remove_selected_segment_groups());
+    editor.remove_selected_segment_groups().unwrap();
 }
 
 #[test]
@@ -394,10 +423,14 @@ fn removes_multiple_selected_segment_groups() {
 
     let mut editor = Editor::new(run).unwrap();
     editor.select_range(1);
-    assert!(editor.create_segment_group_from_selection(Some("Group A")));
+    editor
+        .create_segment_group_from_selection(Some("Group A"))
+        .unwrap();
     editor.select_only(2);
     editor.select_range(4);
-    assert!(editor.create_segment_group_from_selection(Some("Group B")));
+    editor
+        .create_segment_group_from_selection(Some("Group B"))
+        .unwrap();
 
     editor.select_only(0);
     editor.select_additionally(1);
@@ -405,7 +438,7 @@ fn removes_multiple_selected_segment_groups() {
     editor.select_additionally(3);
     editor.select_additionally(4);
     assert!(editor.can_remove_selected_segment_groups());
-    assert!(editor.remove_selected_segment_groups());
+    editor.remove_selected_segment_groups().unwrap();
     assert!(editor.run().segment_groups().groups().is_empty());
 }
 
@@ -419,10 +452,14 @@ fn moving_multiple_selected_segment_groups_is_disabled() {
     let mut editor = Editor::new(run).unwrap();
     editor.select_only(1);
     editor.select_range(2);
-    assert!(editor.create_segment_group_from_selection(Some("Group A")));
+    editor
+        .create_segment_group_from_selection(Some("Group A"))
+        .unwrap();
     editor.select_only(3);
     editor.select_range(4);
-    assert!(editor.create_segment_group_from_selection(Some("Group B")));
+    editor
+        .create_segment_group_from_selection(Some("Group B"))
+        .unwrap();
 
     // This matches a Shift selection of the two complete groups in the Run
     // Editor. It must not take the per-segment movement path, which would
@@ -460,7 +497,9 @@ fn ungrouped_selection_before_group_can_create_segment_group() {
     let mut editor = Editor::new(run).unwrap();
     editor.select_only(1);
     editor.select_range(3);
-    assert!(editor.create_segment_group_from_selection(Some("Group")));
+    editor
+        .create_segment_group_from_selection(Some("Group"))
+        .unwrap();
 
     editor.select_only(1);
     editor.move_segments_up();
@@ -468,7 +507,9 @@ fn ungrouped_selection_before_group_can_create_segment_group() {
     editor.select_only(0);
     editor.select_range(1);
     assert!(editor.can_create_segment_group_from_selection());
-    assert!(editor.create_segment_group_from_selection(Some("New Group")));
+    editor
+        .create_segment_group_from_selection(Some("New Group"))
+        .unwrap();
 }
 
 #[test]
@@ -480,7 +521,9 @@ fn insertion_and_deletion_repair_segment_groups() {
 
     let mut editor = Editor::new(run).unwrap();
     editor.select_range(2);
-    assert!(editor.create_segment_group_from_selection::<String>(None));
+    editor
+        .create_segment_group_from_selection::<String>(None)
+        .unwrap();
 
     editor.select_only(1);
     editor.insert_segment_below();
@@ -507,9 +550,11 @@ fn inserting_above_selected_group_places_segment_before_group() {
     let mut editor = Editor::new(run).unwrap();
     editor.select_only(1);
     editor.select_range(2);
-    assert!(editor.create_segment_group_from_selection(Some("Chapter A")));
+    editor
+        .create_segment_group_from_selection(Some("Chapter A"))
+        .unwrap();
     editor.select_only(0);
-    assert!(editor.select_segment_group(0));
+    editor.select_segment_group(0).unwrap();
 
     editor.insert_segment_above();
 
@@ -559,7 +604,9 @@ fn moving_segments_inside_group_keeps_segment_group() {
 
     let mut editor = Editor::new(run).unwrap();
     editor.select_range(2);
-    assert!(editor.create_segment_group_from_selection(Some("Group")));
+    editor
+        .create_segment_group_from_selection(Some("Group"))
+        .unwrap();
 
     editor.select_only(1);
     editor.move_segments_down();
@@ -599,10 +646,14 @@ fn moving_segments_across_group_boundary_keeps_segment_group() {
 
     let mut editor = Editor::new(run).unwrap();
     editor.select_range(2);
-    assert!(editor.create_segment_group_from_selection(Some("Group 1")));
+    editor
+        .create_segment_group_from_selection(Some("Group 1"))
+        .unwrap();
     editor.select_only(3);
     editor.select_range(5);
-    assert!(editor.create_segment_group_from_selection(Some("Group 2")));
+    editor
+        .create_segment_group_from_selection(Some("Group 2"))
+        .unwrap();
 
     editor.select_only(2);
     editor.move_segments_down();
@@ -690,10 +741,14 @@ fn moving_whole_segment_group_down_moves_it_past_next_group() {
 
     let mut editor = Editor::new(run).unwrap();
     editor.select_range(2);
-    assert!(editor.create_segment_group_from_selection(Some("Group A")));
+    editor
+        .create_segment_group_from_selection(Some("Group A"))
+        .unwrap();
     editor.select_only(3);
     editor.select_range(5);
-    assert!(editor.create_segment_group_from_selection(Some("Group B")));
+    editor
+        .create_segment_group_from_selection(Some("Group B"))
+        .unwrap();
 
     editor.select_only(0);
     editor.select_range(2);
@@ -737,10 +792,14 @@ fn moving_whole_segment_group_up_moves_it_past_previous_group() {
     let mut editor = Editor::new(run).unwrap();
     editor.select_only(1);
     editor.select_range(3);
-    assert!(editor.create_segment_group_from_selection(Some("Group A")));
+    editor
+        .create_segment_group_from_selection(Some("Group A"))
+        .unwrap();
     editor.select_only(4);
     editor.select_range(6);
-    assert!(editor.create_segment_group_from_selection(Some("Group B")));
+    editor
+        .create_segment_group_from_selection(Some("Group B"))
+        .unwrap();
 
     editor.select_only(4);
     editor.select_range(6);
@@ -782,7 +841,9 @@ fn moving_whole_segment_group_down_moves_it_past_ungrouped_segment() {
 
     let mut editor = Editor::new(run).unwrap();
     editor.select_range(2);
-    assert!(editor.create_segment_group_from_selection(Some("Group A")));
+    editor
+        .create_segment_group_from_selection(Some("Group A"))
+        .unwrap();
     assert!(editor.can_move_segments_down());
 
     editor.move_segments_down();
@@ -812,7 +873,9 @@ fn moving_whole_segment_group_up_moves_it_past_ungrouped_segment() {
     let mut editor = Editor::new(run).unwrap();
     editor.select_only(1);
     editor.select_range(3);
-    assert!(editor.create_segment_group_from_selection(Some("Group A")));
+    editor
+        .create_segment_group_from_selection(Some("Group A"))
+        .unwrap();
     assert!(editor.can_move_segments_up());
 
     editor.move_segments_up();
@@ -840,7 +903,9 @@ fn moving_edge_segment_out_can_leave_single_segment_group() {
 
     let mut editor = Editor::new(run).unwrap();
     editor.select_range(1);
-    assert!(editor.create_segment_group_from_selection(Some("Group")));
+    editor
+        .create_segment_group_from_selection(Some("Group"))
+        .unwrap();
     editor.select_only(0);
     assert!(editor.can_move_segments_up());
 
@@ -869,7 +934,9 @@ fn moving_last_of_two_segment_group_out_does_not_backfill_group() {
 
     let mut editor = Editor::new(run).unwrap();
     editor.select_range(1);
-    assert!(editor.create_segment_group_from_selection(Some("Group")));
+    editor
+        .create_segment_group_from_selection(Some("Group"))
+        .unwrap();
     editor.select_only(1);
     assert!(editor.can_move_segments_down());
 
@@ -898,7 +965,9 @@ fn moving_single_segment_group_moves_the_group() {
     }
 
     let mut editor = Editor::new(run).unwrap();
-    assert!(editor.create_segment_group_from_selection(Some("Group")));
+    editor
+        .create_segment_group_from_selection(Some("Group"))
+        .unwrap();
     assert!(editor.can_move_segments_down());
 
     editor.move_segments_down();
@@ -925,7 +994,9 @@ fn moving_last_segment_down_can_move_it_out_of_final_group() {
 
     let mut editor = Editor::new(run).unwrap();
     editor.select_range(2);
-    assert!(editor.create_segment_group_from_selection(Some("Group")));
+    editor
+        .create_segment_group_from_selection(Some("Group"))
+        .unwrap();
     editor.select_only(2);
     assert!(editor.can_move_segments_down());
 
@@ -954,7 +1025,9 @@ fn moving_first_segment_up_can_move_it_out_of_first_group() {
 
     let mut editor = Editor::new(run).unwrap();
     editor.select_range(2);
-    assert!(editor.create_segment_group_from_selection(Some("Group")));
+    editor
+        .create_segment_group_from_selection(Some("Group"))
+        .unwrap();
     editor.select_only(0);
     assert!(editor.can_move_segments_up());
 

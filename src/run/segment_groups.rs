@@ -1,6 +1,19 @@
 use crate::{Segment, platform::prelude::*, settings::Image};
 use core::{iter::FusedIterator, ops::Range, slice};
 
+/// Describes why a segment group operation failed.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, snafu::Snafu)]
+pub enum SegmentGroupError {
+    /// The provided segment group index does not exist.
+    InvalidIndex,
+    /// The provided range does not contain any segments.
+    EmptyRange,
+    /// The provided range extends past the segment list.
+    RangeOutOfBounds,
+    /// The provided range overlaps another segment group.
+    OverlappingRanges,
+}
+
 /// A contiguous, non-overlapping group of segments.
 ///
 /// The range is half-open: `start` is inclusive and `end` is exclusive. The
@@ -18,8 +31,11 @@ pub struct SegmentGroup {
 impl SegmentGroup {
     /// Creates a new segment group if the provided range contains one or more
     /// segments.
-    pub fn new(start: usize, end: usize, name: Option<String>) -> Option<Self> {
-        (end > start).then_some(Self {
+    pub fn new(start: usize, end: usize, name: Option<String>) -> Result<Self, SegmentGroupError> {
+        if end <= start {
+            return Err(SegmentGroupError::EmptyRange);
+        }
+        Ok(Self {
             start,
             end,
             name: name.filter(|n| !n.is_empty()),
@@ -129,7 +145,7 @@ impl SegmentGroups {
         name: Option<String>,
         segment_count: usize,
     ) {
-        if let Some(group) = SegmentGroup::new(start, end, name) {
+        if let Ok(group) = SegmentGroup::new(start, end, name) {
             self.groups.push(group);
             self.repair(segment_count);
         }
@@ -143,13 +159,13 @@ impl SegmentGroups {
 
     /// Changes one group's range if doing so preserves every group invariant.
     /// The update is rejected without modifying the list otherwise.
-    pub(crate) fn try_set_range(
+    pub(crate) fn set_range(
         &mut self,
         index: usize,
         range: Range<usize>,
         segment_count: usize,
-    ) -> bool {
-        self.try_set_ranges([(index, range)], segment_count)
+    ) -> Result<(), SegmentGroupError> {
+        self.set_ranges([(index, range)], segment_count)
     }
 
     /// Changes multiple group ranges atomically if the resulting list is
@@ -160,32 +176,39 @@ impl SegmentGroups {
     /// clone is deliberately validated before committing it so that even an
     /// invalid set of simultaneous updates leaves every group, including its
     /// name and icon, exactly as it was.
-    pub(crate) fn try_set_ranges<I>(&mut self, ranges: I, segment_count: usize) -> bool
+    pub(crate) fn set_ranges<I>(
+        &mut self,
+        ranges: I,
+        segment_count: usize,
+    ) -> Result<(), SegmentGroupError>
     where
         I: IntoIterator<Item = (usize, Range<usize>)>,
     {
         let mut groups = self.groups.clone();
         for (index, range) in ranges {
             let Some(group) = groups.get_mut(index) else {
-                return false;
+                return Err(SegmentGroupError::InvalidIndex);
             };
             group.start = range.start;
             group.end = range.end;
         }
 
         groups.sort_unstable_by_key(|group| group.start);
-        let ranges_are_valid = groups
-            .iter()
-            .all(|group| group.start < group.end && group.end <= segment_count)
-            && groups
-                .windows(2)
-                .all(|groups| groups[0].end <= groups[1].start);
-        if !ranges_are_valid {
-            return false;
+        if groups.iter().any(|group| group.start >= group.end) {
+            return Err(SegmentGroupError::EmptyRange);
+        }
+        if groups.iter().any(|group| group.end > segment_count) {
+            return Err(SegmentGroupError::RangeOutOfBounds);
+        }
+        if groups
+            .windows(2)
+            .any(|groups| groups[0].end > groups[1].start)
+        {
+            return Err(SegmentGroupError::OverlappingRanges);
         }
 
         self.groups = groups;
-        true
+        Ok(())
     }
 
     /// Removes a group.
@@ -194,30 +217,34 @@ impl SegmentGroups {
     }
 
     /// Sets the explicit name of a group.
-    pub fn set_name(&mut self, index: usize, name: Option<String>) -> bool {
+    pub fn set_name(
+        &mut self,
+        index: usize,
+        name: Option<String>,
+    ) -> Result<(), SegmentGroupError> {
         let Some(group) = self.groups.get_mut(index) else {
-            return false;
+            return Err(SegmentGroupError::InvalidIndex);
         };
         group.set_name(name);
-        true
+        Ok(())
     }
 
     /// Sets the explicit icon of a group.
-    pub fn set_icon(&mut self, index: usize, icon: Image) -> bool {
+    pub fn set_icon(&mut self, index: usize, icon: Image) -> Result<(), SegmentGroupError> {
         let Some(group) = self.groups.get_mut(index) else {
-            return false;
+            return Err(SegmentGroupError::InvalidIndex);
         };
         group.set_icon(icon);
-        true
+        Ok(())
     }
 
     /// Removes the explicit icon of a group.
-    pub fn remove_icon(&mut self, index: usize) -> bool {
+    pub fn remove_icon(&mut self, index: usize) -> Result<(), SegmentGroupError> {
         let Some(group) = self.groups.get_mut(index) else {
-            return false;
+            return Err(SegmentGroupError::InvalidIndex);
         };
         group.remove_icon();
-        true
+        Ok(())
     }
 
     /// Finds the group containing the provided segment index.
