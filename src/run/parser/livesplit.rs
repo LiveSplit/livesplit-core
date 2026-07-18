@@ -573,10 +573,14 @@ fn import_legacy_subsplits(run: &mut Run) {
 
         if let Some(start) = current_group_start.take() {
             groups.push_lossy(start, index + 1, group_name, segment_count);
-        }
-
-        if let Some(segment_name) = segment_name {
-            run.segment_mut(index).set_name(segment_name);
+            // The brace prefix is metadata for the dashed subsplit group that
+            // just ended, rather than general segment-name syntax. Applying it
+            // to an ungrouped segment would silently rename legitimate names
+            // such as `{Boss} Fight` merely because the file predates native
+            // segment groups.
+            if let Some(segment_name) = segment_name {
+                run.segment_mut(index).set_name(segment_name);
+            }
         }
     }
 

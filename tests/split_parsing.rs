@@ -125,6 +125,18 @@ mod parse {
     }
 
     #[test]
+    fn livesplit_legacy_ungrouped_brace_prefix_is_preserved() {
+        let run = livesplit(&minimal_lss(
+            "1.8.0",
+            &["Intro", "{Boss} Fight", "Outro"],
+            "",
+        ));
+
+        assert!(run.segment_groups().groups().is_empty());
+        assert_eq!(run.segment(1).name(), "{Boss} Fight");
+    }
+
+    #[test]
     fn livesplit_attempt_ended_bug() {
         let run = livesplit(run_files::LIVESPLIT_ATTEMPT_ENDED_BUG);
         let playtime = total_playtime::calculate(run);
