@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 pub const CELESTE: &str = include_str!("Celeste - Any% (1.2.1.5).lss");
+pub const CELESTE_NATIVE_SEGMENT_GROUPS: &str = include_str!("celeste_native_segment_groups.lss");
 pub const FLITTER: &str = include_str!("flitter.json");
 pub const LIVESPLIT_1_0: &str = include_str!("livesplit1.0.lss");
 pub const LIVESPLIT_1_4: &str = include_str!("livesplit1.4.lss");
