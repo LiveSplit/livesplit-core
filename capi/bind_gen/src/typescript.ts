@@ -449,10 +449,24 @@ export interface SplitStateJson {
      */
     is_current_split: boolean,
     /**
-     * The index of the segment based on all the segments of the run. This may
-     * differ from the index of this `SplitStateJson` in the
-     * `SplitsComponentStateJson` object, as there can be a scrolling window,
-     * showing only a subset of segments. Each index is guaranteed to be unique.
+     * Describes if this segment is the segment selected by manually scrolling
+     * through subsplit groups.
+     */
+    is_scrolled_to_split: boolean,
+    /** Specifies whether this row should be indented. */
+    is_indented: boolean,
+    /**
+     * The visual section this row belongs to. This is used for alternating
+     * backgrounds when multiple flat segments collapse into a single section.
+     */
+    section_index: number,
+    /**
+     * The stable identity of this visual row. For segment rows this is the
+     * index of the segment in the run. Synthetic group headers and blank rows
+     * use reserved values instead. This may differ from the index of this
+     * `SplitStateJson` in the `SplitsComponentStateJson` object, as there can
+     * be a scrolling window showing only a subset of rows. Each index is
+     * guaranteed to be unique.
      */
     index: number,
 }
