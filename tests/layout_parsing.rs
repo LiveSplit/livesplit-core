@@ -63,8 +63,42 @@ mod parse {
     }
 
     #[test]
+    fn subsplits_without_header_or_indentation_becomes_flat() {
+        let layout = layout_files::SUBSPLITS
+            .replace(
+                "<ShowHeader>True</ShowHeader>",
+                "<ShowHeader>False</ShowHeader>",
+            )
+            .replace(
+                "<IndentSubsplits>True</IndentSubsplits>",
+                "<IndentSubsplits>False</IndentSubsplits>",
+            );
+        let l = livesplit(&layout);
+        let Some(splits) = l.components.iter().find_map(|c| match c {
+            Component::Splits(s) => Some(s),
+            _ => None,
+        }) else {
+            panic!("Splits component not found");
+        };
+        assert_eq!(
+            splits.settings().subsplit_display_mode,
+            splits::SubsplitDisplayMode::Flat
+        );
+    }
+
+    #[test]
     fn wsplit() {
-        livesplit(layout_files::WSPLIT);
+        let l = livesplit(layout_files::WSPLIT);
+        let Some(splits) = l.components.iter().find_map(|c| match c {
+            Component::Splits(s) => Some(s),
+            _ => None,
+        }) else {
+            panic!("Splits component not found");
+        };
+        assert_eq!(
+            splits.settings().subsplit_display_mode,
+            splits::SubsplitDisplayMode::CurrentGroupExpanded
+        );
     }
 
     #[test]

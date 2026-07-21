@@ -241,15 +241,24 @@ pub fn settings(reader: &mut Reader, component: &mut Component) -> Result<()> {
     settings.background = background_builder.build();
     let legacy_hierarchy =
         legacy_show_header == Some(true) || legacy_indent_subsplits == Some(true);
-    settings.subsplit_display_mode = if legacy_show_subsplits == Some(true) && legacy_hierarchy {
-        splits::SubsplitDisplayMode::AllGroupsExpanded
-    } else if legacy_hierarchy || legacy_hide_subsplits == Some(false) {
-        splits::SubsplitDisplayMode::CurrentGroupExpanded
-    } else if legacy_show_header == Some(false) || legacy_indent_subsplits == Some(false) {
-        splits::SubsplitDisplayMode::Flat
-    } else {
-        settings.subsplit_display_mode
-    };
+    settings.subsplit_display_mode =
+        if legacy_show_header == Some(false) && legacy_indent_subsplits == Some(false) {
+            // The original Subsplits component controlled headers and indentation
+            // independently from which subsplits were visible. Disabling both was
+            // nevertheless how a layout expressed that it did not want to present
+            // the splits as a hierarchy at all. Give that combination precedence
+            // over the visibility flags, which are also always serialized.
+            splits::SubsplitDisplayMode::Flat
+        } else if legacy_show_subsplits == Some(true) && legacy_hierarchy {
+            splits::SubsplitDisplayMode::AllGroupsExpanded
+        } else if legacy_hierarchy || legacy_hide_subsplits == Some(false) {
+            // FIXME: `HideSubsplits` used to support keeping every group collapsed.
+            // Native subsplits do not currently expose such a display mode, so the
+            // closest hierarchical representation expands the current group.
+            splits::SubsplitDisplayMode::CurrentGroupExpanded
+        } else {
+            settings.subsplit_display_mode
+        };
 
     Ok(())
 }
