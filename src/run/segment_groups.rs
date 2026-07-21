@@ -1,18 +1,39 @@
 use crate::{Segment, platform::prelude::*, settings::Image};
 use core::{iter::FusedIterator, ops::Range, slice};
 
-/// Describes why a segment group operation failed.
+/// Describes why creating a segment group failed.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, snafu::Snafu)]
-pub enum SegmentGroupError {
+pub enum SegmentGroupCreationError {
+    /// The provided range does not contain any segments.
+    EmptyRange,
+}
+
+/// Describes why atomically updating one or more segment group ranges failed.
+///
+/// This error is intentionally separate from [`SegmentGroupCreationError`]
+/// and [`InvalidSegmentGroupIndexError`]. Range updates validate the complete
+/// group collection and can therefore fail for reasons that creating a single
+/// group or changing its metadata cannot encounter.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum SegmentGroupRangeUpdateError {
     /// The provided segment group index does not exist.
     InvalidIndex,
-    /// The provided range does not contain any segments.
+    /// An updated range does not contain any segments.
     EmptyRange,
     /// The provided range extends past the segment list.
     RangeOutOfBounds,
     /// The provided range overlaps another segment group.
     OverlappingRanges,
 }
+
+/// The provided segment group index does not exist.
+///
+/// This error is shared only by operations whose sole failure mode is looking
+/// up a group by index. In particular, it does not expose the range-validation
+/// failures that used to be part of the catch-all segment group error.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, snafu::Snafu)]
+#[snafu(display("The provided segment group index does not exist"))]
+pub struct InvalidSegmentGroupIndexError;
 
 /// A contiguous, non-overlapping group of segments.
 ///
@@ -31,9 +52,13 @@ pub struct SegmentGroup {
 impl SegmentGroup {
     /// Creates a new segment group if the provided range contains one or more
     /// segments.
-    pub fn new(start: usize, end: usize, name: Option<String>) -> Result<Self, SegmentGroupError> {
+    pub fn new(
+        start: usize,
+        end: usize,
+        name: Option<String>,
+    ) -> Result<Self, SegmentGroupCreationError> {
         if end <= start {
-            return Err(SegmentGroupError::EmptyRange);
+            return Err(SegmentGroupCreationError::EmptyRange);
         }
         Ok(Self {
             start,
@@ -164,7 +189,7 @@ impl SegmentGroups {
         index: usize,
         range: Range<usize>,
         segment_count: usize,
-    ) -> Result<(), SegmentGroupError> {
+    ) -> Result<(), SegmentGroupRangeUpdateError> {
         self.set_ranges([(index, range)], segment_count)
     }
 
@@ -180,14 +205,14 @@ impl SegmentGroups {
         &mut self,
         ranges: I,
         segment_count: usize,
-    ) -> Result<(), SegmentGroupError>
+    ) -> Result<(), SegmentGroupRangeUpdateError>
     where
         I: IntoIterator<Item = (usize, Range<usize>)>,
     {
         let mut groups = self.groups.clone();
         for (index, range) in ranges {
             let Some(group) = groups.get_mut(index) else {
-                return Err(SegmentGroupError::InvalidIndex);
+                return Err(SegmentGroupRangeUpdateError::InvalidIndex);
             };
             group.start = range.start;
             group.end = range.end;
@@ -195,16 +220,16 @@ impl SegmentGroups {
 
         groups.sort_unstable_by_key(|group| group.start);
         if groups.iter().any(|group| group.start >= group.end) {
-            return Err(SegmentGroupError::EmptyRange);
+            return Err(SegmentGroupRangeUpdateError::EmptyRange);
         }
         if groups.iter().any(|group| group.end > segment_count) {
-            return Err(SegmentGroupError::RangeOutOfBounds);
+            return Err(SegmentGroupRangeUpdateError::RangeOutOfBounds);
         }
         if groups
             .windows(2)
             .any(|groups| groups[0].end > groups[1].start)
         {
-            return Err(SegmentGroupError::OverlappingRanges);
+            return Err(SegmentGroupRangeUpdateError::OverlappingRanges);
         }
 
         self.groups = groups;
@@ -221,27 +246,31 @@ impl SegmentGroups {
         &mut self,
         index: usize,
         name: Option<String>,
-    ) -> Result<(), SegmentGroupError> {
+    ) -> Result<(), InvalidSegmentGroupIndexError> {
         let Some(group) = self.groups.get_mut(index) else {
-            return Err(SegmentGroupError::InvalidIndex);
+            return Err(InvalidSegmentGroupIndexError);
         };
         group.set_name(name);
         Ok(())
     }
 
     /// Sets the explicit icon of a group.
-    pub fn set_icon(&mut self, index: usize, icon: Image) -> Result<(), SegmentGroupError> {
+    pub fn set_icon(
+        &mut self,
+        index: usize,
+        icon: Image,
+    ) -> Result<(), InvalidSegmentGroupIndexError> {
         let Some(group) = self.groups.get_mut(index) else {
-            return Err(SegmentGroupError::InvalidIndex);
+            return Err(InvalidSegmentGroupIndexError);
         };
         group.set_icon(icon);
         Ok(())
     }
 
     /// Removes the explicit icon of a group.
-    pub fn remove_icon(&mut self, index: usize) -> Result<(), SegmentGroupError> {
+    pub fn remove_icon(&mut self, index: usize) -> Result<(), InvalidSegmentGroupIndexError> {
         let Some(group) = self.groups.get_mut(index) else {
-            return Err(SegmentGroupError::InvalidIndex);
+            return Err(InvalidSegmentGroupIndexError);
         };
         group.remove_icon();
         Ok(())

@@ -1,8 +1,10 @@
 use crate::{
     Run, Segment,
-    run::{SegmentGroup, SegmentGroupError, SegmentGroups},
+    run::{InvalidSegmentGroupIndexError, SegmentGroup, SegmentGroupCreationError, SegmentGroups},
     settings::Image,
 };
+
+use super::super::segment_groups::SegmentGroupRangeUpdateError;
 
 #[test]
 fn segment_groups_repair_invalid_ranges() {
@@ -51,19 +53,19 @@ fn segment_group_range_updates_are_exact_and_atomic() {
     let unchanged = groups.clone();
     assert_eq!(
         groups.set_range(0, 0..4, 5),
-        Err(SegmentGroupError::OverlappingRanges)
+        Err(SegmentGroupRangeUpdateError::OverlappingRanges)
     );
     assert_eq!(
         groups.set_range(0, 1..1, 5),
-        Err(SegmentGroupError::EmptyRange)
+        Err(SegmentGroupRangeUpdateError::EmptyRange)
     );
     assert_eq!(
         groups.set_range(0, 0..6, 5),
-        Err(SegmentGroupError::RangeOutOfBounds)
+        Err(SegmentGroupRangeUpdateError::RangeOutOfBounds)
     );
     assert_eq!(
         groups.set_range(2, 0..1, 5),
-        Err(SegmentGroupError::InvalidIndex)
+        Err(SegmentGroupRangeUpdateError::InvalidIndex)
     );
     assert_eq!(groups, unchanged);
 }
@@ -72,8 +74,23 @@ fn segment_group_range_updates_are_exact_and_atomic() {
 fn empty_segment_group_range_is_reported() {
     assert_eq!(
         SegmentGroup::new(2, 2, None),
-        Err(SegmentGroupError::EmptyRange)
+        Err(SegmentGroupCreationError::EmptyRange)
     );
+}
+
+#[test]
+fn segment_group_metadata_updates_only_report_an_invalid_index() {
+    let mut groups = SegmentGroups::new();
+
+    assert_eq!(
+        groups.set_name(0, Some("Missing".into())),
+        Err(InvalidSegmentGroupIndexError)
+    );
+    assert_eq!(
+        groups.set_icon(0, Image::EMPTY.clone()),
+        Err(InvalidSegmentGroupIndexError)
+    );
+    assert_eq!(groups.remove_icon(0), Err(InvalidSegmentGroupIndexError));
 }
 
 #[test]

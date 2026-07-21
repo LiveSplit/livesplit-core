@@ -5,7 +5,8 @@
 //! kind of User Interface.
 
 use super::{
-    AddComparisonError, CopyComparisonError, LinkedLayout, SegmentGroup, SegmentGroupError,
+    AddComparisonError, CopyComparisonError, InvalidSegmentGroupIndexError, LinkedLayout,
+    SegmentGroup,
 };
 use crate::{
     Lang, Run, Segment, Time, TimeSpan, TimingMethod, comparison,
@@ -78,8 +79,6 @@ pub enum RenameError {
 pub enum CreateSegmentGroupError {
     /// The selected segments are not one contiguous range.
     SelectionNotContiguous,
-    /// The selected range is empty.
-    EmptySelection,
     /// At least one selected segment already belongs to a segment group.
     SelectionOverlapsExistingGroup,
 }
@@ -1147,9 +1146,6 @@ impl Editor {
         let Some((start, end)) = self.selected_segment_range() else {
             return Err(CreateSegmentGroupError::SelectionNotContiguous);
         };
-        if SegmentGroup::new(start, end, None).is_err() {
-            return Err(CreateSegmentGroupError::EmptySelection);
-        }
         if self
             .run
             .segment_groups()
@@ -1172,9 +1168,12 @@ impl Editor {
     /// unselects all other segments. Frontends can use the group identity from
     /// the editor state directly instead of reconstructing and selecting its
     /// segment range.
-    pub fn select_segment_group(&mut self, group_index: usize) -> Result<(), SegmentGroupError> {
+    pub fn select_segment_group(
+        &mut self,
+        group_index: usize,
+    ) -> Result<(), InvalidSegmentGroupIndexError> {
         let Some(group) = self.run.segment_groups().groups().get(group_index) else {
-            return Err(SegmentGroupError::InvalidIndex);
+            return Err(InvalidSegmentGroupIndexError);
         };
         let (start, last) = (group.start(), group.last_segment_index());
         self.select_only(start);
@@ -1194,8 +1193,11 @@ impl Editor {
     {
         let (start, end) = self.validate_create_segment_group_from_selection()?;
         let name = name.map(PopulateString::into_string);
+        // The editor always keeps at least one segment selected, and validation
+        // above guarantees that the selection is contiguous. Its derived
+        // half-open range is therefore non-empty and construction cannot fail.
         let group = SegmentGroup::new(start, end, name)
-            .map_err(|_| CreateSegmentGroupError::EmptySelection)?;
+            .expect("a validated editor selection must produce a non-empty range");
         let len = self.run.len();
         self.run.segment_groups_mut().push_group_lossy(group, len);
         self.raise_run_edited();
@@ -1220,7 +1222,7 @@ impl Editor {
         &mut self,
         group_index: usize,
         name: Option<S>,
-    ) -> Result<(), SegmentGroupError>
+    ) -> Result<(), InvalidSegmentGroupIndexError>
     where
         S: PopulateString,
     {
@@ -1235,7 +1237,7 @@ impl Editor {
         &mut self,
         group_index: usize,
         icon: Image,
-    ) -> Result<(), SegmentGroupError> {
+    ) -> Result<(), InvalidSegmentGroupIndexError> {
         self.run.segment_groups_mut().set_icon(group_index, icon)?;
         self.raise_run_edited();
         Ok(())
@@ -1245,7 +1247,7 @@ impl Editor {
     pub fn remove_segment_group_icon(
         &mut self,
         group_index: usize,
-    ) -> Result<(), SegmentGroupError> {
+    ) -> Result<(), InvalidSegmentGroupIndexError> {
         self.run.segment_groups_mut().remove_icon(group_index)?;
         self.raise_run_edited();
         Ok(())

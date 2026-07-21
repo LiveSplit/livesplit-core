@@ -35,7 +35,8 @@ pub use linked_layout::LinkedLayout;
 pub use run_metadata::{CustomVariable, RunMetadata};
 pub use segment::Segment;
 pub use segment_groups::{
-    SegmentGroup, SegmentGroupError, SegmentGroupView, SegmentGroups, SegmentGroupsIter,
+    InvalidSegmentGroupIndexError, SegmentGroup, SegmentGroupCreationError, SegmentGroupView,
+    SegmentGroups, SegmentGroupsIter,
 };
 pub use segment_history::SegmentHistory;
 

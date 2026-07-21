@@ -4,7 +4,7 @@ use super::{
 };
 use crate::{
     Lang, Run, Segment, TimeSpan,
-    run::SegmentGroupError,
+    run::InvalidSegmentGroupIndexError,
     settings::{Image, ImageCache},
     util::tests_helper::{create_timer, run_with_splits},
 };
@@ -304,7 +304,7 @@ fn selecting_segment_group_uses_its_state_identity() {
     editor.select_segment_group(0).unwrap();
     assert_eq!(
         editor.select_segment_group(1),
-        Err(SegmentGroupError::InvalidIndex)
+        Err(InvalidSegmentGroupIndexError)
     );
 
     let mut image_cache = ImageCache::new();
