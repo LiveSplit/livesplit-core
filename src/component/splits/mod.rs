@@ -413,7 +413,21 @@ impl Component {
         }
 
         let method = timer.current_timing_method();
-        let current_display_index = displayed_metadata.current_index;
+        // The original Subsplits component reserves a row for the active
+        // group's header. Treat that header as pinned rather than as part of
+        // the scrollable sequence, so constrained layouts discard older group
+        // rows before they discard the context that identifies the group.
+        let pinned_header_index = displayed_metadata.active_group_header_index;
+        let pinned_header_count = usize::from(pinned_header_index.is_some());
+        let scrollable_split_count = displayed_len - pinned_header_count;
+        let scrollable_visual_split_count = visual_split_count.saturating_sub(pinned_header_count);
+        let index_without_pinned_header = |index| {
+            index
+                - usize::from(pinned_header_index.is_some_and(|header_index| header_index < index))
+        };
+        let current_display_index = displayed_metadata
+            .current_index
+            .map(index_without_pinned_header);
 
         let locked_last_split = isize::from(self.settings.always_show_last_split);
         let skip_count = min(
@@ -424,10 +438,10 @@ impl Component {
                         + self.settings.split_preview_count as isize
                         + locked_last_split
                         + 1
-                        - visual_split_count as isize,
+                        - scrollable_visual_split_count as isize,
                 )
             }),
-            displayed_len as isize - visual_split_count as isize,
+            scrollable_split_count as isize - scrollable_visual_split_count as isize,
         );
         let scroll_offset =
             if self.settings.subsplit_display_mode == SubsplitDisplayMode::CurrentGroupExpanded {
@@ -435,17 +449,19 @@ impl Component {
             } else {
                 self.scroll_offset = min(
                     max(self.scroll_offset, -skip_count),
-                    displayed_len as isize - skip_count - visual_split_count as isize,
+                    scrollable_split_count as isize
+                        - skip_count
+                        - scrollable_visual_split_count as isize,
                 );
                 self.scroll_offset
             };
         let skip_count = max(0, skip_count + scroll_offset) as usize;
-        let take_count = visual_split_count - locked_last_split as usize;
+        let take_count = scrollable_visual_split_count.saturating_sub(locked_last_split as usize);
         let always_show_last_split = self.settings.always_show_last_split;
 
         let show_final_separator = self.settings.separator_last_split
             && always_show_last_split
-            && skip_count + take_count + 1 < displayed_len;
+            && skip_count + take_count + 1 < scrollable_split_count;
 
         let Settings {
             show_thin_separators,
@@ -468,8 +484,15 @@ impl Component {
         }
 
         state.splits.clear();
-        for (_i, split) in displayed.enumerate().skip(skip_count).filter(|&(i, _)| {
-            i - skip_count < take_count || (always_show_last_split && i + 1 == displayed_len)
+        for (_i, split) in displayed.enumerate().filter(|&(index, _)| {
+            if Some(index) == pinned_header_index {
+                return true;
+            }
+
+            let index = index_without_pinned_header(index);
+            index >= skip_count
+                && (index - skip_count < take_count
+                    || (always_show_last_split && index + 1 == scrollable_split_count))
         }) {
             let state = state.splits.push_with(|| SplitState {
                 icon: *ImageId::EMPTY,
@@ -864,6 +887,7 @@ struct DisplayedSplit<'a> {
 struct DisplayedSplitsMetadata {
     len: usize,
     current_index: Option<usize>,
+    active_group_header_index: Option<usize>,
     has_icons: bool,
 }
 
@@ -900,12 +924,16 @@ fn displayed_splits<'a>(
     let mut metadata = DisplayedSplitsMetadata {
         len: 0,
         current_index: None,
+        active_group_header_index: None,
         has_icons: false,
     };
     for view in run.segment_groups_iter() {
         let (show_header, expand) = section_display(mode, view.group_index(), current_group);
 
         if show_header {
+            if view.group_index() == current_group {
+                metadata.active_group_header_index = Some(metadata.len);
+            }
             metadata.len += 1;
             metadata.has_icons |= !view.icon_or_default().is_empty();
         }

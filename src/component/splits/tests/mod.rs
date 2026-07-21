@@ -368,6 +368,45 @@ fn current_group_expanded_subsplit_state() {
 }
 
 #[test]
+fn current_group_header_stays_visible_when_group_rows_scroll() {
+    let mut run = Run::new();
+    for name in ["Intro", "A1", "A2", "A3", "A4", "A5", "A6", "Outro"] {
+        run.push_segment(Segment::new(name));
+    }
+    run.segment_groups_mut()
+        .push_lossy(1, 7, Some("Chapter A".into()), 8);
+
+    let mut timer = Timer::new(run).unwrap();
+    let mut component = Component::with_settings(Settings {
+        visual_split_count: 4,
+        split_preview_count: 1,
+        subsplit_display_mode: SubsplitDisplayMode::CurrentGroupExpanded,
+        ..english_settings()
+    });
+    let mut image_cache = ImageCache::new();
+
+    timer.start().unwrap();
+    for _ in 0..4 {
+        timer.split().unwrap();
+    }
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &Default::default(),
+        Lang::English,
+    );
+
+    assert_eq!(
+        state
+            .splits
+            .iter()
+            .map(|split| split.name.as_str())
+            .collect::<Vec<_>>(),
+        ["Chapter A", "A4", "A5", "Outro"]
+    );
+}
+
+#[test]
 fn single_segment_group_subsplit_state() {
     let mut run = Run::new();
     for name in ["Intro", "A", "Outro"] {
