@@ -508,19 +508,24 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
     fn render_selection_outline(&mut self, [w, h]: Pos) {
         const COLOR: FillShader =
             FillShader::SolidColor([50.0 / 255.0, 114.0 / 255.0, 241.0 / 255.0, 1.0]);
+        self.render_selection_outline_with_color([w, h], COLOR);
+    }
+
+    /// Draws a selection outline with a custom color. See `render_selection_outline`.
+    fn render_selection_outline_with_color(&mut self, [w, h]: Pos, color: FillShader) {
         const THICKNESS: f32 = 0.08;
         let rectangle = self.rectangle();
         let layer = self.scene.layer_mut(Layer::Top);
         // Top edge
         layer.push(Entity::FillPath(
             rectangle.share(),
-            COLOR,
+            color,
             self.transform.pre_scale(w, THICKNESS),
         ));
         // Bottom edge
         layer.push(Entity::FillPath(
             rectangle.share(),
-            COLOR,
+            color,
             self.transform
                 .pre_translate(0.0, h - THICKNESS)
                 .pre_scale(w, THICKNESS),
@@ -528,13 +533,13 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         // Left edge
         layer.push(Entity::FillPath(
             rectangle.share(),
-            COLOR,
+            color,
             self.transform.pre_scale(THICKNESS, h),
         ));
         // Right edge
         layer.push(Entity::FillPath(
             rectangle,
-            COLOR,
+            color,
             self.transform
                 .pre_translate(w - THICKNESS, 0.0)
                 .pre_scale(THICKNESS, h),

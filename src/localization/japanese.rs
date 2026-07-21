@@ -412,6 +412,8 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsShowColumnLabels => "列ラベルを表示",
         Text::SplitsShowColumnLabelsDescription => "一覧の上部に列名を表示するかどうか。",
+        Text::SplitsSubsplitDisplayMode => "サブスプリット表示モード",
+        Text::SplitsSubsplitDisplayModeDescription => "サブスプリットの表示方法を設定します。",
         Text::SplitsColumns => "列",
         Text::SplitsColumnsDescription => {
             "各行に表示する列数。各列は異なる情報を表示できます。列は右から左に定義されます。"

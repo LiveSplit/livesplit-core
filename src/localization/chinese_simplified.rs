@@ -330,6 +330,8 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsDropDeltaDecimalsDescription => "当差值列超过 1 分钟时是否不再显示小数。",
         Text::SplitsShowColumnLabels => "显示列标题",
         Text::SplitsShowColumnLabelsDescription => "指定是否在列表顶部显示列名称。",
+        Text::SplitsSubsplitDisplayMode => "子分段显示模式",
+        Text::SplitsSubsplitDisplayModeDescription => "控制子分段的显示方式。",
         Text::SplitsColumns => "列",
         Text::SplitsColumnsDescription => "每行显示的列数。每列可显示不同信息。列从右到左定义。",
         Text::SplitsColumnName => "列名",

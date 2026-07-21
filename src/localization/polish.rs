@@ -442,6 +442,10 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowColumnLabelsDescription => {
             "Określa, czy wyświetlać nazwy kolumn na górze listy."
         }
+        Text::SplitsSubsplitDisplayMode => "Tryb wyświetlania podziałów podrzędnych",
+        Text::SplitsSubsplitDisplayModeDescription => {
+            "Określa, jak wyświetlane są podziały podrzędne."
+        }
         Text::SplitsColumns => "Kolumny",
         Text::SplitsColumnsDescription => {
             "Liczba kolumn do wyświetlenia w każdym wierszu. Każda kolumna może być skonfigurowana do wyświetlania różnych informacji. Kolumny są zdefiniowane od prawej do lewej."

@@ -94,6 +94,8 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::CarouselMinDisplay => "最短顯示時間（秒）",
         Text::CarouselMinDisplayDescription => "切換到其他子元件之前，目前子元件至少要顯示的秒數。",
+        Text::SplitsSubsplitDisplayMode => "子分段顯示模式",
+        Text::SplitsSubsplitDisplayModeDescription => "控制子分段的顯示方式。",
         Text::SplitTime => "分段時間",
         _ => super::chinese_simplified::resolve(text),
     }

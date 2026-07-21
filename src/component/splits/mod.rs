@@ -10,10 +10,10 @@ use crate::{
     localization::{Lang, Text},
     platform::prelude::*,
     settings::{
-        self, Color, Field, FieldHint, Gradient, ImageCache, ImageId, ListGradient,
+        self, Color, Field, FieldHint, Gradient, Image, ImageCache, ImageId, ListGradient,
         SettingsDescription, Value,
     },
-    timing::{Snapshot, formatter::Accuracy},
+    timing::{Snapshot, TimerPhase, formatter::Accuracy},
     util::{Clear, ClearVec},
 };
 use core::{
@@ -32,7 +32,7 @@ pub use column::{
     ColumnUpdateWith, TimeColumn, VariableColumn,
 };
 
-const SETTINGS_BEFORE_COLUMNS: usize = 15;
+const SETTINGS_BEFORE_COLUMNS: usize = 16;
 const SETTINGS_PER_TIME_COLUMN: usize = 6;
 const SETTINGS_PER_VARIABLE_COLUMN: usize = 2;
 
@@ -107,10 +107,25 @@ pub struct Settings {
     pub delta_drop_decimals: bool,
     /// Specifies whether to show the names of the columns above the splits.
     pub show_column_labels: bool,
+    /// Specifies how native subsplits are displayed.
+    pub subsplit_display_mode: SubsplitDisplayMode,
     /// The columns to show on the splits. These can be configured in various
     /// way to show split times, segment times, deltas and so on. The columns
     /// are defined from right to left.
     pub columns: Vec<ColumnSettings>,
+}
+
+/// Describes how native subsplits are displayed.
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub enum SubsplitDisplayMode {
+    /// Every segment is shown as part of the flat list without group hierarchy.
+    Flat,
+    /// Groups are shown with header rows, but only the current group has its
+    /// contents expanded.
+    #[default]
+    CurrentGroupExpanded,
+    /// Groups are shown with header rows and all group contents expanded.
+    AllGroupsExpanded,
 }
 
 /// The state object that describes a single segment's information to visualize.
@@ -128,10 +143,22 @@ pub struct SplitState {
     /// Describes if this segment is the segment the active attempt is currently
     /// on.
     pub is_current_split: bool,
-    /// The index of the segment based on all the segments of the run. This may
-    /// differ from the index of this `SplitState` in the `State` object, as
-    /// there can be a scrolling window, showing only a subset of segments. Each
-    /// index is guaranteed to be unique.
+    /// Describes if this segment is the segment selected by manually scrolling
+    /// through subsplit groups.
+    pub is_scrolled_to_split: bool,
+    /// Specifies whether this row should be indented.
+    pub is_indented: bool,
+    /// Specifies whether a more pronounced separator should be shown before
+    /// this row because one or more logical rows preceding it are not visible.
+    pub show_separator_before: bool,
+    /// The visual section this row belongs to. This is used for alternating
+    /// backgrounds when multiple flat segments collapse into a single section.
+    pub section_index: usize,
+    /// The stable identity of this visual row. For segment rows this is the
+    /// index of the segment in the run. Synthetic group headers and blank rows
+    /// use reserved values instead. This may differ from the index of this
+    /// `SplitState` in the `State` object, as there can be a scrolling window
+    /// showing only a subset of rows. Each index is guaranteed to be unique.
     pub index: usize,
 }
 
@@ -140,6 +167,12 @@ impl Clear for SplitState {
         self.icon = *ImageId::EMPTY;
         self.name.clear();
         self.columns.clear();
+        self.is_current_split = false;
+        self.is_scrolled_to_split = false;
+        self.is_indented = false;
+        self.show_separator_before = false;
+        self.section_index = 0;
+        self.index = 0;
     }
 }
 
@@ -162,9 +195,6 @@ pub struct State {
     /// Specifies whether thin separators should be shown between the individual
     /// segments shown by the component.
     pub show_thin_separators: bool,
-    /// Describes whether a more pronounced separator should be shown in front
-    /// of the last segment provided.
-    pub show_final_separator: bool,
     /// Specifies whether to display each split as two rows, with the segment
     /// name being in one row and the times being in the other.
     pub display_two_rows: bool,
@@ -178,6 +208,10 @@ impl SplitState {
         self.icon.hash(state);
         self.name.hash(state);
         self.is_current_split.hash(state);
+        self.is_scrolled_to_split.hash(state);
+        self.is_indented.hash(state);
+        self.show_separator_before.hash(state);
+        self.section_index.hash(state);
         self.index.hash(state);
         self.columns.len().hash(state);
         for column in self.columns.iter() {
@@ -229,6 +263,7 @@ impl Settings {
             delta_time_accuracy: Accuracy::Tenths,
             delta_drop_decimals: true,
             show_column_labels: false,
+            subsplit_display_mode: SubsplitDisplayMode::CurrentGroupExpanded,
             columns: vec![
                 ColumnSettings {
                     name: Text::SplitTime.resolve(lang).into(),
@@ -328,40 +363,103 @@ impl Component {
         }
 
         let run = timer.run();
+        let current_split = timer.current_split_index();
+        let mut scrolled_to_split = None;
+        let display_current_split = if self.settings.subsplit_display_mode
+            == SubsplitDisplayMode::CurrentGroupExpanded
+            && !run.is_empty()
+            && !run.segment_groups().groups().is_empty()
+        {
+            let (base_split, min_split, max_split) = match timer.current_phase() {
+                TimerPhase::NotRunning => (-1, -1, run.len() as isize - 1),
+                TimerPhase::Ended => (run.len() as isize, 0, run.len() as isize),
+                TimerPhase::Running | TimerPhase::Paused => {
+                    let current_split = min(current_split.unwrap_or(0), run.len() - 1) as isize;
+                    (current_split, 0, run.len() as isize - 1)
+                }
+            };
+            self.scroll_offset = min(
+                max(self.scroll_offset, min_split - base_split),
+                max_split - base_split,
+            );
+            let split = base_split + self.scroll_offset;
+            let split = (0..run.len() as isize)
+                .contains(&split)
+                .then_some(split as usize);
+            if self.scroll_offset != 0 {
+                scrolled_to_split = split;
+            }
+            if self.scroll_offset != 0
+                || matches!(
+                    timer.current_phase(),
+                    TimerPhase::Running | TimerPhase::Paused
+                )
+            {
+                split
+            } else {
+                None
+            }
+        } else {
+            current_split
+        };
+        let (displayed, displayed_metadata) = displayed_splits(
+            run,
+            display_current_split,
+            self.settings.subsplit_display_mode,
+        );
+        let displayed_len = displayed_metadata.len;
 
         let mut visual_split_count = self.settings.visual_split_count;
         if visual_split_count == 0 {
-            visual_split_count = run.len();
+            visual_split_count = displayed_len;
         }
 
-        let current_split = timer.current_split_index();
         let method = timer.current_timing_method();
+        // The original Subsplits component reserves a row for the active
+        // group's header. Treat that header as pinned rather than as part of
+        // the scrollable sequence, so constrained layouts discard older group
+        // rows before they discard the context that identifies the group.
+        let pinned_header_index = displayed_metadata.active_group_header_index;
+        let pinned_header_count = usize::from(pinned_header_index.is_some());
+        let scrollable_split_count = displayed_len - pinned_header_count;
+        let scrollable_visual_split_count = visual_split_count.saturating_sub(pinned_header_count);
+        let index_without_pinned_header = |index| {
+            index
+                - usize::from(pinned_header_index.is_some_and(|header_index| header_index < index))
+        };
+        let current_display_index = displayed_metadata
+            .current_index
+            .map(index_without_pinned_header);
 
         let locked_last_split = isize::from(self.settings.always_show_last_split);
         let skip_count = min(
-            current_split.map_or(0, |current_split| {
+            current_display_index.map_or(0, |current_split| {
                 max(
                     0,
                     current_split as isize
                         + self.settings.split_preview_count as isize
                         + locked_last_split
                         + 1
-                        - visual_split_count as isize,
+                        - scrollable_visual_split_count as isize,
                 )
             }),
-            run.len() as isize - visual_split_count as isize,
+            scrollable_split_count as isize - scrollable_visual_split_count as isize,
         );
-        self.scroll_offset = min(
-            max(self.scroll_offset, -skip_count),
-            run.len() as isize - skip_count - visual_split_count as isize,
-        );
-        let skip_count = max(0, skip_count + self.scroll_offset) as usize;
-        let take_count = visual_split_count - locked_last_split as usize;
+        let scroll_offset =
+            if self.settings.subsplit_display_mode == SubsplitDisplayMode::CurrentGroupExpanded {
+                0
+            } else {
+                self.scroll_offset = min(
+                    max(self.scroll_offset, -skip_count),
+                    scrollable_split_count as isize
+                        - skip_count
+                        - scrollable_visual_split_count as isize,
+                );
+                self.scroll_offset
+            };
+        let skip_count = max(0, skip_count + scroll_offset) as usize;
+        let take_count = scrollable_visual_split_count.saturating_sub(locked_last_split as usize);
         let always_show_last_split = self.settings.always_show_last_split;
-
-        let show_final_separator = self.settings.separator_last_split
-            && always_show_last_split
-            && skip_count + take_count + 1 < run.len();
 
         let Settings {
             show_thin_separators,
@@ -384,70 +482,123 @@ impl Component {
         }
 
         state.splits.clear();
-        for (i, segment) in run
-            .segments()
-            .iter()
-            .enumerate()
-            .skip(skip_count)
-            .filter(|&(i, _)| {
-                i - skip_count < take_count || (always_show_last_split && i + 1 == run.len())
-            })
-        {
+        let mut previous_displayed_index = None;
+        for (displayed_index, split) in displayed.enumerate().filter(|&(index, _)| {
+            if Some(index) == pinned_header_index {
+                return true;
+            }
+
+            let index = index_without_pinned_header(index);
+            index >= skip_count
+                && (index - skip_count < take_count
+                    || (always_show_last_split && index + 1 == scrollable_split_count))
+        }) {
             let state = state.splits.push_with(|| SplitState {
                 icon: *ImageId::EMPTY,
                 name: String::new(),
                 columns: ClearVec::new(),
                 is_current_split: false,
+                is_scrolled_to_split: false,
+                is_indented: false,
+                show_separator_before: false,
+                section_index: 0,
                 index: 0,
             });
 
-            let icon = segment.icon();
-            state.icon = *image_cache.cache(icon.id(), || icon.clone()).id();
+            // A gap between projected row indices means that the scrolling
+            // window omitted one or more logical rows. Communicate that gap on
+            // the following row so every renderer can show the same pronounced
+            // separator without reconstructing the scrolling logic. The
+            // existing setting continues to control gaps before the final row;
+            // gaps within the list always identify hidden group content.
+            let has_gap = previous_displayed_index
+                .is_some_and(|previous_index| displayed_index > previous_index + 1);
+            let is_final_row = displayed_index + 1 == displayed_len;
+            state.show_separator_before = has_gap
+                && (!is_final_row
+                    || (always_show_last_split && self.settings.separator_last_split));
+            previous_displayed_index = Some(displayed_index);
 
-            state.name.push_str(segment.name());
+            state.icon = *image_cache
+                .cache(split.icon.id(), || (*split.icon).clone())
+                .id();
 
-            for column in columns {
-                column::update_state(
-                    state.columns.push_with(|| ColumnState {
-                        value: String::new(),
-                        semantic_color: Default::default(),
-                        visual_color: Color::transparent(),
-                        updates_frequently: false,
-                    }),
-                    column,
-                    timer,
-                    &self.settings,
-                    layout_settings,
-                    segment,
-                    i,
-                    current_split,
-                    method,
-                    lang,
-                );
+            let segment = split.segment;
+            state.name.push_str(split.name);
+
+            if split.show_columns {
+                for column in columns {
+                    column::update_state(
+                        state.columns.push_with(|| ColumnState {
+                            value: String::new(),
+                            semantic_color: Default::default(),
+                            visual_color: Color::transparent(),
+                            updates_frequently: false,
+                        }),
+                        column,
+                        timer,
+                        &self.settings,
+                        layout_settings,
+                        segment,
+                        split.segment_index,
+                        split.column_start_index,
+                        current_split,
+                        method,
+                        lang,
+                    );
+                }
             }
 
-            state.is_current_split = Some(i) == current_split;
-            state.index = i;
+            state.is_current_split = if !split.is_group_header {
+                Some(split.segment_index) == current_split
+            } else {
+                split.show_columns
+                    && current_split.is_some_and(|current_split| {
+                        run.segment_groups().group_index_for_segment(current_split)
+                            == run
+                                .segment_groups()
+                                .group_index_for_segment(split.segment_index)
+                    })
+            };
+            state.is_scrolled_to_split =
+                !split.is_group_header && Some(split.segment_index) == scrolled_to_split;
+            state.is_indented = split.is_indented;
+            state.section_index = split.section_index;
+            state.index = split.state_index;
         }
 
         if fill_with_blank_space && state.splits.len() < visual_split_count {
             let blank_split_count = visual_split_count - state.splits.len();
+            let first_blank_section_index = state
+                .splits
+                .last()
+                .map_or(0, |split| split.section_index + 1);
             for i in 0..blank_split_count {
                 let state = state.splits.push_with(|| SplitState {
                     icon: *ImageId::EMPTY,
                     name: String::new(),
                     columns: ClearVec::new(),
                     is_current_split: false,
+                    is_scrolled_to_split: false,
+                    is_indented: false,
+                    show_separator_before: false,
+                    section_index: 0,
                     index: 0,
                 });
                 state.is_current_split = false;
+                state.is_scrolled_to_split = false;
+                state.show_separator_before = false;
+                state.section_index = first_blank_section_index + i;
                 state.index = (usize::MAX ^ 1) - 2 * i;
             }
         }
 
-        state.has_icons = run.segments().iter().any(|s| !s.icon().is_empty());
+        // Group headers may have an explicit icon even when every underlying
+        // segment has none. Base the icon-column reservation on the rows that
+        // are actually displayed so the renderer never draws such a header
+        // icon on top of its name.
+        state.has_icons = displayed_metadata.has_icons;
         state.show_thin_separators = show_thin_separators;
-        state.show_final_separator = show_final_separator;
         state.display_two_rows = display_two_rows;
         state.current_split_gradient = self.settings.current_split_gradient;
     }
@@ -566,6 +717,13 @@ impl Component {
                 self.settings.show_column_labels.into(),
             ),
             Field::new(
+                Text::SplitsSubsplitDisplayMode.resolve(lang).into(),
+                Text::SplitsSubsplitDisplayModeDescription
+                    .resolve(lang)
+                    .into(),
+                self.settings.subsplit_display_mode.into(),
+            ),
+            Field::new(
                 Text::SplitsColumns.resolve(lang).into(),
                 Text::SplitsColumnsDescription.resolve(lang).into(),
                 Value::UInt(self.settings.columns.len() as _),
@@ -673,6 +831,9 @@ impl Component {
             12 => self.settings.delta_drop_decimals = value.into(),
             13 => self.settings.show_column_labels = value.into(),
             14 => {
+                self.settings.subsplit_display_mode = value.into();
+            }
+            15 => {
                 let new_len = value.into_uint().unwrap() as usize;
                 self.settings.columns.resize(new_len, Default::default());
             }
@@ -723,4 +884,144 @@ impl Component {
             }
         }
     }
+}
+
+struct DisplayedSplit<'a> {
+    state_index: usize,
+    segment_index: usize,
+    column_start_index: usize,
+    segment: &'a crate::Segment,
+    icon: &'a Image,
+    name: &'a str,
+    is_group_header: bool,
+    is_indented: bool,
+    show_columns: bool,
+    section_index: usize,
+}
+
+struct DisplayedSplitsMetadata {
+    len: usize,
+    current_index: Option<usize>,
+    active_group_header_index: Option<usize>,
+    has_icons: bool,
+}
+
+fn section_display(
+    mode: SubsplitDisplayMode,
+    group_index: Option<usize>,
+    current_group: Option<usize>,
+) -> (bool, bool) {
+    let is_group = group_index.is_some();
+    let show_header = is_group && mode != SubsplitDisplayMode::Flat;
+    let expand = match mode {
+        SubsplitDisplayMode::Flat | SubsplitDisplayMode::AllGroupsExpanded => true,
+        SubsplitDisplayMode::CurrentGroupExpanded => !is_group || group_index == current_group,
+    };
+    (show_header, expand)
+}
+
+fn displayed_splits<'a>(
+    run: &'a crate::Run,
+    current_split: Option<usize>,
+    mode: SubsplitDisplayMode,
+) -> (
+    impl Iterator<Item = DisplayedSplit<'a>>,
+    DisplayedSplitsMetadata,
+) {
+    let current_group =
+        current_split.and_then(|index| run.segment_groups().group_index_for_segment(index));
+
+    // Counting rows and locating the current row only requires section lengths,
+    // not constructing every projected row. Calculate all metadata in one
+    // section-level pass and leave the returned iterator to project only the
+    // rows that its consumer actually visits. `section_display` keeps the
+    // hierarchy rules shared between both passes.
+    let mut metadata = DisplayedSplitsMetadata {
+        len: 0,
+        current_index: None,
+        active_group_header_index: None,
+        has_icons: false,
+    };
+    for view in run.segment_groups_iter() {
+        let (show_header, expand) = section_display(mode, view.group_index(), current_group);
+
+        if show_header {
+            if view.group_index() == current_group {
+                metadata.active_group_header_index = Some(metadata.len);
+            }
+            metadata.len += 1;
+            metadata.has_icons |= !view.icon_or_default().is_empty();
+        }
+
+        if expand {
+            if current_split.is_some_and(|index| view.contains(index)) {
+                metadata.current_index =
+                    current_split.map(|index| metadata.len + index - view.start_index());
+            }
+            metadata.len += view.segments().len();
+            metadata.has_icons |= view
+                .segments()
+                .iter()
+                .any(|segment| !segment.icon().is_empty());
+        }
+    }
+    if current_split.is_some_and(|index| index >= run.len()) {
+        metadata.current_index = Some(metadata.len.saturating_sub(1));
+    }
+
+    let splits = run
+        .segment_groups_iter()
+        .enumerate()
+        .flat_map(move |(section_index, view)| {
+            let group_index = view.group_index();
+            let is_group = group_index.is_some();
+            let show_hierarchy = mode != SubsplitDisplayMode::Flat;
+            let (show_header, expand) = section_display(mode, group_index, current_group);
+            let start_index = view.start_index();
+
+            let header = group_index.filter(|_| show_header).map(|group_index| {
+                DisplayedSplit {
+                    // Segment indices remain the stable identity for actual split
+                    // rows. Group headers need a different identity because the
+                    // final segment is also present while a group is expanded.
+                    // Odd indices descending from `usize::MAX` are reserved for
+                    // headers, while blank rows use the adjacent even indices.
+                    state_index: usize::MAX - 2 * group_index,
+                    segment_index: view.last_segment_index(),
+                    column_start_index: start_index,
+                    segment: view.last_segment(),
+                    icon: view.icon().unwrap_or_else(|| view.last_segment().icon()),
+                    name: view.name().unwrap_or_else(|| view.last_segment().name()),
+                    is_group_header: true,
+                    is_indented: false,
+                    show_columns: !expand,
+                    section_index,
+                }
+            });
+            let segments = expand.then(|| view.segments()).into_iter().flatten();
+
+            header
+                .into_iter()
+                .chain(segments.enumerate().map(move |(offset, segment)| {
+                    let segment_index = start_index + offset;
+                    DisplayedSplit {
+                        state_index: segment_index,
+                        segment_index,
+                        column_start_index: segment_index,
+                        segment,
+                        icon: segment.icon(),
+                        name: segment.name(),
+                        is_group_header: false,
+                        is_indented: show_hierarchy && is_group,
+                        show_columns: true,
+                        section_index: if show_hierarchy {
+                            section_index
+                        } else {
+                            segment_index
+                        },
+                    }
+                }))
+        });
+
+    (splits, metadata)
 }

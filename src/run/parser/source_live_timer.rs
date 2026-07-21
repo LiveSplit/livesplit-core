@@ -82,7 +82,7 @@ pub fn parse(source: &str) -> Result<Run> {
     if let Some(segments) = splits.Splits {
         let is_portal2 = run.category_name().starts_with("Portal 2");
 
-        run.segments_mut().extend(segments.into_iter().map(|split| {
+        for split in segments {
             let mut segment = Segment::new(split.Name.unwrap_or(split.Map));
 
             if let Some(ticks) = split.Ticks {
@@ -95,8 +95,8 @@ pub fn parse(source: &str) -> Result<Run> {
                 segment.set_best_segment_time(GameTime(best_segment_time).into());
             }
 
-            segment
-        }));
+            run.push_segment(segment);
+        }
     }
 
     Ok(run)

@@ -21,6 +21,10 @@ pub fn settings(reader: &mut Reader, component: &mut Component) -> Result<()> {
         "CurrentSplitGradient",
     );
     let mut background_builder = GradientBuilder::<ListGradientKind>::new_gradient_type();
+    let mut legacy_show_header = None;
+    let mut legacy_show_subsplits = None;
+    let mut legacy_hide_subsplits = None;
+    let mut legacy_indent_subsplits = None;
 
     parse_children(reader, |reader, tag, _| {
         if !background_builder.parse_background(reader, tag.name())? {
@@ -170,6 +174,10 @@ pub fn settings(reader: &mut Reader, component: &mut Component) -> Result<()> {
                     }),
                     "DeltasAccuracy" => accuracy(reader, |v| settings.delta_time_accuracy = v),
                     "DropDecimals" => parse_bool(reader, |v| settings.delta_drop_decimals = v),
+                    "IndentSubsplits" => parse_bool(reader, |v| legacy_indent_subsplits = Some(v)),
+                    "HideSubsplits" => parse_bool(reader, |v| legacy_hide_subsplits = Some(v)),
+                    "ShowSubsplits" => parse_bool(reader, |v| legacy_show_subsplits = Some(v)),
+                    "ShowHeader" => parse_bool(reader, |v| legacy_show_header = Some(v)),
                     _ => {
                         // FIXME:
                         // DisplayIcons
@@ -196,15 +204,11 @@ pub fn settings(reader: &mut Reader, component: &mut Component) -> Result<()> {
                         // FIXME: Subsplits
                         // MinimumMajorSplits
                         // IndentBlankIcons
-                        // IndentSubsplits
-                        // HideSubsplits
-                        // ShowSubsplits
                         // CurrentSectionOnly
                         // OverrideSubsplitColor
                         // SubsplitTopColor
                         // SubsplitBottomColor
                         // SubsplitGradient
-                        // ShowHeader
                         // IndentSectionSplit
                         // ShowIconSectionSplit
                         // ShowSectionIcon
@@ -235,6 +239,26 @@ pub fn settings(reader: &mut Reader, component: &mut Component) -> Result<()> {
 
     settings.current_split_gradient = split_gradient_builder.build();
     settings.background = background_builder.build();
+    let legacy_hierarchy =
+        legacy_show_header == Some(true) || legacy_indent_subsplits == Some(true);
+    settings.subsplit_display_mode =
+        if legacy_show_header == Some(false) && legacy_indent_subsplits == Some(false) {
+            // The original Subsplits component controlled headers and indentation
+            // independently from which subsplits were visible. Disabling both was
+            // nevertheless how a layout expressed that it did not want to present
+            // the splits as a hierarchy at all. Give that combination precedence
+            // over the visibility flags, which are also always serialized.
+            splits::SubsplitDisplayMode::Flat
+        } else if legacy_show_subsplits == Some(true) && legacy_hierarchy {
+            splits::SubsplitDisplayMode::AllGroupsExpanded
+        } else if legacy_hierarchy || legacy_hide_subsplits == Some(false) {
+            // FIXME: `HideSubsplits` used to support keeping every group collapsed.
+            // Native subsplits do not currently expose such a display mode, so the
+            // closest hierarchical representation expands the current group.
+            splits::SubsplitDisplayMode::CurrentGroupExpanded
+        } else {
+            settings.subsplit_display_mode
+        };
 
     Ok(())
 }

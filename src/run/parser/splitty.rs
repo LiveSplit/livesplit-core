@@ -67,14 +67,13 @@ pub fn parse(source: &str) -> Result<Run> {
         TimingMethod::GameTime
     };
 
-    run.segments_mut()
-        .extend(splits.splits.into_iter().map(|split| {
-            let mut segment = Segment::new(split.name);
-            segment.set_personal_best_split_time(parse_time(split.pb_split, method));
-            segment.set_best_segment_time(parse_time(split.split_best, method));
+    for split in splits.splits {
+        let mut segment = Segment::new(split.name);
+        segment.set_personal_best_split_time(parse_time(split.pb_split, method));
+        segment.set_best_segment_time(parse_time(split.split_best, method));
 
-            segment
-        }));
+        run.push_segment(segment);
+    }
 
     Ok(run)
 }

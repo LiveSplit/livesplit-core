@@ -412,11 +412,6 @@ export interface SplitsComponentStateJson {
      */
     show_thin_separators: boolean,
     /**
-     * Describes whether a more pronounced separator should be shown in front of
-     * the last segment provided.
-     */
-    show_final_separator: boolean,
-    /**
      * Specifies whether to display each split as two rows, with the segment
      * name being in one row and the times being in the other.
      */
@@ -449,10 +444,29 @@ export interface SplitStateJson {
      */
     is_current_split: boolean,
     /**
-     * The index of the segment based on all the segments of the run. This may
-     * differ from the index of this `SplitStateJson` in the
-     * `SplitsComponentStateJson` object, as there can be a scrolling window,
-     * showing only a subset of segments. Each index is guaranteed to be unique.
+     * Describes if this segment is the segment selected by manually scrolling
+     * through subsplit groups.
+     */
+    is_scrolled_to_split: boolean,
+    /** Specifies whether this row should be indented. */
+    is_indented: boolean,
+    /**
+     * Specifies whether a more pronounced separator should be shown before
+     * this row because one or more logical rows preceding it are not visible.
+     */
+    show_separator_before: boolean,
+    /**
+     * The visual section this row belongs to. This is used for alternating
+     * backgrounds when multiple flat segments collapse into a single section.
+     */
+    section_index: number,
+    /**
+     * The stable identity of this visual row. For segment rows this is the
+     * index of the segment in the run. Synthetic group headers and blank rows
+     * use reserved values instead. This may differ from the index of this
+     * `SplitStateJson` in the `SplitsComponentStateJson` object, as there can
+     * be a scrolling window showing only a subset of rows. Each index is
+     * guaranteed to be unique.
      */
     index: number,
 }
@@ -776,6 +790,7 @@ export type SettingsDescriptionValueJson =
     { ColumnStartWith: ColumnStartWith } |
     { ColumnUpdateWith: ColumnUpdateWith } |
     { ColumnUpdateTrigger: ColumnUpdateTrigger } |
+    { SubsplitDisplayMode: SubsplitDisplayMode } |
     { Hotkey: string } |
     { LayoutDirection: LayoutDirection } |
     { Font: Font | null } |
@@ -832,6 +847,12 @@ export type ColumnUpdateTrigger =
     "Contextual" |
     "OnEndingSegment";
 
+/** Describes how native subsplits are displayed. */
+export type SubsplitDisplayMode =
+    "Flat" |
+    "CurrentGroupExpanded" |
+    "AllGroupsExpanded";
+
 /**
  * The Accuracy describes how many digits to show for the fractional part of a
  * time.
@@ -886,8 +907,12 @@ export interface RunEditorStateJson {
      * edited.
      */
     timing_method: TimingMethodJson,
-    /** The state of all the segments. */
-    segments: RunEditorRowJson[],
+    /**
+     * The rows of the editor in presentation order. Segment group headers are
+     * included directly before their segments so consumers don't need to
+     * reconstruct the visual hierarchy from the run's canonical group ranges.
+     */
+    rows: RunEditorRowJson[],
     /** The names of all the custom comparisons that exist for this Run. */
     comparison_names: string[],
     /** Describes which actions are currently available. */
@@ -986,10 +1011,32 @@ export interface RunEditorButtonsJson {
      * moved.
      */
     can_move_down: boolean,
+    /**
+     * Describes whether the currently selected segments can be turned into a
+     * segment group.
+     */
+    can_create_segment_group: boolean,
+    /**
+     * Describes whether the currently selected segments are exactly one or more
+     * segment groups that can be removed.
+     */
+    can_remove_segment_groups: boolean,
 }
 
-/** Describes the current state of a segment. */
-export interface RunEditorRowJson {
+/** Describes a row in the Run Editor's unified presentation model. */
+export type RunEditorRowJson =
+    RunEditorSegmentRowJson |
+    RunEditorSegmentGroupRowJson;
+
+/** Describes the current state of a segment row. */
+export interface RunEditorSegmentRowJson {
+    /** Identifies this row as an individual segment. */
+    kind: "Segment",
+    /**
+     * The index of the segment in the run. Presentation row indices differ
+     * whenever group headers are present, so mutations must use this index.
+     */
+    segment_index: number,
     /**
      * The icon of the segment. The associated image can be looked up in the
      * image cache. The image may be the empty image. This indicates that there
@@ -1012,6 +1059,34 @@ export interface RunEditorRowJson {
     comparison_times: string[],
     /** Describes the segment's selection state. */
     selected: "NotSelected" | "Selected" | "Active",
+    /** Whether the segment is visually nested beneath a group header. */
+    is_indented: boolean,
+    /** Whether a visual section boundary starts immediately before this row. */
+    starts_new_section: boolean,
+}
+
+/** Describes a segment group header row. */
+export interface RunEditorSegmentGroupRowJson {
+    /** Identifies this row as a segment group header. */
+    kind: "SegmentGroup",
+    /** The index of the group in the run. */
+    group_index: number,
+    /** The resolved display name, falling back to the final segment's name. */
+    name: string,
+    /**
+     * The explicitly configured group name. This remains separate from `name`
+     * so an editor can present the inherited name as a placeholder.
+     */
+    explicit_name: string | null,
+    /**
+     * The group display icon. This falls back to the final segment's icon if no
+     * explicit group icon is set.
+     */
+    icon: ImageId,
+    /** Whether the group icon is explicitly set instead of inherited. */
+    has_explicit_icon: boolean,
+    /** Whether every segment in the group is currently selected. */
+    selected: boolean,
 }
 
 /**

@@ -2,7 +2,9 @@
 //!
 // https://github.com/ZellyDev-Games/OpenSplit
 
-use crate::{Run, Segment, Time, TimeSpan, platform::prelude::*};
+use crate::{
+    Run, Segment, Time, TimeSpan, platform::prelude::*, run::SegmentGroup, run::SegmentGroups,
+};
 use alloc::{borrow::Cow, collections::BTreeMap};
 use core::result::Result as StdResult;
 use serde_derive::Deserialize;
@@ -83,20 +85,47 @@ fn integer_time(milliseconds: i64) -> TimeSpan {
     crate::platform::Duration::milliseconds(milliseconds).into()
 }
 
-fn flatten_leaf_segments<'a>(segments: Vec<SegmentPayload<'a>>) -> Vec<SegmentPayload<'a>> {
-    let mut leaf_segments = Vec::with_capacity(segments.len());
-    let mut stack = Vec::with_capacity(segments.len());
-    stack.extend(segments.into_iter().rev());
+struct FlattenedSegments<'a> {
+    segments: Vec<SegmentPayload<'a>>,
+    groups: Vec<SegmentGroup>,
+}
 
-    while let Some(mut segment) = stack.pop() {
-        if segment.children.is_empty() {
-            leaf_segments.push(segment);
-        } else {
-            stack.extend(segment.children.drain(..).rev());
-        }
+fn flatten_segments<'a>(segments: Vec<SegmentPayload<'a>>) -> FlattenedSegments<'a> {
+    let mut flattened = FlattenedSegments {
+        segments: Vec::with_capacity(segments.len()),
+        groups: Vec::new(),
+    };
+
+    for segment in segments {
+        flatten_segment(segment, true, &mut flattened);
     }
 
-    leaf_segments
+    flattened
+}
+
+fn flatten_segment<'a>(
+    mut segment: SegmentPayload<'a>,
+    allow_group: bool,
+    flattened: &mut FlattenedSegments<'a>,
+) {
+    if segment.children.is_empty() {
+        flattened.segments.push(segment);
+        return;
+    }
+
+    let start = flattened.segments.len();
+    for child in segment.children.drain(..) {
+        flatten_segment(child, false, flattened);
+    }
+    let end = flattened.segments.len();
+
+    if allow_group {
+        flattened.groups.push(SegmentGroup::new_unchecked(
+            start,
+            end,
+            Some(segment.name.into_owned()),
+        ));
+    }
 }
 
 /// Attempts to parse an OpenSplit splits file.
@@ -112,7 +141,10 @@ pub fn parse(source: &str) -> Result<Run> {
     run.set_offset(integer_time(splits.offset));
     run.metadata_mut().set_platform_name(splits.platform);
 
-    let leaf_segments = flatten_leaf_segments(splits.segments);
+    let FlattenedSegments {
+        segments: leaf_segments,
+        groups,
+    } = flatten_segments(splits.segments);
 
     let mut segment_ids = Vec::with_capacity(leaf_segments.len());
     let mut cumulative_pb = TimeSpan::zero();
@@ -135,6 +167,7 @@ pub fn parse(source: &str) -> Result<Run> {
 
         run.push_segment(segment);
     }
+    *run.segment_groups_mut() = SegmentGroups::from_vec_lossy(groups, run.len());
 
     for (attempt_history_index, run_payload) in (1..).zip(splits.runs) {
         run.add_attempt_with_index(
