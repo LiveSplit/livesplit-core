@@ -261,6 +261,21 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
             context.render_background(split_background_bottom_right, color);
         }
 
+        if split.show_separator_before {
+            let (pos, end) = if context.direction == LayoutDirection::Horizontal {
+                (
+                    [-THIN_SEPARATOR_THICKNESS, 0.0],
+                    [THIN_SEPARATOR_THICKNESS, split_height],
+                )
+            } else {
+                (
+                    [0.0, -THIN_SEPARATOR_THICKNESS],
+                    [split_width, THIN_SEPARATOR_THICKNESS],
+                )
+            };
+            context.render_rectangle(pos, end, &Gradient::Plain(layout_state.separators_color));
+        }
+
         // Draw a border around the scrolled-to split (the split selected by
         // manually scrolling through subsplit groups in CurrentGroupExpanded
         // mode). The border uses the same color as the current split gradient
@@ -341,21 +356,6 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
             );
         }
         context.translate(delta_x, delta_y);
-    }
-
-    if component.show_final_separator {
-        let (pos, end) = if context.direction == LayoutDirection::Horizontal {
-            (
-                [-split_width - THIN_SEPARATOR_THICKNESS, 0.0],
-                [-split_width + THIN_SEPARATOR_THICKNESS, split_height],
-            )
-        } else {
-            (
-                [0.0, -split_height - THIN_SEPARATOR_THICKNESS],
-                [split_width, -split_height + THIN_SEPARATOR_THICKNESS],
-            )
-        };
-        context.render_rectangle(pos, end, &Gradient::Plain(layout_state.separators_color));
     }
 
     context.transform = transform;

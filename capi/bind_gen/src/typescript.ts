@@ -412,11 +412,6 @@ export interface SplitsComponentStateJson {
      */
     show_thin_separators: boolean,
     /**
-     * Describes whether a more pronounced separator should be shown in front of
-     * the last segment provided.
-     */
-    show_final_separator: boolean,
-    /**
      * Specifies whether to display each split as two rows, with the segment
      * name being in one row and the times being in the other.
      */
@@ -455,6 +450,11 @@ export interface SplitStateJson {
     is_scrolled_to_split: boolean,
     /** Specifies whether this row should be indented. */
     is_indented: boolean,
+    /**
+     * Specifies whether a more pronounced separator should be shown before
+     * this row because one or more logical rows preceding it are not visible.
+     */
+    show_separator_before: boolean,
     /**
      * The visual section this row belongs to. This is used for alternating
      * backgrounds when multiple flat segments collapse into a single section.

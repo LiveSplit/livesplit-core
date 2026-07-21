@@ -205,7 +205,7 @@ fn wsplit() {
         &image_cache,
         [250, 300],
         "445f85286cd8a439",
-        "e198b005bb113d39",
+        "73de387ac81d77c6",
         "wsplit",
     );
 }
@@ -394,7 +394,7 @@ fn background_image() {
         &image_cache,
         [300, 300],
         "6adf7d78502a6f3e",
-        "73edffbbfce6efb1",
+        "c7aacd7b81fe2ac4",
         "background_image",
     );
 }
@@ -486,7 +486,7 @@ fn horizontal() {
         &image_cache,
         [1500, 40],
         "23d8f03a5a08157e",
-        "9f231fbc9520b0f6",
+        "4d9aecef410a844f",
         "horizontal",
     );
 }

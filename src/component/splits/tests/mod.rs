@@ -404,6 +404,17 @@ fn current_group_header_stays_visible_when_group_rows_scroll() {
             .collect::<Vec<_>>(),
         ["Chapter A", "A4", "A5", "Outro"]
     );
+    // A1 through A3 are omitted between the pinned header and A4, while A6 is
+    // omitted before the locked final split. Both discontinuities need a
+    // pronounced separator; A5 remains directly adjacent to A4.
+    assert_eq!(
+        state
+            .splits
+            .iter()
+            .map(|split| split.show_separator_before)
+            .collect::<Vec<_>>(),
+        [false, true, false, true]
+    );
 }
 
 #[test]

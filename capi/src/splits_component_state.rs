@@ -13,13 +13,6 @@ pub extern "C" fn SplitsComponentState_drop(this: OwnedSplitsComponentState) {
     drop(this);
 }
 
-/// Describes whether a more pronounced separator should be shown in front of
-/// the last segment provided.
-#[unsafe(no_mangle)]
-pub extern "C" fn SplitsComponentState_final_separator_shown(this: &SplitsComponentState) -> bool {
-    this.show_final_separator
-}
-
 /// Returns the amount of segments to visualize.
 #[unsafe(no_mangle)]
 pub extern "C" fn SplitsComponentState_len(this: &SplitsComponentState) -> usize {
@@ -118,6 +111,17 @@ pub extern "C" fn SplitsComponentState_is_indented(
     index: usize,
 ) -> bool {
     this.splits[index].is_indented
+}
+
+/// Specifies whether a more pronounced separator should be shown before the
+/// row with the specified index because one or more logical rows preceding it
+/// are not visible. You may not provide an out of bounds index.
+#[unsafe(no_mangle)]
+pub extern "C" fn SplitsComponentState_separator_before(
+    this: &SplitsComponentState,
+    index: usize,
+) -> bool {
+    this.splits[index].show_separator_before
 }
 
 /// Returns the visual section that the row with the specified index belongs

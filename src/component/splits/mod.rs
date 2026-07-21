@@ -148,6 +148,9 @@ pub struct SplitState {
     pub is_scrolled_to_split: bool,
     /// Specifies whether this row should be indented.
     pub is_indented: bool,
+    /// Specifies whether a more pronounced separator should be shown before
+    /// this row because one or more logical rows preceding it are not visible.
+    pub show_separator_before: bool,
     /// The visual section this row belongs to. This is used for alternating
     /// backgrounds when multiple flat segments collapse into a single section.
     pub section_index: usize,
@@ -167,6 +170,7 @@ impl Clear for SplitState {
         self.is_current_split = false;
         self.is_scrolled_to_split = false;
         self.is_indented = false;
+        self.show_separator_before = false;
         self.section_index = 0;
         self.index = 0;
     }
@@ -191,9 +195,6 @@ pub struct State {
     /// Specifies whether thin separators should be shown between the individual
     /// segments shown by the component.
     pub show_thin_separators: bool,
-    /// Describes whether a more pronounced separator should be shown in front
-    /// of the last segment provided.
-    pub show_final_separator: bool,
     /// Specifies whether to display each split as two rows, with the segment
     /// name being in one row and the times being in the other.
     pub display_two_rows: bool,
@@ -209,6 +210,7 @@ impl SplitState {
         self.is_current_split.hash(state);
         self.is_scrolled_to_split.hash(state);
         self.is_indented.hash(state);
+        self.show_separator_before.hash(state);
         self.section_index.hash(state);
         self.index.hash(state);
         self.columns.len().hash(state);
@@ -459,10 +461,6 @@ impl Component {
         let take_count = scrollable_visual_split_count.saturating_sub(locked_last_split as usize);
         let always_show_last_split = self.settings.always_show_last_split;
 
-        let show_final_separator = self.settings.separator_last_split
-            && always_show_last_split
-            && skip_count + take_count + 1 < scrollable_split_count;
-
         let Settings {
             show_thin_separators,
             fill_with_blank_space,
@@ -484,7 +482,8 @@ impl Component {
         }
 
         state.splits.clear();
-        for (_i, split) in displayed.enumerate().filter(|&(index, _)| {
+        let mut previous_displayed_index = None;
+        for (displayed_index, split) in displayed.enumerate().filter(|&(index, _)| {
             if Some(index) == pinned_header_index {
                 return true;
             }
@@ -501,9 +500,24 @@ impl Component {
                 is_current_split: false,
                 is_scrolled_to_split: false,
                 is_indented: false,
+                show_separator_before: false,
                 section_index: 0,
                 index: 0,
             });
+
+            // A gap between projected row indices means that the scrolling
+            // window omitted one or more logical rows. Communicate that gap on
+            // the following row so every renderer can show the same pronounced
+            // separator without reconstructing the scrolling logic. The
+            // existing setting continues to control gaps before the final row;
+            // gaps within the list always identify hidden group content.
+            let has_gap = previous_displayed_index
+                .is_some_and(|previous_index| displayed_index > previous_index + 1);
+            let is_final_row = displayed_index + 1 == displayed_len;
+            state.show_separator_before = has_gap
+                && (!is_final_row
+                    || (always_show_last_split && self.settings.separator_last_split));
+            previous_displayed_index = Some(displayed_index);
 
             state.icon = *image_cache
                 .cache(split.icon.id(), || (*split.icon).clone())
@@ -567,11 +581,13 @@ impl Component {
                     is_current_split: false,
                     is_scrolled_to_split: false,
                     is_indented: false,
+                    show_separator_before: false,
                     section_index: 0,
                     index: 0,
                 });
                 state.is_current_split = false;
                 state.is_scrolled_to_split = false;
+                state.show_separator_before = false;
                 state.section_index = first_blank_section_index + i;
                 state.index = (usize::MAX ^ 1) - 2 * i;
             }
@@ -583,7 +599,6 @@ impl Component {
         // icon on top of its name.
         state.has_icons = displayed_metadata.has_icons;
         state.show_thin_separators = show_thin_separators;
-        state.show_final_separator = show_final_separator;
         state.display_two_rows = display_two_rows;
         state.current_split_gradient = self.settings.current_split_gradient;
     }
