@@ -340,8 +340,8 @@ pub unsafe extern "C" fn SettingValue_from_subsplit_display_mode(
     let value = unsafe { str(value) };
     let value = match value {
         "Flat" => SubsplitDisplayMode::Flat,
-        "AllGroupsExpanded" => SubsplitDisplayMode::AllGroupsExpanded,
         "CurrentGroupExpanded" => SubsplitDisplayMode::CurrentGroupExpanded,
+        "AllGroupsExpanded" => SubsplitDisplayMode::AllGroupsExpanded,
         _ => return None,
     };
     Some(Box::new(value.into()))

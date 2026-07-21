@@ -121,12 +121,12 @@ pub struct Settings {
 pub enum SubsplitDisplayMode {
     /// Every segment is shown as part of the flat list without group hierarchy.
     Flat,
-    /// Groups are shown with header rows and all group contents expanded.
-    AllGroupsExpanded,
     /// Groups are shown with header rows, but only the current group has its
     /// contents expanded.
     #[default]
     CurrentGroupExpanded,
+    /// Groups are shown with header rows and all group contents expanded.
+    AllGroupsExpanded,
 }
 
 /// The state object that describes a single segment's information to visualize.
@@ -886,8 +886,8 @@ fn displayed_splits<'a>(
         let show_hierarchy = mode != SubsplitDisplayMode::Flat;
         let expand = match mode {
             SubsplitDisplayMode::Flat => true,
-            SubsplitDisplayMode::AllGroupsExpanded => true,
             SubsplitDisplayMode::CurrentGroupExpanded => !is_group || group_index == current_group,
+            SubsplitDisplayMode::AllGroupsExpanded => true,
         };
 
         if let Some(group_index) = group_index

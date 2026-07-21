@@ -850,8 +850,8 @@ export type ColumnUpdateTrigger =
 /** Describes how native subsplits are displayed. */
 export type SubsplitDisplayMode =
     "Flat" |
-    "AllGroupsExpanded" |
-    "CurrentGroupExpanded";
+    "CurrentGroupExpanded" |
+    "AllGroupsExpanded";
 
 /**
  * The Accuracy describes how many digits to show for the fractional part of a
