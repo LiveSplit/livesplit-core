@@ -338,6 +338,27 @@ pub extern "C" fn RunEditor_select_segment_group(this: &mut RunEditor, group_ind
     this.select_segment_group(group_index).is_ok()
 }
 
+/// Toggles the native segment group with the provided index as part of the
+/// current selection without clearing other selected rows. Returns <FALSE> if
+/// the group doesn't exist.
+#[unsafe(no_mangle)]
+pub extern "C" fn RunEditor_toggle_segment_group_selection(
+    this: &mut RunEditor,
+    group_index: usize,
+) -> bool {
+    this.toggle_segment_group_selection(group_index).is_ok()
+}
+
+/// Extends the current selection through the entire native segment group with
+/// the provided index. Returns <FALSE> if the group doesn't exist.
+#[unsafe(no_mangle)]
+pub extern "C" fn RunEditor_select_segment_group_range(
+    this: &mut RunEditor,
+    group_index: usize,
+) -> bool {
+    this.select_segment_group_range(group_index).is_ok()
+}
+
 /// Removes the selected native segment groups, while keeping all segments.
 #[unsafe(no_mangle)]
 pub extern "C" fn RunEditor_remove_selected_segment_groups(this: &mut RunEditor) -> bool {

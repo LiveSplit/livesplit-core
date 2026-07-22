@@ -414,9 +414,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowThinSeparatorsDescription => {
             "Specifies whether thin separators should be shown between the individual segment rows."
         }
-        Text::SplitsShowSeparatorBeforeLastSplit => "Show Separator Before Last Split",
-        Text::SplitsShowSeparatorBeforeLastSplitDescription => {
-            "If the last segment is to always be shown, this determines whether to show a more pronounced separator in front of the last segment, if it is not directly adjacent to the segment shown right before it in the scrolling window."
+        Text::SplitsShowGapSeparators => "Show Gap Separators",
+        Text::SplitsShowGapSeparatorsDescription => {
+            "Whether to show a pronounced separator before a row when one or more rows immediately before it are omitted from the scrolling window."
         }
         Text::SplitsAlwaysShowLastSplit => "Always Show Last Split",
         Text::SplitsAlwaysShowLastSplitDescription => {

@@ -406,11 +406,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowThinSeparatorsDescription => {
             "Определяет, следует ли показывать тонкие разделители между строками сегментов."
         }
-        Text::SplitsShowSeparatorBeforeLastSplit => {
-            "Показывать разделитель перед последним сегментом"
-        }
-        Text::SplitsShowSeparatorBeforeLastSplitDescription => {
-            "Если последний сегмент всегда показывается, определяет, показывать ли более заметный разделитель перед ним, если он не рядом с предыдущим сегментом."
+        Text::SplitsShowGapSeparators => "Показывать разделители пропусков",
+        Text::SplitsShowGapSeparatorsDescription => {
+            "Определяет, показывать ли более заметный разделитель перед строкой, если непосредственно перед ней в прокручиваемом окне пропущена одна или несколько строк."
         }
         Text::SplitsAlwaysShowLastSplit => "Всегда показывать последний сегмент",
         Text::SplitsAlwaysShowLastSplitDescription => {

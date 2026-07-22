@@ -42,7 +42,10 @@ pub fn settings(reader: &mut Reader, component: &mut Component) -> Result<()> {
                     }
                     "ShowBlankSplits" => parse_bool(reader, |b| settings.fill_with_blank_space = b),
                     "SeparatorLastSplit" => {
-                        parse_bool(reader, |b| settings.separator_last_split = b)
+                        // LiveSplit's XML format still uses the historical
+                        // name. Map it to the generalized setting while keeping
+                        // that external format backwards compatible.
+                        parse_bool(reader, |b| settings.show_gap_separators = b)
                     }
                     "Display2Rows" => parse_bool(reader, |b| settings.display_two_rows = b),
                     "ShowColumnLabels" => parse_bool(reader, |b| settings.show_column_labels = b),

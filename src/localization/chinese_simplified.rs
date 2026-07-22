@@ -302,9 +302,9 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsShowThinSeparators => "显示细分隔线",
         Text::SplitsShowThinSeparatorsDescription => "指定是否在分段行之间显示细分隔线。",
-        Text::SplitsShowSeparatorBeforeLastSplit => "在最后一段前显示分隔线",
-        Text::SplitsShowSeparatorBeforeLastSplitDescription => {
-            "若最后一段始终显示，则当其不与上一段相邻时，是否在其前显示更明显的分隔线。"
+        Text::SplitsShowGapSeparators => "显示省略行分隔线",
+        Text::SplitsShowGapSeparatorsDescription => {
+            "指定当滚动窗口中紧邻的一行或多行被省略时，是否在下一行前显示更明显的分隔线。"
         }
         Text::SplitsAlwaysShowLastSplit => "始终显示最后一段",
         Text::SplitsAlwaysShowLastSplitDescription => {

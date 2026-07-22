@@ -316,6 +316,84 @@ fn selecting_segment_group_uses_its_state_identity() {
 }
 
 #[test]
+fn toggling_segment_group_selection_preserves_other_whole_groups() {
+    let mut run = Run::new();
+    for name in ["A1", "A2", "B1", "B2", "Outro"] {
+        run.push_segment(Segment::new(name));
+    }
+
+    let mut editor = Editor::new(run).unwrap();
+    editor.select_range(1);
+    editor
+        .create_segment_group_from_selection(Some("Group A"))
+        .unwrap();
+    editor.select_only(2);
+    editor.select_range(3);
+    editor
+        .create_segment_group_from_selection(Some("Group B"))
+        .unwrap();
+
+    editor.select_segment_group(0).unwrap();
+    editor.toggle_segment_group_selection(1).unwrap();
+
+    let mut image_cache = ImageCache::new();
+    let state = editor.state(&mut image_cache, Lang::English);
+    assert!(segment_group(&state, 0).selected);
+    assert!(segment_group(&state, 1).selected);
+    assert_eq!(segment(&state, 3).selected, SelectionState::Active);
+
+    editor.toggle_segment_group_selection(0).unwrap();
+    let state = editor.state(&mut image_cache, Lang::English);
+    assert!(!segment_group(&state, 0).selected);
+    assert!(segment_group(&state, 1).selected);
+
+    // Toggling the only remaining complete group must not violate the editor's
+    // invariant that at least one segment is always selected.
+    editor.toggle_segment_group_selection(1).unwrap();
+    let state = editor.state(&mut image_cache, Lang::English);
+    assert!(segment_group(&state, 1).selected);
+    assert_eq!(
+        editor.toggle_segment_group_selection(2),
+        Err(InvalidSegmentGroupIndexError)
+    );
+}
+
+#[test]
+fn range_selecting_segment_group_includes_the_whole_group() {
+    let mut run = Run::new();
+    for name in ["Intro", "A1", "A2", "Outro"] {
+        run.push_segment(Segment::new(name));
+    }
+
+    let mut editor = Editor::new(run).unwrap();
+    editor.select_only(1);
+    editor.select_range(2);
+    editor
+        .create_segment_group_from_selection(Some("Group"))
+        .unwrap();
+
+    editor.select_only(0);
+    editor.select_segment_group_range(0).unwrap();
+
+    let mut image_cache = ImageCache::new();
+    let state = editor.state(&mut image_cache, Lang::English);
+    assert_eq!(segment(&state, 0).selected, SelectionState::Selected);
+    assert!(segment_group(&state, 0).selected);
+    assert_eq!(segment(&state, 2).selected, SelectionState::Active);
+
+    editor.select_only(3);
+    editor.select_segment_group_range(0).unwrap();
+    let state = editor.state(&mut image_cache, Lang::English);
+    assert!(segment_group(&state, 0).selected);
+    assert_eq!(segment(&state, 1).selected, SelectionState::Active);
+    assert_eq!(segment(&state, 3).selected, SelectionState::Selected);
+    assert_eq!(
+        editor.select_segment_group_range(1),
+        Err(InvalidSegmentGroupIndexError)
+    );
+}
+
+#[test]
 fn segment_group_icons_can_be_explicit_or_inherited() {
     let mut run = Run::new();
     for name in ["A", "B", "C"] {
