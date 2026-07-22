@@ -199,7 +199,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
         }
     }
 
-    write!(writer, r#"LiveSplitCoreNative.{}("#, &function.name)?;
+    write!(writer, r#"LiveSplitCoreNative.{}("#, function.name)?;
 
     for (i, (name, typ)) in function.inputs.iter().enumerate() {
         if i != 0 {
@@ -455,7 +455,7 @@ namespace LiveSplitCore
         [DllImport("livesplit_core", CallingConvention = CallingConvention.Cdecl)]
         public static extern {} {}("#,
                 get_ll_type(&function.output, true),
-                &function.name
+                function.name
             )?;
 
             for (i, (name, typ)) in function.inputs.iter().enumerate() {

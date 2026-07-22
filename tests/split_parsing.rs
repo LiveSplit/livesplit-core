@@ -1,3 +1,8 @@
+//! Integration tests for parsing representative real-world splits files and
+//! detecting their timer kinds. The files in `run_files` are reserved for this
+//! suite. Tests for specific fields, edge cases, and parser semantics should use
+//! inline inputs in the corresponding parser's local test module.
+
 mod run_files;
 
 mod parse {
@@ -270,53 +275,6 @@ mod parse {
     #[test]
     fn opensplit() {
         opensplit::parse(run_files::OPENSPLIT).unwrap();
-    }
-
-    #[test]
-    fn opensplit_segment_children_become_segment_groups() {
-        let run = opensplit::parse(
-            r#"{
-                "game_name": "Game",
-                "game_category": "Any%",
-                "attempts": 0,
-                "segments": [
-                    { "id": "intro", "name": "Intro", "gold": 0, "pb": 0 },
-                    {
-                        "id": "chapter",
-                        "name": "Chapter",
-                        "gold": 0,
-                        "pb": 0,
-                        "children": [
-                            { "id": "a", "name": "A", "gold": 0, "pb": 0 },
-                            {
-                                "id": "nested",
-                                "name": "Nested",
-                                "gold": 0,
-                                "pb": 0,
-                                "children": [
-                                    { "id": "b", "name": "B", "gold": 0, "pb": 0 },
-                                    { "id": "c", "name": "C", "gold": 0, "pb": 0 }
-                                ]
-                            }
-                        ]
-                    },
-                    { "id": "outro", "name": "Outro", "gold": 0, "pb": 0 }
-                ]
-            }"#,
-        )
-        .unwrap();
-
-        assert_eq!(
-            run.segments()
-                .iter()
-                .map(|segment| segment.name())
-                .collect::<Vec<_>>(),
-            ["Intro", "A", "B", "C", "Outro"]
-        );
-        assert_eq!(run.segment_groups().groups().len(), 1);
-        let group = &run.segment_groups().groups()[0];
-        assert_eq!((group.start(), group.end()), (1, 4));
-        assert_eq!(group.name(), Some("Chapter"));
     }
 
     #[test]

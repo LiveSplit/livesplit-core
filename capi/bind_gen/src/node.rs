@@ -221,7 +221,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
         }
     }
 
-    write!(writer, r#"liveSplitCoreNative.{}("#, &function.name)?;
+    write!(writer, r#"liveSplitCoreNative.{}("#, function.name)?;
 
     for (i, (name, typ)) in function.inputs.iter().enumerate() {
         if i != 0 {

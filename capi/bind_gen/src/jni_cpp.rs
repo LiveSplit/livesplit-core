@@ -113,7 +113,7 @@ extern "C" JNIEXPORT {} Java_livesplitcore_LiveSplitCoreNative_{}_1{}(JNIEnv* jn
         }
     }
 
-    write!(writer, r#"{}("#, &function.name)?;
+    write!(writer, r#"{}("#, function.name)?;
 
     for (i, (name, typ)) in function.inputs.iter().enumerate() {
         if i != 0 {

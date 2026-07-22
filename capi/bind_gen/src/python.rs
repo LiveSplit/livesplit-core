@@ -144,7 +144,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         }
     }
 
-    write!(writer, r#"livesplit_core_native.{}("#, &function.name)?;
+    write!(writer, r#"livesplit_core_native.{}("#, function.name)?;
 
     for (i, (name, typ)) in function.inputs.iter().enumerate() {
         if i != 0 {

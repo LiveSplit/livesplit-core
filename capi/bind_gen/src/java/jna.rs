@@ -171,7 +171,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
     write!(
         writer,
         r#"LiveSplitCoreNative.INSTANCE.{}("#,
-        &function.name
+        function.name
     )?;
 
     for (i, (name, typ)) in function.inputs.iter().enumerate() {
