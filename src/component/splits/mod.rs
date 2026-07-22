@@ -75,11 +75,10 @@ pub struct Settings {
     /// Specifies whether thin separators should be shown between the individual
     /// segments shown by the component.
     pub show_thin_separators: bool,
-    /// If the last segment is to always be shown, this determines whether to
-    /// show a more pronounced separator in front of the last segment, if it is
-    /// not directly adjacent to the segment shown right before it in the
-    /// scrolling window.
-    pub separator_last_split: bool,
+    /// Whether to show a pronounced separator before a row when one or more
+    /// rows immediately before it are omitted from the scrolling window.
+    #[serde(alias = "separator_last_split")]
+    pub show_gap_separators: bool,
     /// If not every segment is shown in the scrolling window of segments, then
     /// this determines whether the final segment is always to be shown, as it
     /// contains valuable information about the total duration of the chosen
@@ -250,7 +249,7 @@ impl Settings {
             visual_split_count: 16,
             split_preview_count: 1,
             show_thin_separators: true,
-            separator_last_split: true,
+            show_gap_separators: true,
             always_show_last_split: true,
             fill_with_blank_space: true,
             display_two_rows: false,
@@ -508,15 +507,12 @@ impl Component {
             // A gap between projected row indices means that the scrolling
             // window omitted one or more logical rows. Communicate that gap on
             // the following row so every renderer can show the same pronounced
-            // separator without reconstructing the scrolling logic. The
-            // existing setting continues to control gaps before the final row;
-            // gaps within the list always identify hidden group content.
+            // separator without reconstructing the scrolling logic. Apply the
+            // setting here, where all omissions are known, so it consistently
+            // controls gaps inside groups and before the locked final row.
             let has_gap = previous_displayed_index
                 .is_some_and(|previous_index| displayed_index > previous_index + 1);
-            let is_final_row = displayed_index + 1 == displayed_len;
-            state.show_separator_before = has_gap
-                && (!is_final_row
-                    || (always_show_last_split && self.settings.separator_last_split));
+            state.show_separator_before = self.settings.show_gap_separators && has_gap;
             previous_displayed_index = Some(displayed_index);
 
             state.icon = *image_cache
@@ -647,13 +643,11 @@ impl Component {
                 self.settings.show_thin_separators.into(),
             ),
             Field::new(
-                Text::SplitsShowSeparatorBeforeLastSplit
+                Text::SplitsShowGapSeparators.resolve(lang).into(),
+                Text::SplitsShowGapSeparatorsDescription
                     .resolve(lang)
                     .into(),
-                Text::SplitsShowSeparatorBeforeLastSplitDescription
-                    .resolve(lang)
-                    .into(),
-                self.settings.separator_last_split.into(),
+                self.settings.show_gap_separators.into(),
             ),
             Field::new(
                 Text::SplitsAlwaysShowLastSplit.resolve(lang).into(),
@@ -820,7 +814,7 @@ impl Component {
             1 => self.settings.visual_split_count = value.into_uint().unwrap() as _,
             2 => self.settings.split_preview_count = value.into_uint().unwrap() as _,
             3 => self.settings.show_thin_separators = value.into(),
-            4 => self.settings.separator_last_split = value.into(),
+            4 => self.settings.show_gap_separators = value.into(),
             5 => self.settings.always_show_last_split = value.into(),
             6 => self.settings.fill_with_blank_space = value.into(),
             7 => self.settings.display_two_rows = value.into(),

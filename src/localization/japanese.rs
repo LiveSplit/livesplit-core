@@ -380,9 +380,9 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsShowThinSeparators => "細い区切り線を表示",
         Text::SplitsShowThinSeparatorsDescription => "区間の間に細い区切り線を表示するかどうか。",
-        Text::SplitsShowSeparatorBeforeLastSplit => "最後のスプリット前の区切り線を表示",
-        Text::SplitsShowSeparatorBeforeLastSplitDescription => {
-            "最後の区間を常に表示する場合、スクロール窓で直前の区間と隣接しないときに強調区切り線を表示するかどうかを指定します。"
+        Text::SplitsShowGapSeparators => "省略箇所の区切り線を表示",
+        Text::SplitsShowGapSeparatorsDescription => {
+            "スクロール窓で直前の1行以上が省略されている場合、その次の行の前に強調区切り線を表示するかどうかを指定します。"
         }
         Text::SplitsAlwaysShowLastSplit => "最後のスプリットを常に表示",
         Text::SplitsAlwaysShowLastSplitDescription => {

@@ -376,9 +376,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowThinSeparatorsDescription => {
             "세그먼트 행 사이에 얇은 구분선을 표시할지 지정합니다."
         }
-        Text::SplitsShowSeparatorBeforeLastSplit => "마지막 스플릿 앞 구분선 표시",
-        Text::SplitsShowSeparatorBeforeLastSplitDescription => {
-            "마지막 세그먼트를 항상 표시하는 경우, 스크롤 창에서 바로 앞 세그먼트와 인접하지 않을 때 더 두드러진 구분선을 표시할지 지정합니다."
+        Text::SplitsShowGapSeparators => "생략 구간 구분선 표시",
+        Text::SplitsShowGapSeparatorsDescription => {
+            "스크롤 창에서 바로 앞의 한 개 이상의 행이 생략된 경우 다음 행 앞에 더 두드러진 구분선을 표시할지 지정합니다."
         }
         Text::SplitsAlwaysShowLastSplit => "마지막 스플릿 항상 표시",
         Text::SplitsAlwaysShowLastSplitDescription => {

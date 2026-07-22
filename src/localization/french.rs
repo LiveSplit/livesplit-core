@@ -424,9 +424,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowThinSeparatorsDescription => {
             "Indique si des séparateurs fins doivent être affichés entre les lignes de segments."
         }
-        Text::SplitsShowSeparatorBeforeLastSplit => "Afficher un séparateur avant le dernier split",
-        Text::SplitsShowSeparatorBeforeLastSplitDescription => {
-            "Si le dernier segment est toujours affiché, indique si un séparateur plus prononcé doit être montré avant lui lorsqu’il n’est pas adjacent au segment précédent."
+        Text::SplitsShowGapSeparators => "Afficher les séparateurs d’écart",
+        Text::SplitsShowGapSeparatorsDescription => {
+            "Indique si un séparateur plus prononcé doit être affiché avant une ligne lorsqu’une ou plusieurs lignes juste avant sont omises de la fenêtre de défilement."
         }
         Text::SplitsAlwaysShowLastSplit => "Toujours afficher le dernier split",
         Text::SplitsAlwaysShowLastSplitDescription => {

@@ -416,9 +416,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowThinSeparatorsDescription => {
             "Indica se mostrare separatori sottili tra le righe dei segmenti."
         }
-        Text::SplitsShowSeparatorBeforeLastSplit => "Mostra separatore prima dell’ultimo split",
-        Text::SplitsShowSeparatorBeforeLastSplitDescription => {
-            "Se l’ultimo segmento deve essere sempre mostrato, questa opzione determina se mostrare un separatore più marcato prima dell’ultimo segmento quando non è adiacente al precedente nella finestra scorrevole."
+        Text::SplitsShowGapSeparators => "Mostra separatori per le righe omesse",
+        Text::SplitsShowGapSeparatorsDescription => {
+            "Determina se mostrare un separatore più marcato prima di una riga quando una o più righe immediatamente precedenti sono omesse dalla finestra scorrevole."
         }
         Text::SplitsAlwaysShowLastSplit => "Mostra sempre l’ultimo split",
         Text::SplitsAlwaysShowLastSplitDescription => {

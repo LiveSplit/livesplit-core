@@ -416,9 +416,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowThinSeparatorsDescription => {
             "Indica si deben mostrarse separadores finos entre las filas de segmentos."
         }
-        Text::SplitsShowSeparatorBeforeLastSplit => "Mostrar separador antes del último split",
-        Text::SplitsShowSeparatorBeforeLastSplitDescription => {
-            "Si el último segmento siempre se muestra, esto determina si se muestra un separador más marcado antes del último segmento cuando no está adyacente al anterior en la ventana."
+        Text::SplitsShowGapSeparators => "Mostrar separadores de huecos",
+        Text::SplitsShowGapSeparatorsDescription => {
+            "Determina si se muestra un separador más marcado antes de una fila cuando se omiten una o más filas inmediatamente anteriores en la ventana de desplazamiento."
         }
         Text::SplitsAlwaysShowLastSplit => "Mostrar siempre el último split",
         Text::SplitsAlwaysShowLastSplitDescription => {
