@@ -168,7 +168,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         write!(writer, "let result = ")?;
     }
 
-    write!(writer, "CLiveSplitCore.{}(", &function.name)?;
+    write!(writer, "CLiveSplitCore.{}(", function.name)?;
 
     for (i, (name, ty)) in function.inputs.iter().enumerate() {
         if i != 0 {

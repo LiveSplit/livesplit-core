@@ -222,7 +222,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
         }
     }
 
-    write!(writer, r#"wasm.{}("#, &function.name)?;
+    write!(writer, r#"wasm.{}("#, function.name)?;
 
     for (i, (name, typ)) in function.inputs.iter().enumerate() {
         let type_name = get_hl_type_without_null(typ);
