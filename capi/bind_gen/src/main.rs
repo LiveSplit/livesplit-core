@@ -98,7 +98,7 @@ fn get_type(ty: &SynType) -> Type {
         }
         SynType::Ptr(ptr) => {
             let mut ty = get_type(&ptr.elem);
-            ty.kind = if ptr.mutability.is_some() {
+            ty.kind = if matches!(ptr.mutability, syn::PointerMutability::Mut(_)) {
                 TypeKind::RefMut
             } else {
                 TypeKind::Ref
