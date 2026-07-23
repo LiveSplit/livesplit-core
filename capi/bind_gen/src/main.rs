@@ -13,6 +13,7 @@ mod typescript;
 mod wasm_bindgen;
 
 use clap::Parser;
+use heck::ToLowerCamelCase;
 use std::{
     collections::BTreeMap,
     fs::{self, File, create_dir_all, remove_dir_all},
@@ -73,6 +74,33 @@ impl Function {
 
     fn has_return_type(&self) -> bool {
         self.output.name != "()"
+    }
+}
+
+/// Returns the public method name to use in JavaScript-facing bindings.
+///
+/// A static `name` method collides with the built-in `Function.name` property
+/// inherited by every JavaScript class constructor. Other target languages do
+/// not have that constraint, so the raw C API and their generated bindings can
+/// keep the concise name while only JavaScript exposes it as `displayName`.
+fn javascript_method_name(method: &str, is_static: bool) -> String {
+    let method = method.to_lower_camel_case();
+    if is_static && method == "name" {
+        "displayName".into()
+    } else {
+        method
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::javascript_method_name;
+
+    #[test]
+    fn avoids_the_static_function_name_property_in_javascript() {
+        assert_eq!(javascript_method_name("name", true), "displayName");
+        assert_eq!(javascript_method_name("name", false), "name");
+        assert_eq!(javascript_method_name("parse_locale", true), "parseLocale");
     }
 }
 
