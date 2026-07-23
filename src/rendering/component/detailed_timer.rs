@@ -6,7 +6,7 @@ mod layout;
 
 use self::layout::{Bounds, Timer, fit_ratio, place_comparisons, place_rows};
 use crate::{
-    component::detailed_timer::State,
+    component::detailed_timer::{IconDisplayMode, State},
     layout::LayoutState,
     platform::prelude::*,
     rendering::{
@@ -119,6 +119,10 @@ struct Dimensions {
     width: f32,
     height: f32,
     left: f32,
+    /// The lower row reclaims the icon column when the icon only spans row one.
+    comparison_left: f32,
+    /// Comparisons must remain below a first-row icon as their gaps expand.
+    comparison_top: f32,
     top: f32,
     bottom: f32,
 }
@@ -132,23 +136,32 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
 ) {
     let cache = cache.labels.get_or_insert_with(|| Box::new(Labels::new()));
     context.render_background([width, height], &component.background);
-    let left = render_icon(context, [width, height], component);
     let total_height = component.timer.height as f32 + component.segment_timer.height as f32;
-    if total_height <= 0.0 || width <= left + PADDING || height <= 0.0 {
+    if total_height <= 0.0 || width <= PADDING || height <= 0.0 {
         return;
     }
     let top = height * component.timer.height as f32 / total_height;
+    if top <= 0.0 || height - top <= 0.0 {
+        return;
+    }
+    let first_row_icon = component.display_icon == IconDisplayMode::FirstRow;
+    let (left, icon_bottom) = render_icon(
+        context,
+        [width, if first_row_icon { top } else { height }],
+        component,
+    );
+    if !first_row_icon && width <= left + PADDING {
+        return;
+    }
     let dims = Dimensions {
         width,
         height,
         left,
+        comparison_left: if first_row_icon { PADDING } else { left },
+        comparison_top: if first_row_icon { icon_bottom } else { 0.0 },
         top,
         bottom: height - top,
     };
-    if dims.top <= 0.0 || dims.bottom <= 0.0 {
-        return;
-    }
-
     context.measure_timer(NUMERIC_REFERENCE, &mut cache.timer_bounds, 1.0);
     let reference = Bounds::from(cache.timer_bounds.vertical_bounds(1.0));
     let mut lower = measure_lower_row(cache, context, component, reference, dims);
@@ -164,7 +177,14 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         dims,
         name_floor(&lower, dims),
     );
-    render_comparisons(cache, context, component, layout_state, &lower, left);
+    render_comparisons(
+        cache,
+        context,
+        component,
+        layout_state,
+        &lower,
+        dims.comparison_left,
+    );
 }
 
 fn place_content<A: ResourceAllocator>(
@@ -196,7 +216,7 @@ fn place_content<A: ResourceAllocator>(
         &lower.ink[..lower.count],
         lower.font,
         lower.timer.bounds().center(),
-        divider,
+        divider.max(dims.comparison_top),
         dims.height,
         lower.padding,
     );
@@ -224,7 +244,7 @@ fn render_timers<A: ResourceAllocator>(
     let origin = if lower.count > 0 {
         lower.value_right
     } else {
-        dims.left - PADDING
+        dims.comparison_left - PADDING
     };
     context.translate(origin, dims.top);
     timer::render_fitted(
@@ -242,15 +262,18 @@ fn render_icon<A: ResourceAllocator>(
     context: &mut RenderContext<A>,
     [width, height]: [f32; 2],
     component: &State,
-) -> f32 {
+) -> (f32, f32) {
+    if component.display_icon == IconDisplayMode::Hidden {
+        return (PADDING, 0.0);
+    }
     let padding = vertical_padding(height);
     // Leave a drawable text area even in an unusually narrow component.
     let size = (height - 2.0 * padding).min((width - 3.0 * PADDING).max(0.0));
     if let Some(icon) = context.create_image(&component.icon) {
         context.render_image([PADDING, padding], [size, size], icon);
-        BOTH_PADDINGS + size
+        (BOTH_PADDINGS + size, padding + size)
     } else {
-        PADDING
+        (PADDING, 0.0)
     }
 }
 
@@ -357,7 +380,7 @@ fn measure_lower_row<A: ResourceAllocator>(
         width,
         top,
         bottom: height,
-        left,
+        comparison_left: left,
         ..
     } = dims;
     let font = 0.5 * height;

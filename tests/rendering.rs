@@ -473,7 +473,7 @@ fn horizontal() {
     layout.push(component::separator::Component::new());
     layout.push(Box::new(
         component::detailed_timer::Component::with_settings(component::detailed_timer::Settings {
-            display_icon: true,
+            display_icon: component::detailed_timer::IconDisplayMode::BothRows,
             ..Default::default()
         }),
     ));
@@ -493,6 +493,32 @@ fn horizontal() {
         "ec993e6dc129ba03",
         "4f9d990d99eee1db",
         "horizontal",
+    );
+}
+
+#[test]
+fn detailed_timer_icon_only_in_first_row() {
+    let run = lss(run_files::LIVESPLIT_1_0);
+    let mut timer = Timer::new(run).unwrap();
+    let mut layout = Layout::new();
+    layout.push(Box::new(
+        component::detailed_timer::Component::with_settings(component::detailed_timer::Settings {
+            display_icon: component::detailed_timer::IconDisplayMode::FirstRow,
+            show_segment_name: true,
+            ..Default::default()
+        }),
+    ));
+    timer.start().unwrap();
+
+    let mut image_cache = ImageCache::new();
+
+    check_dims(
+        &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
+        &image_cache,
+        [300, 100],
+        "42ac7b1beb655f32",
+        "488aec07168b809f",
+        "detailed_timer_icon_only_in_first_row",
     );
 }
 

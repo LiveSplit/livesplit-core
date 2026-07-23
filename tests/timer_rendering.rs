@@ -394,12 +394,99 @@ fn detailed_timer_keeps_estimated_size_with_custom_names_and_icon() {
         component.timer.updates_frequently = true;
         component.segment_timer.updates_frequently = true;
         component.icon = icon_id;
+        component.display_icon = detailed_timer::IconDisplayMode::BothRows;
         component.segment_name = Some("A Very Long Segment Name".into());
         set_comparison_name(component, 0, "A Very Long Custom Comparison");
         let dims = [260.0, 120.0];
         manager.update_scene(&mut allocator, dims, &state, &image_cache);
         let current_scale = assert_detailed_timer_fits(&manager, dims, 2);
         assert_eq!(*scale.get_or_insert(current_scale), current_scale);
+    }
+}
+
+#[test]
+fn first_row_icon_reclaims_lower_width_and_keeps_comparisons_below_it() {
+    use detailed_timer::IconDisplayMode;
+
+    let mut timer = detailed_timer_with_times(&["Start", "Final Boss Battle"]);
+    timer.set_game_time(TimeSpan::from_seconds(123.45)).unwrap();
+    let mut layout = detailed_layout();
+    let mut images = ImageCache::new();
+    let icon = SettingsImage::new([1].into(), SettingsImage::ICON);
+    let icon_id = *images.cache(icon.id(), || icon.clone()).id();
+    let mut allocator = Allocator(TextEngine::new(), 0);
+    let mut manager = SceneManager::new(&mut allocator);
+
+    for dims in [
+        [280.0, 120.0],
+        [420.0, 120.0],
+        [280.0, 260.0],
+        [560.0, 260.0],
+    ] {
+        for count in 0..=2 {
+            let mut state = layout.state(&mut images, &timer.snapshot(), Lang::English);
+            let ComponentState::DetailedTimer(component) = &mut state.components[0] else {
+                unreachable!()
+            };
+            component.timer.updates_frequently = true;
+            component.segment_timer.updates_frequently = true;
+            component.icon = icon_id;
+            if count < 2 {
+                remove_comparison(component, 1);
+            }
+            if count == 0 {
+                remove_comparison(component, 0);
+            }
+            component.display_icon = IconDisplayMode::Hidden;
+            manager.update_scene(&mut allocator, dims, &state, &images);
+            assert!(
+                !manager
+                    .scene()
+                    .bottom_layer()
+                    .iter()
+                    .any(|e| matches!(e, Entity::Image(..)))
+            );
+            let hidden_scale = placed_labels(&manager, true)[3].transform.scale_y;
+
+            let ComponentState::DetailedTimer(component) = &mut state.components[0] else {
+                unreachable!()
+            };
+            component.display_icon = IconDisplayMode::FirstRow;
+            manager.update_scene(&mut allocator, dims, &state, &images);
+            let timers = placed_labels(&manager, true);
+            assert_eq!(
+                timers[3].transform.scale_y, hidden_scale,
+                "row one must not consume the segment timer's width"
+            );
+            let icon = manager
+                .scene()
+                .bottom_layer()
+                .iter()
+                .find_map(|e| match e {
+                    Entity::Image(_, transform) => Some(*transform),
+                    _ => None,
+                })
+                .unwrap();
+            assert!(icon.y >= 0.0);
+            assert!(icon.y + icon.scale_y <= dims[1] * 40.0 / 65.0 + 0.001);
+            let text = placed_labels(&manager, false);
+            for line in &text[text.len() - 2 * count..] {
+                assert!(
+                    line.bounds[0] >= icon.y + icon.scale_y - 0.001,
+                    "comparison enters the icon's first-row space"
+                );
+            }
+            for label in timers.iter().chain(&text) {
+                let overlaps_y =
+                    label.bounds[0] < icon.y + icon.scale_y && icon.y < label.bounds[1];
+                let overlaps_x = label.transform.x < icon.x + icon.scale_x
+                    && icon.x < label.transform.x + label.width;
+                assert!(
+                    !overlaps_x || !overlaps_y,
+                    "text overlaps the first-row icon"
+                );
+            }
+        }
     }
 }
 

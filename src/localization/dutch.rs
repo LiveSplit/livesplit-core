@@ -398,7 +398,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::DetailedTimerDisplayIcon => "Icoon tonen",
         Text::DetailedTimerDisplayIconDescription => {
-            "Geeft aan of het segmenticoon getoond moet worden."
+            "Bepaalt of het segmenticoon verborgen is, beide rijen beslaat of alleen ruimte in de eerste rij inneemt."
         }
         Text::SplitsBackground => "Achtergrond",
         Text::SplitsBackgroundDescription => {
