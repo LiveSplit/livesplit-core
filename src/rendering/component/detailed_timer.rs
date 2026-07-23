@@ -1,5 +1,5 @@
 use crate::{
-    component::detailed_timer::State,
+    component::detailed_timer::{IconDisplayMode, State},
     layout::LayoutState,
     rendering::{
         RenderContext,
@@ -45,19 +45,37 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
 ) {
     context.render_background([width, height], &component.background);
 
-    let vertical_padding = vertical_padding(height);
-    let icon_size = height - 2.0 * vertical_padding;
+    let total_height = component.timer.height + component.segment_timer.height;
+    let top_height = (component.timer.height as f32 / total_height as f32) * height;
+    let bottom_height = height - top_height;
 
-    let left_side = if let Some(icon) = context.create_image(&component.icon) {
-        context.render_image([PADDING, vertical_padding], [icon_size, icon_size], icon);
+    let icon_row_height = if component.display_icon == IconDisplayMode::FirstRow {
+        top_height
+    } else {
+        height
+    };
+    let icon_vertical_padding = vertical_padding(icon_row_height);
+    let icon_size = icon_row_height - 2.0 * icon_vertical_padding;
+
+    let segment_name_left_side = if let Some(icon) = context.create_image(&component.icon) {
+        context.render_image(
+            [PADDING, icon_vertical_padding],
+            [icon_size, icon_size],
+            icon,
+        );
         BOTH_PADDINGS + icon_size
     } else {
         PADDING
     };
 
-    let total_height = component.timer.height + component.segment_timer.height;
-    let top_height = (component.timer.height as f32 / total_height as f32) * height;
-    let bottom_height = height - top_height;
+    // The icon still shifts the segment name in the first row. When it is
+    // constrained to that row, however, the comparisons below it can reclaim
+    // the otherwise unused horizontal space.
+    let comparison_left_side = if component.display_icon == IconDisplayMode::FirstRow {
+        PADDING
+    } else {
+        segment_name_left_side
+    };
 
     let timer_end = timer::render(
         &mut cache.timer,
@@ -76,7 +94,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         context.render_text_ellipsis(
             segment_name,
             &mut cache.segment_name,
-            [left_side, 0.6 * top_height],
+            [segment_name_left_side, 0.6 * top_height],
             0.5 * top_height,
             segment_name_color,
             timer_end,
@@ -110,7 +128,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
             .render_text_ellipsis(
                 &comparison.name,
                 &mut cache.comparison2_name,
-                [left_side, comparison2_y],
+                [comparison_left_side, comparison2_y],
                 comparison_text_scale,
                 comparison_names_color,
                 segment_timer_end,
@@ -135,7 +153,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
             .render_text_ellipsis(
                 &comparison.name,
                 &mut cache.comparison1_name,
-                [left_side, comparison1_y],
+                [comparison_left_side, comparison1_y],
                 comparison_text_scale,
                 comparison_names_color,
                 segment_timer_end,
