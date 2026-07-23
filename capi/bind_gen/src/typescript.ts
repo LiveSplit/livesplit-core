@@ -15,7 +15,7 @@ export type ComponentStateJson =
  * texts, lines and various other elements that are being shown. They are stored
  * as RGBA colors with floating point numbers ranging from 0.0 to 1.0 per channel.
  */
-export type Color = number[];
+export type Color = [red: number, green: number, blue: number, alpha: number];
 
 /**
  * Describes a Gradient for coloring a region with more than just a single
@@ -24,8 +24,8 @@ export type Color = number[];
 export type Gradient =
     "Transparent" |
     { Plain: Color } |
-    { Vertical: Color[] } |
-    { Horizontal: Color[] };
+    { Vertical: [top: Color, bottom: Color] } |
+    { Horizontal: [left: Color, right: Color] };
 
 /**
  * Describes an extended form of a gradient, specifically made for use with
@@ -33,7 +33,7 @@ export type Gradient =
  */
 export type ListGradient =
     { Same: Gradient } |
-    { Alternating: Color[] };
+    { Alternating: [even: Color, odd: Color] };
 
 /**
  * The ID of an image that can be used for looking up an image in an image
