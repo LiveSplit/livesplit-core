@@ -26,9 +26,15 @@ impl AutoSplittingRuntime {
         Err(())
     }
 
-    pub fn load(&self, _: PathBuf, _: SharedTimer) -> Result<(), ()> {
+    pub fn load(&self, _: SharedTimer) -> Result<Option<PathBuf>, ()> {
         Err(())
     }
+
+    pub fn load_from_path(&self, _: SharedTimer, _: PathBuf) -> Result<(), ()> {
+        Err(())
+    }
+
+    pub fn store_settings(&self) {}
 }
 
 /// type
@@ -50,8 +56,24 @@ pub unsafe extern "C" fn AutoSplittingRuntime_load(
     shared_timer: OwnedSharedTimer,
 ) -> bool {
     // SAFETY: The caller guarantees that `path` is valid.
-    this.load(PathBuf::from(unsafe { str(path) }), *shared_timer)
+    this.load_from_path(*shared_timer, PathBuf::from(unsafe { str(path) }))
         .is_ok()
+}
+
+/// Attempts to load the auto splitter configured in the timer's run. Returns
+/// true if successful.
+#[unsafe(no_mangle)]
+pub extern "C" fn AutoSplittingRuntime_load_from_timer(
+    this: &AutoSplittingRuntime,
+    shared_timer: OwnedSharedTimer,
+) -> bool {
+    this.load(*shared_timer).is_ok()
+}
+
+/// Stores the loaded auto splitter's path and settings in the timer's run.
+#[unsafe(no_mangle)]
+pub extern "C" fn AutoSplittingRuntime_store_settings(this: &AutoSplittingRuntime) {
+    this.store_settings();
 }
 
 /// Attempts to unload the auto splitter. Returns true if successful.
