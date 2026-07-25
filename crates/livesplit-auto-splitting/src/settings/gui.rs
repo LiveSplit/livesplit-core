@@ -51,7 +51,7 @@ pub enum WidgetKind {
 }
 
 /// A filter for a file selection setting.
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum FileFilter {
     /// A filter that matches on the name of the file.
     Name {

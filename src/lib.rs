@@ -92,6 +92,10 @@ pub use crate::{
 };
 pub use livesplit_hotkey as hotkey;
 
+pub use crate::run::StoredAutoSplitterSettings;
+#[cfg(feature = "auto-splitting")]
+pub use crate::run::StoredAutoSplitterSettingsParseError;
+
 #[cfg(not(feature = "std"))]
 pub use crate::platform::{Clock, Duration, register_clock};
 

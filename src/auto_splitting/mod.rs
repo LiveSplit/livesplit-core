@@ -566,6 +566,7 @@
 use crate::{
     event::{self, TimerQuery},
     platform::Arc,
+    run::{StoredAutoSplitterSettings, StoredAutoSplitterSettingsParseError},
     timing::TimerPhase,
 };
 use arc_swap::ArcSwapOption;
@@ -576,7 +577,7 @@ pub use livesplit_auto_splitting::{settings, wasi_path};
 use snafu::Snafu;
 use std::{
     fmt, fs, io,
-    path::PathBuf,
+    path::{Path, PathBuf},
     sync::{
         Condvar, Mutex,
         mpsc::{self, Receiver, RecvTimeoutError, Sender},
@@ -604,20 +605,27 @@ pub enum Error {
     },
     /// Failed reading the auto splitter settings.
     SettingsLoadFailed,
+    /// Failed parsing the auto splitter settings stored in the splits file.
+    StoredSettingsLoadFailed {
+        /// The underlying parsing error.
+        source: StoredAutoSplitterSettingsParseError,
+    },
     /// The asked setting was not found.
     SettingNotFound,
 }
 
 /// An auto splitter runtime that allows using an auto splitter provided as a
 /// WebAssembly module to control a timer.
-pub struct Runtime<T: event::CommandSink + TimerQuery + Send + 'static> {
+pub struct Runtime<T: event::CommandSink + TimerQuery + Send + Sync + 'static> {
     shared_state: Arc<SharedState<T>>,
     changed_sender: Sender<()>,
     runtime: livesplit_auto_splitting::Runtime,
+    loaded_path: ArcSwapOption<PathBuf>,
+    timer: ArcSwapOption<T>,
 }
 
 struct SharedState<T: 'static> {
-    auto_splitter: ArcSwapOption<AutoSplitter<Timer<T>>>,
+    auto_splitter: ArcSwapOption<AutoSplitter<Timer<Arc<T>>>>,
     watchdog_state: Mutex<WatchdogState>,
     watchdog_state_update: Condvar,
 }
@@ -636,7 +644,7 @@ impl<T> SharedState<T> {
     }
 }
 
-impl<T: event::CommandSink + TimerQuery + Send + 'static> Drop for Runtime<T> {
+impl<T: event::CommandSink + TimerQuery + Send + Sync + 'static> Drop for Runtime<T> {
     fn drop(&mut self) {
         let _ = self.shared_state.update_watchdog(WatchdogState::Shutdown);
         if let Some(auto_splitter) = &*self.shared_state.auto_splitter.load() {
@@ -646,13 +654,13 @@ impl<T: event::CommandSink + TimerQuery + Send + 'static> Drop for Runtime<T> {
     }
 }
 
-impl<T: event::CommandSink + TimerQuery + Send + 'static> Default for Runtime<T> {
+impl<T: event::CommandSink + TimerQuery + Send + Sync + 'static> Default for Runtime<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T: event::CommandSink + TimerQuery + Send + 'static> Runtime<T> {
+impl<T: event::CommandSink + TimerQuery + Send + Sync + 'static> Runtime<T> {
     /// Starts the runtime. Doesn't actually load an auto splitter until
     /// [`load`][Runtime::load] is called.
     pub fn new() -> Self {
@@ -688,23 +696,89 @@ impl<T: event::CommandSink + TimerQuery + Send + 'static> Runtime<T> {
             changed_sender,
             // TODO: unwrap?
             runtime: livesplit_auto_splitting::Runtime::new(Config::default()).unwrap(),
+            loaded_path: ArcSwapOption::from(None),
+            timer: ArcSwapOption::from(None),
         }
     }
 
-    /// Attempts to load a wasm file containing an auto splitter module.
-    pub fn load(&self, path: PathBuf, timer: T) -> Result<(), Error> {
-        let data = fs::read(path).map_err(|e| Error::ReadFileFailed { source: e })?;
+    /// Attempts to load a WebAssembly file containing an auto splitter module
+    /// from the specified path.
+    ///
+    /// The settings stored in the timer's run are passed to the auto splitter
+    /// during instantiation. Settings without a stored script path are accepted
+    /// for compatibility with frontends that provide a fixed script externally.
+    /// When a path is stored, it needs to match `path` so settings from a
+    /// previously selected auto splitter are not applied to a different one.
+    pub fn load_from_path(&self, timer: T, path: PathBuf) -> Result<(), Error> {
+        let timer = Arc::new(timer);
+        self.timer.store(Some(timer.clone()));
+        self.unload()?;
+
+        let settings_map = {
+            let timer = timer.get_timer();
+            settings_map_for_path(timer.run(), &path)
+                .map_err(|source| Error::StoredSettingsLoadFailed { source })?
+        };
+
+        self.load_with_settings(timer, path, settings_map)
+    }
+
+    /// Loads the auto splitter configured in the timer's run together with its
+    /// stored settings. If no script path is configured, the currently loaded
+    /// auto splitter is unloaded and [`None`] is returned.
+    ///
+    /// This is the preferred entry point when a frontend opens or replaces a
+    /// splits file, as it keeps parsing, unloading, and instantiation entirely
+    /// within livesplit-core.
+    pub fn load(&self, timer: T) -> Result<Option<PathBuf>, Error> {
+        let timer = Arc::new(timer);
+        self.timer.store(Some(timer.clone()));
+        self.unload()?;
+
+        let stored_settings = {
+            let timer = timer.get_timer();
+            timer
+                .run()
+                .stored_auto_splitter_settings()
+                .map_err(|source| Error::StoredSettingsLoadFailed { source })?
+        };
+
+        let path = stored_settings
+            .script_path()
+            .filter(|path| !path.is_empty())
+            .map(PathBuf::from);
+        let settings_map = (!stored_settings.settings_map().is_empty())
+            .then(|| stored_settings.into_settings_map());
+
+        // A run's selection is authoritative. In particular, a missing or
+        // invalid replacement must not leave the previous run's module active.
+        let Some(path) = path else {
+            return Ok(None);
+        };
+
+        self.load_with_settings(timer, path.clone(), settings_map)?;
+        Ok(Some(path))
+    }
+
+    fn load_with_settings(
+        &self,
+        timer: Arc<T>,
+        path: PathBuf,
+        settings_map: Option<settings::Map>,
+    ) -> Result<(), Error> {
+        let data = fs::read(&path).map_err(|e| Error::ReadFileFailed { source: e })?;
 
         let auto_splitter = self
             .runtime
             .compile(&data)
             .map_err(|e| Error::LoadFailed { source: e })?
-            .instantiate(Timer(timer), None, None)
+            .instantiate(Timer(timer), settings_map, None)
             .map_err(|e| Error::LoadFailed { source: e })?;
 
         self.shared_state
             .auto_splitter
             .store(Some(Arc::new(auto_splitter)));
+        self.loaded_path.store(Some(Arc::new(path)));
 
         self.changed_sender
             .send(())
@@ -716,10 +790,41 @@ impl<T: event::CommandSink + TimerQuery + Send + 'static> Runtime<T> {
     /// thread stops unexpectedly.
     pub fn unload(&self) -> Result<(), Error> {
         self.shared_state.auto_splitter.store(None);
+        self.loaded_path.store(None);
 
         self.changed_sender
             .send(())
             .map_err(|_| Error::ThreadStopped)
+    }
+
+    /// Returns the path of the currently loaded auto splitter.
+    pub fn loaded_path(&self) -> Option<PathBuf> {
+        self.loaded_path.load_full().as_deref().cloned()
+    }
+
+    /// Stores the currently loaded auto splitter path and its live settings map
+    /// in the run of the timer provided to [`load`](Self::load) or
+    /// [`load_from_path`](Self::load_from_path).
+    ///
+    /// Frontends should call this before saving splits and whenever they want
+    /// the active run to reflect runtime-side setting changes. If no auto
+    /// splitter is loaded, any previously stored path and settings are cleared.
+    pub fn store_settings(&self) {
+        let Some(timer) = self.timer.load_full() else {
+            return;
+        };
+
+        let mut stored_settings = StoredAutoSplitterSettings::new();
+        stored_settings.set_script_path(
+            self.loaded_path()
+                .map(|path| path.to_string_lossy().into_owned()),
+        );
+
+        if let Some(settings_map) = self.settings_map().filter(|map| !map.is_empty()) {
+            stored_settings.set_settings_map(settings_map);
+        }
+
+        drop(timer.set_auto_splitter_settings(stored_settings));
     }
 
     /// Accesses a copy of the currently stored settings. The auto splitter can
@@ -782,6 +887,148 @@ impl<T: event::CommandSink + TimerQuery + Send + 'static> Runtime<T> {
                 .as_ref()?
                 .settings_widgets(),
         )
+    }
+}
+
+fn settings_map_for_path(
+    run: &crate::Run,
+    path: &Path,
+) -> Result<Option<settings::Map>, StoredAutoSplitterSettingsParseError> {
+    let stored_settings = run.stored_auto_splitter_settings()?;
+    let belongs_to_path = stored_settings
+        .script_path()
+        .is_none_or(|stored_path| Path::new(stored_path) == path);
+
+    Ok(
+        (belongs_to_path && !stored_settings.settings_map().is_empty())
+            .then(|| stored_settings.into_settings_map()),
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const SCRIPT_PATH: &str = "Auto Splitters/Game.wasm";
+
+    #[test]
+    fn stored_settings_are_only_loaded_for_their_script() {
+        let mut run = crate::Run::new();
+        let mut stored_settings = StoredAutoSplitterSettings::new();
+        stored_settings.set_script_path(Some(SCRIPT_PATH));
+
+        let mut settings_map = settings::Map::new();
+        settings_map.insert("enabled".into(), settings::Value::Bool(true));
+        stored_settings.set_settings_map(settings_map.clone());
+        run.set_stored_auto_splitter_settings(&stored_settings);
+
+        assert_eq!(
+            settings_map_for_path(&run, Path::new(SCRIPT_PATH)).unwrap(),
+            Some(settings_map)
+        );
+        assert_eq!(
+            settings_map_for_path(&run, Path::new("Auto Splitters/Other.wasm")).unwrap(),
+            None
+        );
+    }
+
+    #[test]
+    fn settings_without_a_script_path_support_fixed_script_frontends() {
+        let mut run = crate::Run::new();
+        let mut stored_settings = StoredAutoSplitterSettings::new();
+        let mut settings_map = settings::Map::new();
+        settings_map.insert("enabled".into(), settings::Value::Bool(true));
+        stored_settings.set_settings_map(settings_map.clone());
+        run.set_stored_auto_splitter_settings(&stored_settings);
+
+        assert_eq!(
+            settings_map_for_path(&run, Path::new(SCRIPT_PATH)).unwrap(),
+            Some(settings_map)
+        );
+    }
+
+    #[test]
+    fn foreign_operating_system_paths_do_not_match_local_paths() {
+        let paths = [
+            (
+                r"C:\Auto Splitters\Game.wasm",
+                "/home/runner/auto-splitters/Game.wasm",
+            ),
+            (
+                "/home/runner/auto-splitters/Game.wasm",
+                r"C:\Auto Splitters\Game.wasm",
+            ),
+        ];
+
+        for (stored_path, local_path) in paths {
+            let mut run = crate::Run::new();
+            let mut stored_settings = StoredAutoSplitterSettings::new();
+            stored_settings.set_script_path(Some(stored_path));
+
+            let mut settings_map = settings::Map::new();
+            settings_map.insert("enabled".into(), settings::Value::Bool(true));
+            stored_settings.set_settings_map(settings_map);
+            run.set_stored_auto_splitter_settings(&stored_settings);
+
+            // A path from another operating system cannot identify the local
+            // script, so its settings must not leak into the replacement.
+            assert_eq!(
+                settings_map_for_path(&run, Path::new(local_path)).unwrap(),
+                None
+            );
+        }
+    }
+
+    #[test]
+    fn foreign_operating_system_script_path_is_reported_as_load_error() {
+        let foreign_path = if cfg!(windows) {
+            "/home/__livesplit_foreign_path_test__/missing.wasm"
+        } else {
+            r"Z:\__livesplit_foreign_path_test__\missing.wasm"
+        };
+
+        let mut run = crate::Run::new();
+        run.push_segment(crate::Segment::new("Segment"));
+        let mut stored_settings = StoredAutoSplitterSettings::new();
+        stored_settings.set_script_path(Some(foreign_path));
+        run.set_stored_auto_splitter_settings(&stored_settings);
+
+        let timer = crate::Timer::new(run).unwrap().into_shared();
+        let runtime = Runtime::new();
+
+        assert!(matches!(
+            runtime.load(timer),
+            Err(Error::ReadFileFailed { .. })
+        ));
+        assert_eq!(runtime.loaded_path(), None);
+    }
+
+    #[test]
+    fn runtime_stores_settings_in_the_timer_it_loaded() {
+        let mut run = crate::Run::new();
+        run.push_segment(crate::Segment::new("Segment"));
+
+        let mut stored_settings = StoredAutoSplitterSettings::new();
+        let mut settings_map = settings::Map::new();
+        settings_map.insert("enabled".into(), settings::Value::Bool(true));
+        stored_settings.set_settings_map(settings_map);
+        run.set_stored_auto_splitter_settings(&stored_settings);
+
+        let timer = crate::Timer::new(run).unwrap().into_shared();
+        let runtime = Runtime::new();
+
+        assert_eq!(runtime.load(timer.clone()).unwrap(), None);
+        runtime.store_settings();
+
+        assert!(
+            timer
+                .read()
+                .unwrap()
+                .run()
+                .stored_auto_splitter_settings()
+                .unwrap()
+                .is_empty()
+        );
     }
 }
 
@@ -870,7 +1117,7 @@ impl<E: event::CommandSink + TimerQuery + Send + 'static> AutoSplitTimer for Tim
     }
 }
 
-fn run<T: event::CommandSink + TimerQuery + Send>(
+fn run<T: event::CommandSink + TimerQuery + Send + Sync>(
     shared_state: Arc<SharedState<T>>,
     changed_receiver: Receiver<()>,
 ) {
@@ -949,7 +1196,7 @@ fn run<T: event::CommandSink + TimerQuery + Send>(
     }
 }
 
-fn watchdog<T: event::CommandSink + TimerQuery + Send>(shared_state: Arc<SharedState<T>>) {
+fn watchdog<T: event::CommandSink + TimerQuery + Send + Sync>(shared_state: Arc<SharedState<T>>) {
     const TIMEOUT: Duration = Duration::from_secs(5);
     let mut has_timed_out = false;
 

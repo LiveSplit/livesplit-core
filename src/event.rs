@@ -13,7 +13,7 @@ use core::{future::Future, ops::Deref};
 
 use alloc::{borrow::Cow, sync::Arc};
 
-use crate::{TimeSpan, Timer, TimingMethod};
+use crate::{StoredAutoSplitterSettings, TimeSpan, Timer, TimingMethod};
 
 /// An event informs you about a change in the timer.
 #[derive(
@@ -59,6 +59,8 @@ pub enum Event {
     LoadingTimesSet = 16,
     /// A custom variable has been set.
     CustomVariableSet = 17,
+    /// The Auto Splitter Settings stored in the run have been changed.
+    AutoSplitterSettingsChanged = 18,
     /// An unknown event occurred.
     #[serde(other)]
     Unknown,
@@ -85,6 +87,7 @@ impl From<u32> for Event {
             15 => Event::GameTimeResumed,
             16 => Event::LoadingTimesSet,
             17 => Event::CustomVariableSet,
+            18 => Event::AutoSplitterSettingsChanged,
             _ => Event::Unknown,
         }
     }
@@ -276,6 +279,15 @@ pub trait CommandSink {
         name: Cow<str>,
         value: Cow<str>,
     ) -> impl Future<Output = Result> + 'static;
+    /// Stores the Auto Splitter Settings in the timer's run.
+    ///
+    /// The payload is empty in builds without the `auto-splitting` feature.
+    /// Keeping this command available in all builds ensures that enabling the
+    /// feature does not change the shape of this trait.
+    fn set_auto_splitter_settings(
+        &self,
+        settings: StoredAutoSplitterSettings,
+    ) -> impl Future<Output = Result> + 'static;
 }
 
 /// This trait provides functionality for querying information from the timer.
@@ -405,6 +417,16 @@ impl CommandSink for crate::SharedTimer {
         self.write().unwrap().set_custom_variable(name, value);
         async { Ok(Event::CustomVariableSet) }
     }
+
+    fn set_auto_splitter_settings(
+        &self,
+        settings: StoredAutoSplitterSettings,
+    ) -> impl Future<Output = Result> + 'static {
+        self.write()
+            .unwrap()
+            .set_stored_auto_splitter_settings(&settings);
+        async { Ok(Event::AutoSplitterSettingsChanged) }
+    }
 }
 
 #[cfg(feature = "std")]
@@ -508,6 +530,13 @@ impl<T: CommandSink + ?Sized> CommandSink for Arc<T> {
         value: Cow<str>,
     ) -> impl Future<Output = Result> + 'static {
         CommandSink::set_custom_variable(&**self, name, value)
+    }
+
+    fn set_auto_splitter_settings(
+        &self,
+        settings: StoredAutoSplitterSettings,
+    ) -> impl Future<Output = Result> + 'static {
+        CommandSink::set_auto_splitter_settings(&**self, settings)
     }
 }
 
