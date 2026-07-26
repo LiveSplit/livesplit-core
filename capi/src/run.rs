@@ -8,7 +8,7 @@ use crate::{
 use livesplit_core::{
     Attempt, Run, RunMetadata, Segment, TimeSpan,
     run::{
-        parser,
+        SegmentGroup, parser,
         saver::{self, livesplit::IoWrite},
     },
 };
@@ -238,6 +238,19 @@ pub extern "C" fn Run_has_been_modified(this: &Run) -> bool {
 #[unsafe(no_mangle)]
 pub extern "C" fn Run_segment(this: &Run, index: usize) -> &Segment {
     this.segment(index)
+}
+
+/// Returns the amount of native segment groups stored in this Run.
+#[unsafe(no_mangle)]
+pub extern "C" fn Run_segment_groups_len(this: &Run) -> usize {
+    this.segment_groups().groups().len()
+}
+
+/// Accesses a native segment group stored in this Run by its index. You may not
+/// provide an out of bounds index.
+#[unsafe(no_mangle)]
+pub extern "C" fn Run_segment_group(this: &Run, index: usize) -> &SegmentGroup {
+    &this.segment_groups().groups()[index]
 }
 
 /// Returns the amount of segments in this Run.
