@@ -147,6 +147,7 @@ impl Client {
             | Event::GameTimeResumed
             | Event::LoadingTimesSet
             | Event::CustomVariableSet
+            | Event::AutoSplitterSettingsChanged
             | Event::Unknown => return None,
         };
 
