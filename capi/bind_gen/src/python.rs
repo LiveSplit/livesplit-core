@@ -334,7 +334,7 @@ class {class_name}({class_name_ref_mut}):"#
             }
         }
 
-        if class_name == "Run" {
+        if class_name == "Run" && class.has_function("Run_parse") {
             writeln!(
                 writer,
                 r#"

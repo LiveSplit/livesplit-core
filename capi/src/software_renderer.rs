@@ -1,34 +1,12 @@
 //! The software renderer allows rendering layouts entirely on the CPU. This is
 //! surprisingly fast and can be considered the default renderer.
 
-use livesplit_core::{layout::LayoutState, settings::ImageCache};
-
-#[cfg(feature = "software-rendering")]
-use livesplit_core::rendering::software::BorrowedRenderer as SoftwareRenderer;
+use livesplit_core::{
+    layout::LayoutState, rendering::software::BorrowedRenderer as SoftwareRenderer,
+    settings::ImageCache,
+};
 
 use crate::slice_mut;
-
-#[cfg(not(feature = "software-rendering"))]
-/// dummy
-pub struct SoftwareRenderer;
-#[cfg(not(feature = "software-rendering"))]
-impl SoftwareRenderer {
-    fn new() -> Self {
-        panic!("The software renderer is not compiled in.")
-    }
-
-    #[expect(warnings)]
-    fn render(
-        &mut self,
-        _: &LayoutState,
-        _: &ImageCache,
-        _: &mut [u8],
-        _: [u32; 2],
-        _: u32,
-        _: bool,
-    ) {
-    }
-}
 
 /// type
 pub type OwnedSoftwareRenderer = Box<SoftwareRenderer>;

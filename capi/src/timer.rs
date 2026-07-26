@@ -1,10 +1,9 @@
 //! A Timer provides all the capabilities necessary for doing speedrun attempts.
 
 use super::{output_str, output_time, output_time_span, output_vec, str};
-use crate::{
-    run::{NullableOwnedRun, OwnedRun},
-    shared_timer::OwnedSharedTimer,
-};
+use crate::run::{NullableOwnedRun, OwnedRun};
+#[cfg(feature = "shared-timer")]
+use crate::shared_timer::OwnedSharedTimer;
 use livesplit_core::{
     Run, Time, TimeSpan, Timer, TimerPhase, TimingMethod,
     event::{Error, Event},
@@ -29,6 +28,7 @@ pub extern "C" fn Timer_new(run: OwnedRun) -> NullableOwnedTimer {
 /// Consumes the Timer and creates a Shared Timer that can be shared across
 /// multiple threads with multiple owners.
 #[unsafe(no_mangle)]
+#[cfg(feature = "shared-timer")]
 pub extern "C" fn Timer_into_shared(this: OwnedTimer) -> OwnedSharedTimer {
     Box::new((*this).into_shared())
 }

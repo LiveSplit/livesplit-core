@@ -69,15 +69,15 @@ fn write_class_comments<W: Write>(mut writer: W, comments: &[String]) -> Result<
     )?;
 
     for comment in comments {
-        write!(
-            writer,
-            r#"
-    /// {}"#,
-            comment
-                .replace("<NULL>", "null")
-                .replace("<TRUE>", "true")
-                .replace("<FALSE>", "false")
-        )?;
+        let comment = comment
+            .replace("<NULL>", "null")
+            .replace("<TRUE>", "true")
+            .replace("<FALSE>", "false");
+        if comment.is_empty() {
+            write!(writer, "\n    ///")?;
+        } else {
+            write!(writer, "\n    /// {comment}")?;
+        }
     }
 
     write!(
@@ -102,15 +102,15 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
         )?;
 
         for comment in &function.comments {
-            write!(
-                writer,
-                r#"
-        /// {}"#,
-                comment
-                    .replace("<NULL>", "null")
-                    .replace("<TRUE>", "true")
-                    .replace("<FALSE>", "false")
-            )?;
+            let comment = comment
+                .replace("<NULL>", "null")
+                .replace("<TRUE>", "true")
+                .replace("<FALSE>", "false");
+            if comment.is_empty() {
+                write!(writer, "\n        ///")?;
+            } else {
+                write!(writer, "\n        /// {comment}")?;
+            }
         }
 
         write!(
@@ -403,7 +403,7 @@ namespace LiveSplitCore
             }
         }
 
-        if class_name == "Run" {
+        if class_name == "Run" && class.has_function("Run_parse") {
             write!(
                 writer,
                 "{}",

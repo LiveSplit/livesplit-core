@@ -611,7 +611,7 @@ export class {class_name_ref} {{"#,
     }"#
                 )?;
             }
-        } else if class_name == "Run" {
+        } else if class_name == "Run" && class.has_function("Run_save_as_lss") {
             if type_script {
                 write!(
                     writer,
@@ -871,7 +871,7 @@ export class {class_name} extends {class_name_ref_mut} {{
             }
         }
 
-        if class_name == "Run" {
+        if class_name == "Run" && class.has_function("Run_parse") {
             if type_script {
                 write!(
                     writer,

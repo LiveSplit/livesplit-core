@@ -5,31 +5,7 @@ use super::str;
 use crate::shared_timer::OwnedSharedTimer;
 use std::{os::raw::c_char, path::PathBuf};
 
-#[cfg(feature = "auto-splitting")]
 type AutoSplittingRuntime = livesplit_core::auto_splitting::Runtime<livesplit_core::SharedTimer>;
-
-#[cfg(not(feature = "auto-splitting"))]
-use livesplit_core::SharedTimer;
-
-#[cfg(not(feature = "auto-splitting"))]
-#[expect(missing_docs)]
-pub struct AutoSplittingRuntime;
-
-#[expect(warnings)]
-#[cfg(not(feature = "auto-splitting"))]
-impl AutoSplittingRuntime {
-    pub fn new() -> Self {
-        Self
-    }
-
-    pub fn unload(&self) -> Result<(), ()> {
-        Err(())
-    }
-
-    pub fn load(&self, _: PathBuf, _: SharedTimer) -> Result<(), ()> {
-        Err(())
-    }
-}
 
 /// type
 pub type OwnedAutoSplittingRuntime = Box<AutoSplittingRuntime>;

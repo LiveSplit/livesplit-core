@@ -168,11 +168,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, class_name: &str) -> R
         }
     }
 
-    write!(
-        writer,
-        r#"LiveSplitCoreNative.INSTANCE.{}("#,
-        function.name
-    )?;
+    write!(writer, r#"LiveSplitCoreNative.INSTANCE.{}("#, function.name)?;
 
     for (i, (name, typ)) in function.inputs.iter().enumerate() {
         if i != 0 {
@@ -392,7 +388,7 @@ public class {class_name} extends {class_name_ref_mut} implements AutoCloseable 
         }
     }
 
-    if class_name == "Run" {
+    if class_name == "Run" && class.has_function("Run_parse") {
         write!(
             writer,
             "{}",

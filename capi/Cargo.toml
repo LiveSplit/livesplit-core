@@ -20,12 +20,164 @@ wasm-bindgen-futures = { version = "0.4.28", optional = true }
 web-sys = { version = "0.3.28", optional = true }
 
 [features]
-default = ["localization", "image-shrinking"]
+default = ["default-api", "localization", "image-shrinking"]
+
+# The default API preserves the portable C API surface that was historically
+# always available. Platform-specific facilities and facilities that require a
+# separate implementation feature are intentionally not represented by dummy
+# types anymore. They are enabled by their own features below.
+default-api = [
+    "analysis",
+    "hotkeys",
+    "layout-editing",
+    "layouts",
+    "parsing",
+    "run-editing",
+    "run-saving",
+    "shared-timer",
+    "timing",
+]
+
+# High-level feature groups. Most consumers should use these instead of
+# selecting the individual API type features below.
+parsing = ["parse-run-result"]
+run-saving = ["run"]
+timing = ["timer"]
+run-editing = ["fuzzy-list", "run-editor", "sum-of-best-cleaner"]
+layouts = ["components", "layout"]
+layout-editing = ["layout-editor"]
+hotkeys = ["hotkey-system"]
+components = [
+    "blank-space-component",
+    "carousel-component",
+    "current-comparison-component",
+    "current-pace-component",
+    "delta-component",
+    "detailed-timer-component",
+    "graph-component",
+    "group-component",
+    "pb-chance-component",
+    "possible-time-save-component",
+    "previous-segment-component",
+    "segment-time-component",
+    "separator-component",
+    "splits-component",
+    "sum-of-best-component",
+    "text-component",
+    "timer-component",
+    "title-component",
+    "total-playtime-component",
+]
+
+# Fine-grained API type features. Dependencies describe types that occur in the
+# public signatures of the selected type.
+analysis = ["run", "time-span", "timer"]
+atomic-date-time = []
+attempt = ["atomic-date-time", "time", "time-span"]
+blank-space-component = ["blank-space-component-state", "component", "timer"]
+blank-space-component-state = []
+carousel-component = ["carousel-component-state", "component"]
+carousel-component-state = []
+command-sink = []
+component = []
+current-comparison-component = ["component", "key-value-component-state", "lang", "timer"]
+current-pace-component = ["component", "key-value-component-state", "lang", "timer"]
+delta-component = ["component", "key-value-component-state", "lang", "timer"]
+detailed-timer-component = ["component", "detailed-timer-component-state", "lang", "timer"]
+detailed-timer-component-state = []
+fuzzy-list = []
+general-layout-settings = []
+graph-component = ["component", "general-layout-settings", "graph-component-state", "timer"]
+graph-component-state = []
+group-component = ["component", "group-component-state"]
+group-component-state = []
+hotkey-config = ["lang", "setting-value"]
+hotkey-system = ["command-sink", "hotkey-config"]
+image-cache = []
+key-value-component-state = []
+lang = []
+layout = ["component", "general-layout-settings", "image-cache", "lang", "layout-state", "timer"]
+layout-editor = [
+    "component",
+    "image-cache",
+    "lang",
+    "layout",
+    "layout-editor-state",
+    "layout-state",
+    "setting-value",
+    "timer",
+]
+layout-editor-state = ["setting-value"]
+layout-state = [
+    "blank-space-component-state",
+    "carousel-component-state",
+    "detailed-timer-component-state",
+    "graph-component-state",
+    "group-component-state",
+    "key-value-component-state",
+    "separator-component-state",
+    "splits-component-state",
+    "text-component-state",
+    "timer-component-state",
+    "title-component-state",
+]
+linked-layout = []
+parse-run-result = ["run"]
+pb-chance-component = ["component", "key-value-component-state", "lang", "timer"]
+possible-time-save-component = ["component", "key-value-component-state", "lang", "timer"]
+potential-clean-up = []
+previous-segment-component = ["component", "key-value-component-state", "lang", "timer"]
+run = [
+    "attempt",
+    "linked-layout",
+    "run-metadata",
+    "segment",
+    "segment-group",
+    "time-span",
+]
+run-editor = ["linked-layout", "run", "sum-of-best-cleaner"]
+run-metadata = [
+    "run-metadata-custom-variables-iter",
+    "run-metadata-speedrun-com-variables-iter",
+]
+run-metadata-custom-variable = []
+run-metadata-custom-variables-iter = ["run-metadata-custom-variable"]
+run-metadata-speedrun-com-variable = []
+run-metadata-speedrun-com-variables-iter = ["run-metadata-speedrun-com-variable"]
+segment = ["segment-history", "time"]
+segment-group = []
+segment-history = ["segment-history-iter"]
+segment-history-element = ["time"]
+segment-history-iter = ["segment-history-element"]
+segment-time-component = ["component", "key-value-component-state", "lang", "timer"]
+separator-component = ["component", "separator-component-state"]
+separator-component-state = []
+setting-value = []
+shared-timer = ["command-sink", "timer", "timer-read-lock", "timer-write-lock"]
+splits-component = ["component", "general-layout-settings", "lang", "splits-component-state", "timer"]
+splits-component-state = []
+sum-of-best-cleaner = ["potential-clean-up"]
+sum-of-best-component = ["component", "key-value-component-state", "lang", "timer"]
+text-component = ["component", "text-component-state", "timer"]
+text-component-state = []
+time = ["time-span"]
+time-span = ["lang"]
+timer = ["run", "time", "time-span"]
+timer-component = ["component", "lang", "timer", "timer-component-state"]
+timer-component-state = []
+timer-read-lock = ["timer"]
+timer-write-lock = ["timer"]
+title-component = ["component", "lang", "timer", "title-component-state"]
+title-component-state = []
+total-playtime-component = ["component", "key-value-component-state", "lang", "timer"]
+
 localization = ["livesplit-core/localization"]
 image-shrinking = ["livesplit-core/image-shrinking"]
-software-rendering = ["livesplit-core/software-rendering"]
+software-rendering = ["image-cache", "layout-state", "livesplit-core/software-rendering"]
 wasm-web = ["livesplit-core/wasm-web", "wasm-bindgen", "wasm-bindgen-futures", "web-sys"]
-auto-splitting = ["livesplit-core/auto-splitting"]
+auto-splitting = ["shared-timer", "livesplit-core/auto-splitting"]
 assume-str-parameters-are-utf8 = []
-web-rendering = ["wasm-web", "livesplit-core/web-rendering"]
-therun-gg = ["wasm-web", "livesplit-core/therun-gg"]
+web-command-sink = ["command-sink", "wasm-web"]
+server-protocol = ["command-sink", "wasm-web"]
+web-rendering = ["image-cache", "layout-state", "wasm-web", "livesplit-core/web-rendering"]
+therun-gg = ["timer", "wasm-web", "livesplit-core/therun-gg"]
