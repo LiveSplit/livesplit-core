@@ -63,6 +63,7 @@ pub mod run_metadata_custom_variables_iter;
 pub mod run_metadata_speedrun_com_variable;
 pub mod run_metadata_speedrun_com_variables_iter;
 pub mod segment;
+pub mod segment_group;
 pub mod segment_history;
 pub mod segment_history_element;
 pub mod segment_history_iter;
