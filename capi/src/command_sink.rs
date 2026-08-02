@@ -15,6 +15,7 @@ use livesplit_core::{
     event::{self, Result},
 };
 
+#[cfg(feature = "shared-timer")]
 use crate::shared_timer::OwnedSharedTimer;
 
 /// type
@@ -26,6 +27,7 @@ pub type OwnedCommandSink = Box<CommandSink>;
 
 /// Creates a new Command Sink.
 #[unsafe(no_mangle)]
+#[cfg(feature = "shared-timer")]
 pub extern "C" fn CommandSink_from_timer(timer: OwnedSharedTimer) -> OwnedCommandSink {
     Box::new(CommandSink(Arc::new(*timer)))
 }

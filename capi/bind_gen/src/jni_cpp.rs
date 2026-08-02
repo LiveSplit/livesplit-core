@@ -179,8 +179,17 @@ pub fn write<W: Write>(mut writer: W, classes: &BTreeMap<String, Class>) -> Resu
 #include "livesplit_core.h"
 
 using namespace LiveSplit;
+"#
+    )?;
 
-extern "C" JNIEXPORT jlong Java_livesplitcore_LiveSplitCoreNative_Run_1parseString(JNIEnv* jni_env, jobject, jstring data, jstring load_files_path) {
+    if classes
+        .get("Run")
+        .is_some_and(|class| class.has_function("Run_parse"))
+    {
+        write!(
+            writer,
+            "{}",
+            r#"extern "C" JNIEXPORT jlong Java_livesplitcore_LiveSplitCoreNative_Run_1parseString(JNIEnv* jni_env, jobject, jstring data, jstring load_files_path) {
     auto cstr_data = jni_env->GetStringUTFChars(data, nullptr);
     auto cstr_load_files_path = jni_env->GetStringUTFChars(load_files_path, nullptr);
     auto result = (jlong)Run_parse(cstr_data, strlen(cstr_data), cstr_load_files_path);
@@ -189,7 +198,8 @@ extern "C" JNIEXPORT jlong Java_livesplitcore_LiveSplitCoreNative_Run_1parseStri
     return result;
 }
 "#
-    )?;
+        )?;
+    }
 
     for (class_name, class) in classes {
         for function in class

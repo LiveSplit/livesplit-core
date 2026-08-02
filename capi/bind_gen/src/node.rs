@@ -602,7 +602,7 @@ const liveSplitCoreNative = ffi.Library('livesplit_core', {"#
             }
         }
 
-        if class_name == "Run" {
+        if class_name == "Run" && class.has_function("Run_parse") {
             if type_script {
                 write!(
                     writer,

@@ -1,22 +1,19 @@
 //! A Run stores the split times for a specific game and category of a runner.
 
-use super::{get_file, output_str, output_time_span, output_vec, str};
-use crate::{
-    linked_layout::NullableOwnedLinkedLayout, parse_run_result::OwnedParseRunResult,
-    segment::OwnedSegment, slice, with_vec,
-};
-use livesplit_core::{
-    Attempt, Run, RunMetadata, Segment, TimeSpan,
-    run::{
-        SegmentGroup, parser,
-        saver::{self, livesplit::IoWrite},
-    },
-};
-use std::{
-    io::{Read, Write},
-    os::raw::c_char,
-    path::Path,
-};
+#[cfg(feature = "parsing")]
+use super::{get_file, with_vec};
+use super::{output_str, output_time_span, output_vec, str};
+use crate::{linked_layout::NullableOwnedLinkedLayout, segment::OwnedSegment};
+#[cfg(feature = "parsing")]
+use crate::{parse_run_result::OwnedParseRunResult, slice};
+#[cfg(feature = "parsing")]
+use livesplit_core::run::parser;
+#[cfg(feature = "run-saving")]
+use livesplit_core::run::saver::{self, livesplit::IoWrite};
+use livesplit_core::{Attempt, Run, RunMetadata, Segment, TimeSpan, run::SegmentGroup};
+#[cfg(feature = "parsing")]
+use std::{io::Read, path::Path};
+use std::{io::Write, os::raw::c_char};
 
 /// type
 pub type OwnedRun = Box<Run>;
@@ -43,6 +40,7 @@ pub extern "C" fn Run_drop(this: OwnedRun) {
 /// normal parsing function, it also fixes problems in the Run, such as
 /// decreasing times and missing information.
 #[unsafe(no_mangle)]
+#[cfg(feature = "parsing")]
 pub unsafe extern "C" fn Run_parse(
     data: *const u8,
     length: usize,
@@ -70,6 +68,7 @@ pub unsafe extern "C" fn Run_parse(
 /// to this function. On Windows you pass a file handle to this function. The
 /// file descriptor / handle does not get closed.
 #[unsafe(no_mangle)]
+#[cfg(feature = "parsing")]
 pub unsafe extern "C" fn Run_parse_file_handle(
     handle: i64,
     load_files_path: *const c_char,
@@ -278,6 +277,7 @@ pub extern "C" fn Run_attempt_history_index(this: &Run, index: usize) -> &Attemp
 /// use by a timer, use the appropriate method on the timer instead, in order to
 /// properly save the current attempt as well.
 #[unsafe(no_mangle)]
+#[cfg(feature = "run-saving")]
 pub extern "C" fn Run_save_as_lss(this: &Run) -> *const c_char {
     output_vec(|o| {
         saver::livesplit::save_run(this, IoWrite(o)).unwrap();

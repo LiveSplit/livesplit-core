@@ -62,6 +62,25 @@ cargo run
 
 The bindings will then be available in `capi/bindings`.
 
+The C API can also be built as a smaller subset. High-level features such as
+`parsing`, `timing`, `run-editing`, and `layouts` select coherent parts of the
+API, while features named after individual API types allow more precise
+control. For example, a library that only parses and inspects split files can
+be built with:
+
+```bash
+cargo rustc --profile max-opt -p livesplit-core-capi --crate-type cdylib \
+  --no-default-features --features parsing
+```
+
+The binding generator needs to receive the same feature selection so that it
+only generates bindings for functions that are present in the library:
+
+```bash
+cd capi/bind_gen
+cargo run -- --no-default-features --features parsing
+```
+
 ## Download
 
 Builds for a lot of common platforms are available in the [Releases](https://github.com/LiveSplit/livesplit-core/releases).
