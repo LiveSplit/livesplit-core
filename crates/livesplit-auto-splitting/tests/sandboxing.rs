@@ -1,4 +1,5 @@
 use livesplit_auto_splitting::{AutoSplitter, Config, LogLevel, Runtime, Timer, TimerState};
+use livesplit_auto_splitting::{settings, settings::Value};
 use std::{
     ffi::OsStr,
     fmt, fs,
@@ -35,6 +36,14 @@ impl Timer for DummyTimer {
 
 #[track_caller]
 fn compile(crate_name: &str) -> wasmtime::Result<AutoSplitter<DummyTimer>> {
+    compile_with_settings(crate_name, None)
+}
+
+#[track_caller]
+fn compile_with_settings(
+    crate_name: &str,
+    settings_map: Option<settings::Map>,
+) -> wasmtime::Result<AutoSplitter<DummyTimer>> {
     let mut path = PathBuf::from("tests");
     path.push("test-cases");
     path.push(crate_name);
@@ -71,7 +80,7 @@ fn compile(crate_name: &str) -> wasmtime::Result<AutoSplitter<DummyTimer>> {
 
     Ok(Runtime::new(Config::default())?
         .compile(&fs::read(wasm_path).unwrap())?
-        .instantiate(DummyTimer, None, None)?)
+        .instantiate(DummyTimer, settings_map, None)?)
 }
 
 #[track_caller]
@@ -84,6 +93,38 @@ fn run(crate_name: &str) -> wasmtime::Result<()> {
 #[test]
 fn empty() {
     run("empty").unwrap();
+}
+
+#[test]
+fn startup_is_deferred_until_the_first_interruptible_update() {
+    let mut settings = settings::Map::new();
+    settings.insert("enabled".into(), Value::Bool(true));
+    let runtime = compile_with_settings("startup", Some(settings)).unwrap();
+
+    assert_eq!(runtime.tick_rate(), Duration::from_secs_f64(1.0 / 120.0));
+    assert!(runtime.settings_widgets().is_empty());
+
+    runtime.lock().update().unwrap();
+    assert_eq!(runtime.tick_rate(), Duration::from_secs_f64(1.0 / 42.0));
+    assert_eq!(runtime.settings_widgets().len(), 2);
+
+    runtime.lock().update().unwrap();
+    assert_eq!(runtime.settings_widgets().len(), 2);
+}
+
+#[test]
+fn startup_can_be_interrupted() {
+    let mut settings = settings::Map::new();
+    settings.insert("hang".into(), Value::Bool(true));
+    let runtime = compile_with_settings("startup", Some(settings)).unwrap();
+    let interrupt = runtime.interrupt_handle();
+
+    thread::spawn(move || {
+        thread::sleep(Duration::from_millis(100));
+        interrupt.interrupt();
+    });
+
+    assert!(runtime.lock().update().is_err());
 }
 
 #[test]

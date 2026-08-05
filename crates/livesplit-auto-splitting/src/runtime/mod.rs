@@ -70,11 +70,6 @@ pub enum CreationError {
         /// The underlying error.
         source: wasmtime::Error,
     },
-    /// Failed running the WebAssembly System Interface (WASI) `_start` function.
-    WasiStart {
-        /// The underlying error.
-        source: wasmtime::Error,
-    },
 }
 
 slotmap::new_key_type! {
@@ -221,6 +216,7 @@ struct SharedData {
 struct ExclusiveData<T: 'static> {
     trapped: bool,
     store: Store<Context<T>>,
+    initialize: Option<TypedFunc<(), ()>>,
     update: TypedFunc<(), ()>,
 }
 
@@ -249,13 +245,21 @@ pub struct ExecutionGuard<'runtime, T: Timer> {
 
 impl<T: Timer> ExecutionGuard<'_, T> {
     /// Runs the exported `update` function of the WebAssembly module a single
-    /// time.
+    /// time. On the first call, the module's `_initialize` or `_start` export,
+    /// if present, runs immediately before `update`. This keeps arbitrary
+    /// initialization code interruptible through [`InterruptHandle`].
     pub fn update(&mut self) -> Result<()> {
         let data = &mut *self.data;
         if data.trapped {
             return Ok(());
         }
-        let result = data.update.call(&mut data.store, ());
+        let result = if let Some(initialize) = data.initialize.take() {
+            initialize
+                .call(&mut data.store, ())
+                .and_then(|()| data.update.call(&mut data.store, ()))
+        } else {
+            data.update.call(&mut data.store, ())
+        };
 
         if result.is_ok() {
             self.settings_widgets
@@ -365,7 +369,11 @@ impl Runtime {
 }
 
 impl CompiledAutoSplitter {
-    /// Instantiates the auto splitter with the given timer.
+    /// Instantiates the auto splitter with the given timer. A conventional
+    /// `_initialize` or `_start` export is retained for the first
+    /// [`ExecutionGuard::update`] call rather than executed here, so callers
+    /// can obtain an [`InterruptHandle`] before arbitrary initialization code
+    /// runs.
     pub fn instantiate<T: Timer>(
         &self,
         timer: T,
@@ -432,16 +440,16 @@ impl CompiledAutoSplitter {
                 format_args!("This auto splitter uses WASI. The API is subject to change, because WASI is still in preview. Auto splitters using WASI may need to be recompiled in the future."),
                 LogLevel::Warning,
             );
-
-            // These may be different in future WASI versions.
-            if let Ok(func) = instance.get_typed_func::<(), ()>(&mut store, "_initialize") {
-                func.call(&mut store, ())
-                    .map_err(|source| CreationError::WasiStart { source })?;
-            } else if let Ok(func) = instance.get_typed_func::<(), ()>(&mut store, "_start") {
-                func.call(&mut store, ())
-                    .map_err(|source| CreationError::WasiStart { source })?;
-            }
         }
+
+        // Initialization is deferred until the first update. This ensures that
+        // arbitrary startup code runs only after the caller can obtain an
+        // interrupt handle, just like every later invocation of `update`.
+        // These exports may be different in future WASI versions.
+        let initialize = instance
+            .get_typed_func::<(), ()>(&mut store, "_initialize")
+            .ok()
+            .or_else(|| instance.get_typed_func::<(), ()>(&mut store, "_start").ok());
 
         let update = instance
             .get_typed_func(&mut store, "update")
@@ -451,6 +459,7 @@ impl CompiledAutoSplitter {
             exclusive_data: Mutex::new(ExclusiveData {
                 trapped: false,
                 store,
+                initialize,
                 update,
             }),
             engine: engine.clone(),
