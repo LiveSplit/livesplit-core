@@ -364,11 +364,15 @@ impl Component {
         let run = timer.run();
         let current_split = timer.current_split_index();
         let mut scrolled_to_split = None;
-        let display_current_split = if self.settings.subsplit_display_mode
+        // CurrentGroupExpanded only needs cursor-based navigation when there is
+        // a hierarchy to expand and collapse. Without any groups, its visual
+        // projection is a flat list, so the scroll offset must keep its normal
+        // meaning of moving the visible window through that list.
+        let scrolls_through_subsplit_groups = self.settings.subsplit_display_mode
             == SubsplitDisplayMode::CurrentGroupExpanded
             && !run.is_empty()
-            && !run.segment_groups().groups().is_empty()
-        {
+            && !run.segment_groups().groups().is_empty();
+        let display_current_split = if scrolls_through_subsplit_groups {
             let (base_split, min_split, max_split) = match timer.current_phase() {
                 TimerPhase::NotRunning => (-1, -1, run.len() as isize - 1),
                 TimerPhase::Ended => (run.len() as isize, 0, run.len() as isize),
@@ -444,18 +448,17 @@ impl Component {
             }),
             scrollable_split_count as isize - scrollable_visual_split_count as isize,
         );
-        let scroll_offset =
-            if self.settings.subsplit_display_mode == SubsplitDisplayMode::CurrentGroupExpanded {
-                0
-            } else {
-                self.scroll_offset = min(
-                    max(self.scroll_offset, -skip_count),
-                    scrollable_split_count as isize
-                        - skip_count
-                        - scrollable_visual_split_count as isize,
-                );
-                self.scroll_offset
-            };
+        let scroll_offset = if scrolls_through_subsplit_groups {
+            0
+        } else {
+            self.scroll_offset = min(
+                max(self.scroll_offset, -skip_count),
+                scrollable_split_count as isize
+                    - skip_count
+                    - scrollable_visual_split_count as isize,
+            );
+            self.scroll_offset
+        };
         let skip_count = max(0, skip_count + scroll_offset) as usize;
         let take_count = scrollable_visual_split_count.saturating_sub(locked_last_split as usize);
         let always_show_last_split = self.settings.always_show_last_split;
