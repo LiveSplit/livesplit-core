@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 /// A setting widget that is meant to be shown to and modified by the user.
 #[non_exhaustive]
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Widget {
     /// A unique identifier for this setting. This is not meant to be shown to
     /// the user and is only used to keep track of the setting. This key is used
@@ -19,7 +19,7 @@ pub struct Widget {
 }
 
 /// The type of a [`Widget`] and additional information about it.
-#[derive(Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum WidgetKind {
     /// A title that is shown to the user. It doesn't by itself store a value
     /// and is instead used to group settings together.
@@ -51,7 +51,7 @@ pub enum WidgetKind {
 }
 
 /// A filter for a file selection setting.
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum FileFilter {
     /// A filter that matches on the name of the file.
     Name {
@@ -82,7 +82,7 @@ pub enum FileFilter {
 }
 
 /// An option for a choice setting.
-#[derive(Clone, Eq, Hash, PartialEq)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq)]
 pub struct ChoiceOption {
     /// The unique identifier of the option. This is not meant to be shown to
     /// the user and is only used to keep track of the option. This key is used
