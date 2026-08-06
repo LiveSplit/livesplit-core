@@ -941,6 +941,47 @@ fn flat_and_all_groups_expanded_scroll_normally_without_subsplit_cursor() {
 }
 
 #[test]
+fn current_group_expanded_scrolls_normally_without_subsplit_groups() {
+    let mut run = Run::new();
+    for name in ["A", "B", "C", "D"] {
+        run.push_segment(Segment::new(name));
+    }
+
+    let timer = Timer::new(run).unwrap();
+    let mut component = Component::with_settings(Settings {
+        visual_split_count: 2,
+        always_show_last_split: false,
+        subsplit_display_mode: SubsplitDisplayMode::CurrentGroupExpanded,
+        ..english_settings()
+    });
+    let mut image_cache = ImageCache::new();
+
+    component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &Default::default(),
+        Lang::English,
+    );
+    component.scroll_down();
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &Default::default(),
+        Lang::English,
+    );
+
+    assert_eq!(
+        state
+            .splits
+            .iter()
+            .map(|split| split.name.as_str())
+            .collect::<Vec<_>>(),
+        ["B", "C"]
+    );
+    assert!(!state.splits.iter().any(|split| split.is_scrolled_to_split));
+}
+
+#[test]
 fn current_group_expanded_closes_other_groups() {
     let mut run = Run::new();
     for name in ["Intro", "A1", "A2", "A End", "Outro"] {
