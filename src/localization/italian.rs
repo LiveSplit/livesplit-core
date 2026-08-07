@@ -399,7 +399,9 @@ pub const fn resolve(text: Text) -> &'static str {
             "Il colore del nome del segmento se è mostrato. Se non specificato, viene usato il colore del layout."
         }
         Text::DetailedTimerDisplayIcon => "Mostra icona",
-        Text::DetailedTimerDisplayIconDescription => "Indica se mostrare l’icona del segmento.",
+        Text::DetailedTimerDisplayIconDescription => {
+            "Controlla se l’icona del segmento è nascosta, occupa entrambe le righe o soltanto la prima."
+        }
         Text::SplitsBackground => "Sfondo",
         Text::SplitsBackgroundDescription => {
             "Lo sfondo mostrato dietro il componente. È possibile scegliere colori alternati; in tal caso ogni riga alterna tra i due colori scelti."

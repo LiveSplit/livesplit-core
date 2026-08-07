@@ -365,7 +365,9 @@ pub const fn resolve(text: Text) -> &'static str {
             "区間名を表示する場合の色。指定しない場合はレイアウトの色が使用されます。"
         }
         Text::DetailedTimerDisplayIcon => "アイコンを表示",
-        Text::DetailedTimerDisplayIconDescription => "区間アイコンを表示するかどうか。",
+        Text::DetailedTimerDisplayIconDescription => {
+            "区間アイコンを非表示にするか、両方の行に表示するか、最初の行のみに表示するかを設定します。"
+        }
         Text::SplitsBackground => "背景",
         Text::SplitsBackgroundDescription => {
             "コンポーネントの背景。交互色を選択すると、各行が2色で交互に表示されます。"
