@@ -3,7 +3,7 @@ mod layout_files;
 mod parse {
     use crate::layout_files;
     use livesplit_core::{
-        Component, Lang,
+        Component, Lang, TimingMethod,
         component::{splits, text},
         layout::{Layout, parser::parse},
     };
@@ -104,6 +104,20 @@ mod parse {
     #[test]
     fn with_timer_delta_background() {
         livesplit(layout_files::WITH_TIMER_DELTA_BACKGROUND);
+    }
+
+    #[test]
+    fn detailed_timer_timing_method_applies_to_segment_timer() {
+        let l = livesplit(layout_files::DETAILED_TIMER_GAME_TIME);
+        let Some(detailed_timer) = l.components.iter().find_map(|c| match c {
+            Component::DetailedTimer(d) => Some(d),
+            _ => None,
+        }) else {
+            panic!("Detailed Timer component not found");
+        };
+        let settings = detailed_timer.settings();
+        assert_eq!(settings.timer.timing_method, Some(TimingMethod::GameTime));
+        assert_eq!(settings.segment_timer.timing_method,Some(TimingMethod::GameTime));
     }
 
     #[test]
