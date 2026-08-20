@@ -8,7 +8,7 @@ mod run_files;
 mod parse {
     use crate::run_files;
     use livesplit_core::{
-        Run, TimeSpan,
+        Lang, Run, Time, TimeSpan,
         analysis::total_playtime,
         run::parser::{
             TimerKind, composite, flitter, libresplit, livesplit, llanfair, llanfair_gered,
@@ -240,6 +240,30 @@ mod parse {
     #[test]
     fn libresplit() {
         libresplit::parse(run_files::LIBRESPLIT, None).unwrap();
+    }
+
+    fn libresplit_time(real_time: Option<&str>, game_time: Option<&str>) -> Time {
+        Time::new()
+            .with_real_time(real_time.map(|time| TimeSpan::parse(time, Lang::English).unwrap()))
+            .with_game_time(game_time.map(|time| TimeSpan::parse(time, Lang::English).unwrap()))
+    }
+
+    #[test]
+    fn libresplit_game_time() {
+        let run = libresplit::parse(run_files::LIBRESPLIT_GAME_TIME, None).unwrap();
+
+        assert_eq!(
+            run.segment(0).personal_best_split_time(),
+            libresplit_time(Some("11:41.299585"), Some("11:30.000000"))
+        );
+        assert_eq!(
+            run.segment(0).best_segment_time(),
+            libresplit_time(Some("11:32.100735"), Some("11:20.000000"))
+        );
+        assert_eq!(
+            run.segment(2).best_segment_time(),
+            libresplit_time(None, Some("2:30.000000"))
+        );
     }
 
     #[test]

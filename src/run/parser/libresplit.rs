@@ -8,6 +8,7 @@ use crate::{
 };
 use alloc::borrow::Cow;
 use core::result::Result as StdResult;
+use serde::{Deserialize as DeserializeTrait, Deserializer};
 use serde_derive::Deserialize;
 use serde_json::Error as JsonError;
 
@@ -27,14 +28,73 @@ pub enum Error {
 /// The Result type for the LibreSplit Parser.
 pub type Result<T> = StdResult<T, Error>;
 
+/// A LibreSplit time can either be a legacy timestamp string or an object
+/// containing separate real-time and game-time timestamps.
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum TimePayload {
+    Legacy(TimeValue),
+    Separate {
+        #[serde(default)]
+        real_time: Option<TimeValue>,
+        #[serde(default)]
+        game_time: Option<TimeValue>,
+    },
+}
+
+/// A timestamp in a LibreSplit time value. LibreSplit uses `-` for a missing
+/// value when the other timing method is present.
+struct TimeValue(Option<TimeSpan>);
+
+impl<'de> DeserializeTrait<'de> for TimeValue {
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let value = <&str>::deserialize(deserializer)?;
+        if value == "-" {
+            return Ok(Self(None));
+        }
+
+        TimeSpan::parse(value, Lang::English)
+            .map(Some)
+            .map(Self)
+            .map_err(|_| serde::de::Error::custom("invalid LibreSplit time"))
+    }
+}
+
+impl TimePayload {
+    fn into_time(self) -> Time {
+        fn nonzero(value: Option<TimeValue>) -> Option<TimeSpan> {
+            // Legacy files use zero for an empty time. New files use `-` for
+            // the same purpose when only one timing method has a value.
+            value
+                .and_then(|value| value.0)
+                .filter(|value| *value != TimeSpan::zero())
+        }
+
+        match self {
+            Self::Legacy(value) => Time::new().with_real_time(nonzero(Some(value))),
+            Self::Separate {
+                real_time,
+                game_time,
+            } => Time::new()
+                .with_real_time(nonzero(real_time))
+                .with_game_time(nonzero(game_time)),
+        }
+    }
+}
+
 #[derive(Deserialize)]
 struct Splits<'a> {
     #[serde(borrow)]
     title: Option<Cow<'a, str>>,
     attempt_count: Option<u32>,
     start_delay: Option<TimeSpan>,
-    world_record: Option<TimeSpan>,
+    world_record: Option<TimePayload>,
     splits: Option<Vec<Split<'a>>>,
+    // TODO: Parse LibreSplit's `comparison_method` once Run can represent the
+    // authoritative timing method. Serde intentionally ignores it for now.
 }
 
 #[derive(Deserialize)]
@@ -46,20 +106,9 @@ struct Split<'a> {
     #[cfg(feature = "std")]
     #[serde(borrow)]
     icon: Option<Cow<'a, str>>,
-    time: Option<TimeSpan>,
-    best_time: Option<TimeSpan>,
-    best_segment: Option<TimeSpan>,
-}
-
-fn parse_time(real_time: TimeSpan) -> Time {
-    // Empty Time is stored as zero
-    let real_time = if real_time != TimeSpan::zero() {
-        Some(real_time)
-    } else {
-        None
-    };
-
-    Time::new().with_real_time(real_time)
+    time: Option<TimePayload>,
+    best_time: Option<TimePayload>,
+    best_segment: Option<TimePayload>,
 }
 
 /// Attempts to parse an LibreSplit (formerly Urn) splits file. In addition to
@@ -87,7 +136,9 @@ pub fn parse(source: &str, #[allow(unused)] load_files_path: Option<&Path>) -> R
     if let Some(start_delay) = splits.start_delay {
         run.set_offset(-start_delay);
     }
-    if let Some(world_record) = splits.world_record {
+    if let Some(world_record) = splits.world_record.map(TimePayload::into_time)
+        && let Some(world_record) = world_record.real_time.or(world_record.game_time)
+    {
         run.metadata_mut()
             .custom_variable_mut(world_record::NAME)
             .permanent()
@@ -110,15 +161,15 @@ pub fn parse(source: &str, #[allow(unused)] load_files_path: Option<&Path>) -> R
         for split in splits {
             let mut segment = Segment::new(split.title.unwrap_or_default());
             if let Some(time) = split.time {
-                segment.set_personal_best_split_time(parse_time(time));
+                segment.set_personal_best_split_time(time.into_time());
             }
             if let Some(best_segment) = split.best_segment {
-                segment.set_best_segment_time(parse_time(best_segment));
+                segment.set_best_segment_time(best_segment.into_time());
             }
 
             if let Some(best_time) = split.best_time {
-                let best_split_time = parse_time(best_time);
-                if best_split_time.real_time.is_some() {
+                let best_split_time = best_time.into_time();
+                if best_split_time.real_time.is_some() || best_split_time.game_time.is_some() {
                     run.add_attempt_with_index(
                         Time::default(),
                         attempt_history_index,
