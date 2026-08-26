@@ -59,6 +59,41 @@ use crate::{
     timing::formatter::{self, ASCII_MINUS, TimeFormatter},
 };
 
+/// Handles commands from a subset of the original LiveSplit's IPC/TCP/WebSocket server protocol
+pub fn convert_old_command(command: &str) -> Option<Command> {
+    let mut words = command.split(" ");
+    Some(match words.next().unwrap_or_default() {
+        "start" | "startimer" => Command::Start,
+        "split" => Command::Split,
+        "startorsplit" => Command::SplitOrStart,
+        "reset" => Command::Reset { save_attempt : None },
+        "unsplit" | "undosplit" => Command::UndoSplit,
+        "skipsplit" => Command::SkipSplit,
+        "pause" => Command::Pause,
+        "resume" => Command::Resume,
+        "undoallpauses" => Command::UndoAllPauses,
+        "setcomparison" => Command::SetCurrentComparison { comparison: Cow::from(words.collect::<Vec<&str>>().join(" ")) },
+        "switchto" => Command::SetCurrentTimingMethod { timing_method: match words.next() {
+            Some("gametime") => TimingMethod::GameTime,
+            Some("realtime") => TimingMethod::RealTime,
+            _ => {return None;}
+        } },
+		//apparently initgametime wasn't a real command but I know of some clients that attempt to use it
+        "initgametime" => Command::InitializeGameTime, 
+        "setgametime" => Command::SetGameTime { time: match TimeSpan::parse(words.next().unwrap_or_default(), Lang::English) {
+            Ok(time) => time,
+            Err(_) => {return None;}
+        } },
+        "pausegametime" => Command::PauseGameTime,
+        "unpausegametime" => Command::ResumeGameTime,
+        "setloadingtimes" => Command::SetLoadingTimes { time: match TimeSpan::parse(words.next().unwrap_or_default(), Lang::English) {
+            Ok(time) => time,
+            Err(_) => {return None;}
+        } },
+        _ => {return None;}
+    })
+}
+
 /// Handles an incoming command and returns the response to be sent.
 pub async fn handle_command<S: event::CommandSink + event::TimerQuery>(
     command: &str,
@@ -66,9 +101,12 @@ pub async fn handle_command<S: event::CommandSink + event::TimerQuery>(
 ) -> String {
     let response = match serde_json::from_str::<Command>(command) {
         Ok(command) => command.handle(command_sink).await.into(),
-        Err(e) => CommandResult::Error(Error::InvalidCommand {
-            message: e.to_string(),
-        }),
+        Err(e) => match convert_old_command(command) {
+            Some(command) => command.handle(command_sink).await.into(),
+            None => CommandResult::Error(Error::InvalidCommand {
+                message: e.to_string(),
+            }),
+        } 
     };
 
     serde_json::to_string(&response).unwrap()
