@@ -78,7 +78,6 @@ pub fn convert_old_command(command: &str) -> Option<Command> {
             Some("realtime") => TimingMethod::RealTime,
             _ => {return None;}
         } },
-		//apparently initgametime wasn't a real command but I know of some clients that attempt to use it
         "initgametime" => Command::InitializeGameTime, 
         "setgametime" => Command::SetGameTime { time: match TimeSpan::parse(words.next().unwrap_or_default(), Lang::English) {
             Ok(time) => time,
