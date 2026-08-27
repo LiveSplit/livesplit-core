@@ -64,19 +64,20 @@ pub async fn handle_command<S: event::CommandSink + event::TimerQuery>(
     command: &str,
     command_sink: &S,
 ) -> String {
-    if serde_json::from_str::<serde_json::Value>(command).is_ok() {
-        let response = match serde_json::from_str::<Command>(command) {
-            Ok(command) => command.handle(command_sink).await.into(),
-            Err(e) => CommandResult::Error(Error::InvalidCommand {
-                message: e.to_string(),
-            }),
-        };
-
-        serde_json::to_string(&response).unwrap()
-    } else {
-        // fall back on normal LiveSplit's server protocol
-        handle_livesplit_command(command, command_sink).await
+    if !command.trim_start().starts_with(&['{', '[']) {
+        // command doesn't look like a JSON Command,
+        // so use normal LiveSplit's server protocol
+        return handle_livesplit_command(command, command_sink).await;
     }
+
+    let response = match serde_json::from_str::<Command>(command) {
+        Ok(command) => command.handle(command_sink).await.into(),
+        Err(e) => CommandResult::Error(Error::InvalidCommand {
+            message: e.to_string(),
+        }),
+    };
+
+    serde_json::to_string(&response).unwrap()
 }
 
 /// Encodes an event that happened to be sent.
