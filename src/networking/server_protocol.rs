@@ -51,6 +51,7 @@
 
 use alloc::borrow::Cow;
 use serde::Serializer;
+use serde_json::json;
 
 use crate::{
     TimeSpan, Timer, TimerPhase, TimingMethod,
@@ -589,6 +590,10 @@ async fn handle_livesplit_command<S: event::CommandSink + event::TimerQuery>(
             command_sink.pause().await.ok();
             "".to_string()
         }
+        "undoallpauses" => {
+            command_sink.undo_all_pauses().await.ok();
+            "".to_string()
+        }
         "resume" => {
             command_sink.resume().await.ok();
             "".to_string()
@@ -626,6 +631,38 @@ async fn handle_livesplit_command<S: event::CommandSink + event::TimerQuery>(
             "".to_string()
         }
         // TODO: alwayspausegametime => would require adding to CommandSink
+        "getgamename" => {
+            let timer = command_sink.get_timer();
+            sanitize_string_response(timer.run().game_name())
+        }
+        "getcategoryname" => {
+            let timer = command_sink.get_timer();
+            sanitize_string_response(timer.run().category_name())
+        }
+        "getcategoryvariables" => {
+            let timer = command_sink.get_timer();
+            let md = timer.run().metadata();
+
+            // Region
+            let region = md.region_name();
+
+            // Platform
+            let platform = md.platform_name();
+
+            // Variables
+            let variables = serde_json::Map::from_iter(
+                md.speedrun_com_variables()
+                    .map(|(k, v)| (k.to_string(), serde_json::Value::String(v.to_string()))),
+            );
+
+            json!({
+                "Region": region,
+                "Platform": platform,
+                "UsesEmulator": md.uses_emulator(),
+                "Variables": variables,
+            })
+            .to_string()
+        }
         "getdelta" => {
             let timer = command_sink.get_timer();
             let comparison = if args.len() > 1 {
@@ -649,15 +686,36 @@ async fn handle_livesplit_command<S: event::CommandSink + event::TimerQuery>(
             time_formatter_format(delta)
         }
         "getsplitindex" => {
-            let split_index = command_sink
-                .get_timer()
-                .current_split_index()
-                .map_or(-1, |i| i as i32);
+            let timer = command_sink.get_timer();
+            let split_index = timer.current_split_index().map_or(-1, |i| i as i32);
             split_index.to_string()
         }
+        "getsplitcount" => {
+            let timer = command_sink.get_timer();
+            timer.run().segments().len().to_string()
+        }
+        "getsplitname" => {
+            let timer = command_sink.get_timer();
+            let Ok(mut index) = args[1].parse::<i32>() else {
+                return "-".to_string();
+            };
+
+            let segments = timer.run().segments();
+            let count = segments.len() as i32;
+            if index.is_negative() {
+                index = count + index;
+            }
+
+            if index >= 0 && index < count {
+                sanitize_string_response(segments[index as usize].name())
+            } else {
+                "-".to_string()
+            }
+        }
         "getcurrentsplitname" => {
-            if let Some(current_split) = command_sink.get_timer().current_split() {
-                current_split.name().to_string()
+            let timer = command_sink.get_timer();
+            if let Some(current_split) = timer.current_split() {
+                sanitize_string_response(current_split.name())
             } else {
                 "-".to_string()
             }
@@ -665,7 +723,17 @@ async fn handle_livesplit_command<S: event::CommandSink + event::TimerQuery>(
         "getlastsplitname" | "getprevioussplitname" => {
             let timer = command_sink.get_timer();
             match timer.current_split_index() {
-                Some(i) if i > 0 => timer.run().segments()[i - 1].name().to_string(),
+                Some(i) if i > 0 => sanitize_string_response(timer.run().segments()[i - 1].name()),
+                _ => "-".to_string(),
+            }
+        }
+        "getnextsplitname" | "getupcomingsplitname" => {
+            let timer = command_sink.get_timer();
+            let segments = timer.run().segments();
+            match timer.current_split_index() {
+                Some(i) if (i + 1) < segments.len() => {
+                    sanitize_string_response(segments[i + 1].name())
+                }
                 _ => "-".to_string(),
             }
         }
@@ -746,8 +814,29 @@ async fn handle_livesplit_command<S: event::CommandSink + event::TimerQuery>(
             let prediction = predict_time::<S>(&timer, comparison);
             time_formatter_format(prediction)
         }
+        "getpausedrealtime" => {
+            let timer = command_sink.get_timer();
+            time_formatter_format(timer.get_pause_time())
+        }
+        "getpausedgametime" => {
+            let timer = command_sink.get_timer();
+            // TODO: PauseTime vs GameTimePauseTime
+            // for a well-behaved auto-splitter that only pauses GameTime when the timer is Running,
+            // this should be equivalent
+            time_formatter_format(timer.get_pause_time())
+        }
+        "getoffset" => {
+            let timer = command_sink.get_timer();
+            time_formatter_format(Some(timer.run().offset()))
+        }
         "gettimerphase" | "getcurrenttimerphase" => {
-            format!("{:?}", command_sink.get_timer().current_phase())
+            let timer = command_sink.get_timer();
+            // TODO: double-check that these are acutally the same
+            format!("{:?}", timer.current_phase())
+        }
+        "getcomparisonname" => {
+            let timer = command_sink.get_timer();
+            sanitize_string_response(timer.current_comparison())
         }
         "setcomparison" => {
             command_sink
@@ -770,15 +859,21 @@ async fn handle_livesplit_command<S: event::CommandSink + event::TimerQuery>(
             };
             "".to_string()
         }
+        "gettimingmethod" => {
+            let timer = command_sink.get_timer();
+            // TODO: double-check that these are acutally the same
+            format!("{:?}", timer.current_timing_method())
+        }
         // TODO: setsplitname | setcurrentsplitname => would require adding to CommandSink
         "getcustomvariablevalue" => {
             let timer = command_sink.get_timer();
-            let value = timer.run().metadata().custom_variable_value(args[1]);
-            // make sure response isn't null or empty, and doesn't contain line endings
-            match value {
-                None | Some("") => "-".to_string(),
-                Some(v) => v.replace("\r\n", " ").replace("\r", " ").replace("\n", " "),
-            }
+            sanitize_string_response(
+                timer
+                    .run()
+                    .metadata()
+                    .custom_variable_value(args[1])
+                    .unwrap_or_default(),
+            )
         }
         "setcustomvariable" => {
             if args.len() < 2 {
@@ -799,17 +894,60 @@ async fn handle_livesplit_command<S: event::CommandSink + event::TimerQuery>(
                 .ok();
             "".to_string()
         }
+        // TODO: globalhotkeysenabled => would require adding something somewhere
+        "globalhotkeysenabled" => "-".to_string(),
+        // TODO: enableglobalhotkeys | disableglobalhotkeys | switchhotkeyprofile => would require adding to CommandSink
         "ping" => "pong".to_string(),
-        "getattemptcount" => command_sink.get_timer().run().attempt_count().to_string(),
-        "getcompletedcount" => command_sink
-            .get_timer()
-            .run()
-            .attempt_history()
-            .iter()
-            .filter(|x| x.time().real_time.is_some())
-            .count()
-            .to_string(),
+        // TODO: getlayoutpath => would require adding something somewhere
+        "getlayoutpath" => "-".to_string(),
+        // TODO: savelayout | savelayoutas => would require adding to CommandSink
+        "savelayout" | "savelayoutas" => "-".to_string(),
+        // TODO: getsplitspath => would require adding something somewhere
+        "getsplitspath" => "-".to_string(),
+        // TODO: savesplits | savesplitsas => would require adding to CommandSink
+        "savesplits" | "savesplitsas" => "-".to_string(),
+        // TODO: switchlayout => would require adding to CommandSink
+        "switchlayout" => "-".to_string(),
+        // TODO: switchsplits => would require adding to CommandSink
+        "switchsplits" => "-".to_string(),
+        // TODO: getsplitsscreenshot | savesplitsscreenshot => would require adding something somewhere
+        "getsplitsscreenshot" | "savesplitsscreenshot" => "-".to_string(),
+        "getattemptcount" => {
+            let timer = command_sink.get_timer();
+            timer.run().attempt_count().to_string()
+        }
+        "getcompletedcount" => {
+            let timer = command_sink.get_timer();
+            timer
+                .run()
+                .attempt_history()
+                .iter()
+                .filter(|x| x.time().real_time.is_some())
+                .count()
+                .to_string()
+        }
+        // TODO: getautosplitterpath => would require adding something somewhere
+        "getautosplitterpath" => "-".to_string(),
+        // TODO: autosplitteractivated => would require adding something somewhere
+        "autosplitteractivated" => "-".to_string(),
+        // TODO: gethotkeyprofile => would require adding something somewhere
+        "gethotkeyprofile" => "-".to_string(),
+        // TODO: getlivesplitversion
+        "getlivesplitversion" => "Unknown Version".to_string(),
+        // TODO: getlivesplitpath
+        "getlivesplitpath" => "-".to_string(),
+        // TODO: getservertype
+        "getservertype" => "-".to_string(),
         _ => "".to_string(),
+    }
+}
+
+/// Make sure string response isn't empty and doesn't contain line endings
+fn sanitize_string_response(s: &str) -> String {
+    if s.trim().is_empty() {
+        "-".to_string()
+    } else {
+        s.replace("\r\n", " ").replace("\r", " ").replace("\n", " ")
     }
 }
 
