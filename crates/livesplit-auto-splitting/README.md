@@ -21,6 +21,18 @@ splitter.
 In addition the WebAssembly module is expected to export a memory called
 `memory`.
 
+They may also optionally provide an `on_settings_button` function with the
+following signature:
+
+```rust
+#[unsafe(no_mangle)]
+pub extern "C" fn on_settings_button() {}
+```
+
+This function is called when the user clicks a settings button. The auto
+splitter can retrieve the key of the button that was clicked by calling
+`user_settings_get_button_key`.
+
 ## API exposed to the Auto Splitters
 
 The following functions are provided to the auto splitters in the module
@@ -281,6 +293,18 @@ unsafe extern "C" {
         description_len: usize,
         heading_level: u32,
     );
+    /// Adds a new button to the user settings. This is used to trigger an
+    /// action in the auto splitter. The key needs to be unique across all
+    /// types of settings and is not persisted in the settings map. The
+    /// pointers need to point to valid UTF-8 encoded text with the respective
+    /// given length. When the user clicks the button, the auto splitter's
+    /// `on_settings_button` export is called.
+    pub fn user_settings_add_button(
+        key_ptr: *const u8,
+        key_len: usize,
+        description_ptr: *const u8,
+        description_len: usize,
+    );
     /// Adds a new choice setting that the user can modify. This allows the user
     /// to choose between various options. The key is used to store the setting
     /// in the settings map and needs to be unique across all types of settings.
@@ -370,6 +394,15 @@ unsafe extern "C" {
         tooltip_ptr: *const u8,
         tooltip_len: usize,
     );
+    /// Stores the key of the settings button that is currently being invoked
+    /// in the buffer given. Returns `false` if the buffer is too small or if
+    /// no settings button is currently being invoked. After this call, no
+    /// matter whether it was successful or not, the `buf_len_ptr` will be set
+    /// to the required buffer size. If `false` is returned and the
+    /// `buf_len_ptr` got set to 0, no settings button is currently being
+    /// invoked. The key is guaranteed to be valid UTF-8 and is not
+    /// nul-terminated.
+    pub fn user_settings_get_button_key(buf_ptr: *mut u8, buf_len_ptr: *mut usize) -> bool;
 
     /// Creates a new settings map. You own the settings map and are responsible
     /// for freeing it.

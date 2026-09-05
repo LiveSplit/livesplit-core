@@ -4,7 +4,7 @@ use wasmtime::{Caller, Error, Linker};
 
 use crate::{CreationError, Timer, runtime::Context, settings};
 
-use super::{get_str, memory_and_context};
+use super::{get_arr_mut, get_slice_mut, get_str, memory_and_context};
 
 pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationError> {
     linker
@@ -58,6 +58,28 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
         .map_err(|source| CreationError::LinkFunction {
             source,
             name: "user_settings_add_title",
+        })?
+        .func_wrap("env", "user_settings_add_button", {
+            |mut caller: Caller<Context<T>>,
+             key_ptr: u32,
+             key_len: u32,
+             description_ptr: u32,
+             description_len: u32| {
+                let (memory, context) = memory_and_context(&mut caller);
+                let key = get_str(memory, key_ptr, key_len)?.into();
+                let description = get_str(memory, description_ptr, description_len)?.into();
+                Arc::make_mut(&mut context.settings_widgets).push(settings::Widget {
+                    key,
+                    description,
+                    tooltip: None,
+                    kind: settings::WidgetKind::Button,
+                });
+                Ok(())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "user_settings_add_button",
         })?
         .func_wrap("env", "user_settings_add_choice", {
             |mut caller: Caller<Context<T>>,
@@ -227,6 +249,32 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
         .map_err(|source| CreationError::LinkFunction {
             source,
             name: "user_settings_set_tooltip",
+        })?
+        .func_wrap("env", "user_settings_get_button_key", {
+            |mut caller: Caller<Context<T>>, ptr: u32, len_ptr: u32| {
+                let (memory, context) = memory_and_context(&mut caller);
+                let key = context.pending_button_key.clone();
+
+                let len_bytes = get_arr_mut(memory, len_ptr)?;
+                let Some(key) = key else {
+                    *len_bytes = 0u32.to_le_bytes();
+                    return Ok(0u32);
+                };
+
+                let len = u32::from_le_bytes(*len_bytes) as usize;
+                *len_bytes = (key.len() as u32).to_le_bytes();
+
+                if len < key.len() {
+                    return Ok(0u32);
+                }
+                let buf = get_slice_mut(memory, ptr, key.len() as _)?;
+                buf.copy_from_slice(key.as_bytes());
+                Ok(1u32)
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "user_settings_get_button_key",
         })?;
     Ok(())
 }
