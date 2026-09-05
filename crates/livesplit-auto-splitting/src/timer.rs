@@ -73,4 +73,8 @@ pub trait Timer: Send + 'static {
     fn log_auto_splitter(&mut self, message: fmt::Arguments);
     /// Logs a message from the runtime.
     fn log_runtime(&mut self, message: fmt::Arguments, log_level: LogLevel);
+    /// The path of the currently loaded splits file, if any.
+    fn splits_path(&self) -> Option<std::path::PathBuf> {
+        None
+    }
 }
