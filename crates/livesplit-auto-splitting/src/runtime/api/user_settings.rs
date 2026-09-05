@@ -207,6 +207,32 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             source,
             name: "user_settings_add_file_select_mime_filter",
         })?
+        .func_wrap("env", "user_settings_add_text_input", {
+            |mut caller: Caller<Context<T>>,
+             key_ptr: u32,
+             key_len: u32,
+             description_ptr: u32,
+             description_len: u32,
+             default_value_ptr: u32,
+             default_value_len: u32| {
+                let (memory, context) = memory_and_context(&mut caller);
+                let key = get_str(memory, key_ptr, key_len)?.into();
+                let description = get_str(memory, description_ptr, description_len)?.into();
+                let default_value =
+                    get_str(memory, default_value_ptr, default_value_len)?.into();
+                Arc::make_mut(&mut context.settings_widgets).push(settings::Widget {
+                    key,
+                    description,
+                    tooltip: None,
+                    kind: settings::WidgetKind::TextInput { default_value },
+                });
+                Ok(())
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "user_settings_add_text_input",
+        })?
         .func_wrap("env", "user_settings_set_tooltip", {
             |mut caller: Caller<Context<T>>,
              key_ptr: u32,
