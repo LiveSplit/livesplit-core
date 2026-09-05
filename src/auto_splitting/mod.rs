@@ -584,6 +584,7 @@ use crate::{
     timing::TimerPhase,
 };
 use arc_swap::ArcSwapOption;
+use core::cell::Cell;
 use livesplit_auto_splitting::{
     AutoSplitter, Config, CreationError, LogLevel, Timer as AutoSplitTimer, TimerState,
 };
@@ -634,6 +635,7 @@ pub struct Runtime<T: event::CommandSink + TimerQuery + Send + Sync + 'static> {
     shared_state: Arc<SharedState<T>>,
     changed_sender: Sender<()>,
     runtime: livesplit_auto_splitting::Runtime,
+    fixed_script_path: Cell<bool>,
     loaded_path: ArcSwapOption<PathBuf>,
     timer: ArcSwapOption<T>,
 }
@@ -710,6 +712,7 @@ impl<T: event::CommandSink + TimerQuery + Send + Sync + 'static> Runtime<T> {
             changed_sender,
             // TODO: unwrap?
             runtime: livesplit_auto_splitting::Runtime::new(Config::default()).unwrap(),
+            fixed_script_path: Cell::from(false),
             loaded_path: ArcSwapOption::from(None),
             timer: ArcSwapOption::from(None),
         }
@@ -724,6 +727,7 @@ impl<T: event::CommandSink + TimerQuery + Send + Sync + 'static> Runtime<T> {
     /// When a path is stored, it needs to match `path` so settings from a
     /// previously selected auto splitter are not applied to a different one.
     pub fn load_from_path(&self, timer: T, path: PathBuf) -> Result<(), Error> {
+        self.fixed_script_path.set(true);
         let timer = Arc::new(timer);
         self.timer.store(Some(timer.clone()));
         self.unload()?;
@@ -745,6 +749,7 @@ impl<T: event::CommandSink + TimerQuery + Send + Sync + 'static> Runtime<T> {
     /// splits file, as it keeps parsing, unloading, and instantiation entirely
     /// within livesplit-core.
     pub fn load(&self, timer: T) -> Result<Option<PathBuf>, Error> {
+        self.fixed_script_path.set(false);
         let timer = Arc::new(timer);
         self.timer.store(Some(timer.clone()));
         self.unload()?;
@@ -829,10 +834,12 @@ impl<T: event::CommandSink + TimerQuery + Send + Sync + 'static> Runtime<T> {
         };
 
         let mut stored_settings = StoredAutoSplitterSettings::new();
-        stored_settings.set_script_path(
-            self.loaded_path()
-                .map(|path| path.to_string_lossy().into_owned()),
-        );
+        if !self.fixed_script_path.get() {
+            stored_settings.set_script_path(
+                self.loaded_path()
+                    .map(|path| path.to_string_lossy().into_owned()),
+            );
+        }
 
         if let Some(settings_map) = self.settings_map().filter(|map| !map.is_empty()) {
             stored_settings.set_settings_map(settings_map);
