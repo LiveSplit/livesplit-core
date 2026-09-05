@@ -140,6 +140,8 @@
 //!     /// Resumes the game time. This does not resume the timer, only the
 //!     /// automatic flow of time for the game time.
 //!     pub safe fn timer_resume_game_time();
+//!     /// Sets whether the timer compares against real time or game time.
+//!     pub safe fn timer_set_timing_method(method: u32);
 //!
 //!     /// Attaches to a process based on its name. The pointer needs to point to
 //!     /// valid UTF-8 encoded text with the given length. If multiple processes
@@ -1095,6 +1097,14 @@ impl<E: event::CommandSink + TimerQuery + Send + 'static> AutoSplitTimer for Tim
 
     fn resume_game_time(&mut self) {
         drop(self.0.resume_game_time());
+    }
+
+    fn set_timing_method(&mut self, method: livesplit_auto_splitting::TimingMethod) {
+        let method = match method {
+            livesplit_auto_splitting::TimingMethod::RealTime => crate::TimingMethod::RealTime,
+            livesplit_auto_splitting::TimingMethod::GameTime => crate::TimingMethod::GameTime,
+        };
+        drop(self.0.set_current_timing_method(method));
     }
 
     fn set_variable(&mut self, name: &str, value: &str) {

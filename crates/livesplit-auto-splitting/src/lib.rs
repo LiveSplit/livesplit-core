@@ -140,6 +140,8 @@
 //!     /// Resumes the game time. This does not resume the timer, only the
 //!     /// automatic flow of time for the game time.
 //!     pub safe fn timer_resume_game_time();
+//!     /// Sets whether the timer compares against real time or game time.
+//!     pub safe fn timer_set_timing_method(method: u32);
 //!
 //!     /// Attaches to a process based on its name. The pointer needs to point to
 //!     /// valid UTF-8 encoded text with the given length. If multiple processes
@@ -586,7 +588,7 @@ pub use runtime::{
     Runtime,
 };
 pub use time;
-pub use timer::{LogLevel, Timer, TimerState};
+pub use timer::{LogLevel, Timer, TimerState, TimingMethod};
 
 const _: () = {
     const fn assert_send_sync<T: Send + Sync>() {}

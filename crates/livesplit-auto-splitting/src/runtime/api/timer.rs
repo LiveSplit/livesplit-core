@@ -124,6 +124,20 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
         .map_err(|source| CreationError::LinkFunction {
             source,
             name: "timer_resume_game_time",
+        })?
+        .func_wrap("env", "timer_set_timing_method", {
+            |mut caller: Caller<Context<T>>, method: u32| {
+                let method = match method {
+                    0 => crate::TimingMethod::RealTime,
+                    1 => crate::TimingMethod::GameTime,
+                    _ => return,
+                };
+                caller.data_mut().timer.set_timing_method(method);
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "timer_set_timing_method",
         })?;
     Ok(())
 }
