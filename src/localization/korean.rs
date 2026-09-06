@@ -359,7 +359,9 @@ pub const fn resolve(text: Text) -> &'static str {
             "세그먼트 이름을 표시할 때의 색상입니다. 지정하지 않으면 레이아웃의 색상을 사용합니다."
         }
         Text::DetailedTimerDisplayIcon => "아이콘 표시",
-        Text::DetailedTimerDisplayIconDescription => "세그먼트 아이콘을 표시할지 지정합니다.",
+        Text::DetailedTimerDisplayIconDescription => {
+            "세그먼트 아이콘을 숨길지, 두 행 모두에 표시할지, 첫 번째 행에만 표시할지 설정합니다."
+        }
         Text::SplitsBackground => "배경",
         Text::SplitsBackgroundDescription => {
             "컴포넌트 뒤에 표시되는 배경입니다. 교차 색상을 선택하면 각 줄이 두 색을 번갈아 사용합니다."

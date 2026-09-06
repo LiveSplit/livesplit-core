@@ -5,6 +5,7 @@ use crate::{Json, output_vec, str};
 use livesplit_core::{
     TimingMethod,
     component::{
+        detailed_timer::IconDisplayMode,
         splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith, SubsplitDisplayMode},
         timer::DeltaGradient,
     },
@@ -342,6 +343,23 @@ pub unsafe extern "C" fn SettingValue_from_subsplit_display_mode(
         "Flat" => SubsplitDisplayMode::Flat,
         "CurrentGroupExpanded" => SubsplitDisplayMode::CurrentGroupExpanded,
         "AllGroupsExpanded" => SubsplitDisplayMode::AllGroupsExpanded,
+        _ => return None,
+    };
+    Some(Box::new(value.into()))
+}
+
+/// Creates a new setting value from the Detailed Timer icon display mode. If
+/// it doesn't match a known icon display mode, <NULL> is returned.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn SettingValue_from_icon_display_mode(
+    value: *const c_char,
+) -> NullableOwnedSettingValue {
+    // SAFETY: The caller guarantees that `value` is valid.
+    let value = unsafe { str(value) };
+    let value = match value {
+        "Hidden" => IconDisplayMode::Hidden,
+        "BothRows" => IconDisplayMode::BothRows,
+        "FirstRow" => IconDisplayMode::FirstRow,
         _ => return None,
     };
     Some(Box::new(value.into()))

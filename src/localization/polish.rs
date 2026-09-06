@@ -385,7 +385,9 @@ pub const fn resolve(text: Text) -> &'static str {
             "Kolor nazwy segmentu, jeśli jest wyświetlana. Jeśli nie określono, kolor jest pobierany z układu."
         }
         Text::DetailedTimerDisplayIcon => "Wyświetl ikonę",
-        Text::DetailedTimerDisplayIconDescription => "Określa, czy wyświetlać ikonę segmentu.",
+        Text::DetailedTimerDisplayIconDescription => {
+            "Określa, czy ikona segmentu jest ukryta, zajmuje oba wiersze, czy tylko pierwszy."
+        }
         Text::SplitsBackground => "Tło",
         Text::SplitsBackgroundDescription => {
             "Tło wyświetlane za komponentem. Możesz wybrać kolory naprzemienne. W takim przypadku każdy wiersz naprzemiennie używa dwóch wybranych kolorów."

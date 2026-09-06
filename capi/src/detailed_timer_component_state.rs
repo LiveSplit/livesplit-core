@@ -140,6 +140,14 @@ pub extern "C" fn DetailedTimerComponentState_icon(
     output_str(this.icon.format_str(&mut [0; 64]))
 }
 
+/// Returns how the segment icon is displayed.
+#[unsafe(no_mangle)]
+pub extern "C" fn DetailedTimerComponentState_display_icon(
+    this: &DetailedTimerComponentState,
+) -> *const c_char {
+    output_vec(|f| write!(f, "{:?}", this.display_icon).unwrap())
+}
+
 /// The name of the segment. This may be <NULL> if it's not supposed to be
 /// visualized.
 #[unsafe(no_mangle)]

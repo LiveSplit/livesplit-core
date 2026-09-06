@@ -655,6 +655,8 @@ export interface DetailedTimerComponentStateJson {
      * is no icon.
      */
     icon: ImageId,
+    /** Specifies how the segment icon should be displayed. */
+    display_icon: IconDisplayMode,
     /**
      * The color of the segment name if it's shown. If `null` is specified, the
      * color is taken from the layout.
@@ -791,6 +793,7 @@ export type SettingsDescriptionValueJson =
     { ColumnUpdateWith: ColumnUpdateWith } |
     { ColumnUpdateTrigger: ColumnUpdateTrigger } |
     { SubsplitDisplayMode: SubsplitDisplayMode } |
+    { IconDisplayMode: IconDisplayMode } |
     { Hotkey: string } |
     { LayoutDirection: LayoutDirection } |
     { Font: Font | null } |
@@ -852,6 +855,9 @@ export type SubsplitDisplayMode =
     "Flat" |
     "CurrentGroupExpanded" |
     "AllGroupsExpanded";
+
+/** Describes how the Detailed Timer Component's icon is displayed. */
+export type IconDisplayMode = "Hidden" | "BothRows" | "FirstRow";
 
 /**
  * The Accuracy describes how many digits to show for the fractional part of a
