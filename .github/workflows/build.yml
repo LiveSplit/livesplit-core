@@ -274,6 +274,7 @@ jobs:
                     - label: Windows i686 gnu
                       target: i686-pc-windows-gnu
                       toolchain: stable-i686-pc-windows-gnu
+                      toolchain_args: --force-non-host
                       os: windows-latest
                       cross: skip
                       auto_splitting: skip
@@ -554,8 +555,8 @@ jobs:
               if: matrix.toolchain != '' && matrix.toolchain != 'stable'
               shell: bash
               run: |
-                  rustup toolchain install "${{ matrix.toolchain }}"
-                  rustup default "${{ matrix.toolchain }}"
+                  rustup toolchain install "${{ matrix.toolchain }}" ${{ matrix.toolchain_args }}
+                  rustup default "${{ matrix.toolchain }}" ${{ matrix.toolchain_args }}
 
             - name: Install Target
               if: matrix.install_target != ''
