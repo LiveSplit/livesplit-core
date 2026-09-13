@@ -29,6 +29,10 @@ pub enum WidgetKind {
         /// The top level titles use a heading level of 0.
         heading_level: u32,
     },
+    /// A button that is shown to the user. It doesn't by itself store a value
+    /// and is not persisted in the settings [`Map`](super::Map). Clicking it
+    /// invokes the auto splitter's `on_settings_button` export.
+    Button,
     /// A boolean setting. This could be shown as a checkbox or a toggle.
     Bool {
         /// The default value of the setting, if it's not available in the
