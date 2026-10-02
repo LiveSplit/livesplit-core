@@ -242,6 +242,22 @@ mod parse {
         libresplit::parse(run_files::LIBRESPLIT, None).unwrap();
     }
 
+    #[test]
+    fn libresplit_metadata() {
+        let run = libresplit::parse(run_files::LIBRESPLIT_METADATA, None).unwrap();
+
+        assert_eq!(run.game_name(), "Castlevania: Symphony of the Night");
+        assert_eq!(run.category_name(), "Any% NSC");
+        assert!(run.game_icon().data().starts_with(b"\x89PNG\r\n\x1a\n"));
+        assert!(
+            run.segment(0)
+                .icon()
+                .data()
+                .starts_with(b"\x89PNG\r\n\x1a\n")
+        );
+        assert_ne!(run.game_icon().data(), run.segment(0).icon().data());
+    }
+
     fn libresplit_time(real_time: Option<&str>, game_time: Option<&str>) -> Time {
         Time::new()
             .with_real_time(real_time.map(|time| TimeSpan::parse(time, Lang::English).unwrap()))
@@ -321,8 +337,14 @@ mod parse {
 
     #[test]
     fn libresplit_prefers_parsing_as_itself() {
-        let run = composite::parse(run_files::LIBRESPLIT.as_bytes(), None).unwrap();
-        assert_eq!(run.kind, TimerKind::LibreSplit);
+        for source in [
+            run_files::LIBRESPLIT,
+            run_files::LIBRESPLIT_GAME_TIME,
+            run_files::LIBRESPLIT_METADATA,
+        ] {
+            let run = composite::parse(source.as_bytes(), None).unwrap();
+            assert_eq!(run.kind, TimerKind::LibreSplit);
+        }
     }
 
     #[test]
