@@ -4,11 +4,13 @@
 //! visualized by any kind of User Interface.
 
 pub mod blank_space;
+pub mod carousel;
 pub mod current_comparison;
 pub mod current_pace;
 pub mod delta;
 pub mod detailed_timer;
 pub mod graph;
+pub mod group;
 pub mod pb_chance;
 pub mod possible_time_save;
 pub mod previous_segment;
@@ -24,11 +26,13 @@ pub mod total_playtime;
 pub mod key_value;
 
 pub use blank_space::Component as BlankSpace;
+pub use carousel::Component as Carousel;
 pub use current_comparison::Component as CurrentComparison;
 pub use current_pace::Component as CurrentPace;
 pub use delta::Component as Delta;
 pub use detailed_timer::Component as DetailedTimer;
 pub use graph::Component as Graph;
+pub use group::Component as Group;
 pub use pb_chance::Component as PbChance;
 pub use possible_time_save::Component as PossibleTimeSave;
 pub use previous_segment::Component as PreviousSegment;

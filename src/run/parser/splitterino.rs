@@ -180,26 +180,25 @@ pub fn parse(source: &str) -> Result<Run> {
 
     let (mut total_rta, mut total_igt) = (TimeSpan::zero(), TimeSpan::zero());
 
-    run.segments_mut()
-        .extend(splits.segments.into_iter().map(|split| {
-            let mut segment = Segment::new(split.name);
+    for split in splits.segments {
+        let mut segment = Segment::new(split.name);
 
-            if !split.skipped
-                && let Some(personal_best) = split.personal_best
-            {
-                segment.set_personal_best_split_time(parse_split_time(
-                    &mut total_rta,
-                    &mut total_igt,
-                    personal_best,
-                ));
-            }
+        if !split.skipped
+            && let Some(personal_best) = split.personal_best
+        {
+            segment.set_personal_best_split_time(parse_split_time(
+                &mut total_rta,
+                &mut total_igt,
+                personal_best,
+            ));
+        }
 
-            if let Some(overall_best) = split.overall_best {
-                segment.set_best_segment_time(parse_best_segment_time(overall_best));
-            }
+        if let Some(overall_best) = split.overall_best {
+            segment.set_best_segment_time(parse_best_segment_time(overall_best));
+        }
 
-            segment
-        }));
+        run.push_segment(segment);
+    }
 
     Ok(run)
 }

@@ -3,7 +3,7 @@ use crate::{
     layout::{LayoutDirection, LayoutState},
     platform::prelude::*,
     rendering::{
-        RenderContext,
+        FillShader, RenderContext,
         consts::{
             BOTH_PADDINGS, DEFAULT_COMPONENT_HEIGHT, DEFAULT_TEXT_SIZE, PADDING, TEXT_ALIGN_BOTTOM,
             TEXT_ALIGN_TOP, THIN_SEPARATOR_THICKNESS, TWO_ROW_HEIGHT, vertical_padding,
@@ -152,9 +152,13 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     };
 
     let display_two_rows =
-        component.display_two_rows || layout_state.direction == LayoutDirection::Horizontal;
+        component.display_two_rows || context.direction == LayoutDirection::Horizontal;
 
-    let split_height = if display_two_rows {
+    let split_height = if context.direction == LayoutDirection::Horizontal {
+        // In horizontal mode, use the full available height so the splits
+        // fill the space allocated by the parent (e.g. a group).
+        height
+    } else if display_two_rows {
         TWO_ROW_HEIGHT
     } else {
         DEFAULT_COMPONENT_HEIGHT
@@ -163,7 +167,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     let vertical_padding = vertical_padding(split_height);
 
     let (split_width, (delta_x, delta_y), separator_pos, split_background_bottom_right, icon_y) =
-        if layout_state.direction == LayoutDirection::Horizontal {
+        if context.direction == LayoutDirection::Horizontal {
             let split_width = width / component.splits.len() as f32;
             (
                 split_width,
@@ -186,7 +190,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     let text_color = solid(&layout_state.text_color);
 
     if let Some(column_labels) = &component.column_labels
-        && layout_state.direction == LayoutDirection::Vertical
+        && context.direction == LayoutDirection::Vertical
     {
         cache
             .column_labels
@@ -247,13 +251,64 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                 &component.current_split_gradient,
             );
         } else if let Some((even, odd)) = &split_background {
-            let color = if split.index % 2 == 0 { even } else { odd };
+            let alternating_index =
+                split.section_index + usize::from(component.column_labels.is_some());
+            let color = if alternating_index % 2 == 0 {
+                even
+            } else {
+                odd
+            };
             context.render_background(split_background_bottom_right, color);
         }
 
+        if split.show_separator_before {
+            let (pos, end) = if context.direction == LayoutDirection::Horizontal {
+                (
+                    [-THIN_SEPARATOR_THICKNESS, 0.0],
+                    [THIN_SEPARATOR_THICKNESS, split_height],
+                )
+            } else {
+                (
+                    [0.0, -THIN_SEPARATOR_THICKNESS],
+                    [split_width, THIN_SEPARATOR_THICKNESS],
+                )
+            };
+            context.render_rectangle(pos, end, &Gradient::Plain(layout_state.separators_color));
+        }
+
+        // Draw a border around the scrolled-to split (the split selected by
+        // manually scrolling through subsplit groups in CurrentGroupExpanded
+        // mode). The border uses the same color as the current split gradient
+        // so it visually relates to the active segment highlight. If the
+        // gradient is transparent (no color set), fall back to the default
+        // blue selection outline so the border remains visible. This is only
+        // shown when the scrolled-to split is different from the current split,
+        // providing a visual indicator of which subsplit the user has navigated to.
+        if split.is_scrolled_to_split {
+            let border_color = component.current_split_gradient.average_color();
+            if border_color.alpha > 0.0 {
+                context.render_selection_outline_with_color(
+                    [split_width, split_height],
+                    FillShader::SolidColor(border_color.to_array()),
+                );
+            } else {
+                context.render_selection_outline([split_width, split_height]);
+            }
+        }
+
         {
+            let subsplit_indent = if split.is_indented {
+                DEFAULT_TEXT_SIZE
+            } else {
+                0.0
+            };
+
             if let Some(icon) = context.create_image(&split.icon) {
-                context.render_image([PADDING, icon_y], [icon_size, icon_size], icon);
+                context.render_image(
+                    [PADDING + subsplit_indent, icon_y],
+                    [icon_size, icon_size],
+                    icon,
+                );
             }
 
             let mut left_x = split_width - PADDING;
@@ -282,35 +337,25 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                 right_x -= max_width + PADDING;
             }
 
-            if display_two_rows {
+            // `render_text_ellipsis` receives the right edge of the name. The
+            // padding subtracted below normally separates the name from the
+            // first column. A row without columns, such as an expanded group
+            // header, only needs the outer padding at the edge of the component.
+            if display_two_rows || split.columns.is_empty() {
                 left_x = split_width;
             }
 
+            let name_x = icon_right + subsplit_indent;
             context.render_text_ellipsis(
                 &split.name,
                 &mut split_cache.name,
-                [icon_right, TEXT_ALIGN_TOP],
+                [name_x, TEXT_ALIGN_TOP],
                 DEFAULT_TEXT_SIZE,
                 text_color,
                 left_x - PADDING,
             );
         }
         context.translate(delta_x, delta_y);
-    }
-
-    if component.show_final_separator {
-        let (pos, end) = if layout_state.direction == LayoutDirection::Horizontal {
-            (
-                [-split_width - THIN_SEPARATOR_THICKNESS, 0.0],
-                [-split_width + THIN_SEPARATOR_THICKNESS, split_height],
-            )
-        } else {
-            (
-                [0.0, -split_height - THIN_SEPARATOR_THICKNESS],
-                [split_width, -split_height + THIN_SEPARATOR_THICKNESS],
-            )
-        };
-        context.render_rectangle(pos, end, &Gradient::Plain(layout_state.separators_color));
     }
 
     context.transform = transform;

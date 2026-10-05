@@ -78,6 +78,24 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::BlankSpaceBackgroundDescription => "空白元件背景。",
         Text::BlankSpaceSize => "空白大小",
         Text::BlankSpaceSizeDescription => "空白元件大小。",
+        Text::GroupFixedWidth => "固定寬度",
+        Text::GroupFixedWidthDescription => "此元件列的可選固定寬度。若未指定，寬度會自動確定。",
+        Text::GroupFixedHeight => "固定高度",
+        Text::GroupFixedHeightDescription => "此元件行的可選固定高度。若未指定，高度會自動確定。",
+        Text::EmptyContainer => "空",
+        Text::Carousel => "輪播",
+        Text::CarouselFixedSize => "固定大小",
+        Text::CarouselFixedSizeDescription => {
+            "覆寫輪播元件的大小。若未指定，大小會根據最大的子元件自動決定。"
+        }
+        Text::CarouselInterval => "間隔（秒）",
+        Text::CarouselIntervalDescription => {
+            "在切換到下一個子元件之前，目前子元件最多顯示的秒數。若另一個子元件的內容有明顯變化，輪播也可能更早切換。"
+        }
+        Text::CarouselMinDisplay => "最短顯示時間（秒）",
+        Text::CarouselMinDisplayDescription => "切換到其他子元件之前，目前子元件至少要顯示的秒數。",
+        Text::SplitsSubsplitDisplayMode => "子分段顯示模式",
+        Text::SplitsSubsplitDisplayModeDescription => "控制子分段的顯示方式。",
         Text::SplitTime => "分段時間",
         _ => super::chinese_simplified::resolve(text),
     }

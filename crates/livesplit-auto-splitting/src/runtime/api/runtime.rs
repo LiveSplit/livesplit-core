@@ -3,8 +3,7 @@ use std::{
     sync::atomic,
 };
 
-use anyhow::{Result, ensure};
-use wasmtime::{Caller, Linker};
+use wasmtime::{Caller, Error, Linker};
 
 use crate::{CreationError, Timer, runtime::Context, timer::LogLevel};
 
@@ -13,20 +12,21 @@ use super::{get_arr_mut, get_slice_mut, get_str, memory_and_context};
 pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationError> {
     linker
         .func_wrap("env", "runtime_set_tick_rate", {
-            |mut caller: Caller<Context<T>>, ticks_per_sec: f64| -> Result<()> {
+            |mut caller: Caller<Context<T>>, ticks_per_sec: f64| {
                 caller.data_mut().timer.log_runtime(
                     format_args!("New Tick Rate: {ticks_per_sec}"),
                     LogLevel::Debug,
                 );
 
-                ensure!(
-                    ticks_per_sec > 0.0,
-                    "The tick rate needs to be larger than 0."
-                );
+                if ticks_per_sec <= 0.0 {
+                    return Err(Error::msg("The tick rate needs to be larger than 0."));
+                }
                 let duration = ticks_per_sec.recip();
 
                 const MAX_DURATION: f64 = u64::MAX as f64;
-                ensure!(duration < MAX_DURATION, "The tick rate is too small.");
+                if duration >= MAX_DURATION {
+                    return Err(Error::msg("The tick rate is too small."));
+                }
 
                 caller
                     .data_mut()

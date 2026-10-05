@@ -13,13 +13,6 @@ pub extern "C" fn SplitsComponentState_drop(this: OwnedSplitsComponentState) {
     drop(this);
 }
 
-/// Describes whether a more pronounced separator should be shown in front of
-/// the last segment provided.
-#[unsafe(no_mangle)]
-pub extern "C" fn SplitsComponentState_final_separator_shown(this: &SplitsComponentState) -> bool {
-    this.show_final_separator
-}
-
 /// Returns the amount of segments to visualize.
 #[unsafe(no_mangle)]
 pub extern "C" fn SplitsComponentState_len(this: &SplitsComponentState) -> usize {
@@ -98,6 +91,49 @@ pub extern "C" fn SplitsComponentState_is_current_split(
     index: usize,
 ) -> bool {
     this.splits[index].is_current_split
+}
+
+/// Describes if the segment with the specified index is the segment selected
+/// by manually scrolling through subsplit groups.
+#[unsafe(no_mangle)]
+pub extern "C" fn SplitsComponentState_is_scrolled_to_split(
+    this: &SplitsComponentState,
+    index: usize,
+) -> bool {
+    this.splits[index].is_scrolled_to_split
+}
+
+/// Specifies whether the row with the specified index should be indented. You
+/// may not provide an out of bounds index.
+#[unsafe(no_mangle)]
+pub extern "C" fn SplitsComponentState_is_indented(
+    this: &SplitsComponentState,
+    index: usize,
+) -> bool {
+    this.splits[index].is_indented
+}
+
+/// Specifies whether a more pronounced separator should be shown before the
+/// row with the specified index because one or more logical rows preceding it
+/// are not visible. You may not provide an out of bounds index.
+#[unsafe(no_mangle)]
+pub extern "C" fn SplitsComponentState_separator_before(
+    this: &SplitsComponentState,
+    index: usize,
+) -> bool {
+    this.splits[index].show_separator_before
+}
+
+/// Returns the visual section that the row with the specified index belongs
+/// to. Renderers can use this to alternate backgrounds when multiple flat
+/// segments collapse into a single section. You may not provide an out of
+/// bounds index.
+#[unsafe(no_mangle)]
+pub extern "C" fn SplitsComponentState_section_index(
+    this: &SplitsComponentState,
+    index: usize,
+) -> usize {
+    this.splits[index].section_index
 }
 
 /// Describes if the columns have labels that are meant to be shown. If this is

@@ -40,10 +40,10 @@ pub struct Settings {
     /// Specifies whether to display the name of the component and its value in
     /// two separate rows.
     pub display_two_rows: bool,
-    /// The color of the label. If `None` is specified, the color is taken from
+    /// The color of the label. If [`None`] is specified, the color is taken from
     /// the layout.
     pub label_color: Option<Color>,
-    /// The color of the value. If `None` is specified, the color is taken from
+    /// The color of the value. If [`None`] is specified, the color is taken from
     /// the layout.
     pub value_color: Option<Color>,
     /// The accuracy of the time shown.

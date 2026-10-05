@@ -75,7 +75,7 @@ impl Attempt {
     }
 
     /// Accesses the point in time the attempt was started at. This returns
-    /// `None` if this information is not known.
+    /// [`None`] if this information is not known.
     #[inline]
     pub const fn started(&self) -> Option<AtomicDateTime> {
         self.started

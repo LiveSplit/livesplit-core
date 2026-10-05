@@ -9,11 +9,12 @@
 use crate::{Json, output_vec};
 use livesplit_core::{
     component::{
-        blank_space::State as BlankSpaceComponentState,
+        blank_space::State as BlankSpaceComponentState, carousel::State as CarouselComponentState,
         detailed_timer::State as DetailedTimerComponentState, graph::State as GraphComponentState,
-        key_value::State as KeyValueComponentState, separator::State as SeparatorComponentState,
-        splits::State as SplitsComponentState, text::State as TextComponentState,
-        timer::State as TimerComponentState, title::State as TitleComponentState,
+        group::State as GroupComponentState, key_value::State as KeyValueComponentState,
+        separator::State as SeparatorComponentState, splits::State as SplitsComponentState,
+        text::State as TextComponentState, timer::State as TimerComponentState,
+        title::State as TitleComponentState,
     },
     layout::{ComponentState, LayoutState},
 };
@@ -64,6 +65,8 @@ pub extern "C" fn LayoutState_component_type(this: &LayoutState, index: usize) -
         ComponentState::Text(_) => "Text\0",
         ComponentState::Timer(_) => "Timer\0",
         ComponentState::Title(_) => "Title\0",
+        ComponentState::Group(_) => "Group\0",
+        ComponentState::Carousel(_) => "Carousel\0",
     })
     .as_ptr()
     .cast()
@@ -173,6 +176,30 @@ pub extern "C" fn LayoutState_component_as_title(
 ) -> &TitleComponentState {
     match &this.components[index] {
         ComponentState::Title(x) => x,
+        _ => panic!("wrong component state type"),
+    }
+}
+
+/// Gets the Group component state at the specified index.
+#[unsafe(no_mangle)]
+pub extern "C" fn LayoutState_component_as_group(
+    this: &LayoutState,
+    index: usize,
+) -> &GroupComponentState {
+    match &this.components[index] {
+        ComponentState::Group(x) => x,
+        _ => panic!("wrong component state type"),
+    }
+}
+
+/// Gets the Carousel component state at the specified index.
+#[unsafe(no_mangle)]
+pub extern "C" fn LayoutState_component_as_carousel(
+    this: &LayoutState,
+    index: usize,
+) -> &CarouselComponentState {
+    match &this.components[index] {
+        ComponentState::Carousel(x) => x,
         _ => panic!("wrong component state type"),
     }
 }

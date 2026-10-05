@@ -196,6 +196,14 @@ bitflags::bitflags! {
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     #[repr(transparent)]
     pub struct EventFlags: u64 {
+        const LEFT_CONTROL = 1 << 0;
+        const LEFT_SHIFT = 1 << 1;
+        const RIGHT_SHIFT = 1 << 2;
+        const LEFT_COMMAND = 1 << 3;
+        const RIGHT_COMMAND = 1 << 4;
+        const LEFT_OPTION = 1 << 5;
+        const RIGHT_OPTION = 1 << 6;
+        const RIGHT_CONTROL = 1 << 13;
         const CAPS_LOCK = 1 << 16;
         const SHIFT = 1 << 17;
         const CONTROL = 1 << 18;

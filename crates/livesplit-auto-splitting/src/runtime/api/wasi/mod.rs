@@ -11,11 +11,12 @@ use std::{
 
 use bstr::ByteSlice;
 use tokio::io::{self, AsyncWrite};
+use wasmtime::Error;
 use wasmtime_wasi::{
     WasiCtxBuilder,
     cli::{IsTerminal, StdoutStream},
+    p1::WasiP1Ctx,
     p2::{OutputStream, Pollable, StreamError},
-    preview1::WasiP1Ctx,
 };
 
 use crate::{Timer, wasi_path};
@@ -79,8 +80,8 @@ impl StdErr {
     fn write(&mut self, bytes: &[u8]) -> Result<(), StreamError> {
         let buffer = &mut *self.buffer.buf.lock().unwrap();
         if bytes.len() > ERR_CAPACITY - buffer.len() {
-            return Err(StreamError::Trap(anyhow::format_err!(
-                "write beyond capacity of StdErr"
+            return Err(StreamError::Trap(Error::msg(
+                "write beyond capacity of StdErr",
             )));
         }
 
@@ -152,12 +153,7 @@ pub fn build(script_path: Option<&Path>) -> (WasiP1Ctx, StdErr) {
     #[cfg(not(windows))]
     {
         // Unfortunate if this fails, but we should still continue.
-        let _ = wasi.preopened_dir(
-            "/",
-            "/mnt",
-            wasmtime_wasi::DirPerms::READ,
-            wasmtime_wasi::FilePerms::READ,
-        );
+        let _ = wasi.preopened_dir("/", "/mnt", wasmtime_wasi::FsPerms::ReadOnly);
     }
     (wasi.build_p1(), stderr)
 }

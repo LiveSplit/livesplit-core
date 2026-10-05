@@ -302,9 +302,9 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsShowThinSeparators => "显示细分隔线",
         Text::SplitsShowThinSeparatorsDescription => "指定是否在分段行之间显示细分隔线。",
-        Text::SplitsShowSeparatorBeforeLastSplit => "在最后一段前显示分隔线",
-        Text::SplitsShowSeparatorBeforeLastSplitDescription => {
-            "若最后一段始终显示，则当其不与上一段相邻时，是否在其前显示更明显的分隔线。"
+        Text::SplitsShowGapSeparators => "显示省略行分隔线",
+        Text::SplitsShowGapSeparatorsDescription => {
+            "指定当滚动窗口中紧邻的一行或多行被省略时，是否在下一行前显示更明显的分隔线。"
         }
         Text::SplitsAlwaysShowLastSplit => "始终显示最后一段",
         Text::SplitsAlwaysShowLastSplitDescription => {
@@ -330,6 +330,8 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsDropDeltaDecimalsDescription => "当差值列超过 1 分钟时是否不再显示小数。",
         Text::SplitsShowColumnLabels => "显示列标题",
         Text::SplitsShowColumnLabelsDescription => "指定是否在列表顶部显示列名称。",
+        Text::SplitsSubsplitDisplayMode => "子分段显示模式",
+        Text::SplitsSubsplitDisplayModeDescription => "控制子分段的显示方式。",
         Text::SplitsColumns => "列",
         Text::SplitsColumnsDescription => "每行显示的列数。每列可显示不同信息。列从右到左定义。",
         Text::SplitsColumnName => "列名",
@@ -384,6 +386,10 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::TextComponentDisplayTwoRowsDescription => "指定是否将左右文本显示为两行。",
         Text::LayoutDirection => "布局方向",
         Text::LayoutDirectionDescription => "组件排列的方向。",
+        Text::GroupFixedWidth => "固定宽度",
+        Text::GroupFixedWidthDescription => "此组件列的可选固定宽度。如枚未指定，宽度会自动确定。",
+        Text::GroupFixedHeight => "固定高度",
+        Text::GroupFixedHeightDescription => "此组件行的可选固定高度。如果未指定，高度会自动确定。",
         Text::CustomTimerFont => "自定义计时器字体",
         Text::CustomTimerFontDescription => "允许为计时器指定自定义字体。若未设置则使用默认字体。",
         Text::CustomTimesFont => "自定义时间字体",
@@ -434,6 +440,20 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentSegmentTimer => "分段计时器",
         Text::ComponentTitle => "标题",
         Text::ComponentTotalPlaytime => "总游玩时间",
+        Text::Row => "行",
+        Text::Column => "列",
+        Text::EmptyContainer => "空",
+        Text::Carousel => "轮播",
+        Text::CarouselFixedSize => "固定大小",
+        Text::CarouselFixedSizeDescription => {
+            "覆盖轮播组件的大小。若未设置，则大小会根据最大的子组件自动确定。"
+        }
+        Text::CarouselInterval => "间隔（秒）",
+        Text::CarouselIntervalDescription => {
+            "在轮播切换到下一个子组件前，当前子组件最多显示的秒数。如果另一个子组件的内容发生了明显变化，轮播也可能更早切换。"
+        }
+        Text::CarouselMinDisplay => "最短显示时间（秒）",
+        Text::CarouselMinDisplayDescription => "切换到其他子组件之前，当前子组件至少要显示的秒数。",
         Text::ComponentCurrentPaceBestPossibleTime => "最佳可能时间",
         Text::ComponentCurrentPaceWorstPossibleTime => "最差可能时间",
         Text::ComponentCurrentPacePredictedTime => "预测时间",

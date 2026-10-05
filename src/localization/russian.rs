@@ -406,11 +406,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowThinSeparatorsDescription => {
             "Определяет, следует ли показывать тонкие разделители между строками сегментов."
         }
-        Text::SplitsShowSeparatorBeforeLastSplit => {
-            "Показывать разделитель перед последним сегментом"
-        }
-        Text::SplitsShowSeparatorBeforeLastSplitDescription => {
-            "Если последний сегмент всегда показывается, определяет, показывать ли более заметный разделитель перед ним, если он не рядом с предыдущим сегментом."
+        Text::SplitsShowGapSeparators => "Показывать разделители пропусков",
+        Text::SplitsShowGapSeparatorsDescription => {
+            "Определяет, показывать ли более заметный разделитель перед строкой, если непосредственно перед ней в прокручиваемом окне пропущена одна или несколько строк."
         }
         Text::SplitsAlwaysShowLastSplit => "Всегда показывать последний сегмент",
         Text::SplitsAlwaysShowLastSplitDescription => {
@@ -442,6 +440,8 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowColumnLabelsDescription => {
             "Определяет, следует ли показывать названия колонок вверху списка."
         }
+        Text::SplitsSubsplitDisplayMode => "Режим отображения подсегментов",
+        Text::SplitsSubsplitDisplayModeDescription => "Определяет, как отображаются подсегменты.",
         Text::SplitsColumns => "Колонки",
         Text::SplitsColumnsDescription => {
             "Количество колонок на строку. Каждая колонка может отображать разные данные. Колонки определяются справа налево."
@@ -514,6 +514,14 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::LayoutDirection => "Направление макета",
         Text::LayoutDirectionDescription => "Направление расположения компонентов.",
+        Text::GroupFixedWidth => "Фиксированная ширина",
+        Text::GroupFixedWidthDescription => {
+            "Необязательная фиксированная ширина этого столбца компонентов. Если не указана, ширина определяется автоматически."
+        }
+        Text::GroupFixedHeight => "Фиксированная высота",
+        Text::GroupFixedHeightDescription => {
+            "Необязательная фиксированная высота этой строки компонентов. Если не указана, высота определяется автоматически."
+        }
         Text::CustomTimerFont => "Пользовательский шрифт таймера",
         Text::CustomTimerFontDescription => {
             "Позволяет указать пользовательский шрифт для таймера. Если не задан, используется шрифт по умолчанию."
@@ -576,6 +584,22 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentSegmentTimer => "Таймер сегмента",
         Text::ComponentTitle => "Заголовок",
         Text::ComponentTotalPlaytime => "Общее время игры",
+        Text::Row => "Строка",
+        Text::Column => "Столбец",
+        Text::EmptyContainer => "Пусто",
+        Text::Carousel => "Карусель",
+        Text::CarouselFixedSize => "Фиксированный размер",
+        Text::CarouselFixedSizeDescription => {
+            "Переопределяет размер карусели. Если не задан, размер определяется автоматически по самому большому дочернему компоненту."
+        }
+        Text::CarouselInterval => "Интервал (секунды)",
+        Text::CarouselIntervalDescription => {
+            "Максимальное количество секунд, в течение которых дочерний компонент показывается перед переключением к следующему. Карусель может переключиться раньше, если содержимое другого дочернего компонента существенно изменилось."
+        }
+        Text::CarouselMinDisplay => "Минимальный показ (секунды)",
+        Text::CarouselMinDisplayDescription => {
+            "Минимальное количество секунд, в течение которых дочерний компонент должен отображаться перед переключением на другой."
+        }
         Text::ComponentCurrentPaceBestPossibleTime => "Лучшее возможное время",
         Text::ComponentCurrentPaceWorstPossibleTime => "Худшее возможное время",
         Text::ComponentCurrentPacePredictedTime => "Прогнозируемое время",

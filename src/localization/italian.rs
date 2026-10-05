@@ -416,9 +416,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowThinSeparatorsDescription => {
             "Indica se mostrare separatori sottili tra le righe dei segmenti."
         }
-        Text::SplitsShowSeparatorBeforeLastSplit => "Mostra separatore prima dell’ultimo split",
-        Text::SplitsShowSeparatorBeforeLastSplitDescription => {
-            "Se l’ultimo segmento deve essere sempre mostrato, questa opzione determina se mostrare un separatore più marcato prima dell’ultimo segmento quando non è adiacente al precedente nella finestra scorrevole."
+        Text::SplitsShowGapSeparators => "Mostra separatori per le righe omesse",
+        Text::SplitsShowGapSeparatorsDescription => {
+            "Determina se mostrare un separatore più marcato prima di una riga quando una o più righe immediatamente precedenti sono omesse dalla finestra scorrevole."
         }
         Text::SplitsAlwaysShowLastSplit => "Mostra sempre l’ultimo split",
         Text::SplitsAlwaysShowLastSplitDescription => {
@@ -455,6 +455,10 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowColumnLabels => "Mostra etichette colonne",
         Text::SplitsShowColumnLabelsDescription => {
             "Indica se mostrare i nomi delle colonne in cima alla lista."
+        }
+        Text::SplitsSubsplitDisplayMode => "Modalità di visualizzazione dei subsplit",
+        Text::SplitsSubsplitDisplayModeDescription => {
+            "Controlla come vengono visualizzati i subsplit."
         }
         Text::SplitsColumns => "Colonne",
         Text::SplitsColumnsDescription => {
@@ -528,6 +532,14 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::LayoutDirection => "Direzione del layout",
         Text::LayoutDirectionDescription => "La direzione in cui i componenti sono disposti.",
+        Text::GroupFixedWidth => "Larghezza fissa",
+        Text::GroupFixedWidthDescription => {
+            "Una larghezza fissa opzionale per questa colonna di componenti. Se non specificata, la larghezza viene determinata automaticamente."
+        }
+        Text::GroupFixedHeight => "Altezza fissa",
+        Text::GroupFixedHeightDescription => {
+            "Un'altezza fissa opzionale per questa riga di componenti. Se non specificata, l'altezza viene determinata automaticamente."
+        }
         Text::CustomTimerFont => "Font personalizzato del timer",
         Text::CustomTimerFontDescription => {
             "Consente di specificare un font personalizzato per il timer. Se non impostato, viene usato il font predefinito."
@@ -600,6 +612,22 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentSegmentTimer => "Timer del segmento",
         Text::ComponentTitle => "Titolo",
         Text::ComponentTotalPlaytime => "Tempo di gioco totale",
+        Text::Row => "Riga",
+        Text::Column => "Colonna",
+        Text::EmptyContainer => "Vuoto",
+        Text::Carousel => "Carosello",
+        Text::CarouselFixedSize => "Dimensione fissa",
+        Text::CarouselFixedSizeDescription => {
+            "Sovrascrive la dimensione del carosello. Se non è impostata, la dimensione viene determinata automaticamente in base al componente figlio più grande."
+        }
+        Text::CarouselInterval => "Intervallo (secondi)",
+        Text::CarouselIntervalDescription => {
+            "Il numero massimo di secondi per cui mostrare un componente figlio prima di passare al successivo. Il carosello può cambiare prima se il contenuto di un altro componente figlio è cambiato in modo significativo."
+        }
+        Text::CarouselMinDisplay => "Visualizzazione minima (secondi)",
+        Text::CarouselMinDisplayDescription => {
+            "Il numero minimo di secondi per cui mostrare un componente figlio prima di passare a un altro."
+        }
         Text::ComponentCurrentPaceBestPossibleTime => "Miglior tempo possibile",
         Text::ComponentCurrentPaceWorstPossibleTime => "Peggior tempo possibile",
         Text::ComponentCurrentPacePredictedTime => "Tempo previsto",

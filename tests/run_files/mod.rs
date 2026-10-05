@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 pub const CELESTE: &str = include_str!("Celeste - Any% (1.2.1.5).lss");
+pub const CELESTE_NATIVE_SEGMENT_GROUPS: &str = include_str!("celeste_native_segment_groups.lss");
 pub const FLITTER: &str = include_str!("flitter.json");
 pub const LIVESPLIT_1_0: &str = include_str!("livesplit1.0.lss");
 pub const LIVESPLIT_1_4: &str = include_str!("livesplit1.4.lss");
@@ -25,5 +26,7 @@ pub const SPLITTERZ: &str = include_str!("splitterz");
 pub const TIME_SPLIT_TRACKER_WITHOUT_ATTEMPT_COUNT: &str = include_str!("1734.timesplittracker");
 pub const TIME_SPLIT_TRACKER: &str = include_str!("timesplittracker.txt");
 pub const LIBRESPLIT: &str = include_str!("libresplit.json");
+pub const LIBRESPLIT_GAME_TIME: &str = include_str!("libresplit_game_time.json");
+pub const LIBRESPLIT_METADATA: &str = include_str!("libresplit_metadata.json");
 pub const WSPLIT: &str = include_str!("wsplit");
 pub const CLEAN_SUM_OF_BEST: &str = include_str!("clean_sum_of_best.lss");

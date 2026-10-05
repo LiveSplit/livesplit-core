@@ -3,7 +3,7 @@
 use crate::{
     AtomicDateTime, DateTime, Lang, Run, RunMetadata, Segment, Time, TimeSpan,
     platform::prelude::*,
-    run::{AddComparisonError, LinkedLayout},
+    run::{AddComparisonError, LinkedLayout, SegmentGroup, SegmentGroups},
     settings::Image,
     util::{
         ascii_char::AsciiChar,
@@ -282,7 +282,7 @@ fn parse_segment(
         }),
         "SplitTimes" => {
             if version >= Version(1, 3, 0, 0) {
-                parse_children(reader, |reader, tag, attributes| {
+                parse_children(reader, |reader, tag, attributes| -> Result<()> {
                     if tag.name() == "SplitTime" {
                         let mut comparison = Cow::Borrowed("");
                         type_hint(attribute(attributes, "name", |t| comparison = t))?;
@@ -422,6 +422,8 @@ pub fn parse(source: &str) -> Result<Run> {
     let mut image_buf = Vec::new();
 
     let mut run = Run::new();
+    let mut has_native_segment_groups = false;
+    let mut parsed_version = Version(1, 0, 0, 0);
 
     let mut required_flags = 0u8;
 
@@ -431,6 +433,7 @@ pub fn parse(source: &str) -> Result<Run> {
             version = parse_version(t)?;
             Ok(())
         }))?;
+        parsed_version = version;
 
         parse_children(reader, |reader, tag, _| match tag.name() {
             "GameIcon" => {
@@ -470,6 +473,48 @@ pub fn parse(source: &str) -> Result<Run> {
                     }
                 })
             }
+            "SegmentGroups" => {
+                has_native_segment_groups = true;
+                let mut groups = Vec::new();
+                parse_children(reader, |reader, tag, attributes| -> Result<()> {
+                    if tag.name() == "SegmentGroup" {
+                        let mut start = 0;
+                        let mut end = 0;
+                        let mut name = String::new();
+                        let mut icon = Image::EMPTY.clone();
+                        type_hint(attribute_escaped_err(attributes, "start", |t| {
+                            start = t.parse()?;
+                            Ok(())
+                        }))?;
+                        type_hint(attribute_escaped_err(attributes, "end", |t| {
+                            end = t.parse()?;
+                            Ok(())
+                        }))?;
+                        parse_children(reader, |reader, tag, _| -> Result<()> {
+                            if tag.name() == "Name" {
+                                text(reader, |t| name = t.into_owned())
+                            } else if tag.name() == "Icon" {
+                                image(reader, &mut image_buf, |i| {
+                                    icon = Image::new(i.into(), Image::ICON);
+                                })
+                            } else {
+                                end_tag(reader)
+                            }
+                        })?;
+                        groups.push(SegmentGroup::new_unchecked_with_icon(
+                            start,
+                            end,
+                            Some(name),
+                            icon,
+                        ));
+                        Ok(())
+                    } else {
+                        end_tag::<Error>(reader)
+                    }
+                })?;
+                *run.segment_groups_mut() = SegmentGroups::from_vec_lossy(groups, run.len());
+                Ok(())
+            }
             "AutoSplitterSettings" => {
                 let settings = run.auto_splitter_settings_mut();
                 reencode_children(reader, settings).map_err(Into::into)
@@ -493,7 +538,53 @@ pub fn parse(source: &str) -> Result<Run> {
         });
     }
 
+    if parsed_version < Version(1, 8, 1, 0) && !has_native_segment_groups {
+        import_legacy_subsplits(&mut run);
+    }
+
     Ok(run)
+}
+
+fn import_legacy_subsplits(run: &mut Run) {
+    let segment_count = run.len();
+    let mut groups = SegmentGroups::new();
+    let mut current_group_start = None;
+
+    for index in 0..segment_count {
+        let is_final = index + 1 == segment_count;
+        let old_name = run.segment(index).name().to_owned();
+
+        if !is_final && old_name.starts_with('-') {
+            if current_group_start.is_none() {
+                current_group_start = Some(index);
+            }
+            run.segment_mut(index).set_name(&old_name[1..]);
+            continue;
+        }
+
+        let mut group_name = None;
+        let mut segment_name = None;
+        if let Some(rest) = old_name.strip_prefix('{')
+            && let Some((name, rem)) = rest.split_once('}')
+        {
+            group_name = Some(name.to_owned());
+            segment_name = Some(rem.trim_start().to_owned());
+        }
+
+        if let Some(start) = current_group_start.take() {
+            groups.push_lossy(start, index + 1, group_name, segment_count);
+            // The brace prefix is metadata for the dashed subsplit group that
+            // just ended, rather than general segment-name syntax. Applying it
+            // to an ungrouped segment would silently rename legitimate names
+            // such as `{Boss} Fight` merely because the file predates native
+            // segment groups.
+            if let Some(segment_name) = segment_name {
+                run.segment_mut(index).set_name(segment_name);
+            }
+        }
+    }
+
+    *run.segment_groups_mut() = groups;
 }
 
 #[cfg(test)]

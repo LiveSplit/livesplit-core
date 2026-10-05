@@ -4,3 +4,4 @@ mod extended_category_name;
 mod fixing;
 mod linked_layout;
 mod metadata;
+mod segment_groups;

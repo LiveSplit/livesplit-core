@@ -14,7 +14,10 @@ use crate::{
         formatter::{Accuracy, DigitsFormat, TimeFormatter, timer as formatter},
     },
 };
-use core::fmt::Write;
+use core::{
+    fmt::Write,
+    hash::{Hash, Hasher},
+};
 use serde_derive::{Deserialize, Serialize};
 
 /// The `Timer` Component is a component that shows the total time of the current
@@ -85,7 +88,7 @@ impl DeltaGradient {
 pub struct Settings {
     /// The background shown behind the component.
     pub background: DeltaGradient,
-    /// Specifies the Timing Method to use. If set to `None` the Timing Method
+    /// Specifies the Timing Method to use. If set to [`None`] the Timing Method
     /// of the Timer is used for showing the time. Otherwise the Timing Method
     /// provided is used.
     pub timing_method: Option<TimingMethod>,
@@ -155,6 +158,17 @@ impl State {
         W: std::io::Write,
     {
         serde_json::to_writer(writer, self)
+    }
+}
+
+impl State {
+    pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
+        self.time.hash(state);
+        self.fraction.hash(state);
+    }
+
+    pub(crate) const fn updates_frequently(&self) -> bool {
+        self.updates_frequently
     }
 }
 

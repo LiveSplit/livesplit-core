@@ -209,11 +209,10 @@ fn parse_history(run: &mut Run, path: Option<std::path::PathBuf>) -> StdResult<(
 
         let file = std::fs::read_to_string(path).map_err(drop)?;
         let mut lines = file.lines();
-        let mut attempt_id = 1;
 
         lines.next(); // Skip the first line
 
-        for line in lines {
+        for (attempt_id, line) in (1..).zip(lines) {
             let mut splits = line.split('\t');
             let time_stamp = splits.next().ok_or(())?;
             let started = parse_date(time_stamp).ok_or(())?;
@@ -243,9 +242,7 @@ fn parse_history(run: &mut Run, path: Option<std::path::PathBuf>) -> StdResult<(
             );
 
             let mut last_split = TimeSpan::zero();
-            for (segment, current_split) in
-                run.segments_mut().iter_mut().zip(split_times.into_iter())
-            {
+            for (segment, current_split) in run.segments_mut().iter_mut().zip(split_times) {
                 let mut segment_time = Time::default();
                 if let Some(current_split) = current_split {
                     segment_time.real_time = Some(current_split - last_split);
@@ -264,8 +261,6 @@ fn parse_history(run: &mut Run, path: Option<std::path::PathBuf>) -> StdResult<(
                     segment.set_best_segment_time(segment_time);
                 }
             }
-
-            attempt_id += 1;
         }
     }
     Ok(())

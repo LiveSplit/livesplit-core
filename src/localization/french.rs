@@ -424,9 +424,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowThinSeparatorsDescription => {
             "Indique si des séparateurs fins doivent être affichés entre les lignes de segments."
         }
-        Text::SplitsShowSeparatorBeforeLastSplit => "Afficher un séparateur avant le dernier split",
-        Text::SplitsShowSeparatorBeforeLastSplitDescription => {
-            "Si le dernier segment est toujours affiché, indique si un séparateur plus prononcé doit être montré avant lui lorsqu’il n’est pas adjacent au segment précédent."
+        Text::SplitsShowGapSeparators => "Afficher les séparateurs d’écart",
+        Text::SplitsShowGapSeparatorsDescription => {
+            "Indique si un séparateur plus prononcé doit être affiché avant une ligne lorsqu’une ou plusieurs lignes juste avant sont omises de la fenêtre de défilement."
         }
         Text::SplitsAlwaysShowLastSplit => "Toujours afficher le dernier split",
         Text::SplitsAlwaysShowLastSplitDescription => {
@@ -463,6 +463,10 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowColumnLabels => "Afficher les en-têtes de colonnes",
         Text::SplitsShowColumnLabelsDescription => {
             "Indique si les noms des colonnes doivent être affichés en haut de la liste."
+        }
+        Text::SplitsSubsplitDisplayMode => "Mode d'affichage des subsplits",
+        Text::SplitsSubsplitDisplayModeDescription => {
+            "Contrôle la façon dont les subsplits sont affichés."
         }
         Text::SplitsColumns => "Colonnes",
         Text::SplitsColumnsDescription => {
@@ -538,6 +542,14 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::LayoutDirectionDescription => {
             "La direction dans laquelle les composants sont disposés."
         }
+        Text::GroupFixedWidth => "Largeur fixe",
+        Text::GroupFixedWidthDescription => {
+            "Une largeur fixe optionnelle pour cette colonne de composants. Si non spécifiée, la largeur est déterminée automatiquement."
+        }
+        Text::GroupFixedHeight => "Hauteur fixe",
+        Text::GroupFixedHeightDescription => {
+            "Une hauteur fixe optionnelle pour cette ligne de composants. Si non spécifiée, la hauteur est déterminée automatiquement."
+        }
         Text::CustomTimerFont => "Police personnalisée du timer",
         Text::CustomTimerFontDescription => {
             "Permet de spécifier une police personnalisée pour le timer. Si non définie, la police par défaut est utilisée."
@@ -612,6 +624,22 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentSegmentTimer => "Minuteur de segment",
         Text::ComponentTitle => "Titre",
         Text::ComponentTotalPlaytime => "Temps de jeu total",
+        Text::Row => "Ligne",
+        Text::Column => "Colonne",
+        Text::EmptyContainer => "Vide",
+        Text::Carousel => "Carrousel",
+        Text::CarouselFixedSize => "Taille fixe",
+        Text::CarouselFixedSizeDescription => {
+            "Remplace la taille du carrousel. Si elle n'est pas définie, la taille est déterminée automatiquement à partir du plus grand composant enfant."
+        }
+        Text::CarouselInterval => "Intervalle (secondes)",
+        Text::CarouselIntervalDescription => {
+            "Le nombre maximal de secondes pendant lesquelles afficher un composant enfant avant de passer au suivant. Le carrousel peut changer plus tôt si le contenu d'un autre composant enfant a changé de manière significative."
+        }
+        Text::CarouselMinDisplay => "Affichage minimum (secondes)",
+        Text::CarouselMinDisplayDescription => {
+            "Le nombre minimum de secondes pendant lesquelles afficher un composant enfant avant de passer à un autre."
+        }
         Text::ComponentCurrentPaceBestPossibleTime => "Meilleur temps possible",
         Text::ComponentCurrentPaceWorstPossibleTime => "Pire temps possible",
         Text::ComponentCurrentPacePredictedTime => "Temps prédit",

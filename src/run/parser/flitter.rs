@@ -114,9 +114,11 @@ pub fn parse(source: &str) -> Result<Run> {
     run.set_category_name(splits.category);
     run.set_attempt_count(splits.attempts);
 
-    let segments = run.segments_mut();
+    for name in splits.split_names {
+        run.push_segment(Segment::new(name));
+    }
 
-    segments.extend(splits.split_names.into_iter().map(Segment::new));
+    let segments = run.segments_mut();
 
     for (segment, pb) in segments.iter_mut().zip(splits.personal_best.splits) {
         catch! {

@@ -2,7 +2,13 @@
 //!
 // https://github.com/ZellyDev-Games/OpenSplit
 
-use crate::{Run, Segment, Time, TimeSpan, platform::prelude::*};
+use crate::{
+    Lang, Run, Segment, Time, TimeSpan,
+    comparison::world_record,
+    platform::prelude::*,
+    run::{SegmentGroup, SegmentGroups},
+    timing::formatter::{self, TimeFormatter},
+};
 use alloc::{borrow::Cow, collections::BTreeMap};
 use core::result::Result as StdResult;
 use serde_derive::Deserialize;
@@ -39,6 +45,23 @@ struct SplitFilePayload<'a> {
     offset: i64,
     #[serde(default, borrow)]
     platform: Cow<'a, str>,
+    #[serde(default, borrow)]
+    variables: Vec<VariablePayload<'a>>,
+    #[serde(default)]
+    wr: Option<WorldRecordPayload>,
+}
+
+#[derive(Deserialize)]
+struct VariablePayload<'a> {
+    #[serde(borrow)]
+    name: Cow<'a, str>,
+    #[serde(borrow)]
+    label: Cow<'a, str>,
+}
+
+#[derive(Deserialize)]
+struct WorldRecordPayload {
+    real_time: f64,
 }
 
 #[derive(Deserialize)]
@@ -83,20 +106,47 @@ fn integer_time(milliseconds: i64) -> TimeSpan {
     crate::platform::Duration::milliseconds(milliseconds).into()
 }
 
-fn flatten_leaf_segments<'a>(segments: Vec<SegmentPayload<'a>>) -> Vec<SegmentPayload<'a>> {
-    let mut leaf_segments = Vec::with_capacity(segments.len());
-    let mut stack = Vec::with_capacity(segments.len());
-    stack.extend(segments.into_iter().rev());
+struct FlattenedSegments<'a> {
+    segments: Vec<SegmentPayload<'a>>,
+    groups: Vec<SegmentGroup>,
+}
 
-    while let Some(mut segment) = stack.pop() {
-        if segment.children.is_empty() {
-            leaf_segments.push(segment);
-        } else {
-            stack.extend(segment.children.drain(..).rev());
-        }
+fn flatten_segments<'a>(segments: Vec<SegmentPayload<'a>>) -> FlattenedSegments<'a> {
+    let mut flattened = FlattenedSegments {
+        segments: Vec::with_capacity(segments.len()),
+        groups: Vec::new(),
+    };
+
+    for segment in segments {
+        flatten_segment(segment, true, &mut flattened);
     }
 
-    leaf_segments
+    flattened
+}
+
+fn flatten_segment<'a>(
+    mut segment: SegmentPayload<'a>,
+    allow_group: bool,
+    flattened: &mut FlattenedSegments<'a>,
+) {
+    if segment.children.is_empty() {
+        flattened.segments.push(segment);
+        return;
+    }
+
+    let start = flattened.segments.len();
+    for child in segment.children.drain(..) {
+        flatten_segment(child, false, flattened);
+    }
+    let end = flattened.segments.len();
+
+    if allow_group {
+        flattened.groups.push(SegmentGroup::new_unchecked(
+            start,
+            end,
+            Some(segment.name.into_owned()),
+        ));
+    }
 }
 
 /// Attempts to parse an OpenSplit splits file.
@@ -110,9 +160,31 @@ pub fn parse(source: &str) -> Result<Run> {
     run.set_category_name(splits.game_category);
     run.set_attempt_count(splits.attempts);
     run.set_offset(integer_time(splits.offset));
-    run.metadata_mut().set_platform_name(splits.platform);
 
-    let leaf_segments = flatten_leaf_segments(splits.segments);
+    let metadata = run.metadata_mut();
+    metadata.set_platform_name(splits.platform);
+    for variable in splits.variables {
+        metadata.set_speedrun_com_variable(variable.name, variable.label);
+    }
+    if let Some(wr) = splits.wr
+        && wr.real_time > 0.0
+    {
+        metadata
+            .custom_variable_mut(world_record::NAME)
+            .permanent()
+            // FIXME: This should probably depend on the locale or:
+            // FIXME: Custom variables should support TimeSpans directly.
+            .set_value(
+                formatter::Regular::new()
+                    .format(Some(TimeSpan::from_seconds(wr.real_time)), Lang::English)
+                    .to_string(),
+            );
+    }
+
+    let FlattenedSegments {
+        segments: leaf_segments,
+        groups,
+    } = flatten_segments(splits.segments);
 
     let mut segment_ids = Vec::with_capacity(leaf_segments.len());
     let mut cumulative_pb = TimeSpan::zero();
@@ -135,10 +207,9 @@ pub fn parse(source: &str) -> Result<Run> {
 
         run.push_segment(segment);
     }
+    *run.segment_groups_mut() = SegmentGroups::from_vec_lossy(groups, run.len());
 
-    let mut attempt_history_index = 1;
-
-    for run_payload in splits.runs {
+    for (attempt_history_index, run_payload) in (1..).zip(splits.runs) {
         run.add_attempt_with_index(
             Time::new().with_real_time(if run_payload.completed {
                 Some(integer_time(run_payload.total_time))
@@ -166,9 +237,132 @@ pub fn parse(source: &str) -> Result<Run> {
                 .segment_history_mut()
                 .insert(attempt_history_index, time);
         }
-
-        attempt_history_index += 1;
     }
 
     Ok(run)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_speedrun_com_metadata() {
+        let run = parse(
+            r#"{
+                "game_name": "Game",
+                "speedrun_game_id": "game-id",
+                "game_category": "Any%",
+                "speedrun_game_category_id": "category-id",
+                "attempts": 0,
+                "platform": "GameCube",
+                "variables": [
+                    {
+                        "id": "difficulty-id",
+                        "name": "Difficulty",
+                        "value": "hard-id",
+                        "label": "Hard"
+                    },
+                    {
+                        "id": "players-id",
+                        "name": "Players",
+                        "value": "one-player-id",
+                        "label": "1 Player"
+                    }
+                ],
+                "wr": {
+                    "show": true,
+                    "run_id": "world-record-run-id",
+                    "players": ["Runner"],
+                    "real_time": 3723.456,
+                    "in_game_time": 3600.0
+                },
+                "segments": []
+            }"#,
+        )
+        .unwrap();
+
+        let metadata = run.metadata();
+        assert_eq!(metadata.platform_name(), "GameCube");
+        assert_eq!(
+            metadata
+                .speedrun_com_variables()
+                .map(|(name, value)| (name, value.as_str()))
+                .collect::<Vec<_>>(),
+            [("Difficulty", "Hard"), ("Players", "1 Player")]
+        );
+
+        let world_record = metadata.custom_variable(world_record::NAME).unwrap();
+        assert_eq!(world_record.value, "1:02:03");
+        assert!(world_record.is_permanent);
+    }
+
+    #[test]
+    fn ignores_unavailable_world_record() {
+        let run = parse(
+            r#"{
+                "game_name": "Game",
+                "game_category": "Any%",
+                "attempts": 0,
+                "wr": {
+                    "show": false,
+                    "run_id": "",
+                    "players": [],
+                    "real_time": 0,
+                    "in_game_time": 0
+                },
+                "segments": []
+            }"#,
+        )
+        .unwrap();
+
+        assert!(run.metadata().custom_variable(world_record::NAME).is_none());
+    }
+
+    #[test]
+    fn segment_children_become_segment_groups() {
+        let run = parse(
+            r#"{
+                "game_name": "Game",
+                "game_category": "Any%",
+                "attempts": 0,
+                "segments": [
+                    { "id": "intro", "name": "Intro", "gold": 0, "pb": 0 },
+                    {
+                        "id": "chapter",
+                        "name": "Chapter",
+                        "gold": 0,
+                        "pb": 0,
+                        "children": [
+                            { "id": "a", "name": "A", "gold": 0, "pb": 0 },
+                            {
+                                "id": "nested",
+                                "name": "Nested",
+                                "gold": 0,
+                                "pb": 0,
+                                "children": [
+                                    { "id": "b", "name": "B", "gold": 0, "pb": 0 },
+                                    { "id": "c", "name": "C", "gold": 0, "pb": 0 }
+                                ]
+                            }
+                        ]
+                    },
+                    { "id": "outro", "name": "Outro", "gold": 0, "pb": 0 }
+                ]
+            }"#,
+        )
+        .unwrap();
+
+        assert_eq!(
+            run.segments()
+                .iter()
+                .map(|segment| segment.name())
+                .collect::<Vec<_>>(),
+            ["Intro", "A", "B", "C", "Outro"]
+        );
+        assert_eq!(run.segment_groups().groups().len(), 1);
+        let group = &run.segment_groups().groups()[0];
+        assert_eq!((group.start(), group.end()), (1, 4));
+        assert_eq!(group.name(), Some("Chapter"));
+    }
 }

@@ -8,6 +8,7 @@ struct FFIDateTime {
     nsecs: u32,
 }
 
+#[link(wasm_import_module = "env")]
 unsafe extern "C" {
     fn Date_now(data: *mut FFIDateTime);
 }
@@ -23,6 +24,7 @@ pub fn utc_now() -> DateTime {
     }
 }
 
+#[link(wasm_import_module = "env")]
 unsafe extern "C" {
     safe fn Instant_now() -> f64;
 }

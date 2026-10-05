@@ -1,7 +1,6 @@
 use std::str;
 
-use anyhow::{Context as _, Result, format_err};
-use wasmtime::{Caller, Linker};
+use wasmtime::{Caller, Error, Linker, Result};
 
 use crate::{CreationError, Timer};
 
@@ -42,17 +41,17 @@ fn get_arr_mut<const N: usize>(memory: &mut [u8], ptr: u32) -> Result<&mut [u8; 
 fn get_slice(memory: &[u8], ptr: u32, len: u32) -> Result<&[u8]> {
     memory
         .get(ptr as usize..)
-        .context("Out of bounds pointer and length pair.")?
+        .ok_or_else(|| Error::msg("Out of bounds pointer and length pair."))?
         .get(..len as usize)
-        .context("Out of bounds pointer and length pair.")
+        .ok_or_else(|| Error::msg("Out of bounds pointer and length pair."))
 }
 
 fn get_slice_mut(memory: &mut [u8], ptr: u32, len: u32) -> Result<&mut [u8]> {
     memory
         .get_mut(ptr as usize..)
-        .context("Out of bounds pointer and length pair.")?
+        .ok_or_else(|| Error::msg("Out of bounds pointer and length pair."))?
         .get_mut(..len as usize)
-        .context("Out of bounds pointer and length pair.")
+        .ok_or_else(|| Error::msg("Out of bounds pointer and length pair."))
 }
 
 fn get_str(memory: &[u8], ptr: u32, len: u32) -> Result<&str> {
@@ -71,33 +70,33 @@ fn get_two_slice_mut(
     let (len1, len2) = (len1 as usize, len2 as usize);
     if ptr1 < ptr2 {
         if ptr2 >= memory.len() {
-            return Err(format_err!("Out of bounds pointer and length pair."));
+            return Err(Error::msg("Out of bounds pointer and length pair."));
         }
         let (first, second) = memory.split_at_mut(ptr2);
         Ok([
             first
                 .get_mut(ptr1..)
-                .context("Out of bounds pointer and length pair.")?
+                .ok_or_else(|| Error::msg("Out of bounds pointer and length pair."))?
                 .get_mut(..len1)
-                .context("Overlapping pair of pointer ranges.")?,
+                .ok_or_else(|| Error::msg("Overlapping pair of pointer ranges."))?,
             second
                 .get_mut(..len2)
-                .context("Out of bounds pointer and length pair.")?,
+                .ok_or_else(|| Error::msg("Out of bounds pointer and length pair."))?,
         ])
     } else {
         if ptr1 >= memory.len() {
-            return Err(format_err!("Out of bounds pointer and length pair."));
+            return Err(Error::msg("Out of bounds pointer and length pair."));
         }
         let (first, second) = memory.split_at_mut(ptr1);
         Ok([
             second
                 .get_mut(..len1)
-                .context("Out of bounds pointer and length pair.")?,
+                .ok_or_else(|| Error::msg("Out of bounds pointer and length pair."))?,
             first
                 .get_mut(ptr2..)
-                .context("Out of bounds pointer and length pair.")?
+                .ok_or_else(|| Error::msg("Out of bounds pointer and length pair."))?
                 .get_mut(..len2)
-                .context("Overlapping pair of pointer ranges.")?,
+                .ok_or_else(|| Error::msg("Overlapping pair of pointer ranges."))?,
         ])
     }
 }

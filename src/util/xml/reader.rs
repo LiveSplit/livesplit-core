@@ -67,18 +67,15 @@ impl<'a> Reader<'a> {
         } else if let Some(rem) = self.source.strip_prefix('?') {
             self.source = rem;
             let tag_inner = self.read_until(AsciiChar::GREATER_THAN)?;
-            if let Some(pi) = tag_inner.strip_suffix('?') {
-                if pi
-                    .strip_prefix("xml")
-                    .and_then(|decl| decl.strip_prefix(|b: char| b.is_ascii_whitespace()))
-                    .is_some()
-                {
-                    Event::Decl
-                } else {
-                    Event::ProcessingInstruction(Text(pi))
-                }
+            let pi = tag_inner.strip_suffix('?')?;
+            if pi
+                .strip_prefix("xml")
+                .and_then(|decl| decl.strip_prefix(|b: char| b.is_ascii_whitespace()))
+                .is_some()
+            {
+                Event::Decl
             } else {
-                return None;
+                Event::ProcessingInstruction(Text(pi))
             }
         } else {
             let tag_inner = read_elem_until(&mut self.source, AsciiChar::GREATER_THAN)?;

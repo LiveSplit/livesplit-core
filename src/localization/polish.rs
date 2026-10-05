@@ -402,9 +402,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowThinSeparatorsDescription => {
             "Określa, czy wyświetlać cienkie separatory pomiędzy poszczególnymi wierszami segmentów."
         }
-        Text::SplitsShowSeparatorBeforeLastSplit => "Pokaż separator przed ostatnim splitem",
-        Text::SplitsShowSeparatorBeforeLastSplitDescription => {
-            "Jeśli ostatni segment ma być zawsze widoczny, to określa, czy pokazywać bardziej wyraźny separator przed ostatnim segmentem, jeśli nie sąsiaduje bezpośrednio z poprzednim segmentem w oknie przewijania."
+        Text::SplitsShowGapSeparators => "Pokaż separatory luk",
+        Text::SplitsShowGapSeparatorsDescription => {
+            "Określa, czy przed wierszem pokazywać bardziej wyraźny separator, gdy w oknie przewijania pominięto co najmniej jeden bezpośrednio poprzedzający wiersz."
         }
         Text::SplitsAlwaysShowLastSplit => "Zawsze pokazuj ostatni split",
         Text::SplitsAlwaysShowLastSplitDescription => {
@@ -441,6 +441,10 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowColumnLabels => "Pokaż etykiety kolumn",
         Text::SplitsShowColumnLabelsDescription => {
             "Określa, czy wyświetlać nazwy kolumn na górze listy."
+        }
+        Text::SplitsSubsplitDisplayMode => "Tryb wyświetlania podziałów podrzędnych",
+        Text::SplitsSubsplitDisplayModeDescription => {
+            "Określa, jak wyświetlane są podziały podrzędne."
         }
         Text::SplitsColumns => "Kolumny",
         Text::SplitsColumnsDescription => {
@@ -514,6 +518,14 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::LayoutDirection => "Kierunek układu",
         Text::LayoutDirectionDescription => "Kierunek, w którym rozmieszczone są komponenty.",
+        Text::GroupFixedWidth => "Stała szerokość",
+        Text::GroupFixedWidthDescription => {
+            "Opcjonalna stała szerokość tej kolumny komponentów. Jeśli nie określono, szerokość jest ustalana automatycznie."
+        }
+        Text::GroupFixedHeight => "Stała wysokość",
+        Text::GroupFixedHeightDescription => {
+            "Opcjonalna stała wysokość tego wiersza komponentów. Jeśli nie określono, wysokość jest ustalana automatycznie."
+        }
         Text::CustomTimerFont => "Własna czcionka timera",
         Text::CustomTimerFontDescription => {
             "Pozwala określić niestandardową czcionkę dla timera. Jeśli nie ustawiono, używana jest domyślna czcionka."
@@ -580,6 +592,22 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentSegmentTimer => "Timer segmentu",
         Text::ComponentTitle => "Tytuł",
         Text::ComponentTotalPlaytime => "Łączny czas gry",
+        Text::Row => "Wiersz",
+        Text::Column => "Kolumna",
+        Text::EmptyContainer => "Puste",
+        Text::Carousel => "Karuzela",
+        Text::CarouselFixedSize => "Stały rozmiar",
+        Text::CarouselFixedSizeDescription => {
+            "Nadpisuje rozmiar karuzeli. Jeśli nie jest ustawiony, rozmiar jest określany automatycznie na podstawie największego komponentu potomnego."
+        }
+        Text::CarouselInterval => "Interwał (sekundy)",
+        Text::CarouselIntervalDescription => {
+            "Maksymalna liczba sekund, przez które komponent potomny jest wyświetlany przed przejściem do następnego. Karuzela może przełączyć się wcześniej, jeśli zawartość innego komponentu potomnego znacząco się zmieniła."
+        }
+        Text::CarouselMinDisplay => "Minimalny czas wyświetlania (sekundy)",
+        Text::CarouselMinDisplayDescription => {
+            "Minimalna liczba sekund, przez które komponent potomny ma być wyświetlany przed przełączeniem na inny."
+        }
         Text::ComponentCurrentPaceBestPossibleTime => "Najlepszy możliwy czas",
         Text::ComponentCurrentPaceWorstPossibleTime => "Najgorszy możliwy czas",
         Text::ComponentCurrentPacePredictedTime => "Przewidywany czas",

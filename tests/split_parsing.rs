@@ -1,20 +1,40 @@
+//! Integration tests for parsing representative real-world splits files and
+//! detecting their timer kinds. The files in `run_files` are reserved for this
+//! suite. Tests for specific fields, edge cases, and parser semantics should use
+//! inline inputs in the corresponding parser's local test module.
+
 mod run_files;
 
 mod parse {
     use crate::run_files;
     use livesplit_core::{
-        Run, TimeSpan,
+        Lang, Run, Time, TimeSpan,
         analysis::total_playtime,
         run::parser::{
             TimerKind, composite, flitter, libresplit, livesplit, llanfair, llanfair_gered,
             opensplit, portal2_live_timer, source_live_timer, speedrun_igt, splitterino, splitterz,
             time_split_tracker, wsplit,
         },
+        run::saver,
     };
 
     #[track_caller]
     fn livesplit(data: &str) -> Run {
         livesplit::parse(data).unwrap()
+    }
+
+    fn minimal_lss(version: &str, segment_names: &[&str], extra: &str) -> String {
+        let segments = segment_names
+            .iter()
+            .map(|name| {
+                format!(
+                    "<Segment><Name>{name}</Name><Icon/><SplitTimes/><BestSegmentTime/><SegmentHistory/></Segment>"
+                )
+            })
+            .collect::<String>();
+        format!(
+            r#"<?xml version="1.0" encoding="UTF-8"?><Run version="{version}"><GameIcon/><GameName>Game</GameName><CategoryName>Any%</CategoryName><Offset>00:00:00</Offset><AttemptCount>0</AttemptCount><Segments>{segments}</Segments>{extra}<AutoSplitterSettings/></Run>"#
+        )
     }
 
     #[track_caller]
@@ -60,6 +80,88 @@ mod parse {
     #[test]
     fn livesplit_celeste() {
         livesplit(run_files::CELESTE);
+    }
+
+    #[test]
+    fn livesplit_native_segment_groups() {
+        // Keep a complete, real-world LSS file as the primary compatibility
+        // test for the native segment-group format. In addition to exercising
+        // the XML structure itself, this covers groups alongside the metadata,
+        // histories, icons, comparisons, and auto splitter settings emitted by
+        // an actual frontend.
+        let run = livesplit(run_files::CELESTE_NATIVE_SEGMENT_GROUPS);
+
+        assert_eq!(run.len(), 33);
+        let groups = run.segment_groups().groups();
+        assert_eq!(groups.len(), 7);
+        assert_eq!(
+            groups
+                .iter()
+                .map(|group| (group.start(), group.end()))
+                .collect::<Vec<_>>(),
+            [
+                (1, 4),
+                (4, 7),
+                (7, 11),
+                (11, 15),
+                (15, 20),
+                (20, 26),
+                (26, 33)
+            ]
+        );
+        assert_eq!(groups[0].name(), Some("Okay"));
+        let group_icon_id = *groups[0].icon().unwrap().id();
+
+        let mut saved = String::new();
+        saver::livesplit::save_run(&run, &mut saved).unwrap();
+        assert!(saved.contains(r#"<Run version="1.8.1">"#));
+        assert!(saved.contains(r#"<SegmentGroup start="1" end="4">"#));
+        assert!(saved.contains("<Name>Okay</Name>"));
+        assert!(saved.contains("<Icon>"));
+
+        let saved = livesplit::parse(&saved).unwrap();
+        let group = &saved.segment_groups().groups()[0];
+        assert_eq!(group.icon().unwrap().id(), &group_icon_id);
+    }
+
+    #[test]
+    fn livesplit_1_8_1_preserves_legacy_subsplit_prefixes() {
+        // Once native groups became part of the format, `-` stopped being
+        // structural syntax. Keep this focused synthetic case because the
+        // real-world native-group fixture has no segment with a literal prefix.
+        let run = livesplit(&minimal_lss("1.8.1", &["Intro", "-Literal"], ""));
+
+        assert!(run.segment_groups().groups().is_empty());
+        assert_eq!(run.segment(1).name(), "-Literal");
+    }
+
+    #[test]
+    fn livesplit_legacy_subsplits_are_upgraded() {
+        let run = livesplit(&minimal_lss(
+            "1.8.0",
+            &["Intro", "-A1", "-A2", "{Chapter A} A End", "-Final"],
+            "",
+        ));
+
+        assert_eq!(run.segment_groups().groups().len(), 1);
+        let group = &run.segment_groups().groups()[0];
+        assert_eq!((group.start(), group.end()), (1, 4));
+        assert_eq!(group.name(), Some("Chapter A"));
+        assert_eq!(run.segment(1).name(), "A1");
+        assert_eq!(run.segment(3).name(), "A End");
+        assert_eq!(run.segment(4).name(), "-Final");
+    }
+
+    #[test]
+    fn livesplit_legacy_ungrouped_brace_prefix_is_preserved() {
+        let run = livesplit(&minimal_lss(
+            "1.8.0",
+            &["Intro", "{Boss} Fight", "Outro"],
+            "",
+        ));
+
+        assert!(run.segment_groups().groups().is_empty());
+        assert_eq!(run.segment(1).name(), "{Boss} Fight");
     }
 
     #[test]
@@ -141,6 +243,46 @@ mod parse {
     }
 
     #[test]
+    fn libresplit_metadata() {
+        let run = libresplit::parse(run_files::LIBRESPLIT_METADATA, None).unwrap();
+
+        assert_eq!(run.game_name(), "Castlevania: Symphony of the Night");
+        assert_eq!(run.category_name(), "Any% NSC");
+        assert!(run.game_icon().data().starts_with(b"\x89PNG\r\n\x1a\n"));
+        assert!(
+            run.segment(0)
+                .icon()
+                .data()
+                .starts_with(b"\x89PNG\r\n\x1a\n")
+        );
+        assert_ne!(run.game_icon().data(), run.segment(0).icon().data());
+    }
+
+    fn libresplit_time(real_time: Option<&str>, game_time: Option<&str>) -> Time {
+        Time::new()
+            .with_real_time(real_time.map(|time| TimeSpan::parse(time, Lang::English).unwrap()))
+            .with_game_time(game_time.map(|time| TimeSpan::parse(time, Lang::English).unwrap()))
+    }
+
+    #[test]
+    fn libresplit_game_time() {
+        let run = libresplit::parse(run_files::LIBRESPLIT_GAME_TIME, None).unwrap();
+
+        assert_eq!(
+            run.segment(0).personal_best_split_time(),
+            libresplit_time(Some("11:41.299585"), Some("11:30.000000"))
+        );
+        assert_eq!(
+            run.segment(0).best_segment_time(),
+            libresplit_time(Some("11:32.100735"), Some("11:20.000000"))
+        );
+        assert_eq!(
+            run.segment(2).best_segment_time(),
+            libresplit_time(None, Some("2:30.000000"))
+        );
+    }
+
+    #[test]
     fn flitter() {
         flitter::parse(run_files::FLITTER).unwrap();
     }
@@ -195,8 +337,14 @@ mod parse {
 
     #[test]
     fn libresplit_prefers_parsing_as_itself() {
-        let run = composite::parse(run_files::LIBRESPLIT.as_bytes(), None).unwrap();
-        assert_eq!(run.kind, TimerKind::LibreSplit);
+        for source in [
+            run_files::LIBRESPLIT,
+            run_files::LIBRESPLIT_GAME_TIME,
+            run_files::LIBRESPLIT_METADATA,
+        ] {
+            let run = composite::parse(source.as_bytes(), None).unwrap();
+            assert_eq!(run.kind, TimerKind::LibreSplit);
+        }
     }
 
     #[test]

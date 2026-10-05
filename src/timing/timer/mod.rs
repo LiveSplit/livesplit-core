@@ -1,3 +1,4 @@
+use crate::StoredAutoSplitterSettings;
 use crate::{
     AtomicDateTime, Run, Segment, Time, TimeSpan, TimeStamp,
     TimerPhase::{self, *},
@@ -175,6 +176,15 @@ impl Timer {
         self.run.mark_as_unmodified();
     }
 
+    /// Stores the structured ASR-compatible Auto Splitter Settings inside the
+    /// active run. This is intentionally a timer-level API so frontends can
+    /// update the splits-file-backed auto splitter state without replacing the
+    /// whole run or disturbing an in-progress attempt.
+    #[inline]
+    pub fn set_stored_auto_splitter_settings(&mut self, settings: &StoredAutoSplitterSettings) {
+        self.run.set_stored_auto_splitter_settings(settings);
+    }
+
     /// Returns the current Timer Phase.
     #[inline]
     pub const fn current_phase(&self) -> TimerPhase {
@@ -254,7 +264,7 @@ impl Timer {
     }
 
     /// Accesses the split the attempt is currently on. If there's no attempt in
-    /// progress or the run finished, `None` is returned instead.
+    /// progress or the run finished, [`None`] is returned instead.
     pub fn current_split(&self) -> Option<&Segment> {
         self.active_attempt
             .as_ref()?
@@ -263,7 +273,7 @@ impl Timer {
     }
 
     /// Accesses the index of the split the attempt is currently on. If there's
-    /// no attempt in progress, `None` is returned instead. This returns an
+    /// no attempt in progress, [`None`] is returned instead. This returns an
     /// index that is equal to the amount of segments when the attempt is
     /// finished, but has not been reset. So you need to be careful when using
     /// this value for indexing.

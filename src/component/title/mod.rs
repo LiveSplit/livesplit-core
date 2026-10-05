@@ -11,7 +11,10 @@ use crate::{
         Alignment, Color, Field, Gradient, Image, ImageCache, ImageId, SettingsDescription, Value,
     },
 };
-use core::fmt::Write;
+use core::{
+    fmt::Write,
+    hash::{Hash, Hasher},
+};
 use livesplit_title_abbreviations::{abbreviate as abbreviate_title, abbreviate_category};
 use serde_derive::{Deserialize, Serialize};
 use smallstr::SmallString;
@@ -33,7 +36,7 @@ pub struct Component {
 pub struct Settings {
     /// The background shown behind the component.
     pub background: Gradient,
-    /// The color of the title text. If `None` is specified, the color is taken
+    /// The color of the title text. If [`None`] is specified, the color is taken
     /// from the layout.
     pub text_color: Option<Color>,
     /// Specifies whether the game name should be part of the title that is
@@ -74,7 +77,7 @@ pub struct Settings {
 pub struct State {
     /// The background shown behind the component.
     pub background: Gradient,
-    /// The color of the text. If `None` is specified, the color is taken from
+    /// The color of the text. If [`None`] is specified, the color is taken from
     /// the layout.
     pub text_color: Option<Color>,
     /// The game icon to show. The associated image can be looked up in the
@@ -95,12 +98,32 @@ pub struct State {
     /// Specifies whether the title should centered or aligned to the left
     /// instead.
     pub is_centered: bool,
-    /// The amount of successfully finished attempts. If `None` is specified,
+    /// The amount of successfully finished attempts. If [`None`] is specified,
     /// the amount of successfully finished attempts isn't supposed to be shown.
     pub finished_runs: Option<u32>,
-    /// The amount of total attempts. If `None` is specified, the amount of
+    /// The amount of total attempts. If [`None`] is specified, the amount of
     /// total attempts isn't supposed to be shown.
     pub attempts: Option<u32>,
+}
+
+impl State {
+    pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
+        self.icon.hash(state);
+        self.line1.len().hash(state);
+        for part in &self.line1 {
+            part.hash(state);
+        }
+        self.line2.len().hash(state);
+        for part in &self.line2 {
+            part.hash(state);
+        }
+        self.finished_runs.hash(state);
+        self.attempts.hash(state);
+    }
+
+    pub(crate) const fn updates_frequently(&self) -> bool {
+        false
+    }
 }
 
 impl Default for Settings {

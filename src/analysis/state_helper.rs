@@ -1,9 +1,10 @@
 //! Provides different helper functions.
 
 use crate::{
-    Run, Segment, TimeSpan, Timer, TimerPhase, TimingMethod, comparison::best_segments,
-    settings::SemanticColor, timing::Snapshot,
+    Run, Segment, TimeSpan, Timer, TimerPhase, TimingMethod, analysis::sum_of_segments::Prediction,
+    comparison::best_segments, settings::SemanticColor, timing::Snapshot,
 };
+use smallvec::{SmallVec, smallvec};
 
 /// Gets the last non-live delta in the [`Run`] starting from `segment_index`.
 ///
@@ -91,6 +92,44 @@ pub fn comparison_combined_segment_time(
     Some(current_comparison_time - previous_comparison_time)
 }
 
+/// Calculates the comparison's segment time over an inclusive range of
+/// segments, combining it with the segment before the range if needed. This is
+/// not calculating the current attempt's segment times.
+///
+/// # Panics
+///
+/// Panics if the provided `end_index` is greater than or equal to `run.len()`.
+pub fn comparison_segment_time_for_range(
+    run: &Run,
+    start_index: usize,
+    end_index: usize,
+    comparison: &str,
+    method: TimingMethod,
+) -> Option<TimeSpan> {
+    if start_index == end_index {
+        return comparison_combined_segment_time(run, end_index, comparison, method);
+    }
+
+    if comparison == best_segments::NAME {
+        let mut predictions: SmallVec<[Option<Prediction>; 64]> = smallvec![None; run.len() + 1];
+        return super::sum_of_segments::best::calculate_segment_range(
+            run.segments(),
+            start_index,
+            end_index + 1,
+            &mut predictions,
+            false,
+            false,
+            method,
+        );
+    }
+
+    let current_comparison_time = run.segment(end_index).comparison(comparison)[method]?;
+    let previous_comparison_time =
+        find_previous_non_empty_comparison_time(&run.segments()[..start_index], comparison, method)
+            .unwrap_or_default();
+    Some(current_comparison_time - previous_comparison_time)
+}
+
 /// Calculates the comparison's segment time of the segment with the timing
 /// method specified. This is not calculating the current attempt's segment
 /// times.
@@ -123,16 +162,30 @@ pub fn comparison_single_segment_time(
 
 fn segment_delta(
     run: &Run,
-    segment_index: usize,
+    start_index: usize,
+    end_index: usize,
     current_time: TimeSpan,
     comparison: &str,
     method: TimingMethod,
 ) -> Option<TimeSpan> {
-    let segment_index_comparison = run.segment(segment_index).comparison(comparison)[method]?;
+    if start_index != end_index && comparison == best_segments::NAME {
+        return Some(
+            segment_time(run, start_index, current_time, method)
+                - comparison_segment_time_for_range(
+                    run,
+                    start_index,
+                    end_index,
+                    comparison,
+                    method,
+                )?,
+        );
+    }
+
+    let segment_index_comparison = run.segment(end_index).comparison(comparison)[method]?;
 
     Some(
         find_previous_non_empty_split_and_comparison_time(
-            &run.segments()[..segment_index],
+            &run.segments()[..start_index],
             comparison,
             method,
         )
@@ -145,11 +198,11 @@ fn segment_delta(
 
 fn segment_time(
     run: &Run,
-    segment_index: usize,
+    start_index: usize,
     current_time: TimeSpan,
     method: TimingMethod,
 ) -> TimeSpan {
-    find_previous_non_empty_split_time(&run.segments()[..segment_index], method)
+    find_previous_non_empty_split_time(&run.segments()[..start_index], method)
         .map(|split_time| current_time - split_time)
         .unwrap_or(current_time)
 }
@@ -168,10 +221,28 @@ pub fn previous_segment_time(
     segment_index: usize,
     method: TimingMethod,
 ) -> Option<TimeSpan> {
+    previous_segment_time_for_range(timer, segment_index, segment_index, method)
+}
+
+/// Gets the length of the last segment range that leads up to a certain split.
+///
+/// - `timer`: The current [`Timer`].
+/// - `start_index`: The index of the first split in the range.
+/// - `end_index`: The index of the split that represents the end of the range.
+/// - `method`: The [`TimingMethod`] that you are using.
+///
+/// Returns the length of the segment range leading up to `end_index`, returning
+/// None if the split is not completed yet.
+pub fn previous_segment_time_for_range(
+    timer: &Timer,
+    start_index: usize,
+    end_index: usize,
+    method: TimingMethod,
+) -> Option<TimeSpan> {
     segment_time(
         timer.run(),
-        segment_index,
-        timer.run().segment(segment_index).split_time()[method]?,
+        start_index,
+        timer.run().segment(end_index).split_time()[method]?,
         method,
     )
     .into()
@@ -192,9 +263,25 @@ pub fn live_segment_time(
     segment_index: usize,
     method: TimingMethod,
 ) -> Option<TimeSpan> {
+    live_segment_time_for_range(timer, segment_index, method)
+}
+
+/// Gets the length of the last segment range that leads up to the current
+/// split, using the live segment time.
+///
+/// - `timer`: The current [`Timer`].
+/// - `start_index`: The index of the first split in the range.
+/// - `method`: The [`TimingMethod`] that you are using.
+///
+/// Returns the live length of the segment range.
+pub fn live_segment_time_for_range(
+    timer: &Snapshot,
+    start_index: usize,
+    method: TimingMethod,
+) -> Option<TimeSpan> {
     segment_time(
         timer.run(),
-        segment_index,
+        start_index,
         timer.current_time()[method]?,
         method,
     )
@@ -216,10 +303,31 @@ pub fn previous_segment_delta(
     comparison: &str,
     method: TimingMethod,
 ) -> Option<TimeSpan> {
+    previous_segment_delta_for_range(timer, segment_index, segment_index, comparison, method)
+}
+
+/// Gets the amount of time lost or gained over an inclusive range of segments.
+///
+/// - `timer`: The current [`Timer`].
+/// - `start_index`: The index of the first split in the range.
+/// - `end_index`: The index of the split for which the delta is calculated.
+/// - `comparison`: The comparison that you are comparing with.
+/// - `method`: The [`TimingMethod`] that you are using.
+///
+/// Returns the segment delta for the range, returning None if the split is not
+/// completed yet.
+pub fn previous_segment_delta_for_range(
+    timer: &Timer,
+    start_index: usize,
+    end_index: usize,
+    comparison: &str,
+    method: TimingMethod,
+) -> Option<TimeSpan> {
     segment_delta(
         timer.run(),
-        segment_index,
-        timer.run().segment(segment_index).split_time()[method]?,
+        start_index,
+        end_index,
+        timer.run().segment(end_index).split_time()[method]?,
         comparison,
         method,
     )
@@ -241,9 +349,30 @@ pub fn live_segment_delta(
     comparison: &str,
     method: TimingMethod,
 ) -> Option<TimeSpan> {
+    live_segment_delta_for_range(timer, segment_index, segment_index, comparison, method)
+}
+
+/// Gets the amount of time lost or gained over an inclusive range of segments,
+/// using the live segment delta if the split is not completed yet.
+///
+/// - `timer`: The current [`Timer`].
+/// - `start_index`: The index of the first split in the range.
+/// - `end_index`: The index of the split for which the delta is calculated.
+/// - `comparison`: The comparison that you are comparing with.
+/// - `method`: The [`TimingMethod`] that you are using.
+///
+/// Returns the live segment delta for the range.
+pub fn live_segment_delta_for_range(
+    timer: &Snapshot,
+    start_index: usize,
+    end_index: usize,
+    comparison: &str,
+    method: TimingMethod,
+) -> Option<TimeSpan> {
     segment_delta(
         timer.run(),
-        segment_index,
+        start_index,
+        end_index,
         timer.current_time()[method]?,
         comparison,
         method,
@@ -315,10 +444,34 @@ pub fn split_color(
     comparison: &str,
     method: TimingMethod,
 ) -> SemanticColor {
-    if show_best_segments && check_best_segment(timer, segment_index, method) {
+    split_color_for_range(
+        timer,
+        time_difference,
+        segment_index..=segment_index,
+        show_segment_deltas,
+        show_best_segments,
+        comparison,
+        method,
+    )
+}
+
+/// Chooses a split color for an inclusive segment range from the
+/// [`LayoutSettings`](crate::layout::LayoutSettings) based on the current run.
+pub fn split_color_for_range(
+    timer: &Timer,
+    time_difference: Option<TimeSpan>,
+    segment_range: core::ops::RangeInclusive<usize>,
+    show_segment_deltas: bool,
+    show_best_segments: bool,
+    comparison: &str,
+    method: TimingMethod,
+) -> SemanticColor {
+    let start_index = *segment_range.start();
+    let end_index = *segment_range.end();
+    if show_best_segments && check_best_segment_for_range(timer, start_index, end_index, method) {
         SemanticColor::BestSegment
     } else if let Some(time_difference) = time_difference.filter(|t| t != &TimeSpan::zero()) {
-        let last_delta = segment_index
+        let last_delta = start_index
             .checked_sub(1)
             .and_then(|n| last_delta(timer.run(), n, comparison, method));
         if time_difference < TimeSpan::zero() {
@@ -346,14 +499,41 @@ pub fn split_color(
 ///
 /// Returns whether or not the indicated split is a Best Segment.
 pub fn check_best_segment(timer: &Timer, segment_index: usize, method: TimingMethod) -> bool {
-    if timer.run().segment(segment_index).split_time()[method].is_none() {
+    check_best_segment_for_range(timer, segment_index, segment_index, method)
+}
+
+/// Calculates whether or not the Split Times for the indicated inclusive range
+/// qualify as a Best Segment.
+pub fn check_best_segment_for_range(
+    timer: &Timer,
+    start_index: usize,
+    end_index: usize,
+    method: TimingMethod,
+) -> bool {
+    if start_index == end_index {
+        if timer.run().segment(end_index).split_time()[method].is_none() {
+            return false;
+        }
+
+        let delta = previous_segment_delta(timer, end_index, best_segments::NAME, method);
+        let current_segment = previous_segment_time(timer, end_index, method);
+        let best_segment = timer.run().segment(end_index).best_segment_time()[method];
+        return best_segment.is_none_or(|b| {
+            current_segment.is_some_and(|c| c < b) || delta.is_some_and(|d| d < TimeSpan::zero())
+        });
+    }
+
+    if timer.run().segment(end_index).split_time()[method].is_none() {
         return false;
     }
 
-    let delta = previous_segment_delta(timer, segment_index, best_segments::NAME, method);
-    let current_segment = previous_segment_time(timer, segment_index, method);
-    let best_segment = timer.run().segment(segment_index).best_segment_time()[method];
-    best_segment.is_none_or(|b| {
-        current_segment.is_some_and(|c| c < b) || delta.is_some_and(|d| d < TimeSpan::zero())
-    })
+    let current_segment = previous_segment_time_for_range(timer, start_index, end_index, method);
+    let best_segment = comparison_segment_time_for_range(
+        timer.run(),
+        start_index,
+        end_index,
+        best_segments::NAME,
+        method,
+    );
+    best_segment.is_none_or(|b| current_segment.is_some_and(|c| c < b))
 }

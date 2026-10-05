@@ -1,7 +1,7 @@
 use crate::{
     TimingMethod,
     component::{
-        splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith},
+        splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith, SubsplitDisplayMode},
         timer::DeltaGradient,
     },
     hotkey::Hotkey,
@@ -30,6 +30,8 @@ pub enum Value {
     Bool(bool),
     /// An unsigned integer.
     UInt(u64),
+    /// An optional unsigned integer.
+    OptionalUInt(Option<u64>),
     /// An integer.
     Int(i64),
     /// A string.
@@ -64,6 +66,8 @@ pub enum Value {
     ColumnUpdateWith(ColumnUpdateWith),
     /// A value describing when to update a column of the Splits Component.
     ColumnUpdateTrigger(ColumnUpdateTrigger),
+    /// A value describing how native subsplits are displayed.
+    SubsplitDisplayMode(SubsplitDisplayMode),
     /// A value describing what hotkey to press to trigger a certain action.
     Hotkey(Option<Hotkey>),
     /// A value describing the direction of a layout.
@@ -87,6 +91,12 @@ impl From<bool> for Value {
 impl From<u64> for Value {
     fn from(x: u64) -> Self {
         Value::UInt(x)
+    }
+}
+
+impl From<Option<u64>> for Value {
+    fn from(x: Option<u64>) -> Self {
+        Value::OptionalUInt(x)
     }
 }
 
@@ -174,6 +184,12 @@ impl From<ColumnUpdateTrigger> for Value {
     }
 }
 
+impl From<SubsplitDisplayMode> for Value {
+    fn from(x: SubsplitDisplayMode) -> Self {
+        Value::SubsplitDisplayMode(x)
+    }
+}
+
 impl From<Option<Hotkey>> for Value {
     fn from(x: Option<Hotkey>) -> Self {
         Value::Hotkey(x)
@@ -233,6 +249,14 @@ impl Value {
     pub fn into_uint(self) -> Result<u64> {
         match self {
             Value::UInt(v) => Ok(v),
+            _ => Err(Error::WrongType),
+        }
+    }
+
+    /// Tries to convert the value into an optional unsigned integer.
+    pub fn into_optional_uint(self) -> Result<Option<u64>> {
+        match self {
+            Value::OptionalUInt(v) => Ok(v),
             _ => Err(Error::WrongType),
         }
     }
@@ -354,6 +378,14 @@ impl Value {
         }
     }
 
+    /// Tries to convert the value into a Subsplit Display Mode.
+    pub fn into_subsplit_display_mode(self) -> Result<SubsplitDisplayMode> {
+        match self {
+            Value::SubsplitDisplayMode(v) => Ok(v),
+            _ => Err(Error::WrongType),
+        }
+    }
+
     /// Tries to convert the value into a hotkey.
     pub fn into_hotkey(self) -> Result<Option<Hotkey>> {
         match self {
@@ -420,6 +452,12 @@ impl From<Value> for bool {
 impl From<Value> for u64 {
     fn from(value: Value) -> Self {
         value.into_uint().unwrap()
+    }
+}
+
+impl From<Value> for Option<u64> {
+    fn from(value: Value) -> Self {
+        value.into_optional_uint().unwrap()
     }
 }
 
@@ -504,6 +542,12 @@ impl From<Value> for ColumnUpdateWith {
 impl From<Value> for ColumnUpdateTrigger {
     fn from(value: Value) -> Self {
         value.into_column_update_trigger().unwrap()
+    }
+}
+
+impl From<Value> for SubsplitDisplayMode {
+    fn from(value: Value) -> Self {
+        value.into_subsplit_display_mode().unwrap()
     }
 }
 

@@ -10,7 +10,7 @@ mod tests_helper;
 
 use livesplit_core::{
     Lang, Run, Segment, TimeSpan, Timer, TimingMethod,
-    component::{self, timer},
+    component::{self, group, timer},
     layout::{self, Component, ComponentState, Layout, LayoutDirection, LayoutState},
     rendering,
     run::parser::{livesplit, llanfair, wsplit},
@@ -48,8 +48,8 @@ fn default() {
     check(
         &state,
         &image_cache,
-        "613e94c31d4d76c3",
-        "c2ae6252eec1d1b5",
+        "70f300e40324b90f",
+        "5a5503400c3eb87e",
         "default",
     );
 }
@@ -72,7 +72,7 @@ fn font_fallback() {
     let build_number: u64 = build_number.parse().unwrap();
     let revision: u32 = cur_ver.get_value("UBR").unwrap();
 
-    if (build_number, revision) < (26100, 5074) {
+    if (build_number, revision) < (26200, 8737) {
         // The hash is different before that Windows 11 version.
         println!(
             "Skipping font fallback test on Windows with build number {build_number}.{revision}.",
@@ -171,8 +171,8 @@ fn font_fallback() {
         &state,
         &image_cache,
         [320, 750],
-        "80a81fbbfbb53fa3",
-        "a72544f5514c086b",
+        "59402e9165a13b58",
+        "a1318840b72a09bc",
         "font_fallback",
     );
 }
@@ -187,8 +187,8 @@ fn actual_split_file() {
     check(
         &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
         &image_cache,
-        "ef12a76febd34908",
-        "a261fbed384d6d51",
+        "385675f173971708",
+        "0cdf37db07c3ea8c",
         "actual_split_file",
     );
 }
@@ -205,7 +205,7 @@ fn wsplit() {
         &image_cache,
         [250, 300],
         "445f85286cd8a439",
-        "e198b005bb113d39",
+        "73de387ac81d77c6",
         "wsplit",
     );
 }
@@ -260,8 +260,8 @@ fn all_components() {
         &state,
         &image_cache,
         [300, 800],
-        "ac1120ceabe1cf2f",
-        "cc6cd2c025ecac2d",
+        "4172bfcf7d7913ff",
+        "752a959a209f332e",
         "all_components",
     );
 
@@ -269,8 +269,8 @@ fn all_components() {
         &state,
         &image_cache,
         [150, 800],
-        "817568e8740f9b53",
-        "8a21844849246afb",
+        "8ebf79b86a476f47",
+        "026dd5923cd8c6be",
         "all_components_thin",
     );
 }
@@ -297,8 +297,8 @@ fn score_split() {
         &state,
         &image_cache,
         [300, 400],
-        "cdf1b9e7ebc09f42",
-        "96bcb8fcc09597cd",
+        "5226bee17b470223",
+        "bcaeeaa666d979a6",
         "score_split",
     );
 }
@@ -338,9 +338,40 @@ fn subsplits_layout() {
         &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
         &image_cache,
         [300, 800],
-        "de8412439f6ac04a",
-        "a5e0f59de02a3f5f",
+        "85d2ac8702abc205",
+        "577b2b51aed1830a",
         "subsplits_layout",
+    );
+}
+
+#[test]
+fn native_subsplits_layout() {
+    let mut run = tests_helper::create_run(&["Intro", "A1", "A2", "A End", "Outro"]);
+    run.segment_groups_mut()
+        .push_lossy(1, 4, Some("Chapter A".into()), 5);
+    let mut timer = Timer::new(run).unwrap();
+    let mut layout = Layout::default_layout(Lang::English);
+
+    for component in &mut layout.components {
+        if let Component::Splits(splits) = component {
+            splits.settings_mut().visual_split_count = 0;
+            splits.settings_mut().subsplit_display_mode =
+                component::splits::SubsplitDisplayMode::AllGroupsExpanded;
+        }
+    }
+
+    tests_helper::start_run(&mut timer);
+    timer.split().unwrap();
+
+    let mut image_cache = ImageCache::new();
+
+    check_dims(
+        &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
+        &image_cache,
+        [300, 300],
+        "a6c612401803a03a",
+        "35f288fb4bdde1ff",
+        "native_subsplits_layout",
     );
 }
 
@@ -362,8 +393,8 @@ fn background_image() {
         &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
         &image_cache,
         [300, 300],
-        "84ec75e9cb50bab5",
-        "721485d08ac431f5",
+        "6adf7d78502a6f3e",
+        "c7aacd7b81fe2ac4",
         "background_image",
     );
 }
@@ -454,8 +485,8 @@ fn horizontal() {
         &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
         &image_cache,
         [1500, 40],
-        "45492bbd1df15cfa",
-        "a56638d106e08232",
+        "23d8f03a5a08157e",
+        "4d9aecef410a844f",
         "horizontal",
     );
 }
@@ -477,6 +508,76 @@ fn text_shadow() {
         "ee437905156e2d64",
         "d21a7fdd462f99fb",
         "text_shadow",
+    );
+}
+
+#[test]
+fn horizontal_group_in_vertical_layout() {
+    let mut run = tests_helper::create_run(&["A", "B", "C"]);
+    run.set_game_name("Group Test");
+    run.set_category_name("Any%");
+    let timer = Timer::new(run).unwrap();
+
+    let mut layout = Layout::new();
+    layout.push(component::title::Component::new());
+
+    // Create a horizontal group containing a timer and a text component.
+    let mut group = group::Component::new();
+    group
+        .components
+        .push(Component::from(component::timer::Component::new()));
+    let mut txt = component::text::Component::new();
+    txt.settings_mut().text =
+        component::text::Text::Split(String::from("Delta"), String::from("+1.23"));
+    group.components.push(Component::from(txt));
+    layout.push(group);
+
+    layout.push(component::splits::Component::new(Lang::English));
+
+    let mut image_cache = ImageCache::new();
+    check_dims(
+        &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
+        &image_cache,
+        [300, 400],
+        "4fb1915193fd644a",
+        "c1222af27509c56f",
+        "horizontal_group_in_vertical_layout",
+    );
+}
+
+#[test]
+fn nested_groups() {
+    let timer = tests_helper::create_timer(&["A", "B"]);
+
+    let mut layout = Layout::new();
+    layout.push(component::title::Component::new());
+
+    // Outer horizontal group containing a timer and an inner vertical group.
+    let mut inner = group::Component::new();
+    let mut txt1 = component::text::Component::new();
+    txt1.settings_mut().text =
+        component::text::Text::Split(String::from("Split"), String::from("0:00"));
+    inner.components.push(Component::from(txt1));
+    let mut txt2 = component::text::Component::new();
+    txt2.settings_mut().text =
+        component::text::Text::Split(String::from("Best"), String::from("0:00"));
+    inner.components.push(Component::from(txt2));
+
+    let mut outer = group::Component::new();
+    outer
+        .components
+        .push(Component::from(component::timer::Component::new()));
+    outer.components.push(Component::Group(inner));
+    layout.push(outer);
+
+    let mut image_cache = ImageCache::new();
+    check_dims(
+        &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
+        &image_cache,
+        [400, 200],
+        "6426d21783560265",
+        "67eb98505a5c540e",
+        "nested_groups",
     );
 }
 

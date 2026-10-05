@@ -19,7 +19,10 @@ use crate::{
         formatter::{Accuracy, DigitsFormat, SegmentTime, TimeFormatter},
     },
 };
-use core::fmt::Write;
+use core::{
+    fmt::Write,
+    hash::{Hash, Hasher},
+};
 use serde_derive::{Deserialize, Serialize};
 
 #[cfg(test)]
@@ -110,6 +113,35 @@ pub struct ComparisonState {
     pub name: String,
     /// The time to show for the comparison.
     pub time: String,
+}
+
+impl State {
+    pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
+        self.timer.content_fingerprint(state);
+        self.segment_timer.content_fingerprint(state);
+        comparison_fingerprint(state, &self.comparison1);
+        comparison_fingerprint(state, &self.comparison2);
+        self.segment_name.hash(state);
+        self.icon.hash(state);
+    }
+
+    pub(crate) const fn updates_frequently(&self) -> bool {
+        self.timer.updates_frequently() || self.segment_timer.updates_frequently()
+    }
+}
+
+impl ComparisonState {
+    pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
+        self.name.hash(state);
+        self.time.hash(state);
+    }
+}
+
+fn comparison_fingerprint(state: &mut impl Hasher, comparison: &Option<ComparisonState>) {
+    comparison.is_some().hash(state);
+    if let Some(comparison) = comparison {
+        comparison.content_fingerprint(state);
+    }
 }
 
 fn update_comparison(

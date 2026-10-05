@@ -13,7 +13,10 @@ use crate::{
     util::PopulateString,
 };
 use alloc::borrow::Cow;
-use core::mem;
+use core::{
+    hash::{Hash, Hasher},
+    mem,
+};
 use serde_derive::{Deserialize, Serialize};
 
 #[cfg(test)]
@@ -37,11 +40,11 @@ pub struct Settings {
     /// displayed as two rows.
     pub display_two_rows: bool,
     /// The color of the left part of the split up text or the whole text if
-    /// it's not split up. If `None` is specified, the color is taken from the
+    /// it's not split up. If [`None`] is specified, the color is taken from the
     /// layout.
     pub left_center_color: Option<Color>,
     /// The color of the right part of the split up text. This can be ignored if
-    /// the text is not split up. If `None` is specified, the color is taken
+    /// the text is not split up. If [`None`] is specified, the color is taken
     /// from the layout.
     pub right_color: Option<Color>,
     /// The text to be shown.
@@ -75,6 +78,29 @@ pub enum TextState {
 impl Default for TextState {
     fn default() -> Self {
         TextState::Center(String::new())
+    }
+}
+
+impl State {
+    pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
+        self.text.content_fingerprint(state);
+    }
+
+    pub(crate) const fn updates_frequently(&self) -> bool {
+        false
+    }
+}
+
+impl TextState {
+    pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
+        mem::discriminant(self).hash(state);
+        match self {
+            Self::Center(text) => text.hash(state),
+            Self::Split(left, right) => {
+                left.hash(state);
+                right.hash(state);
+            }
+        }
     }
 }
 
@@ -128,11 +154,11 @@ pub struct State {
     /// displayed as two rows.
     pub display_two_rows: bool,
     /// The color of the left part of the split up text or the whole text if
-    /// it's not split up. If `None` is specified, the color is taken from the
+    /// it's not split up. If [`None`] is specified, the color is taken from the
     /// layout.
     pub left_center_color: Option<Color>,
     /// The color of the right part of the split up text. This can be ignored if
-    /// the text is not split up. If `None` is specified, the color is taken
+    /// the text is not split up. If [`None`] is specified, the color is taken
     /// from the layout.
     pub right_color: Option<Color>,
     /// The text to show for the component.

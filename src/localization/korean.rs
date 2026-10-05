@@ -376,9 +376,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowThinSeparatorsDescription => {
             "세그먼트 행 사이에 얇은 구분선을 표시할지 지정합니다."
         }
-        Text::SplitsShowSeparatorBeforeLastSplit => "마지막 스플릿 앞 구분선 표시",
-        Text::SplitsShowSeparatorBeforeLastSplitDescription => {
-            "마지막 세그먼트를 항상 표시하는 경우, 스크롤 창에서 바로 앞 세그먼트와 인접하지 않을 때 더 두드러진 구분선을 표시할지 지정합니다."
+        Text::SplitsShowGapSeparators => "생략 구간 구분선 표시",
+        Text::SplitsShowGapSeparatorsDescription => {
+            "스크롤 창에서 바로 앞의 한 개 이상의 행이 생략된 경우 다음 행 앞에 더 두드러진 구분선을 표시할지 지정합니다."
         }
         Text::SplitsAlwaysShowLastSplit => "마지막 스플릿 항상 표시",
         Text::SplitsAlwaysShowLastSplitDescription => {
@@ -414,6 +414,8 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsShowColumnLabels => "열 라벨 표시",
         Text::SplitsShowColumnLabelsDescription => "목록 상단에 열 이름을 표시할지 지정합니다.",
+        Text::SplitsSubsplitDisplayMode => "하위 스플릿 표시 모드",
+        Text::SplitsSubsplitDisplayModeDescription => "하위 스플릿을 표시하는 방식을 설정합니다.",
         Text::SplitsColumns => "열",
         Text::SplitsColumnsDescription => {
             "각 행에 표시할 열 수입니다. 각 열은 서로 다른 정보를 표시할 수 있으며, 열은 오른쪽에서 왼쪽 순으로 정의됩니다."
@@ -482,6 +484,14 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::LayoutDirection => "레이아웃 방향",
         Text::LayoutDirectionDescription => "컴포넌트를 배치하는 방향입니다.",
+        Text::GroupFixedWidth => "고정 너비",
+        Text::GroupFixedWidthDescription => {
+            "이 컴포넌트 열의 선택적 고정 너비입니다. 지정하지 않으면 너비가 자동으로 결정됩니다."
+        }
+        Text::GroupFixedHeight => "고정 높이",
+        Text::GroupFixedHeightDescription => {
+            "이 컴포넌트 행의 선택적 고정 높이입니다. 지정하지 않으면 높이가 자동으로 결정됩니다."
+        }
         Text::CustomTimerFont => "타이머 사용자 지정 글꼴",
         Text::CustomTimerFontDescription => {
             "타이머에 사용자 지정 글꼴을 지정할 수 있습니다. 지정하지 않으면 기본 글꼴이 사용됩니다."
@@ -544,6 +554,22 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentSegmentTimer => "세그먼트 타이머",
         Text::ComponentTitle => "제목",
         Text::ComponentTotalPlaytime => "총 플레이 시간",
+        Text::Row => "행",
+        Text::Column => "열",
+        Text::EmptyContainer => "비어 있음",
+        Text::Carousel => "캐러셀",
+        Text::CarouselFixedSize => "고정 크기",
+        Text::CarouselFixedSizeDescription => {
+            "캐러셀의 크기를 재정의합니다. 설정하지 않으면 가장 큰 하위 구성 요소를 기준으로 크기가 자동으로 결정됩니다."
+        }
+        Text::CarouselInterval => "간격(초)",
+        Text::CarouselIntervalDescription => {
+            "다음 하위 구성 요소로 전환하기 전에 하나의 하위 구성 요소를 표시하는 최대 초 수입니다. 다른 하위 구성 요소의 내용이 의미 있게 변경되면 캐러셀이 더 일찍 전환될 수 있습니다."
+        }
+        Text::CarouselMinDisplay => "최소 표시 시간(초)",
+        Text::CarouselMinDisplayDescription => {
+            "다른 하위 구성 요소로 전환하기 전에 현재 하위 구성 요소를 표시할 최소 초 수입니다."
+        }
         Text::ComponentCurrentPaceBestPossibleTime => "최적 가능 시간",
         Text::ComponentCurrentPaceWorstPossibleTime => "최악 가능 시간",
         Text::ComponentCurrentPacePredictedTime => "예측 시간",

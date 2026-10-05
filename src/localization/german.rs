@@ -440,9 +440,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowThinSeparatorsDescription => {
             "Legt fest, ob dünne Trennlinien zwischen den einzelnen Segmentzeilen angezeigt werden."
         }
-        Text::SplitsShowSeparatorBeforeLastSplit => "Trennlinie vor letztem Split anzeigen",
-        Text::SplitsShowSeparatorBeforeLastSplitDescription => {
-            "Wenn das letzte Segment immer angezeigt werden soll, bestimmt dies, ob vor dem letzten Segment eine deutlichere Trennlinie angezeigt wird, wenn es im Scrollfenster nicht direkt neben dem vorherigen Segment liegt."
+        Text::SplitsShowGapSeparators => "Trennlinien bei Lücken anzeigen",
+        Text::SplitsShowGapSeparatorsDescription => {
+            "Legt fest, ob vor einer Zeile eine deutlichere Trennlinie angezeigt wird, wenn im Scrollfenster unmittelbar davor eine oder mehrere Zeilen ausgelassen werden."
         }
         Text::SplitsAlwaysShowLastSplit => "Letzten Split immer anzeigen",
         Text::SplitsAlwaysShowLastSplitDescription => {
@@ -480,6 +480,8 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowColumnLabelsDescription => {
             "Legt fest, ob die Namen der Spalten oben in der Liste angezeigt werden."
         }
+        Text::SplitsSubsplitDisplayMode => "Subsplit-Anzeigemodus",
+        Text::SplitsSubsplitDisplayModeDescription => "Legt fest, wie Subsplits angezeigt werden.",
         Text::SplitsColumns => "Spalten",
         Text::SplitsColumnsDescription => {
             "Die Anzahl der Spalten pro Zeile. Jede Spalte kann unterschiedliche Informationen anzeigen. Die Spalten sind von rechts nach links definiert."
@@ -554,6 +556,14 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::LayoutDirection => "Layout-Richtung",
         Text::LayoutDirectionDescription => "Die Richtung, in der die Komponenten angeordnet sind.",
+        Text::GroupFixedWidth => "Feste Breite",
+        Text::GroupFixedWidthDescription => {
+            "Eine optionale feste Breite für diese Spalte von Komponenten. Wenn nicht angegeben, wird die Breite automatisch bestimmt."
+        }
+        Text::GroupFixedHeight => "Feste Höhe",
+        Text::GroupFixedHeightDescription => {
+            "Eine optionale feste Höhe für diese Zeile von Komponenten. Wenn nicht angegeben, wird die Höhe automatisch bestimmt."
+        }
         Text::CustomTimerFont => "Benutzerdefinierte Timer-Schriftart",
         Text::CustomTimerFontDescription => {
             "Ermöglicht das Festlegen einer benutzerdefinierten Schriftart für den Timer. Wenn dies nicht gesetzt ist, wird die Standardschriftart verwendet."
@@ -630,6 +640,22 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentSegmentTimer => "Segment-Timer",
         Text::ComponentTitle => "Titel",
         Text::ComponentTotalPlaytime => "Gesamtspielzeit",
+        Text::Row => "Zeile",
+        Text::Column => "Spalte",
+        Text::EmptyContainer => "Leer",
+        Text::Carousel => "Karussell",
+        Text::CarouselFixedSize => "Feste Größe",
+        Text::CarouselFixedSizeDescription => {
+            "Überschreibt die Größe des Karussells. Wenn nichts festgelegt ist, wird die Größe automatisch anhand der größten Kindkomponente bestimmt."
+        }
+        Text::CarouselInterval => "Intervall (Sekunden)",
+        Text::CarouselIntervalDescription => {
+            "Die maximale Anzahl an Sekunden, die eine Kindkomponente angezeigt wird, bevor zur nächsten gewechselt wird. Das Karussell kann früher wechseln, wenn sich der Inhalt einer anderen Kindkomponente wesentlich geändert hat."
+        }
+        Text::CarouselMinDisplay => "Mindestanzeige (Sekunden)",
+        Text::CarouselMinDisplayDescription => {
+            "Die Mindestanzahl an Sekunden, die eine Kindkomponente angezeigt werden soll, bevor zu einer anderen gewechselt wird."
+        }
         Text::ComponentCurrentPaceBestPossibleTime => "Bestmögliche Zeit",
         Text::ComponentCurrentPaceWorstPossibleTime => "Schlechtestmögliche Zeit",
         Text::ComponentCurrentPacePredictedTime => "Vorhergesagte Zeit",
@@ -671,7 +697,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SegmentTimeShort => "Seg.-Zeit",
         Text::SplitTime => "Zeit",
         Text::PossibleTimeSaveShort => "Mögliche Zeitersparnis",
-        Text::PossibleTimeSaveAbbreviation => "Mögl. Zeitersp.",
+        Text::PossibleTimeSaveAbbreviation => "Mögl. Zeitersparnis",
         Text::TimeSaveShort => "Zeitersparnis",
         Text::RealTime => "Echtzeit",
         Text::GameTime => "Spielzeit",

@@ -414,9 +414,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowThinSeparatorsDescription => {
             "Specifies whether thin separators should be shown between the individual segment rows."
         }
-        Text::SplitsShowSeparatorBeforeLastSplit => "Show Separator Before Last Split",
-        Text::SplitsShowSeparatorBeforeLastSplitDescription => {
-            "If the last segment is to always be shown, this determines whether to show a more pronounced separator in front of the last segment, if it is not directly adjacent to the segment shown right before it in the scrolling window."
+        Text::SplitsShowGapSeparators => "Show Gap Separators",
+        Text::SplitsShowGapSeparatorsDescription => {
+            "Whether to show a pronounced separator before a row when one or more rows immediately before it are omitted from the scrolling window."
         }
         Text::SplitsAlwaysShowLastSplit => "Always Show Last Split",
         Text::SplitsAlwaysShowLastSplitDescription => {
@@ -454,6 +454,8 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowColumnLabelsDescription => {
             "Specifies whether to show the names of the columns at the top of the list."
         }
+        Text::SplitsSubsplitDisplayMode => "Subsplit Display Mode",
+        Text::SplitsSubsplitDisplayModeDescription => "Controls how subsplits are shown.",
         Text::SplitsColumns => "Columns",
         Text::SplitsColumnsDescription => {
             "The number of columns to show in each row. Each column can be configured to show different information. The columns are defined from right to left."
@@ -526,6 +528,14 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::LayoutDirection => "Layout Direction",
         Text::LayoutDirectionDescription => "The direction in which the components are laid out.",
+        Text::GroupFixedWidth => "Fixed Width",
+        Text::GroupFixedWidthDescription => {
+            "An optional fixed width for this column of components. If not specified, the width is determined automatically."
+        }
+        Text::GroupFixedHeight => "Fixed Height",
+        Text::GroupFixedHeightDescription => {
+            "An optional fixed height for this row of components. If not specified, the height is determined automatically."
+        }
         Text::CustomTimerFont => "Custom Timer Font",
         Text::CustomTimerFontDescription => {
             "Allows you to specify a custom font for the timer. If this is not set, the default font is used."
@@ -594,6 +604,22 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentSegmentTimer => "Segment Timer",
         Text::ComponentTitle => "Title",
         Text::ComponentTotalPlaytime => "Total Playtime",
+        Text::Row => "Row",
+        Text::Column => "Column",
+        Text::EmptyContainer => "Empty",
+        Text::Carousel => "Carousel",
+        Text::CarouselFixedSize => "Fixed Size",
+        Text::CarouselFixedSizeDescription => {
+            "Overrides the size of the carousel. If not set, the size is determined automatically from the largest child component."
+        }
+        Text::CarouselInterval => "Interval (seconds)",
+        Text::CarouselIntervalDescription => {
+            "The maximum number of seconds to show a child before rotating to the next one. The carousel may switch sooner if another child's content has meaningfully changed."
+        }
+        Text::CarouselMinDisplay => "Minimum Display (seconds)",
+        Text::CarouselMinDisplayDescription => {
+            "The minimum number of seconds to show a child before switching to a different one."
+        }
         Text::ComponentCurrentPaceBestPossibleTime => "Best Possible Time",
         Text::ComponentCurrentPaceWorstPossibleTime => "Worst Possible Time",
         Text::ComponentCurrentPacePredictedTime => "Predicted Time",

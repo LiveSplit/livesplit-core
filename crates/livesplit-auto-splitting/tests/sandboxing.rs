@@ -1,4 +1,5 @@
 use livesplit_auto_splitting::{AutoSplitter, Config, LogLevel, Runtime, Timer, TimerState};
+use livesplit_auto_splitting::{settings, settings::Value};
 use std::{
     ffi::OsStr,
     fmt, fs,
@@ -34,7 +35,24 @@ impl Timer for DummyTimer {
 }
 
 #[track_caller]
-fn compile(crate_name: &str) -> anyhow::Result<AutoSplitter<DummyTimer>> {
+fn compile(crate_name: &str) -> wasmtime::Result<AutoSplitter<DummyTimer>> {
+    compile_with_settings(crate_name, None)
+}
+
+#[track_caller]
+fn compile_with_settings(
+    crate_name: &str,
+    settings_map: Option<settings::Map>,
+) -> wasmtime::Result<AutoSplitter<DummyTimer>> {
+    compile_with_script_path(crate_name, settings_map, None)
+}
+
+#[track_caller]
+fn compile_with_script_path(
+    crate_name: &str,
+    settings_map: Option<settings::Map>,
+    script_path: Option<&std::path::Path>,
+) -> wasmtime::Result<AutoSplitter<DummyTimer>> {
     let mut path = PathBuf::from("tests");
     path.push("test-cases");
     path.push(crate_name);
@@ -71,11 +89,11 @@ fn compile(crate_name: &str) -> anyhow::Result<AutoSplitter<DummyTimer>> {
 
     Ok(Runtime::new(Config::default())?
         .compile(&fs::read(wasm_path).unwrap())?
-        .instantiate(DummyTimer, None, None)?)
+        .instantiate(DummyTimer, settings_map, script_path)?)
 }
 
 #[track_caller]
-fn run(crate_name: &str) -> anyhow::Result<()> {
+fn run(crate_name: &str) -> wasmtime::Result<()> {
     let runtime = compile(crate_name)?;
     runtime.lock().update()?;
     Ok(())
@@ -87,13 +105,60 @@ fn empty() {
 }
 
 #[test]
+fn startup_is_deferred_until_the_first_interruptible_update() {
+    let mut settings = settings::Map::new();
+    settings.insert("enabled".into(), Value::Bool(true));
+    let runtime = compile_with_settings("startup", Some(settings)).unwrap();
+
+    assert_eq!(runtime.tick_rate(), Duration::from_secs_f64(1.0 / 120.0));
+    assert!(runtime.settings_widgets().is_empty());
+
+    runtime.lock().update().unwrap();
+    assert_eq!(runtime.tick_rate(), Duration::from_secs_f64(1.0 / 42.0));
+    assert_eq!(runtime.settings_widgets().len(), 2);
+
+    runtime.lock().update().unwrap();
+    assert_eq!(runtime.settings_widgets().len(), 2);
+}
+
+#[test]
+fn startup_can_be_interrupted() {
+    let mut settings = settings::Map::new();
+    settings.insert("hang".into(), Value::Bool(true));
+    let runtime = compile_with_settings("startup", Some(settings)).unwrap();
+    let interrupt = runtime.interrupt_handle();
+
+    thread::spawn(move || {
+        thread::sleep(Duration::from_millis(100));
+        interrupt.interrupt();
+    });
+
+    assert!(runtime.lock().update().is_err());
+}
+
+#[test]
 fn proc_exit() {
     assert!(run("proc-exit").is_err());
 }
 
 #[test]
 fn create_file() {
-    run("create-file").unwrap();
+    let directory = std::env::temp_dir().join(format!("livesplit-wasi-{}", std::process::id()));
+    fs::create_dir(&directory).unwrap();
+    let script_path = directory.join("readonly.txt");
+    fs::write(&script_path, "read-only fixture").unwrap();
+
+    let result = compile_with_script_path("create-file", None, Some(&script_path))
+        .and_then(|runtime| runtime.lock().update().map_err(Into::into));
+    let contents = fs::read_to_string(&script_path).unwrap();
+    let created_file = directory.join("shouldnt_exist.txt").exists();
+    let created_directory = directory.join("shouldnt_exist").exists();
+    fs::remove_dir_all(&directory).unwrap();
+
+    result.unwrap();
+    assert_eq!(contents, "read-only fixture");
+    assert!(!created_file);
+    assert!(!created_directory);
 }
 
 #[test]

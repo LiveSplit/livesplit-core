@@ -72,9 +72,10 @@ pub fn settings(reader: &mut Reader, component: &mut Component) -> Result<()> {
                 "Comparison" => comparison_override(reader, |v| settings.comparison1 = v),
                 "Comparison2" => comparison_override(reader, |v| settings.comparison2 = v),
                 "HideComparison" => parse_bool(reader, |b| settings.hide_second_comparison = b),
-                "TimingMethod" => {
-                    timing_method_override(reader, |v| settings.timer.timing_method = v)
-                }
+                "TimingMethod" => timing_method_override(reader, |v| {
+                    settings.timer.timing_method = v;
+                    settings.segment_timer.timing_method = v;
+                }),
                 _ => {
                     // FIXME:
                     // Width

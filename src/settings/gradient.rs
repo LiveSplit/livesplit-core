@@ -16,6 +16,25 @@ pub enum Gradient {
     Horizontal(Color, Color),
 }
 
+impl Gradient {
+    /// Returns the average color of this gradient. For `Plain` gradients, the
+    /// single color is returned. For `Vertical` and `Horizontal` gradients, the
+    /// two colors are averaged component-wise. For `Transparent`, a fully
+    /// transparent color is returned.
+    pub fn average_color(&self) -> Color {
+        match self {
+            Gradient::Transparent => Color::transparent(),
+            Gradient::Plain(c) => *c,
+            Gradient::Vertical(c1, c2) | Gradient::Horizontal(c1, c2) => Color::rgba(
+                0.5 * (c1.red + c2.red),
+                0.5 * (c1.green + c2.green),
+                0.5 * (c1.blue + c2.blue),
+                0.5 * (c1.alpha + c2.alpha),
+            ),
+        }
+    }
+}
+
 /// Describes an extended form of a gradient, specifically made for use with
 /// lists. It allows specifying different coloration for the rows in a list.
 #[derive(Debug, Copy, Clone, Serialize, Deserialize, PartialEq)]

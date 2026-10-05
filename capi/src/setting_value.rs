@@ -5,7 +5,7 @@ use crate::{Json, output_vec, str};
 use livesplit_core::{
     TimingMethod,
     component::{
-        splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith},
+        splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith, SubsplitDisplayMode},
         timer::DeltaGradient,
     },
     layout::LayoutDirection,
@@ -46,6 +46,24 @@ pub extern "C" fn SettingValue_from_bool(value: bool) -> OwnedSettingValue {
 #[unsafe(no_mangle)]
 pub extern "C" fn SettingValue_from_uint(value: u32) -> OwnedSettingValue {
     Box::new((value as u64).into())
+}
+
+/// Creates a new setting value from an optional unsigned integer. A value of
+/// 0xFFFFFFFF means that the value is empty and has no unsigned integer.
+#[unsafe(no_mangle)]
+pub extern "C" fn SettingValue_from_optional_uint(value: u32) -> OwnedSettingValue {
+    let v = if value == u32::MAX {
+        None
+    } else {
+        Some(value as u64)
+    };
+    Box::new(v.into())
+}
+
+/// Creates a new empty setting value that has the type `optional uint`.
+#[unsafe(no_mangle)]
+pub extern "C" fn SettingValue_from_optional_empty_uint() -> OwnedSettingValue {
+    Box::new(None::<u64>.into())
 }
 
 /// Creates a new setting value from a signed integer.
@@ -307,6 +325,23 @@ pub unsafe extern "C" fn SettingValue_from_column_update_trigger(
         "OnStartingSegment" => ColumnUpdateTrigger::OnStartingSegment,
         "Contextual" => ColumnUpdateTrigger::Contextual,
         "OnEndingSegment" => ColumnUpdateTrigger::OnEndingSegment,
+        _ => return None,
+    };
+    Some(Box::new(value.into()))
+}
+
+/// Creates a new setting value from the subsplit display mode. If it doesn't
+/// match a known subsplit display mode, <NULL> is returned.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn SettingValue_from_subsplit_display_mode(
+    value: *const c_char,
+) -> NullableOwnedSettingValue {
+    // SAFETY: The caller guarantees that `value` is valid.
+    let value = unsafe { str(value) };
+    let value = match value {
+        "Flat" => SubsplitDisplayMode::Flat,
+        "CurrentGroupExpanded" => SubsplitDisplayMode::CurrentGroupExpanded,
+        "AllGroupsExpanded" => SubsplitDisplayMode::AllGroupsExpanded,
         _ => return None,
     };
     Some(Box::new(value.into()))

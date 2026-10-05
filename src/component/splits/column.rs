@@ -1,6 +1,6 @@
 use crate::{
     GeneralLayoutSettings, Segment, TimeSpan, TimingMethod,
-    analysis::{self, possible_time_save, split_color},
+    analysis::{self, possible_time_save},
     comparison,
     component::splits::Settings as SplitsSettings,
     localization::Lang,
@@ -12,7 +12,10 @@ use crate::{
     },
     util::Clear,
 };
-use core::fmt::Write;
+use core::{
+    fmt::Write,
+    hash::{Hash, Hasher},
+};
 use serde_derive::{Deserialize, Serialize};
 
 /// The settings of an individual column showing timing information on each
@@ -54,7 +57,7 @@ pub struct TimeColumn {
     /// The comparison chosen. Uses the Timer's current comparison if set to
     /// `None`.
     pub comparison_override: Option<String>,
-    /// Specifies the Timing Method to use. If set to `None` the Timing Method
+    /// Specifies the Timing Method to use. If set to [`None`] the Timing Method
     /// of the Timer is used for showing the time. Otherwise the Timing Method
     /// provided is used.
     pub timing_method: Option<TimingMethod>,
@@ -166,6 +169,16 @@ pub struct ColumnState {
     pub updates_frequently: bool,
 }
 
+impl ColumnState {
+    pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
+        self.value.hash(state);
+    }
+
+    pub(crate) const fn updates_frequently(&self) -> bool {
+        self.updates_frequently
+    }
+}
+
 impl Clear for ColumnState {
     fn clear(&mut self) {
         self.value.clear();
@@ -178,6 +191,13 @@ enum ColumnFormatter {
     SegmentTime,
 }
 
+struct ColumnContext<'a> {
+    segment: &'a Segment,
+    segment_index: usize,
+    column_start_index: usize,
+    current_split: Option<usize>,
+}
+
 #[allow(clippy::too_many_arguments)]
 pub fn update_state(
     state: &mut ColumnState,
@@ -187,6 +207,7 @@ pub fn update_state(
     layout_settings: &GeneralLayoutSettings,
     segment: &Segment,
     segment_index: usize,
+    column_start_index: usize,
     current_split: Option<usize>,
     method: TimingMethod,
     lang: Lang,
@@ -223,6 +244,7 @@ pub fn update_state(
                 layout_settings,
                 segment,
                 segment_index,
+                column_start_index,
                 current_split,
                 method,
                 lang,
@@ -240,6 +262,7 @@ fn update_time_column(
     layout_settings: &GeneralLayoutSettings,
     segment: &Segment,
     segment_index: usize,
+    column_start_index: usize,
     current_split: Option<usize>,
     method: TimingMethod,
     lang: Lang,
@@ -250,9 +273,12 @@ fn update_time_column(
     let update_value = time_column_update_value(
         column_settings,
         timer,
-        segment,
-        segment_index,
-        current_split,
+        ColumnContext {
+            segment,
+            segment_index,
+            column_start_index,
+            current_split,
+        },
         method,
         comparison,
     );
@@ -267,8 +293,9 @@ fn update_time_column(
                     ColumnFormatter::Time,
                 ),
                 ColumnStartWith::ComparisonSegmentTime => (
-                    analysis::comparison_combined_segment_time(
+                    analysis::comparison_segment_time_for_range(
                         timer.run(),
+                        column_start_index,
                         segment_index,
                         comparison,
                         method,
@@ -277,7 +304,14 @@ fn update_time_column(
                     ColumnFormatter::SegmentTime,
                 ),
                 ColumnStartWith::PossibleTimeSave => (
-                    possible_time_save::calculate(timer, segment_index, comparison, false).0,
+                    possible_time_save::calculate_range(
+                        timer,
+                        column_start_index,
+                        segment_index,
+                        comparison,
+                        false,
+                    )
+                    .0,
                     SemanticColor::Default,
                     ColumnFormatter::SegmentTime,
                 ),
@@ -328,13 +362,17 @@ fn update_time_column(
 fn time_column_update_value(
     column: &TimeColumn,
     timer: &Snapshot,
-    segment: &Segment,
-    segment_index: usize,
-    current_split: Option<usize>,
+    context: ColumnContext<'_>,
     method: TimingMethod,
     comparison: &str,
 ) -> Option<((Option<TimeSpan>, SemanticColor, ColumnFormatter), bool)> {
     use self::{ColumnUpdateTrigger::*, ColumnUpdateWith::*};
+    let ColumnContext {
+        segment,
+        segment_index,
+        column_start_index,
+        current_split,
+    } = context;
 
     if current_split < Some(segment_index) {
         // Didn't reach the segment yet.
@@ -364,6 +402,7 @@ fn time_column_update_value(
     }
 
     let is_live = is_current_split;
+    let segment_range = column_start_index..=segment_index;
 
     let value = match (column.update_with, is_live) {
         (DontUpdate, _) => return None,
@@ -392,7 +431,15 @@ fn time_column_update_value(
             };
             (
                 value,
-                split_color(timer, delta, segment_index, true, true, comparison, method),
+                analysis::split_color_for_range(
+                    timer,
+                    delta,
+                    segment_range,
+                    true,
+                    true,
+                    comparison,
+                    method,
+                ),
                 formatter,
             )
         }
@@ -406,21 +453,37 @@ fn time_column_update_value(
         ),
 
         (SegmentTime, false) => (
-            analysis::previous_segment_time(timer, segment_index, method),
+            analysis::previous_segment_time_for_range(
+                timer,
+                column_start_index,
+                segment_index,
+                method,
+            ),
             SemanticColor::Default,
             ColumnFormatter::SegmentTime,
         ),
         (SegmentTime, true) => (
-            analysis::live_segment_time(timer, segment_index, method),
+            analysis::live_segment_time_for_range(timer, column_start_index, method),
             SemanticColor::Default,
             ColumnFormatter::SegmentTime,
         ),
 
         (SegmentDelta | SegmentDeltaWithFallback, false) => {
-            let delta = analysis::previous_segment_delta(timer, segment_index, comparison, method);
+            let delta = analysis::previous_segment_delta_for_range(
+                timer,
+                column_start_index,
+                segment_index,
+                comparison,
+                method,
+            );
             let (value, formatter) = if delta.is_none() && column.update_with.has_fallback() {
                 (
-                    analysis::previous_segment_time(timer, segment_index, method),
+                    analysis::previous_segment_time_for_range(
+                        timer,
+                        column_start_index,
+                        segment_index,
+                        method,
+                    ),
                     ColumnFormatter::SegmentTime,
                 )
             } else {
@@ -428,12 +491,26 @@ fn time_column_update_value(
             };
             (
                 value,
-                split_color(timer, delta, segment_index, false, true, comparison, method),
+                analysis::split_color_for_range(
+                    timer,
+                    delta,
+                    segment_range,
+                    false,
+                    true,
+                    comparison,
+                    method,
+                ),
                 formatter,
             )
         }
         (SegmentDelta | SegmentDeltaWithFallback, true) => (
-            analysis::live_segment_delta(timer, segment_index, comparison, method),
+            analysis::live_segment_delta_for_range(
+                timer,
+                column_start_index,
+                segment_index,
+                comparison,
+                method,
+            ),
             SemanticColor::Default,
             ColumnFormatter::Delta,
         ),

@@ -93,7 +93,7 @@ impl Segment {
     }
 
     /// Accesses the given timing method of the specified comparison. If either
-    /// the TimeSpan is empty or the comparison has no stored time, `None` is
+    /// the TimeSpan is empty or the comparison has no stored time, [`None`] is
     /// returned.
     #[inline]
     pub fn comparison_timing_method(

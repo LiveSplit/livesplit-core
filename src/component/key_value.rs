@@ -3,6 +3,8 @@
 //! components. They all share the same visual appearance and thus use the same
 //! state object representation.
 
+use core::hash::{Hash, Hasher};
+
 use crate::{
     platform::prelude::*,
     settings::{Color, Gradient, SemanticColor},
@@ -16,10 +18,10 @@ use serde_derive::{Deserialize, Serialize};
 pub struct State {
     /// The background shown behind the component.
     pub background: Gradient,
-    /// The color of the key. If `None` is specified, the color is taken from
+    /// The color of the key. If [`None`] is specified, the color is taken from
     /// the layout.
     pub key_color: Option<Color>,
-    /// The color of the value. If `None` is specified, the color is taken from
+    /// The color of the value. If [`None`] is specified, the color is taken from
     /// the layout.
     pub value_color: Option<Color>,
     /// The semantic coloring information the value carries.
@@ -46,6 +48,21 @@ impl State {
         W: std::io::Write,
     {
         serde_json::to_writer(writer, self)
+    }
+}
+
+impl State {
+    pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
+        self.key.hash(state);
+        self.value.hash(state);
+        self.key_abbreviations.len().hash(state);
+        for abbreviation in &self.key_abbreviations {
+            abbreviation.hash(state);
+        }
+    }
+
+    pub(crate) const fn updates_frequently(&self) -> bool {
+        self.updates_frequently
     }
 }
 

@@ -416,9 +416,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowThinSeparatorsDescription => {
             "Geeft aan of dunne scheiders tussen segmentrijen moeten worden getoond."
         }
-        Text::SplitsShowSeparatorBeforeLastSplit => "Scheider voor laatste split tonen",
-        Text::SplitsShowSeparatorBeforeLastSplitDescription => {
-            "Als het laatste segment altijd wordt getoond, bepaalt dit of een duidelijke scheider vóór het laatste segment wordt getoond wanneer het niet direct aansluit op het vorige segment in het venster."
+        Text::SplitsShowGapSeparators => "Scheiders bij overgeslagen rijen tonen",
+        Text::SplitsShowGapSeparatorsDescription => {
+            "Bepaalt of een duidelijkere scheider vóór een rij wordt getoond wanneer één of meer direct voorafgaande rijen uit het scrollvenster zijn weggelaten."
         }
         Text::SplitsAlwaysShowLastSplit => "Laatste split altijd tonen",
         Text::SplitsAlwaysShowLastSplitDescription => {
@@ -456,6 +456,8 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowColumnLabelsDescription => {
             "Geeft aan of de namen van de kolommen bovenaan de lijst worden getoond."
         }
+        Text::SplitsSubsplitDisplayMode => "Weergavemodus voor subsplits",
+        Text::SplitsSubsplitDisplayModeDescription => "Bepaalt hoe subsplits worden weergegeven.",
         Text::SplitsColumns => "Kolommen",
         Text::SplitsColumnsDescription => {
             "Het aantal kolommen per rij. Elke kolom kan verschillende informatie tonen. Kolommen worden van rechts naar links gedefinieerd."
@@ -528,6 +530,14 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::LayoutDirection => "Lay-out richting",
         Text::LayoutDirectionDescription => "De richting waarin de componenten worden uitgelijnd.",
+        Text::GroupFixedWidth => "Vaste breedte",
+        Text::GroupFixedWidthDescription => {
+            "Een optionele vaste breedte voor deze kolom van componenten. Indien niet opgegeven, wordt de breedte automatisch bepaald."
+        }
+        Text::GroupFixedHeight => "Vaste hoogte",
+        Text::GroupFixedHeightDescription => {
+            "Een optionele vaste hoogte voor deze rij van componenten. Indien niet opgegeven, wordt de hoogte automatisch bepaald."
+        }
         Text::CustomTimerFont => "Aangepast timerlettertype",
         Text::CustomTimerFontDescription => {
             "Hiermee kun je een aangepast lettertype voor de timer instellen. Als dit niet is ingesteld, wordt het standaardlettertype gebruikt."
@@ -602,6 +612,22 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentSegmentTimer => "Segmenttimer",
         Text::ComponentTitle => "Titel",
         Text::ComponentTotalPlaytime => "Totale speeltijd",
+        Text::Row => "Rij",
+        Text::Column => "Kolom",
+        Text::EmptyContainer => "Leeg",
+        Text::Carousel => "Carrousel",
+        Text::CarouselFixedSize => "Vaste grootte",
+        Text::CarouselFixedSizeDescription => {
+            "Overschrijft de grootte van de carrousel. Als dit niet is ingesteld, wordt de grootte automatisch bepaald op basis van het grootste onderliggende onderdeel."
+        }
+        Text::CarouselInterval => "Interval (seconden)",
+        Text::CarouselIntervalDescription => {
+            "Het maximale aantal seconden dat een onderdeel wordt weergegeven voordat naar het volgende wordt gewisseld. De carrousel kan eerder wisselen als de inhoud van een ander onderliggend onderdeel wezenlijk is veranderd."
+        }
+        Text::CarouselMinDisplay => "Minimale weergave (seconden)",
+        Text::CarouselMinDisplayDescription => {
+            "Het minimum aantal seconden dat een onderdeel zichtbaar blijft voordat naar een ander onderdeel wordt gewisseld."
+        }
         Text::ComponentCurrentPaceBestPossibleTime => "Best mogelijke tijd",
         Text::ComponentCurrentPaceWorstPossibleTime => "Slechtst mogelijke tijd",
         Text::ComponentCurrentPacePredictedTime => "Voorspelde tijd",

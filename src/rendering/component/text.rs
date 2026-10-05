@@ -59,7 +59,7 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
                 .left_center_color
                 .unwrap_or(layout_state.text_color),
             component.right_color.unwrap_or(layout_state.text_color),
-            component.display_two_rows || layout_state.direction == LayoutDirection::Horizontal,
+            component.display_two_rows || context.direction == LayoutDirection::Horizontal,
         ),
     }
 }

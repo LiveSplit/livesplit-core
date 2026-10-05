@@ -1,4 +1,3 @@
-use anyhow::Result;
 use wasmtime::{Caller, Linker};
 
 use crate::{CreationError, Timer, runtime::Context};
@@ -88,8 +87,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
              name_ptr: u32,
              name_len: u32,
              value_ptr: u32,
-             value_len: u32|
-             -> Result<()> {
+             value_len: u32| {
                 let (memory, context) = memory_and_context(&mut caller);
                 let name = get_str(memory, name_ptr, name_len)?;
                 let value = get_str(memory, value_ptr, value_len)?;

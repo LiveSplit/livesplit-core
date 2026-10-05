@@ -11,10 +11,11 @@
 use std::{borrow::Cow, future::Future, ops::Deref, pin::Pin, sync::Arc};
 
 use livesplit_core::{
-    TimeSpan, Timer, TimingMethod,
+    StoredAutoSplitterSettings, TimeSpan, Timer, TimingMethod,
     event::{self, Result},
 };
 
+#[cfg(feature = "shared-timer")]
 use crate::shared_timer::OwnedSharedTimer;
 
 /// type
@@ -26,6 +27,7 @@ pub type OwnedCommandSink = Box<CommandSink>;
 
 /// Creates a new Command Sink.
 #[unsafe(no_mangle)]
+#[cfg(feature = "shared-timer")]
 pub extern "C" fn CommandSink_from_timer(timer: OwnedSharedTimer) -> OwnedCommandSink {
     Box::new(CommandSink(Arc::new(*timer)))
 }
@@ -59,6 +61,7 @@ pub(crate) trait CommandSinkAndQuery: Send + Sync + 'static {
     fn dyn_resume_game_time(&self) -> Fut;
     fn dyn_set_loading_times(&self, time: TimeSpan) -> Fut;
     fn dyn_set_custom_variable(&self, name: Cow<str>, value: Cow<str>) -> Fut;
+    fn dyn_set_auto_splitter_settings(&self, settings: StoredAutoSplitterSettings) -> Fut;
 }
 
 type Fut = Pin<Box<dyn Future<Output = Result> + 'static>>;
@@ -133,6 +136,9 @@ where
     }
     fn dyn_set_custom_variable(&self, name: Cow<str>, value: Cow<str>) -> Fut {
         Box::pin(self.set_custom_variable(name, value))
+    }
+    fn dyn_set_auto_splitter_settings(&self, settings: StoredAutoSplitterSettings) -> Fut {
+        Box::pin(self.set_auto_splitter_settings(settings))
     }
 }
 
@@ -229,6 +235,13 @@ impl event::CommandSink for CommandSink {
         value: Cow<str>,
     ) -> impl Future<Output = Result> + 'static {
         self.0.dyn_set_custom_variable(name, value)
+    }
+
+    fn set_auto_splitter_settings(
+        &self,
+        settings: StoredAutoSplitterSettings,
+    ) -> impl Future<Output = Result> + 'static {
+        self.0.dyn_set_auto_splitter_settings(settings)
     }
 }
 

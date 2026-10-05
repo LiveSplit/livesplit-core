@@ -1,8 +1,7 @@
 use std::str;
 
-use anyhow::{Context as _, Result, format_err};
 use slotmap::{Key, KeyData};
-use wasmtime::{Caller, Linker};
+use wasmtime::{Caller, Error, Linker};
 
 use crate::{
     CreationError, Process, Timer,
@@ -69,7 +68,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                     .data_mut()
                     .processes
                     .remove(ProcessKey::from(KeyData::from_ffi(process)))
-                    .ok_or_else(|| format_err!("Invalid process handle {process}"))?;
+                    .ok_or_else(|| Error::msg(format!("Invalid process handle {process}")))?;
                 caller
                     .data_mut()
                     .timer
@@ -97,9 +96,9 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                     name_ptr,
                     name_len,
                     list_ptr,
-                    list_len
-                        .checked_mul(8)
-                        .context("The list length overflows the size of the address space.")?,
+                    list_len.checked_mul(8).ok_or_else(|| {
+                        Error::msg("The list length overflows the size of the address space.")
+                    })?,
                 )?;
 
                 let mut count = 0u32;
@@ -134,7 +133,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let proc = ctx
                     .processes
                     .get_mut(ProcessKey::from(KeyData::from_ffi(process)))
-                    .ok_or_else(|| format_err!("Invalid process handle: {process}"))?;
+                    .ok_or_else(|| Error::msg(format!("Invalid process handle: {process}")))?;
                 Ok(proc.is_open(&mut ctx.process_list) as u32)
             }
         })
@@ -152,7 +151,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 Ok(context
                     .processes
                     .get(ProcessKey::from(KeyData::from_ffi(process)))
-                    .ok_or_else(|| format_err!("Invalid process handle: {process}"))?
+                    .ok_or_else(|| Error::msg(format!("Invalid process handle {process}")))?
                     .read_mem(address, get_slice_mut(memory, buf_ptr, buf_len)?)
                     .is_ok() as u32)
             }
@@ -168,7 +167,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 Ok(context
                     .processes
                     .get_mut(ProcessKey::from(KeyData::from_ffi(process)))
-                    .ok_or_else(|| format_err!("Invalid process handle: {process}"))?
+                    .ok_or_else(|| Error::msg(format!("Invalid process handle: {process}")))?
                     .module_address(module_name)
                     .unwrap_or_default())
             }
@@ -184,7 +183,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 Ok(context
                     .processes
                     .get_mut(ProcessKey::from(KeyData::from_ffi(process)))
-                    .ok_or_else(|| format_err!("Invalid process handle: {process}"))?
+                    .ok_or_else(|| Error::msg(format!("Invalid process handle: {process}")))?
                     .module_size(module_name)
                     .unwrap_or_default())
             }
@@ -205,7 +204,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let path = context
                     .processes
                     .get_mut(ProcessKey::from(KeyData::from_ffi(process)))
-                    .ok_or_else(|| format_err!("Invalid process handle: {process}"))?
+                    .ok_or_else(|| Error::msg(format!("Invalid process handle: {process}")))?
                     .module_path(module_name);
 
                 let path_len_bytes = get_arr_mut(memory, path_len_ptr)?;
@@ -235,7 +234,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let path = context
                     .processes
                     .get_mut(ProcessKey::from(KeyData::from_ffi(process)))
-                    .ok_or_else(|| format_err!("Invalid process handle: {process}"))?
+                    .ok_or_else(|| Error::msg(format!("Invalid process handle: {process}")))?
                     .path();
 
                 let len_bytes = get_arr_mut(memory, len_ptr)?;
@@ -268,7 +267,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 Ok(ctx
                     .processes
                     .get_mut(ProcessKey::from(KeyData::from_ffi(process)))
-                    .ok_or_else(|| format_err!("Invalid process handle: {process}"))?
+                    .ok_or_else(|| Error::msg(format!("Invalid process handle: {process}")))?
                     .get_memory_range_count()
                     .unwrap_or_default() as u64)
             }
@@ -283,7 +282,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 Ok(ctx
                     .processes
                     .get_mut(ProcessKey::from(KeyData::from_ffi(process)))
-                    .ok_or_else(|| format_err!("Invalid process handle: {process}"))?
+                    .ok_or_else(|| Error::msg(format!("Invalid process handle: {process}")))?
                     .get_memory_range_address(idx as usize)
                     .unwrap_or_default())
             }
@@ -298,7 +297,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 Ok(ctx
                     .processes
                     .get_mut(ProcessKey::from(KeyData::from_ffi(process)))
-                    .ok_or_else(|| format_err!("Invalid process handle: {process}"))?
+                    .ok_or_else(|| Error::msg(format!("Invalid process handle: {process}")))?
                     .get_memory_range_size(idx as usize)
                     .unwrap_or_default())
             }
@@ -313,7 +312,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 Ok(ctx
                     .processes
                     .get_mut(ProcessKey::from(KeyData::from_ffi(process)))
-                    .ok_or_else(|| format_err!("Invalid process handle: {process}"))?
+                    .ok_or_else(|| Error::msg(format!("Invalid process handle: {process}")))?
                     .get_memory_range_flags(idx as usize)
                     .unwrap_or_default())
             }

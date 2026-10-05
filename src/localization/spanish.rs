@@ -416,9 +416,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowThinSeparatorsDescription => {
             "Indica si deben mostrarse separadores finos entre las filas de segmentos."
         }
-        Text::SplitsShowSeparatorBeforeLastSplit => "Mostrar separador antes del último split",
-        Text::SplitsShowSeparatorBeforeLastSplitDescription => {
-            "Si el último segmento siempre se muestra, esto determina si se muestra un separador más marcado antes del último segmento cuando no está adyacente al anterior en la ventana."
+        Text::SplitsShowGapSeparators => "Mostrar separadores de huecos",
+        Text::SplitsShowGapSeparatorsDescription => {
+            "Determina si se muestra un separador más marcado antes de una fila cuando se omiten una o más filas inmediatamente anteriores en la ventana de desplazamiento."
         }
         Text::SplitsAlwaysShowLastSplit => "Mostrar siempre el último split",
         Text::SplitsAlwaysShowLastSplitDescription => {
@@ -456,6 +456,8 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowColumnLabelsDescription => {
             "Indica si se deben mostrar los nombres de las columnas en la parte superior de la lista."
         }
+        Text::SplitsSubsplitDisplayMode => "Modo de visualización de subsplits",
+        Text::SplitsSubsplitDisplayModeDescription => "Controla cómo se muestran los subsplits.",
         Text::SplitsColumns => "Columnas",
         Text::SplitsColumnsDescription => {
             "El número de columnas a mostrar por fila. Cada columna puede configurarse para mostrar distinta información. Las columnas se definen de derecha a izquierda."
@@ -528,6 +530,14 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::LayoutDirection => "Dirección del layout",
         Text::LayoutDirectionDescription => "La dirección en la que se disponen los componentes.",
+        Text::GroupFixedWidth => "Ancho fijo",
+        Text::GroupFixedWidthDescription => {
+            "Un ancho fijo opcional para esta columna de componentes. Si no se especifica, el ancho se determina automáticamente."
+        }
+        Text::GroupFixedHeight => "Alto fijo",
+        Text::GroupFixedHeightDescription => {
+            "Un alto fijo opcional para esta fila de componentes. Si no se especifica, el alto se determina automáticamente."
+        }
         Text::CustomTimerFont => "Fuente personalizada del temporizador",
         Text::CustomTimerFontDescription => {
             "Permite especificar una fuente personalizada para el temporizador. Si no se configura, se usa la fuente predeterminada."
@@ -598,6 +608,22 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentSegmentTimer => "Temporizador de segmento",
         Text::ComponentTitle => "Título",
         Text::ComponentTotalPlaytime => "Tiempo total de juego",
+        Text::Row => "Fila",
+        Text::Column => "Columna",
+        Text::EmptyContainer => "Vacío",
+        Text::Carousel => "Carrusel",
+        Text::CarouselFixedSize => "Tamaño fijo",
+        Text::CarouselFixedSizeDescription => {
+            "Anula el tamaño del carrusel. Si no se establece, el tamaño se determina automáticamente a partir del componente hijo más grande."
+        }
+        Text::CarouselInterval => "Intervalo (segundos)",
+        Text::CarouselIntervalDescription => {
+            "El número máximo de segundos que se muestra un componente hijo antes de pasar al siguiente. El carrusel puede cambiar antes si el contenido de otro componente hijo ha cambiado de forma significativa."
+        }
+        Text::CarouselMinDisplay => "Visualización mínima (segundos)",
+        Text::CarouselMinDisplayDescription => {
+            "El número mínimo de segundos para mostrar un componente hijo antes de cambiar a otro diferente."
+        }
         Text::ComponentCurrentPaceBestPossibleTime => "Mejor tiempo posible",
         Text::ComponentCurrentPaceWorstPossibleTime => "Peor tiempo posible",
         Text::ComponentCurrentPacePredictedTime => "Tiempo previsto",

@@ -33,7 +33,6 @@ use super::{
     splitty, time_split_tracker, wsplit,
 };
 use crate::{Run, platform::path::Path};
-use core::{result::Result as StdResult, str};
 
 /// The Error type for splits files that couldn't be parsed by the Composite
 /// Parser.
@@ -45,7 +44,7 @@ pub enum Error {
 }
 
 /// The Result type for the Composite Parser.
-pub type Result<T> = StdResult<T, Error>;
+pub type Result<T, E = Error> = core::result::Result<T, E>;
 
 /// A run parsed by the Composite Parser. This contains the Run itself and
 /// information about which parser parsed it.

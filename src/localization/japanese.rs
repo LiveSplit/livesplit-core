@@ -380,9 +380,9 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsShowThinSeparators => "細い区切り線を表示",
         Text::SplitsShowThinSeparatorsDescription => "区間の間に細い区切り線を表示するかどうか。",
-        Text::SplitsShowSeparatorBeforeLastSplit => "最後のスプリット前の区切り線を表示",
-        Text::SplitsShowSeparatorBeforeLastSplitDescription => {
-            "最後の区間を常に表示する場合、スクロール窓で直前の区間と隣接しないときに強調区切り線を表示するかどうかを指定します。"
+        Text::SplitsShowGapSeparators => "省略箇所の区切り線を表示",
+        Text::SplitsShowGapSeparatorsDescription => {
+            "スクロール窓で直前の1行以上が省略されている場合、その次の行の前に強調区切り線を表示するかどうかを指定します。"
         }
         Text::SplitsAlwaysShowLastSplit => "最後のスプリットを常に表示",
         Text::SplitsAlwaysShowLastSplitDescription => {
@@ -412,6 +412,8 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsShowColumnLabels => "列ラベルを表示",
         Text::SplitsShowColumnLabelsDescription => "一覧の上部に列名を表示するかどうか。",
+        Text::SplitsSubsplitDisplayMode => "サブスプリット表示モード",
+        Text::SplitsSubsplitDisplayModeDescription => "サブスプリットの表示方法を設定します。",
         Text::SplitsColumns => "列",
         Text::SplitsColumnsDescription => {
             "各行に表示する列数。各列は異なる情報を表示できます。列は右から左に定義されます。"
@@ -476,6 +478,14 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::TextComponentDisplayTwoRowsDescription => "左右のテキストを 2 行で表示するかどうか。",
         Text::LayoutDirection => "レイアウト方向",
         Text::LayoutDirectionDescription => "コンポーネントを配置する方向。",
+        Text::GroupFixedWidth => "固定幅",
+        Text::GroupFixedWidthDescription => {
+            "このコンポーネント列のオプションの固定幅です。指定しない場合、幅は自動的に決定されます。"
+        }
+        Text::GroupFixedHeight => "固定高さ",
+        Text::GroupFixedHeightDescription => {
+            "このコンポーネント行のオプションの固定高さです。指定しない場合、高さは自動的に決定されます。"
+        }
         Text::CustomTimerFont => "カスタムタイマーフォント",
         Text::CustomTimerFontDescription => {
             "タイマーのフォントをカスタム指定できます。指定しない場合はデフォルトフォントを使用します。"
@@ -540,6 +550,22 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentSegmentTimer => "区間タイマー",
         Text::ComponentTitle => "タイトル",
         Text::ComponentTotalPlaytime => "総プレイタイム",
+        Text::Row => "行",
+        Text::Column => "列",
+        Text::EmptyContainer => "空",
+        Text::Carousel => "カルーセル",
+        Text::CarouselFixedSize => "固定サイズ",
+        Text::CarouselFixedSizeDescription => {
+            "カルーセルのサイズを上書きします。設定されていない場合、サイズは最も大きい子コンポーネントに基づいて自動的に決定されます。"
+        }
+        Text::CarouselInterval => "間隔（秒）",
+        Text::CarouselIntervalDescription => {
+            "次の子コンポーネントへ切り替わるまでに 1 つの子コンポーネントを表示する最大秒数です。別の子コンポーネントの内容が意味のある形で変化した場合は、カルーセルはそれより早く切り替わることがあります。"
+        }
+        Text::CarouselMinDisplay => "最小表示時間（秒）",
+        Text::CarouselMinDisplayDescription => {
+            "別の子コンポーネントに切り替える前に、子コンポーネントを表示する最小秒数です。"
+        }
         Text::ComponentCurrentPaceBestPossibleTime => "最速予想タイム",
         Text::ComponentCurrentPaceWorstPossibleTime => "最悪予想タイム",
         Text::ComponentCurrentPacePredictedTime => "予測タイム",

@@ -416,9 +416,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowThinSeparatorsDescription => {
             "Indica se separadores finos devem ser mostrados entre as linhas de segmentos."
         }
-        Text::SplitsShowSeparatorBeforeLastSplit => "Mostrar separador antes do último split",
-        Text::SplitsShowSeparatorBeforeLastSplitDescription => {
-            "Se o último segmento for sempre mostrado, isto determina se mostrar um separador mais pronunciado antes do último segmento, caso não seja adjacente ao segmento anterior na janela."
+        Text::SplitsShowGapSeparators => "Mostrar separadores de lacunas",
+        Text::SplitsShowGapSeparatorsDescription => {
+            "Determina se deve ser mostrado um separador mais pronunciado antes de uma linha quando uma ou mais linhas imediatamente anteriores são omitidas da janela de deslocamento."
         }
         Text::SplitsAlwaysShowLastSplit => "Mostrar sempre o último split",
         Text::SplitsAlwaysShowLastSplitDescription => {
@@ -456,6 +456,8 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowColumnLabelsDescription => {
             "Indica se os nomes das colunas devem ser exibidos no topo da lista."
         }
+        Text::SplitsSubsplitDisplayMode => "Modo de exibição dos subsplits",
+        Text::SplitsSubsplitDisplayModeDescription => "Controla como os subsplits são exibidos.",
         Text::SplitsColumns => "Colunas",
         Text::SplitsColumnsDescription => {
             "O número de colunas a mostrar em cada linha. Cada coluna pode ser configurada para mostrar informações diferentes. As colunas são definidas da direita para a esquerda."
@@ -528,6 +530,14 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::LayoutDirection => "Direção do layout",
         Text::LayoutDirectionDescription => "A direção em que os componentes são dispostos.",
+        Text::GroupFixedWidth => "Largura fixa",
+        Text::GroupFixedWidthDescription => {
+            "Uma largura fixa opcional para esta coluna de componentes. Se não for especificada, a largura é determinada automaticamente."
+        }
+        Text::GroupFixedHeight => "Altura fixa",
+        Text::GroupFixedHeightDescription => {
+            "Uma altura fixa opcional para esta linha de componentes. Se não for especificada, a altura é determinada automaticamente."
+        }
         Text::CustomTimerFont => "Fonte personalizada do cronômetro",
         Text::CustomTimerFontDescription => {
             "Permite especificar uma fonte personalizada para o cronômetro. Se não for definida, usa-se a fonte padrão."
@@ -596,6 +606,22 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentSegmentTimer => "Cronômetro do segmento",
         Text::ComponentTitle => "Título",
         Text::ComponentTotalPlaytime => "Tempo total de jogo",
+        Text::Row => "Linha",
+        Text::Column => "Coluna",
+        Text::EmptyContainer => "Vazio",
+        Text::Carousel => "Carrossel",
+        Text::CarouselFixedSize => "Tamanho fixo",
+        Text::CarouselFixedSizeDescription => {
+            "Substitui o tamanho do carrossel. Se não for definido, o tamanho é determinado automaticamente com base no maior componente filho."
+        }
+        Text::CarouselInterval => "Intervalo (segundos)",
+        Text::CarouselIntervalDescription => {
+            "O número máximo de segundos durante os quais um componente filho é mostrado antes de passar ao seguinte. O carrossel pode mudar mais cedo se o conteúdo de outro componente filho tiver mudado de forma significativa."
+        }
+        Text::CarouselMinDisplay => "Exibição mínima (segundos)",
+        Text::CarouselMinDisplayDescription => {
+            "O número mínimo de segundos para mostrar um componente filho antes de mudar para outro."
+        }
         Text::ComponentCurrentPaceBestPossibleTime => "Melhor tempo possível",
         Text::ComponentCurrentPaceWorstPossibleTime => "Pior tempo possível",
         Text::ComponentCurrentPacePredictedTime => "Tempo previsto",

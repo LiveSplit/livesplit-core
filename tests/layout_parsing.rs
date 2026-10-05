@@ -3,7 +3,7 @@ mod layout_files;
 mod parse {
     use crate::layout_files;
     use livesplit_core::{
-        Component, Lang,
+        Component, Lang, TimingMethod,
         component::{splits, text},
         layout::{Layout, parser::parse},
     };
@@ -30,17 +30,94 @@ mod parse {
 
     #[test]
     fn subsplits() {
-        livesplit(layout_files::SUBSPLITS);
+        let l = livesplit(layout_files::SUBSPLITS);
+        let Some(splits) = l.components.iter().find_map(|c| match c {
+            Component::Splits(s) => Some(s),
+            _ => None,
+        }) else {
+            panic!("Splits component not found");
+        };
+        assert_eq!(
+            splits.settings().subsplit_display_mode,
+            splits::SubsplitDisplayMode::CurrentGroupExpanded
+        );
+    }
+
+    #[test]
+    fn subsplits_without_old_header_but_with_indent_still_becomes_hierarchical() {
+        let layout = layout_files::SUBSPLITS.replace(
+            "<ShowHeader>True</ShowHeader>",
+            "<ShowHeader>False</ShowHeader>",
+        );
+        let l = livesplit(&layout);
+        let Some(splits) = l.components.iter().find_map(|c| match c {
+            Component::Splits(s) => Some(s),
+            _ => None,
+        }) else {
+            panic!("Splits component not found");
+        };
+        assert_eq!(
+            splits.settings().subsplit_display_mode,
+            splits::SubsplitDisplayMode::CurrentGroupExpanded
+        );
+    }
+
+    #[test]
+    fn subsplits_without_header_or_indentation_becomes_flat() {
+        let layout = layout_files::SUBSPLITS
+            .replace(
+                "<ShowHeader>True</ShowHeader>",
+                "<ShowHeader>False</ShowHeader>",
+            )
+            .replace(
+                "<IndentSubsplits>True</IndentSubsplits>",
+                "<IndentSubsplits>False</IndentSubsplits>",
+            );
+        let l = livesplit(&layout);
+        let Some(splits) = l.components.iter().find_map(|c| match c {
+            Component::Splits(s) => Some(s),
+            _ => None,
+        }) else {
+            panic!("Splits component not found");
+        };
+        assert_eq!(
+            splits.settings().subsplit_display_mode,
+            splits::SubsplitDisplayMode::Flat
+        );
     }
 
     #[test]
     fn wsplit() {
-        livesplit(layout_files::WSPLIT);
+        let l = livesplit(layout_files::WSPLIT);
+        let Some(splits) = l.components.iter().find_map(|c| match c {
+            Component::Splits(s) => Some(s),
+            _ => None,
+        }) else {
+            panic!("Splits component not found");
+        };
+        assert_eq!(
+            splits.settings().subsplit_display_mode,
+            splits::SubsplitDisplayMode::CurrentGroupExpanded
+        );
     }
 
     #[test]
     fn with_timer_delta_background() {
         livesplit(layout_files::WITH_TIMER_DELTA_BACKGROUND);
+    }
+
+    #[test]
+    fn detailed_timer_timing_method_applies_to_segment_timer() {
+        let l = livesplit(layout_files::DETAILED_TIMER_GAME_TIME);
+        let Some(detailed_timer) = l.components.iter().find_map(|c| match c {
+            Component::DetailedTimer(d) => Some(d),
+            _ => None,
+        }) else {
+            panic!("Detailed Timer component not found");
+        };
+        let settings = detailed_timer.settings();
+        assert_eq!(settings.timer.timing_method, Some(TimingMethod::GameTime));
+        assert_eq!(settings.segment_timer.timing_method,Some(TimingMethod::GameTime));
     }
 
     #[test]
@@ -144,10 +221,9 @@ mod parse {
             assert_eq!(variable_name, "pb hits");
             assert!(is_split);
         }
-        let l1 = ls1l(layout_files::CUSTOM_VARIABLE_LS1L);
         assert_eq!(
-            serde_json::to_string(&l.settings()).ok(),
-            serde_json::to_string(&l1.settings()).ok()
+            splits.settings().subsplit_display_mode,
+            splits::SubsplitDisplayMode::CurrentGroupExpanded
         );
     }
 

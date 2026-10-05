@@ -75,6 +75,16 @@ pub extern "C" fn RunEditor_select_additionally(this: &mut RunEditor, index: usi
     this.select_additionally(index);
 }
 
+/// Selects all segments from the currently active segment to the segment with
+/// the given index. The segment with the given index becomes the new active
+/// segment.
+///
+/// This panics if the index of the segment provided is out of bounds.
+#[unsafe(no_mangle)]
+pub extern "C" fn RunEditor_select_range(this: &mut RunEditor, index: usize) {
+    this.select_range(index);
+}
+
 /// Selects the segment with the given index. All other segments are
 /// unselected. The segment chosen also becomes the active segment.
 ///
@@ -260,7 +270,7 @@ pub extern "C" fn RunEditor_clear_metadata(this: &mut RunEditor) {
     this.clear_metadata();
 }
 
-/// Inserts a new empty segment above the active segment and adjusts the
+/// Inserts a new empty segment above all selected segments and adjusts the
 /// Run's history information accordingly. The newly created segment is then
 /// the only selected segment and also the active segment.
 #[unsafe(no_mangle)]
@@ -268,7 +278,7 @@ pub extern "C" fn RunEditor_insert_segment_above(this: &mut RunEditor) {
     this.insert_segment_above();
 }
 
-/// Inserts a new empty segment below the active segment and adjusts the
+/// Inserts a new empty segment below all selected segments and adjusts the
 /// Run's history information accordingly. The newly created segment is then
 /// the only selected segment and also the active segment.
 #[unsafe(no_mangle)]
@@ -300,6 +310,102 @@ pub extern "C" fn RunEditor_move_segments_up(this: &mut RunEditor) {
 #[unsafe(no_mangle)]
 pub extern "C" fn RunEditor_move_segments_down(this: &mut RunEditor) {
     this.move_segments_down();
+}
+
+/// Creates a native segment group from the currently selected contiguous
+/// segment rows. Returns <FALSE> if the selection is not contiguous or overlaps
+/// an existing group.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn RunEditor_create_segment_group_from_selection(
+    this: &mut RunEditor,
+    name: *const c_char,
+) -> bool {
+    // SAFETY: The caller guarantees that `name` is valid.
+    let name = unsafe { str(name) };
+    if name.is_empty() {
+        this.create_segment_group_from_selection::<String>(None)
+            .is_ok()
+    } else {
+        this.create_segment_group_from_selection(Some(name)).is_ok()
+    }
+}
+
+/// Selects every segment in the native segment group with the provided index
+/// and unselects all other segments. Returns <FALSE> if the group doesn't
+/// exist.
+#[unsafe(no_mangle)]
+pub extern "C" fn RunEditor_select_segment_group(this: &mut RunEditor, group_index: usize) -> bool {
+    this.select_segment_group(group_index).is_ok()
+}
+
+/// Toggles the native segment group with the provided index as part of the
+/// current selection without clearing other selected rows. Returns <FALSE> if
+/// the group doesn't exist.
+#[unsafe(no_mangle)]
+pub extern "C" fn RunEditor_toggle_segment_group_selection(
+    this: &mut RunEditor,
+    group_index: usize,
+) -> bool {
+    this.toggle_segment_group_selection(group_index).is_ok()
+}
+
+/// Extends the current selection through the entire native segment group with
+/// the provided index. Returns <FALSE> if the group doesn't exist.
+#[unsafe(no_mangle)]
+pub extern "C" fn RunEditor_select_segment_group_range(
+    this: &mut RunEditor,
+    group_index: usize,
+) -> bool {
+    this.select_segment_group_range(group_index).is_ok()
+}
+
+/// Removes the selected native segment groups, while keeping all segments.
+#[unsafe(no_mangle)]
+pub extern "C" fn RunEditor_remove_selected_segment_groups(this: &mut RunEditor) -> bool {
+    this.remove_selected_segment_groups().is_ok()
+}
+
+/// Renames the native segment group with the provided index.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn RunEditor_rename_segment_group(
+    this: &mut RunEditor,
+    group_index: usize,
+    name: *const c_char,
+) -> bool {
+    // SAFETY: The caller guarantees that `name` is valid.
+    let name = unsafe { str(name) };
+    if name.is_empty() {
+        this.rename_segment_group::<String>(group_index, None)
+            .is_ok()
+    } else {
+        this.rename_segment_group(group_index, Some(name)).is_ok()
+    }
+}
+
+/// Sets the icon of the native segment group with the provided index.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn RunEditor_set_segment_group_icon(
+    this: &mut RunEditor,
+    group_index: usize,
+    data: *const u8,
+    length: usize,
+) -> bool {
+    // SAFETY: The caller guarantees that `data` is valid for `length`.
+    this.set_segment_group_icon(
+        group_index,
+        Image::new(unsafe { slice(data, length).into() }, Image::ICON),
+    )
+    .is_ok()
+}
+
+/// Removes the explicit icon of the native segment group with the provided
+/// index.
+#[unsafe(no_mangle)]
+pub extern "C" fn RunEditor_remove_segment_group_icon(
+    this: &mut RunEditor,
+    group_index: usize,
+) -> bool {
+    this.remove_segment_group_icon(group_index).is_ok()
 }
 
 /// Sets the icon of the active segment.

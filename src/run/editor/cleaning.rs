@@ -160,7 +160,7 @@ impl<'r> SumOfBestCleaner<'r> {
     }
 
     /// Returns the next potential clean up. If there are no more potential
-    /// clean ups, `None` is returned.
+    /// clean ups, [`None`] is returned.
     pub fn next_potential_clean_up(&mut self) -> Option<PotentialCleanUp<'_>> {
         loop {
             match replace(&mut self.state, State::Poisoned) {

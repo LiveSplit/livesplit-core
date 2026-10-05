@@ -22,7 +22,10 @@ pub mod parser;
 mod run_metadata;
 pub mod saver;
 mod segment;
+mod segment_groups;
 mod segment_history;
+#[cfg(feature = "auto-splitting")]
+mod stored_auto_splitter_settings;
 
 #[cfg(test)]
 mod tests;
@@ -33,7 +36,38 @@ pub use editor::{Editor, RenameError};
 pub use linked_layout::LinkedLayout;
 pub use run_metadata::{CustomVariable, RunMetadata};
 pub use segment::Segment;
+pub use segment_groups::{
+    InvalidSegmentGroupIndexError, SegmentGroup, SegmentGroupCreationError, SegmentGroupView,
+    SegmentGroups, SegmentGroupsIter,
+};
 pub use segment_history::SegmentHistory;
+#[cfg(feature = "auto-splitting")]
+pub use stored_auto_splitter_settings::{
+    StoredAutoSplitterSettings, StoredAutoSplitterSettingsParseError,
+};
+
+/// An empty Auto Splitter Settings payload for builds without auto splitting.
+///
+/// The type remains available so enabling the `auto-splitting` feature does
+/// not change traits that transport this payload. Its structured contents and
+/// associated APIs are only available when that feature is enabled.
+#[cfg(not(feature = "auto-splitting"))]
+#[derive(Clone, Debug, Default, PartialEq)]
+#[non_exhaustive]
+pub struct StoredAutoSplitterSettings {}
+
+#[cfg(not(feature = "auto-splitting"))]
+impl StoredAutoSplitterSettings {
+    /// Creates an empty settings payload.
+    #[inline]
+    pub const fn new() -> Self {
+        Self {}
+    }
+
+    const fn to_xml_string(&self) -> String {
+        String::new()
+    }
+}
 
 use crate::{
     AtomicDateTime, Time, TimeSpan, TimingMethod,
@@ -72,6 +106,7 @@ pub struct Run {
     metadata: RunMetadata,
     has_been_modified: bool,
     segments: Vec<Segment>,
+    segment_groups: SegmentGroups,
     custom_comparisons: Vec<String>,
     comparison_generators: ComparisonGenerators,
     auto_splitter_settings: String,
@@ -125,6 +160,7 @@ impl Run {
             metadata: RunMetadata::new(),
             has_been_modified: false,
             segments: Vec::new(),
+            segment_groups: SegmentGroups::new(),
             custom_comparisons: vec![personal_best::NAME.to_string()],
             comparison_generators: ComparisonGenerators(default_generators()),
             auto_splitter_settings: String::new(),
@@ -225,16 +261,78 @@ impl Run {
         &self.segments
     }
 
-    /// Grants mutable access to the Segments of this Run object.
+    /// Grants mutable access to the contents of the Segments of this Run object.
+    ///
+    /// The returned slice intentionally cannot change the number of segments.
+    /// Segment groups use ranges into this list, so exposing the backing
+    /// [`Vec`] would let a caller insert or remove a segment without updating
+    /// every affected group. That used to leave stale ranges behind which could
+    /// later panic while rendering or iterating groups. Use
+    /// [`Run::insert_segment`], [`Run::remove_segment`], or
+    /// [`Run::push_segment`] for structural changes instead.
     #[inline]
-    pub const fn segments_mut(&mut self) -> &mut Vec<Segment> {
+    pub fn segments_mut(&mut self) -> &mut [Segment] {
         &mut self.segments
+    }
+
+    /// Accesses the Segment Groups of this Run object.
+    #[inline]
+    pub const fn segment_groups(&self) -> &SegmentGroups {
+        &self.segment_groups
+    }
+
+    /// Grants mutable access to the Segment Groups of this Run object.
+    #[inline]
+    pub const fn segment_groups_mut(&mut self) -> &mut SegmentGroups {
+        &mut self.segment_groups
+    }
+
+    /// Accesses an iterator over grouped and ungrouped segment views.
+    #[inline]
+    pub fn segment_groups_iter(&self) -> SegmentGroupsIter<'_, '_> {
+        self.segment_groups.iter_with(&self.segments)
     }
 
     /// Pushes the segment provided to the end of the list of segments of this Run.
     #[inline]
     pub fn push_segment(&mut self, segment: Segment) {
         self.segments.push(segment);
+        self.segment_groups.repair(self.segments.len());
+    }
+
+    /// Inserts a segment at the specified index and updates native segment
+    /// groups to keep referring to the same logical segments.
+    ///
+    /// A segment inserted at a group's start is placed before that group, a
+    /// segment inserted inside a group becomes part of it, and a segment
+    /// inserted at its exclusive end is placed after it. These rules mirror
+    /// the Run Editor's row-based editing behavior and ensure that callers do
+    /// not have to manually synchronize group ranges with the segment list.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the index is greater than the number of segments.
+    pub fn insert_segment(&mut self, index: usize, segment: Segment) {
+        self.segments.insert(index, segment);
+        self.segment_groups
+            .segment_inserted(index, self.segments.len());
+    }
+
+    /// Removes and returns the segment at the specified index while updating
+    /// native segment groups to keep their ranges valid.
+    ///
+    /// If the final segment of a group is removed, the preceding segment
+    /// becomes the group's new final segment. A group that loses all of its
+    /// segments is removed.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the index is out of bounds.
+    pub fn remove_segment(&mut self, index: usize) -> Segment {
+        let segment = self.segments.remove(index);
+        self.segment_groups
+            .segment_removed(index, self.segments.len());
+        segment
     }
 
     /// Accesses a certain segment of this Run.
@@ -324,6 +422,35 @@ impl Run {
     #[inline]
     pub const fn auto_splitter_settings_mut(&mut self) -> &mut String {
         &mut self.auto_splitter_settings
+    }
+
+    /// Parses the stored Auto Splitter Settings into the ASR-compatible
+    /// structure used by the LiveSplit desktop component. This is the
+    /// structured counterpart to the raw XML accessors above and is intended
+    /// for tools that want to persist the selected auto splitter path together
+    /// with its custom settings inside the splits file itself.
+    #[cfg(feature = "auto-splitting")]
+    #[inline]
+    pub fn stored_auto_splitter_settings(
+        &self,
+    ) -> Result<StoredAutoSplitterSettings, StoredAutoSplitterSettingsParseError> {
+        StoredAutoSplitterSettings::parse(self.auto_splitter_settings())
+    }
+
+    /// Stores the ASR-compatible Auto Splitter Settings into the raw XML field
+    /// that is serialized as `<AutoSplitterSettings>...</AutoSplitterSettings>`
+    /// in LiveSplit splits files.
+    ///
+    /// The run is marked as modified when the serialized representation
+    /// changes, because these settings now materially belong to the splits file
+    /// and should therefore participate in normal save prompts.
+    #[inline]
+    pub fn set_stored_auto_splitter_settings(&mut self, settings: &StoredAutoSplitterSettings) {
+        let next_settings = settings.to_xml_string();
+        if self.auto_splitter_settings != next_settings {
+            self.auto_splitter_settings = next_settings;
+            self.mark_as_modified();
+        }
     }
 
     /// Accesses the [`LinkedLayout`] of this `Run`. If a
@@ -542,6 +669,11 @@ impl Run {
     /// comparison times and history, removing duplicates in the segment
     /// histories and removing empty times.
     pub fn fix_splits(&mut self) {
+        // Runs can originate from older versions or third-party parsers. Repair
+        // the range metadata here as a final defensive boundary before the run
+        // is passed to the timer, editor, or renderer. Normal structural edits
+        // use the dedicated methods above and are already kept in sync.
+        self.segment_groups.repair(self.segments.len());
         for method in TimingMethod::all() {
             self.fix_comparison_times_and_history(method);
         }
@@ -683,7 +815,7 @@ impl Run {
         }
     }
 
-    /// Returns the minimum index in use by all the Segment Histories. `None` is
+    /// Returns the minimum index in use by all the Segment Histories. [`None`] is
     /// returned if the Run has no segments.
     pub fn min_segment_history_index(&self) -> Option<i32> {
         self.segments

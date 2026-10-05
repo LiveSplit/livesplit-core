@@ -1,11 +1,21 @@
 use serde_derive::{Deserialize, Serialize};
 
 /// Describes the direction the components of a layout are laid out in.
-#[derive(Copy, Clone, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Copy, Clone, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum LayoutDirection {
     /// The components are placed on top of each other vertically.
     #[default]
     Vertical,
     /// The components are placed next to each other horizontally.
     Horizontal,
+}
+
+impl LayoutDirection {
+    /// Returns the opposite direction.
+    pub const fn opposite(self) -> Self {
+        match self {
+            Self::Vertical => Self::Horizontal,
+            Self::Horizontal => Self::Vertical,
+        }
+    }
 }
