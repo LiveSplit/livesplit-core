@@ -44,6 +44,15 @@ fn compile_with_settings(
     crate_name: &str,
     settings_map: Option<settings::Map>,
 ) -> wasmtime::Result<AutoSplitter<DummyTimer>> {
+    compile_with_script_path(crate_name, settings_map, None)
+}
+
+#[track_caller]
+fn compile_with_script_path(
+    crate_name: &str,
+    settings_map: Option<settings::Map>,
+    script_path: Option<&std::path::Path>,
+) -> wasmtime::Result<AutoSplitter<DummyTimer>> {
     let mut path = PathBuf::from("tests");
     path.push("test-cases");
     path.push(crate_name);
@@ -80,7 +89,7 @@ fn compile_with_settings(
 
     Ok(Runtime::new(Config::default())?
         .compile(&fs::read(wasm_path).unwrap())?
-        .instantiate(DummyTimer, settings_map, None)?)
+        .instantiate(DummyTimer, settings_map, script_path)?)
 }
 
 #[track_caller]
@@ -134,7 +143,22 @@ fn proc_exit() {
 
 #[test]
 fn create_file() {
-    run("create-file").unwrap();
+    let directory = std::env::temp_dir().join(format!("livesplit-wasi-{}", std::process::id()));
+    fs::create_dir(&directory).unwrap();
+    let script_path = directory.join("readonly.txt");
+    fs::write(&script_path, "read-only fixture").unwrap();
+
+    let result = compile_with_script_path("create-file", None, Some(&script_path))
+        .and_then(|runtime| runtime.lock().update().map_err(Into::into));
+    let contents = fs::read_to_string(&script_path).unwrap();
+    let created_file = directory.join("shouldnt_exist.txt").exists();
+    let created_directory = directory.join("shouldnt_exist").exists();
+    fs::remove_dir_all(&directory).unwrap();
+
+    result.unwrap();
+    assert_eq!(contents, "read-only fixture");
+    assert!(!created_file);
+    assert!(!created_directory);
 }
 
 #[test]
