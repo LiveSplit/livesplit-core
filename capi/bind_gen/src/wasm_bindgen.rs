@@ -1,4 +1,4 @@
-use crate::{Class, Function, Type, TypeKind, typescript};
+use crate::{Class, Function, Type, TypeKind, javascript_method_name, typescript};
 use heck::ToLowerCamelCase;
 use std::{
     collections::BTreeMap,
@@ -79,7 +79,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
     let has_return_type = function.has_return_type();
     let return_type_with_null = get_hl_type_with_null(&function.output);
     let return_type_without_null = get_hl_type_without_null(&function.output);
-    let method = function.method.to_lower_camel_case();
+    let method = javascript_method_name(&function.method, is_static);
     let is_json = has_return_type && function.output.name == "Json";
 
     if function.inputs.iter().any(|(_, ty)| {
@@ -222,7 +222,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function, type_script: bool) -> 
         }
     }
 
-    write!(writer, r#"wasm.{}("#, &function.name)?;
+    write!(writer, r#"wasm.{}("#, function.name)?;
 
     for (i, (name, typ)) in function.inputs.iter().enumerate() {
         let type_name = get_hl_type_without_null(typ);
@@ -611,7 +611,7 @@ export class {class_name_ref} {{"#,
     }"#
                 )?;
             }
-        } else if class_name == "Run" {
+        } else if class_name == "Run" && class.has_function("Run_save_as_lss") {
             if type_script {
                 write!(
                     writer,
@@ -871,7 +871,7 @@ export class {class_name} extends {class_name_ref_mut} {{
             }
         }
 
-        if class_name == "Run" {
+        if class_name == "Run" && class.has_function("Run_parse") {
             if type_script {
                 write!(
                     writer,

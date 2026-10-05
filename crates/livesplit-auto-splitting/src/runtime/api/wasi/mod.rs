@@ -153,12 +153,7 @@ pub fn build(script_path: Option<&Path>) -> (WasiP1Ctx, StdErr) {
     #[cfg(not(windows))]
     {
         // Unfortunate if this fails, but we should still continue.
-        let _ = wasi.preopened_dir(
-            "/",
-            "/mnt",
-            wasmtime_wasi::DirPerms::READ,
-            wasmtime_wasi::FilePerms::READ,
-        );
+        let _ = wasi.preopened_dir("/", "/mnt", wasmtime_wasi::FsPerms::ReadOnly);
     }
     (wasi.build_p1(), stderr)
 }

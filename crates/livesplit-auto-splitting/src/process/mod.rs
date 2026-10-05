@@ -11,6 +11,18 @@ use snafu::{OptionExt, ResultExt, Snafu};
 
 use crate::{runtime::ProcessList, wasi_path};
 
+cfg_select! {
+    any(target_os = "linux", test) => {
+        mod linux;
+        use linux::module_size as platform_module_size;
+    }
+    _ => {
+        const fn platform_module_size(_: &Process, _: Address, mapped_size: u64) -> u64 {
+            mapped_size
+        }
+    }
+}
+
 #[derive(Debug, Snafu)]
 #[snafu(context(suffix(false)))]
 pub enum OpenError {
@@ -27,17 +39,9 @@ pub enum ModuleError {
 
 pub type Address = u64;
 
-// FIXME: Temporary workaround until this is merged and released:
-// https://github.com/rbspy/read-process-memory/pull/21
-struct UnsafeSendSync<T>(T);
-// SAFETY: Temporary
-unsafe impl<T> Send for UnsafeSendSync<T> {}
-// SAFETY: Temporary
-unsafe impl<T> Sync for UnsafeSendSync<T> {}
-
 /// A process that an auto splitter is attached to.
 pub struct Process {
-    handle: UnsafeSendSync<ProcessHandle>,
+    handle: ProcessHandle,
     pid: Pid,
     memory_ranges: Vec<MapRange>,
     next_memory_range_check: Instant,
@@ -72,7 +76,7 @@ impl Process {
 
         let pid = process.pid().as_u32() as Pid;
 
-        let handle = UnsafeSendSync(pid.try_into().context(InvalidHandle)?);
+        let handle = pid.try_into().context(InvalidHandle)?;
 
         let now = Instant::now();
         Ok(Process {
@@ -95,7 +99,7 @@ impl Process {
 
         let pid_out = pid as Pid;
 
-        let handle = UnsafeSendSync(pid_out.try_into().context(InvalidHandle)?);
+        let handle = pid_out.try_into().context(InvalidHandle)?;
 
         let now = Instant::now();
         Ok(Process {
@@ -139,12 +143,16 @@ impl Process {
 
     pub(super) fn module_size(&mut self, module: &str) -> Result<u64, ModuleError> {
         self.refresh_memory_ranges()?;
-        Ok(self
+        let mut ranges = self
             .memory_ranges
             .iter()
-            .filter(|m| m.filename().is_some_and(|f| f.ends_with(module)))
-            .map(|m| m.size() as u64)
-            .sum())
+            .filter(|m| m.filename().is_some_and(|f| f.ends_with(module)));
+        let first_range = ranges.next().context(ModuleDoesntExist)?;
+        let module_address = first_range.start() as Address;
+        let mapped_size =
+            first_range.size() as u64 + ranges.map(|range| range.size() as u64).sum::<u64>();
+
+        Ok(platform_module_size(self, module_address, mapped_size))
     }
 
     pub(super) fn module_path(&mut self, module: &str) -> Result<Box<str>, ModuleError> {
@@ -157,7 +165,7 @@ impl Process {
     }
 
     pub(super) fn read_mem(&self, address: Address, buf: &mut [u8]) -> io::Result<()> {
-        self.handle.0.copy_address(address as usize, buf)
+        self.handle.copy_address(address as usize, buf)
     }
 
     pub(super) fn get_memory_range_count(&mut self) -> Result<usize, ModuleError> {

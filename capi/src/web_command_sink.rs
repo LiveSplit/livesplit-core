@@ -5,7 +5,7 @@
 use std::{borrow::Cow, cell::Cell, convert::TryFrom, future::Future, sync::Arc};
 
 use livesplit_core::{
-    TimeSpan, Timer, TimingMethod,
+    StoredAutoSplitterSettings, TimeSpan, Timer, TimingMethod,
     event::{CommandSink, Error, Event, Result, TimerQuery},
 };
 use wasm_bindgen::prelude::*;
@@ -41,6 +41,7 @@ pub struct WebCommandSink {
     resume_game_time: Option<Function>,
     set_loading_times: Option<Function>,
     set_custom_variable: Option<Function>,
+    set_auto_splitter_settings: Option<Function>,
 
     get_timer: Function,
     locked: Cell<bool>,
@@ -73,6 +74,7 @@ impl WebCommandSink {
             resume_game_time: get_func(&obj, "resumeGameTime"),
             set_loading_times: get_func(&obj, "setLoadingTimes"),
             set_custom_variable: get_func(&obj, "setCustomVariable"),
+            set_auto_splitter_settings: get_func(&obj, "setAutoSplitterSettings"),
 
             get_timer: get_func(&obj, "getTimer").unwrap(),
             locked: Cell::new(false),
@@ -315,6 +317,25 @@ impl CommandSink for WebCommandSink {
             )
             .ok()
         }))
+    }
+
+    fn set_auto_splitter_settings(
+        &self,
+        settings: StoredAutoSplitterSettings,
+    ) -> impl Future<Output = Result> + 'static {
+        debug_assert!(!self.locked.get());
+        #[cfg(feature = "auto-splitting")]
+        let settings = JsValue::from_str(&settings.to_xml_string());
+        #[cfg(not(feature = "auto-splitting"))]
+        let settings = {
+            drop(settings);
+            JsValue::UNDEFINED
+        };
+        handle_action_value(
+            self.set_auto_splitter_settings
+                .as_ref()
+                .and_then(|f| f.call1(&self.obj, &settings).ok()),
+        )
     }
 }
 

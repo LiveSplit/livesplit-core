@@ -48,10 +48,16 @@ pub enum WidgetKind {
         /// The filters that are used to filter the files that can be selected.
         filters: Arc<Vec<FileFilter>>,
     },
+    /// A free-form text input setting.
+    TextInput {
+        /// The default value of the setting, if it's not available in the
+        /// settings [`Map`](super::Map) yet.
+        default_value: Arc<str>,
+    },
 }
 
 /// A filter for a file selection setting.
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub enum FileFilter {
     /// A filter that matches on the name of the file.
     Name {

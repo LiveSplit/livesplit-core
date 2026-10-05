@@ -1,0 +1,62 @@
+{
+    "title": "SotN Any% NSC",
+    "attempt_count": 70,
+    "comparison_method": 1,
+    "start_delay": "2.800000",
+    "world_record": {
+        "real_time": "23:42.151789",
+        "game_time": "22:00.000000"
+    },
+    "splits": [
+        {
+            "title": "Mist",
+            "icon": "mist.png",
+            "time": {
+                "real_time": "11:41.299585",
+                "game_time": "11:30.000000"
+            },
+            "best_time": {
+                "real_time": "11:32.100735",
+                "game_time": "11:20.000000"
+            },
+            "best_segment": {
+                "real_time": "11:32.100735",
+                "game_time": "11:20.000000"
+            }
+        },
+        {
+            "title": "Bat",
+            "icon": "bat.png",
+            "time": {
+                "real_time": "14:36.934210",
+                "game_time": "14:00.000000"
+            },
+            "best_time": {
+                "real_time": "14:16.933388",
+                "game_time": "13:45.000000"
+            },
+            "best_segment": {
+                "real_time": "2:35.819681",
+                "game_time": "2:25.000000"
+            }
+        },
+        {
+            "title": "Reverse",
+            "icon": "reverse.png",
+            "time": {
+                "real_time": "17:51.600311",
+                "game_time": "17:00.000000"
+            },
+            "best_time": {
+                "real_time": "-",
+                "game_time": "16:30.000000"
+            },
+            "best_segment": {
+                "real_time": "-",
+                "game_time": "2:30.000000"
+            }
+        }
+    ],
+    "width": 320,
+    "height": 300
+}

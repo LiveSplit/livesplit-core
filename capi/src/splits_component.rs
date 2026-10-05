@@ -110,14 +110,12 @@ pub extern "C" fn SplitsComponent_set_always_show_last_split(
     this.settings_mut().always_show_last_split = always_show_last_split;
 }
 
-/// If the last segment is to always be shown, this determines whether to
-/// show a more pronounced separator in front of the last segment, if it is
-/// not directly adjacent to the segment shown right before it in the
-/// scrolling window.
+/// Whether to show a pronounced separator before a row when one or more rows
+/// immediately before it are omitted from the scrolling window.
 #[unsafe(no_mangle)]
-pub extern "C" fn SplitsComponent_set_separator_last_split(
+pub extern "C" fn SplitsComponent_set_show_gap_separators(
     this: &mut SplitsComponent,
-    separator_last_split: bool,
+    show_gap_separators: bool,
 ) {
-    this.settings_mut().separator_last_split = separator_last_split;
+    this.settings_mut().show_gap_separators = show_gap_separators;
 }

@@ -144,7 +144,7 @@ fn write_fn<W: Write>(mut writer: W, function: &Function) -> Result<()> {
         }
     }
 
-    write!(writer, r#"livesplit_core_native.{}("#, &function.name)?;
+    write!(writer, r#"livesplit_core_native.{}("#, function.name)?;
 
     for (i, (name, typ)) in function.inputs.iter().enumerate() {
         if i != 0 {
@@ -334,7 +334,7 @@ class {class_name}({class_name_ref_mut}):"#
             }
         }
 
-        if class_name == "Run" {
+        if class_name == "Run" && class.has_function("Run_parse") {
             writeln!(
                 writer,
                 r#"

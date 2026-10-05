@@ -402,9 +402,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowThinSeparatorsDescription => {
             "Określa, czy wyświetlać cienkie separatory pomiędzy poszczególnymi wierszami segmentów."
         }
-        Text::SplitsShowSeparatorBeforeLastSplit => "Pokaż separator przed ostatnim splitem",
-        Text::SplitsShowSeparatorBeforeLastSplitDescription => {
-            "Jeśli ostatni segment ma być zawsze widoczny, to określa, czy pokazywać bardziej wyraźny separator przed ostatnim segmentem, jeśli nie sąsiaduje bezpośrednio z poprzednim segmentem w oknie przewijania."
+        Text::SplitsShowGapSeparators => "Pokaż separatory luk",
+        Text::SplitsShowGapSeparatorsDescription => {
+            "Określa, czy przed wierszem pokazywać bardziej wyraźny separator, gdy w oknie przewijania pominięto co najmniej jeden bezpośrednio poprzedzający wiersz."
         }
         Text::SplitsAlwaysShowLastSplit => "Zawsze pokazuj ostatni split",
         Text::SplitsAlwaysShowLastSplitDescription => {

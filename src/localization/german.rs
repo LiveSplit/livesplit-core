@@ -440,9 +440,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowThinSeparatorsDescription => {
             "Legt fest, ob dünne Trennlinien zwischen den einzelnen Segmentzeilen angezeigt werden."
         }
-        Text::SplitsShowSeparatorBeforeLastSplit => "Trennlinie vor letztem Split anzeigen",
-        Text::SplitsShowSeparatorBeforeLastSplitDescription => {
-            "Wenn das letzte Segment immer angezeigt werden soll, bestimmt dies, ob vor dem letzten Segment eine deutlichere Trennlinie angezeigt wird, wenn es im Scrollfenster nicht direkt neben dem vorherigen Segment liegt."
+        Text::SplitsShowGapSeparators => "Trennlinien bei Lücken anzeigen",
+        Text::SplitsShowGapSeparatorsDescription => {
+            "Legt fest, ob vor einer Zeile eine deutlichere Trennlinie angezeigt wird, wenn im Scrollfenster unmittelbar davor eine oder mehrere Zeilen ausgelassen werden."
         }
         Text::SplitsAlwaysShowLastSplit => "Letzten Split immer anzeigen",
         Text::SplitsAlwaysShowLastSplitDescription => {

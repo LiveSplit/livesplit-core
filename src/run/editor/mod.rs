@@ -1181,6 +1181,67 @@ impl Editor {
         Ok(())
     }
 
+    /// Toggles whether every segment in the group with the provided index is
+    /// part of the current selection. Other selected segments remain selected.
+    /// If the group is the entire selection, it stays selected because the Run
+    /// Editor always requires at least one selected segment.
+    pub fn toggle_segment_group_selection(
+        &mut self,
+        group_index: usize,
+    ) -> Result<(), InvalidSegmentGroupIndexError> {
+        let Some(group) = self.run.segment_groups().groups().get(group_index) else {
+            return Err(InvalidSegmentGroupIndexError);
+        };
+        let (start, end) = (group.start(), group.end());
+        let group_is_selected = (start..end).all(|index| self.selected_segments.contains(&index));
+
+        if group_is_selected {
+            // Removing the only selected visual row would break the editor's
+            // non-empty selection invariant. Matching `unselect`, keep the
+            // current selection unchanged in that case.
+            if self.selected_segments.len() == end - start {
+                return Ok(());
+            }
+            self.selected_segments
+                .retain(|&index| index < start || index >= end);
+        } else {
+            // Select through the normal primitive so the final segment in the
+            // group becomes active, just like exclusive group selection.
+            for index in start..end {
+                self.select_additionally(index);
+            }
+        }
+        Ok(())
+    }
+
+    /// Extends the current selection through the entire group with the
+    /// provided index. The group's far edge becomes active. If the active
+    /// segment is already inside the group, all remaining group segments are
+    /// added instead.
+    pub fn select_segment_group_range(
+        &mut self,
+        group_index: usize,
+    ) -> Result<(), InvalidSegmentGroupIndexError> {
+        let Some(group) = self.run.segment_groups().groups().get(group_index) else {
+            return Err(InvalidSegmentGroupIndexError);
+        };
+        let (start, end) = (group.start(), group.end());
+        let active = self.active_segment_index();
+
+        if active < start {
+            self.select_range(end - 1);
+        } else if active >= end {
+            self.select_range(start);
+        } else {
+            // A range to either boundary alone would omit the other side when
+            // the anchor is inside the group, so add the complete visual row.
+            for index in start..end {
+                self.select_additionally(index);
+            }
+        }
+        Ok(())
+    }
+
     /// Creates a segment group from the currently selected contiguous segment
     /// rows and reports why creation failed. A group needs at least one
     /// segment.

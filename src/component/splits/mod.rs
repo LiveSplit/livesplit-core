@@ -75,11 +75,10 @@ pub struct Settings {
     /// Specifies whether thin separators should be shown between the individual
     /// segments shown by the component.
     pub show_thin_separators: bool,
-    /// If the last segment is to always be shown, this determines whether to
-    /// show a more pronounced separator in front of the last segment, if it is
-    /// not directly adjacent to the segment shown right before it in the
-    /// scrolling window.
-    pub separator_last_split: bool,
+    /// Whether to show a pronounced separator before a row when one or more
+    /// rows immediately before it are omitted from the scrolling window.
+    #[serde(alias = "separator_last_split")]
+    pub show_gap_separators: bool,
     /// If not every segment is shown in the scrolling window of segments, then
     /// this determines whether the final segment is always to be shown, as it
     /// contains valuable information about the total duration of the chosen
@@ -250,7 +249,7 @@ impl Settings {
             visual_split_count: 16,
             split_preview_count: 1,
             show_thin_separators: true,
-            separator_last_split: true,
+            show_gap_separators: true,
             always_show_last_split: true,
             fill_with_blank_space: true,
             display_two_rows: false,
@@ -365,11 +364,15 @@ impl Component {
         let run = timer.run();
         let current_split = timer.current_split_index();
         let mut scrolled_to_split = None;
-        let display_current_split = if self.settings.subsplit_display_mode
+        // CurrentGroupExpanded only needs cursor-based navigation when there is
+        // a hierarchy to expand and collapse. Without any groups, its visual
+        // projection is a flat list, so the scroll offset must keep its normal
+        // meaning of moving the visible window through that list.
+        let scrolls_through_subsplit_groups = self.settings.subsplit_display_mode
             == SubsplitDisplayMode::CurrentGroupExpanded
             && !run.is_empty()
-            && !run.segment_groups().groups().is_empty()
-        {
+            && !run.segment_groups().groups().is_empty();
+        let display_current_split = if scrolls_through_subsplit_groups {
             let (base_split, min_split, max_split) = match timer.current_phase() {
                 TimerPhase::NotRunning => (-1, -1, run.len() as isize - 1),
                 TimerPhase::Ended => (run.len() as isize, 0, run.len() as isize),
@@ -445,18 +448,17 @@ impl Component {
             }),
             scrollable_split_count as isize - scrollable_visual_split_count as isize,
         );
-        let scroll_offset =
-            if self.settings.subsplit_display_mode == SubsplitDisplayMode::CurrentGroupExpanded {
-                0
-            } else {
-                self.scroll_offset = min(
-                    max(self.scroll_offset, -skip_count),
-                    scrollable_split_count as isize
-                        - skip_count
-                        - scrollable_visual_split_count as isize,
-                );
-                self.scroll_offset
-            };
+        let scroll_offset = if scrolls_through_subsplit_groups {
+            0
+        } else {
+            self.scroll_offset = min(
+                max(self.scroll_offset, -skip_count),
+                scrollable_split_count as isize
+                    - skip_count
+                    - scrollable_visual_split_count as isize,
+            );
+            self.scroll_offset
+        };
         let skip_count = max(0, skip_count + scroll_offset) as usize;
         let take_count = scrollable_visual_split_count.saturating_sub(locked_last_split as usize);
         let always_show_last_split = self.settings.always_show_last_split;
@@ -508,15 +510,12 @@ impl Component {
             // A gap between projected row indices means that the scrolling
             // window omitted one or more logical rows. Communicate that gap on
             // the following row so every renderer can show the same pronounced
-            // separator without reconstructing the scrolling logic. The
-            // existing setting continues to control gaps before the final row;
-            // gaps within the list always identify hidden group content.
+            // separator without reconstructing the scrolling logic. Apply the
+            // setting here, where all omissions are known, so it consistently
+            // controls gaps inside groups and before the locked final row.
             let has_gap = previous_displayed_index
                 .is_some_and(|previous_index| displayed_index > previous_index + 1);
-            let is_final_row = displayed_index + 1 == displayed_len;
-            state.show_separator_before = has_gap
-                && (!is_final_row
-                    || (always_show_last_split && self.settings.separator_last_split));
+            state.show_separator_before = self.settings.show_gap_separators && has_gap;
             previous_displayed_index = Some(displayed_index);
 
             state.icon = *image_cache
@@ -647,13 +646,11 @@ impl Component {
                 self.settings.show_thin_separators.into(),
             ),
             Field::new(
-                Text::SplitsShowSeparatorBeforeLastSplit
+                Text::SplitsShowGapSeparators.resolve(lang).into(),
+                Text::SplitsShowGapSeparatorsDescription
                     .resolve(lang)
                     .into(),
-                Text::SplitsShowSeparatorBeforeLastSplitDescription
-                    .resolve(lang)
-                    .into(),
-                self.settings.separator_last_split.into(),
+                self.settings.show_gap_separators.into(),
             ),
             Field::new(
                 Text::SplitsAlwaysShowLastSplit.resolve(lang).into(),
@@ -820,7 +817,7 @@ impl Component {
             1 => self.settings.visual_split_count = value.into_uint().unwrap() as _,
             2 => self.settings.split_preview_count = value.into_uint().unwrap() as _,
             3 => self.settings.show_thin_separators = value.into(),
-            4 => self.settings.separator_last_split = value.into(),
+            4 => self.settings.show_gap_separators = value.into(),
             5 => self.settings.always_show_last_split = value.into(),
             6 => self.settings.fill_with_blank_space = value.into(),
             7 => self.settings.display_two_rows = value.into(),

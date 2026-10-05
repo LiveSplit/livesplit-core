@@ -415,6 +415,31 @@ fn current_group_header_stays_visible_when_group_rows_scroll() {
             .collect::<Vec<_>>(),
         [false, true, false, true]
     );
+
+    component.settings_mut().show_gap_separators = false;
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &Default::default(),
+        Lang::English,
+    );
+    assert!(
+        state
+            .splits
+            .iter()
+            .all(|split| !split.show_separator_before)
+    );
+}
+
+#[test]
+fn old_last_split_separator_setting_deserializes_as_gap_separators() {
+    let settings: Settings =
+        serde_json::from_value(serde_json::json!({ "separator_last_split": false })).unwrap();
+    assert!(!settings.show_gap_separators);
+
+    let serialized = serde_json::to_value(settings).unwrap();
+    assert_eq!(serialized["show_gap_separators"], false);
+    assert!(serialized.get("separator_last_split").is_none());
 }
 
 #[test]
@@ -913,6 +938,47 @@ fn flat_and_all_groups_expanded_scroll_normally_without_subsplit_cursor() {
         assert!(!state.splits.iter().any(|s| s.is_scrolled_to_split));
         assert_eq!(state.splits.len(), 3);
     }
+}
+
+#[test]
+fn current_group_expanded_scrolls_normally_without_subsplit_groups() {
+    let mut run = Run::new();
+    for name in ["A", "B", "C", "D"] {
+        run.push_segment(Segment::new(name));
+    }
+
+    let timer = Timer::new(run).unwrap();
+    let mut component = Component::with_settings(Settings {
+        visual_split_count: 2,
+        always_show_last_split: false,
+        subsplit_display_mode: SubsplitDisplayMode::CurrentGroupExpanded,
+        ..english_settings()
+    });
+    let mut image_cache = ImageCache::new();
+
+    component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &Default::default(),
+        Lang::English,
+    );
+    component.scroll_down();
+    let state = component.state(
+        &mut image_cache,
+        &timer.snapshot(),
+        &Default::default(),
+        Lang::English,
+    );
+
+    assert_eq!(
+        state
+            .splits
+            .iter()
+            .map(|split| split.name.as_str())
+            .collect::<Vec<_>>(),
+        ["B", "C"]
+    );
+    assert!(!state.splits.iter().any(|split| split.is_scrolled_to_split));
 }
 
 #[test]

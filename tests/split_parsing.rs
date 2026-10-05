@@ -1,9 +1,14 @@
+//! Integration tests for parsing representative real-world splits files and
+//! detecting their timer kinds. The files in `run_files` are reserved for this
+//! suite. Tests for specific fields, edge cases, and parser semantics should use
+//! inline inputs in the corresponding parser's local test module.
+
 mod run_files;
 
 mod parse {
     use crate::run_files;
     use livesplit_core::{
-        Run, TimeSpan,
+        Lang, Run, Time, TimeSpan,
         analysis::total_playtime,
         run::parser::{
             TimerKind, composite, flitter, libresplit, livesplit, llanfair, llanfair_gered,
@@ -238,6 +243,46 @@ mod parse {
     }
 
     #[test]
+    fn libresplit_metadata() {
+        let run = libresplit::parse(run_files::LIBRESPLIT_METADATA, None).unwrap();
+
+        assert_eq!(run.game_name(), "Castlevania: Symphony of the Night");
+        assert_eq!(run.category_name(), "Any% NSC");
+        assert!(run.game_icon().data().starts_with(b"\x89PNG\r\n\x1a\n"));
+        assert!(
+            run.segment(0)
+                .icon()
+                .data()
+                .starts_with(b"\x89PNG\r\n\x1a\n")
+        );
+        assert_ne!(run.game_icon().data(), run.segment(0).icon().data());
+    }
+
+    fn libresplit_time(real_time: Option<&str>, game_time: Option<&str>) -> Time {
+        Time::new()
+            .with_real_time(real_time.map(|time| TimeSpan::parse(time, Lang::English).unwrap()))
+            .with_game_time(game_time.map(|time| TimeSpan::parse(time, Lang::English).unwrap()))
+    }
+
+    #[test]
+    fn libresplit_game_time() {
+        let run = libresplit::parse(run_files::LIBRESPLIT_GAME_TIME, None).unwrap();
+
+        assert_eq!(
+            run.segment(0).personal_best_split_time(),
+            libresplit_time(Some("11:41.299585"), Some("11:30.000000"))
+        );
+        assert_eq!(
+            run.segment(0).best_segment_time(),
+            libresplit_time(Some("11:32.100735"), Some("11:20.000000"))
+        );
+        assert_eq!(
+            run.segment(2).best_segment_time(),
+            libresplit_time(None, Some("2:30.000000"))
+        );
+    }
+
+    #[test]
     fn flitter() {
         flitter::parse(run_files::FLITTER).unwrap();
     }
@@ -273,53 +318,6 @@ mod parse {
     }
 
     #[test]
-    fn opensplit_segment_children_become_segment_groups() {
-        let run = opensplit::parse(
-            r#"{
-                "game_name": "Game",
-                "game_category": "Any%",
-                "attempts": 0,
-                "segments": [
-                    { "id": "intro", "name": "Intro", "gold": 0, "pb": 0 },
-                    {
-                        "id": "chapter",
-                        "name": "Chapter",
-                        "gold": 0,
-                        "pb": 0,
-                        "children": [
-                            { "id": "a", "name": "A", "gold": 0, "pb": 0 },
-                            {
-                                "id": "nested",
-                                "name": "Nested",
-                                "gold": 0,
-                                "pb": 0,
-                                "children": [
-                                    { "id": "b", "name": "B", "gold": 0, "pb": 0 },
-                                    { "id": "c", "name": "C", "gold": 0, "pb": 0 }
-                                ]
-                            }
-                        ]
-                    },
-                    { "id": "outro", "name": "Outro", "gold": 0, "pb": 0 }
-                ]
-            }"#,
-        )
-        .unwrap();
-
-        assert_eq!(
-            run.segments()
-                .iter()
-                .map(|segment| segment.name())
-                .collect::<Vec<_>>(),
-            ["Intro", "A", "B", "C", "Outro"]
-        );
-        assert_eq!(run.segment_groups().groups().len(), 1);
-        let group = &run.segment_groups().groups()[0];
-        assert_eq!((group.start(), group.end()), (1, 4));
-        assert_eq!(group.name(), Some("Chapter"));
-    }
-
-    #[test]
     fn speedrun_igt_prefers_parsing_as_itself() {
         let run = composite::parse(run_files::SPEEDRUN_IGT.as_bytes(), None).unwrap();
         assert!(matches!(run.kind, TimerKind::SpeedRunIGT));
@@ -339,8 +337,14 @@ mod parse {
 
     #[test]
     fn libresplit_prefers_parsing_as_itself() {
-        let run = composite::parse(run_files::LIBRESPLIT.as_bytes(), None).unwrap();
-        assert_eq!(run.kind, TimerKind::LibreSplit);
+        for source in [
+            run_files::LIBRESPLIT,
+            run_files::LIBRESPLIT_GAME_TIME,
+            run_files::LIBRESPLIT_METADATA,
+        ] {
+            let run = composite::parse(source.as_bytes(), None).unwrap();
+            assert_eq!(run.kind, TimerKind::LibreSplit);
+        }
     }
 
     #[test]

@@ -416,9 +416,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsShowThinSeparatorsDescription => {
             "Geeft aan of dunne scheiders tussen segmentrijen moeten worden getoond."
         }
-        Text::SplitsShowSeparatorBeforeLastSplit => "Scheider voor laatste split tonen",
-        Text::SplitsShowSeparatorBeforeLastSplitDescription => {
-            "Als het laatste segment altijd wordt getoond, bepaalt dit of een duidelijke scheider vóór het laatste segment wordt getoond wanneer het niet direct aansluit op het vorige segment in het venster."
+        Text::SplitsShowGapSeparators => "Scheiders bij overgeslagen rijen tonen",
+        Text::SplitsShowGapSeparatorsDescription => {
+            "Bepaalt of een duidelijkere scheider vóór een rij wordt getoond wanneer één of meer direct voorafgaande rijen uit het scrollvenster zijn weggelaten."
         }
         Text::SplitsAlwaysShowLastSplit => "Laatste split altijd tonen",
         Text::SplitsAlwaysShowLastSplitDescription => {

@@ -356,7 +356,7 @@ public class {class_name} extends {class_name_ref_mut} implements AutoCloseable 
         }
     }
 
-    if class_name == "Run" {
+    if class_name == "Run" && class.has_function("Run_parse") {
         write!(
             writer,
             "{}",
@@ -389,9 +389,19 @@ fn write_native_class<P: AsRef<Path>>(path: P, classes: &BTreeMap<String, Class>
 public class LiveSplitCoreNative {
     static {
         System.loadLibrary("native-lib");
-    }
-    public static native long Run_parseString(String data);"#
+    }"#
     )?;
+
+    if classes
+        .get("Run")
+        .is_some_and(|class| class.has_function("Run_parse"))
+    {
+        write!(
+            writer,
+            r#"
+    public static native long Run_parseString(String data);"#
+        )?;
+    }
 
     for class in classes.values() {
         for function in class
