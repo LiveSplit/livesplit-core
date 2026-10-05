@@ -1,6 +1,6 @@
 use std::{ffi::OsString, iter, os::windows::ffi::OsStringExt, path::PathBuf};
 
-use wasmtime_wasi::{DirPerms, FilePerms, WasiCtxBuilder};
+use wasmtime_wasi::{FsPerms, WasiCtxBuilder};
 use windows_sys::Win32::{
     Foundation::{ERROR_MORE_DATA, MAX_PATH, NO_ERROR},
     NetworkManagement::WNet::WNetGetConnectionW,
@@ -18,8 +18,7 @@ pub fn add_drives(wasi: &mut WasiCtxBuilder) {
         let _ = wasi.preopened_dir(
             str::from_utf8(&[b'\\', b'\\', b'?', b'\\', drive, b':', b'\\']).unwrap(),
             str::from_utf8(&[b'/', b'm', b'n', b't', b'/', drive]).unwrap(),
-            DirPerms::READ,
-            FilePerms::READ,
+            FsPerms::ReadOnly,
         );
 
         if is_network_drive(drive)
@@ -27,7 +26,7 @@ pub fn add_drives(wasi: &mut WasiCtxBuilder) {
             && let Some(wasi_path) = wasi_path::from_native(&remote_path)
         {
             // Unfortunate if this fails, but we should still continue.
-            let _ = wasi.preopened_dir(remote_path, wasi_path, DirPerms::READ, FilePerms::READ);
+            let _ = wasi.preopened_dir(remote_path, wasi_path, FsPerms::ReadOnly);
         }
     }
 

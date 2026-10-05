@@ -23,7 +23,7 @@ include = [
     "/README.md",
 ]
 edition = "2024"
-rust-version = "1.95"
+rust-version = "1.96"
 
 [package.metadata.docs.rs]
 all-features = true
