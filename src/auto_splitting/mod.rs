@@ -2,6 +2,10 @@
 //! can control the [`Timer`](crate::timing::Timer). These auto splitters are
 //! provided as WebAssembly modules.
 //!
+//! The [`list`] module parses the community-maintained auto splitter list and
+//! looks up auto splitters by game. With the `networking` feature, it also
+//! downloads the list and modules asynchronously.
+//!
 //! # Requirements for the Auto Splitters
 //!
 //! The auto splitters must provide an `update` function with the following
@@ -576,6 +580,8 @@
 //! - There is no networking.
 //! - There is no threading.
 //! - Time and random numbers are available.
+
+pub mod list;
 
 use crate::{
     event::{self, TimerQuery},

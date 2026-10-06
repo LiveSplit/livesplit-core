@@ -2,6 +2,7 @@ use crate::util::ascii_char::AsciiChar;
 
 use super::{Tag, TagName, Text, trim};
 
+#[derive(Clone)]
 enum TagState<'a> {
     Closed,
     Opened,
@@ -21,6 +22,7 @@ pub enum Event<'a> {
     Ended,
 }
 
+#[derive(Clone)]
 pub struct Reader<'a> {
     source: &'a str,
     state: TagState<'a>,
