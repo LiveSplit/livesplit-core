@@ -205,9 +205,9 @@ where
     val.ok_or(Error::ElementNotFound.into())
 }
 
-pub fn parse_children<F, E>(reader: &mut Reader, mut f: F) -> Result<(), E>
+pub fn parse_children<'a, F, E>(reader: &mut Reader<'a>, mut f: F) -> Result<(), E>
 where
-    F: FnMut(&mut Reader, TagName, Attributes) -> Result<(), E>,
+    F: FnMut(&mut Reader<'a>, TagName<'a>, Attributes<'a>) -> Result<(), E>,
     E: From<Error>,
 {
     loop {

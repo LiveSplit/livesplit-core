@@ -91,7 +91,7 @@ livesplit-auto-splitting = { path = "crates/livesplit-auto-splitting", version =
 arc-swap = { version = "1.7.1", optional = true }
 log = { version = "0.4.14", default-features = false, optional = true }
 
-# therun.gg
+# Networking
 reqwest = { version = "0.13.2", default-features = false, features = ["json", "rustls"], optional = true }
 
 [target.'cfg(all(target_family = "wasm", target_os = "unknown"))'.dependencies]
@@ -125,6 +125,7 @@ winreg = "0.56.0"
 
 [target.'cfg(not(target_family = "wasm"))'.dev-dependencies]
 criterion = "0.8.2"
+tokio = { version = "1.47.1", features = ["rt", "net", "time", "macros"] }
 
 [features]
 default = ["image-shrinking", "localization", "std"]
@@ -187,7 +188,8 @@ wasm-web = [
     "web-sys",
 ]
 auto-splitting = ["std", "livesplit-auto-splitting", "arc-swap", "log"]
-therun-gg = ["std", "reqwest", "time/formatting"]
+networking = ["std", "reqwest"]
+therun-gg = ["networking", "time/formatting"]
 
 [lib]
 bench = false
