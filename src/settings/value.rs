@@ -1,6 +1,7 @@
 use crate::{
     TimingMethod,
     component::{
+        detailed_timer::IconDisplayMode,
         splits::{ColumnStartWith, ColumnUpdateTrigger, ColumnUpdateWith, SubsplitDisplayMode},
         timer::DeltaGradient,
     },
@@ -68,6 +69,8 @@ pub enum Value {
     ColumnUpdateTrigger(ColumnUpdateTrigger),
     /// A value describing how native subsplits are displayed.
     SubsplitDisplayMode(SubsplitDisplayMode),
+    /// A value describing how the Detailed Timer Component's icon is displayed.
+    IconDisplayMode(IconDisplayMode),
     /// A value describing what hotkey to press to trigger a certain action.
     Hotkey(Option<Hotkey>),
     /// A value describing the direction of a layout.
@@ -187,6 +190,12 @@ impl From<ColumnUpdateTrigger> for Value {
 impl From<SubsplitDisplayMode> for Value {
     fn from(x: SubsplitDisplayMode) -> Self {
         Value::SubsplitDisplayMode(x)
+    }
+}
+
+impl From<IconDisplayMode> for Value {
+    fn from(x: IconDisplayMode) -> Self {
+        Value::IconDisplayMode(x)
     }
 }
 
@@ -386,6 +395,14 @@ impl Value {
         }
     }
 
+    /// Tries to convert the value into a Detailed Timer icon display mode.
+    pub fn into_icon_display_mode(self) -> Result<IconDisplayMode> {
+        match self {
+            Value::IconDisplayMode(v) => Ok(v),
+            _ => Err(Error::WrongType),
+        }
+    }
+
     /// Tries to convert the value into a hotkey.
     pub fn into_hotkey(self) -> Result<Option<Hotkey>> {
         match self {
@@ -548,6 +565,12 @@ impl From<Value> for ColumnUpdateTrigger {
 impl From<Value> for SubsplitDisplayMode {
     fn from(value: Value) -> Self {
         value.into_subsplit_display_mode().unwrap()
+    }
+}
+
+impl From<Value> for IconDisplayMode {
+    fn from(value: Value) -> Self {
+        value.into_icon_display_mode().unwrap()
     }
 }
 

@@ -287,7 +287,9 @@ pub const fn resolve(text: Text) -> &'static str {
             "显示分段名称时的颜色。如未指定则使用布局颜色。"
         }
         Text::DetailedTimerDisplayIcon => "显示图标",
-        Text::DetailedTimerDisplayIconDescription => "指定是否显示分段图标。",
+        Text::DetailedTimerDisplayIconDescription => {
+            "控制分段图标是隐藏、占用两行，还是仅占用第一行。"
+        }
         Text::SplitsBackground => "背景",
         Text::SplitsBackgroundDescription => {
             "组件背后的背景。可选择交替颜色；若启用，行会在两种颜色之间交替。"

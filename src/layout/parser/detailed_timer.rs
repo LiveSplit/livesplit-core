@@ -2,7 +2,9 @@ use super::{
     DeltaGradientKind, GradientBuilder, Result, accuracy, color, comparison_override, end_tag,
     parse_bool, parse_children, text_parsed, timer_format, timing_method_override, translate_size,
 };
-use crate::{timing::formatter::DigitsFormat, util::xml::Reader};
+use crate::{
+    component::detailed_timer::IconDisplayMode, timing::formatter::DigitsFormat, util::xml::Reader,
+};
 
 pub use crate::component::detailed_timer::Component;
 
@@ -66,7 +68,13 @@ pub fn settings(reader: &mut Reader, component: &mut Component) -> Result<()> {
                     color(reader, |v| settings.comparison_names_color = Some(v))
                 }
                 "SegmentTimesColor" => color(reader, |v| settings.comparison_times_color = Some(v)),
-                "DisplayIcon" => parse_bool(reader, |b| settings.display_icon = b),
+                "DisplayIcon" => parse_bool(reader, |display| {
+                    settings.display_icon = if display {
+                        IconDisplayMode::BothRows
+                    } else {
+                        IconDisplayMode::Hidden
+                    }
+                }),
                 "ShowSplitName" => parse_bool(reader, |b| settings.show_segment_name = b),
                 "SplitNameColor" => color(reader, |v| settings.segment_name_color = Some(v)),
                 "Comparison" => comparison_override(reader, |v| settings.comparison1 = v),

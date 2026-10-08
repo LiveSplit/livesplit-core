@@ -396,7 +396,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::DetailedTimerDisplayIcon => "Display Icon",
         Text::DetailedTimerDisplayIconDescription => {
-            "Specifies whether the segment icon should be shown."
+            "Controls whether the segment icon is hidden, spans both rows, or only occupies the first row."
         }
         Text::SplitsBackground => "Background",
         Text::SplitsBackgroundDescription => {

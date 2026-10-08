@@ -388,7 +388,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::DetailedTimerDisplayIcon => "Показывать иконку",
         Text::DetailedTimerDisplayIconDescription => {
-            "Определяет, следует ли показывать иконку сегмента."
+            "Определяет, скрыта ли иконка сегмента, занимает ли она обе строки или только первую."
         }
         Text::SplitsBackground => "Фон",
         Text::SplitsBackgroundDescription => {

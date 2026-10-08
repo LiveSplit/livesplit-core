@@ -406,7 +406,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::DetailedTimerDisplayIcon => "Afficher l’icône",
         Text::DetailedTimerDisplayIconDescription => {
-            "Indique si l’icône du segment doit être affichée."
+            "Détermine si l’icône du segment est masquée, s’étend sur les deux lignes ou occupe uniquement la première."
         }
         Text::SplitsBackground => "Arrière-plan",
         Text::SplitsBackgroundDescription => {

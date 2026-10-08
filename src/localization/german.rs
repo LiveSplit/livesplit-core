@@ -422,7 +422,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::DetailedTimerDisplayIcon => "Symbol anzeigen",
         Text::DetailedTimerDisplayIconDescription => {
-            "Legt fest, ob das Segmentsymbol angezeigt werden soll."
+            "Legt fest, ob das Segmentsymbol ausgeblendet wird, beide Zeilen überspannt oder nur die erste Zeile belegt."
         }
         Text::SplitsBackground => "Hintergrund",
         Text::SplitsBackgroundDescription => {
