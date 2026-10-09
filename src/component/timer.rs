@@ -5,20 +5,24 @@
 
 use crate::{
     GeneralLayoutSettings, TimeSpan, TimerPhase, TimingMethod,
-    analysis::split_color,
+    analysis::{comparison_single_segment_time, split_color},
+    comparison::{average_segments, median_segments, personal_best},
     localization::{Lang, Text},
     platform::prelude::*,
     settings::{Color, Field, Gradient, SemanticColor, SettingsDescription, Value},
     timing::{
         Snapshot,
-        formatter::{Accuracy, DigitsFormat, TimeFormatter, timer as formatter},
+        formatter::{Accuracy, DASH, DigitsFormat, TimeFormatter, timer as formatter},
     },
 };
 use core::{
-    fmt::Write,
+    fmt::{self, Write},
     hash::{Hash, Hasher},
 };
 use serde_derive::{Deserialize, Serialize};
+
+#[cfg(test)]
+mod tests;
 
 /// The `Timer` Component is a component that shows the total time of the current
 /// attempt as a digital clock. The color of the time shown is based on a how
@@ -137,6 +141,15 @@ pub struct State {
     pub time: String,
     /// The fractional part of the time shown (including the dot).
     pub fraction: String,
+    /// The text to measure when sizing the time without its fractional part.
+    /// Covers both the expected maximum time and the currently displayed time,
+    /// so it stays stable until the current time needs more space. All digits
+    /// are normalized to `8` to avoid measuring again when only digits change.
+    pub time_size_hint: String,
+    /// The fractional part (including the decimal separator) to reserve when
+    /// sizing the timer, with all digits normalized to `8`. Renderers should
+    /// measure it at the fraction's scale.
+    pub fraction_size_hint: String,
     /// The semantic coloring information the time carries.
     pub semantic_color: SemanticColor,
     /// The top color of the timer's gradient.
@@ -165,6 +178,8 @@ impl State {
     pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
         self.time.hash(state);
         self.fraction.hash(state);
+        self.time_size_hint.hash(state);
+        self.fraction_size_hint.hash(state);
     }
 
     pub(crate) const fn updates_frequently(&self) -> bool {
@@ -217,6 +232,55 @@ impl Component {
             .unwrap_or_else(|| timer.current_timing_method());
 
         let phase = timer.current_phase();
+
+        let comparisons = [
+            personal_best::NAME,
+            timer.current_comparison(),
+            median_segments::NAME,
+            average_segments::NAME,
+        ];
+        let expected_time = if self.settings.is_segment_timer {
+            // Use the longest segment to keep the scale stable between splits.
+            (0..timer.run().len())
+                .flat_map(|index| {
+                    comparisons.iter().filter_map(move |comparison| {
+                        comparison_single_segment_time(timer.run(), index, comparison, method)
+                            .or_else(|| {
+                                comparison_single_segment_time(
+                                    timer.run(),
+                                    index,
+                                    comparison,
+                                    TimingMethod::RealTime,
+                                )
+                            })
+                    })
+                })
+                .max()
+        } else {
+            let last_segment = timer.run().segments().last().unwrap();
+            comparisons
+                .iter()
+                .filter_map(|comparison| {
+                    let time = last_segment.comparison(comparison);
+                    time[method].or(time.real_time)
+                })
+                .max()
+        };
+        // Reserve a 20% buffer above the observed comparisons. Only when no
+        // estimate exists, reserve ten minutes for a segment or one hour for
+        // the whole run. The hint also covers the current time below.
+        let expected_time = expected_time
+            .map(|time| {
+                let time = time.max(TimeSpan::zero());
+                time + TimeSpan::from(time.to_duration() / 5)
+            })
+            .unwrap_or_else(|| {
+                TimeSpan::from_seconds(if self.settings.is_segment_timer {
+                    600.0
+                } else {
+                    3600.0
+                })
+            });
 
         let (time, semantic_color) = if self.settings.is_segment_timer {
             let last_split_index = if phase == TimerPhase::Ended {
@@ -279,6 +343,35 @@ impl Component {
 
             (Some(time), semantic_color)
         };
+
+        // The renderer sizes from the hints alone. Expand the expected time
+        // when the actual time needs more digits, and include its minus sign.
+        let size_hint_time = time.map_or(expected_time, |time| {
+            let magnitude = TimeSpan::from(time.to_duration().abs()).max(expected_time);
+            if time < TimeSpan::zero() {
+                -magnitude
+            } else {
+                magnitude
+            }
+        });
+        state.time_size_hint.clear();
+        if time.is_none() {
+            // Reserve the missing-time glyph too, since its width depends on
+            // the font and isn't necessarily bounded by a single digit.
+            state.time_size_hint.push_str(DASH);
+        }
+        let _ = write!(
+            SizeHintWriter(&mut state.time_size_hint),
+            "{}",
+            formatter::Time::with_digits_format(self.settings.digits_format)
+                .format(size_hint_time, lang),
+        );
+        state.fraction_size_hint.clear();
+        let _ = write!(
+            SizeHintWriter(&mut state.fraction_size_hint),
+            "{}",
+            formatter::Fraction::with_accuracy(self.settings.accuracy).format(size_hint_time, lang),
+        );
 
         let not_overwritten_visual_color = semantic_color.visualize(layout_settings);
         let visual_color = if let Some(color) = self.settings.color_override {
@@ -396,6 +489,20 @@ impl Component {
             7 => self.settings.accuracy = value.into(),
             _ => panic!("Unsupported Setting Index"),
         }
+    }
+}
+
+// Timer fonts have monospaced digits. Canonical digits keep the cached label
+// valid whenever the expected time changes without changing its format.
+struct SizeHintWriter<'a>(&'a mut String);
+
+impl Write for SizeHintWriter<'_> {
+    fn write_str(&mut self, text: &str) -> fmt::Result {
+        self.0.extend(
+            text.chars()
+                .map(|c| if c.is_ascii_digit() { '8' } else { c }),
+        );
+        Ok(())
     }
 }
 

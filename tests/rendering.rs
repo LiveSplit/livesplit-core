@@ -187,8 +187,8 @@ fn actual_split_file() {
     check(
         &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
         &image_cache,
-        "385675f173971708",
-        "0cdf37db07c3ea8c",
+        "6b80b888dbd0a60a",
+        "f9e701a720acbf3a",
         "actual_split_file",
     );
 }
@@ -235,8 +235,8 @@ fn timer_delta_background() {
         &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
         &image_cache,
         [250, 300],
-        "be5c85a9a5e3e4a5",
-        "1f0cefb6b7cdc5ab",
+        "fc756956bd507522",
+        "1d712009670cc4d8",
         "timer_delta_background_stopped",
     );
 }
@@ -269,8 +269,8 @@ fn all_components() {
         &state,
         &image_cache,
         [150, 800],
-        "8ebf79b86a476f47",
-        "026dd5923cd8c6be",
+        "20103243ce229698",
+        "ccbb20151c0ee28f",
         "all_components_thin",
     );
 }
@@ -290,6 +290,8 @@ fn score_split() {
         timer::Component::new().state(&timer.snapshot(), layout.general_settings(), Lang::English);
     timer_state.time = "50346".into();
     timer_state.fraction = "PTS".into();
+    timer_state.time_size_hint = "88888".into();
+    timer_state.fraction_size_hint = "PTS".into();
     state.components.push(ComponentState::Timer(timer_state));
     state.components.push(prev_seg);
 
@@ -369,8 +371,8 @@ fn native_subsplits_layout() {
         &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
         &image_cache,
         [300, 300],
-        "a6c612401803a03a",
-        "35f288fb4bdde1ff",
+        "0d7b7c829b1a81bb",
+        "2bb710c84495c43c",
         "native_subsplits_layout",
     );
 }
@@ -505,8 +507,8 @@ fn text_shadow() {
         &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
         &image_cache,
         [400, 400],
-        "ee437905156e2d64",
-        "d21a7fdd462f99fb",
+        "264ee825fffd4446",
+        "6fefd9985c0da17c",
         "text_shadow",
     );
 }
@@ -539,8 +541,8 @@ fn horizontal_group_in_vertical_layout() {
         &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
         &image_cache,
         [300, 400],
-        "4fb1915193fd644a",
-        "c1222af27509c56f",
+        "880a3345a0e9413c",
+        "2f08a9681252a523",
         "horizontal_group_in_vertical_layout",
     );
 }
@@ -575,8 +577,8 @@ fn nested_groups() {
         &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
         &image_cache,
         [400, 200],
-        "6426d21783560265",
-        "67eb98505a5c540e",
+        "1417c192d869ea1e",
+        "8eb3c7a39ada7a3d",
         "nested_groups",
     );
 }
