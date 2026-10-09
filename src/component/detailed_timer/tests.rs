@@ -1,8 +1,27 @@
 use super::{Component, Settings};
 use crate::{
-    GeneralLayoutSettings, Lang, Run, Segment, Timer,
+    GeneralLayoutSettings, Lang, Run, Segment, TimeSpan, Timer,
     settings::{Image, ImageCache},
 };
+
+#[test]
+fn sizes_segment_timer_for_the_longest_segment() {
+    let mut run = Run::new();
+    for seconds in [100.0, 3000.0, 5900.0] {
+        let mut segment = Segment::new("Segment");
+        segment.personal_best_split_time_mut().real_time = Some(TimeSpan::from_seconds(seconds));
+        run.push_segment(segment);
+    }
+    let timer = Timer::new(run).unwrap();
+    let state = Component::new().state(
+        &mut ImageCache::new(),
+        &timer.snapshot(),
+        &GeneralLayoutSettings::default(),
+        Lang::English,
+    );
+    assert_eq!(state.timer.time_size_hint, "8:88:88");
+    assert_eq!(state.segment_timer.time_size_hint, "88:88");
+}
 
 fn prepare() -> (Timer, Component, GeneralLayoutSettings, ImageCache) {
     let mut run = Run::new();

@@ -25,6 +25,24 @@ pub extern "C" fn TimerComponentState_fraction(this: &TimerComponentState) -> *c
     output_str(&this.fraction)
 }
 
+/// The text to measure when sizing the time without its fractional part. Covers
+/// both the expected maximum and the currently displayed time, with all digits
+/// normalized to `8`.
+#[unsafe(no_mangle)]
+pub extern "C" fn TimerComponentState_time_size_hint(this: &TimerComponentState) -> *const c_char {
+    output_str(&this.time_size_hint)
+}
+
+/// The fractional part (including the decimal separator) to reserve when
+/// sizing the timer, with digits normalized to `8`. Measure it at the fraction's
+/// scale.
+#[unsafe(no_mangle)]
+pub extern "C" fn TimerComponentState_fraction_size_hint(
+    this: &TimerComponentState,
+) -> *const c_char {
+    output_str(&this.fraction_size_hint)
+}
+
 /// The semantic coloring information the time carries.
 #[unsafe(no_mangle)]
 pub extern "C" fn TimerComponentState_semantic_color(this: &TimerComponentState) -> *const c_char {

@@ -880,6 +880,11 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         label.width(scale)
     }
 
+    fn measure_timer(&mut self, text: &str, label: &mut CachedLabel<A::Label>, scale: f32) -> f32 {
+        let label = label.update(text, &mut self.handles, &mut self.fonts.timer.font, None);
+        label.width(scale)
+    }
+
     fn decode_layout_background(
         &mut self,
         background: &LayoutBackground<ImageId>,
