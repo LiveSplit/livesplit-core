@@ -78,7 +78,7 @@ mod icon;
 mod resource;
 mod scene;
 
-#[cfg(feature = "default-text-engine")]
+#[cfg(any(feature = "default-text-engine", feature = "parley-text-engine"))]
 pub mod default_text_engine;
 
 #[cfg(feature = "software-rendering")]
