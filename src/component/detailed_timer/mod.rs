@@ -18,7 +18,9 @@ use crate::{
         Snapshot,
         formatter::{Accuracy, DigitsFormat, SegmentTime, TimeFormatter},
     },
+    util::ClearVec,
 };
+use alloc::borrow::Cow;
 use core::{
     fmt::Write,
     hash::{Hash, Hasher},
@@ -91,6 +93,16 @@ pub struct State {
     /// The name of the segment. This may be [`None`] if it's not supposed to be
     /// visualized.
     pub segment_name: Option<String>,
+    /// The segment names used to reserve space for the widest name in the run.
+    /// This keeps the attempt timer's size stable across segment changes. The
+    /// renderer measures these names with the layout's text font. This is empty
+    /// when segment names are hidden.
+    pub segment_name_size_hints: ClearVec<String>,
+    /// The shortest whole-time format the attempt timer can display, with
+    /// normalized digits. Together with the fraction hint, this tells the
+    /// renderer how much space a name could ever use at a stable timer size.
+    /// Generated states borrow this fixed format without allocating a string.
+    pub timer_minimum_size_hint: Cow<'static, str>,
     /// The icon of the segment. The associated image can be looked up in the
     /// image cache. The image may be the empty image. This indicates that there
     /// is no icon.
@@ -122,6 +134,8 @@ impl State {
         comparison_fingerprint(state, &self.comparison1);
         comparison_fingerprint(state, &self.comparison2);
         self.segment_name.hash(state);
+        self.segment_name_size_hints.hash(state);
+        self.timer_minimum_size_hint.hash(state);
         self.icon.hash(state);
     }
 
@@ -338,6 +352,15 @@ impl Component {
         self.timer
             .update_state(&mut state.timer, timer, layout_settings, lang);
 
+        state.timer_minimum_size_hint = Cow::Borrowed(match self.settings.timer.digits_format {
+            DigitsFormat::SingleDigitSeconds => "8",
+            DigitsFormat::DoubleDigitSeconds => "88",
+            DigitsFormat::SingleDigitMinutes => "8:88",
+            DigitsFormat::DoubleDigitMinutes => "88:88",
+            DigitsFormat::SingleDigitHours => "8:88:88",
+            DigitsFormat::DoubleDigitHours => "88:88:88",
+        });
+
         self.segment_timer
             .update_state(&mut state.segment_timer, timer, layout_settings, lang);
 
@@ -366,6 +389,16 @@ impl Component {
                 segment_name.push_str(segment.name());
             }
             None => state.segment_name = None,
+        }
+
+        state.segment_name_size_hints.clear();
+        if self.settings.show_segment_name {
+            for segment in run.segments() {
+                state
+                    .segment_name_size_hints
+                    .push()
+                    .push_str(segment.name());
+            }
         }
 
         state.segment_name_color = self.settings.segment_name_color;

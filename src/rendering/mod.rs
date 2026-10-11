@@ -685,6 +685,23 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         x + label.width(scale)
     }
 
+    fn render_text(
+        &mut self,
+        text: &str,
+        label: &mut CachedLabel<A::Label>,
+        pos: Pos,
+        scale: f32,
+        shader: FillShader,
+    ) {
+        let label = label.update(text, &mut self.handles, &mut self.fonts.text.font, None);
+        self.scene.bottom_layer_mut().push(Entity::Label(
+            label.share(),
+            shader,
+            self.state.text_shadow.as_ref().map(Color::to_array),
+            font::left_aligned(&self.transform, pos, scale),
+        ));
+    }
+
     fn render_text_ellipsis(
         &mut self,
         text: &str,
@@ -868,6 +885,22 @@ impl<A: ResourceAllocator> RenderContext<'_, A> {
         ));
 
         x - width
+    }
+
+    fn measure_text(
+        &mut self,
+        text: &str,
+        label: &mut CachedLabel<A::Label>,
+        scale: f32,
+        max_width: Option<f32>,
+    ) -> f32 {
+        let label = label.update(
+            text,
+            &mut self.handles,
+            &mut self.fonts.text.font,
+            max_width.map(|width| width / scale),
+        );
+        label.width(scale)
     }
 
     fn measure_numbers(

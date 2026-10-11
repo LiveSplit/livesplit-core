@@ -244,3 +244,58 @@ fn stops_showing_icon_when_resetting() {
             .is_empty()
     );
 }
+
+#[test]
+fn reserves_all_names_and_the_shortest_configured_timer_format() {
+    use crate::timing::formatter::DigitsFormat;
+    let mut run = Run::new();
+    for name in ["Start", "Ancient Underground Laboratory Escape", ""] {
+        run.push_segment(Segment::new(name));
+    }
+    let mut timer = Timer::new(run).unwrap();
+    timer.set_current_timing_method(crate::TimingMethod::GameTime);
+    timer.start().unwrap();
+    timer.initialize_game_time().unwrap();
+    timer.pause_game_time().unwrap();
+    timer.set_game_time(TimeSpan::zero()).unwrap();
+    let mut settings = Settings {
+        show_segment_name: true,
+        ..Default::default()
+    };
+    for format in [
+        DigitsFormat::SingleDigitSeconds,
+        DigitsFormat::DoubleDigitSeconds,
+        DigitsFormat::SingleDigitMinutes,
+        DigitsFormat::DoubleDigitMinutes,
+        DigitsFormat::SingleDigitHours,
+        DigitsFormat::DoubleDigitHours,
+    ] {
+        settings.timer.digits_format = format;
+        let component = Component::with_settings(settings.clone());
+        let state = component.state(
+            &mut ImageCache::new(),
+            &timer.snapshot(),
+            &GeneralLayoutSettings::default(),
+            Lang::English,
+        );
+        // Compare with the actual zero-time formatter rather than duplicating
+        // the renderer's format table in this test.
+        let shortest = state.timer.time.replace('0', "8");
+        assert_eq!(state.timer_minimum_size_hint, shortest);
+        assert!(
+            state
+                .segment_name_size_hints
+                .iter()
+                .map(String::as_str)
+                .eq(["Start", "Ancient Underground Laboratory Escape", "",])
+        );
+    }
+    settings.show_segment_name = false;
+    let state = Component::with_settings(settings).state(
+        &mut ImageCache::new(),
+        &timer.snapshot(),
+        &GeneralLayoutSettings::default(),
+        Lang::English,
+    );
+    assert!(state.segment_name_size_hints.is_empty());
+}

@@ -163,6 +163,7 @@ struct CanvasLabelInner {
     shape: LabelShape,
     width: f32,
     width_without_max_width: f32,
+    vertical_bounds: [f32; 2],
 }
 
 struct CanvasLabel(Rc<RefCell<CanvasLabelInner>>);
@@ -180,6 +181,7 @@ impl CanvasLabel {
             shape: LabelShape::Normal(empty_string.clone()),
             width: 0.0,
             width_without_max_width: 0.0,
+            vertical_bounds: [0.0; 2],
         })))
     }
 }
@@ -197,6 +199,10 @@ impl Label for CanvasLabel {
 
     fn width_without_max_width(&self, scale: f32) -> f32 {
         self.0.borrow().width_without_max_width * scale
+    }
+
+    fn vertical_bounds(&self, scale: f32) -> [f32; 2] {
+        self.0.borrow().vertical_bounds.map(|bound| bound * scale)
     }
 }
 
@@ -377,6 +383,11 @@ impl ResourceAllocator for CanvasAllocator {
         let label = &mut *label;
         set_font(&self.ctx_top, font);
 
+        let metrics = self.ctx_top.measure_text(&JsString::from(text)).unwrap();
+        label.vertical_bounds = [
+            -(metrics.actual_bounding_box_ascent() as f32) * FONT_SCALE_FACTOR,
+            metrics.actual_bounding_box_descent() as f32 * FONT_SCALE_FACTOR,
+        ];
         let (shape, width) = font.font_handling.shape(text, &self.ctx_top);
         label.width_without_max_width = width;
         label.width = label.width_without_max_width;

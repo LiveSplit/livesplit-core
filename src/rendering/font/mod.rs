@@ -110,6 +110,16 @@ impl<L> CachedLabel<L> {
         }
     }
 
+    pub fn vertical_bounds(&self, scale: f32) -> [f32; 2]
+    where
+        L: Label,
+    {
+        self.label
+            .as_ref()
+            .expect("the label must be measured first")
+            .vertical_bounds(scale)
+    }
+
     pub fn update<F, R: ResourceAllocator<Label = LabelHandle<L>, Font = Handle<F>>>(
         &mut self,
         value: &str,

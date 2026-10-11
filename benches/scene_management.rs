@@ -67,6 +67,9 @@ cfg_if::cfg_if! {
             fn width_without_max_width(&self, _: f32) -> f32 {
                 0.0
             }
+            fn vertical_bounds(&self, _: f32) -> [f32; 2] {
+                [0.0; 2]
+            }
         }
 
         impl Image for Dummy {
