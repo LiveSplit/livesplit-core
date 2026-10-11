@@ -295,6 +295,34 @@ fn assert_detailed_timer_fits(manager: &Manager, dims: [f32; 2], comparisons: us
     time.scale_x
 }
 
+// These fixtures edit generated states to cover otherwise difficult layouts.
+// A disabled comparison loses its reservation too; temporarily hidden values
+// before an attempt retain it.
+fn remove_comparison(state: &mut detailed_timer::State, index: usize) {
+    if index == 0 {
+        state.comparison1 = None;
+    } else {
+        state.comparison2 = None;
+    }
+    state.comparison_size_hints = state
+        .comparison_size_hints
+        .iter()
+        .enumerate()
+        .filter(|(i, _)| *i != index)
+        .map(|(_, hint)| hint.clone())
+        .collect();
+}
+
+fn set_comparison_name(state: &mut detailed_timer::State, index: usize, name: &str) {
+    let comparison = if index == 0 {
+        &mut state.comparison1
+    } else {
+        &mut state.comparison2
+    };
+    comparison.as_mut().unwrap().name = name.into();
+    state.comparison_size_hints[index].name = name.into();
+}
+
 #[test]
 fn detailed_timer_shares_row_with_comparisons_without_overlaps() {
     let mut image_cache = ImageCache::new();
@@ -330,10 +358,10 @@ fn detailed_timer_shares_row_with_comparisons_without_overlaps() {
                     component.segment_name = Some("A Very Long Segment Name".into());
                 }
                 if comparisons < 2 {
-                    component.comparison2 = None;
+                    remove_comparison(component, 1);
                 }
                 if comparisons == 0 {
-                    component.comparison1 = None;
+                    remove_comparison(component, 0);
                 }
                 for dims in [[80.0, 120.0], [200.0, 120.0], [1000.0, 120.0]] {
                     manager.update_scene(&mut allocator, dims, &state, &image_cache);
@@ -368,7 +396,7 @@ fn detailed_timer_keeps_estimated_size_with_custom_names_and_icon() {
         component.segment_timer.updates_frequently = true;
         component.icon = icon_id;
         component.segment_name = Some("A Very Long Segment Name".into());
-        component.comparison1.as_mut().unwrap().name = "A Very Long Custom Comparison".into();
+        set_comparison_name(component, 0, "A Very Long Custom Comparison");
         let dims = [260.0, 120.0];
         manager.update_scene(&mut allocator, dims, &state, &image_cache);
         let current_scale = assert_detailed_timer_fits(&manager, dims, 2);
@@ -504,7 +532,7 @@ fn detailed_name_fits_before_ellipsizing_at_the_comparison_font_size() {
         };
         component.segment_name =
             Some("Ancient Underground Laboratory Escape and Final Boss Battle".into());
-        component.comparison1.as_mut().unwrap().name = comparison_name.into();
+        set_comparison_name(component, 0, comparison_name);
         manager.update_scene(&mut allocator, dims, &state, &image_cache);
         assert_detailed_timer_fits(&manager, dims, 2);
         let comparison_scale = detailed_comparison_scale(&manager, top_height);
@@ -517,8 +545,8 @@ fn detailed_name_fits_before_ellipsizing_at_the_comparison_font_size() {
     let ComponentState::DetailedTimer(component) = &mut state.components[0] else {
         unreachable!();
     };
-    component.comparison1 = None;
-    component.comparison2 = None;
+    remove_comparison(component, 1);
+    remove_comparison(component, 0);
     manager.update_scene(&mut allocator, dims, &state, &image_cache);
     let (name_scale, _, _) = detailed_name_bounds(&manager, top_height);
     assert!((name_scale - 0.5 * (dims[1] - top_height)).abs() < 0.001);
@@ -638,6 +666,147 @@ fn detailed_timer_with_times(names: &[&str]) -> Timer {
     timer
 }
 
+fn timer_with_varied_comparison_times() -> Timer {
+    let mut run = tests_helper::create_run(&[
+        "Start",
+        "Underground Laboratory Escape",
+        "Final Boss Battle",
+        "Return",
+        "Finish",
+    ]);
+    for ((segment, pb), best) in run
+        .segments_mut()
+        .iter_mut()
+        .zip([Some(1.0), Some(60.0), None, Some(3800.0), Some(6800.0)])
+        .zip([Some(0.5), Some(5.0), None, Some(3200.0), Some(50.0)])
+    {
+        segment.personal_best_split_time_mut().game_time = pb.map(TimeSpan::from_seconds);
+        segment.best_segment_time_mut().game_time = best.map(TimeSpan::from_seconds);
+    }
+    let mut timer = Timer::new(run).unwrap();
+    timer.set_current_timing_method(TimingMethod::GameTime);
+    timer
+}
+
+#[test]
+fn detailed_timer_reserves_comparisons_before_start_and_keeps_the_layout_across_splits() {
+    let mut images = ImageCache::new();
+    let mut allocator = Allocator(TextEngine::new(), 0);
+    let mut manager = SceneManager::new(&mut allocator);
+    for hide_second in [false, true] {
+        for custom_font in [false, true] {
+            for dims in [[160.0, 120.0], [420.0, 120.0], [280.0, 260.0]] {
+                let mut timer = timer_with_varied_comparison_times();
+                let mut layout = Layout::new();
+                layout.general_settings_mut().times_font = custom_font.then(|| Font {
+                    family: "Fira Sans".into(),
+                    ..Default::default()
+                });
+                layout.push(Box::new(detailed_timer::Component::with_settings(
+                    detailed_timer::Settings {
+                        show_segment_name: true,
+                        hide_second_comparison: hide_second,
+                        ..Default::default()
+                    },
+                )));
+                let count = if hide_second { 1 } else { 2 };
+                let mut expected_timers = None;
+                let mut expected_comparisons = None;
+                let mut expected_value_right = None;
+                for step in 0..=7 {
+                    if step == 1 {
+                        tests_helper::start_run(&mut timer);
+                    } else if (2..=6).contains(&step) {
+                        timer
+                            .set_game_time(TimeSpan::from_seconds(step as f64))
+                            .unwrap();
+                        timer.split().unwrap();
+                    } else if step == 7 {
+                        timer.reset(false).unwrap();
+                    }
+                    let mut state = layout.state(&mut images, &timer.snapshot(), Lang::English);
+                    let ComponentState::DetailedTimer(component) = &mut state.components[0] else {
+                        unreachable!()
+                    };
+                    // Keep all four timer labels in the same layer, including
+                    // before starting, to inspect their sizes and baselines.
+                    component.timer.updates_frequently = true;
+                    component.segment_timer.updates_frequently = true;
+                    assert_eq!(component.comparison_size_hints.len(), count);
+                    let visible = step != 0 && step != 7;
+                    assert_eq!(component.comparison1.is_some(), visible);
+                    manager.update_scene(&mut allocator, dims, &state, &images);
+                    let timers = placed_labels(&manager, true);
+                    assert_eq!(timers.len(), 4);
+                    let positions: Vec<_> = timers
+                        .iter()
+                        .map(|label| (label.transform.y, label.transform.scale_y))
+                        .collect();
+                    assert_eq!(
+                        *expected_timers.get_or_insert(positions.clone()),
+                        positions,
+                        "start, split, or reset changed a timer at step {step}"
+                    );
+                    let text = placed_labels(&manager, false);
+                    if visible {
+                        assert_detailed_timer_fits(&manager, dims, count);
+                        let comparisons = &text[text.len() - 2 * count..];
+                        let positions: Vec<_> = comparisons[..count]
+                            .iter()
+                            .map(|label| {
+                                let t = label.transform;
+                                (t.x, t.y, t.scale_x, t.scale_y)
+                            })
+                            .collect();
+                        assert_eq!(
+                            *expected_comparisons.get_or_insert(positions.clone()),
+                            positions,
+                            "split changed comparison positions or sizes at step {step}"
+                        );
+                        let right = comparisons[count].transform.x + comparisons[count].width;
+                        assert!(
+                            (right - *expected_value_right.get_or_insert(right)).abs() < 0.001,
+                            "split moved the reserved value column at step {step}"
+                        );
+                        for value in &comparisons[count..] {
+                            assert!((value.transform.x + value.width - right).abs() < 0.001);
+                        }
+                    } else {
+                        assert!(
+                            text.is_empty(),
+                            "comparisons stay hidden outside an attempt"
+                        );
+                    }
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn hidden_comparison_hints_invalidate_the_cached_layout() {
+    let timer = timer_with_varied_comparison_times();
+    let mut layout = detailed_layout();
+    let mut images = ImageCache::new();
+    let mut state = layout.state(&mut images, &timer.snapshot(), Lang::English);
+    let mut allocator = Allocator(TextEngine::new(), 0);
+    let mut manager = SceneManager::new(&mut allocator);
+    let dims = [160.0, 120.0];
+    manager.update_scene(&mut allocator, dims, &state, &images);
+    let timers = placed_labels(&manager, false);
+    assert_eq!(timers.len(), 4);
+    let before = timers[3].transform.scale_y;
+    let ComponentState::DetailedTimer(component) = &mut state.components[0] else {
+        unreachable!()
+    };
+    assert!(component.comparison1.is_none() && component.comparison2.is_none());
+    component.comparison_size_hints[0].time = "888:88:88.88".into();
+    manager.update_scene(&mut allocator, dims, &state, &images);
+    let after = placed_labels(&manager, false);
+    assert_eq!(after.len(), 4);
+    assert!(after[3].transform.scale_y < before);
+}
+
 #[test]
 fn detailed_timer_centers_comparison_gap_and_protects_all_text() {
     let mut timer = detailed_timer_with_times(&["Start", "Final Boss Battle"]);
@@ -663,8 +832,8 @@ fn detailed_timer_centers_comparison_gap_and_protects_all_text() {
                 let ComponentState::DetailedTimer(component) = &mut state.components[0] else {
                     unreachable!()
                 };
-                component.comparison1.as_mut().unwrap().name = first_label.into();
-                component.comparison2.as_mut().unwrap().name = last_label.into();
+                set_comparison_name(component, 0, first_label);
+                set_comparison_name(component, 1, last_label);
                 for dims in [
                     [280.0, 120.0],
                     [420.0, 120.0],
@@ -775,8 +944,8 @@ fn detailed_timer_uses_three_equal_gaps_around_fixed_timer_boxes() {
     let ComponentState::DetailedTimer(component) = &mut state.components[0] else {
         unreachable!()
     };
-    component.comparison1 = None;
-    component.comparison2 = None;
+    remove_comparison(component, 1);
+    remove_comparison(component, 0);
     let mut allocator = Allocator(TextEngine::new(), 0);
     let reference = timer_reference(&mut allocator, None);
     let mut manager = SceneManager::new(&mut allocator);
@@ -816,9 +985,9 @@ fn detailed_timer_centers_a_single_comparison_for_either_slot() {
             unreachable!()
         };
         if second_slot {
-            component.comparison1 = None;
+            remove_comparison(component, 0);
         } else {
-            component.comparison2 = None;
+            remove_comparison(component, 1);
         }
         for dims in [[280.0, 120.0], [420.0, 260.0]] {
             manager.update_scene(&mut allocator, dims, &state, &image_cache);
@@ -1004,10 +1173,10 @@ fn detailed_timer_preserves_bounds_with_configured_heights_and_accuracies() {
                         unreachable!()
                     };
                     if count < 2 {
-                        component.comparison2 = None;
+                        remove_comparison(component, 1);
                     }
                     if count == 0 {
-                        component.comparison1 = None;
+                        remove_comparison(component, 0);
                     }
                     for dims in [
                         [160.0, 90.0],

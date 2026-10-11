@@ -316,8 +316,8 @@ fn dark_layout() {
     check(
         &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
         &image_cache,
-        "55e09b386968be63",
-        "6285b3508a2af992",
+        "acebad0a696ec423",
+        "5b1084db7fc73700",
         "dark_layout",
     );
 }
@@ -340,8 +340,8 @@ fn subsplits_layout() {
         &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
         &image_cache,
         [300, 800],
-        "984aad276a0a7aa2",
-        "cb67b256bb24e67b",
+        "fc8d561c9974bc4b",
+        "c297389118902b14",
         "subsplits_layout",
     );
 }
@@ -487,8 +487,8 @@ fn horizontal() {
         &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
         &image_cache,
         [1500, 40],
-        "1b3dee7f3cc44a12",
-        "b05726cf8f37145b",
+        "ec993e6dc129ba03",
+        "4f9d990d99eee1db",
         "horizontal",
     );
 }

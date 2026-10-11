@@ -6,7 +6,7 @@
 
 use super::timer;
 use crate::{
-    GeneralLayoutSettings, TimeSpan, TimerPhase,
+    GeneralLayoutSettings, TimeSpan, TimerPhase, TimingMethod,
     analysis::comparison_single_segment_time,
     comparison::{self, best_segments, none},
     localization::{Lang, Text},
@@ -18,7 +18,7 @@ use crate::{
         Snapshot,
         formatter::{Accuracy, DigitsFormat, SegmentTime, TimeFormatter},
     },
-    util::ClearVec,
+    util::{Clear, ClearVec},
 };
 use alloc::borrow::Cow;
 use core::{
@@ -90,6 +90,11 @@ pub struct State {
     pub comparison1: Option<ComparisonState>,
     /// The second comparison to visualize.
     pub comparison2: Option<ComparisonState>,
+    /// The configured comparison names and maximum time formats, in display
+    /// order. These reserve space even while the comparisons are hidden before
+    /// an attempt. Each time hint covers all of that comparison's segment
+    /// times, keeping the lower row stable across splits.
+    pub comparison_size_hints: ClearVec<ComparisonSizeHint>,
     /// The name of the segment. This may be [`None`] if it's not supposed to be
     /// visualized.
     pub segment_name: Option<String>,
@@ -127,12 +132,32 @@ pub struct ComparisonState {
     pub time: String,
 }
 
+/// The space to reserve for a configured comparison, independently of whether
+/// its current value is visible.
+#[derive(Default, Clone, Hash, Serialize, Deserialize)]
+pub struct ComparisonSizeHint {
+    /// The comparison's displayed name, measured with the layout's text font.
+    pub name: String,
+    /// The largest known segment time, formatted with the comparison's
+    /// accuracy and normalized digits. This is a dash if no times are known.
+    /// The renderer also reserves the missing-time glyph alongside this hint.
+    pub time: String,
+}
+
+impl Clear for ComparisonSizeHint {
+    fn clear(&mut self) {
+        self.name.clear();
+        self.time.clear();
+    }
+}
+
 impl State {
     pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
         self.timer.content_fingerprint(state);
         self.segment_timer.content_fingerprint(state);
         comparison_fingerprint(state, &self.comparison1);
         comparison_fingerprint(state, &self.comparison2);
+        self.comparison_size_hints.hash(state);
         self.segment_name.hash(state);
         self.segment_name_size_hints.hash(state);
         self.timer_minimum_size_hint.hash(state);
@@ -183,6 +208,35 @@ fn update_comparison(
         *state = None;
     }
 }
+
+fn write_comparison_size_hint(
+    output: &mut String,
+    timer: &Snapshot,
+    comparison: &str,
+    method: TimingMethod,
+    accuracy: Accuracy,
+    lang: Lang,
+) {
+    // Comparison values are already known and do not grow as the timer runs.
+    // Their exact maximum is sufficient; only live timers need a buffer.
+    let mut has_negative = false;
+    let largest = (0..timer.run().len())
+        .filter_map(|index| comparison_single_segment_time(timer.run(), index, comparison, method))
+        .map(|time| {
+            has_negative |= time < TimeSpan::zero();
+            TimeSpan::from(time.to_duration().abs())
+        })
+        .max();
+    // Reserve a minus sign for the whole run if any segment needs one. Neither
+    // the digits nor the sign in this hint depend on the current segment.
+    let largest = largest.map(|time| if has_negative { -time } else { time });
+    let _ = write!(
+        timer::SizeHintWriter(output),
+        "{}",
+        SegmentTime::with_accuracy(accuracy).format(largest, lang)
+    );
+}
+
 const SEGMENT_TIMER_DEFAULT_COLOR: Color =
     Color::rgba(170.0 / 255.0, 170.0 / 255.0, 170.0 / 255.0, 1.0);
 
@@ -253,6 +307,74 @@ impl Component {
         *self.segment_timer.settings_mut() = self.settings.segment_timer.clone();
     }
 
+    /// Resolve the displayed comparisons before considering their visibility.
+    /// Keeping this selection identical before and during an attempt lets the
+    /// renderer reserve their names, columns, and line count from the outset.
+    fn resolve_comparisons<'a>(&'a self, timer: &'a Snapshot) -> [Option<&'a str>; 2] {
+        let run = timer.run();
+        let mut first = self
+            .settings
+            .comparison1
+            .as_deref()
+            .unwrap_or_else(|| timer.current_comparison());
+        let second = self
+            .settings
+            .comparison2
+            .as_deref()
+            .unwrap_or_else(|| timer.current_comparison());
+        let mut hide_second = self.settings.hide_second_comparison;
+
+        if hide_second || !run.comparisons().any(|c| c == second) || second == none::NAME {
+            hide_second = true;
+            if !run.comparisons().any(|c| c == first) || first == none::NAME {
+                first = timer.current_comparison();
+            }
+        } else if !run.comparisons().any(|c| c == first) || first == none::NAME {
+            hide_second = true;
+            first = second;
+        } else if first == second {
+            hide_second = true;
+        }
+        [Some(first), (!hide_second).then_some(second)]
+    }
+
+    fn update_comparisons(&self, state: &mut State, timer: &Snapshot, index: usize, lang: Lang) {
+        let method = self
+            .settings
+            .timer
+            .timing_method
+            .unwrap_or_else(|| timer.current_timing_method());
+        let accuracy = self.settings.comparison_times_accuracy;
+        state.comparison_size_hints.clear();
+        for (comparison, visible) in self
+            .resolve_comparisons(timer)
+            .into_iter()
+            .zip([&mut state.comparison1, &mut state.comparison2])
+        {
+            if let Some(comparison) = comparison {
+                let hint = state.comparison_size_hints.push();
+                hint.name.push_str(comparison::shorten(comparison));
+                write_comparison_size_hint(
+                    &mut hint.time,
+                    timer,
+                    comparison,
+                    method,
+                    accuracy,
+                    lang,
+                );
+            }
+            let visible_comparison = comparison
+                .filter(|_| timer.current_phase() != TimerPhase::NotRunning)
+                .map(|comparison| {
+                    (
+                        comparison::shorten(comparison),
+                        comparison_single_segment_time(timer.run(), index, comparison, method),
+                    )
+                });
+            update_comparison(visible, visible_comparison, accuracy, lang);
+        }
+    }
+
     /// Accesses the name of the component for the specified language.
     pub const fn name(&self, lang: Lang) -> &'static str {
         Text::ComponentDetailedTimer.resolve(lang)
@@ -272,12 +394,6 @@ impl Component {
         lang: Lang,
     ) {
         let current_phase = timer.current_phase();
-        let timing_method = self
-            .settings
-            .timer
-            .timing_method
-            .unwrap_or_else(|| timer.current_timing_method());
-
         let run = timer.run();
 
         let (current_split, last_split_index) = if current_phase == TimerPhase::Ended {
@@ -287,60 +403,6 @@ impl Component {
                 timer.current_split(),
                 timer.current_split_index().unwrap_or(0),
             )
-        };
-
-        let (comparison1, comparison2) = if current_phase != TimerPhase::NotRunning {
-            let mut comparison1 = self
-                .settings
-                .comparison1
-                .as_deref()
-                .unwrap_or_else(|| timer.current_comparison());
-
-            let comparison2 = self
-                .settings
-                .comparison2
-                .as_deref()
-                .unwrap_or_else(|| timer.current_comparison());
-
-            let mut hide_comparison = self.settings.hide_second_comparison;
-
-            if hide_comparison
-                || !run.comparisons().any(|c| c == comparison2)
-                || comparison2 == none::NAME
-            {
-                hide_comparison = true;
-                if !run.comparisons().any(|c| c == comparison1) || comparison1 == none::NAME {
-                    comparison1 = timer.current_comparison();
-                }
-            } else if !run.comparisons().any(|c| c == comparison1) || comparison1 == none::NAME {
-                hide_comparison = true;
-                comparison1 = comparison2;
-            } else if comparison1 == comparison2 {
-                hide_comparison = true;
-            }
-
-            let comparison1 = Some((
-                comparison::shorten(comparison1),
-                comparison_single_segment_time(run, last_split_index, comparison1, timing_method),
-            ));
-
-            let comparison2 = if !hide_comparison {
-                Some((
-                    comparison::shorten(comparison2),
-                    comparison_single_segment_time(
-                        run,
-                        last_split_index,
-                        comparison2,
-                        timing_method,
-                    ),
-                ))
-            } else {
-                None
-            };
-
-            (comparison1, comparison2)
-        } else {
-            Default::default()
         };
 
         let icon = current_split
@@ -369,18 +431,7 @@ impl Component {
             .background
             .gradient(state.timer.semantic_color.visualize(layout_settings));
 
-        update_comparison(
-            &mut state.comparison1,
-            comparison1,
-            self.settings.comparison_times_accuracy,
-            lang,
-        );
-        update_comparison(
-            &mut state.comparison2,
-            comparison2,
-            self.settings.comparison_times_accuracy,
-            lang,
-        );
+        self.update_comparisons(state, timer, last_split_index, lang);
 
         match current_split.filter(|_| self.settings.show_segment_name) {
             Some(segment) => {

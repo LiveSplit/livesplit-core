@@ -1,8 +1,230 @@
-use super::{Component, Settings};
+use super::{Component, Settings, State};
 use crate::{
-    GeneralLayoutSettings, Lang, Run, Segment, TimeSpan, Timer,
+    GeneralLayoutSettings, Lang, Run, Segment, TimeSpan, Timer, TimingMethod,
+    comparison::{best_segments, none, personal_best},
     settings::{Image, ImageCache},
+    timing::formatter::Accuracy,
+    util::tests_helper::{create_run, start_run},
 };
+
+fn state(component: &Component, timer: &Timer) -> State {
+    component.state(
+        &mut ImageCache::new(),
+        &timer.snapshot(),
+        &GeneralLayoutSettings::default(),
+        Lang::English,
+    )
+}
+
+const TARGET: &str = "Target";
+
+fn timer_with_target(times: &[Option<f64>], method: TimingMethod) -> Timer {
+    let mut run = Run::new();
+    run.add_custom_comparison(TARGET).unwrap();
+    for &time in times {
+        let mut segment = Segment::new("Segment");
+        segment.comparison_mut(TARGET)[method] = time.map(TimeSpan::from_seconds);
+        run.push_segment(segment);
+    }
+    let mut timer = Timer::new(run).unwrap();
+    timer.set_current_comparison(TARGET).unwrap();
+    timer.set_current_timing_method(method);
+    timer
+}
+
+#[test]
+fn comparison_hints_reserve_their_own_longest_segment_instead_of_the_total() {
+    let mut run = create_run(&["Short", "Long", "Short Again"]);
+    run.add_custom_comparison(TARGET).unwrap();
+    for (index, (pb, target, best)) in [
+        (1000.0, 50.0, 50.0),
+        (2000.0, 3200.0, 60.0),
+        (3000.0, 3250.0, 80.0),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let segment = run.segment_mut(index);
+        segment.personal_best_split_time_mut().game_time = Some(TimeSpan::from_seconds(pb));
+        segment.comparison_mut(TARGET).game_time = Some(TimeSpan::from_seconds(target));
+        segment.best_segment_time_mut().game_time = Some(TimeSpan::from_seconds(best));
+    }
+    let mut timer = Timer::new(run).unwrap();
+    timer.set_current_timing_method(TimingMethod::GameTime);
+    let pb = state(&Component::new(), &timer);
+    assert_eq!(pb.comparison_size_hints[0].time, "88:88.88");
+    assert_eq!(pb.comparison_size_hints[1].time, "8:88.88");
+    timer.set_current_comparison(TARGET).unwrap();
+    let target = state(&Component::new(), &timer);
+    assert_eq!(target.comparison_size_hints[0].time, "88:88.88");
+    assert_eq!(target.comparison_size_hints[1].time, "8:88.88");
+}
+
+#[test]
+fn comparison_hints_use_the_exact_maximum_and_normalize_digits() {
+    let component = Component::with_settings(Settings {
+        hide_second_comparison: true,
+        ..Default::default()
+    });
+    for (seconds, expected) in [
+        (5.0, "8.88"),
+        (9.99, "8.88"),
+        (10.0, "88.88"),
+        (49.0, "88.88"),
+        (50.0, "88.88"),
+        (59.99, "88.88"),
+        (60.0, "8:88.88"),
+        (500.0, "8:88.88"),
+        (599.99, "8:88.88"),
+        (600.0, "88:88.88"),
+        (3000.0, "88:88.88"),
+        (3599.99, "88:88.88"),
+        (3600.0, "8:88:88.88"),
+        (30000.0, "8:88:88.88"),
+        (35999.99, "8:88:88.88"),
+        (36000.0, "88:88:88.88"),
+    ] {
+        let timer = timer_with_target(&[Some(seconds)], TimingMethod::GameTime);
+        assert_eq!(
+            state(&component, &timer).comparison_size_hints[0].time,
+            expected
+        );
+    }
+}
+
+#[test]
+fn comparison_hints_only_count_segment_times_that_can_be_displayed() {
+    let component = Component::new();
+    for (times, expected) in [
+        ([Some(5.0), None, Some(5000.0), Some(5005.0)], "8.88"),
+        ([None, Some(50.0), None, Some(5000.0)], "—"),
+        ([None; 4], "—"),
+        ([Some(0.0); 4], "8.88"),
+    ] {
+        let timer = timer_with_target(&times, TimingMethod::GameTime);
+        assert_eq!(
+            state(&component, &timer).comparison_size_hints[0].time,
+            expected
+        );
+    }
+}
+
+#[test]
+fn comparison_hints_follow_the_comparison_timing_method_override() {
+    let timer = timer_with_target(&[Some(50.0)], TimingMethod::RealTime);
+    let mut run = timer.into_run(false);
+    run.segment_mut(0).comparison_mut(TARGET).game_time = Some(TimeSpan::from_seconds(3200.0));
+    let mut timer = Timer::new(run).unwrap();
+    timer.set_current_comparison(TARGET).unwrap();
+    timer.set_current_timing_method(TimingMethod::GameTime);
+    for (method, expected) in [
+        (TimingMethod::RealTime, "88.88"),
+        (TimingMethod::GameTime, "88:88.88"),
+    ] {
+        let mut settings = Settings::default();
+        settings.timer.timing_method = Some(method);
+        let component = Component::with_settings(settings);
+        assert_eq!(
+            state(&component, &timer).comparison_size_hints[0].time,
+            expected
+        );
+    }
+}
+
+#[test]
+fn comparison_hints_follow_accuracy_and_decimal_separator() {
+    let timer = timer_with_target(&[Some(50.0)], TimingMethod::GameTime);
+    for (accuracy, fraction) in [
+        (Accuracy::Seconds, ""),
+        (Accuracy::Tenths, ".8"),
+        (Accuracy::Hundredths, ".88"),
+        (Accuracy::Milliseconds, ".888"),
+    ] {
+        let component = Component::with_settings(Settings {
+            comparison_times_accuracy: accuracy,
+            ..Default::default()
+        });
+        let expected = format!("88{fraction}");
+        assert_eq!(
+            state(&component, &timer).comparison_size_hints[0].time,
+            expected
+        );
+        #[cfg(feature = "localization")]
+        {
+            let localized = component.state(
+                &mut ImageCache::new(),
+                &timer.snapshot(),
+                &GeneralLayoutSettings::default(),
+                Lang::German,
+            );
+            assert_eq!(
+                localized.comparison_size_hints[0].time,
+                expected.replace('.', ",")
+            );
+        }
+    }
+}
+
+#[test]
+fn comparison_reservations_use_the_same_selection_before_and_during_an_attempt() {
+    for (first, second, hide_second, names) in [
+        (None, None, false, &["PB"][..]),
+        (None, Some(best_segments::NAME), false, &["PB", "Best"]),
+        (None, Some(best_segments::NAME), true, &["PB"]),
+        (
+            Some(personal_best::NAME),
+            Some(personal_best::NAME),
+            false,
+            &["PB"],
+        ),
+        (Some("Missing"), Some(best_segments::NAME), false, &["Best"]),
+        (
+            Some(none::NAME),
+            Some(best_segments::NAME),
+            false,
+            &["Best"],
+        ),
+        (None, Some(none::NAME), false, &["PB"]),
+        (Some("Missing"), Some("Missing"), false, &["PB"]),
+        (Some(none::NAME), Some(best_segments::NAME), true, &["PB"]),
+    ] {
+        let mut timer = Timer::new(create_run(&["Start"])).unwrap();
+        let component = Component::with_settings(Settings {
+            comparison1: first.map(Into::into),
+            comparison2: second.map(Into::into),
+            hide_second_comparison: hide_second,
+            ..Default::default()
+        });
+        let before = state(&component, &timer);
+        assert!(before.comparison1.is_none() && before.comparison2.is_none());
+        assert!(
+            before
+                .comparison_size_hints
+                .iter()
+                .map(|h| h.name.as_str())
+                .eq(names.iter().copied())
+        );
+        start_run(&mut timer);
+        let after = state(&component, &timer);
+        assert!(
+            [after.comparison1, after.comparison2]
+                .iter()
+                .flatten()
+                .map(|c| c.name.as_str())
+                .eq(names.iter().copied())
+        );
+        assert!(
+            after
+                .comparison_size_hints
+                .iter()
+                .map(|h| (&h.name, &h.time))
+                .eq(before
+                    .comparison_size_hints
+                    .iter()
+                    .map(|h| (&h.name, &h.time)))
+        );
+    }
+}
 
 #[test]
 fn sizes_segment_timer_for_the_longest_segment() {

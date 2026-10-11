@@ -20,6 +20,7 @@ use crate::{
         scene::Layer,
         solid,
     },
+    timing::formatter::DASH,
 };
 
 /// Extra shrinking to accommodate names is limited to 25%. Width fitting of
@@ -33,6 +34,7 @@ const TEXT_REFERENCE: &str = "Hgyp0123456789";
 struct ComparisonCache<L> {
     name: CachedLabel<L>,
     time: CachedLabel<L>,
+    time_size_hint: CachedLabel<L>,
 }
 
 impl<L> ComparisonCache<L> {
@@ -40,6 +42,7 @@ impl<L> ComparisonCache<L> {
         Self {
             name: CachedLabel::new(),
             time: CachedLabel::new(),
+            time_size_hint: CachedLabel::new(),
         }
     }
 }
@@ -66,6 +69,7 @@ struct Labels<L> {
     timer_bounds: CachedLabel<L>,
     comparison_text_bounds: CachedLabel<L>,
     comparison_number_bounds: CachedLabel<L>,
+    comparison_dash: CachedLabel<L>,
     comparisons: [ComparisonCache<L>; 2],
 }
 
@@ -80,6 +84,7 @@ impl<L> Labels<L> {
             timer_bounds: CachedLabel::new(),
             comparison_text_bounds: CachedLabel::new(),
             comparison_number_bounds: CachedLabel::new(),
+            comparison_dash: CachedLabel::new(),
             comparisons: [ComparisonCache::new(), ComparisonCache::new()],
         }
     }
@@ -305,15 +310,21 @@ fn measure_comparisons<A: ResourceAllocator>(
     let mut ink = [numbers; 2];
     let mut reserved = [reference; 2];
     let mut count = 0;
-    for (comparison, labels) in [&component.comparison1, &component.comparison2]
-        .into_iter()
-        .flatten()
+    // Visibility and current values must not affect the reserved lower row.
+    // The hints include every segment and stay available before an attempt.
+    let dash_width = context.measure_numbers(DASH, &mut cache.comparison_dash, font);
+    for (comparison, labels) in component
+        .comparison_size_hints
+        .iter()
         .zip(&mut cache.comparisons)
     {
         widths[0] =
             widths[0].max(context.measure_text(&comparison.name, &mut labels.name, font, None));
-        widths[1] =
-            widths[1].max(context.measure_numbers(&comparison.time, &mut labels.time, font));
+        widths[1] = widths[1].max(dash_width).max(context.measure_numbers(
+            &comparison.time,
+            &mut labels.time_size_hint,
+            font,
+        ));
         // A missing value (dash) and any digits have one stable numeric box.
         // Empty names must not introduce an artificial baseline into that box.
         if !comparison.name.is_empty() {
