@@ -2,7 +2,7 @@ use super::{Component, Settings, State};
 use crate::{
     GeneralLayoutSettings, Lang, Run, Segment, TimeSpan, Timer, TimingMethod,
     comparison::{best_segments, none, personal_best},
-    settings::{Image, ImageCache},
+    settings::{Image, ImageCache, SemanticColor, Value},
     timing::formatter::Accuracy,
     util::tests_helper::{create_run, start_run},
 };
@@ -14,6 +14,115 @@ fn state(component: &Component, timer: &Timer) -> State {
         &GeneralLayoutSettings::default(),
         Lang::English,
     )
+}
+
+#[test]
+fn constructors_produce_equivalent_settings_and_states() {
+    let new = Component::new();
+    let default = Component::default();
+    let expected_settings = serde_json::to_value(Settings::default()).unwrap();
+    assert_eq!(
+        serde_json::to_value(new.settings()).unwrap(),
+        expected_settings
+    );
+    assert_eq!(
+        serde_json::to_value(default.settings()).unwrap(),
+        expected_settings
+    );
+
+    let mut timer = Timer::new(create_run(&["First", "Second"])).unwrap();
+    for phase in 0..=5 {
+        match phase {
+            1 => start_run(&mut timer),
+            2 => {
+                timer.set_game_time(TimeSpan::from_seconds(10.0)).unwrap();
+                timer.split().unwrap();
+            }
+            3 => {
+                timer.pause().unwrap();
+            }
+            4 => {
+                timer.resume().unwrap();
+                timer.set_game_time(TimeSpan::from_seconds(35.25)).unwrap();
+                timer.split().unwrap();
+            }
+            5 => {
+                timer.reset(false).unwrap();
+            }
+            _ => {}
+        }
+        let snapshot = timer.snapshot();
+        let mut images = ImageCache::new();
+        let layout = GeneralLayoutSettings::default();
+        let expected = new.state(&mut images, &snapshot, &layout, Lang::English);
+        let actual = default.state(&mut images, &snapshot, &layout, Lang::English);
+        // Compare the full public state, including hints, colors, and update
+        // frequency, with both constructors observing the same timer snapshot.
+        assert_eq!(
+            serde_json::to_value(actual).unwrap(),
+            serde_json::to_value(expected).unwrap(),
+            "constructors differ at phase {phase}"
+        );
+    }
+}
+
+#[test]
+fn constructors_use_segment_timing_and_the_default_segment_color() {
+    let mut run = create_run(&["First", "Second"]);
+    for (segment, seconds) in run.segments_mut().iter_mut().zip([10.0, 100.0]) {
+        segment.personal_best_split_time_mut().game_time = Some(TimeSpan::from_seconds(seconds));
+    }
+    let mut timer = Timer::new(run).unwrap();
+    start_run(&mut timer);
+    timer.set_game_time(TimeSpan::from_seconds(10.0)).unwrap();
+    timer.split().unwrap();
+    timer.set_game_time(TimeSpan::from_seconds(35.25)).unwrap();
+    let expected_colors = super::timer::top_and_bottom_color(super::SEGMENT_TIMER_DEFAULT_COLOR);
+
+    for component in [Component::new(), Component::default()] {
+        assert!(!component.settings().timer.is_segment_timer);
+        assert!(component.settings().segment_timer.is_segment_timer);
+        assert_eq!(component.settings().timer.height, 40);
+        assert_eq!(component.settings().segment_timer.height, 25);
+        let state = state(&component, &timer);
+        assert_eq!(state.timer.height, 40);
+        assert_eq!(state.segment_timer.height, 25);
+        assert_eq!(state.timer.time, "35");
+        assert_eq!(state.segment_timer.time, "25");
+        assert_eq!(state.segment_timer.fraction, ".25");
+        assert_eq!(state.segment_timer.semantic_color, SemanticColor::Default);
+        assert_eq!(
+            (
+                state.segment_timer.top_color,
+                state.segment_timer.bottom_color
+            ),
+            expected_colors
+        );
+        assert_ne!(
+            (state.timer.top_color, state.timer.bottom_color),
+            expected_colors,
+            "the segment color is independent of the attempt's comparison color"
+        );
+    }
+}
+
+#[test]
+fn constructors_apply_segment_height_edits_from_the_correct_default() {
+    let timer = Timer::new(create_run(&["First"])).unwrap();
+    for mut component in [Component::new(), Component::default()] {
+        let before = state(&component, &timer);
+        assert_eq!(component.settings().segment_timer.height, 25);
+        assert_eq!(before.segment_timer.height, 25);
+
+        // Exercise the editor's single-setting update rather than replacing
+        // all settings, which would conceal incorrectly initialized timers.
+        component.set_value(6, Value::UInt(26));
+        let after = state(&component, &timer);
+        assert_eq!(component.settings().segment_timer.height, 26);
+        assert_eq!(after.segment_timer.height, before.segment_timer.height + 1);
+        assert_eq!(after.segment_timer.height, 26);
+        assert_eq!(after.timer.height, 40);
+    }
 }
 
 const TARGET: &str = "Target";

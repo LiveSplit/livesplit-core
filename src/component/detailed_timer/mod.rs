@@ -34,11 +34,19 @@ mod tests;
 /// the total time of the current attempt and one showing the time of just the
 /// current segment. Other information, like segment times of up to two
 /// comparisons, the segment icon, and the segment's name, can also be shown.
-#[derive(Default, Clone)]
+#[derive(Clone)]
 pub struct Component {
     timer: timer::Component,
     segment_timer: timer::Component,
     settings: Settings,
+}
+
+impl Default for Component {
+    fn default() -> Self {
+        // Initialize both timers from the detailed timer's settings rather
+        // than giving them the standalone timer's independent defaults.
+        Self::new()
+    }
 }
 
 /// The Settings for this component.
@@ -281,7 +289,7 @@ impl State {
 impl Component {
     /// Creates a new Detailed Timer Component.
     pub fn new() -> Self {
-        Self::with_settings(Default::default())
+        Self::with_settings(Settings::default())
     }
 
     /// Creates a new Detailed Timer Component with the given settings.
