@@ -18,14 +18,17 @@ use livesplit_core::{
 };
 use std::{fs, path::PathBuf};
 
+#[track_caller]
 fn lss(data: &str) -> Run {
     livesplit::parse(data).unwrap()
 }
 
+#[track_caller]
 fn lsl(data: &str) -> Layout {
     layout::parser::parse(data).unwrap()
 }
 
+#[track_caller]
 fn ls1l(data: &str) -> Layout {
     Layout::from_settings(serde_json::from_str(data).unwrap())
 }
@@ -260,8 +263,8 @@ fn all_components() {
         &state,
         &image_cache,
         [300, 800],
-        "4172bfcf7d7913ff",
-        "752a959a209f332e",
+        "f8f1a68e5c589001",
+        "9d3957736010916a",
         "all_components",
     );
 
@@ -269,8 +272,8 @@ fn all_components() {
         &state,
         &image_cache,
         [150, 800],
-        "20103243ce229698",
-        "ccbb20151c0ee28f",
+        "442a072cec27ca27",
+        "38840fd8335a7a03",
         "all_components_thin",
     );
 }
@@ -316,8 +319,8 @@ fn dark_layout() {
     check(
         &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
         &image_cache,
-        "540515e778133820",
-        "5ca393d8b84cb704",
+        "acebad0a696ec423",
+        "5b1084db7fc73700",
         "dark_layout",
     );
 }
@@ -340,8 +343,8 @@ fn subsplits_layout() {
         &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
         &image_cache,
         [300, 800],
-        "85d2ac8702abc205",
-        "577b2b51aed1830a",
+        "fc8d561c9974bc4b",
+        "c297389118902b14",
         "subsplits_layout",
     );
 }
@@ -487,8 +490,8 @@ fn horizontal() {
         &layout.state(&mut image_cache, &timer.snapshot(), Lang::English),
         &image_cache,
         [1500, 40],
-        "23d8f03a5a08157e",
-        "4d9aecef410a844f",
+        "ec993e6dc129ba03",
+        "4f9d990d99eee1db",
         "horizontal",
     );
 }

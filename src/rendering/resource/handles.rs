@@ -157,6 +157,10 @@ impl<L: Label> Label for LabelHandle<L> {
     fn width_without_max_width(&self, scale: f32) -> f32 {
         self.handle.inner.width_without_max_width(scale)
     }
+
+    fn vertical_bounds(&self, scale: f32) -> [f32; 2] {
+        self.handle.inner.vertical_bounds(scale)
+    }
 }
 
 impl<T> Eq for LabelHandle<T> {}

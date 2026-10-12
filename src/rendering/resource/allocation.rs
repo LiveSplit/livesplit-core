@@ -140,6 +140,13 @@ pub trait Label: SharedOwnership {
     /// The width of the current text scaled by the scale factor provided as if
     /// it wasn't truncated by the maximum width that was provided.
     fn width_without_max_width(&self, scale: f32) -> f32;
+
+    /// The top and bottom of the full text's glyph outlines relative to its
+    /// baseline, scaled by the scale factor provided. Coordinates increase
+    /// downwards; both bounds may be negative for text above the baseline.
+    /// These bounds are independent of truncation by the maximum width. Text
+    /// without outlines, including an empty label, returns `[0.0, 0.0]`.
+    fn vertical_bounds(&self, scale: f32) -> [f32; 2];
 }
 
 /// The [`ResourceAllocator`] provides a path builder that defines how to build

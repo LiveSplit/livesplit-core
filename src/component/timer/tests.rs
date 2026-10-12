@@ -14,6 +14,7 @@ const COMPARISONS: [&str; 4] = [
     average_segments::NAME,
 ];
 
+#[track_caller]
 fn timer_with_comparisons(times: [Option<f64>; 4], method: TimingMethod) -> Timer {
     let mut run = create_run(&["A", "B"]);
     // Explicit comparison values let each source be tested independently.
@@ -30,6 +31,7 @@ fn timer_with_comparisons(times: [Option<f64>; 4], method: TimingMethod) -> Time
     timer
 }
 
+#[track_caller]
 fn state(component: &Component, timer: &Timer) -> State {
     component.state(
         &timer.snapshot(),

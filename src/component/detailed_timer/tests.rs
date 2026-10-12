@@ -1,8 +1,434 @@
-use super::{Component, Settings};
+use super::{Component, Settings, State};
 use crate::{
-    GeneralLayoutSettings, Lang, Run, Segment, TimeSpan, Timer,
-    settings::{Image, ImageCache},
+    GeneralLayoutSettings, Lang, Run, Segment, TimeSpan, Timer, TimingMethod,
+    comparison::{best_segments, none, personal_best},
+    settings::{Image, ImageCache, SemanticColor, Value},
+    timing::formatter::Accuracy,
+    util::tests_helper::{create_run, start_run},
 };
+
+#[track_caller]
+fn state(component: &Component, timer: &Timer) -> State {
+    component.state(
+        &mut ImageCache::new(),
+        &timer.snapshot(),
+        &GeneralLayoutSettings::default(),
+        Lang::English,
+    )
+}
+
+#[test]
+fn constructors_produce_equivalent_settings_and_states() {
+    let new = Component::new();
+    let default = Component::default();
+    let expected_settings = serde_json::to_value(Settings::default()).unwrap();
+    assert_eq!(
+        serde_json::to_value(new.settings()).unwrap(),
+        expected_settings
+    );
+    assert_eq!(
+        serde_json::to_value(default.settings()).unwrap(),
+        expected_settings
+    );
+
+    let mut timer = Timer::new(create_run(&["First", "Second"])).unwrap();
+    for phase in 0..=5 {
+        match phase {
+            1 => start_run(&mut timer),
+            2 => {
+                timer.set_game_time(TimeSpan::from_seconds(10.0)).unwrap();
+                timer.split().unwrap();
+            }
+            3 => {
+                timer.pause().unwrap();
+            }
+            4 => {
+                timer.resume().unwrap();
+                timer.set_game_time(TimeSpan::from_seconds(35.25)).unwrap();
+                timer.split().unwrap();
+            }
+            5 => {
+                timer.reset(false).unwrap();
+            }
+            _ => {}
+        }
+        let snapshot = timer.snapshot();
+        let mut images = ImageCache::new();
+        let layout = GeneralLayoutSettings::default();
+        let expected = new.state(&mut images, &snapshot, &layout, Lang::English);
+        let actual = default.state(&mut images, &snapshot, &layout, Lang::English);
+        // Compare the full public state, including hints, colors, and update
+        // frequency, with both constructors observing the same timer snapshot.
+        assert_eq!(
+            serde_json::to_value(actual).unwrap(),
+            serde_json::to_value(expected).unwrap(),
+            "constructors differ at phase {phase}"
+        );
+    }
+}
+
+#[test]
+fn constructors_use_segment_timing_and_the_default_segment_color() {
+    let mut run = create_run(&["First", "Second"]);
+    for (segment, seconds) in run.segments_mut().iter_mut().zip([10.0, 100.0]) {
+        segment.personal_best_split_time_mut().game_time = Some(TimeSpan::from_seconds(seconds));
+    }
+    let mut timer = Timer::new(run).unwrap();
+    start_run(&mut timer);
+    timer.set_game_time(TimeSpan::from_seconds(10.0)).unwrap();
+    timer.split().unwrap();
+    timer.set_game_time(TimeSpan::from_seconds(35.25)).unwrap();
+    let expected_colors = super::timer::top_and_bottom_color(super::SEGMENT_TIMER_DEFAULT_COLOR);
+
+    for component in [Component::new(), Component::default()] {
+        assert!(!component.settings().timer.is_segment_timer);
+        assert!(component.settings().segment_timer.is_segment_timer);
+        assert_eq!(component.settings().timer.height, 40);
+        assert_eq!(component.settings().segment_timer.height, 25);
+        let state = state(&component, &timer);
+        assert_eq!(state.timer.height, 40);
+        assert_eq!(state.segment_timer.height, 25);
+        assert_eq!(state.timer.time, "35");
+        assert_eq!(state.segment_timer.time, "25");
+        assert_eq!(state.segment_timer.fraction, ".25");
+        assert_eq!(state.segment_timer.semantic_color, SemanticColor::Default);
+        assert_eq!(
+            (
+                state.segment_timer.top_color,
+                state.segment_timer.bottom_color
+            ),
+            expected_colors
+        );
+        assert_ne!(
+            (state.timer.top_color, state.timer.bottom_color),
+            expected_colors,
+            "the segment color is independent of the attempt's comparison color"
+        );
+    }
+}
+
+#[test]
+fn constructors_apply_segment_height_edits_from_the_correct_default() {
+    let timer = Timer::new(create_run(&["First"])).unwrap();
+    for mut component in [Component::new(), Component::default()] {
+        let before = state(&component, &timer);
+        assert_eq!(component.settings().segment_timer.height, 25);
+        assert_eq!(before.segment_timer.height, 25);
+
+        // Exercise the editor's single-setting update rather than replacing
+        // all settings, which would conceal incorrectly initialized timers.
+        component.set_value(6, Value::UInt(26));
+        let after = state(&component, &timer);
+        assert_eq!(component.settings().segment_timer.height, 26);
+        assert_eq!(after.segment_timer.height, before.segment_timer.height + 1);
+        assert_eq!(after.segment_timer.height, 26);
+        assert_eq!(after.timer.height, 40);
+    }
+}
+
+const TARGET: &str = "Target";
+
+#[track_caller]
+fn timer_with_target(times: &[Option<f64>], method: TimingMethod) -> Timer {
+    let mut run = Run::new();
+    run.add_custom_comparison(TARGET).unwrap();
+    for &time in times {
+        let mut segment = Segment::new("Segment");
+        segment.comparison_mut(TARGET)[method] = time.map(TimeSpan::from_seconds);
+        run.push_segment(segment);
+    }
+    let mut timer = Timer::new(run).unwrap();
+    timer.set_current_comparison(TARGET).unwrap();
+    timer.set_current_timing_method(method);
+    timer
+}
+
+#[test]
+fn comparison_hints_reserve_their_own_longest_segment_instead_of_the_total() {
+    let mut run = create_run(&["Short", "Long", "Short Again"]);
+    run.add_custom_comparison(TARGET).unwrap();
+    for (index, (pb, target, best)) in [
+        (1000.0, 50.0, 50.0),
+        (2000.0, 3200.0, 60.0),
+        (3000.0, 3250.0, 80.0),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let segment = run.segment_mut(index);
+        segment.personal_best_split_time_mut().game_time = Some(TimeSpan::from_seconds(pb));
+        segment.comparison_mut(TARGET).game_time = Some(TimeSpan::from_seconds(target));
+        segment.best_segment_time_mut().game_time = Some(TimeSpan::from_seconds(best));
+    }
+    let mut timer = Timer::new(run).unwrap();
+    timer.set_current_timing_method(TimingMethod::GameTime);
+    let pb = state(&Component::new(), &timer);
+    assert_eq!(
+        pb.comparison_size_hints[0].as_ref().unwrap().time,
+        "88:88.88"
+    );
+    assert_eq!(
+        pb.comparison_size_hints[1].as_ref().unwrap().time,
+        "8:88.88"
+    );
+    timer.set_current_comparison(TARGET).unwrap();
+    let target = state(&Component::new(), &timer);
+    assert_eq!(
+        target.comparison_size_hints[0].as_ref().unwrap().time,
+        "88:88.88"
+    );
+    assert_eq!(
+        target.comparison_size_hints[1].as_ref().unwrap().time,
+        "8:88.88"
+    );
+}
+
+#[test]
+fn comparison_hints_use_the_exact_maximum_and_normalize_digits() {
+    let component = Component::with_settings(Settings {
+        hide_second_comparison: true,
+        ..Default::default()
+    });
+    for (seconds, expected) in [
+        (5.0, "8.88"),
+        (9.99, "8.88"),
+        (10.0, "88.88"),
+        (49.0, "88.88"),
+        (50.0, "88.88"),
+        (59.99, "88.88"),
+        (60.0, "8:88.88"),
+        (500.0, "8:88.88"),
+        (599.99, "8:88.88"),
+        (600.0, "88:88.88"),
+        (3000.0, "88:88.88"),
+        (3599.99, "88:88.88"),
+        (3600.0, "8:88:88.88"),
+        (30000.0, "8:88:88.88"),
+        (35999.99, "8:88:88.88"),
+        (36000.0, "88:88:88.88"),
+    ] {
+        let timer = timer_with_target(&[Some(seconds)], TimingMethod::GameTime);
+        assert_eq!(
+            state(&component, &timer).comparison_size_hints[0]
+                .as_ref()
+                .unwrap()
+                .time,
+            expected
+        );
+    }
+}
+
+#[test]
+fn comparison_hints_only_count_segment_times_that_can_be_displayed() {
+    let component = Component::new();
+    for (times, expected) in [
+        ([Some(5.0), None, Some(5000.0), Some(5005.0)], "8.88"),
+        ([None, Some(50.0), None, Some(5000.0)], "—"),
+        ([None; 4], "—"),
+        ([Some(0.0); 4], "8.88"),
+    ] {
+        let timer = timer_with_target(&times, TimingMethod::GameTime);
+        assert_eq!(
+            state(&component, &timer).comparison_size_hints[0]
+                .as_ref()
+                .unwrap()
+                .time,
+            expected
+        );
+    }
+}
+
+#[test]
+fn comparison_hints_follow_the_comparison_timing_method_override() {
+    let timer = timer_with_target(&[Some(50.0)], TimingMethod::RealTime);
+    let mut run = timer.into_run(false);
+    run.segment_mut(0).comparison_mut(TARGET).game_time = Some(TimeSpan::from_seconds(3200.0));
+    let mut timer = Timer::new(run).unwrap();
+    timer.set_current_comparison(TARGET).unwrap();
+    timer.set_current_timing_method(TimingMethod::GameTime);
+    for (method, expected) in [
+        (TimingMethod::RealTime, "88.88"),
+        (TimingMethod::GameTime, "88:88.88"),
+    ] {
+        let mut settings = Settings::default();
+        settings.timer.timing_method = Some(method);
+        let component = Component::with_settings(settings);
+        assert_eq!(
+            state(&component, &timer).comparison_size_hints[0]
+                .as_ref()
+                .unwrap()
+                .time,
+            expected
+        );
+    }
+}
+
+#[test]
+fn comparison_hints_follow_accuracy_and_decimal_separator() {
+    let timer = timer_with_target(&[Some(50.0)], TimingMethod::GameTime);
+    for (accuracy, fraction) in [
+        (Accuracy::Seconds, ""),
+        (Accuracy::Tenths, ".8"),
+        (Accuracy::Hundredths, ".88"),
+        (Accuracy::Milliseconds, ".888"),
+    ] {
+        let component = Component::with_settings(Settings {
+            comparison_times_accuracy: accuracy,
+            ..Default::default()
+        });
+        let expected = format!("88{fraction}");
+        assert_eq!(
+            state(&component, &timer).comparison_size_hints[0]
+                .as_ref()
+                .unwrap()
+                .time,
+            expected
+        );
+        #[cfg(feature = "localization")]
+        {
+            let localized = component.state(
+                &mut ImageCache::new(),
+                &timer.snapshot(),
+                &GeneralLayoutSettings::default(),
+                Lang::German,
+            );
+            assert_eq!(
+                localized.comparison_size_hints[0].as_ref().unwrap().time,
+                expected.replace('.', ",")
+            );
+        }
+    }
+}
+
+#[test]
+fn comparison_reservations_use_the_same_selection_before_and_during_an_attempt() {
+    for (first, second, hide_second, names) in [
+        (None, None, false, &["PB"][..]),
+        (None, Some(best_segments::NAME), false, &["PB", "Best"]),
+        (None, Some(best_segments::NAME), true, &["PB"]),
+        (
+            Some(personal_best::NAME),
+            Some(personal_best::NAME),
+            false,
+            &["PB"],
+        ),
+        (Some("Missing"), Some(best_segments::NAME), false, &["Best"]),
+        (
+            Some(none::NAME),
+            Some(best_segments::NAME),
+            false,
+            &["Best"],
+        ),
+        (None, Some(none::NAME), false, &["PB"]),
+        (Some("Missing"), Some("Missing"), false, &["PB"]),
+        (Some(none::NAME), Some(best_segments::NAME), true, &["PB"]),
+    ] {
+        let mut timer = Timer::new(create_run(&["Start"])).unwrap();
+        let component = Component::with_settings(Settings {
+            comparison1: first.map(Into::into),
+            comparison2: second.map(Into::into),
+            hide_second_comparison: hide_second,
+            ..Default::default()
+        });
+        let before = state(&component, &timer);
+        assert!(before.comparison1.is_none() && before.comparison2.is_none());
+        assert!(
+            before
+                .comparison_size_hints
+                .iter()
+                .flatten()
+                .map(|h| h.name.as_str())
+                .eq(names.iter().copied())
+        );
+        start_run(&mut timer);
+        let after = state(&component, &timer);
+        assert!(
+            [after.comparison1, after.comparison2]
+                .iter()
+                .flatten()
+                .map(|c| c.name.as_str())
+                .eq(names.iter().copied())
+        );
+        assert!(
+            after
+                .comparison_size_hints
+                .iter()
+                .flatten()
+                .map(|h| (&h.name, &h.time))
+                .eq(before
+                    .comparison_size_hints
+                    .iter()
+                    .flatten()
+                    .map(|h| (&h.name, &h.time)))
+        );
+    }
+}
+
+#[test]
+fn comparison_reservations_update_reused_states_when_configuration_changes() {
+    let mut run = timer_with_target(&[Some(3200.0)], TimingMethod::GameTime).into_run(false);
+    run.segment_mut(0).personal_best_split_time_mut().game_time = Some(TimeSpan::from_seconds(5.0));
+    run.segment_mut(0).best_segment_time_mut().game_time = Some(TimeSpan::from_seconds(2.5));
+    let mut timer = Timer::new(run).unwrap();
+    timer.set_current_comparison(TARGET).unwrap();
+    timer.set_current_timing_method(TimingMethod::GameTime);
+    let mut component = Component::new();
+    let mut state = State::default();
+    let mut images = ImageCache::new();
+    let layout = GeneralLayoutSettings::default();
+
+    for (first, second, hide_second, expected) in [
+        (
+            None,
+            Some(best_segments::NAME),
+            false,
+            [Some((TARGET, "88:88.88")), Some(("Best", "8.88"))],
+        ),
+        (None, None, false, [Some((TARGET, "88:88.88")), None]),
+        (
+            Some(personal_best::NAME),
+            Some(TARGET),
+            false,
+            [Some(("PB", "8.88")), Some((TARGET, "88:88.88"))],
+        ),
+        (
+            Some(best_segments::NAME),
+            Some(TARGET),
+            true,
+            [Some(("Best", "8.88")), None],
+        ),
+        (
+            Some(personal_best::NAME),
+            Some(best_segments::NAME),
+            false,
+            [Some(("PB", "8.88")), Some(("Best", "8.88"))],
+        ),
+    ] {
+        component.set_settings(Settings {
+            comparison1: first.map(Into::into),
+            comparison2: second.map(Into::into),
+            hide_second_comparison: hide_second,
+            ..Default::default()
+        });
+        component.update_state(
+            &mut state,
+            &mut images,
+            &timer.snapshot(),
+            &layout,
+            Lang::English,
+        );
+        // Reusing a state must replace old names and formats and remove the
+        // second reservation when a comparison is disabled or deduplicated.
+        assert_eq!(
+            state
+                .comparison_size_hints
+                .each_ref()
+                .map(|hint| hint.as_ref().map(|h| (h.name.as_str(), h.time.as_str()))),
+            expected,
+        );
+        assert!(state.comparison1.is_none() && state.comparison2.is_none());
+    }
+}
 
 #[test]
 fn sizes_segment_timer_for_the_longest_segment() {
@@ -23,6 +449,7 @@ fn sizes_segment_timer_for_the_longest_segment() {
     assert_eq!(state.segment_timer.time_size_hint, "88:88");
 }
 
+#[track_caller]
 fn prepare() -> (Timer, Component, GeneralLayoutSettings, ImageCache) {
     let mut run = Run::new();
     let mut segment = Segment::new("foo");
@@ -243,4 +670,59 @@ fn stops_showing_icon_when_resetting() {
             .icon
             .is_empty()
     );
+}
+
+#[test]
+fn reserves_all_names_and_the_shortest_configured_timer_format() {
+    use crate::timing::formatter::DigitsFormat;
+    let mut run = Run::new();
+    for name in ["Start", "Ancient Underground Laboratory Escape", ""] {
+        run.push_segment(Segment::new(name));
+    }
+    let mut timer = Timer::new(run).unwrap();
+    timer.set_current_timing_method(crate::TimingMethod::GameTime);
+    timer.start().unwrap();
+    timer.initialize_game_time().unwrap();
+    timer.pause_game_time().unwrap();
+    timer.set_game_time(TimeSpan::zero()).unwrap();
+    let mut settings = Settings {
+        show_segment_name: true,
+        ..Default::default()
+    };
+    for format in [
+        DigitsFormat::SingleDigitSeconds,
+        DigitsFormat::DoubleDigitSeconds,
+        DigitsFormat::SingleDigitMinutes,
+        DigitsFormat::DoubleDigitMinutes,
+        DigitsFormat::SingleDigitHours,
+        DigitsFormat::DoubleDigitHours,
+    ] {
+        settings.timer.digits_format = format;
+        let component = Component::with_settings(settings.clone());
+        let state = component.state(
+            &mut ImageCache::new(),
+            &timer.snapshot(),
+            &GeneralLayoutSettings::default(),
+            Lang::English,
+        );
+        // Compare with the actual zero-time formatter rather than duplicating
+        // the renderer's format table in this test.
+        let shortest = state.timer.time.replace('0', "8");
+        assert_eq!(state.timer_minimum_size_hint, shortest);
+        assert!(
+            state
+                .segment_name_size_hints
+                .iter()
+                .map(String::as_str)
+                .eq(["Start", "Ancient Underground Laboratory Escape", "",])
+        );
+    }
+    settings.show_segment_name = false;
+    let state = Component::with_settings(settings).state(
+        &mut ImageCache::new(),
+        &timer.snapshot(),
+        &GeneralLayoutSettings::default(),
+        Lang::English,
+    );
+    assert!(state.segment_name_size_hints.is_empty());
 }

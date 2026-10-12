@@ -27,6 +27,7 @@ mod color_font;
 
 struct CachedGlyph<P> {
     scale: f32,
+    vertical_bounds: [f32; 2],
     paths: Vec<(Option<Rgba>, P)>,
 }
 
@@ -207,6 +208,7 @@ impl<P: SharedOwnership> TextEngine<P> {
         let label = Arc::new(RwLock::new(LockedLabel {
             width: 0.0,
             width_without_max_width: 0.0,
+            vertical_bounds: [0.0; 2],
             glyphs: Vec::new(),
         }));
 
@@ -228,6 +230,7 @@ impl<P: SharedOwnership> TextEngine<P> {
         let mut label = label.write().unwrap();
 
         label.glyphs.clear();
+        label.vertical_bounds = [f32::INFINITY, f32::NEG_INFINITY];
 
         // FIXME: Look into shape plans in 0.11
         let shape_line = ShapeLine::new(
@@ -270,6 +273,15 @@ impl<P: SharedOwnership> TextEngine<P> {
                                 (glyph.x_advance, glyph.x_offset)
                             };
 
+                            // Empty glyphs have zero bounds. Including them
+                            // would pull visible ink toward their baseline.
+                            if cached_glyph.vertical_bounds[0] < cached_glyph.vertical_bounds[1] {
+                                label.vertical_bounds[0] = label.vertical_bounds[0]
+                                    .min(y - glyph.y_offset + cached_glyph.vertical_bounds[0]);
+                                label.vertical_bounds[1] = label.vertical_bounds[1]
+                                    .max(y - glyph.y_offset + cached_glyph.vertical_bounds[1]);
+                            }
+
                             label
                                 .glyphs
                                 .extend(cached_glyph.paths.iter().map(|(color, path)| Glyph {
@@ -307,6 +319,17 @@ impl<P: SharedOwnership> TextEngine<P> {
                                 &mut path_builder,
                             );
 
+                            // Empty glyphs have zero bounds. Including them
+                            // would pull visible ink toward their baseline.
+                            if cached_glyph.vertical_bounds[0] < cached_glyph.vertical_bounds[1] {
+                                label.vertical_bounds[0] = label.vertical_bounds[0].min(
+                                    glyph_y - glyph.y_offset + cached_glyph.vertical_bounds[0],
+                                );
+                                label.vertical_bounds[1] = label.vertical_bounds[1].max(
+                                    glyph_y - glyph.y_offset + cached_glyph.vertical_bounds[1],
+                                );
+                            }
+
                             label
                                 .glyphs
                                 .extend(cached_glyph.paths.iter().map(|(color, path)| Glyph {
@@ -326,6 +349,12 @@ impl<P: SharedOwnership> TextEngine<P> {
             }
         }
 
+        // Whitespace has no outline. Keep its bounds empty, without forcing
+        // the baseline into the ink bounds of visible text such as a dash.
+        // An inverted range means no glyph contributed to the accumulator.
+        if label.vertical_bounds[0] > label.vertical_bounds[1] {
+            label.vertical_bounds = [0.0; 2];
+        }
         label.width_without_max_width = x;
 
         if let Some(max_width) = max_width
@@ -383,16 +412,28 @@ fn cache_glyph<'gc, P, PB: PathBuilder<Path = P>>(
         let font = font_system.get_font(font_id).unwrap();
         let font = font.rustybuzz();
         let mut paths = Vec::new();
+        let mut vertical_bounds = [f32::INFINITY, f32::NEG_INFINITY];
         let color_tables = ColorTables::new(font);
         let glyph = GlyphId(glyph_id);
         color_font::iter_colored_glyphs(&color_tables, 0, glyph, |glyph, color| {
             let mut builder = GlyphBuilder(path_builder());
-            font.outline_glyph(glyph, &mut builder);
+            if let Some(bounds) = font.outline_glyph(glyph, &mut builder) {
+                vertical_bounds[0] = vertical_bounds[0].min(-(bounds.y_max as f32));
+                vertical_bounds[1] = vertical_bounds[1].max(-(bounds.y_min as f32));
+            }
             let path = builder.0.finish();
             paths.push((color.map(|c| c.to_array()), path));
         });
+        // The initial inverted range remains when the glyph has no outline.
+        if vertical_bounds[0] > vertical_bounds[1] {
+            vertical_bounds = [0.0; 2];
+        }
         let scale = f32::recip(font.units_per_em() as _);
-        CachedGlyph { scale, paths }
+        CachedGlyph {
+            scale,
+            paths,
+            vertical_bounds: vertical_bounds.map(|bound| bound * scale),
+        }
     })
 }
 
@@ -438,6 +479,7 @@ pub type Label<P> = Arc<RwLock<LockedLabel<P>>>;
 pub struct LockedLabel<P> {
     width: f32,
     width_without_max_width: f32,
+    vertical_bounds: [f32; 2],
     glyphs: Vec<Glyph<P>>,
 }
 
@@ -455,6 +497,13 @@ impl<P> super::Label for Label<P> {
 
     fn width_without_max_width(&self, scale: f32) -> f32 {
         self.read().unwrap().width_without_max_width * scale
+    }
+
+    fn vertical_bounds(&self, scale: f32) -> [f32; 2] {
+        self.read()
+            .unwrap()
+            .vertical_bounds
+            .map(|bound| bound * scale)
     }
 }
 

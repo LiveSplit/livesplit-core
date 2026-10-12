@@ -270,10 +270,7 @@ impl Component {
         // estimate exists, reserve ten minutes for a segment or one hour for
         // the whole run. The hint also covers the current time below.
         let expected_time = expected_time
-            .map(|time| {
-                let time = time.max(TimeSpan::zero());
-                time + TimeSpan::from(time.to_duration() / 5)
-            })
+            .map(|time| with_size_hint_buffer(time.max(TimeSpan::zero())))
             .unwrap_or_else(|| {
                 TimeSpan::from_seconds(if self.settings.is_segment_timer {
                     600.0
@@ -492,9 +489,15 @@ impl Component {
     }
 }
 
-// Timer fonts have monospaced digits. Canonical digits keep the cached label
-// valid whenever the expected time changes without changing its format.
-struct SizeHintWriter<'a>(&'a mut String);
+/// Reserve 20% beyond a known nonnegative time to anticipate larger formats
+/// that a live timer may need as an attempt progresses.
+fn with_size_hint_buffer(time: TimeSpan) -> TimeSpan {
+    time + TimeSpan::from(time.to_duration() / 5)
+}
+
+// Timer and times fonts have monospaced digits. Canonical digits keep the
+// cached label valid whenever the estimate changes without changing its format.
+pub(super) struct SizeHintWriter<'a>(pub(super) &'a mut String);
 
 impl Write for SizeHintWriter<'_> {
     fn write_str(&mut self, text: &str) -> fmt::Result {
