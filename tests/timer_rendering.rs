@@ -490,6 +490,310 @@ fn first_row_icon_reclaims_lower_width_and_keeps_comparisons_below_it() {
     }
 }
 
+#[track_caller]
+fn icon_transform(manager: &Manager) -> Transform {
+    manager
+        .scene()
+        .bottom_layer()
+        .iter()
+        .find_map(|entity| match entity {
+            Entity::Image(_, transform) => Some(*transform),
+            _ => None,
+        })
+        .expect("an enabled icon must remain visible")
+}
+
+#[track_caller]
+fn assert_icon_does_not_overlap_text(manager: &Manager, icon: Transform) {
+    for label in placed_labels(manager, true)
+        .into_iter()
+        .chain(placed_labels(manager, false))
+    {
+        let overlaps_y = label.bounds[0] < icon.y + icon.scale_y && icon.y < label.bounds[1];
+        let overlaps_x =
+            label.transform.x < icon.x + icon.scale_x && icon.x < label.transform.x + label.width;
+        assert!(!overlaps_x || !overlaps_y, "text overlaps the icon");
+    }
+}
+
+#[test]
+fn first_row_icon_aligns_with_fixed_timer_center_and_protects_comparison_padding() {
+    let mut timer = detailed_timer_with_times(&["Start", "Underground Laboratory Escape"]);
+    timer.set_game_time(TimeSpan::from_seconds(123.45)).unwrap();
+    let mut layout = detailed_layout();
+    let mut images = ImageCache::new();
+    let image = SettingsImage::new([1].into(), SettingsImage::ICON);
+    let id = *images.cache(image.id(), || image.clone()).id();
+    let mut allocator = Allocator(TextEngine::new(), 0);
+    let mut manager = SceneManager::new(&mut allocator);
+    for custom_font in [false, true] {
+        let font = custom_font.then(|| Font {
+            family: "Fira Sans".into(),
+            ..Default::default()
+        });
+        let reference = timer_reference(&mut allocator, font.as_ref());
+        layout.general_settings_mut().timer_font = font;
+        for share in [35, 62, 85] {
+            for count in 0..=2 {
+                let mut state = layout.state(&mut images, &timer.snapshot(), Lang::English);
+                let ComponentState::DetailedTimer(component) = &mut state.components[0] else {
+                    unreachable!()
+                };
+                component.icon = id;
+                component.display_icon = detailed_timer::IconDisplayMode::FirstRow;
+                component.timer.height = share;
+                component.segment_timer.height = 100 - share;
+                component.timer.updates_frequently = true;
+                component.segment_timer.updates_frequently = true;
+                if count < 2 {
+                    remove_comparison(component, 1);
+                }
+                if count == 0 {
+                    remove_comparison(component, 0);
+                }
+                for dims in [
+                    [160.0, 70.0],
+                    [280.0, 120.0],
+                    [200.0, 260.0],
+                    [560.0, 120.0],
+                    [1000.0, 260.0],
+                ] {
+                    manager.update_scene(&mut allocator, dims, &state, &images);
+                    let icon = icon_transform(&manager);
+                    let main = placed_labels(&manager, true)[1].transform;
+                    let timer_center = main.y + 0.5 * (reference[0] + reference[1]) * main.scale_y;
+                    assert!((icon.y + 0.5 * icon.scale_y - timer_center).abs() < 0.001);
+                    assert!(icon.scale_x > 0.0 && icon.scale_y > 0.0);
+                    let padding =
+                        (0.1 * dims[1] * share as f32 / 100.0).min(0.35 * 24.0 * dims[1] / 100.0);
+                    assert!(icon.y >= padding - 0.001, "icon needs padding above it");
+                    assert!(icon.y + icon.scale_y <= dims[1] - padding + 0.001);
+                    let text = placed_labels(&manager, false);
+                    for line in &text[text.len() - 2 * count..] {
+                        assert!(
+                            line.bounds[0] >= icon.y + icon.scale_y + padding - 0.001,
+                            "first-row icon touches a comparison"
+                        );
+                    }
+                    assert_icon_does_not_overlap_text(&manager, icon);
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn icons_shrink_with_width_and_remain_visible_when_text_consumes_the_row() {
+    let mut timer = detailed_timer_with_times(&["Start", "Underground Laboratory Escape"]);
+    timer
+        .set_game_time(TimeSpan::from_seconds(1124.85))
+        .unwrap();
+    let mut layout = detailed_layout();
+    let mut images = ImageCache::new();
+    let image = SettingsImage::new([1].into(), SettingsImage::ICON);
+    let id = *images.cache(image.id(), || image.clone()).id();
+    let mut allocator = Allocator(TextEngine::new(), 0);
+    let mut manager = SceneManager::new(&mut allocator);
+    for mode in [
+        detailed_timer::IconDisplayMode::FirstRow,
+        detailed_timer::IconDisplayMode::BothRows,
+    ] {
+        let mut state = layout.state(&mut images, &timer.snapshot(), Lang::English);
+        let ComponentState::DetailedTimer(component) = &mut state.components[0] else {
+            unreachable!()
+        };
+        component.icon = id;
+        component.display_icon = mode;
+        component.timer.updates_frequently = true;
+        component.segment_timer.updates_frequently = true;
+        let mut sizes = Vec::new();
+        for width in [1000.0, 280.0, 160.0] {
+            let dims = [width, 160.0];
+            manager.update_scene(&mut allocator, dims, &state, &images);
+            let icon = icon_transform(&manager);
+            sizes.push(icon.scale_x);
+            assert!(icon.scale_x > 0.0);
+            let main = placed_labels(&manager, true)[1].transform;
+            assert!(main.scale_y > 0.0, "the timer must retain drawable width");
+            assert!(
+                main.x >= icon.x + icon.scale_x,
+                "the icon consumes timer space"
+            );
+            assert_icon_does_not_overlap_text(&manager, icon);
+        }
+        assert!(sizes[0] > sizes[1] && sizes[1] > sizes[2], "{sizes:?}");
+    }
+}
+
+#[test]
+fn icon_size_and_position_stay_stable_before_start_during_ticks_and_across_splits() {
+    let mut images = ImageCache::new();
+    let image = SettingsImage::new([1].into(), SettingsImage::ICON);
+    let id = *images.cache(image.id(), || image.clone()).id();
+    let mut allocator = Allocator(TextEngine::new(), 0);
+    let mut manager = SceneManager::new(&mut allocator);
+    for mode in [
+        detailed_timer::IconDisplayMode::FirstRow,
+        detailed_timer::IconDisplayMode::BothRows,
+    ] {
+        for share in [35, 62, 85] {
+            for dims in [[160.0, 120.0], [560.0, 120.0], [280.0, 260.0]] {
+                let mut timer = timer_with_varied_comparison_times();
+                let mut layout = detailed_layout();
+                let mut expected_icon = None;
+                let mut expected_timers = None;
+                for step in 0..=13 {
+                    if step == 1 {
+                        tests_helper::start_run(&mut timer);
+                    }
+                    if (2..=7).contains(&step) {
+                        let seconds = [0.11, 1.11, 8.88, 59.99, 60.11, 600.11][step - 2];
+                        timer
+                            .set_game_time(TimeSpan::from_seconds(seconds))
+                            .unwrap();
+                    } else if (8..=12).contains(&step) {
+                        timer
+                            .set_game_time(TimeSpan::from_seconds(600.11 + step as f64))
+                            .unwrap();
+                        timer.split().unwrap();
+                    } else if step == 13 {
+                        timer.reset(false).unwrap();
+                    }
+                    let mut state = layout.state(&mut images, &timer.snapshot(), Lang::English);
+                    let ComponentState::DetailedTimer(component) = &mut state.components[0] else {
+                        unreachable!()
+                    };
+                    component.icon = id;
+                    component.display_icon = mode;
+                    component.timer.height = share;
+                    component.segment_timer.height = 100 - share;
+                    component.timer.updates_frequently = true;
+                    component.segment_timer.updates_frequently = true;
+                    manager.update_scene(&mut allocator, dims, &state, &images);
+                    let icon = icon_transform(&manager);
+                    let placement = (icon.x, icon.y, icon.scale_x, icon.scale_y);
+                    assert_eq!(
+                        *expected_icon.get_or_insert(placement),
+                        placement,
+                        "starting, ticking, splitting, or resetting changed the icon at step {step}"
+                    );
+                    let timers: Vec<_> = placed_labels(&manager, true)
+                        .iter()
+                        .map(|label| (label.transform.y, label.transform.scale_y))
+                        .collect();
+                    assert_eq!(*expected_timers.get_or_insert(timers.clone()), timers);
+                }
+            }
+        }
+    }
+}
+
+#[test]
+fn icon_remains_visible_and_timers_fit_when_expected_times_are_exceeded() {
+    let mut timer = detailed_timer_with_times(&["Start"]);
+    let mut layout = detailed_layout();
+    let mut images = ImageCache::new();
+    let image = SettingsImage::new([1].into(), SettingsImage::ICON);
+    let id = *images.cache(image.id(), || image.clone()).id();
+    let mut allocator = Allocator(TextEngine::new(), 0);
+    let mut manager = SceneManager::new(&mut allocator);
+    let dims = [280.0, 120.0];
+    let mut previous = f32::INFINITY;
+    for seconds in [1.11, 36_000.11, 360_000.11, 3_600_000.11] {
+        timer
+            .set_game_time(TimeSpan::from_seconds(seconds))
+            .unwrap();
+        let mut state = layout.state(&mut images, &timer.snapshot(), Lang::English);
+        let ComponentState::DetailedTimer(component) = &mut state.components[0] else {
+            unreachable!()
+        };
+        component.icon = id;
+        component.display_icon = detailed_timer::IconDisplayMode::FirstRow;
+        component.timer.updates_frequently = true;
+        component.segment_timer.updates_frequently = true;
+        manager.update_scene(&mut allocator, dims, &state, &images);
+        let icon = icon_transform(&manager);
+        assert!(icon.scale_y > 0.0);
+        let timers = placed_labels(&manager, true);
+        let main = timers[1].transform;
+        assert!(main.scale_y < previous);
+        previous = main.scale_y;
+        for label in timers {
+            assert!(label.transform.x >= 0.0);
+            assert!(label.transform.x + label.width <= dims[0] + 0.001);
+        }
+        assert_icon_does_not_overlap_text(&manager, icon);
+    }
+}
+
+#[test]
+fn configured_icon_space_stays_reserved_when_the_current_segment_has_no_image() {
+    let image = SettingsImage::new([1].into(), SettingsImage::ICON);
+    let mut images = ImageCache::new();
+    let mut allocator = Allocator(TextEngine::new(), 0);
+    let mut manager = SceneManager::new(&mut allocator);
+    for mode in [
+        detailed_timer::IconDisplayMode::FirstRow,
+        detailed_timer::IconDisplayMode::BothRows,
+    ] {
+        let mut run = timer_with_varied_comparison_times().run().clone();
+        for index in [0, 2, 4] {
+            run.segment_mut(index).set_icon(image.clone());
+        }
+        let mut timer = Timer::new(run).unwrap();
+        timer.set_current_timing_method(TimingMethod::GameTime);
+        let mut layout = Layout::new();
+        layout.push(Box::new(detailed_timer::Component::with_settings(
+            detailed_timer::Settings {
+                display_icon: mode,
+                show_segment_name: true,
+                ..Default::default()
+            },
+        )));
+        let mut expected_timers = None;
+        let mut expected_icon = None;
+        for step in 0..=7 {
+            if step == 1 {
+                tests_helper::start_run(&mut timer);
+            } else if (2..=6).contains(&step) {
+                timer
+                    .set_game_time(TimeSpan::from_seconds(step as f64))
+                    .unwrap();
+                timer.split().unwrap();
+            } else if step == 7 {
+                timer.reset(false).unwrap();
+            }
+            let mut state = layout.state(&mut images, &timer.snapshot(), Lang::English);
+            let ComponentState::DetailedTimer(component) = &mut state.components[0] else {
+                unreachable!()
+            };
+            component.timer.updates_frequently = true;
+            component.segment_timer.updates_frequently = true;
+            manager.update_scene(&mut allocator, [280.0, 120.0], &state, &images);
+            let timers: Vec<_> = placed_labels(&manager, true)
+                .iter()
+                .map(|label| (label.transform.y, label.transform.scale_y))
+                .collect();
+            assert_eq!(
+                *expected_timers.get_or_insert(timers.clone()),
+                timers,
+                "an empty icon must not change the reserved layout at step {step}"
+            );
+            let has_image = manager
+                .scene()
+                .bottom_layer()
+                .iter()
+                .any(|entity| matches!(entity, Entity::Image(..)));
+            assert_eq!(has_image, matches!(step, 1 | 3 | 5 | 6));
+            if has_image {
+                let icon = icon_transform(&manager);
+                let placement = (icon.x, icon.y, icon.scale_x, icon.scale_y);
+                assert_eq!(*expected_icon.get_or_insert(placement), placement);
+            }
+        }
+    }
+}
+
 #[test]
 fn detailed_timer_ellipsizes_name_without_shrinking_main_timer() {
     let mut timer = tests_helper::create_timer(&["A"]);

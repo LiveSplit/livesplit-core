@@ -150,6 +150,51 @@ pub(super) fn fit_ratio(available: f32, needed: f32) -> f32 {
     }
 }
 
+/// Give the expected timer and run-wide name reservation priority over the
+/// icon. When those reservations consume the row, retain a small icon instead
+/// of hiding something the user explicitly enabled. Five percent of usable
+/// width keeps that minimum responsive too; it is not a fixed pixel floor.
+pub(super) fn text_priority_icon_width(
+    preferred: f32,
+    available: f32,
+    timer_reservation: f32,
+    name_reservation: f32,
+    gaps: f32,
+) -> f32 {
+    let remaining = (available - timer_reservation - gaps).max(0.0);
+    // An exceptionally long name must not consume every bit left after the
+    // timer. Reserve its comparison-size width up to 35% of that remainder.
+    let name = name_reservation.min(0.35 * remaining);
+    preferred.min((remaining - name).max(0.05 * available))
+}
+
+/// Fit a square symmetrically around a fixed center while protecting both
+/// edges of the region. First-row icons use the main timer's reference center
+/// and the final divider, rather than the configured row height or live ink.
+pub(super) fn centered_icon_capacity(center: f32, divider: f32, padding: f32) -> f32 {
+    (2.0 * (center - padding).min(divider - padding - center)).max(0.0)
+}
+
+/// Icon width affects font fitting and therefore its own vertical capacity.
+/// Usually the width limit already fits; only constrained cases need a bounded
+/// search. The caller evaluates geometry from previously measured labels.
+pub(super) fn fit_icon_width(limit: f32, capacity: impl Fn(f32) -> f32) -> f32 {
+    if limit <= capacity(limit) {
+        return limit;
+    }
+    let mut low = 0.0;
+    let mut high = limit;
+    for _ in 0..16 {
+        let middle = 0.5 * (low + high);
+        if middle <= capacity(middle) {
+            low = middle;
+        } else {
+            high = middle;
+        }
+    }
+    low
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -240,5 +285,41 @@ mod tests {
         assert_eq!(baselines, [50.0; 2]);
         near(fit_ratio(0.0, 0.0), 1.0);
         near(fit_ratio(-1.0, 2.0), 0.0);
+    }
+
+    #[test]
+    fn icons_give_text_priority_but_keep_a_responsive_minimum() {
+        near(
+            text_priority_icon_width(80.0, 400.0, 250.0, 30.0, 20.0),
+            80.0,
+        );
+        // A very long name leaves 65% of the remainder for the icon.
+        near(
+            text_priority_icon_width(80.0, 200.0, 120.0, 500.0, 20.0),
+            39.0,
+        );
+        // Even if text consumes the whole row, the enabled icon remains.
+        near(
+            text_priority_icon_width(80.0, 200.0, 190.0, 500.0, 20.0),
+            10.0,
+        );
+        near(
+            text_priority_icon_width(80.0, 100.0, 95.0, 500.0, 20.0),
+            5.0,
+        );
+        // Vertical or horizontal limits still take precedence over the floor.
+        near(text_priority_icon_width(3.0, 100.0, 95.0, 500.0, 20.0), 3.0);
+    }
+
+    #[test]
+    fn centered_icons_protect_both_edges_and_fit_coupled_geometry() {
+        near(centered_icon_capacity(30.0, 50.0, 5.0), 30.0);
+        near(centered_icon_capacity(20.0, 70.0, 5.0), 30.0);
+        near(centered_icon_capacity(5.0, 50.0, 5.0), 0.0);
+        near(fit_icon_width(20.0, |_| 30.0), 20.0);
+        // Growing the icon narrows the text and reduces its vertical room.
+        let size = fit_icon_width(60.0, |width| 40.0 - 0.5 * width);
+        assert!(size <= 40.0 - 0.5 * size);
+        assert!((size - 80.0 / 3.0).abs() < 0.001);
     }
 }

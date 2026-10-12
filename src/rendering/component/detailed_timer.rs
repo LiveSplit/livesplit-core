@@ -4,7 +4,10 @@
 
 mod layout;
 
-use self::layout::{Bounds, Timer, fit_ratio, place_comparisons, place_rows};
+use self::layout::{
+    Bounds, Timer, centered_icon_capacity, fit_icon_width, fit_ratio, place_comparisons,
+    place_rows, text_priority_icon_width,
+};
 use crate::{
     component::detailed_timer::{IconDisplayMode, State},
     layout::LayoutState,
@@ -65,7 +68,7 @@ struct Labels<L> {
     segment_timer: timer::Cache<L>,
     segment_name: CachedLabel<L>,
     segment_name_unconstrained: CachedLabel<L>,
-    segment_name_size_hints: Vec<CachedLabel<L>>,
+    segment_name_size_hints: Vec<NameCache<L>>,
     // Only the detailed timer needs the shortest format to reserve the
     // largest possible segment-name size beside the attempt timer.
     timer_minimum_size_hint: CachedLabel<L>,
@@ -74,6 +77,46 @@ struct Labels<L> {
     comparison_number_bounds: CachedLabel<L>,
     comparison_dash: CachedLabel<L>,
     comparisons: [ComparisonCache<L>; 2],
+}
+
+/// Measure run-wide names once before fitting. Icon fitting can then explore
+/// different widths without reshaping labels or consulting the current name.
+struct NameCache<L> {
+    label: CachedLabel<L>,
+    width: f32,
+    bounds: Bounds,
+}
+
+impl<L> NameCache<L> {
+    const fn new() -> Self {
+        Self {
+            label: CachedLabel::new(),
+            width: 0.0,
+            bounds: Bounds {
+                top: 0.0,
+                bottom: 0.0,
+            },
+        }
+    }
+}
+
+struct Measurements {
+    reference: Bounds,
+    /// Expected width at the configured attempt-timer font size.
+    main_hint_width: f32,
+    /// Shortest time format, including its fraction, at unit font size.
+    main_minimum_width: f32,
+    /// Widest run name at its configured size (half the attempt row height).
+    widest_name: f32,
+    /// Expected segment-timer width at unit font size.
+    segment_hint_width: f32,
+    comparisons: ComparisonMeasurements,
+}
+
+struct Content {
+    main: Timer,
+    lower: LowerRow,
+    divider: f32,
 }
 
 impl<L> Labels<L> {
@@ -107,6 +150,7 @@ struct LowerRow {
     padding: f32,
 }
 
+#[derive(Clone, Copy)]
 struct ComparisonMeasurements {
     count: usize,
     widths: [f32; 2],
@@ -121,8 +165,6 @@ struct Dimensions {
     left: f32,
     /// The lower row reclaims the icon column when the icon only spans row one.
     comparison_left: f32,
-    /// Comparisons must remain below a first-row icon as their gaps expand.
-    comparison_top: f32,
     top: f32,
     bottom: f32,
 }
@@ -144,29 +186,38 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     if top <= 0.0 || height - top <= 0.0 {
         return;
     }
-    let first_row_icon = component.display_icon == IconDisplayMode::FirstRow;
-    let (left, icon_bottom) = render_icon(
-        context,
-        [width, if first_row_icon { top } else { height }],
-        component,
-    );
-    if !first_row_icon && width <= left + PADDING {
-        return;
-    }
     let dims = Dimensions {
         width,
         height,
-        left,
-        comparison_left: if first_row_icon { PADDING } else { left },
-        comparison_top: if first_row_icon { icon_bottom } else { 0.0 },
+        left: PADDING,
+        comparison_left: PADDING,
         top,
         bottom: height - top,
     };
-    context.measure_timer(NUMERIC_REFERENCE, &mut cache.timer_bounds, 1.0);
-    let reference = Bounds::from(cache.timer_bounds.vertical_bounds(1.0));
-    let mut lower = measure_lower_row(cache, context, component, reference, dims);
-    let main = measure_main_timer(cache, context, component, reference, dims);
-    let main = place_content(cache, context, component, main, &mut lower, dims);
+    let measured = measure_labels(cache, context, component, dims);
+    let icon = (component.display_icon != IconDisplayMode::Hidden)
+        .then(|| context.create_image(&component.icon))
+        .flatten();
+    // The selected mode reserves the icon column even before starting or on
+    // a segment without an image. Otherwise the timer would resize whenever
+    // the image appears or disappears, despite unchanged run-wide hints.
+    let (dims, content, icon_bounds) = if component.display_icon != IconDisplayMode::Hidden {
+        fit_icon(cache, &measured, dims, component.display_icon)
+    } else {
+        (
+            dims,
+            fit_content(cache, &measured, dims),
+            Bounds {
+                top: 0.0,
+                bottom: 0.0,
+            },
+        )
+    };
+    if let Some(icon) = icon {
+        let size = icon_bounds.height();
+        context.render_image([PADDING, icon_bounds.top], [size, size], icon);
+    }
+    let Content { main, lower, .. } = content;
     render_timers(cache, context, component, main, &lower, dims);
     render_name(
         cache,
@@ -187,22 +238,12 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     );
 }
 
-fn place_content<A: ResourceAllocator>(
-    cache: &mut Labels<A::Label>,
-    context: &mut RenderContext<A>,
-    component: &State,
-    mut main: Timer,
-    lower: &mut LowerRow,
-    dims: Dimensions,
-) -> Timer {
-    let upper_row = reserve_names(
-        cache,
-        context,
-        component,
-        main,
-        dims,
-        name_floor(lower, dims),
-    );
+/// Fit and place both rows without any font-engine work. The logical divider
+/// protects the lower row and also bounds first-row icons with real padding.
+fn fit_content<L>(cache: &Labels<L>, measured: &Measurements, dims: Dimensions) -> Content {
+    let mut main = fit_main_timer(measured, dims);
+    let mut lower = fit_lower_row(measured, dims);
+    let upper_row = reserve_names(cache, measured, main, dims, name_floor(&lower, dims));
     let (shifts, divider) = place_rows(
         dims.height,
         main.bounds(),
@@ -216,11 +257,15 @@ fn place_content<A: ResourceAllocator>(
         &lower.ink[..lower.count],
         lower.font,
         lower.timer.bounds().center(),
-        divider.max(dims.comparison_top),
+        divider,
         dims.height,
         lower.padding,
     );
-    main
+    Content {
+        main,
+        lower,
+        divider,
+    }
 }
 
 fn render_timers<A: ResourceAllocator>(
@@ -258,64 +303,133 @@ fn render_timers<A: ResourceAllocator>(
     context.translate(-origin, -dims.top);
 }
 
-fn render_icon<A: ResourceAllocator>(
-    context: &mut RenderContext<A>,
-    [width, height]: [f32; 2],
-    component: &State,
-) -> (f32, f32) {
-    if component.display_icon == IconDisplayMode::Hidden {
-        return (PADDING, 0.0);
-    }
+/// Text has priority, but an enabled icon always keeps a small responsive
+/// share. The entire fit uses the expected timer formats and every run name,
+/// so starting, ticking, or splitting cannot resize or move the icon.
+fn fit_icon<L>(
+    cache: &Labels<L>,
+    measured: &Measurements,
+    dims: Dimensions,
+    mode: IconDisplayMode,
+) -> (Dimensions, Content, Bounds) {
+    let first_row = mode == IconDisplayMode::FirstRow;
+    let height = if first_row { dims.top } else { dims.height };
     let padding = vertical_padding(height);
-    // Leave a drawable text area even in an unusually narrow component.
-    let size = (height - 2.0 * padding).min((width - 3.0 * PADDING).max(0.0));
-    if let Some(icon) = context.create_image(&component.icon) {
-        context.render_image([PADDING, padding], [size, size], icon);
-        (BOTH_PADDINGS + size, padding + size)
-    } else {
-        (PADDING, 0.0)
-    }
+    let preferred = (height - 2.0 * padding)
+        .min((dims.width - 3.0 * PADDING).max(0.0))
+        .max(0.0);
+    let available = (dims.width - BOTH_PADDINGS).max(0.0);
+    let timer_reservation = measured.main_hint_width.min(available) * MINIMUM_TIMER_SCALE;
+    // Names may shrink as far as the comparisons. Reserve the widest name at
+    // that configured comparison size, capped at the name's own normal size.
+    let name_reservation = measured.widest_name * (dims.bottom / dims.top).min(1.0);
+    let width_limit = text_priority_icon_width(
+        preferred,
+        available,
+        timer_reservation,
+        name_reservation,
+        BOTH_PADDINGS,
+    );
+    let fit = |size| {
+        let left = BOTH_PADDINGS + size;
+        let fitted_dims = Dimensions {
+            left,
+            comparison_left: if first_row { PADDING } else { left },
+            ..dims
+        };
+        let content = fit_content(cache, measured, fitted_dims);
+        let (center, divider) = if first_row {
+            (
+                content.main.bounds().center(),
+                content.divider.min(dims.height),
+            )
+        } else {
+            (0.5 * dims.height, dims.height)
+        };
+        (
+            fitted_dims,
+            content,
+            center,
+            centered_icon_capacity(center, divider, padding),
+        )
+    };
+    // All iterations use the same measured reservations; no labels are
+    // reshaped or allocated while solving the width/divider dependency.
+    let size = fit_icon_width(width_limit, |size| fit(size).3);
+    let (dims, content, center, _) = fit(size);
+    (
+        dims,
+        content,
+        Bounds {
+            top: center - 0.5 * size,
+            bottom: center + 0.5 * size,
+        },
+    )
 }
 
-fn measure_main_timer<A: ResourceAllocator>(
+/// All measurements use hints or fixed glyph references. Live times and the
+/// current segment name are used only when drawing, never to place the icon.
+fn measure_labels<A: ResourceAllocator>(
     cache: &mut Labels<A::Label>,
     context: &mut RenderContext<A>,
     component: &State,
-    reference: Bounds,
     dims: Dimensions,
-) -> Timer {
-    let Dimensions {
-        width,
-        top: height,
-        left,
-        ..
-    } = dims;
+) -> Measurements {
+    context.measure_timer(NUMERIC_REFERENCE, &mut cache.timer_bounds, 1.0);
+    let reference = Bounds::from(cache.timer_bounds.vertical_bounds(1.0));
+    let comparisons = measure_comparisons(cache, context, component, 0.5 * dims.bottom);
+    let segment_hint_width = timer::measure(
+        &mut cache.segment_timer,
+        context,
+        1.0,
+        &component.segment_timer,
+    );
     cache
         .segment_name_size_hints
-        .resize_with(component.segment_name_size_hints.len(), CachedLabel::new);
-    let mut widest = 0.0_f32;
-    for (name, label) in component
+        .resize_with(component.segment_name_size_hints.len(), NameCache::new);
+    let mut widest_name = 0.0_f32;
+    for (name, cached) in component
         .segment_name_size_hints
         .iter()
         .zip(&mut cache.segment_name_size_hints)
     {
-        widest = widest.max(context.measure_text(name, label, 0.5 * height, None));
+        cached.width = context.measure_text(name, &mut cached.label, 0.5 * dims.top, None);
+        cached.bounds = cached.label.vertical_bounds(1.0).into();
+        widest_name = widest_name.max(cached.width);
     }
-    let hint_width = timer::measure(&mut cache.timer, context, height, &component.timer);
-    let available = (width - left - PADDING).max(0.0);
-    let fitted_width = hint_width.min(available);
+    let main_hint_width = timer::measure(&mut cache.timer, context, dims.top, &component.timer);
+    let main_minimum_width =
+        context.measure_timer(
+            &component.timer_minimum_size_hint,
+            &mut cache.timer_minimum_size_hint,
+            1.0,
+        ) + timer::measure_fraction_size_hint(&mut cache.timer, context, 1.0, &component.timer);
+    Measurements {
+        reference,
+        main_hint_width,
+        main_minimum_width,
+        widest_name,
+        segment_hint_width,
+        comparisons,
+    }
+}
+
+fn fit_main_timer(measured: &Measurements, dims: Dimensions) -> Timer {
+    let available = (dims.width - dims.left - PADDING).max(0.0);
+    let fitted_width = measured.main_hint_width.min(available);
     // All names, including future ones, participate. A short or empty current
     // name must not grow the timer again when the user splits.
-    let extra = if widest > 0.0 {
-        ((available - PADDING) / (widest + fitted_width)).clamp(MINIMUM_TIMER_SCALE, 1.0)
+    let extra = if measured.widest_name > 0.0 {
+        ((available - PADDING) / (measured.widest_name + fitted_width))
+            .clamp(MINIMUM_TIMER_SCALE, 1.0)
     } else {
         1.0
     };
-    let font = height * fit_ratio(available, hint_width) * extra;
+    let font = dims.top * fit_ratio(available, measured.main_hint_width) * extra;
     Timer {
         font,
-        baseline: 0.5 * height + 0.35 * font,
-        reference,
+        baseline: 0.5 * dims.top + 0.35 * font,
+        reference: measured.reference,
     }
 }
 
@@ -369,13 +483,7 @@ fn measure_comparisons<A: ResourceAllocator>(
     }
 }
 
-fn measure_lower_row<A: ResourceAllocator>(
-    cache: &mut Labels<A::Label>,
-    context: &mut RenderContext<A>,
-    component: &State,
-    reference: Bounds,
-    dims: Dimensions,
-) -> LowerRow {
+fn fit_lower_row(measured: &Measurements, dims: Dimensions) -> LowerRow {
     let Dimensions {
         width,
         top,
@@ -389,13 +497,9 @@ fn measure_lower_row<A: ResourceAllocator>(
         widths,
         ink,
         reserved: bounds,
-    } = measure_comparisons(cache, context, component, font);
-    let hint_width = timer::measure(
-        &mut cache.segment_timer,
-        context,
-        1.0,
-        &component.segment_timer,
-    );
+    } = measured.comparisons;
+    let hint_width = measured.segment_hint_width;
+    let reference = measured.reference;
     let leading = if count == 2 {
         font * 1.1_f32.max(bounds[0].bottom - bounds[1].top + 0.1)
     } else {
@@ -463,10 +567,9 @@ fn name_floor(lower: &LowerRow, dims: Dimensions) -> f32 {
 /// Reserve every name at its largest reachable fitted font. The shortest
 /// configured time format leaves the most room, so this reservation is stable
 /// across splits and digit changes without reserving impossible name sizes.
-fn reserve_names<A: ResourceAllocator>(
-    cache: &mut Labels<A::Label>,
-    context: &mut RenderContext<A>,
-    component: &State,
+fn reserve_names<L>(
+    cache: &Labels<L>,
+    measured: &Measurements,
     main: Timer,
     dims: Dimensions,
     floor: f32,
@@ -477,29 +580,17 @@ fn reserve_names<A: ResourceAllocator>(
         left,
         ..
     } = dims;
-    let minimum_time_width = context.measure_timer(
-        &component.timer_minimum_size_hint,
-        &mut cache.timer_minimum_size_hint,
-        1.0,
-    );
-    let minimum_width = (minimum_time_width
-        + timer::measure_fraction_size_hint(&mut cache.timer, context, 1.0, &component.timer))
-        * main.font;
+    let minimum_width = measured.main_minimum_width * main.font;
     let available = (width - left - BOTH_PADDINGS - minimum_width).max(0.0);
     let configured = 0.5 * height;
     let mut row = main.bounds();
-    for (name, label) in component
-        .segment_name_size_hints
-        .iter()
-        .zip(&mut cache.segment_name_size_hints)
-    {
-        if name.is_empty() {
+    for cached in &cache.segment_name_size_hints {
+        if cached.bounds.height() <= 0.0 {
             continue;
         }
-        let needed = context.measure_text(name, label, configured, None);
-        let font = (configured * fit_ratio(available, needed)).max(floor);
+        let font = (configured * fit_ratio(available, cached.width)).max(floor);
         let baseline = main.baseline + 0.35 * (font - main.font);
-        row = row.union(Bounds::from(label.vertical_bounds(font)).translated(baseline));
+        row = row.union(cached.bounds.scaled(font).translated(baseline));
     }
     row
 }
