@@ -713,7 +713,7 @@ fn reserves_all_names_and_the_shortest_configured_timer_format() {
             state
                 .segment_name_size_hints
                 .iter()
-                .map(String::as_str)
+                .map(|hint| hint.name.as_str())
                 .eq(["Start", "Ancient Underground Laboratory Escape", "",])
         );
     }
@@ -725,6 +725,69 @@ fn reserves_all_names_and_the_shortest_configured_timer_format() {
         Lang::English,
     );
     assert!(state.segment_name_size_hints.is_empty());
+}
+
+#[test]
+fn name_reservations_include_future_icon_presence_and_update_without_stale_flags() {
+    let mut run = create_run(&["Start", "Underground Laboratory Escape", "Finish"]);
+    let icon = Image::new([1].into(), Image::ICON);
+    run.segment_mut(0).set_icon(icon.clone());
+    run.segment_mut(2).set_icon(icon.clone());
+    let mut timer = Timer::new(run).unwrap();
+    let component = Component::with_settings(Settings {
+        show_segment_name: true,
+        display_icon: IconDisplayMode::FirstRow,
+        ..Default::default()
+    });
+    let mut images = ImageCache::new();
+    let mut state = component.state(
+        &mut images,
+        &timer.snapshot(),
+        &GeneralLayoutSettings::default(),
+        Lang::English,
+    );
+    assert!(
+        state
+            .segment_name_size_hints
+            .iter()
+            .map(|hint| (hint.name.as_str(), hint.has_icon))
+            .eq([
+                ("Start", true),
+                ("Underground Laboratory Escape", false),
+                ("Finish", true)
+            ])
+    );
+    // Changing a future segment must invalidate the name reservation even
+    // though its image and name are not the ones currently being displayed.
+    let mut before = std::collections::hash_map::DefaultHasher::new();
+    state.content_fingerprint(&mut before);
+    let mut run = timer.run().clone();
+    run.segment_mut(1).set_icon(icon);
+    run.segment_mut(2).set_icon(Image::EMPTY.clone());
+    timer = Timer::new(run).unwrap();
+    component.update_state(
+        &mut state,
+        &mut images,
+        &timer.snapshot(),
+        &GeneralLayoutSettings::default(),
+        Lang::English,
+    );
+    assert!(
+        state
+            .segment_name_size_hints
+            .iter()
+            .map(|hint| hint.has_icon)
+            .eq([true, true, false])
+    );
+    let mut after = std::collections::hash_map::DefaultHasher::new();
+    state.content_fingerprint(&mut after);
+    use core::hash::Hasher;
+    assert_ne!(before.finish(), after.finish());
+    let serialized = serde_json::to_value(&state).unwrap();
+    assert_eq!(
+        serialized["segment_name_size_hints"][2],
+        serde_json::json!({"name":"Finish","has_icon":false})
+    );
 }
 
 #[test]

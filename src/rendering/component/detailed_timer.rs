@@ -85,6 +85,7 @@ struct NameCache<L> {
     label: CachedLabel<L>,
     width: f32,
     bounds: Bounds,
+    has_icon: bool,
 }
 
 impl<L> NameCache<L> {
@@ -96,6 +97,7 @@ impl<L> NameCache<L> {
                 top: 0.0,
                 bottom: 0.0,
             },
+            has_icon: false,
         }
     }
 }
@@ -199,8 +201,8 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         .then(|| context.create_image(&component.icon))
         .flatten();
     // The selected mode reserves the icon column even before starting or on
-    // a segment without an image. Otherwise the timer would resize whenever
-    // the image appears or disappears, despite unchanged run-wide hints.
+    // a segment without an image. This is only a fitting reservation: absent
+    // icons let the companion text move left without resizing either timer.
     let (dims, content, icon_bounds) = if component.display_icon != IconDisplayMode::Hidden {
         fit_icon(cache, &measured, dims, component.display_icon)
     } else {
@@ -219,13 +221,27 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
     }
     let Content { main, lower, .. } = content;
     render_timers(cache, context, component, main, &lower, dims);
+    // Reclaim the empty column only while drawing the text. In both-row mode
+    // the comparison names and values translate together; their fonts and
+    // baselines, and the segment timer's origin, retain the reserved layout.
+    // First-row mode already gives the comparisons the normal left margin.
+    let missing_icon = component.icon.is_empty();
+    let name_left = if missing_icon { PADDING } else { dims.left };
+    let comparison_left = if missing_icon {
+        PADDING
+    } else {
+        dims.comparison_left
+    };
     render_name(
         cache,
         context,
         component,
         layout_state,
         main,
-        dims,
+        Dimensions {
+            left: name_left,
+            ..dims
+        },
         name_floor(&lower, dims),
     );
     render_comparisons(
@@ -234,7 +250,8 @@ pub(in crate::rendering) fn render<A: ResourceAllocator>(
         component,
         layout_state,
         &lower,
-        dims.comparison_left,
+        comparison_left,
+        lower.value_right - (dims.comparison_left - comparison_left),
     );
 }
 
@@ -388,13 +405,14 @@ fn measure_labels<A: ResourceAllocator>(
         .segment_name_size_hints
         .resize_with(component.segment_name_size_hints.len(), NameCache::new);
     let mut widest_name = 0.0_f32;
-    for (name, cached) in component
+    for (hint, cached) in component
         .segment_name_size_hints
         .iter()
         .zip(&mut cache.segment_name_size_hints)
     {
-        cached.width = context.measure_text(name, &mut cached.label, 0.5 * dims.top, None);
+        cached.width = context.measure_text(&hint.name, &mut cached.label, 0.5 * dims.top, None);
         cached.bounds = cached.label.vertical_bounds(1.0).into();
+        cached.has_icon = hint.has_icon;
         widest_name = widest_name.max(cached.width);
     }
     let main_hint_width = timer::measure(&mut cache.timer, context, dims.top, &component.timer);
@@ -575,19 +593,20 @@ fn reserve_names<L>(
     floor: f32,
 ) -> Bounds {
     let Dimensions {
-        width,
-        top: height,
-        left,
-        ..
+        width, top: height, ..
     } = dims;
     let minimum_width = measured.main_minimum_width * main.font;
-    let available = (width - left - BOTH_PADDINGS - minimum_width).max(0.0);
     let configured = 0.5 * height;
     let mut row = main.bounds();
     for cached in &cache.segment_name_size_hints {
         if cached.bounds.height() <= 0.0 {
             continue;
         }
+        // A missing-icon segment can display its name at a larger font after
+        // reclaiming the column. Reserve that reachable size for the entire
+        // run, so the larger name never changes the divider at a split.
+        let left = if cached.has_icon { dims.left } else { PADDING };
+        let available = (width - left - BOTH_PADDINGS - minimum_width).max(0.0);
         let font = (configured * fit_ratio(available, cached.width)).max(floor);
         let baseline = main.baseline + 0.35 * (font - main.font);
         row = row.union(cached.bounds.scaled(font).translated(baseline));
@@ -660,6 +679,7 @@ fn render_comparisons<A: ResourceAllocator>(
     layout_state: &LayoutState,
     lower: &LowerRow,
     left: f32,
+    value_right: f32,
 ) {
     if lower.font <= 0.0 {
         return;
@@ -700,7 +720,7 @@ fn render_comparisons<A: ResourceAllocator>(
             &comparison.time,
             &mut labels.time,
             Layer::Bottom,
-            [lower.value_right, lower.baselines[index]],
+            [value_right, lower.baselines[index]],
             lower.font,
             times_color,
         );

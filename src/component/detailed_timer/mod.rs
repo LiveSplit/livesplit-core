@@ -18,7 +18,7 @@ use crate::{
         Snapshot,
         formatter::{Accuracy, DigitsFormat, SegmentTime, TimeFormatter},
     },
-    util::ClearVec,
+    util::{Clear, ClearVec},
 };
 use alloc::borrow::Cow;
 use core::{
@@ -156,8 +156,10 @@ pub struct State {
     /// The segment names used to reserve space for the widest name in the run.
     /// This keeps the attempt timer's size stable across segment changes. The
     /// renderer measures these names with the layout's text font. This is empty
-    /// when segment names are hidden.
-    pub segment_name_size_hints: ClearVec<String>,
+    /// when segment names are hidden. Icon presence determines whether a name
+    /// can use the empty icon column, so its largest reachable size can also
+    /// be reserved before placing either row.
+    pub segment_name_size_hints: ClearVec<SegmentNameSizeHint>,
     /// The shortest whole-time format the attempt timer can display, with
     /// normalized digits. Together with the fraction hint, this tells the
     /// renderer how much space a name could ever use at a stable timer size.
@@ -199,6 +201,24 @@ pub struct ComparisonSizeHint {
     /// accuracy and normalized digits. This is a dash if no times are known.
     /// The renderer also reserves the missing-time glyph alongside this hint.
     pub time: String,
+}
+
+/// A run-wide segment name reservation, including whether its icon column
+/// will be available to the name when that segment is current.
+#[derive(Default, Clone, Hash, Serialize, Deserialize)]
+pub struct SegmentNameSizeHint {
+    /// The segment's name, measured with the layout's text font.
+    pub name: String,
+    /// Whether the segment has an icon. Names without one may use the icon
+    /// column without changing the timers' reserved sizes or positions.
+    pub has_icon: bool,
+}
+
+impl Clear for SegmentNameSizeHint {
+    fn clear(&mut self) {
+        self.name.clear();
+        self.has_icon = false;
+    }
 }
 
 impl State {
@@ -502,10 +522,9 @@ impl Component {
         state.segment_name_size_hints.clear();
         if self.settings.show_segment_name {
             for segment in run.segments() {
-                state
-                    .segment_name_size_hints
-                    .push()
-                    .push_str(segment.name());
+                let hint = state.segment_name_size_hints.push();
+                hint.name.push_str(segment.name());
+                hint.has_icon = !segment.icon().is_empty();
             }
         }
 
