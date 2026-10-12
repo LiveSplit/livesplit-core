@@ -110,14 +110,15 @@ impl<L> CachedLabel<L> {
         }
     }
 
+    /// Returns the full glyph bounds relative to the baseline. A newly created
+    /// cache has no allocated label and represents empty text with zero bounds.
     pub fn vertical_bounds(&self, scale: f32) -> [f32; 2]
     where
         L: Label,
     {
         self.label
             .as_ref()
-            .expect("the label must be measured first")
-            .vertical_bounds(scale)
+            .map_or([0.0; 2], |label| label.vertical_bounds(scale))
     }
 
     pub fn update<F, R: ResourceAllocator<Label = LabelHandle<L>, Font = Handle<F>>>(
@@ -196,4 +197,18 @@ pub fn centered(
         x = max_x - width;
     }
     transform.pre_translate(x, y).pre_scale(scale, scale)
+}
+
+#[cfg(all(test, feature = "default-text-engine"))]
+mod tests {
+    use super::CachedLabel;
+    use crate::rendering::default_text_engine;
+
+    #[test]
+    fn uninitialized_cached_label_has_empty_vertical_bounds() {
+        let cache = CachedLabel::<default_text_engine::Label<()>>::new();
+        for scale in [0.0, 1.0, 12.0] {
+            assert_eq!(cache.vertical_bounds(scale), [0.0; 2]);
+        }
+    }
 }

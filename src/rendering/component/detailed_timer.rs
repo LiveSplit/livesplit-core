@@ -66,6 +66,9 @@ struct Labels<L> {
     segment_name: CachedLabel<L>,
     segment_name_unconstrained: CachedLabel<L>,
     segment_name_size_hints: Vec<CachedLabel<L>>,
+    // Only the detailed timer needs the shortest format to reserve the
+    // largest possible segment-name size beside the attempt timer.
+    timer_minimum_size_hint: CachedLabel<L>,
     timer_bounds: CachedLabel<L>,
     comparison_text_bounds: CachedLabel<L>,
     comparison_number_bounds: CachedLabel<L>,
@@ -81,6 +84,7 @@ impl<L> Labels<L> {
             segment_name: CachedLabel::new(),
             segment_name_unconstrained: CachedLabel::new(),
             segment_name_size_hints: Vec::new(),
+            timer_minimum_size_hint: CachedLabel::new(),
             timer_bounds: CachedLabel::new(),
             comparison_text_bounds: CachedLabel::new(),
             comparison_number_bounds: CachedLabel::new(),
@@ -316,6 +320,7 @@ fn measure_comparisons<A: ResourceAllocator>(
     for (comparison, labels) in component
         .comparison_size_hints
         .iter()
+        .flatten()
         .zip(&mut cache.comparisons)
     {
         widths[0] =
@@ -449,12 +454,14 @@ fn reserve_names<A: ResourceAllocator>(
         left,
         ..
     } = dims;
-    let minimum_width = timer::measure_minimum(
-        &mut cache.timer,
-        context,
+    let minimum_time_width = context.measure_timer(
         &component.timer_minimum_size_hint,
-        &component.timer,
-    ) * main.font;
+        &mut cache.timer_minimum_size_hint,
+        1.0,
+    );
+    let minimum_width = (minimum_time_width
+        + timer::measure_fraction_size_hint(&mut cache.timer, context, 1.0, &component.timer))
+        * main.font;
     let available = (width - left - BOTH_PADDINGS - minimum_width).max(0.0);
     let configured = 0.5 * height;
     let mut row = main.bounds();

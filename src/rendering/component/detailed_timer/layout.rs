@@ -154,6 +154,7 @@ pub(super) fn fit_ratio(available: f32, needed: f32) -> f32 {
 mod tests {
     use super::*;
 
+    #[track_caller]
     fn near(actual: f32, expected: f32) {
         assert!((actual - expected).abs() < 0.0001, "{actual} != {expected}");
     }

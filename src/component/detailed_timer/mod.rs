@@ -18,7 +18,7 @@ use crate::{
         Snapshot,
         formatter::{Accuracy, DigitsFormat, SegmentTime, TimeFormatter},
     },
-    util::{Clear, ClearVec},
+    util::ClearVec,
 };
 use alloc::borrow::Cow;
 use core::{
@@ -98,11 +98,12 @@ pub struct State {
     pub comparison1: Option<ComparisonState>,
     /// The second comparison to visualize.
     pub comparison2: Option<ComparisonState>,
-    /// The configured comparison names and maximum time formats, in display
-    /// order. These reserve space even while the comparisons are hidden before
-    /// an attempt. Each time hint covers all of that comparison's segment
-    /// times, keeping the lower row stable across splits.
-    pub comparison_size_hints: ClearVec<ComparisonSizeHint>,
+    /// The configured comparison names and maximum time formats, corresponding
+    /// to [`comparison1`](Self::comparison1) and [`comparison2`](Self::comparison2).
+    /// An unconfigured comparison has no hint. Configured comparisons reserve
+    /// space even while hidden before an attempt. Each time hint covers all of
+    /// that comparison's segment times, keeping the lower row stable across splits.
+    pub comparison_size_hints: [Option<ComparisonSizeHint>; 2],
     /// The name of the segment. This may be [`None`] if it's not supposed to be
     /// visualized.
     pub segment_name: Option<String>,
@@ -150,13 +151,6 @@ pub struct ComparisonSizeHint {
     /// accuracy and normalized digits. This is a dash if no times are known.
     /// The renderer also reserves the missing-time glyph alongside this hint.
     pub time: String,
-}
-
-impl Clear for ComparisonSizeHint {
-    fn clear(&mut self) {
-        self.name.clear();
-        self.time.clear();
-    }
 }
 
 impl State {
@@ -353,15 +347,18 @@ impl Component {
             .timing_method
             .unwrap_or_else(|| timer.current_timing_method());
         let accuracy = self.settings.comparison_times_accuracy;
-        state.comparison_size_hints.clear();
-        for (comparison, visible) in self
+        // Reuse each configured slot's strings independently of visibility.
+        for ((comparison, visible), hint) in self
             .resolve_comparisons(timer)
             .into_iter()
             .zip([&mut state.comparison1, &mut state.comparison2])
+            .zip(&mut state.comparison_size_hints)
         {
             if let Some(comparison) = comparison {
-                let hint = state.comparison_size_hints.push();
+                let hint = hint.get_or_insert_with(ComparisonSizeHint::default);
+                hint.name.clear();
                 hint.name.push_str(comparison::shorten(comparison));
+                hint.time.clear();
                 write_comparison_size_hint(
                     &mut hint.time,
                     timer,
@@ -370,6 +367,8 @@ impl Component {
                     accuracy,
                     lang,
                 );
+            } else {
+                *hint = None;
             }
             let visible_comparison = comparison
                 .filter(|_| timer.current_phase() != TimerPhase::NotRunning)

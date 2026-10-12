@@ -18,14 +18,17 @@ use livesplit_core::{
 };
 use std::{fs, path::PathBuf};
 
+#[track_caller]
 fn lss(data: &str) -> Run {
     livesplit::parse(data).unwrap()
 }
 
+#[track_caller]
 fn lsl(data: &str) -> Layout {
     layout::parser::parse(data).unwrap()
 }
 
+#[track_caller]
 fn ls1l(data: &str) -> Layout {
     Layout::from_settings(serde_json::from_str(data).unwrap())
 }

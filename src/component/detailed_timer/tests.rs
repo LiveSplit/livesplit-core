@@ -7,6 +7,7 @@ use crate::{
     util::tests_helper::{create_run, start_run},
 };
 
+#[track_caller]
 fn state(component: &Component, timer: &Timer) -> State {
     component.state(
         &mut ImageCache::new(),
@@ -127,6 +128,7 @@ fn constructors_apply_segment_height_edits_from_the_correct_default() {
 
 const TARGET: &str = "Target";
 
+#[track_caller]
 fn timer_with_target(times: &[Option<f64>], method: TimingMethod) -> Timer {
     let mut run = Run::new();
     run.add_custom_comparison(TARGET).unwrap();
@@ -161,12 +163,24 @@ fn comparison_hints_reserve_their_own_longest_segment_instead_of_the_total() {
     let mut timer = Timer::new(run).unwrap();
     timer.set_current_timing_method(TimingMethod::GameTime);
     let pb = state(&Component::new(), &timer);
-    assert_eq!(pb.comparison_size_hints[0].time, "88:88.88");
-    assert_eq!(pb.comparison_size_hints[1].time, "8:88.88");
+    assert_eq!(
+        pb.comparison_size_hints[0].as_ref().unwrap().time,
+        "88:88.88"
+    );
+    assert_eq!(
+        pb.comparison_size_hints[1].as_ref().unwrap().time,
+        "8:88.88"
+    );
     timer.set_current_comparison(TARGET).unwrap();
     let target = state(&Component::new(), &timer);
-    assert_eq!(target.comparison_size_hints[0].time, "88:88.88");
-    assert_eq!(target.comparison_size_hints[1].time, "8:88.88");
+    assert_eq!(
+        target.comparison_size_hints[0].as_ref().unwrap().time,
+        "88:88.88"
+    );
+    assert_eq!(
+        target.comparison_size_hints[1].as_ref().unwrap().time,
+        "8:88.88"
+    );
 }
 
 #[test]
@@ -195,7 +209,10 @@ fn comparison_hints_use_the_exact_maximum_and_normalize_digits() {
     ] {
         let timer = timer_with_target(&[Some(seconds)], TimingMethod::GameTime);
         assert_eq!(
-            state(&component, &timer).comparison_size_hints[0].time,
+            state(&component, &timer).comparison_size_hints[0]
+                .as_ref()
+                .unwrap()
+                .time,
             expected
         );
     }
@@ -212,7 +229,10 @@ fn comparison_hints_only_count_segment_times_that_can_be_displayed() {
     ] {
         let timer = timer_with_target(&times, TimingMethod::GameTime);
         assert_eq!(
-            state(&component, &timer).comparison_size_hints[0].time,
+            state(&component, &timer).comparison_size_hints[0]
+                .as_ref()
+                .unwrap()
+                .time,
             expected
         );
     }
@@ -234,7 +254,10 @@ fn comparison_hints_follow_the_comparison_timing_method_override() {
         settings.timer.timing_method = Some(method);
         let component = Component::with_settings(settings);
         assert_eq!(
-            state(&component, &timer).comparison_size_hints[0].time,
+            state(&component, &timer).comparison_size_hints[0]
+                .as_ref()
+                .unwrap()
+                .time,
             expected
         );
     }
@@ -255,7 +278,10 @@ fn comparison_hints_follow_accuracy_and_decimal_separator() {
         });
         let expected = format!("88{fraction}");
         assert_eq!(
-            state(&component, &timer).comparison_size_hints[0].time,
+            state(&component, &timer).comparison_size_hints[0]
+                .as_ref()
+                .unwrap()
+                .time,
             expected
         );
         #[cfg(feature = "localization")]
@@ -267,7 +293,7 @@ fn comparison_hints_follow_accuracy_and_decimal_separator() {
                 Lang::German,
             );
             assert_eq!(
-                localized.comparison_size_hints[0].time,
+                localized.comparison_size_hints[0].as_ref().unwrap().time,
                 expected.replace('.', ",")
             );
         }
@@ -310,6 +336,7 @@ fn comparison_reservations_use_the_same_selection_before_and_during_an_attempt()
             before
                 .comparison_size_hints
                 .iter()
+                .flatten()
                 .map(|h| h.name.as_str())
                 .eq(names.iter().copied())
         );
@@ -326,12 +353,80 @@ fn comparison_reservations_use_the_same_selection_before_and_during_an_attempt()
             after
                 .comparison_size_hints
                 .iter()
+                .flatten()
                 .map(|h| (&h.name, &h.time))
                 .eq(before
                     .comparison_size_hints
                     .iter()
+                    .flatten()
                     .map(|h| (&h.name, &h.time)))
         );
+    }
+}
+
+#[test]
+fn comparison_reservations_update_reused_states_when_configuration_changes() {
+    let mut run = timer_with_target(&[Some(3200.0)], TimingMethod::GameTime).into_run(false);
+    run.segment_mut(0).personal_best_split_time_mut().game_time = Some(TimeSpan::from_seconds(5.0));
+    run.segment_mut(0).best_segment_time_mut().game_time = Some(TimeSpan::from_seconds(2.5));
+    let mut timer = Timer::new(run).unwrap();
+    timer.set_current_comparison(TARGET).unwrap();
+    timer.set_current_timing_method(TimingMethod::GameTime);
+    let mut component = Component::new();
+    let mut state = State::default();
+    let mut images = ImageCache::new();
+    let layout = GeneralLayoutSettings::default();
+
+    for (first, second, hide_second, expected) in [
+        (
+            None,
+            Some(best_segments::NAME),
+            false,
+            [Some((TARGET, "88:88.88")), Some(("Best", "8.88"))],
+        ),
+        (None, None, false, [Some((TARGET, "88:88.88")), None]),
+        (
+            Some(personal_best::NAME),
+            Some(TARGET),
+            false,
+            [Some(("PB", "8.88")), Some((TARGET, "88:88.88"))],
+        ),
+        (
+            Some(best_segments::NAME),
+            Some(TARGET),
+            true,
+            [Some(("Best", "8.88")), None],
+        ),
+        (
+            Some(personal_best::NAME),
+            Some(best_segments::NAME),
+            false,
+            [Some(("PB", "8.88")), Some(("Best", "8.88"))],
+        ),
+    ] {
+        component.set_settings(Settings {
+            comparison1: first.map(Into::into),
+            comparison2: second.map(Into::into),
+            hide_second_comparison: hide_second,
+            ..Default::default()
+        });
+        component.update_state(
+            &mut state,
+            &mut images,
+            &timer.snapshot(),
+            &layout,
+            Lang::English,
+        );
+        // Reusing a state must replace old names and formats and remove the
+        // second reservation when a comparison is disabled or deduplicated.
+        assert_eq!(
+            state
+                .comparison_size_hints
+                .each_ref()
+                .map(|hint| hint.as_ref().map(|h| (h.name.as_str(), h.time.as_str()))),
+            expected,
+        );
+        assert!(state.comparison1.is_none() && state.comparison2.is_none());
     }
 }
 
@@ -354,6 +449,7 @@ fn sizes_segment_timer_for_the_longest_segment() {
     assert_eq!(state.segment_timer.time_size_hint, "88:88");
 }
 
+#[track_caller]
 fn prepare() -> (Timer, Component, GeneralLayoutSettings, ImageCache) {
     let mut run = Run::new();
     let mut segment = Segment::new("foo");

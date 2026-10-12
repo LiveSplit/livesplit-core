@@ -85,6 +85,7 @@ impl ResourceAllocator for Allocator {
 type Manager =
     SceneManager<(), EmptyPath, default_text_engine::Font, default_text_engine::Label<()>>;
 
+#[track_caller]
 fn timer_labels(manager: &Manager) -> [(Transform, f32); 2] {
     let labels: Vec<_> = manager
         .scene()
@@ -101,6 +102,7 @@ fn timer_labels(manager: &Manager) -> [(Transform, f32); 2] {
     labels.try_into().ok().unwrap()
 }
 
+#[track_caller]
 fn assert_fits(manager: &Manager, [width, height]: [f32; 2]) -> f32 {
     let [(fraction, fraction_width), (time, time_width)] = timer_labels(manager);
     for (transform, label_width) in [(fraction, fraction_width), (time, time_width)] {
@@ -207,6 +209,7 @@ fn keeps_configured_size_when_there_is_room() {
     assert!((assert_fits(&manager, dims) - 60.0).abs() < 0.001);
 }
 
+#[track_caller]
 fn assert_detailed_timer_fits(manager: &Manager, dims: [f32; 2], comparisons: usize) -> f32 {
     // Keep the ticking timers in the top layer so the comparison labels can
     // be checked independently of the main timer above them.
@@ -298,21 +301,17 @@ fn assert_detailed_timer_fits(manager: &Manager, dims: [f32; 2], comparisons: us
 // These fixtures edit generated states to cover otherwise difficult layouts.
 // A disabled comparison loses its reservation too; temporarily hidden values
 // before an attempt retain it.
+#[track_caller]
 fn remove_comparison(state: &mut detailed_timer::State, index: usize) {
     if index == 0 {
         state.comparison1 = None;
     } else {
         state.comparison2 = None;
     }
-    state.comparison_size_hints = state
-        .comparison_size_hints
-        .iter()
-        .enumerate()
-        .filter(|(i, _)| *i != index)
-        .map(|(_, hint)| hint.clone())
-        .collect();
+    state.comparison_size_hints[index] = None;
 }
 
+#[track_caller]
 fn set_comparison_name(state: &mut detailed_timer::State, index: usize, name: &str) {
     let comparison = if index == 0 {
         &mut state.comparison1
@@ -320,7 +319,7 @@ fn set_comparison_name(state: &mut detailed_timer::State, index: usize, name: &s
         &mut state.comparison2
     };
     comparison.as_mut().unwrap().name = name.into();
-    state.comparison_size_hints[index].name = name.into();
+    state.comparison_size_hints[index].as_mut().unwrap().name = name.into();
 }
 
 #[test]
@@ -462,6 +461,7 @@ fn detailed_timer_ellipsizes_name_without_shrinking_main_timer() {
     assert_eq!(timer_bounds(&manager), bounds_with_name);
 }
 
+#[track_caller]
 fn detailed_name_bounds(manager: &Manager, top_height: f32) -> (f32, f32, f32) {
     manager
         .scene()
@@ -478,6 +478,7 @@ fn detailed_name_bounds(manager: &Manager, top_height: f32) -> (f32, f32, f32) {
         .expect("the segment name should be visible")
 }
 
+#[track_caller]
 fn detailed_main_timer_scale(manager: &Manager) -> f32 {
     manager
         .scene()
@@ -592,6 +593,7 @@ fn detailed_name_stays_complete_while_fitting_fractional_widths() {
     );
 }
 
+#[track_caller]
 fn detailed_comparison_scale(manager: &Manager, top_height: f32) -> f32 {
     manager
         .scene()
@@ -614,6 +616,7 @@ struct PlacedText {
     bounds: [f32; 2],
 }
 
+#[track_caller]
 fn placed_labels(manager: &Manager, top: bool) -> Vec<PlacedText> {
     let entities = if top {
         manager.scene().top_layer()
@@ -637,12 +640,14 @@ fn placed_labels(manager: &Manager, top: bool) -> Vec<PlacedText> {
         .collect()
 }
 
+#[track_caller]
 fn timer_reference(allocator: &mut Allocator, font: Option<&Font>) -> [f32; 2] {
     let mut font = allocator.create_font(font, FontKind::Timer);
     let label = allocator.create_label("0123456789:−.—", &mut font, None);
     label.vertical_bounds(1.0)
 }
 
+#[track_caller]
 fn detailed_layout() -> Layout {
     let mut layout = Layout::new();
     layout.push(Box::new(detailed_timer::Component::with_settings(
@@ -654,6 +659,7 @@ fn detailed_layout() -> Layout {
     layout
 }
 
+#[track_caller]
 fn detailed_timer_with_times(names: &[&str]) -> Timer {
     let mut run = tests_helper::create_run(names);
     for (index, segment) in run.segments_mut().iter_mut().enumerate() {
@@ -666,6 +672,7 @@ fn detailed_timer_with_times(names: &[&str]) -> Timer {
     timer
 }
 
+#[track_caller]
 fn timer_with_varied_comparison_times() -> Timer {
     let mut run = tests_helper::create_run(&[
         "Start",
@@ -732,7 +739,10 @@ fn detailed_timer_reserves_comparisons_before_start_and_keeps_the_layout_across_
                     // before starting, to inspect their sizes and baselines.
                     component.timer.updates_frequently = true;
                     component.segment_timer.updates_frequently = true;
-                    assert_eq!(component.comparison_size_hints.len(), count);
+                    assert_eq!(
+                        component.comparison_size_hints.iter().flatten().count(),
+                        count
+                    );
                     let visible = step != 0 && step != 7;
                     assert_eq!(component.comparison1.is_some(), visible);
                     manager.update_scene(&mut allocator, dims, &state, &images);
@@ -800,7 +810,7 @@ fn hidden_comparison_hints_invalidate_the_cached_layout() {
         unreachable!()
     };
     assert!(component.comparison1.is_none() && component.comparison2.is_none());
-    component.comparison_size_hints[0].time = "888:88:88.88".into();
+    component.comparison_size_hints[0].as_mut().unwrap().time = "888:88:88.88".into();
     manager.update_scene(&mut allocator, dims, &state, &images);
     let after = placed_labels(&manager, false);
     assert_eq!(after.len(), 4);

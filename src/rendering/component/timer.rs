@@ -14,7 +14,6 @@ pub struct Cache<L> {
     fraction: CachedLabel<L>,
     time_size_hint: CachedLabel<L>,
     fraction_size_hint: CachedLabel<L>,
-    minimum_time: CachedLabel<L>,
 }
 
 impl<L> Cache<L> {
@@ -24,7 +23,6 @@ impl<L> Cache<L> {
             fraction: CachedLabel::new(),
             time_size_hint: CachedLabel::new(),
             fraction_size_hint: CachedLabel::new(),
-            minimum_time: CachedLabel::new(),
         }
     }
 }
@@ -93,18 +91,18 @@ pub(in crate::rendering) fn measure_current<A: ResourceAllocator>(
         + context.measure_timer(&component.fraction, &mut cache.fraction, 0.7)
 }
 
-pub(in crate::rendering) fn measure_minimum<A: ResourceAllocator>(
+/// Measure the fraction hint at the same relative scale used to render it.
+pub(in crate::rendering) fn measure_fraction_size_hint<A: ResourceAllocator>(
     cache: &mut Cache<A::Label>,
     context: &mut RenderContext<A>,
-    minimum_time: &str,
+    height: f32,
     component: &State,
 ) -> f32 {
-    context.measure_timer(minimum_time, &mut cache.minimum_time, 1.0)
-        + context.measure_timer(
-            &component.fraction_size_hint,
-            &mut cache.fraction_size_hint,
-            0.7,
-        )
+    context.measure_timer(
+        &component.fraction_size_hint,
+        &mut cache.fraction_size_hint,
+        0.7 * height,
+    )
 }
 
 pub(in crate::rendering) fn measure<A: ResourceAllocator>(
@@ -114,9 +112,5 @@ pub(in crate::rendering) fn measure<A: ResourceAllocator>(
     component: &State,
 ) -> f32 {
     context.measure_timer(&component.time_size_hint, &mut cache.time_size_hint, height)
-        + context.measure_timer(
-            &component.fraction_size_hint,
-            &mut cache.fraction_size_hint,
-            0.7 * height,
-        )
+        + measure_fraction_size_hint(cache, context, height, component)
 }
