@@ -473,7 +473,7 @@ fn horizontal() {
     layout.push(component::separator::Component::new());
     layout.push(Box::new(
         component::detailed_timer::Component::with_settings(component::detailed_timer::Settings {
-            display_icon: true,
+            display_icon: component::detailed_timer::IconDisplayMode::BothRows,
             ..Default::default()
         }),
     ));
@@ -491,8 +491,65 @@ fn horizontal() {
         &image_cache,
         [1500, 40],
         "ec993e6dc129ba03",
-        "4f9d990d99eee1db",
+        "ef62008412941a49",
         "horizontal",
+    );
+}
+
+#[track_caller]
+fn check_first_row_icon(heights: [u32; 2], dims: [u32; 2], hashes: [&str; 2], name: &str) {
+    let run = lss(run_files::LIVESPLIT_1_0);
+    let mut timer = Timer::new(run).unwrap();
+    let mut layout = Layout::new();
+    let mut settings = component::detailed_timer::Settings {
+        display_icon: component::detailed_timer::IconDisplayMode::FirstRow,
+        show_segment_name: true,
+        ..Default::default()
+    };
+    settings.timer.height = heights[0];
+    settings.segment_timer.height = heights[1];
+    layout.push(Box::new(
+        component::detailed_timer::Component::with_settings(settings),
+    ));
+    timer.start().unwrap();
+    let mut images = ImageCache::new();
+    check_dims(
+        &layout.state(&mut images, &timer.snapshot(), Lang::English),
+        &images,
+        dims,
+        hashes[0],
+        hashes[1],
+        name,
+    );
+}
+
+#[test]
+fn detailed_timer_icon_only_in_first_row() {
+    check_first_row_icon(
+        [40, 25],
+        [300, 100],
+        ["611169738b2e1b57", "d4a0161d39f828cf"],
+        "detailed_timer_icon_only_in_first_row",
+    );
+}
+
+#[test]
+fn detailed_timer_first_row_icon_in_a_narrow_component() {
+    check_first_row_icon(
+        [40, 25],
+        [160, 120],
+        ["fdfce0c7c4238013", "50710c570d6384e5"],
+        "detailed_timer_first_row_icon_narrow",
+    );
+}
+
+#[test]
+fn detailed_timer_first_row_icon_with_reduced_first_row_share() {
+    check_first_row_icon(
+        [25, 40],
+        [280, 180],
+        ["b58e8df30f7e1f94", "7e14d326d3e133cf"],
+        "detailed_timer_first_row_icon_small_share",
     );
 }
 

@@ -398,7 +398,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::DetailedTimerDisplayIcon => "Mostrar ícone",
         Text::DetailedTimerDisplayIconDescription => {
-            "Indica se o ícone do segmento deve ser exibido."
+            "Controla se o ícone do segmento fica oculto, ocupa as duas linhas ou apenas a primeira."
         }
         Text::SplitsBackground => "Fundo",
         Text::SplitsBackgroundDescription => {

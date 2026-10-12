@@ -644,17 +644,25 @@ export interface DetailedTimerComponentStateJson {
     comparison1: DetailedTimerComponentComparisonStateJson | null,
     /** The second comparison to visualize. */
     comparison2: DetailedTimerComponentComparisonStateJson | null,
+    /** Configured comparison names and maximum known segment-time formats. */
+    comparison_size_hints: [DetailedTimerComponentComparisonSizeHintJson | null, DetailedTimerComponentComparisonSizeHintJson | null],
     /**
      * The name of the segment. This may be `null` if it's not supposed to be
      * visualized.
      */
     segment_name: string | null,
+    /** Run-wide names and icon presence, used to reserve stable timer geometry. */
+    segment_name_size_hints: DetailedTimerComponentSegmentNameSizeHintJson[],
+    /** The shortest whole-time format, with normalized digits. */
+    timer_minimum_size_hint: string,
     /**
      * The icon of the segment. The associated image can be looked up in the
      * image cache. The image may be the empty image. This indicates that there
      * is no icon.
      */
     icon: ImageId,
+    /** Specifies how the segment icon should be displayed. */
+    display_icon: IconDisplayMode,
     /**
      * The color of the segment name if it's shown. If `null` is specified, the
      * color is taken from the layout.
@@ -678,6 +686,22 @@ export interface DetailedTimerComponentComparisonStateJson {
     name: string,
     /** The time to show for the comparison. */
     time: string,
+}
+
+/** A configured comparison's reservation, also available before an attempt. */
+export interface DetailedTimerComponentComparisonSizeHintJson {
+    /** The displayed comparison name. */
+    name: string,
+    /** The largest known segment-time format, with normalized digits. */
+    time: string,
+}
+
+/** A run-wide name reservation, including its ability to reclaim icon space. */
+export interface DetailedTimerComponentSegmentNameSizeHintJson {
+    /** The segment's name. */
+    name: string,
+    /** Whether the segment has an icon. */
+    has_icon: boolean,
 }
 
 /**
@@ -791,6 +815,7 @@ export type SettingsDescriptionValueJson =
     { ColumnUpdateWith: ColumnUpdateWith } |
     { ColumnUpdateTrigger: ColumnUpdateTrigger } |
     { SubsplitDisplayMode: SubsplitDisplayMode } |
+    { IconDisplayMode: IconDisplayMode } |
     { Hotkey: string } |
     { LayoutDirection: LayoutDirection } |
     { Font: Font | null } |
@@ -852,6 +877,9 @@ export type SubsplitDisplayMode =
     "Flat" |
     "CurrentGroupExpanded" |
     "AllGroupsExpanded";
+
+/** Describes how the Detailed Timer Component's icon is displayed. */
+export type IconDisplayMode = "Hidden" | "BothRows" | "FirstRow";
 
 /**
  * The Accuracy describes how many digits to show for the fractional part of a

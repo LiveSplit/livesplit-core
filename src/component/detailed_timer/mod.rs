@@ -18,7 +18,7 @@ use crate::{
         Snapshot,
         formatter::{Accuracy, DigitsFormat, SegmentTime, TimeFormatter},
     },
-    util::ClearVec,
+    util::{Clear, ClearVec},
 };
 use alloc::borrow::Cow;
 use core::{
@@ -68,8 +68,8 @@ pub struct Settings {
     pub timer: timer::Settings,
     /// The settings of the segment timer.
     pub segment_timer: timer::Settings,
-    /// Specifies whether the segment icon should be shown.
-    pub display_icon: bool,
+    /// Specifies how the segment icon should be displayed.
+    pub display_icon: IconDisplayMode,
     /// Specifies whether the segment name should be shown.
     pub show_segment_name: bool,
     /// The color of the segment name if it's shown. If [`None`] is specified,
@@ -83,6 +83,52 @@ pub struct Settings {
     pub comparison_times_color: Option<Color>,
     /// The accuracy of the comparison times.
     pub comparison_times_accuracy: Accuracy,
+}
+
+/// Describes how the segment icon is displayed.
+#[derive(Copy, Clone, Debug, Default, Hash, PartialEq, Eq, Serialize)]
+pub enum IconDisplayMode {
+    /// The segment icon is not shown.
+    #[default]
+    Hidden,
+    /// The segment icon spans both rows of the component.
+    BothRows,
+    /// The segment icon only occupies space in the first row.
+    FirstRow,
+}
+
+#[derive(Deserialize)]
+#[serde(untagged)]
+enum IconDisplayModeDeserialize {
+    Mode(IconDisplayModeName),
+    Legacy(bool),
+}
+
+#[derive(Deserialize)]
+enum IconDisplayModeName {
+    Hidden,
+    BothRows,
+    FirstRow,
+}
+
+impl<'de> serde::Deserialize<'de> for IconDisplayMode {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        // `display_icon` was a boolean in released layouts. Accepting the old
+        // representation on the enum itself keeps the field name stable and
+        // confines compatibility logic to the value whose format changed.
+        Ok(
+            match <IconDisplayModeDeserialize as serde::Deserialize>::deserialize(deserializer)? {
+                IconDisplayModeDeserialize::Mode(IconDisplayModeName::Hidden) => Self::Hidden,
+                IconDisplayModeDeserialize::Mode(IconDisplayModeName::BothRows) => Self::BothRows,
+                IconDisplayModeDeserialize::Mode(IconDisplayModeName::FirstRow) => Self::FirstRow,
+                IconDisplayModeDeserialize::Legacy(false) => Self::Hidden,
+                IconDisplayModeDeserialize::Legacy(true) => Self::BothRows,
+            },
+        )
+    }
 }
 
 /// The state object describes the information to visualize for this component.
@@ -110,8 +156,10 @@ pub struct State {
     /// The segment names used to reserve space for the widest name in the run.
     /// This keeps the attempt timer's size stable across segment changes. The
     /// renderer measures these names with the layout's text font. This is empty
-    /// when segment names are hidden.
-    pub segment_name_size_hints: ClearVec<String>,
+    /// when segment names are hidden. Icon presence determines whether a name
+    /// can use the empty icon column, so its largest reachable size can also
+    /// be reserved before placing either row.
+    pub segment_name_size_hints: ClearVec<SegmentNameSizeHint>,
     /// The shortest whole-time format the attempt timer can display, with
     /// normalized digits. Together with the fraction hint, this tells the
     /// renderer how much space a name could ever use at a stable timer size.
@@ -121,6 +169,8 @@ pub struct State {
     /// image cache. The image may be the empty image. This indicates that there
     /// is no icon.
     pub icon: ImageId,
+    /// Specifies how the segment icon should be displayed.
+    pub display_icon: IconDisplayMode,
     /// The color of the segment name if it's shown. If [`None`] is specified,
     /// the color is taken from the layout.
     pub segment_name_color: Option<Color>,
@@ -153,6 +203,24 @@ pub struct ComparisonSizeHint {
     pub time: String,
 }
 
+/// A run-wide segment name reservation, including whether its icon column
+/// will be available to the name when that segment is current.
+#[derive(Default, Clone, Hash, Serialize, Deserialize)]
+pub struct SegmentNameSizeHint {
+    /// The segment's name, measured with the layout's text font.
+    pub name: String,
+    /// Whether the segment has an icon. Names without one may use the icon
+    /// column without changing the timers' reserved sizes or positions.
+    pub has_icon: bool,
+}
+
+impl Clear for SegmentNameSizeHint {
+    fn clear(&mut self) {
+        self.name.clear();
+        self.has_icon = false;
+    }
+}
+
 impl State {
     pub(crate) fn content_fingerprint(&self, state: &mut impl Hasher) {
         self.timer.content_fingerprint(state);
@@ -164,6 +232,7 @@ impl State {
         self.segment_name_size_hints.hash(state);
         self.timer_minimum_size_hint.hash(state);
         self.icon.hash(state);
+        self.display_icon.hash(state);
     }
 
     pub(crate) const fn updates_frequently(&self) -> bool {
@@ -259,7 +328,7 @@ impl Default for Settings {
                 color_override: Some(SEGMENT_TIMER_DEFAULT_COLOR),
                 ..Default::default()
             },
-            display_icon: false,
+            display_icon: IconDisplayMode::Hidden,
             show_segment_name: false,
             segment_name_color: None,
             comparison_names_color: None,
@@ -413,10 +482,11 @@ impl Component {
         };
 
         let icon = current_split
-            .filter(|_| self.settings.display_icon)
+            .filter(|_| self.settings.display_icon != IconDisplayMode::Hidden)
             .map(|s| s.icon())
             .unwrap_or(Image::EMPTY);
         state.icon = *image_cache.cache(icon.id(), || icon.clone()).id();
+        state.display_icon = self.settings.display_icon;
 
         self.timer
             .update_state(&mut state.timer, timer, layout_settings, lang);
@@ -452,10 +522,9 @@ impl Component {
         state.segment_name_size_hints.clear();
         if self.settings.show_segment_name {
             for segment in run.segments() {
-                state
-                    .segment_name_size_hints
-                    .push()
-                    .push_str(segment.name());
+                let hint = state.segment_name_size_hints.push();
+                hint.name.push_str(segment.name());
+                hint.has_icon = !segment.icon().is_empty();
             }
         }
 
