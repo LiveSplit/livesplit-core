@@ -51,6 +51,7 @@
 
 use alloc::borrow::Cow;
 use serde::Serializer;
+use serde_json::json;
 
 use crate::{
     TimeSpan, Timer, TimerPhase, TimingMethod,
@@ -64,6 +65,12 @@ pub async fn handle_command<S: event::CommandSink + event::TimerQuery>(
     command: &str,
     command_sink: &S,
 ) -> String {
+    if !command.trim_start().starts_with(&['{', '[']) {
+        // command doesn't look like a JSON Command,
+        // so use normal LiveSplit's server protocol
+        return handle_livesplit_command(command, command_sink).await;
+    }
+
     let response = match serde_json::from_str::<Command>(command) {
         Ok(command) => command.handle(command_sink).await.into(),
         Err(e) => CommandResult::Error(Error::InvalidCommand {
@@ -554,4 +561,489 @@ fn format_time(time: TimeSpan) -> String {
     formatter::none_wrapper::NoneWrapper::new(formatter::Complete::new(), ASCII_MINUS)
         .format(time, Lang::English)
         .to_string()
+}
+
+async fn handle_livesplit_command<S: event::CommandSink + event::TimerQuery>(
+    command: &str,
+    command_sink: &S,
+) -> String {
+    let args: Vec<&str> = command.splitn(2, [' ']).collect();
+    let command = args[0];
+    match command {
+        "startorsplit" => {
+            command_sink.split_or_start().await.ok();
+            "".to_string()
+        }
+        "split" => {
+            command_sink.split().await.ok();
+            "".to_string()
+        }
+        "undosplit" | "unsplit" => {
+            command_sink.undo_split().await.ok();
+            "".to_string()
+        }
+        "skipsplit" => {
+            command_sink.skip_split().await.ok();
+            "".to_string()
+        }
+        "pause" => {
+            command_sink.pause().await.ok();
+            "".to_string()
+        }
+        "undoallpauses" => {
+            command_sink.undo_all_pauses().await.ok();
+            "".to_string()
+        }
+        "resume" => {
+            command_sink.resume().await.ok();
+            "".to_string()
+        }
+        "reset" => {
+            command_sink.reset(None).await.ok();
+            "".to_string()
+        }
+        "start" | "starttimer" => {
+            command_sink.start().await.ok();
+            "".to_string()
+        }
+        "setgametime" => {
+            if let Ok(Some(time)) = parse_time(args[1]) {
+                command_sink.set_game_time(time).await.ok();
+            }
+            "".to_string()
+        }
+        "setloadingtimes" => {
+            if let Ok(maybe_time) = parse_time(args[1]) {
+                command_sink
+                    .set_loading_times(maybe_time.unwrap_or_default())
+                    .await
+                    .ok();
+            }
+            "".to_string()
+        }
+        // TODO: addloadingtimes => would require adding to CommandSink
+        "pausegametime" => {
+            command_sink.pause_game_time().await.ok();
+            "".to_string()
+        }
+        "unpausegametime" => {
+            command_sink.resume_game_time().await.ok();
+            "".to_string()
+        }
+        // TODO: alwayspausegametime => would require adding to CommandSink
+        "getgamename" => {
+            let timer = command_sink.get_timer();
+            sanitize_string_response(timer.run().game_name())
+        }
+        "getcategoryname" => {
+            let timer = command_sink.get_timer();
+            sanitize_string_response(timer.run().category_name())
+        }
+        "getcategoryvariables" => {
+            let timer = command_sink.get_timer();
+            let md = timer.run().metadata();
+
+            // Region
+            let region = md.region_name();
+
+            // Platform
+            let platform = md.platform_name();
+
+            // Variables
+            let variables = serde_json::Map::from_iter(
+                md.speedrun_com_variables()
+                    .map(|(k, v)| (k.to_string(), serde_json::Value::String(v.to_string()))),
+            );
+
+            json!({
+                "Region": region,
+                "Platform": platform,
+                "UsesEmulator": md.uses_emulator(),
+                "Variables": variables,
+            })
+            .to_string()
+        }
+        "getdelta" => {
+            let timer = command_sink.get_timer();
+            let comparison = if args.len() > 1 {
+                args[1]
+            } else {
+                timer.current_comparison()
+            };
+            let delta: Option<TimeSpan> = match timer.current_phase() {
+                TimerPhase::Running | TimerPhase::Paused => get_last_delta::<S>(
+                    &timer,
+                    timer.current_split_index().unwrap_or_default(),
+                    comparison,
+                    timer.current_timing_method(),
+                ),
+                TimerPhase::Ended => timer.run().segments().last().and_then(|last| {
+                    let d = last.split_time() - last.comparison(comparison);
+                    d[timer.current_timing_method()]
+                }),
+                _ => None,
+            };
+            time_formatter_format(delta)
+        }
+        "getsplitindex" => {
+            let timer = command_sink.get_timer();
+            let split_index = timer.current_split_index().map_or(-1, |i| i as i32);
+            split_index.to_string()
+        }
+        "getsplitcount" => {
+            let timer = command_sink.get_timer();
+            timer.run().segments().len().to_string()
+        }
+        "getsplitname" => {
+            let timer = command_sink.get_timer();
+            let Ok(mut index) = args[1].parse::<i32>() else {
+                return "-".to_string();
+            };
+
+            let segments = timer.run().segments();
+            let count = segments.len() as i32;
+            if index.is_negative() {
+                index = count + index;
+            }
+
+            if index >= 0 && index < count {
+                sanitize_string_response(segments[index as usize].name())
+            } else {
+                "-".to_string()
+            }
+        }
+        "getcurrentsplitname" => {
+            let timer = command_sink.get_timer();
+            if let Some(current_split) = timer.current_split() {
+                sanitize_string_response(current_split.name())
+            } else {
+                "-".to_string()
+            }
+        }
+        "getlastsplitname" | "getprevioussplitname" => {
+            let timer = command_sink.get_timer();
+            match timer.current_split_index() {
+                Some(i) if i > 0 => sanitize_string_response(timer.run().segments()[i - 1].name()),
+                _ => "-".to_string(),
+            }
+        }
+        "getnextsplitname" | "getupcomingsplitname" => {
+            let timer = command_sink.get_timer();
+            let segments = timer.run().segments();
+            match timer.current_split_index() {
+                Some(i) if (i + 1) < segments.len() => {
+                    sanitize_string_response(segments[i + 1].name())
+                }
+                _ => "-".to_string(),
+            }
+        }
+        "getlastsplittime" | "getprevioussplittime" => {
+            let timer = command_sink.get_timer();
+            match timer.current_split_index() {
+                Some(i) if i > 0 => {
+                    let time =
+                        timer.run().segments()[i - 1].split_time()[timer.current_timing_method()];
+                    time_formatter_format(time)
+                }
+                _ => "-".to_string(),
+            }
+        }
+        "getcurrentsplittime" | "getcomparisonsplittime" => {
+            let timer = command_sink.get_timer();
+            if let Some(current_split) = timer.current_split() {
+                let comparison = if args.len() > 1 {
+                    args[1]
+                } else {
+                    timer.current_comparison()
+                };
+                let time = current_split.comparison(comparison)[timer.current_timing_method()];
+                time_formatter_format(time)
+            } else {
+                "-".to_string()
+            }
+        }
+        "getcurrentrealtime" => {
+            let timer = command_sink.get_timer();
+            time_formatter_format(get_current_time::<S>(&timer, TimingMethod::RealTime))
+        }
+        "getcurrentgametime" => {
+            let timer = command_sink.get_timer();
+            let timing_method = if timer.is_game_time_initialized() {
+                TimingMethod::GameTime
+            } else {
+                TimingMethod::RealTime
+            };
+
+            time_formatter_format(get_current_time::<S>(&timer, timing_method))
+        }
+        "getcurrenttime" => {
+            let timer = command_sink.get_timer();
+            let timing_method = if timer.is_game_time_initialized() {
+                timer.current_timing_method()
+            } else {
+                TimingMethod::RealTime
+            };
+
+            time_formatter_format(get_current_time::<S>(&timer, timing_method))
+        }
+        "getfinaltime" | "getfinalsplittime" => {
+            let timer = command_sink.get_timer();
+            let comparison = if args.len() > 1 {
+                args[1]
+            } else {
+                timer.current_comparison()
+            };
+            let time = match timer.current_phase() {
+                TimerPhase::Ended => timer.snapshot().current_time()[timer.current_timing_method()],
+                _ => timer.run().segments().last().and_then(|last| {
+                    last.comparison_timing_method(comparison, timer.current_timing_method())
+                }),
+            };
+            time_formatter_format(time)
+        }
+        "getbestpossibletime" | "getpredictedtime" => {
+            let timer = command_sink.get_timer();
+            let comparison = if command == "getbestpossibletime" {
+                crate::comparison::best_segments::NAME
+            } else if args.len() > 1 {
+                args[1]
+            } else {
+                timer.current_comparison()
+            };
+
+            let prediction = predict_time::<S>(&timer, comparison);
+            time_formatter_format(prediction)
+        }
+        "getpausedrealtime" => {
+            let timer = command_sink.get_timer();
+            time_formatter_format(timer.get_pause_time())
+        }
+        "getpausedgametime" => {
+            let timer = command_sink.get_timer();
+            // TODO: PauseTime vs GameTimePauseTime
+            // for a well-behaved auto-splitter that only pauses GameTime when the timer is Running,
+            // this should be equivalent
+            time_formatter_format(timer.get_pause_time())
+        }
+        "getoffset" => {
+            let timer = command_sink.get_timer();
+            time_formatter_format(Some(timer.run().offset()))
+        }
+        "gettimerphase" | "getcurrenttimerphase" => {
+            let timer = command_sink.get_timer();
+            // TODO: double-check that these are acutally the same
+            format!("{:?}", timer.current_phase())
+        }
+        "getcomparisonname" => {
+            let timer = command_sink.get_timer();
+            sanitize_string_response(timer.current_comparison())
+        }
+        "setcomparison" => {
+            command_sink
+                .set_current_comparison(args[1].into())
+                .await
+                .ok();
+            "".to_string()
+        }
+        "switchto" => {
+            match args[1] {
+                "gametime" => command_sink
+                    .set_current_timing_method(TimingMethod::GameTime)
+                    .await
+                    .ok(),
+                "realtime" => command_sink
+                    .set_current_timing_method(TimingMethod::RealTime)
+                    .await
+                    .ok(),
+                _ => None,
+            };
+            "".to_string()
+        }
+        "gettimingmethod" => {
+            let timer = command_sink.get_timer();
+            // TODO: double-check that these are acutally the same
+            format!("{:?}", timer.current_timing_method())
+        }
+        // TODO: setsplitname | setcurrentsplitname => would require adding to CommandSink
+        "getcustomvariablevalue" => {
+            let timer = command_sink.get_timer();
+            sanitize_string_response(
+                timer
+                    .run()
+                    .metadata()
+                    .custom_variable_value(args[1])
+                    .unwrap_or_default(),
+            )
+        }
+        "setcustomvariable" => {
+            if args.len() < 2 {
+                return "".to_string();
+            }
+
+            let Ok(options) = serde_json::from_str::<Vec<&str>>(args[1]) else {
+                return "".to_string();
+            };
+
+            if options.len() < 2 {
+                return "".to_string();
+            }
+
+            command_sink
+                .set_custom_variable(options[0].into(), options[1].into())
+                .await
+                .ok();
+            "".to_string()
+        }
+        // TODO: globalhotkeysenabled => would require adding something somewhere
+        "globalhotkeysenabled" => "-".to_string(),
+        // TODO: enableglobalhotkeys | disableglobalhotkeys | switchhotkeyprofile => would require adding to CommandSink
+        "ping" => "pong".to_string(),
+        // TODO: getlayoutpath => would require adding something somewhere
+        "getlayoutpath" => "-".to_string(),
+        // TODO: savelayout | savelayoutas => would require adding to CommandSink
+        "savelayout" | "savelayoutas" => "-".to_string(),
+        // TODO: getsplitspath => would require adding something somewhere
+        "getsplitspath" => "-".to_string(),
+        // TODO: savesplits | savesplitsas => would require adding to CommandSink
+        "savesplits" | "savesplitsas" => "-".to_string(),
+        // TODO: switchlayout => would require adding to CommandSink
+        "switchlayout" => "-".to_string(),
+        // TODO: switchsplits => would require adding to CommandSink
+        "switchsplits" => "-".to_string(),
+        // TODO: getsplitsscreenshot | savesplitsscreenshot => would require adding something somewhere
+        "getsplitsscreenshot" | "savesplitsscreenshot" => "-".to_string(),
+        "getattemptcount" => {
+            let timer = command_sink.get_timer();
+            timer.run().attempt_count().to_string()
+        }
+        "getcompletedcount" => {
+            let timer = command_sink.get_timer();
+            timer
+                .run()
+                .attempt_history()
+                .iter()
+                .filter(|x| x.time().real_time.is_some())
+                .count()
+                .to_string()
+        }
+        // TODO: getautosplitterpath => would require adding something somewhere
+        "getautosplitterpath" => "-".to_string(),
+        // TODO: autosplitteractivated => would require adding something somewhere
+        "autosplitteractivated" => "-".to_string(),
+        // TODO: gethotkeyprofile => would require adding something somewhere
+        "gethotkeyprofile" => "-".to_string(),
+        // TODO: getlivesplitversion
+        "getlivesplitversion" => "Unknown Version".to_string(),
+        // TODO: getlivesplitpath
+        "getlivesplitpath" => "-".to_string(),
+        // TODO: getservertype
+        "getservertype" => "-".to_string(),
+        _ => "".to_string(),
+    }
+}
+
+/// Make sure string response isn't empty and doesn't contain line endings
+fn sanitize_string_response(s: &str) -> String {
+    if s.trim().is_empty() {
+        "-".to_string()
+    } else {
+        s.replace("\r\n", " ").replace("\r", " ").replace("\n", " ")
+    }
+}
+
+fn parse_time(time_string: &str) -> Result<Option<TimeSpan>, crate::timing::ParseError> {
+    if time_string == "-" {
+        Ok(None)
+    } else {
+        TimeSpan::parse_opt_with_lang(time_string, Lang::English)
+    }
+}
+
+fn time_formatter_format(mt: Option<TimeSpan>) -> String {
+    match mt {
+        None => "-".to_string(),
+        Some(t) => format_time(t),
+    }
+}
+
+fn get_current_time<S: event::TimerQuery>(
+    timer: &S::Guard<'_>,
+    timing_method: TimingMethod,
+) -> Option<TimeSpan> {
+    match timer.current_phase() {
+        TimerPhase::NotRunning => Some(timer.run().offset()),
+        _ => timer.snapshot().current_time()[timing_method],
+    }
+}
+
+fn get_last_delta<S: event::TimerQuery>(
+    timer: &S::Guard<'_>,
+    split_number: usize,
+    comparison: &str,
+    method: TimingMethod,
+) -> Option<TimeSpan> {
+    for x in (0..=split_number).rev() {
+        let Some(c) = timer
+            .run()
+            .segment(x)
+            .comparison_timing_method(comparison, method)
+        else {
+            continue;
+        };
+        let Some(s) = timer.run().segment(x).split_time()[method] else {
+            continue;
+        };
+        return Some(s - c);
+    }
+
+    None
+}
+
+fn get_live_delta<S: event::TimerQuery>(
+    timer: &S::Guard<'_>,
+    comparison: &str,
+    method: TimingMethod,
+) -> Option<TimeSpan> {
+    Some(
+        timer.snapshot().current_time()[method]?
+            - timer
+                .current_split()?
+                .comparison_timing_method(comparison, method)?,
+    )
+}
+
+fn predict_time<S: event::TimerQuery>(timer: &S::Guard<'_>, comparison: &str) -> Option<TimeSpan> {
+    match timer.current_phase() {
+        TimerPhase::Running | TimerPhase::Paused => {
+            let delta = get_last_delta::<S>(
+                timer,
+                timer.current_split_index().unwrap_or_default(),
+                comparison,
+                timer.current_timing_method(),
+            );
+            let live_delta = get_live_delta::<S>(timer, comparison, timer.current_timing_method());
+            let delta = if live_delta > delta {
+                live_delta
+            } else {
+                delta
+            };
+
+            Some(
+                delta?
+                    + timer
+                        .run()
+                        .segments()
+                        .last()?
+                        .comparison_timing_method(comparison, timer.current_timing_method())?,
+            )
+        }
+        TimerPhase::Ended => timer
+            .run()
+            .segments()
+            .last()
+            .and_then(|last| last.split_time()[timer.current_timing_method()]),
+        _ => timer.run().segments().last().and_then(|last| {
+            last.comparison_timing_method(comparison, timer.current_timing_method())
+        }),
+    }
 }
