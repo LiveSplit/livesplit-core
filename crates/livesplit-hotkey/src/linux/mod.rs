@@ -7,6 +7,7 @@ use nix::unistd::{Group, getgroups};
 use promising_future::{Promise, future_promise};
 
 mod evdev_impl;
+mod wayland_impl;
 mod x11_impl;
 
 #[derive(Debug, Copy, Clone)]
@@ -16,6 +17,11 @@ pub enum Error {
     EPoll,
     NoXLib,
     OpenXServerConnection,
+    NoWaylandConnection,
+    Wayland,
+    WaylandHotkeyProtocolUnavailable,
+    WaylandHotkeyDenied,
+    WaylandKeymapUnavailable,
     ThreadStopped,
 }
 
@@ -32,6 +38,13 @@ impl fmt::Display for Error {
             Self::EPoll => "Failed polling the event file descriptors.",
             Self::NoXLib => "Failed dynamically linking to X11.",
             Self::OpenXServerConnection => "Failed opening a connection to the X11 server.",
+            Self::NoWaylandConnection => "Failed opening a connection to the Wayland compositor.",
+            Self::Wayland => "The Wayland connection failed.",
+            Self::WaylandHotkeyProtocolUnavailable => {
+                "The Wayland compositor does not support the global hotkey protocol."
+            }
+            Self::WaylandHotkeyDenied => "The Wayland compositor denied the global hotkey.",
+            Self::WaylandKeymapUnavailable => "Failed obtaining the Wayland keyboard map.",
             Self::ThreadStopped => "The background thread stopped unexpectedly.",
         })
     }
@@ -72,21 +85,35 @@ fn can_use_evdev() -> Option<()> {
 
 impl Hook {
     pub fn new(consume: ConsumePreference) -> Result<Self> {
-        if matches!(consume, ConsumePreference::PreferConsume)
-            && let Ok(x11) = x11_impl::new()
-        {
-            return Ok(x11);
-        }
-
-        if !matches!(consume, ConsumePreference::MustConsume) && can_use_evdev().is_some() {
-            evdev_impl::new()
-        } else if !matches!(
-            consume,
-            ConsumePreference::MustNotConsume | ConsumePreference::PreferConsume
-        ) {
-            x11_impl::new()
-        } else {
-            Err(crate::Error::UnmatchedPreference)
+        match consume {
+            ConsumePreference::NoPreference => {
+                if can_use_evdev().is_some() {
+                    evdev_impl::new()
+                } else if let Ok(wayland) = wayland_impl::new() {
+                    Ok(wayland)
+                } else {
+                    x11_impl::new()
+                }
+            }
+            ConsumePreference::PreferConsume => {
+                if let Ok(wayland) = wayland_impl::new() {
+                    Ok(wayland)
+                } else if let Ok(x11) = x11_impl::new() {
+                    Ok(x11)
+                } else if can_use_evdev().is_some() {
+                    evdev_impl::new()
+                } else {
+                    Err(crate::Error::UnmatchedPreference)
+                }
+            }
+            ConsumePreference::MustConsume => wayland_impl::new().or_else(|_| x11_impl::new()),
+            ConsumePreference::PreferNoConsume | ConsumePreference::MustNotConsume => {
+                if can_use_evdev().is_some() {
+                    evdev_impl::new()
+                } else {
+                    Err(crate::Error::UnmatchedPreference)
+                }
+            }
         }
     }
 
