@@ -91,6 +91,7 @@ pub struct Context<T> {
     process_list: ProcessList,
     wasi: WasiP1Ctx,
     stderr: StdErr,
+    pending_button_key: Option<Arc<str>>,
 }
 
 /// A thread-safe handle used to interrupt the execution of the script.
@@ -218,6 +219,7 @@ struct ExclusiveData<T: 'static> {
     store: Store<Context<T>>,
     initialize: Option<TypedFunc<(), ()>>,
     update: TypedFunc<(), ()>,
+    on_settings_button: Option<TypedFunc<(), ()>>,
 }
 
 /// An instantiated auto splitter that is ready to be executed. You generally
@@ -260,6 +262,45 @@ impl<T: Timer> ExecutionGuard<'_, T> {
         } else {
             data.update.call(&mut data.store, ())
         };
+
+        if result.is_ok() {
+            self.settings_widgets
+                .store(data.store.data().settings_widgets.clone());
+        } else {
+            data.trapped = true;
+        }
+
+        let data = data.store.data_mut();
+        data.stderr.print_lines(&mut data.timer);
+
+        result
+    }
+
+    /// Runs the exported `on_settings_button` function of the WebAssembly
+    /// module for the given settings button key. The auto splitter can then
+    /// retrieve the key by calling `user_settings_get_button_key`. If the auto
+    /// splitter does not export `on_settings_button`, this logs a debug message
+    /// and returns successfully. The pending key is cleared after the call,
+    /// including when the auto splitter traps.
+    pub fn invoke_settings_button(&mut self, key: &str) -> Result<()> {
+        let data = &mut *self.data;
+        if data.trapped {
+            return Ok(());
+        }
+
+        let Some(on_settings_button) = data.on_settings_button.as_ref() else {
+            data.store.data_mut().timer.log_runtime(
+                format_args!(
+                    "Settings button `{key}` was clicked, but the auto splitter does not export `on_settings_button`."
+                ),
+                LogLevel::Debug,
+            );
+            return Ok(());
+        };
+
+        data.store.data_mut().pending_button_key = Some(Arc::from(key));
+        let result = on_settings_button.call(&mut data.store, ());
+        data.store.data_mut().pending_button_key = None;
 
         if result.is_ok() {
             self.settings_widgets
@@ -405,6 +446,7 @@ impl CompiledAutoSplitter {
                 process_list: ProcessList::new(),
                 wasi,
                 stderr,
+                pending_button_key: None,
             },
         );
 
@@ -455,12 +497,17 @@ impl CompiledAutoSplitter {
             .get_typed_func(&mut store, "update")
             .map_err(|source| CreationError::MissingUpdateFunction { source })?;
 
+        let on_settings_button = instance
+            .get_typed_func::<(), ()>(&mut store, "on_settings_button")
+            .ok();
+
         Ok(AutoSplitter {
             exclusive_data: Mutex::new(ExclusiveData {
                 trapped: false,
                 store,
                 initialize,
                 update,
+                on_settings_button,
             }),
             engine: engine.clone(),
             settings_widgets: ArcSwap::new(settings_widgets),
@@ -551,5 +598,12 @@ impl<T: Timer> AutoSplitter<T> {
     /// applied to the settings map and stored back.
     pub fn settings_widgets(&self) -> Arc<Vec<settings::Widget>> {
         self.settings_widgets.load_full()
+    }
+
+    /// Invokes the auto splitter's `on_settings_button` export for the given
+    /// settings button key. This locks the auto splitter, so it may block if
+    /// another thread is currently executing it.
+    pub fn invoke_settings_button(&self, key: &str) -> Result<()> {
+        self.lock().invoke_settings_button(key)
     }
 }
