@@ -13,6 +13,10 @@
 //! Linux and the web via wasm-bindgen. On unsupported platforms the crate still
 //! compiles but uses a stubbed out implementation instead that never receives
 //! any hotkeys.
+//!
+//! [`display`] presents localized key and modifier names using native keyboard
+//! conventions. Callers provide translations through [`display::Localize`], so
+//! display names never affect the stable identifiers used for saved hotkeys.
 
 extern crate alloc;
 
@@ -38,6 +42,7 @@ cfg_if::cfg_if! {
     }
 }
 
+pub mod display;
 mod hotkey;
 mod key_code;
 mod modifiers;

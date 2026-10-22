@@ -1,8 +1,8 @@
 use alloc::borrow::Cow;
 
 use crate::{
-    HotkeyConfig, event,
-    hotkey::{ConsumePreference, Hook, Hotkey, KeyCode},
+    HotkeyConfig, Lang, event,
+    hotkey::{ConsumePreference, Hook, Hotkey, KeyCode, display},
 };
 
 pub use crate::hotkey::Result;
@@ -283,9 +283,26 @@ impl<S: event::CommandSink + Clone + Send + 'static> HotkeySystem<S> {
         Ok(())
     }
 
-    /// Resolves the key according to the current keyboard layout.
+    /// Resolves a writing-system key according to the current keyboard layout.
+    /// Other keys retain their legacy English/symbol names. For localized UI
+    /// labels, use [`Self::resolve_key`] or [`Self::resolve_hotkey`] instead.
     pub fn resolve(&self, key_code: KeyCode) -> Cow<'static, str> {
         key_code.resolve(&self.hook)
+    }
+
+    /// Prepares a localized key label using native platform conventions. Only a
+    /// writing-system key queries the native layout, once before this returns.
+    /// The returned label can be formatted after releasing the system's lock.
+    pub fn resolve_key(&self, key_code: KeyCode, lang: Lang) -> display::Key<Lang> {
+        display::Key::new(key_code, lang).with_hook(&self.hook)
+    }
+
+    /// Prepares a localized binding label without changing its stable identifier
+    /// or registration. Special keys and modifier names follow the supplied
+    /// language and native platform; character keys follow the active native layout.
+    /// The returned display value performs no native calls while formatting.
+    pub fn resolve_hotkey(&self, hotkey: Hotkey, lang: Lang) -> display::Binding<Lang> {
+        display::Binding::new(hotkey, lang).with_hook(&self.hook)
     }
 
     /// On the web you can use this to listen to keyboard events on an
