@@ -17,12 +17,14 @@ pub fn modifier_name<L: Localize>(modifier: Modifier, lang: L) -> &'static str {
         Modifier::Alt => Text::Alt,
         Modifier::Shift => Text::Shift,
         Modifier::Meta => {
-            cfg_if::cfg_if! {
-                if #[cfg(windows)] {
+            cfg_select! {
+                windows => {
                     return "Win";
-                } else if #[cfg(target_os = "linux")] {
+                }
+                target_os = "linux" => {
                     Text::Super
-                } else {
+                }
+                _ => {
                     Text::Meta
                 }
             }

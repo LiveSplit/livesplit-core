@@ -20,23 +20,28 @@
 
 extern crate alloc;
 
-cfg_if::cfg_if! {
-    if #[cfg(not(feature = "std"))] {
+cfg_select! {
+    not(feature = "std") => {
         mod other;
         use self::other as platform;
-    } else if #[cfg(windows)] {
+    }
+    windows => {
         mod windows;
         use self::windows as platform;
-    } else if #[cfg(target_os = "linux")] {
+    }
+    target_os = "linux" => {
         mod linux;
         use self::linux as platform;
-    } else if #[cfg(target_os = "macos")] {
+    }
+    target_os = "macos" => {
         mod macos;
         use self::macos as platform;
-    } else if #[cfg(all(target_family = "wasm", target_os = "unknown", feature = "wasm-web"))] {
+    }
+    all(target_family = "wasm", target_os = "unknown", feature = "wasm-web") => {
         mod wasm_web;
         use self::wasm_web as platform;
-    } else {
+    }
+    _ => {
         mod other;
         use self::other as platform;
     }

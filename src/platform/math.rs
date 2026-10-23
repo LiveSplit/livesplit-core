@@ -1,12 +1,13 @@
 pub mod f32 {
-    cfg_if::cfg_if! {
-        if #[cfg(all(feature = "std"))] {
+    cfg_select! {
+        all(feature = "std") => {
             #[inline(always)]
             #[expect(clippy::missing_const_for_fn)] // Can't do this for the libm counterpart.
             pub fn abs(x: f32) -> f32 {
                 x.abs()
             }
-        } else {
+        }
+        _ => {
             pub use libm::fabsf as abs;
         }
     }
@@ -23,13 +24,14 @@ pub mod f32 {
 }
 
 mod f64 {
-    cfg_if::cfg_if! {
-        if #[cfg(all(feature = "std"))] {
+    cfg_select! {
+        all(feature = "std") => {
             #[inline(always)]
             pub fn powf(x: f64, y: f64) -> f64 {
                 x.powf(y)
             }
-        } else {
+        }
+        _ => {
             pub use libm::pow as powf;
         }
     }

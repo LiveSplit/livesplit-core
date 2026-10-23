@@ -3,7 +3,7 @@ pub use std::sync::RwLock;
 use time::UtcOffset;
 pub use time::{Duration, OffsetDateTime as DateTime};
 
-cfg_if::cfg_if! {
+cfg_select! {
     // We can't use std's Instant as it's insufficiently specified. It neither
     // guarantees "real time" nor does it guarantee measuring "uptime" (the time
     // the OS has been awake rather than suspended), meaning that you can't
@@ -94,12 +94,12 @@ cfg_if::cfg_if! {
     //
     // And we add Fuchsia to this list as it's based on the Zircon kernel which
     // uses `CLOCK_BOOTTIME` in the same way as Linux.
-    if #[cfg(any(
+    any(
         target_os = "linux",
         target_os = "l4re",
         target_os = "android",
         target_os = "fuchsia",
-    ))] {
+    ) => {
         use core::{mem::MaybeUninit, ops::Sub};
 
         #[derive(Copy, Clone, PartialOrd, PartialEq, Ord, Eq, Debug)]
@@ -132,12 +132,13 @@ cfg_if::cfg_if! {
                 self.0 - rhs.0
             }
         }
-    } else if #[cfg(any(
+    }
+    any(
         target_os = "macos",
         target_os = "ios",
         target_os = "tvos",
         target_os = "watchos",
-    ))] {
+    ) => {
         use core::ops::Sub;
 
         unsafe extern "C" {
@@ -167,7 +168,8 @@ cfg_if::cfg_if! {
                 Duration::nanoseconds(self.0 as i64 - rhs.0 as i64)
             }
         }
-    } else {
+    }
+    _ => {
         use core::ops::Sub;
 
         #[derive(Copy, Clone, PartialOrd, PartialEq, Ord, Eq, Debug)]

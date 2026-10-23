@@ -38,7 +38,6 @@ base64-simd = { version = "0.8.0", default-features = false, features = [
 ] }
 bytemuck = { version = "1.9.1", default-features = false }
 bytemuck_derive = { version = "1.4.1", default-features = false }
-cfg-if = "1.0.0"
 itoa = { version = "1.0.3", default-features = false }
 time = { version = "0.3.47", default-features = false }
 hashbrown = "0.17.1"

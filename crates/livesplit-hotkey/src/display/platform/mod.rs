@@ -11,10 +11,11 @@ mod apple;
 #[cfg(any(not(target_vendor = "apple"), test))]
 mod conventional;
 
-cfg_if::cfg_if! {
-    if #[cfg(target_vendor = "apple")] {
+cfg_select! {
+    target_vendor = "apple" => {
         pub use apple::{SEPARATOR, key_symbol, modifier_name};
-    } else {
+    }
+    _ => {
         pub use conventional::{SEPARATOR, key_symbol, modifier_name};
     }
 }

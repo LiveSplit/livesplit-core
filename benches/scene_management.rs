@@ -1,5 +1,5 @@
-cfg_if::cfg_if! {
-    if #[cfg(feature = "rendering")] {
+cfg_select! {
+    feature = "rendering" => {
         use criterion::{criterion_group, criterion_main, Criterion};
         use livesplit_core::{
             layout::{self, Layout},
@@ -165,7 +165,8 @@ cfg_if::cfg_if! {
                 }
             }
         }
-    } else {
+    }
+    _ => {
         fn main() {}
     }
 }
