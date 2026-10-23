@@ -1,5 +1,3 @@
-use alloc::borrow::Cow;
-
 use crate::{
     HotkeyConfig, Lang, event,
     hotkey::{ConsumePreference, Hook, Hotkey, KeyCode, display},
@@ -281,13 +279,6 @@ impl<S: event::CommandSink + Clone + Send + 'static> HotkeySystem<S> {
         self.set_toggle_timing_method(config.toggle_timing_method)?;
 
         Ok(())
-    }
-
-    /// Resolves a writing-system key according to the current keyboard layout.
-    /// Other keys retain their legacy English/symbol names. For localized UI
-    /// labels, use [`Self::resolve_key`] or [`Self::resolve_hotkey`] instead.
-    pub fn resolve(&self, key_code: KeyCode) -> Cow<'static, str> {
-        key_code.resolve(&self.hook)
     }
 
     /// Prepares a localized key label using native platform conventions. Only a
