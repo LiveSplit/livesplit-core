@@ -1,5 +1,5 @@
-cfg_if::cfg_if! {
-    if #[cfg(feature = "software-rendering")] {
+cfg_select! {
+    feature = "software-rendering" => {
         use {
             criterion::{criterion_group, criterion_main, Criterion},
             livesplit_core::{
@@ -90,7 +90,8 @@ cfg_if::cfg_if! {
                 }
             }
         }
-    } else {
+    }
+    _ => {
         fn main() {}
     }
 }

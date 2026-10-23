@@ -4,6 +4,9 @@ use serde::{Deserialize, Serialize};
 
 bitflags::bitflags! {
     /// The modifier keys that are currently pressed.
+    ///
+    /// Display uses the stable names and order required by serialization and
+    /// parsing, independently of platform-specific or localized UI labels.
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
     pub struct Modifiers: u8 {
         /// The shift key is pressed.

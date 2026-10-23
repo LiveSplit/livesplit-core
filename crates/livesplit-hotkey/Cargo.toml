@@ -8,7 +8,7 @@ license = "MIT OR Apache-2.0"
 description = "livesplit-hotkey provides cross-platform global hotkey hooks."
 keywords = ["speedrun", "timer", "livesplit", "hotkey", "keyboard"]
 edition = "2024"
-rust-version = "1.89"
+rust-version = "1.95"
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.61.0", features = [
@@ -43,7 +43,6 @@ web-sys = { version = "0.3.28", default-features = false, features = [
 js-sys = { version = "0.3.28", default-features = false, optional = true }
 
 [dependencies]
-cfg-if = "1.0.0"
 serde = { version = "1.0.186", default-features = false, features = ["alloc"] }
 bitflags = "2.0.1"
 

@@ -1,17 +1,19 @@
-cfg_if::cfg_if! {
-    if #[cfg(not(feature = "std"))] {
+cfg_select! {
+    not(feature = "std") => {
         mod no_std;
         pub use self::no_std::*;
-    } else if #[cfg(all(
+    }
+    all(
         target_family = "wasm",
         not(any(
             target_os = "wasi",
             target_os = "emscripten",
         ))
-    ))] {
+    ) => {
         mod wasm;
         pub use self::wasm::*;
-    } else {
+    }
+    _ => {
         mod normal;
         pub use self::normal::*;
     }

@@ -1,5 +1,5 @@
 use crate::{Hook, Hotkey, Modifiers};
-use alloc::borrow::Cow;
+use alloc::{borrow::Cow, string::String};
 use core::{fmt, str::FromStr};
 use serde::{Deserialize, Serialize};
 
@@ -1841,20 +1841,30 @@ impl KeyCode {
         }
     }
 
-    /// Resolves the key according to the current keyboard layout.
-    pub fn resolve(self, hook: &Hook) -> Cow<'static, str> {
-        let class = self.classify();
-        if class == KeyCodeClass::WritingSystem
-            && let Some(resolved) = hook.0.try_resolve(self)
-        {
-            let uppercase = if resolved != "ß" {
-                resolved.to_uppercase()
-            } else {
-                resolved
-            };
-            uppercase.into()
+    /// Resolve a writing-system key through the native keyboard layout.
+    /// Special keys and unavailable layout observations return `None`, so
+    /// callers can supply their own localized fallback without recognizing or
+    /// replacing English display text. The label uses the same case convention
+    /// as [`Self::resolve`], including preserving the German sharp S.
+    pub fn try_resolve(self, hook: &Hook) -> Option<String> {
+        if self.classify() != KeyCodeClass::WritingSystem {
+            return None;
+        }
+
+        let resolved = hook.0.try_resolve(self)?;
+        Some(if resolved != "ß" {
+            resolved.to_uppercase()
         } else {
-            self.resolve_en_us().into()
+            resolved
+        })
+    }
+
+    /// Resolve a key through the native keyboard layout, using legacy English
+    /// or symbol names when unavailable. For localized labels use [`crate::display`].
+    pub fn resolve(self, hook: &Hook) -> Cow<'static, str> {
+        match self.try_resolve(hook) {
+            Some(resolved) => resolved.into(),
+            None => self.resolve_en_us().into(),
         }
     }
 }

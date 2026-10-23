@@ -1,6 +1,11 @@
+//! Shared language selection, translation tables and locale-aware value formatting.
+//!
+//! Keyboard mechanics live in the hotkey crate; this module implements its
+//! translation contract using the same language registry as the timer UI.
+
 use core::fmt;
 
-use crate::util::ascii_char::AsciiChar;
+use crate::{hotkey::display, util::ascii_char::AsciiChar};
 
 #[cfg(feature = "localization")]
 mod brazilian_portuguese;
@@ -1007,6 +1012,7 @@ pub(crate) enum Text {
     Untitled,
     SumOfBestCleanerStartOfRun,
     SumOfBestCleanerShouldRemove,
+    Hotkey(display::Text),
 }
 
 /// Text with placeholders for dynamic formatting.
@@ -1017,6 +1023,7 @@ pub enum PlaceholderText {
     SumOfBestCleanerSegmentTimeBetween,
     SumOfBestCleanerFasterThanCombined,
     SumOfBestCleanerRunOn,
+    Hotkey(display::Template),
 }
 
 /// A resolved placeholder text that can be formatted without allocations.
@@ -1121,3 +1128,42 @@ impl PlaceholderText {
         }
     }
 }
+
+// The hotkey crate owns key classification and platform conventions. Reuse this
+// module's one language registry and exhaustive translation tables; the low-level
+// crate only needs a vocabulary and does not depend on timer or UI policy.
+/// Display labels preserve the raw binding's persistence format.
+///
+/// ```
+/// use livesplit_core::{Lang, hotkey::{KeyCode, Modifiers, display::Binding}};
+/// let binding = KeyCode::KeyA.with_modifiers(Modifiers::META | Modifiers::SHIFT);
+/// let label = Binding::new(binding, Lang::English);
+/// assert!(!label.to_string().is_empty());
+/// assert_eq!(binding.to_string(), "Meta + Shift + KeyA");
+/// ```
+///
+/// ```compile_fail
+/// use livesplit_core::{Lang, hotkey::{KeyCode, display::Binding}};
+/// let label = Binding::new(KeyCode::KeyA.into(), Lang::English);
+/// serde_json::to_string(&label).unwrap();
+/// ```
+impl display::Localize for Lang {
+    fn text(self, text: display::Text) -> &'static str {
+        Text::Hotkey(text).resolve(self)
+    }
+
+    fn format(
+        self,
+        template: display::Template,
+        value: &dyn fmt::Display,
+        f: &mut fmt::Formatter<'_>,
+    ) -> fmt::Result {
+        fmt::Display::fmt(
+            &PlaceholderText::Hotkey(template).resolve(self, &[value]),
+            f,
+        )
+    }
+}
+
+#[cfg(test)]
+mod tests;

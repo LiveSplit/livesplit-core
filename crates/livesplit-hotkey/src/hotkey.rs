@@ -5,6 +5,10 @@ use serde::{Deserialize, Serialize};
 use crate::{KeyCode, Modifiers};
 
 /// A hotkey is a combination of a key code and a set of modifiers.
+///
+/// [`Display`](fmt::Display) is the stable, platform-independent identifier used
+/// by serialization and parsing. It must not be localized or changed to match
+/// the current keyboard layout; user-facing labels need a separate display API.
 #[derive(Eq, PartialEq, Hash, Copy, Clone)]
 pub struct Hotkey {
     /// The key code of the hotkey.
