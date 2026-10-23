@@ -13,14 +13,14 @@ mod conventional;
 
 cfg_if::cfg_if! {
     if #[cfg(target_vendor = "apple")] {
-        pub(crate) use apple::{SEPARATOR, key_symbol, modifier_name};
+        pub use apple::{SEPARATOR, key_symbol, modifier_name};
     } else {
-        pub(crate) use conventional::{SEPARATOR, key_symbol, modifier_name};
+        pub use conventional::{SEPARATOR, key_symbol, modifier_name};
     }
 }
 
 #[derive(Clone, Copy)]
-pub(crate) enum Modifier {
+pub enum Modifier {
     Control,
     Alt,
     Shift,
@@ -28,7 +28,7 @@ pub(crate) enum Modifier {
 }
 
 impl Modifier {
-    pub(crate) const fn flag(self) -> Modifiers {
+    pub const fn flag(self) -> Modifiers {
         match self {
             Self::Control => Modifiers::CONTROL,
             Self::Alt => Modifiers::ALT,
@@ -41,7 +41,7 @@ impl Modifier {
 // Display order is independent of the historical Control/Alt/Meta/Shift wire
 // format. This follows the standard Control/Option/Shift/Command order on macOS.
 // https://developer.apple.com/design/human-interface-guidelines/keyboards
-pub(crate) const ORDER: [Modifier; 4] = [
+pub const ORDER: [Modifier; 4] = [
     Modifier::Control,
     Modifier::Alt,
     Modifier::Shift,

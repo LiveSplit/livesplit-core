@@ -9,9 +9,9 @@ use crate::{
 };
 
 // macOS modifier glyphs are adjacent, without a textual plus separator.
-pub(crate) const SEPARATOR: &str = "";
+pub const SEPARATOR: &str = "";
 
-pub(crate) fn modifier_name<L: Localize>(modifier: Modifier, _: L) -> &'static str {
+pub fn modifier_name<L: Localize>(modifier: Modifier, _: L) -> &'static str {
     match modifier {
         Modifier::Control => "⌃",
         Modifier::Alt => "⌥",
@@ -20,7 +20,7 @@ pub(crate) fn modifier_name<L: Localize>(modifier: Modifier, _: L) -> &'static s
     }
 }
 
-pub(crate) const fn key_symbol(code: KeyCode) -> Option<&'static str> {
+pub const fn key_symbol(code: KeyCode) -> Option<&'static str> {
     // This is an optional glyph override. The ordinary key-name table still
     // matches every KeyCode exhaustively and localizes keys without a glyph.
     Some(match code {

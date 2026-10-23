@@ -10,7 +10,7 @@ use alloc::{format, string::ToString};
 use core::fmt;
 
 #[derive(Clone, Copy)]
-pub(crate) struct Labels;
+pub struct Labels;
 
 impl Localize for Labels {
     fn text(self, text: Text) -> &'static str {

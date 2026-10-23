@@ -9,9 +9,9 @@ use crate::{
 };
 
 // Named shortcuts use the same separator as the existing English resolver.
-pub(crate) const SEPARATOR: &str = " + ";
+pub const SEPARATOR: &str = " + ";
 
-pub(crate) fn modifier_name<L: Localize>(modifier: Modifier, lang: L) -> &'static str {
+pub fn modifier_name<L: Localize>(modifier: Modifier, lang: L) -> &'static str {
     lang.text(match modifier {
         Modifier::Control => Text::Control,
         Modifier::Alt => Text::Alt,
@@ -30,6 +30,6 @@ pub(crate) fn modifier_name<L: Localize>(modifier: Modifier, lang: L) -> &'stati
     })
 }
 
-pub(crate) const fn key_symbol(_: KeyCode) -> Option<&'static str> {
+pub const fn key_symbol(_: KeyCode) -> Option<&'static str> {
     None
 }

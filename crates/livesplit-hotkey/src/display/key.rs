@@ -37,11 +37,7 @@ impl<L: Localize> fmt::Display for Part<L> {
     }
 }
 
-pub(crate) fn format<L: Localize>(
-    code: KeyCode,
-    lang: L,
-    f: &mut fmt::Formatter<'_>,
-) -> fmt::Result {
+pub fn format<L: Localize>(code: KeyCode, lang: L, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     if let Some(symbol) = platform::key_symbol(code) {
         return f.write_str(symbol);
     }
