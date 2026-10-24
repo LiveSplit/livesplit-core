@@ -48,6 +48,7 @@ layouts = ["components", "layout"]
 layout-editing = ["layout-editor"]
 hotkeys = ["hotkey-system"]
 components = [
+    "alternate-timing-method-component",
     "blank-space-component",
     "carousel-component",
     "current-comparison-component",
@@ -71,6 +72,7 @@ components = [
 
 # Fine-grained API type features. Dependencies describe types that occur in the
 # public signatures of the selected type.
+alternate-timing-method-component = ["component", "key-value-component-state", "lang", "timer"]
 analysis = ["run", "time-span", "timer"]
 atomic-date-time = []
 attempt = ["atomic-date-time", "time", "time-span"]

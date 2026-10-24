@@ -23,6 +23,7 @@ use crate::{
 };
 use core::{mem::MaybeUninit, num::ParseIntError, str};
 
+mod alternate_timing_method;
 mod blank_space;
 mod current_comparison;
 mod current_pace;
@@ -636,6 +637,9 @@ where
         match tag.name() {
             "Path" => text_as_escaped_string_err(reader, |text| {
                 component = Some(match text {
+                    "LiveSplit.AlternateTimingMethod.dll" => {
+                        alternate_timing_method::Component::new().into()
+                    }
                     "LiveSplit.BlankSpace.dll" => blank_space::Component::new().into(),
                     "LiveSplit.CurrentComparison.dll" => {
                         current_comparison::Component::new().into()
@@ -667,6 +671,9 @@ where
                 // Otherwise we need to cache the settings and load them later.
                 if let Some(component) = &mut component {
                     match component {
+                        Component::AlternateTimingMethod(c) => {
+                            alternate_timing_method::settings(reader, c)
+                        }
                         Component::BlankSpace(c) => blank_space::settings(reader, c),
                         Component::CurrentComparison(c) => current_comparison::settings(reader, c),
                         Component::CurrentPace(c) => current_pace::settings(reader, c),

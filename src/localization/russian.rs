@@ -228,6 +228,26 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::CurrentComparisonValueColorDescription => {
             "Цвет названия сравнения. Если не указан, используется цвет из макета."
         }
+        Text::AlternateTimingMethodBackground => "Фон",
+        Text::AlternateTimingMethodBackgroundDescription => "Фон за компонентом.",
+        Text::AlternateTimingMethodDisplayTwoRows => "Показывать в две строки",
+        Text::AlternateTimingMethodDisplayTwoRowsDescription => {
+            "Определяет, показывать ли название компонента и время в две строки."
+        }
+        Text::AlternateTimingMethodLabelColor => "Цвет подписи",
+        Text::AlternateTimingMethodLabelColorDescription => {
+            "Цвет названия компонента. Если не указан, используется цвет из макета."
+        }
+        Text::AlternateTimingMethodValueColor => "Цвет значения",
+        Text::AlternateTimingMethodValueColorDescription => {
+            "Цвет времени. Если не указан, используется цвет из макета."
+        }
+        Text::AlternateTimingMethodDigitsFormat => "Формат разрядов",
+        Text::AlternateTimingMethodDigitsFormatDescription => {
+            "Определяет количество разрядов. Если времени меньше, заполняется нулями."
+        }
+        Text::AlternateTimingMethodAccuracy => "Точность",
+        Text::AlternateTimingMethodAccuracyDescription => "Точность отображаемого времени.",
         Text::CurrentPaceBackground => "Фон",
         Text::CurrentPaceBackgroundDescription => "Фон за компонентом.",
         Text::CurrentPaceComparison => "Сравнение",
@@ -656,6 +676,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SeparatorsDescription => "Цвет обычных разделителей.",
         Text::TextColor => "Текст",
         Text::TextColorDescription => "Цвет текста, который не имеет собственного цвета.",
+        Text::ComponentAlternateTimingMethod => "Альтернативный метод тайминга",
         Text::ComponentBlankSpace => "Пустое место",
         Text::ComponentCurrentComparison => "Текущее сравнение",
         Text::ComponentCurrentPace => "Текущий темп",

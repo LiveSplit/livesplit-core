@@ -1,9 +1,9 @@
 use super::Component;
 use crate::{
     component::{
-        blank_space, carousel, current_comparison, current_pace, delta, detailed_timer, graph,
-        group, pb_chance, possible_time_save, previous_segment, segment_time, separator, splits,
-        sum_of_best, text, timer, title, total_playtime,
+        alternate_timing_method, blank_space, carousel, current_comparison, current_pace, delta,
+        detailed_timer, graph, group, pb_chance, possible_time_save, previous_segment,
+        segment_time, separator, splits, sum_of_best, text, timer, title, total_playtime,
     },
     platform::prelude::*,
 };
@@ -12,6 +12,8 @@ use serde_derive::{Deserialize, Serialize};
 /// The settings for one of the components available.
 #[derive(Clone, Serialize, Deserialize)]
 pub enum ComponentSettings {
+    /// The settings for the Alternate Timing Method Component.
+    AlternateTimingMethod(alternate_timing_method::Settings),
     /// The Settings for the Blank Space Component.
     BlankSpace(blank_space::Settings),
     /// The Settings for the Current Comparison Component.
@@ -55,6 +57,9 @@ pub enum ComponentSettings {
 impl From<ComponentSettings> for Component {
     fn from(settings: ComponentSettings) -> Self {
         match settings {
+            ComponentSettings::AlternateTimingMethod(settings) => Component::AlternateTimingMethod(
+                alternate_timing_method::Component::with_settings(settings),
+            ),
             ComponentSettings::BlankSpace(settings) => {
                 Component::BlankSpace(blank_space::Component::with_settings(settings))
             }
