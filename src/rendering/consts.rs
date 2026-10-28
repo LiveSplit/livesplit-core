@@ -1,3 +1,6 @@
+//! Shared component layout metrics and optional built-in renderer shadow metrics.
+//! Callers use component coordinate units; backend selection owns rasterization.
+
 pub const PADDING: f32 = 0.35;
 pub const BOTH_PADDINGS: f32 = 2.0 * PADDING;
 const BOTH_VERTICAL_PADDINGS: f32 = DEFAULT_COMPONENT_HEIGHT - DEFAULT_TEXT_ASCENT_DESCENT_DISTANCE;
@@ -16,6 +19,14 @@ pub const SEPARATOR_THICKNESS: f32 = 0.1;
 pub const THIN_SEPARATOR_THICKNESS: f32 = SEPARATOR_THICKNESS / 2.0;
 pub const PSEUDO_PIXELS: f32 = 1.0 / 24.0;
 pub const DEFAULT_VERTICAL_WIDTH: f32 = 11.5;
+
+// Scene-only consumers provide their own renderer. Compile this backend metric
+// only with a renderer that uses it, matching the backend module gates.
+#[cfg(any(
+    feature = "software-rendering",
+    feature = "svg-rendering",
+    all(target_family = "wasm", feature = "web-rendering"),
+))]
 pub const SHADOW_OFFSET: f32 = 0.05;
 
 pub fn vertical_padding(height: f32) -> f32 {
