@@ -1,6 +1,4 @@
-//! Cached case-normalized search entries and bounded, deterministic ranking.
-//! This owns textual similarity, not website data, popularity or UI state.
-//! Callers choose a result bound and keep catalogue construction off hot paths.
+//! Case-normalized search entries with bounded, deterministic text ranking.
 
 use crate::{
     platform::prelude::*,
@@ -88,8 +86,8 @@ impl FuzzyList {
     /// Levenshtein distance orders nearby titles and breaks match-quality ties;
     /// shorter titles and lexical order make the remaining order deterministic.
     ///
-    /// Unlike [`Self::search`], this can suggest a different subtitle in the same
-    /// series or recover from a mistyped character. No popularity is inferred.
+    /// This can suggest a different subtitle in the same series or recover from
+    /// a mistyped character.
     /// Search storage is bounded by the query workspace and result count;
     /// catalogue strings stay borrowed. Empty queries use internal catalogue
     /// order, and a zero bound always returns an empty result.
@@ -417,6 +415,7 @@ fn match_against_ascii(pattern: &str, text: &str) -> Option<NotNaN> {
 #[cfg(test)]
 mod tests {
     //! Bounded ranking must retain strong early matches, independently of API order.
+
     use super::*;
 
     #[test]
@@ -461,6 +460,7 @@ mod tests {
         );
 
         let related = list.search_similar("The Legend of Zelda: Ocarina of Time", 5);
+
         assert_eq!(related[0], "The Legend of Zelda: Ocarina of Time");
 
         assert!(
@@ -513,6 +513,7 @@ mod tests {
 
         for query in ["ocarina of time", "zelda ocarina", "legend of zelda"] {
             assert_eq!(list.search_similar(query, 1), [title], "{query}");
+
             assert!(
                 list.search_similar(query, SHORT_TITLES.len())
                     .contains(&title)
@@ -526,6 +527,7 @@ mod tests {
         list.push("Super Mario 64");
         list.push("Marvel Rio");
         list.push("Doom 64");
+
         assert_eq!(list.search_similar("mario", 1), ["Super Mario 64"]);
         assert_eq!(list.search_similar("mario 64", 1), ["Super Mario 64"]);
 
@@ -540,6 +542,7 @@ mod tests {
         let mut list = FuzzyList::new();
         list.push("Zelda");
         list.push("Puzzle and Dragons");
+
         assert_eq!(list.search_similar("zleda", 1), ["Zelda"]);
     }
 
@@ -556,6 +559,7 @@ mod tests {
             let mut list = FuzzyList::new();
             list.push(unrelated);
             list.push(expected);
+
             assert_eq!(list.search_similar(query, 1), [expected], "{query}");
         }
     }
@@ -615,6 +619,7 @@ mod tests {
             let pattern = "字".repeat(length);
             let text = format!("{}文", "字".repeat(length - 1));
             let mut distance = EditDistance::new(&pattern);
+
             assert_eq!(distance.measure(&text), 1);
             assert_eq!(distance.measure(&pattern), 0);
         }

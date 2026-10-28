@@ -188,6 +188,7 @@ wasm-web = [
 ]
 auto-splitting = ["std", "livesplit-auto-splitting", "arc-swap", "log"]
 networking = ["std", "reqwest"]
+speedrun-com = ["networking"]
 therun-gg = ["networking", "time/formatting"]
 
 [lib]
