@@ -203,7 +203,7 @@ impl Editor {
 
     /// Returns the flat index one past the last item in the subtree rooted at
     /// `flat_index`.
-    fn subtree_end(flat_index: usize, flat: &[FlatEntry]) -> usize {
+    const fn subtree_end(flat_index: usize, flat: &[FlatEntry]) -> usize {
         let base_indent = flat[flat_index].indent;
         let mut end = flat_index + 1;
         while end < flat.len() && flat[end].indent > base_indent {
