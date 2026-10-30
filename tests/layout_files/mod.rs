@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 pub const ALL: &str = include_str!("All.lsl");
+pub const ALTERNATE_TIMING_METHOD: &str = include_str!("AlternateTimingMethod.lsl");
 pub const DARK: &str = include_str!("dark.lsl");
 pub const SUBSPLITS: &str = include_str!("subsplits.lsl");
 pub const WSPLIT: &str = include_str!("WSplit.lsl");

@@ -3,6 +3,7 @@
 //! information is provided as state objects in a way that can easily be
 //! visualized by any kind of User Interface.
 
+pub mod alternate_timing_method;
 pub mod blank_space;
 pub mod carousel;
 pub mod current_comparison;
@@ -25,6 +26,7 @@ pub mod total_playtime;
 
 pub mod key_value;
 
+pub use alternate_timing_method::Component as AlternateTimingMethod;
 pub use blank_space::Component as BlankSpace;
 pub use carousel::Component as Carousel;
 pub use current_comparison::Component as CurrentComparison;

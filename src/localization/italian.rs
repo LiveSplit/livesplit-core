@@ -234,6 +234,28 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::CurrentComparisonValueColorDescription => {
             "Il colore del nome del confronto. Se non specificato, viene usato il colore del layout."
         }
+        Text::AlternateTimingMethodBackground => "Sfondo",
+        Text::AlternateTimingMethodBackgroundDescription => {
+            "Lo sfondo mostrato dietro il componente."
+        }
+        Text::AlternateTimingMethodDisplayTwoRows => "Mostra 2 righe",
+        Text::AlternateTimingMethodDisplayTwoRowsDescription => {
+            "Indica se mostrare il nome del componente e il tempo su due righe separate."
+        }
+        Text::AlternateTimingMethodLabelColor => "Colore etichetta",
+        Text::AlternateTimingMethodLabelColorDescription => {
+            "Il colore del nome del componente. Se non specificato, viene usato il colore del layout."
+        }
+        Text::AlternateTimingMethodValueColor => "Colore valore",
+        Text::AlternateTimingMethodValueColorDescription => {
+            "Il colore del tempo. Se non specificato, viene usato il colore del layout."
+        }
+        Text::AlternateTimingMethodDigitsFormat => "Formato cifre",
+        Text::AlternateTimingMethodDigitsFormatDescription => {
+            "Indica quante cifre mostrare. Se la durata è inferiore alle cifre da mostrare, vengono mostrati zeri."
+        }
+        Text::AlternateTimingMethodAccuracy => "Precisione",
+        Text::AlternateTimingMethodAccuracyDescription => "La precisione del tempo mostrato.",
         Text::CurrentPaceBackground => "Sfondo",
         Text::CurrentPaceBackgroundDescription => "Lo sfondo mostrato dietro il componente.",
         Text::CurrentPaceComparison => "Confronto",
@@ -686,6 +708,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::TextColorDescription => {
             "Il colore da usare per il testo che non specifica il proprio colore."
         }
+        Text::ComponentAlternateTimingMethod => "Metodo di cronometraggio alternativo",
         Text::ComponentBlankSpace => "Spazio vuoto",
         Text::ComponentCurrentComparison => "Confronto attuale",
         Text::ComponentCurrentPace => "Pace attuale",
