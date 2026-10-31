@@ -1,12 +1,21 @@
-use livesplit_auto_splitting::{AutoSplitter, Config, LogLevel, Runtime, Timer, TimerState};
-use livesplit_auto_splitting::{settings, settings::Value};
+//! Sandboxing checks using compiled Wasm fixtures and an in-memory timer.
+//!
+//! These tests do not control a desktop or real timer. Fixture setup must fail
+//! independently of the Wasm execution errors that individual tests expect.
+
+use livesplit_auto_splitting::{
+    AutoSplitter, Config, LogLevel, Runtime, Timer, TimerState,
+    settings::{self, Value},
+};
 use std::{
+    env,
     ffi::OsStr,
     fmt, fs,
-    path::PathBuf,
-    process::{Command, Stdio},
+    panic::{self, Location},
+    path::{Path, PathBuf},
+    process::{self, Command, Stdio},
     thread,
-    time::Duration,
+    time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
 struct DummyTimer;
@@ -57,11 +66,24 @@ fn compile_with_script_path(
     path.push("test-cases");
     path.push(crate_name);
 
+    // Two tests exercise the startup module concurrently. Cargo may rebuild
+    // its output after one build returns but before that test loads the Wasm.
+    // The helpers propagate the test's caller location, giving each call site
+    // a compact, deterministic target directory without global coordination.
+    // An absolute path is needed because Cargo runs inside the fixture crate.
+    let target_dir = env::current_dir()
+        .expect("the test working directory must exist to locate its fixtures")
+        .join(&path)
+        .join("target")
+        .join(Location::caller().line().to_string());
+
     let output = Command::new("cargo")
         .current_dir(&path)
         .arg("build")
         .arg("--target")
         .arg("wasm32-wasip1")
+        .arg("--target-dir")
+        .arg(&target_dir)
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .output()
@@ -72,24 +94,49 @@ fn compile_with_script_path(
         panic!("{}", output);
     }
 
-    path.push("target");
-    path.push("wasm32-wasip1");
-    path.push("debug");
-    let wasm_path = fs::read_dir(path)
-        .unwrap()
-        .find_map(|e| {
-            let path = e.unwrap().path();
-            if path.extension() == Some(OsStr::new("wasm")) {
-                Some(path)
-            } else {
-                None
-            }
-        })
-        .unwrap();
+    let artifact_dir = target_dir.join("wasm32-wasip1").join("debug");
+    let wasm_path = wasm_artifact_in(&artifact_dir);
 
     Ok(Runtime::new(Config::default())?
         .compile(&fs::read(wasm_path).unwrap())?
         .instantiate(DummyTimer, settings_map, script_path)?)
+}
+
+/// Fixture setup must panic: returning an execution error here would make
+/// tests for deliberate Wasm failures pass without loading their test module.
+#[track_caller]
+fn wasm_artifact_in(directory: &Path) -> PathBuf {
+    let entries = match fs::read_dir(directory) {
+        Ok(entries) => entries,
+        Err(error) => panic!("failed to read {}: {error}", directory.display()),
+    };
+
+    for entry in entries {
+        let path = entry
+            .expect("the fixture artifact entry must be readable")
+            .path();
+        if path.extension() == Some(OsStr::new("wasm")) {
+            return path;
+        }
+    }
+
+    panic!("no Wasm fixture found in {}", directory.display());
+}
+
+#[test]
+fn missing_wasm_artifacts_fail_fixture_setup() {
+    let directory = env::temp_dir().join(format!(
+        "livesplit-empty-wasm-{}-{}",
+        process::id(),
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos(),
+    ));
+    fs::create_dir(&directory).unwrap();
+    let result = panic::catch_unwind(|| wasm_artifact_in(&directory));
+    fs::remove_dir(&directory).unwrap();
+    assert!(result.is_err(), "missing fixture output must fail setup");
 }
 
 #[track_caller]
@@ -143,7 +190,7 @@ fn proc_exit() {
 
 #[test]
 fn create_file() {
-    let directory = std::env::temp_dir().join(format!("livesplit-wasi-{}", std::process::id()));
+    let directory = env::temp_dir().join(format!("livesplit-wasi-{}", process::id()));
     fs::create_dir(&directory).unwrap();
     let script_path = directory.join("readonly.txt");
     fs::write(&script_path, "read-only fixture").unwrap();
