@@ -1,6 +1,7 @@
 //! Provides the parser for SpeedrunIGT splits files.
 
 use alloc::borrow::Cow;
+use core::fmt;
 use serde_derive::Deserialize;
 use time::Duration;
 
@@ -11,15 +12,30 @@ use crate::{
 
 /// The Error type for splits files that couldn't be parsed by the SpeedRunIGT
 /// Parser.
-#[derive(Debug, snafu::Snafu)]
-#[snafu(context(suffix(false)))]
+#[derive(Debug)]
 pub enum Error {
     /// Failed to parse JSON.
     Json {
         /// The underlying error.
-        #[cfg_attr(not(feature = "std"), snafu(source(false)))]
         source: serde_json::Error,
     },
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Json { .. } => f.write_str("Failed to parse JSON."),
+        }
+    }
+}
+
+impl core::error::Error for Error {
+    #[cfg(feature = "std")]
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        match self {
+            Self::Json { source } => Some(source),
+        }
+    }
 }
 
 /// The Result type for the SpeedRunIGT Parser.

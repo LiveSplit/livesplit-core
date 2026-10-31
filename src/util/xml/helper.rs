@@ -5,7 +5,7 @@ use core::{fmt, mem::MaybeUninit, str};
 use super::{Attributes, Event, Reader, TagName, Text, Writer};
 
 /// The Error type for XML-based splits files that couldn't be parsed.
-#[derive(Debug, snafu::Snafu)]
+#[derive(Debug)]
 pub enum Error {
     /// Failed to parse the XML.
     Xml,
@@ -20,6 +20,23 @@ pub enum Error {
     /// A required element has not been found.
     ElementNotFound,
 }
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Xml => f.write_str("Failed to parse the XML."),
+            Self::Bool => f.write_str("Failed to parse a boolean."),
+            Self::UnexpectedEndOfFile => f.write_str("Didn't expect the end of the file."),
+            Self::UnexpectedElement => f.write_str("Didn't expect an inner element."),
+            Self::AttributeNotFound => {
+                f.write_str("A required attribute has not been found on an element.")
+            }
+            Self::ElementNotFound => f.write_str("A required element has not been found."),
+        }
+    }
+}
+
+impl core::error::Error for Error {}
 
 pub fn text_parsed<F, T, E>(reader: &mut Reader, f: F) -> Result<(), E>
 where

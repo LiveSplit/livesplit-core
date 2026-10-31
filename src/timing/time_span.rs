@@ -4,10 +4,10 @@ use crate::{
     util::ascii_char::AsciiChar,
 };
 use core::{
+    fmt,
     num::ParseIntError,
     ops::{Add, AddAssign, Neg, Sub, SubAssign},
 };
-use snafu::{OptionExt, ResultExt};
 
 /// A `TimeSpan` represents a certain span of time.
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
@@ -73,8 +73,7 @@ impl TimeSpan {
 }
 
 /// The Error type for a `TimeSpan` that couldn't be parsed.
-#[derive(Debug, snafu::Snafu, PartialEq, Eq)]
-#[snafu(context(suffix(false)))]
+#[derive(Debug, PartialEq, Eq)]
 pub enum ParseError {
     /// There are too many colons in the string.
     TooManyColons,
@@ -94,6 +93,30 @@ pub enum ParseError {
         /// The underlying error.
         source: ParseIntError,
     },
+}
+
+impl fmt::Display for ParseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::TooManyColons => f.write_str("There are too many colons in the string."),
+            Self::PieceOverflow => f.write_str("A piece separate by a colon is too large."),
+            Self::Overflow => f.write_str("The time is too large to be represented."),
+            Self::FractionDigits => {
+                f.write_str("The fractional part contains characters that are not digits.")
+            }
+            Self::Fraction { .. } => f.write_str("Couldn't parse the fractional part."),
+            Self::Piece { .. } => f.write_str("Couldn't parse the seconds, minutes, or hours."),
+        }
+    }
+}
+
+impl core::error::Error for ParseError {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        match self {
+            Self::Fraction { source } | Self::Piece { source } => Some(source),
+            _ => None,
+        }
+    }
 }
 
 pub(crate) trait CustomParser {
@@ -139,11 +162,14 @@ fn parse_custom_with_decimal<T: CustomParser>(
 
     let (mut rem, nanos) = if let Some((seconds, mut nanos)) = decimal_separator.split_once(text) {
         if nanos.len() > 9 {
-            nanos = nanos.get(..9).context(FractionDigits)?;
+            nanos = nanos.get(..9).ok_or(ParseError::FractionDigits)?;
         }
         (
             seconds,
-            nanos.parse::<u32>().context(Fraction)? * 10_u32.pow(9 - nanos.len() as u32),
+            nanos
+                .parse::<u32>()
+                .map_err(|source| ParseError::Fraction { source })?
+                * 10_u32.pow(9 - nanos.len() as u32),
         )
     } else {
         (text, 0u32)
@@ -160,33 +186,37 @@ fn parse_custom_with_decimal<T: CustomParser>(
         match AsciiChar::COLON.rsplit_once(rem) {
             Some((new_rem, piece)) => {
                 rem = new_rem;
-                let piece = piece.parse::<u64>().context(Piece)?;
+                let piece = piece
+                    .parse::<u64>()
+                    .map_err(|source| ParseError::Piece { source })?;
                 let max = if i < 3 { 60 } else { 24 };
                 if piece >= max {
                     return Err(ParseError::PieceOverflow);
                 }
                 seconds = piece
                     .checked_mul(factor)
-                    .context(Overflow)?
+                    .ok_or(ParseError::Overflow)?
                     .checked_add(seconds)
-                    .context(Overflow)?;
+                    .ok_or(ParseError::Overflow)?;
                 factor *= max;
             }
             None => {
-                let piece = rem.parse::<u64>().context(Piece)?;
+                let piece = rem
+                    .parse::<u64>()
+                    .map_err(|source| ParseError::Piece { source })?;
                 seconds = piece
                     .checked_mul(factor)
-                    .context(Overflow)?
+                    .ok_or(ParseError::Overflow)?
                     .checked_add(seconds)
-                    .context(Overflow)?;
+                    .ok_or(ParseError::Overflow)?;
                 break;
             }
         }
     }
 
     let (mut seconds, mut nanos) = (
-        i64::try_from(seconds).ok().context(Overflow)?,
-        i32::try_from(nanos).ok().context(Overflow)?,
+        i64::try_from(seconds).map_err(|_| ParseError::Overflow)?,
+        i32::try_from(nanos).map_err(|_| ParseError::Overflow)?,
     );
 
     if T::ALLOW_NEGATIVE && negate {
@@ -248,7 +278,6 @@ impl Neg for TimeSpan {
     }
 }
 
-use core::fmt;
 use serde::de::{self, Deserialize, Deserializer, Visitor};
 
 impl<'de> Deserialize<'de> for TimeSpan {

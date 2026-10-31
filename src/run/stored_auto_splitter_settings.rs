@@ -308,7 +308,7 @@ fn write_setting_value<W: fmt::Write>(
 
 /// The error returned when parsing the stored ASR-compatible Auto Splitter
 /// Settings fails.
-#[derive(Debug, snafu::Snafu)]
+#[derive(Debug)]
 pub enum StoredAutoSplitterSettingsParseError {
     /// The XML structure itself was malformed.
     Xml {
@@ -342,6 +342,38 @@ pub enum StoredAutoSplitterSettingsParseError {
     },
     /// Failed to parse a boolean value.
     Bool,
+}
+
+impl fmt::Display for StoredAutoSplitterSettingsParseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Xml { .. } => f.write_str("The XML structure itself was malformed."),
+            Self::MissingTypeAttribute => {
+                f.write_str("A `<Setting>` element was missing its `type` attribute.")
+            }
+            Self::MissingIdAttribute => f.write_str("A map entry was missing its `id` attribute."),
+            Self::UnknownType { .. } => {
+                f.write_str("A setting used an unknown `type` discriminator.")
+            }
+            Self::UnexpectedElement { .. } => f.write_str(
+                "An unexpected XML element was encountered while parsing the stored settings tree.",
+            ),
+            Self::ParseInt { .. } => f.write_str("Failed to parse an integer value."),
+            Self::ParseFloat { .. } => f.write_str("Failed to parse a floating point value."),
+            Self::Bool => f.write_str("Failed to parse a boolean value."),
+        }
+    }
+}
+
+impl core::error::Error for StoredAutoSplitterSettingsParseError {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        match self {
+            Self::Xml { source } => Some(source),
+            Self::ParseInt { source } => Some(source),
+            Self::ParseFloat { source } => Some(source),
+            _ => None,
+        }
+    }
 }
 
 impl From<XmlError> for StoredAutoSplitterSettingsParseError {

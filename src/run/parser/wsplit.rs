@@ -2,15 +2,14 @@
 
 use crate::{RealTime, Run, Segment, TimeSpan, platform::path::Path};
 use core::{
+    fmt,
     num::{ParseFloatError, ParseIntError},
     result::Result as StdResult,
 };
-use snafu::ResultExt;
 
 /// The Error type for splits files that couldn't be parsed by the WSplit
 /// Parser.
-#[derive(Debug, snafu::Snafu)]
-#[snafu(context(suffix(false)))]
+#[derive(Debug)]
 pub enum Error {
     /// Expected the name of the segment, but didn't find it.
     ExpectedSegmentName,
@@ -47,6 +46,45 @@ pub enum Error {
     },
 }
 
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::ExpectedSegmentName => {
+                f.write_str("Expected the name of the segment, but didn't find it.")
+            }
+            Self::ExpectedOldTime => f.write_str("Expected the old time, but didn't find it."),
+            Self::ExpectedPbTime => f.write_str("Expected the split time, but didn't find it."),
+            Self::ExpectedBestTime => {
+                f.write_str("Expected the best segment time, but didn't find it.")
+            }
+            Self::Attempt { .. } => f.write_str("Failed to parse the amount of attempts."),
+            Self::Offset { .. } => f.write_str("Failed to parse the time the timer starts at."),
+            Self::PbTime { .. } => {
+                f.write_str("Failed to parse the personal best split time of a segment.")
+            }
+            Self::BestSegment { .. } => {
+                f.write_str("Failed to parse the best segment time of a segment.")
+            }
+            Self::OldTime { .. } => {
+                f.write_str("Failed to parse the \"Old Run\" time of a segment.")
+            }
+        }
+    }
+}
+
+impl core::error::Error for Error {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        match self {
+            Self::Attempt { source } => Some(source),
+            Self::Offset { source }
+            | Self::PbTime { source }
+            | Self::BestSegment { source }
+            | Self::OldTime { source } => Some(source),
+            _ => None,
+        }
+    }
+}
+
 /// The Result type for the WSplit Parser.
 pub type Result<T> = StdResult<T, Error>;
 
@@ -73,11 +111,17 @@ pub fn parse(source: &str, #[allow(unused)] load_files_path: Option<&Path>) -> R
         if let Some(title) = line.strip_prefix("Title=") {
             run.set_category_name(title);
         } else if let Some(attempts) = line.strip_prefix("Attempts=") {
-            run.set_attempt_count(attempts.parse().context(Attempt)?);
+            run.set_attempt_count(
+                attempts
+                    .parse()
+                    .map_err(|source| Error::Attempt { source })?,
+            );
         } else if let Some(offset) = line.strip_prefix("Offset=") {
             if !offset.is_empty() {
                 run.set_offset(TimeSpan::from_milliseconds(
-                    -offset.parse::<f64>().context(Offset)?,
+                    -offset
+                        .parse::<f64>()
+                        .map_err(|source| Error::Offset { source })?,
                 ));
             }
         } else if line.starts_with("Size=") {
@@ -120,9 +164,18 @@ pub fn parse(source: &str, #[allow(unused)] load_files_path: Option<&Path>) -> R
             let pb_time = split_info.next().ok_or(Error::ExpectedPbTime)?;
             let best_time = split_info.next().ok_or(Error::ExpectedBestTime)?;
 
-            let pb_time = TimeSpan::from_seconds(pb_time.parse().context(PbTime)?);
-            let best_time = TimeSpan::from_seconds(best_time.parse().context(BestSegment)?);
-            let old_time = TimeSpan::from_seconds(old_time.parse().context(OldTime)?);
+            let pb_time =
+                TimeSpan::from_seconds(pb_time.parse().map_err(|source| Error::PbTime { source })?);
+            let best_time = TimeSpan::from_seconds(
+                best_time
+                    .parse()
+                    .map_err(|source| Error::BestSegment { source })?,
+            );
+            let old_time = TimeSpan::from_seconds(
+                old_time
+                    .parse()
+                    .map_err(|source| Error::OldTime { source })?,
+            );
 
             let mut segment = Segment::new(segment_name);
 

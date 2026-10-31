@@ -11,7 +11,7 @@ use crate::{
     settings::{Alignment, Color, Font, Gradient, ImageId, LayoutBackground, ListGradient},
     timing::formatter::{Accuracy, DigitsFormat},
 };
-use core::result::Result as StdResult;
+use core::{fmt, result::Result as StdResult};
 use serde_derive::{Deserialize, Serialize};
 
 /// Describes the kind of a column.
@@ -236,11 +236,23 @@ impl From<LayoutBackground<ImageId>> for Value {
 }
 
 /// The Error type for values that couldn't be converted.
-#[derive(Debug, snafu::Snafu)]
+#[derive(Debug)]
 pub enum Error {
     /// The value couldn't be converted because it had an incompatible type.
     WrongType,
 }
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::WrongType => {
+                f.write_str("The value couldn't be converted because it had an incompatible type.")
+            }
+        }
+    }
+}
+
+impl core::error::Error for Error {}
 
 /// The Result type for conversions from Values to other types.
 pub type Result<T> = StdResult<T, Error>;

@@ -10,13 +10,15 @@ use crate::{
     timing,
 };
 use alloc::borrow::Cow;
-use core::{fmt::Write, num::ParseIntError, result::Result as StdResult};
-use snafu::{OptionExt, ResultExt};
+use core::{
+    fmt::{self, Write},
+    num::ParseIntError,
+    result::Result as StdResult,
+};
 
 /// The Error type for splits files that couldn't be parsed by the Time
 /// Split Tracker Parser.
-#[derive(Debug, snafu::Snafu)]
-#[snafu(context(suffix(false)))]
+#[derive(Debug)]
 pub enum Error {
     /// An empty splits file was provided.
     Empty,
@@ -58,6 +60,58 @@ pub enum Error {
     ExpectedIconLine,
 }
 
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Empty => f.write_str("An empty splits file was provided."),
+            Self::ExpectedAttemptCount => {
+                f.write_str("Expected the attempt count, but didn't find it.")
+            }
+            Self::ParseAttemptCount { .. } => f.write_str("Failed to parse the attempt count."),
+            Self::ExpectedOffset => {
+                f.write_str("Expected the start time offset, but didn't find it.")
+            }
+            Self::ParseOffset { .. } => f.write_str("Failed to parse the start time offset."),
+            Self::ExpectedTitleLine => {
+                f.write_str("Expected the line containing the title, but didn't find it.")
+            }
+            Self::ExpectedCategoryName => {
+                f.write_str("Expected the name of the category, but didn't find it.")
+            }
+            Self::ExpectedSegmentName => {
+                f.write_str("Expected the name of a segment, but didn't find it.")
+            }
+            Self::ExpectedBestSegment => {
+                f.write_str("Expected the best segment time of a segment, but didn't find it.")
+            }
+            Self::ParseBestSegment { .. } => {
+                f.write_str("Failed to parse the best segment time of a segment.")
+            }
+            Self::ExpectedComparisonTime => {
+                f.write_str("Expected the time for a comparison of a segment, but didn't find it.")
+            }
+            Self::ParseComparisonTime { .. } => {
+                f.write_str("Failed to parse the time for a comparison of a segment.")
+            }
+            Self::ExpectedIconLine => {
+                f.write_str("Expected a line containing the icon of a segment, but didn't find it.")
+            }
+        }
+    }
+}
+
+impl core::error::Error for Error {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        match self {
+            Self::ParseAttemptCount { source } => Some(source),
+            Self::ParseOffset { source }
+            | Self::ParseBestSegment { source }
+            | Self::ParseComparisonTime { source } => Some(source),
+            _ => None,
+        }
+    }
+}
+
 /// The Result type for the Time Split Tracker parser.
 pub type Result<T> = StdResult<T, Error>;
 
@@ -86,17 +140,21 @@ pub fn parse(
 
     let mut lines = source.lines();
 
-    let line = lines.next().context(Empty)?;
+    let line = lines.next().ok_or(Error::Empty)?;
     let mut splits = line.split('\t');
 
-    let attempt_count = splits.next().context(ExpectedAttemptCount)?;
+    let attempt_count = splits.next().ok_or(Error::ExpectedAttemptCount)?;
     if !attempt_count.is_empty() {
-        run.set_attempt_count(attempt_count.parse().context(ParseAttemptCount)?);
+        run.set_attempt_count(
+            attempt_count
+                .parse()
+                .map_err(|source| Error::ParseAttemptCount { source })?,
+        );
     }
 
     run.set_offset(
-        TimeSpan::parse(splits.next().context(ExpectedOffset)?, Lang::English)
-            .context(ParseOffset)?,
+        TimeSpan::parse(splits.next().ok_or(Error::ExpectedOffset)?, Lang::English)
+            .map_err(|source| Error::ParseOffset { source })?,
     );
 
     #[cfg(feature = "std")]
@@ -114,9 +172,9 @@ pub fn parse(
         run.set_game_icon(image);
     }
 
-    let line = lines.next().context(ExpectedTitleLine)?;
+    let line = lines.next().ok_or(Error::ExpectedTitleLine)?;
     let mut splits = line.split('\t');
-    run.set_category_name(splits.next().context(ExpectedCategoryName)?);
+    run.set_category_name(splits.next().ok_or(Error::ExpectedCategoryName)?);
     splits.next(); // Skip one element
 
     let mut comparisons = splits.map(Cow::Borrowed).collect::<Vec<_>>();
@@ -153,21 +211,22 @@ pub fn parse(
         }
 
         let mut splits = line.split('\t');
-        let mut segment = Segment::new(splits.next().context(ExpectedSegmentName)?);
-        let best_segment = parse_time_optional(splits.next().context(ExpectedBestSegment)?)
-            .context(ParseBestSegment)?;
+        let mut segment = Segment::new(splits.next().ok_or(Error::ExpectedSegmentName)?);
+        let best_segment = parse_time_optional(splits.next().ok_or(Error::ExpectedBestSegment)?)
+            .map_err(|source| Error::ParseBestSegment { source })?;
         segment.set_best_segment_time(RealTime(best_segment).into());
 
         let mut pb_time = Time::new();
         for comparison in &comparisons {
             let time = segment.comparison_mut(comparison);
-            pb_time.real_time = parse_time_optional(splits.next().context(ExpectedComparisonTime)?)
-                .context(ParseComparisonTime)?;
+            pb_time.real_time =
+                parse_time_optional(splits.next().ok_or(Error::ExpectedComparisonTime)?)
+                    .map_err(|source| Error::ParseComparisonTime { source })?;
             time.real_time = pb_time.real_time;
         }
         segment.set_personal_best_split_time(pb_time);
 
-        let _line = lines.next().context(ExpectedIconLine)?;
+        let _line = lines.next().ok_or(Error::ExpectedIconLine)?;
 
         #[cfg(feature = "std")]
         {

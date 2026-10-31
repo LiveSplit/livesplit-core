@@ -10,7 +10,7 @@ use crate::util::xml::{
     helper::{Error as XmlError, end_tag, parse_base, parse_children, text},
 };
 use alloc::borrow::Cow;
-use snafu::Snafu;
+use core::fmt;
 
 #[cfg(feature = "networking")]
 mod download;
@@ -21,7 +21,7 @@ pub use download::Downloader;
 pub const DEFAULT_LIST_URL: &str = "https://raw.githubusercontent.com/LiveSplit/LiveSplit.AutoSplitters/master/LiveSplit.AutoSplitters.xml";
 
 /// An error while parsing the auto splitter list.
-#[derive(Debug, Snafu)]
+#[derive(Debug)]
 pub enum Error {
     /// Failed to parse the XML list.
     Xml {
@@ -29,11 +29,31 @@ pub enum Error {
         source: XmlError,
     },
     /// An auto splitter is missing a required element.
-    #[snafu(display("The auto splitter list is missing the {element} element."))]
     MissingElement {
         /// The name of the missing element.
         element: &'static str,
     },
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Xml { .. } => f.write_str("Failed to parse the XML list."),
+            Self::MissingElement { element } => write!(
+                f,
+                "The auto splitter list is missing the {element} element."
+            ),
+        }
+    }
+}
+
+impl core::error::Error for Error {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        match self {
+            Self::Xml { source } => Some(source),
+            _ => None,
+        }
+    }
 }
 
 impl From<XmlError> for Error {

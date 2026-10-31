@@ -16,8 +16,7 @@ use crate::{
     timing::ParseError as ParseTimeSpanError,
     util::{PopulateString, caseless},
 };
-use core::{mem::swap, num::ParseIntError};
-use snafu::{OptionExt, ResultExt};
+use core::{fmt, mem::swap, num::ParseIntError};
 
 pub mod cleaning;
 mod fuzzy_list;
@@ -37,8 +36,7 @@ pub use self::{
 };
 
 /// Describes an Error that occurred while parsing a time.
-#[derive(Debug, snafu::Snafu)]
-#[snafu(context(suffix(false)))]
+#[derive(Debug)]
 pub enum ParseError {
     /// Couldn't parse the time.
     ParseTime {
@@ -51,18 +49,45 @@ pub enum ParseError {
     EmptyTimeNotAllowed,
 }
 
+impl fmt::Display for ParseError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::ParseTime { .. } => f.write_str("Couldn't parse the time."),
+            Self::NegativeTimeNotAllowed => f.write_str("Negative times are not allowed here."),
+            Self::EmptyTimeNotAllowed => f.write_str("Empty times are not allowed here."),
+        }
+    }
+}
+
+impl core::error::Error for ParseError {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        match self {
+            Self::ParseTime { source } => Some(source),
+            _ => None,
+        }
+    }
+}
+
 /// Describes an Error that occurred while opening the Run Editor.
-#[derive(Debug, snafu::Snafu)]
-#[snafu(context(suffix(false)))]
+#[derive(Debug)]
 pub enum OpenError {
     /// The Run Editor couldn't be opened because an empty run with no
     /// segments was provided.
     EmptyRun,
 }
 
+impl fmt::Display for OpenError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::EmptyRun => f.write_str("The Run Editor couldn't be opened because an empty run with no segments was provided."),
+        }
+    }
+}
+
+impl core::error::Error for OpenError {}
+
 /// Error type for a failed Rename.
-#[derive(PartialEq, Eq, Debug, snafu::Snafu)]
-#[snafu(context(suffix(false)))]
+#[derive(PartialEq, Eq, Debug)]
 pub enum RenameError {
     /// Old Comparison was not found during rename.
     OldNameNotFound,
@@ -73,9 +98,26 @@ pub enum RenameError {
     },
 }
 
+impl fmt::Display for RenameError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::OldNameNotFound => f.write_str("Old Comparison was not found during rename."),
+            Self::InvalidName { .. } => f.write_str("Name was invalid."),
+        }
+    }
+}
+
+impl core::error::Error for RenameError {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        match self {
+            Self::InvalidName { source } => Some(source),
+            _ => None,
+        }
+    }
+}
+
 /// Describes why creating a segment group from the current selection failed.
-#[derive(PartialEq, Eq, Debug, snafu::Snafu)]
-#[snafu(context(suffix(false)))]
+#[derive(PartialEq, Eq, Debug)]
 pub enum CreateSegmentGroupError {
     /// The selected segments are not one contiguous range.
     SelectionNotContiguous,
@@ -83,13 +125,40 @@ pub enum CreateSegmentGroupError {
     SelectionOverlapsExistingGroup,
 }
 
+impl fmt::Display for CreateSegmentGroupError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::SelectionNotContiguous => {
+                f.write_str("The selected segments are not one contiguous range.")
+            }
+            Self::SelectionOverlapsExistingGroup => {
+                f.write_str("At least one selected segment already belongs to a segment group.")
+            }
+        }
+    }
+}
+
+impl core::error::Error for CreateSegmentGroupError {}
+
 /// Describes why removing the selected segment groups failed.
-#[derive(PartialEq, Eq, Debug, snafu::Snafu)]
+#[derive(PartialEq, Eq, Debug)]
 pub enum RemoveSegmentGroupsError {
     /// The selection is not made up exclusively of one or more whole segment
     /// groups.
     InvalidSelection,
 }
+
+impl fmt::Display for RemoveSegmentGroupsError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InvalidSelection => f.write_str(
+                "The selection is not made up exclusively of one or more whole segment groups.",
+            ),
+        }
+    }
+}
+
+impl core::error::Error for RemoveSegmentGroupsError {}
 
 /// The Run Editor allows modifying Runs while ensuring that all the different
 /// invariants of the Run objects are upheld no matter what kind of operations
@@ -295,7 +364,9 @@ impl Editor {
     /// offset specifies the time, the timer starts at when starting a new
     /// attempt.
     pub fn parse_and_set_offset(&mut self, offset: &str, lang: Lang) -> Result<(), ParseError> {
-        self.set_offset(TimeSpan::parse(offset, lang).context(ParseTime)?);
+        self.set_offset(
+            TimeSpan::parse(offset, lang).map_err(|source| ParseError::ParseTime { source })?,
+        );
         Ok(())
     }
 
@@ -1389,7 +1460,7 @@ impl Editor {
 
         self.run
             .validate_comparison_name(new)
-            .context(InvalidName)?;
+            .map_err(|source| RenameError::InvalidName { source })?;
 
         {
             let comparison_name = self
@@ -1397,7 +1468,7 @@ impl Editor {
                 .custom_comparisons_mut()
                 .iter_mut()
                 .find(|c| *c == old)
-                .context(OldNameNotFound)?;
+                .ok_or(RenameError::OldNameNotFound)?;
 
             comparison_name.clear();
             comparison_name.push_str(new);
@@ -1541,7 +1612,8 @@ impl Editor {
 }
 
 fn parse_positive(time: &str, lang: Lang) -> Result<Option<TimeSpan>, ParseError> {
-    let time = TimeSpan::parse_opt_with_lang(time, lang).context(ParseTime)?;
+    let time = TimeSpan::parse_opt_with_lang(time, lang)
+        .map_err(|source| ParseError::ParseTime { source })?;
     if time.is_some_and(|t| t < TimeSpan::zero()) {
         Err(ParseError::NegativeTimeNotAllowed)
     } else {
