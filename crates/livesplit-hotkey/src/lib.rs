@@ -22,6 +22,15 @@
 //! grants return [`Error::PermissionRequired`]. Applications should explain the
 //! required permission and call [`Hook::request_permission`] only after a user
 //! action, then explicitly retry creation once access has been granted.
+//!
+//! An existing macOS tap makes at most one automatic recovery attempt after a
+//! timeout over its complete lifetime. User-requested disables are respected,
+//! and subsequent timeouts remain disabled to avoid repeatedly stalling input.
+//! Control notifications never invoke hotkeys. Recovery requests no permissions
+//! and rebuilds no registrations. This does not guarantee delivery after grant
+//! revocation; permission checks observe access rather than live tap health.
+//! After fixing a persistently slow callback, callers may explicitly recreate
+//! the hook to obtain a new tap and recovery budget.
 
 extern crate alloc;
 
@@ -144,6 +153,10 @@ impl Hook {
     }
 
     /// Registers a hotkey to listen to.
+    ///
+    /// On macOS the callback runs synchronously on the event-tap worker. Keep it
+    /// short and avoid blocking: CoreGraphics may disable an unresponsive tap,
+    /// and repeated timeouts exhaust its automatic recovery attempt.
     pub fn register<F>(&self, hotkey: Hotkey, callback: F) -> Result<()>
     where
         F: FnMut() + Send + 'static,

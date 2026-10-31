@@ -9,6 +9,7 @@ mod carbon;
 mod cf;
 mod cg;
 pub mod permission;
+mod recovery;
 
 use crate::{
     ConsumePreference, Hotkey, KeyCode, Modifiers, Result,
@@ -33,12 +34,16 @@ use crate::{
 };
 use core::ptr::null_mut;
 use std::{
+    cell::Cell,
     collections::{HashMap, hash_map::Entry},
     ffi::c_void,
     fmt,
     sync::{Arc, Mutex, mpsc::channel},
     thread,
 };
+
+#[cfg(test)]
+use std::sync::mpsc::Sender;
 
 #[derive(Debug)]
 #[non_exhaustive]
@@ -73,22 +78,95 @@ struct Owned<T>(*mut T);
 
 impl<T> Drop for Owned<T> {
     fn drop(&mut self) {
-        unsafe {
-            CFRelease(self.0.cast());
-        }
+        // SAFETY: Owned is constructed only from a non-null retained CF
+        // object. Each guard releases its own reference exactly once.
+        unsafe { CFRelease(self.0.cast()) };
     }
 }
 
-#[derive(Copy, Clone)]
+/// Retained independently of the worker: native source invalidation can end
+/// its loop while the caller still owns Hook and will later run its destructor.
 struct RunLoop(cf::RunLoopRef);
+
+impl RunLoop {
+    fn current() -> Option<Self> {
+        // SAFETY: CoreFoundation returns this thread's borrowed loop. Retaining
+        // it gives the returned handle its own reference, independent of thread
+        // lifetime. Null is handled before the retaining call.
+        let loop_ref = unsafe { CFRunLoopGetCurrent() };
+        if loop_ref.is_null() {
+            return None;
+        }
+        // SAFETY: The current thread keeps this non-null loop alive while the
+        // additional reference is acquired. Drop releases that reference once.
+        unsafe { cf::CFRetain(loop_ref.cast()) };
+        Some(Self(loop_ref))
+    }
+}
+
+impl Drop for RunLoop {
+    fn drop(&mut self) {
+        // SAFETY: This handle owns one retained CF reference. CF reference
+        // counting is thread-safe, including after the originating worker exits.
+        unsafe { CFRelease(self.0.cast()) };
+    }
+}
 
 // https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/Multithreading/RunLoopManagement/RunLoopManagement.html
 // "The functions in Core Foundation are generally thread-safe and can be called from any thread."
+// SAFETY: This opaque handle is used only with thread-safe CF run-loop
+// functions; native tap/context access stays on the worker.
 unsafe impl Send for RunLoop {}
+
+// SAFETY: Sharing this handle does not expose or mutate the worker's callback
+// data; CF run-loop control functions support cross-thread callers.
 unsafe impl Sync for RunLoop {}
 
 struct State {
     hotkeys: Mutex<HashMap<Hotkey, Box<dyn FnMut() + Send + 'static>>>,
+    #[cfg(test)]
+    observer: Option<Sender<Observation>>,
+}
+
+/// Native tests use an application-specific tap so synthetic events and slow
+/// callbacks affect only their disposable receiver. Both targets share the
+/// production worker, callback context, native source and teardown path.
+#[derive(Clone, Copy)]
+enum Target {
+    Session,
+    #[cfg(test)]
+    Process(i32),
+}
+
+#[cfg(test)]
+#[derive(Debug)]
+enum Observation {
+    Notification {
+        event_type: EventType,
+        attempted: bool,
+        enabled: bool,
+    },
+    Stopped,
+}
+
+#[cfg(test)]
+fn observe(state: &State, observation: Observation) {
+    if let Some(observer) = &state.observer
+        && let Err(error) = observer.send(observation)
+    {
+        eprintln!("native recovery observer disconnected: {error}");
+    }
+}
+
+/// Callback data owned exclusively by the event-tap worker. The box is allocated
+/// before creating the tap, and its address remains stable until the run-loop
+/// source and tap have been released. Only that worker accesses the native port;
+/// registration threads share the separate, synchronized hotkey state.
+struct CallbackContext {
+    state: Arc<State>,
+    // Filled before scheduling the source, so no callback can observe null.
+    tap: Cell<cf::MachPortRef>,
+    recovery: recovery::Recovery,
 }
 
 /// A hook allows you to listen to hotkeys.
@@ -99,6 +177,8 @@ pub struct Hook {
 
 impl Drop for Hook {
     fn drop(&mut self) {
+        // SAFETY: Hook owns a retained loop reference even if native source
+        // invalidation already ended the worker. CF loop control is thread-safe.
         unsafe {
             let mode = cf::CFRunLoopCopyCurrentMode(self.event_loop.0);
             if !mode.is_null() {
@@ -111,11 +191,16 @@ impl Drop for Hook {
 
 impl Hook {
     pub fn new(consume: ConsumePreference) -> Result<Self> {
-        let is_consuming = TapMode::from_preference(consume) == TapMode::Consume;
-
         let state = Arc::new(State {
             hotkeys: Mutex::new(HashMap::new()),
+            #[cfg(test)]
+            observer: None,
         });
+        Self::with_state(consume, Target::Session, state)
+    }
+
+    fn with_state(consume: ConsumePreference, target: Target, state: Arc<State>) -> Result<Self> {
+        let is_consuming = TapMode::from_preference(consume) == TapMode::Consume;
         let thread_state = state.clone();
 
         let (sender, receiver) = channel();
@@ -123,29 +208,50 @@ impl Hook {
         // The code here is mostly based on:
         // https://github.com/kwhat/libuiohook/blob/f4bb19be8aee7d7ee5ead89b5a89dbf440e2a71a/src/darwin/input_hook.c#L1086
 
+        // SAFETY: The worker owns the native port and run-loop source. Its
+        // boxed callback data remains stable through creation and scheduling;
+        // the source is removed before the port and context are released.
         thread::spawn(move || unsafe {
-            let state_ptr: *const State = &*thread_state;
+            let context = Box::new(CallbackContext {
+                state: thread_state,
+                tap: Cell::new(null_mut()),
+                recovery: recovery::Recovery::new(),
+            });
+            let context_ptr: *const CallbackContext = &*context;
 
             // Hook's public constructor already checked the matching privacy
             // grant without prompting. Creating the tap may still fail if the
             // grant was revoked or native resources are unavailable.
-            let port = CGEventTapCreate(
-                EventTapLocation::SESSION,
-                EventTapPlacement::HEAD_INSERT_EVENT_TAP,
-                if is_consuming {
-                    EventTapOptions::DEFAULT_TAP
-                } else {
-                    EventTapOptions::LISTEN_ONLY
-                },
-                EventMask::KEY_DOWN,
-                Some(callback),
-                state_ptr as *mut c_void,
-            );
+            let options = if is_consuming {
+                EventTapOptions::DEFAULT_TAP
+            } else {
+                EventTapOptions::LISTEN_ONLY
+            };
+            let port = match target {
+                Target::Session => CGEventTapCreate(
+                    EventTapLocation::SESSION,
+                    EventTapPlacement::HEAD_INSERT_EVENT_TAP,
+                    options,
+                    EventMask::KEY_DOWN,
+                    Some(callback),
+                    context_ptr as *mut c_void,
+                ),
+                #[cfg(test)]
+                Target::Process(pid) => cg::CGEventTapCreateForPid(
+                    pid,
+                    EventTapPlacement::HEAD_INSERT_EVENT_TAP,
+                    options,
+                    EventMask::KEY_DOWN,
+                    Some(callback),
+                    context_ptr as *mut c_void,
+                ),
+            };
             if port.is_null() {
                 let _ = sender.send(Err(Error::CouldntCreateEventTap));
                 return;
             }
             let port = Owned(port);
+            context.tap.set(port.0);
 
             let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, port.0, 0);
             if source.is_null() {
@@ -154,15 +260,16 @@ impl Hook {
             }
             let source = Owned(source);
 
-            let event_loop = CFRunLoopGetCurrent();
-            if event_loop.is_null() {
+            let Some(control) = RunLoop::current() else {
                 let _ = sender.send(Err(Error::CouldntGetCurrentRunLoop));
                 return;
-            }
-
+            };
+            // The worker's thread-local CF reference keeps this raw borrow
+            // alive after the retained control handle moves to the caller.
+            let event_loop = control.0;
             CFRunLoopAddSource(event_loop, source.0, kCFRunLoopDefaultMode);
 
-            if { sender }.send(Ok(RunLoop(event_loop))).is_ok() {
+            if { sender }.send(Ok(control)).is_ok() {
                 CFRunLoopRun();
             }
 
@@ -170,6 +277,12 @@ impl Hook {
                 CFRunLoopRemoveSource(event_loop, source.0, kCFRunLoopDefaultMode);
             }
             CGEventTapEnable(port.0, false);
+            // Release the source and port before publishing test completion or
+            // dropping callback data. No native callback can outlive its box.
+            drop(source);
+            drop(port);
+            #[cfg(test)]
+            observe(&context.state, Observation::Stopped);
         });
 
         let event_loop = receiver
@@ -308,36 +421,78 @@ impl Hook {
     }
 }
 
+/// # Safety
+/// `user_info` must point to a live, immovable callback context. Its tap must be
+/// valid when handling a disable notification; the worker installs it before
+/// scheduling the source. Non-null key-down events must be valid CoreGraphics
+/// events. Null and non-keyboard events are ignored; control notifications may
+/// carry a null event.
+/// The source must be removed and the tap released before dropping the context.
 unsafe extern "C" fn callback(
     _: EventTapProxy,
-    _: EventType,
+    event_type: EventType,
     event: EventRef,
     user_info: *mut c_void,
 ) -> EventRef {
-    // If the tap ever gets disabled by a timeout, we may need the following code:
-    // // Handle the timeout case by re-enabling the tap.
-    // if (type == kCGEventTapDisabledByTimeout) {
-    //   CGEventTapEnable(shortcut_listener->event_tap_, TRUE);
-    //   return event;
-    // }
+    // SAFETY: The worker keeps the boxed context alive until its native source
+    // and tap are gone; callbacks execute only on that worker's run loop.
+    let context = unsafe { &*user_info.cast::<CallbackContext>() };
 
-    // SAFETY: The worker owns this stable registration state for the native
-    // source's lifetime, and native callbacks supply the accessor arguments.
-    let state = unsafe { &*user_info.cast::<State>() };
-    // SAFETY: Preserve native keyboard decoding and callback behavior here.
-    unsafe { dispatch_key(event, state) }
+    #[cfg(test)]
+    let attempted = Cell::new(false);
+
+    let response = context.recovery.dispatch(
+        event_type,
+        !event.is_null(),
+        event,
+        || {
+            // SAFETY: The worker installs this port before scheduling callbacks
+            // and releases it after removing the source. The policy spends its
+            // sole timeout retry before this native call; no grant is requested.
+            unsafe { CGEventTapEnable(context.tap.get(), true) };
+            #[cfg(test)]
+            attempted.set(true);
+        },
+        || {
+            // SAFETY: The router admits only non-null key-down events. Both
+            // the event and shared registration state outlive this callback.
+            unsafe { dispatch_key(event, &context.state) }
+        },
+    );
+
+    #[cfg(test)]
+    if matches!(
+        event_type,
+        EventType::TAP_DISABLED_BY_TIMEOUT | EventType::TAP_DISABLED_BY_USER_INPUT
+    ) {
+        // SAFETY: As in native recovery, the worker's port remains alive for
+        // this callback. Tests observe its state without sharing that port.
+        let enabled = unsafe { cg::CGEventTapIsEnabled(context.tap.get()) };
+        observe(
+            &context.state,
+            Observation::Notification {
+                event_type,
+                attempted: attempted.get(),
+                enabled,
+            },
+        );
+    }
+
+    response
 }
 
 /// # Safety
-/// The event must meet the native keyboard accessor contracts, and registration
-/// state must remain valid for the invocation. Its mutex serializes callbacks.
+/// `event` must be a live, non-null native key-down event. Registration state
+/// stays valid for this invocation; its mutex serializes access to callbacks.
 unsafe fn dispatch_key(event: EventRef, state: &State) -> EventRef {
+    // SAFETY: Only non-null native key-down events reach keyboard accessors.
     let is_repeating =
         unsafe { cg::CGEventGetIntegerValueField(event, EventField::KEYBOARD_EVENT_AUTOREPEAT) };
     if is_repeating != 0 {
         return event;
     }
 
+    // SAFETY: The same live key-down event was admitted above.
     let key_code =
         unsafe { cg::CGEventGetIntegerValueField(event, EventField::KEYBOARD_EVENT_KEYCODE) };
     let key_code = match key_code {
@@ -467,6 +622,7 @@ unsafe fn dispatch_key(event: EventRef, state: &State) -> EventRef {
         _ => return event,
     };
 
+    // SAFETY: The callback's key-down event remains borrowed for this invocation.
     let modifier_flags = unsafe { CGEventGetFlags(event) };
     let mut modifiers = Modifiers::empty();
 
@@ -514,3 +670,6 @@ unsafe fn dispatch_key(event: EventRef, state: &State) -> EventRef {
         event
     }
 }
+
+#[cfg(test)]
+mod tests;

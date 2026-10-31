@@ -1,3 +1,8 @@
+//! CoreFoundation declarations for macOS tap resources and keyboard metadata.
+//!
+//! These bindings own no references. Callers balance Create, Copy and Retain
+//! results with Release, and keep callback storage alive until source teardown.
+
 #![allow(dead_code)]
 
 use std::ffi::{c_ulong, c_void};
@@ -115,6 +120,12 @@ unsafe extern "C" {
     pub fn CFRunLoopStop(rl: RunLoopRef);
 
     pub fn CFRunLoopCopyCurrentMode(rl: RunLoopRef) -> RunLoopMode;
+
+    /// Acquires one reference; the caller balances it with CFRelease.
+    ///
+    /// # Safety
+    /// `cf` must be a live, non-null CoreFoundation object for this call.
+    pub fn CFRetain(cf: TypeRef) -> TypeRef;
 
     pub fn CFRelease(cf: TypeRef);
 

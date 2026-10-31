@@ -1,3 +1,9 @@
+//! Raw CoreGraphics event-tap bindings and native event representations.
+//!
+//! These declarations own no resources or permission policy. Callers keep native
+//! objects alive, use the documented ABI, and distinguish tap control messages
+//! from events before reading keyboard fields.
+
 #![allow(dead_code)]
 
 use std::ffi::c_void;
@@ -228,7 +234,57 @@ unsafe extern "C" {
         user_info: *mut c_void,
     ) -> MachPortRef;
 
+    #[cfg(test)]
+    /// Returns an owned, nullable port for events addressed to `pid`.
+    ///
+    /// # Safety
+    /// Callback data must outlive the port and every scheduled source. The
+    /// callback must uphold the same contract as CGEventTapCreate callbacks.
+    pub fn CGEventTapCreateForPid(
+        pid: i32,
+        place: EventTapPlacement,
+        options: EventTapOptions,
+        events_of_interest: EventMask,
+        callback: EventTapCallBack,
+        user_info: *mut c_void,
+    ) -> MachPortRef;
+
+    #[cfg(test)]
+    /// Posts a copy to a specific process; ownership of `event` stays with us.
+    ///
+    /// # Safety
+    /// `event` must be a live native event throughout this call. Tests target
+    /// only their disposable receiver and require existing posting access.
+    pub fn CGEventPostToPid(pid: i32, event: EventRef);
+
     pub fn CGEventTapEnable(tap: MachPortRef, enable: bool);
+
+    #[cfg(test)]
+    /// # Safety
+    /// `tap` must be a live event-tap port throughout the query.
+    pub fn CGEventTapIsEnabled(tap: MachPortRef) -> bool;
+
+    // The tests pass a null source, requesting an independent native event.
+    #[cfg(test)]
+    /// Returns an owned event or null; a successful result needs CFRelease.
+    ///
+    /// # Safety
+    /// A non-null source must be a live CGEventSource for the call's duration.
+    pub fn CGEventCreateKeyboardEvent(
+        source: *const c_void,
+        virtual_key: u16,
+        key_down: bool,
+    ) -> EventRef;
+
+    #[cfg(test)]
+    /// # Safety
+    /// `event` must be live and must not be concurrently accessed or modified.
+    pub fn CGEventSetFlags(event: EventRef, flags: EventFlags);
+
+    #[cfg(test)]
+    /// # Safety
+    /// `event` must be live and must not be concurrently accessed or modified.
+    pub fn CGEventSetIntegerValueField(event: EventRef, field: EventField, value: i64);
 
     pub fn CGEventGetIntegerValueField(event: EventRef, field: EventField) -> i64;
 }
