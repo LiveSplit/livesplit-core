@@ -925,133 +925,6 @@ fn settings_map_for_path(
     )
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    const SCRIPT_PATH: &str = "Auto Splitters/Game.wasm";
-
-    #[test]
-    fn stored_settings_are_only_loaded_for_their_script() {
-        let mut run = crate::Run::new();
-        let mut stored_settings = StoredAutoSplitterSettings::new();
-        stored_settings.set_script_path(Some(SCRIPT_PATH));
-
-        let mut settings_map = settings::Map::new();
-        settings_map.insert("enabled".into(), settings::Value::Bool(true));
-        stored_settings.set_settings_map(settings_map.clone());
-        run.set_stored_auto_splitter_settings(&stored_settings);
-
-        assert_eq!(
-            settings_map_for_path(&run, Path::new(SCRIPT_PATH)).unwrap(),
-            Some(settings_map)
-        );
-        assert_eq!(
-            settings_map_for_path(&run, Path::new("Auto Splitters/Other.wasm")).unwrap(),
-            None
-        );
-    }
-
-    #[test]
-    fn settings_without_a_script_path_support_fixed_script_frontends() {
-        let mut run = crate::Run::new();
-        let mut stored_settings = StoredAutoSplitterSettings::new();
-        let mut settings_map = settings::Map::new();
-        settings_map.insert("enabled".into(), settings::Value::Bool(true));
-        stored_settings.set_settings_map(settings_map.clone());
-        run.set_stored_auto_splitter_settings(&stored_settings);
-
-        assert_eq!(
-            settings_map_for_path(&run, Path::new(SCRIPT_PATH)).unwrap(),
-            Some(settings_map)
-        );
-    }
-
-    #[test]
-    fn foreign_operating_system_paths_do_not_match_local_paths() {
-        let paths = [
-            (
-                r"C:\Auto Splitters\Game.wasm",
-                "/home/runner/auto-splitters/Game.wasm",
-            ),
-            (
-                "/home/runner/auto-splitters/Game.wasm",
-                r"C:\Auto Splitters\Game.wasm",
-            ),
-        ];
-
-        for (stored_path, local_path) in paths {
-            let mut run = crate::Run::new();
-            let mut stored_settings = StoredAutoSplitterSettings::new();
-            stored_settings.set_script_path(Some(stored_path));
-
-            let mut settings_map = settings::Map::new();
-            settings_map.insert("enabled".into(), settings::Value::Bool(true));
-            stored_settings.set_settings_map(settings_map);
-            run.set_stored_auto_splitter_settings(&stored_settings);
-
-            // A path from another operating system cannot identify the local
-            // script, so its settings must not leak into the replacement.
-            assert_eq!(
-                settings_map_for_path(&run, Path::new(local_path)).unwrap(),
-                None
-            );
-        }
-    }
-
-    #[test]
-    fn foreign_operating_system_script_path_is_reported_as_load_error() {
-        let foreign_path = if cfg!(windows) {
-            "/home/__livesplit_foreign_path_test__/missing.wasm"
-        } else {
-            r"Z:\__livesplit_foreign_path_test__\missing.wasm"
-        };
-
-        let mut run = crate::Run::new();
-        run.push_segment(crate::Segment::new("Segment"));
-        let mut stored_settings = StoredAutoSplitterSettings::new();
-        stored_settings.set_script_path(Some(foreign_path));
-        run.set_stored_auto_splitter_settings(&stored_settings);
-
-        let timer = crate::Timer::new(run).unwrap().into_shared();
-        let runtime = Runtime::new();
-
-        assert!(matches!(
-            runtime.load(timer),
-            Err(Error::ReadFileFailed { .. })
-        ));
-        assert_eq!(runtime.loaded_path(), None);
-    }
-
-    #[test]
-    fn runtime_stores_settings_in_the_timer_it_loaded() {
-        let mut run = crate::Run::new();
-        run.push_segment(crate::Segment::new("Segment"));
-
-        let mut stored_settings = StoredAutoSplitterSettings::new();
-        let mut settings_map = settings::Map::new();
-        settings_map.insert("enabled".into(), settings::Value::Bool(true));
-        stored_settings.set_settings_map(settings_map);
-        run.set_stored_auto_splitter_settings(&stored_settings);
-
-        let timer = crate::Timer::new(run).unwrap().into_shared();
-        let runtime = Runtime::new();
-
-        assert_eq!(runtime.load(timer.clone()).unwrap(), None);
-        runtime.store_settings();
-
-        assert!(
-            timer
-                .read()
-                .unwrap()
-                .run()
-                .stored_auto_splitter_settings()
-                .unwrap()
-                .is_empty()
-        );
-    }
-}
-
 // This newtype is required because [`SharedTimer`](crate::timing::SharedTimer)
 // is an Arc<RwLock<T>>, so we can't implement the trait directly on it.
 struct Timer<E>(E);
@@ -1257,5 +1130,132 @@ fn watchdog<T: event::CommandSink + TimerQuery + Send + Sync>(shared_state: Arc<
                 new_state
             }
         };
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const SCRIPT_PATH: &str = "Auto Splitters/Game.wasm";
+
+    #[test]
+    fn stored_settings_are_only_loaded_for_their_script() {
+        let mut run = crate::Run::new();
+        let mut stored_settings = StoredAutoSplitterSettings::new();
+        stored_settings.set_script_path(Some(SCRIPT_PATH));
+
+        let mut settings_map = settings::Map::new();
+        settings_map.insert("enabled".into(), settings::Value::Bool(true));
+        stored_settings.set_settings_map(settings_map.clone());
+        run.set_stored_auto_splitter_settings(&stored_settings);
+
+        assert_eq!(
+            settings_map_for_path(&run, Path::new(SCRIPT_PATH)).unwrap(),
+            Some(settings_map)
+        );
+        assert_eq!(
+            settings_map_for_path(&run, Path::new("Auto Splitters/Other.wasm")).unwrap(),
+            None
+        );
+    }
+
+    #[test]
+    fn settings_without_a_script_path_support_fixed_script_frontends() {
+        let mut run = crate::Run::new();
+        let mut stored_settings = StoredAutoSplitterSettings::new();
+        let mut settings_map = settings::Map::new();
+        settings_map.insert("enabled".into(), settings::Value::Bool(true));
+        stored_settings.set_settings_map(settings_map.clone());
+        run.set_stored_auto_splitter_settings(&stored_settings);
+
+        assert_eq!(
+            settings_map_for_path(&run, Path::new(SCRIPT_PATH)).unwrap(),
+            Some(settings_map)
+        );
+    }
+
+    #[test]
+    fn foreign_operating_system_paths_do_not_match_local_paths() {
+        let paths = [
+            (
+                r"C:\Auto Splitters\Game.wasm",
+                "/home/runner/auto-splitters/Game.wasm",
+            ),
+            (
+                "/home/runner/auto-splitters/Game.wasm",
+                r"C:\Auto Splitters\Game.wasm",
+            ),
+        ];
+
+        for (stored_path, local_path) in paths {
+            let mut run = crate::Run::new();
+            let mut stored_settings = StoredAutoSplitterSettings::new();
+            stored_settings.set_script_path(Some(stored_path));
+
+            let mut settings_map = settings::Map::new();
+            settings_map.insert("enabled".into(), settings::Value::Bool(true));
+            stored_settings.set_settings_map(settings_map);
+            run.set_stored_auto_splitter_settings(&stored_settings);
+
+            // A path from another operating system cannot identify the local
+            // script, so its settings must not leak into the replacement.
+            assert_eq!(
+                settings_map_for_path(&run, Path::new(local_path)).unwrap(),
+                None
+            );
+        }
+    }
+
+    #[test]
+    fn foreign_operating_system_script_path_is_reported_as_load_error() {
+        let foreign_path = if cfg!(windows) {
+            "/home/__livesplit_foreign_path_test__/missing.wasm"
+        } else {
+            r"Z:\__livesplit_foreign_path_test__\missing.wasm"
+        };
+
+        let mut run = crate::Run::new();
+        run.push_segment(crate::Segment::new("Segment"));
+        let mut stored_settings = StoredAutoSplitterSettings::new();
+        stored_settings.set_script_path(Some(foreign_path));
+        run.set_stored_auto_splitter_settings(&stored_settings);
+
+        let timer = crate::Timer::new(run).unwrap().into_shared();
+        let runtime = Runtime::new();
+
+        assert!(matches!(
+            runtime.load(timer),
+            Err(Error::ReadFileFailed { .. })
+        ));
+        assert_eq!(runtime.loaded_path(), None);
+    }
+
+    #[test]
+    fn runtime_stores_settings_in_the_timer_it_loaded() {
+        let mut run = crate::Run::new();
+        run.push_segment(crate::Segment::new("Segment"));
+
+        let mut stored_settings = StoredAutoSplitterSettings::new();
+        let mut settings_map = settings::Map::new();
+        settings_map.insert("enabled".into(), settings::Value::Bool(true));
+        stored_settings.set_settings_map(settings_map);
+        run.set_stored_auto_splitter_settings(&stored_settings);
+
+        let timer = crate::Timer::new(run).unwrap().into_shared();
+        let runtime = Runtime::new();
+
+        assert_eq!(runtime.load(timer.clone()).unwrap(), None);
+        runtime.store_settings();
+
+        assert!(
+            timer
+                .read()
+                .unwrap()
+                .run()
+                .stored_auto_splitter_settings()
+                .unwrap()
+                .is_empty()
+        );
     }
 }
