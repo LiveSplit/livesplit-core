@@ -205,6 +205,27 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SplitsSubsplitDisplayMode => "子分段顯示模式",
         Text::SplitsSubsplitDisplayModeDescription => "控制子分段的顯示方式。",
         Text::SplitTime => "分段時間",
+        Text::ComponentAlternateTimingMethod => "備用計時方式",
+        Text::AlternateTimingMethodBackground => "背景",
+        Text::AlternateTimingMethodBackgroundDescription => "元件背後的背景。",
+        Text::AlternateTimingMethodDisplayTwoRows => "顯示為兩行",
+        Text::AlternateTimingMethodDisplayTwoRowsDescription => {
+            "指定是否將元件名稱與時間顯示為兩行。"
+        }
+        Text::AlternateTimingMethodLabelColor => "標籤顏色",
+        Text::AlternateTimingMethodLabelColorDescription => {
+            "元件名稱的顏色。如未指定則使用版面配置的顏色。"
+        }
+        Text::AlternateTimingMethodValueColor => "數值顏色",
+        Text::AlternateTimingMethodValueColorDescription => {
+            "時間的顏色。如未指定則使用版面配置的顏色。"
+        }
+        Text::AlternateTimingMethodDigitsFormat => "位數格式",
+        Text::AlternateTimingMethodDigitsFormatDescription => {
+            "指定顯示多少位數。如果時長小於位數，則以 0 填充。"
+        }
+        Text::AlternateTimingMethodAccuracy => "精確度",
+        Text::AlternateTimingMethodAccuracyDescription => "顯示的時間精確度。",
         _ => super::chinese_simplified::resolve(text),
     }
 }

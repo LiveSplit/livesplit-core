@@ -252,6 +252,28 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::CurrentComparisonValueColorDescription => {
             "La couleur du nom de la comparaison. Si non précisée, la couleur du layout est utilisée."
         }
+        Text::AlternateTimingMethodBackground => "Arrière-plan",
+        Text::AlternateTimingMethodBackgroundDescription => {
+            "L’arrière-plan affiché derrière le composant."
+        }
+        Text::AlternateTimingMethodDisplayTwoRows => "Afficher sur 2 lignes",
+        Text::AlternateTimingMethodDisplayTwoRowsDescription => {
+            "Indique s’il faut afficher le nom du composant et le temps sur deux lignes distinctes."
+        }
+        Text::AlternateTimingMethodLabelColor => "Couleur du libellé",
+        Text::AlternateTimingMethodLabelColorDescription => {
+            "La couleur du nom du composant. Si non précisée, la couleur du layout est utilisée."
+        }
+        Text::AlternateTimingMethodValueColor => "Couleur de la valeur",
+        Text::AlternateTimingMethodValueColorDescription => {
+            "La couleur du temps. Si non précisée, la couleur du layout est utilisée."
+        }
+        Text::AlternateTimingMethodDigitsFormat => "Format des chiffres",
+        Text::AlternateTimingMethodDigitsFormatDescription => {
+            "Indique combien de chiffres afficher. Si la durée est inférieure, des zéros sont affichés."
+        }
+        Text::AlternateTimingMethodAccuracy => "Précision",
+        Text::AlternateTimingMethodAccuracyDescription => "La précision du temps affiché.",
         Text::CurrentPaceBackground => "Arrière-plan",
         Text::CurrentPaceBackgroundDescription => "L’arrière-plan affiché derrière le composant.",
         Text::CurrentPaceComparison => "Comparaison",
@@ -714,6 +736,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::TextColorDescription => {
             "La couleur utilisée pour le texte qui ne précise pas sa propre couleur."
         }
+        Text::ComponentAlternateTimingMethod => "Méthode de timing alternative",
         Text::ComponentBlankSpace => "Espace vide",
         Text::ComponentCurrentComparison => "Comparaison actuelle",
         Text::ComponentCurrentPace => "Rythme actuel",

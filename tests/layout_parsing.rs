@@ -29,6 +29,22 @@ mod parse {
     }
 
     #[test]
+    fn alternate_timing_method() {
+        use livesplit_core::{settings::Gradient, timing::formatter::Accuracy};
+
+        let layout = livesplit(layout_files::ALTERNATE_TIMING_METHOD);
+        let Component::AlternateTimingMethod(component) = &layout.components[0] else {
+            panic!("Alternate Timing Method component not found");
+        };
+        let settings = component.settings();
+        assert_eq!(settings.accuracy, Accuracy::Tenths);
+        assert!(settings.display_two_rows);
+        assert!(settings.label_color.is_some());
+        assert!(settings.value_color.is_none());
+        assert!(matches!(settings.background, Gradient::Horizontal(..)));
+    }
+
+    #[test]
     fn subsplits() {
         let l = livesplit(layout_files::SUBSPLITS);
         let Some(splits) = l.components.iter().find_map(|c| match c {

@@ -248,6 +248,26 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::CurrentComparisonValueColorDescription => {
             "A cor do nome da comparação. Se não for especificada, usa-se a cor do layout."
         }
+        Text::AlternateTimingMethodBackground => "Fundo",
+        Text::AlternateTimingMethodBackgroundDescription => "O fundo mostrado atrás do componente.",
+        Text::AlternateTimingMethodDisplayTwoRows => "Exibir 2 linhas",
+        Text::AlternateTimingMethodDisplayTwoRowsDescription => {
+            "Indica se deve exibir o nome do componente e o tempo em duas linhas separadas."
+        }
+        Text::AlternateTimingMethodLabelColor => "Cor do rótulo",
+        Text::AlternateTimingMethodLabelColorDescription => {
+            "A cor do nome do componente. Se não for especificada, usa-se a cor do layout."
+        }
+        Text::AlternateTimingMethodValueColor => "Cor do valor",
+        Text::AlternateTimingMethodValueColorDescription => {
+            "A cor do tempo. Se não for especificada, usa-se a cor do layout."
+        }
+        Text::AlternateTimingMethodDigitsFormat => "Formato de dígitos",
+        Text::AlternateTimingMethodDigitsFormatDescription => {
+            "Indica quantos dígitos mostrar. Se a duração for menor do que o número de dígitos, zeros serão exibidos."
+        }
+        Text::AlternateTimingMethodAccuracy => "Precisão",
+        Text::AlternateTimingMethodAccuracyDescription => "A precisão do tempo mostrado.",
         Text::CurrentPaceBackground => "Fundo",
         Text::CurrentPaceBackgroundDescription => "O fundo mostrado atrás do componente.",
         Text::CurrentPaceComparison => "Comparação",
@@ -696,6 +716,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SeparatorsDescription => "A cor dos separadores normais.",
         Text::TextColor => "Texto",
         Text::TextColorDescription => "A cor a usar para texto que não especifica sua própria cor.",
+        Text::ComponentAlternateTimingMethod => "Método de cronometragem alternativo",
         Text::ComponentBlankSpace => "Espaço em branco",
         Text::ComponentCurrentComparison => "Comparação atual",
         Text::ComponentCurrentPace => "Ritmo atual",

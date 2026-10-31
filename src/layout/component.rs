@@ -1,9 +1,9 @@
 use super::{ComponentSettings, ComponentState, GeneralSettings, LayoutDirection};
 use crate::{
     component::{
-        blank_space, carousel, current_comparison, current_pace, delta, detailed_timer, graph,
-        group, pb_chance, possible_time_save, previous_segment, segment_time, separator, splits,
-        sum_of_best, text, timer, title, total_playtime,
+        alternate_timing_method, blank_space, carousel, current_comparison, current_pace, delta,
+        detailed_timer, graph, group, pb_chance, possible_time_save, previous_segment,
+        segment_time, separator, splits, sum_of_best, text, timer, title, total_playtime,
     },
     localization::Lang,
     platform::prelude::*,
@@ -16,6 +16,8 @@ use alloc::borrow::Cow;
 /// visualize. This type can store any of the components provided by this crate.
 #[derive(Clone)]
 pub enum Component {
+    /// The Alternate Timing Method Component.
+    AlternateTimingMethod(alternate_timing_method::Component),
     /// The Blank Space Component.
     BlankSpace(blank_space::Component),
     /// The Current Comparison Component.
@@ -56,6 +58,12 @@ pub enum Component {
     /// A carousel of components that cycles through its children, showing
     /// one at a time.
     Carousel(carousel::Component),
+}
+
+impl From<alternate_timing_method::Component> for Component {
+    fn from(component: alternate_timing_method::Component) -> Self {
+        Self::AlternateTimingMethod(component)
+    }
 }
 
 impl From<blank_space::Component> for Component {
@@ -207,6 +215,9 @@ impl Component {
         lang: Lang,
     ) {
         match (state, self) {
+            (ComponentState::KeyValue(state), Component::AlternateTimingMethod(component)) => {
+                component.update_state(state, timer, lang);
+            }
             (ComponentState::BlankSpace(state), Component::BlankSpace(component)) => {
                 component.update_state(state)
             }
@@ -286,6 +297,9 @@ impl Component {
         lang: Lang,
     ) -> ComponentState {
         match self {
+            Component::AlternateTimingMethod(component) => {
+                ComponentState::KeyValue(component.state(timer, lang))
+            }
             Component::BlankSpace(component) => ComponentState::BlankSpace(component.state()),
             Component::CurrentComparison(component) => {
                 ComponentState::KeyValue(component.state(timer, lang))
@@ -346,6 +360,9 @@ impl Component {
     /// Settings Description instead.
     pub fn settings(&self) -> ComponentSettings {
         match self {
+            Component::AlternateTimingMethod(component) => {
+                ComponentSettings::AlternateTimingMethod(component.settings().clone())
+            }
             Component::BlankSpace(component) => {
                 ComponentSettings::BlankSpace(component.settings().clone())
             }
@@ -394,6 +411,7 @@ impl Component {
     /// for horizontal, "Column" for vertical).
     pub fn name(&self, lang: Lang, parent_direction: LayoutDirection) -> Cow<'_, str> {
         match self {
+            Component::AlternateTimingMethod(component) => Cow::Borrowed(component.name(lang)),
             Component::BlankSpace(component) => Cow::Borrowed(component.name(lang)),
             Component::CurrentComparison(component) => Cow::Borrowed(component.name(lang)),
             Component::CurrentPace(component) => component.name(lang),
@@ -448,6 +466,7 @@ impl Component {
         parent_direction: LayoutDirection,
     ) -> SettingsDescription {
         match self {
+            Component::AlternateTimingMethod(component) => component.settings_description(lang),
             Component::BlankSpace(component) => component.settings_description(lang),
             Component::CurrentComparison(component) => component.settings_description(lang),
             Component::CurrentPace(component) => component.settings_description(lang),
@@ -482,6 +501,7 @@ impl Component {
     /// have a compatible type.
     pub fn set_value(&mut self, index: usize, value: Value) {
         match self {
+            Component::AlternateTimingMethod(component) => component.set_value(index, value),
             Component::BlankSpace(component) => component.set_value(index, value),
             Component::CurrentComparison(component) => component.set_value(index, value),
             Component::CurrentPace(component) => component.set_value(index, value),

@@ -250,6 +250,28 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::CurrentComparisonValueColorDescription => {
             "The color of the comparison's name. If not specified, the color is taken from the layout."
         }
+        Text::AlternateTimingMethodBackground => "Background",
+        Text::AlternateTimingMethodBackgroundDescription => {
+            "The background shown behind the component."
+        }
+        Text::AlternateTimingMethodDisplayTwoRows => "Display 2 Rows",
+        Text::AlternateTimingMethodDisplayTwoRowsDescription => {
+            "Specifies whether to display the name of the component and the time in two separate rows."
+        }
+        Text::AlternateTimingMethodLabelColor => "Label Color",
+        Text::AlternateTimingMethodLabelColorDescription => {
+            "The color of the component's name. If not specified, the color is taken from the layout."
+        }
+        Text::AlternateTimingMethodValueColor => "Value Color",
+        Text::AlternateTimingMethodValueColorDescription => {
+            "The color of the time. If not specified, the color is taken from the layout."
+        }
+        Text::AlternateTimingMethodDigitsFormat => "Digits Format",
+        Text::AlternateTimingMethodDigitsFormatDescription => {
+            "Specifies how many digits to show. If the duration is lower than the digits to be shown, zeros are shown instead."
+        }
+        Text::AlternateTimingMethodAccuracy => "Accuracy",
+        Text::AlternateTimingMethodAccuracyDescription => "The accuracy of the time shown.",
         Text::CurrentPaceBackground => "Background",
         Text::CurrentPaceBackgroundDescription => "The background shown behind the component.",
         Text::CurrentPaceComparison => "Comparison",
@@ -694,6 +716,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::TextColorDescription => {
             "The color to use for text that doesn't specify its own color."
         }
+        Text::ComponentAlternateTimingMethod => "Alternate Timing Method",
         Text::ComponentBlankSpace => "Blank Space",
         Text::ComponentCurrentComparison => "Current Comparison",
         Text::ComponentCurrentPace => "Current Pace",
