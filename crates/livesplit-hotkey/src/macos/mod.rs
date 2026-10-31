@@ -1,26 +1,36 @@
+//! CoreGraphics keyboard taps, callback storage and native keyboard resolution.
+//!
+//! Public Hook construction checks privacy access before starting this worker.
+//! Explicit permission requests live separately; callbacks never query or prompt
+//! for grants. Callers retain Hook while using its thread-confined native loop.
+
 mod ax;
 mod carbon;
 mod cf;
 mod cg;
-mod permission;
+pub mod permission;
 
-use self::{
-    carbon::{
-        LMGetKbdType, TISCopyCurrentKeyboardInputSource, TISCopyCurrentKeyboardLayoutInputSource,
-        TISGetInputSourceProperty, UCKeyAction, UCKeyTranslate, UCKeyTranslateBits,
-        kTISPropertyUnicodeKeyLayoutData,
+use crate::{
+    ConsumePreference, Hotkey, KeyCode, Modifiers, Result,
+    macos::{
+        carbon::{
+            LMGetKbdType, TISCopyCurrentKeyboardInputSource,
+            TISCopyCurrentKeyboardLayoutInputSource, TISGetInputSourceProperty, UCKeyAction,
+            UCKeyTranslate, UCKeyTranslateBits, kTISPropertyUnicodeKeyLayoutData,
+        },
+        cf::{
+            CFDataGetBytePtr, CFMachPortCreateRunLoopSource, CFRelease, CFRunLoopAddSource,
+            CFRunLoopContainsSource, CFRunLoopGetCurrent, CFRunLoopRemoveSource, CFRunLoopRun,
+            kCFAllocatorDefault, kCFRunLoopDefaultMode,
+        },
+        cg::{
+            CGEventGetFlags, CGEventTapCreate, CGEventTapEnable, EventField, EventFlags, EventMask,
+            EventRef, EventTapLocation, EventTapOptions, EventTapPlacement, EventTapProxy,
+            EventType,
+        },
     },
-    cf::{
-        CFDataGetBytePtr, CFMachPortCreateRunLoopSource, CFRelease, CFRunLoopAddSource,
-        CFRunLoopContainsSource, CFRunLoopGetCurrent, CFRunLoopRemoveSource, CFRunLoopRun,
-        kCFAllocatorDefault, kCFRunLoopDefaultMode,
-    },
-    cg::{
-        CGEventGetFlags, CGEventTapCreate, CGEventTapEnable, EventField, EventFlags, EventMask,
-        EventRef, EventTapLocation, EventTapOptions, EventTapPlacement, EventTapProxy, EventType,
-    },
+    permission::macos::TapMode,
 };
-use crate::{ConsumePreference, Hotkey, KeyCode, Modifiers, Result};
 use core::ptr::null_mut;
 use std::{
     collections::{HashMap, hash_map::Entry},
@@ -34,6 +44,8 @@ use std::{
 #[non_exhaustive]
 pub enum Error {
     CouldntCreateEventTap,
+    /// The native dictionary for an explicit permission request could not be created.
+    CouldntCreatePermissionOptions,
     CouldntCreateRunLoopSource,
     CouldntGetCurrentRunLoop,
     ThreadStoppedUnexpectedly,
@@ -48,6 +60,7 @@ impl From<Error> for crate::Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_str(match self {
+            Self::CouldntCreatePermissionOptions => "Failed creating permission request options.",
             Self::CouldntCreateEventTap => "Failed creating the event tap.",
             Self::CouldntCreateRunLoopSource => "Failed creating the run loop source.",
             Self::CouldntGetCurrentRunLoop => "Failed getting the current run loop.",
@@ -98,10 +111,7 @@ impl Drop for Hook {
 
 impl Hook {
     pub fn new(consume: ConsumePreference) -> Result<Self> {
-        let is_consuming = matches!(
-            consume,
-            ConsumePreference::PreferConsume | ConsumePreference::MustConsume,
-        );
+        let is_consuming = TapMode::from_preference(consume) == TapMode::Consume;
 
         let state = Arc::new(State {
             hotkeys: Mutex::new(HashMap::new()),
@@ -116,13 +126,9 @@ impl Hook {
         thread::spawn(move || unsafe {
             let state_ptr: *const State = &*thread_state;
 
-            // If we don't have the permission to use the hotkeys, we want to
-            // request it. In that case, this however will fail regardless of
-            // whether the permission is then granted by the user or not. The
-            // user will have to restart the application. If the permission is
-            // already granted, this does nothing.
-            permission::request();
-
+            // Hook's public constructor already checked the matching privacy
+            // grant without prompting. Creating the tap may still fail if the
+            // grant was revoked or native resources are unavailable.
             let port = CGEventTapCreate(
                 EventTapLocation::SESSION,
                 EventTapPlacement::HEAD_INSERT_EVENT_TAP,

@@ -32,6 +32,12 @@ main() {
 
     $cargo test -p livesplit-core $features --target $TARGET
     $cargo test -p livesplit-core --no-default-features --features std --target $TARGET
+
+    # Dependency unit tests are not run by the livesplit-core commands above.
+    # Native hook/input examples are ignored, so the default suite is windowless.
+    $cargo test --locked -p livesplit-hotkey --target $TARGET
+    # The C API's bridge tests also need their own package invocation.
+    $cargo test --locked -p livesplit-core-capi --target $TARGET
 }
 
 main

@@ -17,6 +17,11 @@
 //! [`display`] presents localized key and modifier names using native keyboard
 //! conventions. Callers provide translations through [`display::Localize`], so
 //! display names never affect the stable identifiers used for saved hotkeys.
+//!
+//! On macOS, constructing a [`Hook`] never requests privacy access. Missing
+//! grants return [`Error::PermissionRequired`]. Applications should explain the
+//! required permission and call [`Hook::request_permission`] only after a user
+//! action, then explicitly retry creation once access has been granted.
 
 extern crate alloc;
 
@@ -51,9 +56,10 @@ pub mod display;
 mod hotkey;
 mod key_code;
 mod modifiers;
+mod permission;
 use core::fmt;
 
-pub use self::{hotkey::*, key_code::*, modifiers::*};
+pub use self::{hotkey::*, key_code::*, modifiers::*, permission::Permission};
 
 /// A hook allows you to listen to hotkeys.
 #[repr(transparent)]
@@ -80,14 +86,61 @@ pub enum ConsumePreference {
 impl Hook {
     /// Creates a new hook without any preference of whether the hotkeys should
     /// be consumed or not.
+    ///
+    /// This never requests privacy permissions. Missing access returns
+    /// [`Error::PermissionRequired`]; callers may use [`Self::request_permission`]
+    /// after an explicit user action.
     pub fn new() -> Result<Self> {
-        Ok(Self(platform::Hook::new(ConsumePreference::NoPreference)?))
+        Self::with_consume_preference(ConsumePreference::NoPreference)
     }
 
     /// Creates a new hook with a specific preference of whether the hotkeys
     /// should be consumed or not.
+    ///
+    /// This never requests privacy permissions. Missing access returns
+    /// [`Error::PermissionRequired`]; callers may use [`Self::request_permission`]
+    /// after an explicit user action.
     pub fn with_consume_preference(consume: ConsumePreference) -> Result<Self> {
+        Self::check_permission(consume)?;
         Ok(Self(platform::Hook::new(consume)?))
+    }
+
+    /// Checks the native privacy grant for the selected hook without prompting.
+    ///
+    /// This does not create hooks or check registration/device access. On platforms
+    /// without a separate privacy-grant API it succeeds; hook creation may still fail.
+    pub fn check_permission(consume: ConsumePreference) -> Result<()> {
+        permission::check(consume)
+    }
+
+    /// Requests the selected hook's native privacy grant after a user action.
+    ///
+    /// Already granted access does not prompt. A native request may return before
+    /// approval takes effect. [`Error::PermissionRequired`] means access is still
+    /// missing at that moment; it does not distinguish a denial from pending
+    /// approval, even when the native permission UI has been opened.
+    ///
+    /// Check again or retry construction on a later explicit user action. This
+    /// crate starts no polling loop and imposes no restart requirement.
+    ///
+    /// ```no_run
+    /// # fn enable_from_user_action() -> livesplit_hotkey::Result<Option<livesplit_hotkey::Hook>> {
+    /// use livesplit_hotkey::{ConsumePreference, Error, Hook};
+    /// let preference = ConsumePreference::PreferNoConsume;
+    /// match Hook::request_permission(preference) {
+    ///     Ok(()) => Hook::with_consume_preference(preference).map(Some),
+    ///     Err(Error::PermissionRequired(permission)) => {
+    ///         eprintln!("{permission} access is not available yet.");
+    ///         // Explain how to grant access, then retry construction on a later
+    ///         // user action. Returning None does not schedule a background retry.
+    ///         Ok(None)
+    ///     }
+    ///     Err(error) => Err(error),
+    /// }
+    /// # }
+    /// ```
+    pub fn request_permission(consume: ConsumePreference) -> Result<()> {
+        permission::request(consume)
     }
 
     /// Registers a hotkey to listen to.
@@ -124,6 +177,8 @@ pub enum Error {
     AlreadyRegistered,
     /// The hotkey to unregister was not registered.
     NotRegistered,
+    /// A native privacy grant is missing; explicitly request it after a user action.
+    PermissionRequired(Permission),
     /// A platform specific error occurred.
     Platform(platform::Error),
 }
@@ -140,6 +195,9 @@ impl fmt::Display for Error {
             }
             Self::AlreadyRegistered => "The hotkey was already registered.",
             Self::NotRegistered => "The hotkey to unregister was not registered.",
+            Self::PermissionRequired(permission) => {
+                return write!(f, "Global hotkeys require {permission} permission.");
+            }
             Self::Platform(e) => return fmt::Display::fmt(e, f),
         })
     }

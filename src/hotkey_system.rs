@@ -1,9 +1,33 @@
+//! Timer hotkey bindings, suspension and their native access requirements.
+//!
+//! Permission checks and requests use the same hook preference as construction;
+//! callers do not need to duplicate that internal selection. Native privacy APIs
+//! remain in livesplit-hotkey. These functions neither create a timer nor change
+//! bindings, and a privacy grant does not guarantee hook creation will succeed.
+
 use crate::{
     HotkeyConfig, Lang, event,
     hotkey::{ConsumePreference, Hook, Hotkey, KeyCode, display},
 };
 
 pub use crate::hotkey::Result;
+
+// Keep timer shortcuts non-consuming where the backend can honor it. Permission
+// queries and explicit requests must use the identical selection as construction.
+const CONSUME_PREFERENCE: ConsumePreference = ConsumePreference::PreferNoConsume;
+
+/// Check the timer hotkey system's native privacy requirement without prompting.
+/// This creates no hook and does not check key conflicts or device-file access.
+pub fn check_permission() -> Result<()> {
+    Hook::check_permission(CONSUME_PREFERENCE)
+}
+
+/// Request the timer hotkey system's native access after an explicit user action.
+/// Approval may become visible only on a later explicit check or construction.
+/// Existing timers and bindings are unaffected; no hook is created or polled.
+pub fn request_permission() -> Result<()> {
+    Hook::request_permission(CONSUME_PREFERENCE)
+}
 
 // This enum might be better situated in hotkey_config, but the last method should stay in this file
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -117,7 +141,7 @@ impl<S: event::CommandSink + Clone + Send + 'static> HotkeySystem<S> {
     pub fn with_config(command_sink: S, config: HotkeyConfig) -> Result<Self> {
         let mut hotkey_system = Self {
             config,
-            hook: Hook::with_consume_preference(ConsumePreference::PreferNoConsume)?,
+            hook: Hook::with_consume_preference(CONSUME_PREFERENCE)?,
             command_sink,
             is_active: false,
         };
