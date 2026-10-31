@@ -6,20 +6,17 @@ use crate::{
     timing::{CustomParser, parse_custom},
 };
 use alloc::borrow::Cow;
-use core::result::Result as StdResult;
+use core::{fmt, result::Result as StdResult};
 use serde_derive::Deserialize;
 use serde_json::Error as JsonError;
-use snafu::ensure;
 
 /// The Error type for splits files that couldn't be parsed by the Flitter
 /// Parser.
-#[derive(Debug, snafu::Snafu)]
-#[snafu(context(suffix(false)))]
+#[derive(Debug)]
 pub enum Error {
     /// Failed to parse JSON.
     Json {
         /// The underlying error.
-        #[cfg_attr(not(feature = "std"), snafu(source(false)))]
         source: JsonError,
     },
     /// The split names can't be empty.
@@ -34,6 +31,36 @@ pub enum Error {
     PersonalBestCountMismatch,
     /// The last split of the personal best can't be null.
     LastSplitNull,
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Json { .. } => f.write_str("Failed to parse JSON."),
+            Self::SplitNamesEmpty => f.write_str("The split names can't be empty."),
+            Self::PersonalBestEmpty => f.write_str("The personal best can't be empty."),
+            Self::GoldsEmpty => f.write_str("The golds can't be empty."),
+            Self::GoldCountMismatch => {
+                f.write_str("The split name count does not match the gold count.")
+            }
+            Self::PersonalBestCountMismatch => {
+                f.write_str("The split name count does not match the personal best split count.")
+            }
+            Self::LastSplitNull => {
+                f.write_str("The last split of the personal best can't be null.")
+            }
+        }
+    }
+}
+
+impl core::error::Error for Error {
+    #[cfg(feature = "std")]
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        match self {
+            Self::Json { source } => Some(source),
+            _ => None,
+        }
+    }
 }
 
 /// The Result type for the Flitter Parser.
@@ -92,21 +119,24 @@ pub fn parse(source: &str) -> Result<Run> {
     let splits: Splits<'_> =
         serde_json::from_str(source).map_err(|source| Error::Json { source })?;
 
-    ensure!(!splits.split_names.is_empty(), SplitNamesEmpty);
-    ensure!(!splits.golds.is_empty(), GoldsEmpty);
-    ensure!(!splits.personal_best.splits.is_empty(), PersonalBestEmpty);
-    ensure!(
-        splits.golds.len() == splits.split_names.len(),
-        GoldCountMismatch
-    );
-    ensure!(
-        splits.personal_best.splits.len() == splits.split_names.len(),
-        PersonalBestCountMismatch
-    );
-    ensure!(
-        splits.personal_best.splits.last().unwrap().is_some(),
-        LastSplitNull
-    );
+    if splits.split_names.is_empty() {
+        return Err(Error::SplitNamesEmpty);
+    }
+    if splits.golds.is_empty() {
+        return Err(Error::GoldsEmpty);
+    }
+    if splits.personal_best.splits.is_empty() {
+        return Err(Error::PersonalBestEmpty);
+    }
+    if splits.golds.len() != splits.split_names.len() {
+        return Err(Error::GoldCountMismatch);
+    }
+    if splits.personal_best.splits.len() != splits.split_names.len() {
+        return Err(Error::PersonalBestCountMismatch);
+    }
+    if splits.personal_best.splits.last().unwrap().is_none() {
+        return Err(Error::LastSplitNull);
+    }
 
     let mut run = Run::new();
 

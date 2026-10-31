@@ -18,12 +18,12 @@ use crate::{
     },
 };
 use alloc::borrow::Cow;
-use core::{mem::MaybeUninit, str};
+use core::{fmt, mem::MaybeUninit, str};
 use time::{Date, Duration, PrimitiveDateTime};
 
 /// The Error type for splits files that couldn't be parsed by the LiveSplit
 /// Parser.
-#[derive(Debug, snafu::Snafu)]
+#[derive(Debug)]
 pub enum Error {
     /// The underlying XML format couldn't be parsed.
     Xml {
@@ -56,6 +56,36 @@ pub enum Error {
     },
     /// Failed to parse a boolean.
     ParseBool,
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Xml { .. } => f.write_str("The underlying XML format couldn't be parsed."),
+            Self::ParseInt { .. } => f.write_str("Failed to parse an integer."),
+            Self::ParseFloat { .. } => f.write_str("Failed to parse a floating point number."),
+            Self::ParseTime { .. } => f.write_str("Failed to parse a time."),
+            Self::ParseExtendedTime => f.write_str("Failed to parse a time that contains days."),
+            Self::ParseDate => f.write_str("Failed to parse a date."),
+            Self::InvalidComparisonName { .. } => {
+                f.write_str("Parsed comparison has an invalid name.")
+            }
+            Self::ParseBool => f.write_str("Failed to parse a boolean."),
+        }
+    }
+}
+
+impl core::error::Error for Error {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        match self {
+            Self::Xml { source } => Some(source),
+            Self::ParseInt { source } => Some(source),
+            Self::ParseFloat { source } => Some(source),
+            Self::ParseTime { source } => Some(source),
+            Self::InvalidComparisonName { source } => Some(source),
+            _ => None,
+        }
+    }
 }
 
 impl From<XmlError> for Error {

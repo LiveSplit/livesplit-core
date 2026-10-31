@@ -126,7 +126,7 @@ impl PartialEq for ComparisonGenerators {
 }
 
 /// Error type for an invalid comparison name to be added.
-#[derive(PartialEq, Eq, Debug, snafu::Snafu)]
+#[derive(PartialEq, Eq, Debug)]
 pub enum AddComparisonError {
     /// Comparison name starts with "\[Race\]".
     NameStartsWithRace,
@@ -134,8 +134,19 @@ pub enum AddComparisonError {
     DuplicateName,
 }
 
+impl fmt::Display for AddComparisonError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::NameStartsWithRace => f.write_str("Comparison name starts with \"\\[Race\\]\"."),
+            Self::DuplicateName => f.write_str("Comparison name is a duplicate."),
+        }
+    }
+}
+
+impl core::error::Error for AddComparisonError {}
+
 /// Error type for copying a comparison.
-#[derive(PartialEq, Eq, Debug, snafu::Snafu)]
+#[derive(PartialEq, Eq, Debug)]
 pub enum CopyComparisonError {
     /// There is no comparison with the provided name to copy.
     NoSuchComparison,
@@ -144,6 +155,26 @@ pub enum CopyComparisonError {
         /// The underlying error.
         source: AddComparisonError,
     },
+}
+
+impl fmt::Display for CopyComparisonError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::NoSuchComparison => {
+                f.write_str("There is no comparison with the provided name to copy.")
+            }
+            Self::AddComparison { .. } => f.write_str("The new comparison could not be added."),
+        }
+    }
+}
+
+impl core::error::Error for CopyComparisonError {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        match self {
+            Self::AddComparison { source } => Some(source),
+            _ => None,
+        }
+    }
 }
 
 impl Run {

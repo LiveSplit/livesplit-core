@@ -594,7 +594,6 @@ use livesplit_auto_splitting::{
     AutoSplitter, Config, CreationError, LogLevel, Timer as AutoSplitTimer, TimerState,
 };
 pub use livesplit_auto_splitting::{settings, wasi_path};
-use snafu::Snafu;
 use std::{
     fmt, fs, io,
     path::{Path, PathBuf},
@@ -607,7 +606,7 @@ use std::{
 };
 
 /// An error that the [`Runtime`] can return.
-#[derive(Debug, Snafu)]
+#[derive(Debug)]
 pub enum Error {
     /// The runtime thread unexpectedly stopped.
     ThreadStopped,
@@ -632,6 +631,35 @@ pub enum Error {
     },
     /// The asked setting was not found.
     SettingNotFound,
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::ThreadStopped => f.write_str("The runtime thread unexpectedly stopped."),
+            Self::LoadFailed { .. } => f.write_str("Failed loading the auto splitter."),
+            Self::ImpossibleReload => {
+                f.write_str("Tried reloading the auto splitter when no auto splitter is loaded")
+            }
+            Self::ReadFileFailed { .. } => f.write_str("Failed reading the auto splitter file."),
+            Self::SettingsLoadFailed => f.write_str("Failed reading the auto splitter settings."),
+            Self::StoredSettingsLoadFailed { .. } => {
+                f.write_str("Failed parsing the auto splitter settings stored in the splits file.")
+            }
+            Self::SettingNotFound => f.write_str("The asked setting was not found."),
+        }
+    }
+}
+
+impl core::error::Error for Error {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        match self {
+            Self::LoadFailed { source } => Some(source),
+            Self::ReadFileFailed { source } => Some(source),
+            Self::StoredSettingsLoadFailed { source } => Some(source),
+            _ => None,
+        }
+    }
 }
 
 /// An auto splitter runtime that allows using an auto splitter provided as a

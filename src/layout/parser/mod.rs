@@ -21,7 +21,7 @@ use crate::{
         },
     },
 };
-use core::{mem::MaybeUninit, num::ParseIntError, str};
+use core::{fmt, mem::MaybeUninit, num::ParseIntError, str};
 
 mod blank_space;
 mod current_comparison;
@@ -53,7 +53,7 @@ fn translate_size(v: u32) -> u32 {
 }
 
 /// The Error type for parsing layout files of the original LiveSplit.
-#[derive(Debug, snafu::Snafu)]
+#[derive(Debug)]
 pub enum Error {
     /// The underlying XML format couldn't be parsed.
     Xml {
@@ -89,6 +89,39 @@ pub enum Error {
     MissingBackgroundImage,
     /// Parsed an empty layout, which is considered an invalid layout.
     Empty,
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Xml { .. } => f.write_str("The underlying XML format couldn't be parsed."),
+            Self::ParseInt { .. } => f.write_str("Failed to parse an integer."),
+            Self::ParseBool => f.write_str("Failed to parse a boolean."),
+            Self::ParseLayoutDirection => f.write_str("Failed to parse the layout direction."),
+            Self::ParseGradientType => f.write_str("Failed to parse a gradient type."),
+            Self::ParseAccuracy => f.write_str("Failed to parse an accuracy."),
+            Self::ParseDigitsFormat => f.write_str("Failed to parse a digits format."),
+            Self::ParseTimingMethod => f.write_str("Failed to parse a timing method."),
+            Self::ParseAlignment => f.write_str("Failed to parse an alignment."),
+            Self::ParseColumnType => f.write_str("Failed to parse a column type."),
+            Self::ParseFont => f.write_str("Failed to parse a font."),
+            Self::ParsePercentage => f.write_str("Failed to parse a percentage."),
+            Self::MissingBackgroundImage => f.write_str("The background image is missing."),
+            Self::Empty => {
+                f.write_str("Parsed an empty layout, which is considered an invalid layout.")
+            }
+        }
+    }
+}
+
+impl core::error::Error for Error {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        match self {
+            Self::Xml { source } => Some(source),
+            Self::ParseInt { source } => Some(source),
+            _ => None,
+        }
+    }
 }
 
 impl From<XmlError> for Error {

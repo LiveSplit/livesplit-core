@@ -1,12 +1,22 @@
 use crate::{Segment, platform::prelude::*, settings::Image};
-use core::{iter::FusedIterator, ops::Range, slice};
+use core::{fmt, iter::FusedIterator, ops::Range, slice};
 
 /// Describes why creating a segment group failed.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, snafu::Snafu)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SegmentGroupCreationError {
     /// The provided range does not contain any segments.
     EmptyRange,
 }
+
+impl fmt::Display for SegmentGroupCreationError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::EmptyRange => f.write_str("The provided range does not contain any segments."),
+        }
+    }
+}
+
+impl core::error::Error for SegmentGroupCreationError {}
 
 /// Describes why atomically updating one or more segment group ranges failed.
 ///
@@ -31,9 +41,16 @@ pub(crate) enum SegmentGroupRangeUpdateError {
 /// This error is shared only by operations whose sole failure mode is looking
 /// up a group by index. In particular, it does not expose the range-validation
 /// failures that used to be part of the catch-all segment group error.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, snafu::Snafu)]
-#[snafu(display("The provided segment group index does not exist"))]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct InvalidSegmentGroupIndexError;
+
+impl fmt::Display for InvalidSegmentGroupIndexError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str("The provided segment group index does not exist")
+    }
+}
+
+impl core::error::Error for InvalidSegmentGroupIndexError {}
 
 /// A contiguous, non-overlapping group of segments.
 ///
