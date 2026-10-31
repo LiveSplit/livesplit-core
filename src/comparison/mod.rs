@@ -15,11 +15,12 @@ pub mod latest_run;
 pub mod median_segments;
 pub mod none;
 pub mod worst_segments;
+pub mod merged_timeloss;
 
 pub use self::{
     average_segments::AverageSegments, balanced_pb::BalancedPB, best_segments::BestSegments,
     best_split_times::BestSplitTimes, latest_run::LatestRun, median_segments::MedianSegments,
-    none::None, worst_segments::WorstSegments,
+    none::None, worst_segments::WorstSegments, merged_timeloss::MergedTimeloss,
 };
 
 use crate::{Attempt, Segment, Timer, platform::prelude::*};
@@ -91,6 +92,7 @@ pub fn default_generators() -> Vec<Box<dyn ComparisonGenerator>> {
     vec![
         Box::new(BestSegments),
         Box::new(BestSplitTimes),
+        Box::new(MergedTimeloss),
         Box::new(AverageSegments),
         Box::new(MedianSegments),
         Box::new(WorstSegments),
@@ -115,6 +117,7 @@ pub fn try_shorten(comparison: &str) -> Option<&'static str> {
         latest_run::NAME => latest_run::SHORT_NAME,
         none::NAME => none::SHORT_NAME,
         worst_segments::NAME => worst_segments::SHORT_NAME,
+        merged_timeloss::NAME => merged_timeloss::SHORT_NAME,
         _ => return Option::None,
     })
 }
