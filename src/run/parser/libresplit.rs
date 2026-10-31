@@ -3,13 +3,13 @@
 use crate::{
     Lang, Run, Segment, Time, TimeSpan,
     comparison::world_record,
-    platform::{
-        path::{Path, PathBuf},
-        prelude::*,
-    },
+    platform::{path::Path, prelude::*},
     settings::Image,
     timing::formatter::{self, TimeFormatter},
 };
+// Native filesystem paths are absent from no_std icon loading.
+#[cfg(feature = "std")]
+use crate::platform::path::PathBuf;
 use alloc::borrow::Cow;
 use core::result::Result as StdResult;
 use serde::{Deserialize as DeserializeTrait, Deserializer};
@@ -177,15 +177,24 @@ fn decode_data_url(source: &[u8], buf: &mut Vec<u8>) -> Option<()> {
     Some(())
 }
 
+/// Reuse decoding bytes and, when available, the native path buffer across all
+/// icons. Keeping both scratch buffers together avoids extra per-segment path
+/// allocations while no_std builds retain only their data-URL decoding storage.
+#[derive(Default)]
+struct IconBuffers {
+    data: Vec<u8>,
+    #[cfg(feature = "std")]
+    path: PathBuf,
+}
+
 fn load_icon(
     source: &str,
     #[allow(unused)] load_files_path: Option<&Path>,
-    icon_buf: &mut Vec<u8>,
-    #[allow(unused)] path_buf: &mut PathBuf,
+    buffers: &mut IconBuffers,
 ) -> Option<Image> {
     if let Some(source) = strip_data_url_prefix(source) {
-        decode_data_url(source, icon_buf)?;
-        return Some(Image::new(icon_buf.as_slice().into(), Image::ICON));
+        decode_data_url(source, &mut buffers.data)?;
+        return Some(Image::new(buffers.data.as_slice().into(), Image::ICON));
     }
 
     #[cfg(feature = "std")]
@@ -193,8 +202,12 @@ fn load_icon(
         && let Some(load_files_path) = load_files_path
     {
         return Image::from_file(
-            crate::platform::path::relative_to(path_buf, load_files_path, Path::new(source)),
-            icon_buf,
+            crate::platform::path::relative_to(
+                &mut buffers.path,
+                load_files_path,
+                Path::new(source),
+            ),
+            &mut buffers.data,
             Image::ICON,
         )
         .ok();
@@ -214,8 +227,7 @@ pub fn parse(source: &str, #[allow(unused)] load_files_path: Option<&Path>) -> R
 
     let mut run = Run::new();
 
-    let mut icon_buf = Vec::new();
-    let mut path_buf = Default::default();
+    let mut icon_buffers = IconBuffers::default();
 
     // Legacy files only have a combined title. Like LibreSplit, use it as
     // the game name if no explicit name is provided.
@@ -227,7 +239,7 @@ pub fn parse(source: &str, #[allow(unused)] load_files_path: Option<&Path>) -> R
     }
 
     if let Some(icon) = splits.icon
-        && let Some(image) = load_icon(&icon, load_files_path, &mut icon_buf, &mut path_buf)
+        && let Some(image) = load_icon(&icon, load_files_path, &mut icon_buffers)
     {
         run.set_game_icon(image);
     }
@@ -296,7 +308,7 @@ pub fn parse(source: &str, #[allow(unused)] load_files_path: Option<&Path>) -> R
             }
 
             if let Some(icon) = split.icon
-                && let Some(image) = load_icon(&icon, load_files_path, &mut icon_buf, &mut path_buf)
+                && let Some(image) = load_icon(&icon, load_files_path, &mut icon_buffers)
             {
                 segment.set_icon(image);
             }

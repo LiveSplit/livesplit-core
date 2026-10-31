@@ -92,35 +92,53 @@ pub const fn resolve(text: Text) -> &'static str {
             display::Text::ShowAllWindows => "Afficher toutes les fenêtres",
             display::Text::ZoomToggle => "Basculer le zoom",
         },
+        #[cfg(feature = "std")]
         Text::StartSplit => "Démarrer / Split",
+        #[cfg(feature = "std")]
         Text::StartSplitDescription => {
             "Le raccourci à utiliser pour splitter et démarrer une nouvelle tentative."
         }
+        #[cfg(feature = "std")]
         Text::Reset => "Réinitialiser",
+        #[cfg(feature = "std")]
         Text::ResetDescription => {
             "Le raccourci à utiliser pour réinitialiser la tentative en cours."
         }
+        #[cfg(feature = "std")]
         Text::UndoSplit => "Annuler le split",
+        #[cfg(feature = "std")]
         Text::UndoSplitDescription => "Le raccourci à utiliser pour annuler le dernier split.",
+        #[cfg(feature = "std")]
         Text::SkipSplit => "Passer le split",
+        #[cfg(feature = "std")]
         Text::SkipSplitDescription => "Le raccourci à utiliser pour passer le split actuel.",
+        #[cfg(feature = "std")]
         Text::Pause => "Pause",
+        #[cfg(feature = "std")]
         Text::PauseDescription => {
             "Le raccourci à utiliser pour mettre en pause la tentative en cours. Il peut aussi servir à démarrer une nouvelle tentative."
         }
+        #[cfg(feature = "std")]
         Text::UndoAllPauses => "Annuler toutes les pauses",
+        #[cfg(feature = "std")]
         Text::UndoAllPausesDescription => {
             "Le raccourci à utiliser pour retirer tous les temps de pause du temps actuel. Utile si vous avez mis en pause par erreur."
         }
+        #[cfg(feature = "std")]
         Text::PreviousComparison => "Comparaison précédente",
+        #[cfg(feature = "std")]
         Text::PreviousComparisonDescription => {
             "Le raccourci à utiliser pour passer à la comparaison précédente."
         }
+        #[cfg(feature = "std")]
         Text::NextComparison => "Comparaison suivante",
+        #[cfg(feature = "std")]
         Text::NextComparisonDescription => {
             "Le raccourci à utiliser pour passer à la comparaison suivante."
         }
+        #[cfg(feature = "std")]
         Text::ToggleTimingMethod => "Basculer la méthode de timing",
+        #[cfg(feature = "std")]
         Text::ToggleTimingMethodDescription => {
             "Le raccourci à utiliser pour basculer entre « Temps réel » et « Temps de jeu »."
         }

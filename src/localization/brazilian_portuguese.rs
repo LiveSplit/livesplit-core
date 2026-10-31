@@ -92,33 +92,51 @@ pub const fn resolve(text: Text) -> &'static str {
             display::Text::ShowAllWindows => "Mostrar todas as janelas",
             display::Text::ZoomToggle => "Alternar zoom",
         },
+        #[cfg(feature = "std")]
         Text::StartSplit => "Iniciar / Split",
+        #[cfg(feature = "std")]
         Text::StartSplitDescription => {
             "O atalho de teclado para fazer split e iniciar uma nova tentativa."
         }
+        #[cfg(feature = "std")]
         Text::Reset => "Resetar",
+        #[cfg(feature = "std")]
         Text::ResetDescription => "O atalho de teclado para resetar a tentativa atual.",
+        #[cfg(feature = "std")]
         Text::UndoSplit => "Desfazer split",
+        #[cfg(feature = "std")]
         Text::UndoSplitDescription => "O atalho de teclado para desfazer o último split.",
+        #[cfg(feature = "std")]
         Text::SkipSplit => "Pular split",
+        #[cfg(feature = "std")]
         Text::SkipSplitDescription => "O atalho de teclado para pular o split atual.",
+        #[cfg(feature = "std")]
         Text::Pause => "Pausar",
+        #[cfg(feature = "std")]
         Text::PauseDescription => {
             "O atalho de teclado para pausar a tentativa atual. Também pode ser usado para iniciar uma nova tentativa."
         }
+        #[cfg(feature = "std")]
         Text::UndoAllPauses => "Desfazer todas as pausas",
+        #[cfg(feature = "std")]
         Text::UndoAllPausesDescription => {
             "O atalho de teclado para remover todos os tempos de pausa do tempo atual. Útil se você pausou por engano."
         }
+        #[cfg(feature = "std")]
         Text::PreviousComparison => "Comparação anterior",
+        #[cfg(feature = "std")]
         Text::PreviousComparisonDescription => {
             "O atalho de teclado para mudar para a comparação anterior."
         }
+        #[cfg(feature = "std")]
         Text::NextComparison => "Próxima comparação",
+        #[cfg(feature = "std")]
         Text::NextComparisonDescription => {
             "O atalho de teclado para mudar para a próxima comparação."
         }
+        #[cfg(feature = "std")]
         Text::ToggleTimingMethod => "Alternar método de cronometragem",
+        #[cfg(feature = "std")]
         Text::ToggleTimingMethodDescription => {
             "O atalho de teclado para alternar entre «Tempo real» e «Tempo de jogo»."
         }

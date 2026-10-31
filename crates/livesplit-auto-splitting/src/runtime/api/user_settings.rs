@@ -218,8 +218,7 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
                 let (memory, context) = memory_and_context(&mut caller);
                 let key = get_str(memory, key_ptr, key_len)?.into();
                 let description = get_str(memory, description_ptr, description_len)?.into();
-                let default_value =
-                    get_str(memory, default_value_ptr, default_value_len)?.into();
+                let default_value = get_str(memory, default_value_ptr, default_value_len)?.into();
                 Arc::make_mut(&mut context.settings_widgets).push(settings::Widget {
                     key,
                     description,

@@ -84,58 +84,61 @@ pub enum Lang {
 
 impl Lang {
     /// Parses the locale string and returns the corresponding language.
+    #[cfg(feature = "localization")]
     pub fn parse_locale(_locale: &str) -> Self {
-        #[cfg(feature = "localization")]
-        {
-            let mut parts = _locale.split('-');
-            let language = parts.next().unwrap_or(_locale).to_ascii_lowercase();
-            let mut is_br = false;
-            let mut is_traditional = false;
-            for part in parts {
-                if part.eq_ignore_ascii_case("br") {
-                    is_br = true;
-                }
-                if part.eq_ignore_ascii_case("hant")
-                    || part.eq_ignore_ascii_case("tw")
-                    || part.eq_ignore_ascii_case("hk")
-                    || part.eq_ignore_ascii_case("mo")
-                {
-                    is_traditional = true;
-                }
+        let mut parts = _locale.split('-');
+        let language = parts.next().unwrap_or(_locale).to_ascii_lowercase();
+        let mut is_br = false;
+        let mut is_traditional = false;
+        for part in parts {
+            if part.eq_ignore_ascii_case("br") {
+                is_br = true;
             }
+            if part.eq_ignore_ascii_case("hant")
+                || part.eq_ignore_ascii_case("tw")
+                || part.eq_ignore_ascii_case("hk")
+                || part.eq_ignore_ascii_case("mo")
+            {
+                is_traditional = true;
+            }
+        }
 
-            match language.as_str() {
-                "en" => Lang::English,
-                "pt" => {
-                    if is_br {
-                        Lang::BrazilianPortuguese
-                    } else {
-                        Lang::Portuguese
-                    }
+        match language.as_str() {
+            "en" => Lang::English,
+            "pt" => {
+                if is_br {
+                    Lang::BrazilianPortuguese
+                } else {
+                    Lang::Portuguese
                 }
-                "pl" => Lang::Polish,
-                "zh" => {
-                    if is_traditional {
-                        Lang::ChineseTraditional
-                    } else {
-                        Lang::ChineseSimplified
-                    }
-                }
-                "nl" => Lang::Dutch,
-                "fr" => Lang::French,
-                "de" => Lang::German,
-                "it" => Lang::Italian,
-                "ja" => Lang::Japanese,
-                "ko" => Lang::Korean,
-                "ru" => Lang::Russian,
-                "es" => Lang::Spanish,
-                _ => Lang::English,
             }
+            "pl" => Lang::Polish,
+            "zh" => {
+                if is_traditional {
+                    Lang::ChineseTraditional
+                } else {
+                    Lang::ChineseSimplified
+                }
+            }
+            "nl" => Lang::Dutch,
+            "fr" => Lang::French,
+            "de" => Lang::German,
+            "it" => Lang::Italian,
+            "ja" => Lang::Japanese,
+            "ko" => Lang::Korean,
+            "ru" => Lang::Russian,
+            "es" => Lang::Spanish,
+            _ => Lang::English,
         }
-        #[cfg(not(feature = "localization"))]
-        {
-            Lang::English
-        }
+    }
+
+    /// Returns English, the only language compiled without localization.
+    ///
+    /// Keep this constant branch separate from the allocating locale parser so
+    /// builds without the optional catalog can evaluate it at compile time.
+    #[cfg(not(feature = "localization"))]
+    pub const fn parse_locale(_locale: &str) -> Self {
+        Lang::English
     }
 
     /// Parses the language name and returns the corresponding language.
@@ -598,23 +601,43 @@ impl fmt::Display for Lang {
 #[allow(clippy::enum_variant_names)]
 #[derive(Copy, Clone)]
 pub(crate) enum Text {
+    // HotkeySystem is std-only. Match the catalog to that API so no_std builds
+    // do not retain action labels that they can never construct.
+    #[cfg(feature = "std")]
     StartSplit,
+    #[cfg(feature = "std")]
     StartSplitDescription,
+    #[cfg(feature = "std")]
     Reset,
+    #[cfg(feature = "std")]
     ResetDescription,
+    #[cfg(feature = "std")]
     UndoSplit,
+    #[cfg(feature = "std")]
     UndoSplitDescription,
+    #[cfg(feature = "std")]
     SkipSplit,
+    #[cfg(feature = "std")]
     SkipSplitDescription,
+    #[cfg(feature = "std")]
     Pause,
+    #[cfg(feature = "std")]
     PauseDescription,
+    #[cfg(feature = "std")]
     UndoAllPauses,
+    #[cfg(feature = "std")]
     UndoAllPausesDescription,
+    #[cfg(feature = "std")]
     PreviousComparison,
+    #[cfg(feature = "std")]
     PreviousComparisonDescription,
+    #[cfg(feature = "std")]
     NextComparison,
+    #[cfg(feature = "std")]
     NextComparisonDescription,
+    #[cfg(feature = "std")]
     ToggleTimingMethod,
+    #[cfg(feature = "std")]
     ToggleTimingMethodDescription,
     TimerBackground,
     TimerBackgroundDescription,

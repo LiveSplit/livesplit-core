@@ -1,11 +1,16 @@
+//! File-path types shared by parsers and std-only external-file resolution.
+//!
+//! Parsers retain a UTF-8 path type without std for API compatibility, but only
+//! filesystem-enabled callers resolve paths and reuse a mutable scratch buffer.
+
 #[cfg(feature = "std")]
 pub use std::path::{Path, PathBuf};
 
 #[cfg(not(feature = "std"))]
-pub use alloc::string::String as PathBuf;
-#[cfg(not(feature = "std"))]
 pub use str as Path;
 
+// Relative resolution serves filesystem icon loading, which requires std.
+#[cfg(feature = "std")]
 pub fn relative_to<'path>(
     path_buf: &'path mut PathBuf,
     source: &Path,
@@ -23,47 +28,22 @@ pub fn relative_to<'path>(
     path_buf
 }
 
+#[cfg(feature = "std")]
 #[inline]
 fn parent(path: &Path) -> Option<&Path> {
-    #[cfg(feature = "std")]
-    {
-        path.parent()
-    }
-    #[cfg(not(feature = "std"))]
-    {
-        path.rsplit_once('/').map(|(parent, _)| parent)
-    }
+    path.parent()
 }
 
+#[cfg(feature = "std")]
 #[inline]
 fn push(path_buf: &mut PathBuf, path: &Path) {
-    #[cfg(feature = "std")]
-    {
-        path_buf.push(path);
-    }
-    #[cfg(not(feature = "std"))]
-    {
-        if is_absolute(path) {
-            alloc::borrow::ToOwned::clone_into(path, path_buf);
-            return;
-        }
-        if !path_buf.is_empty() && !path_buf.ends_with('/') {
-            path_buf.push('/');
-        }
-        path_buf.push_str(path);
-    }
+    path_buf.push(path);
 }
 
+#[cfg(feature = "std")]
 #[inline]
 fn is_absolute(path: &Path) -> bool {
-    #[cfg(feature = "std")]
-    {
-        path.is_absolute()
-    }
-    #[cfg(not(feature = "std"))]
-    {
-        path.starts_with('/')
-    }
+    path.is_absolute()
 }
 
 #[cfg(all(test, feature = "std"))]

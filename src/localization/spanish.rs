@@ -92,27 +92,45 @@ pub const fn resolve(text: Text) -> &'static str {
             display::Text::ShowAllWindows => "Mostrar todas las ventanas",
             display::Text::ZoomToggle => "Alternar zoom",
         },
+        #[cfg(feature = "std")]
         Text::StartSplit => "Iniciar / Split",
+        #[cfg(feature = "std")]
         Text::StartSplitDescription => "El atajo para hacer split e iniciar un nuevo intento.",
+        #[cfg(feature = "std")]
         Text::Reset => "Reiniciar",
+        #[cfg(feature = "std")]
         Text::ResetDescription => "El atajo para reiniciar el intento actual.",
+        #[cfg(feature = "std")]
         Text::UndoSplit => "Deshacer split",
+        #[cfg(feature = "std")]
         Text::UndoSplitDescription => "El atajo para deshacer el último split.",
+        #[cfg(feature = "std")]
         Text::SkipSplit => "Omitir split",
+        #[cfg(feature = "std")]
         Text::SkipSplitDescription => "El atajo para omitir el split actual.",
+        #[cfg(feature = "std")]
         Text::Pause => "Pausa",
+        #[cfg(feature = "std")]
         Text::PauseDescription => {
             "El atajo para pausar el intento actual. También puede usarse para iniciar un nuevo intento."
         }
+        #[cfg(feature = "std")]
         Text::UndoAllPauses => "Deshacer todas las pausas",
+        #[cfg(feature = "std")]
         Text::UndoAllPausesDescription => {
             "El atajo para quitar todos los tiempos de pausa del tiempo actual. Útil si pausaste por error."
         }
+        #[cfg(feature = "std")]
         Text::PreviousComparison => "Comparación anterior",
+        #[cfg(feature = "std")]
         Text::PreviousComparisonDescription => "El atajo para cambiar a la comparación anterior.",
+        #[cfg(feature = "std")]
         Text::NextComparison => "Siguiente comparación",
+        #[cfg(feature = "std")]
         Text::NextComparisonDescription => "El atajo para cambiar a la siguiente comparación.",
+        #[cfg(feature = "std")]
         Text::ToggleTimingMethod => "Alternar método de cronometraje",
+        #[cfg(feature = "std")]
         Text::ToggleTimingMethodDescription => {
             "El atajo para alternar entre los métodos «Tiempo real» y «Tiempo de juego»."
         }

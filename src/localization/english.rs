@@ -92,33 +92,51 @@ pub const fn resolve(text: Text) -> &'static str {
             display::Text::ShowAllWindows => "Show All Windows",
             display::Text::ZoomToggle => "Toggle Zoom",
         },
+        #[cfg(feature = "std")]
         Text::StartSplit => "Start / Split",
+        #[cfg(feature = "std")]
         Text::StartSplitDescription => {
             "The hotkey to use for splitting and starting a new attempt."
         }
+        #[cfg(feature = "std")]
         Text::Reset => "Reset",
+        #[cfg(feature = "std")]
         Text::ResetDescription => "The hotkey to use for resetting the current attempt.",
+        #[cfg(feature = "std")]
         Text::UndoSplit => "Undo Split",
+        #[cfg(feature = "std")]
         Text::UndoSplitDescription => "The hotkey to use for undoing the last split.",
+        #[cfg(feature = "std")]
         Text::SkipSplit => "Skip Split",
+        #[cfg(feature = "std")]
         Text::SkipSplitDescription => "The hotkey to use for skipping the current split.",
+        #[cfg(feature = "std")]
         Text::Pause => "Pause",
+        #[cfg(feature = "std")]
         Text::PauseDescription => {
             "The hotkey to use for pausing the current attempt. It can also be used for starting a new attempt."
         }
+        #[cfg(feature = "std")]
         Text::UndoAllPauses => "Undo All Pauses",
+        #[cfg(feature = "std")]
         Text::UndoAllPausesDescription => {
             "The hotkey to use for removing all the pause times from the current time. This is useful in case you accidentally paused and want to undo it."
         }
+        #[cfg(feature = "std")]
         Text::PreviousComparison => "Previous Comparison",
+        #[cfg(feature = "std")]
         Text::PreviousComparisonDescription => {
             "The hotkey to use for switching to the previous comparison."
         }
+        #[cfg(feature = "std")]
         Text::NextComparison => "Next Comparison",
+        #[cfg(feature = "std")]
         Text::NextComparisonDescription => {
             "The hotkey to use for switching to the next comparison."
         }
+        #[cfg(feature = "std")]
         Text::ToggleTimingMethod => "Toggle Timing Method",
+        #[cfg(feature = "std")]
         Text::ToggleTimingMethodDescription => {
             "The hotkey to use for toggling between the \"Real Time\" and \"Game Time\" timing methods."
         }

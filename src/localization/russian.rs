@@ -92,31 +92,49 @@ pub const fn resolve(text: Text) -> &'static str {
             display::Text::ShowAllWindows => "Показать все окна",
             display::Text::ZoomToggle => "Переключить масштаб",
         },
+        #[cfg(feature = "std")]
         Text::StartSplit => "Старт / Сплит",
+        #[cfg(feature = "std")]
         Text::StartSplitDescription => "Горячая клавиша для сплита и начала новой попытки.",
+        #[cfg(feature = "std")]
         Text::Reset => "Сброс",
+        #[cfg(feature = "std")]
         Text::ResetDescription => "Горячая клавиша для сброса текущей попытки.",
+        #[cfg(feature = "std")]
         Text::UndoSplit => "Отменить сплит",
+        #[cfg(feature = "std")]
         Text::UndoSplitDescription => "Горячая клавиша для отмены последнего сплита.",
+        #[cfg(feature = "std")]
         Text::SkipSplit => "Пропустить сплит",
+        #[cfg(feature = "std")]
         Text::SkipSplitDescription => "Горячая клавиша для пропуска текущего сплита.",
+        #[cfg(feature = "std")]
         Text::Pause => "Пауза",
+        #[cfg(feature = "std")]
         Text::PauseDescription => {
             "Горячая клавиша для паузы текущей попытки. Также может начать новую попытку."
         }
+        #[cfg(feature = "std")]
         Text::UndoAllPauses => "Отменить все паузы",
+        #[cfg(feature = "std")]
         Text::UndoAllPausesDescription => {
             "Горячая клавиша для удаления всего времени паузы из текущего времени. Полезно, если пауза была нажата случайно."
         }
+        #[cfg(feature = "std")]
         Text::PreviousComparison => "Предыдущее сравнение",
+        #[cfg(feature = "std")]
         Text::PreviousComparisonDescription => {
             "Горячая клавиша для переключения на предыдущее сравнение."
         }
+        #[cfg(feature = "std")]
         Text::NextComparison => "Следующее сравнение",
+        #[cfg(feature = "std")]
         Text::NextComparisonDescription => {
             "Горячая клавиша для переключения на следующее сравнение."
         }
+        #[cfg(feature = "std")]
         Text::ToggleTimingMethod => "Переключить метод тайминга",
+        #[cfg(feature = "std")]
         Text::ToggleTimingMethodDescription => {
             "Горячая клавиша для переключения между «Реальное время» и «Игровое время»."
         }

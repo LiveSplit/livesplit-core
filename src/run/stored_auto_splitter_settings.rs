@@ -362,7 +362,7 @@ impl From<core::num::ParseFloatError> for StoredAutoSplitterSettingsParseError {
     }
 }
 
-fn bool_text(value: bool) -> &'static str {
+const fn bool_text(value: bool) -> &'static str {
     if value { "True" } else { "False" }
 }
 

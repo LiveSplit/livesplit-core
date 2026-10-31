@@ -158,6 +158,7 @@ mod tests {
     use super::*;
 
     #[test]
+    #[ignore = "registers native hotkeys and waits for manual keyboard input"]
     fn test() {
         let hook = Hook::new().unwrap();
 
@@ -184,6 +185,7 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "creates a native hook and reads the host keyboard layout"]
     fn resolve() {
         let hook = Hook::new().unwrap();
 

@@ -92,39 +92,57 @@ pub const fn resolve(text: Text) -> &'static str {
             display::Text::ShowAllWindows => "Mostra tutte le finestre",
             display::Text::ZoomToggle => "Attiva/disattiva zoom",
         },
+        #[cfg(feature = "std")]
         Text::StartSplit => "Avvia / Split",
+        #[cfg(feature = "std")]
         Text::StartSplitDescription => {
             "Il tasto ad azione rapida da usare per splittare e avviare un nuovo tentativo."
         }
+        #[cfg(feature = "std")]
         Text::Reset => "Reimposta",
+        #[cfg(feature = "std")]
         Text::ResetDescription => {
             "Il tasto ad azione rapida da usare per reimpostare il tentativo corrente."
         }
+        #[cfg(feature = "std")]
         Text::UndoSplit => "Annulla split",
+        #[cfg(feature = "std")]
         Text::UndoSplitDescription => {
             "Il tasto ad azione rapida da usare per annullare l’ultimo split."
         }
+        #[cfg(feature = "std")]
         Text::SkipSplit => "Salta split",
+        #[cfg(feature = "std")]
         Text::SkipSplitDescription => {
             "Il tasto ad azione rapida da usare per saltare lo split corrente."
         }
+        #[cfg(feature = "std")]
         Text::Pause => "Pausa",
+        #[cfg(feature = "std")]
         Text::PauseDescription => {
             "Il tasto ad azione rapida da usare per mettere in pausa il tentativo corrente. Può anche essere usato per avviare un nuovo tentativo."
         }
+        #[cfg(feature = "std")]
         Text::UndoAllPauses => "Annulla tutte le pause",
+        #[cfg(feature = "std")]
         Text::UndoAllPausesDescription => {
             "Il tasto ad azione rapida da usare per rimuovere tutti i tempi di pausa dal tempo corrente. Utile se hai messo in pausa per errore."
         }
+        #[cfg(feature = "std")]
         Text::PreviousComparison => "Confronto precedente",
+        #[cfg(feature = "std")]
         Text::PreviousComparisonDescription => {
             "Il tasto ad azione rapida da usare per passare al confronto precedente."
         }
+        #[cfg(feature = "std")]
         Text::NextComparison => "Confronto successivo",
+        #[cfg(feature = "std")]
         Text::NextComparisonDescription => {
             "Il tasto ad azione rapida da usare per passare al confronto successivo."
         }
+        #[cfg(feature = "std")]
         Text::ToggleTimingMethod => "Cambia metodo di cronometraggio",
+        #[cfg(feature = "std")]
         Text::ToggleTimingMethodDescription => {
             "Il tasto ad azione rapida da usare per alternare tra «Tempo reale» e «Tempo di gioco»."
         }

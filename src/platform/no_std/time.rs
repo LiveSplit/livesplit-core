@@ -1,3 +1,8 @@
+//! Time values backed by an embedder-provided clock without std.
+//!
+//! This module does not discover clocks or time zones. Register a clock before
+//! reading time and provide callbacks valid for every execution context used.
+
 use crate::platform::prelude::*;
 use core::{
     ops::Sub,
@@ -48,6 +53,9 @@ impl Instant {
         if clock.is_null() {
             panic!("No clock registered");
         }
+        // SAFETY: register_clock publishes a fully initialized boxed clock and
+        // never frees that allocation. After the null check, this shared borrow
+        // therefore remains valid for the complete clock call.
         let clock = unsafe { &*clock };
         Instant(clock.now())
     }
@@ -71,6 +79,6 @@ pub fn utc_now() -> DateTime {
     clock.date_now()
 }
 
-pub fn to_local(date_time: DateTime) -> DateTime {
+pub const fn to_local(date_time: DateTime) -> DateTime {
     date_time
 }

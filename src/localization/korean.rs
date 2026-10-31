@@ -92,27 +92,45 @@ pub const fn resolve(text: Text) -> &'static str {
             display::Text::ShowAllWindows => "모든 창 표시",
             display::Text::ZoomToggle => "확대/축소 전환",
         },
+        #[cfg(feature = "std")]
         Text::StartSplit => "시작 / 스플릿",
+        #[cfg(feature = "std")]
         Text::StartSplitDescription => "스플릿과 새 시도를 시작하는 단축키입니다.",
+        #[cfg(feature = "std")]
         Text::Reset => "리셋",
+        #[cfg(feature = "std")]
         Text::ResetDescription => "현재 시도를 리셋하는 단축키입니다.",
+        #[cfg(feature = "std")]
         Text::UndoSplit => "스플릿 되돌리기",
+        #[cfg(feature = "std")]
         Text::UndoSplitDescription => "마지막 스플릿을 되돌리는 단축키입니다.",
+        #[cfg(feature = "std")]
         Text::SkipSplit => "스플릿 건너뛰기",
+        #[cfg(feature = "std")]
         Text::SkipSplitDescription => "현재 스플릿을 건너뛰는 단축키입니다.",
+        #[cfg(feature = "std")]
         Text::Pause => "일시정지",
+        #[cfg(feature = "std")]
         Text::PauseDescription => {
             "현재 시도를 일시정지하는 단축키입니다. 새 시도를 시작하는 데도 사용할 수 있습니다."
         }
+        #[cfg(feature = "std")]
         Text::UndoAllPauses => "모든 일시정지 취소",
+        #[cfg(feature = "std")]
         Text::UndoAllPausesDescription => {
             "현재 시간에서 모든 일시정지 시간을 제거하는 단축키입니다. 실수로 일시정지했을 때 유용합니다."
         }
+        #[cfg(feature = "std")]
         Text::PreviousComparison => "이전 비교",
+        #[cfg(feature = "std")]
         Text::PreviousComparisonDescription => "이전 비교로 전환하는 단축키입니다.",
+        #[cfg(feature = "std")]
         Text::NextComparison => "다음 비교",
+        #[cfg(feature = "std")]
         Text::NextComparisonDescription => "다음 비교로 전환하는 단축키입니다.",
+        #[cfg(feature = "std")]
         Text::ToggleTimingMethod => "타이밍 방법 전환",
+        #[cfg(feature = "std")]
         Text::ToggleTimingMethodDescription => "«실시간»과 «게임 시간»을 전환하는 단축키입니다.",
         Text::TimerBackground => "배경",
         Text::TimerBackgroundDescription => {

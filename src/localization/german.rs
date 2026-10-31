@@ -92,31 +92,49 @@ pub const fn resolve(text: Text) -> &'static str {
             display::Text::ShowAllWindows => "Alle Fenster anzeigen",
             display::Text::ZoomToggle => "Zoom umschalten",
         },
+        #[cfg(feature = "std")]
         Text::StartSplit => "Start / Split",
+        #[cfg(feature = "std")]
         Text::StartSplitDescription => {
             "Die Hotkey-Taste zum Splitten und Starten eines neuen Versuchs."
         }
+        #[cfg(feature = "std")]
         Text::Reset => "Zurücksetzen",
+        #[cfg(feature = "std")]
         Text::ResetDescription => "Die Hotkey-Taste zum Zurücksetzen des aktuellen Versuchs.",
+        #[cfg(feature = "std")]
         Text::UndoSplit => "Split rückgängig",
+        #[cfg(feature = "std")]
         Text::UndoSplitDescription => "Die Hotkey-Taste zum Rückgängig machen des letzten Splits.",
+        #[cfg(feature = "std")]
         Text::SkipSplit => "Split überspringen",
+        #[cfg(feature = "std")]
         Text::SkipSplitDescription => "Die Hotkey-Taste zum Überspringen des aktuellen Splits.",
+        #[cfg(feature = "std")]
         Text::Pause => "Pause",
+        #[cfg(feature = "std")]
         Text::PauseDescription => {
             "Die Hotkey-Taste zum Pausieren des aktuellen Versuchs. Sie kann auch zum Starten eines neuen Versuchs verwendet werden."
         }
+        #[cfg(feature = "std")]
         Text::UndoAllPauses => "Alle Pausen rückgängig",
+        #[cfg(feature = "std")]
         Text::UndoAllPausesDescription => {
             "Die Hotkey-Taste zum Entfernen aller Pausenzeiten aus der aktuellen Zeit. Das ist nützlich, wenn du versehentlich pausiert hast und das rückgängig machen möchtest."
         }
+        #[cfg(feature = "std")]
         Text::PreviousComparison => "Vorheriger Vergleich",
+        #[cfg(feature = "std")]
         Text::PreviousComparisonDescription => {
             "Die Hotkey-Taste zum Wechseln zum vorherigen Vergleich."
         }
+        #[cfg(feature = "std")]
         Text::NextComparison => "Nächster Vergleich",
+        #[cfg(feature = "std")]
         Text::NextComparisonDescription => "Die Hotkey-Taste zum Wechseln zum nächsten Vergleich.",
+        #[cfg(feature = "std")]
         Text::ToggleTimingMethod => "Zeitmessmethode umschalten",
+        #[cfg(feature = "std")]
         Text::ToggleTimingMethodDescription => {
             "Die Hotkey-Taste zum Umschalten zwischen den Zeitmessmethoden „Echtzeit“ und „Spielzeit“."
         }
