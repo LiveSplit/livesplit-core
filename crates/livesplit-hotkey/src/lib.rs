@@ -29,8 +29,9 @@
 //! Control notifications never invoke hotkeys. Recovery requests no permissions
 //! and rebuilds no registrations. This does not guarantee delivery after grant
 //! revocation; permission checks observe access rather than live tap health.
-//! After fixing a persistently slow callback, callers may explicitly recreate
-//! the hook to obtain a new tap and recovery budget.
+//! User callbacks run on a separate worker and cannot delay the native tap.
+//! After resolving a persistent stall in the native worker, callers may
+//! explicitly recreate the hook to obtain a new tap and recovery budget.
 
 extern crate alloc;
 
@@ -153,10 +154,6 @@ impl Hook {
     }
 
     /// Registers a hotkey to listen to.
-    ///
-    /// On macOS the callback runs synchronously on the event-tap worker. Keep it
-    /// short and avoid blocking: CoreGraphics may disable an unresponsive tap,
-    /// and repeated timeouts exhaust its automatic recovery attempt.
     pub fn register<F>(&self, hotkey: Hotkey, callback: F) -> Result<()>
     where
         F: FnMut() + Send + 'static,

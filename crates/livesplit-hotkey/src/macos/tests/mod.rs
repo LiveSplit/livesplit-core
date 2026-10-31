@@ -6,52 +6,74 @@
 //! change TCC grants, validate revocation or simulate a user-requested disable.
 
 use crate::{
-    ConsumePreference, Hotkey, KeyCode, Modifiers,
+    ConsumePreference, KeyCode, Modifiers,
     macos::{
         CallbackContext, Hook, Observation, Owned, RunLoop, State, Target, callback, cf,
         cg::{self, EventField, EventFlags, EventType},
+        dispatch::Dispatcher,
         recovery::Recovery,
+        shutdown::Shutdown,
     },
 };
 use std::{
     cell::Cell,
-    collections::HashMap,
     env, fs,
     io::{BufRead, BufReader},
     path::PathBuf,
     process::{self, Child, Command, Stdio},
     ptr::null_mut,
     sync::{
-        Arc, Mutex,
-        atomic::{AtomicUsize, Ordering},
+        Arc,
+        atomic::{AtomicBool, AtomicUsize, Ordering},
         mpsc::{self, Receiver},
     },
     thread,
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
-fn context(calls: Arc<AtomicUsize>) -> CallbackContext {
-    let mut hotkeys: HashMap<Hotkey, Box<dyn FnMut() + Send>> = HashMap::new();
-    hotkeys.insert(
-        KeyCode::KeyA.with_modifiers(Modifiers::empty()),
-        Box::new(move || {
-            calls.fetch_add(1, Ordering::Relaxed);
-        }),
-    );
-    CallbackContext {
-        state: Arc::new(State {
-            hotkeys: Mutex::new(hotkeys),
-            observer: None,
-        }),
-        tap: Cell::new(null_mut()),
-        recovery: Recovery::new(),
-    }
+#[track_caller]
+fn context(calls: Arc<AtomicUsize>) -> (CallbackContext, Receiver<()>) {
+    let dispatch = Dispatcher::new().unwrap();
+    let (delivered, deliveries) = mpsc::channel();
+    dispatch
+        .register(
+            KeyCode::KeyA.with_modifiers(Modifiers::empty()),
+            move || {
+                calls.fetch_add(1, Ordering::Relaxed);
+                delivered.send(()).unwrap();
+            },
+        )
+        .unwrap();
+    (
+        CallbackContext {
+            state: Arc::new(State {
+                dispatch,
+                stall_native: AtomicBool::new(false),
+                observer: None,
+            }),
+            tap: Cell::new(null_mut()),
+            recovery: Recovery::new(),
+        },
+        deliveries,
+    )
+}
+
+#[track_caller]
+fn dispatch_barrier(dispatch: &Dispatcher) {
+    let key = KeyCode::KeyB.with_modifiers(Modifiers::empty());
+    let (delivered, deliveries) = mpsc::channel();
+    dispatch
+        .register(key, move || delivered.send(()).unwrap())
+        .unwrap();
+    assert!(dispatch.enqueue(key));
+    deliveries.recv_timeout(NATIVE_DEADLINE).unwrap();
+    dispatch.unregister(key).unwrap();
 }
 
 #[test]
 fn non_keyboard_messages_and_null_key_events_never_dispatch_hotkeys() {
     let calls = Arc::new(AtomicUsize::new(0));
-    let context = context(calls.clone());
+    let (context, _deliveries) = context(calls.clone());
     let context_ptr = (&context as *const CallbackContext).cast_mut().cast();
 
     for event_type in [
@@ -67,6 +89,7 @@ fn non_keyboard_messages_and_null_key_events_never_dispatch_hotkeys() {
         assert!(returned.is_null());
     }
 
+    dispatch_barrier(&context.state.dispatch);
     assert_eq!(calls.load(Ordering::Relaxed), 0);
 }
 
@@ -74,7 +97,7 @@ fn non_keyboard_messages_and_null_key_events_never_dispatch_hotkeys() {
 fn native_key_dispatch_preserves_repeats_registration_and_consumption() {
     // Event construction stays local; no event is posted to the operating system.
     let calls = Arc::new(AtomicUsize::new(0));
-    let context = context(calls.clone());
+    let (context, deliveries) = context(calls.clone());
     let context_ptr = (&context as *const CallbackContext).cast_mut().cast();
 
     for (key, handled) in [(ANSI_A, true), (ANSI_S, false)] {
@@ -103,6 +126,8 @@ fn native_key_dispatch_preserves_repeats_registration_and_consumption() {
         }
     }
 
+    deliveries.recv_timeout(NATIVE_DEADLINE).unwrap();
+    dispatch_barrier(&context.state.dispatch);
     assert_eq!(calls.load(Ordering::Relaxed), 1);
 }
 
@@ -111,7 +136,7 @@ fn native_key_dispatch_preserves_repeats_registration_and_consumption() {
 const NATIVE_DEADLINE: Duration = Duration::from_secs(10);
 // Stall only events addressed to the disposable receiver. Hosts whose native
 // timeout exceeds this delay cannot validate recovery with this test.
-const SLOW_CALLBACK: Duration = Duration::from_secs(2);
+pub const NATIVE_STALL: Duration = Duration::from_secs(2);
 // Carbon virtual-key codes; S is the unregistered FIFO delivery barrier.
 const ANSI_A: u16 = 0x00;
 const ANSI_S: u16 = 0x01;
@@ -322,7 +347,8 @@ fn native_process_tap_wiring_consumption_and_bounded_recovery() {
         let consuming = preference == ConsumePreference::MustConsume;
         let (observer, observations) = mpsc::channel();
         let state = Arc::new(State {
-            hotkeys: Mutex::new(HashMap::new()),
+            dispatch: Dispatcher::new().unwrap(),
+            stall_native: AtomicBool::new(false),
             observer: Some(observer),
         });
         // Same worker/context/source/callback as Hook::new; only the native
@@ -332,33 +358,55 @@ fn native_process_tap_wiring_consumption_and_bounded_recovery() {
         let calls = Arc::new(AtomicUsize::new(0));
         let callback_calls = calls.clone();
         let (delivered, deliveries) = mpsc::channel();
+        let (release, releases) = mpsc::channel();
         let hotkey = KeyCode::KeyA.with_modifiers(Modifiers::empty());
         hook.register(hotkey, move || {
             let index = callback_calls.fetch_add(1, Ordering::SeqCst);
-            if consuming && matches!(index, 1 | 2) {
-                thread::sleep(SLOW_CALLBACK);
-            }
-            if let Err(error) = delivered.send(index) {
-                eprintln!("native dispatch observer disconnected: {error}");
+            delivered.send(index).unwrap();
+            if index == 0 {
+                releases.recv_timeout(NATIVE_DEADLINE).unwrap();
             }
         })
         .unwrap();
 
-        // A fast handled event establishes real worker wiring and native
-        // consume/listen semantics before any deliberate timeout is attempted.
+        // Keep arbitrary user code blocked while another registered key and a
+        // receiver barrier pass through the tap. Consuming taps must suppress
+        // both A events immediately, without waiting for callback completion.
         post_key(receiver.pid(), ANSI_A, 0);
         assert_eq!(deliveries.recv_timeout(NATIVE_DEADLINE).unwrap(), 0);
-        let received = receiver.through_barrier(0);
+        post_key(receiver.pid(), ANSI_A, 1);
+        let received = receiver.through_barrier(1);
         assert_eq!(received.contains(&(ANSI_A, 0)), !consuming);
+        assert_eq!(received.contains(&(ANSI_A, 1)), !consuming);
         assert_eq!(calls.load(Ordering::SeqCst), 1);
+        // Exceed the same delay that provokes a real native timeout below,
+        // then prove a third key still passes through the live tap immediately.
+        thread::sleep(NATIVE_STALL);
+        post_key(receiver.pid(), ANSI_A, 2);
+        assert_eq!(
+            receiver.through_barrier(2).contains(&(ANSI_A, 2)),
+            !consuming
+        );
+        assert_eq!(calls.load(Ordering::SeqCst), 1);
+        release.send(()).unwrap();
+        assert_eq!(deliveries.recv_timeout(NATIVE_DEADLINE).unwrap(), 1);
+        assert_eq!(deliveries.recv_timeout(NATIVE_DEADLINE).unwrap(), 2);
+        receiver.through_barrier(10);
+        assert!(matches!(
+            observations.try_recv(),
+            Err(mpsc::TryRecvError::Empty)
+        ));
 
         if consuming {
-            post_key(receiver.pid(), ANSI_A, 1);
-            assert_eq!(deliveries.recv_timeout(NATIVE_DEADLINE).unwrap(), 1);
+            // Independently stall native plumbing to provoke real OS disable
+            // notifications. Slow user callbacks above must never do this.
+            hook.state.stall_native.store(true, Ordering::Relaxed);
+            post_key(receiver.pid(), ANSI_A, 3);
+            assert_eq!(deliveries.recv_timeout(NATIVE_DEADLINE).unwrap(), 3);
             // CoreGraphics may report the disable only when another event
             // reaches the tap. Drive that notification with the unregistered
             // barrier before waiting for the worker's recovery observation.
-            receiver.through_barrier(1);
+            receiver.through_barrier(3);
             timeout_observation(&observations, true, true);
             assert!(matches!(
                 hook.register(hotkey, || {}),
@@ -368,25 +416,32 @@ fn native_process_tap_wiring_consumption_and_bounded_recovery() {
             // Delivery resumes through the same hook and registration, then a
             // second genuine timeout exhausts recovery instead of stalling input
             // indefinitely. Notifications must not increment the A callback.
-            post_key(receiver.pid(), ANSI_A, 2);
-            assert_eq!(deliveries.recv_timeout(NATIVE_DEADLINE).unwrap(), 2);
-            receiver.through_barrier(2);
+            hook.state.stall_native.store(true, Ordering::Relaxed);
+            post_key(receiver.pid(), ANSI_A, 4);
+            assert_eq!(deliveries.recv_timeout(NATIVE_DEADLINE).unwrap(), 4);
+            receiver.through_barrier(4);
             timeout_observation(&observations, false, false);
-            assert_eq!(calls.load(Ordering::SeqCst), 3);
+            assert_eq!(calls.load(Ordering::SeqCst), 5);
 
-            post_key(receiver.pid(), ANSI_A, 3);
-            assert!(receiver.through_barrier(3).contains(&(ANSI_A, 3)));
-            assert_eq!(calls.load(Ordering::SeqCst), 3);
+            post_key(receiver.pid(), ANSI_A, 5);
+            assert!(receiver.through_barrier(5).contains(&(ANSI_A, 5)));
+            assert_eq!(calls.load(Ordering::SeqCst), 5);
         }
 
         if !consuming {
             // Model an early native loop exit while the public owner remains
             // alive. Its retained control reference must survive worker teardown.
             // SAFETY: The hook owns the live loop and CF stop is thread-safe.
-            unsafe { cf::CFRunLoopStop(hook.event_loop.0) };
+            unsafe { cf::CFRunLoopStop(hook.shutdown.event_loop.0) };
             assert!(matches!(
                 observations.recv_timeout(NATIVE_DEADLINE).unwrap(),
                 Observation::Stopped
+            ));
+            assert!(matches!(
+                hook.register(hotkey, || {}),
+                Err(crate::Error::Platform(
+                    crate::macos::Error::ThreadStoppedUnexpectedly
+                ))
             ));
             drop(hook);
         } else {
@@ -418,4 +473,31 @@ fn retained_run_loop_outlives_its_originating_thread() {
     // SAFETY: The retained handle owns its reference after the thread has exited.
     let mode = unsafe { cf::CFRunLoopCopyCurrentMode(handle.0) };
     assert!(mode.is_null(), "a loop that never ran has no active mode");
+}
+
+#[test]
+fn stop_requested_before_run_is_not_lost() {
+    let (sender, receiver) = mpsc::channel();
+    let (start, starts) = mpsc::channel();
+    let (stopped, stops) = mpsc::channel();
+    thread::spawn(move || {
+        let shutdown = Shutdown::new().unwrap();
+        let event_loop = shutdown.event_loop.0;
+        let source = shutdown.source.0;
+        // SAFETY: The source and loop are retained, scheduled and removed on
+        // this worker. The receiving owner retains both until after teardown.
+        unsafe { cf::CFRunLoopAddSource(event_loop, source, cf::kCFRunLoopDefaultMode) };
+        sender.send(shutdown).unwrap();
+        starts.recv_timeout(NATIVE_DEADLINE).unwrap();
+        // SAFETY: This is the worker's loop and the retained source is live.
+        unsafe {
+            cf::CFRunLoopRun();
+            cf::CFRunLoopRemoveSource(event_loop, source, cf::kCFRunLoopDefaultMode);
+        }
+        stopped.send(()).unwrap();
+    });
+    let shutdown = receiver.recv_timeout(NATIVE_DEADLINE).unwrap();
+    shutdown.request();
+    start.send(()).unwrap();
+    stops.recv_timeout(NATIVE_DEADLINE).unwrap();
 }

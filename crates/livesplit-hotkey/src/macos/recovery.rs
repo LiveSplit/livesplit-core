@@ -18,8 +18,8 @@ enum State {
 /// Apple distinguishes unresponsive taps from user-requested disables:
 /// https://developer.apple.com/documentation/coregraphics/cgevent/tapenable(tap:enable:)
 /// Respect the latter. A transient stall can recover once, but repeatedly
-/// restoring a slow consuming callback could repeatedly stall session input.
-/// Do not replenish the retry on key delivery: a slow callback can still deliver
+/// restoring a stalled native worker could repeatedly stall session input.
+/// Do not replenish the retry on key delivery: a stalled worker can still deliver
 /// keys between timeouts. Recreating the hook is an explicit caller decision.
 pub(crate) struct Recovery(Cell<State>);
 
