@@ -9,7 +9,7 @@ use crate::{
     platform::prelude::*,
     util::PopulateString,
 };
-use core::{mem, ops::Deref};
+use core::{fmt, mem, ops::Deref};
 
 #[cfg(test)]
 mod tests;
@@ -85,11 +85,23 @@ impl Deref for Snapshot<'_> {
 pub type SharedTimer = alloc::sync::Arc<std::sync::RwLock<Timer>>;
 
 /// The Error type for creating a new Timer from a Run.
-#[derive(Debug, snafu::Snafu)]
+#[derive(Debug)]
 pub enum CreationError {
     /// The Timer couldn't be created, because the Run has no segments.
     EmptyRun,
 }
+
+impl fmt::Display for CreationError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::EmptyRun => {
+                f.write_str("The Timer couldn't be created, because the Run has no segments.")
+            }
+        }
+    }
+}
+
+impl core::error::Error for CreationError {}
 
 pub type Result<T = Event, E = Error> = core::result::Result<T, E>;
 

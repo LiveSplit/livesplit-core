@@ -12,7 +12,7 @@ use crate::{
     settings::{ImageCache, Value},
     timing::Snapshot,
 };
-use core::result::Result as StdResult;
+use core::{fmt, result::Result as StdResult};
 
 mod state;
 #[cfg(test)]
@@ -52,12 +52,22 @@ struct FlatEntry {
 }
 
 /// Describes an Error that occurred while opening the Layout Editor.
-#[derive(Debug, snafu::Snafu)]
+#[derive(Debug)]
 pub enum Error {
     /// The Layout Editor couldn't be opened because an empty layout with no
     /// components was provided.
     EmptyLayout,
 }
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::EmptyLayout => f.write_str("The Layout Editor couldn't be opened because an empty layout with no components was provided."),
+        }
+    }
+}
+
+impl core::error::Error for Error {}
 
 /// The Result type for the Layout Editor.
 pub type Result<T> = StdResult<T, Error>;

@@ -75,7 +75,7 @@ fn font_fallback() {
     let build_number: u64 = build_number.parse().unwrap();
     let revision: u32 = cur_ver.get_value("UBR").unwrap();
 
-    if (build_number, revision) < (26200, 8737) {
+    if (build_number, revision) < (26300, 9818) {
         // The hash is different before that Windows 11 version.
         println!(
             "Skipping font fallback test on Windows with build number {build_number}.{revision}.",
@@ -174,8 +174,8 @@ fn font_fallback() {
         &state,
         &image_cache,
         [320, 750],
-        "59402e9165a13b58",
-        "a1318840b72a09bc",
+        "41c3fd1b18777b72",
+        "3e03e4f5fc44e6c2",
         "font_fallback",
     );
 }

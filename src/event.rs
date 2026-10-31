@@ -9,7 +9,7 @@
 //! reported as [`Event`]s. Various [`Error`] conditions can occur if the
 //! command couldn't be processed.
 
-use core::{future::Future, ops::Deref};
+use core::{fmt, future::Future, ops::Deref};
 
 use alloc::{borrow::Cow, sync::Arc};
 
@@ -95,17 +95,8 @@ impl From<u32> for Event {
 
 /// An error that occurred when a command was being processed.
 #[derive(
-    Copy,
-    Clone,
-    Debug,
-    PartialEq,
-    Eq,
-    Hash,
-    snafu::Snafu,
-    serde_derive::Serialize,
-    serde_derive::Deserialize,
+    Copy, Clone, Debug, PartialEq, Eq, Hash, serde_derive::Serialize, serde_derive::Deserialize,
 )]
-#[snafu(context(suffix(false)))]
 #[non_exhaustive]
 pub enum Error {
     /// The operation is not supported.
@@ -146,6 +137,37 @@ pub enum Error {
     #[serde(other)]
     Unknown,
 }
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Unsupported => f.write_str("The operation is not supported."),
+            Self::Busy => f.write_str("The timer can't be interacted with at the moment."),
+            Self::RunAlreadyInProgress => f.write_str("There is already a run in progress."),
+            Self::NoRunInProgress => f.write_str("There is no run in progress."),
+            Self::RunFinished => f.write_str("The run is already finished."),
+            Self::NegativeTime => f.write_str("The time is negative, you can't split yet."),
+            Self::CantSkipLastSplit => f.write_str("The last split can't be skipped."),
+            Self::CantUndoFirstSplit => f.write_str("There is no split to undo."),
+            Self::AlreadyPaused => f.write_str("The timer is already paused."),
+            Self::NotPaused => f.write_str("The timer is not paused."),
+            Self::ComparisonDoesntExist => f.write_str("The requested comparison doesn't exist."),
+            Self::GameTimeAlreadyInitialized => {
+                f.write_str("The game time is already initialized.")
+            }
+            Self::GameTimeAlreadyPaused => f.write_str("The game time is already paused."),
+            Self::GameTimeNotPaused => f.write_str("The game time is not paused."),
+            Self::CouldNotParseTime => f.write_str("The time could not be parsed."),
+            Self::TimerPaused => f.write_str("The timer is currently paused."),
+            Self::RunnerDecidedAgainstReset => {
+                f.write_str("The runner decided to not reset the run.")
+            }
+            Self::Unknown => f.write_str("An unknown error occurred."),
+        }
+    }
+}
+
+impl core::error::Error for Error {}
 
 impl From<u32> for Error {
     fn from(value: u32) -> Self {

@@ -1,6 +1,6 @@
 //! Provides the parser for splits files used by Gered's Llanfair fork.
 
-use core::mem::MaybeUninit;
+use core::{fmt, mem::MaybeUninit};
 
 #[cfg(feature = "std")]
 use crate::util::byte_parsing::big_endian::strip_u32;
@@ -19,13 +19,10 @@ use crate::{
 };
 #[cfg(feature = "std")]
 use image::{ExtendedColorType, ImageEncoder};
-#[cfg(feature = "std")]
-use snafu::OptionExt;
 
 /// The Error type for splits files that couldn't be parsed by the Llanfair (Gered)
 /// Parser.
-#[derive(Debug, snafu::Snafu)]
-#[snafu(context(suffix(false)))]
+#[derive(Debug)]
 pub enum Error {
     /// The underlying XML format couldn't be parsed.
     Xml {
@@ -41,6 +38,27 @@ pub enum Error {
     LengthOutOfBounds,
     /// Failed to parse an image.
     Image,
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Xml { .. } => f.write_str("The underlying XML format couldn't be parsed."),
+            Self::Int { .. } => f.write_str("Failed to parse an integer."),
+            Self::LengthOutOfBounds => f.write_str("The length of a buffer was too large."),
+            Self::Image => f.write_str("Failed to parse an image."),
+        }
+    }
+}
+
+impl core::error::Error for Error {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        match self {
+            Self::Xml { source } => Some(source),
+            Self::Int { source } => Some(source),
+            _ => None,
+        }
+    }
 }
 
 impl From<XmlError> for Error {
@@ -113,7 +131,7 @@ where
             let len = (width as usize)
                 .checked_mul(height as usize)
                 .and_then(|b| b.checked_mul(4))
-                .context(LengthOutOfBounds)?;
+                .ok_or(Error::LengthOutOfBounds)?;
 
             Ok((
                 width,

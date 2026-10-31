@@ -1,13 +1,12 @@
 #![allow(clippy::unnecessary_cast)]
 
 use std::{
-    io,
+    fmt, io,
     time::{Duration, Instant},
 };
 
 use proc_maps::{MapRange, Pid};
 use read_process_memory::{CopyAddress, ProcessHandle};
-use snafu::{OptionExt, ResultExt, Snafu};
 
 use crate::{runtime::ProcessList, wasi_path};
 
@@ -23,18 +22,52 @@ cfg_select! {
     }
 }
 
-#[derive(Debug, Snafu)]
-#[snafu(context(suffix(false)))]
+#[derive(Debug)]
 pub enum OpenError {
     ProcessDoesntExist,
     InvalidHandle { source: io::Error },
 }
 
-#[derive(Debug, Snafu)]
-#[snafu(context(suffix(false)))]
+impl fmt::Display for OpenError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::ProcessDoesntExist => f.write_str("ProcessDoesntExist"),
+            Self::InvalidHandle { .. } => f.write_str("InvalidHandle"),
+        }
+    }
+}
+
+impl core::error::Error for OpenError {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        match self {
+            Self::InvalidHandle { source } => Some(source),
+            _ => None,
+        }
+    }
+}
+
+#[derive(Debug)]
 pub enum ModuleError {
     ModuleDoesntExist,
     ListModules { source: io::Error },
+}
+
+impl fmt::Display for ModuleError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::ModuleDoesntExist => f.write_str("ModuleDoesntExist"),
+            Self::ListModules { .. } => f.write_str("ListModules"),
+        }
+    }
+}
+
+impl core::error::Error for ModuleError {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        match self {
+            Self::ListModules { source } => Some(source),
+            _ => None,
+        }
+    }
 }
 
 pub type Address = u64;
@@ -70,13 +103,15 @@ impl Process {
 
         let process = &processes
             .max_by_key(|p| (p.start_time(), p.pid().as_u32()))
-            .context(ProcessDoesntExist)?;
+            .ok_or(OpenError::ProcessDoesntExist)?;
 
         let path = process.exe().and_then(wasi_path::from_native);
 
         let pid = process.pid().as_u32() as Pid;
 
-        let handle = pid.try_into().context(InvalidHandle)?;
+        let handle = pid
+            .try_into()
+            .map_err(|source| OpenError::InvalidHandle { source })?;
 
         let now = Instant::now();
         Ok(Process {
@@ -93,13 +128,15 @@ impl Process {
         process_list.refresh();
         let process = process_list
             .get(sysinfo::Pid::from_u32(pid))
-            .context(ProcessDoesntExist)?;
+            .ok_or(OpenError::ProcessDoesntExist)?;
 
         let path = process.exe().and_then(wasi_path::from_native);
 
         let pid_out = pid as Pid;
 
-        let handle = pid_out.try_into().context(InvalidHandle)?;
+        let handle = pid_out
+            .try_into()
+            .map_err(|source| OpenError::InvalidHandle { source })?;
 
         let now = Instant::now();
         Ok(Process {
@@ -137,7 +174,7 @@ impl Process {
         self.memory_ranges
             .iter()
             .find(|m| m.filename().is_some_and(|f| f.ends_with(module)))
-            .context(ModuleDoesntExist)
+            .ok_or(ModuleError::ModuleDoesntExist)
             .map(|m| m.start() as u64)
     }
 
@@ -147,7 +184,7 @@ impl Process {
             .memory_ranges
             .iter()
             .filter(|m| m.filename().is_some_and(|f| f.ends_with(module)));
-        let first_range = ranges.next().context(ModuleDoesntExist)?;
+        let first_range = ranges.next().ok_or(ModuleError::ModuleDoesntExist)?;
         let module_address = first_range.start() as Address;
         let mapped_size =
             first_range.size() as u64 + ranges.map(|range| range.size() as u64).sum::<u64>();
@@ -160,7 +197,7 @@ impl Process {
         self.memory_ranges
             .iter()
             .find(|m| m.filename().is_some_and(|f| f.ends_with(module)))
-            .context(ModuleDoesntExist)
+            .ok_or(ModuleError::ModuleDoesntExist)
             .map(|m| wasi_path::from_native(m.filename().unwrap()).unwrap_or_default())
     }
 

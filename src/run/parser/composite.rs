@@ -33,15 +33,25 @@ use super::{
     splitty, time_split_tracker, wsplit,
 };
 use crate::{Run, platform::path::Path};
+use core::fmt;
 
 /// The Error type for splits files that couldn't be parsed by the Composite
 /// Parser.
-#[derive(Debug, snafu::Snafu)]
-#[snafu(context(suffix(false)))]
+#[derive(Debug)]
 pub enum Error {
     /// No parser was able to parse the splits file.
     NoParserParsedIt,
 }
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::NoParserParsedIt => f.write_str("No parser was able to parse the splits file."),
+        }
+    }
+}
+
+impl core::error::Error for Error {}
 
 /// The Result type for the Composite Parser.
 pub type Result<T, E = Error> = core::result::Result<T, E>;

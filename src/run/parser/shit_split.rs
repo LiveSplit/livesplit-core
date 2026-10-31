@@ -1,13 +1,11 @@
 //! Provides the parser for ShitSplit splits files.
 
 use crate::{GameTime, Lang, Run, Segment, TimeSpan, timing};
-use core::{num::ParseIntError, result::Result as StdResult};
-use snafu::{OptionExt, ResultExt};
+use core::{fmt, num::ParseIntError, result::Result as StdResult};
 
 /// The Error type for splits files that couldn't be parsed by the ShitSplit
 /// Parser.
-#[derive(Debug, snafu::Snafu)]
-#[snafu(context(suffix(false)))]
+#[derive(Debug)]
 pub enum Error {
     /// An empty splits file was provided.
     Empty,
@@ -31,6 +29,38 @@ pub enum Error {
     },
 }
 
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Empty => f.write_str("An empty splits file was provided."),
+            Self::ExpectedCategoryName => {
+                f.write_str("Expected the name of the category, but didn't find it.")
+            }
+            Self::ExpectedAttemptCount => {
+                f.write_str("Expected the attempt count, but didn't find it.")
+            }
+            Self::ParseAttemptCount { .. } => f.write_str("Failed to parse the attempt count."),
+            Self::ExpectedWorldName => {
+                f.write_str("Expected the name of a world, but didn't find it.")
+            }
+            Self::ExpectedWorldTime => {
+                f.write_str("Expected the time of a world, but didn't find it.")
+            }
+            Self::ParseWorldTime { .. } => f.write_str("Failed to parse the time of a world."),
+        }
+    }
+}
+
+impl core::error::Error for Error {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        match self {
+            Self::ParseAttemptCount { source } => Some(source),
+            Self::ParseWorldTime { source } => Some(source),
+            _ => None,
+        }
+    }
+}
+
 /// The Result type for the ShitSplit Parser.
 pub type Result<T> = StdResult<T, Error>;
 
@@ -38,10 +68,10 @@ pub type Result<T> = StdResult<T, Error>;
 pub fn parse(source: &str) -> Result<Run> {
     let mut lines = source.lines();
 
-    let line = lines.next().context(Empty)?;
+    let line = lines.next().ok_or(Error::Empty)?;
 
     let mut splits = line.split('|');
-    let category_name = splits.next().context(ExpectedCategoryName)?;
+    let category_name = splits.next().ok_or(Error::ExpectedCategoryName)?;
 
     let mut run = Run::new();
 
@@ -53,9 +83,9 @@ pub fn parse(source: &str) -> Result<Run> {
     run.set_attempt_count(
         splits
             .next()
-            .context(ExpectedAttemptCount)?
+            .ok_or(Error::ExpectedAttemptCount)?
             .parse()
-            .context(ParseAttemptCount)?,
+            .map_err(|source| Error::ParseAttemptCount { source })?,
     );
     let mut total_time = TimeSpan::zero();
     let mut next_line = lines.next();
@@ -64,9 +94,12 @@ pub fn parse(source: &str) -> Result<Run> {
             break;
         }
         let mut splits = line.split('|');
-        let world_name = splits.next().context(ExpectedWorldName)?;
-        total_time += TimeSpan::parse(splits.next().context(ExpectedWorldTime)?, Lang::English)
-            .context(ParseWorldTime)?;
+        let world_name = splits.next().ok_or(Error::ExpectedWorldName)?;
+        total_time += TimeSpan::parse(
+            splits.next().ok_or(Error::ExpectedWorldTime)?,
+            Lang::English,
+        )
+        .map_err(|source| Error::ParseWorldTime { source })?;
         next_line = lines.next();
         let mut has_acts = false;
         while let Some(line) = next_line {

@@ -2,13 +2,11 @@
 
 use crate::{Lang, RealTime, Run, Segment, TimeSpan, platform::path::Path, timing};
 use alloc::borrow::Cow;
-use core::{num::ParseIntError, result::Result as StdResult};
-use snafu::ResultExt;
+use core::{fmt, num::ParseIntError, result::Result as StdResult};
 
 /// The Error type for splits files that couldn't be parsed by the SplitterZ
 /// Parser.
-#[derive(Debug, snafu::Snafu)]
-#[snafu(context(suffix(false)))]
+#[derive(Debug)]
 pub enum Error {
     /// An empty splits file was provided.
     Empty,
@@ -37,6 +35,42 @@ pub enum Error {
         /// The underlying error.
         source: timing::ParseError,
     },
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Empty => f.write_str("An empty splits file was provided."),
+            Self::ExpectedCategoryName => {
+                f.write_str("Expected the name of the category, but didn't find it.")
+            }
+            Self::ExpectedAttemptCount => {
+                f.write_str("Expected the attempt count, but didn't find it.")
+            }
+            Self::ParseAttemptCount { .. } => {
+                f.write_str("Failed to parse the amount of attempts.")
+            }
+            Self::ExpectedSegmentName => {
+                f.write_str("Expected the name of the segment, but didn't find it.")
+            }
+            Self::ExpectedSplitTime => f.write_str("Expected the split time, but didn't find it."),
+            Self::ParseSplitTime { .. } => f.write_str("Failed to parse a split time."),
+            Self::ExpectedBestSegment => {
+                f.write_str("Expected the best segment time, but didn't find it.")
+            }
+            Self::ParseBestSegment { .. } => f.write_str("Failed to parse a best segment time."),
+        }
+    }
+}
+
+impl core::error::Error for Error {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        match self {
+            Self::ParseAttemptCount { source } => Some(source),
+            Self::ParseSplitTime { source } | Self::ParseBestSegment { source } => Some(source),
+            _ => None,
+        }
+    }
 }
 
 /// The Result type for the SplitterZ parser.
@@ -71,7 +105,7 @@ pub fn parse(source: &str, #[allow(unused)] load_files_path: Option<&Path>) -> R
             .next()
             .ok_or(Error::ExpectedAttemptCount)?
             .parse()
-            .context(ParseAttemptCount)?,
+            .map_err(|source| Error::ParseAttemptCount { source })?,
     );
 
     for line in &mut lines {
@@ -87,7 +121,7 @@ pub fn parse(source: &str, #[allow(unused)] load_files_path: Option<&Path>) -> R
             splits.next().ok_or(Error::ExpectedSplitTime)?,
             Lang::English,
         )
-        .context(ParseSplitTime)?;
+        .map_err(|source| Error::ParseSplitTime { source })?;
         if time != TimeSpan::zero() {
             segment.set_personal_best_split_time(RealTime(Some(time)).into());
         }
@@ -96,7 +130,7 @@ pub fn parse(source: &str, #[allow(unused)] load_files_path: Option<&Path>) -> R
             splits.next().ok_or(Error::ExpectedBestSegment)?,
             Lang::English,
         )
-        .context(ParseBestSegment)?;
+        .map_err(|source| Error::ParseBestSegment { source })?;
         if time != TimeSpan::zero() {
             segment.set_best_segment_time(RealTime(Some(time)).into());
         }

@@ -10,8 +10,8 @@ use api::wasi::StdErr;
 use arc_swap::ArcSwap;
 use indexmap::IndexMap;
 use slotmap::SlotMap;
-use snafu::Snafu;
 use std::{
+    fmt,
     path::Path,
     sync::{
         Arc, Mutex, MutexGuard,
@@ -29,8 +29,7 @@ use wasmtime_wasi::p1::WasiP1Ctx;
 mod api;
 
 /// An error that is returned when the creation of a new runtime fails.
-#[derive(Debug, Snafu)]
-#[snafu(context(suffix(false)))]
+#[derive(Debug)]
 pub enum CreationError {
     /// Failed creating the WebAssembly engine.
     EngineCreation {
@@ -43,7 +42,6 @@ pub enum CreationError {
         source: wasmtime::Error,
     },
     /// Failed linking the WebAssembly module.
-    #[snafu(display("Failed linking the function `{name}` to the WebAssembly module."))]
     LinkFunction {
         /// The name of the function that failed to link.
         name: &'static str,
@@ -70,6 +68,34 @@ pub enum CreationError {
         /// The underlying error.
         source: wasmtime::Error,
     },
+}
+
+impl fmt::Display for CreationError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::EngineCreation { .. } => f.write_str("Failed creating the WebAssembly engine."),
+            Self::ModuleLoading { .. } => f.write_str("Failed loading the WebAssembly module."),
+            Self::LinkFunction { name, .. } => write!(f, "Failed linking the function `{name}` to the WebAssembly module."),
+            Self::ModuleInstantiation { .. } => f.write_str("Failed instantiating the WebAssembly module."),
+            Self::MissingUpdateFunction { .. } => f.write_str("The WebAssembly module has no exported function called `update`, which is a required function."),
+            Self::MissingMemory => f.write_str("The WebAssembly module has no exported memory called `memory`, which is a requirement."),
+            Self::Wasi { .. } => f.write_str("Failed linking the WebAssembly System Interface (WASI)."),
+        }
+    }
+}
+
+impl core::error::Error for CreationError {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        match self {
+            Self::EngineCreation { source }
+            | Self::ModuleLoading { source }
+            | Self::LinkFunction { source, .. }
+            | Self::ModuleInstantiation { source }
+            | Self::MissingUpdateFunction { source }
+            | Self::Wasi { source } => Some(source.as_ref()),
+            _ => None,
+        }
+    }
 }
 
 slotmap::new_key_type! {

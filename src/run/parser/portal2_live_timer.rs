@@ -1,20 +1,17 @@
 //! Provides the parser for Portal 2 Live Timer splits files.
 
 use crate::{GameTime, Run, Segment, TimeSpan, platform::prelude::*};
-use core::{num::ParseFloatError, result::Result as StdResult};
-use snafu::{OptionExt, ResultExt};
+use core::{fmt, num::ParseFloatError, result::Result as StdResult};
 
 /// The Error types for splits files that couldn't be parsed by the Portal 2
 /// Live Timer Parser.
-#[derive(Debug, snafu::Snafu)]
-#[snafu(context(suffix(false)))]
+#[derive(Debug)]
 pub enum Error {
     /// Expected another map, but didn't find it.
     ExpectedMap,
     /// Expected the name of a map, but didn't find it.
     ExpectedMapName,
     /// Expected a different map.
-    #[snafu(display("Expect the map `{expected}` but found `{found}`."))]
     ExpectedDifferentMapName {
         /// The name of the map that was expected.
         expected: &'static str,
@@ -35,6 +32,37 @@ pub enum Error {
         /// The underlying error.
         source: ParseFloatError,
     },
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::ExpectedMap => f.write_str("Expected another map, but didn't find it."),
+            Self::ExpectedMapName => f.write_str("Expected the name of a map, but didn't find it."),
+            Self::ExpectedDifferentMapName { expected, found } => {
+                write!(f, "Expect the map `{expected}` but found `{found}`.")
+            }
+            Self::ExpectedStartTicks => {
+                f.write_str("Expected the start ticks of a map, but didn't find it.")
+            }
+            Self::ParseStartTicks { .. } => {
+                f.write_str("Failed to parse the start ticks of a map.")
+            }
+            Self::ExpectedEndTicks => {
+                f.write_str("Expected the end ticks of a map, but didn't find it.")
+            }
+            Self::ParseEndTicks { .. } => f.write_str("Failed to parse the end ticks of a map."),
+        }
+    }
+}
+
+impl core::error::Error for Error {
+    fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
+        match self {
+            Self::ParseStartTicks { source } | Self::ParseEndTicks { source } => Some(source),
+            _ => None,
+        }
+    }
 }
 
 /// The Result type for the Portal 2 Live Timer Parser.
@@ -162,12 +190,12 @@ pub fn parse(source: &str) -> Result<Run> {
 
     let mut aggregate_ticks = 0.0;
 
-    let mut line = lines.next().context(ExpectedMap)?;
+    let mut line = lines.next().ok_or(Error::ExpectedMap)?;
     for &(chapter_name, maps) in &CHAPTERS {
         for &map in maps {
             {
                 let mut splits = line.split(',');
-                let map_name = splits.next().context(ExpectedMapName)?;
+                let map_name = splits.next().ok_or(Error::ExpectedMapName)?;
                 if map_name != map {
                     return Err(Error::ExpectedDifferentMapName {
                         expected: map,
@@ -176,14 +204,14 @@ pub fn parse(source: &str) -> Result<Run> {
                 }
                 let start_ticks: f64 = splits
                     .next()
-                    .context(ExpectedStartTicks)?
+                    .ok_or(Error::ExpectedStartTicks)?
                     .parse()
-                    .context(ParseStartTicks)?;
+                    .map_err(|source| Error::ParseStartTicks { source })?;
                 let end_ticks: f64 = splits
                     .next()
-                    .context(ExpectedEndTicks)?
+                    .ok_or(Error::ExpectedEndTicks)?
                     .parse()
-                    .context(ParseEndTicks)?;
+                    .map_err(|source| Error::ParseEndTicks { source })?;
                 let map_ticks = end_ticks - start_ticks;
                 aggregate_ticks += map_ticks;
             }
@@ -194,14 +222,14 @@ pub fn parse(source: &str) -> Result<Run> {
                 if splits.next() == Some(map) {
                     let start_ticks: f64 = splits
                         .next()
-                        .context(ExpectedStartTicks)?
+                        .ok_or(Error::ExpectedStartTicks)?
                         .parse()
-                        .context(ParseStartTicks)?;
+                        .map_err(|source| Error::ParseStartTicks { source })?;
                     let end_ticks: f64 = splits
                         .next()
-                        .context(ExpectedEndTicks)?
+                        .ok_or(Error::ExpectedEndTicks)?
                         .parse()
-                        .context(ParseEndTicks)?;
+                        .map_err(|source| Error::ParseEndTicks { source })?;
                     let map_ticks = end_ticks - start_ticks;
                     aggregate_ticks += map_ticks;
                 } else {
