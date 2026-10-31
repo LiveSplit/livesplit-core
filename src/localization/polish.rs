@@ -92,31 +92,49 @@ pub const fn resolve(text: Text) -> &'static str {
             display::Text::ShowAllWindows => "Pokaż wszystkie okna",
             display::Text::ZoomToggle => "Przełącz powiększenie",
         },
+        #[cfg(feature = "std")]
         Text::StartSplit => "Start / Split",
+        #[cfg(feature = "std")]
         Text::StartSplitDescription => "Skrót klawiszowy do dzielenia i rozpoczęcia nowego biegu.",
+        #[cfg(feature = "std")]
         Text::Reset => "Reset",
+        #[cfg(feature = "std")]
         Text::ResetDescription => "Skrót klawiszowy do resetowania bieżącego biegu.",
+        #[cfg(feature = "std")]
         Text::UndoSplit => "Cofnij split",
+        #[cfg(feature = "std")]
         Text::UndoSplitDescription => "Skrót klawiszowy do cofnięcia ostatniego splitu.",
+        #[cfg(feature = "std")]
         Text::SkipSplit => "Pomiń split",
+        #[cfg(feature = "std")]
         Text::SkipSplitDescription => "Skrót klawiszowy do pominięcia bieżącego splitu.",
+        #[cfg(feature = "std")]
         Text::Pause => "Pauza",
+        #[cfg(feature = "std")]
         Text::PauseDescription => {
             "Skrót klawiszowy do wstrzymania bieżącego biegu. Może też służyć do rozpoczęcia nowego biegu."
         }
+        #[cfg(feature = "std")]
         Text::UndoAllPauses => "Cofnij wszystkie pauzy",
+        #[cfg(feature = "std")]
         Text::UndoAllPausesDescription => {
             "Skrót klawiszowy do usunięcia całego czasu pauz z bieżącego czasu. Przydatne, gdy pauza została włączona przypadkowo."
         }
+        #[cfg(feature = "std")]
         Text::PreviousComparison => "Poprzednie porównanie",
+        #[cfg(feature = "std")]
         Text::PreviousComparisonDescription => {
             "Skrót klawiszowy do przełączenia na poprzednie porównanie."
         }
+        #[cfg(feature = "std")]
         Text::NextComparison => "Następne porównanie",
+        #[cfg(feature = "std")]
         Text::NextComparisonDescription => {
             "Skrót klawiszowy do przełączenia na następne porównanie."
         }
+        #[cfg(feature = "std")]
         Text::ToggleTimingMethod => "Przełącz metodę pomiaru czasu",
+        #[cfg(feature = "std")]
         Text::ToggleTimingMethodDescription => {
             "Skrót klawiszowy do przełączania między metodami „Czas rzeczywisty” i „Czas gry”."
         }

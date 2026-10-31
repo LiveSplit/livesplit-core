@@ -92,25 +92,43 @@ pub const fn resolve(text: Text) -> &'static str {
             display::Text::ShowAllWindows => "显示所有窗口",
             display::Text::ZoomToggle => "切换缩放",
         },
+        #[cfg(feature = "std")]
         Text::StartSplit => "开始 / 分段",
+        #[cfg(feature = "std")]
         Text::StartSplitDescription => "用于分段并开始新尝试的快捷键。",
+        #[cfg(feature = "std")]
         Text::Reset => "重置",
+        #[cfg(feature = "std")]
         Text::ResetDescription => "用于重置当前尝试的快捷键。",
+        #[cfg(feature = "std")]
         Text::UndoSplit => "撤销分段",
+        #[cfg(feature = "std")]
         Text::UndoSplitDescription => "用于撤销上一个分段的快捷键。",
+        #[cfg(feature = "std")]
         Text::SkipSplit => "跳过分段",
+        #[cfg(feature = "std")]
         Text::SkipSplitDescription => "用于跳过当前分段的快捷键。",
+        #[cfg(feature = "std")]
         Text::Pause => "暂停",
+        #[cfg(feature = "std")]
         Text::PauseDescription => "用于暂停当前尝试的快捷键。也可用于开始新尝试。",
+        #[cfg(feature = "std")]
         Text::UndoAllPauses => "撤销全部暂停",
+        #[cfg(feature = "std")]
         Text::UndoAllPausesDescription => {
             "用于从当前时间中移除所有暂停时间的快捷键。适用于误暂停的情况。"
         }
+        #[cfg(feature = "std")]
         Text::PreviousComparison => "上一个比较",
+        #[cfg(feature = "std")]
         Text::PreviousComparisonDescription => "用于切换到上一个比较的快捷键。",
+        #[cfg(feature = "std")]
         Text::NextComparison => "下一个比较",
+        #[cfg(feature = "std")]
         Text::NextComparisonDescription => "用于切换到下一个比较的快捷键。",
+        #[cfg(feature = "std")]
         Text::ToggleTimingMethod => "切换计时方式",
+        #[cfg(feature = "std")]
         Text::ToggleTimingMethodDescription => "用于在“实时时间”和“游戏时间”之间切换的快捷键。",
         Text::TimerBackground => "背景",
         Text::TimerBackgroundDescription => {

@@ -92,31 +92,49 @@ pub const fn resolve(text: Text) -> &'static str {
             display::Text::ShowAllWindows => "Alle vensters tonen",
             display::Text::ZoomToggle => "Zoom omschakelen",
         },
+        #[cfg(feature = "std")]
         Text::StartSplit => "Start / Split",
+        #[cfg(feature = "std")]
         Text::StartSplitDescription => {
             "De sneltoets om te splitten en een nieuwe poging te starten."
         }
+        #[cfg(feature = "std")]
         Text::Reset => "Reset",
+        #[cfg(feature = "std")]
         Text::ResetDescription => "De sneltoets om de huidige poging te resetten.",
+        #[cfg(feature = "std")]
         Text::UndoSplit => "Split ongedaan maken",
+        #[cfg(feature = "std")]
         Text::UndoSplitDescription => "De sneltoets om de laatste split ongedaan te maken.",
+        #[cfg(feature = "std")]
         Text::SkipSplit => "Split overslaan",
+        #[cfg(feature = "std")]
         Text::SkipSplitDescription => "De sneltoets om de huidige split over te slaan.",
+        #[cfg(feature = "std")]
         Text::Pause => "Pauze",
+        #[cfg(feature = "std")]
         Text::PauseDescription => {
             "De sneltoets om de huidige poging te pauzeren. Deze kan ook worden gebruikt om een nieuwe poging te starten."
         }
+        #[cfg(feature = "std")]
         Text::UndoAllPauses => "Alle pauzes ongedaan maken",
+        #[cfg(feature = "std")]
         Text::UndoAllPausesDescription => {
             "De sneltoets om alle pauzetijden uit de huidige tijd te verwijderen. Handig als je per ongeluk hebt gepauzeerd."
         }
+        #[cfg(feature = "std")]
         Text::PreviousComparison => "Vorige vergelijking",
+        #[cfg(feature = "std")]
         Text::PreviousComparisonDescription => {
             "De sneltoets om naar de vorige vergelijking te gaan."
         }
+        #[cfg(feature = "std")]
         Text::NextComparison => "Volgende vergelijking",
+        #[cfg(feature = "std")]
         Text::NextComparisonDescription => "De sneltoets om naar de volgende vergelijking te gaan.",
+        #[cfg(feature = "std")]
         Text::ToggleTimingMethod => "Timingmethode wisselen",
+        #[cfg(feature = "std")]
         Text::ToggleTimingMethodDescription => {
             "De sneltoets om te wisselen tussen «Realtime» en «Speltijd»."
         }

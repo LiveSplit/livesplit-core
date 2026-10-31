@@ -92,27 +92,45 @@ pub const fn resolve(text: Text) -> &'static str {
             display::Text::ShowAllWindows => "すべてのウィンドウを表示",
             display::Text::ZoomToggle => "ズームを切り替え",
         },
+        #[cfg(feature = "std")]
         Text::StartSplit => "開始 / スプリット",
+        #[cfg(feature = "std")]
         Text::StartSplitDescription => "スプリットと新しいタイマースタートに使用するホットキー。",
+        #[cfg(feature = "std")]
         Text::Reset => "リセット",
+        #[cfg(feature = "std")]
         Text::ResetDescription => "現在の試行をリセットするホットキー。",
+        #[cfg(feature = "std")]
         Text::UndoSplit => "スプリットを取り消す",
+        #[cfg(feature = "std")]
         Text::UndoSplitDescription => "最後のスプリットを取り消すホットキー。",
+        #[cfg(feature = "std")]
         Text::SkipSplit => "スプリットをスキップ",
+        #[cfg(feature = "std")]
         Text::SkipSplitDescription => "現在のスプリットをスキップするホットキー。",
+        #[cfg(feature = "std")]
         Text::Pause => "ポーズ",
+        #[cfg(feature = "std")]
         Text::PauseDescription => {
             "現在の試行をポーズするホットキー。新しい試行の開始にも使用できます。"
         }
+        #[cfg(feature = "std")]
         Text::UndoAllPauses => "すべてのポーズを取り消す",
+        #[cfg(feature = "std")]
         Text::UndoAllPausesDescription => {
             "現在のタイムからすべてのポーズ時間を削除するホットキー。誤ってポーズした場合に便利です。"
         }
+        #[cfg(feature = "std")]
         Text::PreviousComparison => "前の比較対象",
+        #[cfg(feature = "std")]
         Text::PreviousComparisonDescription => "前の比較対象に切り替えるホットキー。",
+        #[cfg(feature = "std")]
         Text::NextComparison => "次の比較対象",
+        #[cfg(feature = "std")]
         Text::NextComparisonDescription => "次の比較対象に切り替えるホットキー。",
+        #[cfg(feature = "std")]
         Text::ToggleTimingMethod => "計測方法を切り替え",
+        #[cfg(feature = "std")]
         Text::ToggleTimingMethodDescription => "「実時間」と「ゲーム時間」を切り替えるホットキー。",
         Text::TimerBackground => "背景",
         Text::TimerBackgroundDescription => {
