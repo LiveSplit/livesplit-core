@@ -69,7 +69,7 @@ pub mod event;
 #[cfg(feature = "std")]
 mod hotkey_config;
 #[cfg(feature = "std")]
-mod hotkey_system;
+pub mod hotkey_system;
 pub mod layout;
 mod localization;
 pub mod networking;

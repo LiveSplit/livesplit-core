@@ -11,7 +11,8 @@ use crate::{
 };
 use livesplit_core::{
     Lang,
-    hotkey::{Hotkey, KeyCode},
+    hotkey::{self, Error, Hotkey, KeyCode, Permission},
+    hotkey_system,
 };
 
 type HotkeySystem = livesplit_core::HotkeySystem<CommandSink>;
@@ -21,7 +22,67 @@ pub type OwnedHotkeySystem = Box<HotkeySystem>;
 /// type
 pub type NullableOwnedHotkeySystem = Option<OwnedHotkeySystem>;
 
+// Keep these codes independent of Rust enum discriminants. Positive values
+// always mean a missing native grant, including requirements added in a future
+// hotkey backend; negative values are failures of the permission operation.
+fn permission_status(result: hotkey::Result<()>) -> i32 {
+    match result {
+        Ok(()) => 0,
+        Err(Error::PermissionRequired(permission)) => match permission {
+            Permission::InputMonitoring => 1,
+            Permission::Accessibility => 2,
+            _ => i32::MAX,
+        },
+        Err(_) => -1,
+    }
+}
+
+/// Checks the Hotkey System's current native privacy access without prompting.
+/// No Hotkey System, timer, hook or registrations are created.
+///
+/// Returns 0 if access is currently available or the platform has no separate
+/// privacy-grant API, 1 if macOS Input Monitoring is required, 2 if macOS
+/// Accessibility is required, and -1 if the native permission operation failed.
+/// Other positive values identify unknown permission requirements; callers must
+/// handle all positive values as missing access and all negative values as
+/// failures. The fallback for an unknown requirement is 2147483647.
+///
+/// This uses the same hook preference as construction. A return value of 0
+/// does not guarantee that construction or registration will succeed. After a
+/// constructor returns <NULL>, this observes the current grant; it does not
+/// recover the original failure or rule out a grant change between calls.
+#[unsafe(no_mangle)]
+pub extern "C" fn HotkeySystem_check_permission() -> i32 {
+    permission_status(hotkey_system::check_permission())
+}
+
+/// Requests the Hotkey System's native privacy access after an explicit user
+/// action. No Hotkey System, timer, hook or registrations are created.
+///
+/// Returns the same status codes as HotkeySystem_check_permission: 0 for
+/// currently available access, 1 for missing macOS Input Monitoring, 2 for
+/// missing macOS Accessibility, and -1 for a native permission-operation failure.
+/// Any other positive value is an unknown missing permission (2147483647 is the
+/// fallback); callers must handle all positive values as missing access and all
+/// negative values as failures.
+///
+/// Existing access is checked first, and at most one native request is made
+/// when access is missing. A positive result can mean approval is still pending
+/// even if the native permission UI was opened; it does not establish denial.
+/// On a later explicit user action, check again or retry HotkeySystem_new or
+/// HotkeySystem_with_config. These operations neither poll nor retry bindings
+/// automatically, and permission access alone does not guarantee construction.
+#[unsafe(no_mangle)]
+pub extern "C" fn HotkeySystem_request_permission() -> i32 {
+    permission_status(hotkey_system::request_permission())
+}
+
 /// Creates a new Hotkey System for a Timer with the default hotkeys.
+///
+/// Returns <NULL> on failure without requesting privacy access. Call
+/// HotkeySystem_check_permission to inspect the current native grant, then
+/// HotkeySystem_request_permission only after an explicit user action. Retry
+/// construction explicitly once access is available; other failures may remain.
 #[unsafe(no_mangle)]
 pub extern "C" fn HotkeySystem_new(command_sink: &CommandSink) -> NullableOwnedHotkeySystem {
     HotkeySystem::new(command_sink.clone()).ok().map(Box::new)
@@ -29,6 +90,16 @@ pub extern "C" fn HotkeySystem_new(command_sink: &CommandSink) -> NullableOwnedH
 
 /// Creates a new Hotkey System for a Timer with a custom configuration for the
 /// hotkeys.
+///
+/// Returns <NULL> on failure without requesting privacy access. Call
+/// HotkeySystem_check_permission to inspect the current native grant, and request
+/// missing access only after an explicit user action.
+///
+/// This consumes the configuration even when construction fails. To retry saved
+/// bindings, retain their data in the caller or copy HotkeyConfig_as_json before
+/// this call and recreate the configuration with HotkeyConfig_parse_json. Copy
+/// the JSON into caller-owned storage before another API call can reuse its
+/// temporary output buffer. Retry construction explicitly after granting access.
 #[unsafe(no_mangle)]
 pub extern "C" fn HotkeySystem_with_config(
     command_sink: &CommandSink,
@@ -151,12 +222,36 @@ pub unsafe fn HotkeySystem_add_window(
 
 #[cfg(test)]
 mod tests {
-    use crate::hotkey_system::resolve;
+    use crate::hotkey_system::{permission_status, resolve};
     use livesplit_core::{
         Lang,
-        hotkey::{Hotkey, KeyCode, display},
+        hotkey::{Error, Hotkey, KeyCode, Permission, display},
     };
     use std::{ffi::CStr, os::raw::c_char};
+
+    #[test]
+    fn permission_status_codes_are_stable() {
+        assert_eq!(permission_status(Ok(())), 0);
+        assert_eq!(
+            permission_status(Err(Error::PermissionRequired(Permission::InputMonitoring))),
+            1
+        );
+        assert_eq!(
+            permission_status(Err(Error::PermissionRequired(Permission::Accessibility))),
+            2
+        );
+    }
+
+    #[test]
+    fn permission_operation_failures_are_distinct_from_missing_grants() {
+        for error in [
+            Error::UnmatchedPreference,
+            Error::AlreadyRegistered,
+            Error::NotRegistered,
+        ] {
+            assert_eq!(permission_status(Err(error)), -1);
+        }
+    }
 
     #[track_caller]
     fn read_output(output: *const c_char) -> String {
