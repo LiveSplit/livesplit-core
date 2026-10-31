@@ -18,10 +18,10 @@ pub use unrestricted::{check, request};
 
 /// A native privacy grant required by the selected keyboard hook.
 ///
-/// The consume preference describes the desired hook behavior; this identifies
-/// the specific native grant that the backend requires, rather than a portable
-/// consume/listen capability. Currently only macOS queries these grants. Other
-/// platforms do not return dummy permission identifiers.
+/// Identifies the missing access reported by [`crate::Error::PermissionRequired`].
+/// macOS can require Input Monitoring or Accessibility depending on the selected
+/// hook and OS version. Windows, Linux and the web currently require no separate
+/// privacy grant; hook creation and registration can still fail for other reasons.
 ///
 /// These are permission identifiers, not localized application messages. They
 /// do not describe device-file access, conflicting shortcuts or other failures.
