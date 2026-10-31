@@ -321,6 +321,17 @@ unsafe extern "C" fn callback(
     //   return event;
     // }
 
+    // SAFETY: The worker owns this stable registration state for the native
+    // source's lifetime, and native callbacks supply the accessor arguments.
+    let state = unsafe { &*user_info.cast::<State>() };
+    // SAFETY: Preserve native keyboard decoding and callback behavior here.
+    unsafe { dispatch_key(event, state) }
+}
+
+/// # Safety
+/// The event must meet the native keyboard accessor contracts, and registration
+/// state must remain valid for the invocation. Its mutex serializes callbacks.
+unsafe fn dispatch_key(event: EventRef, state: &State) -> EventRef {
     let is_repeating =
         unsafe { cg::CGEventGetIntegerValueField(event, EventField::KEYBOARD_EVENT_AUTOREPEAT) };
     if is_repeating != 0 {
@@ -455,9 +466,6 @@ unsafe extern "C" fn callback(
         0x7E => KeyCode::ArrowUp,
         _ => return event,
     };
-
-    let state = user_info as *const State;
-    let state = unsafe { &*state };
 
     let modifier_flags = unsafe { CGEventGetFlags(event) };
     let mut modifiers = Modifiers::empty();
