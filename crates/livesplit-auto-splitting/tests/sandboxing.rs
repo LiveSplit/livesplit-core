@@ -149,7 +149,7 @@ fn create_file() {
     fs::write(&script_path, "read-only fixture").unwrap();
 
     let result = compile_with_script_path("create-file", None, Some(&script_path))
-        .and_then(|runtime| runtime.lock().update().map_err(Into::into));
+        .and_then(|runtime| runtime.lock().update());
     let contents = fs::read_to_string(&script_path).unwrap();
     let created_file = directory.join("shouldnt_exist.txt").exists();
     let created_directory = directory.join("shouldnt_exist").exists();

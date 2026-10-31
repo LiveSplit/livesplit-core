@@ -117,7 +117,10 @@ mod parse {
         };
         let settings = detailed_timer.settings();
         assert_eq!(settings.timer.timing_method, Some(TimingMethod::GameTime));
-        assert_eq!(settings.segment_timer.timing_method,Some(TimingMethod::GameTime));
+        assert_eq!(
+            settings.segment_timer.timing_method,
+            Some(TimingMethod::GameTime)
+        );
     }
 
     #[test]
