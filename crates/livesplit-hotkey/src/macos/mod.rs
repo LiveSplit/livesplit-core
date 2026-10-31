@@ -3,6 +3,10 @@
 //! Public Hook construction checks privacy access before starting this worker.
 //! Explicit permission requests live separately; callbacks never query or prompt
 //! for grants. Callers retain Hook while using its thread-confined native loop.
+//! Timeout notifications allow one recovery per tap lifetime; user-requested
+//! disables and later timeouts stay disabled. This does not monitor live grant
+//! revocation. Explicit hook recreation gives a new recovery budget after the
+//! cause of persistent native-worker stalls has been resolved.
 
 mod ax;
 mod carbon;

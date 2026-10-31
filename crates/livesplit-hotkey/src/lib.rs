@@ -8,30 +8,15 @@
 #![forbid(clippy::incompatible_msrv)]
 #![cfg_attr(not(feature = "std"), no_std)]
 
-//! `livesplit-hotkey` is a crate that allows listening to hotkeys even when the
-//! application is not in focus. The crate currently supports Windows, macOS,
-//! Linux and the web via wasm-bindgen. On unsupported platforms the crate still
-//! compiles but uses a stubbed out implementation instead that never receives
-//! any hotkeys.
+//! Listen to global hotkeys on Windows and macOS, including while the application
+//! is not focused. On Linux, global capture requires an X11 session or access to
+//! input devices. With `std` and `wasm-web`, web keyboard hooks listen within
+//! browser windows instead of across other applications. Without `std`, native
+//! hooks are stubs that receive no hotkeys; unsupported platforms also use stubs.
 //!
 //! [`display`] presents localized key and modifier names using native keyboard
 //! conventions. Callers provide translations through [`display::Localize`], so
 //! display names never affect the stable identifiers used for saved hotkeys.
-//!
-//! On macOS, constructing a [`Hook`] never requests privacy access. Missing
-//! grants return [`Error::PermissionRequired`]. Applications should explain the
-//! required permission and call [`Hook::request_permission`] only after a user
-//! action, then explicitly retry creation once access has been granted.
-//!
-//! An existing macOS tap makes at most one automatic recovery attempt after a
-//! timeout over its complete lifetime. User-requested disables are respected,
-//! and subsequent timeouts remain disabled to avoid repeatedly stalling input.
-//! Control notifications never invoke hotkeys. Recovery requests no permissions
-//! and rebuilds no registrations. This does not guarantee delivery after grant
-//! revocation; permission checks observe access rather than live tap health.
-//! User callbacks run on a separate worker and cannot delay the native tap.
-//! After resolving a persistent stall in the native worker, callers may
-//! explicitly recreate the hook to obtain a new tap and recovery budget.
 
 extern crate alloc;
 
@@ -78,6 +63,10 @@ pub struct Hook(platform::Hook);
 /// The preference of whether the hotkeys should be consumed or not. Consuming a
 /// hotkey means that the hotkey won't be passed on to the application that is
 /// currently in focus.
+///
+/// Requirements select a supported consumption mode when creating the hook.
+/// Delivery and consumption can still be interrupted by runtime failures or
+/// overload.
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub enum ConsumePreference {
     /// There is no preference, the crate chooses the most suitable implementation.
@@ -86,10 +75,9 @@ pub enum ConsumePreference {
     PreferConsume,
     /// Prefers the hotkeys to not be consumed, but does not require it.
     PreferNoConsume,
-    /// Requires the hotkeys to be consumed, the [`Hook`] won't be created otherwise.
+    /// Requires a consuming implementation; [`Hook`] creation fails otherwise.
     MustConsume,
-    /// Requires the hotkeys to not be consumed, the [`Hook`] won't be created
-    /// otherwise.
+    /// Requires a non-consuming implementation; [`Hook`] creation fails otherwise.
     MustNotConsume,
 }
 
@@ -117,8 +105,10 @@ impl Hook {
 
     /// Checks the native privacy grant for the selected hook without prompting.
     ///
-    /// This does not create hooks or check registration/device access. On platforms
-    /// without a separate privacy-grant API it succeeds; hook creation may still fail.
+    /// On macOS, checks the keyboard privacy permission required by the selected
+    /// hook. On Windows, Linux and the web, this performs no separate privacy
+    /// check and returns success. Hook creation and registration may still fail for
+    /// other reasons, and a successful check does not guarantee future delivery.
     pub fn check_permission(consume: ConsumePreference) -> Result<()> {
         permission::check(consume)
     }
@@ -130,8 +120,9 @@ impl Hook {
     /// missing at that moment; it does not distinguish a denial from pending
     /// approval, even when the native permission UI has been opened.
     ///
-    /// Check again or retry construction on a later explicit user action. This
-    /// crate starts no polling loop and imposes no restart requirement.
+    /// Check again or retry construction after the user has granted access.
+    /// Platforms without a separate privacy grant return success without
+    /// prompting, as described by [`Self::check_permission`].
     ///
     /// ```no_run
     /// # fn enable_from_user_action() -> livesplit_hotkey::Result<Option<livesplit_hotkey::Hook>> {
@@ -153,7 +144,13 @@ impl Hook {
         permission::request(consume)
     }
 
-    /// Registers a hotkey to listen to.
+    /// Registers a callback for a hotkey observed by the backend.
+    ///
+    /// On Windows, macOS and Linux, callbacks run on a background thread; on the
+    /// web, they run on the browser's event loop. Keep callbacks short and send
+    /// UI work to the application's event loop when required by its UI framework.
+    /// Defer registration changes and keyboard-layout queries on the same hook
+    /// until after the callback returns.
     pub fn register<F>(&self, hotkey: Hotkey, callback: F) -> Result<()>
     where
         F: FnMut() + Send + 'static,
