@@ -16,7 +16,7 @@ fn get_type(ty: &Type) -> Cow<'_, str> {
         "u32" => "uint32_t",
         "u64" => "uint64_t",
         "usize" => "size_t",
-        "isize" => "ssize_t",
+        "isize" => "ptrdiff_t",
         "f32" => "float",
         "f64" => "double",
         "bool" => "bool",
