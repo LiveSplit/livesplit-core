@@ -246,6 +246,26 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::CurrentComparisonValueColorDescription => {
             "De kleur van de naam van de vergelijking. Als deze niet is opgegeven, wordt de layoutkleur gebruikt."
         }
+        Text::AlternateTimingMethodBackground => "Achtergrond",
+        Text::AlternateTimingMethodBackgroundDescription => "De achtergrond achter het component.",
+        Text::AlternateTimingMethodDisplayTwoRows => "2 rijen tonen",
+        Text::AlternateTimingMethodDisplayTwoRowsDescription => {
+            "Geeft aan of de naam van het component en de tijd in twee aparte rijen worden getoond."
+        }
+        Text::AlternateTimingMethodLabelColor => "Labelkleur",
+        Text::AlternateTimingMethodLabelColorDescription => {
+            "De kleur van de naam van het component. Als deze niet is opgegeven, wordt de layoutkleur gebruikt."
+        }
+        Text::AlternateTimingMethodValueColor => "Waarde-kleur",
+        Text::AlternateTimingMethodValueColorDescription => {
+            "De kleur van de tijd. Als deze niet is opgegeven, wordt de layoutkleur gebruikt."
+        }
+        Text::AlternateTimingMethodDigitsFormat => "Cijferformaat",
+        Text::AlternateTimingMethodDigitsFormatDescription => {
+            "Geeft aan hoeveel cijfers worden getoond. Als de duur lager is dan het aantal cijfers, worden nullen getoond."
+        }
+        Text::AlternateTimingMethodAccuracy => "Nauwkeurigheid",
+        Text::AlternateTimingMethodAccuracyDescription => "De nauwkeurigheid van de getoonde tijd.",
         Text::CurrentPaceBackground => "Achtergrond",
         Text::CurrentPaceBackgroundDescription => "De achtergrond achter het component.",
         Text::CurrentPaceComparison => "Vergelijking",
@@ -702,6 +722,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::TextColorDescription => {
             "De kleur die wordt gebruikt voor tekst die geen eigen kleur opgeeft."
         }
+        Text::ComponentAlternateTimingMethod => "Alternatieve timingmethode",
         Text::ComponentBlankSpace => "Lege ruimte",
         Text::ComponentCurrentComparison => "Huidige vergelijking",
         Text::ComponentCurrentPace => "Huidige pace",

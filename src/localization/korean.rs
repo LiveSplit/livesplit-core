@@ -230,6 +230,26 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::CurrentComparisonValueColorDescription => {
             "비교 이름의 색상입니다. 지정하지 않으면 레이아웃의 색상을 사용합니다."
         }
+        Text::AlternateTimingMethodBackground => "배경",
+        Text::AlternateTimingMethodBackgroundDescription => "컴포넌트 뒤에 표시되는 배경입니다.",
+        Text::AlternateTimingMethodDisplayTwoRows => "2줄 표시",
+        Text::AlternateTimingMethodDisplayTwoRowsDescription => {
+            "컴포넌트 이름과 시간을 두 줄로 표시할지 지정합니다."
+        }
+        Text::AlternateTimingMethodLabelColor => "라벨 색상",
+        Text::AlternateTimingMethodLabelColorDescription => {
+            "컴포넌트 이름의 색상입니다. 지정하지 않으면 레이아웃의 색상을 사용합니다."
+        }
+        Text::AlternateTimingMethodValueColor => "값 색상",
+        Text::AlternateTimingMethodValueColorDescription => {
+            "시간의 색상입니다. 지정하지 않으면 레이아웃의 색상을 사용합니다."
+        }
+        Text::AlternateTimingMethodDigitsFormat => "자릿수 형식",
+        Text::AlternateTimingMethodDigitsFormatDescription => {
+            "표시할 자릿수를 지정합니다. 표시할 자릿수보다 시간이 짧으면 0이 표시됩니다."
+        }
+        Text::AlternateTimingMethodAccuracy => "정확도",
+        Text::AlternateTimingMethodAccuracyDescription => "표시되는 시간의 정확도입니다.",
         Text::CurrentPaceBackground => "배경",
         Text::CurrentPaceBackgroundDescription => "컴포넌트 뒤에 표시되는 배경입니다.",
         Text::CurrentPaceComparison => "비교",
@@ -646,6 +666,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SeparatorsDescription => "일반 구분선의 색상입니다.",
         Text::TextColor => "텍스트",
         Text::TextColorDescription => "자체 색상을 지정하지 않은 텍스트에 사용할 색상입니다.",
+        Text::ComponentAlternateTimingMethod => "대체 타이밍 방법",
         Text::ComponentBlankSpace => "빈 공간",
         Text::ComponentCurrentComparison => "현재 비교",
         Text::ComponentCurrentPace => "현재 페이스",

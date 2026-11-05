@@ -230,6 +230,26 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::CurrentComparisonValueColorDescription => {
             "比較対象名の色。指定しない場合はレイアウトの色が使用されます。"
         }
+        Text::AlternateTimingMethodBackground => "背景",
+        Text::AlternateTimingMethodBackgroundDescription => "コンポーネントの背景。",
+        Text::AlternateTimingMethodDisplayTwoRows => "2 行で表示",
+        Text::AlternateTimingMethodDisplayTwoRowsDescription => {
+            "コンポーネント名とタイムを 2 行で表示するかどうか。"
+        }
+        Text::AlternateTimingMethodLabelColor => "ラベル色",
+        Text::AlternateTimingMethodLabelColorDescription => {
+            "コンポーネント名の色。指定しない場合はレイアウトの色が使用されます。"
+        }
+        Text::AlternateTimingMethodValueColor => "値の色",
+        Text::AlternateTimingMethodValueColorDescription => {
+            "タイムの色。指定しない場合はレイアウトの色が使用されます。"
+        }
+        Text::AlternateTimingMethodDigitsFormat => "桁数",
+        Text::AlternateTimingMethodDigitsFormatDescription => {
+            "表示する桁数を指定します。桁数より短いタイムの場合は 0 で埋めて表示されます。"
+        }
+        Text::AlternateTimingMethodAccuracy => "精度",
+        Text::AlternateTimingMethodAccuracyDescription => "表示するタイムの精度。",
         Text::CurrentPaceBackground => "背景",
         Text::CurrentPaceBackgroundDescription => "コンポーネントの背景。",
         Text::CurrentPaceComparison => "比較対象",
@@ -642,6 +662,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SeparatorsDescription => "通常の区切り線の色。",
         Text::TextColor => "テキスト",
         Text::TextColorDescription => "独自の色が指定されていないテキストに使用する色。",
+        Text::ComponentAlternateTimingMethod => "もう一方の計測方法",
         Text::ComponentBlankSpace => "余白",
         Text::ComponentCurrentComparison => "現在の比較対象",
         Text::ComponentCurrentPace => "現在のペース",

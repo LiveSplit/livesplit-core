@@ -244,6 +244,26 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::CurrentComparisonValueColorDescription => {
             "Kolor nazwy porównania. Jeśli nie określono, kolor jest pobierany z układu."
         }
+        Text::AlternateTimingMethodBackground => "Tło",
+        Text::AlternateTimingMethodBackgroundDescription => "Tło wyświetlane za komponentem.",
+        Text::AlternateTimingMethodDisplayTwoRows => "Wyświetl 2 wiersze",
+        Text::AlternateTimingMethodDisplayTwoRowsDescription => {
+            "Określa, czy wyświetlać nazwę komponentu i czas w dwóch oddzielnych wierszach."
+        }
+        Text::AlternateTimingMethodLabelColor => "Kolor etykiety",
+        Text::AlternateTimingMethodLabelColorDescription => {
+            "Kolor nazwy komponentu. Jeśli nie określono, kolor jest pobierany z układu."
+        }
+        Text::AlternateTimingMethodValueColor => "Kolor wartości",
+        Text::AlternateTimingMethodValueColorDescription => {
+            "Kolor czasu. Jeśli nie określono, kolor jest pobierany z układu."
+        }
+        Text::AlternateTimingMethodDigitsFormat => "Format cyfr",
+        Text::AlternateTimingMethodDigitsFormatDescription => {
+            "Określa, ile cyfr wyświetlać. Jeśli czas jest krótszy niż liczba wyświetlanych cyfr, wyświetlane są zera."
+        }
+        Text::AlternateTimingMethodAccuracy => "Dokładność",
+        Text::AlternateTimingMethodAccuracyDescription => "Dokładność wyświetlanego czasu.",
         Text::CurrentPaceBackground => "Tło",
         Text::CurrentPaceBackgroundDescription => "Tło wyświetlane za komponentem.",
         Text::CurrentPaceComparison => "Porównanie",
@@ -684,6 +704,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::TextColorDescription => {
             "Kolor używany dla tekstu, który nie określa własnego koloru."
         }
+        Text::ComponentAlternateTimingMethod => "Alternatywna metoda pomiaru czasu",
         Text::ComponentBlankSpace => "Pusta przestrzeń",
         Text::ComponentCurrentComparison => "Bieżące porównanie",
         Text::ComponentCurrentPace => "Bieżące tempo",

@@ -254,6 +254,28 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::CurrentComparisonValueColorDescription => {
             "Die Farbe des Vergleichsnamens. Wenn keine Farbe angegeben ist, wird die Farbe aus dem Layout übernommen."
         }
+        Text::AlternateTimingMethodBackground => "Hintergrund",
+        Text::AlternateTimingMethodBackgroundDescription => {
+            "Der Hintergrund, der hinter der Komponente angezeigt wird."
+        }
+        Text::AlternateTimingMethodDisplayTwoRows => "2 Zeilen anzeigen",
+        Text::AlternateTimingMethodDisplayTwoRowsDescription => {
+            "Legt fest, ob der Name der Komponente und die Zeit in zwei separaten Zeilen angezeigt werden."
+        }
+        Text::AlternateTimingMethodLabelColor => "Beschriftungsfarbe",
+        Text::AlternateTimingMethodLabelColorDescription => {
+            "Die Farbe des Komponentennamens. Wenn keine Farbe angegeben ist, wird die Farbe aus dem Layout übernommen."
+        }
+        Text::AlternateTimingMethodValueColor => "Wertfarbe",
+        Text::AlternateTimingMethodValueColorDescription => {
+            "Die Farbe der Zeit. Wenn keine Farbe angegeben ist, wird die Farbe aus dem Layout übernommen."
+        }
+        Text::AlternateTimingMethodDigitsFormat => "Ziffernformat",
+        Text::AlternateTimingMethodDigitsFormatDescription => {
+            "Legt fest, wie viele Ziffern angezeigt werden. Ist die Dauer kleiner als die anzuzeigenden Ziffern, werden Nullen angezeigt."
+        }
+        Text::AlternateTimingMethodAccuracy => "Genauigkeit",
+        Text::AlternateTimingMethodAccuracyDescription => "Die Genauigkeit der angezeigten Zeit.",
         Text::CurrentPaceBackground => "Hintergrund",
         Text::CurrentPaceBackgroundDescription => {
             "Der Hintergrund, der hinter der Komponente angezeigt wird."
@@ -730,6 +752,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::TextColorDescription => {
             "Die Farbe, die verwendet wird, wenn der Text keine eigene Farbe angibt."
         }
+        Text::ComponentAlternateTimingMethod => "Alternative Zeitmessmethode",
         Text::ComponentBlankSpace => "Leerraum",
         Text::ComponentCurrentComparison => "Aktueller Vergleich",
         Text::ComponentCurrentPace => "Aktuelles Tempo",
