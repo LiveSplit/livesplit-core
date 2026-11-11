@@ -89,7 +89,15 @@ livesplit-auto-splitting = { path = "crates/livesplit-auto-splitting", version =
 arc-swap = { version = "1.7.1", optional = true }
 log = { version = "0.4.14", default-features = false, optional = true }
 
-# Networking
+# Windows and Apple platforms provide mature TLS implementations that receive
+# security fixes through operating system updates. Use them so these fixes do
+# not require rebuilding applications that use livesplit-core.
+[target.'cfg(any(windows, target_vendor = "apple"))'.dependencies]
+reqwest = { version = "0.13.2", default-features = false, features = ["json", "native-tls"], optional = true }
+
+# Keep rustls elsewhere, particularly on Linux, to avoid OpenSSL's
+# distribution-specific library versions and native linking requirements.
+[target.'cfg(not(any(windows, target_vendor = "apple")))'.dependencies]
 reqwest = { version = "0.13.2", default-features = false, features = ["json", "rustls"], optional = true }
 
 [target.'cfg(all(target_family = "wasm", target_os = "unknown"))'.dependencies]
