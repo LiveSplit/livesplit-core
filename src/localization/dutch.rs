@@ -93,7 +93,7 @@ pub const fn resolve(text: Text) -> &'static str {
             display::Text::ZoomToggle => "Zoom omschakelen",
         },
         #[cfg(feature = "std")]
-        Text::StartSplit => "Start / Split",
+        Text::StartSplit => "Starten / Splitten",
         #[cfg(feature = "std")]
         Text::StartSplitDescription => {
             "De sneltoets om te splitten en een nieuwe poging te starten."
@@ -136,7 +136,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ToggleTimingMethod => "Timingmethode wisselen",
         #[cfg(feature = "std")]
         Text::ToggleTimingMethodDescription => {
-            "De sneltoets om te wisselen tussen «Realtime» en «Speltijd»."
+            "De sneltoets om te wisselen tussen “Echte tijd” en “Speltijd”."
         }
         Text::TimerBackground => "Achtergrond",
         Text::TimerBackgroundDescription => {
@@ -174,11 +174,11 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::ShowGameName => "Spelnaam tonen",
         Text::ShowGameNameDescription => {
-            "Geeft aan of de spelnaam onderdeel moet zijn van de titel die wordt getoond."
+            "Geeft aan of de spelnaam in de getoonde titel moet worden opgenomen."
         }
         Text::ShowCategoryName => "Categorienaam tonen",
         Text::ShowCategoryNameDescription => {
-            "Geeft aan of de categorienaam onderdeel moet zijn van de titel die wordt getoond."
+            "Geeft aan of de categorienaam in de getoonde titel moet worden opgenomen."
         }
         Text::ShowFinishedRunsCount => "Aantal voltooide runs tonen",
         Text::ShowFinishedRunsCountDescription => {
@@ -208,7 +208,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::ShowVariables => "Variabelen tonen",
         Text::ShowVariablesDescription => {
-            "De categorienaam kan worden uitgebreid met extra informatie. Dit voegt extra variabelen toe die zijn opgegeven in het tabblad variabelen van de splits-editor. Dit verwijst naar speedrun.com-variabelen, niet naar aangepaste variabelen."
+            "De categorienaam kan worden uitgebreid met extra informatie. Dit voegt extra variabelen toe die zijn opgegeven in het tabblad variabelen van de splits-editor. Dit verwijst naar Speedrun.com-variabelen, niet naar aangepaste variabelen."
         }
         Text::TotalPlaytimeBackground => "Achtergrond",
         Text::TotalPlaytimeBackgroundDescription => "De achtergrond achter het component.",
@@ -406,7 +406,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::GraphFlipGraph => "Grafiek omdraaien",
         Text::GraphFlipGraphDescription => {
-            "Geeft aan of de grafiek verticaal moet worden omgedraaid. Als dit uitstaat, worden tijden voor op de vergelijking onder de x-as weergegeven en tijden achter boven de x-as."
+            "Geeft aan of de grafiek verticaal moet worden omgedraaid. Als dit uitstaat, worden splittijden die voorlopen op de vergelijking onder de x-as weergegeven en tijden die achterlopen erboven. Als dit aanstaat, worden deze posities omgedraaid."
         }
         Text::GraphBehindBackgroundColor => "Achtergrondkleur (achter)",
         Text::GraphBehindBackgroundColorDescription => {
@@ -530,11 +530,11 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsAlwaysShowLastSplit => "Laatste split altijd tonen",
         Text::SplitsAlwaysShowLastSplitDescription => {
-            "Als niet elk segment in het venster wordt getoond, bepaalt deze optie of het laatste segment altijd getoond wordt, omdat dit de totale duur van de gekozen vergelijking bevat."
+            "Als niet elk segment in het scrollende venster wordt getoond, bepaalt deze optie of het laatste segment altijd wordt getoond, omdat dit de totale duur van de gekozen vergelijking bevat. Dit kan nuttige informatie zijn, omdat het vaak het persoonlijk record van de speler is."
         }
         Text::SplitsFillWithBlankSpace => "Opvullen met lege ruimte",
         Text::SplitsFillWithBlankSpaceDescription => {
-            "Als er niet genoeg segmenten zijn om de lijst te vullen, kun je de resterende rijen opvullen met lege ruimte om altijd het totale aantal rijen te tonen."
+            "Als er niet genoeg segmenten zijn om de lijst te vullen, kun je de resterende rijen opvullen met lege ruimte om altijd het totale aantal rijen uit de instellingen te tonen. Anders wordt het aantal getoonde rijen verminderd tot het werkelijke aantal segmenten."
         }
         Text::SplitsShowTimesBelowSegmentName => "Tijden onder segmentnaam tonen",
         Text::SplitsShowTimesBelowSegmentNameDescription => {
@@ -592,7 +592,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsUpdateTrigger => "Update-trigger",
         Text::SplitsUpdateTriggerDescription => {
-            "De voorwaarde die moet worden voldaan om de tijd te updaten met de waarde uit «Bijwerken met». Hiervoor is de tijd de waarde uit «Beginnen met»."
+            "De voorwaarde waaraan moet worden voldaan om de tijd bij te werken met de waarde uit “Bijwerken met”. Zolang niet aan deze voorwaarde is voldaan, wordt de waarde uit “Beginnen met” gebruikt."
         }
         Text::SplitsColumnComparison => "Vergelijking",
         Text::SplitsColumnComparisonDescription => {
@@ -726,15 +726,15 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::Carousel => "Carrousel",
         Text::CarouselFixedSize => "Vaste grootte",
         Text::CarouselFixedSizeDescription => {
-            "Overschrijft de grootte van de carrousel. Als dit niet is ingesteld, wordt de grootte automatisch bepaald op basis van het grootste onderliggende onderdeel."
+            "Overschrijft de grootte van de carrousel. Als dit niet is ingesteld, wordt de grootte automatisch bepaald op basis van de grootste onderliggende component."
         }
         Text::CarouselInterval => "Interval (seconden)",
         Text::CarouselIntervalDescription => {
-            "Het maximale aantal seconden dat een onderdeel wordt weergegeven voordat naar het volgende wordt gewisseld. De carrousel kan eerder wisselen als de inhoud van een ander onderliggend onderdeel wezenlijk is veranderd."
+            "Het maximale aantal seconden dat een component wordt weergegeven voordat naar de volgende wordt gewisseld. De carrousel kan eerder wisselen als de inhoud van een andere onderliggende component wezenlijk is veranderd."
         }
         Text::CarouselMinDisplay => "Minimale weergave (seconden)",
         Text::CarouselMinDisplayDescription => {
-            "Het minimum aantal seconden dat een onderdeel zichtbaar blijft voordat naar een ander onderdeel wordt gewisseld."
+            "Het minimum aantal seconden dat een component zichtbaar blijft voordat naar een andere component wordt gewisseld."
         }
         Text::ComponentCurrentPaceBestPossibleTime => "Best mogelijke tijd",
         Text::ComponentCurrentPaceWorstPossibleTime => "Slechtst mogelijke tijd",

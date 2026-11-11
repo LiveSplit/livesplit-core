@@ -93,7 +93,7 @@ pub const fn resolve(text: Text) -> &'static str {
             display::Text::ZoomToggle => "Zoom umschalten",
         },
         #[cfg(feature = "std")]
-        Text::StartSplit => "Start / Split",
+        Text::StartSplit => "Starten / Splitten",
         #[cfg(feature = "std")]
         Text::StartSplitDescription => {
             "Die Hotkey-Taste zum Splitten und Starten eines neuen Versuchs."
@@ -210,7 +210,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::ShowVariables => "Variablen anzeigen",
         Text::ShowVariablesDescription => {
-            "Der Kategoriename kann mit zusätzlichen Informationen erweitert werden. Dies fügt zusätzliche Variablen hinzu, die im Variablen-Tab des Splits-Editors angegeben sind. Dies bezieht sich auf speedrun.com-Variablen, nicht auf benutzerdefinierte Variablen."
+            "Der Kategoriename kann mit zusätzlichen Informationen erweitert werden. Dies fügt zusätzliche Variablen hinzu, die im Variablen-Tab des Splits-Editors angegeben sind. Dies bezieht sich auf Speedrun.com-Variablen, nicht auf benutzerdefinierte Variablen."
         }
         Text::TotalPlaytimeBackground => "Hintergrund",
         Text::TotalPlaytimeBackgroundDescription => {

@@ -208,7 +208,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::ShowVariables => "Показывать переменные",
         Text::ShowVariablesDescription => {
-            "Категория может быть дополнена переменными с вкладки переменных редактора сплитов. Это переменные speedrun.com, а не пользовательские."
+            "Категория может быть дополнена переменными с вкладки переменных редактора сплитов. Это переменные Speedrun.com, а не пользовательские."
         }
         Text::TotalPlaytimeBackground => "Фон",
         Text::TotalPlaytimeBackgroundDescription => "Фон за компонентом.",
@@ -444,7 +444,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::DetailedTimerSegmentTimerHeightDescription => "Высота таймера сегмента.",
         Text::DetailedTimerTimerColor => "Цвет таймера",
         Text::DetailedTimerTimerColorDescription => {
-            "Можно указать фиксированный цвет основного таймера вместо автоматического выбора по прогрессу."
+            "Позволяет задать постоянный цвет основного таймера вместо автоматического выбора цвета в зависимости от того, насколько успешно проходит текущая попытка."
         }
         Text::DetailedTimerShowTimerGradient => "Показывать градиент таймера",
         Text::DetailedTimerShowTimerGradientDescription => {
@@ -460,7 +460,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::DetailedTimerSegmentTimerColor => "Цвет таймера сегмента",
         Text::DetailedTimerSegmentTimerColorDescription => {
-            "Позволяет задать цвет таймера сегмента, отличный от основного."
+            "Позволяет задать цвет таймера сегмента, отличный от цвета по умолчанию."
         }
         Text::DetailedTimerShowSegmentTimerGradient => "Показывать градиент таймера сегмента",
         Text::DetailedTimerShowSegmentTimerGradientDescription => {
@@ -520,11 +520,11 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsAlwaysShowLastSplit => "Всегда показывать последний сегмент",
         Text::SplitsAlwaysShowLastSplitDescription => {
-            "Если окно не показывает все сегменты, определяет, следует ли всегда показывать последний сегмент, так как он содержит общее время выбранного сравнения."
+            "Если в прокручиваемом окне показаны не все сегменты, эта опция определяет, следует ли всегда показывать последний сегмент, содержащий общее время выбранного сравнения. Это полезная информация, поскольку часто это личный рекорд бегуна."
         }
         Text::SplitsFillWithBlankSpace => "Заполнить пустым пространством",
         Text::SplitsFillWithBlankSpaceDescription => {
-            "Если сегментов меньше, чем строк, оставшиеся строки можно заполнить пустым пространством, чтобы всегда показывать заданное количество строк."
+            "Если сегментов недостаточно для заполнения списка, эта опция позволяет заполнить оставшиеся строки пустым пространством, чтобы всегда показывать общее число строк, указанное в настройках. В противном случае число отображаемых строк уменьшается до фактического числа сегментов."
         }
         Text::SplitsShowTimesBelowSegmentName => "Показывать времена под названием сегмента",
         Text::SplitsShowTimesBelowSegmentNameDescription => {
@@ -576,7 +576,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsUpdateTrigger => "Условие обновления",
         Text::SplitsUpdateTriggerDescription => {
-            "Условие, при котором значение времени заменяется. Пока не выполнено, используется начальное значение."
+            "Условие, при выполнении которого время заменяется значением из поля «Обновлённое значение». Пока условие не выполнено, используется значение из поля «Начальное значение»."
         }
         Text::SplitsColumnComparison => "Сравнение",
         Text::SplitsColumnComparisonDescription => {
@@ -590,7 +590,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::TextComponentBackgroundDescription => "Фон за компонентом.",
         Text::TextComponentUseVariable => "Использовать переменную",
         Text::TextComponentUseVariableDescription => {
-            "Определяет, следует ли использовать пользовательскую переменную для отображения значения. Пользовательские переменные настраиваются в редакторе сплитов и могут предоставляться авто-сплиттером."
+            "Определяет, следует ли использовать пользовательскую переменную для отображения значения. Пользовательские переменные настраиваются в редакторе сплитов и могут предоставляться автосплиттером."
         }
         Text::TextComponentSplit => "Разделить",
         Text::TextComponentSplitDescription => {

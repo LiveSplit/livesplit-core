@@ -206,7 +206,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::ShowVariables => "Pokaż zmienne",
         Text::ShowVariablesDescription => {
-            "Nazwa kategorii może zostać rozszerzona o dodatkowe informacje. Ta opcja rozszerza ją o dodatkowe zmienne z zakładki Zmienne edytora splitów. Dotyczy to zmiennych speedrun.com, a nie zmiennych niestandardowych."
+            "Nazwa kategorii może zostać rozszerzona o dodatkowe informacje. Ta opcja rozszerza ją o dodatkowe zmienne z zakładki Zmienne edytora splitów. Dotyczy to zmiennych Speedrun.com, a nie zmiennych niestandardowych."
         }
         Text::TotalPlaytimeBackground => "Tło",
         Text::TotalPlaytimeBackgroundDescription => "Tło wyświetlane za komponentem.",

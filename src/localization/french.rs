@@ -93,7 +93,7 @@ pub const fn resolve(text: Text) -> &'static str {
             display::Text::ZoomToggle => "Basculer le zoom",
         },
         #[cfg(feature = "std")]
-        Text::StartSplit => "Démarrer / Split",
+        Text::StartSplit => "Démarrer / Splitter",
         #[cfg(feature = "std")]
         Text::StartSplitDescription => {
             "Le raccourci à utiliser pour splitter et démarrer une nouvelle tentative."
@@ -146,7 +146,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::TimerBackgroundDescription => {
             "L’arrière-plan affiché derrière le composant. Il est aussi possible d’appliquer la couleur associée à l’avance ou au retard comme couleur d’arrière-plan."
         }
-        Text::SegmentTimer => "Minuteur de segment",
+        Text::SegmentTimer => "Timer de segment",
         Text::SegmentTimerDescription => {
             "Indique s’il faut afficher le temps écoulé depuis le début du segment en cours plutôt que depuis le début de la tentative."
         }
@@ -212,7 +212,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::ShowVariables => "Afficher les variables",
         Text::ShowVariablesDescription => {
-            "Le nom de la catégorie peut être étendu avec des informations supplémentaires. Ceci l’étend avec des variables supplémentaires renseignées dans l’onglet variables de l’éditeur de splits. Il s’agit des variables speedrun.com, pas des variables personnalisées."
+            "Le nom de la catégorie peut être étendu avec des informations supplémentaires. Ceci l’étend avec des variables supplémentaires renseignées dans l’onglet variables de l’éditeur de splits. Il s’agit des variables Speedrun.com, pas des variables personnalisées."
         }
         Text::TotalPlaytimeBackground => "Arrière-plan",
         Text::TotalPlaytimeBackgroundDescription => "L’arrière-plan affiché derrière le composant.",
@@ -414,7 +414,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::GraphFlipGraph => "Inverser le graphique",
         Text::GraphFlipGraphDescription => {
-            "Indique si le graphique doit être inversé verticalement. Sinon, les temps en avance sont affichés sous l’axe des x et les temps en retard au-dessus."
+            "Indique si le graphique doit être inversé verticalement. Si cette option est désactivée, les temps de split en avance sur la comparaison sont affichés sous l’axe des x et les temps en retard au-dessus. L’activer inverse ces positions."
         }
         Text::GraphBehindBackgroundColor => "Couleur d’arrière-plan (retard)",
         Text::GraphBehindBackgroundColorDescription => {
@@ -526,7 +526,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsUpcomingSegments => "Segments à venir",
         Text::SplitsUpcomingSegmentsDescription => {
-            "Si plus de segments que de lignes sont affichés, la fenêtre défile automatiquement. Ce nombre détermine le minimum de segments futurs affichés."
+            "Si le nombre de segments dépasse le nombre de lignes affichées, la fenêtre défile automatiquement vers le haut ou le bas lorsque le segment actuel change. Ce nombre détermine le minimum de segments à venir à afficher dans cette fenêtre."
         }
         Text::SplitsShowThinSeparators => "Afficher les séparateurs fins",
         Text::SplitsShowThinSeparatorsDescription => {
@@ -538,11 +538,11 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsAlwaysShowLastSplit => "Toujours afficher le dernier split",
         Text::SplitsAlwaysShowLastSplitDescription => {
-            "Si tous les segments ne sont pas affichés, cette option indique si le dernier segment doit toujours être visible, car il contient la durée totale de la comparaison choisie."
+            "Si tous les segments ne sont pas affichés dans la fenêtre défilante, cette option indique si le dernier segment doit toujours être visible, car il contient la durée totale de la comparaison choisie. Cette information peut être utile, car il s’agit souvent du record personnel du joueur."
         }
         Text::SplitsFillWithBlankSpace => "Remplir avec des espaces vides",
         Text::SplitsFillWithBlankSpaceDescription => {
-            "S’il n’y a pas assez de segments pour remplir la liste, cette option permet de remplir les lignes restantes avec des espaces vides pour conserver le nombre de lignes total."
+            "S’il n’y a pas assez de segments pour remplir la liste, cette option permet de remplir les lignes restantes avec des espaces vides pour toujours afficher le nombre total de lignes indiqué dans les paramètres. Sinon, le nombre de lignes affichées est réduit au nombre réel de segments."
         }
         Text::SplitsShowTimesBelowSegmentName => "Afficher les temps sous le nom du segment",
         Text::SplitsShowTimesBelowSegmentNameDescription => {
@@ -602,7 +602,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsUpdateTrigger => "Déclencheur de mise à jour",
         Text::SplitsUpdateTriggerDescription => {
-            "La condition à remplir pour mettre à jour la valeur. Avant cette condition, la valeur est celle du champ « Commencer avec »."
+            "La condition à remplir pour remplacer le temps par la valeur du champ « Mettre à jour avec ». Tant que cette condition n’est pas remplie, le temps correspond à la valeur du champ « Commencer avec »."
         }
         Text::SplitsColumnComparison => "Comparaison",
         Text::SplitsColumnComparisonDescription => {
@@ -646,7 +646,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::TextComponentDisplayTwoRowsDescription => {
             "Indique si les textes gauche et droite doivent être affichés sur deux lignes distinctes."
         }
-        Text::LayoutDirection => "Direction de la mise en page",
+        Text::LayoutDirection => "Direction du layout",
         Text::LayoutDirectionDescription => {
             "La direction dans laquelle les composants sont disposés."
         }
@@ -729,7 +729,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentSumOfBest => "Somme des meilleurs",
         Text::ComponentText => "Texte",
         Text::ComponentTimer => "Timer",
-        Text::ComponentSegmentTimer => "Minuteur de segment",
+        Text::ComponentSegmentTimer => "Timer de segment",
         Text::ComponentTitle => "Titre",
         Text::ComponentTotalPlaytime => "Temps de jeu total",
         Text::Row => "Ligne",
@@ -796,7 +796,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::Untitled => "Sans titre",
         Text::SumOfBestCleanerStartOfRun => "le début du run",
         Text::SumOfBestCleanerShouldRemove => {
-            ". Pensez-vous que ce temps de segment est inexact et devrait être supprimé ?"
+            ". Pensez-vous que ce temps de segment est inexact et devrait être supprimé ?"
         }
     }
 }

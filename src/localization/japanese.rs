@@ -192,7 +192,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::ShowVariables => "変数を表示",
         Text::ShowVariablesDescription => {
-            "カテゴリー名に追加情報を付加します。スプリットエディタの変数タブで指定された追加変数を付加します。speedrun.com 変数を指し、カスタム変数ではありません。"
+            "カテゴリー名に追加情報を付加します。スプリットエディタの変数タブで指定された追加変数を付加します。Speedrun.com 変数を指し、カスタム変数ではありません。"
         }
         Text::TotalPlaytimeBackground => "背景",
         Text::TotalPlaytimeBackgroundDescription => "コンポーネントの背景。",
@@ -496,11 +496,11 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsAlwaysShowLastSplit => "最後のスプリットを常に表示",
         Text::SplitsAlwaysShowLastSplitDescription => {
-            "スクロール窓で全区間を表示しない場合、最後の区間を常に表示するかどうか。最後の区間には比較対象の合計タイムが含まれるため有用です。"
+            "スクロール窓で全区間を表示しない場合、最後の区間を常に表示するかどうか。最後の区間には比較対象の合計タイムが含まれるため有用です。比較対象として自己ベストがよく使われます。"
         }
         Text::SplitsFillWithBlankSpace => "余白で埋める",
         Text::SplitsFillWithBlankSpaceDescription => {
-            "表示行数に対して区間が少ない場合、余白で埋めて常に表示行数分の空間を表示するかどうか。"
+            "表示行数に対して区間が少ない場合、余白で埋めて常に表示行数分の空間を表示するかどうか。無効の場合、表示行数は実際の区間数まで減ります。"
         }
         Text::SplitsShowTimesBelowSegmentName => "区間名の下にタイムを表示",
         Text::SplitsShowTimesBelowSegmentNameDescription => {
