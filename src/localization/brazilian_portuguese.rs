@@ -93,58 +93,58 @@ pub const fn resolve(text: Text) -> &'static str {
             display::Text::ZoomToggle => "Alternar zoom",
         },
         #[cfg(feature = "std")]
-        Text::StartSplit => "Iniciar / Split",
+        Text::StartSplit => "Iniciar / Fazer split",
         #[cfg(feature = "std")]
         Text::StartSplitDescription => {
-            "O atalho de teclado para fazer split e iniciar uma nova tentativa."
+            "A tecla de atalho para fazer split e iniciar uma nova tentativa."
         }
         #[cfg(feature = "std")]
         Text::Reset => "Resetar",
         #[cfg(feature = "std")]
-        Text::ResetDescription => "O atalho de teclado para resetar a tentativa atual.",
+        Text::ResetDescription => "A tecla de atalho para resetar a tentativa atual.",
         #[cfg(feature = "std")]
         Text::UndoSplit => "Desfazer split",
         #[cfg(feature = "std")]
-        Text::UndoSplitDescription => "O atalho de teclado para desfazer o último split.",
+        Text::UndoSplitDescription => "A tecla de atalho para desfazer o último split.",
         #[cfg(feature = "std")]
         Text::SkipSplit => "Pular split",
         #[cfg(feature = "std")]
-        Text::SkipSplitDescription => "O atalho de teclado para pular o split atual.",
+        Text::SkipSplitDescription => "A tecla de atalho para pular o split atual.",
         #[cfg(feature = "std")]
         Text::Pause => "Pausar",
         #[cfg(feature = "std")]
         Text::PauseDescription => {
-            "O atalho de teclado para pausar a tentativa atual. Também pode ser usado para iniciar uma nova tentativa."
+            "A tecla de atalho para pausar a tentativa atual. Também pode ser usado para iniciar uma nova tentativa."
         }
         #[cfg(feature = "std")]
         Text::UndoAllPauses => "Desfazer todas as pausas",
         #[cfg(feature = "std")]
         Text::UndoAllPausesDescription => {
-            "O atalho de teclado para remover todos os tempos de pausa do tempo atual. Útil se você pausou por engano."
+            "A tecla de atalho para remover todos os tempos de pausa do tempo atual. Útil se você pausou por engano."
         }
         #[cfg(feature = "std")]
         Text::PreviousComparison => "Comparação anterior",
         #[cfg(feature = "std")]
         Text::PreviousComparisonDescription => {
-            "O atalho de teclado para mudar para a comparação anterior."
+            "A tecla de atalho para mudar para a comparação anterior."
         }
         #[cfg(feature = "std")]
         Text::NextComparison => "Próxima comparação",
         #[cfg(feature = "std")]
         Text::NextComparisonDescription => {
-            "O atalho de teclado para mudar para a próxima comparação."
+            "A tecla de atalho para mudar para a próxima comparação."
         }
         #[cfg(feature = "std")]
         Text::ToggleTimingMethod => "Alternar método de cronometragem",
         #[cfg(feature = "std")]
         Text::ToggleTimingMethodDescription => {
-            "O atalho de teclado para alternar entre «Tempo real» e «Tempo de jogo»."
+            "A tecla de atalho para alternar entre «Tempo real» e «Tempo de jogo»."
         }
         Text::TimerBackground => "Fundo",
         Text::TimerBackgroundDescription => {
             "O fundo mostrado atrás do componente. Também é possível aplicar a cor associada ao tempo à frente ou atrás como cor de fundo."
         }
-        Text::SegmentTimer => "Cronômetro do segmento",
+        Text::SegmentTimer => "Timer de segmento",
         Text::SegmentTimerDescription => {
             "Indica se deve mostrar o tempo desde o início do segmento atual em vez do início da tentativa."
         }
@@ -210,7 +210,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::ShowVariables => "Mostrar variáveis",
         Text::ShowVariablesDescription => {
-            "O nome da categoria pode ser estendido com informações adicionais. Isso o estende com variáveis adicionais fornecidas na aba de variáveis do editor de splits. Refere-se às variáveis do speedrun.com, não às variáveis personalizadas."
+            "O nome da categoria pode ser estendido com informações adicionais. Isso o estende com variáveis adicionais fornecidas na aba de variáveis do editor de splits. Refere-se às variáveis do Speedrun.com, não às variáveis personalizadas."
         }
         Text::TotalPlaytimeBackground => "Fundo",
         Text::TotalPlaytimeBackgroundDescription => "O fundo mostrado atrás do componente.",
@@ -404,7 +404,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::GraphFlipGraph => "Inverter gráfico",
         Text::GraphFlipGraphDescription => {
-            "Indica se o gráfico deve ser invertido verticalmente. Se não ativado, tempos à frente são exibidos abaixo do eixo x e tempos atrás acima."
+            "Indica se o gráfico deve ser invertido verticalmente. Se a opção estiver desativada, os tempos de split à frente da comparação são exibidos abaixo do eixo x e os tempos em atraso acima. Ativar esta opção inverte essas posições."
         }
         Text::GraphBehindBackgroundColor => "Cor de fundo (atrás)",
         Text::GraphBehindBackgroundColorDescription => {
@@ -530,11 +530,11 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsAlwaysShowLastSplit => "Mostrar sempre o último split",
         Text::SplitsAlwaysShowLastSplitDescription => {
-            "Se nem todos os segmentos são mostrados na janela, esta opção determina se o último segmento deve sempre ser mostrado, pois contém a duração total da comparação escolhida."
+            "Se nem todos os segmentos forem exibidos na janela de rolagem, esta opção determina se o último segmento deve ser sempre exibido, pois contém a duração total da comparação escolhida. Essa informação pode ser útil, pois geralmente corresponde ao recorde pessoal do jogador."
         }
         Text::SplitsFillWithBlankSpace => "Preencher com espaço em branco",
         Text::SplitsFillWithBlankSpaceDescription => {
-            "Se não houver segmentos suficientes para preencher a lista, esta opção permite preencher as linhas restantes com espaço em branco para sempre mostrar o número total de linhas."
+            "Se não houver segmentos suficientes para preencher a lista, esta opção permite preencher as linhas restantes com espaço em branco para sempre exibir o número total de linhas indicado nas configurações. Caso contrário, o número de linhas exibidas é reduzido ao número real de segmentos."
         }
         Text::SplitsShowTimesBelowSegmentName => "Mostrar tempos abaixo do nome do segmento",
         Text::SplitsShowTimesBelowSegmentNameDescription => {
@@ -684,7 +684,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::NotRunning => "Não em execução",
         Text::NotRunningDescription => "A cor a usar quando não há uma tentativa ativa.",
-        Text::PersonalBest => "Melhor pessoal",
+        Text::PersonalBest => "Recorde pessoal",
         Text::PersonalBestDescription => {
             "A cor a usar quando você consegue um novo recorde pessoal."
         }
@@ -699,7 +699,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentBlankSpace => "Espaço em branco",
         Text::ComponentCurrentComparison => "Comparação atual",
         Text::ComponentCurrentPace => "Ritmo atual",
-        Text::ComponentDelta => "Diferença",
+        Text::ComponentDelta => "Delta",
         Text::ComponentDetailedTimer => "Timer detalhado",
         Text::ComponentGraph => "Gráfico",
         Text::ComponentPbChance => "Chance de PB",
@@ -711,7 +711,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentSumOfBest => "Soma dos melhores",
         Text::ComponentText => "Texto",
         Text::ComponentTimer => "Timer",
-        Text::ComponentSegmentTimer => "Cronômetro do segmento",
+        Text::ComponentSegmentTimer => "Timer de segmento",
         Text::ComponentTitle => "Título",
         Text::ComponentTotalPlaytime => "Tempo total de jogo",
         Text::Row => "Linha",

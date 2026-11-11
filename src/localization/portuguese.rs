@@ -93,58 +93,58 @@ pub const fn resolve(text: Text) -> &'static str {
             display::Text::ZoomToggle => "Alternar zoom",
         },
         #[cfg(feature = "std")]
-        Text::StartSplit => "Iniciar / Split",
+        Text::StartSplit => "Iniciar / Fazer split",
         #[cfg(feature = "std")]
         Text::StartSplitDescription => {
-            "O atalho de teclado para fazer split e iniciar uma nova tentativa."
+            "A tecla de atalho para fazer split e iniciar uma nova tentativa."
         }
         #[cfg(feature = "std")]
         Text::Reset => "Reiniciar",
         #[cfg(feature = "std")]
-        Text::ResetDescription => "O atalho de teclado para reiniciar a tentativa atual.",
+        Text::ResetDescription => "A tecla de atalho para reiniciar a tentativa atual.",
         #[cfg(feature = "std")]
         Text::UndoSplit => "Desfazer split",
         #[cfg(feature = "std")]
-        Text::UndoSplitDescription => "O atalho de teclado para desfazer o último split.",
+        Text::UndoSplitDescription => "A tecla de atalho para desfazer o último split.",
         #[cfg(feature = "std")]
         Text::SkipSplit => "Ignorar split",
         #[cfg(feature = "std")]
-        Text::SkipSplitDescription => "O atalho de teclado para ignorar o split atual.",
+        Text::SkipSplitDescription => "A tecla de atalho para ignorar o split atual.",
         #[cfg(feature = "std")]
         Text::Pause => "Pausar",
         #[cfg(feature = "std")]
         Text::PauseDescription => {
-            "O atalho de teclado para pausar a tentativa atual. Também pode ser usado para iniciar uma nova tentativa."
+            "A tecla de atalho para pausar a tentativa atual. Também pode ser usado para iniciar uma nova tentativa."
         }
         #[cfg(feature = "std")]
         Text::UndoAllPauses => "Desfazer todas as pausas",
         #[cfg(feature = "std")]
         Text::UndoAllPausesDescription => {
-            "O atalho de teclado para remover todos os tempos de pausa do tempo atual. Útil se você pausou por engano."
+            "A tecla de atalho para remover todos os tempos de pausa do tempo atual. É útil se colocou o temporizador em pausa por engano e pretende anular a pausa."
         }
         #[cfg(feature = "std")]
         Text::PreviousComparison => "Comparação anterior",
         #[cfg(feature = "std")]
         Text::PreviousComparisonDescription => {
-            "O atalho de teclado para mudar para a comparação anterior."
+            "A tecla de atalho para mudar para a comparação anterior."
         }
         #[cfg(feature = "std")]
         Text::NextComparison => "Próxima comparação",
         #[cfg(feature = "std")]
         Text::NextComparisonDescription => {
-            "O atalho de teclado para mudar para a próxima comparação."
+            "A tecla de atalho para mudar para a próxima comparação."
         }
         #[cfg(feature = "std")]
         Text::ToggleTimingMethod => "Alternar método de cronometragem",
         #[cfg(feature = "std")]
         Text::ToggleTimingMethodDescription => {
-            "O atalho de teclado para alternar entre «Tempo real» e «Tempo de jogo»."
+            "A tecla de atalho para alternar entre «Tempo real» e «Tempo de jogo»."
         }
         Text::TimerBackground => "Fundo",
         Text::TimerBackgroundDescription => {
             "O fundo mostrado atrás do componente. Também é possível aplicar a cor associada ao tempo à frente ou atrás como cor de fundo."
         }
-        Text::SegmentTimer => "Cronômetro do segmento",
+        Text::SegmentTimer => "Temporizador do segmento",
         Text::SegmentTimerDescription => {
             "Indica se deve mostrar o tempo desde o início do segmento atual em vez do início da tentativa."
         }
@@ -153,18 +153,18 @@ pub const fn resolve(text: Text) -> &'static str {
             "Indica o método de cronometragem a usar. Se não for especificado, usa-se o método atual."
         }
         Text::Height => "Altura",
-        Text::HeightDescription => "A altura do cronômetro.",
+        Text::HeightDescription => "A altura do temporizador.",
         Text::TimerTextColor => "Cor do texto",
         Text::TimerTextColorDescription => {
-            "A cor do tempo mostrado. Se não for especificada, a cor é escolhida automaticamente conforme o andamento da tentativa. Essas cores podem ser definidas nas configurações gerais do layout."
+            "A cor do tempo mostrado. Se não for especificada, a cor é escolhida automaticamente conforme o andamento da tentativa. Essas cores podem ser definidas nas definições gerais do layout."
         }
         Text::ShowGradient => "Mostrar gradiente",
         Text::ShowGradientDescription => {
-            "Determina se a cor do cronômetro é exibida como gradiente."
+            "Determina se a cor do temporizador é apresentada como gradiente."
         }
         Text::DigitsFormat => "Formato de dígitos",
         Text::DigitsFormatDescription => {
-            "Indica quantos dígitos mostrar. Se a duração for menor do que os dígitos a mostrar, zeros serão exibidos."
+            "Indica quantos dígitos mostrar. Se a duração for menor do que os dígitos a mostrar, zeros serão apresentados."
         }
         Text::Accuracy => "Precisão",
         Text::AccuracyDescription => "A precisão do tempo mostrado.",
@@ -176,19 +176,19 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::ShowGameName => "Mostrar nome do jogo",
         Text::ShowGameNameDescription => {
-            "Indica se o nome do jogo deve fazer parte do título exibido."
+            "Indica se o nome do jogo deve fazer parte do título apresentado."
         }
         Text::ShowCategoryName => "Mostrar nome da categoria",
         Text::ShowCategoryNameDescription => {
-            "Indica se o nome da categoria deve fazer parte do título exibido."
+            "Indica se o nome da categoria deve fazer parte do título apresentado."
         }
         Text::ShowFinishedRunsCount => "Mostrar quantidade de runs concluídos",
         Text::ShowFinishedRunsCountDescription => {
-            "Indica se o número de runs concluídos com sucesso deve ser exibido."
+            "Indica se o número de runs concluídos com sucesso deve ser apresentado."
         }
         Text::ShowAttemptCount => "Mostrar quantidade de tentativas",
         Text::ShowAttemptCountDescription => {
-            "Indica se o número total de tentativas deve ser exibido."
+            "Indica se o número total de tentativas deve ser apresentado."
         }
         Text::TextAlignment => "Alinhamento do texto",
         Text::TextAlignmentDescription => "Indica o alinhamento do título.",
@@ -198,19 +198,19 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::DisplayGameIcon => "Mostrar ícone do jogo",
         Text::DisplayGameIconDescription => {
-            "Indica se o ícone do jogo deve ser exibido, caso exista um ícone armazenado nos splits."
+            "Indica se o ícone do jogo deve ser apresentado, caso exista um ícone armazenado nos splits."
         }
         Text::ShowRegion => "Mostrar região",
         Text::ShowRegionDescription => {
-            "O nome da categoria pode ser estendido com informações adicionais. Isso o estende com a região do jogo, se fornecida na aba de variáveis do editor de splits."
+            "O nome da categoria pode ser estendido com informações adicionais. Isso o estende com a região do jogo, se fornecida no separador de variáveis do editor de splits."
         }
         Text::ShowPlatform => "Mostrar plataforma",
         Text::ShowPlatformDescription => {
-            "O nome da categoria pode ser estendido com informações adicionais. Isso o estende com a plataforma em que o jogo é jogado, se fornecida na aba de variáveis do editor de splits."
+            "O nome da categoria pode ser estendido com informações adicionais. Isso o estende com a plataforma em que o jogo é jogado, se fornecida no separador de variáveis do editor de splits."
         }
         Text::ShowVariables => "Mostrar variáveis",
         Text::ShowVariablesDescription => {
-            "O nome da categoria pode ser estendido com informações adicionais. Isso o estende com variáveis adicionais fornecidas na aba de variáveis do editor de splits. Refere-se às variáveis do speedrun.com, não às variáveis personalizadas."
+            "O nome da categoria pode ser estendido com informações adicionais. Isso o estende com variáveis adicionais fornecidas no separador de variáveis do editor de splits. Refere-se às variáveis do Speedrun.com, não às variáveis personalizadas."
         }
         Text::TotalPlaytimeBackground => "Fundo",
         Text::TotalPlaytimeBackgroundDescription => "O fundo mostrado atrás do componente.",
@@ -267,7 +267,7 @@ pub const fn resolve(text: Text) -> &'static str {
             "A cor do tempo previsto. Se não for especificada, usa-se a cor do layout."
         }
         Text::CurrentPaceAccuracy => "Precisão",
-        Text::CurrentPaceAccuracyDescription => "A precisão do tempo previsto exibido.",
+        Text::CurrentPaceAccuracyDescription => "A precisão do tempo previsto apresentado.",
         Text::DeltaBackground => "Fundo",
         Text::DeltaBackgroundDescription => "O fundo mostrado atrás do componente.",
         Text::DeltaComparison => "Comparação",
@@ -284,10 +284,10 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::DeltaDropDecimals => "Remover decimais",
         Text::DeltaDropDecimalsDescription => {
-            "Indica se os decimais devem ser ocultados quando o delta exibido ultrapassa um minuto."
+            "Indica se os decimais devem ser ocultados quando o delta apresentado ultrapassa um minuto."
         }
         Text::DeltaAccuracy => "Precisão",
-        Text::DeltaAccuracyDescription => "A precisão do delta exibido.",
+        Text::DeltaAccuracyDescription => "A precisão do delta apresentado.",
         Text::SumOfBestBackground => "Fundo",
         Text::SumOfBestBackgroundDescription => "O fundo mostrado atrás do componente.",
         Text::SumOfBestDisplayTwoRows => "Exibir 2 linhas",
@@ -303,7 +303,9 @@ pub const fn resolve(text: Text) -> &'static str {
             "A cor da soma dos melhores segmentos. Se não for especificada, usa-se a cor do layout."
         }
         Text::SumOfBestAccuracy => "Precisão",
-        Text::SumOfBestAccuracyDescription => "A precisão da soma dos melhores segmentos exibida.",
+        Text::SumOfBestAccuracyDescription => {
+            "A precisão da soma dos melhores segmentos apresentada."
+        }
         Text::PbChanceBackground => "Fundo",
         Text::PbChanceBackgroundDescription => "O fundo mostrado atrás do componente.",
         Text::PbChanceDisplayTwoRows => "Exibir 2 linhas",
@@ -342,7 +344,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::PossibleTimeSaveAccuracy => "Precisão",
         Text::PossibleTimeSaveAccuracyDescription => {
-            "A precisão do tempo potencialmente economizável exibido."
+            "A precisão do tempo potencialmente economizável apresentado."
         }
         Text::PreviousSegmentBackground => "Fundo",
         Text::PreviousSegmentBackgroundDescription => "O fundo mostrado atrás do componente.",
@@ -360,10 +362,10 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::PreviousSegmentDropDecimals => "Remover decimais",
         Text::PreviousSegmentDropDecimalsDescription => {
-            "Indica se os decimais devem ser removidos quando o tempo exibido ultrapassa um minuto."
+            "Indica se os decimais devem ser removidos quando o tempo apresentado ultrapassa um minuto."
         }
         Text::PreviousSegmentAccuracy => "Precisão",
-        Text::PreviousSegmentAccuracyDescription => "A precisão do tempo exibido.",
+        Text::PreviousSegmentAccuracyDescription => "A precisão do tempo apresentado.",
         Text::PreviousSegmentShowPossibleTimeSave => "Mostrar economia de tempo possível",
         Text::PreviousSegmentShowPossibleTimeSaveDescription => {
             "Indica se deve mostrar, além do tempo ganho ou perdido, quanto tempo poderia ter sido economizado no segmento anterior."
@@ -387,7 +389,7 @@ pub const fn resolve(text: Text) -> &'static str {
             "A cor do tempo de segmento. Se não for especificada, usa-se a cor do layout."
         }
         Text::SegmentTimeAccuracy => "Precisão",
-        Text::SegmentTimeAccuracyDescription => "A precisão do tempo de segmento exibido.",
+        Text::SegmentTimeAccuracyDescription => "A precisão do tempo de segmento apresentado.",
         Text::GraphComparison => "Comparação",
         Text::GraphComparisonDescription => {
             "A comparação a usar no gráfico. Se não for especificada, usa-se a comparação atual."
@@ -404,7 +406,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::GraphFlipGraph => "Inverter gráfico",
         Text::GraphFlipGraphDescription => {
-            "Indica se o gráfico deve ser invertido verticalmente. Se não ativado, tempos à frente são exibidos abaixo do eixo x e tempos atrás acima."
+            "Indica se o gráfico deve ser invertido verticalmente. Se a opção estiver desativada, os tempos de split à frente da comparação são apresentados abaixo do eixo x e os tempos em atraso acima. Ativar esta opção inverte essas posições."
         }
         Text::GraphBehindBackgroundColor => "Cor de fundo (atrás)",
         Text::GraphBehindBackgroundColorDescription => {
@@ -434,63 +436,63 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::DetailedTimerComparison1 => "Comparação 1",
         Text::DetailedTimerComparison1Description => {
-            "A primeira comparação cujo tempo de segmento é exibido. Se não for especificada, usa-se a comparação atual."
+            "A primeira comparação cujo tempo de segmento é apresentado. Se não for especificada, usa-se a comparação atual."
         }
         Text::DetailedTimerComparison2 => "Comparação 2",
         Text::DetailedTimerComparison2Description => {
-            "A segunda comparação cujo tempo de segmento é exibido. Se não for especificada, usa-se a comparação atual, a menos que a primeira comparação também seja None. Não é exibida se a segunda comparação estiver oculta."
+            "A segunda comparação cujo tempo de segmento é apresentado. Se não for especificada, usa-se a comparação atual, a menos que a primeira comparação também seja None. Não é apresentada se a segunda comparação estiver oculta."
         }
         Text::DetailedTimerHideSecondComparison => "Ocultar segunda comparação",
         Text::DetailedTimerHideSecondComparisonDescription => {
             "Indica se deve mostrar apenas uma comparação."
         }
-        Text::DetailedTimerTimerHeight => "Altura do cronômetro",
-        Text::DetailedTimerTimerHeightDescription => "A altura do cronômetro de corrida.",
-        Text::DetailedTimerSegmentTimerHeight => "Altura do cronômetro de segmento",
-        Text::DetailedTimerSegmentTimerHeightDescription => "A altura do cronômetro de segmento.",
-        Text::DetailedTimerTimerColor => "Cor do cronômetro",
+        Text::DetailedTimerTimerHeight => "Altura do temporizador",
+        Text::DetailedTimerTimerHeightDescription => "A altura do temporizador de corrida.",
+        Text::DetailedTimerSegmentTimerHeight => "Altura do temporizador de segmento",
+        Text::DetailedTimerSegmentTimerHeightDescription => "A altura do temporizador de segmento.",
+        Text::DetailedTimerTimerColor => "Cor do temporizador",
         Text::DetailedTimerTimerColorDescription => {
-            "Em vez de determinar automaticamente a cor do cronômetro principal com base no andamento da tentativa, pode-se fornecer uma cor fixa."
+            "Em vez de determinar automaticamente a cor do temporizador principal com base no andamento da tentativa, pode-se fornecer uma cor fixa."
         }
-        Text::DetailedTimerShowTimerGradient => "Mostrar gradiente do cronômetro",
+        Text::DetailedTimerShowTimerGradient => "Mostrar gradiente do temporizador",
         Text::DetailedTimerShowTimerGradientDescription => {
-            "O cronômetro principal transforma automaticamente sua cor em um gradiente vertical se esta opção estiver ativada. Caso contrário, usa-se a cor real."
+            "O temporizador principal transforma automaticamente sua cor em um gradiente vertical se esta opção estiver ativada. Caso contrário, usa-se a cor real."
         }
-        Text::DetailedTimerTimerDigitsFormat => "Formato de dígitos do cronômetro",
+        Text::DetailedTimerTimerDigitsFormat => "Formato de dígitos do temporizador",
         Text::DetailedTimerTimerDigitsFormatDescription => {
-            "Indica quantos dígitos mostrar no cronômetro principal. Se a duração for menor, zeros são exibidos."
+            "Indica quantos dígitos mostrar no temporizador principal. Se a duração for menor, zeros são apresentados."
         }
-        Text::DetailedTimerTimerAccuracy => "Precisão do cronômetro",
+        Text::DetailedTimerTimerAccuracy => "Precisão do temporizador",
         Text::DetailedTimerTimerAccuracyDescription => {
-            "A precisão do tempo mostrado no cronômetro principal."
+            "A precisão do tempo mostrado no temporizador principal."
         }
-        Text::DetailedTimerSegmentTimerColor => "Cor do cronômetro de segmento",
+        Text::DetailedTimerSegmentTimerColor => "Cor do temporizador de segmento",
         Text::DetailedTimerSegmentTimerColorDescription => {
-            "Altera a cor do cronômetro de segmento para uma cor diferente da padrão."
+            "Altera a cor do temporizador de segmento para uma cor diferente da predefinida."
         }
         Text::DetailedTimerShowSegmentTimerGradient => {
-            "Mostrar gradiente do cronômetro de segmento"
+            "Mostrar gradiente do temporizador de segmento"
         }
         Text::DetailedTimerShowSegmentTimerGradientDescription => {
-            "O cronômetro de segmento transforma automaticamente sua cor em um gradiente vertical se esta opção estiver ativada. Caso contrário, usa-se a cor real."
+            "O temporizador de segmento transforma automaticamente sua cor em um gradiente vertical se esta opção estiver ativada. Caso contrário, usa-se a cor real."
         }
         Text::DetailedTimerSegmentTimerDigitsFormat => {
-            "Formato de dígitos do cronômetro de segmento"
+            "Formato de dígitos do temporizador de segmento"
         }
         Text::DetailedTimerSegmentTimerDigitsFormatDescription => {
-            "Indica quantos dígitos mostrar no cronômetro de segmento. Se a duração for menor, zeros são exibidos."
+            "Indica quantos dígitos mostrar no temporizador de segmento. Se a duração for menor, zeros são apresentados."
         }
-        Text::DetailedTimerSegmentTimerAccuracy => "Precisão do cronômetro de segmento",
+        Text::DetailedTimerSegmentTimerAccuracy => "Precisão do temporizador de segmento",
         Text::DetailedTimerSegmentTimerAccuracyDescription => {
-            "A precisão do tempo mostrado no cronômetro de segmento."
+            "A precisão do tempo mostrado no temporizador de segmento."
         }
         Text::DetailedTimerComparisonNamesColor => "Cor dos nomes de comparação",
         Text::DetailedTimerComparisonNamesColorDescription => {
-            "A cor dos nomes de comparação se forem exibidos. Se não for especificada, usa-se a cor do layout."
+            "A cor dos nomes de comparação se forem apresentados. Se não for especificada, usa-se a cor do layout."
         }
         Text::DetailedTimerComparisonTimesColor => "Cor dos tempos de comparação",
         Text::DetailedTimerComparisonTimesColorDescription => {
-            "A cor dos tempos de comparação se forem exibidos. Se não for especificada, usa-se a cor do layout."
+            "A cor dos tempos de comparação se forem apresentados. Se não for especificada, usa-se a cor do layout."
         }
         Text::DetailedTimerComparisonTimesAccuracy => "Precisão dos tempos de comparação",
         Text::DetailedTimerComparisonTimesAccuracyDescription => {
@@ -498,11 +500,11 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::DetailedTimerShowSegmentName => "Mostrar nome do segmento",
         Text::DetailedTimerShowSegmentNameDescription => {
-            "Indica se o nome do segmento deve ser exibido."
+            "Indica se o nome do segmento deve ser apresentado."
         }
         Text::DetailedTimerSegmentNameColor => "Cor do nome do segmento",
         Text::DetailedTimerSegmentNameColorDescription => {
-            "A cor do nome do segmento, se for exibido. Se não for especificada, usa-se a cor do layout."
+            "A cor do nome do segmento, se for apresentado. Se não for especificada, usa-se a cor do layout."
         }
         Text::DetailedTimerDisplayIcon => "Mostrar ícone",
         Text::DetailedTimerDisplayIconDescription => {
@@ -510,15 +512,15 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsBackground => "Fundo",
         Text::SplitsBackgroundDescription => {
-            "O fundo mostrado atrás do componente. Você pode escolher cores alternadas; nesse caso, cada linha alterna entre as duas cores escolhidas."
+            "O fundo mostrado atrás do componente. Pode escolher cores alternadas; nesse caso, cada linha alterna entre as duas cores escolhidas."
         }
         Text::SplitsTotalRows => "Total de linhas",
         Text::SplitsTotalRowsDescription => {
-            "O número total de linhas de segmentos a mostrar. Se definido como 0, todos os segmentos são mostrados. Se for menor que o total, apenas uma janela é mostrada e pode rolar."
+            "O número total de linhas de segmentos a apresentar na lista. Se definido como 0, são apresentados todos os segmentos. Se for inferior ao número total de segmentos, apenas parte da lista é apresentada numa janela que permite deslocar o conteúdo para cima ou para baixo."
         }
         Text::SplitsUpcomingSegments => "Segmentos futuros",
         Text::SplitsUpcomingSegmentsDescription => {
-            "Se houver mais segmentos do que linhas exibidas, a janela rola automaticamente quando o segmento atual muda. Este número determina o mínimo de segmentos futuros a exibir."
+            "Se houver mais segmentos do que linhas apresentadas, a janela desloca-se automaticamente para cima ou para baixo quando o segmento atual muda. Este número determina o mínimo de segmentos seguintes a apresentar nessa janela."
         }
         Text::SplitsShowThinSeparators => "Mostrar separadores finos",
         Text::SplitsShowThinSeparatorsDescription => {
@@ -530,11 +532,11 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsAlwaysShowLastSplit => "Mostrar sempre o último split",
         Text::SplitsAlwaysShowLastSplitDescription => {
-            "Se nem todos os segmentos são mostrados na janela, esta opção determina se o último segmento deve sempre ser mostrado, pois contém a duração total da comparação escolhida."
+            "Se nem todos os segmentos forem apresentados na janela de deslocamento, esta opção determina se o último segmento deve ser sempre apresentado, pois contém a duração total da comparação escolhida. Esta informação pode ser útil, pois corresponde frequentemente ao recorde pessoal do jogador."
         }
         Text::SplitsFillWithBlankSpace => "Preencher com espaço em branco",
         Text::SplitsFillWithBlankSpaceDescription => {
-            "Se não houver segmentos suficientes para preencher a lista, esta opção permite preencher as linhas restantes com espaço em branco para sempre mostrar o número total de linhas."
+            "Se não houver segmentos suficientes para preencher a lista, esta opção permite preencher as linhas restantes com espaço em branco para apresentar sempre o número total de linhas indicado nas definições. Caso contrário, o número de linhas apresentadas é reduzido ao número real de segmentos."
         }
         Text::SplitsShowTimesBelowSegmentName => "Mostrar tempos abaixo do nome do segmento",
         Text::SplitsShowTimesBelowSegmentNameDescription => {
@@ -562,10 +564,12 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsShowColumnLabels => "Mostrar rótulos das colunas",
         Text::SplitsShowColumnLabelsDescription => {
-            "Indica se os nomes das colunas devem ser exibidos no topo da lista."
+            "Indica se os nomes das colunas devem ser apresentados no topo da lista."
         }
         Text::SplitsSubsplitDisplayMode => "Modo de exibição dos subsplits",
-        Text::SplitsSubsplitDisplayModeDescription => "Controla como os subsplits são exibidos.",
+        Text::SplitsSubsplitDisplayModeDescription => {
+            "Controla como os subsplits são apresentados."
+        }
         Text::SplitsColumns => "Colunas",
         Text::SplitsColumnsDescription => {
             "O número de colunas a mostrar em cada linha. Cada coluna pode ser configurada para mostrar informações diferentes. As colunas são definidas da direita para a esquerda."
@@ -610,7 +614,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::TextComponentSplit => "Separar",
         Text::TextComponentSplitDescription => {
-            "Indica se o texto deve ser dividido em uma parte esquerda e direita. Caso contrário, apenas um texto centralizado é exibido."
+            "Indica se o texto deve ser dividido em uma parte esquerda e direita. Caso contrário, apenas um texto centralizado é apresentado."
         }
         Text::TextComponentText => "Texto",
         Text::TextComponentTextDescription => "Indica o texto a exibir no centro.",
@@ -634,7 +638,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::TextComponentValueColorDescription => "A cor do valor da variável.",
         Text::TextComponentDisplayTwoRows => "Exibir 2 linhas",
         Text::TextComponentDisplayTwoRowsDescription => {
-            "Indica se os textos da esquerda e direita devem ser exibidos em duas linhas separadas."
+            "Indica se os textos da esquerda e direita devem ser apresentados em duas linhas separadas."
         }
         Text::LayoutDirection => "Direção do layout",
         Text::LayoutDirectionDescription => "A direção em que os componentes são dispostos.",
@@ -646,17 +650,17 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::GroupFixedHeightDescription => {
             "Uma altura fixa opcional para esta linha de componentes. Se não for especificada, a altura é determinada automaticamente."
         }
-        Text::CustomTimerFont => "Fonte personalizada do cronômetro",
+        Text::CustomTimerFont => "Fonte personalizada do temporizador",
         Text::CustomTimerFontDescription => {
-            "Permite especificar uma fonte personalizada para o cronômetro. Se não for definida, usa-se a fonte padrão."
+            "Permite especificar uma fonte personalizada para o temporizador. Se não for definida, usa-se a fonte predefinida."
         }
         Text::CustomTimesFont => "Fonte personalizada dos tempos",
         Text::CustomTimesFontDescription => {
-            "Permite especificar uma fonte personalizada para os tempos. Se não for definida, usa-se a fonte padrão."
+            "Permite especificar uma fonte personalizada para os tempos. Se não for definida, usa-se a fonte predefinida."
         }
         Text::CustomTextFont => "Fonte personalizada do texto",
         Text::CustomTextFontDescription => {
-            "Permite especificar uma fonte personalizada para o texto. Se não for definida, usa-se a fonte padrão."
+            "Permite especificar uma fonte personalizada para o texto. Se não for definida, usa-se a fonte predefinida."
         }
         Text::TextShadow => "Sombra do texto",
         Text::TextShadowDescription => {
@@ -665,31 +669,29 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::Background => "Fundo",
         Text::BackgroundDescription => "O fundo mostrado atrás de todo o layout.",
         Text::BestSegment => "Melhor segmento",
-        Text::BestSegmentDescription => "A cor a usar quando você alcança um novo melhor segmento.",
-        Text::AheadGainingTime => "À frente (ganhando tempo)",
+        Text::BestSegmentDescription => "A cor a usar quando alcança um novo melhor segmento.",
+        Text::AheadGainingTime => "À frente (a ganhar tempo)",
         Text::AheadGainingTimeDescription => {
-            "A cor a usar quando você está à frente e ganhando ainda mais tempo."
+            "A cor a usar quando está à frente e a ganhar ainda mais tempo."
         }
-        Text::AheadLosingTime => "À frente (perdendo tempo)",
+        Text::AheadLosingTime => "À frente (a perder tempo)",
         Text::AheadLosingTimeDescription => {
-            "A cor a usar quando você está à frente, mas perdendo tempo."
+            "A cor a usar quando está à frente, mas a perder tempo."
         }
-        Text::BehindGainingTime => "Atrás (recuperando tempo)",
+        Text::BehindGainingTime => "Atrás (a recuperar tempo)",
         Text::BehindGainingTimeDescription => {
-            "A cor a usar quando você está atrás, mas recuperando tempo."
+            "A cor a usar quando está atrás, mas a recuperar tempo."
         }
-        Text::BehindLosingTime => "Atrás (perdendo tempo)",
+        Text::BehindLosingTime => "Atrás (a perder tempo)",
         Text::BehindLosingTimeDescription => {
-            "A cor a usar quando você está atrás e perdendo ainda mais tempo."
+            "A cor a usar quando está atrás e a perder ainda mais tempo."
         }
         Text::NotRunning => "Não em execução",
         Text::NotRunningDescription => "A cor a usar quando não há uma tentativa ativa.",
-        Text::PersonalBest => "Melhor pessoal",
-        Text::PersonalBestDescription => {
-            "A cor a usar quando você consegue um novo recorde pessoal."
-        }
+        Text::PersonalBest => "Recorde pessoal",
+        Text::PersonalBestDescription => "A cor a usar quando consegue um novo recorde pessoal.",
         Text::Paused => "Pausado",
-        Text::PausedDescription => "A cor a usar quando o cronômetro está pausado.",
+        Text::PausedDescription => "A cor a usar quando o temporizador está pausado.",
         Text::ThinSeparators => "Separadores finos",
         Text::ThinSeparatorsDescription => "A cor dos separadores finos.",
         Text::Separators => "Separadores",
@@ -699,7 +701,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentBlankSpace => "Espaço em branco",
         Text::ComponentCurrentComparison => "Comparação atual",
         Text::ComponentCurrentPace => "Ritmo atual",
-        Text::ComponentDelta => "Diferença",
+        Text::ComponentDelta => "Delta",
         Text::ComponentDetailedTimer => "Temporizador detalhado",
         Text::ComponentGraph => "Gráfico",
         Text::ComponentPbChance => "Probabilidade de PB",
@@ -711,7 +713,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentSumOfBest => "Soma dos melhores",
         Text::ComponentText => "Texto",
         Text::ComponentTimer => "Temporizador",
-        Text::ComponentSegmentTimer => "Cronômetro do segmento",
+        Text::ComponentSegmentTimer => "Temporizador do segmento",
         Text::ComponentTitle => "Título",
         Text::ComponentTotalPlaytime => "Tempo total de jogo",
         Text::Row => "Linha",

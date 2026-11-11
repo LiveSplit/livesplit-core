@@ -93,58 +93,52 @@ pub const fn resolve(text: Text) -> &'static str {
             display::Text::ZoomToggle => "Attiva/disattiva zoom",
         },
         #[cfg(feature = "std")]
-        Text::StartSplit => "Avvia / Split",
+        Text::StartSplit => "Avvia / Splitta",
         #[cfg(feature = "std")]
         Text::StartSplitDescription => {
-            "Il tasto ad azione rapida da usare per splittare e avviare un nuovo tentativo."
+            "Il tasto rapido da usare per splittare e avviare un nuovo tentativo."
         }
         #[cfg(feature = "std")]
         Text::Reset => "Reimposta",
         #[cfg(feature = "std")]
-        Text::ResetDescription => {
-            "Il tasto ad azione rapida da usare per reimpostare il tentativo corrente."
-        }
+        Text::ResetDescription => "Il tasto rapido da usare per reimpostare il tentativo attuale.",
         #[cfg(feature = "std")]
         Text::UndoSplit => "Annulla split",
         #[cfg(feature = "std")]
-        Text::UndoSplitDescription => {
-            "Il tasto ad azione rapida da usare per annullare l’ultimo split."
-        }
+        Text::UndoSplitDescription => "Il tasto rapido da usare per annullare l’ultimo split.",
         #[cfg(feature = "std")]
         Text::SkipSplit => "Salta split",
         #[cfg(feature = "std")]
-        Text::SkipSplitDescription => {
-            "Il tasto ad azione rapida da usare per saltare lo split corrente."
-        }
+        Text::SkipSplitDescription => "Il tasto rapido da usare per saltare lo split attuale.",
         #[cfg(feature = "std")]
         Text::Pause => "Pausa",
         #[cfg(feature = "std")]
         Text::PauseDescription => {
-            "Il tasto ad azione rapida da usare per mettere in pausa il tentativo corrente. Può anche essere usato per avviare un nuovo tentativo."
+            "Il tasto rapido da usare per mettere in pausa il tentativo attuale. Può anche essere usato per avviare un nuovo tentativo."
         }
         #[cfg(feature = "std")]
         Text::UndoAllPauses => "Annulla tutte le pause",
         #[cfg(feature = "std")]
         Text::UndoAllPausesDescription => {
-            "Il tasto ad azione rapida da usare per rimuovere tutti i tempi di pausa dal tempo corrente. Utile se hai messo in pausa per errore."
+            "Il tasto rapido da usare per rimuovere tutti i tempi di pausa dal tempo attuale. Utile se hai messo in pausa per errore."
         }
         #[cfg(feature = "std")]
         Text::PreviousComparison => "Confronto precedente",
         #[cfg(feature = "std")]
         Text::PreviousComparisonDescription => {
-            "Il tasto ad azione rapida da usare per passare al confronto precedente."
+            "Il tasto rapido da usare per passare al confronto precedente."
         }
         #[cfg(feature = "std")]
         Text::NextComparison => "Confronto successivo",
         #[cfg(feature = "std")]
         Text::NextComparisonDescription => {
-            "Il tasto ad azione rapida da usare per passare al confronto successivo."
+            "Il tasto rapido da usare per passare al confronto successivo."
         }
         #[cfg(feature = "std")]
         Text::ToggleTimingMethod => "Cambia metodo di cronometraggio",
         #[cfg(feature = "std")]
         Text::ToggleTimingMethodDescription => {
-            "Il tasto ad azione rapida da usare per alternare tra «Tempo reale» e «Tempo di gioco»."
+            "Il tasto rapido da usare per alternare tra «Tempo reale» e «Tempo di gioco»."
         }
         Text::TimerBackground => "Sfondo",
         Text::TimerBackgroundDescription => {
@@ -152,11 +146,11 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SegmentTimer => "Timer del segmento",
         Text::SegmentTimerDescription => {
-            "Indica se mostrare il tempo trascorso dall’inizio del segmento corrente invece che dall’inizio del tentativo."
+            "Indica se mostrare il tempo trascorso dall’inizio del segmento attuale invece che dall’inizio del tentativo."
         }
         Text::TimingMethod => "Metodo di cronometraggio",
         Text::TimingMethodDescription => {
-            "Indica il metodo di cronometraggio da usare. Se non specificato, viene usato il metodo corrente."
+            "Indica il metodo di cronometraggio da usare. Se non specificato, viene usato il metodo attuale."
         }
         Text::Height => "Altezza",
         Text::HeightDescription => "L’altezza del timer.",
@@ -214,7 +208,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::ShowVariables => "Mostra variabili",
         Text::ShowVariablesDescription => {
-            "Il nome della categoria può essere esteso con informazioni aggiuntive. Questo lo estende con variabili aggiuntive fornite nella scheda variabili dell’editor degli split. Si riferisce alle variabili di speedrun.com, non alle variabili personalizzate."
+            "Il nome della categoria può essere esteso con informazioni aggiuntive. Questo lo estende con variabili aggiuntive fornite nella scheda variabili dell’editor degli split. Si riferisce alle variabili di Speedrun.com, non alle variabili personalizzate."
         }
         Text::TotalPlaytimeBackground => "Sfondo",
         Text::TotalPlaytimeBackgroundDescription => "Lo sfondo mostrato dietro il componente.",
@@ -256,7 +250,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::CurrentPaceBackgroundDescription => "Lo sfondo mostrato dietro il componente.",
         Text::CurrentPaceComparison => "Confronto",
         Text::CurrentPaceComparisonDescription => {
-            "Il confronto da cui prevedere il tempo finale. Se non specificato, viene usato il confronto corrente."
+            "Il confronto da cui prevedere il tempo finale. Se non specificato, viene usato il confronto attuale."
         }
         Text::CurrentPaceDisplayTwoRows => "Mostra 2 righe",
         Text::CurrentPaceDisplayTwoRowsDescription => {
@@ -276,7 +270,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::DeltaBackgroundDescription => "Lo sfondo mostrato dietro il componente.",
         Text::DeltaComparison => "Confronto",
         Text::DeltaComparisonDescription => {
-            "Il confronto usato per calcolare quanto si è avanti o indietro. Se non specificato, viene usato il confronto corrente."
+            "Il confronto usato per calcolare quanto si è avanti o indietro. Se non specificato, viene usato il confronto attuale."
         }
         Text::DeltaDisplayTwoRows => "Mostra 2 righe",
         Text::DeltaDisplayTwoRowsDescription => {
@@ -328,7 +322,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::PossibleTimeSaveBackgroundDescription => "Lo sfondo mostrato dietro il componente.",
         Text::PossibleTimeSaveComparison => "Confronto",
         Text::PossibleTimeSaveComparisonDescription => {
-            "Il confronto per calcolare il tempo potenzialmente risparmiabile. Se non specificato, viene usato il confronto corrente."
+            "Il confronto per calcolare il tempo potenzialmente risparmiabile. Se non specificato, viene usato il confronto attuale."
         }
         Text::PossibleTimeSaveDisplayTwoRows => "Mostra 2 righe",
         Text::PossibleTimeSaveDisplayTwoRowsDescription => {
@@ -336,7 +330,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::PossibleTimeSaveShowTotal => "Mostra risparmio totale possibile",
         Text::PossibleTimeSaveShowTotalDescription => {
-            "Indica se mostrare il risparmio totale possibile per il resto del tentativo invece di quello del segmento corrente."
+            "Indica se mostrare il risparmio totale possibile per il resto del tentativo invece di quello del segmento attuale."
         }
         Text::PossibleTimeSaveLabelColor => "Colore etichetta",
         Text::PossibleTimeSaveLabelColorDescription => {
@@ -354,7 +348,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::PreviousSegmentBackgroundDescription => "Lo sfondo mostrato dietro il componente.",
         Text::PreviousSegmentComparison => "Confronto",
         Text::PreviousSegmentComparisonDescription => {
-            "Il confronto usato per calcolare quanto tempo è stato risparmiato o perso. Se non specificato, viene usato il confronto corrente."
+            "Il confronto usato per calcolare quanto tempo è stato risparmiato o perso. Se non specificato, viene usato il confronto attuale."
         }
         Text::PreviousSegmentDisplayTwoRows => "Mostra 2 righe",
         Text::PreviousSegmentDisplayTwoRowsDescription => {
@@ -378,7 +372,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SegmentTimeBackgroundDescription => "Lo sfondo mostrato dietro il componente.",
         Text::SegmentTimeComparison => "Confronto",
         Text::SegmentTimeComparisonDescription => {
-            "Il confronto per il tempo di segmento. Se non specificato, viene usato il confronto corrente."
+            "Il confronto per il tempo di segmento. Se non specificato, viene usato il confronto attuale."
         }
         Text::SegmentTimeDisplayTwoRows => "Mostra 2 righe",
         Text::SegmentTimeDisplayTwoRowsDescription => {
@@ -396,7 +390,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SegmentTimeAccuracyDescription => "La precisione del tempo di segmento mostrato.",
         Text::GraphComparison => "Confronto",
         Text::GraphComparisonDescription => {
-            "Il confronto da usare per il grafico. Se non specificato, viene usato il confronto corrente."
+            "Il confronto da usare per il grafico. Se non specificato, viene usato il confronto attuale."
         }
         Text::GraphHeight => "Altezza",
         Text::GraphHeightDescription => "L’altezza del grafico.",
@@ -406,11 +400,11 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::GraphLiveGraph => "Grafico in tempo reale",
         Text::GraphLiveGraphDescription => {
-            "Indica se il grafico deve aggiornarsi continuamente. Se disattivato, i cambiamenti avvengono solo quando cambia il segmento corrente."
+            "Indica se il grafico deve aggiornarsi continuamente. Se disattivato, i cambiamenti avvengono solo quando cambia il segmento attuale."
         }
         Text::GraphFlipGraph => "Inverti grafico",
         Text::GraphFlipGraphDescription => {
-            "Indica se il grafico deve essere capovolto verticalmente. Se non attivo, i tempi avanti sono sotto l’asse x e quelli indietro sopra."
+            "Indica se il grafico deve essere capovolto verticalmente. Se l’opzione è disattivata, i tempi di split in vantaggio sul confronto sono mostrati sotto l’asse x e quelli in ritardo sopra. Attivandola, queste posizioni vengono invertite."
         }
         Text::GraphBehindBackgroundColor => "Colore sfondo (indietro)",
         Text::GraphBehindBackgroundColorDescription => {
@@ -438,15 +432,15 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::DetailedTimerBackgroundDescription => "Lo sfondo mostrato dietro il componente.",
         Text::DetailedTimerTimingMethod => "Metodo di cronometraggio",
         Text::DetailedTimerTimingMethodDescription => {
-            "Indica il metodo di cronometraggio da usare. Se non specificato, viene usato il metodo corrente."
+            "Indica il metodo di cronometraggio da usare. Se non specificato, viene usato il metodo attuale."
         }
         Text::DetailedTimerComparison1 => "Confronto 1",
         Text::DetailedTimerComparison1Description => {
-            "Il primo confronto di cui mostrare il tempo di segmento. Se non specificato, viene usato il confronto corrente."
+            "Il primo confronto di cui mostrare il tempo di segmento. Se non specificato, viene usato il confronto attuale."
         }
         Text::DetailedTimerComparison2 => "Confronto 2",
         Text::DetailedTimerComparison2Description => {
-            "Il secondo confronto di cui mostrare il tempo di segmento. Se non specificato, viene usato il confronto corrente, a meno che il primo confronto sia anch’esso None. Non viene mostrato se il secondo confronto è nascosto."
+            "Il secondo confronto di cui mostrare il tempo di segmento. Se non specificato, viene usato il confronto attuale, a meno che il primo confronto sia anch’esso None. Non viene mostrato se il secondo confronto è nascosto."
         }
         Text::DetailedTimerHideSecondComparison => "Nascondi secondo confronto",
         Text::DetailedTimerHideSecondComparisonDescription => {
@@ -520,7 +514,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsUpcomingSegments => "Segmenti imminenti",
         Text::SplitsUpcomingSegmentsDescription => {
-            "Se ci sono più segmenti delle righe mostrate, la finestra scorre automaticamente quando cambia il segmento corrente. Questo numero determina il minimo di segmenti futuri visibili."
+            "Se ci sono più segmenti delle righe mostrate, la finestra scorre automaticamente quando cambia il segmento attuale. Questo numero determina il minimo di segmenti futuri visibili."
         }
         Text::SplitsShowThinSeparators => "Mostra separatori sottili",
         Text::SplitsShowThinSeparatorsDescription => {
@@ -532,19 +526,19 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsAlwaysShowLastSplit => "Mostra sempre l’ultimo split",
         Text::SplitsAlwaysShowLastSplitDescription => {
-            "Se non tutti i segmenti sono mostrati, questa opzione determina se l’ultimo segmento deve essere sempre visibile, poiché contiene la durata totale del confronto scelto."
+            "Se non tutti i segmenti sono mostrati nella finestra scorrevole, questa opzione determina se l’ultimo segmento deve essere sempre visibile, poiché contiene la durata totale del confronto scelto. Questa informazione può essere utile, perché spesso corrisponde al miglior tempo personale del giocatore."
         }
         Text::SplitsFillWithBlankSpace => "Riempi con spazio vuoto",
         Text::SplitsFillWithBlankSpaceDescription => {
-            "Se non ci sono abbastanza segmenti per riempire la lista, questa opzione consente di riempire le righe rimanenti con spazio vuoto per mantenere il numero totale di righe."
+            "Se non ci sono abbastanza segmenti per riempire la lista, questa opzione consente di riempire le righe rimanenti con spazio vuoto, in modo da mostrare sempre il numero totale di righe specificato nelle impostazioni. Altrimenti, il numero di righe mostrate viene ridotto al numero effettivo di segmenti."
         }
         Text::SplitsShowTimesBelowSegmentName => "Mostra tempi sotto il nome del segmento",
         Text::SplitsShowTimesBelowSegmentNameDescription => {
             "Indica se mostrare i tempi sotto il nome del segmento. In caso contrario, i tempi vengono mostrati accanto al nome."
         }
-        Text::SplitsCurrentSegmentGradient => "Gradiente del segmento corrente",
+        Text::SplitsCurrentSegmentGradient => "Gradiente del segmento attuale",
         Text::SplitsCurrentSegmentGradientDescription => {
-            "Il gradiente da mostrare dietro al segmento corrente come indicatore."
+            "Il gradiente da mostrare dietro al segmento attuale come indicatore."
         }
         Text::SplitsSplitTimeAccuracy => "Precisione tempi split",
         Text::SplitsSplitTimeAccuracyDescription => {
@@ -600,11 +594,11 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsColumnComparison => "Confronto",
         Text::SplitsColumnComparisonDescription => {
-            "Il confronto rispetto al quale questa colonna viene confrontata. Se non specificato, viene usato il confronto corrente."
+            "Il confronto rispetto al quale questa colonna viene confrontata. Se non specificato, viene usato il confronto attuale."
         }
         Text::SplitsColumnTimingMethod => "Metodo di cronometraggio",
         Text::SplitsColumnTimingMethodDescription => {
-            "Indica il metodo di cronometraggio da usare per questa colonna. Se non specificato, viene usato il metodo corrente."
+            "Indica il metodo di cronometraggio da usare per questa colonna. Se non specificato, viene usato il metodo attuale."
         }
         Text::TextComponentBackground => "Sfondo",
         Text::TextComponentBackgroundDescription => "Lo sfondo mostrato dietro il componente.",

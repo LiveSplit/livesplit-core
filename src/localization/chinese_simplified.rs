@@ -180,7 +180,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::ShowVariables => "显示变量",
         Text::ShowVariablesDescription => {
-            "类别名可扩展附加信息。追加分段编辑器变量页提供的变量。此处指 speedrun.com 变量而非自定义变量。"
+            "类别名可扩展附加信息。追加分段编辑器变量页提供的变量。此处指 Speedrun.com 变量而非自定义变量。"
         }
         Text::TotalPlaytimeBackground => "背景",
         Text::TotalPlaytimeBackgroundDescription => "组件背后的背景。",
@@ -314,7 +314,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::GraphFlipGraph => "翻转图表",
         Text::GraphFlipGraphDescription => {
-            "指定是否垂直翻转图表。未启用时，领先在 x 轴下方，落后在上方；启用后反转。"
+            "指定是否垂直翻转图表。未启用时，领先于比较的累计时间显示在 x 轴下方，落后的时间显示在上方。启用后会反转上下位置。"
         }
         Text::GraphBehindBackgroundColor => "落后背景色",
         Text::GraphBehindBackgroundColorDescription => "图表中落后区域的背景色。",
@@ -354,7 +354,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::DetailedTimerSegmentTimerHeightDescription => "分段计时器高度。",
         Text::DetailedTimerTimerColor => "计时器颜色",
         Text::DetailedTimerTimerColorDescription => {
-            "可指定主计时器的固定颜色，而非根据当前进度自动选择。"
+            "可以指定主计时器始终使用的颜色，取代根据当前尝试表现自动选择的颜色。"
         }
         Text::DetailedTimerShowTimerGradient => "显示计时器渐变",
         Text::DetailedTimerShowTimerGradientDescription => {
@@ -418,11 +418,11 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsAlwaysShowLastSplit => "始终显示最后一段",
         Text::SplitsAlwaysShowLastSplitDescription => {
-            "若窗口不显示所有分段，指定是否始终显示最后一段，因为其中包含所选比较的总时长。"
+            "如果滚动窗口中未显示所有分段，此选项决定是否始终显示最后一个分段，因为它包含所选比较的总时长。这通常是跑者的个人最佳，因此是很有用的信息。"
         }
         Text::SplitsFillWithBlankSpace => "用空白填充",
         Text::SplitsFillWithBlankSpaceDescription => {
-            "当分段不足以填满列表时，可用空白填充剩余行，以始终显示设置的总行数。"
+            "当分段不足以填满列表时，此选项允许用空白填充剩余行，使显示的总行数始终与设置一致。否则，显示的总行数会减少到实际的分段数量。"
         }
         Text::SplitsShowTimesBelowSegmentName => "在分段名下显示时间",
         Text::SplitsShowTimesBelowSegmentNameDescription => {
@@ -430,8 +430,8 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsCurrentSegmentGradient => "当前分段渐变",
         Text::SplitsCurrentSegmentGradientDescription => "用于突出当前分段的背景渐变。",
-        Text::SplitsSplitTimeAccuracy => "分段总时间精度",
-        Text::SplitsSplitTimeAccuracyDescription => "用于显示分段总时间列的精度。",
+        Text::SplitsSplitTimeAccuracy => "累计时间精度",
+        Text::SplitsSplitTimeAccuracyDescription => "指定显示累计时间的列所使用的精度。",
         Text::SplitsSegmentTimeAccuracy => "分段时间精度",
         Text::SplitsSegmentTimeAccuracyDescription => "用于显示分段时间列的精度。",
         Text::SplitsDeltaTimeAccuracy => "差值时间精度",
@@ -459,7 +459,9 @@ pub const fn resolve(text: Text) -> &'static str {
             "当满足某个条件（通常为正在该分段或已完成）时，时间会更新为此值。"
         }
         Text::SplitsUpdateTrigger => "更新触发条件",
-        Text::SplitsUpdateTriggerDescription => "更新时间替换的条件。在满足之前，时间为“起始值”。",
+        Text::SplitsUpdateTriggerDescription => {
+            "将时间更新为“更新值”字段指定的值之前必须满足的条件。在满足该条件之前，时间保持为“起始值”字段指定的值。"
+        }
         Text::SplitsColumnComparison => "比较",
         Text::SplitsColumnComparisonDescription => "该列使用的比较。如未指定则使用当前比较。",
         Text::SplitsColumnTimingMethod => "计时方式",
@@ -497,7 +499,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::LayoutDirection => "布局方向",
         Text::LayoutDirectionDescription => "组件排列的方向。",
         Text::GroupFixedWidth => "固定宽度",
-        Text::GroupFixedWidthDescription => "此组件列的可选固定宽度。如枚未指定，宽度会自动确定。",
+        Text::GroupFixedWidthDescription => "此组件列的可选固定宽度。如果未指定，宽度会自动确定。",
         Text::GroupFixedHeight => "固定高度",
         Text::GroupFixedHeightDescription => "此组件行的可选固定高度。如果未指定，高度会自动确定。",
         Text::CustomTimerFont => "自定义计时器字体",
@@ -603,7 +605,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::LatestSegmentTimeShort => "最新分段时间",
         Text::LatestSegmentShort => "最新分段",
         Text::SegmentTimeShort => "分段时间",
-        Text::SplitTime => "分段时间",
+        Text::SplitTime => "累计时间",
         Text::PossibleTimeSaveShort => "可节省时间",
         Text::PossibleTimeSaveAbbreviation => "可节省",
         Text::TimeSaveShort => "节省时间",

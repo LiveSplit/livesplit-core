@@ -93,7 +93,7 @@ pub const fn resolve(text: Text) -> &'static str {
             display::Text::ZoomToggle => "Alternar zoom",
         },
         #[cfg(feature = "std")]
-        Text::StartSplit => "Iniciar / Split",
+        Text::StartSplit => "Iniciar / Hacer split",
         #[cfg(feature = "std")]
         Text::StartSplitDescription => "El atajo para hacer split e iniciar un nuevo intento.",
         #[cfg(feature = "std")]
@@ -204,7 +204,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::ShowVariables => "Mostrar variables",
         Text::ShowVariablesDescription => {
-            "El nombre de la categoría puede ampliarse con información adicional. Esto lo amplía con variables adicionales proporcionadas en la pestaña de variables del editor de splits. Se refiere a variables de speedrun.com, no a variables personalizadas."
+            "El nombre de la categoría puede ampliarse con información adicional. Esto lo amplía con variables adicionales proporcionadas en la pestaña de variables del editor de splits. Se refiere a variables de Speedrun.com, no a variables personalizadas."
         }
         Text::TotalPlaytimeBackground => "Fondo",
         Text::TotalPlaytimeBackgroundDescription => "El fondo mostrado detrás del componente.",
@@ -400,7 +400,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::GraphFlipGraph => "Invertir gráfico",
         Text::GraphFlipGraphDescription => {
-            "Indica si el gráfico debe invertirse verticalmente. Si no se activa, los tiempos por delante se muestran debajo del eje x y los tiempos por detrás por encima."
+            "Indica si el gráfico debe invertirse verticalmente. Si la opción está desactivada, los tiempos de split por delante de la comparación se muestran debajo del eje x y los tiempos por detrás, encima. Al activarla, estas posiciones se invierten."
         }
         Text::GraphBehindBackgroundColor => "Color de fondo (detrás)",
         Text::GraphBehindBackgroundColorDescription => {
@@ -530,11 +530,11 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsAlwaysShowLastSplit => "Mostrar siempre el último split",
         Text::SplitsAlwaysShowLastSplitDescription => {
-            "Si no se muestran todos los segmentos, esta opción determina si el último segmento debe mostrarse siempre, ya que contiene la duración total de la comparación elegida."
+            "Si no se muestran todos los segmentos en la ventana de desplazamiento, esta opción determina si el último segmento debe mostrarse siempre, ya que contiene la duración total de la comparación elegida. Esta información puede ser útil, porque a menudo corresponde a la mejor marca personal del jugador."
         }
         Text::SplitsFillWithBlankSpace => "Rellenar con espacio en blanco",
         Text::SplitsFillWithBlankSpaceDescription => {
-            "Si no hay suficientes segmentos para llenar la lista, esta opción permite rellenar las filas restantes con espacio en blanco para mantener el número total de filas."
+            "Si no hay suficientes segmentos para llenar la lista, esta opción permite rellenar las filas restantes con espacio en blanco para mostrar siempre el número total de filas indicado en la configuración. De lo contrario, el número de filas mostradas se reduce al número real de segmentos."
         }
         Text::SplitsShowTimesBelowSegmentName => "Mostrar tiempos bajo el nombre del segmento",
         Text::SplitsShowTimesBelowSegmentNameDescription => {
@@ -701,7 +701,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentBlankSpace => "Espacio en blanco",
         Text::ComponentCurrentComparison => "Comparación actual",
         Text::ComponentCurrentPace => "Ritmo actual",
-        Text::ComponentDelta => "Diferencia",
+        Text::ComponentDelta => "Delta",
         Text::ComponentDetailedTimer => "Temporizador detallado",
         Text::ComponentGraph => "Gráfico",
         Text::ComponentPbChance => "Probabilidad de PB",

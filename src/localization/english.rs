@@ -210,7 +210,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::ShowVariables => "Show Variables",
         Text::ShowVariablesDescription => {
-            "The category name can be extended with additional information. This extends it with additional variables provided in the variables tab of the splits editor. This refers to speedrun.com variables, not custom variables."
+            "The category name can be extended with additional information. This extends it with additional variables provided in the variables tab of the splits editor. This refers to Speedrun.com variables, not custom variables."
         }
         Text::TotalPlaytimeBackground => "Background",
         Text::TotalPlaytimeBackgroundDescription => "The background shown behind the component.",

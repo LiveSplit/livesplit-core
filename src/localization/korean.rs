@@ -131,7 +131,7 @@ pub const fn resolve(text: Text) -> &'static str {
         #[cfg(feature = "std")]
         Text::ToggleTimingMethod => "타이밍 방법 전환",
         #[cfg(feature = "std")]
-        Text::ToggleTimingMethodDescription => "«실시간»과 «게임 시간»을 전환하는 단축키입니다.",
+        Text::ToggleTimingMethodDescription => "“실시간”과 “게임 시간”을 전환하는 단축키입니다.",
         Text::TimerBackground => "배경",
         Text::TimerBackgroundDescription => {
             "컴포넌트 뒤에 표시되는 배경입니다. 앞섬/뒤처짐 색상을 배경색으로 적용할 수도 있습니다."
@@ -192,7 +192,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::ShowVariables => "변수 표시",
         Text::ShowVariablesDescription => {
-            "카테고리 이름에 추가 정보를 붙입니다. 스플릿 편집기의 변수 탭에 제공된 추가 변수를 추가합니다. speedrun.com 변수에 해당하며 사용자 정의 변수는 아닙니다."
+            "카테고리 이름에 추가 정보를 붙입니다. 스플릿 편집기의 변수 탭에 제공된 추가 변수를 추가합니다. Speedrun.com 변수에 해당하며 사용자 지정 변수는 아닙니다."
         }
         Text::TotalPlaytimeBackground => "배경",
         Text::TotalPlaytimeBackgroundDescription => "컴포넌트 뒤에 표시되는 배경입니다.",
@@ -382,7 +382,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::GraphFlipGraph => "그래프 뒤집기",
         Text::GraphFlipGraphDescription => {
-            "그래프를 수직으로 뒤집을지 지정합니다. 비활성화하면 앞서는 시간은 x축 아래, 뒤처진 시간은 위에 표시됩니다."
+            "그래프를 수직으로 뒤집을지 지정합니다. 비활성화하면 비교보다 앞선 스플릿 시간은 x축 아래에, 뒤처진 시간은 위에 표시됩니다. 활성화하면 위아래 위치가 반대로 바뀝니다."
         }
         Text::GraphBehindBackgroundColor => "뒤처짐 배경색",
         Text::GraphBehindBackgroundColorDescription => "비교보다 뒤처진 시간 영역의 배경색입니다.",
@@ -422,7 +422,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::DetailedTimerSegmentTimerHeightDescription => "세그먼트 타이머의 높이입니다.",
         Text::DetailedTimerTimerColor => "타이머 색상",
         Text::DetailedTimerTimerColorDescription => {
-            "현재 진행에 따라 자동으로 색상을 결정하는 대신, 항상 사용할 색상을 지정할 수 있습니다."
+            "현재 시도의 성과에 따라 메인 타이머의 색상을 자동으로 선택하는 대신, 항상 사용할 고정 색상을 지정할 수 있습니다."
         }
         Text::DetailedTimerShowTimerGradient => "타이머 그라디언트 표시",
         Text::DetailedTimerShowTimerGradientDescription => {
@@ -492,11 +492,11 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsAlwaysShowLastSplit => "마지막 스플릿 항상 표시",
         Text::SplitsAlwaysShowLastSplitDescription => {
-            "모든 세그먼트를 표시하지 않는 경우, 마지막 세그먼트를 항상 표시할지 지정합니다. 마지막 세그먼트에는 선택한 비교의 총 시간이 포함됩니다."
+            "스크롤 창에 모든 세그먼트가 표시되지 않는 경우, 마지막 세그먼트를 항상 표시할지 지정합니다. 마지막 세그먼트에는 선택한 비교의 총 시간이 포함됩니다. 이는 보통 주자의 개인 최고 기록이므로 유용한 정보입니다."
         }
         Text::SplitsFillWithBlankSpace => "빈 공간으로 채우기",
         Text::SplitsFillWithBlankSpaceDescription => {
-            "세그먼트가 부족하면 빈 공간으로 남은 행을 채워 항상 총 행 수를 표시할지 지정합니다."
+            "세그먼트가 목록을 채우기에 부족하면 남은 행을 빈 공간으로 채워, 설정한 총 행 수를 항상 표시할 수 있습니다. 이 옵션을 비활성화하면 표시되는 총 행 수가 실제 세그먼트 수로 줄어듭니다."
         }
         Text::SplitsShowTimesBelowSegmentName => "세그먼트 이름 아래에 시간 표시",
         Text::SplitsShowTimesBelowSegmentNameDescription => {
@@ -536,10 +536,10 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsColumnType => "열 유형",
         Text::SplitsColumnTypeDescription => {
-            "이 열에 표시되는 정보의 유형입니다. 시간 또는 사용자 정의 변수를 표시할 수 있습니다."
+            "이 열에 표시되는 정보의 유형입니다. 시간 또는 사용자 지정 변수를 표시할 수 있습니다."
         }
         Text::SplitsVariableName => "변수 이름",
-        Text::SplitsVariableNameDescription => "이 열에 표시되는 사용자 정의 변수의 이름입니다.",
+        Text::SplitsVariableNameDescription => "이 열에 표시되는 사용자 지정 변수의 이름입니다.",
         Text::SplitsStartWith => "시작 값",
         Text::SplitsStartWithDescription => {
             "각 세그먼트에서 이 열이 시작하는 값입니다. 업데이트 트리거가 충족되면 값이 대체됩니다."
@@ -550,7 +550,7 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SplitsUpdateTrigger => "업데이트 트리거",
         Text::SplitsUpdateTriggerDescription => {
-            "업데이트 값으로 바꾸기 위한 조건입니다. 이 조건 전에는 시작 값이 표시됩니다."
+            "시간을 “업데이트 값” 필드에 지정된 값으로 바꾸기 위해 충족해야 하는 조건입니다. 이 조건이 충족되기 전에는 “시작 값” 필드에 지정된 값이 표시됩니다."
         }
         Text::SplitsColumnComparison => "비교",
         Text::SplitsColumnComparisonDescription => {
@@ -564,7 +564,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::TextComponentBackgroundDescription => "컴포넌트 뒤에 표시되는 배경입니다.",
         Text::TextComponentUseVariable => "변수 사용",
         Text::TextComponentUseVariableDescription => {
-            "동적 값을 표시하기 위해 사용자 정의 변수를 사용할지 지정합니다. 사용자 정의 변수는 스플릿 편집기에서 설정하거나 오토 스플리터가 제공할 수 있습니다."
+            "동적 값을 표시하기 위해 사용자 지정 변수를 사용할지 지정합니다. 사용자 지정 변수는 스플릿 편집기에서 설정하거나 자동 스플리터가 제공할 수 있습니다."
         }
         Text::TextComponentSplit => "분할",
         Text::TextComponentSplitDescription => {
@@ -577,7 +577,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::TextComponentRight => "오른쪽",
         Text::TextComponentRightDescription => "오른쪽에 표시할 텍스트입니다.",
         Text::TextComponentVariable => "변수",
-        Text::TextComponentVariableDescription => "표시할 사용자 정의 변수의 이름입니다.",
+        Text::TextComponentVariableDescription => "표시할 사용자 지정 변수의 이름입니다.",
         Text::TextComponentTextColor => "텍스트 색상",
         Text::TextComponentTextColorDescription => "텍스트의 색상입니다.",
         Text::TextComponentLeftColor => "왼쪽 색상",
