@@ -31,13 +31,7 @@ impl NameRecord {
             .get(self.string_offset.usize()..)?
             .get(..self.length.usize())?;
 
-        let mut buf = Vec::new();
-        let slice: &[[u8; 2]] = bytemuck::try_cast_slice(name).ok()?;
-        for &c in slice {
-            buf.push(u16::from_be_bytes(c));
-        }
-
-        String::from_utf16(&buf).ok()
+        String::from_utf16be(name).ok()
     }
 }
 
@@ -71,4 +65,39 @@ pub fn look_up_family_name(table: &[u8]) -> Option<String> {
 
     let storage = table.get(header.storage_offset.usize()..)?;
     record.get_name(storage)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use bytemuck::Zeroable;
+
+    #[test]
+    fn decodes_big_endian_names_at_unaligned_offsets() {
+        let record = NameRecord {
+            string_offset: U16(1u16.to_be_bytes()),
+            length: U16(8u16.to_be_bytes()),
+            ..NameRecord::zeroed()
+        };
+        let storage = [0xff, 0x00, b'A', 0xd8, 0x34, 0xdd, 0x1e, 0x00, b'B', 0xff];
+
+        assert_eq!(record.get_name(&storage).as_deref(), Some("A𝄞B"));
+    }
+
+    #[test]
+    fn rejects_invalid_utf16_names() {
+        for storage in [
+            &[0x00][..],
+            &[0xd8, 0x00],
+            &[0xdc, 0x00],
+            &[0xd8, 0x00, 0x00, b'A'],
+        ] {
+            let record = NameRecord {
+                length: U16((storage.len() as u16).to_be_bytes()),
+                ..NameRecord::zeroed()
+            };
+
+            assert!(record.get_name(storage).is_none());
+        }
+    }
 }

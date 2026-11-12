@@ -7,7 +7,7 @@ use super::{
     TimeFormatter, format_padded, format_unpadded,
 };
 use crate::{TimeSpan, localization::Lang, util::ascii_char::AsciiChar};
-use core::fmt::{Display, Formatter, Result};
+use core::fmt::{Display, Formatter, NumBuffer, Result};
 
 /// A Time Span to be formatted as the main part of the Time Formatter Pair.
 pub struct TimeInner {
@@ -85,8 +85,8 @@ impl Display for TimeInner {
             let hours = total_seconds / SECONDS_PER_HOUR;
 
             if self.digits_format == DigitsFormat::DoubleDigitHours {
-                let mut buffer = itoa::Buffer::new();
-                let hours = buffer.format(hours);
+                let mut buffer = NumBuffer::new();
+                let hours = hours.format_into(&mut buffer);
                 if hours.len() < 2 {
                     f.write_str("0")?;
                 }
@@ -96,7 +96,7 @@ impl Display for TimeInner {
                 f.write_str(TIME_SEPARATOR)?;
                 f.write_str(format_padded(seconds))
             } else if hours > 0 || self.digits_format == DigitsFormat::SingleDigitHours {
-                f.write_str(itoa::Buffer::new().format(hours))?;
+                f.write_str(hours.format_into(&mut NumBuffer::new()))?;
                 f.write_str(TIME_SEPARATOR)?;
                 f.write_str(format_padded(minutes))?;
                 f.write_str(TIME_SEPARATOR)?;
