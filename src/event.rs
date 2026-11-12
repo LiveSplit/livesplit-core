@@ -247,16 +247,10 @@ pub trait CommandSink {
     fn pause(&self) -> impl Future<Output = Result> + 'static;
     /// Resumes an attempt that is paused.
     fn resume(&self) -> impl Future<Output = Result> + 'static;
-    /// Removes all the pause times from the current time. If the current
-    /// attempt is paused, it also resumes that attempt. Additionally, if the
-    /// attempt is finished, the final split time is adjusted to not include the
-    /// pause times as well.
-    ///
-    /// # Warning
-    ///
-    /// This behavior is not entirely optimal, as generally only the final split
-    /// time is modified, while all other split times are left unmodified, which
-    /// may not be what actually happened during the run.
+    /// Undoes all pauses in the current attempt's Real Time, including each
+    /// recorded split's Real Time. Game Time is adjusted as well, unless
+    /// [`set_game_time`](Self::set_game_time) has been called at any point in
+    /// this attempt. If the attempt is paused, it also resumes that attempt.
     fn undo_all_pauses(&self) -> impl Future<Output = Result> + 'static;
     /// Switches the current comparison to the previous comparison in the list.
     fn switch_to_previous_comparison(&self) -> impl Future<Output = Result> + 'static;

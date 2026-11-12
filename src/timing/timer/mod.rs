@@ -315,8 +315,10 @@ impl Timer {
                 start_time,
                 original_offset: offset,
                 adjusted_offset: offset,
+                split_pause_times: Vec::new(),
                 game_time_paused_at: None,
                 loading_times: None,
+                game_time_was_set: false,
             });
             self.run.start_next_run();
 
@@ -332,6 +334,12 @@ impl Timer {
         let active_attempt = self.active_attempt.as_mut().ok_or(Error::NoRunInProgress)?;
 
         let (split_index, current_time, event) = active_attempt.prepare_split(&self.run)?;
+
+        active_attempt
+            .split_pause_times
+            .resize(split_index + 1, TimeSpan::zero());
+        active_attempt.split_pause_times[split_index] =
+            active_attempt.original_offset - active_attempt.adjusted_offset;
 
         // FIXME: We shouldn't need to collect here.
         let variables = self
@@ -403,6 +411,9 @@ impl Timer {
                 current_split_index: previous_split_index,
                 time_paused_at,
             };
+            active_attempt
+                .split_pause_times
+                .truncate(previous_split_index);
 
             self.run
                 .segment_mut(previous_split_index)
@@ -565,48 +576,59 @@ impl Timer {
         }
     }
 
-    /// Removes all the pause times from the current time. If the current
-    /// attempt is paused, it also resumes that attempt. Additionally, if the
-    /// attempt is finished, the final split time is adjusted to not include the
-    /// pause times as well.
-    ///
-    /// # Warning
-    ///
-    /// This behavior is not entirely optimal, as generally only the final split
-    /// time is modified, while all other split times are left unmodified, which
-    /// may not be what actually happened during the run.
+    /// Undoes all pauses in the current attempt's Real Time, including each
+    /// recorded split's Real Time. Game Time is adjusted as well, unless
+    /// [`set_game_time`](Self::set_game_time) has been called at any point in
+    /// this attempt. If the attempt is paused, it also resumes that attempt.
     pub fn undo_all_pauses(&mut self) -> Result {
         let event = match self.current_phase() {
             Paused => {
                 self.resume()?;
                 Event::PausesUndoneAndResumed
             }
-            Ended => {
-                let pause_time = Some(self.get_pause_time().unwrap_or_default());
-
-                let split_time = self
-                    .run
-                    .segments_mut()
-                    .iter_mut()
-                    .last()
-                    .unwrap()
-                    .split_time_mut();
-
-                *split_time += Time::new()
-                    .with_real_time(pause_time)
-                    .with_game_time(pause_time);
-
-                Event::PausesUndone
-            }
             _ => Event::PausesUndone,
         };
 
-        if let Some(active_attempt) = &mut self.active_attempt {
-            active_attempt.adjusted_offset = active_attempt.original_offset;
-            Ok(event)
-        } else {
-            Err(Error::NoRunInProgress)
+        let active_attempt = self.active_attempt.as_mut().ok_or(Error::NoRunInProgress)?;
+        let mut modified = false;
+        for (segment, pause_time) in self
+            .run
+            .segments_mut()
+            .iter_mut()
+            .zip(active_attempt.split_pause_times.drain(..))
+        {
+            if pause_time != TimeSpan::zero() {
+                let split_time = segment.split_time_mut();
+                if let Some(real_time) = &mut split_time.real_time {
+                    *real_time += pause_time;
+                    modified = true;
+                }
+                if !active_attempt.game_time_was_set
+                    && let Some(game_time) = &mut split_time.game_time
+                {
+                    *game_time += pause_time;
+                    modified = true;
+                }
+            }
         }
+
+        let pause_time = active_attempt.original_offset - active_attempt.adjusted_offset;
+        if active_attempt.game_time_was_set {
+            // Preserve explicitly set Game Time as the Real Time offset is restored.
+            if let Some(loading_times) = &mut active_attempt.loading_times {
+                *loading_times += pause_time;
+            }
+        } else if let Some(game_time) = &mut active_attempt.game_time_paused_at {
+            // Running Game Time follows the restored Real Time offset, but a
+            // frozen Game Time needs the same correction applied explicitly.
+            *game_time += pause_time;
+        }
+        active_attempt.adjusted_offset = active_attempt.original_offset;
+
+        if modified {
+            self.run.mark_as_modified();
+        }
+        Ok(event)
     }
 
     /// Switches the current comparison to the next comparison in the list.
@@ -784,6 +806,7 @@ impl Timer {
     pub fn set_game_time(&mut self, game_time: TimeSpan) -> Result {
         let active_attempt = self.active_attempt.as_mut().ok_or(Error::NoRunInProgress)?;
 
+        active_attempt.game_time_was_set = true;
         if active_attempt.game_time_paused_at.is_some() {
             active_attempt.game_time_paused_at = Some(game_time);
         }
