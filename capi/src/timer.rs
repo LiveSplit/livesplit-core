@@ -202,16 +202,10 @@ pub extern "C" fn Timer_toggle_pause_or_start(this: &mut Timer) -> i32 {
     convert(this.toggle_pause_or_start())
 }
 
-/// Removes all the pause times from the current time. If the current
-/// attempt is paused, it also resumes that attempt. Additionally, if the
-/// attempt is finished, the final split time is adjusted to not include the
-/// pause times as well.
-///
-/// # Warning
-///
-/// This behavior is not entirely optimal, as generally only the final split
-/// time is modified, while all other split times are left unmodified, which
-/// may not be what actually happened during the run.
+/// Undoes all pauses in the current attempt's Real Time, including each
+/// recorded split's Real Time. Game Time is adjusted as well, unless
+/// `Timer_set_game_time` has been called at any point in this attempt.
+/// If the attempt is paused, it also resumes that attempt.
 #[unsafe(no_mangle)]
 pub extern "C" fn Timer_undo_all_pauses(this: &mut Timer) -> i32 {
     convert(this.undo_all_pauses())
