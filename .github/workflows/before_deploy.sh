@@ -19,7 +19,11 @@ main() {
     cp target/$TARGET/max-opt/liblivesplit_core.a $stage/liblivesplit_core.a 2>/dev/null || :
     cp target/$TARGET/max-opt/liblivesplit_core.so $stage/liblivesplit_core.so 2>/dev/null || :
     cp target/$TARGET/max-opt/livesplit*.js* $stage/. 2>/dev/null || :
-    cp target/$TARGET/max-opt/deps/*.wasm $stage/livesplit.wasm 2>/dev/null || :
+    case $TARGET in
+        wasm32-unknown-unknown|wasm32-wasip1)
+            cp "target/$TARGET/max-opt/livesplit_core.wasm" "$stage/livesplit.wasm"
+            ;;
+    esac
     cp target/$TARGET/max-opt/liblivesplit_core.dylib $stage/liblivesplit_core.dylib 2>/dev/null || :
 
     cd $stage

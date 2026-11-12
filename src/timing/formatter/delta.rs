@@ -3,7 +3,7 @@ use super::{
     TimeFormatter, format_padded,
 };
 use crate::{TimeSpan, localization::Lang, util::ascii_char::AsciiChar};
-use core::fmt::{Display, Formatter, Result};
+use core::fmt::{Display, Formatter, NumBuffer, Result};
 
 pub struct Inner {
     time: Option<TimeSpan>,
@@ -102,20 +102,18 @@ impl Display for Inner {
             let minutes = ((total_seconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE) as u8;
             let hours = total_seconds / SECONDS_PER_HOUR;
 
-            let mut buffer = itoa::Buffer::new();
-
             if hours > 0 {
-                f.write_str(buffer.format(hours))?;
+                f.write_str(hours.format_into(&mut NumBuffer::new()))?;
                 f.write_str(TIME_SEPARATOR)?;
                 f.write_str(format_padded(minutes))?;
                 f.write_str(TIME_SEPARATOR)?;
                 f.write_str(format_padded(seconds))?;
             } else if minutes > 0 {
-                f.write_str(buffer.format(minutes))?;
+                f.write_str(minutes.format_into(&mut NumBuffer::new()))?;
                 f.write_str(TIME_SEPARATOR)?;
                 f.write_str(format_padded(seconds))?;
             } else {
-                f.write_str(buffer.format(seconds))?;
+                f.write_str(seconds.format_into(&mut NumBuffer::new()))?;
                 return self
                     .accuracy
                     .format_nanoseconds(nanoseconds, self.decimal_separator)

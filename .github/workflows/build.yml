@@ -44,7 +44,6 @@ jobs:
                     # - Windows i586
                     - Windows i686
                     - Windows x86_64
-                    - Windows i686 gnu
                     - Windows x86_64 gnu
 
                     # Linux
@@ -270,15 +269,6 @@ jobs:
                       target: x86_64-pc-windows-msvc
                       os: windows-latest
                       cross: skip
-
-                    - label: Windows i686 gnu
-                      target: i686-pc-windows-gnu
-                      toolchain: stable-i686-pc-windows-gnu
-                      toolchain_args: --force-non-host
-                      os: windows-latest
-                      cross: skip
-                      auto_splitting: skip
-                      install_target: true
 
                     - label: Windows x86_64 gnu
                       target: x86_64-pc-windows-gnu
@@ -555,8 +545,8 @@ jobs:
               if: matrix.toolchain != '' && matrix.toolchain != 'stable'
               shell: bash
               run: |
-                  rustup toolchain install "${{ matrix.toolchain }}" ${{ matrix.toolchain_args }}
-                  rustup default "${{ matrix.toolchain }}" ${{ matrix.toolchain_args }}
+                  rustup toolchain install "${{ matrix.toolchain }}"
+                  rustup default "${{ matrix.toolchain }}"
 
             - name: Install Target
               if: matrix.install_target != ''
@@ -654,6 +644,8 @@ jobs:
 
             - name: Run Clippy
               run: cargo clippy --all-features
+              env:
+                  CARGO_BUILD_WARNINGS: deny
 
     format:
         name: Check formatting

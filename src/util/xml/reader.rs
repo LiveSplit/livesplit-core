@@ -57,9 +57,9 @@ impl<'a> Reader<'a> {
         } else if let Some(rem) = self.source.strip_prefix('!') {
             self.source = rem;
             let tag_inner = self.read_until(AsciiChar::GREATER_THAN)?;
-            if let Some(comment) = strip_surrounding("--", tag_inner, "--") {
+            if let Some(comment) = tag_inner.strip_circumfix("--", "--") {
                 Event::Comment(Text(comment))
-            } else if let Some(cdata) = strip_surrounding("[CDATA[", tag_inner, "]]") {
+            } else if let Some(cdata) = tag_inner.strip_circumfix("[CDATA[", "]]") {
                 Event::CData(Text(cdata))
             } else if tag_inner.starts_with("DOCTYPE") {
                 Event::DocType
@@ -146,8 +146,4 @@ fn read_elem_until<'a>(source: &mut &'a str, end_byte: AsciiChar) -> Option<&'a 
     }
 
     None
-}
-
-fn strip_surrounding<'t>(before: &str, text: &'t str, after: &str) -> Option<&'t str> {
-    text.strip_prefix(before)?.strip_suffix(after)
 }

@@ -504,8 +504,7 @@ where
             } else if token.eq_ignore_ascii_case("ultraexpanded") {
                 stretch = FontStretch::UltraExpanded;
             } else if !token.eq_ignore_ascii_case("regular") {
-                family =
-                    &family[..token.as_ptr() as usize - family.as_ptr() as usize + token.len()];
+                family = &family[..family.substr_range(token).unwrap().end];
                 break;
             }
         }

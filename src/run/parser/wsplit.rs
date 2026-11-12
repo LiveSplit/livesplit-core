@@ -132,8 +132,7 @@ pub fn parse(source: &str, #[allow(unused)] load_files_path: Option<&Path>) -> R
                 icons_list.clear();
                 for path in _icons.split(',') {
                     icons_list.push(
-                        if let Some(path) = path.strip_prefix('"')
-                            && let Some(path) = path.strip_suffix('"')
+                        if let Some(path) = path.strip_circumfix('"', '"')
                             && let Ok(image) = crate::settings::Image::from_file(
                                 crate::platform::path::relative_to(
                                     &mut path_buf,

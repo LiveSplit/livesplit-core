@@ -3,7 +3,7 @@ use super::{
     TimeFormatter, format_padded,
 };
 use crate::{TimeSpan, localization::Lang, util::ascii_char::AsciiChar};
-use core::fmt::{Display, Formatter, Result};
+use core::fmt::{Display, Formatter, NumBuffer, Result};
 
 pub struct Inner {
     time: Option<TimeSpan>,
@@ -71,10 +71,8 @@ impl Display for Inner {
             let hours = ((total_seconds % SECONDS_PER_DAY) / SECONDS_PER_HOUR) as u8;
             let days = total_seconds / SECONDS_PER_DAY;
 
-            let mut buffer = itoa::Buffer::new();
-
             if days > 0 {
-                f.write_str(buffer.format(days))?;
+                f.write_str(days.format_into(&mut NumBuffer::new()))?;
                 f.write_str(self.decimal_separator.as_str())?;
             }
 
@@ -84,7 +82,8 @@ impl Display for Inner {
             f.write_str(TIME_SEPARATOR)?;
             f.write_str(format_padded(seconds))?;
             f.write_str(self.decimal_separator.as_str())?;
-            let nanoseconds = buffer.format(nanoseconds);
+            let mut buffer = NumBuffer::new();
+            let nanoseconds = nanoseconds.format_into(&mut buffer);
             f.write_str(&"000000000"[nanoseconds.len()..])?;
             f.write_str(nanoseconds)
         } else {

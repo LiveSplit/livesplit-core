@@ -3,7 +3,7 @@ use super::{
     format_padded,
 };
 use crate::{TimeSpan, localization::Lang};
-use core::fmt::{Display, Formatter, Result};
+use core::fmt::{Display, Formatter, NumBuffer, Result};
 
 pub struct Inner {
     time: Option<TimeSpan>,
@@ -62,19 +62,17 @@ impl Display for Inner {
             let hours = ((total_seconds % SECONDS_PER_DAY) / SECONDS_PER_HOUR) as u8;
             let days = total_seconds / SECONDS_PER_DAY;
 
-            let mut buffer = itoa::Buffer::new();
-
             if days > 0 {
-                f.write_str(buffer.format(days))?;
+                f.write_str(days.format_into(&mut NumBuffer::new()))?;
                 f.write_str("d ")?;
             }
 
             if days > 0 || hours > 0 {
-                f.write_str(buffer.format(hours))?;
+                f.write_str(hours.format_into(&mut NumBuffer::new()))?;
                 f.write_str(TIME_SEPARATOR)?;
                 f.write_str(format_padded(minutes))?;
             } else {
-                f.write_str(buffer.format(minutes))?;
+                f.write_str(minutes.format_into(&mut NumBuffer::new()))?;
             }
             f.write_str(TIME_SEPARATOR)?;
             f.write_str(format_padded(seconds))
