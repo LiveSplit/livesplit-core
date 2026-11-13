@@ -1,6 +1,7 @@
 use crate::{
     AtomicDateTime, Run, Time, TimeSpan, TimeStamp, TimingMethod,
     event::{Error, Event, Result},
+    platform::prelude::*,
 };
 
 #[derive(Debug, Clone)]
@@ -14,8 +15,16 @@ pub struct ActiveAttempt {
     pub original_offset: TimeSpan,
     /// The adjusted offset gets modified as pauses get accumulated.
     pub adjusted_offset: TimeSpan,
+    /// The accumulated pause time when each split was recorded.
+    /// Slots for skipped splits contain zero. Undoing pauses consumes these
+    /// records so the same correction cannot be applied twice.
+    pub split_pause_times: Vec<TimeSpan>,
     pub game_time_paused_at: Option<TimeSpan>,
     pub loading_times: Option<TimeSpan>,
+    /// Whether Game Time was explicitly set at any point in this attempt.
+    /// Keep this across reinitialization and undone splits: correcting only
+    /// some Game Time values could mix incompatible sources of timing data.
+    pub game_time_was_set: bool,
 }
 
 #[derive(Debug, Clone)]
