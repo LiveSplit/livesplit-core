@@ -32,6 +32,7 @@ The documentation is available here:
 - [LiveSplit One OBS Plugin](https://github.com/LiveSplit/obs-livesplit-one)
 - [chronos Terminal Timer](https://github.com/DarkRTA/chronos)
 - [annelid](https://github.com/dagit/annelid)
+- [LiveGrit](https://github.com/kryptografisch/livegrit)
 
 ## Build Instructions
 
