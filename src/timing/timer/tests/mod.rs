@@ -8,6 +8,7 @@ use crate::{
 
 mod events;
 mod mark_as_modified;
+mod undo_all_pauses;
 mod variables;
 
 fn run() -> Run {
