@@ -272,7 +272,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::SumOfBestBackgroundDescription => "컴포넌트 뒤에 표시되는 배경입니다.",
         Text::SumOfBestDisplayTwoRows => "2줄 표시",
         Text::SumOfBestDisplayTwoRowsDescription => {
-            "컴포넌트 이름과 베스트 세그먼트 합계를 두 줄로 표시할지 지정합니다."
+            "컴포넌트 이름과 최고 세그먼트 합계를 두 줄로 표시할지 지정합니다."
         }
         Text::SumOfBestLabelColor => "라벨 색상",
         Text::SumOfBestLabelColorDescription => {
@@ -280,10 +280,10 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::SumOfBestValueColor => "값 색상",
         Text::SumOfBestValueColorDescription => {
-            "베스트 세그먼트 합계의 색상입니다. 지정하지 않으면 레이아웃의 색상을 사용합니다."
+            "최고 세그먼트 합계의 색상입니다. 지정하지 않으면 레이아웃의 색상을 사용합니다."
         }
         Text::SumOfBestAccuracy => "정확도",
-        Text::SumOfBestAccuracyDescription => "표시되는 베스트 합계의 정확도입니다.",
+        Text::SumOfBestAccuracyDescription => "표시되는 최고 합계의 정확도입니다.",
         Text::PbChanceBackground => "배경",
         Text::PbChanceBackgroundDescription => "컴포넌트 뒤에 표시되는 배경입니다.",
         Text::PbChanceDisplayTwoRows => "2줄 표시",
@@ -372,9 +372,9 @@ pub const fn resolve(text: Text) -> &'static str {
         }
         Text::GraphHeight => "높이",
         Text::GraphHeightDescription => "그래프 높이입니다.",
-        Text::GraphShowBestSegments => "베스트 세그먼트 표시",
+        Text::GraphShowBestSegments => "최고 세그먼트 표시",
         Text::GraphShowBestSegmentsDescription => {
-            "베스트 세그먼트를 레이아웃의 베스트 세그먼트 색상으로 표시할지 지정합니다."
+            "최고 세그먼트를 레이아웃의 최고 세그먼트 색상으로 표시할지 지정합니다."
         }
         Text::GraphLiveGraph => "라이브 그래프",
         Text::GraphLiveGraphDescription => {
@@ -618,8 +618,8 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::TextShadowDescription => "텍스트 그림자 색상을 선택적으로 지정할 수 있습니다.",
         Text::Background => "배경",
         Text::BackgroundDescription => "레이아웃 전체의 배경입니다.",
-        Text::BestSegment => "베스트 세그먼트",
-        Text::BestSegmentDescription => "새로운 베스트 세그먼트를 달성했을 때 사용할 색상입니다.",
+        Text::BestSegment => "최고 세그먼트",
+        Text::BestSegmentDescription => "새로운 최고 세그먼트를 달성했을 때 사용할 색상입니다.",
         Text::AheadGainingTime => "앞섬(시간 벌기)",
         Text::AheadGainingTimeDescription => "비교보다 앞서면서 더 시간을 벌 때 사용할 색상입니다.",
         Text::AheadLosingTime => "앞섬(시간 잃기)",
@@ -683,7 +683,7 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::ComponentCurrentPaceBestPossibleTime => "최적 가능 시간",
         Text::ComponentCurrentPaceWorstPossibleTime => "최악 가능 시간",
         Text::ComponentCurrentPacePredictedTime => "예측 시간",
-        Text::ComponentSegmentTimeBest => "최단 세그먼트 시간",
+        Text::ComponentSegmentTimeBest => "최고 세그먼트 시간",
         Text::ComponentSegmentTimeWorst => "최악 세그먼트 시간",
         Text::ComponentSegmentTimeAverage => "평균 세그먼트 시간",
         Text::ComponentSegmentTimeMedian => "중앙값 세그먼트 시간",
@@ -704,9 +704,9 @@ pub const fn resolve(text: Text) -> &'static str {
         Text::CurrentPaceShort => "현 페이스",
         Text::CurrentPaceAbbreviation => "페이스",
         Text::Goal => "목표",
-        Text::SumOfBestSegments => "베스트 세그먼트 합계",
-        Text::SumOfBestShort => "베스트 합계",
-        Text::SumOfBestAbbreviation => "베합",
+        Text::SumOfBestSegments => "최고 세그먼트 합계",
+        Text::SumOfBestShort => "최고 합계",
+        Text::SumOfBestAbbreviation => "최합",
         Text::PlaytimeShort => "플레이 시간",
         Text::BestSegmentTimeShort => "최고 세그 시간",
         Text::BestSegmentShort => "최고 세그먼트",
@@ -757,7 +757,7 @@ pub const fn resolve_placeholder(text: PlaceholderText) -> &'static [Piece] {
             Piece::Static("로 기록되었습니다."),
         ],
         PlaceholderText::SumOfBestCleanerFasterThanCombined => &[
-            Piece::Static(" 이는 베스트 세그먼트 합계 "),
+            Piece::Static(" 이는 최고 세그먼트 합계 "),
             Piece::Dynamic(0),
             Piece::Static("보다 빠른 기록입니다."),
         ],
