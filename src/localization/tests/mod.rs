@@ -303,3 +303,27 @@ fn hotkey_configuration_keeps_its_existing_json_schema() {
         r#"{"split":"Numpad1","reset":"Numpad3","undo":"Numpad8","skip":"Numpad2","pause":"Numpad5","undo_all_pauses":null,"previous_comparison":"Numpad4","next_comparison":"Numpad6","toggle_timing_method":null}"#
     );
 }
+
+#[cfg(feature = "localization")]
+#[test]
+fn a_chinese_script_subtag_takes_precedence_over_the_region() {
+    for (locale, expected) in [
+        ("zh", Lang::ChineseSimplified),
+        ("zh-CN", Lang::ChineseSimplified),
+        ("zh-SG", Lang::ChineseSimplified),
+        ("zh-Hans", Lang::ChineseSimplified),
+        ("zh-TW", Lang::ChineseTraditional),
+        ("zh-HK", Lang::ChineseTraditional),
+        ("zh-MO", Lang::ChineseTraditional),
+        ("zh-Hant", Lang::ChineseTraditional),
+        // A script overrides what the region implies, in both directions.
+        ("zh-Hans-HK", Lang::ChineseSimplified),
+        ("zh-Hans-TW", Lang::ChineseSimplified),
+        ("zh-Hans-MO", Lang::ChineseSimplified),
+        ("zh-Hant-CN", Lang::ChineseTraditional),
+        ("ZH-hANS-hk", Lang::ChineseSimplified),
+    ] {
+        // `Lang` has no equality; its `u8` representation identifies it.
+        assert_eq!(Lang::parse_locale(locale) as u8, expected as u8, "{locale}");
+    }
+}
