@@ -322,6 +322,12 @@ fn a_chinese_script_subtag_takes_precedence_over_the_region() {
         ("zh-Hans-MO", Lang::ChineseSimplified),
         ("zh-Hant-CN", Lang::ChineseTraditional),
         ("ZH-hANS-hk", Lang::ChineseSimplified),
+        // Extensions and private use name no script or region of the tag.
+        ("zh-Hant-TW-x-hans", Lang::ChineseTraditional),
+        ("zh-Hans-u-co-hk", Lang::ChineseSimplified),
+        ("zh-x-tw", Lang::ChineseSimplified),
+        ("pt-PT-x-br", Lang::Portuguese),
+        ("pt-BR-u-ca-gregory", Lang::BrazilianPortuguese),
     ] {
         // `Lang` has no equality; its `u8` representation identifies it.
         assert_eq!(Lang::parse_locale(locale) as u8, expected as u8, "{locale}");

@@ -96,7 +96,11 @@ impl Lang {
         // operating systems offer) is Simplified.
         let mut script_is_traditional = None;
         let mut region_is_traditional = false;
-        for part in parts {
+        // Only the language tag's own script and region count. A single-letter
+        // subtag starts an extension or private use (`-u-…`, `-x-…`), whose
+        // subtags can look like scripts or regions without being one:
+        // `zh-Hant-TW-x-hans` is still Traditional Chinese.
+        for part in parts.take_while(|part| part.len() > 1) {
             if part.eq_ignore_ascii_case("br") {
                 is_br = true;
             }
