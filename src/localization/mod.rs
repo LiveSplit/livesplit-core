@@ -89,19 +89,29 @@ impl Lang {
         let mut parts = _locale.split('-');
         let language = parts.next().unwrap_or(_locale).to_ascii_lowercase();
         let mut is_br = false;
-        let mut is_traditional = false;
+        // An explicit script subtag says which characters the user reads, so
+        // it decides between Simplified and Traditional Chinese. The region
+        // only implies a script when none is given: `zh-HK` is Traditional,
+        // but `zh-Hans-HK` (Simplified Chinese as used in Hong Kong, which
+        // operating systems offer) is Simplified.
+        let mut script_is_traditional = None;
+        let mut region_is_traditional = false;
         for part in parts {
             if part.eq_ignore_ascii_case("br") {
                 is_br = true;
             }
-            if part.eq_ignore_ascii_case("hant")
-                || part.eq_ignore_ascii_case("tw")
+            if part.eq_ignore_ascii_case("hant") {
+                script_is_traditional = Some(true);
+            } else if part.eq_ignore_ascii_case("hans") {
+                script_is_traditional = Some(false);
+            } else if part.eq_ignore_ascii_case("tw")
                 || part.eq_ignore_ascii_case("hk")
                 || part.eq_ignore_ascii_case("mo")
             {
-                is_traditional = true;
+                region_is_traditional = true;
             }
         }
+        let is_traditional = script_is_traditional.unwrap_or(region_is_traditional);
 
         match language.as_str() {
             "en" => Lang::English,
