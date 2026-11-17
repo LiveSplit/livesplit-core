@@ -249,6 +249,13 @@
 //!     /// guaranteed to be valid UTF-8 and is not nul-terminated.
 //!     /// Example values: `windows`, `linux`, `macos`
 //!     pub fn runtime_get_os(buf_ptr: *mut u8, buf_len_ptr: *mut usize) -> bool;
+//!     /// Stores the WASI path of the currently loaded splits file in the buffer
+//!     /// given. Returns `false` if there is no splits path or the buffer is too
+//!     /// small. After this call, no matter whether it was successful or not, the
+//!     /// `buf_len_ptr` will be set to the required buffer size, or `0` if there
+//!     /// is no splits path. The path is guaranteed to be valid UTF-8 and is not
+//!     /// nul-terminated.
+//!     pub fn runtime_get_splits_path(buf_ptr: *mut u8, buf_len_ptr: *mut usize) -> bool;
 //!     /// Stores the name of the architecture that the runtime is running on
 //!     /// in the buffer given. Returns `false` if the buffer is too small.
 //!     /// After this call, no matter whether it was successful or not, the

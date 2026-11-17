@@ -73,6 +73,38 @@ pub fn bind<T: Timer>(linker: &mut Linker<Context<T>>) -> Result<(), CreationErr
             source,
             name: "runtime_get_os",
         })?
+        .func_wrap("env", "runtime_get_splits_path", {
+            |mut caller: Caller<Context<T>>, ptr: u32, len_ptr: u32| {
+                let path = caller
+                    .data()
+                    .timer
+                    .splits_path()
+                    .and_then(|path| crate::wasi_path::from_native(&path));
+
+                let (memory, _) = memory_and_context(&mut caller);
+                let len_bytes = get_arr_mut(memory, len_ptr)?;
+
+                let Some(path) = path else {
+                    *len_bytes = 0u32.to_le_bytes();
+                    return Ok(0u32);
+                };
+
+                let needed = path.len();
+                let len = u32::from_le_bytes(*len_bytes) as usize;
+                *len_bytes = (needed as u32).to_le_bytes();
+
+                if len < needed {
+                    return Ok(0u32);
+                }
+                let buf = get_slice_mut(memory, ptr, needed as _)?;
+                buf.copy_from_slice(path.as_bytes());
+                Ok(1u32)
+            }
+        })
+        .map_err(|source| CreationError::LinkFunction {
+            source,
+            name: "runtime_get_splits_path",
+        })?
         .func_wrap("env", "runtime_get_arch", {
             |mut caller: Caller<Context<T>>, ptr: u32, len_ptr: u32| {
                 let (memory, _) = memory_and_context(&mut caller);
