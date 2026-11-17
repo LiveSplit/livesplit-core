@@ -16,6 +16,16 @@ pub enum TimerState {
     Ended = 3,
 }
 
+/// Whether the timer compares against real time or game time.
+#[repr(u8)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum TimingMethod {
+    /// Compare against real time.
+    RealTime = 0,
+    /// Compare against game time.
+    GameTime = 1,
+}
+
 /// The level of criticalness of a log message.
 pub enum LogLevel {
     /// A trace message. This is the least critical and most verbose message.
@@ -66,6 +76,8 @@ pub trait Timer: Send + 'static {
     /// Resumes the game time. This does not resume the timer, only the
     /// automatic flow of time for the game time.
     fn resume_game_time(&mut self);
+    /// Sets whether the timer compares against real time or game time.
+    fn set_timing_method(&mut self, _method: TimingMethod) {}
     /// Sets a custom key value pair. This may be arbitrary information that the
     /// auto splitter wants to provide for visualization.
     fn set_variable(&mut self, key: &str, value: &str);
