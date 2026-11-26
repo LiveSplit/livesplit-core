@@ -667,6 +667,7 @@ impl core::error::Error for Error {
 pub struct Runtime<T: event::CommandSink + TimerQuery + Send + Sync + 'static> {
     shared_state: Arc<SharedState<T>>,
     changed_sender: Sender<()>,
+    start_updates: Option<Sender<()>>,
     runtime: livesplit_auto_splitting::Runtime,
     loaded_path: ArcSwapOption<PathBuf>,
     timer: ArcSwapOption<T>,
@@ -686,7 +687,13 @@ enum WatchdogState {
 
 impl<T> SharedState<T> {
     fn update_watchdog(&self, watchdog_state: WatchdogState) -> Result<(), ()> {
-        *self.watchdog_state.lock().map_err(drop)? = watchdog_state;
+        let mut state = self.watchdog_state.lock().map_err(drop)?;
+        // The owner may start updates and immediately drop the runtime before
+        // the worker gets scheduled. Shutdown must remain the final state.
+        if matches!(*state, WatchdogState::Shutdown) {
+            return Err(());
+        }
+        *state = watchdog_state;
         self.watchdog_state_update.notify_one();
         Ok(())
     }
@@ -712,6 +719,17 @@ impl<T: event::CommandSink + TimerQuery + Send + Sync + 'static> Runtime<T> {
     /// Starts the runtime. Doesn't actually load an auto splitter until
     /// [`load`][Runtime::load] is called.
     pub fn new() -> Self {
+        let mut runtime = Self::new_suspended();
+        runtime.start_updates();
+        runtime
+    }
+
+    /// Creates a runtime that can load a module and configure its settings
+    /// without running its first update. Call [`start_updates`](Self::start_updates)
+    /// when the timer is ready to accept commands. Dropping a suspended
+    /// runtime discards the module without running an update.
+    pub fn new_suspended() -> Self {
+        let (start_updates, start_receiver) = mpsc::channel();
         let (changed_sender, changed_receiver) = mpsc::channel();
         let shared_state = Arc::new(SharedState {
             auto_splitter: ArcSwapOption::from(None),
@@ -724,7 +742,11 @@ impl<T: event::CommandSink + TimerQuery + Send + Sync + 'static> Runtime<T> {
             .spawn({
                 let shared_state = shared_state.clone();
                 move || {
-                    run(shared_state, changed_receiver);
+                    // Wait outside the tick loop and its watchdog deadline.
+                    // Dropping an unselected module closes the start channel.
+                    if start_receiver.recv().is_ok() {
+                        run(shared_state, changed_receiver);
+                    }
                 }
             })
             .unwrap();
@@ -742,10 +764,22 @@ impl<T: event::CommandSink + TimerQuery + Send + Sync + 'static> Runtime<T> {
         Self {
             shared_state,
             changed_sender,
+            start_updates: Some(start_updates),
             // TODO: unwrap?
             runtime: livesplit_auto_splitting::Runtime::new(Config::default()).unwrap(),
             loaded_path: ArcSwapOption::from(None),
             timer: ArcSwapOption::from(None),
+        }
+    }
+
+    /// Enables updates for the currently loaded module and any subsequent
+    /// loads. Calling this again or on a runtime created with [`new`](Self::new)
+    /// leaves the running module and its tick schedule intact.
+    pub fn start_updates(&mut self) {
+        if let Some(start) = self.start_updates.take() {
+            start
+                .send(())
+                .expect("the worker holds its receiver until updates start");
         }
     }
 
@@ -1166,6 +1200,59 @@ mod tests {
     use super::*;
 
     const SCRIPT_PATH: &str = "Auto Splitters/Game.wasm";
+
+    #[test]
+    fn suspended_runtime_preserves_the_first_update() {
+        // The fixture calls timer_start exactly once, on its first update.
+        // A retry on every tick would hide a first update consumed too early.
+        let path =
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/auto_splitting/start_once.wasm");
+        let mut run = crate::Run::new();
+        run.push_segment(crate::Segment::new("Finish"));
+        let timer = crate::Timer::new(run).unwrap().into_shared();
+
+        for start in [false, true] {
+            let mut runtime = Runtime::new_suspended();
+            runtime.load_from_path(timer.clone(), path.clone()).unwrap();
+            assert_eq!(runtime.loaded_path().as_deref(), Some(path.as_path()));
+            assert_eq!(
+                timer.read().unwrap().current_phase(),
+                TimerPhase::NotRunning
+            );
+
+            if start {
+                runtime.start_updates();
+                runtime.start_updates();
+                let deadline = Instant::now() + Duration::from_secs(5);
+                while timer.read().unwrap().current_phase() == TimerPhase::NotRunning {
+                    assert!(
+                        Instant::now() < deadline,
+                        "the first update should start the timer"
+                    );
+                    thread::yield_now();
+                }
+            }
+
+            // Wait for both workers to exit before observing the final phase:
+            // dropping a suspended runtime must never release its first update.
+            let workers = Arc::downgrade(&runtime.shared_state);
+            drop(runtime);
+            let deadline = Instant::now() + Duration::from_secs(5);
+            while workers.strong_count() != 0 {
+                assert!(
+                    Instant::now() < deadline,
+                    "runtime workers should exit on drop"
+                );
+                thread::yield_now();
+            }
+            let expected = if start {
+                TimerPhase::Running
+            } else {
+                TimerPhase::NotRunning
+            };
+            assert_eq!(timer.read().unwrap().current_phase(), expected);
+        }
+    }
 
     #[test]
     fn stored_settings_are_only_loaded_for_their_script() {
